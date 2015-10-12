@@ -26,7 +26,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -68,10 +68,7 @@ public class CompareFileWithEditorAction extends BaseShowDiffAction {
     Project project = e.getProject();
     if (project == null) return null;
 
-    VirtualFile[] selectedFiles = FileEditorManager.getInstance(project).getSelectedFiles();
-    if (selectedFiles.length == 0) return null;
-
-    return selectedFiles[0];
+    return FileEditorManagerEx.getInstanceEx(project).getCurrentFile();
   }
 
   private static boolean canCompare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {

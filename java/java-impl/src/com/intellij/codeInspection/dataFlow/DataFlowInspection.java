@@ -19,18 +19,13 @@ import com.intellij.codeInsight.NullableNotNullDialog;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
-import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.Consumer;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
+import com.siyeh.ig.fixes.IntroduceVariableFix;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -69,35 +64,12 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   @Override
-  protected LocalQuickFixOnPsiElement createIntroduceVariableFix(final PsiExpression expression) {
-    return new LocalQuickFixOnPsiElement(expression) {
-      @NotNull
+  protected LocalQuickFix createIntroduceVariableFix(final PsiExpression expression) {
+    return new IntroduceVariableFix(false) {
+      @Nullable
       @Override
-      public String getText() {
-        return "Introduce Local Variable";
-      }
-
-      @Override
-      public void invoke(@NotNull final Project project,
-                         @NotNull PsiFile file,
-                         @NotNull final PsiElement startElement,
-                         @NotNull PsiElement endElement) {
-        final RefactoringActionHandler handler = JavaRefactoringActionHandlerFactory.getInstance().createIntroduceVariableHandler();
-        final AsyncResult<DataContext> dataContextContainer = DataManager.getInstance().getDataContextFromFocus();
-        dataContextContainer.doWhenDone(new Consumer<DataContext>() {
-          @Override
-          public void consume(DataContext dataContext) {
-            handler.invoke(project, new PsiElement[]{startElement}, dataContext);
-          }
-        });
-
-      }
-
-      @Nls
-      @NotNull
-      @Override
-      public String getFamilyName() {
-        return getText();
+      public PsiExpression getExpressionToExtract(PsiElement element) {
+        return (PsiExpression)element;
       }
     };
   }

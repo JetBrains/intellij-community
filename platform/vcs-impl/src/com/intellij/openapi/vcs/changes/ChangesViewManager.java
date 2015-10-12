@@ -51,6 +51,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.Content;
@@ -325,7 +326,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
       @Override
       public JComponent create() {
         JLabel label = new JLabel(text);
-        label.setForeground(isError ? Color.red : UIUtil.getLabelForeground());
+        label.setForeground(isError ? JBColor.RED : UIUtil.getLabelForeground());
         return label;
       }
     };

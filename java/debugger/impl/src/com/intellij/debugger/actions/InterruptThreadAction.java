@@ -58,32 +58,34 @@ public class InterruptThreadAction extends DebuggerAction{
     if (!threadsToInterrupt.isEmpty()) {
       final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
       final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
-      debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
-        protected void action() throws Exception {
-          boolean unsupported = false;
-          for (ThreadReferenceProxyImpl thread : threadsToInterrupt) {
-            try {
-              thread.getThreadReference().interrupt();
-            }
-            catch (UnsupportedOperationException ignored) {
-              unsupported = true;
-            }
-          }
-          if (unsupported) {
-            final Project project = debugProcess.getProject();
-            //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                if (!project.isDisposed()) {
-                  XDebugSessionImpl.NOTIFICATION_GROUP.createNotification("Thread operation 'interrupt' is not supported by VM", MessageType.INFO).notify(project);
-                }
+      if (debugProcess != null) {
+        debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+          protected void action() throws Exception {
+            boolean unsupported = false;
+            for (ThreadReferenceProxyImpl thread : threadsToInterrupt) {
+              try {
+                thread.getThreadReference().interrupt();
               }
-            });
+              catch (UnsupportedOperationException ignored) {
+                unsupported = true;
+              }
+            }
+            if (unsupported) {
+              final Project project = debugProcess.getProject();
+              //noinspection SSBasedInspection
+              SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                  if (!project.isDisposed()) {
+                    XDebugSessionImpl.NOTIFICATION_GROUP
+                      .createNotification("Thread operation 'interrupt' is not supported by VM", MessageType.INFO).notify(project);
+                  }
+                }
+              });
+            }
           }
-        }
-      });
+        });
+      }
     }
-
   }
 
   public void update(AnActionEvent e) {

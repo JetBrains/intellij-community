@@ -15,30 +15,24 @@
  */
 package com.intellij.ide;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.impl.SystemDock;
-import com.intellij.openapi.wm.impl.welcomeScreen.NewRecentProjectPanel;
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.SmartList;
@@ -68,6 +62,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public abstract class RecentProjectsManagerBase extends RecentProjectsManager implements PersistentStateComponent<RecentProjectsManagerBase.State> {
+  private static final int MAX_PROJECTS_IN_MAIN_MENU = 6;
   private static final Map<String, MyIcon> ourProjectIcons = new HashMap<String, MyIcon>();
   private static Icon ourSmallAppIcon;
 
@@ -325,12 +320,12 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   @Override
-  public AnAction[] getRecentProjectsActions(boolean addClearListItem) {
-    return getRecentProjectsActions(addClearListItem, false);
+  public AnAction[] getRecentProjectsActions(boolean forMainMenu) {
+    return getRecentProjectsActions(forMainMenu, false);
   }
 
   @Override
-  public AnAction[] getRecentProjectsActions(boolean addClearListItem, boolean useGroups) {
+  public AnAction[] getRecentProjectsActions(boolean forMainMenu, boolean useGroups) {
     final Set<String> paths;
     synchronized (myStateLock) {
       myState.validateRecentProjects();
@@ -380,6 +375,10 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
           final AnAction action = createOpenAction(path, duplicates);
           if (action != null) {
             children.add(action);
+
+            if (forMainMenu && children.size() >= MAX_PROJECTS_IN_MAIN_MENU) {
+              break;
+            }
           }
         }
         actions.add(new ProjectGroupActionGroup(group, children));
@@ -400,47 +399,6 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
     if (actions.isEmpty()) {
       return AnAction.EMPTY_ARRAY;
-    }
-
-    if (addClearListItem) {
-      AnAction manageAction = new DumbAwareAction("Manage projects...") {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          Disposable disposable = Disposer.newDisposable();
-          NewRecentProjectPanel panel = new NewRecentProjectPanel(disposable);
-          JList list = UIUtil.findComponentOfType(panel, JList.class);
-          JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, list)
-            .setTitle("Recent Projects")
-            .setFocusable(true)
-            .setMovable(true)
-            .createPopup();
-          Disposer.register(popup, disposable);
-          popup.showCenteredInCurrentWindow(e.getProject());
-          //IdeFocusManager.getGlobalInstance().requestFocus(list, true);
-        }
-      };
-
-      if (Registry.is("ide.manage.recent.project.action.available")) {
-        actions.add(0, manageAction);
-        actions.add(1, Separator.getInstance());
-      }
-
-      AnAction clearListAction = new DumbAwareAction(IdeBundle.message("action.clear.list")) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          String message = IdeBundle.message("action.clear.list.message");
-          String title = IdeBundle.message("action.clear.list.title");
-          if (Messages.showOkCancelDialog(e.getProject(), message, title, Messages.getQuestionIcon()) == Messages.OK) {
-            synchronized (myStateLock) {
-              myState.recentPaths.clear();
-            }
-            WelcomeFrame.clearRecents();
-          }
-        }
-      };
-      
-      actions.add(Separator.getInstance());
-      actions.add(clearListAction);
     }
 
     return actions.toArray(new AnAction[actions.size()]);

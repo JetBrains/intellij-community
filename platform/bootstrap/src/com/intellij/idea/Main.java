@@ -246,7 +246,7 @@ public class Main {
                          "-Dswing.defaultlaf=" + UIManager.getSystemLookAndFeelClassName(),
                          "com.intellij.updater.Runner",
                          "install",
-                         "\"" + PathManager.getHomePath() + "\"");
+                         PathManager.getHomePath());
 
       status = Restarter.scheduleRestart(ArrayUtilRt.toStringArray(args));
     }

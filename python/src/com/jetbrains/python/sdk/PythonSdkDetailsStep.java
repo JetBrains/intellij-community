@@ -21,10 +21,7 @@ import com.google.common.collect.Lists;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
@@ -57,7 +54,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   private final Project myProject;
   private final Component myOwnerComponent;
   private final Sdk[] myExistingSdks;
-  private final NullableConsumer<Sdk> myCallback;
+  private final NullableConsumer<Sdk> mySdkAddedCallback;
 
   private static final String LOCAL = PyBundle.message("sdk.details.step.add.local");
   private static final String REMOTE = PyBundle.message("sdk.details.step.add.remote");
@@ -70,8 +67,8 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
                           final Sdk[] existingSdks,
                           @Nullable final DialogWrapper moreDialog,
                           JComponent ownerComponent, final Point popupPoint,
-                          final NullableConsumer<Sdk> callback) {
-    show(project, existingSdks, moreDialog, ownerComponent, popupPoint, callback, false);
+                          final NullableConsumer<Sdk> sdkAddedCallback) {
+    show(project, existingSdks, moreDialog, ownerComponent, popupPoint, sdkAddedCallback, false);
 
   }
 
@@ -79,8 +76,8 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
                           final Sdk[] existingSdks,
                           @Nullable final DialogWrapper moreDialog,
                           JComponent ownerComponent, final Point popupPoint,
-                          final NullableConsumer<Sdk> callback, boolean isNewProject) {
-    final PythonSdkDetailsStep sdkHomesStep = new PythonSdkDetailsStep(project, moreDialog, ownerComponent, existingSdks, callback);
+                          final NullableConsumer<Sdk> sdkAddedCallback, boolean isNewProject) {
+    final PythonSdkDetailsStep sdkHomesStep = new PythonSdkDetailsStep(project, moreDialog, ownerComponent, existingSdks, sdkAddedCallback);
     sdkHomesStep.setNewProject(isNewProject);
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
     popup.showInScreenCoordinates(ownerComponent, popupPoint);
@@ -93,13 +90,13 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   public PythonSdkDetailsStep(@Nullable final Project project,
                               @Nullable final DialogWrapper moreDialog, @NotNull final Component ownerComponent,
                               @NotNull final Sdk[] existingSdks,
-                              @NotNull final NullableConsumer<Sdk> callback) {
+                              @NotNull final NullableConsumer<Sdk> sdkAddedCallback) {
     super(null, getAvailableOptions(moreDialog != null));
     myProject = project;
     myMore = moreDialog;
     myOwnerComponent = ownerComponent;
     myExistingSdks = existingSdks;
-    myCallback = callback;
+    mySdkAddedCallback = sdkAddedCallback;
   }
 
   private static List<String> getAvailableOptions(boolean showMore) {
@@ -149,24 +146,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        final NullableConsumer<Sdk> callback = new NullableConsumer<Sdk>() {
-          @Override
-          public void consume(@Nullable final Sdk sdk) {
-            myCallback.consume(sdk);
-            if (sdk != null) {
-              DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
-                @Override
-                public void run() {
-                  if (ProjectJdkTable.getInstance().findJdk(sdk.getName()) == null) {
-                    SdkConfigurationUtil.addSdk(sdk);
-                  }
-                  PythonSdkUpdater.getInstance().markAlreadyUpdated(sdk.getHomePath());
-                }
-              });
-            }
-          }
-        };
-        SdkConfigurationUtil.createSdk(myProject, myExistingSdks, callback, false, PythonSdkType.getInstance());
+      SdkConfigurationUtil.createSdk(myProject, myExistingSdks, mySdkAddedCallback, false, PythonSdkType.getInstance());
       }
     }, ModalityState.any());
   }
@@ -174,7 +154,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   private void createRemoteSdk() {
     PythonRemoteInterpreterManager remoteInterpreterManager = PythonRemoteInterpreterManager.getInstance();
     if (remoteInterpreterManager != null) {
-      remoteInterpreterManager.addRemoteSdk(myProject, myOwnerComponent, Lists.newArrayList(myExistingSdks), myCallback);
+      remoteInterpreterManager.addRemoteSdk(myProject, myOwnerComponent, Lists.newArrayList(myExistingSdks), mySdkAddedCallback);
     }
     else {
       final String pathToPluginsPage = ShowSettingsUtil.getSettingsMenuName() + " | Plugins";
@@ -221,7 +201,6 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     return new CreateVirtualEnvDialog.VirtualEnvCallback() {
         @Override
         public void virtualEnvCreated(Sdk sdk, boolean associateWithProject) {
-          PythonSdkUpdater.getInstance().markAlreadyUpdated(sdk.getHomePath());
           if (associateWithProject) {
             SdkAdditionalData additionalData = sdk.getSdkAdditionalData();
             if (additionalData == null) {
@@ -235,7 +214,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
               ((PythonSdkAdditionalData)additionalData).associateWithProject(myProject);
             }
           }
-          myCallback.consume(sdk);
+          mySdkAddedCallback.consume(sdk);
         }
       };
   }

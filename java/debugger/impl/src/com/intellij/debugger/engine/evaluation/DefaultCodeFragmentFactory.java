@@ -101,7 +101,7 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
                 semaphore.up();
               }
             };
-          debuggerContext.getDebugProcess().getManagerThread().invoke(worker);
+          debuggerSession.getProcess().getManagerThread().invoke(worker);
           for (int i = 0; i < 50; i++) {
             ProgressManager.checkCanceled();
             if (semaphore.waitFor(20)) break;

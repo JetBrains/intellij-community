@@ -16,6 +16,7 @@
 package git4idea.annotate;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -144,56 +145,69 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
     h.endOptions();
     h.addRelativePaths(repositoryFilePath);
     String output = h.run();
+    GitFileAnnotation annotation = parseAnnotations(revision, file, output);
+    annotation.addLogEntries(revisions);
+    return annotation;
+  }
+
+  @NotNull
+  private GitFileAnnotation parseAnnotations(@Nullable VcsRevisionNumber revision,
+                                             @NotNull VirtualFile file,
+                                             @NotNull String output) throws VcsException {
     GitFileAnnotation annotation = new GitFileAnnotation(myProject, file, revision == null ? null : revision);
     class CommitInfo {
       Date date;
       String author;
       GitRevisionNumber revision;
     }
-    HashMap<String, CommitInfo> commits = new HashMap<String, CommitInfo>();
-    for (StringScanner s = new StringScanner(output); s.hasMoreData();) {
-      // parse header line
-      String commitHash = s.spaceToken();
-      if (commitHash.equals(GitRevisionNumber.NOT_COMMITTED_HASH)) {
-        commitHash = null;
-      }
-      s.spaceToken(); // skip revision line number
-      String s1 = s.spaceToken();
-      int lineNum = Integer.parseInt(s1);
-      s.nextLine();
-      // parse commit information
-      CommitInfo commit = commits.get(commitHash);
-      if (commit != null) {
-        while (s.hasMoreData() && !s.startsWith('\t')) {
-          s.nextLine();
+    try {
+      HashMap<String, CommitInfo> commits = new HashMap<String, CommitInfo>();
+      for (StringScanner s = new StringScanner(output); s.hasMoreData();) {
+        // parse header line
+        String commitHash = s.spaceToken();
+        if (commitHash.equals(GitRevisionNumber.NOT_COMMITTED_HASH)) {
+          commitHash = null;
         }
-      }
-      else {
-        commit = new CommitInfo();
-        while (s.hasMoreData() && !s.startsWith('\t')) {
-          String key = s.spaceToken();
-          String value = s.line();
-          if (commitHash != null && AUTHOR_KEY.equals(key)) {
-            commit.author = value;
-          }
-          if (commitHash != null && COMMITTER_TIME_KEY.equals(key)) {
-            commit.date = GitUtil.parseTimestampWithNFEReport(value, h, output);
-            commit.revision = new GitRevisionNumber(commitHash, commit.date);
+        s.spaceToken(); // skip revision line number
+        String s1 = s.spaceToken();
+        int lineNum = Integer.parseInt(s1);
+        s.nextLine();
+        // parse commit information
+        CommitInfo commit = commits.get(commitHash);
+        if (commit != null) {
+          while (s.hasMoreData() && !s.startsWith('\t')) {
+            s.nextLine();
           }
         }
-        commits.put(commitHash, commit);
+        else {
+          commit = new CommitInfo();
+          while (s.hasMoreData() && !s.startsWith('\t')) {
+            String key = s.spaceToken();
+            String value = s.line();
+            if (commitHash != null && AUTHOR_KEY.equals(key)) {
+              commit.author = value;
+            }
+            if (commitHash != null && COMMITTER_TIME_KEY.equals(key)) {
+              commit.date = GitUtil.parseTimestamp(value);
+              commit.revision = new GitRevisionNumber(commitHash, commit.date);
+            }
+          }
+          commits.put(commitHash, commit);
+        }
+        // parse line
+        if (!s.hasMoreData()) {
+          // if the file is empty, the next line will not start with tab and it will be
+          // empty.
+          continue;
+        }
+        s.skipChars(1);
+        String line = s.line(true);
+        annotation.appendLineInfo(commit.date, commit.revision, commit.author, line, lineNum);
       }
-      // parse line
-      if (!s.hasMoreData()) {
-        // if the file is empty, the next line will not start with tab and it will be
-        // empty.  
-        continue;
-      }
-      s.skipChars(1);
-      String line = s.line(true);
-      annotation.appendLineInfo(commit.date, commit.revision, commit.author, line, lineNum);
     }
-    annotation.addLogEntries(revisions);
+    catch (Exception e) {
+      LOG.error("Couldn't parse annotation: " + e, new Attachment("output.txt", output));
+    }
     return annotation;
   }
 
@@ -208,13 +222,15 @@ public class GitAnnotationProvider implements AnnotationProviderEx, VcsCacheable
     return new VcsAnnotation(VcsUtil.getFilePath(gitFileAnnotation.getFile()), basicData, null);
   }
 
+  @Nullable
   @Override
-  public FileAnnotation restore(VcsAnnotation vcsAnnotation,
-                                VcsAbstractHistorySession session,
-                                String annotatedContent,
+  public FileAnnotation restore(@NotNull VcsAnnotation vcsAnnotation,
+                                @NotNull VcsAbstractHistorySession session,
+                                @NotNull String annotatedContent,
                                 boolean forCurrentRevision, VcsRevisionNumber revisionNumber) {
-    final GitFileAnnotation gitFileAnnotation =
-      new GitFileAnnotation(myProject, vcsAnnotation.getFilePath().getVirtualFile(), revisionNumber);
+    VirtualFile virtualFile = vcsAnnotation.getFilePath().getVirtualFile();
+    if (virtualFile == null) return null;
+    final GitFileAnnotation gitFileAnnotation = new GitFileAnnotation(myProject, virtualFile, revisionNumber);
     gitFileAnnotation.addLogEntries(session.getRevisionList());
     final VcsLineAnnotationData basicAnnotation = vcsAnnotation.getBasicAnnotation();
     final int size = basicAnnotation.getNumLines();
