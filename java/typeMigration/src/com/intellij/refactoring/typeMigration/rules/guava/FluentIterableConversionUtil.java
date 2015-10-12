@@ -21,9 +21,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.util.SmartList;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.types.ReplaceMethodRefWithLambdaIntention;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,8 +92,7 @@ public class FluentIterableConversionUtil {
         if (iterable == null) return expression;
 
         if (body instanceof PsiCodeBlock) {
-          for (PsiReturnStatement statement : PsiTreeUtil
-            .findChildrenOfType(body, PsiReturnStatement.class)) {
+          for (PsiReturnStatement statement : PsiUtil.findReturnStatements((PsiCodeBlock)body)) {
             final PsiExpression retValue = statement.getReturnValue();
             if (!determineType(retValue, iterableReturnValues, iterable, collection)) {
               return expression;
@@ -135,10 +135,21 @@ public class FluentIterableConversionUtil {
     }
 
     private static void convertToStream(@NotNull PsiExpression returnValue, boolean isCollection) {
-      String expressionAsText = isCollection
-                         ? "(" + returnValue.getText() + ").stream()"
-                         : "java.util.stream.StreamSupport.stream((" + returnValue.getText() + ").spliterator(), false)";
-      returnValue.replace(JavaPsiFacade.getElementFactory(returnValue.getProject()).createExpressionFromText(expressionAsText, returnValue));
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(returnValue.getProject());
+      PsiExpression newExpression;
+      if (isCollection) {
+        String expressionAsText = "(" + returnValue.getText() + ").stream()";
+        newExpression = elementFactory.createExpressionFromText(expressionAsText, returnValue);
+        ParenthesesUtils.removeParentheses(newExpression, false);
+      }
+      else {
+        final String methodCall = "(" + returnValue.getText() + ")";
+        final boolean needParentheses = ParenthesesUtils
+          .areParenthesesNeeded((PsiParenthesizedExpression)elementFactory.createExpressionFromText(methodCall, null), false);
+        String expressionAsText = "java.util.stream.StreamSupport.stream(" + (needParentheses ? methodCall : methodCall.substring(1, methodCall.length() - 1)) + ".spliterator(), false)";
+        newExpression = elementFactory.createExpressionFromText(expressionAsText, returnValue);
+      }
+      returnValue.replace(newExpression);
     }
   }
 
@@ -150,8 +161,8 @@ public class FluentIterableConversionUtil {
     @Override
     public PsiExpression replace(PsiExpression expression) {
       final PsiExpression argument = ((PsiMethodCallExpression)expression).getArgumentList().getExpressions()[0];
-      final PsiExpression newArgument =
-        JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText("(" + argument.getText() + ")::isInstance", argument);
+      final PsiExpression newArgument = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText("(" + argument.getText() + ")::isInstance", argument);
+      ParenthesesUtils.removeParentheses((PsiExpression)((PsiMethodReferenceExpression)newArgument).getQualifier(), false);
       argument.replace(newArgument);
       return super.replace(expression);
     }

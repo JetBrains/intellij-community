@@ -10,11 +10,11 @@ class A {
 
     int i = it.flatMap(o -> {
         if ('a' > 2) {
-            return StreamSupport.stream((getIterable()).spliterator(), false);
+            return StreamSupport.stream(getIterable().spliterator(), false);
         } else if ('c' < 123) {
             ArrayList<String> strings1 = new ArrayList<>();
             strings1.add(o);
-            return (strings1).stream();
+            return strings1.stream();
         }
         return null;
     }).collect(Collectors.toList()).size();
