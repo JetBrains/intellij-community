@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UnorderedPair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -833,7 +834,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       for (long encodedPair : myDistinctClasses.toArray()) {
         EqClass c1 = myEqClasses.get(low(encodedPair));
         EqClass c2 = myEqClasses.get(high(encodedPair));
-        if (c1.findConstant(false) != null && c2.findConstant(false) != null) {
+        DfaConstValue const1 = (DfaConstValue)c1.findConstant(false);
+        DfaConstValue const2 = (DfaConstValue)c2.findConstant(false);
+        if (const1 != null && const2 != null && !preserveConstantDistinction(const1.getValue(), const2.getValue())) {
           myDistinctClasses.remove(encodedPair);
         }
       }
@@ -849,6 +852,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     return true;
+  }
+
+  private static boolean preserveConstantDistinction(final Object c1, final Object c2) {
+    return c1 == null && c2 instanceof PsiEnumConstant ||
+           c2 == null && c1 instanceof PsiEnumConstant;
   }
 
   private boolean areCompatibleConstants(int i1, int i2) {

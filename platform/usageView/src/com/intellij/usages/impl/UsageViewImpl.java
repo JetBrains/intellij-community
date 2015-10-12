@@ -927,7 +927,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   private final TransferToEDTQueue<Runnable> myTransferToEDTQueue;
-  public void drainQueuedUsageNodes() {
+  void drainQueuedUsageNodes() {
     assert !ApplicationManager.getApplication().isDispatchThread() : Thread.currentThread();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
@@ -936,6 +936,13 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       }
     });
   }
+  private final Consumer<Runnable> edtQueue = new Consumer<Runnable>() {
+    @Override
+    public void consume(Runnable runnable) {
+      myTransferToEDTQueue.offer(runnable);
+    }
+  };
+
 
   @Override
   public void appendUsage(@NotNull Usage usage) {
@@ -950,15 +957,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       // because the view is built incrementally, the usage may be already invalid, so need to filter such cases
       return null;
     }
-    UsageNode node = myBuilder.appendUsage(usage, new Consumer<Runnable>() {
-      @Override
-      public void consume(Runnable runnable) {
-        myTransferToEDTQueue.offer(runnable);
-      }
-    });
+    UsageNode node = myBuilder.appendUsage(usage, edtQueue);
     if (node != null) {
       // update and cache flags while the node is still hot
-      node.update(this);
+      node.update(this, edtQueue);
     }
     myUsageNodes.put(usage, node == null ? NULL_NODE : node);
     return node;
@@ -1082,7 +1084,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     for (int i=0; i<nodes.size(); i++) {
       TreeNode node = nodes.get(i);
       if (node instanceof Node) {
-        ((Node)node).update(this);
+        ((Node)node).update(this, edtQueue);
         TreeNode parent = node.getParent();
         if (parent != root && parent != null) {
           nodes.add(parent);
@@ -1127,7 +1129,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     // call update last, to let children a chance to update their cache first
     if (node instanceof Node && node != getModelRoot() && isVisible == UsageViewTreeCellRenderer.RowLocation.INSIDE_VISIBLE_RECT) {
       try {
-        ((Node)node).update(this);
+        ((Node)node).update(this, edtQueue);
       }
       catch (IndexNotReadyException ignore) {
       }

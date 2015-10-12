@@ -229,9 +229,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.io.FileInputStream FileInputStream(java.lang.String) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.io.FileInputStream int read(byte[]) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -241,23 +238,8 @@
     <item name='java.io.FileNotFoundException FileNotFoundException(java.lang.String, java.lang.String) 1'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='java.io.FileOutputStream FileOutputStream(java.lang.String) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.io.FileOutputStream FileOutputStream(java.lang.String, boolean) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.io.FileOutputStream void write(byte[]) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.io.FileReader FileReader(java.lang.String) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.io.FileWriter FileWriter(java.lang.String) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.io.FileWriter FileWriter(java.lang.String, boolean) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.io.FilterOutputStream void write(byte[]) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -442,12 +424,6 @@
     <item name='java.io.PrintStream PrintStream(java.io.OutputStream, boolean, java.lang.String) 2'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.io.PrintStream PrintStream(java.lang.String) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.io.PrintStream PrintStream(java.lang.String, java.lang.String) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.io.PrintStream PrintStream(java.lang.String, java.lang.String) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -486,9 +462,6 @@
     </item>
     <item name='java.io.RandomAccessFile RandomAccessFile(java.io.File, java.lang.String) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.io.RandomAccessFile RandomAccessFile(java.lang.String, java.lang.String) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.io.RandomAccessFile RandomAccessFile(java.lang.String, java.lang.String) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
