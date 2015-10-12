@@ -327,7 +327,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
 
     return new XSourcePosition() {
-      private XSourcePosition myDelegate;
+      private volatile XSourcePosition myDelegate;
 
       private XSourcePosition getDelegate() {
         if (myDelegate == null) {
