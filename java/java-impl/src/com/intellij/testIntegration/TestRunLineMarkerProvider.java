@@ -21,6 +21,7 @@ import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.execution.testframework.TestIconMapper;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -54,7 +55,7 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
         TestFramework framework = TestFrameworks.detectFramework((PsiClass)element);
         if (framework != null && framework.isTestClass(element)) {
           String url = "java:suite://" + ((PsiClass)element).getQualifiedName();
-          return getInfo(url, framework, e.getProject());
+          return getInfo(url, e.getProject());
         }
       }
       if (element instanceof PsiMethod) {
@@ -63,7 +64,7 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
           TestFramework framework = TestFrameworks.detectFramework(psiClass);
           if (framework != null && framework.isTestMethod(element)) {
             String url = "java:test://" + psiClass.getQualifiedName() + "." + ((PsiMethod)element).getName();
-            return getInfo(url, framework, e.getProject());
+            return getInfo(url, e.getProject());
           }
         }
       }
@@ -72,9 +73,9 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
   }
 
   @NotNull
-  protected Info getInfo(String url, TestFramework framework, Project project) {
+  private static Info getInfo(String url, Project project) {
     Icon icon = getTestStateIcon(url, project);
-    return new Info(icon == null ? framework.getIcon() : icon, TOOLTIP_PROVIDER, ExecutorAction.getActions(1));
+    return new Info(icon, TOOLTIP_PROVIDER, ExecutorAction.getActions(1));
   }
 
   protected boolean isIdentifier(PsiElement e) {
@@ -83,8 +84,19 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
 
   private static Icon getTestStateIcon(String url, Project project) {
     TestStateStorage.Record state = TestStateStorage.getInstance(project).getState(url);
-    if (state == null) return null;
-    TestStateInfo.Magnitude magnitude = TestIconMapper.getMagnitude(state.magnitude);
-    return TestIconMapper.getIcon(magnitude);
+    if (state != null) {
+      TestStateInfo.Magnitude magnitude = TestIconMapper.getMagnitude(state.magnitude);
+      switch (magnitude) {
+        case ERROR_INDEX:
+        case FAILED_INDEX:
+          return AllIcons.RunConfigurations.TestState.Red2;
+        case PASSED_INDEX:
+        case COMPLETE_INDEX:
+          return AllIcons.RunConfigurations.TestState.Green2;
+        default:
+
+      }
+    }
+    return AllIcons.RunConfigurations.TestState.Run;
   }
 }
