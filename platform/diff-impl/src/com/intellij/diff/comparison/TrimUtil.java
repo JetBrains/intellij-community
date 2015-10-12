@@ -39,16 +39,6 @@ public class TrimUtil {
     return !isWhiteSpace(c) && !isPunctuation(c);
   }
 
-  //public static void main(String[] args) {
-  //  String PUNCTUATION = "(){}[],./?`~!@#$%^&*-=+|\\;:'\"<>";
-  //  for (char c = Character.MIN_VALUE; c < Character.MAX_VALUE; c++) {
-  //    if (StringUtil.containsChar(PUNCTUATION, c) != isPunctuation(c)) System.out.println("'" + c + "' - " + (int)c);
-  //  }
-  //  char c = Character.MAX_VALUE;
-  //  if (StringUtil.containsChar(PUNCTUATION, c) != isPunctuation(c)) System.out.println("'" + c + "' - " + (int)c);
-  //  System.out.println("Finish");
-  //}
-
   //
   // Trim
   //
