@@ -15,9 +15,7 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiSynchronizedStatement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -45,31 +43,29 @@ public class NestedSynchronizedStatementInspection extends BaseInspection {
     return new NestedSynchronizedStatementVisitor();
   }
 
-  private static class NestedSynchronizedStatementVisitor
-    extends BaseInspectionVisitor {
+  private static class NestedSynchronizedStatementVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitSynchronizedStatement(
-      @NotNull PsiSynchronizedStatement statement) {
+    public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
       super.visitSynchronizedStatement(statement);
-      final PsiElement containingSynchronizedStatement =
-        PsiTreeUtil.getParentOfType(statement,
-                                    PsiSynchronizedStatement.class);
-      if (containingSynchronizedStatement == null) {
-        return;
+      if (isNestedStatement(statement, PsiSynchronizedStatement.class)) {
+        registerStatementError(statement);
       }
-      final PsiMethod containingMethod =
-        PsiTreeUtil.getParentOfType(statement,
-                                    PsiMethod.class);
-      final PsiMethod containingContainingMethod =
-        PsiTreeUtil.getParentOfType(containingSynchronizedStatement,
-                                    PsiMethod.class);
-      if (containingMethod == null ||
-          containingContainingMethod == null ||
-          !containingMethod.equals(containingContainingMethod)) {
-        return;
-      }
-      registerStatementError(statement);
     }
+  }
+
+  public static <T extends PsiStatement> boolean isNestedStatement(@NotNull PsiStatement statement, Class<T> aClass) {
+    final PsiElement containingStatement = PsiTreeUtil.getParentOfType(statement, aClass);
+    if (containingStatement == null) {
+      return false;
+    }
+    final NavigatablePsiElement containingElement = PsiTreeUtil.getParentOfType(statement, PsiMember.class, true, PsiLambdaExpression.class);
+    final NavigatablePsiElement containingContainingElement = PsiTreeUtil.getParentOfType(containingStatement, PsiMember.class, true, PsiLambdaExpression.class);
+    if (containingElement == null ||
+        containingContainingElement == null ||
+        !containingElement.equals(containingContainingElement)) {
+      return false;
+    }
+    return true;
   }
 }
