@@ -18,6 +18,7 @@ package com.intellij.usages.impl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.usages.UsageView;
 import com.intellij.util.BitUtil;
+import com.intellij.util.Consumer;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,7 +61,7 @@ public abstract class Node extends DefaultMutableTreeNode {
 
   /**
    * isDataXXX methods perform actual (expensive) data computation.
-   * Called from  {@link #update(com.intellij.usages.UsageView)})
+   * Called from  {@link #update(UsageView, Consumer)})
    * to be compared later with cached data stored in {@link #myCachedFlags} and {@link #myCachedText}
    */
   protected abstract boolean isDataValid();
@@ -92,7 +93,7 @@ public abstract class Node extends DefaultMutableTreeNode {
     return isFlagSet(EXCLUDED_MASK);
   }
 
-  public final void update(@NotNull UsageView view) {
+  final void update(@NotNull UsageView view, @NotNull Consumer<Runnable> edtQueue) {
     boolean isDataValid = isDataValid();
     boolean isReadOnly = isDataReadOnly();
     boolean isExcluded = isDataExcluded();
@@ -109,7 +110,12 @@ public abstract class Node extends DefaultMutableTreeNode {
 
       myCachedText = text;
       updateNotify();
-      myTreeModel.nodeChanged(this);
+      edtQueue.consume(new Runnable() {
+        @Override
+        public void run() {
+          myTreeModel.nodeChanged(Node.this);
+        }
+      });
     }
     setFlag(UPDATED_MASK, true);
   }
