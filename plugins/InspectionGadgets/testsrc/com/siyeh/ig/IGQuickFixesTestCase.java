@@ -98,7 +98,7 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
   }
 
   protected void doTest() {
-    assertNotNull(myDefaultHint);
+    if (myDefaultHint == null) throw new NullPointerException("myDefaultHint");
     final String testName = getTestName(false);
     doTest(testName, myDefaultHint);
   }
