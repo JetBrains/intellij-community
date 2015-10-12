@@ -37,7 +37,7 @@ public class BuiltInServer implements Disposable {
   // Some antiviral software detect viruses by the fact of accessing these ports so we should not touch them to appear innocent.
   private static final int[] FORBIDDEN_PORTS = {6953, 6969, 6970};
 
-  private final ChannelRegistrar channelRegistrar = new ChannelRegistrar();
+  private final ChannelRegistrar channelRegistrar;
   private final boolean isOwnerOfEventLoopGroup;
 
   private final EventLoopGroup eventLoopGroup;
@@ -47,9 +47,13 @@ public class BuiltInServer implements Disposable {
     return !channelRegistrar.isEmpty();
   }
 
-  private BuiltInServer(@NotNull EventLoopGroup eventLoopGroup, int port, boolean isOwnerOfEventLoopGroup) {
+  private BuiltInServer(@NotNull EventLoopGroup eventLoopGroup,
+                        int port,
+                        @NotNull ChannelRegistrar channelRegistrar,
+                        boolean isOwnerOfEventLoopGroup) {
     this.eventLoopGroup = eventLoopGroup;
     this.port = port;
+    this.channelRegistrar = channelRegistrar;
     this.isOwnerOfEventLoopGroup = isOwnerOfEventLoopGroup;
   }
 
@@ -72,7 +76,8 @@ public class BuiltInServer implements Disposable {
     ChannelRegistrar channelRegistrar = new ChannelRegistrar();
     ServerBootstrap bootstrap = NettyUtil.nioServerBootstrap(eventLoopGroup);
     configureChildHandler(bootstrap, channelRegistrar, handler);
-    return new BuiltInServer(eventLoopGroup, bind(firstPort, portsCount, tryAnyPort, bootstrap, channelRegistrar), isEventLoopGroupOwner);
+    int port = bind(firstPort, portsCount, tryAnyPort, bootstrap, channelRegistrar);
+    return new BuiltInServer(eventLoopGroup, port, channelRegistrar, isEventLoopGroupOwner);
   }
 
   public int getPort() {
