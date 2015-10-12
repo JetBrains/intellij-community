@@ -37,6 +37,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.io.*;
@@ -61,6 +62,7 @@ class HTMLTextPainter {
   private int myCurrentMethodSeparator;
   private final Project myProject;
   private final Map<TextAttributes, String> myStyleMap = new HashMap<TextAttributes, String>();
+  private final Map<Color, String> mySeparatorStyles = new HashMap<Color, String>();
 
   public HTMLTextPainter(PsiFile psiFile, Project project, String dirName, boolean printLineNumbers) {
     myProject = project;
@@ -171,7 +173,8 @@ class HTMLTextPainter {
         if (myCurrentMethodSeparator < myMethodSeparators.length) {
           LineMarkerInfo marker = myMethodSeparators[myCurrentMethodSeparator];
           if (marker != null && marker.startOffset <= hEnd) {
-            writer.write("<hr>");
+            Color color = marker.separatorColor;
+            writer.write("<hr class=\"" + mySeparatorStyles.get(color) + "\">");
             myCurrentMethodSeparator++;
           }
         }
@@ -344,7 +347,7 @@ class HTMLTextPainter {
         writer.write("." + styleName + " { ");
         final Color foreColor = textAttributes.getForegroundColor();
         if (foreColor != null) {
-          writer.write("color: rgb(" + foreColor.getRed() + "," + foreColor.getGreen() + "," + foreColor.getBlue() + "); ");
+          writer.write("color: " + colorToHtml(foreColor) + "; ");
         }
         if ((textAttributes.getFontType() & Font.BOLD) != 0) {
           writer.write("font-weight: bold; ");
@@ -356,7 +359,20 @@ class HTMLTextPainter {
       }
       hIterator.advance();
     }
+    for (LineMarkerInfo separator : myMethodSeparators) {
+      Color color = separator.separatorColor;
+      if (color != null && !mySeparatorStyles.containsKey(color)) {
+        @NonNls String styleName = "ls" + mySeparatorStyles.size();
+        mySeparatorStyles.put(color, styleName);
+        String htmlColor = colorToHtml(color);
+        writer.write("." + styleName + " { height: 1px; border-width: 0; color: " + htmlColor + "; background-color:" + htmlColor + "}\n");
+      }
+    }
     writer.write("</style>\n");
+  }
+  
+  private static String colorToHtml(@NotNull Color color) {
+    return "rgb(" + color.getRed() + "," + color.getGreen() + "," + color.getBlue() + ")";
   }
 
   private static void writeFooter(@NonNls Writer writer) throws IOException {
