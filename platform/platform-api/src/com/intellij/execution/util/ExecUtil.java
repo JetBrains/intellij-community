@@ -226,8 +226,6 @@ public class ExecUtil {
       sudoCommandLine = new GeneralCommandLine(sudoCommand);
     }
     else if (hasPkExec.getValue()) {
-      command.add(0, "pkexec");
-
       //workaround for RUBY-16963
       String homeDirectory = commandLine.getEnvironment().get("HOME");
       if (hasSh.getValue() && homeDirectory != null) {
@@ -241,10 +239,12 @@ public class ExecUtil {
         File exportHomeScript = createTempExecutableScript("pkexec-homeDirectory", ".sh",
                                                            "#!/bin/sh\n" +
                                                            "HOME=" + escapeUnixShellArgument(homeDirectory) + " " + escapedCommandLine);
-        command.add(1, "sh");
-        command.add(2, exportHomeScript.getAbsolutePath());
+        command.clear();
+        command.add("sh");
+        command.add(exportHomeScript.getAbsolutePath());
       }
 
+      command.add(0, "pkexec");
       sudoCommandLine = new GeneralCommandLine(command);
     }
     else if (SystemInfo.isUnix && hasTerminalApp()) {
