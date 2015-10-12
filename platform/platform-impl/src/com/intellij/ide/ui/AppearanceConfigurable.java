@@ -18,6 +18,8 @@ package com.intellij.ide.ui;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceKt;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
@@ -33,7 +35,6 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.openapi.diagnostic.Logger;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -232,7 +233,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     if (settings.COLOR_BLINDNESS != blindness) {
       settings.COLOR_BLINDNESS = blindness;
       update = true;
-      ComponentsPackage.getStateStore(ApplicationManager.getApplication()).reloadState(DefaultColorSchemesManager.class);
+      ServiceKt.getStateStore(ApplicationManager.getApplication()).reloadState(DefaultColorSchemesManager.class);
       updateEditorScheme = true;
     }
 
