@@ -4314,6 +4314,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     };
   }
 
+  private boolean isInsideGutterOnlyFoldingArea(@NotNull MouseEvent e) {
+    EditorMouseEventArea area = getMouseEventArea(e);
+    return area == EditorMouseEventArea.FOLDING_OUTLINE_AREA &&
+           myGutterComponent.convertX(e.getX()) <= myGutterComponent.getWhitespaceSeparatorOffset();
+  }
 
   @Override
   public EditorMouseEventArea getMouseEventArea(@NotNull MouseEvent e) {
@@ -5946,7 +5951,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // are drawn) and annotations area. E.g. we don't want to change caret position if a user sets new break point (clicks
       // at 'line markers' area).
       if (e.getSource() != myGutterComponent ||
-          eventArea != EditorMouseEventArea.LINE_MARKERS_AREA && eventArea != EditorMouseEventArea.ANNOTATIONS_AREA)
+          (eventArea != EditorMouseEventArea.LINE_MARKERS_AREA &&
+          eventArea != EditorMouseEventArea.ANNOTATIONS_AREA &&
+          !isInsideGutterOnlyFoldingArea(e)))
       {
         VisualPosition visualPosition = myUseNewRendering ? getTargetPosition(x, y, true) : null;
         LogicalPosition pos = myUseNewRendering ? visualToLogicalPosition(visualPosition) : getLogicalPositionForScreenPos(x, y, true);
