@@ -80,7 +80,11 @@ public class FindSuperElementsHelper {
     if (!hasSubClass) {
       return null;
     }
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
+      return null;
+    }
     final Collection<PsiAnchor> checkedInterfaces = new THashSet<PsiAnchor>();
+    checkedInterfaces.add(PsiAnchor.create(containingClass));
     final Ref<Pair<PsiMethod, PsiClass>> result = Ref.create();
     ClassInheritorsSearch.search(containingClass, containingClass.getUseScope(), true, true, false).forEach(new Processor<PsiClass>() {
       @Override
@@ -92,6 +96,7 @@ public class FindSuperElementsHelper {
           PsiClass anInterface = resolved.getElement();
           if (anInterface == null || !checkedInterfaces.add(PsiAnchor.create(anInterface))) continue;
           for (PsiMethod superMethod : anInterface.findMethodsByName(method.getName(), true)) {
+            superMethod = (PsiMethod)superMethod.getNavigationElement();
             ProgressManager.checkCanceled();
             PsiClass superInterface = superMethod.getContainingClass();
             if (superInterface == null) {
