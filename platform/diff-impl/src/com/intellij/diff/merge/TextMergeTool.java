@@ -397,6 +397,7 @@ public class TextMergeTool implements MergeTool {
 
               @Override
               public void onSuccess() {
+                if (isDisposed()) return;
                 myCallback.run();
               }
             });
