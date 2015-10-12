@@ -21,7 +21,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExceptionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,8 +61,7 @@ public class ThrowCaughtLocallyInspection extends BaseInspection {
     return new ThrowCaughtLocallyVisitor();
   }
 
-  private class ThrowCaughtLocallyVisitor
-    extends BaseInspectionVisitor {
+  private class ThrowCaughtLocallyVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitThrowStatement(PsiThrowStatement statement) {
@@ -76,44 +74,30 @@ public class ThrowCaughtLocallyInspection extends BaseInspection {
       if (exceptionType == null) {
         return;
       }
-      PsiTryStatement containingTryStatement =
-        PsiTreeUtil.getParentOfType(statement,
-                                    PsiTryStatement.class);
+      PsiTryStatement containingTryStatement = PsiTreeUtil.getParentOfType(statement, PsiTryStatement.class, true, PsiLambdaExpression.class, PsiClass.class);
       while (containingTryStatement != null) {
-        final PsiCodeBlock tryBlock =
-          containingTryStatement.getTryBlock();
+        final PsiCodeBlock tryBlock = containingTryStatement.getTryBlock();
         if (tryBlock == null) {
           return;
         }
         if (PsiTreeUtil.isAncestor(tryBlock, statement, true)) {
-          final PsiParameter[] catchBlockParameters =
-            containingTryStatement.getCatchBlockParameters();
+          final PsiParameter[] catchBlockParameters = containingTryStatement.getCatchBlockParameters();
           for (PsiParameter parameter : catchBlockParameters) {
             final PsiType parameterType = parameter.getType();
             if (!parameterType.isAssignableFrom(exceptionType)) {
               continue;
             }
             if (ignoreRethrownExceptions) {
-              final PsiCatchSection section =
-                (PsiCatchSection)parameter.getParent();
-              final PsiCodeBlock catchBlock =
-                section.getCatchBlock();
+              final PsiCatchSection section = (PsiCatchSection)parameter.getParent();
+              final PsiCodeBlock catchBlock = section.getCatchBlock();
               if (ExceptionUtils.isThrowableRethrown(parameter, catchBlock)) {
                 return;
               }
             }
-            final PsiClass containingClass =
-              ClassUtils.getContainingClass(statement);
-            if (PsiTreeUtil.isAncestor(containingClass,
-                                       containingTryStatement, true)) {
-              registerStatementError(statement);
-              return;
-            }
+            registerStatementError(statement);
           }
         }
-        containingTryStatement =
-          PsiTreeUtil.getParentOfType(containingTryStatement,
-                                      PsiTryStatement.class);
+        containingTryStatement = PsiTreeUtil.getParentOfType(containingTryStatement, PsiTryStatement.class, true, PsiLambdaExpression.class, PsiClass.class);
       }
     }
   }
