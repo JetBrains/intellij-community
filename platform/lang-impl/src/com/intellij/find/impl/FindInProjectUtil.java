@@ -197,9 +197,10 @@ public class FindInProjectUtil {
     new FindInProjectTask(findModel, project).findUsages(consumer, processPresentation);
   }
 
+  // returns number of hits
   static int processUsagesInFile(@NotNull final PsiFile psiFile,
-                                         @NotNull final FindModel findModel,
-                                         @NotNull final Processor<UsageInfo> consumer) {
+                                 @NotNull final FindModel findModel,
+                                 @NotNull final Processor<UsageInfo> consumer) {
     if (findModel.getStringToFind().isEmpty()) {
       if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
               @Override
