@@ -19,6 +19,7 @@ import junit.framework.TestCase;
 
 import java.awt.Font;
 import java.awt.FontMetrics;
+import java.beans.PropertyChangeListener;
 import javax.swing.JLabel;
 
 /**
@@ -27,6 +28,24 @@ import javax.swing.JLabel;
 public final class RelativeFontTest extends TestCase {
   private static final RelativeFont BOLD_ITALIC_FONT = RelativeFont.NORMAL.style(Font.BOLD | Font.ITALIC);
   private static final RelativeFont MONOSPACED_FONT = RelativeFont.NORMAL.family(Font.MONOSPACED);
+
+  public void testInstallUninstall() {
+    JLabel label = new JLabel();
+    checkInstallUninstall(1, BOLD_ITALIC_FONT.install(label));
+    checkInstallUninstall(1, MONOSPACED_FONT.install(label));
+    checkInstallUninstall(0, RelativeFont.uninstallFrom(label));
+    checkInstallUninstall(0, RelativeFont.uninstallFrom(label));
+  }
+
+  private static void checkInstallUninstall(int expected, JLabel label) {
+    int actual = 0;
+    for (PropertyChangeListener listener : label.getPropertyChangeListeners("font")) {
+      if (listener instanceof RelativeFont) {
+        actual++;
+      }
+    }
+    assertEquals(expected, actual);
+  }
 
   public void testFamily() {
     checkMonospaced(toMonospaced(new Font(Font.DIALOG, Font.PLAIN, 12), false));
