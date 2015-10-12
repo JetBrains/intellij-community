@@ -447,7 +447,7 @@ public class TreeTraverserTest extends TestCase {
     JBIterable<Integer> it = t.regard(new FilteredTraverserBase.EdgeFilter<Integer>() {
       @Override
       public boolean value(Integer integer) {
-        return (integer / curParent) % 2 == 0;
+        return (integer / edgeSource) % 2 == 0;
       }
     }).withRoot(1).traverse();
     assertEquals(Arrays.asList(1, 2, 5, 8, 10, 4, 11), it.toList());
