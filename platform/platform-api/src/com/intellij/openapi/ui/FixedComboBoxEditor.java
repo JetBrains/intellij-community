@@ -161,7 +161,12 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
           if ("enabled".equals(evt.getPropertyName())) {
-            setBorder(Boolean.TRUE.equals(evt.getNewValue()) ? EDITOR_BORDER : DISABLED_EDITOR_BORDER);
+            if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+              //ignore
+            } else {
+              setBorder(Boolean.TRUE.equals(evt.getNewValue()) ? EDITOR_BORDER : DISABLED_EDITOR_BORDER);
+            }
+
             repaint();
           }
         }
