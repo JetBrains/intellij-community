@@ -181,7 +181,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     invokeAfterUpdate(new Runnable() {
       @Override
       public void run() {
-        if (getChangeList(oldList.getId()) == null) {
+        LocalChangeList actualList = getChangeList(oldList.getId());
+        if (actualList == null) {
           return; // removed already  
         }
         
@@ -189,7 +190,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             config.REMOVE_EMPTY_INACTIVE_CHANGELISTS != VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
           myListsToBeDeleted.add(oldList);
         } else {
-          deleteEmptyChangeLists(Collections.singletonList(oldList));
+          deleteEmptyChangeLists(Collections.singletonList(actualList));
         }
       }
     }, InvokeAfterUpdateMode.SILENT, null, null);

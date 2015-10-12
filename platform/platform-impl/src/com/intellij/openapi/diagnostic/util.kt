@@ -13,19 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.tools.util.side;
+package com.intellij.openapi.diagnostic
 
-import com.intellij.diff.tools.holders.EditorHolder;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
-
-public class OnesideContentPanel extends JPanel {
-  public OnesideContentPanel(@NotNull EditorHolder holder, @Nullable JComponent titleComponent) {
-    super(new BorderLayout());
-
-    add(new HolderPanel(holder, titleComponent), BorderLayout.CENTER);
+inline fun Logger.debug(lazyMessage: () -> String) {
+  if (isDebugEnabled) {
+    debug(lazyMessage())
   }
 }

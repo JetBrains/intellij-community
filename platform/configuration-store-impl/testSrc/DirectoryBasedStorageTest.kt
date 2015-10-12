@@ -44,8 +44,16 @@ private fun StateStorageBase<*>.setStateAndSave(componentName: String, state: St
   externalizationSession.save()
 }
 
+internal class TestStateSplitter : MainConfigurationStateSplitter() {
+  override fun getComponentStateFileName() = "main"
+
+  override fun getSubStateTagName() = "sub"
+
+  override fun getSubStateFileName(element: Element) = element.getAttributeValue("name")
+}
+
 @Bombed(year = 2015, month = Calendar.OCTOBER, day = 10)
-class DirectoryBasedStorageTest {
+internal class DirectoryBasedStorageTest {
   companion object {
     @ClassRule val projectRule = ProjectRule()
   }
@@ -57,13 +65,7 @@ class DirectoryBasedStorageTest {
 
   @Test fun save() {
     val dir = tempDirManager.newPath()
-    val storage = DirectoryBasedStorage(dir.toFile(), object : MainConfigurationStateSplitter() {
-      override fun getComponentStateFileName() = "main"
-
-      override fun getSubStateTagName() = "sub"
-
-      override fun getSubStateFileName(element: Element) = element.getAttributeValue("name")
-    })
+    val storage = DirectoryBasedStorage(dir.toFile(), TestStateSplitter())
 
     val componentName = "test"
 

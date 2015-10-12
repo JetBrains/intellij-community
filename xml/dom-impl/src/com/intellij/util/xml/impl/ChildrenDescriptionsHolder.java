@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.util.SmartList;
 import com.intellij.util.xml.XmlName;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -83,8 +84,12 @@ public class ChildrenDescriptionsHolder<T extends DomChildDescriptionImpl> {
       return cached;
     }
 
-    cached = new ArrayList<T>(myMap.values());
-    Collections.sort(cached);
+    if (!myMap.isEmpty()) {
+      cached = new SmartList<T>(myMap.values());
+      Collections.sort(cached);
+    } else {
+      cached = Collections.emptyList();
+    }
     myCached = cached;
     return cached;
   }
