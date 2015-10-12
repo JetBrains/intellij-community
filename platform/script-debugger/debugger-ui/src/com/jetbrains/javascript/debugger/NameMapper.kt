@@ -17,6 +17,7 @@ package com.jetbrains.javascript.debugger
 
 import com.google.common.base.CharMatcher
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import gnu.trove.THashMap
@@ -48,24 +49,21 @@ open class NameMapper(private val document: Document, private val generatedDocum
       return null
     }
 
-    val sourceEntryName = sourceEntry.name
     val generatedName = extractName(getGeneratedName(generatedDocument, sourceMap, sourceEntry))
-    if (!generatedName.isEmpty()) {
-      var sourceName: String? = sourceEntryName
-      if (sourceName == null) {
-        sourceName = if (identifierOrNamedElement is PsiNamedElement) identifierOrNamedElement.name else identifierOrNamedElement.text
-        if (sourceName == null) {
-          return null
-        }
-      }
-
-      if (rawNameToSource == null) {
-        rawNameToSource = THashMap<String, String>()
-      }
-      rawNameToSource!!.put(generatedName, sourceName)
-      return generatedName
+    if (generatedName.isEmpty()) {
+      return null
     }
-    return null
+
+    var sourceName = sourceEntry.name
+    if (sourceName == null || Registry.`is`("js.debugger.name.mappings.by.source.code", false)) {
+      sourceName = (identifierOrNamedElement as? PsiNamedElement)?.name ?: identifierOrNamedElement.text ?: sourceName ?: return null
+    }
+
+    if (rawNameToSource == null) {
+      rawNameToSource = THashMap<String, String>()
+    }
+    rawNameToSource!!.put(generatedName, sourceName)
+    return generatedName
   }
 
   protected open fun extractName(rawGeneratedName: CharSequence) = NAME_TRIMMER.trimFrom(rawGeneratedName)
