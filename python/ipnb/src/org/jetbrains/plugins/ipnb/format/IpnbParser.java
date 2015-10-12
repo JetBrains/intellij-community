@@ -452,7 +452,7 @@ public class IpnbParser {
       }
       final JsonElement count = object.get("execution_count");
       if (count != null) {
-        cellRaw.execution_count = count.getAsInt();
+        cellRaw.execution_count = count.isJsonNull() ? null : count.getAsInt();
       }
       final JsonElement metadata = object.get("metadata");
       if (metadata != null) {
