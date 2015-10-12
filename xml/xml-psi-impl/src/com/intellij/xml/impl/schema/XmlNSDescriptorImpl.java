@@ -149,7 +149,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
            XmlUtil.XML_SCHEMA_URI3.equals(namespace);
   }
 
-  public static boolean checkSchemaNamespace(XmlTag context) {
+  public static boolean checkSchemaNamespace(@NotNull XmlTag context) {
     LOG.assertTrue(context.isValid());
     final String namespace = context.getNamespace();
     if (namespace.length() > 0) {
