@@ -16,6 +16,8 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.lang.LanguageImportStatements;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
@@ -31,6 +33,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.vcs.MockChangeListManager;
 import com.intellij.testFramework.vcs.MockVcsContextFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,6 +53,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
   private MockChangeListManager myMockChangeListManager;
   private MockCodeStyleManager myMockCodeStyleManager;
   private MockPlainTextFormattingModelBuilder myMockPlainTextFormattingModelBuilder;
+  private MockPlainTextImportOptimizer myMockPlainTextImportOptimizer;
 
   private ChangeListManager myRealChangeListManager;
   private CodeStyleManager myRealCodeStyleManger;
@@ -93,17 +97,24 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
 
     myMockPlainTextFormattingModelBuilder = new MockPlainTextFormattingModelBuilder();
     LanguageFormatting.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, myMockPlainTextFormattingModelBuilder);
+    
+    myMockPlainTextImportOptimizer = new MockPlainTextImportOptimizer();
+    LanguageImportStatements.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, myMockPlainTextImportOptimizer);
   }
 
   @Override
   public void tearDown() throws Exception {
-    registerChangeListManager(myRealChangeListManager);
-    registerCodeStyleManager(myRealCodeStyleManger);
-    registerVcsContextFactory(myRealVcsContextFactory);
-    LanguageFormatting.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, myMockPlainTextFormattingModelBuilder);
+    try {
+      registerChangeListManager(myRealChangeListManager);
+      registerCodeStyleManager(myRealCodeStyleManger);
+      registerVcsContextFactory(myRealVcsContextFactory);
+      LanguageFormatting.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, myMockPlainTextFormattingModelBuilder);
+      LanguageImportStatements.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, myMockPlainTextImportOptimizer);
 
-    TestFileStructure.delete(myWorkingDirectory.getVirtualFile());
-    super.tearDown();
+      TestFileStructure.delete(myWorkingDirectory.getVirtualFile());
+    } finally {
+      super.tearDown();
+    }
   }
 
   public void testInsertion() throws IOException {
@@ -276,6 +287,39 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     assertFormattedLines(NO_CHANGED_LINES, modified11, modified12);
   }
 
+  public void testOptimizeImportsInModule() throws IOException {
+    ChangedFilesStructure fs = new ChangedFilesStructure(myWorkingDirectory);
+
+    String initialFile = "import java.util.HashMap; class X {}";
+    PsiFile toModify = fs.createFile("Modified.java", initialFile, "import java.util.HashMap; class X { int x = 2; }");
+    PsiFile toModify2 = fs.createFile("Modified2.java", initialFile, "import java.util.HashMap; class X { int x = 2; }");
+
+    PsiFile toKeep = fs.createFile("NonModified.java", initialFile, initialFile);
+    PsiFile toKeep2 = fs.createFile("NonModified2.java", initialFile, initialFile);
+
+    OptimizeImportsAction optimizeImports = new OptimizeImportsAction();
+    OptimizeImportsAction.setProcessVcsChangedFilesInTests(true);
+    try {
+      optimizeImports.actionPerformed(new TestActionEvent(dataId -> {
+        if (CommonDataKeys.PROJECT.is(dataId)) {
+          return getProject();
+        }
+        if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
+          return getModule();
+        }
+        return null;
+      }));
+    }
+    finally {
+      OptimizeImportsAction.setProcessVcsChangedFilesInTests(false);
+    }
+    
+    assertTrue(isImportsOptimized(toModify));
+    assertTrue(isImportsOptimized(toModify2));
+    assertTrue(!isImportsOptimized(toKeep));
+    assertTrue(!isImportsOptimized(toKeep2));
+  }
+
   private static void registerChangeListManager(@NotNull ChangeListManager manager) {
     Project project = getProject();
     assert (project instanceof ComponentManagerImpl);
@@ -322,6 +366,10 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     Arrays.sort(formatted, cmp);
 
     assertTrue(getErrorMessage(expected, formatted), Arrays.equals(expected, formatted));
+  }
+  
+  private boolean isImportsOptimized(@NotNull PsiFile file) {
+    return myMockPlainTextImportOptimizer.getProcessedFiles().contains(file);
   }
 
   @NotNull
