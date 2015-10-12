@@ -19,6 +19,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentsPackage;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -102,8 +103,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     myComponent.myAntialiasingInIDE.setSelectedItem(settings.IDE_AA_TYPE);
     myComponent.myAntialiasingInEditor.setSelectedItem(settings.EDITOR_AA_TYPE);
-    myComponent.myAntialiasingInIDE.setRenderer(new AAListCellRenderer());
-    myComponent.myAntialiasingInEditor.setRenderer(new AAListCellRenderer());
+    myComponent.myAntialiasingInIDE.setRenderer(new AAListCellRenderer(false));
+    myComponent.myAntialiasingInEditor.setRenderer(new AAListCellRenderer(true));
 
     @SuppressWarnings("UseOfObsoleteCollectionType") Dictionary<Integer, JComponent> delayDictionary = new Hashtable<Integer, JComponent>();
     delayDictionary.put(new Integer(0), new JLabel("0"));
@@ -532,6 +533,12 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB, UIUtil.getLcdContrastValue());
     private static final SwingUtilities2.AATextInfo GREYSCALE_HINT = new SwingUtilities2.AATextInfo(
       RenderingHints.VALUE_TEXT_ANTIALIAS_ON, UIUtil.getLcdContrastValue());
+    private final boolean useEditorAASettings;
+
+    public AAListCellRenderer(boolean useEditorAASettings) {
+      super();
+      this.useEditorAASettings = useEditorAASettings;
+    }
 
     @Override
     public void customize(JList list, AntialiasingType value, int index, boolean selected, boolean hasFocus) {
@@ -543,6 +550,11 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       }
       else if (value == AntialiasingType.OFF) {
         setClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, null);
+      }
+
+      if (useEditorAASettings) {
+        setFont(new Font(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName(),
+                         Font.PLAIN, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize()));
       }
 
       setText(value.toString());
