@@ -707,7 +707,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         eachPsiRoot.putUserData(ObjectStubTree.LAST_STUB_TREE_HASH, null);
         eachPsiRoot.myStub = new SoftReference<StubTree>(stubTree);
       }
-      assert derefStub() == stubHolder : "Current file not in root list: " + roots + ", vp=" + viewProvider;
       return stubHolder;
     }
   }
