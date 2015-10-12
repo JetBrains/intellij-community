@@ -37,15 +37,10 @@ public class BuiltInServer implements Disposable {
   // Some antiviral software detect viruses by the fact of accessing these ports so we should not touch them to appear innocent.
   private static final int[] FORBIDDEN_PORTS = {6953, 6969, 6970};
 
-  private final ChannelRegistrar channelRegistrar;
-  private final boolean isOwnerOfEventLoopGroup;
-
   private final EventLoopGroup eventLoopGroup;
   private final int port;
-
-  public boolean isRunning() {
-    return !channelRegistrar.isEmpty();
-  }
+  private final ChannelRegistrar channelRegistrar;
+  private final boolean isOwnerOfEventLoopGroup;
 
   private BuiltInServer(@NotNull EventLoopGroup eventLoopGroup,
                         int port,
@@ -55,6 +50,25 @@ public class BuiltInServer implements Disposable {
     this.port = port;
     this.channelRegistrar = channelRegistrar;
     this.isOwnerOfEventLoopGroup = isOwnerOfEventLoopGroup;
+  }
+
+  @NotNull
+  public EventLoopGroup getEventLoopGroup() {
+    return eventLoopGroup;
+  }
+
+  public int getPort() {
+    return port;
+  }
+
+  public boolean isRunning() {
+    return !channelRegistrar.isEmpty();
+  }
+
+  @Override
+  public void dispose() {
+    channelRegistrar.close(isOwnerOfEventLoopGroup);
+    LOG.info("web server stopped");
   }
 
   @NotNull
@@ -78,15 +92,6 @@ public class BuiltInServer implements Disposable {
     configureChildHandler(bootstrap, channelRegistrar, handler);
     int port = bind(firstPort, portsCount, tryAnyPort, bootstrap, channelRegistrar);
     return new BuiltInServer(eventLoopGroup, port, channelRegistrar, isEventLoopGroupOwner);
-  }
-
-  public int getPort() {
-    return port;
-  }
-
-  @NotNull
-  public EventLoopGroup getEventLoopGroup() {
-    return eventLoopGroup;
   }
 
   static void configureChildHandler(@NotNull ServerBootstrap bootstrap,
@@ -136,12 +141,6 @@ public class BuiltInServer implements Disposable {
     }
 
     return -1;  // unreachable
-  }
-
-  @Override
-  public void dispose() {
-    channelRegistrar.close(isOwnerOfEventLoopGroup);
-    LOG.info("web server stopped");
   }
 
   public static void replaceDefaultHandler(@NotNull ChannelHandlerContext context, @NotNull ChannelHandler channelHandler) {
