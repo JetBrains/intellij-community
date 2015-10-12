@@ -175,7 +175,12 @@ class HTMLTextPainter {
           if (marker != null && marker.startOffset <= hEnd) {
             Color color = marker.separatorColor;
             writer.write("<hr class=\"" + mySeparatorStyles.get(color) + "\">");
-            myCurrentMethodSeparator++;
+            do {
+              myCurrentMethodSeparator++;
+            }
+            while (myCurrentMethodSeparator < myMethodSeparators.length && 
+                   myMethodSeparators[myCurrentMethodSeparator] != null && 
+                   myMethodSeparators[myCurrentMethodSeparator].startOffset <= hEnd);
           }
         }
 
