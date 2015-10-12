@@ -54,6 +54,7 @@ class HTMLTextPainter {
   private final String myHTMLFileName;
   private int mySegmentEnd;
   private final PsiFile myPsiFile;
+  private final Document myDocument;
   private int lineCount;
   private int myFirstLineNumber;
   private final boolean myPrintLineNumbers;
@@ -83,11 +84,11 @@ class HTMLTextPainter {
     myHTMLFileName = dirName + File.separator + ExportToHTMLManager.getHTMLFileName(psiFile);
 
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-    Document document = psiDocumentManager.getDocument(psiFile);
+    myDocument = psiDocumentManager.getDocument(psiFile);
 
     ArrayList<LineMarkerInfo> methodSeparators = new ArrayList<LineMarkerInfo>();
-    if (document != null) {
-      final List<LineMarkerInfo> separators = FileSeparatorProvider.getFileSeparators(psiFile, document);
+    if (myDocument != null) {
+      final List<LineMarkerInfo> separators = FileSeparatorProvider.getFileSeparators(psiFile, myDocument);
       if (separators != null) {
         methodSeparators.addAll(separators);
       }
@@ -131,11 +132,7 @@ class HTMLTextPainter {
       }
       String closeTag = null;
 
-      while (myCurrentMethodSeparator < myMethodSeparators.length) {
-        LineMarkerInfo marker = myMethodSeparators[myCurrentMethodSeparator];
-        if (marker != null && marker.startOffset >= hIterator.getStart()) break;
-        myCurrentMethodSeparator++;
-      }
+      getMethodSeparator(hIterator.getStart());
 
       while(!hIterator.atEnd()) {
         TextAttributes textAttributes = hIterator.getTextAttributes();
@@ -170,20 +167,6 @@ class HTMLTextPainter {
           prevAttributes = textAttributes;
         }
 
-        if (myCurrentMethodSeparator < myMethodSeparators.length) {
-          LineMarkerInfo marker = myMethodSeparators[myCurrentMethodSeparator];
-          if (marker != null && marker.startOffset <= hEnd) {
-            Color color = marker.separatorColor;
-            writer.write("<hr class=\"" + mySeparatorStyles.get(color) + "\">");
-            do {
-              myCurrentMethodSeparator++;
-            }
-            while (myCurrentMethodSeparator < myMethodSeparators.length && 
-                   myMethodSeparators[myCurrentMethodSeparator] != null && 
-                   myMethodSeparators[myCurrentMethodSeparator].startOffset <= hEnd);
-          }
-        }
-
         writeString(writer, myText, hStart, hEnd - hStart, fileType);
 //        if(closeTag != null) {
 //          writer.write(closeTag);
@@ -215,6 +198,20 @@ class HTMLTextPainter {
         LOG.error(e.getMessage(), e);
       }
     }
+  }
+
+  private LineMarkerInfo getMethodSeparator(int offset) {
+    if (myDocument == null) return null;
+    int line = myDocument.getLineNumber(Math.max(0, Math.min(myDocument.getTextLength(), offset)));
+    LineMarkerInfo marker = null;
+    LineMarkerInfo tmpMarker;
+    while (myCurrentMethodSeparator < myMethodSeparators.length &&
+           (tmpMarker = myMethodSeparators[myCurrentMethodSeparator]) != null &&
+           FileSeparatorProvider.getDisplayLine(tmpMarker, myDocument) <= line) {
+      marker = tmpMarker;
+      myCurrentMethodSeparator++;
+    }
+    return marker;
   }
 
   private int writeReferenceTag(Writer writer, PsiReference ref) throws IOException {
@@ -277,12 +274,26 @@ class HTMLTextPainter {
         }
       }
       else if (c == '\n' || c == '\r') {
+        boolean writeSlashR = false;
         if (c == '\r' && i+1 < start+length && charArray.charAt(i+1) == '\n') {
-          writeChar(writer, " \r");
+          writeSlashR = true;
+          //noinspection AssignmentToForLoopParameter
           i++;
         }
         else if (c == '\n') {
           writeChar(writer, " ");
+        }
+        
+        LineMarkerInfo marker = getMethodSeparator(i + 1);
+        if (marker != null) {
+          Color color = marker.separatorColor;
+          writer.write("<hr class=\"" + mySeparatorStyles.get(color) + "\">");
+        }
+        else {
+          if (writeSlashR) {
+            writeChar(writer, "\r");
+          }
+          writer.write('\n');
         }
         writeLineNumber(writer);
       }
@@ -298,7 +309,6 @@ class HTMLTextPainter {
   }
 
   private void writeLineNumber(@NonNls Writer writer) throws IOException {
-    writer.write('\n');
     myColumn = 0;
     lineCount++;
     if (myPrintLineNumbers) {
