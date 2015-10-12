@@ -199,7 +199,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @NotNull
   IProjectStore getStateStore() {
-    return (IProjectStore)ComponentsPackage.getStateStore(this);
+    return (IProjectStore)ServiceKt.getStateStore(this);
   }
 
   @Override
@@ -359,7 +359,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
         }
       }
 
-      StoreUtil.save(ComponentsPackage.getStateStore(this), this);
+      StoreUtil.save(ServiceKt.getStateStore(this), this);
     }
     finally {
       mySavingInProgress.set(false);

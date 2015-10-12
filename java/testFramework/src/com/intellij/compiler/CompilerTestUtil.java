@@ -20,7 +20,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.components.ComponentsPackage;
+import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -76,7 +76,7 @@ public class CompilerTestUtil {
 
   private static void doSaveComponent(Object appComponent) {
     //noinspection TestOnlyProblems
-    ComponentsPackage.getStateStore(ApplicationManager.getApplication()).saveApplicationComponent(appComponent);
+    ServiceKt.getStateStore(ApplicationManager.getApplication()).saveApplicationComponent(appComponent);
   }
 
   public static void enableExternalCompiler() {
