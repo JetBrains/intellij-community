@@ -22,7 +22,6 @@ import com.intellij.ui.components.labels.SwingActionLink;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.util.ui.JBUI;
 
-import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -37,21 +36,17 @@ final class ColorBlindnessPanel extends JPanel implements ChangeListener {
   private ColorBlindness myBlindness;
 
   public ColorBlindnessPanel() {
-    super(new BorderLayout());
+    super(new HorizontalLayout(JBUI.scale(10)));
+    add(HorizontalLayout.LEFT, myCheckBox);
+    add(HorizontalLayout.LEFT, myComboBox);
 
-    JPanel panel = new JPanel(new HorizontalLayout(JBUI.scale(10)));
-    panel.add(HorizontalLayout.LEFT, myCheckBox);
-    panel.add(HorizontalLayout.LEFT, myComboBox);
-    add(BorderLayout.CENTER, panel);
-
-    JLabel label = new SwingActionLink(new AbstractAction("How it works") {
+    JLabel label = new SwingActionLink(new AbstractAction(UIBundle.message("color.blindness.link.to.help")) {
       @Override
       public void actionPerformed(ActionEvent event) {
         HelpManager.getInstance().invokeHelp("Colorblind_Settings");
       }
     });
-    label.setBorder(JBUI.Borders.emptyLeft(26));
-    add(BorderLayout.SOUTH, label);
+    add(HorizontalLayout.LEFT, label);
     
     myCheckBox.setSelected(false);
     myCheckBox.addChangeListener(this);
