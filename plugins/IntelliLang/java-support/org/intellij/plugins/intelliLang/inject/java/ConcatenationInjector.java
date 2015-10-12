@@ -174,7 +174,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           return false;
         }
 
-        public boolean visitMethodReturnStatement(PsiReturnStatement parent, PsiMethod method) {
+        public boolean visitMethodReturnStatement(PsiElement source, PsiMethod method) {
           if (areThereInjectionsWithName(method.getName(), false)) {
             process(method, method, -1);
           }
