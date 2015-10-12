@@ -68,7 +68,7 @@ public abstract class MavenRemoteManager<Result, Argument, RemoteTask extends Ma
     final FutureResult<Result> future = new FutureResult<Result>();
     schedule(task, argument, new MavenRemoteTask.ResultProcessor<Result>() {
       @Override
-      public void process(Result result) {
+      public void process(@Nullable Result result) {
         future.set(result);
       }
     }, true);

@@ -206,7 +206,7 @@ public class RepositoryLibraryPropertiesEditor {
         repositoryLibraryDescription.getArtifactId(),
         new MavenRemoteTask.ResultProcessor<List<String>>() {
           @Override
-          public void process(List<String> versions) {
+          public void process(@Nullable List<String> versions) {
             versionsLoaded(versions);
           }
         });
@@ -246,7 +246,7 @@ public class RepositoryLibraryPropertiesEditor {
   }
 
 
-  private void versionsLoaded(final List<String> versions) {
+  private void versionsLoaded(final @Nullable List<String> versions) {
     this.versions = versions;
     if (versions == null || versions.isEmpty()) {
       versionsFailedToLoad();
