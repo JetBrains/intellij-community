@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CanonicalTypes;
@@ -75,6 +76,10 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
         if (!parameterInfo.getTypeWrapper().isValid()) {
           return null;
         }
+      }
+
+      if (PsiTreeUtil.findChildOfType(method.getParameterList(), PsiErrorElement.class) != null) {
+        return null;
       }
     }
     catch (IncorrectOperationException e) {
