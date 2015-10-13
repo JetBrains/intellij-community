@@ -13,116 +13,53 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.debugger;
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.jetbrains.debugger
 
-import com.intellij.util.ThreeState;
-import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XInlineDebuggerDataCallback;
-import com.intellij.xdebugger.frame.XNavigatable;
-import com.intellij.xdebugger.frame.XValueNode;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.debugger.frame.CallFrameView;
-import org.jetbrains.debugger.values.ObjectValue;
-import org.jetbrains.debugger.values.Value;
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
+import com.intellij.xdebugger.frame.XNavigatable
+import com.intellij.xdebugger.frame.XValueNode
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.debugger.frame.CallFrameView
+import org.jetbrains.debugger.values.ObjectValue
+import org.jetbrains.debugger.values.Value
+import javax.swing.Icon
 
-import javax.swing.*;
-import java.util.Collections;
-import java.util.List;
+val INSTANCE: DebuggerViewSupport = BasicDebuggerViewSupport()
 
-public class BasicDebuggerViewSupport extends MemberFilterBase implements DebuggerViewSupport {
-  protected final Promise<MemberFilter> defaultMemberFilterPromise = Promise.<MemberFilter>resolve(this);
+open class BasicDebuggerViewSupport : MemberFilter, DebuggerViewSupport {
+  protected val defaultMemberFilterPromise = Promise.resolve<MemberFilter>(this)
 
-  public static final DebuggerViewSupport INSTANCE = new BasicDebuggerViewSupport();
+  override fun propertyNamesToString(list: List<String>, quotedAware: Boolean) = ValueModifierUtil.propertyNamesToString(list, quotedAware)
 
-  @Nullable
-  @Override
-  public SourceInfo getSourceInfo(@Nullable Script script, @NotNull CallFrame frame) {
-    return null;
+  override fun computeObjectPresentation(value: ObjectValue, variable: Variable, context: VariableContext, node: XValueNode, icon: Icon) = VariableView.setObjectPresentation(value, icon, node)
+
+  override fun computeArrayPresentation(value: Value, variable: Variable, context: VariableContext, node: XValueNode, icon: Icon) {
+    VariableView.setArrayPresentation(value, context, icon, node)
   }
 
-  @Nullable
-  @Override
-  public SourceInfo getSourceInfo(@Nullable String functionName, @NotNull String scriptUrl, int line, int column) {
-    return null;
+  override fun createFrameEvaluator(frame: CallFrameView): XDebuggerEvaluator {
+    throw UnsupportedOperationException()
   }
 
-  @Nullable
-  @Override
-  public SourceInfo getSourceInfo(@Nullable String functionName, @NotNull Script script, int line, int column) {
-    return null;
+  override fun computeSourcePosition(name: String, variable: Variable, context: VariableContext, navigatable: XNavigatable) {
   }
 
-  @Override
-  public Vm getVm() {
-    return null;
-  }
-
-  @NotNull
-  @Override
-  public String propertyNamesToString(@NotNull List<String> list, boolean quotedAware) {
-    return ValueModifierUtil.propertyNamesToString(list, quotedAware);
-  }
-
-  @Override
-  public void computeObjectPresentation(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XValueNode node, @NotNull Icon icon) {
-    VariableView.Companion.setObjectPresentation(value, icon, node);
-  }
-
-  @Override
-  public void computeArrayPresentation(@NotNull Value value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XValueNode node, @NotNull Icon icon) {
-    VariableView.Companion.setArrayPresentation(value, context, icon, node);
-  }
-
-  @NotNull
-  @Override
-  public XDebuggerEvaluator createFrameEvaluator(@NotNull CallFrameView frameView) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean canNavigateToSource(@NotNull Variable variable, @NotNull VariableContext context) {
-    return false;
-  }
-
-  @Override
-  public void computeSourcePosition(@NotNull String name, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XNavigatable navigatable) {
-  }
-
-  @NotNull
-  @Override
-  public ThreeState computeInlineDebuggerData(@NotNull String name, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XInlineDebuggerDataCallback callback) {
-    return ThreeState.UNSURE;
-  }
-
-  @Nullable
-  @Override
-  public Promise<Void> computeAdditionalObjectProperties(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XCompositeNode node) {
-    return null;
-  }
-
-  @NotNull
-  @Override
-  public Promise<MemberFilter> getMemberFilter(@NotNull VariableContext context) {
-    return defaultMemberFilterPromise;
-  }
-
-  @NotNull
-  @Override
-  public List<Variable> getAdditionalVariables() {
-    return Collections.emptyList();
-  }
-
-  @Override
-  @Nullable
-  public Value transformErrorOnGetUsedReferenceValue(@Nullable Value value, @Nullable String error) {
-    return value;
-  }
-
-  @Override
-  public boolean isInLibraryContent(@NotNull SourceInfo sourceInfo, @Nullable Script script) {
-    return false;
+  override fun getMemberFilter(context: VariableContext): Promise<MemberFilter> {
+    return defaultMemberFilterPromise
   }
 }
