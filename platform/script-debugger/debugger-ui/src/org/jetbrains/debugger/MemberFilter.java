@@ -13,24 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.debugger;
+package org.jetbrains.debugger
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+interface MemberFilter {
+  fun isMemberVisible(variable: Variable) = variable.isReadable
 
-import java.util.Collection;
+  val additionalVariables: Collection<Variable>
+    get() = emptyList()
 
-public interface MemberFilter {
-  boolean isMemberVisible(@NotNull Variable variable);
+  fun rawNameToSource(variable: Variable) = variable.name
 
-  @NotNull
-  Collection<Variable> getAdditionalVariables();
+  fun sourceNameToRaw(name: String): String? = null
 
-  @NotNull
-  String rawNameToSource(@NotNull Variable variable);
-
-  @Nullable
-  String sourceNameToRaw(@NotNull String name);
-
-  boolean hasNameMappings();
+  fun hasNameMappings() = false
 }

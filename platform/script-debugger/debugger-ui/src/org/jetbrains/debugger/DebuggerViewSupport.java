@@ -1,63 +1,66 @@
-package org.jetbrains.debugger;
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.jetbrains.debugger
 
-import com.intellij.util.ThreeState;
-import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XInlineDebuggerDataCallback;
-import com.intellij.xdebugger.frame.XNavigatable;
-import com.intellij.xdebugger.frame.XValueNode;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.debugger.frame.CallFrameView;
-import org.jetbrains.debugger.values.ObjectValue;
-import org.jetbrains.debugger.values.Value;
+import com.intellij.util.ThreeState
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
+import com.intellij.xdebugger.frame.XCompositeNode
+import com.intellij.xdebugger.frame.XInlineDebuggerDataCallback
+import com.intellij.xdebugger.frame.XNavigatable
+import com.intellij.xdebugger.frame.XValueNode
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.debugger.frame.CallFrameView
+import org.jetbrains.debugger.values.ObjectValue
+import org.jetbrains.debugger.values.Value
+import javax.swing.Icon
 
-import javax.swing.*;
-import java.util.List;
+interface DebuggerViewSupport {
+  val vm: Vm?
+    get() = null
 
-public interface DebuggerViewSupport {
-  @Nullable
-  SourceInfo getSourceInfo(@Nullable Script script, @NotNull CallFrame frame);
+  fun getSourceInfo(script: Script?, frame: CallFrame): SourceInfo? = null
 
-  @Nullable
-  SourceInfo getSourceInfo(@Nullable String functionName, @NotNull String scriptUrl, int line, int column);
+  fun getSourceInfo(functionName: String?, scriptUrl: String, line: Int, column: Int): SourceInfo? = null
 
-  @Nullable
-  SourceInfo getSourceInfo(@Nullable String functionName, @NotNull Script script, int line, int column);
+  fun getSourceInfo(functionName: String?, script: Script, line: Int, column: Int): SourceInfo? = null
 
-  Vm getVm();
-
-  @NotNull
-  String propertyNamesToString(@NotNull List<String> list, boolean quotedAware);
+  fun propertyNamesToString(list: List<String>, quotedAware: Boolean): String
 
   // Please, don't hesitate to ask to share some generic implementations. Don't reinvent the wheel and keep in mind - user expects the same UI across all IDEA-based IDEs.
-  void computeObjectPresentation(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XValueNode node, @NotNull Icon icon);
+  fun computeObjectPresentation(value: ObjectValue, variable: Variable, context: VariableContext, node: XValueNode, icon: Icon)
 
-  void computeArrayPresentation(@NotNull Value value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XValueNode node, @NotNull Icon icon);
+  fun computeArrayPresentation(value: Value, variable: Variable, context: VariableContext, node: XValueNode, icon: Icon)
 
-  @NotNull
-  XDebuggerEvaluator createFrameEvaluator(@NotNull CallFrameView frame);
+  fun createFrameEvaluator(frame: CallFrameView): XDebuggerEvaluator
 
   /**
-   * {@link org.jetbrains.debugger.values.FunctionValue} is special case and handled by SDK
+   * [org.jetbrains.debugger.values.FunctionValue] is special case and handled by SDK
    */
-  boolean canNavigateToSource(@NotNull Variable variable, @NotNull VariableContext context);
+  fun canNavigateToSource(variable: Variable, context: VariableContext) = false
 
-  void computeSourcePosition(@NotNull String name, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XNavigatable navigatable);
+  fun computeSourcePosition(name: String, variable: Variable, context: VariableContext, navigatable: XNavigatable)
 
-  @NotNull
-  ThreeState computeInlineDebuggerData(@NotNull String name, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XInlineDebuggerDataCallback callback);
+  fun computeInlineDebuggerData(name: String, variable: Variable, context: VariableContext, callback: XInlineDebuggerDataCallback) = ThreeState.UNSURE
 
   // return null if you don't need to add additional properties
-  @Nullable
-  Promise<Void> computeAdditionalObjectProperties(@NotNull ObjectValue value, @NotNull Variable variable, @NotNull VariableContext context, @NotNull XCompositeNode node);
+  fun computeAdditionalObjectProperties(value: ObjectValue, variable: Variable, context: VariableContext, node: XCompositeNode): Promise<Void>? = null
 
-  @NotNull
-  Promise<MemberFilter> getMemberFilter(@NotNull VariableContext context);
+  fun getMemberFilter(context: VariableContext): Promise<MemberFilter>
 
-  @Nullable
-  Value transformErrorOnGetUsedReferenceValue(@Nullable Value value, @Nullable String error);
+  fun transformErrorOnGetUsedReferenceValue(value: Value?, error: String?) = value
 
-  boolean isInLibraryContent(@NotNull SourceInfo sourceInfo, @Nullable Script script);
+  fun isInLibraryContent(sourceInfo: SourceInfo, script: Script?) = false
 }

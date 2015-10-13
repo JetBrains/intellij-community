@@ -13,51 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.debugger;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.Map;
+package org.jetbrains.debugger
 
-public class MemberFilterWithNameMappings extends MemberFilterBase {
-  protected final Map<String, String> rawNameToSource;
+open class MemberFilterWithNameMappings(rawNameToSource: Map<String, String>?) : MemberFilter {
+  protected val rawNameToSource: Map<String, String>
 
-  public MemberFilterWithNameMappings(@Nullable Map<String, String> rawNameToSource) {
-    this.rawNameToSource = rawNameToSource == null ? Collections.<String, String>emptyMap() : rawNameToSource;
+  init {
+    this.rawNameToSource = rawNameToSource ?: emptyMap<String, String>()
   }
 
-  @Override
-  public final boolean hasNameMappings() {
-    return !rawNameToSource.isEmpty();
+  override fun hasNameMappings(): Boolean {
+    return !rawNameToSource.isEmpty()
   }
 
-  @NotNull
-  @Override
-  public String rawNameToSource(@NotNull Variable variable) {
-    String name = variable.getName();
-    String sourceName = rawNameToSource.get(name);
-    return sourceName == null ? normalizeMemberName(name) : sourceName;
+  override fun rawNameToSource(variable: Variable): String {
+    val name = variable.name
+    val sourceName = rawNameToSource.get(name)
+    return sourceName ?: normalizeMemberName(name)
   }
 
-  @NotNull
-  protected String normalizeMemberName(@NotNull String name) {
-    return name;
+  protected open fun normalizeMemberName(name: String): String {
+    return name
   }
 
-  @Nullable
-  @Override
-  public String sourceNameToRaw(@NotNull String name) {
+  override fun sourceNameToRaw(name: String): String? {
     if (!hasNameMappings()) {
-      return null;
+      return null
     }
 
-    for (Map.Entry<String, String> entry : rawNameToSource.entrySet()) {
-      if (entry.getValue().equals(name)) {
-        return entry.getKey();
+    for (entry in rawNameToSource.entrySet()) {
+      if (entry.getValue() == name) {
+        return entry.getKey()
       }
     }
-    return null;
+    return null
   }
 }
