@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
 
@@ -36,9 +37,11 @@ public enum AntialiasingType {
   }
 
   public static Object getAAHintForSwingComponent() {
-    UISettings uiSettings = UISettings.getInstance();
+    if (ApplicationManager.getApplication() == null) {
+      return getAAEnabledTextInfo();
+    }
 
-    if (uiSettings == null) return getAAEnabledTextInfo();
+    UISettings uiSettings = UISettings.getInstance();
 
     switch (uiSettings.IDE_AA_TYPE) {
       case SUBPIXEL:
