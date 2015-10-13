@@ -1,22 +1,22 @@
 <root>
-  <item name="org.apache.velocity.runtime.resource.util.StringResource java.lang.String getBody()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="org.apache.velocity.runtime.resource.util.StringResource java.lang.String getEncoding()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="org.apache.velocity.runtime.resource.util.StringResource long getLastModified()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="org.apache.velocity.runtime.resource.util.StringResourceRepositoryImpl java.lang.String getEncoding()">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
+    <item name='org.apache.velocity.runtime.resource.util.StringResource java.lang.String getBody()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.resource.util.StringResource java.lang.String getEncoding()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.resource.util.StringResource long getLastModified()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.resource.util.StringResourceRepositoryImpl java.lang.String getEncoding()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
 </root>

@@ -1,52 +1,5 @@
 <root>
-  <item name="org.apache.velocity.servlet.VelocityServlet java.lang.String chooseCharacterEncoding(javax.servlet.http.HttpServletRequest) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="org.apache.velocity.servlet.VelocityServlet java.util.Properties loadConfiguration(javax.servlet.ServletConfig) 0">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="org.apache.velocity.servlet.VelocityServlet java.util.Properties loadConfiguration(javax.servlet.ServletConfig)">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="org.apache.velocity.servlet.VelocityServlet org.apache.velocity.Template handleRequest(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse, org.apache.velocity.context.Context) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="org.apache.velocity.servlet.VelocityServlet org.apache.velocity.Template handleRequest(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse, org.apache.velocity.context.Context) 1">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="org.apache.velocity.servlet.VelocityServlet org.apache.velocity.Template handleRequest(org.apache.velocity.context.Context) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="org.apache.velocity.servlet.VelocityServlet org.apache.velocity.context.Context createContext(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="org.apache.velocity.servlet.VelocityServlet void error(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse, java.lang.Exception) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="org.apache.velocity.servlet.VelocityServlet void error(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse, java.lang.Exception) 1">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="org.apache.velocity.servlet.VelocityServlet void error(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse, java.lang.Exception) 2">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="org.apache.velocity.servlet.VelocityServlet void mergeTemplate(org.apache.velocity.Template, org.apache.velocity.context.Context, javax.servlet.http.HttpServletResponse) 2">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="org.apache.velocity.servlet.VelocityServlet void requestCleanup(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse, org.apache.velocity.context.Context) 0">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="org.apache.velocity.servlet.VelocityServlet void requestCleanup(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse, org.apache.velocity.context.Context) 1">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="org.apache.velocity.servlet.VelocityServlet void requestCleanup(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse, org.apache.velocity.context.Context) 2">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
-  </item>
-  <item name="org.apache.velocity.servlet.VelocityServlet void requestCleanup(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse, org.apache.velocity.context.Context)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="org.apache.velocity.servlet.VelocityServlet void setContentType(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse) 1">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
+    <item name='org.apache.velocity.servlet.VelocityServlet org.apache.velocity.Template handleRequest(org.apache.velocity.context.Context) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
 </root>
