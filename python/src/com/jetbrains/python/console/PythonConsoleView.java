@@ -104,7 +104,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     showConsole(new Runnable() {
       @Override
       public void run() {
-        ProgressManager.getInstance().run(new Task.Backgroundable(null, "Executing code in console...", false) {
+        ProgressManager.getInstance().run(new Task.Backgroundable(null, "Executing Code in Console...", false) {
           @Override
           public void run(@NotNull final ProgressIndicator indicator) {
             long time = System.currentTimeMillis();
