@@ -19,6 +19,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitSession;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
@@ -48,7 +49,9 @@ public class SessionDialog extends DialogWrapper {
     myCommitMessage = commitMessage;
     myConfigurationComponent =
       configurationComponent == null ? createConfigurationUI(mySession, myChanges, myCommitMessage) : configurationComponent;
-    setTitle(CommitChangeListDialog.trimEllipsis(title));
+    String configurationComponentName = myConfigurationComponent.getName();
+    setTitle(StringUtil.isEmptyOrSpaces(configurationComponentName)
+             ? CommitChangeListDialog.trimEllipsis(title) : configurationComponentName);
     init();
     updateButtons();
   }
