@@ -20,7 +20,6 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -36,7 +35,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class ExtractMethodTest extends LightCodeInsightTestCase {
@@ -766,6 +764,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testConditionalExitCombinedWithNullabilityShouldPreserveVarsUsedInExitStatements() throws Exception {
+    doTest();
+  }
+
+  public void testSingleExitPOintWithTryFinally() throws Exception {
     doTest();
   }
 
