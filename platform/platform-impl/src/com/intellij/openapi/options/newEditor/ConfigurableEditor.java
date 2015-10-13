@@ -212,8 +212,11 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     if (editor != null) {
       Window popup = UIUtil.getWindow(component);
       // light-weight popup is located on the layered pane of the same window
+      if (popup == editor) {
+        return true;
+      }
       // heavy-weight popup opens new window with the corresponding parent
-      if (popup == editor || popup != null && editor == popup.getParent()) {
+      if (popup != null && editor == popup.getParent()) {
         if (popup instanceof JDialog) {
           JDialog dialog = (JDialog)popup;
           return Dialog.ModalityType.MODELESS == dialog.getModalityType();
