@@ -143,7 +143,7 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPyDocstringInspection() {
-    LocalInspectionTool inspection = new PyDocstringInspection();
+    LocalInspectionTool inspection = new PyMissingOrEmptyDocstringInspection();
     doTest(getTestName(false), inspection);
   }
 
@@ -151,7 +151,7 @@ public class PythonInspectionsTest extends PyTestCase {
   public void testPyDocstringParametersInspection() {     
     runWithDocStringFormat(DocStringFormat.EPYTEXT, new Runnable() {
       public void run() {
-        doHighlightingTest(PyDocstringInspection.class, LanguageLevel.PYTHON33);
+        doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON33);
       }
     });
   }
@@ -160,7 +160,7 @@ public class PythonInspectionsTest extends PyTestCase {
   public void testGoogleDocstringParametersInspection() {     
     runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
       public void run() {
-        doHighlightingTest(PyDocstringInspection.class, LanguageLevel.PYTHON33);
+        doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON33);
       }
     });
   }
