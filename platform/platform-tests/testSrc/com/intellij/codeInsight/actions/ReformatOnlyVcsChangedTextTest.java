@@ -290,12 +290,12 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
   public void testOptimizeImportsInModule() throws IOException {
     ChangedFilesStructure fs = new ChangedFilesStructure(myWorkingDirectory);
 
-    String initialFile = "import java.util.HashMap; class X {}";
-    PsiFile toModify = fs.createFile("Modified.java", initialFile, "import java.util.HashMap; class X { int x = 2; }");
-    PsiFile toModify2 = fs.createFile("Modified2.java", initialFile, "import java.util.HashMap; class X { int x = 2; }");
+    String initialFile = "initial file";
+    PsiFile toModify = fs.createFile("Modified.txt", initialFile, initialFile  + " + unused import");
+    PsiFile toModify2 = fs.createFile("Modified2.txt", initialFile, initialFile + " + another unused import");
 
-    PsiFile toKeep = fs.createFile("NonModified.java", initialFile, initialFile);
-    PsiFile toKeep2 = fs.createFile("NonModified2.java", initialFile, initialFile);
+    PsiFile toKeep = fs.createFile("NonModified.txt", initialFile, initialFile);
+    PsiFile toKeep2 = fs.createFile("NonModified2.txt", initialFile, initialFile);
 
     OptimizeImportsAction optimizeImports = new OptimizeImportsAction();
     OptimizeImportsAction.setProcessVcsChangedFilesInTests(true);
