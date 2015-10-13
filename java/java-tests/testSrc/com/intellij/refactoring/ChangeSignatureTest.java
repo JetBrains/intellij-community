@@ -24,7 +24,6 @@ import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
-import com.intellij.util.IncorrectOperationException;
 
 import java.util.HashSet;
 
@@ -149,6 +148,13 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   public void testParamNameNoConflict() {
     doTest(null, new ParameterInfoImpl[]{
       new ParameterInfoImpl(0),
+      new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN)
+    }, false);
+  }
+
+  public void testVarargMethodToNonVarag() throws Exception {
+    doTest(null, new ParameterInfoImpl[]{
+      new ParameterInfoImpl(0, "i", PsiType.INT),
       new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN)
     }, false);
   }
