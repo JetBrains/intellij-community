@@ -502,6 +502,21 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     return PsiTreeUtil.getParentOfType(this, parentClass);
   }
 
+  /**
+   * @return same as {@link #getParentByStub()}
+   * to remove in IDEA 16
+   */
+  @Nullable
+  @Deprecated
+  protected PsiElement getStubOrPsiParent() {
+    T stub = myStub;
+    if (stub != null) {
+      //noinspection unchecked
+      return stub.getParentStub().getPsi();
+    }
+    return getParent();
+  }
+
   @Override
   protected Object clone() {
     final StubBasedPsiElementBase copy = (StubBasedPsiElementBase)super.clone();
