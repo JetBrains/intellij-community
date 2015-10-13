@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSynchronizedStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -54,18 +57,7 @@ public class NestedSynchronizedStatementInspection extends BaseInspection {
     }
   }
 
-  public static <T extends PsiStatement> boolean isNestedStatement(@NotNull PsiStatement statement, Class<T> aClass) {
-    final PsiElement containingStatement = PsiTreeUtil.getParentOfType(statement, aClass);
-    if (containingStatement == null) {
-      return false;
-    }
-    final NavigatablePsiElement containingElement = PsiTreeUtil.getParentOfType(statement, PsiMember.class, true, PsiLambdaExpression.class);
-    final NavigatablePsiElement containingContainingElement = PsiTreeUtil.getParentOfType(containingStatement, PsiMember.class, true, PsiLambdaExpression.class);
-    if (containingElement == null ||
-        containingContainingElement == null ||
-        !containingElement.equals(containingContainingElement)) {
-      return false;
-    }
-    return true;
+  public static <T extends PsiStatement> boolean isNestedStatement(@NotNull T statement, @NotNull Class<T> aClass) {
+    return PsiTreeUtil.getParentOfType(statement, aClass, true, PsiClass.class, PsiLambdaExpression.class) != null;
   }
 }
