@@ -38,6 +38,7 @@ import com.jetbrains.python.configuration.VirtualEnvProjectFilter;
 import com.jetbrains.python.newProject.PyFrameworkProjectGenerator;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import icons.PythonIcons;
@@ -164,19 +165,23 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
       PyFrameworkProjectGenerator frameworkProjectGenerator = (PyFrameworkProjectGenerator)myProjectGenerator;
       String frameworkName = frameworkProjectGenerator.getFrameworkTitle();
       if (sdk != null && !isFrameworkInstalled(sdk)) {
-        String warningText = frameworkName + " will be installed on selected interpreter";
-        myInstallFramework = true;
-        final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
-        boolean hasManagement = false;
-        try {
-          hasManagement = packageManager.hasManagement(PySdkUtil.isRemote(sdk));
+        if (PyPackageUtil.packageManagementEnabled(sdk)) {
+          String warningText = frameworkName + " will be installed on the selected interpreter";
+          myInstallFramework = true;
+          final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
+          boolean hasManagement = false;
+          try {
+            hasManagement = packageManager.hasManagement(PySdkUtil.isRemote(sdk));
+          }
+          catch (ExecutionException ignored) {
+          }
+          if (!hasManagement) {
+            warningText = "Python packaging tools and " + warningText;
+          }
+          setWarningText(warningText);
+        } else {
+          setWarningText(frameworkName + " is not installed on the selected interpreter");
         }
-        catch (ExecutionException ignored) {
-        }
-        if (!hasManagement) {
-          warningText = "Python packaging tools and " + warningText;
-        }
-        setWarningText(warningText);
       }
       if (isPy3k && !((PyFrameworkProjectGenerator)myProjectGenerator).supportsPython3()) {
         setErrorText(frameworkName + " is not supported for the selected interpreter");
