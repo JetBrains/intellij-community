@@ -333,12 +333,6 @@ public class GenericsHighlightUtil {
         JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(extendFrom, resolveResult.getSubstitutor());
       QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createExtendsListFix(aClass, type, false), null);
     }
-    if (errorResult == null && languageLevel.isAtLeast(LanguageLevel.JDK_1_7) &&
-        referenceElements.length > 1) {
-      //todo suppress erased methods which come from the same class
-      final Collection<HighlightInfo> result = checkOverrideEquivalentMethods(aClass);
-      return result != null && !result.isEmpty() ? result.iterator().next() : null;
-    }
     return errorResult;
   }
 
@@ -1389,6 +1383,20 @@ public class GenericsHighlightUtil {
         final String notAccessibleMessage = isSuperTypeAccessible(type, classes, resolveScope, factory);
         if (notAccessibleMessage != null) {
           return notAccessibleMessage;
+        }
+      }
+    }
+    return null;
+  }
+
+  public static HighlightInfo checkTypeParameterOverrideEquivalentMethods(PsiClass aClass, LanguageLevel level) {
+    if (aClass instanceof PsiTypeParameter && level.isAtLeast(LanguageLevel.JDK_1_7)) {
+      final PsiReferenceList extendsList = aClass.getExtendsList();
+      if (extendsList != null && extendsList.getReferenceElements().length > 1) {
+        //todo suppress erased methods which come from the same class
+        final Collection<HighlightInfo> result = GenericsHighlightUtil.checkOverrideEquivalentMethods(aClass);
+        if (result != null && !result.isEmpty()) {
+          return result.iterator().next();
         }
       }
     }
