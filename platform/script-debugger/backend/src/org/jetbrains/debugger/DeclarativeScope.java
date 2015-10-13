@@ -1,38 +1,24 @@
-package org.jetbrains.debugger;
+package org.jetbrains.debugger
 
-import com.intellij.util.Consumer;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.debugger.values.ObjectValue;
-import org.jetbrains.debugger.values.ValueManager;
+import com.intellij.util.Consumer
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.debugger.values.ObjectValue
+import org.jetbrains.debugger.values.ValueManager
 
-import java.util.List;
+abstract class DeclarativeScope<VALUE_MANAGER : ValueManager<out Vm>>(type: Scope.Type, description: String? = null) : ScopeBase(type, description) {
+  protected abstract val childrenManager: VariablesHost<VALUE_MANAGER>
 
-public abstract class DeclarativeScope<VALUE_MANAGER extends ValueManager> extends ScopeBase {
-  protected VariablesHost<VALUE_MANAGER> childrenManager;
-
-  protected DeclarativeScope(@NotNull Type type, @Nullable String description) {
-    super(type, description);
-  }
-
-  @NotNull
-  protected final Promise<List<Variable>> loadScopeObjectProperties(@NotNull ObjectValue value) {
-    if (childrenManager.valueManager.isObsolete()) {
-      return ValueManager.reject();
+  protected fun loadScopeObjectProperties(value: ObjectValue): Promise<List<Variable>> {
+    if (childrenManager.valueManager.isObsolete) {
+      return ValueManager.reject()
     }
 
-    return value.getProperties().done(new Consumer<List<Variable>>() {
-      @Override
-      public void consume(List<Variable> variables) {
-        childrenManager.updateCacheStamp();
+    return value.properties.done(object : Consumer<List<Variable>> {
+      override fun consume(variables: List<Variable>) {
+        childrenManager.updateCacheStamp()
       }
-    });
+    })
   }
 
-  @NotNull
-  @Override
-  public final VariablesHost getVariablesHost() {
-    return childrenManager;
-  }
+  override fun getVariablesHost() = childrenManager
 }
