@@ -26,7 +26,6 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.actions.ThreadDumpAction;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -56,6 +55,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.BreakpointRequest;
@@ -220,7 +220,12 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
 
   @Nullable
   protected JavaLineBreakpointType getXBreakpointType() {
-    return (JavaLineBreakpointType)myXBreakpoint.getType();
+    XBreakpointType<?, P> type = myXBreakpoint.getType();
+    // Nashorn breakpoints do not contain JavaLineBreakpointType
+    if (type instanceof JavaLineBreakpointType) {
+      return (JavaLineBreakpointType)type;
+    }
+    return null;
   }
 
   private boolean isInScopeOf(DebugProcessImpl debugProcess, String className) {
