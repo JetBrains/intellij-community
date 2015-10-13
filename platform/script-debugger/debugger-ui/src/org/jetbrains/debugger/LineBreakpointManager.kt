@@ -34,7 +34,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
   private val lock = Object()
 
   private val breakpointManager: BreakpointManager
-    get() = debugProcess.vm!!.getBreakpointManager()
+    get() = debugProcess.vm!!.breakpointManager
 
   open fun isAnyFirstLineBreakpoint(breakpoint: Breakpoint) = false
 

@@ -348,7 +348,7 @@ class VariableView(name: String, private val variable: Variable, private val con
     if (value is FunctionValue) {
       (value as FunctionValue).resolve().done(object : Consumer<FunctionValue> {
         override fun consume(function: FunctionValue) {
-          viewSupport.vm.getScriptManager().getScript(function).done(object : Consumer<Script> {
+          viewSupport.vm!!.scriptManager.getScript(function).done(object : Consumer<Script> {
             override fun consume(script: Script?) {
               val position = if (script == null) null else viewSupport.getSourceInfo(null, script, function.openParenLine, function.openParenColumn)
               navigatable.setSourcePosition(if (position == null)

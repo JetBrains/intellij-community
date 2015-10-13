@@ -31,9 +31,9 @@ interface Vm {
 
   val evaluateContext: EvaluateContext?
 
-  fun getScriptManager(): ScriptManager
+  val scriptManager: ScriptManager
 
-  fun getBreakpointManager(): BreakpointManager
+  val breakpointManager: BreakpointManager
 
   fun getSuspendContextManager(): SuspendContextManager<out CallFrame>
 
