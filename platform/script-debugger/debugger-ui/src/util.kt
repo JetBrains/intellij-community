@@ -23,14 +23,14 @@ import org.jetbrains.rpc.CommandProcessor
 import org.jetbrains.util.concurrency.AsyncPromise
 
 // have to use package "com.intellij.xdebugger.util" to avoid package clash
-public fun XDebugSession.rejectedErrorReporter(description: String? = null): (Throwable) -> Unit = {
+fun XDebugSession.rejectedErrorReporter(description: String? = null): (Throwable) -> Unit = {
   Promise.logError(CommandProcessor.LOG, it)
   if (it != AsyncPromise.OBSOLETE_ERROR) {
     reportError("${if (description == null) "" else description + ": "}${it.getMessage()}")
   }
 }
 
-public inline fun <T> contextDependentResultConsumer(context: SuspendContext, crossinline done: (result: T, vm: Vm) -> Unit) : (T) -> Unit {
+inline fun <T> contextDependentResultConsumer(context: SuspendContext, crossinline done: (result: T, vm: Vm) -> Unit) : (T) -> Unit {
   return {
     val vm = context.valueManager.vm
     if (vm.attachStateManager.isAttached() && !vm.getSuspendContextManager().isContextObsolete(context)) {
