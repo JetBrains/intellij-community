@@ -128,6 +128,7 @@
         <option name="BACKGROUND" value="404040" />
       </value>
     </option>
+    <option name="CONSOLE_RANGE_TO_EXECUTE" baseAttributes="INJECTED_LANGUAGE_FRAGMENT" />
     <option name="CONSOLE_RED_BRIGHT_OUTPUT">
       <value>
         <option name="FOREGROUND" value="eb6f6f" />
@@ -511,6 +512,7 @@
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
+    <option name="GROOVY_KEYWORD" baseAttributes="JAVA_KEYWORD" />
     <option name="GString">
       <value>
         <option name="FOREGROUND" value="99cc00" />
@@ -561,7 +563,7 @@
     </option>
     <option name="IDENTIFIER_UNDER_CARET_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="e4e4ff" />
+        <option name="BACKGROUND" value="46464d" />
         <option name="ERROR_STRIPE_COLOR" value="ccccff" />
       </value>
     </option>
@@ -766,6 +768,19 @@
     <option name="JSP_SCRIPTING_BACKGROUND">
       <value>
         <option name="FOREGROUND" value="9dd4de" />
+      </value>
+    </option>
+    <option name="KOTLIN_ANNOTATION">
+      <value>
+        <option name="FOREGROUND" value="7a8fd9" />
+      </value>
+    </option>
+    <option name="KOTLIN_PROPERTY_WITH_BACKING_FIELD">
+      <value />
+    </option>
+    <option name="KOTLIN_SMART_CAST_VALUE">
+      <value>
+        <option name="BACKGROUND" value="485748" />
       </value>
     </option>
     <option name="Keyword">
@@ -1160,58 +1175,15 @@
         <option name="EFFECT_COLOR" value="a9b7c6" />
       </value>
     </option>
-    <option name="SQL_COLUMN">
-      <value>
-        <option name="FOREGROUND" value="cc9900" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="SQL_DATABASE_OBJECT">
-      <value>
-        <option name="FOREGROUND" value="3fa7d4" />
-      </value>
-    </option>
-    <option name="SQL_KEYWORD">
-      <value>
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="SQL_LOCAL_ALIAS">
-      <value>
-        <option name="FOREGROUND" value="c0c0c0" />
-      </value>
-    </option>
-    <option name="SQL_PARAMETER">
-      <value>
-        <option name="FOREGROUND" value="6699ff" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="SQL_PROCEDURE">
-      <value>
-        <option name="FOREGROUND" value="cacc" />
-        <option name="FONT_TYPE" value="2" />
-      </value>
-    </option>
-    <option name="SQL_STRING">
-      <value>
-        <option name="FOREGROUND" value="85cd00" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="SQL_SYNTHETIC_ENTITY">
-      <value>
-        <option name="FOREGROUND" value="ffff00" />
-      </value>
-    </option>
-    <option name="SQL_TABLE">
-      <value>
-        <option name="FOREGROUND" value="ffffff" />
-      </value>
-    </option>
     <option name="STATIC_FIELD_ATTRIBUTES">
       <value>
         <option name="FONT_TYPE" value="1" />
+      </value>
+    </option>
+    <option name="STATIC_FINAL_FIELD_ATTRIBUTES">
+      <value>
+        <option name="FOREGROUND" value="c257d2" />
+        <option name="FONT_TYPE" value="3" />
       </value>
     </option>
     <option name="Static field">
@@ -1280,7 +1252,7 @@
     </option>
     <option name="WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="ffe4ff" />
+        <option name="BACKGROUND" value="4d444d" />
         <option name="ERROR_STRIPE_COLOR" value="ffcdff" />
       </value>
     </option>
