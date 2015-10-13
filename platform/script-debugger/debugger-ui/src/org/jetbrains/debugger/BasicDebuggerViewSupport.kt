@@ -26,8 +26,6 @@ import org.jetbrains.debugger.values.ObjectValue
 import org.jetbrains.debugger.values.Value
 import javax.swing.Icon
 
-val INSTANCE: DebuggerViewSupport = BasicDebuggerViewSupport()
-
 open class BasicDebuggerViewSupport : MemberFilter, DebuggerViewSupport {
   protected val defaultMemberFilterPromise = Promise.resolve<MemberFilter>(this)
 

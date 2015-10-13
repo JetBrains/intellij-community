@@ -22,6 +22,8 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.xdebugger.XDebugProcess
 
+private val LOG: Logger = Logger.getInstance(ProcessHandlerWrapper::class.java)
+
 class ProcessHandlerWrapper(private val debugProcess: XDebugProcess, private val handler: ProcessHandler) : ProcessHandler(), KillableProcess {
   init {
     if (handler.isStartNotified) {
@@ -37,10 +39,6 @@ class ProcessHandlerWrapper(private val debugProcess: XDebugProcess, private val
         notifyProcessTerminated(event.exitCode)
       }
     })
-  }
-
-  companion object {
-    private val LOG: Logger = Logger.getInstance(ProcessHandlerWrapper::class.java)
   }
 
   override fun isSilentlyDestroyOnClose() = handler.isSilentlyDestroyOnClose
