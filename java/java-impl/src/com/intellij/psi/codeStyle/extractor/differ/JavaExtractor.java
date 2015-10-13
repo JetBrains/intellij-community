@@ -24,7 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
-import com.intellij.psi.codeStyle.extractor.values.FValue;
+import com.intellij.psi.codeStyle.extractor.values.Value;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -34,12 +34,14 @@ import java.util.LinkedList;
  * @author Roman.Shein
  * @since 05.08.2015.
  * TODO: move from debugger-impl to more meaningful location?
+ *
+ *
  */
-public class FJavaExtractor implements FLangCodeStyleExtractor {
+public class JavaExtractor implements LangCodeStyleExtractor {
     @NotNull
     @Override
-    public FDiffer getDiffer(final Project project, PsiFile psiFile, CodeStyleSettings settings) {
-        return new FDifferBase(project, psiFile, settings) {
+    public Differ getDiffer(final Project project, PsiFile psiFile, CodeStyleSettings settings) {
+        return new DifferBase(project, psiFile, settings) {
             @Override
             public String reformattedText() {
                 final JavaCodeFragment file = JavaCodeFragmentFactory.getInstance(project).
@@ -61,7 +63,7 @@ public class FJavaExtractor implements FLangCodeStyleExtractor {
 
     @NotNull
     @Override
-    public Collection<FValue.VAR_KIND> getCustomVarKinds() {
-        return new LinkedList<FValue.VAR_KIND>();
+    public Collection<Value.VAR_KIND> getCustomVarKinds() {
+        return new LinkedList<Value.VAR_KIND>();
     }
 }
