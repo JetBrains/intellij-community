@@ -15,6 +15,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -27,7 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.Alarm;
-import com.intellij.util.io.HttpRequests;
+import com.intellij.util.text.VersionComparatorUtil;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
@@ -177,30 +178,19 @@ public final class IpnbConnectionManager implements ProjectComponent {
         }
       };
 
-      HttpRequests.request(urlString + "/api").connect(new HttpRequests.RequestProcessor<Object>() {
-        @Override
-        public Object process(@NotNull HttpRequests.Request request) throws IOException {
-          final IpnbConnection connection;
-          try {
-            if (request.isSuccessful()) {
-              connection = new IpnbConnectionV3(urlString, listener);
-            }
-            else {
-              connection = new IpnbConnection(urlString, listener);
-            }
-            myKernels.put(path, connection);
-          }
-          catch (URISyntaxException e) {
-            if (showNotification) {
-              showWarning(codePanel.getFileEditor(),
-                          "Please, check IPython Notebook URL in <a href=\"\">Settings->Tools->IPython Notebook</a>",
-                          new IpnbSettingsAdapter());
-              LOG.warn("IPython Notebook connection refused: " + e.getMessage());
-            }
-          }
-          return null;
+      try {
+        final IpnbConnection connection = getConnection(codePanel, urlString, listener);
+        myKernels.put(path, connection);
+      }
+      catch (URISyntaxException e) {
+        if (showNotification) {
+          showWarning(codePanel.getFileEditor(),
+                      "Please, check IPython Notebook URL in <a href=\"\">Settings->Tools->IPython Notebook</a>",
+                      new IpnbSettingsAdapter());
+          LOG.warn("IPython Notebook connection refused: " + e.getMessage());
         }
-      });
+        return false;
+      }
     }
     catch (IOException e) {
       if (showNotification) {
@@ -209,6 +199,32 @@ public final class IpnbConnectionManager implements ProjectComponent {
       return false;
     }
     return true;
+  }
+
+  @NotNull
+  private IpnbConnection getConnection(@NotNull final IpnbCodePanel codePanel, @NotNull final String urlString,
+                                       @NotNull final IpnbConnectionListenerBase listener)
+    throws IOException, URISyntaxException {
+    final Module module = ProjectRootManager.getInstance(myProject).getFileIndex()
+                                              .getModuleForFile(codePanel.getFileEditor().getVirtualFile());
+    if (module != null) {
+      final Sdk sdk = PythonSdkType.findPythonSdk(module);
+      if (sdk != null) {
+        try {
+          final PyPackage ipython = PyPackageManager.getInstance(sdk).findPackage("ipython", true);
+          if (ipython == null || VersionComparatorUtil.compare(ipython.getVersion(), "3.0") > 0) {
+            return new IpnbConnectionV3(urlString, listener);
+          }
+          else {
+            return new IpnbConnection(urlString, listener);
+          }
+        }
+        catch (ExecutionException e) {
+          return new IpnbConnectionV3(urlString, listener);
+        }
+      }
+    }
+    return new IpnbConnectionV3(urlString, listener);
   }
 
   public void interruptKernel(@NotNull final String filePath) {

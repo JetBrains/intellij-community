@@ -27,7 +27,7 @@ import java.util.List;
 
 public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   private final Project myProject;
-  private final IpnbFileEditor myParent;
+  @NotNull private final IpnbFileEditor myParent;
   private IpnbCodeSourcePanel myCodeSourcePanel;
   private final List<IpnbPanel> myOutputPanels = Lists.newArrayList();
 
@@ -40,6 +40,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     add(myViewPanel);
   }
 
+  @NotNull
   public IpnbFileEditor getFileEditor() {
     return myParent;
   }
