@@ -77,11 +77,6 @@ public class JavaStackFrame extends XStackFrame {
   private JavaDebuggerEvaluator myEvaluator = null;
   private final String myEqualityObject;
 
-  public JavaStackFrame(@NotNull StackFrameProxyImpl stackFrameProxy,
-                        @NotNull MethodsTracker tracker) {
-    this(new StackFrameDescriptorImpl(stackFrameProxy, tracker), true);
-  }
-
   public JavaStackFrame(@NotNull StackFrameDescriptorImpl descriptor, boolean update) {
     myDescriptor = descriptor;
     if (update) {
@@ -133,11 +128,6 @@ public class JavaStackFrame extends XStackFrame {
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
     if (node.isObsolete()) return;
-    XStackFrame xFrame = getDescriptor().getXStackFrame();
-    if (xFrame != null) {
-      xFrame.computeChildren(node);
-      return;
-    }
     myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(myDebugProcess.getDebuggerContext(), myDescriptor.getFrameProxy().threadProxy()) {
       @Override
       public Priority getPriority() {
