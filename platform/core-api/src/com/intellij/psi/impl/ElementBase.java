@@ -251,7 +251,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return baseIcon;
   }
 
-  public static RowIcon createLayeredIcon(Iconable instance, Icon icon, int flags) {
+  public static RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags) {
     List<Icon> layersFromProviders = new SmartList<Icon>();
     for (IconLayerProvider provider : Extensions.getExtensions(IconLayerProvider.EP_NAME)) {
       final Icon layerIcon = provider.getLayerIcon(instance, (flags & FLAGS_LOCKED) != 0);
