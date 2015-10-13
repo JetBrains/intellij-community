@@ -27,6 +27,10 @@ import org.jetbrains.debugger.sourcemap.SourceMap
 
 import org.jetbrains.rpc.CommandProcessor.LOG
 
+private val S1 = ",()[]{}="
+// don't trim trailing .&: - could be part of expression
+private val OPERATOR_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1))
+
 open class NameMapper(private val document: Document, private val generatedDocument: Document, private val sourceMappings: MappingList, private val sourceMap: SourceMap) {
   var rawNameToSource: MutableMap<String, String>? = null
     private set
@@ -69,21 +73,16 @@ open class NameMapper(private val document: Document, private val generatedDocum
   protected open fun extractName(rawGeneratedName: CharSequence) = NAME_TRIMMER.trimFrom(rawGeneratedName)
 
   companion object {
-    private val S1 = ",()[]{}="
     protected val NAME_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1 + ".&:"))
-    // don't trim trailing .&: - could be part of expression
-    private val OPERATOR_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1))
 
-    fun warnSeveralMapping(element: PsiElement) {
-      // see https://dl.dropboxusercontent.com/u/43511007/s/Screen%20Shot%202015-01-21%20at%2020.33.44.png
-      // var1 mapped to the whole "var c, notes, templates, ..." expression text + unrelated text "   ;"
-      LOG.warn("incorrect sourcemap, several mappings for named element " + element.text)
-    }
-
-    fun trimName(rawGeneratedName: CharSequence, isLastToken: Boolean): String {
-      return (if (isLastToken) NAME_TRIMMER else OPERATOR_TRIMMER).trimFrom(rawGeneratedName)
-    }
+    fun trimName(rawGeneratedName: CharSequence, isLastToken: Boolean) = (if (isLastToken) NAME_TRIMMER else OPERATOR_TRIMMER).trimFrom(rawGeneratedName)
   }
+}
+
+fun warnSeveralMapping(element: PsiElement) {
+  // see https://dl.dropboxusercontent.com/u/43511007/s/Screen%20Shot%202015-01-21%20at%2020.33.44.png
+  // var1 mapped to the whole "var c, notes, templates, ..." expression text + unrelated text "   ;"
+  LOG.warn("incorrect sourcemap, several mappings for named element ${element.text}")
 }
 
 private fun getGeneratedName(document: Document, sourceMap: SourceMap, sourceEntry: MappingEntry): CharSequence {
