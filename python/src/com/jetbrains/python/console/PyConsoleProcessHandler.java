@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.console;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
@@ -36,6 +38,15 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
     super(process, commandLine, charset);
     myConsoleView = consoleView;
     myPydevConsoleCommunication = pydevConsoleCommunication;
+
+    Disposer.register(consoleView, new Disposable() {
+      @Override
+      public void dispose() {
+        if (!isProcessTerminated()) {
+          destroyProcess();
+        }
+      }
+    });
   }
 
   @Override
