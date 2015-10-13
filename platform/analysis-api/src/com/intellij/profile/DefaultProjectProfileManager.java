@@ -227,7 +227,9 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
       setProjectProfile(myProfiles.keySet().iterator().next());
     }
     final Profile profile = myProfiles.get(myProjectProfile);
-    profile.setProfileManager(this);
+    if (profile.isProjectLevel()) {
+      profile.setProfileManager(this);
+    }
     return profile;
   }
 
