@@ -55,6 +55,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     (DumbPermissionServiceImpl)ServiceManager.getService(DumbPermissionService.class);
   private static Throwable ourForcedTrace;
   private volatile boolean myDumb = false;
+  private volatile Throwable myDumbStart;
   private final DumbModeListener myPublisher;
   private long myModificationCount;
   private final Queue<DumbModeTask> myUpdatesQueue = new Queue<DumbModeTask>(5);
@@ -217,6 +218,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
             @Override
             public void run() {
               myDumb = true;
+              myDumbStart = trace;
               myModificationCount++;
               try {
                 myPublisher.enteredDumbMode();
@@ -291,6 +293,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private void updateFinished() {
     myDumb = false;
+    myDumbStart = null;
     myModificationCount++;
     if (myProject.isDisposed()) return;
 
@@ -536,6 +539,11 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   @Override
   public long getModificationCount() {
     return myModificationCount;
+  }
+
+  @Nullable
+  public Throwable getDumbModeStartTrace() {
+    return myDumbStart;
   }
 
   private class AppIconProgress extends ProgressIndicatorBase {
