@@ -362,7 +362,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
    * in the containing file.
    */
   @Nullable
-  public final T getStub() {
+  public T getStub() {
     ProgressIndicatorProvider.checkCanceled(); // Hope, this is called often
     return myStub;
   }
