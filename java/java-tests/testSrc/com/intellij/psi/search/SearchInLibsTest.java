@@ -27,6 +27,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.util.CommonProcessors;
 
 import java.util.ArrayList;
@@ -92,12 +93,29 @@ public class SearchInLibsTest extends PsiTestCase {
     model.setProjectScope(false);
 
     List<UsageInfo> usages = new ArrayList<>();
-    FindInProjectUtil.findUsages(model, getProject(),
-                                 new CommonProcessors.CollectProcessor<>(
-                                   usages), FindInProjectUtil
-                                   .setupProcessPresentation(getProject(), false, FindInProjectUtil.setupViewPresentation(false, model)));
+    CommonProcessors.CollectProcessor<UsageInfo> consumer = new CommonProcessors.CollectProcessor<>(usages);
+    FindUsagesProcessPresentation presentation = FindInProjectUtil.setupProcessPresentation(getProject(), false, FindInProjectUtil.setupViewPresentation(false, model));
+    FindInProjectUtil.findUsages(model, getProject(), consumer, presentation);
 
-    assertEquals(2, usages.size());
+    assertSize(2, usages);
+  }
+
+  public void testFindInPathInLibrariesIsNotBrokenAgain() throws Exception {
+    FindModel model = new FindModel();
+    final PsiClass aClass = myJavaFacade.findClass("LibraryClass1");
+    assertNotNull(aClass);
+    model.setDirectoryName(aClass.getContainingFile().getContainingDirectory().getVirtualFile().getPath());
+    model.setCaseSensitive(true);
+    model.setCustomScope(false);
+    model.setStringToFind(/*LibraryClas*/"s1"); // to defeat trigram index
+    model.setProjectScope(false);
+
+    List<UsageInfo> usages = new ArrayList<>();
+    CommonProcessors.CollectProcessor<UsageInfo> consumer = new CommonProcessors.CollectProcessor<>(usages);
+    FindUsagesProcessPresentation presentation = FindInProjectUtil.setupProcessPresentation(getProject(), false, FindInProjectUtil.setupViewPresentation(false, model));
+    FindInProjectUtil.findUsages(model, getProject(), consumer, presentation);
+
+    assertEquals(3, usages.size());
   }
 
   public void testFindInPathInLibrarySourceDirShouldSearchJustInThisDirectoryOnly() throws Exception {
@@ -114,10 +132,9 @@ public class SearchInLibsTest extends PsiTestCase {
     model.setProjectScope(false);
 
     List<UsageInfo> usages = new ArrayList<>();
-    FindInProjectUtil.findUsages(model, getProject(),
-                                 new CommonProcessors.CollectProcessor<>(
-                                   usages), FindInProjectUtil
-                                   .setupProcessPresentation(getProject(), false, FindInProjectUtil.setupViewPresentation(false, model)));
+    CommonProcessors.CollectProcessor<UsageInfo> consumer = new CommonProcessors.CollectProcessor<>(usages);
+    FindUsagesProcessPresentation presentation = FindInProjectUtil.setupProcessPresentation(getProject(), false, FindInProjectUtil.setupViewPresentation(false, model));
+    FindInProjectUtil.findUsages(model, getProject(), consumer, presentation);
 
     UsageInfo info = assertOneElement(usages);
     assertEquals("X.java", info.getFile().getName());

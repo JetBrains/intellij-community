@@ -64,7 +64,7 @@ public class GlobalSearchScopesCore {
     }
     BitSet withSubdirectoriesBS = new BitSet(directories.length);
     if (withSubdirectories) {
-      withSubdirectoriesBS.set(0, directories.length-1);
+      withSubdirectoriesBS.set(0, directories.length);
     }
     return new DirectoriesScope(project, directories, withSubdirectoriesBS);
   }
