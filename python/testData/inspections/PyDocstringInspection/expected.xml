@@ -25,4 +25,14 @@
     <line>13</line>
     <description>Empty docstring</description>
   </problem>
+  <problem>
+    <file>test.py</file>
+    <line>17</line>
+    <description>Missing docstring</description>
+  </problem>
+  <problem>
+    <file>test.py</file>
+    <line>19</line>
+    <description>Missing docstring</description>
+  </problem>
 </problems>

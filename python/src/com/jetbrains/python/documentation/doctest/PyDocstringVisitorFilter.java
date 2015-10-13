@@ -38,12 +38,13 @@ public class PyDocstringVisitorFilter implements PythonVisitorFilter {
     if (visitorClass == PyArgumentListInspection.class) {
       return false;
     }
-    if (visitorClass == PyDocstringInspection.class || visitorClass == PyStatementEffectInspection.class ||
+    if (visitorClass == PyIncorrectDocstringInspection.class || visitorClass == PyMissingOrEmptyDocstringInspection.class ||
         visitorClass == PyUnboundLocalVariableInspection.class || visitorClass == PyUnnecessaryBackslashInspection.class ||
         visitorClass == PyByteLiteralInspection.class || visitorClass == PyNonAsciiCharInspection.class ||
         visitorClass == PyPackageRequirementsInspection.class || visitorClass == PyMandatoryEncodingInspection.class ||
         visitorClass == PyInterpreterInspection.class || visitorClass == PyDocstringTypesInspection.class ||
-        visitorClass == PySingleQuotedDocstringInspection.class || visitorClass == PyClassHasNoInitInspection.class) {
+        visitorClass == PySingleQuotedDocstringInspection.class || visitorClass == PyClassHasNoInitInspection.class || 
+        visitorClass == PyStatementEffectInspection.class) {
       return false;
     }
     //annotators

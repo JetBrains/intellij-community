@@ -42,16 +42,3 @@ def foo(a, <weak_warning descr="Missing parameter c in docstring">c</weak_warnin
   """
   pass
   
-class <weak_warning descr="Missing docstring">C</weak_warning>:
-  @property
-  def <weak_warning descr="Missing docstring">x</weak_warning>(self):
-      return 42
-
-  @x.setter
-  def x(self, value):
-      pass
-  
-  @x.deleter
-  def x(self):
-      pass
-  
