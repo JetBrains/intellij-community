@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * (c) 2015 Silent Forest AB
- * created: 12 October 2015
- */
 package com.siyeh.ig.fixes.errorhandling;
 
 import com.siyeh.InspectionGadgetsBundle;
@@ -42,5 +37,9 @@ public class UnnecessaryInitCauseFixTest extends IGQuickFixesTestCase {
 
   public void testIndirect() {
     doTest();
+  }
+
+  public void testNoConstructor() {
+    assertQuickfixNotAvailable();
   }
 }

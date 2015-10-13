@@ -15,14 +15,11 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -33,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class UnnecessaryInitCauseInspection extends BaseInspection {
+public class UnnecessaryInitCauseInspectionBase extends BaseInspection {
   @Nls
   @NotNull
   @Override
@@ -45,64 +42,6 @@ public class UnnecessaryInitCauseInspection extends BaseInspection {
   @Override
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unnecessary.initcause.problem.descriptor");
-  }
-
-  @Nullable
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new UnnecessaryInitCauseFix();
-  }
-
-  private static class UnnecessaryInitCauseFix extends InspectionGadgetsFix {
-
-    @Nls
-    @NotNull
-    @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("unnecessary.initcause.quickfix");
-    }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return getName();
-    }
-
-    @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement().getParent().getParent();
-      if (!(element instanceof PsiMethodCallExpression)) {
-        return;
-      }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
-      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-      final PsiExpression argument = ExpressionUtils.getFirstExpressionInList(argumentList);
-      if (argument == null) {
-        return;
-      }
-      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
-      if (qualifier == null) {
-        return;
-      }
-      final PsiNewExpression newExpression = findNewExpression(qualifier);
-      if (newExpression == null) {
-        return;
-      }
-      final PsiExpressionList argumentList1 = newExpression.getArgumentList();
-      if (argumentList1 == null) {
-        return;
-      }
-      argumentList1.add(argument);
-      final PsiElement parent = methodCallExpression.getParent();
-      if (parent instanceof PsiExpressionStatement) {
-        parent.delete();
-      }
-      else {
-        methodCallExpression.replace(qualifier);
-      }
-    }
   }
 
   @Override
@@ -141,13 +80,13 @@ public class UnnecessaryInitCauseInspection extends BaseInspection {
       }
       final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
       final PsiNewExpression newExpression = findNewExpression(qualifier);
-      if (!existsCauseConstructor(newExpression)) {
+      if (!isCauseConstructorAvailable(newExpression)) {
         return;
       }
       registerMethodCallError(expression);
     }
 
-    public static boolean existsCauseConstructor(PsiNewExpression newExpression) {
+    public static boolean isCauseConstructorAvailable(PsiNewExpression newExpression) {
       if (newExpression == null) {
         return false;
       }
@@ -159,10 +98,24 @@ public class UnnecessaryInitCauseInspection extends BaseInspection {
       if (aClass == null) {
         return false;
       }
+      final PsiExpressionList argumentList = newExpression.getArgumentList();
+      if (argumentList == null) {
+        return false;
+      }
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      outer:
       for (PsiMethod constructor1 : aClass.getConstructors()) {
         final PsiParameterList parameterList = constructor1.getParameterList();
-        if (parameterList.getParametersCount() > 0) {
+        if (parameterList.getParametersCount() == arguments.length + 1) {
           final PsiParameter[] parameters = parameterList.getParameters();
+          for (int i = 0; i < arguments.length; i++) {
+            final PsiExpression argument = arguments[i];
+            final PsiParameter parameter = parameters[i];
+            final PsiType type = argument.getType();
+            if (type == null || !parameter.getType().isAssignableFrom(type)) {
+              continue outer;
+            }
+          }
           final PsiParameter lastParameter = parameters[parameters.length - 1];
           final PsiType type = lastParameter.getType();
           if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_THROWABLE)) {
@@ -175,7 +128,7 @@ public class UnnecessaryInitCauseInspection extends BaseInspection {
   }
 
   @Nullable
-  private static PsiNewExpression findNewExpression(PsiExpression expression) {
+  static PsiNewExpression findNewExpression(PsiExpression expression) {
     if (expression instanceof PsiNewExpression) {
       return (PsiNewExpression)expression;
     }
