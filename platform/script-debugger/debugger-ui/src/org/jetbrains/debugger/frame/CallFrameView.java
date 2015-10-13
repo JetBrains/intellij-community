@@ -13,155 +13,85 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.debugger.frame;
+package org.jetbrains.debugger.frame
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ui.ColoredTextContainer;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XStackFrame;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.debugger.*;
+import com.intellij.icons.AllIcons
+import com.intellij.ui.ColoredTextContainer
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
+import com.intellij.xdebugger.frame.XCompositeNode
+import com.intellij.xdebugger.frame.XStackFrame
+import org.jetbrains.debugger.*
 
-public final class CallFrameView extends XStackFrame implements VariableContext {
-  private final SourceInfo sourceInfo;
-  private final DebuggerViewSupport viewSupport;
-  private final CallFrame callFrame;
+class CallFrameView(val callFrame: CallFrame,
+                    private val sourceInfo: SourceInfo?,
+                    private val viewSupport: DebuggerViewSupport,
+                    val script: Script?) : XStackFrame(), VariableContext {
+  // isInLibraryContent call could be costly, so we compute it only once (our customizePresentation called on each repaint)
+  private val inLibraryContent = sourceInfo != null && viewSupport.isInLibraryContent(sourceInfo, script)
+  private var evaluator: XDebuggerEvaluator? = null
 
-  private final Script script;
-
-  private final boolean inLibraryContent;
-  private XDebuggerEvaluator evaluator;
-
-  public CallFrameView(@NotNull CallFrame callFrame, @NotNull DebuggerViewSupport viewSupport, @Nullable Script script) {
-    this(callFrame, viewSupport.getSourceInfo(script, callFrame), viewSupport, script);
+  constructor(callFrame: CallFrame, viewSupport: DebuggerViewSupport, script: Script?) : this(callFrame, viewSupport.getSourceInfo(script, callFrame), viewSupport, script) {
   }
 
-  public CallFrameView(@NotNull CallFrame callFrame,
-                       @Nullable SourceInfo sourceInfo,
-                       @NotNull DebuggerViewSupport viewSupport,
-                       @Nullable Script script) {
-    this.sourceInfo = sourceInfo;
+  override fun getEqualityObject() = callFrame.equalityObject
 
-    this.viewSupport = viewSupport;
-    this.callFrame = callFrame;
-    this.script = script;
-
-    // isInLibraryContent call could be costly, so we compute it only once (our customizePresentation called on each repaint)
-    inLibraryContent = sourceInfo != null && viewSupport.isInLibraryContent(sourceInfo, script);
+  override fun computeChildren(node: XCompositeNode) {
+    node.setAlreadySorted(true)
+    createAndAddScopeList(node, callFrame.variableScopes, this, callFrame)
   }
 
-  @Nullable
-  public Script getScript() {
-    return script;
-  }
+  override fun getEvaluateContext() = callFrame.evaluateContext
 
-  @Override
-  public Object getEqualityObject() {
-    return callFrame.getEqualityObject();
-  }
+  override fun getName() = null
 
-  @Override
-  public void computeChildren(@NotNull XCompositeNode node) {
-    node.setAlreadySorted(true);
-    ScopeVariablesGroup.createAndAddScopeList(node, callFrame.getVariableScopes(), this, callFrame);
-  }
+  override fun getParent() = null
 
-  @NotNull
-  public CallFrame getCallFrame() {
-    return callFrame;
-  }
+  override fun watchableAsEvaluationExpression() = true
 
-  @NotNull
-  @Override
-  public EvaluateContext getEvaluateContext() {
-    return callFrame.getEvaluateContext();
-  }
+  override fun getViewSupport() = viewSupport
 
-  @Nullable
-  @Override
-  public String getName() {
-    return null;
-  }
+  override fun getMemberFilter() = viewSupport.getMemberFilter(this)
 
-  @Nullable
-  @Override
-  public VariableContext getParent() {
-    return null;
-  }
+  fun getMemberFilter(scope: Scope) = createVariableContext(scope, this, callFrame).memberFilter
 
-  @Override
-  public boolean watchableAsEvaluationExpression() {
-    return true;
-  }
+  override fun getScope() = null
 
-  @NotNull
-  @Override
-  public DebuggerViewSupport getViewSupport() {
-    return viewSupport;
-  }
-
-  @NotNull
-  @Override
-  public Promise<MemberFilter> getMemberFilter() {
-    return viewSupport.getMemberFilter(this);
-  }
-
-  @NotNull
-  public Promise<MemberFilter> getMemberFilter(@NotNull Scope scope) {
-    return ScopeVariablesGroup.createVariableContext(scope, this, callFrame).getMemberFilter();
-  }
-
-  @Nullable
-  @Override
-  public Scope getScope() {
-    return null;
-  }
-
-  @Override
-  public final XDebuggerEvaluator getEvaluator() {
+  override fun getEvaluator(): XDebuggerEvaluator? {
     if (evaluator == null) {
-      evaluator = viewSupport.createFrameEvaluator(this);
+      evaluator = viewSupport.createFrameEvaluator(this)
     }
-    return evaluator;
+    return evaluator
   }
 
-  @Override
-  @Nullable
-  public SourceInfo getSourcePosition() {
-    return sourceInfo;
-  }
+  override fun getSourcePosition() = sourceInfo
 
-  @Override
-  public final void customizePresentation(@NotNull ColoredTextContainer component) {
+  override fun customizePresentation(component: ColoredTextContainer) {
     if (sourceInfo == null) {
-      String scriptName = script == null ? "unknown" : script.getUrl().trimParameters().toDecodedForm();
-      int line = callFrame.getLine();
-      component.append(line != -1 ? scriptName + ':' + line : scriptName, SimpleTextAttributes.ERROR_ATTRIBUTES);
-      return;
+      val scriptName = if (script == null) "unknown" else script.url.trimParameters().toDecodedForm()
+      val line = callFrame.line
+      component.append(if (line != -1) scriptName + ':' + line else scriptName, SimpleTextAttributes.ERROR_ATTRIBUTES)
+      return
     }
 
-    String fileName = sourceInfo.getFile().getName();
-    int line = sourceInfo.getLine() + 1;
+    val fileName = sourceInfo.file.name
+    val line = sourceInfo.line + 1
 
-    SimpleTextAttributes textAttributes = inLibraryContent ? SimpleTextAttributes.GRAYED_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
+    val textAttributes = if (inLibraryContent) SimpleTextAttributes.GRAYED_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES
 
-    String functionName = sourceInfo.getFunctionName();
+    val functionName = sourceInfo.functionName
     if (functionName == null || (functionName.isEmpty() && callFrame.hasOnlyGlobalScope())) {
-      component.append(fileName + ":" + line, textAttributes);
+      component.append(fileName + ":" + line, textAttributes)
     }
     else {
       if (functionName.isEmpty()) {
-        component.append("anonymous", inLibraryContent ? SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES : SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
+        component.append("anonymous", if (inLibraryContent) SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES else SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES)
       }
       else {
-        component.append(functionName, textAttributes);
+        component.append(functionName, textAttributes)
       }
-      component.append("(), " + fileName + ":" + line, textAttributes);
+      component.append("(), $fileName:$line", textAttributes)
     }
-    component.setIcon(AllIcons.Debugger.StackFrame);
+    component.setIcon(AllIcons.Debugger.StackFrame)
   }
 }
