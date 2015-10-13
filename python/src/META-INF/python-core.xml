@@ -804,7 +804,7 @@
     </action>
 
     <action id="PyConvertLocalFunctionToTopLevelFunctionAction" class="com.jetbrains.python.refactoring.makeFunctionTopLevel.PyMakeFunctionTopLevelRefactoring"
-            text="Make top-level function"
+            text="Make Top-Level Function"
             description="Convert local function or method to top-level function, transforming names from enclosing scope and instance attributes into parameters">
       <add-to-group group-id="RefactoringMenu"/>
     </action>
