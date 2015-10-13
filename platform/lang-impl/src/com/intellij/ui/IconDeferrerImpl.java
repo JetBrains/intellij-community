@@ -116,7 +116,7 @@ public class IconDeferrerImpl extends IconDeferrer {
     }
   };
 
-  static void evaluateDeferred(@NotNull Runnable runnable) {
+  protected void evaluateDeferred(@NotNull Runnable runnable) {
     try {
       myEvaluationIsInProgress.set(Boolean.TRUE);
       runnable.run();

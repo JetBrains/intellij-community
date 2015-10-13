@@ -109,7 +109,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
           boolean result = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(new Runnable() {
             @Override
             public void run() {
-              IconDeferrerImpl.evaluateDeferred(new Runnable() {
+              IconDeferrer.getInstance().evaluateDeferred(new Runnable() {
                 @Override
                 public void run() {
                   try {
@@ -132,7 +132,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
           }
         }
         else {
-          IconDeferrerImpl.evaluateDeferred(new Runnable() {
+          IconDeferrer.getInstance().evaluateDeferred(new Runnable() {
             @Override
             public void run() {
               evaluated[0] = nonNull(myEvaluator.fun(myParam));
