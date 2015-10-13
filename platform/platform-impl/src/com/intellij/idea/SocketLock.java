@@ -308,7 +308,7 @@ public final class SocketLock {
   }
 
   private static void log(Exception e) {
-    Logger.getInstance(SocketLock.class).debug(e);
+    Logger.getInstance(SocketLock.class).warn(e);
   }
 
   private static void log(String format, Object... args) {
