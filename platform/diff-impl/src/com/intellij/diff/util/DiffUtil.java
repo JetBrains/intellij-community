@@ -67,6 +67,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
@@ -309,13 +310,27 @@ public class DiffUtil {
 
   @NotNull
   public static String createTooltipText(@NotNull String text, @Nullable String appendix) {
-    @NonNls StringBuilder result = new StringBuilder();
+    StringBuilder result = new StringBuilder();
     result.append("<html><body>");
     result.append(text);
     if (appendix != null) {
       result.append("<br><div style='margin-top: 5px'><font size='2'>");
       result.append(appendix);
       result.append("</font></div>");
+    }
+    result.append("</body></html>");
+    return result.toString();
+  }
+
+  @NotNull
+  public static String createNotificationText(@NotNull String text, @Nullable String appendix) {
+    StringBuilder result = new StringBuilder();
+    result.append("<html><body>");
+    result.append(text);
+    if (appendix != null) {
+      result.append("<br><span style='color:#").append(ColorUtil.toHex(JBColor.gray)).append("'><small>");
+      result.append(appendix);
+      result.append("</small></span>");
     }
     result.append("</body></html>");
     return result.toString();
