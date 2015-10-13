@@ -84,17 +84,11 @@ class LineLayout {
   
   private static List<BidiRun> createFragments(@NotNull EditorView view, int lineStartOffset, int lineEndOffset, boolean skipBidiLayout) {
     if (lineEndOffset <= lineStartOffset) return Collections.emptyList();
+    if (skipBidiLayout) return Collections.singletonList(new BidiRun(lineEndOffset - lineStartOffset));
     EditorImpl editor = view.getEditor();
-    List<BidiRun> runs;
-    if (skipBidiLayout) {
-      runs = Collections.singletonList(new BidiRun((byte)0, 0, lineEndOffset - lineStartOffset));
-    }
-    else {
-      CharSequence text = editor.getDocument().getImmutableCharSequence().subSequence(lineStartOffset, lineEndOffset);
-      char[] chars = CharArrayUtil.fromSequence(text);
-      runs = createRuns(editor, chars, lineStartOffset);
-    }
-    return runs;
+    CharSequence text = editor.getDocument().getImmutableCharSequence().subSequence(lineStartOffset, lineEndOffset);
+    char[] chars = CharArrayUtil.fromSequence(text);
+    return createRuns(editor, chars, lineStartOffset);
   }
 
   private static List<BidiRun> createFragments(@NotNull EditorView view, @NotNull CharSequence text, 
@@ -115,7 +109,9 @@ class LineLayout {
 
   private static List<BidiRun> createRuns(EditorImpl editor, char[] text, int startOffsetInEditor) {
     int textLength = text.length;
-    if (editor.myDisableRtl) return Collections.singletonList(new BidiRun((byte)0, 0, textLength));
+    if (editor.myDisableRtl || !Bidi.requiresBidi(text, 0, textLength)) {
+      return Collections.singletonList(new BidiRun(textLength));
+    }
     List<BidiRun> runs = new ArrayList<BidiRun>();
     if (startOffsetInEditor >= 0) {
       // running bidi algorithm separately for text fragments corresponding to different lexer tokens
@@ -324,6 +320,10 @@ class LineLayout {
     private final int endOffset;
     private Chunk[] chunks; // in logical order
 
+    private BidiRun(int length) {
+      this((byte)0, 0, length);
+    }
+    
     private BidiRun(byte level, int startOffset, int endOffset) {
       this.level = level;
       this.startOffset = startOffset;
