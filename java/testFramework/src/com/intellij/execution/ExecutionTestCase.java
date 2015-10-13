@@ -154,6 +154,7 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
     parameters.getClassPath().add(getAppOutputPath());
     parameters.setMainClass(mainClass);
     parameters.setJdk(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
+    parameters.setWorkingDirectory(getTestAppPath());
     return parameters;
   }
 

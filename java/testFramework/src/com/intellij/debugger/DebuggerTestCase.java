@@ -477,11 +477,16 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     return debuggerSession;
   }
 
-  public static class MockConfiguration implements ModuleRunConfiguration {
+  public class MockConfiguration implements ModuleRunConfiguration {
     @Override
     @NotNull
     public Module[] getModules() {
-      return Module.EMPTY_ARRAY;
+      if (myModule != null) {
+        return new Module[]{myModule};
+      }
+      else {
+        return Module.EMPTY_ARRAY;
+      }
     }
 
     @Override
