@@ -305,22 +305,65 @@ public class FileWatcherTest extends PlatformTestCase {
     }
   }
 
-  public void testIncorrectPath() throws Exception {
+  // Make sure we don't crash when we supply the file watcher with a single path that is invalid
+  public void testInvalidPathDoesNotCrashFileWatcher() throws Exception {
     File topDir = createTestDir(myTempDirectory, "top");
     File file = createTestFile(topDir, "file.zip");
     File subDir = new File(file, "sub/zip");
     refresh(topDir);
 
-    LocalFileSystem.WatchRequest request = watch(subDir, false);
+    LocalFileSystem.WatchRequest request = watchAndIgnoreEvents(subDir, false);
+    try {
+      myAccept = true;
+      FileUtil.writeToFile(file, "new content");
+    }
+    finally {
+      unwatchAndIgnoreEvents(request);
+      delete(topDir);
+    }
+  }
+
+  // Only use these methods if you do not expect any events to come from the file watcher. Additionally, only uses these methods in tests
+  // that are testing corner cases of the file watcher. For any test that actually wants to verify the events received from the file watcher
+  // implementations, use the standard watch and unwatch methods.
+
+  @NotNull
+  private LocalFileSystem.WatchRequest watchAndIgnoreEvents(File watchFile, boolean recursive) {
+    Ref<LocalFileSystem.WatchRequest> request = Ref.create();
+    request.set(myFileSystem.addRootToWatch(watchFile.getPath(), recursive));
+    myFileSystem.refresh(false);
+    assertFalse(request.isNull());
+    assertFalse(myWatcher.isSettingRoots());
+    return request.get();
+  }
+
+  private void unwatchAndIgnoreEvents(LocalFileSystem.WatchRequest... requests) {
+    myFileSystem.removeWatchedRoots(Arrays.asList(requests));
+    myFileSystem.refresh(false);
+  }
+
+  // Make sure the file watcher behaves as expected when we include an invalid path as one of the watch roots.
+  public void testInvalidPathAmongRoots() throws Exception {
+    File topDir = createTestDir(myTempDirectory, "top");
+    File validDirectory = createTestDir(topDir, "watchme");
+    File validFile = createTestFile(validDirectory, "watchedFile.txt");
+    File file = createTestFile(topDir, "file.zip");
+    File invalidDirectory = new File(file, "sub/zip");
+    refresh(topDir);
+
+    // There is nothing to watch, so we shouldn't wait for any events
+    LocalFileSystem.WatchRequest invalidRequest = watchAndIgnoreEvents(invalidDirectory, false);
+    LocalFileSystem.WatchRequest validRequest = watch(validDirectory, false);
     try {
       myTimeout = 10 * INTER_RESPONSE_DELAY;
       myAccept = true;
       FileUtil.writeToFile(file, "new content");
-      assertEvent(VFileEvent.class);
+      FileUtil.writeToFile(validFile, "new watched content");
+      assertEvent(VFileContentChangeEvent.class, validFile.getPath());
       myTimeout = NATIVE_PROCESS_DELAY;
     }
     finally {
-      unwatch(request);
+      unwatch(invalidRequest, validRequest);
       delete(topDir);
     }
   }
@@ -886,6 +929,7 @@ public class FileWatcherTest extends PlatformTestCase {
     assertFalse(myWatcher.isSettingRoots());
     return request.get();
   }
+
 
   private void unwatch(LocalFileSystem.WatchRequest... requests) {
     getEvents("events to stop watching", () -> myFileSystem.removeWatchedRoots(Arrays.asList(requests)));
