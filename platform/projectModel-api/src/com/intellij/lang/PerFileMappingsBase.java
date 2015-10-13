@@ -168,8 +168,9 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
         if (oldFile == null) continue; // project
         oldFile.putUserData(pusher.getFileDataKey(), null);
       }
-      PushedFilePropertiesUpdater updater = PushedFilePropertiesUpdater.getInstance(project);
-      updater.pushAll(pusher);
+      if (!project.isDefault()) {
+        PushedFilePropertiesUpdater.getInstance(project).pushAll(pusher);
+      }
     }
     if (shouldReparseFiles()) {
       Project[] projects = project == null ? ProjectManager.getInstance().getOpenProjects() : new Project[] { project };
