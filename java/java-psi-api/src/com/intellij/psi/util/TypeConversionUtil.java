@@ -1005,16 +1005,8 @@ public class TypeConversionUtil {
         }
       }
       else {
-        boolean effectiveAllowUncheckedConversion = allowUncheckedConversion;
-        if (typeRight instanceof PsiCapturedWildcardType) {
-          effectiveAllowUncheckedConversion = false;
-          final PsiClass psiClass = PsiUtil.resolveClassInType(((PsiCapturedWildcardType)typeRight).getWildcard().getBound());
-          if (psiClass != null && !psiClass.hasTypeParameters()) {
-            effectiveAllowUncheckedConversion = allowUncheckedConversion;
-          }
-        }
         if (leftWildcard.isExtends()) {
-          return isAssignable(leftBound, typeRight, effectiveAllowUncheckedConversion && !containsWildcards(leftBound));
+          return isAssignable(leftBound, typeRight, false);
         }
         else { // isSuper
           final Boolean assignable = ourGuard.doPreventingRecursion(leftWildcard, true, new NotNullComputable<Boolean>() {

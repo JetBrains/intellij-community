@@ -563,6 +563,26 @@ public class EditorRtlTest extends AbstractEditorTest {
     checkResult("RLR<caret>");
   }
   
+  public void testTabInsideRtlText() throws Exception {
+    prepareText("<caret>R\tRR");
+    right();
+    checkResult("R<caret>\tRR");
+    right();
+    checkResult("<caret>R\tRR");
+    right();
+    checkResult("R<caret>\tRR");
+    right();
+    checkResult("R\t<caret>RR");
+    right();
+    checkResult("R\tRR<caret>");
+    right();
+    checkResult("R\tR<caret>R");
+    right();
+    checkResult("R\t<caret>RR");
+    right();
+    checkResult("R\tRR<caret>");
+  }
+  
   private void prepareText(String text) throws IOException {
     prepare(text, TestFileType.TEXT);
   }

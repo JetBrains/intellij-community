@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,12 @@ public class RegistryOptionsTopHitProvider extends OptionsTopHitProvider {
       for (RegistryValue value : Registry.getAll()) {
         if (value.isBoolean()) {
           final String key = value.getKey();
-          result.add(new RegistryBooleanOptionDescriptor(key, key));
+          RegistryBooleanOptionDescriptor optionDescriptor = new RegistryBooleanOptionDescriptor(key, key);
+          if (value.isChangedFromDefault()) {
+            result.add(0, optionDescriptor);
+          } else {
+            result.add(optionDescriptor);
+          }
         }
       }
       return result;

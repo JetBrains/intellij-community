@@ -75,10 +75,7 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
       final List<? extends AbstractTestProxy> allTests = root.getAllTests();
       for (AbstractTestProxy test : allTests) {
         if (test.isLeaf()) {
-          final DiffHyperlink provider = test.getDiffViewerProvider();
-          if (provider != null) {
-            providers.add(provider);
-          }
+          providers.addAll(test.getDiffViewerProviders());
         }
       }
     }

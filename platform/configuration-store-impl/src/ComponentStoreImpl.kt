@@ -415,6 +415,10 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
+  @TestOnly fun removeComponent(name: String) {
+    components.remove(name)
+  }
+
   companion object {
     protected fun executeSave(session: SaveSession, readonlyFiles: MutableList<JBPair<SaveSession, VirtualFile>>, previousErrors: MutableList<Throwable>?): MutableList<Throwable>? {
       var errors = previousErrors

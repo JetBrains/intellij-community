@@ -66,10 +66,12 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
     return new TextRange(prev, next + 1);
   }
 
+  @Nullable
   private static TextRange findSentenceRange(String editorText, int start, int end) {
     int sentenceStart = start;
 
     while (sentenceStart > 0) {
+      if (start - sentenceStart > 1000) return null;
       if (isSentenceEnd(editorText, sentenceStart - 1) || !isNatural(editorText.charAt(sentenceStart - 1))) {
         break;
       }
@@ -83,6 +85,7 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
 
     while (sentenceEnd < editorText.length()) {
       sentenceEnd++;
+      if (sentenceEnd - end > 1000) return null;
       if (isSentenceEnd(editorText, sentenceEnd - 1)) {
         break;
       }
@@ -145,6 +148,8 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
     int end = selEnd - shift;
 
     TextRange best = findSentenceRange(elementText, start, end);
+    if (best == null) return null;
+
     best = narrowRange(best, findCustomRange(elementText, start, end, '\"', '\"'));
     best = narrowRange(best, findCustomRange(elementText, start, end, '(', ')'));
     best = narrowRange(best, findCustomRange(elementText, start, end, '<', '>'));

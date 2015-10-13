@@ -28,6 +28,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -2260,6 +2261,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
       final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
       final Component owner = mgr.getFocusOwner();
+
+      if (owner instanceof EditorComponentImpl) return;
 
       IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
         @Override

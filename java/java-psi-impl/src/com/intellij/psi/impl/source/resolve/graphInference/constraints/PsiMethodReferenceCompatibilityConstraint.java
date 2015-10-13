@@ -26,6 +26,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -228,6 +229,9 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
           final PsiResolveHelper helper = JavaPsiFacade.getInstance(myExpression.getProject()).getResolveHelper();
           final PsiType[] paramTypes =
             member instanceof PsiMethod ? ((PsiMethod)member).getSignature(PsiSubstitutor.EMPTY).getParameterTypes() : PsiType.EMPTY_ARRAY;
+          LOG.assertTrue(paramTypes.length == signature.getParameterTypes().length, "expr: " + myExpression + "; " + 
+                                                                                    paramTypes.length + "; " +
+                                                                                    Arrays.toString(signature.getParameterTypes()));
           psiSubstitutor = helper.inferTypeArguments(qContainingClass.getTypeParameters(),
                                                      paramTypes,
                                                      signature.getParameterTypes(),

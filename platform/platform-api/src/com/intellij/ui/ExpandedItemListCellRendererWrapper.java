@@ -15,9 +15,11 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,6 +35,7 @@ public class ExpandedItemListCellRendererWrapper implements ListCellRenderer {
 
   @Override
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    list.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent());
     Component result = myWrappee.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     if (!myHandler.getExpandedItems().contains(index)) return result;
     Rectangle bounds = result.getBounds();

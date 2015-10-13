@@ -480,8 +480,20 @@ public class SMTestProxy extends AbstractTestProxy {
                                       @Nullable final String expectedFilePath,
                                       @Nullable final String actualFilePath) {
     setStacktraceIfNotSet(stackTrace);
-    myState = new TestComparisionFailedState(localizedMessage, stackTrace, actualText, expectedText, expectedFilePath, actualFilePath);
-    fireOnNewPrintable(myState);
+    final TestComparisionFailedState comparisionFailedState = new TestComparisionFailedState(localizedMessage, stackTrace, actualText, expectedText, expectedFilePath, actualFilePath);
+    if (myState instanceof TestComparisionFailedState) {
+      final TestComparisonFailedStates states = new TestComparisonFailedStates(localizedMessage, stackTrace);
+      states.addComparisonFailure((TestComparisionFailedState)myState);
+      states.addComparisonFailure(comparisionFailedState);
+      myState = states;
+    }
+    else if (myState instanceof TestComparisonFailedStates) {
+      ((TestComparisonFailedStates)myState).addComparisonFailure(comparisionFailedState);
+    }
+    else {
+      myState = comparisionFailedState;
+    }
+    fireOnNewPrintable(comparisionFailedState);
   }
 
   public void setTestIgnored(@Nullable String ignoreComment, @Nullable String stackTrace) {
@@ -627,6 +639,10 @@ public class SMTestProxy extends AbstractTestProxy {
       return ((TestComparisionFailedState)myState).getHyperlink();
     }
 
+    if (myState instanceof TestComparisonFailedStates) {
+      return ((TestComparisonFailedStates)myState).getHyperlinks().get(0);
+    }
+
     if (myChildren != null) {
       for (SMTestProxy child : myChildren) {
         if (!child.isDefect()) continue;
@@ -637,6 +653,15 @@ public class SMTestProxy extends AbstractTestProxy {
       }
     }
     return null;
+  }
+
+  @NotNull
+  @Override
+  public List<DiffHyperlink> getDiffViewerProviders() {
+    if (myState instanceof TestComparisonFailedStates) {
+      return ((TestComparisonFailedStates)myState).getHyperlinks();
+    }
+    return super.getDiffViewerProviders();
   }
 
   @Override

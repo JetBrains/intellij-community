@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui;
 
+import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
 
 import java.awt.*;
@@ -24,29 +25,31 @@ public enum AntialiasingType {
   GREYSCALE,
   OFF;
 
-  private static final SwingUtilities2.AATextInfo aaEnabled =
-    new SwingUtilities2.AATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_ON, 140);
-
-  private static final SwingUtilities2.AATextInfo lcdEnabled =
-    new SwingUtilities2.AATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB, 140);
-
   private static final SwingUtilities2.AATextInfo aaDisabled = null;
+
+  private static SwingUtilities2.AATextInfo getLCDEnabledTextInfo () {
+    return new SwingUtilities2.AATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB, UIUtil.getLcdContrastValue());
+  }
+
+  private static SwingUtilities2.AATextInfo getAAEnabledTextInfo () {
+    return new SwingUtilities2.AATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_ON, UIUtil.getLcdContrastValue());
+  }
 
   public static Object getAAHintForSwingComponent() {
     UISettings uiSettings = UISettings.getInstance();
 
-    if (uiSettings == null) return aaEnabled;
+    if (uiSettings == null) return getAAEnabledTextInfo();
 
     switch (uiSettings.IDE_AA_TYPE) {
       case SUBPIXEL:
-        return lcdEnabled;
+        return getLCDEnabledTextInfo();
       case GREYSCALE:
-        return aaEnabled;
+        return getAAEnabledTextInfo();
       case OFF:
         return aaDisabled;
     }
 
-    return aaEnabled;
+    return getAAEnabledTextInfo();
   }
 
   public Object getRenderingHintValue () {

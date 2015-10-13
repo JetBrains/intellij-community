@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
@@ -55,6 +56,7 @@ public class EditorView implements TextDrawingCallback, Disposable {
   private final EditorCoordinateMapper myMapper;
   private final EditorSizeManager mySizeManager;
   private final TextLayoutCache myTextLayoutCache;
+  private final LogicalPositionCache myLogicalPositionCache;
   private final TabFragment myTabFragment;
   
   private String myPrefixText; // accessed only in EDT
@@ -79,8 +81,10 @@ public class EditorView implements TextDrawingCallback, Disposable {
     myMapper = new EditorCoordinateMapper(this);
     mySizeManager = new EditorSizeManager(this);
     myTextLayoutCache = new TextLayoutCache(this);
+    myLogicalPositionCache = new LogicalPositionCache(this);
     myTabFragment = new TabFragment(this);
     
+    Disposer.register(this, myLogicalPositionCache);
     Disposer.register(this, myTextLayoutCache);
     Disposer.register(this, mySizeManager);
   }
@@ -107,6 +111,10 @@ public class EditorView implements TextDrawingCallback, Disposable {
   
   TabFragment getTabFragment() {
     return myTabFragment;
+  }
+  
+  LogicalPositionCache getLogicalPositionCache() {
+    return myLogicalPositionCache;
   }
 
   @Override
@@ -164,6 +172,12 @@ public class EditorView implements TextDrawingCallback, Disposable {
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.offsetToVisualLine(offset, beforeSoftWrap);
   }
+  
+  public int visualLineStartOffset(int visualLine) {
+    assertIsDispatchThread();
+    myEditor.getSoftWrapModel().prepareToMapping();
+    return myMapper.visualLineToOffset(visualLine);
+  }
 
   @NotNull
   public VisualPosition xyToVisualPosition(@NotNull Point p) {
@@ -191,7 +205,7 @@ public class EditorView implements TextDrawingCallback, Disposable {
     myPrefixText = prefixText;
     synchronized (myLock) {
       myPrefixLayout = prefixText == null || prefixText.isEmpty() ? null :
-                       new LineLayout(this, prefixText, attributes.getFontType(), myFontRenderContext);
+                       new LineLayout(this, prefixText, attributes.getFontType());
     }
     myPrefixAttributes = attributes;
     mySizeManager.invalidateRange(0, 0);
@@ -231,18 +245,22 @@ public class EditorView implements TextDrawingCallback, Disposable {
 
   public int getMaxWidthInRange(int startOffset, int endOffset) {
     assertIsDispatchThread();
-    return getMaxWidthInLineRange(offsetToVisualLine(startOffset, false), offsetToVisualLine(endOffset, true));
+    return getMaxWidthInLineRange(offsetToVisualLine(startOffset, false), offsetToVisualLine(endOffset, true), null);
   }
-  
-  int getMaxWidthInLineRange(int startVisualLine, int endVisualLine) {
+
+  /**
+   * If <code>quickEvaluationListener</code> is provided, quick approximate size evaluation becomes enabled, listener will be invoked
+   * if approximation will in fact be used during width calculation.
+   */
+  int getMaxWidthInLineRange(int startVisualLine, int endVisualLine, @Nullable Runnable quickEvaluationListener) {
     int maxWidth = 0;
+    endVisualLine = Math.min(endVisualLine, myEditor.getVisibleLineCount() - 1);
     for (int i = startVisualLine; i <= endVisualLine; i++) {
-      LogicalPosition startPosition = visualToLogicalPosition(new VisualPosition(i, 0));
-      if (startPosition.line >= myDocument.getLineCount()) break;
-      int startOffset = logicalPositionToOffset(startPosition);
+      int startOffset = myMapper.visualLineToOffset(i);
       float x = 0;
       int maxOffset = 0;
-      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(this, startOffset, false)) {
+      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(this, startOffset, false, 
+                                                                                              quickEvaluationListener)) {
         x = fragment.getEndX();
         maxOffset = Math.max(maxOffset, fragment.getMaxOffset());
       }
@@ -264,9 +282,11 @@ public class EditorView implements TextDrawingCallback, Disposable {
       myMaxCharWidth = -1;
       myTabSize = -1;
     }
-    reset();
-    setPrefix(myPrefixText, myPrefixAttributes); // recreate prefix layout
+    myLogicalPositionCache.reset(false);
+    myTextLayoutCache.resetToDocumentSize(false);
     invalidateFoldRegionLayouts();
+    setPrefix(myPrefixText, myPrefixAttributes); // recreate prefix layout
+    mySizeManager.reset();
   }
   
   public void invalidateRange(int startOffset, int endOffset) {
@@ -277,14 +297,18 @@ public class EditorView implements TextDrawingCallback, Disposable {
     }
     int startLine = myDocument.getLineNumber(Math.max(0, startOffset));
     int endLine = myDocument.getLineNumber(Math.min(textLength, endOffset));
-    myTextLayoutCache.invalidateLines(startLine, endLine, endLine);
+    myTextLayoutCache.invalidateLines(startLine, endLine);
     mySizeManager.invalidateRange(startOffset, endOffset);
   }
 
+  /**
+   * Invoked when document might have changed, but no notifications were sent (for a hacky document in EditorTextFieldCellRenderer)
+   */
   public void reset() {
     assertIsDispatchThread();
+    myLogicalPositionCache.reset(true);
+    myTextLayoutCache.resetToDocumentSize(true);
     mySizeManager.reset();
-    myTextLayoutCache.resetToDocumentSize();
   }
   
   public boolean isRtlLocation(@NotNull VisualPosition visualPosition) {
@@ -422,8 +446,7 @@ public class EditorView implements TextDrawingCallback, Disposable {
     if (layout == null) {
       TextAttributes placeholderAttributes = myEditor.getFoldingModel().getPlaceholderAttributes();
       layout = new LineLayout(this, foldRegion.getPlaceholderText(), 
-                              placeholderAttributes == null ? Font.PLAIN : placeholderAttributes.getFontType(), 
-                              myFontRenderContext);
+                              placeholderAttributes == null ? Font.PLAIN : placeholderAttributes.getFontType());
       foldRegion.putUserData(FOLD_REGION_TEXT_LAYOUT, layout);
     }
     return layout;

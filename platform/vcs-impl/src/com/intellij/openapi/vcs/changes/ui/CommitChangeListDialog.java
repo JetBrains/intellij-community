@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.util.Alarm;
@@ -464,7 +465,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     myWarningLabel = new JLabel();
     myWarningLabel.setUI(new MultiLineLabelUI());
-    myWarningLabel.setForeground(Color.red);
+    myWarningLabel.setForeground(JBColor.RED);
 
     updateWarning();
 

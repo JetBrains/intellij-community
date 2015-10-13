@@ -321,7 +321,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile != null) {
-      ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject)).fastenBelts(virtualFile);
+      getSmartPointerManager().fastenBelts(virtualFile);
     }
 
     myIsCommitInProgress = true;
@@ -340,6 +340,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
         }
         if (success) {
           clearUncommittedInfo(document);
+          if (virtualFile != null) {
+            getSmartPointerManager().updatePointerTargetsAfterReparse(virtualFile);
+          }
           viewProvider.contentsSynchronized();
         }
       }
@@ -792,10 +795,14 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   private UncommittedInfo clearUncommittedInfo(@NotNull Document document) {
     UncommittedInfo info = myUncommittedInfos.remove(document);
     if (info != null) {
-      ((SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject)).updatePointers(document, info.myFrozen, info.myEvents);
+      getSmartPointerManager().updatePointers(document, info.myFrozen, info.myEvents);
       info.removeListener();
     }
     return info;
+  }
+
+  private SmartPointerManagerImpl getSmartPointerManager() {
+    return (SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject);
   }
 
   private boolean isRelevant(@NotNull VirtualFile virtualFile) {

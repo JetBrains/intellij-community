@@ -521,6 +521,11 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
             }
           } else {
             for (PsiDirectory directory : directories) {
+              if (myMoveDestination.verify(directory) != null) {
+                //e.g. directory is excluded so there is no source root for it, hence target directory would be missed from newDirectories
+                continue;
+              }
+
               oldToNewElementsMapping.put(directory, newDirectories[i++]);
             }
           }

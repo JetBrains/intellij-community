@@ -1964,25 +1964,32 @@ public class UIUtil {
     return null;
   }
 
-  @NonNls
-  public static String getCssFontDeclaration(final Font font) {
+  @Language("HTML")
+  public static String getCssFontDeclaration(@NotNull Font font) {
     return getCssFontDeclaration(font, null, null, null);
   }
 
   @Language("HTML")
-  @NonNls
-  public static String getCssFontDeclaration(final Font font, @Nullable Color fgColor, @Nullable Color linkColor, @Nullable String liImg) {
-    URL resource = liImg != null ? SystemInfo.class.getResource(liImg) : null;
+  public static String getCssFontDeclaration(@NotNull Font font, @Nullable Color fgColor, @Nullable Color linkColor, @Nullable String liImg) {
+    StringBuilder builder = new StringBuilder().append("<style>\n");
+    String familyAndSize = "font-family:'" + font.getFamily() + "'; font-size:" + font.getSize() + "pt;";
 
-    @NonNls String fontFamilyAndSize = "font-family:'" + font.getFamily() + "'; font-size:" + font.getSize() + "pt;";
-    @NonNls @Language("HTML")
-    String body = "body, div, td, p {" + fontFamilyAndSize + " " + (fgColor != null ? "color:#" + ColorUtil.toHex(fgColor)+";" : "") + "}\n" +
-                  "code {font-size:" + font.getSize() + "pt;}\n";
+    builder.append("body, div, td, p {").append(familyAndSize);
+    if (fgColor != null) builder.append(" color:#").append(ColorUtil.toHex(fgColor)).append(';');
+    builder.append("}\n");
+
+    builder.append("a {").append(familyAndSize);
+    if (linkColor != null) builder.append(" color:#").append(ColorUtil.toHex(linkColor)).append(';');
+    builder.append("}\n");
+
+    builder.append("code {font-size:").append(font.getSize()).append("pt;}\n");
+
+    URL resource = liImg != null ? SystemInfo.class.getResource(liImg) : null;
     if (resource != null) {
-      body += "ul {list-style-image:url('" + StringUtil.escapeCharCharacters(resource.toExternalForm()) + "');}\n";
+      builder.append("ul {list-style-image:url('").append(StringUtil.escapeCharCharacters(resource.toExternalForm())).append("');}\n");
     }
-    @NonNls String link = linkColor != null ? "a {" + fontFamilyAndSize + " color:#"+ColorUtil.toHex(linkColor) + ";}\n" : "";
-    return "<style>\n" + body + link + "</style>";
+
+    return builder.append("</style>").toString();
   }
 
   public static boolean isWinLafOnVista() {
@@ -2451,7 +2458,8 @@ public class UIUtil {
   }
 
   public static void installComboBoxCopyAction(JComboBox comboBox) {
-    final Component editorComponent = comboBox.getEditor().getEditorComponent();
+    ComboBoxEditor editor = comboBox.getEditor();
+    final Component editorComponent = editor != null ? editor.getEditorComponent() : null;
     if (!(editorComponent instanceof JTextComponent)) return;
     final InputMap inputMap = ((JTextComponent)editorComponent).getInputMap();
     for (KeyStroke keyStroke : inputMap.allKeys()) {
@@ -3070,6 +3078,33 @@ public class UIUtil {
     }
 
     return null;
+  }
+
+  public static int getLcdContrastValue() {
+    int lcdContrastValue  = Registry.get("lcd.contrast.value").asInteger();
+
+    // Evaluate the value depending on our current theme
+    if (lcdContrastValue == 0) {
+      if (SystemInfo.isMacIntel64) {
+        lcdContrastValue = isUnderDarcula() ? 140 : 200;
+      } else {
+        Map map = (Map)Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");
+
+        if (map == null) {
+          lcdContrastValue = 140;
+        } else {
+          Object o = map.get(RenderingHints.KEY_TEXT_LCD_CONTRAST);
+          lcdContrastValue = (o == null) ? 140 : ((Integer)o);
+        }
+      }
+    }
+
+    if (lcdContrastValue < 100 || lcdContrastValue > 250) {
+      // the default value
+      lcdContrastValue = 140;
+    }
+
+    return lcdContrastValue;
   }
 
   /**

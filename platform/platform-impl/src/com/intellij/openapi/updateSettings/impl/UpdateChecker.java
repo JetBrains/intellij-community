@@ -33,6 +33,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -238,7 +239,8 @@ public final class UpdateChecker {
 
     ApplicationInfo appInfo = ApplicationInfo.getInstance();
     int majorVersion = Integer.parseInt(appInfo.getMajorVersion());
-    UpdateStrategy strategy = new UpdateStrategy(majorVersion, appInfo.getBuild(), updateInfo, settings);
+    UpdateStrategyCustomization customization = UpdateStrategyCustomization.getInstance();
+    UpdateStrategy strategy = new UpdateStrategy(majorVersion, appInfo.getBuild(), updateInfo, settings, customization);
     return strategy.checkForUpdates();
   }
 
@@ -385,7 +387,23 @@ public final class UpdateChecker {
     final UpdateChannel channelToPropose = checkForUpdateResult.getChannelToPropose();
     final UpdateChannel updatedChannel = checkForUpdateResult.getUpdatedChannel();
 
-    if (newChannelReady(channelToPropose)) {
+    if (updatedChannel != null) {
+      Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+          new UpdateInfoDialog(updatedChannel, enableLink, updateSettings.canUseSecureConnection(), updatedPlugins, incompatiblePlugins).show();
+        }
+      };
+
+      if (alwaysShowResults) {
+        runnable.run();
+      }
+      else {
+        String message = IdeBundle.message("updates.ready.message", ApplicationNamesInfo.getInstance().getFullProductName());
+        showNotification(project, message, runnable, NotificationUniqueType.UPDATE_IN_CHANNEL);
+      }
+    }
+    else if (newChannelReady(channelToPropose)) {
       Runnable runnable = new Runnable() {
         @Override
         public void run() {
@@ -407,23 +425,7 @@ public final class UpdateChecker {
       }
       else {
         String message = IdeBundle.message("updates.new.version.available", ApplicationNamesInfo.getInstance().getFullProductName());
-        showNotification(project, message, false, runnable, NotificationUniqueType.NEW_CHANNEL);
-      }
-    }
-    else if (updatedChannel != null) {
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          new UpdateInfoDialog(updatedChannel, enableLink, updateSettings.canUseSecureConnection(), updatedPlugins, incompatiblePlugins).show();
-        }
-      };
-
-      if (alwaysShowResults) {
-        runnable.run();
-      }
-      else {
-        String message = IdeBundle.message("updates.ready.message", ApplicationNamesInfo.getInstance().getFullProductName());
-        showNotification(project, message, false, runnable, NotificationUniqueType.UPDATE_IN_CHANNEL);
+        showNotification(project, message, runnable, NotificationUniqueType.NEW_CHANNEL);
       }
     }
     else if (updatedPlugins != null && !updatedPlugins.isEmpty()) {
@@ -445,7 +447,7 @@ public final class UpdateChecker {
           }
         }, ", ");
         String message = IdeBundle.message("updates.plugins.ready.message", updatedPlugins.size(), plugins);
-        showNotification(project, message, false, runnable, NotificationUniqueType.PLUGINS_UPDATE);
+        showNotification(project, message, runnable, NotificationUniqueType.PLUGINS_UPDATE);
       }
     }
     else if (alwaysShowResults) {
@@ -455,7 +457,6 @@ public final class UpdateChecker {
 
   private static void showNotification(@Nullable Project project,
                                        String message,
-                                       boolean error,
                                        @Nullable final Runnable runnable,
                                        @Nullable final NotificationUniqueType notificationType) {
     if (notificationType != null) {
@@ -476,8 +477,7 @@ public final class UpdateChecker {
     }
 
     String title = IdeBundle.message("update.notifications.title");
-    NotificationType type = error ? NotificationType.ERROR : NotificationType.INFORMATION;
-    NOTIFICATIONS.createNotification(title, XmlStringUtil.wrapInHtml(message), type, listener).whenExpired(new Runnable() {
+    NOTIFICATIONS.createNotification(title, XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION, listener).whenExpired(new Runnable() {
       @Override
       public void run() {
         SHOWN_NOTIFICATION_TYPES.remove(notificationType);

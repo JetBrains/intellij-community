@@ -27,6 +27,7 @@ import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.DefaultProgramRunner;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -50,12 +51,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Future;
 
 /**
  * @author Gregory.Shrago
  */
 public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
-  public static final Logger LOG = Logger.getInstance("#" + RemoteProcessSupport.class);
+  public static final Logger LOG = Logger.getInstance(RemoteProcessSupport.class);
 
   private final Class<EntryPoint> myValueClass;
   private final HashMap<Pair<Target, Parameters>, Info> myProcMap = new HashMap<Pair<Target, Parameters>, Info>();
@@ -79,19 +81,33 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     stopAll(false);
   }
 
-  public void stopAll(boolean wait) {
-    ArrayList<ProcessHandler> allHandlers = new ArrayList<ProcessHandler>();
+  public void stopAll(final boolean wait) {
+    final List<Info> infos = ContainerUtil.newArrayList();
     synchronized (myProcMap) {
       for (Info o : myProcMap.values()) {
-        ContainerUtil.addIfNotNull(o.handler, allHandlers);
+        if (o.handler != null) infos.add(o);
       }
     }
-    for (ProcessHandler handler : allHandlers) {
-      handler.destroyProcess();
-    }
+    if (infos.isEmpty()) return;
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        destroyProcessesImpl(infos);
+        if (wait) {
+          for (Info o : infos) {
+            o.handler.waitFor();
+          }
+        }
+      }
+    });
     if (wait) {
-      for (ProcessHandler handler : allHandlers) {
-        handler.waitFor();
+      try {
+        future.get();
+      }
+      catch (InterruptedException ignored) {
+      }
+      catch (java.util.concurrent.ExecutionException e) {
+        LOG.warn(e);
       }
     }
   }
@@ -149,19 +165,25 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   }
 
   public void release(@NotNull Target target, @Nullable Parameters configuration) {
-    ArrayList<ProcessHandler> handlers = new ArrayList<ProcessHandler>();
+    List<Info> infos = ContainerUtil.newArrayList();
     synchronized (myProcMap) {
       for (Pair<Target, Parameters> key : myProcMap.keySet()) {
         if (key.first == target && (configuration == null || key.second == configuration)) {
-          ContainerUtil.addIfNotNull(myProcMap.get(key).handler, handlers);
+          Info o = myProcMap.get(key);
+          if (o.handler != null) infos.add(o);
         }
       }
     }
-    if (handlers.isEmpty()) return;
-    for (ProcessHandler handler : handlers) {
-      handler.destroyProcess();
-    }
+    if (infos.isEmpty()) return;
+    destroyProcessesImpl(infos);
     fireModificationCountChanged();
+  }
+
+  private static void destroyProcessesImpl(@NotNull List<Info> infos) {
+    for (Info o : infos) {
+      LOG.info("Terminating: " + o);
+      o.handler.destroyProcess();
+    }
   }
 
   private void startProcess(Target target, Parameters configuration, @NotNull Pair<Target, Parameters> key) {
@@ -178,7 +200,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       }
     };
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-    ProcessHandler processHandler = null;
+    ProcessHandler processHandler;
     try {
       RunProfileState state = getRunProfileState(target, configuration, executor);
       ExecutionResult result = state.execute(executor, runner);
@@ -186,7 +208,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       processHandler = result.getProcessHandler();
     }
     catch (Exception e) {
-      dropProcessInfo(key, e instanceof ExecutionException? e.getMessage() : ExceptionUtil.getUserStackTrace(e, LOG), processHandler);
+      dropProcessInfo(key, e instanceof ExecutionException? e.getMessage() : ExceptionUtil.getUserStackTrace(e, LOG), null);
       return;
     }
     processHandler.addProcessListener(getProcessListener(key));
@@ -378,6 +400,10 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       this.ref = ref;
     }
 
+    @Override
+    public String toString() {
+      return "PendingInfo{" + ref.get() + '}';
+    }
   }
 
   private static class RunningInfo extends Info {
@@ -389,6 +415,11 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       super(handler);
       this.port = port;
       this.name = name;
+    }
+
+    @Override
+    public String toString() {
+      return port + "/" + name;
     }
   }
 

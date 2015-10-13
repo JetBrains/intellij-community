@@ -128,9 +128,10 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
       myClass.setName(myNewClassName);
       PsiClass superClass = extractSuper(superClassName);
       final PsiDirectory initialDirectory = myClass.getContainingFile().getContainingDirectory();
+      PsiFile containingFile = myClass.getContainingFile();
       try {
         if (myTargetDirectory != initialDirectory) {
-          myTargetDirectory.add(myClass.getContainingFile().copy());
+          containingFile = (PsiFile)myTargetDirectory.add(myClass.getContainingFile().copy());
           myClass.getContainingFile().delete();
         }
       }
@@ -148,7 +149,6 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
       if (!Comparing.equal(oldQualifiedName, superClass.getQualifiedName())) {
         processTurnToSuperRefs(usages, superClass);
       }
-      final PsiFile containingFile = myClass.getContainingFile();
       if (containingFile instanceof PsiJavaFile) {
         JavaCodeStyleManager.getInstance(myProject).removeRedundantImports((PsiJavaFile) containingFile);
       }

@@ -85,6 +85,14 @@ public class ExecUtil {
     }
   };
 
+  private static final NotNullLazyValue<Boolean> hasSh = new NotNullLazyValue<Boolean>() {
+    @NotNull
+    @Override
+    protected Boolean compute() {
+      return new File("/bin/sh").canExecute();
+    }
+  };
+
   private ExecUtil() { }
 
   @NotNull
@@ -218,12 +226,25 @@ public class ExecUtil {
       sudoCommandLine = new GeneralCommandLine(sudoCommand);
     }
     else if (hasPkExec.getValue()) {
-      command.add(0, "pkexec");
-      command.add(1, "env");
-      int i = 2;
-      for (Map.Entry<String, String> entry : commandLine.getEnvironment().entrySet()) {
-        command.add(i++, entry.getKey() + "=" + escapeUnixShellArgument(entry.getValue()));
+      //workaround for RUBY-16963
+      String homeDirectory = commandLine.getEnvironment().get("HOME");
+      if (hasSh.getValue() && homeDirectory != null) {
+        String escapedCommandLine = StringUtil.join(command, new Function<String, String>() {
+          @Override
+          public String fun(String s) {
+            return escapeUnixShellArgument(s);
+          }
+        }, " ");
+
+        File exportHomeScript = createTempExecutableScript("pkexec-homeDirectory", ".sh",
+                                                           "#!/bin/sh\n" +
+                                                           "HOME=" + escapeUnixShellArgument(homeDirectory) + " " + escapedCommandLine);
+        command.clear();
+        command.add("sh");
+        command.add(exportHomeScript.getAbsolutePath());
       }
+
+      command.add(0, "pkexec");
       sudoCommandLine = new GeneralCommandLine(command);
     }
     else if (SystemInfo.isUnix && hasTerminalApp()) {

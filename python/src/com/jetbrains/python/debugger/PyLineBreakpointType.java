@@ -15,8 +15,6 @@
  */
 package com.jetbrains.python.debugger;
 
-import com.intellij.ide.scratch.RootType;
-import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.scratch.ScratchFileType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -48,7 +46,7 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
     final Ref<Boolean> stoppable = Ref.create(false);
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {
-      if (file.getFileType() == PythonFileType.INSTANCE || isPythonScratch(project, file)) {
+      if (file.getFileType() == PythonFileType.INSTANCE || isPythonScratch(file)) {
         XDebuggerUtil.getInstance().iterateLine(project, document, line, new Processor<PsiElement>() {
           @Override
           public boolean process(PsiElement psiElement) {
@@ -70,14 +68,8 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
     return stoppable.get();
   }
 
-  private static boolean isPythonScratch(Project project, VirtualFile file) {
-    if (file.getFileType() == ScratchFileType.INSTANCE) {
-      RootType type = ScratchFileService.getInstance().getRootType(file);
-      return type != null && type.substituteLanguage(project, file) == PythonFileType.INSTANCE.getLanguage();
-    }
-    else {
-      return false;
-    }
+  private static boolean isPythonScratch(VirtualFile file) {
+    return ScratchFileType.getOriginalFileType(file) == PythonFileType.INSTANCE;
   }
 
   private static boolean notStoppableElementType(IElementType elementType) {

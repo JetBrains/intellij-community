@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.utils.library;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
+import com.intellij.CommonBundle;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -28,6 +29,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -37,6 +39,7 @@ import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.ProjectBundle;
 import org.jetbrains.idea.maven.utils.library.remote.MavenDependenciesRemoteManager;
 import org.jetbrains.idea.maven.utils.library.remote.MavenRemoteTask;
 import org.jetbrains.idea.maven.utils.library.remote.MavenVersionsRemoteManager;
@@ -141,6 +144,16 @@ public class RepositoryUtils {
         new MavenRemoteTask.ResultProcessor<List<OrderRoot>>() {
           @Override
           public void process(final List<OrderRoot> roots) {
+            if (roots == null || roots.isEmpty()) {
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  Messages.showErrorDialog(project, ProjectBundle.message("maven.downloading.failed", properties.getMavenId()),
+                                           CommonBundle.getErrorTitle());
+                }
+              });
+              return;
+            }
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {

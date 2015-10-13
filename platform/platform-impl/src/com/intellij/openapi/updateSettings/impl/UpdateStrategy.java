@@ -30,16 +30,28 @@ public class UpdateStrategy {
   private final UpdatesInfo myUpdatesInfo;
   private final UserUpdateSettings myUpdateSettings;
   private final ChannelStatus myChannelStatus;
+  private final UpdateStrategyCustomization myStrategyCustomization;
 
+  /** @deprecated use {@link #UpdateStrategy(int, BuildNumber, UpdatesInfo, UserUpdateSettings, UpdateStrategyCustomization)} */
+  @SuppressWarnings("unused")
   public UpdateStrategy(int majorVersion,
                         @NotNull BuildNumber currentBuild,
                         @NotNull UpdatesInfo updatesInfo,
                         @NotNull UserUpdateSettings updateSettings) {
+    this(majorVersion, currentBuild, updatesInfo, updateSettings, UpdateStrategyCustomization.getInstance());
+  }
+
+  public UpdateStrategy(int majorVersion,
+                        @NotNull BuildNumber currentBuild,
+                        @NotNull UpdatesInfo updatesInfo,
+                        @NotNull UserUpdateSettings updateSettings,
+                        @NotNull UpdateStrategyCustomization customization) {
     myMajorVersion = majorVersion;
     myCurrentBuild = currentBuild;
     myUpdatesInfo = updatesInfo;
     myUpdateSettings = updateSettings;
     myChannelStatus = updateSettings.getSelectedChannelStatus();
+    myStrategyCustomization = customization;
   }
 
   public final CheckForUpdateResult checkForUpdates() {
@@ -60,8 +72,6 @@ public class UpdateStrategy {
       }
     }
 
-    CheckForUpdateResult result = new CheckForUpdateResult(updatedChannel, newBuild, product.getAllChannelIds());
-
     UpdateChannel channelToPropose = null;
     for (UpdateChannel channel : product.getChannels()) {
       if (!myUpdateSettings.getKnownChannelsIds().contains(channel.getId()) &&
@@ -72,9 +82,8 @@ public class UpdateStrategy {
         channelToPropose = channel;
       }
     }
-    result.setChannelToPropose(channelToPropose);
 
-    return result;
+    return new CheckForUpdateResult(newBuild, updatedChannel, channelToPropose, product.getAllChannelIds());
   }
 
   private List<UpdateChannel> getActiveChannels(Product product) {
@@ -83,7 +92,7 @@ public class UpdateStrategy {
     for (UpdateChannel channel : product.getChannels()) {
       // If the update is to a new version and on a stabler channel, choose it.
       if ((channel.getMajorVersion() >= myMajorVersion && channel.getStatus().compareTo(myChannelStatus) >= 0) &&
-          (UpdateStrategyCustomization.getInstance().allowMajorVersionUpdate() ||
+          (myStrategyCustomization.allowMajorVersionUpdate() ||
            channel.getMajorVersion() == myMajorVersion ||
            channel.getStatus() == ChannelStatus.EAP && myChannelStatus == ChannelStatus.EAP)) {
         // Prefer channel that has same status as our selected channel status

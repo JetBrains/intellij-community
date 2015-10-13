@@ -94,6 +94,7 @@ public class ExtractMethodSignatureSuggester {
     if (duplicates != null && !duplicates.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode() || 
           new PreviewDialog(method, myExtractedMethod, methodCall, myMethodCall, duplicates.size()).showAndGet()) {
+        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
         WriteCommandAction.runWriteCommandAction(myProject, new Runnable() {
           @Override
           public void run() {

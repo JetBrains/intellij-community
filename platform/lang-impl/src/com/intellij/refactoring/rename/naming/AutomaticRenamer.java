@@ -132,7 +132,7 @@ public abstract class AutomaticRenamer {
     for (int varIndex = myElements.size() - 1; varIndex >= 0; varIndex--) {
       final PsiNamedElement element = myElements.get(varIndex);
       final String name = element.getName();
-      if (!myRenames.containsKey(element)) {
+      if (!myRenames.containsKey(element) && name != null) {
         String newName = suggestNameForElement(element, suggester, newClassName, oldClassName);
         if (!newName.equals(name)) {
           myRenames.put(element, newName);

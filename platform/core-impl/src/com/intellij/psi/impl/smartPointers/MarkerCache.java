@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.impl.event.RetargetRangeMarkers;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TLongObjectHashMap;
@@ -112,38 +111,15 @@ class MarkerCache {
   synchronized void updateMarkers(@NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
     TLongObjectHashMap<ManualRangeMarker> updated = getUpdatedMarkers(frozen, events);
 
-    for (SmartPsiElementPointerImpl pointer : myPointers.getAlivePointers()) {
-      SmartPointerElementInfo info = pointer.getElementInfo();
-      if (info instanceof SelfElementInfo) {
-        long key = ((SelfElementInfo)info).markerCacheKey();
-        if (key != 0) {
-          ManualRangeMarker newRangeMarker = updated.get(key);
-          ProperTextRange newRange = newRangeMarker == null ? null : newRangeMarker.getRange();
-          ((SelfElementInfo)info).setRange(newRange);
-
-          if (newRange != null && !(pointer instanceof SmartPsiFileRangePointerImpl)) {
-            updatePointerTarget(pointer, newRange);
-          }
-        }
-
+    for (SelfElementInfo info : getInfos()) {
+      long key = info.markerCacheKey();
+      if (key != 0) {
+        ManualRangeMarker newRangeMarker = updated.get(key);
+        info.setRange(newRangeMarker == null ? null : newRangeMarker.getRange());
       }
     }
 
     myUpdatedRanges = null;
-  }
-
-  // after reparse and its complex tree diff, the element might have "moved" to other range
-  // but if an element of the same type can still be found at the old range, let's point there
-  private static <E extends PsiElement> void updatePointerTarget(@NotNull SmartPsiElementPointerImpl<E> pointer, @NotNull ProperTextRange newRange) {
-    E cachedElement = pointer.getCachedElement();
-    if (cachedElement == null || cachedElement.isValid() && newRange.equals(cachedElement.getTextRange())) {
-      return;
-    }
-
-    E newTarget = pointer.doRestoreElement();
-    if (newTarget != null) {
-      pointer.cacheElement(newTarget);
-    }
   }
 
   @NotNull

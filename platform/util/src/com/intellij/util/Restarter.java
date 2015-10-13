@@ -96,8 +96,10 @@ public class Restarter {
       output.write("#!/bin/sh\n");
       for (int i = 0; i < beforeRestart.length; i++) {
         output.write(beforeRestart[i]);
-        output.write(i == beforeRestart.length - 1 ? '\n' : ' ');
+        if (i <= beforeRestart.length - 2) output.write(' ');
+        if (i >= beforeRestart.length - 2) output.write('"');
       }
+      output.write('\n');
     }
     finally {
       output.close();

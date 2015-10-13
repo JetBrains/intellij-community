@@ -59,7 +59,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   private static final NotificationGroup GROUP = new NotificationGroup("System Health", NotificationDisplayType.STICKY_BALLOON, false);
   private static final NotificationGroup LOG_GROUP = NotificationGroup.logOnlyGroup("System Health (minor)");
 
-  @NotNull private final PropertiesComponent myProperties;
+  private final PropertiesComponent myProperties;
 
   public SystemHealthMonitor(@NotNull PropertiesComponent properties) {
     myProperties = properties;

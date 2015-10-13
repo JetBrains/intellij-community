@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,7 +80,7 @@ public class PathEnvironmentVariableUtil {
   @Nullable
   private static File findInPath(@NotNull String fileBaseName, boolean logDetails, @Nullable FileFilter filter) {
     List<File> exeFiles = findExeFilesInPath(fileBaseName, true, logDetails, filter);
-    return exeFiles.size() > 0 ? exeFiles.get(0) : null;
+    return ContainerUtil.getFirstItem(exeFiles);
   }
 
   /**
@@ -91,15 +92,9 @@ public class PathEnvironmentVariableUtil {
    * @return {@link File} instance or null if not found
    */
   private static File findInOriginalPath(@NotNull String fileBaseName) {
-    String originalPath;
-    if (SystemInfo.isMac) {
-      originalPath = System.getenv(PATH_ENV_VAR_NAME);
-    }
-    else {
-      originalPath = EnvironmentUtil.getValue(PATH_ENV_VAR_NAME);
-    }
+    String originalPath = System.getenv(PATH_ENV_VAR_NAME);
     List<File> exeFiles = doFindExeFilesInPath(originalPath, fileBaseName, true, false, null);
-    return exeFiles.size() > 0 ? exeFiles.get(0) : null;
+    return ContainerUtil.getFirstItem(exeFiles);
   }
 
   /**
@@ -165,17 +160,34 @@ public class PathEnvironmentVariableUtil {
   }
 
   /**
-   * Finds the absolute path of an executable file in PATH by the given relative path.
-   * This method makes sense for Mac only, because other OSs pass correct environment variables to IDE process
-   * letting {@link ProcessBuilder#start} sees correct PATH environment variable.
+   * Alters the passed in exe path to increase probability of exe file success finding when
+   * spawning an external process. Modifications are performed iff the passed in exe path is
+   * a basename (i.e. it doesn't contain slashes). E.g. "java", "git" or "node".
+   * <p>
+   * The motivation behind this modification is as follows. When exe path is a basename,
+   * {@link ProcessBuilder#start} searches for the executable file in the original PATH
+   * environment variable (i.e. {@code System.getenv("PATH")}).
+   * The problem is that on MacOSX original PATH value can be different than the PATH
+   * value in Terminal (see {@link EnvironmentUtil#getEnvironmentMap()}.
    *
-   * @param exePath String relative path (or just a base name)
-   * @return the absolute path if the executable file found, and the given {@code exePath} otherwise
+   * @param exePath String path to exe file (basename, relative path or absolute path)
+   * @return if an exe file can be found in {@code EnvironmentUtil.getValue("PATH")} and
+   *            nothing found in original PATH (i.e. {@code System.getenv("PATH")}),
+   *         return the found exe file absolute path.
+   *         Otherwise, return the passed in exe path.
    */
   @NotNull
+  public static String toLocatableExePath(@NotNull String exePath) {
+    //noinspection deprecation
+    return findAbsolutePathOnMac(exePath);
+  }
+
+  /**
+   * @deprecated use {@link #toLocatableExePath(String)} instead
+   */
   public static String findAbsolutePathOnMac(@NotNull String exePath) {
     if (SystemInfo.isMac) {
-      if (!exePath.contains(File.separator)) {
+      if (!StringUtil.containsChar(exePath, '/') && !StringUtil.containsChar(exePath, '\\')) {
         File originalResolvedExeFile = findInOriginalPath(exePath);
         // don't modify exePath if the absolute path can be found in the original PATH
         if (originalResolvedExeFile == null) {

@@ -24,6 +24,7 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.*
 import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -117,9 +118,7 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
 
   private fun isReloadUnblocked(): Boolean {
     val count = reloadBlockCount.get()
-    if (LOG.isDebugEnabled) {
-      LOG.debug("[RELOAD] myReloadBlockCount = $count")
-    }
+    LOG.debug { "[RELOAD] myReloadBlockCount = $count" }
     return count == 0
   }
 

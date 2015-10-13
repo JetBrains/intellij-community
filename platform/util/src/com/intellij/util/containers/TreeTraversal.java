@@ -194,7 +194,7 @@ public abstract class TreeTraversal {
     @NotNull
     @Override
     public <T> It<T> createIterator(@NotNull Iterable<? extends T> roots, @NotNull Function<T, ? extends Iterable<? extends T>> tree) {
-      return new BfsIterator<T>(roots, tree);
+      return new PlainBfsIt<T>(roots, tree);
     }
   };
 
@@ -327,22 +327,26 @@ public abstract class TreeTraversal {
   // Iterators: BFS
   // -----------------------------------------------------------------------------
 
-  private static final class BfsIterator<T> extends It<T> {
+  private static final class PlainBfsIt<T> extends It<T> {
 
     final Function<T, ? extends Iterable<? extends T>> tree;
     final ArrayDeque<T> queue = new ArrayDeque<T>();
+    P<T> top;
 
-    BfsIterator(@NotNull Iterable<? extends T> roots, Function<T, ? extends Iterable<? extends T>> tree) {
+    PlainBfsIt(@NotNull Iterable<? extends T> roots, Function<T, ? extends Iterable<? extends T>> tree) {
       this.tree = tree;
       JBIterable.from(roots).addAllTo(queue);
     }
 
     @Override
     public T nextImpl() {
+      if (top != null) {
+        JBIterable.from(top.iterable(tree)).addAllTo(queue);
+        top = null;
+      }
       if (queue.isEmpty()) return stop();
-      T result = queue.remove();
-      JBIterable.from(tree.fun(result)).addAllTo(queue);
-      return result;
+      top = P.create(queue.remove());
+      return top.node;
     }
   }
 
@@ -374,7 +378,7 @@ public abstract class TreeTraversal {
     final Function<T, ? extends Iterable<? extends T>> tree;
     final ArrayDeque<T> queue = new ArrayDeque<T>();
     final Map<T, T> paths = ContainerUtil.newTroveMap(ContainerUtil.<T>identityStrategy());
-    T cur;
+    P<T> top;
 
     TracingBfsIt(@NotNull Iterable<? extends T> roots, Function<T, ? extends Iterable<? extends T>> tree) {
       this.tree = tree;
@@ -383,25 +387,30 @@ public abstract class TreeTraversal {
 
     @Override
     public T nextImpl() {
-      if (queue.isEmpty()) return stop();
-      T result = queue.remove();
-      for (T t : JBIterable.from(tree.fun(result))) {
-        if (paths.containsKey(t)) continue;
-        queue.add(t);
-        paths.put(t, result);
+      if (top != null) {
+        for (T t : top.iterable(tree)) {
+          if (paths.containsKey(t)) continue;
+          queue.add(t);
+          paths.put(t, top.node);
+        }
+        top = null;
       }
-      return cur = result;
+      if (queue.isEmpty()) return stop();
+      top = P.create(queue.remove());
+      return top.node;
     }
 
     @Override
     public T parent() {
-      return paths.get(cur);
+      if (top == null) throw new NoSuchElementException();
+      return paths.get(top.node);
     }
 
     @NotNull
     @Override
     public JBIterable<T> backtrace() {
-      final T first = cur;
+      if (top == null) throw new NoSuchElementException();
+      final T first = top.node;
       return new JBIterable<T>() {
         @Override
         public Iterator<T> iterator() {
@@ -490,11 +499,15 @@ public abstract class TreeTraversal {
 
     Iterator<? extends T> iterator(@NotNull Function<T, ? extends Iterable<? extends T>> tree) {
       if (it != null) return it;
-      it = (itle != null ? itle : JBIterable.from(itle = tree.fun(node))).iterator();
+      it = iterable(tree).iterator();
       empty = itle == null || !it.hasNext();
       return it;
     }
-    
+
+    Iterable<? extends T> iterable(@NotNull Function<T, ? extends Iterable<? extends T>> tree) {
+      return itle != null ? itle : JBIterable.from(itle = tree.fun(node));
+    }
+
     static <T> P<T> create(T node) {
       P<T> p = new P<T>();
       p.node = node;

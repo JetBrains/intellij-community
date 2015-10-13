@@ -252,7 +252,7 @@ public class StartupManagerImpl extends StartupManagerEx {
   private void checkFsSanity() {
     try {
       String path = myProject.getProjectFilePath();
-      if (path == null) {
+      if (path == null || FileUtil.isAncestor(PathManager.getConfigPath(), path, true)) {
         return;
       }
 

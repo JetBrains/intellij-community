@@ -33,19 +33,19 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.File
 
-fun createProjectAndUseInLoadComponentStateMode(tempDirManager: TemporaryDirectory, task: (Project) -> Unit) {
-  createOrLoadProject(tempDirManager, task)
+fun createProjectAndUseInLoadComponentStateMode(tempDirManager: TemporaryDirectory, directoryBased: Boolean = false, task: (Project) -> Unit) {
+  createOrLoadProject(tempDirManager, task, directoryBased = directoryBased)
 }
 
-fun loadAndUseProject(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String)? = null, task: (Project) -> Unit) {
-  createOrLoadProject(tempDirManager, task, projectCreator)
+fun loadAndUseProject(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String), task: (Project) -> Unit) {
+  createOrLoadProject(tempDirManager, task, projectCreator, false)
 }
 
-private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Project) -> Unit, projectCreator: ((VirtualFile) -> String)? = null) {
+private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Project) -> Unit, projectCreator: ((VirtualFile) -> String)? = null, directoryBased: Boolean) {
   runInEdtAndWait {
     var filePath: String
     if (projectCreator == null) {
-      filePath = tempDirManager.newDirectory("test${ProjectFileType.DOT_DEFAULT_EXTENSION}").systemIndependentPath
+      filePath = tempDirManager.newDirectory("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}").systemIndependentPath
     }
     else {
       filePath = runWriteAction { projectCreator(tempDirManager.newVirtualDirectory()) }

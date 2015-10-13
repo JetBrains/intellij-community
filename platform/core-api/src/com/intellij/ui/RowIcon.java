@@ -109,4 +109,9 @@ public class RowIcon implements Icon {
     myWidth = width;
     myHeight = height;
   }
+
+  @Override
+  public String toString() {
+    return "Row icon. myIcons=" + Arrays.asList(myIcons);
+  }
 }

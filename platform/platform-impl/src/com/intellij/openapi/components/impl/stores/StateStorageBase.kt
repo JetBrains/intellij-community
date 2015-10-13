@@ -17,14 +17,13 @@ package com.intellij.openapi.components.impl.stores
 
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import org.jdom.Element
 import java.util.concurrent.atomic.AtomicReference
 
-abstract class StateStorageBase<T : Any> : StateStorage {
-  companion object {
-    private val LOG: Logger = Logger.getInstance(StateStorageBase::class.java)
-  }
+private val LOG: Logger = Logger.getInstance(StateStorageBase::class.java)
 
+abstract class StateStorageBase<T : Any> : StateStorage {
   private var mySavingDisabled = false
 
   protected val storageDataRef: AtomicReference<T> = AtomicReference()
@@ -45,13 +44,11 @@ abstract class StateStorageBase<T : Any> : StateStorage {
 
   protected abstract fun hasState(storageData: T, componentName: String): Boolean
 
-  override fun hasState(componentName: String, reloadData: Boolean): Boolean {
+  override final fun hasState(componentName: String, reloadData: Boolean): Boolean {
     return hasState(getStorageData(reloadData), componentName)
   }
 
-  public fun getStorageData(): T = getStorageData(false)
-
-  protected fun getStorageData(reload: Boolean): T {
+  protected fun getStorageData(reload: Boolean = false): T {
     val storageData = storageDataRef.get()
     if (storageData != null && !reload) {
       return storageData
@@ -69,23 +66,17 @@ abstract class StateStorageBase<T : Any> : StateStorage {
   protected abstract fun loadData(): T
 
   public fun disableSaving() {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Disabled saving for " + toString())
-    }
+    LOG.debug { "Disabled saving for ${toString()}" }
     mySavingDisabled = true
   }
 
   public fun enableSaving() {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Enabled saving " + toString())
-    }
+    LOG.debug { "Enabled saving ${toString()}" }
     mySavingDisabled = false
   }
 
   protected fun checkIsSavingDisabled(): Boolean {
-    if (mySavingDisabled && LOG.isDebugEnabled()) {
-      LOG.debug("Saving disabled for " + toString())
-    }
+    LOG.debug { "Saving disabled for ${toString()}" }
     return mySavingDisabled
   }
 }
