@@ -54,6 +54,7 @@ import com.jetbrains.python.documentation.docstrings.DocStringTypeReference;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.packaging.PyPIPackageUtil;
+import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -607,7 +608,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           final String packageName = components.get(0);
           final Module module = ModuleUtilCore.findModuleForPsiElement(node);
           final Sdk sdk = PythonSdkType.findPythonSdk(module);
-          if (module != null && sdk != null) {
+          if (module != null && sdk != null && PyPackageUtil.packageManagementEnabled(sdk)) {
             if (PyPIPackageUtil.INSTANCE.isInPyPI(packageName)) {
               addInstallPackageAction(actions, packageName, module, sdk);
             }
