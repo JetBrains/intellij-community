@@ -212,10 +212,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
       if (sdk != null) {
         try {
           final PyPackage ipython = PyPackageManager.getInstance(sdk).findPackage("ipython", true);
-          if (ipython == null || VersionComparatorUtil.compare(ipython.getVersion(), "3.0") > 0) {
-            return new IpnbConnectionV3(urlString, listener);
-          }
-          else {
+          if (ipython != null && VersionComparatorUtil.compare(ipython.getVersion(), "3.0") <= 0) {
             return new IpnbConnection(urlString, listener);
           }
         }
