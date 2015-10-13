@@ -16,6 +16,8 @@
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.util.Computable;
+import com.intellij.util.ExceptionUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Thrown on accessing indices when they're not ready, in so-called dumb mode. Possible fixes:
@@ -47,9 +49,22 @@ import com.intellij.openapi.util.Computable;
  * @see DumbAware
  */
 public class IndexNotReadyException extends RuntimeException {
+  private final Throwable myStartTrace;
+
+  public IndexNotReadyException() {
+    this(null);
+  }
+
+  public IndexNotReadyException(@Nullable Throwable startTrace) {
+    myStartTrace = startTrace;
+  }
 
   @Override
   public String getMessage() {
-    return "Please change caller according to " + IndexNotReadyException.class.getName() + " documentation";
+    String msg = "Please change caller according to " + IndexNotReadyException.class.getName() + " documentation";
+    if (myStartTrace != null) {
+      msg += "\nIndexing started at: " + ExceptionUtil.getThrowableText(myStartTrace) + "\n-----------------------------\n";
+    }
+    return msg;
   }
 }

@@ -868,7 +868,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
     }
 
-    throw new IndexNotReadyException();
+    throw new IndexNotReadyException(project == null ? null : DumbServiceImpl.getInstance(project).getDumbModeStartTrace());
   }
 
   @Override
