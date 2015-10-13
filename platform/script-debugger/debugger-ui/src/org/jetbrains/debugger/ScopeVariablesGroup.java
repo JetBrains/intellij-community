@@ -13,139 +13,82 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.debugger;
+package org.jetbrains.debugger
 
-import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XValueChildrenList;
-import com.intellij.xdebugger.frame.XValueGroup;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.concurrency.Promise;
+import com.intellij.xdebugger.XDebuggerBundle
+import com.intellij.xdebugger.frame.XCompositeNode
+import com.intellij.xdebugger.frame.XValueChildrenList
+import com.intellij.xdebugger.frame.XValueGroup
 
-import java.util.List;
+class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, callFrame: CallFrame?) : XValueGroup(createScopeNodeName(scope)) {
+  private val context = createVariableContext(scope, parentContext, callFrame)
 
-public class ScopeVariablesGroup extends XValueGroup {
-  private final Scope scope;
-  private final VariableContext context;
+  private val callFrame = if (scope.type == Scope.Type.LOCAL) callFrame else null
 
-  private final CallFrame callFrame;
+  override fun isAutoExpand() = scope.type == Scope.Type.LOCAL || scope.type == Scope.Type.CATCH
 
-  public ScopeVariablesGroup(@NotNull Scope scope, @NotNull VariableContext parentContext, @Nullable CallFrame callFrame) {
-    super(createScopeNodeName(scope));
-
-    this.scope = scope;
-    context = createVariableContext(scope, parentContext, callFrame);
-    this.callFrame = scope.getType() == Scope.Type.LOCAL ? callFrame : null;
+  override fun getComment(): String? {
+    val className = scope.description
+    return if ("Object" == className) null else className
   }
 
-  // public only for tests
-  @NotNull
-  public static VariableContext createVariableContext(@NotNull Scope scope, @NotNull VariableContext parentContext, @Nullable CallFrame callFrame) {
-    if (callFrame == null || scope.getType() == Scope.Type.LIBRARY) {
-      // functions scopes - we can watch variables only from global scope
-      return new ParentlessVariableContext(parentContext, scope, scope.getType() == Scope.Type.GLOBAL);
+  override fun computeChildren(node: XCompositeNode) {
+    val promise = processScopeVariables(scope, node, context, callFrame == null)
+    if (callFrame == null) {
+      return
     }
-    else {
-      return new VariableContextWrapper(parentContext, scope);
-    }
+
+    promise.done(object : ObsolescentConsumer<Void>(node) {
+      override fun consume(ignored: Void) {
+        callFrame.receiverVariable.done(object : ObsolescentConsumer<Variable>(node) {
+          override fun consume(variable: Variable?) {
+            node.addChildren(if (variable == null) XValueChildrenList.EMPTY else XValueChildrenList.singleton(VariableView(variable, context)), true)
+          }
+        }).rejected(object : ObsolescentConsumer<Throwable>(node) {
+          override fun consume(error: Throwable?) {
+            node.addChildren(XValueChildrenList.EMPTY, true)
+          }
+        })
+      }
+    })
   }
+}
 
-  @TestOnly
-  @NotNull
-  public Scope getScope() {
-    return scope;
+fun createAndAddScopeList(node: XCompositeNode, scopes: List<Scope>, context: VariableContext, callFrame: CallFrame?) {
+  val list = XValueChildrenList(scopes.size())
+  for (scope in scopes) {
+    list.addTopGroup(ScopeVariablesGroup(scope, context, callFrame))
   }
+  node.addChildren(list, true)
+}
 
-  public static void createAndAddScopeList(@NotNull XCompositeNode node, @NotNull List<Scope> scopes, @NotNull VariableContext context, @Nullable CallFrame callFrame) {
-    XValueChildrenList list = new XValueChildrenList(scopes.size());
-    for (Scope scope : scopes) {
-      list.addTopGroup(new ScopeVariablesGroup(scope, context, callFrame));
-    }
-    node.addChildren(list, true);
+fun createVariableContext(scope: Scope, parentContext: VariableContext, callFrame: CallFrame?): VariableContext {
+  if (callFrame == null || scope.type == Scope.Type.LIBRARY) {
+    // functions scopes - we can watch variables only from global scope
+    return ParentlessVariableContext(parentContext, scope, scope.type == Scope.Type.GLOBAL)
   }
-
-  private static String createScopeNodeName(@NotNull Scope scope) {
-    switch (scope.getType()) {
-      case GLOBAL:
-        return XDebuggerBundle.message("scope.global");
-      case LOCAL:
-        return XDebuggerBundle.message("scope.local");
-      case WITH:
-        return XDebuggerBundle.message("scope.with");
-      case CLOSURE:
-        return XDebuggerBundle.message("scope.closure");
-      case CATCH:
-        return XDebuggerBundle.message("scope.catch");
-      case LIBRARY:
-        return XDebuggerBundle.message("scope.library");
-      case INSTANCE:
-        return XDebuggerBundle.message("scope.instance");
-      case CLASS:
-        return XDebuggerBundle.message("scope.class");
-      case UNKNOWN:
-        return XDebuggerBundle.message("scope.unknown");
-      default:
-        throw new IllegalArgumentException(scope.getType().name());
-    }
+  else {
+    return VariableContextWrapper(parentContext, scope)
   }
+}
 
-  @Override
-  public boolean isAutoExpand() {
-    return scope.getType() == Scope.Type.LOCAL || scope.getType() == Scope.Type.CATCH;
-  }
+private class ParentlessVariableContext(parentContext: VariableContext, scope: Scope, private val watchableAsEvaluationExpression: Boolean) : VariableContextWrapper(parentContext, scope) {
+  override fun watchableAsEvaluationExpression() = watchableAsEvaluationExpression
 
-  @Nullable
-  @Override
-  public String getComment() {
-    String className = scope.getDescription();
-    return "Object".equals(className) ? null : className;
-  }
+  override fun getParent() = null
+}
 
-  @Override
-  public void computeChildren(final @NotNull XCompositeNode node) {
-    Promise<Void> promise = VariablesKt.processScopeVariables(scope, node, context, callFrame == null);
-    if (callFrame != null) {
-      promise.done(new ObsolescentConsumer<Void>(node) {
-        @Override
-        public void consume(Void ignored) {
-          callFrame.getReceiverVariable()
-            .done(new ObsolescentConsumer<Variable>(node) {
-              @Override
-              public void consume(Variable variable) {
-                node.addChildren(variable == null ? XValueChildrenList.EMPTY : XValueChildrenList.singleton(VariableViewKt.VariableView(variable, context)), true);
-              }
-            })
-            .rejected(new ObsolescentConsumer<Throwable>(node) {
-              @Override
-              public void consume(@Nullable Throwable error) {
-                node.addChildren(XValueChildrenList.EMPTY, true);
-              }
-            });
-        }
-      });
-    }
-  }
-
-  private static final class ParentlessVariableContext extends VariableContextWrapper {
-    private final boolean watchableAsEvaluationExpression;
-
-    public ParentlessVariableContext(@NotNull VariableContext parentContext, @NotNull Scope scope, boolean watchableAsEvaluationExpression) {
-      super(parentContext, scope);
-
-      this.watchableAsEvaluationExpression = watchableAsEvaluationExpression;
-    }
-
-    @Override
-    public boolean watchableAsEvaluationExpression() {
-      return watchableAsEvaluationExpression;
-    }
-
-    @Nullable
-    @Override
-    public VariableContext getParent() {
-      return null;
-    }
+private fun createScopeNodeName(scope: Scope): String {
+  when (scope.type) {
+    Scope.Type.GLOBAL -> return XDebuggerBundle.message("scope.global")
+    Scope.Type.LOCAL -> return XDebuggerBundle.message("scope.local")
+    Scope.Type.WITH -> return XDebuggerBundle.message("scope.with")
+    Scope.Type.CLOSURE -> return XDebuggerBundle.message("scope.closure")
+    Scope.Type.CATCH -> return XDebuggerBundle.message("scope.catch")
+    Scope.Type.LIBRARY -> return XDebuggerBundle.message("scope.library")
+    Scope.Type.INSTANCE -> return XDebuggerBundle.message("scope.instance")
+    Scope.Type.CLASS -> return XDebuggerBundle.message("scope.class")
+    Scope.Type.UNKNOWN -> return XDebuggerBundle.message("scope.unknown")
+    else -> throw IllegalArgumentException(scope.type.name())
   }
 }
