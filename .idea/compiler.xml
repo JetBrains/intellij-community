@@ -42,7 +42,7 @@
       <module name="groovy_rt" target="1.5" />
       <module name="intellilang-jps-plugin" target="1.6" />
       <module name="IntelliLang-tests" target="1.8" />
-      <module name="java-runtime" target="1.3" />
+      <module name="java-runtime" target="1.1" />
       <module name="java-tests" target="1.8" />
       <module name="javac2" target="1.5" />
       <module name="javaFX-jps-plugin" target="1.6" />
@@ -53,7 +53,7 @@
       <module name="jps-model-serialization" target="1.6" />
       <module name="jps-standalone-builder" target="1.6" />
       <module name="json-tests" target="1.8" />
-      <module name="junit_rt" target="1.3" />
+      <module name="junit_rt" target="1.1" />
       <module name="lang-tests" target="1.8" />
       <module name="maven-jps-plugin" target="1.6" />
       <module name="platform-tests" target="1.8" />
