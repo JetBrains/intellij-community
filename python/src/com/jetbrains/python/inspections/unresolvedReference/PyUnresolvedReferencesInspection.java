@@ -274,14 +274,20 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     @Override
+    public void visitComment(PsiComment comment) {
+      super.visitComment(comment);
+      if (comment instanceof PsiLanguageInjectionHost) {
+        processInjection((PsiLanguageInjectionHost)comment);
+      }
+    }
+
+    @Override
     public void visitPyElement(final PyElement node) {
       super.visitPyElement(node);
       final PsiFile file = node.getContainingFile();
-      final InjectedLanguageManager injectedLanguageManager =
-        InjectedLanguageManager.getInstance(node.getProject());
+      final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(node.getProject());
       if (injectedLanguageManager.isInjectedFragment(file)) {
-        final PsiLanguageInjectionHost host =
-          injectedLanguageManager.getInjectionHost(node);
+        final PsiLanguageInjectionHost host = injectedLanguageManager.getInjectionHost(node);
         processInjection(host);
       }
       if (node instanceof PyReferenceOwner) {
@@ -300,8 +306,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
     private void processInjection(@Nullable PsiLanguageInjectionHost node) {
       if (node == null) return;
-      final List<Pair<PsiElement, TextRange>>
-        files = InjectedLanguageManager.getInstance(node.getProject()).getInjectedPsiFiles(node);
+      final List<Pair<PsiElement, TextRange>> files = InjectedLanguageManager.getInstance(node.getProject()).getInjectedPsiFiles(node);
       if (files != null) {
         for (Pair<PsiElement, TextRange> pair : files) {
           new PyRecursiveElementVisitor() {
