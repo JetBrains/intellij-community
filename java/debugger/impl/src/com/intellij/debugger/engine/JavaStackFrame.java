@@ -279,7 +279,7 @@ public class JavaStackFrame extends XStackFrame {
       else {
         final SourcePosition sourcePosition = debuggerContext.getSourcePosition();
         final Map<String, LocalVariableProxyImpl> visibleVariables =
-          ContainerUtil.map2Map(getVisibleVariables(getStackFrameProxy()),
+          ContainerUtil.map2Map(getVisibleVariables(),
                                 new Function<LocalVariableProxyImpl, Pair<String, LocalVariableProxyImpl>>() {
                                   @Override
                                   public Pair<String, LocalVariableProxyImpl> fun(LocalVariableProxyImpl var) {
@@ -392,7 +392,7 @@ public class JavaStackFrame extends XStackFrame {
   }
 
   protected void superBuildVariables(final EvaluationContextImpl evaluationContext, XValueChildrenList children) throws EvaluateException {
-    for (LocalVariableProxyImpl local : getVisibleVariables(getStackFrameProxy())) {
+    for (LocalVariableProxyImpl local : getVisibleVariables()) {
       children.add(JavaValue.create(myNodeManager.getLocalVariableDescriptor(null, local), evaluationContext, myNodeManager));
     }
   }
@@ -537,8 +537,8 @@ public class JavaStackFrame extends XStackFrame {
     }
   }
 
-  protected List<LocalVariableProxyImpl> getVisibleVariables(StackFrameProxyImpl frame) throws EvaluateException {
-    return frame.visibleVariables();
+  protected List<LocalVariableProxyImpl> getVisibleVariables() throws EvaluateException {
+    return getStackFrameProxy().visibleVariables();
   }
 
   private static boolean shouldSkipLine(final PsiFile file, Document doc, int line) {
