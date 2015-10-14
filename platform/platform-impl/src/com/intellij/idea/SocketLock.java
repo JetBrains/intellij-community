@@ -137,6 +137,7 @@ public final class SocketLock {
         byte[] portBytes = Integer.toString(myServer.getPort()).getBytes(CharsetToolkit.UTF8_CHARSET);
         FileUtil.writeToFile(portMarkerC, portBytes);
         FileUtil.writeToFile(portMarkerS, portBytes);
+        log("exit: lock(): succeed");
         return ActivateStatus.NO_INSTANCE;
       }
     });
@@ -174,6 +175,7 @@ public final class SocketLock {
 
   @NotNull
   private static ActivateStatus tryActivate(int portNumber, @NotNull Collection<String> paths, @NotNull String[] args) {
+    log("trying: port=%s", portNumber);
     try {
       Socket socket = new Socket(NetUtils.getLoopbackAddress(), portNumber);
       try {
@@ -184,11 +186,13 @@ public final class SocketLock {
         while (true) {
           try {
             String path = in.readUTF();
+            log("read: path=%s", path);
             if (paths.contains(path)) {
               result = true;  // don't break - read all input
             }
           }
-          catch (IOException ignored) {
+          catch (IOException e) {
+            log("read: %s", e.getMessage());
             break;
           }
         }
@@ -199,6 +203,7 @@ public final class SocketLock {
             out.writeUTF(ACTIVATE_COMMAND + new File(".").getAbsolutePath() + "\0" + StringUtil.join(args, "\0"));
             out.flush();
             String response = in.readUTF();
+            log("read: response=%s", response);
             if (response.equals("ok")) {
               return ActivateStatus.ACTIVATED;
             }
