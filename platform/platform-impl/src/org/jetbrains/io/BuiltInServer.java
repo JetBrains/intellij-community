@@ -32,8 +32,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 public class BuiltInServer implements Disposable {
-  static final Logger LOG = Logger.getInstance(BuiltInServer.class);
-
   // Some antiviral software detect viruses by the fact of accessing these ports so we should not touch them to appear innocent.
   private static final int[] FORBIDDEN_PORTS = {6953, 6969, 6970};
 
@@ -68,7 +66,7 @@ public class BuiltInServer implements Disposable {
   @Override
   public void dispose() {
     channelRegistrar.close(isOwnerOfEventLoopGroup);
-    LOG.info("web server stopped");
+    Logger.getInstance(BuiltInServer.class).info("web server stopped");
   }
 
   @NotNull
@@ -130,7 +128,7 @@ public class BuiltInServer implements Disposable {
       }
     }
 
-    LOG.info("We cannot bind to our default range, so, try to bind to any free port");
+    Logger.getInstance(BuiltInServer.class).info("We cannot bind to our default range, so, try to bind to any free port");
     ChannelFuture future = bootstrap.bind(address, 0).awaitUninterruptibly();
     if (future.isSuccess()) {
       channelRegistrar.add(future.channel());
