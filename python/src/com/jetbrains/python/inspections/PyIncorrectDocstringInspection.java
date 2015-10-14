@@ -38,44 +38,39 @@ import java.util.Map;
 public class PyIncorrectDocstringInspection extends PyBaseDocstringInspection {
   @NotNull
   @Override
-  public Visitor buildVisitor(@NotNull ProblemsHolder holder,
-                              boolean isOnTheFly,
-                              @NotNull LocalInspectionToolSession session) {
+  public Visitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, session) {
 
       @Override
       protected void checkDocString(@NotNull PyDocStringOwner node) {
-        super.checkDocString(node);
-        final PyStringLiteralExpression docStringExpression1 = node.getDocStringExpression();
-        if (docStringExpression1 != null) {
-          checkParameters(node, docStringExpression1);
+        final PyStringLiteralExpression docstringExpr = node.getDocStringExpression();
+        if (docstringExpr != null) {
+          checkParameters(node, docstringExpr);
         }
       }
 
-      private boolean checkParameters(@NotNull PyDocStringOwner pyDocStringOwner, @NotNull PyStringLiteralExpression node) {
+      private void checkParameters(@NotNull PyDocStringOwner pyDocStringOwner, @NotNull PyStringLiteralExpression node) {
         final String text = node.getText();
         if (text == null) {
-          return false;
+          return;
         }
 
         final StructuredDocString docString = DocStringUtil.parse(text, node);
 
         if (docString instanceof PlainDocString) {
-          return false;
+          return;
         }
 
         if (pyDocStringOwner instanceof PyFunction) {
           final PyParameter[] realParams = ((PyFunction)pyDocStringOwner).getParameterList().getParameters();
 
           final List<PyNamedParameter> missingParams = getMissingParams(docString, realParams);
-          boolean registered = false;
           if (!missingParams.isEmpty()) {
             for (PyNamedParameter param : missingParams) {
               registerProblem(param, 
                               PyBundle.message("INSP.missing.parameter.in.docstring", param.getName()), 
                               new DocstringQuickFix(param, null));
             }
-            registered = true;
           }
           final List<Substring> unexpectedParams = getUnexpectedParams(docString, realParams);
           if (!unexpectedParams.isEmpty()) {
@@ -88,11 +83,8 @@ public class PyIncorrectDocstringInspection extends PyBaseDocstringInspection {
                                        new DocstringQuickFix(null, param.getValue()));
               }
             }
-            registered = true;
           }
-          return registered;
         }
-        return false;
       }
     };
   }
