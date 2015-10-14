@@ -17,6 +17,7 @@ package com.jetbrains.python.codeInsight;
 
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
@@ -39,7 +40,7 @@ public class PyInjectionUtil {
     private final boolean myInjected;
     private final boolean myStrict;
 
-    private InjectionResult(boolean injected, boolean strict) {
+    public InjectionResult(boolean injected, boolean strict) {
       myInjected = injected;
       myStrict = strict;
     }
@@ -57,8 +58,9 @@ public class PyInjectionUtil {
     }
   }
 
-  public static final List<Class<? extends PyExpression>> ELEMENTS_TO_INJECT_IN =
-    Arrays.asList(PyStringLiteralExpression.class, PyParenthesizedExpression.class, PyBinaryExpression.class, PyCallExpression.class);
+  public static final List<Class<? extends PsiElement>> ELEMENTS_TO_INJECT_IN =
+    Arrays.asList(PyStringLiteralExpression.class, PyParenthesizedExpression.class, PyBinaryExpression.class, PyCallExpression.class,
+                  PsiComment.class);
 
   private PyInjectionUtil() {}
 
@@ -86,10 +88,7 @@ public class PyInjectionUtil {
   }
 
   private static boolean isStringLiteralPart(@NotNull PsiElement element, @Nullable PsiElement context) {
-    if (element == context) {
-      return true;
-    }
-    else if (element instanceof PyStringLiteralExpression) {
+    if (element == context || element instanceof PyStringLiteralExpression || element instanceof PsiComment) {
       return true;
     }
     else if (element instanceof PyParenthesizedExpression) {
