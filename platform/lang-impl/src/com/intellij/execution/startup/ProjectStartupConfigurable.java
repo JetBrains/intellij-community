@@ -99,7 +99,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
   @Nullable
   @Override
   public String getHelpTopic() {
-    return null;
+    return "reference.settings.startup.tasks";
   }
 
   @Nullable
