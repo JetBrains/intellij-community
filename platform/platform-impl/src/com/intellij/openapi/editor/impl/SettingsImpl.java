@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -349,8 +349,11 @@ public class SettingsImpl implements EditorSettings {
   public int getTabSize(Project project) {
     if (myTabSize != null) return myTabSize.intValue();
     if (myCachedTabSize != null) return myCachedTabSize.intValue();
-    int tabSize = 0;
-    if (project != null && !project.isDisposed()) {
+    int tabSize;
+    if (project == null || project.isDisposed()) {
+      tabSize = CodeStyleSettingsManager.getSettings(null).getTabSize(null);
+    }
+    else  {
       PsiFile file = getPsiFile(project);
       tabSize = CodeStyleSettingsManager.getSettings(project).getIndentOptionsByFile(file).TAB_SIZE;
     }
