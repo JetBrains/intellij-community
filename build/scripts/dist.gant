@@ -80,6 +80,7 @@ target(compile: "Compile project") {
   }
 
   projectBuilder.targetFolder = "$out/classes"
+  clearBuildCaches()
   projectBuilder.cleanOutput()
   bundledJDKs()
   projectBuilder.buildProduction()

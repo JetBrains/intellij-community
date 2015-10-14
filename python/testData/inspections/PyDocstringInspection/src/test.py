@@ -12,3 +12,17 @@ class B:
 def bar():
   """"""
   pass
+
+
+class C:
+  @property
+  def x(self):
+      return 42
+
+  @x.setter
+  def x(self, value):
+      pass
+
+  @x.deleter
+  def x(self):
+      pass

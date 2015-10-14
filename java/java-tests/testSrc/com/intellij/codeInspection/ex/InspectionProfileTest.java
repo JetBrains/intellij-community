@@ -81,6 +81,27 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     return new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance(), base);
   }
 
+  public void testSameNameSharedProfile() throws Exception {
+    InspectionProfileManager profileManager = InspectionProfileManager.getInstance();
+    InspectionProfileImpl localProfile = createProfile();
+    profileManager.updateProfile(localProfile);
+
+    InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(getProject());
+    try {
+      //normally on open project profile wrappers are init for both managers
+      profileManager.updateProfile(localProfile);
+      InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), projectProfileManager,
+                                                                InspectionProfileImpl.getDefaultProfile());
+      projectProfileManager.updateProfile(profile);
+      projectProfileManager.setProjectProfile(profile.getName());
+
+      assertTrue(projectProfileManager.getInspectionProfile() == profile);
+    }
+    finally {
+      projectProfileManager.deleteProfile(PROFILE);
+    }
+  }
+
   public void testConvertOldProfile() throws Exception {
     Element element = JDOMUtil.loadDocument("<inspections version=\"1.0\">\n" +
                                             "  <option name=\"myName\" value=\"ToConvert\" />\n" +

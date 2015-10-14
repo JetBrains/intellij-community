@@ -71,7 +71,7 @@ public abstract class PyCommandLineTestCase extends PyTestCase {
     try {
       PythonCommandLineState state = getState(configuration, DefaultDebugExecutor.getDebugExecutorInstance());
       assert state != null;
-      return state.generateCommandLine(PyDebugRunner.createCommandLinePatchers(configuration.getProject(), state, configuration, PORT))
+      return state.generateCommandLine(new PyDebugRunner().createCommandLinePatchers(configuration.getProject(), state, configuration, PORT))
         .getParametersList()
         .getList();
     }
