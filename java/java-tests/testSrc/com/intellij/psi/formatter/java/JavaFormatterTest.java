@@ -92,6 +92,23 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+  
+  public void test_DoNot_JoinLines_If_KeepLineBreaksIsOn_WithMultipleAnnotations() {
+    getSettings().KEEP_LINE_BREAKS = true;
+    getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    doTextTest(
+      "public class Test<Param> {\n" +
+      "    @Override @SuppressWarnings(\"unchecked\")\n" +
+      "        void executeParallel(Param... params) {\n" +
+      "    }\n" +
+      "}",
+      "public class Test<Param> {\n" +
+      "    @Override @SuppressWarnings(\"unchecked\")\n" +
+      "    void executeParallel(Param... params) {\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 
   public void testNew() throws Exception {
     final CommonCodeStyleSettings settings = getSettings();
