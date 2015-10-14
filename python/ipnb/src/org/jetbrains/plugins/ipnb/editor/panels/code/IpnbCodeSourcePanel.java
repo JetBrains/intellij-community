@@ -106,13 +106,13 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
         final Rectangle cellBounds = IpnbCodeSourcePanel.this.getIpnbCodePanel().getBounds();
         final JScrollPane scrollPane = fileEditor.getScrollPane();
 
-        final double y = cellBounds.getY() + myEditor.visualPositionToXY(myEditor.getCaretModel().getVisualPosition()).getY();
-        int delta = myEditor.getLineHeight();
+        final int y = cellBounds.y + myEditor.visualPositionToXY(myEditor.getCaretModel().getVisualPosition()).y;
+        int delta = myEditor.getLineHeight() * 2;
         if (y <= rect.getY() && up) {
-          scrollPane.getVerticalScrollBar().setValue(rect.y - delta);
+          scrollPane.getVerticalScrollBar().setValue(y);
         }
         if (y + delta > rect.getY() + rect.getHeight() && !up) {
-          scrollPane.getVerticalScrollBar().setValue(rect.y + delta);
+          scrollPane.getVerticalScrollBar().setValue(y - rect.height + delta);
         }
       }
 
@@ -139,8 +139,9 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
           else if (keyCode == KeyEvent.VK_ENTER && InputEvent.SHIFT_DOWN_MASK == e.getModifiersEx()) {
             IpnbRunCellBaseAction.runCell(ipnbFilePanel, true);
           }
-          else if (keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_DOWN) {
-            updateVisibleArea(keyCode == KeyEvent.VK_UP);
+          else if (keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_DOWN || keyCode == KeyEvent.VK_PAGE_DOWN ||
+                   keyCode == KeyEvent.VK_PAGE_UP) {
+            updateVisibleArea(keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_PAGE_UP);
           }
         }
 
