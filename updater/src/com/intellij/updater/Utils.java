@@ -33,8 +33,6 @@ public class Utils {
       myTempDir.mkdirs();
       Runner.logger.info("created temp file: " + myTempDir.getPath());
     }
-    //File myTempFile = getTempFile(myTempDir + "/temp");
-    //return myTempFile;
     return getTempFile(myTempDir + "/temp");
   }
 
