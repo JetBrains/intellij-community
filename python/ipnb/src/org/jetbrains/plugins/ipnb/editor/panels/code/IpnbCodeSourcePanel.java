@@ -26,6 +26,7 @@ import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
+import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction;
 import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellBaseAction;
 import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellInplaceAction;
@@ -97,6 +98,24 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
         }
       }
 
+      private void updateVisibleArea(boolean up) {
+        final IpnbFileEditor fileEditor = myParent.getFileEditor();
+        final IpnbFilePanel ipnbPanel = fileEditor.getIpnbFilePanel();
+        final Rectangle rect = ipnbPanel.getVisibleRect();
+
+        final Rectangle cellBounds = IpnbCodeSourcePanel.this.getIpnbCodePanel().getBounds();
+        final JScrollPane scrollPane = fileEditor.getScrollPane();
+
+        final double y = cellBounds.getY() + myEditor.visualPositionToXY(myEditor.getCaretModel().getVisualPosition()).getY();
+        int delta = myEditor.getLineHeight();
+        if (y <= rect.getY() && up) {
+          scrollPane.getVerticalScrollBar().setValue(rect.y - delta);
+        }
+        if (y + delta > rect.getY() + rect.getHeight() && !up) {
+          scrollPane.getVerticalScrollBar().setValue(rect.y + delta);
+        }
+      }
+
       @Override
       public void keyReleased(KeyEvent e) {
         final int keyCode = e.getKeyCode();
@@ -119,6 +138,9 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
           }
           else if (keyCode == KeyEvent.VK_ENTER && InputEvent.SHIFT_DOWN_MASK == e.getModifiersEx()) {
             IpnbRunCellBaseAction.runCell(ipnbFilePanel, true);
+          }
+          else if (keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_DOWN) {
+            updateVisibleArea(keyCode == KeyEvent.VK_UP);
           }
         }
 
