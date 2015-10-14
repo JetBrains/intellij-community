@@ -17,7 +17,6 @@ package com.siyeh.ig.threading;
 
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiSynchronizedStatement;
 import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
@@ -58,7 +57,7 @@ public class EmptySynchronizedStatementInspection extends BaseInspection {
     public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
       super.visitSynchronizedStatement(statement);
       final PsiCodeBlock body = statement.getBody();
-      if (ControlFlowUtils.isEmptyCodeBlock(body)) {
+      if (!ControlFlowUtils.isEmptyCodeBlock(body)) {
         return;
       }
       registerStatementError(statement);
