@@ -619,5 +619,26 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
                     "};";
     doMethodTest(before, before);
   }
+  
+  public void testAnnotatedParameters() {
+    String before = "public class Formatting {\n" +
+                    "  @RequestMapping(value = \"/\", method = GET)\n" +
+                    "  public HttpEntity<String> helloWorld(@RequestParam(\"name\") String name, @PageableDefault(page = 0, size = 10)\n" +
+                    "  Pageable pageable) {\n" +
+                    "    // I'd expect the line above to be indented by 4 spaces\n" +
+                    "    return ResponseEntity.ok(\"Hello \" + name);\n" +
+                    "  }\n" +
+                    "}";
+    String after = "public class Formatting {\n" +
+                   "    @RequestMapping(value = \"/\", method = GET)\n" +
+                   "    public HttpEntity<String> helloWorld(@RequestParam(\"name\") String name, @PageableDefault(page = 0, size = 10)\n" +
+                   "            Pageable pageable) {\n" +
+                   "        // I'd expect the line above to be indented by 4 spaces\n" +
+                   "        return ResponseEntity.ok(\"Hello \" + name);\n" +
+                   "    }\n" +
+                   "}";
+    
+    doTextTest(before, after);
+  }
 
 }
