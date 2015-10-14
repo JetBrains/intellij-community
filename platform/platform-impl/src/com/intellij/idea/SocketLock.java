@@ -50,8 +50,10 @@ public final class SocketLock {
   public enum ActivateStatus {ACTIVATED, NO_INSTANCE, CANNOT_ACTIVATE}
 
   private static final String PORT_FILE = "port";
-  private static final String ACTIVATE_COMMAND = "activate ";
   private static final String PORT_LOCK_FILE = "port.lock";
+  private static final String ACTIVATE_COMMAND = "activate ";
+  private static final String PATHS_EOT_RESPONSE = "---";
+  private static final String OK_RESPONSE = "ok";
 
   private final String myConfigPath;
   private final String mySystemPath;
@@ -179,7 +181,7 @@ public final class SocketLock {
     try {
       Socket socket = new Socket(NetUtils.getLoopbackAddress(), portNumber);
       try {
-        socket.setSoTimeout(300);
+        socket.setSoTimeout(1000);
 
         boolean result = false;
         @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataInputStream in = new DataInputStream(socket.getInputStream());
@@ -187,7 +189,10 @@ public final class SocketLock {
           try {
             String path = in.readUTF();
             log("read: path=%s", path);
-            if (paths.contains(path)) {
+            if (PATHS_EOT_RESPONSE.equals(path)) {
+              break;
+            }
+            else if (paths.contains(path)) {
               result = true;  // don't break - read all input
             }
           }
@@ -204,7 +209,7 @@ public final class SocketLock {
             out.flush();
             String response = in.readUTF();
             log("read: response=%s", response);
-            if (response.equals("ok")) {
+            if (response.equals(OK_RESPONSE)) {
               return ActivateStatus.ACTIVATED;
             }
           }
@@ -244,11 +249,8 @@ public final class SocketLock {
       boolean success = false;
       try {
         ByteBufOutputStream out = new ByteBufOutputStream(buffer);
-        for (String path : myLockedPaths) {
-          if (path != null) {
-            out.writeUTF(path);
-          }
-        }
+        for (String path : myLockedPaths) out.writeUTF(path);
+        out.writeUTF(PATHS_EOT_RESPONSE);
         out.close();
         success = true;
       }
@@ -290,7 +292,7 @@ public final class SocketLock {
 
               ByteBuf buffer = context.alloc().ioBuffer(4);
               ByteBufOutputStream out = new ByteBufOutputStream(buffer);
-              out.writeUTF("ok");
+              out.writeUTF(OK_RESPONSE);
               out.close();
               context.writeAndFlush(buffer);
             }
