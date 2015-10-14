@@ -45,6 +45,10 @@ public class Conditions {
     return (Condition<T>)Condition.NOT_NULL;
   }
 
+  public static <T> Condition<T> constant(boolean value) {
+    return (Condition<T>)(value ? TRUE : FALSE);
+  }
+
   public static <T> Condition<T> instanceOf(final Class<?> clazz) {
     return new Condition<T>() {
       @Override

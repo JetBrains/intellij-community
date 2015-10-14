@@ -29,6 +29,15 @@ public class Functions {
     return (Function.Mono<A>)Function.ID;
   }
 
+  public static <A, B> Function<A, B> constant(final B b) {
+    return new Function<A, B>() {
+      @Override
+      public B fun(A a) {
+        return b;
+      }
+    };
+  }
+
   public static <A, B> Function<A, B> identity() {
     return Function.ID;
   }
