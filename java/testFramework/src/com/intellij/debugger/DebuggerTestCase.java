@@ -425,7 +425,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   protected void printLocation(SuspendContextImpl suspendContext) {
     try {
       Location location = suspendContext.getFrameProxy().location();
-      String message = "paused at " + location.sourcePath() + ":" + location.lineNumber();
+      String message = "paused at " + location.sourceName() + ":" + location.lineNumber();
       println(message, ProcessOutputTypes.SYSTEM);
     }
     catch (Throwable e) {
