@@ -234,6 +234,14 @@ binding.setVariable("prepareOutputFolder", {
   }
 })
 
+binding.setVariable("clearBuildCaches", {
+  //todo[nik] this is temporary solution until we update bootstrap jps-builders jars to the new version where cleaning is performed in JpsGantProjectBuilder#cleanOutput
+  def storageRoot = projectBuilder.dataStorageRoot
+  if (storageRoot != null) {
+    FileUtil.delete(storageRoot)
+  }
+})
+
 boolean hasSourceRoots(JpsModule module) {
   return module.getSourceRoots(JavaSourceRootType.SOURCE).iterator().hasNext()
 }
@@ -1150,6 +1158,7 @@ binding.setVariable("collectUsedJars", { List modules, List approvedJars, List f
 binding.setVariable("buildModulesAndCollectUsedJars", { List modules, List approvedJars, List forbiddenJars ->
   def modulesToBuild = []
   def usedJars = collectUsedJars(modules, approvedJars, forbiddenJars, modulesToBuild)
+  clearBuildCaches()
   projectBuilder.cleanOutput()
   projectBuilder.buildModules(modulesToBuild)
 
