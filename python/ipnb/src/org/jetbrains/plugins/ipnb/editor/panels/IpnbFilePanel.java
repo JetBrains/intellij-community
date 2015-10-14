@@ -494,7 +494,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
         ipnbPanel.setEditing(false);
         ipnbPanel.requestFocus();
         repaint();
-        setSelectedCell(ipnbPanel);
+        setSelectedCell(ipnbPanel, true);
       }
     }
   }
@@ -504,6 +504,10 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   }
 
   public void setSelectedCell(@NotNull final IpnbEditablePanel ipnbPanel) {
+    setSelectedCell(ipnbPanel, false);
+  }
+
+  public void setSelectedCell(@NotNull final IpnbEditablePanel ipnbPanel, boolean mouse) {
     if (ipnbPanel.equals(mySelectedCell)) return;
     if (mySelectedCell != null)
       mySelectedCell.setEditing(false);
@@ -512,7 +516,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     UIUtil.requestFocus(this);
     repaint();
     if (ipnbPanel.getBounds().getHeight() != 0) {
-      myListener.selectionChanged(ipnbPanel);
+      myListener.selectionChanged(ipnbPanel, mouse);
     }
   }
 
