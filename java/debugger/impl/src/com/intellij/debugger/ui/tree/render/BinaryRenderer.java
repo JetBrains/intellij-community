@@ -53,7 +53,7 @@ public class BinaryRenderer extends NodeRendererImpl {
         LOG.assertTrue(false);
       }
       // group by 8
-      for (int i = prefix.length() + 8; i < buf.length(); i += 9) {
+      for (int i = buf.length() - 8; i > prefix.length(); i -= 8) {
         buf.insert(i, '_');
       }
       return buf.toString();
