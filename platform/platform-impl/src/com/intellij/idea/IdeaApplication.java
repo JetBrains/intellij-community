@@ -42,7 +42,6 @@ import java.util.List;
 public class IdeaApplication {
   @NonNls public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
   @NonNls public static final String IDEA_IS_UNIT_TEST = "idea.is.unit.test";
-  @NonNls public static final String IDEA_IS_ON_AIR = "com.jetbrains.onair";
 
   private static final String[] SAFE_JAVA_ENV_PARAMETERS = {"idea.required.plugins.id"};
 
@@ -70,7 +69,7 @@ public class IdeaApplication {
     myArgs = processProgramArguments(args);
     boolean isInternal = Boolean.getBoolean(IDEA_IS_INTERNAL_PROPERTY);
     boolean isUnitTest = Boolean.getBoolean(IDEA_IS_UNIT_TEST);
-    boolean isServer = Boolean.getBoolean(IDEA_IS_ON_AIR);
+    boolean isServer = System.getProperty(ExtensionPoints.APPLICATION_STARTER).equals("onair");
 
     boolean headless = Main.isHeadless();
     patchSystem(headless);
@@ -156,12 +155,19 @@ public class IdeaApplication {
 
   @NotNull
   public ApplicationStarter getStarter() {
+    String key = null;
     if (myArgs.length > 0) {
+      key = myArgs[0];
+    }
+    else {
+      key = System.getProperty(ExtensionPoints.APPLICATION_STARTER);
+    }
+
+    if (key != null) {
       PluginManagerCore.getPlugins();
 
       ExtensionPoint<ApplicationStarter> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.APPLICATION_STARTER);
       ApplicationStarter[] starters = point.getExtensions();
-      String key = myArgs[0];
       for (ApplicationStarter o : starters) {
         if (Comparing.equal(o.getCommandName(), key)) return o;
       }
