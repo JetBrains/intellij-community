@@ -66,7 +66,7 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   void populateProjectExtraModels(@NotNull IdeaProject gradleProject, @NotNull DataNode<ProjectData> ideProject);
 
   @NotNull
-  ModuleData createModule(@NotNull IdeaModule gradleModule, @NotNull ProjectData projectData);
+  DataNode<ModuleData> createModule(@NotNull IdeaModule gradleModule, @NotNull DataNode<ProjectData> projectDataNode);
 
   /**
    * Populates extra models of the given ide module on the basis of the information provided by {@link org.jetbrains.plugins.gradle.tooling.ModelBuilderService}

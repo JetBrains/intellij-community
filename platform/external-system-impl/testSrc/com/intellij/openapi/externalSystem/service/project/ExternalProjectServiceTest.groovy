@@ -39,7 +39,7 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
 
     applyProjectState([projectNode, projectNode])
 
-    def modelsProvider = new IdeModifiableModelsProviderImpl(project);
+    def modelsProvider = new IdeModelsProviderImpl(project);
     def module = modelsProvider.findIdeModule('module')
     assertNotNull(module)
 
@@ -50,7 +50,7 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
         def name = (entry as LibraryOrderEntry).libraryName
         dependencies[name]++
       }
-    }
+      }
     ExternalSystemTestUtil.assertMapsEqual(['Test_external_system_id: lib1': 1, 'Test_external_system_id: lib2': 1], dependencies)
   }
 
@@ -80,7 +80,7 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
 
     applyProjectState([projectNodeInitial, projectNodeRefreshed])
 
-    def modelsProvider = new IdeModifiableModelsProviderImpl(project);
+    def modelsProvider = new IdeModelsProviderImpl(project);
     def module = modelsProvider.findIdeModule('module')
     assertNotNull(module)
     def entries = modelsProvider.getOrderEntries(module)
@@ -88,10 +88,10 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
     for (OrderEntry entry : entries) {
       if (entry instanceof ModuleSourceOrderEntry) {
         def contentEntry = (entry as ModuleSourceOrderEntry).getRootModel().getContentEntries().first()
-        folders['source']+=contentEntry.sourceFolders.length
-        folders['excluded']+=contentEntry.excludeFolders.length
+        folders['source'] += contentEntry.sourceFolders.length
+        folders['excluded'] += contentEntry.excludeFolders.length
       }
-    }
+      }
     ExternalSystemTestUtil.assertMapsEqual(['source': 4, 'excluded': 2], folders)
   }
 
@@ -120,7 +120,7 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
             lib('lib1', level: 'module', bin: [libBinPath.absolutePath], src: [libSrcPath.absolutePath],  doc: [libDocPath.absolutePath]) } } }
     ])
 
-    def modelsProvider = new IdeModifiableModelsProviderImpl(project);
+    def modelsProvider = new IdeModelsProviderImpl(project);
     def module = modelsProvider.findIdeModule('module')
     assertNotNull(module)
 
@@ -144,8 +144,8 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
         else {
           fail()
         }
+        }
       }
-    }
     ExternalSystemTestUtil.assertMapsEqual(['Test_external_system_id: lib1': 1], dependencies)
   }
 }

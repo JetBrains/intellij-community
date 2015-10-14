@@ -19,14 +19,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Vladislav.Soroka
  * @since 7/14/2014
  */
-public class DefaultExternalProject implements ExternalProject {
+public class DefaultExternalProject implements ExternalProject, ExternalProjectPreview {
 
   private static final long serialVersionUID = 1L;
 
@@ -58,6 +57,10 @@ public class DefaultExternalProject implements ExternalProject {
   private String myExternalSystemId;
   @NotNull
   private Map<String, ExternalPlugin> myPlugins;
+  @NotNull
+  private List<File> myArtifacts;
+  @NotNull
+  private Map<String, Set<File>> myArtifactsByConfiguration;
 
   public DefaultExternalProject() {
     myChildProjects = new HashMap<String, ExternalProject>();
@@ -65,6 +68,8 @@ public class DefaultExternalProject implements ExternalProject {
     myProperties = new HashMap<String, Object>();
     mySourceSets = new HashMap<String, ExternalSourceSet>();
     myPlugins = new HashMap<String, ExternalPlugin>();
+    myArtifacts = new ArrayList<File>();
+    myArtifactsByConfiguration = new HashMap<String, Set<File>>();
   }
 
   public DefaultExternalProject(@NotNull ExternalProject externalProject) {
@@ -92,6 +97,9 @@ public class DefaultExternalProject implements ExternalProject {
     for (Map.Entry<String, ExternalPlugin> entry : externalProject.getPlugins().entrySet()) {
       myPlugins.put(entry.getKey(), new DefaultExternalPlugin(entry.getValue()));
     }
+
+    myArtifacts.addAll(externalProject.getArtifacts());
+    myArtifactsByConfiguration.putAll(externalProject.getArtifactsByConfiguration());
   }
 
 
@@ -239,5 +247,30 @@ public class DefaultExternalProject implements ExternalProject {
 
   public void setSourceSets(@NotNull Map<String, ExternalSourceSet> sourceSets) {
     mySourceSets = sourceSets;
+  }
+
+  @NotNull
+  @Override
+  public List<File> getArtifacts() {
+    return myArtifacts;
+  }
+
+  public void setArtifacts(@NotNull List<File> artifacts) {
+    this.myArtifacts = artifacts;
+  }
+
+  public void setArtifactsByConfiguration(@NotNull Map<String, Set<File>> artifactsByConfiguration) {
+    myArtifactsByConfiguration = artifactsByConfiguration;
+  }
+
+  @NotNull
+  @Override
+  public Map<String, Set<File>> getArtifactsByConfiguration() {
+    return myArtifactsByConfiguration;
+  }
+
+  @Override
+  public String toString() {
+    return "project '" + myQName + "'";
   }
 }

@@ -62,6 +62,7 @@ public class DefaultExternalSourceDirectorySet implements ExternalSourceDirector
     for (ExternalFilter filter : sourceDirectorySet.getFilters()) {
       myFilters.add(new DefaultExternalFilter(filter));
     }
+    myInheritedCompilerOutput = sourceDirectorySet.isCompilerOutputPathInherited();
   }
 
   @NotNull

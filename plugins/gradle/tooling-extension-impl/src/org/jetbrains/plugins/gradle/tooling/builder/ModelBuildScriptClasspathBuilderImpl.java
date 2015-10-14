@@ -66,7 +66,7 @@ public class ModelBuildScriptClasspathBuilderImpl implements ModelBuilderService
     buildScriptClasspath.setGradleHomeDir(gradleHomeDir);
     buildScriptClasspath.setGradleVersion(GradleVersion.current().getVersion());
 
-    final IdeaPlugin ideaPlugin = project.getPlugins().getPlugin(IdeaPlugin.class);
+    final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class);
     if (ideaPlugin != null) {
       Project parent = project.getParent();
       if (parent != null) {

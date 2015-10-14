@@ -19,8 +19,7 @@ import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceTyp
 import com.intellij.openapi.externalSystem.model.project.IExternalSystemSourceType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Vladislav.Soroka
@@ -31,9 +30,11 @@ public class DefaultExternalSourceSet implements ExternalSourceSet {
 
   private String myName;
   private Map<IExternalSystemSourceType, ExternalSourceDirectorySet> mySources;
+  private Collection<ExternalDependency> myDependencies;
 
   public DefaultExternalSourceSet() {
     mySources = new HashMap<IExternalSystemSourceType, ExternalSourceDirectorySet>();
+    myDependencies = new LinkedHashSet<ExternalDependency>();
   }
 
   public DefaultExternalSourceSet(ExternalSourceSet sourceSet) {
@@ -42,12 +43,21 @@ public class DefaultExternalSourceSet implements ExternalSourceSet {
     for (Map.Entry<IExternalSystemSourceType, ExternalSourceDirectorySet> entry : sourceSet.getSources().entrySet()) {
       mySources.put(ExternalSystemSourceType.from(entry.getKey()), new DefaultExternalSourceDirectorySet(entry.getValue()));
     }
+
+    for (ExternalDependency dependency : sourceSet.getDependencies()) {
+      myDependencies.add(ModelFactory.createCopy(dependency));
+    }
   }
 
   @NotNull
   @Override
   public String getName() {
     return myName;
+  }
+
+  @Override
+  public Collection<ExternalDependency> getDependencies() {
+    return myDependencies;
   }
 
   public void setName(String name) {
@@ -62,5 +72,10 @@ public class DefaultExternalSourceSet implements ExternalSourceSet {
 
   public void setSources(Map<IExternalSystemSourceType, ExternalSourceDirectorySet> sources) {
     mySources = sources;
+  }
+
+  @Override
+  public String toString() {
+    return "sourceSet '" + myName + '\'' ;
   }
 }

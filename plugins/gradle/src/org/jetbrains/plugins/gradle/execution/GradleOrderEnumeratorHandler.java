@@ -17,13 +17,8 @@ package org.jetbrains.plugins.gradle.execution;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.plugins.gradle.model.ExternalProject;
-import org.jetbrains.plugins.gradle.model.ExternalSourceDirectorySet;
-import org.jetbrains.plugins.gradle.model.ExternalSourceSet;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
@@ -39,11 +34,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataService;
+import org.jetbrains.plugins.gradle.model.ExternalProject;
+import org.jetbrains.plugins.gradle.model.ExternalSourceDirectorySet;
+import org.jetbrains.plugins.gradle.model.ExternalSourceSet;
+import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Map;
 
 public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
   private static final Logger LOG = Logger.getInstance(GradleOrderEnumeratorHandler.class);
@@ -70,6 +69,21 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
   private static final GradleOrderEnumeratorHandler INSTANCE = new GradleOrderEnumeratorHandler();
 
   @Override
+  public boolean shouldAddRuntimeDependenciesToTestCompilationClasspath() {
+    return true;
+  }
+
+  @Override
+  public boolean shouldIncludeTestsFromDependentModulesToTestClasspath() {
+    return false;
+  }
+
+  @Override
+  public boolean shouldProcessDependenciesRecursively() {
+    return false;
+  }
+
+  @Override
   public boolean addCustomModuleRoots(@NotNull OrderRootType type,
                                       @NotNull ModuleRootModel rootModel,
                                       @NotNull Collection<String> result,
@@ -84,35 +98,33 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
       return false;
     }
 
-    final ExternalProjectDataService externalProjectDataService =
-      (ExternalProjectDataService)ServiceManager.getService(ProjectDataManager.class).getDataService(ExternalProjectDataService.KEY);
-
-    assert externalProjectDataService != null;
+    final ExternalProjectDataCache externalProjectDataCache = ExternalProjectDataCache.getInstance(rootModel.getModule().getProject());
+    assert externalProjectDataCache != null;
     final ExternalProject externalRootProject =
-      externalProjectDataService.getRootExternalProject(GradleConstants.SYSTEM_ID, new File(gradleProjectPath));
+      externalProjectDataCache.getRootExternalProject(GradleConstants.SYSTEM_ID, new File(gradleProjectPath));
     if (externalRootProject == null) {
       LOG.debug("Root external project was not yep imported for the project path: " + gradleProjectPath);
       return false;
     }
 
-    ExternalProject externalProject = externalProjectDataService.findExternalProject(externalRootProject, rootModel.getModule());
-    if (externalProject == null) return false;
+    Map<String, ExternalSourceSet> externalSourceSets =
+      externalProjectDataCache.findExternalProject(externalRootProject, rootModel.getModule());
+    if (externalSourceSets.isEmpty()) return false;
 
-    if (includeTests) {
-      addOutputModuleRoots(externalProject.getSourceSets().get("test"), ExternalSystemSourceType.TEST_RESOURCE, result);
-    }
-    if (includeProduction) {
-      addOutputModuleRoots(externalProject.getSourceSets().get("main"), ExternalSystemSourceType.RESOURCE, result);
+    for (ExternalSourceSet sourceSet : externalSourceSets.values()) {
+      if (includeTests) {
+        addOutputModuleRoots(sourceSet.getSources().get(ExternalSystemSourceType.TEST_RESOURCE), result);
+      }
+      if (includeProduction) {
+        addOutputModuleRoots(sourceSet.getSources().get(ExternalSystemSourceType.RESOURCE), result);
+      }
     }
 
     return true;
   }
 
-  private static void addOutputModuleRoots(@Nullable ExternalSourceSet externalSourceSet,
-                                           @NotNull ExternalSystemSourceType sourceType,
+  private static void addOutputModuleRoots(@Nullable ExternalSourceDirectorySet directorySet,
                                            @NotNull Collection<String> result) {
-    if (externalSourceSet == null) return;
-    final ExternalSourceDirectorySet directorySet = externalSourceSet.getSources().get(sourceType);
     if (directorySet == null) return;
 
     if (directorySet.isCompilerOutputPathInherited()) return;

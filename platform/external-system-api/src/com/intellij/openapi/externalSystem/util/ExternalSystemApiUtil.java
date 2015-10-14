@@ -256,6 +256,17 @@ public class ExternalSystemApiUtil {
   }
 
   @NotNull
+  public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<DataNode<V>> nodes, final Class<K> moduleDataClass) {
+    return ContainerUtil.groupBy(nodes, new NullableFunction<DataNode<V>, DataNode<K>>() {
+      @Nullable
+      @Override
+      public DataNode<K> fun(DataNode<V> node) {
+        return node.getParent(moduleDataClass);
+      }
+    });
+  }
+
+  @NotNull
   public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<DataNode<V>> nodes, @NotNull final Key<K> key) {
     return ContainerUtil.groupBy(nodes, new NullableFunction<DataNode<V>, DataNode<K>>() {
       @Nullable
@@ -325,17 +336,7 @@ public class ExternalSystemApiUtil {
   @SuppressWarnings("unchecked")
   @NotNull
   public static <T> Collection<DataNode<T>> findAll(@NotNull DataNode<?> parent, @NotNull Key<T> key) {
-    Collection<DataNode<T>> result = null;
-    for (DataNode<?> child : parent.getChildren()) {
-      if (!key.equals(child.getKey())) {
-        continue;
-      }
-      if (result == null) {
-        result = ContainerUtilRt.newArrayList();
-      }
-      result.add((DataNode<T>)child);
-    }
-    return result == null ? Collections.<DataNode<T>>emptyList() : result;
+    return getChildren(parent, key);
   }
 
   public static void visit(@Nullable DataNode node, @NotNull Consumer<DataNode<?>> consumer) {
@@ -891,6 +892,12 @@ public class ExternalSystemApiUtil {
   @Contract(pure=true)
   public static String getExternalProjectVersion(@Nullable Module module) {
     return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION_KEY) : null;
+  }
+
+  @Nullable
+  @Contract(pure=true)
+  public static String getExternalModuleType(@Nullable Module module) {
+    return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_TYPE_KEY) : null;
   }
 
   public static void subscribe(@NotNull Project project,
