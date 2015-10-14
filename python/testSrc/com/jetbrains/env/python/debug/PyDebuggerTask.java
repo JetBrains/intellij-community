@@ -93,8 +93,8 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
       }
     }.execute();
 
-    final PyDebugRunner runner = (PyDebugRunner)ProgramRunnerUtil.getRunner(DefaultDebugExecutor.EXECUTOR_ID, settings);
-    Assert.assertTrue(runner.canRun(DefaultDebugExecutor.EXECUTOR_ID, myRunConfiguration));
+    final PyDebugRunner runner = (PyDebugRunner)ProgramRunnerUtil.getRunner(getExecutorId(), settings);
+    Assert.assertTrue(runner.canRun(getExecutorId(), myRunConfiguration));
 
     final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
     final ExecutionEnvironment env = new ExecutionEnvironment(executor, runner, settings, project);
@@ -127,7 +127,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
       @Override
       protected void run(@NotNull Result<ExecutionResult> result) throws Throwable {
         myExecutionResult =
-          pyState.execute(executor, PyDebugRunner.createCommandLinePatchers(myFixture.getProject(), pyState, profile, serverLocalPort));
+          pyState.execute(executor, runner.createCommandLinePatchers(myFixture.getProject(), pyState, profile, serverLocalPort));
 
         mySession = XDebuggerManager.getInstance(getProject()).
           startSession(env, new XDebugProcessStarter() {
@@ -181,6 +181,10 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
     });
 
     doTest(myOutputPrinter);
+  }
+
+  protected String getExecutorId() {
+    return DefaultDebugExecutor.EXECUTOR_ID;
   }
 
   public PythonRunConfiguration getRunConfiguration() {

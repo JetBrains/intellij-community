@@ -54,6 +54,7 @@ public abstract class AbstractCommand<T> {
 
   public static final int GET_ARRAY = 143;
   public static final int STEP_INTO_MY_CODE = 144;
+  public static final int LOG_CONCURRENCY_EVENT = 145;
 
   @NotNull private final RemoteDebugger myDebugger;
   private final int myCommandCode;
@@ -186,6 +187,10 @@ public abstract class AbstractCommand<T> {
 
   public static boolean isCallSignatureTrace(int command) {
     return command == CALL_SIGNATURE_TRACE;
+  }
+
+  public static boolean isConcurrencyEvent(int command) {
+    return command == LOG_CONCURRENCY_EVENT;
   }
 
   public static boolean isWriteToConsole(final int command) {
