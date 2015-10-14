@@ -607,4 +607,28 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                 "    int a = 2;\n" +
                 "}");
   }
+  
+  public void testSpace_BeforeSemicolon_InsideFor() {
+    getSettings().SPACE_BEFORE_SEMICOLON = true;
+    doMethodTest(
+      "int i = 0;\n" +
+      "for (; i < 10 ; i++) {\n" +
+      "}\n",
+      "int i = 0;\n" +
+      "for ( ; i < 10 ; i++) {\n" +
+      "}\n"
+    );
+  }
+  
+  public void testSpace_BeforeSemicolon_InsideFor_IfSpacesWithinForIsOn() {
+    getSettings().SPACE_WITHIN_FOR_PARENTHESES = true;
+    doMethodTest(
+      "int i = 0;\n" +
+      "for (; i < 10 ; i++) {\n" +
+      "}\n",
+      "int i = 0;\n" +
+      "for ( ; i < 10; i++ ) {\n" +
+      "}\n"
+    );
+  }
 }
