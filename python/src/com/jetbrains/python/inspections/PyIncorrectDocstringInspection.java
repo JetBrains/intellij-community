@@ -50,13 +50,7 @@ public class PyIncorrectDocstringInspection extends PyBaseDocstringInspection {
       }
 
       private void checkParameters(@NotNull PyDocStringOwner pyDocStringOwner, @NotNull PyStringLiteralExpression node) {
-        final String text = node.getText();
-        if (text == null) {
-          return;
-        }
-
-        final StructuredDocString docString = DocStringUtil.parse(text, node);
-
+        final StructuredDocString docString = DocStringUtil.parseDocString(node);
         if (docString instanceof PlainDocString) {
           return;
         }
