@@ -631,4 +631,17 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "}\n"
     );
   }
+  
+  public void testSpaceBeforeTypeArgumentList() {
+    getSettings().SPACE_BEFORE_TYPE_PARAMETER_LIST = true;
+    doMethodTest(
+      "Map<Int, String> map = new HashMap<Int, String>();",
+      "Map <Int, String> map = new HashMap <Int, String>();"
+    );
+    doMethodTest(
+      "Bar.<Int, String>call();",
+      "Bar. <Int, String>call();"
+    );
+  }
+  
 }
