@@ -52,7 +52,7 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor implement
     if (!isVisible()) {
        getContentPanel().addComponentListener(new ComponentAdapter() {
          @Override
-         public void componentResized(ComponentEvent e) {
+         public void componentShown(ComponentEvent e) {
            if (configuration != null) {
              configurable.updateRightPanel(configuration);
              getContentPanel().removeComponentListener(this);
