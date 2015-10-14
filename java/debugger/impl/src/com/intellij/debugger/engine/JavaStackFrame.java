@@ -45,6 +45,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ColoredTextContainer;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -277,7 +278,14 @@ public class JavaStackFrame extends XStackFrame {
       }
       else {
         final SourcePosition sourcePosition = debuggerContext.getSourcePosition();
-        final Map<String, LocalVariableProxyImpl> visibleVariables = getVisibleVariables(getStackFrameProxy());
+        final Map<String, LocalVariableProxyImpl> visibleVariables =
+          ContainerUtil.map2Map(getVisibleVariables(getStackFrameProxy()),
+                                new Function<LocalVariableProxyImpl, Pair<String, LocalVariableProxyImpl>>() {
+                                  @Override
+                                  public Pair<String, LocalVariableProxyImpl> fun(LocalVariableProxyImpl var) {
+                                    return Pair.create(var.name(), var);
+                                  }
+                                });
 
         Pair<Set<String>, Set<TextWithImports>> usedVars = EMPTY_USED_VARS;
         if (sourcePosition != null) {
@@ -384,10 +392,8 @@ public class JavaStackFrame extends XStackFrame {
   }
 
   protected void superBuildVariables(final EvaluationContextImpl evaluationContext, XValueChildrenList children) throws EvaluateException {
-    final StackFrameProxyImpl frame = getStackFrameProxy();
-    for (final LocalVariableProxyImpl local : frame.visibleVariables()) {
-      final LocalVariableDescriptorImpl descriptor = myNodeManager.getLocalVariableDescriptor(null, local);
-      children.add(JavaValue.create(descriptor, evaluationContext, myNodeManager));
+    for (LocalVariableProxyImpl local : getVisibleVariables(getStackFrameProxy())) {
+      children.add(JavaValue.create(myNodeManager.getLocalVariableDescriptor(null, local), evaluationContext, myNodeManager));
     }
   }
 
@@ -531,12 +537,8 @@ public class JavaStackFrame extends XStackFrame {
     }
   }
 
-  private static Map<String, LocalVariableProxyImpl> getVisibleVariables(final StackFrameProxyImpl frame) throws EvaluateException {
-    final Map<String, LocalVariableProxyImpl> vars = new HashMap<String, LocalVariableProxyImpl>();
-    for (LocalVariableProxyImpl localVariableProxy : frame.visibleVariables()) {
-      vars.put(localVariableProxy.name(), localVariableProxy);
-    }
-    return vars;
+  protected List<LocalVariableProxyImpl> getVisibleVariables(StackFrameProxyImpl frame) throws EvaluateException {
+    return frame.visibleVariables();
   }
 
   private static boolean shouldSkipLine(final PsiFile file, Document doc, int line) {
