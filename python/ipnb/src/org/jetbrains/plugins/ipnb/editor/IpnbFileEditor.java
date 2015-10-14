@@ -330,8 +330,8 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
     return new IpnbFilePanel(project, this, vFile,
                              new CellSelectionListener() {
                                @Override
-                               public void selectionChanged(@NotNull IpnbPanel ipnbPanel) {
-                                 if (myCellTypeCombo == null) return;
+                               public void selectionChanged(@NotNull IpnbPanel ipnbPanel, boolean byMouse) {
+                                 if (myCellTypeCombo == null || byMouse) return;
                                  updateCellTypeCombo(ipnbPanel);
                                  updateScrollPosition(ipnbPanel);
                                }
@@ -343,10 +343,10 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
 
     final Rectangle cellBounds = ipnbPanel.getBounds();
     if (cellBounds.getY() <= rect.getY()) {
-      myScrollPane.getVerticalScrollBar().setValue(cellBounds.y);
+      myScrollPane.getVerticalScrollBar().setValue(cellBounds.y - rect.height + cellBounds.height);
     }
     if (cellBounds.getY() + cellBounds.getHeight() > rect.getY() + rect.getHeight()) {
-      myScrollPane.getVerticalScrollBar().setValue(cellBounds.y - rect.height + cellBounds.height);
+      myScrollPane.getVerticalScrollBar().setValue(cellBounds.y);
     }
   }
 
@@ -446,7 +446,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
   }
 
   public abstract static class CellSelectionListener {
-    public abstract void selectionChanged(@NotNull final IpnbPanel ipnbPanel);
+    public abstract void selectionChanged(@NotNull final IpnbPanel ipnbPanel, boolean mouse);
   }
 
   public VirtualFile getVirtualFile() {
