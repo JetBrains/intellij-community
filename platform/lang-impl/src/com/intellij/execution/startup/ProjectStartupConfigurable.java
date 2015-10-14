@@ -47,7 +47,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
@@ -138,7 +137,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
           if (row < 0) return;
           final RunnerAndConfigurationSettings selected = myModel.getAllConfigurations().get(row);
 
-          final RunManager runManager = RunManagerImpl.getInstance(myProject);
+          final RunManager runManager = RunManager.getInstance(myProject);
           final RunnerAndConfigurationSettings was = runManager.getSelectedConfiguration();
           try {
             runManager.setSelectedConfiguration(selected);
@@ -219,7 +218,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
 
           @Override
           public boolean value(ConfigurationType configurationType) {
-            ConfigurationFactory factory = null;
+            ConfigurationFactory factory;
             return !UnknownConfigurationType.INSTANCE.equals(configurationType) &&
                    ((factory = runManager.getFactory(configurationType.getId(), null)) != null) &&
                    myRegistry.getRunner(executor.getId(), runManager.getConfigurationTemplate(factory).getConfiguration()) != null;
@@ -306,7 +305,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
         }
       }
     });
-    final JBPopup popup = PopupFactoryImpl.getInstance()
+    final JBPopup popup = JBPopupFactory.getInstance()
       .createListPopupBuilder(list)
       .setItemChoosenCallback(new Runnable() {
         @Override
