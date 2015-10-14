@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.WritingAccessProvider;
 import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
@@ -53,11 +52,11 @@ public class IconUtil {
     Boolean was = project.getUserData(PROJECT_WAS_EVER_INITIALIZED);
     if (was == null) {
       if (project.isInitialized()) {
-        was = Boolean.valueOf(true);
+        was = true;
         project.putUserData(PROJECT_WAS_EVER_INITIALIZED, was);
       }
       else {
-        was = Boolean.valueOf(false);
+        was = false;
       }
     }
 
@@ -94,7 +93,8 @@ public class IconUtil {
     return new ImageIcon(img);
   }
 
-  public static Icon cropIcon(@NotNull Icon icon, Rectangle area) {
+  @NotNull
+  public static Icon cropIcon(@NotNull Icon icon, @NotNull Rectangle area) {
     if (!new Rectangle(icon.getIconWidth(), icon.getIconHeight()).contains(area)) {
       return icon;
     }
@@ -153,10 +153,6 @@ public class IconUtil {
         icon = patcher.patchIcon(icon, file, flags, project);
       }
 
-      if ((flags & Iconable.ICON_FLAG_READ_STATUS) != 0 &&
-          (!file.isWritable() || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
-        icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
-      }
       if (file.is(VFileProperty.SYMLINK)) {
         icon = new LayeredIcon(icon, PlatformIcons.SYMLINK_ICON);
       }
@@ -234,72 +230,88 @@ public class IconUtil {
     }
   }
 
+  @NotNull
   public static Icon getAddIcon() {
     return getToolbarDecoratorIcon("add.png");
   }
 
+  @NotNull
   public static Icon getRemoveIcon() {
     return getToolbarDecoratorIcon("remove.png");
   }
 
+  @NotNull
   public static Icon getMoveUpIcon() {
     return getToolbarDecoratorIcon("moveUp.png");
   }
 
+  @NotNull
   public static Icon getMoveDownIcon() {
     return getToolbarDecoratorIcon("moveDown.png");
   }
 
+  @NotNull
   public static Icon getEditIcon() {
     return getToolbarDecoratorIcon("edit.png");
   }
 
+  @NotNull
   public static Icon getAddClassIcon() {
     return getToolbarDecoratorIcon("addClass.png");
   }
 
+  @NotNull
   public static Icon getAddPatternIcon() {
     return getToolbarDecoratorIcon("addPattern.png");
   }
 
+  @NotNull
   public static Icon getAddJiraPatternIcon() {
     return getToolbarDecoratorIcon("addJira.png");
   }
 
+  @NotNull
   public static Icon getAddYouTrackPatternIcon() {
     return getToolbarDecoratorIcon("addYouTrack.png");
   }
 
+  @NotNull
   public static Icon getAddBlankLineIcon() {
     return getToolbarDecoratorIcon("addBlankLine.png");
   }
 
+  @NotNull
   public static Icon getAddPackageIcon() {
     return getToolbarDecoratorIcon("addPackage.png");
   }
 
+  @NotNull
   public static Icon getAddLinkIcon() {
     return getToolbarDecoratorIcon("addLink.png");
   }
 
+  @NotNull
   public static Icon getAddFolderIcon() {
     return getToolbarDecoratorIcon("addFolder.png");
   }
 
+  @NotNull
   public static Icon getAnalyzeIcon() {
     return getToolbarDecoratorIcon("analyze.png");
   }
 
-  public static void paintInCenterOf(@NotNull Component c, Graphics g, Icon icon) {
+  public static void paintInCenterOf(@NotNull Component c, @NotNull Graphics g, @NotNull Icon icon) {
     final int x = (c.getWidth() - icon.getIconWidth()) / 2;
     final int y = (c.getHeight() - icon.getIconHeight()) / 2;
     icon.paintIcon(c, g, x, y);
   }
 
-  public static Icon getToolbarDecoratorIcon(String name) {
+  @NotNull
+  private static Icon getToolbarDecoratorIcon(@NotNull String name) {
     return IconLoader.getIcon(getToolbarDecoratorIconsFolder() + name);
   }
 
+  @NotNull
   private static String getToolbarDecoratorIconsFolder() {
     return "/toolbarDecorator/" + (SystemInfo.isMac ? "mac/" : "");
   }
@@ -322,6 +334,7 @@ public class IconUtil {
     return result;
   }
 
+  @NotNull
   public static Icon toSize(@NotNull Icon icon, int width, int height) {
     return new IconSizeWrapper(icon, width, height);
   }
@@ -359,7 +372,7 @@ public class IconUtil {
     private final Icon mySrc;
     private final Rectangle myCrop;
 
-    private CropIcon(@NotNull Icon src, Rectangle crop) {
+    private CropIcon(@NotNull Icon src, @NotNull Rectangle crop) {
       mySrc = src;
       myCrop = crop;
     }
@@ -380,12 +393,14 @@ public class IconUtil {
     }
   }
 
+  @NotNull
   public static Icon scale(@NotNull final Icon source, double _scale) {
     final int hiDPIscale;
     if (source instanceof ImageIcon) {
       Image image = ((ImageIcon)source).getImage();
       hiDPIscale = RetinaImage.isAppleHiDPIScaledImage(image) || image instanceof JBHiDPIScaledImage ? 2 : 1;
-    } else {
+    }
+    else {
       hiDPIscale = 1;
     }
     final double scale = Math.min(32, Math.max(.1, _scale));
@@ -400,7 +415,8 @@ public class IconUtil {
           g2d.setTransform(transform);
           g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
           source.paintIcon(c, g2d, 0, 0);
-        } finally {
+        }
+        finally {
           g2d.dispose();
         }
       }
@@ -415,7 +431,6 @@ public class IconUtil {
         return (int)(source.getIconHeight() * scale) / hiDPIscale;
       }
     };
-
   }
 
   @NotNull
@@ -465,7 +480,7 @@ public class IconUtil {
   }
 
   @NotNull
-  public static Icon textToIcon(final String text, final Component component, final float fontSize) {
+  public static Icon textToIcon(@NotNull final String text, @NotNull final Component component, final float fontSize) {
     final Font font = JBFont.create(JBUI.Fonts.label().deriveFont(fontSize));
     FontMetrics metrics = component.getFontMetrics(font);
     final int width = metrics.stringWidth(text) + JBUI.scale(4);
@@ -479,7 +494,8 @@ public class IconUtil {
           GraphicsUtil.setupAntialiasing(g);
           g.setFont(font);
           UIUtil.drawStringWithHighlighting(g, text, x + JBUI.scale(2), y + height - JBUI.scale(1), JBColor.foreground(), JBColor.background());
-        } finally {
+        }
+        finally {
           g.dispose();
         }
       }
@@ -496,6 +512,7 @@ public class IconUtil {
     };
   }
 
+  @NotNull
   public static Icon addText(@NotNull Icon base, @NotNull String text) {
     LayeredIcon icon = new LayeredIcon(2);
     icon.setIcon(base, 0);
