@@ -581,4 +581,9 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   public Project getProject() {
     return myProject;
   }
+
+  @NotNull
+  public VirtualFile getVirtualFile() {
+    return myVirtualFile;
+  }
 }

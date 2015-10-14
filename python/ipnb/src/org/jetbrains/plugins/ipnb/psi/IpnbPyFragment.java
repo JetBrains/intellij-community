@@ -1,16 +1,15 @@
 package org.jetbrains.plugins.ipnb.psi;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.SingleRootFileViewProvider;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodeSourcePanel;
 
@@ -72,5 +71,29 @@ public class IpnbPyFragment extends PyFileImpl {
 
   public IpnbFilePanel getFilePanel() {
     return myFilePanel;
+  }
+
+  @Nullable
+  @Override
+  public PsiDirectory getContainingDirectory() {
+    final VirtualFile file = myFilePanel.getVirtualFile();
+    final VirtualFile parentFile = file.getParent();
+    if (parentFile == null) {
+      return super.getContainingDirectory();
+    }
+    if (!parentFile.isValid()) {
+      return super.getContainingDirectory();
+    }
+    return getManager().findDirectory(parentFile);
+  }
+
+  @Override
+  public PsiElement getNextSibling() {
+    return null;
+  }
+
+  @Override
+  public PsiElement getPrevSibling() {
+    return null;
   }
 }
