@@ -84,12 +84,7 @@ public class PyDocstringTypesInspection extends PyInspection {
     }
 
     private void checkParameters(PyFunction function, PyStringLiteralExpression node, PySignature signature) {
-      final String text = node.getText();
-      if (text == null) {
-        return;
-      }
-
-      StructuredDocString docString = DocStringUtil.parse(text, function);
+      final StructuredDocString docString = DocStringUtil.parseDocString(node);
       if (docString instanceof PlainDocString) {
         return;
       }
