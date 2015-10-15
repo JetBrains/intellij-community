@@ -170,7 +170,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     return chooseActionAndInvoke(hostFile, hostEditor, action, text, project);
   }
 
-  public static boolean chooseActionAndInvoke(@Nullable PsiFile hostFile,
+  public static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
                                               @Nullable final Editor hostEditor,
                                               @NotNull final IntentionAction action,
                                               @NotNull String text,
@@ -178,13 +178,12 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickFix");
     ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats().registerInvocation();
 
-    final Pair<PsiFile, Editor> pair = hostEditor != null && hostFile != null
-                                 ? chooseBetweenHostAndInjected(hostFile, hostEditor, new PairProcessor<PsiFile, Editor>() {
+    final Pair<PsiFile, Editor> pair = hostEditor != null ? chooseBetweenHostAndInjected(hostFile, hostEditor, new PairProcessor<PsiFile, Editor>() {
       @Override
       public boolean process(PsiFile psiFile, Editor editor) {
         return availableFor(psiFile, editor, action);
       }
-    }) : Pair.<PsiFile, Editor>create(null, null);
+    }) : Pair.<PsiFile, Editor>create(hostFile, null);
     if (pair == null) return false;
 
     Runnable runnable = new Runnable() {

@@ -741,13 +741,13 @@ public class HighlightInfo implements Segment {
       this(action, options, displayName, icon, null, null, null);
     }
 
-    private IntentionActionDescriptor(@NotNull IntentionAction action,
-                                      @Nullable final List<IntentionAction> options,
-                                      @Nullable final String displayName,
-                                      @Nullable Icon icon,
-                                      @Nullable HighlightDisplayKey key,
-                                      @Nullable ProblemGroup problemGroup,
-                                      @Nullable HighlightSeverity severity) {
+    public IntentionActionDescriptor(@NotNull IntentionAction action,
+                                     @Nullable final List<IntentionAction> options,
+                                     @Nullable final String displayName,
+                                     @Nullable Icon icon,
+                                     @Nullable HighlightDisplayKey key,
+                                     @Nullable ProblemGroup problemGroup,
+                                     @Nullable HighlightSeverity severity) {
       myAction = action;
       myOptions = options;
       myDisplayName = displayName;

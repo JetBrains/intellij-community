@@ -118,7 +118,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     if (myEditor == null) {
       LOG.assertTrue(!callUpdate);
       for (HighlightInfo.IntentionActionDescriptor descriptor : newDescriptors) {
-        changed |= cachedActions.add(wrapAction(descriptor, null, myFile, null));
+        changed |= cachedActions.add(wrapAction(descriptor, myFile, myFile, null));
       }
     } else {
       final int caretOffset = myEditor.getCaretModel().getOffset();
@@ -263,12 +263,14 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
             }
             
             PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-            PsiFile file = null;
+            PsiFile file;
             if (myEditor != null) {
               file = PsiUtilBase.getPsiFileInEditor(myEditor, myProject);
               if (file == null) {
                 return;
               }
+            } else {
+              file = myFile;
             }
 
             ShowIntentionActionsHandler.chooseActionAndInvoke(file, myEditor, cachedAction.getAction(), cachedAction.getText(), myProject);
