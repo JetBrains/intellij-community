@@ -163,7 +163,7 @@ internal class GitTest : GitTestCase() {
       .compare()
   }
 
-  @Test fun `overwrite local: second merge is null`() {
+  @Test fun `overwrite local - second merge is null`() {
     createLocalAndRemoteRepositories(initialCommit = true)
 
     sync(SyncType.MERGE)
@@ -266,7 +266,7 @@ internal class GitTest : GitTestCase() {
     doSyncWithUninitializedUpstream(SyncType.MERGE)
   }
 
-  @Test fun `overwrite remote: uninitialized upstream`() {
+  @Test fun `overwrite remote - uninitialized upstream`() {
     doSyncWithUninitializedUpstream(SyncType.OVERWRITE_REMOTE)
   }
 
@@ -299,19 +299,19 @@ internal class GitTest : GitTestCase() {
     }
   }
 
-  @Test fun `initial copy to repository: no local files`() {
+  @Test fun `initial copy to repository - no local files`() {
     createRemoteRepository(initialCommit = false)
     // check error during findRemoteRefUpdatesFor (no master ref)
     testInitialCopy(false)
   }
 
-  @Test fun `initial copy to repository: some local files`() {
+  @Test fun `initial copy to repository - some local files`() {
     createRemoteRepository(initialCommit = false)
     // check error during findRemoteRefUpdatesFor (no master ref)
     testInitialCopy(true)
   }
 
-  @Test fun `initial copy to repository: remote files removed`() {
+  @Test fun `initial copy to repository - remote files removed`() {
     createRemoteRepository(initialCommit = true)
 
     // check error during findRemoteRefUpdatesFor (no master ref)
