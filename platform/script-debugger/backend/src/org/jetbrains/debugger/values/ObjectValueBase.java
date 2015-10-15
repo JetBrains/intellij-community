@@ -1,127 +1,88 @@
-package org.jetbrains.debugger.values;
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.jetbrains.debugger.values
 
-import com.intellij.util.SmartList;
-import com.intellij.util.ThreeState;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Obsolescent;
-import org.jetbrains.concurrency.ObsolescentAsyncFunction;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.debugger.EvaluateContext;
-import org.jetbrains.debugger.ValueModifier;
-import org.jetbrains.debugger.Variable;
-import org.jetbrains.debugger.VariablesHost;
+import com.intellij.util.SmartList
+import org.jetbrains.concurrency.Obsolescent
+import org.jetbrains.concurrency.ObsolescentAsyncFunction
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.debugger.EvaluateContext
+import org.jetbrains.debugger.Variable
+import org.jetbrains.debugger.VariablesHost
+import org.jetbrains.debugger.Vm
+import java.util.*
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+abstract class ObjectValueBase<VALUE_LOADER : ValueManager<out Vm>>(type: ValueType) : ValueBase(type), ObjectValue {
+  protected abstract val childrenManager: VariablesHost<VALUE_LOADER>
 
-public abstract class ObjectValueBase<VALUE_LOADER extends ValueManager> extends ValueBase implements ObjectValue {
-  protected VariablesHost<VALUE_LOADER> childrenManager;
+  override val properties: Promise<List<Variable>>
+    get() = childrenManager.get()
 
-  public ObjectValueBase(@NotNull ValueType type) {
-    super(type);
+  internal abstract inner class MyObsolescentAsyncFunction<PARAM, RESULT>(private val obsolescent: Obsolescent) : ObsolescentAsyncFunction<PARAM, RESULT> {
+    override fun isObsolete() = obsolescent.isObsolete || childrenManager.valueManager.isObsolete
   }
 
-  @NotNull
-  @Override
-  public final Promise<List<Variable>> getProperties() {
-    return childrenManager.get();
-  }
+  override fun getProperties(names: List<String>, evaluateContext: EvaluateContext, obsolescent: Obsolescent) = properties
+    .then(object : MyObsolescentAsyncFunction<List<Variable>, List<Variable>>(obsolescent) {
+      override fun `fun`(variables: List<Variable>) = getSpecifiedProperties(variables, names, evaluateContext)
+    })
 
-  abstract class MyObsolescentAsyncFunction<PARAM, RESULT> implements ObsolescentAsyncFunction<PARAM, RESULT> {
-    private final Obsolescent obsolescent;
+  override val valueString: String? = null
 
-    MyObsolescentAsyncFunction(@NotNull Obsolescent obsolescent) {
-      this.obsolescent = obsolescent;
-    }
+  override fun getIndexedProperties(from: Int, to: Int, bucketThreshold: Int, consumer: IndexedVariablesConsumer, componentType: ValueType?): Promise<*> = Promise.REJECTED
 
-    @Override
-    public boolean isObsolete() {
-      return obsolescent.isObsolete() || childrenManager.valueManager.isObsolete();
-    }
-  }
+  @Suppress("CAST_NEVER_SUCCEEDS")
+  override val variablesHost: VariablesHost<ValueManager<Vm>>
+    get() = childrenManager as VariablesHost<ValueManager<Vm>>
 
-  @NotNull
-  @Override
-  public Promise<List<Variable>> getProperties(@NotNull final List<String> names, @NotNull final EvaluateContext evaluateContext, @NotNull final Obsolescent obsolescent) {
-    return getProperties()
-      .then(new MyObsolescentAsyncFunction<List<Variable>, List<Variable>>(obsolescent) {
-        @NotNull
-        @Override
-        public Promise<List<Variable>> fun(List<Variable> variables) {
-          return getSpecifiedProperties(variables, names, evaluateContext);
+  companion object {
+    protected fun getSpecifiedProperties(variables: List<Variable>, names: List<String>, evaluateContext: EvaluateContext): Promise<List<Variable>> {
+      val properties = SmartList<Variable>()
+      var getterCount = 0
+      for (property in variables) {
+        if (!property.isReadable || !names.contains(property.name)) {
+          continue
         }
-      });
-  }
 
-  @NotNull
-  protected static Promise<List<Variable>> getSpecifiedProperties(@NotNull List<Variable> variables, @NotNull final List<String> names, @NotNull EvaluateContext evaluateContext) {
-    final List<Variable> properties = new SmartList<Variable>();
-    int getterCount = 0;
-    for (Variable property : variables) {
-      if (!property.isReadable() || !names.contains(property.getName())) {
-        continue;
+        if (!properties.isEmpty()) {
+          Collections.sort(properties, object : Comparator<Variable> {
+            override fun compare(o1: Variable, o2: Variable) = names.indexOf(o1.name) - names.indexOf(o2.name)
+          })
+        }
+
+        properties.add(property)
+        if (property.value == null) {
+          getterCount++
+        }
       }
 
-      if (!properties.isEmpty()) {
-        Collections.sort(properties, new Comparator<Variable>() {
-          @Override
-          public int compare(@NotNull Variable o1, @NotNull Variable o2) {
-            return names.indexOf(o1.getName()) - names.indexOf(o2.getName());
+      if (getterCount == 0) {
+        return Promise.resolve(properties)
+      }
+      else {
+        val promises = SmartList<Promise<*>>()
+        for (variable in properties) {
+          if (variable.value == null) {
+            val valueModifier = variable.valueModifier
+            assert(valueModifier != null)
+            promises.add(valueModifier!!.evaluateGet(variable, evaluateContext))
           }
-        });
-      }
-
-      properties.add(property);
-      if (property.getValue() == null) {
-        getterCount++;
-      }
-    }
-
-    if (getterCount == 0) {
-      return Promise.resolve(properties);
-    }
-    else {
-      List<Promise<?>> promises = new SmartList<Promise<?>>();
-      for (Variable variable : properties) {
-        if (variable.getValue() == null) {
-          ValueModifier valueModifier = variable.getValueModifier();
-          assert valueModifier != null;
-          promises.add(valueModifier.evaluateGet(variable, evaluateContext));
         }
+        return Promise.all<List<Variable>>(promises, properties)
       }
-      return Promise.all(promises, properties);
     }
-  }
-
-  @Nullable
-  @Override
-  public String getValueString() {
-    return null;
-  }
-
-  @NotNull
-  @Override
-  public ThreeState hasProperties() {
-    return ThreeState.UNSURE;
-  }
-
-  @NotNull
-  @Override
-  public ThreeState hasIndexedProperties() {
-    return ThreeState.NO;
-  }
-
-  @NotNull
-  @Override
-  public Promise<Void> getIndexedProperties(int from, int to, int bucketThreshold, @NotNull IndexedVariablesConsumer consumer, @Nullable ValueType componentType) {
-    return Promise.REJECTED;
-  }
-
-  @NotNull
-  @Override
-  public VariablesHost getVariablesHost() {
-    return childrenManager;
   }
 }
