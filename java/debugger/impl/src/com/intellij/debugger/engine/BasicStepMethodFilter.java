@@ -83,7 +83,6 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
                 }
                 catch (EvaluateException e) {
                   LOG.info(e);
-                  return false;
                 }
               }
             }
