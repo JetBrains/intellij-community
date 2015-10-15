@@ -1639,11 +1639,24 @@ public class UIUtil {
         g.fillRect(x, 0, width, height);
       }
       g.setColor(new Color(0, 0, 0, toolWindow ? 90 : 50));
-      if (drawTopLine) g.drawLine(x, 0, width, 0);
+      if (drawTopLine && !(SystemInfo.isMac && isUnderIntelliJLaF())) g.drawLine(x, 0, width, 0);
       if (drawBottomLine) g.drawLine(x, height - (isRetina() ? 1 : 2), width, height - (isRetina() ? 1 : 2));
 
-      g.setColor(isUnderDarcula() ? Gray._255.withAlpha(30) : new Color(255, 255, 255, 100));
-      g.drawLine(x, drawTopLine ? 1 : 0, width, drawTopLine ? 1 : 0);
+      if (SystemInfo.isMac && isUnderIntelliJLaF()) {
+        g.setColor(Gray.xC9);
+      } else {
+        g.setColor(isUnderDarcula() ? Gray._255.withAlpha(30) : new Color(255, 255, 255, 100));
+      }
+      if (isRetina()) {
+        Graphics2D g2 = (Graphics2D)g.create(0, 0, width, height);
+        g2.scale(0.5, 0.5);
+
+        g2.drawLine(2*x, 0, 2 * width, 0);
+        g2.scale(1, 1);
+        g2.dispose();
+      } else {
+        g.drawLine(x, drawTopLine ? 1 : 0, width, drawTopLine ? 1 : 0);
+      }
 
     } finally {
       config.restore();
