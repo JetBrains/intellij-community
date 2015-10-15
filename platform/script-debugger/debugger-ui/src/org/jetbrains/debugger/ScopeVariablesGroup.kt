@@ -20,7 +20,7 @@ import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.frame.XValueGroup
 
-class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, callFrame: CallFrame?) : XValueGroup(createScopeNodeName(scope)) {
+class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, callFrame: CallFrame?) : XValueGroup(scope.createScopeNodeName()) {
   private val context = createVariableContext(scope, parentContext, callFrame)
 
   private val callFrame = if (scope.type == Scope.Type.LOCAL) callFrame else null
@@ -54,7 +54,7 @@ class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, call
 }
 
 fun createAndAddScopeList(node: XCompositeNode, scopes: List<Scope>, context: VariableContext, callFrame: CallFrame?) {
-  val list = XValueChildrenList(scopes.size())
+  val list = XValueChildrenList(scopes.size)
   for (scope in scopes) {
     list.addTopGroup(ScopeVariablesGroup(scope, context, callFrame))
   }
@@ -77,8 +77,8 @@ private class ParentlessVariableContext(parentContext: VariableContext, scope: S
   override fun getParent() = null
 }
 
-private fun createScopeNodeName(scope: Scope): String {
-  when (scope.type) {
+private fun Scope.createScopeNodeName(): String {
+  when (type) {
     Scope.Type.GLOBAL -> return XDebuggerBundle.message("scope.global")
     Scope.Type.LOCAL -> return XDebuggerBundle.message("scope.local")
     Scope.Type.WITH -> return XDebuggerBundle.message("scope.with")
@@ -87,7 +87,9 @@ private fun createScopeNodeName(scope: Scope): String {
     Scope.Type.LIBRARY -> return XDebuggerBundle.message("scope.library")
     Scope.Type.INSTANCE -> return XDebuggerBundle.message("scope.instance")
     Scope.Type.CLASS -> return XDebuggerBundle.message("scope.class")
+    Scope.Type.BLOCK -> return XDebuggerBundle.message("scope.block")
+    Scope.Type.SCRIPT -> return XDebuggerBundle.message("scope.script")
     Scope.Type.UNKNOWN -> return XDebuggerBundle.message("scope.unknown")
-    else -> throw IllegalArgumentException(scope.type.name())
+    else -> throw IllegalArgumentException(type.name)
   }
 }
