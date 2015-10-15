@@ -268,7 +268,9 @@ public class CodeStyleSettingPresentation {
                                        ApplicationBundle.message("checkbox.spaces.after.comma"))
     ));
 
-    result.put(new SettingsGroup(SPACES_IN_TYPE_ARGUMENTS), ContainerUtil.<CodeStyleSettingPresentation>immutableList());
+    result.put(new SettingsGroup(SPACES_IN_TYPE_ARGUMENTS), ContainerUtil.immutableList(
+      new CodeStyleSettingPresentation("SPACE_BEFORE_TYPE_PARAMETER_LIST", ApplicationBundle.message("checkbox.spaces.before.opening.angle.bracket"))
+    ));
 
     result.put(new SettingsGroup(SPACES_IN_TYPE_PARAMETERS), ContainerUtil.<CodeStyleSettingPresentation>immutableList());
 
