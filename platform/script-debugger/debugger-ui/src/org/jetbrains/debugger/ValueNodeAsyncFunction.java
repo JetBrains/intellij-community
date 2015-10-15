@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.debugger;
+package org.jetbrains.debugger
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.AsyncFunction;
-import org.jetbrains.concurrency.Obsolescent;
+import org.jetbrains.concurrency.AsyncFunction
+import org.jetbrains.concurrency.Obsolescent
+import org.jetbrains.concurrency.Promise
 
-public abstract class ValueNodeAsyncFunction<PARAM, RESULT> implements AsyncFunction<PARAM, RESULT>, Obsolescent {
-  private final Obsolescent node;
-
-  protected ValueNodeAsyncFunction(@NotNull Obsolescent node) {
-    this.node = node;
-  }
-
-  @Override
-  public final boolean isObsolete() {
-    return node.isObsolete();
-  }
+abstract class ValueNodeAsyncFunction<PARAM, RESULT> protected constructor(private val node: Obsolescent) : AsyncFunction<PARAM, RESULT>, Obsolescent {
+  override fun isObsolete() = node.isObsolete
 }
+
+inline fun <T, SUB_RESULT> Promise<T>.thenAsync(node: Obsolescent, crossinline handler: (T) -> Promise<SUB_RESULT>) = then(object : ValueNodeAsyncFunction<T, SUB_RESULT>(node) {
+  override fun `fun`(param: T) = handler(param)
+})
+
+@Suppress("UNCHECKED_CAST")
+inline fun <T> Promise<T>.thenAsyncVoid(node: Obsolescent, crossinline handler: (T) -> Promise<*>) = then(object : ValueNodeAsyncFunction<T, Any?>(node) {
+  override fun `fun`(param: T) = handler(param) as Promise<Any?>
+})

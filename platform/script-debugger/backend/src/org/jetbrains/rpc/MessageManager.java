@@ -13,121 +13,100 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.rpc;
+package org.jetbrains.rpc
 
-import com.intellij.util.containers.ConcurrentIntObjectMap;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.Promise;
+import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.concurrency.Promise
+import java.io.IOException
+import java.util.*
 
-import java.io.IOException;
-import java.util.Arrays;
+class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS>(private val handler: MessageManager.Handler<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS>) : MessageManagerBase() {
+  private val callbackMap = ContainerUtil.createConcurrentIntObjectMap<RequestCallback<SUCCESS>>()
 
-/**
- * @param <REQUEST> type of outgoing message
- * @param <INCOMING> type of incoming message
- * @param <INCOMING_WITH_SEQ> type of incoming message that is a command (has sequence number)
- */
-public final class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS> extends MessageManagerBase {
-  private final ConcurrentIntObjectMap<RequestCallback<SUCCESS>> callbackMap = ContainerUtil.createConcurrentIntObjectMap();
-  private final Handler<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS> handler;
+  interface Handler<OUTGOING, INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS> {
+    fun getUpdatedSequence(message: OUTGOING): Int
 
-  public MessageManager(Handler<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS> handler) {
-    this.handler = handler;
+    @Throws(IOException::class)
+    fun write(message: OUTGOING): Boolean
+
+    fun readIfHasSequence(incoming: INCOMING): INCOMING_WITH_SEQ?
+
+    fun getSequence(incomingWithSeq: INCOMING_WITH_SEQ): Int
+
+    fun acceptNonSequence(incoming: INCOMING)
+
+    fun call(response: INCOMING_WITH_SEQ, callback: RequestCallback<SUCCESS>)
   }
 
-  public interface Handler<OUTGOING, INCOMING, INCOMING_WITH_SEQ, SUCCESS> {
-    int getUpdatedSequence(@NotNull OUTGOING message);
-
-    boolean write(@NotNull OUTGOING message) throws IOException;
-
-    INCOMING_WITH_SEQ readIfHasSequence(INCOMING incoming);
-
-    int getSequence(INCOMING_WITH_SEQ incomingWithSeq);
-
-    void acceptNonSequence(INCOMING incoming);
-
-    void call(INCOMING_WITH_SEQ response, RequestCallback<SUCCESS> callback);
-  }
-
-  public void send(@NotNull REQUEST message, @NotNull RequestCallback<SUCCESS> callback) {
+  fun send(message: REQUEST, callback: RequestCallback<SUCCESS>) {
     if (rejectIfClosed(callback)) {
-      return;
+      return
     }
 
-    int sequence = handler.getUpdatedSequence(message);
-    callbackMap.put(sequence, callback);
-    
-    boolean success;
+    val sequence = handler.getUpdatedSequence(message)
+    callbackMap.put(sequence, callback)
+
+    val success: Boolean
     try {
-      success = handler.write(message);
+      success = handler.write(message)
     }
-    catch (Throwable e) {
+    catch (e: Throwable) {
       try {
-        failedToSend(sequence);
+        failedToSend(sequence)
       }
       finally {
-        CommandProcessor.LOG.error("Failed to send", e);
+        LOG.error("Failed to send", e)
       }
-      return;
+      return
     }
 
     if (!success) {
-      failedToSend(sequence);
+      failedToSend(sequence)
     }
   }
 
-  private void failedToSend(int sequence) {
-    RequestCallback<SUCCESS> callback = callbackMap.remove(sequence);
-    if (callback != null) {
-      callback.onError(Promise.createError("Failed to send"));
-    }
+  private fun failedToSend(sequence: Int) {
+    callbackMap.remove(sequence)?.onError(Promise.createError("Failed to send"))
   }
 
-  public void processIncoming(INCOMING incomingParsed) {
-    INCOMING_WITH_SEQ commandResponse = handler.readIfHasSequence(incomingParsed);
+  fun processIncoming(incomingParsed: INCOMING) {
+    val commandResponse = handler.readIfHasSequence(incomingParsed)
     if (commandResponse == null) {
       if (closed) {
         // just ignore
-        CommandProcessor.LOG.info("Connection closed, ignore incoming");
+        LOG.info("Connection closed, ignore incoming")
       }
       else {
-        handler.acceptNonSequence(incomingParsed);
+        handler.acceptNonSequence(incomingParsed)
       }
-      return;
+      return
     }
 
-    RequestCallback<SUCCESS> callback = getCallbackAndRemove(handler.getSequence(commandResponse));
+    val callback = getCallbackAndRemove(handler.getSequence(commandResponse))
     if (rejectIfClosed(callback)) {
-      return;
+      return
     }
 
     try {
-      handler.call(commandResponse, callback);
+      handler.call(commandResponse, callback)
     }
-    catch (Throwable e) {
-      callback.onError(e);
-      CommandProcessor.LOG.error("Failed to dispatch response to callback", e);
+    catch (e: Throwable) {
+      callback.onError(e)
+      LOG.error("Failed to dispatch response to callback", e)
     }
   }
 
-  public RequestCallback<SUCCESS> getCallbackAndRemove(int id) {
-    RequestCallback<SUCCESS> callback = callbackMap.remove(id);
-    if (callback == null) {
-      throw new IllegalArgumentException("Cannot find callback with id " + id);
-    }
-    return callback;
-  }
+  fun getCallbackAndRemove(id: Int) = callbackMap.remove(id) ?: throw IllegalArgumentException("Cannot find callback with id $id")
 
-  public void cancelWaitingRequests() {
+  fun cancelWaitingRequests() {
     // we should call them in the order they have been submitted
-    ConcurrentIntObjectMap<RequestCallback<SUCCESS>> map = callbackMap;
-    int[] keys = map.keys();
-    Arrays.sort(keys);
-    for (int key : keys) {
-      RequestCallback<SUCCESS> callback = map.get(key);
+    val map = callbackMap
+    val keys = map.keys()
+    Arrays.sort(keys)
+    for (key in keys) {
+      val callback = map.get(key)
       if (callback != null) {
-        rejectCallback(callback);
+        MessageManagerBase.rejectCallback(callback)
       }
     }
   }

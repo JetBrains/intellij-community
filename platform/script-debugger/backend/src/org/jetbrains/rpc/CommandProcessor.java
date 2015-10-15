@@ -1,44 +1,30 @@
-package org.jetbrains.rpc;
+package org.jetbrains.rpc
 
-import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jsonProtocol.Request;
+import com.intellij.openapi.diagnostic.Logger
+import org.jetbrains.jsonProtocol.Request
+import java.util.concurrent.atomic.AtomicInteger
 
-import java.util.concurrent.atomic.AtomicInteger;
+val LOG = Logger.getInstance(CommandProcessor::class.java)
 
-public abstract class CommandProcessor<INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE>
-  extends CommandSenderBase<SUCCESS_RESPONSE>
-  implements MessageManager.Handler<Request, INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE>,
-             ResultReader<SUCCESS_RESPONSE>,
-             MessageProcessor {
-  public static final Logger LOG = Logger.getInstance(CommandProcessor.class);
+abstract class CommandProcessor<INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS_RESPONSE>() : CommandSenderBase<SUCCESS_RESPONSE>(), MessageManager.Handler<Request<out Any>, INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE>, ResultReader<SUCCESS_RESPONSE>, MessageProcessor {
+  private val currentSequence = AtomicInteger()
+  protected val messageManager = MessageManager(this)
 
-  private final AtomicInteger currentSequence = new AtomicInteger();
-  protected final MessageManager<Request, INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE> messageManager;
-
-  protected CommandProcessor() {
-    messageManager = new MessageManager<Request, INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE>(this);
+  override fun cancelWaitingRequests() {
+    messageManager.cancelWaitingRequests()
   }
 
-  @Override
-  public final void cancelWaitingRequests() {
-    messageManager.cancelWaitingRequests();
+  override fun closed() {
+    messageManager.closed()
   }
 
-  @Override
-  public final void closed() {
-    messageManager.closed();
+  override fun getUpdatedSequence(message: Request<out Any>): Int {
+    val id = currentSequence.incrementAndGet()
+    message.finalize(id)
+    return id
   }
 
-  @Override
-  public final int getUpdatedSequence(@NotNull Request message) {
-    int id = currentSequence.incrementAndGet();
-    message.finalize(id);
-    return id;
-  }
-
-  @Override
-  protected <RESULT> void send(@NotNull Request message, @NotNull RequestPromise<SUCCESS_RESPONSE, RESULT> callback) {
-    messageManager.send(message, callback);
+  override final fun <RESULT : Any> doSend(message: Request<RESULT>, callback: CommandSenderBase.RequestPromise<SUCCESS_RESPONSE, RESULT>) {
+    messageManager.send(message, callback)
   }
 }

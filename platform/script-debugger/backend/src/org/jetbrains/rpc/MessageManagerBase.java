@@ -1,24 +1,25 @@
-package org.jetbrains.rpc;
+package org.jetbrains.rpc
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promise
 
-public abstract class MessageManagerBase {
-  protected volatile boolean closed;
+abstract class MessageManagerBase {
+  @Volatile protected var closed = false
 
-  protected final boolean rejectIfClosed(RequestCallback<?> callback) {
+  protected fun rejectIfClosed(callback: RequestCallback<*>): Boolean {
     if (closed) {
-      callback.onError(Promise.createError("Connection closed"));
-      return true;
+      callback.onError(Promise.createError("Connection closed"))
+      return true
     }
-    return false;
+    return false
   }
 
-  public final void closed() {
-    closed = true;
+  fun closed() {
+    closed = true
   }
 
-  protected static void rejectCallback(@NotNull RequestCallback<?> callback) {
-    callback.onError(Promise.createError("Connection closed"));
+  companion object {
+    protected fun rejectCallback(callback: RequestCallback<*>) {
+      callback.onError(Promise.createError("Connection closed"))
+    }
   }
 }

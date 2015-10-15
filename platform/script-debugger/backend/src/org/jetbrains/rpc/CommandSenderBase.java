@@ -1,49 +1,43 @@
-package org.jetbrains.rpc;
+package org.jetbrains.rpc
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.jsonProtocol.Request;
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.jsonProtocol.Request
 
-public abstract class CommandSenderBase<SUCCESS_RESPONSE> implements CommandSender {
-  protected abstract <RESULT> void send(@NotNull Request message, @NotNull RequestPromise<SUCCESS_RESPONSE, RESULT> callback);
+abstract class CommandSenderBase<SUCCESS_RESPONSE> {
+  protected abstract fun <RESULT : Any> doSend(message: Request<RESULT>, callback: RequestPromise<SUCCESS_RESPONSE, RESULT>)
 
-  @Override
-  @NotNull
-  public final <RESULT> Promise<RESULT> send(@NotNull Request<RESULT> request) {
-    RequestPromise<SUCCESS_RESPONSE, RESULT> callback = new RequestPromise<SUCCESS_RESPONSE, RESULT>(request.getMethodName());
-    send(request, callback);
-    return callback;
+  fun <RESULT : Any> send(message: Request<RESULT>): Promise<RESULT> {
+    val callback = RequestPromise<SUCCESS_RESPONSE, RESULT>(message.methodName)
+    doSend(message, callback)
+    return callback
   }
 
-  protected static final class RequestPromise<SUCCESS_RESPONSE, RESULT> extends AsyncPromise<RESULT> implements RequestCallback<SUCCESS_RESPONSE> {
-    private final String methodName;
-
-    public RequestPromise(@Nullable String methodName) {
-      this.methodName = methodName;
-    }
-
-    @Override
-    public void onSuccess(@Nullable SUCCESS_RESPONSE response, @Nullable ResultReader<SUCCESS_RESPONSE> resultReader) {
+  protected class RequestPromise<SUCCESS_RESPONSE, RESULT : Any>(private val methodName: String?) : AsyncPromise<RESULT>(), RequestCallback<SUCCESS_RESPONSE> {
+    @Suppress("BASE_WITH_NULLABLE_UPPER_BOUND")
+    override fun onSuccess(response: SUCCESS_RESPONSE?, resultReader: ResultReader<SUCCESS_RESPONSE>?) {
       try {
         if (resultReader == null || response == null) {
-          //noinspection unchecked
-          setResult((RESULT)response);
+          @Suppress("UNCHECKED_CAST")
+          setResult(response as RESULT)
         }
         else {
-          setResult(methodName == null ? null : resultReader.<RESULT>readResult(methodName, response));
+          if (methodName == null) {
+            setResult(null)
+          }
+          else {
+            setResult(resultReader.readResult(methodName, response))
+          }
         }
       }
-      catch (Throwable e) {
-        CommandProcessor.LOG.error(e);
-        setError(e);
+      catch (e: Throwable) {
+        LOG.error(e)
+        setError(e)
       }
     }
 
-    @Override
-    public void onError(@NotNull Throwable error) {
-      setError(error);
+    override fun onError(error: Throwable) {
+      setError(error)
     }
   }
 }

@@ -1,16 +1,13 @@
-package org.jetbrains.debugger.values;
-
-import org.jetbrains.annotations.NotNull;
+package org.jetbrains.debugger.values
 
 /**
  * An object that represents a VM variable value (compound or atomic).
  */
-public interface Value {
-  @NotNull
-  ValueType getType();
+interface Value {
+  val type: ValueType
 
   /**
    * @return a string representation of this value
    */
-  String getValueString();
+  val valueString: String?
 }

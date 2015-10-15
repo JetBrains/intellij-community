@@ -1,14 +1,12 @@
-package org.jetbrains.rpc;
+package org.jetbrains.rpc
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.jsonProtocol.Request;
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.jsonProtocol.Request
 
-public interface MessageProcessor {
-  void cancelWaitingRequests();
+interface MessageProcessor {
+  fun cancelWaitingRequests()
 
-  void closed();
+  fun closed()
 
-  @NotNull
-  <T> Promise<T> send(@NotNull Request<T> message);
+  fun <RESULT : Any> send(message: Request<RESULT>): Promise<RESULT>
 }
