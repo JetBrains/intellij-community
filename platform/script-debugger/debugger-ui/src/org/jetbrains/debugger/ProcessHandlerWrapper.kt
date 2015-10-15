@@ -19,10 +19,8 @@ import com.intellij.execution.KillableProcess
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.xdebugger.XDebugProcess
-
-private val LOG: Logger = Logger.getInstance(ProcessHandlerWrapper::class.java)
+import org.jetbrains.rpc.LOG
 
 class ProcessHandlerWrapper(private val debugProcess: XDebugProcess, private val handler: ProcessHandler) : ProcessHandler(), KillableProcess {
   init {

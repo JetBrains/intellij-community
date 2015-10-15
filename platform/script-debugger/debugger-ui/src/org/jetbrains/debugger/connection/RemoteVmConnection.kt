@@ -25,7 +25,7 @@ import com.intellij.util.io.socketConnection.ConnectionStatus
 import io.netty.bootstrap.Bootstrap
 import org.jetbrains.debugger.Vm
 import org.jetbrains.io.NettyUtil
-import org.jetbrains.rpc.CommandProcessor
+import org.jetbrains.rpc.LOG
 import org.jetbrains.util.concurrency.AsyncPromise
 import org.jetbrains.util.concurrency.Promise
 import org.jetbrains.util.concurrency.RejectedPromise
@@ -63,7 +63,7 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
           }
           .rejected {
             if (it !is ConnectException) {
-              Promise.logError(CommandProcessor.LOG, it)
+              Promise.logError(LOG, it)
             }
             setState(ConnectionStatus.CONNECTION_FAILED, it.getMessage())
           }

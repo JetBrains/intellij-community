@@ -38,19 +38,18 @@ class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, call
       return
     }
 
-    promise.done(object : ObsolescentConsumer<Void>(node) {
-      override fun consume(ignored: Void) {
-        callFrame.receiverVariable.done(object : ObsolescentConsumer<Variable>(node) {
-          override fun consume(variable: Variable?) {
-            node.addChildren(if (variable == null) XValueChildrenList.EMPTY else XValueChildrenList.singleton(VariableView(variable, context)), true)
-          }
-        }).rejected(object : ObsolescentConsumer<Throwable>(node) {
-          override fun consume(error: Throwable?) {
-            node.addChildren(XValueChildrenList.EMPTY, true)
-          }
-        })
-      }
-    })
+    promise
+      .done(object : ObsolescentConsumer<Any?>(node) {
+        override fun consume(ignored: Any?) {
+          callFrame.receiverVariable
+            .done(object : ObsolescentConsumer<Variable>(node) {
+              override fun consume(variable: Variable?) = node.addChildren(if (variable == null) XValueChildrenList.EMPTY else XValueChildrenList.singleton(VariableView(variable, context)), true)
+            })
+            .rejected(object : ObsolescentConsumer<Throwable>(node) {
+              override fun consume(error: Throwable?) = node.addChildren(XValueChildrenList.EMPTY, true)
+            })
+        }
+      })
   }
 }
 
