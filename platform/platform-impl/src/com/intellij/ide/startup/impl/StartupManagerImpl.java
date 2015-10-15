@@ -51,6 +51,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.FileNotFoundException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -277,7 +278,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     if (!(fs instanceof LocalFileSystemImpl)) return;
     FileWatcher watcher = ((LocalFileSystemImpl)fs).getFileWatcher();
     if (!watcher.isOperational()) return;
-    List<String> manualWatchRoots = watcher.getManualWatchRoots();
+    Collection<String> manualWatchRoots = watcher.getManualWatchRoots();
     if (manualWatchRoots.isEmpty()) return;
     VirtualFile[] roots = ProjectRootManager.getInstance(myProject).getContentRoots();
     if (roots.length == 0) return;

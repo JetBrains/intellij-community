@@ -28,7 +28,8 @@ import java.util.List;
  * @author dslomov
  */
 public abstract class PluggableFileWatcher {
-  public static final ExtensionPointName<PluggableFileWatcher> EP_NAME = ExtensionPointName.create("com.intellij.vfs.local.pluggableFileWatcher");
+  public static final ExtensionPointName<PluggableFileWatcher> EP_NAME =
+    ExtensionPointName.create("com.intellij.vfs.local.pluggableFileWatcher");
 
   public abstract void initialize(@NotNull ManagingFS managingFS, @NotNull FileWatcherNotificationSink notificationSink);
 
@@ -45,7 +46,7 @@ public abstract class PluggableFileWatcher {
 
   public abstract boolean isWatched(@NotNull VirtualFile file);
 
-  public abstract void resetChangedPaths();
+  public void resetChangedPaths() { }
 
   @TestOnly
   public abstract void startup() throws IOException;
