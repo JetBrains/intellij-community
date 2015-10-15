@@ -49,7 +49,10 @@ class CompletionAutoPopupTester {
     }
     finally {
       CompletionAutoPopupHandler.ourTestingAutopopup = false
-      ((DocumentEx) myFixture.editor.document).setModificationStamp(0)  // to not let autopopup handler sneak in
+      def document = myFixture?.editor?.document
+      if (document) {
+        ((DocumentEx)document).setModificationStamp(0) // to force possible autopopup handler's invokeLater cancel itself
+      }
     }
   }
 
