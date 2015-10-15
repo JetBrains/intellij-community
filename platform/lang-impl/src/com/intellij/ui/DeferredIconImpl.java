@@ -34,6 +34,8 @@ import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
@@ -76,7 +78,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     this(baseIcon, param, needReadAction, evaluator, null, false);
   }
 
-  private DeferredIconImpl(Icon baseIcon, T param, boolean needReadAction, final Function<T, Icon> evaluator, IconListener<T> listener, boolean autoUpdatable) {
+  private DeferredIconImpl(Icon baseIcon, T param, boolean needReadAction, @NotNull Function<T, Icon> evaluator, @Nullable IconListener<T> listener, boolean autoUpdatable) {
     myParam = param;
     myDelegateIcon = nonNull(baseIcon);
     myEvaluator = evaluator;
@@ -368,6 +370,12 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     return icon instanceof DeferredIconImpl &&
            Comparing.equal(myParam, ((DeferredIconImpl)icon).myParam) &&
            equalIcons(myDelegateIcon, ((DeferredIconImpl)icon).myDelegateIcon);
+  }
+
+  @TestOnly
+  @NotNull
+  Icon getDelegateIcon() {
+    return myDelegateIcon;
   }
 
   @Override

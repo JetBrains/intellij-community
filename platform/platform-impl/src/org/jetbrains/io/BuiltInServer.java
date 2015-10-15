@@ -32,25 +32,41 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 public class BuiltInServer implements Disposable {
-  static final Logger LOG = Logger.getInstance(BuiltInServer.class);
-
   // Some antiviral software detect viruses by the fact of accessing these ports so we should not touch them to appear innocent.
   private static final int[] FORBIDDEN_PORTS = {6953, 6969, 6970};
 
-  private final ChannelRegistrar channelRegistrar = new ChannelRegistrar();
-  private final boolean isOwnerOfEventLoopGroup;
-
   private final EventLoopGroup eventLoopGroup;
   private final int port;
+  private final ChannelRegistrar channelRegistrar;
+  private final boolean isOwnerOfEventLoopGroup;
+
+  private BuiltInServer(@NotNull EventLoopGroup eventLoopGroup,
+                        int port,
+                        @NotNull ChannelRegistrar channelRegistrar,
+                        boolean isOwnerOfEventLoopGroup) {
+    this.eventLoopGroup = eventLoopGroup;
+    this.port = port;
+    this.channelRegistrar = channelRegistrar;
+    this.isOwnerOfEventLoopGroup = isOwnerOfEventLoopGroup;
+  }
+
+  @NotNull
+  public EventLoopGroup getEventLoopGroup() {
+    return eventLoopGroup;
+  }
+
+  public int getPort() {
+    return port;
+  }
 
   public boolean isRunning() {
     return !channelRegistrar.isEmpty();
   }
 
-  private BuiltInServer(@NotNull EventLoopGroup eventLoopGroup, int port, boolean isOwnerOfEventLoopGroup) {
-    this.eventLoopGroup = eventLoopGroup;
-    this.port = port;
-    this.isOwnerOfEventLoopGroup = isOwnerOfEventLoopGroup;
+  @Override
+  public void dispose() {
+    channelRegistrar.close(isOwnerOfEventLoopGroup);
+    Logger.getInstance(BuiltInServer.class).info("web server stopped");
   }
 
   @NotNull
@@ -72,16 +88,8 @@ public class BuiltInServer implements Disposable {
     ChannelRegistrar channelRegistrar = new ChannelRegistrar();
     ServerBootstrap bootstrap = NettyUtil.nioServerBootstrap(eventLoopGroup);
     configureChildHandler(bootstrap, channelRegistrar, handler);
-    return new BuiltInServer(eventLoopGroup, bind(firstPort, portsCount, tryAnyPort, bootstrap, channelRegistrar), isEventLoopGroupOwner);
-  }
-
-  public int getPort() {
-    return port;
-  }
-
-  @NotNull
-  public EventLoopGroup getEventLoopGroup() {
-    return eventLoopGroup;
+    int port = bind(firstPort, portsCount, tryAnyPort, bootstrap, channelRegistrar);
+    return new BuiltInServer(eventLoopGroup, port, channelRegistrar, isEventLoopGroupOwner);
   }
 
   static void configureChildHandler(@NotNull ServerBootstrap bootstrap,
@@ -120,7 +128,7 @@ public class BuiltInServer implements Disposable {
       }
     }
 
-    LOG.info("We cannot bind to our default range, so, try to bind to any free port");
+    Logger.getInstance(BuiltInServer.class).info("We cannot bind to our default range, so, try to bind to any free port");
     ChannelFuture future = bootstrap.bind(address, 0).awaitUninterruptibly();
     if (future.isSuccess()) {
       channelRegistrar.add(future.channel());
@@ -131,12 +139,6 @@ public class BuiltInServer implements Disposable {
     }
 
     return -1;  // unreachable
-  }
-
-  @Override
-  public void dispose() {
-    channelRegistrar.close(isOwnerOfEventLoopGroup);
-    LOG.info("web server stopped");
   }
 
   public static void replaceDefaultHandler(@NotNull ChannelHandlerContext context, @NotNull ChannelHandler channelHandler) {

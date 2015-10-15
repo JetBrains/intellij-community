@@ -108,8 +108,11 @@
 
     <externalSystemConfigLocator implementation="org.jetbrains.plugins.gradle.service.settings.GradleConfigLocator"/>
     <externalSystemManager implementation="org.jetbrains.plugins.gradle.GradleManager"/>
+    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.GradleSourceSetDataService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.BuildClasspathModuleGradleDataService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataService"/>
+    <externalSystemViewContributor implementation="org.jetbrains.plugins.gradle.service.project.view.GradleViewContributor"/>
+    <externalProjectStructureCustomizer implementation="org.jetbrains.plugins.gradle.service.project.GradleProjectStructureCustomizer"/>
     <externalSystemNotificationExtension implementation="org.jetbrains.plugins.gradle.service.notification.GradleNotificationExtension" order="last"/>
     <externalSystemTaskNotificationListener implementation="org.jetbrains.plugins.gradle.service.project.GradleProjectImportNotificationListener"/>
 
@@ -121,6 +124,7 @@
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.project.GradleNotification"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.task.ExecuteGradleTaskHistoryService"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache"/>
 
     <stepsBeforeRunProvider implementation="org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider" />
     <configurationProducer implementation="org.jetbrains.plugins.gradle.service.execution.GradleRuntimeConfigurationProducer"/>

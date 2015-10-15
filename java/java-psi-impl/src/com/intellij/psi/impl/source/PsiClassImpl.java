@@ -577,8 +577,12 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
     }
 
     final StubElement parentStub = stub.getParentStub();
-
-    final StubBasedPsiElementBase<?> context = (StubBasedPsiElementBase)parentStub.getPsi();
+    PsiElement psi = parentStub.getPsi();
+    if (!(psi instanceof StubBasedPsiElementBase)) {
+      LOG.error(stub + " parent is " + parentStub);
+      return null;
+    }
+    final StubBasedPsiElementBase<?> context = (StubBasedPsiElementBase)psi;
     @SuppressWarnings("unchecked")
     PsiClass[] classesInScope = (PsiClass[])parentStub.getChildrenByType(Constants.CLASS_BIT_SET, PsiClass.ARRAY_FACTORY);
 
@@ -595,7 +599,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
     }
     else {
       if (classesInScope.length != 1) {
-        LOG.assertTrue(classesInScope.length == 1, "Parent stub: "+parentStub.getStubType() +"; children: "+parentStub.getChildrenStubs()+"; \ntext:"+context.getText());
+        LOG.error("Parent stub: " + parentStub.getStubType() + "; children: " + parentStub.getChildrenStubs() + "; \ntext:" + context.getText());
       }
       LOG.assertTrue(classesInScope[0] == aClass);
     }

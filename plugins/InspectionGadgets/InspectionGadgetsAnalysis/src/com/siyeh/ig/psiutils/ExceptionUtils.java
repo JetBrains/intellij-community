@@ -67,11 +67,7 @@ public class ExceptionUtils {
   }
 
   public static boolean isThrowableRethrown(PsiParameter throwable, PsiCodeBlock catchBlock) {
-    final PsiStatement[] statements = catchBlock.getStatements();
-    if (statements.length <= 0) {
-      return false;
-    }
-    final PsiStatement lastStatement = statements[statements.length - 1];
+    final PsiStatement lastStatement = ControlFlowUtils.getLastStatementInBlock(catchBlock);
     if (!(lastStatement instanceof PsiThrowStatement)) {
       return false;
     }

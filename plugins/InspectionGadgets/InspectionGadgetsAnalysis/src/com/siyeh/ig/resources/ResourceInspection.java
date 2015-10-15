@@ -25,6 +25,7 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
@@ -205,14 +206,7 @@ public abstract class ResourceInspection extends BaseInspection {
     if (statement instanceof PsiTryStatement) {
       final PsiTryStatement tryStatement = (PsiTryStatement)statement;
       final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-      if (tryBlock == null) {
-        return false;
-      }
-      final PsiStatement[] innerStatements = tryBlock.getStatements();
-      if (innerStatements.length == 0) {
-        return false;
-      }
-      if (isResourceClose(innerStatements[0], variable)) {
+      if (isResourceClose(ControlFlowUtils.getFirstStatementInBlock(tryBlock), variable)) {
         return true;
       }
     }
@@ -258,8 +252,7 @@ public abstract class ResourceInspection extends BaseInspection {
     else if (statement instanceof PsiBlockStatement) {
       final PsiBlockStatement blockStatement = (PsiBlockStatement)statement;
       final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-      final PsiStatement[] statements = codeBlock.getStatements();
-      return statements.length != 0 && isResourceClose(statements[0], variable);
+      return isResourceClose(ControlFlowUtils.getFirstStatementInBlock(codeBlock), variable);
     }
     return false;
   }

@@ -2458,7 +2458,8 @@ public class UIUtil {
   }
 
   public static void installComboBoxCopyAction(JComboBox comboBox) {
-    final Component editorComponent = comboBox.getEditor().getEditorComponent();
+    final ComboBoxEditor editor = comboBox.getEditor();
+    final Component editorComponent = editor != null ? editor.getEditorComponent() : null;
     if (!(editorComponent instanceof JTextComponent)) return;
     final InputMap inputMap = ((JTextComponent)editorComponent).getInputMap();
     for (KeyStroke keyStroke : inputMap.allKeys()) {

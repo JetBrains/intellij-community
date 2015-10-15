@@ -26,6 +26,7 @@ import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -103,14 +104,15 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   @Nullable
   private Icon computeIcon(@Iconable.IconFlags int flags) {
     PsiElement psiElement = (PsiElement)this;
-    if (!psiElement.isValid()) return null;
+    PsiFile psiFile = psiElement.getContainingFile();
+    if (psiFile == null || !psiFile.isValid()) return null;
 
     if (Registry.is("psi.deferIconLoading")) {
       Icon baseIcon = LastComputedIcon.get(psiElement, flags);
       if (baseIcon == null) {
         baseIcon = computeBaseIcon(flags);
       }
-      return IconDeferrer.getInstance().defer(baseIcon, new ElementIconRequest(psiElement, flags), ICON_COMPUTE);
+      return IconDeferrer.getInstance().defer(baseIcon, new ElementIconRequest(psiElement, psiFile.getProject(), flags), ICON_COMPUTE);
     }
 
     return computeIconNow(psiElement, flags);
@@ -156,13 +158,17 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return false;
   }
 
-  public static Icon overlayIcons(Icon ... icons) {
+  @NotNull
+  public static Icon overlayIcons(@NotNull Icon ... icons) {
     final LayeredIcon icon = new LayeredIcon(icons.length);
     int i = 0;
-    for(Icon ic:icons) icon.setIcon(ic, i++);
+    for (Icon ic : icons) {
+      icon.setIcon(ic, i++);
+    }
     return icon;
   }
 
+  @NotNull
   public static RowIcon buildRowIcon(final Icon baseIcon, Icon visibilityIcon) {
     RowIcon icon = new RowIcon(2);
     icon.setIcon(baseIcon, 0);
@@ -171,18 +177,15 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   public static Icon iconWithVisibilityIfNeeded(@Iconable.IconFlags int flags, Icon baseIcon, Icon visibility) {
-    return (flags & ICON_FLAG_VISIBILITY) != 0 ? buildRowIcon(
-      baseIcon,
-      visibility
-    ):baseIcon;
+    return (flags & ICON_FLAG_VISIBILITY) != 0 ? buildRowIcon(baseIcon, visibility) : baseIcon;
   }
 
   private static class ElementIconRequest {
     private final SmartPsiElementPointer<?> myPointer;
     @Iconable.IconFlags private final int myFlags;
 
-    public ElementIconRequest(PsiElement element, @Iconable.IconFlags int flags) {
-      myPointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
+    private ElementIconRequest(@NotNull PsiElement element, @NotNull Project project, @IconFlags int flags) {
+      myPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(element);
       myFlags = flags;
     }
 
@@ -251,7 +254,8 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return baseIcon;
   }
 
-  public static RowIcon createLayeredIcon(Iconable instance, Icon icon, int flags) {
+  @NotNull
+  public static RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags) {
     List<Icon> layersFromProviders = new SmartList<Icon>();
     for (IconLayerProvider provider : Extensions.getExtensions(IconLayerProvider.EP_NAME)) {
       final Icon layerIcon = provider.getLayerIcon(instance, (flags & FLAGS_LOCKED) != 0);
@@ -288,10 +292,11 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   private static class IconLayer {
-    int flagMask;
-    Icon icon;
+    private final int flagMask;
+    @NotNull
+    private final Icon icon;
 
-    IconLayer(final int flagMask, final Icon icon) {
+    private IconLayer(final int flagMask, @NotNull Icon icon) {
       this.flagMask = flagMask;
       this.icon = icon;
     }
@@ -299,7 +304,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
   private static final List<IconLayer> ourIconLayers = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public static void registerIconLayer(int flagMask, Icon icon) {
+  public static void registerIconLayer(int flagMask, @NotNull Icon icon) {
     for(IconLayer iconLayer: ourIconLayers) {
       if (iconLayer.flagMask == flagMask) return;
     }

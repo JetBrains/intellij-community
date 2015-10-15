@@ -27,6 +27,7 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
+import com.intellij.openapi.externalSystem.model.project.Identifiable;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
@@ -66,10 +67,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
@@ -95,11 +94,13 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
   private ExternalProjectInfo myProjectInfo;
   private final Set<Key<?>> myIgnorableKeys;
   private final Set<Key<?>> myPublicKeys;
+  private final Set<Key<? extends Identifiable>> myDependencyAwareDataKeys;
   @Nullable
   private final Object myPreselectedNodeObject;
   private CheckboxTree myTree;
   @SuppressWarnings("unchecked")
-  private final MultiMap<DataNode<ModuleData>, DataNode<ModuleData>> dependentNodeMap = MultiMap.create(TObjectHashingStrategy.IDENTITY);
+  private final MultiMap<DataNode<Identifiable>, DataNode<Identifiable>> dependentNodeMap =
+    MultiMap.create(TObjectHashingStrategy.IDENTITY);
 
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
   private final CachedValue<SelectionState> selectionState = new CachedValueImpl<SelectionState>(new CachedValueProvider<SelectionState>() {
@@ -125,6 +126,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     myProject = project;
     myIgnorableKeys = getIgnorableKeys();
     myPublicKeys = getPublicKeys();
+    myDependencyAwareDataKeys = getDependencyAwareDataKeys();
     myPreselectedNodeObject = preselectedNodeDataObject;
     init(projectInfo);
   }
@@ -282,19 +284,31 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
         String tooltip = null;
         boolean hasErrors = false;
-        if (node.isChecked() && node.myDataNode.getKey().equals(ProjectKeys.MODULE)) {
-          //noinspection unchecked
-          final String listOfUncheckedDependencies =
-            StringUtil.join(dependentNodeMap.get((DataNode<ModuleData>)node.myDataNode), new Function<DataNode<ModuleData>, String>() {
-              @Override
-              public String fun(final DataNode<ModuleData> depNode) {
-                final DataNodeCheckedTreeNode uiNode = depNode.getUserData(CONNECTED_UI_NODE_KEY);
-                return uiNode != null && !uiNode.isChecked() ? depNode.getData().getId() : null;
-              }
-            }, "<br>");
-          if (StringUtil.isNotEmpty(listOfUncheckedDependencies)) {
-            hasErrors = true;
-            tooltip = "There are not selected module dependencies of the module: <br><b>" + listOfUncheckedDependencies + "</b>";
+        if (node.isChecked()) {
+          final Enumeration children = node.children();
+          while (children.hasMoreElements()) {
+            final Object o = children.nextElement();
+            if (o instanceof DataNodeCheckedTreeNode && !((DataNodeCheckedTreeNode)o).isChecked()) {
+              myCheckbox.setEnabled(false);
+              break;
+            }
+          }
+
+          if (myDependencyAwareDataKeys.contains(node.myDataNode.getKey())) {
+            //noinspection unchecked
+            final String listOfUncheckedDependencies =
+              StringUtil
+                .join(dependentNodeMap.get((DataNode<Identifiable>)node.myDataNode), new Function<DataNode<Identifiable>, String>() {
+                  @Override
+                  public String fun(final DataNode<Identifiable> depNode) {
+                    final DataNodeCheckedTreeNode uiNode = depNode.getUserData(CONNECTED_UI_NODE_KEY);
+                    return uiNode != null && !uiNode.isChecked() ? depNode.getData().getId() : null;
+                  }
+                }, "<br>");
+            if (StringUtil.isNotEmpty(listOfUncheckedDependencies)) {
+              hasErrors = true;
+              tooltip = "There are not selected module dependencies of the module: <br><b>" + listOfUncheckedDependencies + "</b>";
+            }
           }
         }
 
@@ -335,14 +349,14 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     final DataNodeCheckedTreeNode[] rootModuleNode = {null};
 
     final MultiMap<String, String> moduleDependenciesMap = MultiMap.create();
-    final Map<String, DataNode<ModuleData>> modulesNodeMap = ContainerUtil.newHashMap();
+    final Map<String, DataNode<Identifiable>> modulesNodeMap = ContainerUtil.newHashMap();
 
     for (DataNode<ModuleDependencyData> moduleDependencyDataNode : ExternalSystemApiUtil.findAllRecursively(
       myProjectInfo.getExternalProjectStructure(), ProjectKeys.MODULE_DEPENDENCY)) {
       final ModuleDependencyData moduleDependencyData = moduleDependencyDataNode.getData();
       moduleDependenciesMap.putValue(
-        moduleDependencyData.getOwnerModule().getLinkedExternalProjectPath(),
-        moduleDependencyData.getTarget().getLinkedExternalProjectPath());
+        moduleDependencyData.getOwnerModule().getId(),
+        moduleDependencyData.getTarget().getId());
     }
 
     final int[] modulesCount = {0};
@@ -355,7 +369,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
         DataNode modifiableDataNode = getModifiableDataNode(node);
 
-        if (node.getKey().equals(ProjectKeys.MODULE)) {
+        if (myDependencyAwareDataKeys.contains(key)) {
           modulesCount[0]++;
         }
 
@@ -365,17 +379,17 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
         if (treeNode == null) {
           treeNode = new DataNodeCheckedTreeNode(node);
 
-          if (node.getKey().equals(ProjectKeys.MODULE)) {
-            final ModuleData moduleData = (ModuleData)node.getData();
+          if (myDependencyAwareDataKeys.contains(key)) {
+            final Identifiable moduleData = (Identifiable)node.getData();
             //noinspection unchecked
-            modulesNodeMap.put(moduleData.getLinkedExternalProjectPath(), (DataNode<ModuleData>)node);
+            modulesNodeMap.put(moduleData.getId(), (DataNode<Identifiable>)node);
           }
 
           if (myPreselectedNodeObject != null && myPreselectedNodeObject.equals(node.getData())) {
             preselectedNode[0] = treeNode;
           }
           if (node.getData() instanceof ModuleData) {
-            if (myProjectInfo.getExternalProjectPath().equals(((ModuleData)node.getData()).getLinkedExternalProjectPath())) {
+            if (key.equals(ProjectKeys.MODULE) && myProjectInfo.getExternalProjectPath().equals(((ModuleData)node.getData()).getLinkedExternalProjectPath())) {
               rootModuleNode[0] = treeNode;
             }
           }
@@ -395,13 +409,13 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     myModulesCount = modulesCount[0];
 
     dependentNodeMap.clear();
-    for (String modulePath : moduleDependenciesMap.keySet()) {
-      final Collection<String> moduleDependencies = moduleDependenciesMap.get(modulePath);
-      final DataNode<ModuleData> moduleNode = modulesNodeMap.get(modulePath);
+    for (String moduleId : moduleDependenciesMap.keySet()) {
+      final Collection<String> moduleDependencies = moduleDependenciesMap.get(moduleId);
+      final DataNode<Identifiable> moduleNode = modulesNodeMap.get(moduleId);
       if (moduleNode != null) {
-        dependentNodeMap.putValues(moduleNode, ContainerUtil.mapNotNull(moduleDependencies, new Function<String, DataNode<ModuleData>>() {
+        dependentNodeMap.putValues(moduleNode, ContainerUtil.mapNotNull(moduleDependencies, new Function<String, DataNode<Identifiable>>() {
           @Override
-          public DataNode<ModuleData> fun(String s) {
+          public DataNode<Identifiable> fun(String s) {
             return modulesNodeMap.get(s);
           }
         }));
@@ -413,7 +427,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
     if (rootModuleNode[0] != null && projectNode != null) {
       rootModuleNode[0].comment = "root module";
-      projectNode.remove(rootModuleNode[0]);
+      if (projectNode.isNodeChild(rootModuleNode[0])) projectNode.remove(rootModuleNode[0]);
       projectNode.insert(rootModuleNode[0], 0);
     }
 
@@ -436,6 +450,16 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     Set<Key<?>> result = ContainerUtil.newHashSet(DATA_KEYS);
     for (ExternalProjectStructureCustomizer customizer : ExternalProjectStructureCustomizer.EP_NAME.getExtensions()) {
       result.addAll(customizer.getIgnorableDataKeys());
+    }
+    return result;
+  }
+
+  @NotNull
+  private static Set<Key<? extends Identifiable>> getDependencyAwareDataKeys() {
+    Set<Key<? extends Identifiable>> result = ContainerUtil.newHashSet();
+    result.add(ProjectKeys.MODULE);
+    for (ExternalProjectStructureCustomizer customizer : ExternalProjectStructureCustomizer.EP_NAME.getExtensions()) {
+      result.addAll(customizer.getDependencyAwareDataKeys());
     }
     return result;
   }
@@ -494,7 +518,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
         DataNodeCheckedTreeNode parent = this;
         DataNodeCheckedTreeNode moduleNode = null;
         while (parent.parent instanceof DataNodeCheckedTreeNode) {
-          if (moduleNode == null && ProjectKeys.MODULE.equals(parent.myDataNode.getKey())) {
+          if (moduleNode == null && (myDependencyAwareDataKeys.contains(parent.myDataNode.getKey()))) {
             moduleNode = parent;
           }
           parent = (DataNodeCheckedTreeNode)parent.parent;
@@ -548,11 +572,11 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
         DataNodeCheckedTreeNode.class, new Tree.NodeFilter<DataNodeCheckedTreeNode>() {
           @Override
           public boolean accept(DataNodeCheckedTreeNode node) {
-            return node.myDataNode.getKey().equals(ProjectKeys.MODULE) && checked != node.isChecked();
+            return myDependencyAwareDataKeys.contains(node.myDataNode.getKey()) && checked != node.isChecked();
           }
         });
 
-      boolean isCheckCompleted = unprocessedNodes.length == 0 && myDataNode.getKey().equals(ProjectKeys.MODULE);
+      boolean isCheckCompleted = unprocessedNodes.length == 0 && myDependencyAwareDataKeys.contains(myDataNode.getKey());
 
       updateSelectionState();
 
@@ -562,31 +586,31 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     }
 
     private void warnAboutMissedDependencies(boolean checked) {
-      List<DataNode<ModuleData>> selectedModules = ContainerUtil.newSmartList();
+      List<DataNode<Identifiable>> selectedModules = ContainerUtil.newSmartList();
       for (DataNode node : TreeUtil.collectSelectedObjectsOfType(myTree, DataNode.class)) {
-        if (node.getKey().equals(ProjectKeys.MODULE)) {
+        if (myDependencyAwareDataKeys.contains(node.getKey())) {
           //noinspection unchecked
           selectedModules.add(node);
         }
       }
 
-      final Set<DataNode<ModuleData>> deps = ContainerUtil.newHashSet();
-      for (DataNode<ModuleData> selectedModule : selectedModules) {
+      final Set<DataNode<Identifiable>> deps = ContainerUtil.newHashSet();
+      for (DataNode<Identifiable> selectedModule : selectedModules) {
         if (checked) {
-          deps.addAll(ContainerUtil.filter(dependentNodeMap.get(selectedModule), new Condition<DataNode<ModuleData>>() {
+          deps.addAll(ContainerUtil.filter(dependentNodeMap.get(selectedModule), new Condition<DataNode<Identifiable>>() {
             @Override
-            public boolean value(DataNode<ModuleData> node) {
+            public boolean value(DataNode<Identifiable> node) {
               final DataNodeCheckedTreeNode uiNode = node.getUserData(CONNECTED_UI_NODE_KEY);
               return uiNode != null && !uiNode.isChecked();
             }
           }));
         }
         else {
-          for (DataNode<ModuleData> node : dependentNodeMap.keySet()) {
+          for (DataNode<Identifiable> node : dependentNodeMap.keySet()) {
             final DataNodeCheckedTreeNode uiNode = node.getUserData(CONNECTED_UI_NODE_KEY);
             if (uiNode != null && !uiNode.isChecked()) continue;
 
-            Collection<DataNode<ModuleData>> dependencies = dependentNodeMap.get(node);
+            Collection<DataNode<Identifiable>> dependencies = dependentNodeMap.get(node);
             if (dependencies.contains(selectedModule)) {
               deps.add(node);
             }
@@ -595,16 +619,16 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
       }
 
       if (!deps.isEmpty() && !selectedModules.isEmpty()) {
-        final String listOfSelectedModules = StringUtil.join(selectedModules, new Function<DataNode<ModuleData>, String>() {
+        final String listOfSelectedModules = StringUtil.join(selectedModules, new Function<DataNode<Identifiable>, String>() {
           @Override
-          public String fun(DataNode<ModuleData> node) {
+          public String fun(DataNode<Identifiable> node) {
             return node.getData().getId();
           }
         }, ", ");
 
-        final String listOfDependencies = StringUtil.join(deps, new Function<DataNode<ModuleData>, String>() {
+        final String listOfDependencies = StringUtil.join(deps, new Function<DataNode<Identifiable>, String>() {
           @Override
-          public String fun(final DataNode<ModuleData> node) {
+          public String fun(final DataNode<Identifiable> node) {
             return node.getData().getId();
           }
         }, "<br>");
@@ -613,7 +637,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
         if (!checked) {
           message = String.format(
             "<html>The following module%s <br><b>%s</b><br>%s enabled and depend%s on selected modules. <br>Would you like to disable %s too?</html>",
-            deps.size() == 1 ? "" : "s", listOfDependencies, deps.size() == 1 ? "is" : "are", deps.size() == 1 ? "" : "s",
+            deps.size() == 1 ? "" : "s", listOfDependencies, deps.size() == 1 ? "is" : "are", deps.size() == 1 ? "s" : "",
             deps.size() == 1 ? "it" : "them");
         }
         else {
@@ -625,9 +649,9 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
         if (Messages.showOkCancelDialog(message, checked ? "Enable Dependant Modules" : "Disable Modules with Dependency on this",
                                         Messages.getQuestionIcon()) == Messages.OK) {
           List<DataNodeCheckedTreeNode> nodes =
-            ContainerUtil.mapNotNull(deps, new Function<DataNode<ModuleData>, DataNodeCheckedTreeNode>() {
+            ContainerUtil.mapNotNull(deps, new Function<DataNode<Identifiable>, DataNodeCheckedTreeNode>() {
               @Override
-              public DataNodeCheckedTreeNode fun(DataNode<ModuleData> node) {
+              public DataNodeCheckedTreeNode fun(DataNode<Identifiable> node) {
                 return node.getUserData(CONNECTED_UI_NODE_KEY);
               }
             });
@@ -668,7 +692,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
         public boolean accept(Object node) {
           if (node instanceof DataNodeCheckedTreeNode &&
               ((DataNodeCheckedTreeNode)node).isChecked() &&
-              ((DataNodeCheckedTreeNode)node).myDataNode.getKey().equals(ProjectKeys.MODULE)) {
+              myDependencyAwareDataKeys.contains((((DataNodeCheckedTreeNode)node).myDataNode.getKey()))) {
             selectedModulesCount[0]++;
           }
           return true;
@@ -681,12 +705,12 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
   }
 
   private boolean computeRequiredSelectionStatus() {
-    for (DataNode<ModuleData> node : dependentNodeMap.keySet()) {
+    for (DataNode<Identifiable> node : dependentNodeMap.keySet()) {
       final DataNodeCheckedTreeNode uiNode = node.getUserData(CONNECTED_UI_NODE_KEY);
       assert uiNode != null;
       if (!uiNode.isChecked()) continue;
 
-      for (DataNode<ModuleData> depNode : dependentNodeMap.get(node)) {
+      for (DataNode<Identifiable> depNode : dependentNodeMap.get(node)) {
         final DataNodeCheckedTreeNode uiDependentNode = depNode.getUserData(CONNECTED_UI_NODE_KEY);
         assert uiDependentNode != null;
         if (!uiDependentNode.isChecked()) return true;
@@ -791,12 +815,12 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
       }
 
       myTree.clearSelection();
-      for (DataNode<ModuleData> node : dependentNodeMap.keySet()) {
+      for (DataNode<Identifiable> node : dependentNodeMap.keySet()) {
         final DataNodeCheckedTreeNode uiNode = node.getUserData(CONNECTED_UI_NODE_KEY);
         assert uiNode != null;
         if (!uiNode.isChecked()) continue;
 
-        for (DataNode<ModuleData> treeNode : dependentNodeMap.get(node)) {
+        for (DataNode<Identifiable> treeNode : dependentNodeMap.get(node)) {
           final DataNodeCheckedTreeNode uiDependentNode = treeNode.getUserData(CONNECTED_UI_NODE_KEY);
           assert uiDependentNode != null;
           myTree.setNodeState(uiDependentNode, true);

@@ -57,8 +57,10 @@ public class GradleClassFinderTest extends GradleImportingTestCase {
     importProject("subprojects {\n" +
                   "    apply plugin: 'groovy'\n" +
                   "}");
-    assertModules("multiproject", "app", "buildSrc");
-    Module buildSrcModule = getModule("buildSrc");
+    assertModules("multiproject",
+                  "app", "app_main", "app_test",
+                  "buildSrc", "buildSrc_main", "buildSrc_test");
+    Module buildSrcModule = getModule("buildSrc_main");
     assertNotNull(buildSrcModule);
     final AccessToken accessToken = ReadAction.start();
     try {

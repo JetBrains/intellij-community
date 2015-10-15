@@ -2,10 +2,12 @@ package org.jetbrains.plugins.ipnb.format.cells;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class IpnbHeadingCell extends IpnbEditableCell {
   private int myLevel;   // from 1 to 6
 
-  public IpnbHeadingCell(@NotNull final String[] source, int level) {
+  public IpnbHeadingCell(@NotNull final List<String> source, int level) {
     super(source);
     myLevel = level;
   }

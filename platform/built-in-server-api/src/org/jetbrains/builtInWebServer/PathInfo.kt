@@ -48,6 +48,5 @@ class PathInfo(val ioFile: File?, val file: VirtualFile?, val root: VirtualFile,
     get() = if (ioFile == null) file!!.fileType else FileTypeManager.getInstance().getFileTypeByFileName(ioFile.name)
 
 
-  val isDirectory: Boolean
-    get() = if (ioFile == null) file!!.isDirectory else ioFile.isDirectory
+  fun isDirectory(): Boolean = if (ioFile == null) file!!.isDirectory else ioFile.isDirectory
 }

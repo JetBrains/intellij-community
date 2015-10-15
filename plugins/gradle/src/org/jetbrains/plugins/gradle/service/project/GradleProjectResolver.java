@@ -21,19 +21,19 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
-import com.intellij.openapi.externalSystem.model.project.LibraryData;
-import com.intellij.openapi.externalSystem.model.project.ModuleData;
-import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyValue;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,7 +48,8 @@ import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.ProjectImportAction;
+import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
 import org.jetbrains.plugins.gradle.service.execution.UnsupportedCancellationToken;
 import org.jetbrains.plugins.gradle.settings.ClassHolder;
@@ -57,6 +58,9 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 import java.util.*;
+
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.attachGradleSdkSources;
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getModuleId;
 
 /**
  * @author Denis Zhdanov, Vladislav Soroka
@@ -70,6 +74,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   private final GradleLibraryNamesMixer myLibraryNamesMixer = new GradleLibraryNamesMixer();
 
   private final MultiMap<ExternalSystemTaskId, CancellationTokenSource> myCancellationMap = MultiMap.create();
+  public static final Key<Map<String/* module id */, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>>> RESOLVED_SOURCE_SETS =
+    Key.create("resolvedSourceSets");
+  public static final Key<Map<String/* output path */, Pair<String /* module id*/, ExternalSystemSourceType>>> MODULES_OUTPUTS =
+    Key.create("moduleOutputsMap");
+  public static final Key<Map<String/* artifact path */, String /* module id*/>> CONFIGURATION_ARTIFACTS =
+    Key.create("gradleArtifactsMap");
 
   // This constructor is called by external system API, see AbstractExternalSystemFacadeImpl class constructor.
   @SuppressWarnings("UnusedDeclaration")
@@ -175,6 +185,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       resolverCtx.getSettings(), resolverCtx.getListener(),
       parametersList.getParameters(), commandLineArgs, resolverCtx.getConnection());
 
+    resolverCtx.checkCancelled();
+
     ProjectImportAction.AllModels allModels;
     final CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
     try {
@@ -191,6 +203,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
     }
     catch (UnsupportedVersionException unsupportedVersionException) {
+      resolverCtx.checkCancelled();
+
       // Old gradle distribution version used (before ver. 1.8)
       // fallback to use ModelBuilder gradle tooling API
       Class<? extends IdeaProject> aClass = resolverCtx.isPreviewMode() ? BasicIdeaProject.class : IdeaProject.class;
@@ -211,7 +225,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
     }
 
+    resolverCtx.checkCancelled();
+
     allModels.setBuildEnvironment(buildEnvironment);
+    extractExternalProjectModels(allModels, resolverCtx.isPreviewMode());
     resolverCtx.setModels(allModels);
 
     // import project data
@@ -230,7 +247,17 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     if (gradleModules == null || gradleModules.isEmpty()) {
       throw new IllegalStateException("No modules found for the target project: " + ideaProject);
     }
-    final Map<String, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap = ContainerUtilRt.newHashMap();
+
+    final Map<String /* module id */, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap = ContainerUtilRt.newHashMap();
+    final Map<String /* module id */, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetsMap = ContainerUtil.newHashMap();
+    projectDataNode.putUserData(RESOLVED_SOURCE_SETS, sourceSetsMap);
+
+    final Map<String/* output path */, Pair<String /* module id*/, ExternalSystemSourceType>> moduleOutputsMap =
+      ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
+    projectDataNode.putUserData(MODULES_OUTPUTS, moduleOutputsMap);
+    final Map<String/* artifact path */, String /* module id*/> artifactsMap =
+      ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
+    projectDataNode.putUserData(CONFIGURATION_ARTIFACTS, artifactsMap);
 
     // import modules data
     for (IdeaModule gradleModule : gradleModules) {
@@ -238,51 +265,269 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         continue;
       }
 
+      resolverCtx.checkCancelled();
+
       if (ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
         LOG.info(String.format("Importing module data: %s", gradleModule));
       }
-
       final String moduleName = gradleModule.getName();
       if (moduleName == null) {
         throw new IllegalStateException("Module with undefined name detected: " + gradleModule);
       }
 
-      ModuleData moduleData = projectResolverChain.createModule(gradleModule, projectData);
-
-      Pair<DataNode<ModuleData>, IdeaModule> previouslyParsedModule = moduleMap.get(moduleName);
-      if (previouslyParsedModule != null) {
-        throw new IllegalStateException(
-          String.format("Modules with duplicate name (%s) detected: '%s' and '%s'", moduleName, moduleData, previouslyParsedModule)
-        );
-      }
-      DataNode<ModuleData> moduleDataNode = projectDataNode.createChild(ProjectKeys.MODULE, moduleData);
-      moduleMap.put(moduleName, Pair.create(moduleDataNode, gradleModule));
-      if(StringUtil.equals(moduleData.getLinkedExternalProjectPath(), projectData.getLinkedExternalProjectPath())) {
-        projectData.setGroup(moduleData.getGroup());
-        projectData.setVersion(moduleData.getVersion());
-      }
+      DataNode<ModuleData> moduleDataNode = projectResolverChain.createModule(gradleModule, projectDataNode);
+      String mainModuleId = getModuleId(gradleModule);
+      moduleMap.put(mainModuleId, Pair.create(moduleDataNode, gradleModule));
     }
 
+    File gradleHomeDir = null;
     // populate modules nodes
-    final List<TaskData> allTasks = ContainerUtil.newArrayList();
     for (final Pair<DataNode<ModuleData>, IdeaModule> pair : moduleMap.values()) {
       final DataNode<ModuleData> moduleDataNode = pair.first;
       final IdeaModule ideaModule = pair.second;
+
+      if (gradleHomeDir == null) {
+        final BuildScriptClasspathModel buildScriptClasspathModel =
+          resolverCtx.getExtraProject(ideaModule, BuildScriptClasspathModel.class);
+        if (buildScriptClasspathModel != null) {
+          gradleHomeDir = buildScriptClasspathModel.getGradleHomeDir();
+        }
+      }
+
       projectResolverChain.populateModuleExtraModels(ideaModule, moduleDataNode);
       projectResolverChain.populateModuleContentRoots(ideaModule, moduleDataNode);
       projectResolverChain.populateModuleCompileOutputSettings(ideaModule, moduleDataNode);
-      projectResolverChain.populateModuleDependencies(ideaModule, moduleDataNode, projectDataNode);
       if (!isBuildSrcProject) {
-        final Collection<TaskData> moduleTasks = projectResolverChain.populateModuleTasks(ideaModule, moduleDataNode, projectDataNode);
-        allTasks.addAll(moduleTasks);
+        projectResolverChain.populateModuleTasks(ideaModule, moduleDataNode, projectDataNode);
+      }
+
+      final List<DataNode<? extends ModuleData>> modules = ContainerUtil.newSmartList();
+      modules.add(moduleDataNode);
+      modules.addAll(ExternalSystemApiUtil.findAll(moduleDataNode, GradleSourceSetData.KEY));
+
+      final ExternalSystemSourceType[] sourceTypes = new ExternalSystemSourceType[]{
+        ExternalSystemSourceType.SOURCE,
+        ExternalSystemSourceType.RESOURCE,
+        ExternalSystemSourceType.TEST,
+        ExternalSystemSourceType.TEST_RESOURCE
+      };
+      for (DataNode<? extends ModuleData> module : modules) {
+        final ModuleData moduleData = module.getData();
+        for (ExternalSystemSourceType sourceType : sourceTypes) {
+          final String path = moduleData.getCompileOutputPath(sourceType);
+          if (path != null) {
+            moduleOutputsMap.put(path, Pair.create(moduleData.getId(), sourceType));
+          }
+        }
+
+        if (moduleData instanceof GradleSourceSetData) {
+          for (File artifactFile : moduleData.getArtifacts()) {
+            artifactsMap.put(ExternalSystemApiUtil.toCanonicalPath(artifactFile.getAbsolutePath()), moduleData.getId());
+          }
+        }
       }
     }
+
+    for (final Pair<DataNode<ModuleData>, IdeaModule> pair : moduleMap.values()) {
+      final DataNode<ModuleData> moduleDataNode = pair.first;
+      final IdeaModule ideaModule = pair.second;
+      projectResolverChain.populateModuleDependencies(ideaModule, moduleDataNode, projectDataNode);
+    }
+
+    mergeLibraryAndModuleDependencyData(projectDataNode, gradleHomeDir, gradleVersion);
 
     // ensure unique library names
     Collection<DataNode<LibraryData>> libraries = ExternalSystemApiUtil.getChildren(projectDataNode, ProjectKeys.LIBRARY);
     myLibraryNamesMixer.mixNames(libraries);
 
     return projectDataNode;
+  }
+
+  private static void mergeLibraryAndModuleDependencyData(DataNode<ProjectData> projectDataNode,
+                                                          @Nullable File gradleHomeDir,
+                                                          @Nullable GradleVersion gradleVersion) {
+    final Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap =
+      projectDataNode.getUserData(RESOLVED_SOURCE_SETS);
+    assert sourceSetMap != null;
+
+    final Map<String, Pair<String, ExternalSystemSourceType>> moduleOutputsMap =
+      projectDataNode.getUserData(MODULES_OUTPUTS);
+    assert moduleOutputsMap != null;
+
+    final Map<String, String> artifactsMap = projectDataNode.getUserData(CONFIGURATION_ARTIFACTS);
+    assert artifactsMap != null;
+
+    final Collection<DataNode<LibraryDependencyData>> libraryDependencies =
+      ExternalSystemApiUtil.findAllRecursively(projectDataNode, ProjectKeys.LIBRARY_DEPENDENCY);
+
+    for (DataNode<LibraryDependencyData> libraryDependencyDataNode : libraryDependencies) {
+      if (!libraryDependencyDataNode.getChildren().isEmpty()) continue;
+
+      final DataNode<?> libraryNodeParent = libraryDependencyDataNode.getParent();
+      if (libraryNodeParent == null) continue;
+
+      final LibraryDependencyData libraryDependencyData = libraryDependencyDataNode.getData();
+      final LibraryData libraryData = libraryDependencyData.getTarget();
+      final Set<String> libraryPaths = libraryData.getPaths(LibraryPathType.BINARY);
+      if (libraryPaths.isEmpty()) continue;
+
+      final LinkedList<String> unprocessedPaths = ContainerUtil.newLinkedList(libraryPaths);
+      while (!unprocessedPaths.isEmpty()) {
+        final String path = unprocessedPaths.remove();
+
+        Set<String> targetModuleOutputPaths = null;
+
+        final String moduleId;
+        final Pair<String, ExternalSystemSourceType> sourceTypePair = moduleOutputsMap.get(path);
+        if (sourceTypePair == null) {
+          moduleId = artifactsMap.get(path);
+          if (moduleId != null) {
+            targetModuleOutputPaths = ContainerUtil.set(path);
+          }
+        }
+        else {
+          moduleId = sourceTypePair.first;
+        }
+        if (moduleId == null) continue;
+
+        final Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> pair = sourceSetMap.get(moduleId);
+        if (pair == null) {
+          continue;
+        }
+
+        final ModuleData moduleData = pair.first.getData();
+        if (targetModuleOutputPaths == null) {
+          final Set<String> compileSet = ContainerUtil.newHashSet();
+          ContainerUtil.addAllNotNull(compileSet,
+                                      moduleData.getCompileOutputPath(ExternalSystemSourceType.SOURCE),
+                                      moduleData.getCompileOutputPath(ExternalSystemSourceType.RESOURCE));
+          if (!compileSet.isEmpty() && libraryPaths.containsAll(compileSet)) {
+            targetModuleOutputPaths = compileSet;
+          }
+          else {
+            final Set<String> testSet = ContainerUtil.newHashSet();
+            ContainerUtil.addAllNotNull(testSet,
+                                        moduleData.getCompileOutputPath(ExternalSystemSourceType.TEST),
+                                        moduleData.getCompileOutputPath(ExternalSystemSourceType.TEST_RESOURCE));
+            if (compileSet.isEmpty() && libraryPaths.containsAll(testSet)) {
+              targetModuleOutputPaths = testSet;
+            }
+          }
+        }
+
+        final ModuleData ownerModule = libraryDependencyData.getOwnerModule();
+        final ModuleDependencyData moduleDependencyData = new ModuleDependencyData(ownerModule, moduleData);
+        moduleDependencyData.setScope(libraryDependencyData.getScope());
+        if ("test".equals(pair.second.getName())) {
+          moduleDependencyData.setProductionOnTestDependency(true);
+        }
+        final DataNode<ModuleDependencyData> found = ExternalSystemApiUtil.find(
+          libraryNodeParent, ProjectKeys.MODULE_DEPENDENCY, new BooleanFunction<DataNode<ModuleDependencyData>>() {
+            @Override
+            public boolean fun(DataNode<ModuleDependencyData> node) {
+              return moduleDependencyData.equals(node.getData());
+            }
+          });
+
+        if (targetModuleOutputPaths != null) {
+          if (found == null) {
+            libraryNodeParent.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData);
+          }
+          libraryPaths.removeAll(targetModuleOutputPaths);
+          unprocessedPaths.removeAll(targetModuleOutputPaths);
+          if (libraryPaths.isEmpty()) {
+            libraryDependencyDataNode.clear(true);
+            break;
+          }
+          continue;
+        }
+        else {
+          // do not add the path as library dependency if another module dependency is already contain the path as one of its output paths
+          if (found != null) {
+            libraryPaths.remove(path);
+            if (libraryPaths.isEmpty()) {
+              libraryDependencyDataNode.clear(true);
+              break;
+            }
+            continue;
+          }
+        }
+
+        final ExternalSourceDirectorySet directorySet = pair.second.getSources().get(sourceTypePair.second);
+        if (directorySet != null) {
+          for (File file : directorySet.getSrcDirs()) {
+            libraryData.addPath(LibraryPathType.SOURCE, file.getAbsolutePath());
+          }
+        }
+      }
+
+      if (libraryDependencyDataNode.getParent() != null) {
+        if (libraryPaths.size() > 1) {
+          List<String> toRemove = ContainerUtil.newSmartList();
+          for (String path : libraryPaths) {
+            final File binaryPath = new File(path);
+            if (binaryPath.isFile()) {
+              final LibraryData extractedLibrary = new LibraryData(libraryDependencyData.getOwner(), "");
+              extractedLibrary.addPath(LibraryPathType.BINARY, path);
+              if (gradleHomeDir != null && gradleVersion != null) {
+                attachGradleSdkSources(binaryPath, extractedLibrary, gradleHomeDir, gradleVersion);
+              }
+              LibraryDependencyData extractedDependencyData = new LibraryDependencyData(
+                libraryDependencyData.getOwnerModule(), extractedLibrary, LibraryLevel.MODULE);
+              libraryDependencyDataNode.getParent().createChild(ProjectKeys.LIBRARY_DEPENDENCY, extractedDependencyData);
+
+              toRemove.add(path);
+            }
+          }
+          libraryPaths.removeAll(toRemove);
+          if (libraryPaths.isEmpty()) {
+            libraryDependencyDataNode.clear(true);
+          }
+        }
+      }
+    }
+  }
+
+  private static Map<String, ExternalProject> extractExternalProjectModels(ProjectImportAction.AllModels models, boolean isPreview) {
+    final ExternalProject externalRootProject =
+      isPreview ? models.getExtraProject(null, ExternalProjectPreview.class) : models.getExtraProject(null, ExternalProject.class);
+    if (externalRootProject == null) return Collections.emptyMap();
+
+    final DefaultExternalProject wrappedExternalRootProject = new DefaultExternalProject(externalRootProject);
+    models.addExtraProject(wrappedExternalRootProject, ExternalProject.class);
+    final Map<String, ExternalProject> externalProjectsMap = createExternalProjectsMap(wrappedExternalRootProject);
+
+    DomainObjectSet<? extends IdeaModule> gradleModules = models.getIdeaProject().getModules();
+    if (gradleModules != null && !gradleModules.isEmpty()) {
+      for (IdeaModule ideaModule : gradleModules) {
+        final ExternalProject externalProject = externalProjectsMap.get(getModuleId(ideaModule));
+        if (externalProject != null) {
+          models.addExtraProject(externalProject, ExternalProject.class, ideaModule);
+        }
+      }
+    }
+
+    return externalProjectsMap;
+  }
+
+  private static Map<String, ExternalProject> createExternalProjectsMap(@Nullable final ExternalProject rootExternalProject) {
+    final Map<String, ExternalProject> externalProjectMap = ContainerUtilRt.newHashMap();
+
+    if (rootExternalProject == null) return externalProjectMap;
+
+    Queue<ExternalProject> queue = new LinkedList<ExternalProject>();
+    queue.add(rootExternalProject);
+
+    while (!queue.isEmpty()) {
+      ExternalProject externalProject = queue.remove();
+      queue.addAll(externalProject.getChildProjects().values());
+      final String moduleName = externalProject.getName();
+      final String qName = externalProject.getQName();
+      String moduleId = StringUtil.isEmpty(qName) || ":".equals(qName) ? moduleName : qName;
+      externalProjectMap.put(moduleId, externalProject);
+    }
+
+    return externalProjectMap;
   }
 
   private void handleBuildSrcProject(@NotNull final DataNode<ProjectData> resultProjectDataNode,
@@ -315,22 +560,18 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       projectConnectionDataNodeFunction.myProjectPath, projectConnectionDataNodeFunction.mySettings, projectConnectionDataNodeFunction);
 
     if (buildSrcProjectDataDataNode != null) {
-      final DataNode<ModuleData> moduleDataNode = ExternalSystemApiUtil.find(
-        buildSrcProjectDataDataNode, ProjectKeys.MODULE, new BooleanFunction<DataNode<ModuleData>>() {
-          @Override
-          public boolean fun(DataNode<ModuleData> node) {
-            return projectConnectionDataNodeFunction.myProjectPath.equals(node.getData().getLinkedExternalProjectPath());
-          }
-        });
-      if (moduleDataNode != null) {
-        for (DataNode<LibraryData> libraryDataNode : ExternalSystemApiUtil.findAll(buildSrcProjectDataDataNode, ProjectKeys.LIBRARY)) {
-          resultProjectDataNode.createChild(libraryDataNode.getKey(), libraryDataNode.getData());
-        }
+      for (DataNode<ModuleData> moduleNode : ExternalSystemApiUtil.getChildren(buildSrcProjectDataDataNode, ProjectKeys.MODULE)) {
+        resultProjectDataNode.addChild(moduleNode);
 
-        final DataNode<ModuleData> newModuleDataNode = resultProjectDataNode.createChild(ProjectKeys.MODULE, moduleDataNode.getData());
-        for (DataNode node : moduleDataNode.getChildren()) {
-          if(!ProjectKeys.MODULE.equals(node.getKey()) && !ProjectKeys.MODULE_DEPENDENCY.equals(node.getKey()))
-          newModuleDataNode.createChild(node.getKey(), node.getData());
+        // adjust ide module group
+        final ModuleData moduleData = moduleNode.getData();
+        if (moduleData.getIdeModuleGroup() != null) {
+          String[] moduleGroup = ArrayUtil.prepend(resultProjectDataNode.getData().getInternalName(), moduleData.getIdeModuleGroup());
+          moduleData.setIdeModuleGroup(moduleGroup);
+
+          for (DataNode<GradleSourceSetData> sourceSetNode : ExternalSystemApiUtil.getChildren(moduleNode, GradleSourceSetData.KEY)) {
+            sourceSetNode.getData().setIdeModuleGroup(moduleGroup);
+          }
         }
       }
     }
@@ -374,7 +615,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
     }
   }
-
 
   @NotNull
   public static GradleProjectResolverExtension createProjectResolverChain(@Nullable final GradleExecutionSettings settings) {

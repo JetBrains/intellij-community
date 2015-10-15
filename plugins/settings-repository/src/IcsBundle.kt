@@ -25,7 +25,7 @@ private var ourBundle: Reference<ResourceBundle>? = null
 
 private const val BUNDLE: String = "messages.IcsBundle"
 
-internal fun icsMessage(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any?): String {
+fun icsMessage(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any?): String {
   return CommonBundle.message(getBundle(), key, *params)
 }
 

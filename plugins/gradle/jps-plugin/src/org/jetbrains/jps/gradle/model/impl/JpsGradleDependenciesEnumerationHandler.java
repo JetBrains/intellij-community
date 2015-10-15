@@ -41,6 +41,16 @@ public class JpsGradleDependenciesEnumerationHandler extends JpsJavaDependencies
     return JpsGradleExtensionService.getInstance().isProductionOnTestDependency(element);
   }
 
+  @Override
+  public boolean shouldIncludeTestsFromDependentModulesToTestClasspath() {
+    return false;
+  }
+
+  @Override
+  public boolean shouldProcessDependenciesRecursively() {
+    return false;
+  }
+
   public static class GradleFactory extends Factory {
     @Nullable
     @Override

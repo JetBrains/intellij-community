@@ -824,8 +824,10 @@ class EditorPainter implements TextDrawingCallback {
           if (it.getEndOffset() <= offset) {
             it.advance();
           }
-          painter.paintBeforeLineStart(g, it.getStartOffset() == offset ? it.getBeforeLineStartBackgroundAttributes() :
-                                          it.getMergedAttributes(), fragment.getStartVisualColumn(), fragment.getStartX(), y);
+          if (x >= clip.getMinX()) {
+            painter.paintBeforeLineStart(g, it.getStartOffset() == offset ? it.getBeforeLineStartBackgroundAttributes() :
+                                            it.getMergedAttributes(), fragment.getStartVisualColumn(), x, y);
+          }
         }
       }
       FoldRegion foldRegion = fragment.getCurrentFoldRegion();
@@ -843,22 +845,27 @@ class EditorPainter implements TextDrawingCallback {
           TextAttributes attributes = it.getMergedAttributes();
           int curEnd = fragment.isRtl() ? Math.max(it.getEndOffset(), end) : Math.min(it.getEndOffset(), end);
           float xNew = fragment.offsetToX(x, start, curEnd);
-          painter.paint(g, fragment, 
-                        fragment.isRtl() ? fragmentStartOffset - start : start - fragmentStartOffset,
-                        fragment.isRtl() ? fragmentStartOffset - curEnd : curEnd - fragmentStartOffset, 
-                        attributes, x, xNew, y);
+          if (xNew >= clip.getMinX()) {
+            painter.paint(g, fragment, 
+                          fragment.isRtl() ? fragmentStartOffset - start : start - fragmentStartOffset,
+                          fragment.isRtl() ? fragmentStartOffset - curEnd : curEnd - fragmentStartOffset, 
+                          attributes, x, xNew, y);
+          }
           x = xNew;
           start = curEnd;
         }
       }
       else {
         float xNew = fragment.getEndX();
-        painter.paint(g, fragment, 0, fragment.getEndVisualColumn() - fragment.getStartVisualColumn(), getFoldRegionAttributes(foldRegion), 
-                      x, xNew, y);
+        if (xNew >= clip.getMinX()) {
+          painter.paint(g, fragment, 0, fragment.getEndVisualColumn() - fragment.getStartVisualColumn(), getFoldRegionAttributes(foldRegion), 
+                        x, xNew, y);
+        }
         x = xNew;
         prevEndOffset = -1;
         it = null;
       }
+      if (x > clip.getMaxX()) return;
       maxColumn = fragment.getEndVisualColumn();
     }
     if (it == null || it.getEndOffset() != visualLineEndOffset) {

@@ -161,7 +161,12 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
           if ("enabled".equals(evt.getPropertyName())) {
-            setBorder(Boolean.TRUE.equals(evt.getNewValue()) ? EDITOR_BORDER : DISABLED_EDITOR_BORDER);
+            if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+              //ignore
+            } else {
+              setBorder(Boolean.TRUE.equals(evt.getNewValue()) ? EDITOR_BORDER : DISABLED_EDITOR_BORDER);
+            }
+
             repaint();
           }
         }
@@ -213,6 +218,17 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
     @Override
     public void setBounds(final int x, final int y, final int width, final int height) {
       UIUtil.setComboBoxEditorBounds(x, y, width, height, this);
+    }
+
+    @Override
+    public Color getBackground() {
+      if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+        Container parent = getParent();
+        if (parent != null && !parent.isEnabled()) {
+          return Gray.xF8;
+        }
+      }
+      return super.getBackground();
     }
 
     @Override

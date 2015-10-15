@@ -15,6 +15,7 @@
  */
 package org.jetbrains.io;
 
+import com.intellij.openapi.diagnostic.Logger;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -24,9 +25,8 @@ import org.jetbrains.annotations.NotNull;
 abstract class DelegatingHttpRequestHandlerBase extends SimpleChannelInboundHandlerAdapter<FullHttpRequest> {
   @Override
   protected void messageReceived(ChannelHandlerContext context, FullHttpRequest message) throws Exception {
-    if (BuiltInServer.LOG.isDebugEnabled()) {
-      //BuiltInServer.LOG.debug("IN HTTP:\n" + message);
-      BuiltInServer.LOG.debug("IN HTTP: " + message.uri());
+    if (Logger.getInstance(BuiltInServer.class).isDebugEnabled()) {
+      Logger.getInstance(BuiltInServer.class).debug("IN HTTP: " + message.uri());
     }
 
     if (!process(context, message, new QueryStringDecoder(message.uri()))) {
@@ -34,10 +34,12 @@ abstract class DelegatingHttpRequestHandlerBase extends SimpleChannelInboundHand
     }
   }
 
-  protected abstract boolean process(@NotNull ChannelHandlerContext context, @NotNull FullHttpRequest request, @NotNull QueryStringDecoder urlDecoder) throws Exception;
+  protected abstract boolean process(@NotNull ChannelHandlerContext context,
+                                     @NotNull FullHttpRequest request,
+                                     @NotNull QueryStringDecoder urlDecoder) throws Exception;
 
   @Override
   public void exceptionCaught(@NotNull ChannelHandlerContext context, @NotNull Throwable cause) {
-    NettyUtil.logAndClose(cause, BuiltInServer.LOG, context.channel());
+    NettyUtil.logAndClose(cause, Logger.getInstance(BuiltInServer.class), context.channel());
   }
 }

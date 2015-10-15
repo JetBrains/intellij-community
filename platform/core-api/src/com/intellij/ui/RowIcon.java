@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2015 JetBrains s.r.o.
  *
@@ -17,9 +16,14 @@
 
 package com.intellij.ui;
 
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
+import java.util.List;
 
 public class RowIcon implements Icon {
   private final Alignment myAlignment;
@@ -44,6 +48,13 @@ public class RowIcon implements Icon {
     this(icons.length);
     System.arraycopy(icons, 0, myIcons, 0, icons.length);
     recalculateSize();
+  }
+
+  @TestOnly
+  @NotNull
+  Icon[] getAllIcons() {
+    List<Icon> icons = ContainerUtil.packNullables(myIcons);
+    return icons.toArray(new Icon[icons.size()]);
   }
 
   public int hashCode() {

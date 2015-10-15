@@ -276,7 +276,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   public static List<Change> collectChanges(final List<? extends CommittedChangeList> selectedChangeLists, final boolean withMovedTrees) {
     Collections.sort(selectedChangeLists, CommittedChangeListByDateComparator.ASCENDING);
 
-    List<Change> changes = Collections.emptyList();
+    List<Change> changes = new ArrayList<Change>();
     for (CommittedChangeList cl : selectedChangeLists) {
       changes.addAll(withMovedTrees ? cl.getChangesWithMovedTrees() : cl.getChanges());
     }

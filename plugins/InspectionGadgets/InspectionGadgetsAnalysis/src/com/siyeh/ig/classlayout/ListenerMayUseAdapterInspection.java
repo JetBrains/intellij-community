@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Bas Leijdekkers
+ * Copyright 2009-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -112,16 +113,10 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
         }
         final PsiClass interfaceClass = (PsiClass)target;
         for (PsiMethod method : methods) {
-          final PsiCodeBlock body = method.getBody();
-          if (body == null) {
+          if (!ControlFlowUtils.isEmptyCodeBlock(method.getBody())) {
             continue;
           }
-          final PsiStatement[] statements = body.getStatements();
-          if (statements.length != 0) {
-            continue;
-          }
-          final PsiMethod[] superMethods = method.findSuperMethods(
-            interfaceClass);
+          final PsiMethod[] superMethods = method.findSuperMethods(interfaceClass);
           if (superMethods.length > 0) {
             method.delete();
           }
@@ -220,15 +215,10 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
         final PsiMethod[] methods = aClass.getMethods();
         for (PsiMethod method : methods) {
           final PsiCodeBlock body = method.getBody();
-          if (body == null) {
+          if (!ControlFlowUtils.isEmptyCodeBlock(body)) {
             continue;
           }
-          final PsiStatement[] statements = body.getStatements();
-          if (statements.length != 0) {
-            continue;
-          }
-          final PsiMethod[] superMethods =
-            method.findSuperMethods(implementsClass);
+          final PsiMethod[] superMethods = method.findSuperMethods(implementsClass);
           if (superMethods.length == 0) {
             continue;
           }

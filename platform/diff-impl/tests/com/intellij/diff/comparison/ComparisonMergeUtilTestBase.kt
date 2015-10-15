@@ -165,7 +165,7 @@ public abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
   }
 
 
-  public data class Change(start1: Int, end1: Int, start2: Int, end2: Int, start3: Int, end3: Int)
+  public class Change(start1: Int, end1: Int, start2: Int, end2: Int, start3: Int, end3: Int)
   : Trio<IntPair>(IntPair(start1, end1), IntPair(start2, end2), IntPair(start3, end3)) {
 
     val start1 = start(ThreeSide.LEFT)

@@ -45,6 +45,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -114,18 +115,15 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   private void assertGeneratedSources(String moduleName, JavaSourceRootType type, String... expectedSources) {
-    ContentEntry contentRoot = getContentRoot(moduleName);
-    List<ContentFolder> folders = new ArrayList<ContentFolder>();
-    for (SourceFolder folder : contentRoot.getSourceFolders(type)) {
+    final ContentEntry[] contentRoots = getContentRoots(moduleName);
+    final String rootUrl = contentRoots.length > 1 ? ExternalSystemApiUtil.getExternalProjectPath(getModule(moduleName)) : null;
+    List<SourceFolder> folders = doAssertContentFolders(rootUrl, contentRoots, type, expectedSources);
+    for (SourceFolder folder : folders) {
       JavaSourceRootProperties properties = folder.getJpsElement().getProperties(type);
       assertNotNull(properties);
-      if (properties.isForGeneratedSources()) {
-        folders.add(folder);
-      }
+      assertTrue("Not a generated folder: " + folder, properties.isForGeneratedSources());
     }
-    doAssertContentFolders(contentRoot, folders, expectedSources);
   }
-
 
   protected void assertResources(String moduleName, String... expectedSources) {
     doAssertContentFolders(moduleName, JavaResourceRootType.RESOURCE, expectedSources);
@@ -150,8 +148,33 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   private void doAssertContentFolders(String moduleName, @NotNull JpsModuleSourceRootType<?> rootType, String... expected) {
-    ContentEntry contentRoot = getContentRoot(moduleName);
-    doAssertContentFolders(contentRoot, contentRoot.getSourceFolders(rootType), expected);
+    final ContentEntry[] contentRoots = getContentRoots(moduleName);
+    final String rootUrl = contentRoots.length > 1 ? ExternalSystemApiUtil.getExternalProjectPath(getModule(moduleName)) : null;
+    doAssertContentFolders(rootUrl, contentRoots, rootType, expected);
+  }
+
+  private static List<SourceFolder> doAssertContentFolders(@Nullable String rootUrl,
+                                                           ContentEntry[] contentRoots,
+                                                           @NotNull JpsModuleSourceRootType<?> rootType,
+                                                           String... expected) {
+    List<SourceFolder> result = new ArrayList<SourceFolder>();
+    List<String> actual = new ArrayList<String>();
+    for (ContentEntry contentRoot : contentRoots) {
+      for (SourceFolder f : contentRoot.getSourceFolders(rootType)) {
+        rootUrl = rootUrl == null ? VirtualFileManager.extractPath(contentRoot.getUrl()) : VirtualFileManager.extractPath(rootUrl);
+        String folderUrl = VirtualFileManager.extractPath(f.getUrl());
+        if (folderUrl.startsWith(rootUrl)) {
+          int length = rootUrl.length() + 1;
+          folderUrl = folderUrl.substring(Math.min(length, folderUrl.length()));
+        }
+
+        actual.add(folderUrl);
+        result.add(f);
+      }
+    }
+
+    assertOrderedElementsAreEqual(actual, Arrays.asList(expected));
+    return result;
   }
 
   private static void doAssertContentFolders(ContentEntry e, final List<? extends ContentFolder> folders, String... expected) {
@@ -227,6 +250,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   private static void assertModuleLibDepPath(LibraryOrderEntry lib, OrderRootType type, List<String> paths) {
+    assertNotNull(lib);
     if (paths == null) return;
     assertUnorderedPathsAreEqual(Arrays.asList(lib.getRootUrls(type)), paths);
     // also check the library because it may contain slight different set of urls (e.g. with duplicates)
@@ -245,7 +269,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     }), scopes);
   }
 
-  private List<LibraryOrderEntry> getModuleLibDeps(String moduleName, String depName) {
+  protected List<LibraryOrderEntry> getModuleLibDeps(String moduleName, String depName) {
     return getModuleDep(moduleName, depName, LibraryOrderEntry.class);
   }
 

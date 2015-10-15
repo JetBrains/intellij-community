@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Bas Leijdekkers
+ * Copyright 2006-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,11 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,19 +71,11 @@ public class MethodMayBeSynchronizedInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement identifier = descriptor.getPsiElement();
       final PsiMethod method = (PsiMethod)identifier.getParent();
       final PsiCodeBlock methodBody = method.getBody();
-      if (methodBody == null) {
-        return;
-      }
-      final PsiStatement[] methodStatements = methodBody.getStatements();
-      if (methodStatements.length != 1) {
-        return;
-      }
-      final PsiStatement statement = methodStatements[0];
+      final PsiStatement statement = ControlFlowUtils.getOnlyStatementInBlock(methodBody);
       if (!(statement instanceof PsiSynchronizedStatement)) {
         return;
       }
@@ -114,8 +106,7 @@ public class MethodMayBeSynchronizedInspection extends BaseInspection {
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitSynchronizedStatement(
-      PsiSynchronizedStatement statement) {
+    public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
       super.visitSynchronizedStatement(statement);
       final PsiElement parent = statement.getParent();
       if (!(parent instanceof PsiCodeBlock)) {
@@ -126,18 +117,12 @@ public class MethodMayBeSynchronizedInspection extends BaseInspection {
         return;
       }
       final PsiMethod method = (PsiMethod)grandParent;
-      final PsiCodeBlock body = method.getBody();
-      if (body == null) {
-        return;
-      }
-      final PsiStatement[] statements = body.getStatements();
-      if (statements.length != 1) {
+      if (!ControlFlowUtils.hasStatementCount(method.getBody(), 1)) {
         return;
       }
       final PsiExpression lockExpression = statement.getLockExpression();
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
-        if (!(lockExpression
-                instanceof PsiClassObjectAccessExpression)) {
+        if (!(lockExpression instanceof PsiClassObjectAccessExpression)) {
           return;
         }
         final PsiClassObjectAccessExpression classExpression =

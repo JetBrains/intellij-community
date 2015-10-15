@@ -4,17 +4,19 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbCell;
 
+import java.util.List;
+
 public class IpnbOutputCell implements IpnbCell {
   @Nullable protected final Integer myPromptNumber;
-  @Nullable private final String[] myText;
+  @Nullable private final List<String>myText;
 
-  public IpnbOutputCell(@Nullable final String[] text, @Nullable final Integer promptNumber) {
+  public IpnbOutputCell(@Nullable final List<String> text, @Nullable final Integer promptNumber) {
     myText = text;
     myPromptNumber = promptNumber;
   }
 
   @Nullable
-  public String[] getText() {
+  public List<String> getText() {
     return myText;
   }
 

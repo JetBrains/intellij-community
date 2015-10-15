@@ -341,7 +341,7 @@ public abstract class MergeTestBase : DiffTestCase() {
     public inner class LineColHelper(val line: Int) {
     }
 
-    public inner data class LineCol(val line: Int, val col: Int) {
+    public inner class LineCol(val line: Int, val col: Int) {
       public fun toOffset(): Int = editor.getDocument().getLineStartOffset(line) + col
     }
   }

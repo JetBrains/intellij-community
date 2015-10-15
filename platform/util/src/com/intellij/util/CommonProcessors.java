@@ -98,6 +98,7 @@ public class CommonProcessors {
       return myCollection;
     }
   }
+
   public static class UniqueProcessor<T> implements Processor<T> {
     private final Set<T> processed;
     private final Processor<T> myDelegate;
@@ -105,6 +106,7 @@ public class CommonProcessors {
     public UniqueProcessor(@NotNull Processor<T> delegate) {
       this(delegate, ContainerUtil.<T>canonicalStrategy());
     }
+
     public UniqueProcessor(@NotNull Processor<T> delegate, @NotNull TObjectHashingStrategy<T> strategy) {
       myDelegate = delegate;
       processed = new THashSet<T>(strategy);
@@ -146,7 +148,7 @@ public class CommonProcessors {
         myValue = t;
         return false;
       }
-      else return true;
+      return true;
     }
 
     protected abstract boolean accept(T t);

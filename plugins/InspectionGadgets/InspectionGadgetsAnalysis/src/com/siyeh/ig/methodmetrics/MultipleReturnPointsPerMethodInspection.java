@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.methodmetrics;
 
-import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiType;
@@ -26,12 +25,8 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
-import javax.swing.JFormattedTextField;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import javax.swing.*;
+import java.awt.*;
 
 public class MultipleReturnPointsPerMethodInspection
   extends MethodMetricInspection {
@@ -142,23 +137,13 @@ public class MultipleReturnPointsPerMethodInspection
     }
 
     private int calculateReturnPointCount(PsiMethod method) {
-      final ReturnPointCountVisitor visitor =
-        new ReturnPointCountVisitor(ignoreGuardClauses);
+      final ReturnPointCountVisitor visitor = new ReturnPointCountVisitor(ignoreGuardClauses);
       method.accept(visitor);
       final int count = visitor.getCount();
       if (!mayFallThroughBottom(method)) {
         return count;
       }
-      final PsiCodeBlock body = method.getBody();
-      if (body == null) {
-        return count;
-      }
-      final PsiStatement[] statements = body.getStatements();
-      if (statements.length == 0) {
-        return count + 1;
-      }
-      final PsiStatement lastStatement =
-        statements[statements.length - 1];
+      final PsiStatement lastStatement = ControlFlowUtils.getLastStatementInBlock(method.getBody());
       if (ControlFlowUtils.statementMayCompleteNormally(lastStatement)) {
         return count + 1;
       }

@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.utils.library.remote;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface MavenRemoteTask<Result, Argument> {
   Result execute(@NotNull Argument arg, ProgressIndicator indicator);
@@ -24,6 +25,6 @@ public interface MavenRemoteTask<Result, Argument> {
   String getName(@NotNull Argument arg);
 
   interface ResultProcessor<Result> {
-    void process(Result result);
+    void process(@Nullable Result result);
   }
 }

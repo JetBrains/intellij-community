@@ -450,12 +450,9 @@ public class TreeUtil {
     }
   }
 
-  public static void bindStubsToTree(@NotNull PsiFileImpl file, @NotNull StubTree stubTree) throws StubBindingException {
+  public static void bindStubsToTree(@NotNull PsiFileImpl file, @NotNull StubTree stubTree, @NotNull FileElement tree) throws StubBindingException {
     final Iterator<StubElement<?>> stubs = stubTree.getPlainList().iterator();
     stubs.next();  // skip file root stub
-
-    FileElement tree = file.getTreeElement();
-    assert tree != null : file;
 
     final IStubFileElementType type = file.getElementTypeForStubBuilder();
     assert type != null;

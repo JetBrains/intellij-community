@@ -29,7 +29,7 @@ public class NestedSynchronizedStatementInspectionTest extends LightInspectionTe
     doTest("class C {\n" +
            "  {\n" +
            "    synchronized (C.class) {\n" +
-           "      /*Nested 'synchronized' statement*/synchronized (C.class) /**/{\n" +
+           "      /*Nested 'synchronized' statement*/synchronized/**/ (C.class){\n" +
            "      }\n" +
            "    }\n" +
            "  }\n" +

@@ -22,6 +22,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -895,7 +896,17 @@ public class Switcher extends AnAction implements DumbAware {
                   }
                 }
                 else {
+                  boolean oldValue = UISettings.getInstance().REUSE_NOT_MODIFIED_TABS;
+                  UISettings.getInstance().REUSE_NOT_MODIFIED_TABS = false;
                   manager.openFile(file, true, true);
+                  if (oldValue) {
+                    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+                      @Override
+                      public void run() {
+                        UISettings.getInstance().REUSE_NOT_MODIFIED_TABS = true;
+                      }
+                    }, "", null);
+                  }
                 }
               }
             }

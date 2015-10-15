@@ -954,6 +954,10 @@
                      key="unchecked.exception.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.error.handling" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.UncheckedExceptionClassInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryInitCause" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="unnecessary.initcause.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.error.handling" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.errorhandling.UnnecessaryInitCauseInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnusedCatchParameter" bundle="com.siyeh.InspectionGadgetsBundle" key="unused.catch.parameter.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.UnusedCatchParameterInspection"/>

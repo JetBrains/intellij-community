@@ -1,7 +1,8 @@
 import os
 import sys
-import pydev_log
 import traceback
+
+import pydev_log
 
 pydev_src_dir = os.path.dirname(__file__)
 
@@ -423,6 +424,14 @@ class _NewThreadStartupWithTrace:
         global_debugger = GetGlobalDebugger()
         if global_debugger is not None:
             global_debugger.SetTrace(global_debugger.trace_dispatch)
+
+        if global_debugger.thread_analyser is not None:
+            # we can detect start_new_thread only here
+            try:
+                from pydevd_concurrency_analyser.pydevd_concurrency_logger import log_new_thread
+                log_new_thread(global_debugger)
+            except:
+                sys.stderr.write("Failed to detect new thread for visualization")
 
         return self.original_func(*self.args, **self.kwargs)
 

@@ -319,6 +319,12 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
         error = e;
         clearCaches();
       }
+      catch (InternalException e) {
+        if (e.errorCode() == 35 || e.errorCode() == 101) {
+          throw new EvaluateException(DebuggerBundle.message("error.corrupt.debug.info", e.getMessage()), e);
+        }
+        else throw e;
+      }
     }
     throw new EvaluateException(error.getMessage(), error);
   }

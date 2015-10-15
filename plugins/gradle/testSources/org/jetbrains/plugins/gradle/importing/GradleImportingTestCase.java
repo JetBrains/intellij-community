@@ -191,6 +191,11 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   }
 
   @Override
+  protected void importProject(@NonNls @Language("Groovy") String config) throws IOException {
+    super.importProject(config);
+  }
+
+  @Override
   protected ExternalProjectSettings getCurrentExternalProjectSettings() {
     return myProjectSettings;
   }

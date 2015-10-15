@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,12 +34,10 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class NonCodeUsageGroupingRule implements UsageGroupingRule {
-  private final GeneratedSourcesFilter[] myGeneratedSourcesFilters;
   private final Project myProject;
 
   public NonCodeUsageGroupingRule(Project project) {
     myProject = project;
-    myGeneratedSourcesFilters = GeneratedSourcesFilter.EP_NAME.getExtensions();
   }
 
   private static class CodeUsageGroup extends UsageGroupBase {
@@ -132,12 +130,8 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
   public UsageGroup groupUsage(@NotNull Usage usage) {
     if (usage instanceof UsageInFile) {
       VirtualFile file = ((UsageInFile)usage).getFile();
-      if (file != null) {
-        for (GeneratedSourcesFilter filter : myGeneratedSourcesFilters) {
-          if (filter.isGeneratedSource(file, myProject)) {
-            return UsageInGeneratedCodeGroup.INSTANCE;
-          }
-        }
+      if (file != null && GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
+          return UsageInGeneratedCodeGroup.INSTANCE;
       }
     }
     if (usage instanceof PsiElementUsage) {

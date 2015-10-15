@@ -22,12 +22,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-
 /**
  * Allows to compare files
  */
-public class FileContentImpl implements FileContent, BinaryFileContent {
+public class FileContentImpl implements FileContent {
   @NotNull private final VirtualFile myFile;
   @Nullable private final Project myProject;
   @NotNull private final FileType myType;
@@ -56,12 +54,6 @@ public class FileContentImpl implements FileContent, BinaryFileContent {
   @Override
   public FileType getContentType() {
     return myType;
-  }
-
-  @NotNull
-  @Override
-  public byte[] getBytes() throws IOException {
-    return myFile.contentsToByteArray();
   }
 
   @NotNull

@@ -270,29 +270,27 @@ public class LocalVariablesUtil {
         SourcePosition position = ContextUtil.getSourcePosition(context);
         if (position != null) {
           PsiElement element = position.getElementAt();
-          PsiElement method = DebuggerUtilsEx.getContainingMethod(element);
+          PsiParameterListOwner method = DebuggerUtilsEx.getContainingMethod(element);
           if (method != null) {
-            PsiParameterList params = DebuggerUtilsEx.getParameterList(method);
-            if (params != null) {
-              MultiMap<Integer, String> res = new MultiMap<Integer, String>();
-              int psiFirstLocalsSlot = getFirstLocalsSlot(method);
-              int slot = Math.max(0, firstLocalsSlot - psiFirstLocalsSlot);
-              for (int i = 0; i < params.getParametersCount(); i++) {
-                PsiParameter parameter = params.getParameters()[i];
-                res.putValue(slot, parameter.getName());
-                slot += getTypeSlotSize(parameter.getType());
-              }
-              PsiElement body = DebuggerUtilsEx.getBody(method);
-              if (body != null) {
-                try {
-                  body.accept(new LocalVariableNameFinder(firstLocalsSlot, res, element));
-                }
-                catch (Exception e) {
-                  LOG.info(e);
-                }
-              }
-              return res;
+            PsiParameterList params = method.getParameterList();
+            MultiMap<Integer, String> res = new MultiMap<Integer, String>();
+            int psiFirstLocalsSlot = getFirstLocalsSlot(method);
+            int slot = Math.max(0, firstLocalsSlot - psiFirstLocalsSlot);
+            for (int i = 0; i < params.getParametersCount(); i++) {
+              PsiParameter parameter = params.getParameters()[i];
+              res.putValue(slot, parameter.getName());
+              slot += getTypeSlotSize(parameter.getType());
             }
+            PsiElement body = method.getBody();
+            if (body != null) {
+              try {
+                body.accept(new LocalVariableNameFinder(firstLocalsSlot, res, element));
+              }
+              catch (Exception e) {
+                LOG.info(e);
+              }
+            }
+            return res;
           }
         }
         return MultiMap.empty();
@@ -430,16 +428,14 @@ public class LocalVariablesUtil {
     }
   }
 
-  private static int getFirstLocalsSlot(PsiElement method) {
+  private static int getFirstLocalsSlot(PsiParameterListOwner method) {
     int startSlot = 0;
     if (method instanceof PsiModifierListOwner) {
       startSlot = ((PsiModifierListOwner)method).hasModifierProperty(PsiModifier.STATIC) ? 0 : 1;
     }
-    PsiParameterList params = DebuggerUtilsEx.getParameterList(method);
-    if (params != null) {
-      for (PsiParameter parameter : params.getParameters()) {
-        startSlot += getTypeSlotSize(parameter.getType());
-      }
+    PsiParameterList params = method.getParameterList();
+    for (PsiParameter parameter : params.getParameters()) {
+      startSlot += getTypeSlotSize(parameter.getType());
     }
     return startSlot;
   }

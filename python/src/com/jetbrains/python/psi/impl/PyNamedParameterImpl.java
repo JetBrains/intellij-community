@@ -197,7 +197,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   }
 
   public PyType getType(@NotNull final TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    final PsiElement parent = getStubOrPsiParent();
+    final PsiElement parent = getParentByStub();
     if (parent instanceof PyParameterList) {
       PyParameterList parameterList = (PyParameterList)parent;
       PyFunction func = parameterList.getContainingFunction();

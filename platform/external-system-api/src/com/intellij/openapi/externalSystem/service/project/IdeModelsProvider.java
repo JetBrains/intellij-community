@@ -52,10 +52,16 @@ public interface IdeModelsProvider {
   ModuleOrderEntry findIdeModuleDependency(@NotNull ModuleDependencyData dependency, @NotNull Module module);
 
   @Nullable
-  OrderEntry findIdeModuleOrderEntry(LibraryDependencyData data);
+  OrderEntry findIdeModuleOrderEntry(@NotNull DependencyData data);
 
   @NotNull
   VirtualFile[] getContentRoots(Module module);
+
+  @NotNull
+  VirtualFile[] getSourceRoots(Module module);
+
+  @NotNull
+  VirtualFile[] getSourceRoots(Module module, boolean includingTests);
 
   @NotNull
   Library[] getAllLibraries();

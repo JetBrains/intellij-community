@@ -19,26 +19,21 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
-import com.intellij.openapi.externalSystem.model.project.ModuleData;
-import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
-import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.ModuleOrderEntryImpl;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Map;
-
-import static com.intellij.openapi.externalSystem.model.ProjectKeys.MODULE;
+import java.util.Set;
 
 /**
  * @author Denis Zhdanov
@@ -55,25 +50,6 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
     return ProjectKeys.MODULE_DEPENDENCY;
   }
 
-  @Override
-  public void importData(@NotNull Collection<DataNode<ModuleDependencyData>> toImport,
-                         @Nullable ProjectData projectData,
-                         @NotNull Project project,
-                         @NotNull IdeModifiableModelsProvider modelsProvider) {
-    MultiMap<DataNode<ModuleData>, DataNode<ModuleDependencyData>> byModule = ExternalSystemApiUtil.groupBy(toImport, MODULE);
-    for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ModuleDependencyData>>> entry : byModule.entrySet()) {
-      Module ideModule = modelsProvider.findIdeModule(entry.getKey().getData());
-      if (ideModule == null) {
-        LOG.warn(String.format(
-          "Can't import module dependencies %s. Reason: target module (%s) is not found at the ide and can't be imported",
-          entry.getValue(), entry.getKey()
-        ));
-        continue;
-      }
-      importData(entry.getValue(), ideModule, modelsProvider);
-    }
-  }
-
   @NotNull
   @Override
   public Class<ModuleOrderEntry> getOrderEntryType() {
@@ -85,21 +61,28 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
     return orderEntry.getModuleName();
   }
 
-  private void importData(@NotNull final Collection<DataNode<ModuleDependencyData>> toImport,
-                          @NotNull final Module module,
-                          @NotNull final IdeModifiableModelsProvider modelsProvider) {
+  @Override
+  protected Map<OrderEntry, OrderAware> importData(@NotNull final Collection<DataNode<ModuleDependencyData>> toImport,
+                                                 @NotNull final Module module,
+                                                 @NotNull final IdeModifiableModelsProvider modelsProvider) {
     final Map<Pair<String /* dependency module internal name */, /* dependency module scope */DependencyScope>, ModuleOrderEntry> toRemove =
       ContainerUtilRt.newHashMap();
+    final Map<OrderEntry, OrderAware> orderEntryDataMap = ContainerUtil.newLinkedHashMap();
+
     for (OrderEntry entry : modelsProvider.getOrderEntries(module)) {
       if (entry instanceof ModuleOrderEntry) {
         ModuleOrderEntry e = (ModuleOrderEntry)entry;
         toRemove.put(Pair.create(e.getModuleName(), e.getScope()), e);
       }
     }
-
+    final Set<ModuleDependencyData> processed = ContainerUtil.newHashSet();
     final ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
     for (DataNode<ModuleDependencyData> dependencyNode : toImport) {
       final ModuleDependencyData dependencyData = dependencyNode.getData();
+
+      if (processed.contains(dependencyData)) continue;
+      processed.add(dependencyData);
+
       toRemove.remove(Pair.create(dependencyData.getInternalName(), dependencyData.getScope()));
       final String moduleName = dependencyData.getInternalName();
       Module ideDependencyModule = modelsProvider.findIdeModule(moduleName);
@@ -126,10 +109,22 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
 
       orderEntry.setScope(dependencyData.getScope());
       orderEntry.setExported(dependencyData.isExported());
+
+      final boolean productionOnTestDependency = dependencyData.isProductionOnTestDependency();
+      if (orderEntry instanceof ModuleOrderEntryImpl) {
+        ((ModuleOrderEntryImpl)orderEntry).setProductionOnTestDependency(productionOnTestDependency);
+      }
+      else if (productionOnTestDependency) {
+        LOG.warn("Unable to set productionOnTestDependency for entry: " + orderEntry);
+      }
+
+      orderEntryDataMap.put(orderEntry, dependencyData);
     }
 
     if (!toRemove.isEmpty()) {
       removeData(toRemove.values(), module, modelsProvider);
     }
+
+    return orderEntryDataMap;
   }
 }

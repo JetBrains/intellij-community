@@ -17,8 +17,8 @@ package org.jetbrains.plugins.gradle.model;
 
 import com.intellij.openapi.externalSystem.model.project.IExternalSystemSourceType;
 import org.jetbrains.annotations.NotNull;
-
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -28,11 +28,8 @@ import java.util.Map;
 public interface ExternalSourceSet extends Serializable {
   @NotNull
   String getName();
-  //@NotNull
-  //ClasspathContainer getCompileClasspath();
 
-  //@NotNull
-  //ClasspathContainer getRuntimeClasspath();
+  Collection<ExternalDependency> getDependencies();
 
   @NotNull
   Map<IExternalSystemSourceType, ExternalSourceDirectorySet> getSources();

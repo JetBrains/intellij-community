@@ -630,6 +630,15 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         if (abstract2 && !abstract1) {
           return Specifics.FIRST;
         }
+
+        if (abstract1 && abstract2 && MethodSignatureUtil.areOverrideEquivalent(method1, method2)) {
+          final PsiType returnType1 = method1.getReturnType();
+          final PsiType returnType2 = method2.getReturnType();
+          if (returnType1 != null && returnType2 != null && returnType1.isAssignableFrom(returnType2)) {
+            return Specifics.SECOND;
+          }
+          return Specifics.FIRST;
+        }
       }
     } 
     else if (varargsPosition) {

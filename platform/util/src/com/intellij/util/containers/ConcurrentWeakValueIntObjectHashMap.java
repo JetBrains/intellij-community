@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 
 /**
- * Concurrent int key -> weak value:V map
+ * Concurrent key:int -> weak value:V map
  * Null values are NOT allowed
  * @deprecated Use {@link ContainerUtil#createConcurrentIntObjectWeakValueMap()} instead
  */
@@ -33,7 +33,7 @@ class ConcurrentWeakValueIntObjectHashMap<V> extends ConcurrentRefValueIntObject
     private final int hash;
     private final int key;
 
-    MyRef(int key, @NotNull V referent, ReferenceQueue<V> queue) {
+    private MyRef(int key, @NotNull V referent, @NotNull ReferenceQueue<V> queue) {
       super(referent, queue);
       this.key = key;
       hash = referent.hashCode();
@@ -60,8 +60,9 @@ class ConcurrentWeakValueIntObjectHashMap<V> extends ConcurrentRefValueIntObject
     }
   }
 
+  @NotNull
   @Override
-  protected IntReference<V> createReference(int key, @NotNull V value, ReferenceQueue<V> queue) {
+  protected IntReference<V> createReference(int key, @NotNull V value, @NotNull ReferenceQueue<V> queue) {
     return new MyRef<V>(key, value, queue);
   }
 }

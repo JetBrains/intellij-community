@@ -190,6 +190,12 @@ public class GradleExecutionHelper {
         listener.onStatusChange(new ExternalSystemTaskNotificationEvent(id, event.getDescription()));
       }
     });
+    operation.addProgressListener(new org.gradle.tooling.events.ProgressListener() {
+      @Override
+      public void statusChanged(org.gradle.tooling.events.ProgressEvent event) {
+        listener.onStatusChange(new ExternalSystemTaskNotificationEvent(id, event.getDisplayName()));
+      }
+    });
     operation.setStandardOutput(standardOutput);
     operation.setStandardError(standardError);
   }

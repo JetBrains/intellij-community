@@ -37,7 +37,7 @@ import java.util.List;
  * @author nik
  */
 public class JetBrainsAnnotationsExternalLibraryResolver extends ExternalLibraryResolver {
-  private static final ExternalLibraryDescriptor JAVA5 = new JetBrainsAnnotationsLibraryDescriptor() {
+  private static final ExternalLibraryDescriptor JAVA5 = new JetBrainsAnnotationsLibraryDescriptor("annotations-java5") {
     @NotNull
     @Override
     public List<String> getLibraryClassesRoots() {
@@ -49,7 +49,7 @@ public class JetBrainsAnnotationsExternalLibraryResolver extends ExternalLibrary
     }
   };
 
-  private static final ExternalLibraryDescriptor JAVA8 = new JetBrainsAnnotationsLibraryDescriptor() {
+  private static final ExternalLibraryDescriptor JAVA8 = new JetBrainsAnnotationsLibraryDescriptor("annotations") {
     @NotNull
     @Override
     public List<String> getLibraryClassesRoots() {
@@ -86,8 +86,8 @@ public class JetBrainsAnnotationsExternalLibraryResolver extends ExternalLibrary
   }
 
   private static abstract class JetBrainsAnnotationsLibraryDescriptor extends ExternalLibraryDescriptor {
-    public JetBrainsAnnotationsLibraryDescriptor() {
-      super("com.intellij", "annotations");
+    public JetBrainsAnnotationsLibraryDescriptor(final String artifactId) {
+      super("org.jetbrains", artifactId);
     }
   }
 }

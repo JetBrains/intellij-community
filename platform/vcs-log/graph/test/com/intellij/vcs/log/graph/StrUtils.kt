@@ -15,15 +15,15 @@
  */
 package com.intellij.vcs.log.graph
 
-import com.intellij.vcs.log.graph.api.LinearGraph
-import com.intellij.vcs.log.graph.api.elements.GraphNode
-import com.intellij.vcs.log.graph.parser.EdgeNodeCharConverter.*
-import com.intellij.vcs.log.graph.api.elements.GraphEdge
-import com.intellij.vcs.log.graph.parser.CommitParser
-import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator
-import com.intellij.vcs.log.graph.api.elements.GraphElement
 import com.intellij.vcs.log.graph.api.EdgeFilter
+import com.intellij.vcs.log.graph.api.LinearGraph
+import com.intellij.vcs.log.graph.api.elements.GraphEdge
+import com.intellij.vcs.log.graph.api.elements.GraphElement
+import com.intellij.vcs.log.graph.api.elements.GraphNode
+import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
+import com.intellij.vcs.log.graph.parser.CommitParser
+import com.intellij.vcs.log.graph.parser.EdgeNodeCharConverter.toChar
 
 fun LinearGraph.asString(sorted: Boolean = false): String {
   val s = StringBuilder()
@@ -34,7 +34,7 @@ fun LinearGraph.asString(sorted: Boolean = false): String {
 
     var adjEdges = getAdjacentEdges(nodeIndex, EdgeFilter.ALL)
     if (sorted) {
-      adjEdges = adjEdges.sortBy(GraphStrUtils.GRAPH_ELEMENT_COMPARATOR)
+      adjEdges = adjEdges.sortedWith(GraphStrUtils.GRAPH_ELEMENT_COMPARATOR)
     }
     adjEdges.map { it.asString() }.joinTo(s, separator = " ")
   }
@@ -83,7 +83,7 @@ fun PrintElementGenerator.asString(size: Int): String {
 
   for (row in 0..size - 1) {
     if (row > 0) s.append("\n")
-    val elements = getPrintElements(row).sortBy {
+    val elements = getPrintElements(row).sortedBy {
       val pos = it.getPositionInCurrentRow()
       if (it is NodePrintElement) {
         1024 * pos

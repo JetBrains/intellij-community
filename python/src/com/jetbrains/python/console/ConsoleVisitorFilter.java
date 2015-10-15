@@ -33,7 +33,8 @@ public class ConsoleVisitorFilter implements PythonVisitorFilter {
       //inspections
       if (visitorClass == PyUnusedLocalInspection.class || visitorClass == PyUnboundLocalVariableInspection.class ||
           visitorClass == PyStatementEffectInspection.class || visitorClass == PySingleQuotedDocstringInspection.class ||
-          visitorClass == PyDocstringInspection.class || visitorClass == PyMandatoryEncodingInspection.class) {
+          visitorClass == PyIncorrectDocstringInspection.class || visitorClass == PyMissingOrEmptyDocstringInspection.class || 
+          visitorClass == PyMandatoryEncodingInspection.class) {
         return false;
       }
 

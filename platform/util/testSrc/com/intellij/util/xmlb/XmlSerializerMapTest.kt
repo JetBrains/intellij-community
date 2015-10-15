@@ -10,7 +10,7 @@ import java.util.*
 internal class XmlSerializerMapTest {
   @Test fun beanValueUsingSkipDefaultsFilter() {
     @Tag("bean")
-    private class BeanWithMapWithBeanValue2 {
+    class BeanWithMapWithBeanValue2 {
       @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
       public var values: Map<String, BeanWithProperty> = THashMap()
     }

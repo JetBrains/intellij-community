@@ -20,28 +20,20 @@ import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceTyp
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.ContentFilterable
 import org.gradle.api.file.FileCopyDetails
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.util.PatternFilterable
 import org.gradle.plugins.ide.idea.IdeaPlugin
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-import org.jetbrains.plugins.gradle.model.DefaultExternalFilter
-import org.jetbrains.plugins.gradle.model.DefaultExternalPlugin
-import org.jetbrains.plugins.gradle.model.DefaultExternalProject
-import org.jetbrains.plugins.gradle.model.DefaultExternalSourceDirectorySet
-import org.jetbrains.plugins.gradle.model.DefaultExternalSourceSet
-import org.jetbrains.plugins.gradle.model.DefaultExternalTask
-import org.jetbrains.plugins.gradle.model.ExternalFilter
-import org.jetbrains.plugins.gradle.model.ExternalPlugin
-import org.jetbrains.plugins.gradle.model.ExternalProject
-import org.jetbrains.plugins.gradle.model.ExternalSourceDirectorySet
-import org.jetbrains.plugins.gradle.model.ExternalSourceSet
-import org.jetbrains.plugins.gradle.model.ExternalTask
+import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
+import org.jetbrains.plugins.gradle.tooling.util.DependencyResolverImpl
 
 import java.util.concurrent.ConcurrentHashMap
 
@@ -56,7 +48,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
 
   @Override
   public boolean canBuild(String modelName) {
-    return ExternalProject.name.equals(modelName)
+    return ExternalProject.name.equals(modelName) || ExternalProjectPreview.name.equals(modelName)
   }
 
   @Nullable
@@ -65,6 +57,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     ExternalProject externalProject = cache[project.path]
     if (externalProject != null) return externalProject
 
+    def isPreview = ExternalProjectPreview.name.equals(modelName)
     DefaultExternalProject defaultExternalProject = new DefaultExternalProject()
     defaultExternalProject.externalSystemId = "GRADLE"
     defaultExternalProject.name = project.name
@@ -75,12 +68,13 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     defaultExternalProject.buildFile = project.buildFile
     defaultExternalProject.group = wrap(project.group)
     defaultExternalProject.projectDir = project.projectDir
-    defaultExternalProject.sourceSets = getSourceSets(project)
+    defaultExternalProject.sourceSets = getSourceSets(project, isPreview)
     defaultExternalProject.tasks = getTasks(project)
 
     defaultExternalProject.plugins = getPlugins(project)
     //defaultExternalProject.setProperties(project.getProperties())
 
+    addArtifactsData(project, defaultExternalProject)
 
     final Map<String, ExternalProject> childProjects = new HashMap<String, ExternalProject>(project.getChildProjects().size())
     for (Map.Entry<String, Project> projectEntry : project.getChildProjects().entrySet()) {
@@ -93,6 +87,25 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     cache.put(project.getPath(), defaultExternalProject)
 
     defaultExternalProject
+  }
+
+  static void addArtifactsData(final Project project, DefaultExternalProject externalProject) {
+    final List<File> artifacts = new ArrayList<File>();
+    for (Task task : project.getTasks()) {
+      if (task instanceof Jar) {
+        Jar jar = (Jar)task;
+        artifacts.add(jar.getArchivePath());
+      }
+    }
+    externalProject.setArtifacts(artifacts);
+
+    def configurationsByName = project.getConfigurations().getAsMap();
+    Map<String, Set<File>> artifactsByConfiguration = new HashMap<String, Set<File>>();
+    for (Map.Entry<String, Configuration> configurationEntry : configurationsByName.entrySet()) {
+      Set<File> files = configurationEntry.getValue().getAllArtifacts().getFiles().getFiles();
+      artifactsByConfiguration.put(configurationEntry.getKey(), files);
+    }
+    externalProject.setArtifactsByConfiguration(artifactsByConfiguration);
   }
 
   static Map<String, ExternalPlugin> getPlugins(Project project) {
@@ -128,11 +141,13 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     result
   }
 
-  static Map<String, ExternalSourceSet> getSourceSets(Project project) {
-    final IdeaPlugin ideaPlugin = project.getPlugins().getPlugin(IdeaPlugin.class);
-    boolean inheritOutputDirs = ideaPlugin?.model?.module?.inheritOutputDirs ?: false
-    def ideaOutDir = ideaPlugin?.model?.module?.outputDir
-    def ideaTestOutDir = ideaPlugin?.model?.module?.testOutputDir
+  static Map<String, ExternalSourceSet> getSourceSets(Project project, boolean isPreview) {
+    final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class);
+    def ideaPluginModule = ideaPlugin?.model?.module
+    boolean inheritOutputDirs = ideaPluginModule?.inheritOutputDirs ?: false
+    def ideaOutDir = ideaPluginModule?.outputDir
+    def ideaTestOutDir = ideaPluginModule?.testOutputDir
+    def generatedSourceDirs = ideaPluginModule.hasProperty("generatedSourceDirs") ? ideaPluginModule?.generatedSourceDirs: null;
 
     def result = [:] as Map<String, ExternalSourceSet>
     if (!project.hasProperty("sourceSets") || !(project.sourceSets instanceof SourceSetContainer)) {
@@ -163,6 +178,24 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
 //      javaDirectorySet.excludes = javaExcludes + sourceSet.java.excludes;
 //      javaDirectorySet.includes = javaIncludes + sourceSet.java.includes;
 
+      ExternalSourceDirectorySet generatedDirectorySet = null
+      if(generatedSourceDirs && !generatedSourceDirs.isEmpty()) {
+        def files = new HashSet<File>()
+        for(File file : generatedSourceDirs) {
+          if(javaDirectorySet.srcDirs.contains(file)) {
+            files.add(file)
+          }
+        }
+        if(!files.isEmpty()) {
+          javaDirectorySet.srcDirs.removeAll(files)
+          generatedDirectorySet = new DefaultExternalSourceDirectorySet()
+          generatedDirectorySet.name = "generated " + javaDirectorySet.name
+          generatedDirectorySet.srcDirs = files
+          generatedDirectorySet.outputDir = javaDirectorySet.outputDir
+          generatedDirectorySet.inheritedCompilerOutput = javaDirectorySet.isCompilerOutputPathInherited()
+        }
+      }
+
       if (SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.name)) {
         if (!inheritOutputDirs && ideaTestOutDir != null) {
           javaDirectorySet.outputDir = ideaTestOutDir
@@ -173,6 +206,9 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         resourcesDirectorySet.filters = testFilterReaders
         sources.put(ExternalSystemSourceType.TEST, javaDirectorySet)
         sources.put(ExternalSystemSourceType.TEST_RESOURCE, resourcesDirectorySet)
+        if(generatedDirectorySet) {
+          sources.put(ExternalSystemSourceType.TEST_GENERATED, generatedDirectorySet)
+        }
       }
       else {
         if (!inheritOutputDirs && SourceSet.MAIN_SOURCE_SET_NAME.equals(sourceSet.name) && ideaOutDir != null) {
@@ -184,7 +220,13 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         resourcesDirectorySet.filters = filterReaders
         sources.put(ExternalSystemSourceType.SOURCE, javaDirectorySet)
         sources.put(ExternalSystemSourceType.RESOURCE, resourcesDirectorySet)
+        if(generatedDirectorySet) {
+          sources.put(ExternalSystemSourceType.SOURCE_GENERATED, generatedDirectorySet)
+        }
       }
+
+      def dependencies = new DependencyResolverImpl(project, isPreview).resolveDependencies(sourceSet)
+      externalSourceSet.dependencies.addAll(dependencies)
 
       externalSourceSet.sources = sources
       result[sourceSet.name] = externalSourceSet

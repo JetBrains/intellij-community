@@ -86,6 +86,7 @@ public class ProjectDataManager {
     };
   }
 
+  @Deprecated // to be removed in 15.1
   @Nullable
   public ProjectDataService<?, ?> getDataService(Key<?> key) {
     final List<ProjectDataService<?, ?>> dataServices = myServices.getValue().get(key);
@@ -129,6 +130,7 @@ public class ProjectDataManager {
       ExternalSystemUtil.scheduleExternalViewStructureUpdate(project, projectSystemId);
     }
 
+    List<Runnable> onSuccessImportTasks = ContainerUtil.newSmartList();
     try {
       final Set<Map.Entry<Key<?>, Collection<DataNode<?>>>> entries = grouped.entrySet();
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -146,7 +148,7 @@ public class ProjectDataManager {
           indicator.setText(message);
           indicator.setFraction((double)count++ / size);
         }
-        doImportData(entry.getKey(), entry.getValue(), projectData, project, modelsProvider, postImportTasks);
+        doImportData(entry.getKey(), entry.getValue(), projectData, project, modelsProvider, postImportTasks, onSuccessImportTasks);
       }
 
       for (Runnable postImportTask : ContainerUtil.reverse(postImportTasks)) {
@@ -161,6 +163,10 @@ public class ProjectDataManager {
     catch (Throwable t) {
       dispose(modelsProvider, project, synchronous);
       ExceptionUtil.rethrowAllAsUnchecked(t);
+    }
+
+    for (Runnable onSuccessImportTask : ContainerUtil.reverse(onSuccessImportTasks)) {
+      onSuccessImportTask.run();
     }
   }
 
@@ -212,7 +218,8 @@ public class ProjectDataManager {
                                 @Nullable final ProjectData projectData,
                                 @NotNull final Project project,
                                 @NotNull final IdeModifiableModelsProvider modelsProvider,
-                                @NotNull List<Runnable> postImportTasks) {
+                                @NotNull final List<Runnable> postImportTasks,
+                                @NotNull final List<Runnable> onSuccessImportTasks) {
     if (project.isDisposed()) return;
     if (project instanceof ProjectImpl) {
       assert ((ProjectImpl)project).isComponentsCreated();
@@ -263,6 +270,33 @@ public class ProjectDataManager {
             ((ProjectDataService)service).removeData(orphanIdeDataComputable, toIgnore, projectData, project, modelsProvider);
             final long removeTimeInMs = (System.currentTimeMillis() - removeStartTime);
             LOG.debug(String.format("Service %s computed and removed data in %d ms", service.getClass().getSimpleName(), removeTimeInMs));
+          }
+        }
+      });
+
+      postImportTasks.add(new Runnable() {
+        @Override
+        public void run() {
+          for (ProjectDataService<?, ?> service : services) {
+            if (service instanceof AbstractProjectDataService) {
+              final long taskStartTime = System.currentTimeMillis();
+              ((AbstractProjectDataService)service).postProcess(toImport, projectData, project, modelsProvider);
+              final long taskTimeInMs = (System.currentTimeMillis() - taskStartTime);
+              LOG.debug(String.format("Service %s run post import task in %d ms", service.getClass().getSimpleName(), taskTimeInMs));
+            }
+          }
+        }
+      });
+      onSuccessImportTasks.add(new Runnable() {
+        @Override
+        public void run() {
+          for (ProjectDataService<?, ?> service : services) {
+            if (service instanceof AbstractProjectDataService) {
+              final long taskStartTime = System.currentTimeMillis();
+              ((AbstractProjectDataService)service).onSuccessImport(project);
+              final long taskTimeInMs = (System.currentTimeMillis() - taskStartTime);
+              LOG.debug(String.format("Service %s run post import task in %d ms", service.getClass().getSimpleName(), taskTimeInMs));
+            }
           }
         }
       });

@@ -1083,6 +1083,13 @@ public class AllIcons {
     public static final Icon TestPassed = IconLoader.getIcon("/runConfigurations/testPassed.png"); // 16x16
     public static final Icon TestPaused = IconLoader.getIcon("/runConfigurations/testPaused.png"); // 16x16
     public static final Icon TestSkipped = IconLoader.getIcon("/runConfigurations/testSkipped.png"); // 16x16
+    
+    public static class TestState {
+      public static final Icon Green2 = IconLoader.getIcon("/runConfigurations/testState/green2.png"); // 12x12
+      public static final Icon Red2 = IconLoader.getIcon("/runConfigurations/testState/red2.png"); // 12x12
+      public static final Icon Run = IconLoader.getIcon("/runConfigurations/testState/run.png"); // 12x12
+
+    }
     public static final Icon TestTerminated = IconLoader.getIcon("/runConfigurations/testTerminated.png"); // 16x16
     public static final Icon Tomcat = IconLoader.getIcon("/runConfigurations/tomcat.png"); // 16x16
     public static final Icon TrackCoverage = IconLoader.getIcon("/runConfigurations/trackCoverage.png"); // 16x16

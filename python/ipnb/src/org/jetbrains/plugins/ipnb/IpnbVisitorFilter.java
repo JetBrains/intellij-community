@@ -16,7 +16,8 @@
 package org.jetbrains.plugins.ipnb;
 
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.inspections.PyDocstringInspection;
+import com.jetbrains.python.inspections.PyIncorrectDocstringInspection;
+import com.jetbrains.python.inspections.PyMissingOrEmptyDocstringInspection;
 import com.jetbrains.python.inspections.PyStatementEffectInspection;
 import com.jetbrains.python.inspections.PythonVisitorFilter;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,9 @@ import org.jetbrains.annotations.NotNull;
 public class IpnbVisitorFilter implements PythonVisitorFilter {
   @Override
   public boolean isSupported(@NotNull final Class visitorClass, @NotNull final PsiFile file) {
-    if (visitorClass == PyDocstringInspection.class || visitorClass == PyStatementEffectInspection.class) {
+    if (visitorClass == PyIncorrectDocstringInspection.class || 
+        visitorClass == PyMissingOrEmptyDocstringInspection.class || 
+        visitorClass == PyStatementEffectInspection.class) {
       return false;
     }
     return true;

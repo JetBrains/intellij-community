@@ -227,12 +227,7 @@ public class MethodUtils {
   }
 
   public static boolean isEmpty(PsiMethod method) {
-    final PsiCodeBlock body = method.getBody();
-    if (body == null) {
-      return true;
-    }
-    final PsiStatement[] statements = body.getStatements();
-    return statements.length == 0;
+    return ControlFlowUtils.isEmptyCodeBlock(method.getBody());
   }
 
   /**

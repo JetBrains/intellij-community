@@ -50,9 +50,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author yole
- */
 public class CreatePatchCommitExecutor extends LocalCommitExecutor implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor");
 
@@ -147,7 +144,9 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
         }
       }));
       myPanel.showTextStoreOption();
-      return myPanel.getPanel();
+      JComponent component = myPanel.getPanel();
+      component.setName("Patch File Settings");
+      return component;
     }
 
     public boolean canExecute(Collection<Change> changes, String commitMessage) {

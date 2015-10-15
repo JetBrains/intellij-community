@@ -67,15 +67,7 @@ public class CloneUtils {
         return false;
       }
     }
-    final PsiCodeBlock body = method.getBody();
-    if (body == null) {
-      return false;
-    }
-    final PsiStatement[] statements = body.getStatements();
-    if (statements.length == 0) {
-      return false;
-    }
-    final PsiStatement statement = statements[statements.length - 1];
+    final PsiStatement statement = ControlFlowUtils.getLastStatementInBlock(method.getBody());
     return statement instanceof PsiThrowStatement;
   }
 }

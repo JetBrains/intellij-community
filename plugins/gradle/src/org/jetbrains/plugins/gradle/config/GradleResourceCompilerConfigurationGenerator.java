@@ -21,14 +21,8 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.plugins.gradle.model.ExternalFilter;
-import org.jetbrains.plugins.gradle.model.ExternalProject;
-import org.jetbrains.plugins.gradle.model.ExternalSourceDirectorySet;
-import org.jetbrains.plugins.gradle.model.ExternalSourceSet;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
@@ -51,7 +45,11 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.gradle.model.impl.*;
-import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataService;
+import org.jetbrains.plugins.gradle.model.ExternalFilter;
+import org.jetbrains.plugins.gradle.model.ExternalProject;
+import org.jetbrains.plugins.gradle.model.ExternalSourceDirectorySet;
+import org.jetbrains.plugins.gradle.model.ExternalSourceSet;
+import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
@@ -73,14 +71,13 @@ public class GradleResourceCompilerConfigurationGenerator {
   private final Project myProject;
   @NotNull
   private final Map<String, Integer> myModulesConfigurationHash;
-  private final ExternalProjectDataService myExternalProjectDataService;
+  private final ExternalProjectDataCache externalProjectDataCache;
 
   public GradleResourceCompilerConfigurationGenerator(@NotNull final Project project) {
     myProject = project;
     myModulesConfigurationHash = ContainerUtil.newConcurrentMap();
-    myExternalProjectDataService =
-      (ExternalProjectDataService)ServiceManager.getService(ProjectDataManager.class).getDataService(ExternalProjectDataService.KEY);
-    assert myExternalProjectDataService != null;
+    externalProjectDataCache = ExternalProjectDataCache.getInstance(project);
+    assert externalProjectDataCache != null;
 
     project.getMessageBus().connect(project).subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
       public void moduleRemoved(@NotNull Project project, @NotNull Module module) {
@@ -186,12 +183,14 @@ public class GradleResourceCompilerConfigurationGenerator {
       @Nullable
       @Override
       protected ExternalProject create(String gradleProjectPath) {
-        return myExternalProjectDataService.getRootExternalProject(GradleConstants.SYSTEM_ID, new File(gradleProjectPath));
+        return externalProjectDataCache.getRootExternalProject(GradleConstants.SYSTEM_ID, new File(gradleProjectPath));
       }
     };
 
     for (Module module : context.getCompileScope().getAffectedModules()) {
       if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) continue;
+      if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) continue;
+      if (!GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(ExternalSystemApiUtil.getExternalModuleType(module))) continue;
 
       if (shouldBeBuiltByExternalSystem(module)) continue;
 
@@ -206,21 +205,22 @@ public class GradleResourceCompilerConfigurationGenerator {
         continue;
       }
 
-      ExternalProject externalProject = myExternalProjectDataService.findExternalProject(externalRootProject, module);
-      if (externalProject == null) {
-        LOG.warn("Unable to find config for module: " + module.getName());
+      Map<String, ExternalSourceSet> externalSourceSets = externalProjectDataCache.findExternalProject(externalRootProject, module);
+      if (externalSourceSets.isEmpty()) {
+        LOG.debug("Unable to find source sets config for module: " + module.getName());
         continue;
       }
 
       GradleModuleResourceConfiguration resourceConfig = new GradleModuleResourceConfiguration();
-      resourceConfig.id = new ModuleVersion(externalProject.getGroup(), externalProject.getName(), externalProject.getVersion());
-      resourceConfig.directory = FileUtil.toSystemIndependentName(externalProject.getProjectDir().getPath());
+      resourceConfig.id = new ModuleVersion(
+        ExternalSystemApiUtil.getExternalProjectGroup(module),
+        ExternalSystemApiUtil.getExternalProjectId(module),
+        ExternalSystemApiUtil.getExternalProjectVersion(module));
 
-      final ExternalSourceSet mainSourcesSet = externalProject.getSourceSets().get("main");
-      addResources(resourceConfig.resources, mainSourcesSet, ExternalSystemSourceType.RESOURCE);
-
-      final ExternalSourceSet testSourcesSet = externalProject.getSourceSets().get("test");
-      addResources(resourceConfig.testResources, testSourcesSet, ExternalSystemSourceType.TEST_RESOURCE);
+      for (ExternalSourceSet sourceSet : externalSourceSets.values()) {
+        addResources(resourceConfig.resources, sourceSet.getSources().get(ExternalSystemSourceType.RESOURCE));
+        addResources(resourceConfig.testResources, sourceSet.getSources().get(ExternalSystemSourceType.TEST_RESOURCE));
+      }
 
       final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
       if (compilerModuleExtension != null && compilerModuleExtension.isCompilerOutputPathInherited()) {
@@ -264,10 +264,7 @@ public class GradleResourceCompilerConfigurationGenerator {
   }
 
   private static void addResources(@NotNull List<ResourceRootConfiguration> container,
-                                   @Nullable ExternalSourceSet externalSourceSet,
-                                   @NotNull ExternalSystemSourceType sourceType) {
-    if (externalSourceSet == null) return;
-    final ExternalSourceDirectorySet directorySet = externalSourceSet.getSources().get(sourceType);
+                                   @Nullable final ExternalSourceDirectorySet directorySet) {
     if (directorySet == null) return;
 
     for (File file : directorySet.getSrcDirs()) {

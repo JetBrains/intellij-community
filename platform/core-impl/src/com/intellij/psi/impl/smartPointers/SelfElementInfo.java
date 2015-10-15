@@ -159,17 +159,22 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     if (range.getStartOffset() != syncStartOffset) return null;
     while (range.getEndOffset() < syncEndOffset) {
       anchor = anchor.getParent();
-      if (anchor == null || anchor.getTextRange() == null) break;
+      if (anchor == null || anchor.getTextRange() == null) {
+        return null;
+      }
       range = anchor.getTextRange();
     }
 
-    while (range.getEndOffset() == syncEndOffset && anchor != null && !type.equals(anchor.getClass())) {
+    while (range.getEndOffset() == syncEndOffset) {
+      if (type.equals(anchor.getClass())) {
+        return anchor;
+      }
       anchor = anchor.getParent();
       if (anchor == null || anchor.getTextRange() == null) break;
       range = anchor.getTextRange();
     }
 
-    return range.getEndOffset() == syncEndOffset ? anchor : null;
+    return null;
   }
 
   @Override

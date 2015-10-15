@@ -53,7 +53,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
       pathToFileManager.pathToInfoCache.put(path, pathInfo)
     }
 
-    if (pathInfo.isDirectory) {
+    if (pathInfo.isDirectory()) {
       if (!endsWithSlash(decodedRawPath)) {
         WebServerPathHandler.redirectToDirectory(request, channel, if (isCustomHost) path else ("$projectName/$path"))
         return true

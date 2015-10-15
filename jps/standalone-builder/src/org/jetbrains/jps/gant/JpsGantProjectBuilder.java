@@ -171,6 +171,9 @@ public class JpsGantProjectBuilder {
         }
       }
     }
+    if (myDataStorageRoot != null) {
+      FileUtil.delete(myDataStorageRoot);
+    }
 
     myBuildInfoPrinter.printStatisticsMessage(this, "Cleaning output time, ms",
                                               String.valueOf(System.currentTimeMillis() - cleanOutputStart));

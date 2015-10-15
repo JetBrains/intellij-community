@@ -100,25 +100,26 @@ public class Runner {
   }
 
   // checks that log directory 1)exists 2)has write perm. and 3)has 1MB+ free space
-  private static boolean isValidLogDir(String logFolder) {
-    File fileLogDir = new File(logFolder);
-    return fileLogDir.isDirectory() && fileLogDir.canWrite() && fileLogDir.getUsableSpace() >= 1000000;
+  private static boolean isValidDir(String folder, long space) {
+    File fileDir = new File(folder);
+    return fileDir.isDirectory() && fileDir.canWrite() && fileDir.getUsableSpace() >= space;
   }
 
-  private static String getLogDir() {
-    String logFolder = System.getProperty("idea.updater.log");
-    if (logFolder == null || !isValidLogDir(logFolder)) {
-      logFolder = System.getProperty("java.io.tmpdir");
-      if (!isValidLogDir(logFolder)) {
-        logFolder = System.getProperty("user.home");
+  public static String getDir(long requiredFreeSpace) {
+    String dir = System.getProperty("idea.updater.log");
+    if (dir == null || !isValidDir(dir, requiredFreeSpace)) {
+      dir = System.getProperty("java.io.tmpdir");
+      if (!isValidDir(dir, requiredFreeSpace)) {
+        dir = System.getProperty("user.home");
       }
     }
-    return logFolder;
+    return dir;
   }
 
   public static void initLogger() {
     if (logger == null) {
-      String logFolder = getLogDir();
+      long requiredFreeSpace = 1000000;
+      String logFolder = getDir(requiredFreeSpace);
       FileAppender update = new FileAppender();
 
       update.setFile(new File(logFolder, "idea_updater.log").getAbsolutePath());
