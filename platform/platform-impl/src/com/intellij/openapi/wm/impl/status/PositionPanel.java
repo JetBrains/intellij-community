@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,7 +139,9 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
       if (!isOurEditor(editor)) return;
       myText = getPositionText(editor);
     }
-    myStatusBar.updateWidget(ID());
+    if (myStatusBar != null) {
+      myStatusBar.updateWidget(ID());
+    }
   }
 
   private String getPositionText(Editor editor) {
