@@ -148,4 +148,39 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
       }
     ExternalSystemTestUtil.assertMapsEqual(['Test_external_system_id: lib1': 1], dependencies)
   }
+
+  void 'test excluded directories merge'() {
+    String rootPath = ExternalSystemApiUtil.toCanonicalPath(project.basePath);
+    def contentRoots = [
+      (EXCLUDED): ['.gradle', 'build']
+    ]
+
+    def projectRootBuilder = {
+      buildExternalProjectInfo {
+        project {
+          module {
+            contentRoot(rootPath) {
+              contentRoots.each { key, values -> values.each { folder(type: key, path: "$rootPath/$it") } }
+            } } } } }
+
+    DataNode<ProjectData> projectNodeInitial = projectRootBuilder()
+
+    contentRoots[(EXCLUDED)].remove(0)
+    contentRoots[(EXCLUDED)].add("newExclDir")
+
+    DataNode<ProjectData> projectNodeRefreshed = projectRootBuilder()
+    applyProjectState([projectNodeInitial, projectNodeRefreshed])
+
+    def modelsProvider = new IdeModelsProviderImpl(project);
+    def module = modelsProvider.findIdeModule('module')
+    assertNotNull(module)
+    def folders = []
+    for (OrderEntry entry : modelsProvider.getOrderEntries(module)) {
+      if (entry instanceof ModuleSourceOrderEntry) {
+        def contentEntry = (entry as ModuleSourceOrderEntry).getRootModel().getContentEntries().first()
+        folders = contentEntry.excludeFolders.collect {new File(it.url).name}
+      }
+    }
+    assertEquals(new HashSet<>(folders), new HashSet<>([".gradle", "build", "newExclDir"]));
+  }
 }
