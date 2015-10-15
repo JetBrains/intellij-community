@@ -66,12 +66,9 @@ internal class DefaultProjectStoreImpl(override val project: ProjectImpl, privat
 
     override fun getStateStorage(storageSpec: Storage) = storage
 
-    override fun startExternalization(): StateStorageManager.ExternalizationSession? {
-      val externalizationSession = storage.startExternalization()
-      return if (externalizationSession == null) null else MyExternalizationSession(externalizationSession)
-    }
+    override fun startExternalization() = storage.startExternalization()?.let { MyExternalizationSession(it) }
 
-    override fun expandMacros(file: String) = throw UnsupportedOperationException("Method expandMacros not implemented in " + javaClass)
+    override fun expandMacros(file: String) = throw UnsupportedOperationException()
 
     override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation) = storage
   }
@@ -104,7 +101,7 @@ internal class DefaultProjectStoreImpl(override val project: ProjectImpl, privat
 // ExportSettingsAction checks only "State" annotation presence, but doesn't require PersistentStateComponent implementation, so, we can just specify annotation
 @State(name = "ProjectManager", storages = arrayOf(Storage(file = DefaultProjectStoreImpl.FILE_SPEC)))
 private class DefaultProjectExportableAndSaveTrigger : SettingsSavingComponent {
-  @Volatile var project: Project? = null;
+  @Volatile var project: Project? = null
 
   override fun save() {
     // we must trigger save

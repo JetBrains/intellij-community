@@ -3,7 +3,7 @@ package org.jetbrains.protocolReader
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.Arrays
+import java.util.*
 
 /**
  * A class that makes accurate java source file update. If only header
@@ -16,19 +16,19 @@ class FileUpdater(private val file: Path) {
   val out = TextOutput(builder)
 
   fun update() {
-    if (builder.length() == 0) {
+    if (builder.length == 0) {
       Files.delete(file)
       return
     }
 
-    val newContent = builder.toString().getBytes(StandardCharsets.UTF_8)
+    val newContent = builder.toString().toByteArray(StandardCharsets.UTF_8)
     if (Files.exists(file)) {
       if (Arrays.equals(Files.readAllBytes(file), newContent)) {
         return
       }
     }
     else {
-      Files.createDirectories(file.getParent())
+      Files.createDirectories(file.parent)
     }
     Files.write(file, newContent)
   }
