@@ -135,6 +135,7 @@ public class PythonSdkType extends SdkType {
     return "reference.project.structure.sdk.python";
   }
 
+  @NotNull
   public Icon getIconForAddAction() {
     return PythonFileType.INSTANCE.getIcon();
   }
@@ -264,6 +265,7 @@ public class PythonSdkType extends SdkType {
     return isRemote(findSdkByPath(sdkPath));
   }
 
+  @NotNull
   @Override
   public FileChooserDescriptor getHomeChooserDescriptor() {
     final boolean isWindows = SystemInfo.isWindows;
@@ -302,7 +304,7 @@ public class PythonSdkType extends SdkType {
     return true;
   }
 
-  public void showCustomCreateUI(SdkModel sdkModel, final JComponent parentComponent, final Consumer<Sdk> sdkCreatedCallback) {
+  public void showCustomCreateUI(@NotNull SdkModel sdkModel, @NotNull final JComponent parentComponent, @NotNull final Consumer<Sdk> sdkCreatedCallback) {
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
     final PointerInfo pointerInfo = MouseInfo.getPointerInfo();
     if (pointerInfo == null) return;
@@ -456,7 +458,7 @@ public class PythonSdkType extends SdkType {
   }
 
   @Nullable
-  public AdditionalDataConfigurable createAdditionalDataConfigurable(final SdkModel sdkModel, final SdkModificator sdkModificator) {
+  public AdditionalDataConfigurable createAdditionalDataConfigurable(@NotNull final SdkModel sdkModel, @NotNull final SdkModificator sdkModificator) {
     return null;
   }
 
@@ -482,13 +484,14 @@ public class PythonSdkType extends SdkType {
     return path.contains(SKELETON_DIR_NAME);
   }
 
+  @NotNull
   @NonNls
   public String getPresentableName() {
     return "Python SDK";
   }
 
   @Override
-  public String sdkPath(VirtualFile homePath) {
+  public String sdkPath(@NotNull VirtualFile homePath) {
     String path = super.sdkPath(homePath);
     PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(path);
     if (flavor != null) {
@@ -520,7 +523,7 @@ public class PythonSdkType extends SdkType {
   }
 
   @Override
-  public boolean setupSdkPaths(Sdk sdk, SdkModel sdkModel) {
+  public boolean setupSdkPaths(@NotNull Sdk sdk, @NotNull SdkModel sdkModel) {
     return true;  // run setupSdkPaths only once (from PythonSdkDetailsStep). Skip this from showCustomCreateUI
   }
 
@@ -934,7 +937,7 @@ public class PythonSdkType extends SdkType {
     return LanguageLevel.getDefault();
   }
 
-  public boolean isRootTypeApplicable(final OrderRootType type) {
+  public boolean isRootTypeApplicable(@NotNull final OrderRootType type) {
     return type == OrderRootType.CLASSES;
   }
 

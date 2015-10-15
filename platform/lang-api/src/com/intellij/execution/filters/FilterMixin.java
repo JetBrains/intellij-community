@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.execution.filters;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,15 +29,16 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface FilterMixin {
   boolean shouldRunHeavy();
-  void applyHeavyFilter(Document copiedFragment, int startOffset, int startLineNumber, Consumer<AdditionalHighlight> consumer);
+  void applyHeavyFilter(@NotNull Document copiedFragment, int startOffset, int startLineNumber, @NotNull Consumer<AdditionalHighlight> consumer);
 
+  @NotNull
   String getUpdateMessage();
 
   abstract class AdditionalHighlight {
     private final int myStart;
     private final int myEnd;
 
-    public AdditionalHighlight(int start, int end) {
+    protected AdditionalHighlight(int start, int end) {
       myStart = start;
       myEnd = end;
     }
@@ -49,6 +51,7 @@ public interface FilterMixin {
       return myEnd;
     }
 
+    @NotNull
     public abstract TextAttributes getTextAttributes(@Nullable final TextAttributes source);
   }
 }

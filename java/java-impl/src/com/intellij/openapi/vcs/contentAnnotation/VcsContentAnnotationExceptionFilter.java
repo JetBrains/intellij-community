@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,6 +71,7 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
       super(start, end);
     }
 
+    @NotNull
     @Override
     public TextAttributes getTextAttributes(@Nullable TextAttributes source) {
       EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
@@ -93,10 +94,10 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
   }
 
   @Override
-  public void applyHeavyFilter(final Document copiedFragment,
+  public void applyHeavyFilter(@NotNull final Document copiedFragment,
                                int startOffset,
                                int startLineNumber,
-                               Consumer<AdditionalHighlight> consumer) {
+                               @NotNull Consumer<AdditionalHighlight> consumer) {
     VcsContentAnnotation vcsContentAnnotation = VcsContentAnnotationImpl.getInstance(myProject);
     final LocalChangesCorrector localChangesCorrector = new LocalChangesCorrector(myProject);
     Trinity<PsiClass, PsiFile, String> previousLineResult = null;
@@ -168,6 +169,7 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
     }
   }
 
+  @NotNull
   @Override
   public String getUpdateMessage() {
     return "Checking recent changes...";

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 /**
  * @author anna
@@ -238,13 +240,13 @@ public class ProjectSdksModel implements SdkModel {
     }
   }
 
-  public void createAddActions(DefaultActionGroup group, final JComponent parent, final Consumer<Sdk> updateTree) {
+  public void createAddActions(@NotNull DefaultActionGroup group, @NotNull JComponent parent, @NotNull Consumer<Sdk> updateTree) {
     createAddActions(group, parent, updateTree, null);
   }
 
-  public void createAddActions(DefaultActionGroup group,
-                               final JComponent parent,
-                               final Consumer<Sdk> updateTree,
+  public void createAddActions(@NotNull DefaultActionGroup group,
+                               @NotNull final JComponent parent,
+                               @NotNull final Consumer<Sdk> updateTree,
                                @Nullable Condition<SdkTypeId> filter) {
     final SdkType[] types = SdkType.getAllTypes();
     for (final SdkType type : types) {
@@ -259,7 +261,7 @@ public class ProjectSdksModel implements SdkModel {
     }
   }
 
-  public void doAdd(JComponent parent, final SdkType type, final Consumer<Sdk> callback) {
+  public void doAdd(@NotNull JComponent parent, @NotNull final SdkType type, @NotNull final Consumer<Sdk> callback) {
     myModified = true;
     if (type.supportsCustomCreateUI()) {
       type.showCustomCreateUI(this, parent, new Consumer<Sdk>() {

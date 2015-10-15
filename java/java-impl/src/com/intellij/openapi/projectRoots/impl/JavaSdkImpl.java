@@ -100,6 +100,7 @@ public class JavaSdkImpl extends JavaSdk {
     });
   }
 
+  @NotNull
   @Override
   public String getPresentableName() {
     return ProjectBundle.message("sdk.java.name");
@@ -116,6 +117,7 @@ public class JavaSdkImpl extends JavaSdk {
     return "reference.project.structure.sdk.java";
   }
 
+  @NotNull
   @Override
   public Icon getIconForAddAction() {
     return AllIcons.General.AddJdk;
@@ -141,7 +143,7 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   @Override
-  public AdditionalDataConfigurable createAdditionalDataConfigurable(SdkModel sdkModel, SdkModificator sdkModificator) {
+  public AdditionalDataConfigurable createAdditionalDataConfigurable(@NotNull SdkModel sdkModel, @NotNull SdkModificator sdkModificator) {
     return null;
   }
 
@@ -280,6 +282,7 @@ public class JavaSdkImpl extends JavaSdk {
     }
   }
 
+  @NotNull
   @Override
   public FileChooserDescriptor getHomeChooserDescriptor() {
     final FileChooserDescriptor baseDescriptor = super.getHomeChooserDescriptor();
@@ -299,8 +302,9 @@ public class JavaSdkImpl extends JavaSdk {
     return descriptor;
   }
 
+  @NotNull
   @Override
-  public String adjustSelectedSdkHome(String homePath) {
+  public String adjustSelectedSdkHome(@NotNull String homePath) {
     if (SystemInfo.isMac) {
       File home = new File(homePath, "/Home");
       if (home.exists()) return home.getPath();
@@ -621,7 +625,7 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   @Override
-  public boolean isRootTypeApplicable(OrderRootType type) {
+  public boolean isRootTypeApplicable(@NotNull OrderRootType type) {
     return type == OrderRootType.CLASSES ||
            type == OrderRootType.SOURCES ||
            type == JavadocOrderRootType.getInstance() ||

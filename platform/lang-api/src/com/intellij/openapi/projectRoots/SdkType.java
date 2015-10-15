@@ -71,7 +71,8 @@ public abstract class SdkType implements SdkTypeId {
    * @param homePath the path selected in the file chooser.
    * @return the path to be used as the SDK home.
    */
-  public String adjustSelectedSdkHome(String homePath) {
+  @NotNull
+  public String adjustSelectedSdkHome(@NotNull String homePath) {
     return homePath;
   }
 
@@ -92,7 +93,7 @@ public abstract class SdkType implements SdkTypeId {
 
   public void setupSdkPaths(@NotNull Sdk sdk) {}
 
-  public boolean setupSdkPaths(final Sdk sdk, final SdkModel sdkModel) {
+  public boolean setupSdkPaths(@NotNull Sdk sdk, @NotNull SdkModel sdkModel) {
     setupSdkPaths(sdk);
     return true;
   }
@@ -101,7 +102,7 @@ public abstract class SdkType implements SdkTypeId {
    * @return Configurable object for the sdk's additional data or null if not applicable
    */
   @Nullable
-  public abstract AdditionalDataConfigurable createAdditionalDataConfigurable(SdkModel sdkModel, SdkModificator sdkModificator);
+  public abstract AdditionalDataConfigurable createAdditionalDataConfigurable(@NotNull SdkModel sdkModel, @NotNull SdkModificator sdkModificator);
 
   @Nullable
   public SdkAdditionalData loadAdditionalData(Element additional) {
@@ -120,6 +121,7 @@ public abstract class SdkType implements SdkTypeId {
     return myName;
   }
 
+  @NotNull
   public abstract String getPresentableName();
 
   public Icon getIcon() {
@@ -131,6 +133,7 @@ public abstract class SdkType implements SdkTypeId {
     return "preferences.jdks";
   }
 
+  @NotNull
   public Icon getIconForAddAction() {
     return IconUtil.getAddIcon();
   }
@@ -157,6 +160,7 @@ public abstract class SdkType implements SdkTypeId {
     return getName();
   }
 
+  @NotNull
   public FileChooserDescriptor getHomeChooserDescriptor() {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       @Override
@@ -181,6 +185,7 @@ public abstract class SdkType implements SdkTypeId {
   }
 
 
+  @NotNull
   public String getHomeFieldLabel() {
     return ProjectBundle.message("sdk.configure.type.home.path", getPresentableName());
   }
@@ -190,6 +195,7 @@ public abstract class SdkType implements SdkTypeId {
     return null;
   }
 
+  @NotNull
   public static SdkType[] getAllTypes() {
     List<SdkType> allTypes = new ArrayList<SdkType>();
     Collections.addAll(allTypes, ApplicationManager.getApplication().getComponents(SdkType.class));
@@ -197,7 +203,8 @@ public abstract class SdkType implements SdkTypeId {
     return allTypes.toArray(new SdkType[allTypes.size()]);
   }
 
-  public static <T extends SdkType> T findInstance(final Class<T> sdkTypeClass) {
+  @NotNull
+  public static <T extends SdkType> T findInstance(@NotNull Class<T> sdkTypeClass) {
     for (SdkType sdkType : Extensions.getExtensions(EP_NAME)) {
       if (sdkTypeClass.equals(sdkType.getClass())) {
         //noinspection unchecked
@@ -208,7 +215,7 @@ public abstract class SdkType implements SdkTypeId {
     return null;
   }
 
-  public boolean isRootTypeApplicable(final OrderRootType type) {
+  public boolean isRootTypeApplicable(@NotNull OrderRootType type) {
     return true;
   }
 
@@ -232,7 +239,7 @@ public abstract class SdkType implements SdkTypeId {
    * @param sdkCreatedCallback the callback to which the created SDK is passed.
    * @since 12.0
    */
-  public void showCustomCreateUI(SdkModel sdkModel, JComponent parentComponent, Consumer<Sdk> sdkCreatedCallback) {
+  public void showCustomCreateUI(@NotNull SdkModel sdkModel, @NotNull JComponent parentComponent, @NotNull Consumer<Sdk> sdkCreatedCallback) {
   }
 
   /**
@@ -248,7 +255,7 @@ public abstract class SdkType implements SdkTypeId {
     return homeDir != null && homeDir.isValid();
   }
 
-  public String sdkPath(VirtualFile homePath) {
+  public String sdkPath(@NotNull VirtualFile homePath) {
     return homePath.getPath();
   }
 }
