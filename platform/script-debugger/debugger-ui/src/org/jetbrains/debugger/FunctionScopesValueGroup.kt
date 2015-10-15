@@ -15,13 +15,12 @@
  */
 package org.jetbrains.debugger
 
-import com.intellij.util.Consumer
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.frame.XValueGroup
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.values.FunctionValue
-import org.jetbrains.rpc.CommandProcessor
+import org.jetbrains.rpc.LOG
 import java.util.*
 
 internal class FunctionScopesValueGroup(private val value: FunctionValue, private val variableContext: VariableContext) : XValueGroup("Function scopes") {
@@ -40,11 +39,9 @@ internal class FunctionScopesValueGroup(private val value: FunctionValue, privat
           }
         }
       })
-      .rejected(object : Consumer<Throwable> {
-        override fun consume(error: Throwable) {
-          Promise.logError(CommandProcessor.LOG, error)
-          node.setErrorMessage(error.getMessage()!!)
-        }
-      })
+      .rejected {
+        Promise.logError(LOG, it)
+        node.setErrorMessage(it.getMessage()!!)
+      }
   }
 }

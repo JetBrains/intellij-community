@@ -19,12 +19,12 @@ import com.intellij.xdebugger.XDebugSession
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.SuspendContext
 import org.jetbrains.debugger.Vm
-import org.jetbrains.rpc.CommandProcessor
+import org.jetbrains.rpc.LOG
 import org.jetbrains.util.concurrency.AsyncPromise
 
 // have to use package "com.intellij.xdebugger.util" to avoid package clash
 fun XDebugSession.rejectedErrorReporter(description: String? = null): (Throwable) -> Unit = {
-  Promise.logError(CommandProcessor.LOG, it)
+  Promise.logError(LOG, it)
   if (it != AsyncPromise.OBSOLETE_ERROR) {
     reportError("${if (description == null) "" else description + ": "}${it.getMessage()}")
   }

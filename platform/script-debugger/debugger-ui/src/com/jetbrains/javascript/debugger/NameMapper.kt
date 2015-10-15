@@ -24,8 +24,8 @@ import gnu.trove.THashMap
 import org.jetbrains.debugger.sourcemap.MappingEntry
 import org.jetbrains.debugger.sourcemap.MappingList
 import org.jetbrains.debugger.sourcemap.SourceMap
+import org.jetbrains.rpc.LOG
 
-import org.jetbrains.rpc.CommandProcessor.LOG
 
 private val S1 = ",()[]{}="
 // don't trim trailing .&: - could be part of expression

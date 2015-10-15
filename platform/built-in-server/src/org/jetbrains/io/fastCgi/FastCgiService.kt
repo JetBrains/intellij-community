@@ -15,7 +15,6 @@
  */
 package org.jetbrains.io.fastCgi
 
-import com.intellij.execution.process.OSProcessHandler
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.Consumer
@@ -144,11 +143,7 @@ public abstract class FastCgiService(project: Project) : SingleConnectionNetServ
       }
       else {
         processHandler.get()
-          .done(object : Consumer<OSProcessHandler> {
-            override fun consume(osProcessHandler: OSProcessHandler) {
-              fastCgiRequest.writeToServerChannel(notEmptyContent, processChannel!!)
-            }
-          })
+          .done { fastCgiRequest.writeToServerChannel(notEmptyContent, processChannel!!) }
           .rejected {
             Promise.logError(LOG, it)
             handleError(fastCgiRequest, notEmptyContent)

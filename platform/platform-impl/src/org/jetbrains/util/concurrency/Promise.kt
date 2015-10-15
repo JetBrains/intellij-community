@@ -17,8 +17,8 @@ package org.jetbrains.util.concurrency
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
-import org.jetbrains.concurrency.Promise as OJCPromise
 import org.jetbrains.concurrency.AsyncPromise as OJCAsyncPromise
+import org.jetbrains.concurrency.Promise as OJCPromise
 
 interface Promise<T> {
   enum class State {
@@ -33,7 +33,7 @@ interface Promise<T> {
 
   fun rejected(rejected: (Throwable) -> Unit): Promise<T>
 
-  fun processed(processed: (T?) -> Unit): Promise<T>
+  fun processed(@Suppress("BASE_WITH_NULLABLE_UPPER_BOUND") processed: (T?) -> Unit): Promise<T>
 
   fun <SUB_RESULT> then(done: (T) -> SUB_RESULT): Promise<SUB_RESULT>
 
@@ -93,8 +93,8 @@ fun <T> ResolvedPromise(result: T): Promise<T> = DonePromise(result)
 fun <T> OJCPromise<T>.toPromise(): AsyncPromise<T> {
   val promise = AsyncPromise<T>()
   val oldPromise = this
-  done({ promise.setResult(it) })
-    .rejected({ promise.setError(it) })
+  done { promise.setResult(it) }
+    .rejected { promise.setError(it) }
 
   if (oldPromise is OJCAsyncPromise) {
     promise
