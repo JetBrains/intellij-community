@@ -20,7 +20,6 @@ import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
@@ -31,6 +30,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.FontComboBox;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.UIUtil;
@@ -89,8 +89,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     UISettings settings = UISettings.getInstance();
 
     initComponent();
-    DefaultComboBoxModel aModel = new DefaultComboBoxModel(UIUtil.getValidFontNames(Registry.is("ide.settings.appearance.font.family.only")));
-    myComponent.myFontCombo.setModel(aModel);
+
     myComponent.myFontSizeCombo.setModel(new DefaultComboBoxModel(UIUtil.getStandardFontSizes()));
     myComponent.myPresentationModeFontSize.setModel(new DefaultComboBoxModel(UIUtil.getStandardFontSizes()));
     myComponent.myFontSizeCombo.setEditable(true);
@@ -162,7 +161,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     int _fontSize = getIntValue(myComponent.myFontSizeCombo, settings.FONT_SIZE);
     int _presentationFontSize = getIntValue(myComponent.myPresentationModeFontSize, settings.PRESENTATION_MODE_FONT_SIZE);
     boolean shouldUpdateUI = false;
-    String _fontFace = (String)myComponent.myFontCombo.getSelectedItem();
+    String _fontFace = myComponent.myFontCombo.getFontName();
     LafManager lafManager = LafManager.getInstance();
     if (_fontSize != settings.FONT_SIZE || !settings.FONT_FACE.equals(_fontFace)) {
       settings.FONT_SIZE = _fontSize;
@@ -327,7 +326,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     initComponent();
     UISettings settings = UISettings.getInstance();
 
-    myComponent.myFontCombo.setSelectedItem(settings.FONT_FACE);
+    myComponent.myFontCombo.setFontName(settings.FONT_FACE);
 
     // todo migrate
     //myComponent.myAntialiasingCheckBox.setSelected(settings.ANTIALIASING_IN_IDE);
@@ -399,7 +398,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     UISettings settings = UISettings.getInstance();
 
     boolean isModified = false;
-    isModified |= !Comparing.equal(myComponent.myFontCombo.getSelectedItem(), settings.FONT_FACE);
+    isModified |= !Comparing.equal(myComponent.myFontCombo.getFontName(), settings.FONT_FACE);
     isModified |= !Comparing.equal(myComponent.myFontSizeCombo.getEditor().getItem(), Integer.toString(settings.FONT_SIZE));
 
     isModified |= !myComponent.myAntialiasingInIDE.getSelectedItem().equals(settings.IDE_AA_TYPE);
@@ -466,7 +465,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
   private static class MyComponent {
     private JPanel myPanel;
-    private JComboBox myFontCombo;
+    private FontComboBox myFontCombo;
     private JComboBox myFontSizeCombo;
     private JCheckBox myAnimateWindowsCheckBox;
     private JCheckBox myWindowShortcutsCheckBox;
