@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.data
 
 import com.intellij.mock.MockVirtualFile
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Function
 import com.intellij.vcs.log.*
@@ -30,9 +29,7 @@ import com.intellij.vcs.log.impl.TestVcsLogProvider.DEFAULT_USER
 import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl
 import com.intellij.vcs.log.ui.tables.GraphTableModel
 import org.junit.Test
-import java.util.ArrayList
-import java.util.HashMap
-import java.util.HashSet
+import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -130,7 +127,7 @@ class VisiblePackBuilderTest {
   inner class Graph(val commits: List<GraphCommit<Int>>,
                     val refs: Set<VisiblePackBuilderTest.Ref>,
                     val data: HashMap<GraphCommit<Int>, Data>) {
-    val root = MockVirtualFile("root") : VirtualFile
+    val root: VirtualFile = MockVirtualFile("root")
     val providers: Map<VirtualFile, TestVcsLogProvider> = mapOf(root to TestVcsLogProvider(root))
     val hashMap = generateHashMap(commits.maxBy { it.getId() }!!.getId())
 

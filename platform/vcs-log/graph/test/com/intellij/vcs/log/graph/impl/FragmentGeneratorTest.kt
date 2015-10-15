@@ -16,19 +16,19 @@
 package com.intellij.vcs.log.graph.impl
 
 
-import org.junit.Assert.*
-import org.junit.Test
+import com.intellij.vcs.log.graph.api.LinearGraph
+import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.collapsing.FragmentGenerator
 import com.intellij.vcs.log.graph.graph
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
-import com.intellij.vcs.log.graph.api.LinearGraph
-import com.intellij.vcs.log.graph.api.LiteLinearGraph
+import org.junit.Assert.assertEquals
+import org.junit.Test
 
 private val LinearGraph.lite: LiteLinearGraph get() = LinearGraphUtils.asLiteLinearGraph(this)
 
 private fun LinearGraph.getMiddleNodes(upNode: Int, downNode: Int) = FragmentGenerator(lite) { false }.getMiddleNodes(upNode, downNode, false)
 
-private fun Collection<Int>.assert(s: String) = assertEquals(s, sort().joinToString(","))
+private fun Collection<Int>.assert(s: String) = assertEquals(s, sorted().joinToString(","))
 private fun Int?.assert(i: Int?) = assertEquals(i, this)
 
 private fun LinearGraph.redNodes(vararg redNode: Int = IntArray(0)): FragmentGenerator {
@@ -42,7 +42,7 @@ private fun LinearGraph.redNodes(vararg redNode: Int = IntArray(0)): FragmentGen
 private val Int?.s: String get() = if (this == null) "n" else toString()
 
 private fun FragmentGenerator.GreenFragment.assert(s: String)
-    = assertEquals(s, "${getUpRedNode().s}|${getDownRedNode().s}|${getMiddleGreenNodes().sort().joinToString(",")}")
+    = assertEquals(s, "${getUpRedNode().s}|${getDownRedNode().s}|${getMiddleGreenNodes().sorted().joinToString(",")}")
 
 /*
 0

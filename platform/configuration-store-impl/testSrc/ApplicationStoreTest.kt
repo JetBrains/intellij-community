@@ -171,7 +171,7 @@ internal class ApplicationStoreTest {
     val componentKey = A::class.java.name
     picoContainer.registerComponent(InstanceComponentAdapter(componentKey, component))
     try {
-      assertThat(getExportableComponentsMap(false, false, storageManager, relativePaths)).containsOnly(componentFile to list, additionalFile to list)
+      assertThat(getExportableComponentsMap(false, false, storageManager, relativePaths)).containsOnly(componentFile.to(list), additionalFile.to(list))
     }
     finally {
       picoContainer.unregisterComponent(componentKey)

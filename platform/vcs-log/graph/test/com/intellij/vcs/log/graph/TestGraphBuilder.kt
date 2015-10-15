@@ -15,29 +15,29 @@
  */
 package com.intellij.vcs.log.graph
 
-import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
-import java.util.ArrayList
-import com.intellij.vcs.log.graph.api.LinearGraph
-import com.intellij.vcs.log.graph.api.elements.GraphEdge
-import com.intellij.vcs.log.graph.api.elements.GraphNode
-import com.intellij.util.containers.MultiMap
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.HashMap
-import com.intellij.vcs.log.graph.api.elements.GraphNodeType
+import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.graph.BaseTestGraphBuilder.SimpleEdge
 import com.intellij.vcs.log.graph.BaseTestGraphBuilder.SimpleNode
-import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
-import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.vcs.log.graph.utils.TimestampGetter
-import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
-import kotlin.test.assertNull
-import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.api.EdgeFilter
-import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl
+import com.intellij.vcs.log.graph.api.LinearGraph
+import com.intellij.vcs.log.graph.api.elements.GraphEdge
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
+import com.intellij.vcs.log.graph.api.elements.GraphNode
+import com.intellij.vcs.log.graph.api.elements.GraphNodeType
+import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
+import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
+import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder
+import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils
+import com.intellij.vcs.log.graph.utils.TimestampGetter
+import java.util.*
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 public interface BaseTestGraphBuilder {
   public val Int.U: SimpleNode get() = SimpleNode(this, GraphNodeType.USUAL)
@@ -181,7 +181,7 @@ public fun LinearGraph.asTestGraphString(sorted: Boolean = false): String = Stri
     // edges
     var adjacentEdges = getAdjacentEdges(nodeIndex, EdgeFilter.ALL)
     if (sorted) {
-      adjacentEdges = adjacentEdges.sortBy(GraphStrUtils.GRAPH_ELEMENT_COMPARATOR)
+      adjacentEdges = adjacentEdges.sortedWith(GraphStrUtils.GRAPH_ELEMENT_COMPARATOR)
     }
 
     append("(")
