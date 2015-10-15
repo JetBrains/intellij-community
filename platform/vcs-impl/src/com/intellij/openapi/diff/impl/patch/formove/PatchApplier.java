@@ -307,9 +307,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
 
     try {
       markInternalOperation(textPatches, true);
-
-      final ApplyPatchStatus status = actualApply(myVerifier, myCommitContext);
-      return status;
+      return actualApply(myVerifier, myCommitContext);
     }
     finally {
       markInternalOperation(textPatches, false);
@@ -436,14 +434,11 @@ public class PatchApplier<BinaryType extends FilePatch> {
                                                                 myReverseConflict, myLeftConflictPanelTitle, myRightConflictPanelTitle);
 
       if (patchStatus == ApplyPatchStatus.ABORT) return patchStatus;
-      myVerifier.doMoveIfNeeded(patch.getFirst());
-
       status = ApplyPatchStatus.and(status, patchStatus);
-      if (patchStatus != ApplyPatchStatus.FAILURE) {
+      if (patchStatus == ApplyPatchStatus.FAILURE) return status;
+      if (patchStatus != ApplyPatchStatus.SKIP) {
+        myVerifier.doMoveIfNeeded(patch.getFirst());
         myRemainingPatches.remove(patch.getSecond().getPatch());
-      } else {
-        // interrupt if failure
-        return status;
       }
     }
     return status;
