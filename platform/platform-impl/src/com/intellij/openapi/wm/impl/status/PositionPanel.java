@@ -106,12 +106,6 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
     multicaster.addSelectionListener(this, this);
   }
 
-  private static void appendLogicalPosition(LogicalPosition caret, StringBuilder message) {
-    message.append(caret.line + 1);
-    message.append(":");
-    message.append(caret.column + 1);
-  }
-
   @Override
   public void selectionChanged(final SelectionEvent e) {
     updatePosition(e.getEditor());
@@ -144,7 +138,7 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
     }
   }
 
-  private String getPositionText(Editor editor) {
+  private String getPositionText(@NotNull Editor editor) {
     if (!editor.isDisposed() && myStatusBar != null) {
       StringBuilder message = new StringBuilder();
 
@@ -154,13 +148,21 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
         message.append(caretCount).append(" carets");
       }
       else {
-        LogicalPosition caret = editor.getCaretModel().getLogicalPosition();
-
-        appendLogicalPosition(caret, message);
         if (selectionModel.hasSelection()) {
-          int len = Math.abs(selectionModel.getSelectionStart() - selectionModel.getSelectionEnd());
-          if (len != 0) message.append("/").append(len);
+          int selectionStart = selectionModel.getSelectionStart();
+          int selectionEnd = selectionModel.getSelectionEnd();
+          if (selectionEnd > selectionStart) {
+            message.append(selectionEnd - selectionStart).append(" chars");
+            int selectionStartLine = editor.getDocument().getLineNumber(selectionStart);
+            int selectionEndLine = editor.getDocument().getLineNumber(selectionEnd);
+            if (selectionEndLine > selectionStartLine) {
+              message.append(", ").append(selectionEndLine - selectionStartLine + 1).append(" lines");
+            }
+            message.append("     ");
+          }
         }
+        LogicalPosition caret = editor.getCaretModel().getLogicalPosition();
+        message.append(caret.line + 1).append(":").append(caret.column + 1);
       }
 
       return message.toString();
