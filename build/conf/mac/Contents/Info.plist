@@ -54,6 +54,9 @@
     <key>NSHighResolutionCapable</key>
     <true/>
 
+    <key>NSAppSleepDisabled</key>
+    <@@mavericks_app_nap_disabled@@/>
+
     @@archs@@
     <key>LSRequiresNativeExecution</key>
     <string>YES</string>

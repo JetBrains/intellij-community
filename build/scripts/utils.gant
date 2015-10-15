@@ -515,7 +515,12 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
 """
   }
 
+  if (args.mavericks_app_nap_disabled == null) {
+  	args.mavericks_app_nap_disabled = "false"
+  }
+
   ant.replace(file: "$path/Info.plist") {
+  	replacefilter(token: "@@mavericks_app_nap_disabled@@", value: args.mavericks_app_nap_disabled)
     replacefilter(token: "@@build@@", value: args.buildNumber)
     replacefilter(token: "@@doc_types@@", value: ifNull(args.doc_types, ""))
     replacefilter(token: "@@executable@@", value: executable)
