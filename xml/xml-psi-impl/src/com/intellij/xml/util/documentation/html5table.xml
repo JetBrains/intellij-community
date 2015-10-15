@@ -167,6 +167,14 @@
      empty       = "false"
      dtd         = ""
 />
+<tag name        = "picture"
+     helpref     = "semantics.html#the-picture-element"
+     description = "Pictures container"
+     startTag    = "true"
+     endTag      = "true"
+     empty       = "false"
+     dtd         = ""
+/>
 <tag name        = "progress"
      helpref     = "semantics.html#the-progress-element"
      description = "Progress bar"

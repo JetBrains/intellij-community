@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,8 +100,8 @@ public class FileCopyPasteUtil {
     try {
       if (transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
         @SuppressWarnings({"unchecked"})
-        final List<File> fileList = (List<File>)transferable.getTransferData(DataFlavor.javaFileListFlavor);
-        return ContainerUtil.filter(fileList, new Condition<File>() {
+        List<File> fileList = (List<File>)transferable.getTransferData(DataFlavor.javaFileListFlavor);
+        return fileList == null ? null : ContainerUtil.filter(fileList, new Condition<File>() {
           @Override
           public boolean value(File file) {
             return !StringUtil.isEmptyOrSpaces(file.getPath());
