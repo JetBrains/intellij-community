@@ -131,6 +131,27 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
     checkResult(new String []{"(2: 3) B myB = new B();", "(2: 15) B myB = new B();", "(4: 9) myB.bb();"}, psiUsages);
   }
 
+  public void testForwardJdkClasses(){
+    final DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new AnalysisScope(myProject));
+    builder.analyze();
+
+    final Set<PsiFile> searchIn = new HashSet<PsiFile>();
+    final PsiClass aClass = myJavaFacade.findClass("A", GlobalSearchScope.allScope(myProject));
+    searchIn.add(aClass.getContainingFile());
+
+    final Set<PsiFile> searchFor = new HashSet<PsiFile>();
+    final PsiClass stringClass = myJavaFacade.findClass("java.lang.String", GlobalSearchScope.allScope(myProject));
+    searchFor.add((PsiFile)stringClass.getContainingFile().getNavigationElement());
+
+    final UsageInfo[] usagesInfos = FindDependencyUtil.findDependencies(builder, searchIn, searchFor);
+    final UsageInfo2UsageAdapter[] usages = UsageInfo2UsageAdapter.convert(usagesInfos);
+    final String [] psiUsages = new String [usagesInfos.length];
+    for (int i = 0; i < usagesInfos.length; i++) {
+      psiUsages[i] = toString(usages[i]);
+    }
+    checkResult(new String []{"(2: 3) String myName;"}, psiUsages);
+  }
+
   private static void checkResult(final String[] usages, final String [] psiUsages) {
     assertEquals(usages.length , psiUsages.length);
     for (int i = 0; i < psiUsages.length; i++) {
