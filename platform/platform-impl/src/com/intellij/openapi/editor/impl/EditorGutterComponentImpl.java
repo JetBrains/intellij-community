@@ -1362,7 +1362,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   void validateMousePointer(@NotNull MouseEvent e) {
-    Cursor cursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
+    Cursor cursor = getCursor();//Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
     FoldRegion foldingAtCursor = findFoldingAnchorAt(e.getX(), e.getY());
     setActiveFoldRegion(foldingAtCursor);
     boolean updated = false;
@@ -1397,17 +1397,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
       }
     }
-    if (updated) {
-      setCursor(cursor);
+    if (!updated && cursor == Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)) {
+      cursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
     }
-  }
-
-  @Override
-  public void setCursor(Cursor cursor) {
-    if (cursor != getCursor()) {
-      System.out.println(cursor);
-    }
-    super.setCursor(cursor);
+    setCursor(cursor);
   }
 
   @Override
