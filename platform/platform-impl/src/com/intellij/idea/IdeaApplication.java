@@ -155,7 +155,7 @@ public class IdeaApplication {
 
   @NotNull
   public ApplicationStarter getStarter() {
-    String key = null;
+    String key;
     if (myArgs.length > 0) {
       key = myArgs[0];
     }
