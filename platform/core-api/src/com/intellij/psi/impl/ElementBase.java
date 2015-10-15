@@ -104,15 +104,14 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   @Nullable
   private Icon computeIcon(@Iconable.IconFlags int flags) {
     PsiElement psiElement = (PsiElement)this;
-    PsiFile psiFile = psiElement.getContainingFile();
-    if (psiFile == null || !psiFile.isValid()) return null;
+    if (!psiElement.isValid()) return null;
 
     if (Registry.is("psi.deferIconLoading")) {
       Icon baseIcon = LastComputedIcon.get(psiElement, flags);
       if (baseIcon == null) {
         baseIcon = computeBaseIcon(flags);
       }
-      return IconDeferrer.getInstance().defer(baseIcon, new ElementIconRequest(psiElement, psiFile.getProject(), flags), ICON_COMPUTE);
+      return IconDeferrer.getInstance().defer(baseIcon, new ElementIconRequest(psiElement, psiElement.getProject(), flags), ICON_COMPUTE);
     }
 
     return computeIconNow(psiElement, flags);
