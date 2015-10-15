@@ -23,6 +23,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.HashSet;
@@ -84,7 +85,9 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   protected void resume(){
     assertNotResumed();
-    LOG.assertTrue(!isEvaluating(), "resuming context while evaluating");
+    if (isEvaluating()) {
+      LOG.error("Resuming context while evaluating", ThreadDumper.dumpThreadsToString());
+    }
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
       if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
