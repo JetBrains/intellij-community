@@ -57,8 +57,18 @@ public final class CommandLineConsoleApi {
     @NotNull final Module module,
     @NotNull final String consoleName,
     @Nullable final Pair<List<Command>, CommandExecutor> commandsAndDefaultExecutor) {
+    return createConsole(module, consoleName, consoleName, commandsAndDefaultExecutor);
+  }
+
+
+  @NotNull
+  public static LanguageConsoleView createConsole(
+    @NotNull final Module module,
+    @NotNull final String consoleName,
+    @NotNull final String promptName,
+    @Nullable final Pair<List<Command>, CommandExecutor> commandsAndDefaultExecutor) {
     final Project project = module.getProject();
-    final CommandConsole console = CommandConsole.createConsole(module, consoleName, commandsAndDefaultExecutor);
+    final CommandConsole console = CommandConsole.createConsole(module, promptName, commandsAndDefaultExecutor);
 
     // Show console on "toolwindow"
     WindowWithActions.showConsoleWithProcess(console,
