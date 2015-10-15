@@ -759,8 +759,9 @@ binding.setVariable("zipSourcesOfModules", { String targetFilePath, Collection<S
 binding.setVariable("moduleSrc", {String moduleName ->
   result = []
   JpsModule module = findModule(moduleName)
+  if (module == null) projectBuilder.error("Module $moduleName not found")
   module.getSourceRoots(JavaSourceRootType.SOURCE).each { root ->
-    result += ant.zipfileset(dir: root.file.absolutePath , prefix: root.properties.packagePrefix.replace('.', '/'), erroronmissingdir: false)
+    result << ant.zipfileset(dir: root.file.absolutePath , prefix: root.properties.packagePrefix.replace('.', '/'), erroronmissingdir: false)
   }
   result
 })
