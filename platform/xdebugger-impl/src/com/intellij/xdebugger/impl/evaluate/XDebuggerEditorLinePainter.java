@@ -30,9 +30,11 @@ import com.intellij.ui.*;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.containers.ObjectLongHashMap;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -82,7 +84,9 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
       XDebugSession session = XDebugView.getSession(values.iterator().next().getTree());
       final int bpLine = getCurrentBreakPointLineInFile(session, file);
       boolean isTopFrame = session instanceof XDebugSessionImpl && ((XDebugSessionImpl)session).isTopFrameSelected();
-      final TextAttributes attributes = bpLine == lineNumber && isTopFrame ? getTopFrameSelectedAttributes() : getNormalAttributes();
+      final TextAttributes attributes = bpLine == lineNumber && isTopFrame &&
+                                        ((XDebuggerManagerImpl)XDebuggerManager.getInstance(project)).isFullLineHighlighter()
+                                        ? getTopFrameSelectedAttributes() : getNormalAttributes();
 
       ArrayList<VariableText> result = new ArrayList<VariableText>();
       for (XValueNodeImpl value : values) {

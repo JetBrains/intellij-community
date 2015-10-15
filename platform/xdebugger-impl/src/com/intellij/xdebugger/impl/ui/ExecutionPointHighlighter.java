@@ -223,6 +223,11 @@ public class ExecutionPointHighlighter {
     myRangeHighlighter.setGutterIconRenderer(myGutterIconRenderer);
   }
 
+  public boolean isFullLineHighlighter() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    return myRangeHighlighter != null && myRangeHighlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE;
+  }
+
   private static void adjustCounter(@NotNull final Editor editor, final int increment) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
