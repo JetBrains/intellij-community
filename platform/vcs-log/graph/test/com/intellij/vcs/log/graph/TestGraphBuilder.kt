@@ -181,7 +181,7 @@ public fun LinearGraph.asTestGraphString(sorted: Boolean = false): String = Stri
     // edges
     var adjacentEdges = getAdjacentEdges(nodeIndex, EdgeFilter.ALL)
     if (sorted) {
-      adjacentEdges = adjacentEdges.sortBy(GraphStrUtils.GRAPH_ELEMENT_COMPARATOR)
+      adjacentEdges = adjacentEdges.sortedWith(GraphStrUtils.GRAPH_ELEMENT_COMPARATOR)
     }
 
     append("(")
