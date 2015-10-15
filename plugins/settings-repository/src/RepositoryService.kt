@@ -65,7 +65,7 @@ public interface RepositoryService {
         return true
       }
       catch (e: IOException) {
-        Messages.showErrorDialog(messageParent, icsMessage("init.failed.message", e.getMessage()), icsMessage("init.failed.title"))
+        Messages.showErrorDialog(messageParent, icsMessage("init.failed.message", e.message), icsMessage("init.failed.title"))
         return false
       }
     }

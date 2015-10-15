@@ -57,7 +57,7 @@ public abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointM
 
     breakpoints.add(breakpoint)
     if (enabled) {
-      doSetBreakpoint(target, breakpoint).rejected { dispatcher.multicaster.errorOccurred(breakpoint, it.getMessage() ?: it.toString()) }
+      doSetBreakpoint(target, breakpoint).rejected { dispatcher.multicaster.errorOccurred(breakpoint, it.message ?: it.toString()) }
     }
     return breakpoint
   }

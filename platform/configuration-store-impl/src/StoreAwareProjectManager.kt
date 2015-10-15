@@ -226,7 +226,7 @@ private fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStor
     }
     catch (e: Throwable) {
       LOG.warn(e)
-      Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.getMessage()), ProjectBundle.message("project.reload.failed.title"))
+      Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.message), ProjectBundle.message("project.reload.failed.title"))
       return ReloadComponentStoreStatus.ERROR
     }
 

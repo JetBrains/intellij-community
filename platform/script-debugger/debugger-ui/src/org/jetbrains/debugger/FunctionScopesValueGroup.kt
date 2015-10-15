@@ -41,7 +41,7 @@ internal class FunctionScopesValueGroup(private val value: FunctionValue, privat
       })
       .rejected {
         Promise.logError(LOG, it)
-        node.setErrorMessage(it.getMessage()!!)
+        node.setErrorMessage(it.message!!)
       }
   }
 }

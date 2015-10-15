@@ -200,6 +200,6 @@ enum class SyncType {
   OVERWRITE_REMOTE
 }
 
-class NoRemoteRepositoryException(cause: Throwable) : RuntimeException(cause.getMessage(), cause)
+class NoRemoteRepositoryException(cause: Throwable) : RuntimeException(cause.message, cause)
 
 class CannotResolveConflictInTestMode() : RuntimeException()

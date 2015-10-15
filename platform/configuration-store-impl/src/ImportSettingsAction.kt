@@ -51,11 +51,11 @@ private class ImportSettingsAction : AnAction(), DumbAware {
         }
         catch (e1: ZipException) {
           Messages.showErrorDialog(
-            IdeBundle.message("error.reading.settings.file", presentableFileName(saveFile), e1.getMessage(), promptLocationMessage()),
+            IdeBundle.message("error.reading.settings.file", presentableFileName(saveFile), e1.message, promptLocationMessage()),
             IdeBundle.message("title.invalid.file"))
         }
         catch (e1: IOException) {
-          Messages.showErrorDialog(IdeBundle.message("error.reading.settings.file.2", presentableFileName(saveFile), e1.getMessage()),
+          Messages.showErrorDialog(IdeBundle.message("error.reading.settings.file.2", presentableFileName(saveFile), e1.message),
             IdeBundle.message("title.error.reading.file"))
         }
       }

@@ -141,7 +141,7 @@ open class FileBasedStorage(file: File,
       if (e != null) {
         LOG.info(e)
       }
-      Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Load Settings", "Cannot load settings from file '$file': ${if (contentTruncated) "content truncated" else e!!.getMessage()}\n${if (blockSavingTheContent) "Please correct the file content" else "File content will be recreated"}", NotificationType.WARNING).notify(null)
+      Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Load Settings", "Cannot load settings from file '$file': ${if (contentTruncated) "content truncated" else e!!.message}\n${if (blockSavingTheContent) "Please correct the file content" else "File content will be recreated"}", NotificationType.WARNING).notify(null)
     }
   }
 
