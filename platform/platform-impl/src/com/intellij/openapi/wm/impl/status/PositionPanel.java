@@ -145,18 +145,19 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
       SelectionModel selectionModel = editor.getSelectionModel();
       int caretCount = editor.getCaretModel().getCaretCount();
       if (caretCount > 1) {
-        message.append(caretCount).append(" carets");
+        message.append(UIBundle.message("position.panel.caret.count", caretCount));
       }
       else {
         if (selectionModel.hasSelection()) {
           int selectionStart = selectionModel.getSelectionStart();
           int selectionEnd = selectionModel.getSelectionEnd();
           if (selectionEnd > selectionStart) {
-            message.append(selectionEnd - selectionStart).append(" chars");
+            message.append(UIBundle.message("position.panel.selected.chars.count", selectionEnd - selectionStart));
             int selectionStartLine = editor.getDocument().getLineNumber(selectionStart);
             int selectionEndLine = editor.getDocument().getLineNumber(selectionEnd);
             if (selectionEndLine > selectionStartLine) {
-              message.append(", ").append(selectionEndLine - selectionStartLine + 1).append(" lines");
+              message.append(", ");
+              message.append(UIBundle.message("position.panel.selected.lines.count", selectionEndLine - selectionStartLine + 1));
             }
             message.append("     ");
           }
