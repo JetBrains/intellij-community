@@ -92,7 +92,9 @@ public class ResourceBundleEditorInspectionPass {
             }
             HighlightSeverity severity = profileToUse.getInspectionProfile().getErrorLevel(toolKey, containingFile).getSeverity();
             final HighlightInfoType infoType =
-              ProblemDescriptorUtil.highlightTypeFromDescriptor(descriptor, severity, SeverityRegistrar.getSeverityRegistrar(project));
+              ProblemDescriptorUtil.getHighlightInfoType(descriptor.getHighlightType(),
+                                                         severity,
+                                                         SeverityRegistrar.getSeverityRegistrar(project));
             highlightTypes.add(infoType);
           }
         }
