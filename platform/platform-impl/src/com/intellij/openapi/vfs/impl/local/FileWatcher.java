@@ -35,9 +35,9 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 /**
@@ -54,9 +54,6 @@ public class FileWatcher {
     }
   };
 
-  private final Object myLock = new Object();
-  private final PluggableFileWatcher[] myWatchers;
-
   public static class DirtyPaths {
     public final List<String> dirtyPaths = newArrayList();
     public final List<String> dirtyPathsRecursive = newArrayList();
@@ -69,14 +66,15 @@ public class FileWatcher {
     }
   }
 
-  private DirtyPaths myDirtyPaths = new DirtyPaths();
-  private final AtomicBoolean myFailureShownToTheUser = new AtomicBoolean(false);
+  private final MyFileWatcherNotificationSink myNotificationSink;
+  private final PluggableFileWatcher[] myWatchers;
+  private final AtomicBoolean myFailureShown = new AtomicBoolean(false);
 
   FileWatcher(@NotNull ManagingFS managingFS) {
-    MyFileWatcherNotificationSink notificationSink = new MyFileWatcherNotificationSink();
+    myNotificationSink = new MyFileWatcherNotificationSink();
     myWatchers = PluggableFileWatcher.EP_NAME.getExtensions();
     for (PluggableFileWatcher watcher : myWatchers) {
-      watcher.initialize(managingFS, notificationSink);
+      watcher.initialize(managingFS, myNotificationSink);
     }
   }
 
@@ -102,37 +100,29 @@ public class FileWatcher {
 
   @NotNull
   public DirtyPaths getDirtyPaths() {
-    synchronized (myLock) {
-      if (!myDirtyPaths.isEmpty()) {
-        DirtyPaths dirtyPaths = myDirtyPaths;
-        myDirtyPaths = new DirtyPaths();
-        for (PluggableFileWatcher watcher : myWatchers) {
-          watcher.resetChangedPaths();
-        }
-        return dirtyPaths;
-      }
-      else {
-        return DirtyPaths.EMPTY;
-      }
-    }
+    return myNotificationSink.getDirtyPaths();
   }
 
   @NotNull
-  public List<String> getManualWatchRoots() {
+  public Collection<String> getManualWatchRoots() {
     if (myWatchers.length == 1) {
       return myWatchers[0].getManualWatchRoots();
     }
-    HashSet<String> result = null;
+
+    Set<String> result = null;
     for (PluggableFileWatcher watcher : myWatchers) {
-      List<String> roots = watcher.getManualWatchRoots();
-      if (result == null) {
-        result = new HashSet<String>(roots);
-      } else {
-        result.retainAll(roots);
+      Collection<String> roots = watcher.getManualWatchRoots();
+      if (!roots.isEmpty()) {
+        if (result == null) {
+          result = new HashSet<String>(roots);
+        }
+        else {
+          result.retainAll(roots);
+        }
       }
     }
-    if (result == null) return emptyList();
-    return Collections.list(Collections.enumeration(result));
+
+    return result != null ? result : Collections.<String>emptyList();
   }
 
   public void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat) {
@@ -151,16 +141,37 @@ public class FileWatcher {
   public void notifyOnFailure(final String cause, @Nullable final NotificationListener listener) {
     LOG.warn(cause);
 
-    if (myFailureShownToTheUser.compareAndSet(false, true)) ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        String title = ApplicationBundle.message("watcher.slow.sync");
-        Notifications.Bus.notify(NOTIFICATION_GROUP.getValue().createNotification(title, cause, NotificationType.WARNING, listener));
-      }
-    }, ModalityState.NON_MODAL);
+    if (myFailureShown.compareAndSet(false, true)) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          String title = ApplicationBundle.message("watcher.slow.sync");
+          Notifications.Bus.notify(NOTIFICATION_GROUP.getValue().createNotification(title, cause, NotificationType.WARNING, listener));
+        }
+      }, ModalityState.NON_MODAL);
+    }
   }
 
   private class MyFileWatcherNotificationSink implements FileWatcherNotificationSink {
+    private final Object myLock = new Object();
+    private DirtyPaths myDirtyPaths = new DirtyPaths();
+
+    private DirtyPaths getDirtyPaths() {
+      synchronized (myLock) {
+        if (!myDirtyPaths.isEmpty()) {
+          DirtyPaths dirtyPaths = myDirtyPaths;
+          myDirtyPaths = new DirtyPaths();
+          for (PluggableFileWatcher watcher : myWatchers) {
+            watcher.resetChangedPaths();
+          }
+          return dirtyPaths;
+        }
+        else {
+          return DirtyPaths.EMPTY;
+        }
+      }
+    }
+
     @Override
     public void notifyDirtyPaths(Collection<String> paths) {
       synchronized (myLock) {
