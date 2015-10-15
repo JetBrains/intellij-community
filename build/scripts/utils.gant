@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
+
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.gant.JpsGantTool
 import org.jetbrains.jps.gant.TeamCityBuildInfoPrinter
-import org.jetbrains.jps.model.java.JavaResourceRootType
-import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.jps.model.java.JdkVersionDetector
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.java.JpsJavaSdkType
+import org.jetbrains.jps.model.java.*
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
@@ -757,6 +754,15 @@ binding.setVariable("zipSourcesOfModules", { String targetFilePath, Collection<S
   }
 
   notifyArtifactBuilt(targetFilePath)
+})
+
+binding.setVariable("moduleSrc", {String moduleName ->
+  result = []
+  JpsModule module = findModule(moduleName)
+  module.getSourceRoots(JavaSourceRootType.SOURCE).each { root ->
+    result += ant.zipfileset(dir: root.file.absolutePath , prefix: root.properties.packagePrefix.replace('.', '/'), erroronmissingdir: false)
+  }
+  result
 })
 
 /**
