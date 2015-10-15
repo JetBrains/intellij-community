@@ -32,14 +32,14 @@ private val NATURAL_NAME_COMPARATOR = object : Comparator<Variable> {
   override fun compare(o1: Variable, o2: Variable) = naturalCompare(o1.name, o2.name)
 }
 
+// start properties loading to achieve, possibly, parallel execution (properties loading & member filter computation)
 fun processVariables(context: VariableContext,
                      variables: Promise<List<Variable>>,
                      obsolescent: Obsolescent,
-                     consumer: (memberFilter: MemberFilter, variables: List<Variable>) -> Unit): Promise<Void> {
-  // start properties loading to achieve, possibly, parallel execution (properties loading & member filter computation)
-  return context.memberFilter.then(object : ValueNodeAsyncFunction<MemberFilter, Void>(obsolescent) {
-    override fun `fun`(memberFilter: MemberFilter): Promise<Void> {
-      return variables.then(object : ObsolescentFunction<List<Variable>, Void> {
+                     consumer: (memberFilter: MemberFilter, variables: List<Variable>) -> Unit) = context.memberFilter
+  .then(object : ValueNodeAsyncFunction<MemberFilter, Any?>(obsolescent) {
+    override fun `fun`(memberFilter: MemberFilter): Promise<Any?> {
+      return variables.then(object : ObsolescentFunction<List<Variable>, Any?> {
         override fun isObsolete() = obsolescent.isObsolete
 
         override fun `fun`(variables: List<Variable>): Void? {
@@ -49,46 +49,43 @@ fun processVariables(context: VariableContext,
       })
     }
   })
-}
 
 fun processScopeVariables(scope: Scope,
                           node: XCompositeNode,
                           context: VariableContext,
-                          isLast: Boolean): Promise<Void> {
-  return processVariables(context, scope.variablesHost.get(), node, { memberFilter, variables ->
-    val additionalVariables = memberFilter.additionalVariables
-    val properties = ArrayList<Variable>(variables.size() + additionalVariables.size())
-    val functions = SmartList<Variable>()
-    for (variable in variables) {
-      if (memberFilter.isMemberVisible(variable)) {
-        val value = variable.value
-        if (value != null && value.type == ValueType.FUNCTION && value.valueString != null && !UNNAMED_FUNCTION_PATTERN.matcher(value.valueString).lookingAt()) {
-          functions.add(variable)
-        }
-        else {
-          properties.add(variable)
-        }
+                          isLast: Boolean) = processVariables(context, scope.variablesHost.get(), node, { memberFilter, variables ->
+  val additionalVariables = memberFilter.additionalVariables
+  val properties = ArrayList<Variable>(variables.size() + additionalVariables.size())
+  val functions = SmartList<Variable>()
+  for (variable in variables) {
+    if (memberFilter.isMemberVisible(variable)) {
+      val value = variable.value
+      if (value != null && value.type == ValueType.FUNCTION && value.valueString != null && !UNNAMED_FUNCTION_PATTERN.matcher(value.valueString).lookingAt()) {
+        functions.add(variable)
+      }
+      else {
+        properties.add(variable)
       }
     }
+  }
 
-    val comparator = if (memberFilter.hasNameMappings()) comparator { o1, o2 -> naturalCompare(memberFilter.rawNameToSource(o1), memberFilter.rawNameToSource(o2)) } else NATURAL_NAME_COMPARATOR
-    Collections.sort(properties, comparator)
-    Collections.sort(functions, comparator)
+  val comparator = if (memberFilter.hasNameMappings()) comparator { o1, o2 -> naturalCompare(memberFilter.rawNameToSource(o1), memberFilter.rawNameToSource(o2)) } else NATURAL_NAME_COMPARATOR
+  Collections.sort(properties, comparator)
+  Collections.sort(functions, comparator)
 
-    addAditionalVariables(variables, additionalVariables, properties, memberFilter)
+  addAditionalVariables(variables, additionalVariables, properties, memberFilter)
 
-    if (!properties.isEmpty()) {
-      node.addChildren(createVariablesList(properties, context, memberFilter), functions.isEmpty() && isLast)
-    }
+  if (!properties.isEmpty()) {
+    node.addChildren(createVariablesList(properties, context, memberFilter), functions.isEmpty() && isLast)
+  }
 
-    if (!functions.isEmpty()) {
-      node.addChildren(XValueChildrenList.bottomGroup(VariablesGroup("Functions", functions, context)), isLast)
-    }
-    else if (isLast && properties.isEmpty()) {
-      node.addChildren(XValueChildrenList.EMPTY, true)
-    }
-  })
-}
+  if (!functions.isEmpty()) {
+    node.addChildren(XValueChildrenList.bottomGroup(VariablesGroup("Functions", functions, context)), isLast)
+  }
+  else if (isLast && properties.isEmpty()) {
+    node.addChildren(XValueChildrenList.EMPTY, true)
+  }
+})
 
 fun processNamedObjectProperties(variables: List<Variable>,
                                  node: XCompositeNode,

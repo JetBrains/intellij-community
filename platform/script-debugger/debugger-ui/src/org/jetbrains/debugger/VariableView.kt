@@ -31,7 +31,6 @@ import com.intellij.xdebugger.frame.presentation.XKeywordValuePresentation
 import com.intellij.xdebugger.frame.presentation.XNumericValuePresentation
 import com.intellij.xdebugger.frame.presentation.XStringValuePresentation
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
-import org.jetbrains.concurrency.ObsolescentAsyncFunction
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.values.*
 import java.util.*
@@ -116,7 +115,6 @@ class VariableView(name: String, private val variable: Variable, private val con
   }
 
   private fun computePresentation(value: Value, node: XValueNode) {
-    val valueString = value.valueString
     when (value.type) {
       ValueType.OBJECT, ValueType.NODE -> context.viewSupport.computeObjectPresentation((value as ObjectValue), variable, context, node, icon)
 
@@ -124,20 +122,20 @@ class VariableView(name: String, private val variable: Variable, private val con
 
       ValueType.ARRAY -> context.viewSupport.computeArrayPresentation(value, variable, context, node, icon)
 
-      ValueType.BOOLEAN, ValueType.NULL, ValueType.UNDEFINED -> node.setPresentation(icon, XKeywordValuePresentation(valueString), false)
+      ValueType.BOOLEAN, ValueType.NULL, ValueType.UNDEFINED -> node.setPresentation(icon, XKeywordValuePresentation(value.valueString!!), false)
 
-      ValueType.NUMBER -> node.setPresentation(icon, createNumberPresentation(valueString), false)
+      ValueType.NUMBER -> node.setPresentation(icon, createNumberPresentation(value.valueString!!), false)
 
       ValueType.STRING -> {
-        node.setPresentation(icon, XStringValuePresentation(valueString), false)
+        node.setPresentation(icon, XStringValuePresentation(value.valueString!!), false)
         // isTruncated in terms of debugger backend, not in our terms (i.e. sometimes we cannot control truncation),
         // so, even in case of StringValue, we check value string length
-        if ((value is StringValue && value.isTruncated) || valueString.length() > XValueNode.MAX_VALUE_LENGTH) {
+        if ((value is StringValue && value.isTruncated) || value.valueString!!.length() > XValueNode.MAX_VALUE_LENGTH) {
           node.setFullValueEvaluator(MyFullValueEvaluator(value))
         }
       }
 
-      else -> node.setPresentation(icon, null, valueString, true)
+      else -> node.setPresentation(icon, null, value.valueString!!, true)
     }
   }
 
@@ -181,32 +179,19 @@ class VariableView(name: String, private val variable: Variable, private val con
         promises.add(computeNamedProperties(objectValue, node, !hasIndexedProperties && additionalProperties == null))
       }
       else {
-        promises.add(additionalProperties.then(object : ObsolescentAsyncFunction<Void, Void> {
-          override fun isObsolete(): Boolean {
-            return node.isObsolete
-          }
-
-          override fun `fun`(o: Void): Promise<Void> {
-            return computeNamedProperties(objectValue, node, true)
-          }
-        }))
+        promises.add(additionalProperties.thenAsync(node) { computeNamedProperties(objectValue, node, true) })
       }
     }
 
     if (hasIndexedProperties == hasNamedProperties || additionalProperties != null) {
-      Promise.all(promises).processed(object : ObsolescentConsumer<Void>(node) {
-        override fun consume(aVoid: Void) {
-          node.addChildren(XValueChildrenList.EMPTY, true)
-        }
+      Promise.all(promises).processed(object : ObsolescentConsumer<Any?>(node) {
+        override fun consume(aVoid: Any?) = node.addChildren(XValueChildrenList.EMPTY, true)
       })
     }
   }
 
-  abstract class ObsolescentIndexedVariablesConsumer protected constructor(protected val node: XCompositeNode) : IndexedVariablesConsumer() {
-
-    override fun isObsolete(): Boolean {
-      return node.isObsolete
-    }
+  abstract class ObsolescentIndexedVariablesConsumer(protected val node: XCompositeNode) : IndexedVariablesConsumer() {
+    override fun isObsolete() = node.isObsolete
   }
 
   private fun computeIndexedProperties(value: ArrayValue, node: XCompositeNode, isLastChildren: Boolean): Promise<*> {
@@ -228,29 +213,27 @@ class VariableView(name: String, private val variable: Variable, private val con
     }, null)
   }
 
-  private fun computeNamedProperties(value: ObjectValue, node: XCompositeNode, isLastChildren: Boolean): Promise<Void> {
-    return processVariables(this, value.properties, node) { memberFilter, variables ->
-      this@VariableView.memberFilter = memberFilter
+  private fun computeNamedProperties(value: ObjectValue, node: XCompositeNode, isLastChildren: Boolean) = processVariables(this, value.properties, node) { memberFilter, variables ->
+    this@VariableView.memberFilter = memberFilter
 
-      if (value.type == ValueType.ARRAY && value !is ArrayValue) {
-        computeArrayRanges(variables, node)
-        return@processVariables
-      }
+    if (value.type == ValueType.ARRAY && value !is ArrayValue) {
+      computeArrayRanges(variables, node)
+      return@processVariables
+    }
 
-      var functionValue = value as? FunctionValue
-      if (functionValue != null && functionValue.hasScopes() == ThreeState.NO) {
-        functionValue = null
-      }
+    var functionValue = value as? FunctionValue
+    if (functionValue != null && functionValue.hasScopes() == ThreeState.NO) {
+      functionValue = null
+    }
 
-      remainingChildren = processNamedObjectProperties(variables, node, this@VariableView, memberFilter, XCompositeNode.MAX_CHILDREN_TO_SHOW, isLastChildren && functionValue == null)
-      if (remainingChildren != null) {
-        remainingChildrenOffset = XCompositeNode.MAX_CHILDREN_TO_SHOW
-      }
+    remainingChildren = processNamedObjectProperties(variables, node, this@VariableView, memberFilter, XCompositeNode.MAX_CHILDREN_TO_SHOW, isLastChildren && functionValue == null)
+    if (remainingChildren != null) {
+      remainingChildrenOffset = XCompositeNode.MAX_CHILDREN_TO_SHOW
+    }
 
-      if (functionValue != null) {
-        // we pass context as variable context instead of this variable value - we cannot watch function scopes variables, so, this variable name doesn't matter
-        node.addChildren(XValueChildrenList.bottomGroup(FunctionScopesValueGroup(functionValue, context)), isLastChildren)
-      }
+    if (functionValue != null) {
+      // we pass context as variable context instead of this variable value - we cannot watch function scopes variables, so, this variable name doesn't matter
+      node.addChildren(XValueChildrenList.bottomGroup(FunctionScopesValueGroup(functionValue, context)), isLastChildren)
     }
   }
 
@@ -312,7 +295,7 @@ class VariableView(name: String, private val variable: Variable, private val con
     return object : XValueModifier() {
       override fun getInitialValueEditorText(): String? {
         if (value!!.type == ValueType.STRING) {
-          val string = value!!.valueString
+          val string = value!!.valueString!!
           val builder = StringBuilder(string.length())
           builder.append('"')
           StringUtil.escapeStringCharacters(string.length(), string, builder)
@@ -325,10 +308,7 @@ class VariableView(name: String, private val variable: Variable, private val con
       }
 
       override fun setValue(expression: String, callback: XValueModifier.XModificationCallback) {
-        val valueModifier = variable.valueModifier
-        assert(valueModifier != null)
-        //noinspection unchecked
-        valueModifier!!.setValue(variable, expression, evaluateContext)
+        variable.valueModifier!!.setValue(variable, expression, evaluateContext)
           .done(Consumer<Any?> {
             value = null
             callback.valueModified()
@@ -346,11 +326,11 @@ class VariableView(name: String, private val variable: Variable, private val con
 
   override fun computeSourcePosition(navigatable: XNavigatable) {
     if (value is FunctionValue) {
-      (value as FunctionValue).resolve().done(object : Consumer<FunctionValue> {
-        override fun consume(function: FunctionValue) {
-          viewSupport.vm!!.scriptManager.getScript(function).done(object : Consumer<Script> {
-            override fun consume(script: Script?) {
-              val position = if (script == null) null else viewSupport.getSourceInfo(null, script, function.openParenLine, function.openParenColumn)
+      (value as FunctionValue).resolve()
+        .done { function ->
+          viewSupport.vm!!.scriptManager.getScript(function)
+            .done {
+              val position = if (it == null) null else viewSupport.getSourceInfo(null, it, function.openParenLine, function.openParenColumn)
               navigatable.setSourcePosition(if (position == null)
                 null
               else
@@ -388,9 +368,7 @@ class VariableView(name: String, private val variable: Variable, private val con
                   }
                 })
             }
-          })
         }
-      })
     }
     else {
       viewSupport.computeSourcePosition(name, variable, context, navigatable)
@@ -413,21 +391,21 @@ class VariableView(name: String, private val variable: Variable, private val con
     return context.viewSupport.propertyNamesToString(list, false)
   }
 
-  private class MyFullValueEvaluator(private val value: Value) : XFullValueEvaluator(if (value is StringValue) value.length else value.valueString.length()) {
+  private class MyFullValueEvaluator(private val value: Value) : XFullValueEvaluator(if (value is StringValue) value.length else value.valueString!!.length()) {
     override fun startEvaluation(callback: XFullValueEvaluator.XFullValueEvaluationCallback) {
       if (value !is StringValue || !value.isTruncated) {
-        callback.evaluated(value.valueString)
+        callback.evaluated(value.valueString!!)
         return
       }
 
       val evaluated = AtomicBoolean()
-      value.fullString.done(object : Consumer<String> {
-        override fun consume(s: String) {
+      value.fullString
+        .done {
           if (!callback.isObsolete && evaluated.compareAndSet(false, true)) {
-            callback.evaluated(value.valueString)
+            callback.evaluated(value.valueString!!)
           }
         }
-      }).rejected(createErrorMessageConsumer(callback))
+        .rejected(createErrorMessageConsumer(callback))
     }
   }
 
@@ -483,7 +461,7 @@ fun getClassName(value: ObjectValue): String {
 
 fun getObjectValueDescription(value: ObjectValue): String {
   val description = value.valueString
-  return if (description.isNullOrEmpty()) getClassName(value) else description
+  return if (description.isNullOrEmpty()) getClassName(value) else description!!
 }
 
 internal fun trimFunctionDescription(value: Value): String {

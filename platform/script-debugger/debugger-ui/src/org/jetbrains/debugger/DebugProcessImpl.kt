@@ -38,10 +38,10 @@ import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 
 public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
-                                                             public val connection: C,
-                                                             private val editorsProvider: XDebuggerEditorsProvider,
-                                                             private val smartStepIntoHandler: XSmartStepIntoHandler<*>?,
-                                                             protected val executionResult: ExecutionResult?) : XDebugProcess(session) {
+                                                            public val connection: C,
+                                                            private val editorsProvider: XDebuggerEditorsProvider,
+                                                            private val smartStepIntoHandler: XSmartStepIntoHandler<*>?,
+                                                            protected val executionResult: ExecutionResult?) : XDebugProcess(session) {
   protected val repeatStepInto: AtomicBoolean = AtomicBoolean()
   @Volatile protected var lastStep: StepAction? = null
   @Volatile protected var lastCallFrame: CallFrame? = null
