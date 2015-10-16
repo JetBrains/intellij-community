@@ -84,6 +84,7 @@
     <orderEntry type="module" module-name="github" />
     <orderEntry type="module" module-name="hg4idea" />
     <orderEntry type="module" module-name="relaxng" />
+    <orderEntry type="module" module-name="gradle" />
     <orderEntry type="module" module-name="remote-servers-impl" />
     <orderEntry type="module" module-name="dom-tests" />
     <orderEntry type="module" module-name="colorSchemes" />
