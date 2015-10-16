@@ -53,6 +53,7 @@ import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
+import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
@@ -1362,26 +1363,24 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   void validateMousePointer(@NotNull MouseEvent e) {
-    Cursor cursor = getCursor();//Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
+    if (IdeGlassPaneImpl.hasPreProcessedCursor(this)) return;
+
+    Cursor cursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
     FoldRegion foldingAtCursor = findFoldingAnchorAt(e.getX(), e.getY());
     setActiveFoldRegion(foldingAtCursor);
-    boolean updated = false;
     if (foldingAtCursor != null) {
       cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
-      updated = true;
     }
     GutterIconRenderer renderer = getGutterRenderer(e);
     if (renderer != null) {
       if (renderer.isNavigateAction()) {
         cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
-        updated = true;
       }
     }
     else {
       ActiveGutterRenderer lineRenderer = getActiveRendererByMouseEvent(e);
       if (lineRenderer != null) {
         cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
-        updated = true;
       }
       else {
         TextAnnotationGutterProvider provider = getProviderAtPoint(e.getPoint());
@@ -1391,14 +1390,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
             if (action != null) {
               int line = getLineNumAtPoint(e.getPoint());
               cursor = action.getCursor(line);
-              updated = true;
             }
           }
         }
       }
-    }
-    if (!updated && cursor == Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)) {
-      cursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
     }
     setCursor(cursor);
   }
