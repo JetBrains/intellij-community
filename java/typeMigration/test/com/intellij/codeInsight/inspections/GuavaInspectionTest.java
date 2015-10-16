@@ -57,6 +57,10 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testOptional3() {
+    doTest();
+  }
+
   public void testSimpleFluentIterable() {
     doTest();
   }

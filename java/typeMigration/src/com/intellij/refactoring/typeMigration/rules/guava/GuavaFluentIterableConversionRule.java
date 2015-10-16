@@ -185,7 +185,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
   }
 
   @Nullable
-  private static GuavaChainedConversionDescriptor buildCompoundDescriptor(PsiMethodCallExpression expression,
+  public static GuavaChainedConversionDescriptor buildCompoundDescriptor(PsiMethodCallExpression expression,
                                                                           PsiType to,
                                                                           TypeMigrationLabeler labeler) {
     List<TypeConversionDescriptorBase> methodDescriptors = new SmartList<TypeConversionDescriptorBase>();
