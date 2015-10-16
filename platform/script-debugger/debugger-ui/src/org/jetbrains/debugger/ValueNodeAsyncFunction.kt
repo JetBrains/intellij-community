@@ -15,6 +15,7 @@
  */
 package org.jetbrains.debugger
 
+import com.intellij.util.Consumer
 import org.jetbrains.concurrency.AsyncFunction
 import org.jetbrains.concurrency.Obsolescent
 import org.jetbrains.concurrency.Promise
@@ -31,3 +32,15 @@ inline fun <T, SUB_RESULT> Promise<T>.thenAsync(node: Obsolescent, crossinline h
 inline fun <T> Promise<T>.thenAsyncVoid(node: Obsolescent, crossinline handler: (T) -> Promise<*>) = then(object : ValueNodeAsyncFunction<T, Any?>(node) {
   override fun `fun`(param: T) = handler(param) as Promise<Any?>
 })
+
+inline fun <T> Promise<T>.done(node: Obsolescent, crossinline handler: (T) -> Unit) = done(object : ObsolescentConsumer<T>(node) {
+  override fun consume(param: T) = handler(param)
+})
+
+inline fun <T> Promise<T>.rejected(node: Obsolescent, crossinline handler: (Throwable) -> Unit) = rejected(object : ObsolescentConsumer<Throwable>(node) {
+  override fun consume(param: Throwable) = handler(param)
+})
+
+abstract class ObsolescentConsumer<T>(private val obsolescent: Obsolescent) : Obsolescent, Consumer<T> {
+  override fun isObsolete() = obsolescent.isObsolete
+}

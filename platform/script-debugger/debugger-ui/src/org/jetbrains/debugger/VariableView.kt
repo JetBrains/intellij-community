@@ -67,21 +67,17 @@ class VariableView(name: String, private val variable: Variable, private val con
 
     if (variable !is ObjectProperty || variable.getter == null) {
       // it is "used" expression (WEB-6779 Debugger/Variables: Automatically show used variables)
-      evaluateContext.evaluate(variable.name).done(object : ObsolescentConsumer<EvaluateResult>(node) {
-        override fun consume(result: EvaluateResult) {
-          if (result.wasThrown) {
+      evaluateContext.evaluate(variable.name)
+        .done(node) {
+          if (it.wasThrown) {
             setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(value, null), null, node)
           }
           else {
-            value = result.value
-            computePresentation(result.value, node)
+            value = it.value
+            computePresentation(it.value, node)
           }
         }
-      }).rejected(object : ObsolescentConsumer<Throwable>(node) {
-        override fun consume(error: Throwable) {
-          setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(null, error.getMessage()), error.getMessage(), node)
-        }
-      })
+        .rejected(node) { setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(null, it.getMessage()), it.getMessage(), node) }
       return
     }
 
@@ -94,12 +90,11 @@ class VariableView(name: String, private val variable: Variable, private val con
       override fun startEvaluation(callback: XFullValueEvaluator.XFullValueEvaluationCallback) {
         val valueModifier = variable.valueModifier
         assert(valueModifier != null)
-        valueModifier!!.evaluateGet(variable, evaluateContext).done(object : ObsolescentConsumer<Value>(node) {
-          override fun consume(value: Value) {
+        valueModifier!!.evaluateGet(variable, evaluateContext)
+          .done(node) {
             callback.evaluated("")
-            setEvaluatedValue(value, null, node)
+            setEvaluatedValue(it, null, node)
           }
-        })
       }
     }.setShowValuePopup(false))
   }
@@ -431,15 +426,9 @@ class VariableView(name: String, private val variable: Variable, private val con
         node.setPresentation(icon, null, valueString, true)
       }
       else {
-        context.evaluateContext.evaluate("a.length", Collections.singletonMap<String, Any>("a", value), false).done(object : ObsolescentConsumer<EvaluateResult>(node) {
-          override fun consume(result: EvaluateResult) {
-            node.setPresentation(icon, null, "Array[" + result.value.valueString + ']', true)
-          }
-        }).rejected(object : ObsolescentConsumer<Throwable>(node) {
-          override fun consume(error: Throwable) {
-            node.setPresentation(icon, null, "Internal error: " + error, false)
-          }
-        })
+        context.evaluateContext.evaluate("a.length", Collections.singletonMap<String, Any>("a", value), false)
+          .done(node) { node.setPresentation(icon, null, "Array[${it.value.valueString}]", true) }
+          .rejected(node) { node.setPresentation(icon, null, "Internal error: $it", false) }
       }
     }
 

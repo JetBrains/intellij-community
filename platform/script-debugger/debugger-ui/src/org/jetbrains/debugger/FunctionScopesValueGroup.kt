@@ -23,14 +23,13 @@ import org.jetbrains.debugger.values.FunctionValue
 import org.jetbrains.rpc.LOG
 import java.util.*
 
-internal class FunctionScopesValueGroup(private val value: FunctionValue, private val variableContext: VariableContext) : XValueGroup("Function scopes") {
+internal class FunctionScopesValueGroup(private val functionValue: FunctionValue, private val variableContext: VariableContext) : XValueGroup("Function scopes") {
   override fun computeChildren(node: XCompositeNode) {
     node.setAlreadySorted(true)
 
-    value.resolve()
-      .done(object : ObsolescentConsumer<FunctionValue>(node) {
-        override fun consume(value: FunctionValue) {
-          val scopes = value.scopes
+    functionValue.resolve()
+      .done(node) {
+          val scopes = it.scopes
           if (scopes == null || scopes.size() == 0) {
             node.addChildren(XValueChildrenList.EMPTY, true)
           }
@@ -38,7 +37,6 @@ internal class FunctionScopesValueGroup(private val value: FunctionValue, privat
             createAndAddScopeList(node, Arrays.asList(*scopes), variableContext, null)
           }
         }
-      })
       .rejected {
         Promise.logError(LOG, it)
         node.setErrorMessage(it.getMessage()!!)
