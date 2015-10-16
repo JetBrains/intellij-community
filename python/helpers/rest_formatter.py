@@ -1,5 +1,13 @@
 import re
 import sys
+import os
+
+_helpers_dir = os.path.dirname(__file__)
+if sys.version_info[0] == 2:
+    sys.path.insert(0, os.path.join(_helpers_dir, 'py2only'))
+else:
+    sys.path.insert(0, os.path.join(_helpers_dir, 'py3only'))
+
 from docutils import nodes
 from docutils.core import publish_string
 from docutils.frontend import OptionParser
@@ -20,15 +28,20 @@ class RestHTMLTranslator(HTMLTranslator):
 
         HTMLTranslator.__init__(self, document)
 
-    def visit_document(self, node): pass
+    def visit_document(self, node):
+        pass
 
-    def depart_document(self, node): pass
+    def depart_document(self, node):
+        pass
 
-    def visit_docinfo(self, node): pass
+    def visit_docinfo(self, node):
+        pass
 
-    def depart_docinfo(self, node): pass
+    def depart_docinfo(self, node):
+        pass
 
-    def unimplemented_visit(self, node): pass
+    def unimplemented_visit(self, node):
+        pass
 
     def visit_field_name(self, node):
         atts = {}
