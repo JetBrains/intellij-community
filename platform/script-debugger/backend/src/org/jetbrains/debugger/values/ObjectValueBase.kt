@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.debugger.values
 
 import com.intellij.util.SmartList
@@ -32,42 +47,40 @@ abstract class ObjectValueBase<VALUE_LOADER : ValueManager<out Vm>>(type: ValueT
   @Suppress("CAST_NEVER_SUCCEEDS")
   override val variablesHost: VariablesHost<ValueManager<Vm>>
     get() = childrenManager as VariablesHost<ValueManager<Vm>>
+}
 
-  companion object {
-    protected fun getSpecifiedProperties(variables: List<Variable>, names: List<String>, evaluateContext: EvaluateContext): Promise<List<Variable>> {
-      val properties = SmartList<Variable>()
-      var getterCount = 0
-      for (property in variables) {
-        if (!property.isReadable || !names.contains(property.name)) {
-          continue
-        }
+fun getSpecifiedProperties(variables: List<Variable>, names: List<String>, evaluateContext: EvaluateContext): Promise<List<Variable>> {
+  val properties = SmartList<Variable>()
+  var getterCount = 0
+  for (property in variables) {
+    if (!property.isReadable || !names.contains(property.name)) {
+      continue
+    }
 
-        if (!properties.isEmpty()) {
-          Collections.sort(properties, object : Comparator<Variable> {
-            override fun compare(o1: Variable, o2: Variable) = names.indexOf(o1.name) - names.indexOf(o2.name)
-          })
-        }
+    if (!properties.isEmpty()) {
+      Collections.sort(properties, object : Comparator<Variable> {
+        override fun compare(o1: Variable, o2: Variable) = names.indexOf(o1.name) - names.indexOf(o2.name)
+      })
+    }
 
-        properties.add(property)
-        if (property.value == null) {
-          getterCount++
-        }
-      }
+    properties.add(property)
+    if (property.value == null) {
+      getterCount++
+    }
+  }
 
-      if (getterCount == 0) {
-        return Promise.resolve(properties)
-      }
-      else {
-        val promises = SmartList<Promise<*>>()
-        for (variable in properties) {
-          if (variable.value == null) {
-            val valueModifier = variable.valueModifier
-            assert(valueModifier != null)
-            promises.add(valueModifier!!.evaluateGet(variable, evaluateContext))
-          }
-        }
-        return Promise.all<List<Variable>>(promises, properties)
+  if (getterCount == 0) {
+    return Promise.resolve(properties)
+  }
+  else {
+    val promises = SmartList<Promise<*>>()
+    for (variable in properties) {
+      if (variable.value == null) {
+        val valueModifier = variable.valueModifier
+        assert(valueModifier != null)
+        promises.add(valueModifier!!.evaluateGet(variable, evaluateContext))
       }
     }
+    return Promise.all<List<Variable>>(promises, properties)
   }
 }

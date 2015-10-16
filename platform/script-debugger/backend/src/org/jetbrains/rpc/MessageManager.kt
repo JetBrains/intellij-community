@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,10 +104,7 @@ class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS>(privat
     val keys = map.keys()
     Arrays.sort(keys)
     for (key in keys) {
-      val callback = map.get(key)
-      if (callback != null) {
-        MessageManagerBase.rejectCallback(callback)
-      }
+      map.get(key)?.reject()
     }
   }
 }
