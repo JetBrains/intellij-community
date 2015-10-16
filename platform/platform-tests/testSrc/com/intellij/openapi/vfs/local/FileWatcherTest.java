@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
@@ -304,22 +305,65 @@ public class FileWatcherTest extends PlatformTestCase {
     }
   }
 
-  public void testIncorrectPath() throws Exception {
+  // Make sure we don't crash when we supply the file watcher with a single path that is invalid
+  public void testInvalidPathDoesNotCrashFileWatcher() throws Exception {
     File topDir = createTestDir(myTempDirectory, "top");
     File file = createTestFile(topDir, "file.zip");
     File subDir = new File(file, "sub/zip");
     refresh(topDir);
 
-    LocalFileSystem.WatchRequest request = watch(subDir, false);
+    LocalFileSystem.WatchRequest request = watchAndIgnoreEvents(subDir, false);
+    try {
+      myAccept = true;
+      FileUtil.writeToFile(file, "new content");
+    }
+    finally {
+      unwatchAndIgnoreEvents(request);
+      delete(topDir);
+    }
+  }
+
+  // Only use these methods if you do not expect any events to come from the file watcher. Additionally, only uses these methods in tests
+  // that are testing corner cases of the file watcher. For any test that actually wants to verify the events received from the file watcher
+  // implementations, use the standard watch and unwatch methods.
+
+  @NotNull
+  private LocalFileSystem.WatchRequest watchAndIgnoreEvents(File watchFile, boolean recursive) {
+    Ref<LocalFileSystem.WatchRequest> request = Ref.create();
+    request.set(myFileSystem.addRootToWatch(watchFile.getPath(), recursive));
+    myFileSystem.refresh(false);
+    assertFalse(request.isNull());
+    assertFalse(myWatcher.isSettingRoots());
+    return request.get();
+  }
+
+  private void unwatchAndIgnoreEvents(LocalFileSystem.WatchRequest... requests) {
+    myFileSystem.removeWatchedRoots(Arrays.asList(requests));
+    myFileSystem.refresh(false);
+  }
+
+  // Make sure the file watcher behaves as expected when we include an invalid path as one of the watch roots.
+  public void testInvalidPathAmongRoots() throws Exception {
+    File topDir = createTestDir(myTempDirectory, "top");
+    File validDirectory = createTestDir(topDir, "watchme");
+    File validFile = createTestFile(validDirectory, "watchedFile.txt");
+    File file = createTestFile(topDir, "file.zip");
+    File invalidDirectory = new File(file, "sub/zip");
+    refresh(topDir);
+
+    // There is nothing to watch, so we shouldn't wait for any events
+    LocalFileSystem.WatchRequest invalidRequest = watchAndIgnoreEvents(invalidDirectory, false);
+    LocalFileSystem.WatchRequest validRequest = watch(validDirectory, false);
     try {
       myTimeout = 10 * INTER_RESPONSE_DELAY;
       myAccept = true;
       FileUtil.writeToFile(file, "new content");
-      assertEvent(VFileEvent.class);
+      FileUtil.writeToFile(validFile, "new watched content");
+      assertEvent(VFileContentChangeEvent.class, validFile.getPath());
       myTimeout = NATIVE_PROCESS_DELAY;
     }
     finally {
-      unwatch(request);
+      unwatch(invalidRequest, validRequest);
       delete(topDir);
     }
   }
@@ -337,6 +381,11 @@ public class FileWatcherTest extends PlatformTestCase {
     LocalFileSystem.WatchRequest requestForSubDir = watch(subDir);
     LocalFileSystem.WatchRequest requestForSideDir = watch(sideDir);
     try {
+      myAccept = true;
+      FileUtil.writeToFile(fileInSubDir, "first content");
+      FileUtil.writeToFile(fileInSideDir, "first content");
+      assertEvent(VFileContentChangeEvent.class, fileInSubDir.getPath(), fileInSideDir.getPath());
+
       myAccept = true;
       FileUtil.writeToFile(fileInTopDir, "new content");
       FileUtil.writeToFile(fileInSubDir, "new content");
@@ -373,12 +422,94 @@ public class FileWatcherTest extends PlatformTestCase {
     }
   }
 
-/*
-  public void testSymlinkAboveWatchRoot() throws Exception {
-    final File topDir = FileUtil.createTempDirectory("top.", null);
-    final File topLink = IoTestUtil.createTempLink(topDir.getPath(), "link");
-    final File subDir = FileUtil.createTempDirectory(topDir, "sub.", null);
-    final File file = FileUtil.createTempFile(subDir, "test.", ".txt");
+  /**
+   * Ensure that flat roots set via symbolic paths behave correctly and do not report dirty files returned from other recursive roots.
+   */
+  public void testSymbolicLinkIntoFlatRoot() throws Exception {
+    File rootDir = createTestDir("root");
+    File aDir = createTestDir(rootDir, "A");
+    File bDir = createTestDir(rootDir, "B");
+    File cDir = createTestDir(aDir, "C");
+
+    File aLink = createSymLink(aDir.getAbsolutePath(), new File(rootDir, "aLink").getAbsolutePath());
+    File flatWatchedFile = createTestFile(aLink, "test.txt");
+    File fileOutsideFlatWatchRoot = createTestFile(cDir, "test.txt");
+    refresh(rootDir);
+
+    LocalFileSystem.WatchRequest aLinkRequest = watch(aLink, false);
+    LocalFileSystem.WatchRequest cDirRequest = watch(cDir, false);
+    try {
+      myAccept = true;
+      FileUtil.writeToFile(flatWatchedFile, "new content");
+      assertEvent(VFileContentChangeEvent.class, flatWatchedFile.getPath());
+
+      myTimeout = 10 * INTER_RESPONSE_DELAY;
+      myAccept = true;
+      FileUtil.writeToFile(fileOutsideFlatWatchRoot, "new content");
+      // The file is correctly watched, but it is being reported back with a path that is not being watched because of the symbolic link.
+      assertEvent(VFileContentChangeEvent.class, fileOutsideFlatWatchRoot.getPath());
+      myTimeout = NATIVE_PROCESS_DELAY;
+    }
+    finally {
+      unwatch(aLinkRequest);
+      unwatch(cDirRequest);
+
+      delete(aLink);
+
+      delete(rootDir);
+    }
+  }
+
+  public void testMultipleSymbolicLinkPathsToFile() throws Exception {
+    final File rootDir = createTestDir("root");
+    final File aDir = createTestDir(rootDir, "A");
+    final File bDir = createTestDir(aDir, "B");
+    final File cDir = createTestDir(bDir, "C");
+    final String cDirectoryName = cDir.getName();
+    final File file = createTestFile(cDir, "test.txt");
+    final String filename = file.getName();
+
+    final File bLink = IoTestUtil.createSymLink(bDir.getPath(), new File(rootDir, "bLink").getAbsolutePath());
+    final File cLink = IoTestUtil.createSymLink(cDir.getPath(), new File(rootDir, "cLink").getAbsolutePath());
+    refresh(rootDir);
+    //refresh(topLink);
+
+    final LocalFileSystem.WatchRequest bRequest = watch(bLink);
+    final LocalFileSystem.WatchRequest cRequest = watch(cLink);
+    try {
+      myAccept = true;
+      FileUtil.writeToFile(file, "new content");
+      assertEvent(VFileContentChangeEvent.class,
+                  FileUtil.join(bLink.getAbsolutePath(), cDirectoryName, filename),
+                  FileUtil.join(cLink.getAbsolutePath(), filename));
+
+      myAccept = true;
+      FileUtil.delete(file);
+      assertEvent(VFileDeleteEvent.class,
+                  FileUtil.join(bLink.getAbsolutePath(), cDirectoryName, filename),
+                  FileUtil.join(cLink.getAbsolutePath(), filename));
+
+      myAccept = true;
+      FileUtil.writeToFile(file, "re-creation");
+      assertEvent(VFileCreateEvent.class,
+                  FileUtil.join(bLink.getAbsolutePath(), cDirectoryName, filename),
+                  FileUtil.join(cLink.getAbsolutePath(), filename));
+    }
+    finally {
+      unwatch(bRequest);
+      unwatch(cRequest);
+      delete(bLink);
+      delete(cLink);
+
+      delete(rootDir);
+    }
+  }
+
+  public void testSymbolicLinkAboveWatchRoot() throws Exception {
+    final File topDir = createTestDir("top.");
+    final File topLink = IoTestUtil.createSymLink(topDir.getPath(), "link");
+    final File subDir = createTestDir(topDir, "sub.");
+    final File file = createTestFile(subDir, "test.txt");
     final File fileLink = new File(new File(topLink, subDir.getName()), file.getName());
     refresh(topDir);
     refresh(topLink);
@@ -398,18 +529,19 @@ public class FileWatcherTest extends PlatformTestCase {
       assertEvent(VFileCreateEvent.class, fileLink.getPath());
     }
     finally {
-      myFileSystem.removeWatchedRoot(request);
+      unwatch(request);
       delete(topLink);
       delete(topDir);
     }
   }
 
+  /*
   public void testSymlinkBelowWatchRoot() throws Exception {
     final File targetDir = FileUtil.createTempDirectory("top.", null);
     final File file = FileUtil.createTempFile(targetDir, "test.", ".txt");
     final File linkDir = FileUtil.createTempDirectory("link.", null);
     final File link = new File(linkDir, "link");
-    IoTestUtil.createTempLink(targetDir.getPath(), link.getPath());
+    IoTestUtil.createSymLink(targetDir.getPath(), link.getPath());
     final File fileLink = new File(link, file.getName());
     refresh(targetDir);
     refresh(linkDir);
@@ -797,6 +929,7 @@ public class FileWatcherTest extends PlatformTestCase {
     assertFalse(myWatcher.isSettingRoots());
     return request.get();
   }
+
 
   private void unwatch(LocalFileSystem.WatchRequest... requests) {
     getEvents("events to stop watching", () -> myFileSystem.removeWatchedRoots(Arrays.asList(requests)));

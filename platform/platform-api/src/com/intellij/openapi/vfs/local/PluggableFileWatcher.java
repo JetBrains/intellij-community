@@ -38,12 +38,31 @@ public abstract class PluggableFileWatcher {
 
   public abstract boolean isSettingRoots();
 
+  /**
+   *
+   * @return the manual watch roots. All returned paths will be canonical.
+   */
   @NotNull
   public abstract List<String> getManualWatchRoots();
 
-  public abstract void setWatchRoots(@NotNull List<String> recursive, @NotNull List<String> flat);
+  /**
+   * The inputs to this method must be absolute and free of symbolic links.
+   *
+   * @param recursiveCanonicalPaths list of canonical paths to watch recursively
+   * @param flatCanonicalPaths list of canonical paths to watch non-recursively
+   */
+  public abstract void setWatchRoots(@NotNull List<String> recursiveCanonicalPaths, @NotNull List<String> flatCanonicalPaths);
 
-  public abstract boolean isWatched(@NotNull VirtualFile file);
+  /**
+   * Each file watcher should only need to keep track of local state, so it is reasonable for them to keep track of files they are actively
+   * ignoring. If this method returns false, it does not mean that this watcher is watching the file. If
+   * {@link com.intellij.openapi.vfs.impl.local.FileWatcher#isUnderWatchRoot} returns true AND this method returns false, then this watcher
+   * is watching the file.
+   *
+   * @param canonicalFile a canonical file
+   * @return true if the file is being ignored by this file watcher, false otherwise
+   */
+  public abstract boolean isIgnored(@NotNull VirtualFile canonicalFile);
 
   public abstract void resetChangedPaths();
 
