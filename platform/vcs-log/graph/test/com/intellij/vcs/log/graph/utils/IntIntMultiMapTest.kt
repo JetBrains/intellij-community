@@ -16,7 +16,7 @@
 package com.intellij.vcs.log.graph.utils
 
 import com.intellij.util.containers.MultiMap
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 
@@ -39,11 +39,11 @@ private class MapTester {
   fun compareMaps() {
     val keys = compareKeys()
     val correctStr = keys.joinLines {
-      "$it:" + correctMap.get(it).sort().joinToString()
+      "$it:" + correctMap.get(it).sorted().joinToString()
     }
 
     val testedStr = keys.joinLines {
-      "$it:" + testedMap.get(it).sort().joinToString()
+      "$it:" + testedMap.get(it).sorted().joinToString()
     }
 
     val testedArrayStr = keys.joinLines {
@@ -54,10 +54,10 @@ private class MapTester {
   }
 
   fun compareKeys(): List<Int> {
-    val correctKeys = correctMap.keySet().sort().joinToString()
+    val correctKeys = correctMap.keySet().sorted().joinToString()
     val testedKeys = testedMap.keys().sortR().joinToString()
     assertEquals(correctKeys, testedKeys)
-    return correctMap.keySet().sort()
+    return correctMap.keySet().sorted()
   }
 }
 

@@ -55,6 +55,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     (DumbPermissionServiceImpl)ServiceManager.getService(DumbPermissionService.class);
   private static Throwable ourForcedTrace;
   private volatile boolean myDumb = false;
+  private volatile Throwable myDumbStart;
   private final DumbModeListener myPublisher;
   private long myModificationCount;
   private final Queue<DumbModeTask> myUpdatesQueue = new Queue<DumbModeTask>(5);
@@ -181,7 +182,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       return;
     }
 
-    UIUtil.invokeLaterIfNeeded(new DumbAwareRunnable() {
+    invokeLaterIfNeeded(application, new DumbAwareRunnable() {
       @Override
       public void run() {
         if (myProject.isDisposed()) {
@@ -203,7 +204,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         // ok to test and set the flag like this, because the change is always done from dispatch thread
         if (!myDumb) {
           if (permission == null) {
-            LOG.error("Dumb mode not permitted in modal environment; see DumbService.allowStartingDumbModeInside documentation." +
+            LOG.info("Dumb mode not permitted in modal environment; see DumbService.allowStartingDumbModeInside documentation." +
                       "\n Current modality: " + modality +
                       "\n all permissions: " + ourPermissionService.getPermissions(), trace);
           }
@@ -217,6 +218,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
             @Override
             public void run() {
               myDumb = true;
+              myDumbStart = trace;
               myModificationCount++;
               try {
                 myPublisher.enteredDumbMode();
@@ -245,6 +247,15 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         }
       }
     });
+  }
+
+  private static void invokeLaterIfNeeded(Application application, DumbAwareRunnable runnable) {
+    if (application.isDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      application.invokeLater(runnable, ModalityState.any());
+    }
   }
 
   @Nullable
@@ -282,6 +293,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private void updateFinished() {
     myDumb = false;
+    myDumbStart = null;
     myModificationCount++;
     if (myProject.isDisposed()) return;
 
@@ -527,6 +539,11 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   @Override
   public long getModificationCount() {
     return myModificationCount;
+  }
+
+  @Nullable
+  public Throwable getDumbModeStartTrace() {
+    return myDumbStart;
   }
 
   private class AppIconProgress extends ProgressIndicatorBase {

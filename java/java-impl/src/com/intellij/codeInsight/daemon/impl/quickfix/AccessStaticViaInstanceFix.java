@@ -135,7 +135,8 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
     }
     final PsiReferenceExpression qualifiedWithClassName = (PsiReferenceExpression)myExpression.copy();
     qualifiedWithClassName.setQualifierExpression(factory.createReferenceExpression(containingClass));
-    final boolean canCopeWithSideEffects = hasSideEffects;
+    final PsiStatement statement = PsiTreeUtil.getParentOfType(myExpression, PsiStatement.class);
+    final boolean canCopeWithSideEffects = hasSideEffects && statement != null;
     final SideEffectWarningDialog dialog =
       new SideEffectWarningDialog(project, false, null, sideEffects.get(0).getText(), PsiExpressionTrimRenderer.render(qualifierExpression),
                                   canCopeWithSideEffects){
@@ -169,7 +170,7 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
     try {
       if (res == RemoveUnusedVariableUtil.RemoveMode.MAKE_STATEMENT.ordinal()) {
         final PsiStatement statementFromText = factory.createStatementFromText(qualifierExpression.getText() + ";", null);
-        final PsiStatement statement = PsiTreeUtil.getParentOfType(myExpression, PsiStatement.class);
+        LOG.assertTrue(statement != null);
         statement.getParent().addBefore(statementFromText, statement);
       }
     }

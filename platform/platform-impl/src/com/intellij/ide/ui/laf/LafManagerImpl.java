@@ -124,6 +124,9 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     ourLafClassesAliases.put("idea.dark.laf.classname", DarculaLookAndFeelInfo.CLASS_NAME);
   }
 
+  public static boolean useIntelliJInsteadOfAqua() {
+    return Registry.is("ide.mac.yosemite.laf") && isIntelliJLafEnabled() && SystemInfo.isJavaVersionAtLeast("1.8") && SystemInfo.isMacOSYosemite;
+  }
   /**
    * Invoked via reflection.
    */
@@ -133,7 +136,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     List<UIManager.LookAndFeelInfo> lafList = ContainerUtil.newArrayList();
 
     if (SystemInfo.isMac) {
-      if (Registry.is("ide.mac.yosemite.laf") && isIntelliJLafEnabled() && SystemInfo.isJavaVersionAtLeast("1.8") && SystemInfo.isMacOSYosemite) {
+      if (useIntelliJInsteadOfAqua()) {
         lafList.add(new UIManager.LookAndFeelInfo("Default", IntelliJLaf.class.getName()));
       } else {
         lafList.add(new UIManager.LookAndFeelInfo("Default", UIManager.getSystemLookAndFeelClassName()));
@@ -320,7 +323,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
     final String systemLafClassName = UIManager.getSystemLookAndFeelClassName();
     if (SystemInfo.isMac) {
-      String className = Registry.is("ide.mac.yosemite.laf") ? IntelliJLaf.class.getName() : systemLafClassName;
+      String className = useIntelliJInsteadOfAqua() ? IntelliJLaf.class.getName() : systemLafClassName;
       UIManager.LookAndFeelInfo laf = findLaf(className);
       LOG.assertTrue(laf != null, "Could not find look and feel: " + className);
       return laf;

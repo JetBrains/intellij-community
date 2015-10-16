@@ -491,7 +491,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
                                                     final PsiExpression[] args) throws IncorrectOperationException {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(list.getProject()).getElementFactory();
     final int index = info.getOldIndex();
-    if (index >= 0) {
+    if (index >= 0 && index < args.length) {
       return args[index];
     }
     else {

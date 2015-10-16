@@ -77,21 +77,32 @@ class PluginUpdateInfoDialog extends AbstractUpdateDialog {
   protected void doOKAction() {
     super.doOKAction();
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(null, IdeBundle.message("progress.downloading.plugins"), true, PerformInBackgroundOption.DEAF) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        UpdateChecker.saveDisabledToUpdatePlugins();
-        boolean updated = UpdateChecker.installPluginUpdates(myUploadedPlugins, indicator);
-        if (updated && !myPlatformUpdate) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              PluginManagerMain.notifyPluginsUpdated(null);
-            }
-          }, ModalityState.NON_MODAL);
+    if (myPlatformUpdate) {
+      ProgressManager.getInstance().run(new Task.Modal(null, IdeBundle.message("progress.downloading.plugins"), true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          UpdateChecker.saveDisabledToUpdatePlugins();
+          UpdateChecker.installPluginUpdates(myUploadedPlugins, indicator);
         }
-      }
-    });
+      });
+    }
+    else {
+      ProgressManager.getInstance().run(new Task.Backgroundable(null, IdeBundle.message("progress.downloading.plugins"), true, PerformInBackgroundOption.DEAF) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          UpdateChecker.saveDisabledToUpdatePlugins();
+          boolean updated = UpdateChecker.installPluginUpdates(myUploadedPlugins, indicator);
+          if (updated) {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                PluginManagerMain.notifyPluginsUpdated(null);
+              }
+            }, ModalityState.NON_MODAL);
+          }
+        }
+      });
+    }
   }
 
   private class PluginUpdateInfoPanel {

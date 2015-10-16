@@ -17,6 +17,7 @@ package com.intellij.coverage;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
@@ -241,7 +242,6 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
 
   public @NotNull List<PsiClass> getCurrentSuiteClasses(final Project project) {
     final List<PsiClass> classes = new ArrayList<PsiClass>();
-    final PsiManager psiManager = PsiManager.getInstance(project);
     final String[] classNames = getFilteredClassNames();
     if (classNames.length > 0) {
       for (final String className : classNames) {
@@ -249,7 +249,14 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
           ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
             @Nullable
             public PsiClass compute() {
-              return JavaPsiFacade.getInstance(psiManager.getProject()).findClass(className.replace("$", "."), GlobalSearchScope.allScope(project));
+              final DumbService dumbService = DumbService.getInstance(project);
+              dumbService.setAlternativeResolveEnabled(true);
+              try {
+                return JavaPsiFacade.getInstance(project).findClass(className.replace("$", "."), GlobalSearchScope.allScope(project));
+              }
+              finally {
+                dumbService.setAlternativeResolveEnabled(false);
+              }
             }
           });
         if (aClass != null) {

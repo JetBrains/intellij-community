@@ -16,7 +16,6 @@
 package com.jetbrains.python.sdk;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -59,8 +58,6 @@ import java.util.List;
 public class PythonSdkUpdater implements StartupActivity {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.PythonSdkUpdater");
 
-  private final Set<String> myAlreadyUpdated = new HashSet<String>();
-
   public static PythonSdkUpdater getInstance() {
     final StartupActivity[] extensions = Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY);
     for (StartupActivity extension : extensions) {
@@ -69,10 +66,6 @@ public class PythonSdkUpdater implements StartupActivity {
       }
     }
     throw new UnsupportedOperationException("could not find self");
-  }
-
-  public void markAlreadyUpdated(String path) {
-    myAlreadyUpdated.add(path);
   }
 
   @Override
@@ -85,13 +78,13 @@ public class PythonSdkUpdater implements StartupActivity {
     updateActiveSdks(project, 7000);
   }
 
-  public void updateActiveSdks(@NotNull final Project project, final int delay) {
+  public static void updateActiveSdks(@NotNull final Project project, final int delay) {
     final Set<Sdk> sdksToUpdate = new HashSet<Sdk>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       final Sdk sdk = PythonSdkType.findPythonSdk(module);
       if (sdk != null) {
         final SdkTypeId sdkType = sdk.getSdkType();
-        if (sdkType instanceof PythonSdkType && !myAlreadyUpdated.contains(sdk.getHomePath())) {
+        if (sdkType instanceof PythonSdkType) {
           sdksToUpdate.add(sdk);
         }
       }
@@ -103,7 +96,7 @@ public class PythonSdkUpdater implements StartupActivity {
     }
   }
 
-  private void updateSdks(final Project project, final int delay, final Set<Sdk> sdksToUpdate) {
+  private static void updateSdks(final Project project, final int delay, final Set<Sdk> sdksToUpdate) {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         if (delay > 0) {
@@ -121,27 +114,7 @@ public class PythonSdkUpdater implements StartupActivity {
               @Override
               public void run(@NotNull ProgressIndicator indicator) {
                 for (final Sdk sdk : sdksToUpdate) {
-                  try {
-                    LOG.info("Performing background update of skeletons for SDK " + sdk.getHomePath());
-                    updateSdk(project, null, PySdkUpdater.fromSdkPath(sdk.getHomePath()));
-                  }
-                  catch (PySdkUpdater.PySdkNotFoundException e) {
-                    LOG.info("Sdk " + sdk.getName() + " was removed during update process.");
-                  }
-                  catch (InvalidSdkException e) {
-                    if (PythonSdkType.isVagrant(sdk) || PythonSdkType.isDocker(sdk)) {
-                      PythonSdkType.notifyRemoteSdkSkeletonsFail(e, new Runnable() {
-                        @Override
-                        public void run() {
-                          updateSdks(project, delay, Sets.newHashSet(sdk));
-                        }
-                      });
-                    }
-                    else if (!PythonSdkType.isInvalid(sdk)) {
-                      LOG.error(e);
-                    }
-                  }
-                  myAlreadyUpdated.add(sdk.getHomePath());
+                  updateSdk(sdk, project);
                 }
               }
             });
@@ -149,6 +122,29 @@ public class PythonSdkUpdater implements StartupActivity {
         });
       }
     });
+  }
+
+  public static void updateSdk(final Sdk sdk, final Project project) {
+    try {
+      LOG.info("Performing background update of skeletons for SDK " + sdk.getHomePath());
+      updateSdk(project, null, PySdkUpdater.fromSdkPath(sdk.getHomePath()));
+    }
+    catch (PySdkUpdater.PySdkNotFoundException e) {
+      LOG.info("Sdk " + sdk.getName() + " was removed during update process.");
+    }
+    catch (InvalidSdkException e) {
+      if (PythonSdkType.isVagrant(sdk) || PythonSdkType.isDocker(sdk)) {
+        PythonSdkType.notifyRemoteSdkSkeletonsFail(e, new Runnable() {
+          @Override
+          public void run() {
+            updateSdk(sdk, project);
+          }
+        });
+      }
+      else if (!PythonSdkType.isInvalid(sdk)) {
+        LOG.error(e);
+      }
+    }
   }
 
   public static void updateSdk(@Nullable Project project, @Nullable Component ownerComponent, @NotNull final PySdkUpdater sdkUpdater)
@@ -196,7 +192,6 @@ public class PythonSdkUpdater implements StartupActivity {
    * Updates SDK based on sys.path and cleans legacy information up.
    */
   private static void updateSdkPath(@NotNull PySdkUpdater sdkUpdater, @NotNull List<String> sysPath) {
-    if (getInstance().isAlreadyUpdated(sdkUpdater.getHomePath())) return;
     addNewSysPathEntries(sdkUpdater, sysPath);
     removeSourceRoots(sdkUpdater);
     removeDuplicateClassRoots(sdkUpdater);
@@ -304,13 +299,5 @@ public class PythonSdkUpdater implements StartupActivity {
       return oldRoots.contains(rootFile);
     }
     return false;
-  }
-
-  public void clearAlreadyUpdated() {
-    myAlreadyUpdated.clear();
-  }
-
-  public boolean isAlreadyUpdated(String path) {
-    return myAlreadyUpdated.contains(path);
   }
 }

@@ -15,11 +15,13 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiTryStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.threading.NestedSynchronizedStatementInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class NestedTryStatementInspection extends BaseInspection {
@@ -49,9 +51,7 @@ public class NestedTryStatementInspection extends BaseInspection {
     @Override
     public void visitTryStatement(@NotNull PsiTryStatement statement) {
       super.visitTryStatement(statement);
-      final PsiTryStatement parentTry =
-        PsiTreeUtil.getParentOfType(statement,
-                                    PsiTryStatement.class);
+      final PsiTryStatement parentTry = PsiTreeUtil.getParentOfType(statement, PsiTryStatement.class);
       if (parentTry == null) {
         return;
       }
@@ -62,16 +62,9 @@ public class NestedTryStatementInspection extends BaseInspection {
       if (!PsiTreeUtil.isAncestor(tryBlock, statement, true)) {
         return;
       }
-      final PsiMember containingMethod =
-        PsiTreeUtil.getParentOfType(statement, PsiMember.class, true, PsiLambdaExpression.class, PsiClass.class);
-      final PsiMember containingContainingMethod =
-        PsiTreeUtil.getParentOfType(parentTry, PsiMember.class, true, PsiLambdaExpression.class, PsiClass.class);
-      if (containingMethod == null ||
-          containingContainingMethod == null ||
-          !containingMethod.equals(containingContainingMethod)) {
-        return;
+      if (NestedSynchronizedStatementInspection.isNestedStatement(statement, PsiTryStatement.class)) {
+        registerStatementError(statement);
       }
-      registerStatementError(statement);
     }
   }
 }

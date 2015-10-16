@@ -321,7 +321,8 @@
     <localInspection language="Python" shortName="PyExceptionInheritInspection" suppressId="PyExceptionInherit" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.exception.not.inherit" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyExceptionInheritInspection"/>
     <localInspection language="Python" shortName="PyDefaultArgumentInspection" suppressId="PyDefaultArgument" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.default.argument" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyDefaultArgumentInspection"/>
     <localInspection language="Python" shortName="PyRaisingNewStyleClassInspection" suppressId="PyRaisingNewStyleClass" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.raising.new.style.class" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyRaisingNewStyleClassInspection"/>
-    <localInspection language="Python" shortName="PyDocstringInspection" suppressId="PyDocstring" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.docstring" groupKey="INSP.GROUP.python" enabledByDefault="false"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyDocstringInspection"/>
+    <localInspection language="Python" shortName="PyIncorrectDocstringInspection" suppressId="PyIncorrectDocstring" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.incorrect.docstring" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyIncorrectDocstringInspection"/>
+    <localInspection language="Python" shortName="PyMissingOrEmptyDocstringInspection" suppressId="PyMissingOrEmptyDocstring" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.missing.or.empty.docstring" groupKey="INSP.GROUP.python" enabledByDefault="false" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyMissingOrEmptyDocstringInspection"/>
     <localInspection language="Python" shortName="PyUnboundLocalVariableInspection" suppressId="PyUnboundLocalVariable" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.unbound" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyUnboundLocalVariableInspection"/>
     <localInspection language="Python" shortName="PyStatementEffectInspection" suppressId="PyStatementEffect" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.statement.effect" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyStatementEffectInspection"/>
     <localInspection language="Python" shortName="PySimplifyBooleanCheckInspection" suppressId="PySimplifyBooleanCheck" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.check.can.be.simplified" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PySimplifyBooleanCheckInspection"/>
@@ -804,7 +805,7 @@
     </action>
 
     <action id="PyConvertLocalFunctionToTopLevelFunctionAction" class="com.jetbrains.python.refactoring.makeFunctionTopLevel.PyMakeFunctionTopLevelRefactoring"
-            text="Make top-level function"
+            text="Make Top-Level Function"
             description="Convert local function or method to top-level function, transforming names from enclosing scope and instance attributes into parameters">
       <add-to-group group-id="RefactoringMenu"/>
     </action>

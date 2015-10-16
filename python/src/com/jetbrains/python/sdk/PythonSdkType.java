@@ -63,6 +63,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.NullableConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -109,6 +110,8 @@ public class PythonSdkType extends SdkType {
   private static final String[] WIN_BINARY_NAMES = new String[]{"jython.bat", "ipy.exe", "pypy.exe", "python.exe"};
 
   private static final Key<WeakReference<Component>> SDK_CREATOR_COMPONENT_KEY = Key.create("#com.jetbrains.python.sdk.creatorComponent");
+
+  private Set<String> scheduledToRefresh = ContainerUtil.newConcurrentSet();
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
@@ -521,15 +524,17 @@ public class PythonSdkType extends SdkType {
     return true;  // run setupSdkPaths only once (from PythonSdkDetailsStep). Skip this from showCustomCreateUI
   }
 
-  public static void setupSdkPaths(@NotNull final Sdk sdk,
+  public void setupSdkPaths(@NotNull final Sdk sdk,
                                    @Nullable final Project project,
                                    @Nullable final Component ownerComponent,
                                    @NotNull final SdkModificator sdkModificator) {
+    scheduledToRefresh.add(sdk.getHomePath());
     doSetupSdkPaths(project, ownerComponent, PySdkUpdater.fromSdkModificator(sdk, sdkModificator));
   }
 
 
-  public static void setupSdkPaths(final Sdk sdk, @Nullable final Project project, @Nullable final Component ownerComponent) {
+  public void setupSdkPaths(final Sdk sdk, @Nullable final Project project, @Nullable final Component ownerComponent) {
+    scheduledToRefresh.add(sdk.getHomePath());
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -551,7 +556,7 @@ public class PythonSdkType extends SdkType {
     }, ModalityState.NON_MODAL);
   }
 
-  private static boolean doSetupSdkPaths(@Nullable final Project project,
+  private boolean doSetupSdkPaths(@Nullable final Project project,
                                          @Nullable final Component ownerComponent,
                                          @NotNull final PySdkUpdater sdkUpdater) {
     if (isRemote(sdkUpdater.getSdk()) && project == null && ownerComponent == null) {
@@ -572,6 +577,10 @@ public class PythonSdkType extends SdkType {
       application.invokeLater(new Runnable() {
         @Override
         public void run() {
+          if (!scheduledToRefresh.contains(sdkUpdater.getHomePath())) {
+            return;
+          }
+          scheduledToRefresh.remove(sdkUpdater.getHomePath());
           progressManager.run(new Task.Backgroundable(project, PyBundle.message("sdk.gen.updating.skels"), false) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
@@ -612,8 +621,6 @@ public class PythonSdkType extends SdkType {
     try {
       updateSdkRootsFromSysPath(sdkUpdater);
       updateUserAddedPaths(sdkUpdater);
-      PythonSdkUpdater.getInstance()
-        .markAlreadyUpdated(sdkUpdater.getHomePath());
       return true;
     }
     catch (InvalidSdkException ignored) {

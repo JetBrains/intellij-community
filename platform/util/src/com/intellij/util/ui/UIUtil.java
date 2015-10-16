@@ -230,7 +230,17 @@ public class UIUtil {
   private static final Color INACTIVE_HEADER_COLOR = Gray._128;
   private static final Color BORDER_COLOR = Color.LIGHT_GRAY;
 
-  public static final Color CONTRAST_BORDER_COLOR = new JBColor(0x9b9b9b, 0x282828);
+  public static final Color CONTRAST_BORDER_COLOR = new JBColor(new NotNullProducer<Color>() {
+    final Color color = new JBColor(0x9b9b9b, 0x282828);
+    @NotNull
+    @Override
+    public Color produce() {
+      if (SystemInfo.isMac && isUnderIntelliJLaF()) {
+        return Gray.xC9;
+      }
+      return color;
+    }
+  });
   public static final Color SIDE_PANEL_BACKGROUND = new JBColor(new Color(0xE6EBF0), new Color(0x3E434C));
 
   public static final Color AQUA_SEPARATOR_FOREGROUND_COLOR = new JBColor(Gray._190, Gray.x51);
@@ -1629,11 +1639,24 @@ public class UIUtil {
         g.fillRect(x, 0, width, height);
       }
       g.setColor(new Color(0, 0, 0, toolWindow ? 90 : 50));
-      if (drawTopLine) g.drawLine(x, 0, width, 0);
+      if (drawTopLine && !(SystemInfo.isMac && isUnderIntelliJLaF())) g.drawLine(x, 0, width, 0);
       if (drawBottomLine) g.drawLine(x, height - (isRetina() ? 1 : 2), width, height - (isRetina() ? 1 : 2));
 
-      g.setColor(isUnderDarcula() ? Gray._255.withAlpha(30) : new Color(255, 255, 255, 100));
-      g.drawLine(x, drawTopLine ? 1 : 0, width, drawTopLine ? 1 : 0);
+      if (SystemInfo.isMac && isUnderIntelliJLaF()) {
+        g.setColor(Gray.xC9);
+      } else {
+        g.setColor(isUnderDarcula() ? Gray._255.withAlpha(30) : new Color(255, 255, 255, 100));
+      }
+      if (isRetina()) {
+        Graphics2D g2 = (Graphics2D)g.create(0, 0, width, height);
+        g2.scale(0.5, 0.5);
+
+        g2.drawLine(2*x, 0, 2 * width, 0);
+        g2.scale(1, 1);
+        g2.dispose();
+      } else {
+        g.drawLine(x, drawTopLine ? 1 : 0, width, drawTopLine ? 1 : 0);
+      }
 
     } finally {
       config.restore();
@@ -2458,7 +2481,8 @@ public class UIUtil {
   }
 
   public static void installComboBoxCopyAction(JComboBox comboBox) {
-    final Component editorComponent = comboBox.getEditor().getEditorComponent();
+    ComboBoxEditor editor = comboBox.getEditor();
+    final Component editorComponent = editor != null ? editor.getEditorComponent() : null;
     if (!(editorComponent instanceof JTextComponent)) return;
     final InputMap inputMap = ((JTextComponent)editorComponent).getInputMap();
     for (KeyStroke keyStroke : inputMap.allKeys()) {

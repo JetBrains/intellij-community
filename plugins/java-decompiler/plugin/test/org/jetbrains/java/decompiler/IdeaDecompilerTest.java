@@ -141,7 +141,7 @@ public class IdeaDecompilerTest extends LightCodeInsightFixtureTestCase {
   public void testPerformance() {
     final IdeaDecompiler decompiler = new IdeaDecompiler();
     final VirtualFile file = getTestFile(PlatformTestUtil.getRtJarPath() + "!/javax/swing/JTable.class");
-    PlatformTestUtil.startPerformanceTest("decompiling JTable.class", 2500, new ThrowableRunnable() {
+    PlatformTestUtil.startPerformanceTest("decompiling JTable.class", 4000, new ThrowableRunnable() {
       @Override
       public void run() throws Throwable {
         decompiler.getText(file);

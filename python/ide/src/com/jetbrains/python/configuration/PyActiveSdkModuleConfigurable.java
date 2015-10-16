@@ -23,7 +23,6 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.jetbrains.python.sdk.PythonSdkUpdater;
 import com.jetbrains.python.testing.VFSTestFrameworkListener;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +32,6 @@ public class PyActiveSdkModuleConfigurable extends ModuleAwareProjectConfigurabl
   public PyActiveSdkModuleConfigurable(Project project) {
     super(project, "Project Interpreter", "reference.settings.project.interpreter");
     myProject = project;
-    PythonSdkUpdater.getInstance().clearAlreadyUpdated();
   }
 
   @NotNull
@@ -60,6 +58,5 @@ public class PyActiveSdkModuleConfigurable extends ModuleAwareProjectConfigurabl
       }
 
     }
-    PythonSdkUpdater.getInstance().updateActiveSdks(myProject, 0);
   }
 }

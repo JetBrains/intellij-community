@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 
@@ -63,11 +64,17 @@ public class StatusBarUI extends ComponentUI {
       g2d.setColor(background);
       g2d.fillRect(0, 0, width, height);
 
-      g2d.setColor(UIUtil.isUnderDarcula() ? BORDER_TOP_COLOR.darker().darker() : BORDER_TOP_COLOR);
+      Color topColor = UIUtil.isUnderDarcula() ? BORDER_TOP_COLOR.darker().darker() : BORDER_TOP_COLOR;
+      if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+        topColor = Gray.xC9;
+      }
+      g2d.setColor(topColor);
       g2d.drawLine(0, 0, width, 0);
 
-      g2d.setColor(UIUtil.isUnderDarcula() ? BORDER_BOTTOM_COLOR.darker().darker() : BORDER_BOTTOM_COLOR);
-      g2d.drawLine(0, height, width, height);
+      if (!UIUtil.isUnderDarcula()) {
+        g2d.setColor(BORDER_BOTTOM_COLOR);
+        g2d.drawLine(0, height, width, height);
+      }
 
       g2d.dispose();
     }

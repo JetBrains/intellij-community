@@ -15,10 +15,10 @@
  */
 package com.intellij.xdebugger.impl.evaluate;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.ui.JBSplitter;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
@@ -38,9 +38,14 @@ import java.awt.*;
 public class CodeFragmentInputComponent extends EvaluationInputComponent {
   private final XDebuggerExpressionEditor myMultilineEditor;
   private final JPanel myMainPanel;
+  private final String mySplitterProportionKey;
 
-  public CodeFragmentInputComponent(final @NotNull Project project, @NotNull XDebuggerEditorsProvider editorsProvider,
-                                    final @Nullable XSourcePosition sourcePosition, @Nullable XExpression statements, Disposable parentDisposable) {
+  public CodeFragmentInputComponent(final @NotNull Project project,
+                                    @NotNull XDebuggerEditorsProvider editorsProvider,
+                                    final @Nullable XSourcePosition sourcePosition,
+                                    @Nullable XExpression statements,
+                                    String splitterProportionKey,
+                                    Disposable parentDisposable) {
     super(XDebuggerBundle.message("dialog.title.evaluate.code.fragment"));
     myMultilineEditor = new XDebuggerExpressionEditor(project, editorsProvider, "evaluateCodeFragment", sourcePosition,
                                                       statements != null ? statements : XExpressionImpl.EMPTY_CODE_FRAGMENT, true);
@@ -56,6 +61,7 @@ public class CodeFragmentInputComponent extends EvaluationInputComponent {
     if (statements != null) {
       myMultilineEditor.setExpression(statements);
     }
+    mySplitterProportionKey = splitterProportionKey;
   }
 
   @NotNull
@@ -65,7 +71,8 @@ public class CodeFragmentInputComponent extends EvaluationInputComponent {
 
   @Override
   public void addComponent(JPanel contentPanel, JPanel resultPanel) {
-    final Splitter splitter = new Splitter(true, 0.3f, 0.2f, 0.7f);
+    final JBSplitter splitter = new JBSplitter(true, 0.3f, 0.2f, 0.7f);
+    splitter.setSplitterProportionKey(mySplitterProportionKey);
     contentPanel.add(splitter, BorderLayout.CENTER);
     splitter.setFirstComponent(myMainPanel);
     splitter.setSecondComponent(resultPanel);

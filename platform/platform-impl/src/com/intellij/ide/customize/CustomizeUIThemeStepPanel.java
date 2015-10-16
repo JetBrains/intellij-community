@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.IntelliJLaf;
+import com.intellij.ide.ui.laf.LafManagerImpl;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.OptionsBundle;
@@ -43,7 +44,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
 
     public ThemeInfo(String name, String previewFileName, String laf) {
       this.name = name;
-      this.previewFileName = previewFileName;
+      this.previewFileName = SystemInfo.isMac && "IntelliJ".equals(previewFileName) ? "Aqua" : previewFileName;
       this.laf = laf;
     }
 
@@ -130,7 +131,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
 
   protected void initThemes(Collection<ThemeInfo> result) {
     if (SystemInfo.isMac) {
-      result.add(AQUA);
+      result.add(LafManagerImpl.useIntelliJInsteadOfAqua() ? INTELLIJ : AQUA);
       result.add(DARCULA);
     }
     else if (SystemInfo.isWindows) {

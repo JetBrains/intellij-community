@@ -275,7 +275,7 @@ private layoutFull(Map args, String target, Set usedJars) {
       }
       jar("extensions.jar") { module("extensions") }
 
-      jar("pycharm.jar") {
+      jar([name: "pycharm.jar", duplicate: "preserve"]) {
         pycharmImplementationModules().each {
           module(it) {
             exclude(name: "**/tips/**")

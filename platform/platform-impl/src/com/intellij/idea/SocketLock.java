@@ -50,8 +50,10 @@ public final class SocketLock {
   public enum ActivateStatus {ACTIVATED, NO_INSTANCE, CANNOT_ACTIVATE}
 
   private static final String PORT_FILE = "port";
-  private static final String ACTIVATE_COMMAND = "activate ";
   private static final String PORT_LOCK_FILE = "port.lock";
+  private static final String ACTIVATE_COMMAND = "activate ";
+  private static final String PATHS_EOT_RESPONSE = "---";
+  private static final String OK_RESPONSE = "ok";
 
   private final String myConfigPath;
   private final String mySystemPath;
@@ -137,6 +139,7 @@ public final class SocketLock {
         byte[] portBytes = Integer.toString(myServer.getPort()).getBytes(CharsetToolkit.UTF8_CHARSET);
         FileUtil.writeToFile(portMarkerC, portBytes);
         FileUtil.writeToFile(portMarkerS, portBytes);
+        log("exit: lock(): succeed");
         return ActivateStatus.NO_INSTANCE;
       }
     });
@@ -174,21 +177,27 @@ public final class SocketLock {
 
   @NotNull
   private static ActivateStatus tryActivate(int portNumber, @NotNull Collection<String> paths, @NotNull String[] args) {
+    log("trying: port=%s", portNumber);
     try {
       Socket socket = new Socket(NetUtils.getLoopbackAddress(), portNumber);
       try {
-        socket.setSoTimeout(300);
+        socket.setSoTimeout(1000);
 
         boolean result = false;
         @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataInputStream in = new DataInputStream(socket.getInputStream());
         while (true) {
           try {
             String path = in.readUTF();
-            if (paths.contains(path)) {
+            log("read: path=%s", path);
+            if (PATHS_EOT_RESPONSE.equals(path)) {
+              break;
+            }
+            else if (paths.contains(path)) {
               result = true;  // don't break - read all input
             }
           }
-          catch (IOException ignored) {
+          catch (IOException e) {
+            log("read: %s", e.getMessage());
             break;
           }
         }
@@ -199,7 +208,8 @@ public final class SocketLock {
             out.writeUTF(ACTIVATE_COMMAND + new File(".").getAbsolutePath() + "\0" + StringUtil.join(args, "\0"));
             out.flush();
             String response = in.readUTF();
-            if (response.equals("ok")) {
+            log("read: response=%s", response);
+            if (response.equals(OK_RESPONSE)) {
               return ActivateStatus.ACTIVATED;
             }
           }
@@ -239,11 +249,8 @@ public final class SocketLock {
       boolean success = false;
       try {
         ByteBufOutputStream out = new ByteBufOutputStream(buffer);
-        for (String path : myLockedPaths) {
-          if (path != null) {
-            out.writeUTF(path);
-          }
-        }
+        for (String path : myLockedPaths) out.writeUTF(path);
+        out.writeUTF(PATHS_EOT_RESPONSE);
         out.close();
         success = true;
       }
@@ -285,7 +292,7 @@ public final class SocketLock {
 
               ByteBuf buffer = context.alloc().ioBuffer(4);
               ByteBufOutputStream out = new ByteBufOutputStream(buffer);
-              out.writeUTF("ok");
+              out.writeUTF(OK_RESPONSE);
               out.close();
               context.writeAndFlush(buffer);
             }
@@ -308,7 +315,7 @@ public final class SocketLock {
   }
 
   private static void log(Exception e) {
-    Logger.getInstance(SocketLock.class).debug(e);
+    Logger.getInstance(SocketLock.class).warn(e);
   }
 
   private static void log(String format, Object... args) {

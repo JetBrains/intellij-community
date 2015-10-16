@@ -36,16 +36,16 @@ public abstract class BreakpointBase<L : Any>(override val target: BreakpointTar
 
   override var condition: String? = condition
     set(value: String?) {
-      if (condition != value) {
-        $condition = value
+      if (field != value) {
+        field = value
         dirty = true
       }
   }
 
   override var enabled: Boolean = enabled
     set(value: Boolean) {
-      if (value != enabled) {
-        $enabled = value
+      if (value != field) {
+        field = value
         dirty = true
       }
     }

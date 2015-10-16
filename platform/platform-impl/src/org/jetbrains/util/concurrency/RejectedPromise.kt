@@ -15,7 +15,7 @@
  */
 package org.jetbrains.util.concurrency
 
-class RejectedPromise<T>(private val error: Throwable) : Promise<T> {
+internal class RejectedPromise<T>(private val error: Throwable) : Promise<T> {
   override public val state: Promise.State
     get() = Promise.State.REJECTED
 

@@ -317,7 +317,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       @Override
       public PomModelEvent runInner() {
         final PomModelEvent event = new PomModelEvent(model);
-        XmlChangeSet xmlAspectChangeSet = new XmlAspectChangeSetImpl(model, (XmlFile)getContainingFile());
+        PsiFile file = getContainingFile();
+        XmlChangeSet xmlAspectChangeSet = new XmlAspectChangeSetImpl(model, file instanceof XmlFile ? (XmlFile)file : null);
         xmlAspectChangeSet.add(new XmlAttributeSetImpl(getParent(), oldName, null));
         xmlAspectChangeSet.add(new XmlAttributeSetImpl(getParent(), nameText, getValue()));
         event.registerChangeSet(model.getModelAspect(XmlAspect.class), xmlAspectChangeSet);

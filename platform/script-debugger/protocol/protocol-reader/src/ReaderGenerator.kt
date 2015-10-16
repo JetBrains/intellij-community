@@ -3,23 +3,16 @@ package org.jetbrains.protocolReader
 import gnu.trove.THashMap
 import java.io.File
 import java.nio.file.FileSystems
-import java.util.HashMap
-import java.util.LinkedHashMap
+import java.util.*
 
-public class GenerateConfiguration<ROOT>(val packageName: String, val className: String, readerRootClass: Class<ROOT>, protocolInterfaces: Array<Class<*>>, basePackagesMap: Map<Class<*>, String>? = null) {
-  val basePackagesMap: Collection<Map<Class<*>, String>>
+class GenerateConfiguration<ROOT>(val packageName: String, val className: String, readerRootClass: Class<ROOT>, protocolInterfaces: List<Class<*>>, basePackagesMap: Map<Class<*>, String>? = null) {
+  val basePackagesMap = if (basePackagesMap == null) listOf<Map<Class<*>, String>>() else listOf(basePackagesMap)
 
-  val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>>
-  val root: ReaderRoot<ROOT>
-
-  init {
-    this.basePackagesMap = if (basePackagesMap == null) listOf<Map<Class<*>, String>>() else listOf(basePackagesMap)
-    typeToTypeHandler = InterfaceReader(protocolInterfaces).go()
-    root = ReaderRoot(readerRootClass, typeToTypeHandler)
-  }
+  val typeToTypeHandler = InterfaceReader(protocolInterfaces).go()
+  val root = ReaderRoot(readerRootClass, typeToTypeHandler)
 }
 
-public fun generate(args: Array<String>, configuration: GenerateConfiguration<*>) {
+fun generate(args: Array<String>, configuration: GenerateConfiguration<*>) {
   val fileUpdater = FileUpdater(FileSystems.getDefault().getPath(parseArgs(args), configuration.packageName.replace('.', File.separatorChar), configuration.className + ".java"))
   generate(configuration, fileUpdater.builder)
   fileUpdater.update()
@@ -46,10 +39,7 @@ private fun parseArgs(args: Array<String>): String {
       key = arg.substring(2, equalsPos).trim()
       value = arg.substring(equalsPos + 1).trim()
     }
-    val paramListener = paramMap.get(key)
-    if (paramListener == null) {
-      throw IllegalArgumentException("Unrecognized param name: " + key)
-    }
+    val paramListener = paramMap.get(key) ?: throw IllegalArgumentException("Unrecognized param name: " + key)
     try {
       paramListener.value = value
     }
@@ -68,15 +58,15 @@ private fun parseArgs(args: Array<String>): String {
 }
 
 private class StringParam {
-  public var value: String? = null
+  var value: String? = null
 }
 
-public fun buildParserMap(configuration: GenerateConfiguration<*>): Map<Class<*>, String> {
+fun buildParserMap(configuration: GenerateConfiguration<*>): Map<Class<*>, String> {
   val fileScope = generate(configuration, StringBuilder())
 
   val typeToImplClassName = THashMap<Class<*>, String>()
   for (typeWriter in configuration.typeToTypeHandler.values()) {
-    typeToImplClassName.put(typeWriter.typeClass, configuration.packageName + "." + configuration.className + "." + fileScope.getTypeImplShortName(typeWriter))
+    typeToImplClassName.put(typeWriter!!.typeClass, configuration.packageName + "." + configuration.className + "." + fileScope.getTypeImplShortName(typeWriter))
   }
   return typeToImplClassName
 }
@@ -97,14 +87,14 @@ private fun generate(configuration: GenerateConfiguration<*>, stringBuilder: Str
 
   out.newLine().newLine().append("import static org.jetbrains.jsonProtocol.JsonReaders.*;")
   out.newLine().newLine().append("public final class ").append(configuration.className).space()
-  out.append(if (configuration.root.type.isInterface()) "implements" else "extends").space().append(configuration.root.type.getCanonicalName()).openBlock(false)
+  out.append(if (configuration.root.type.isInterface) "implements" else "extends").space().append(configuration.root.type.canonicalName).openBlock(false)
 
   val rootClassScope = fileScope.newClassScope()
   configuration.root.writeStaticMethodJava(rootClassScope)
 
   for (typeWriter in configuration.typeToTypeHandler.values()) {
     out.newLine()
-    typeWriter.write(rootClassScope)
+    typeWriter!!.write(rootClassScope)
     out.newLine()
   }
 
@@ -117,7 +107,7 @@ private fun generate(configuration: GenerateConfiguration<*>, stringBuilder: Str
       out.newLine()
     }
 
-    val originName = typeWriter.typeClass.getCanonicalName()
+    val originName = typeWriter.typeClass.canonicalName
     out.newLine().append("private static final class ").append(TYPE_FACTORY_NAME_PREFIX).append(globalScope.getTypeImplShortName(typeWriter)).append(" extends ObjectFactory<")
     out.append(originName).append('>').openBlock()
     out.append("@Override").newLine().append("public ").append(originName).append(" read(").append(JSON_READER_PARAMETER_DEF)

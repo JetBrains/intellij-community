@@ -15,11 +15,14 @@
  */
 package com.intellij.ide.ui;
 
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.components.labels.SwingActionLink;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.util.ui.JBUI;
 
+import java.awt.event.ActionEvent;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -36,6 +39,15 @@ final class ColorBlindnessPanel extends JPanel implements ChangeListener {
     super(new HorizontalLayout(JBUI.scale(10)));
     add(HorizontalLayout.LEFT, myCheckBox);
     add(HorizontalLayout.LEFT, myComboBox);
+
+    JLabel label = new SwingActionLink(new AbstractAction(UIBundle.message("color.blindness.link.to.help")) {
+      @Override
+      public void actionPerformed(ActionEvent event) {
+        HelpManager.getInstance().invokeHelp("Colorblind_Settings");
+      }
+    });
+    add(HorizontalLayout.LEFT, label);
+    
     myCheckBox.setSelected(false);
     myCheckBox.addChangeListener(this);
     myCheckBox.setText(UIBundle.message("color.blindness.checkbox.text"));

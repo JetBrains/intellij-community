@@ -847,41 +847,23 @@ public class GenericsHighlightUtil {
   static HighlightInfo checkInstanceOfGenericType(PsiInstanceOfExpression expression) {
     final PsiTypeElement checkTypeElement = expression.getCheckType();
     if (checkTypeElement == null) return null;
-    PsiElement ref = checkTypeElement.getInnermostComponentReferenceElement();
-    while (ref instanceof PsiJavaCodeReferenceElement) {
-      final HighlightInfo result = isIllegalForInstanceOf((PsiJavaCodeReferenceElement)ref, checkTypeElement);
-      if (result != null) return result;
-      ref = ((PsiQualifiedReference)ref).getQualifier();
-    }
-    return null;
+    return isIllegalForInstanceOf(checkTypeElement.getType(), checkTypeElement);
   }
 
-  private static HighlightInfo isIllegalForInstanceOf(PsiJavaCodeReferenceElement ref, final PsiTypeElement typeElement) {
-    final PsiElement resolved = ref.resolve();
+  /**
+   * 15.20.2 Type Comparison Operator instanceof
+   * ReferenceType mentioned after the instanceof operator is reifiable
+   */
+  private static HighlightInfo isIllegalForInstanceOf(PsiType type, final PsiTypeElement typeElement) {
+    final PsiClass resolved = PsiUtil.resolveClassInClassTypeOnly(type);
     if (resolved instanceof PsiTypeParameter) {
       String description = JavaErrorMessages.message("generics.cannot.instanceof.type.parameters");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(description).create();
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
     }
 
-    if (resolved instanceof PsiClass) {
-      final PsiClass containingClass = ((PsiClass)resolved).getContainingClass();
-      if (containingClass != null &&
-          ref.getQualifier() == null &&
-          containingClass.getTypeParameters().length > 0 &&
-          !((PsiClass)resolved).hasModifierProperty(PsiModifier.STATIC) &&
-          ((PsiClass)resolved).getTypeParameters().length == 0) {
-        String description = JavaErrorMessages.message("illegal.generic.type.for.instanceof");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
-      }
-    }
-
-    final PsiType[] parameters = ref.getTypeParameters();
-    for (PsiType parameterType : parameters) {
-      if (parameterType != null &&
-          !(parameterType instanceof PsiWildcardType && ((PsiWildcardType)parameterType).getBound() == null)) {
-        String description = JavaErrorMessages.message("illegal.generic.type.for.instanceof");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
-      }
+    if (!JavaGenericsUtil.isReifiableType(type)) {
+      String description = JavaErrorMessages.message("illegal.generic.type.for.instanceof");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
     }
 
     return null;

@@ -568,11 +568,11 @@ public class I18nInspection extends BaseLocalInspectionTool {
       return false;
     }
 
-    if (JavaI18nUtil.isPassedToAnnotatedParam(expression, AnnotationUtil.NON_NLS, new HashMap<String, Object>(), nonNlsTargets)) {
+    if (JavaI18nUtil.isPassedToAnnotatedParam(project, expression, AnnotationUtil.NON_NLS, new HashMap<String, Object>(), nonNlsTargets)) {
       return false;
     }
 
-    if (isInNonNlsCall(expression, nonNlsTargets)) {
+    if (isInNonNlsCall(project, expression, nonNlsTargets)) {
       return false;
     }
 
@@ -580,11 +580,11 @@ public class I18nInspection extends BaseLocalInspectionTool {
       return false;
     }
 
-    if (isPassedToNonNlsVariable(expression, nonNlsTargets)) {
+    if (isPassedToNonNlsVariable(project, expression, nonNlsTargets)) {
       return false;
     }
 
-    if (JavaI18nUtil.mustBePropertyKey(expression, new HashMap<String, Object>())) {
+    if (JavaI18nUtil.mustBePropertyKey(project, expression, new HashMap<String, Object>())) {
       return false;
     }
 
@@ -678,9 +678,10 @@ public class I18nInspection extends BaseLocalInspectionTool {
            || isPackageNonNls(psiPackage.getParentPackage());
   }
 
-  private boolean isPassedToNonNlsVariable(@NotNull PsiLiteralExpression expression,
+  private boolean isPassedToNonNlsVariable(@NotNull Project project,
+                                           @NotNull PsiLiteralExpression expression,
                                            final Set<PsiModifierListOwner> nonNlsTargets) {
-    PsiExpression toplevel = JavaI18nUtil.getTopLevelExpression(expression);
+    PsiExpression toplevel = JavaI18nUtil.getToplevelExpression(project, expression);
     PsiVariable var = null;
     if (toplevel instanceof PsiAssignmentExpression) {
       PsiExpression lExpression = ((PsiAssignmentExpression)toplevel).getLExpression();
@@ -784,9 +785,8 @@ public class I18nInspection extends BaseLocalInspectionTool {
     return false;
   }
 
-  private static boolean isInNonNlsCall(@NotNull PsiExpression expression,
-                                        final Set<PsiModifierListOwner> nonNlsTargets) {
-    expression = JavaI18nUtil.getTopLevelExpression(expression);
+  private static boolean isInNonNlsCall(@NotNull Project project, @NotNull PsiExpression expression, final Set<PsiModifierListOwner> nonNlsTargets) {
+    expression = JavaI18nUtil.getToplevelExpression(project, expression);
     final PsiElement parent = expression.getParent();
     if (parent instanceof PsiExpressionList) {
       final PsiElement grParent = parent.getParent();

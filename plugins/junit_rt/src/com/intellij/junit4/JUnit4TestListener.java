@@ -222,7 +222,7 @@ public class JUnit4TestListener extends RunListener {
       }
 
       if (methodName == null && description.getChildren().isEmpty()) {
-        methodName = description.getDisplayName();
+        methodName = getShortName(description.getDisplayName());
       }
 
       myMethodNames.put(description, methodName);

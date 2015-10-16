@@ -69,6 +69,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   public void initComponent() {
     checkJvm();
     checkIBus();
+    checkJAyatana();
     startDiskSpaceMonitoring();
   }
 
@@ -95,6 +96,16 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
             }
           }
         }
+      }
+    }
+  }
+
+  @SuppressWarnings("SpellCheckingInspection")
+  private void checkJAyatana() {
+    if (SystemInfo.isXWindow) {
+      String originalOpts = System.getenv("_ORIGINAL_JAVA_TOOL_OPTIONS");
+      if (originalOpts != null && originalOpts.contains("jayatanaag.jar")) {
+        showNotification("ayatana.menu.warn.message");
       }
     }
   }

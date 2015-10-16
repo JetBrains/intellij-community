@@ -312,9 +312,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
         doPaintBorder(c, g, x, y, width, height);
       }
       else {
-        g.setColor(UIUtil.getPanelBackground());
-        doPaintBorder(c, g, x, y, width, height);
-        g.setColor(Gray._155);
+        g.setColor(SystemInfo.isMac && UIUtil.isUnderIntelliJLaF() ? Gray.xC9 : Gray._155);
         doPaintBorder(c, g, x, y, width, height);
       }
     }

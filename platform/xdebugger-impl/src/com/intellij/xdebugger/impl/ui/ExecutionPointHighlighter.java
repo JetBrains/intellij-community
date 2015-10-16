@@ -207,8 +207,9 @@ public class ExecutionPointHighlighter {
     if (mySourcePosition instanceof HighlighterProvider) {
       TextRange range = ((HighlighterProvider)mySourcePosition).getHighlightRange();
       if (range != null) {
-        range = range.intersection(DocumentUtil.getLineTextRange(document, line));
-        if (range != null && !range.isEmpty()) {
+        TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
+        range = range.intersection(lineRange);
+        if (range != null && !range.isEmpty() && !range.equals(lineRange)) {
           myRangeHighlighter = markupModel.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
                                                                DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER, attributes,
                                                                HighlighterTargetArea.EXACT_RANGE);
