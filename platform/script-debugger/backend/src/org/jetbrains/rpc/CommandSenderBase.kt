@@ -34,7 +34,7 @@ abstract class CommandSenderBase<SUCCESS_RESPONSE> {
       try {
         if (resultReader == null || response == null) {
           @Suppress("UNCHECKED_CAST")
-          setResult(response as RESULT)
+          setResult(response as RESULT?)
         }
         else {
           if (methodName == null) {

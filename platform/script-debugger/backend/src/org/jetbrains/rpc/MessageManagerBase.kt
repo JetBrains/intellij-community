@@ -15,14 +15,12 @@
  */
 package org.jetbrains.rpc
 
-import org.jetbrains.concurrency.Promise
-
 abstract class MessageManagerBase {
   @Volatile protected var closed = false
 
   protected fun rejectIfClosed(callback: RequestCallback<*>): Boolean {
     if (closed) {
-      callback.onError(Promise.createError("Connection closed"))
+      callback.onError("Connection closed")
       return true
     }
     return false
@@ -34,5 +32,5 @@ abstract class MessageManagerBase {
 }
 
 fun RequestCallback<*>.reject() {
-  onError(Promise.createError("Connection closed"))
+  onError("Connection closed")
 }

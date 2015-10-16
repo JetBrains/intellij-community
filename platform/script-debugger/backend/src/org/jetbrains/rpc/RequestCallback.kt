@@ -15,9 +15,12 @@
  */
 package org.jetbrains.rpc
 
-@Suppress("BASE_WITH_NULLABLE_UPPER_BOUND")
+import org.jetbrains.concurrency.Promise
+
 interface RequestCallback<SUCCESS_RESPONSE> {
   fun onSuccess(response: SUCCESS_RESPONSE?, resultReader: ResultReader<SUCCESS_RESPONSE>?)
 
   fun onError(error: Throwable)
+
+  fun onError(error: String) = onError(Promise.createError(error))
 }

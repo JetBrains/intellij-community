@@ -16,7 +16,6 @@
 package org.jetbrains.rpc
 
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.concurrency.Promise
 import java.io.IOException
 import java.util.*
 
@@ -66,7 +65,7 @@ class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS>(privat
   }
 
   private fun failedToSend(sequence: Int) {
-    callbackMap.remove(sequence)?.onError(Promise.createError("Failed to send"))
+    callbackMap.remove(sequence)?.onError("Failed to send")
   }
 
   fun processIncoming(incomingParsed: INCOMING) {
