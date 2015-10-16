@@ -229,15 +229,12 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
       if (qualifier instanceof PsiMethodCallExpression) {
         current = (PsiMethodCallExpression)qualifier;
       }
-      else if (qualifier instanceof PsiReferenceExpression) {
+      else if (method.hasModifierProperty(PsiModifier.STATIC)) {
         if (!CHAIN_HEAD_METHODS.contains(methodName)) {
           return null;
         }
-        final PsiElement maybeClass = ((PsiReferenceExpression)qualifier).resolve();
-        if (!(maybeClass instanceof PsiClass)) {
-          return null;
-        }
-        if (!FLUENT_ITERABLE.equals(((PsiClass)maybeClass).getQualifiedName())) {
+        final PsiClass aClass = method.getContainingClass();
+        if (aClass == null || !FLUENT_ITERABLE.equals(aClass.getQualifiedName())) {
           return null;
         }
         break;
