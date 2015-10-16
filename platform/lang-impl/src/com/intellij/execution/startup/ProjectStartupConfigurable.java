@@ -260,7 +260,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
   private void addConfiguration(RunnerAndConfigurationSettings configuration) {
     if (!ProjectStartupRunner.canRun(DefaultRunExecutor.getRunExecutorInstance(), configuration)) {
       final String message = "Can not add Run Configuration '" + configuration.getName() + "' to Startup Tasks," +
-                             " since it can not be run with Run executor.";
+                             " since it can not be started with 'Run' action.";
       final Balloon balloon = JBPopupFactory.getInstance()
         .createHtmlTextBalloonBuilder(message, MessageType.ERROR, null)
         .setHideOnClickOutside(true)
