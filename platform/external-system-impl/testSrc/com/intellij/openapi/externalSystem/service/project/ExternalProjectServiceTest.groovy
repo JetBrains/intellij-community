@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.io.FileUtil
 
 import static com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.*
+
 /**
  * @author Denis Zhdanov
  * @since 8/8/13 5:17 PM
@@ -40,18 +41,23 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
     applyProjectState([projectNode, projectNode])
 
     def modelsProvider = new IdeModifiableModelsProviderImpl(project);
-    def module = modelsProvider.findIdeModule('module')
-    assertNotNull(module)
+    try {
+      def module = modelsProvider.findIdeModule('module')
+      assertNotNull(module)
 
-    def entries = modelsProvider.getOrderEntries(module)
-    def dependencies = [:].withDefault { 0 }
-    for (OrderEntry entry : entries) {
-      if (entry instanceof LibraryOrderEntry) {
-        def name = (entry as LibraryOrderEntry).libraryName
-        dependencies[name]++
+      def entries = modelsProvider.getOrderEntries(module)
+      def dependencies = [:].withDefault { 0 }
+      for (OrderEntry entry : entries) {
+        if (entry instanceof LibraryOrderEntry) {
+          def name = (entry as LibraryOrderEntry).libraryName
+          dependencies[name]++
+        }
       }
+      ExternalSystemTestUtil.assertMapsEqual(['Test_external_system_id: lib1': 1, 'Test_external_system_id: lib2': 1], dependencies)
     }
-    ExternalSystemTestUtil.assertMapsEqual(['Test_external_system_id: lib1': 1, 'Test_external_system_id: lib2': 1], dependencies)
+    finally {
+      modelsProvider.dispose()
+    }
   }
 
   void 'test changes in a project layout (content roots) could be detected on Refresh'() {
@@ -59,8 +65,8 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
     String rootPath = ExternalSystemApiUtil.toCanonicalPath(project.basePath);
 
     def contentRoots = [
-      (TEST): ['src/test/resources', '/src/test/java', 'src/test/groovy'],
-      (SOURCE): ['src/main/resources', 'src/main/java', 'src/main/groovy'],
+      (TEST)    : ['src/test/resources', '/src/test/java', 'src/test/groovy'],
+      (SOURCE)  : ['src/main/resources', 'src/main/java', 'src/main/groovy'],
       (EXCLUDED): ['.gradle', 'build']
     ]
 
@@ -88,8 +94,8 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
     for (OrderEntry entry : entries) {
       if (entry instanceof ModuleSourceOrderEntry) {
         def contentEntry = (entry as ModuleSourceOrderEntry).getRootModel().getContentEntries().first()
-        folders['source']+=contentEntry.sourceFolders.length
-        folders['excluded']+=contentEntry.excludeFolders.length
+        folders['source'] += contentEntry.sourceFolders.length
+        folders['excluded'] += contentEntry.excludeFolders.length
       }
     }
     ExternalSystemTestUtil.assertMapsEqual(['source': 4, 'excluded': 2], folders)
@@ -117,35 +123,80 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
       buildExternalProjectInfo {
         project {
           module('module') {
-            lib('lib1', level: 'module', bin: [libBinPath.absolutePath], src: [libSrcPath.absolutePath],  doc: [libDocPath.absolutePath]) } } }
+            lib('lib1', level: 'module', bin: [libBinPath.absolutePath], src: [libSrcPath.absolutePath], doc: [libDocPath.absolutePath]) } } }
     ])
 
     def modelsProvider = new IdeModifiableModelsProviderImpl(project);
-    def module = modelsProvider.findIdeModule('module')
-    assertNotNull(module)
+    try {
+      def module = modelsProvider.findIdeModule('module')
+      assertNotNull(module)
 
-    def entries = modelsProvider.getOrderEntries(module)
-    def dependencies = [:].withDefault { 0 }
-    entries.each { OrderEntry entry ->
-      if (entry instanceof LibraryOrderEntry) {
-        def name = (entry as LibraryOrderEntry).libraryName
-        dependencies[name]++
-        if ("Test_external_system_id: lib1".equals(name)) {
-          def classesUrls = entry.getUrls(OrderRootType.CLASSES)
-          assertEquals(1, classesUrls.length)
-          assertTrue(classesUrls[0].endsWith("bin_path"))
-          def sourceUrls = entry.getUrls(OrderRootType.SOURCES)
-          assertEquals(1, sourceUrls.length)
-          assertTrue(sourceUrls[0].endsWith("source_path"))
-          def docUrls = entry.getUrls(JavadocOrderRootType.instance)
-          assertEquals(1, docUrls.length)
-          assertTrue(docUrls[0].endsWith("doc_path"))
-        }
-        else {
-          fail()
+      def entries = modelsProvider.getOrderEntries(module)
+      def dependencies = [:].withDefault { 0 }
+      entries.each { OrderEntry entry ->
+        if (entry instanceof LibraryOrderEntry) {
+          def name = (entry as LibraryOrderEntry).libraryName
+          dependencies[name]++
+          if ("Test_external_system_id: lib1".equals(name)) {
+            def classesUrls = entry.getUrls(OrderRootType.CLASSES)
+            assertEquals(1, classesUrls.length)
+            assertTrue(classesUrls[0].endsWith("bin_path"))
+            def sourceUrls = entry.getUrls(OrderRootType.SOURCES)
+            assertEquals(1, sourceUrls.length)
+            assertTrue(sourceUrls[0].endsWith("source_path"))
+            def docUrls = entry.getUrls(JavadocOrderRootType.instance)
+            assertEquals(1, docUrls.length)
+            assertTrue(docUrls[0].endsWith("doc_path"))
+          }
+          else {
+            fail()
+          }
         }
       }
+      ExternalSystemTestUtil.assertMapsEqual(['Test_external_system_id: lib1': 1], dependencies)
     }
-    ExternalSystemTestUtil.assertMapsEqual(['Test_external_system_id: lib1': 1], dependencies)
+    finally {
+      modelsProvider.dispose()
+    }
+  }
+
+  void 'test excluded directories merge'() {
+    String rootPath = ExternalSystemApiUtil.toCanonicalPath(project.basePath);
+    def contentRoots = [
+      (EXCLUDED): ['.gradle', 'build']
+    ]
+
+    def projectRootBuilder = {
+      buildExternalProjectInfo {
+        project {
+          module {
+            contentRoot(rootPath) {
+              contentRoots.each { key, values -> values.each { folder(type: key, path: "$rootPath/$it") } } } } } }
+    }
+
+    DataNode<ProjectData> projectNodeInitial = projectRootBuilder()
+
+    contentRoots[(EXCLUDED)].remove(0)
+    contentRoots[(EXCLUDED)].add("newExclDir")
+
+    DataNode<ProjectData> projectNodeRefreshed = projectRootBuilder()
+    applyProjectState([projectNodeInitial, projectNodeRefreshed])
+
+    def modelsProvider = new IdeModifiableModelsProviderImpl(project);
+    try {
+      def module = modelsProvider.findIdeModule('module')
+      assertNotNull(module)
+      def folders = []
+      for (OrderEntry entry : modelsProvider.getOrderEntries(module)) {
+        if (entry instanceof ModuleSourceOrderEntry) {
+          def contentEntry = (entry as ModuleSourceOrderEntry).getRootModel().getContentEntries().first()
+          folders = contentEntry.excludeFolders.collect { new File(it.url).name }
+        }
+      }
+      assertEquals(new HashSet<>(folders), new HashSet<>([".gradle", "build", "newExclDir"]));
+    }
+    finally {
+      modelsProvider.dispose()
+    }
   }
 }
