@@ -259,6 +259,7 @@ public class BuildManager implements Disposable {
   private volatile int myListenPort = -1;
   @NotNull
   private final Charset mySystemCharset = CharsetToolkit.getDefaultSystemCharset();
+  private volatile boolean myBuildProcessDebuggingEnabled;
 
   public BuildManager(final ProjectManager projectManager) {
     final Application application = ApplicationManager.getApplication();
@@ -602,6 +603,13 @@ public class BuildManager implements Disposable {
     return futures;
   }
 
+  private void cancelAllPreloadedBuilds() {
+    String[] paths = ArrayUtil.toStringArray(myPreloadedBuilds.keySet());
+    for (String path : paths) {
+      cancelPreloadedBuilds(path);
+    }
+  }
+
   private void cancelPreloadedBuilds(final String projectPath) {
     runCommand(new Runnable() {
       @Override
@@ -847,7 +855,7 @@ public class BuildManager implements Disposable {
 
   private boolean isProcessPreloadingEnabled(Project project) {
     // automatically disable process preloading when debugging or testing
-    if (IS_UNIT_TEST_MODE || !Registry.is("compiler.process.preload") || Registry.intValue("compiler.process.debug.port") > 0) {
+    if (IS_UNIT_TEST_MODE || !Registry.is("compiler.process.preload") || myBuildProcessDebuggingEnabled) {
       return false;
     }
     if (project.isDisposed()) {
@@ -1110,10 +1118,21 @@ public class BuildManager implements Disposable {
     }
 
     // debugging
-    final int debugPort = Registry.intValue("compiler.process.debug.port");
-    if (debugPort > 0) {
-      cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
-      cmdLine.addParameter("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + debugPort);
+    int debugPort = -1;
+    if (myBuildProcessDebuggingEnabled) {
+      debugPort = Registry.intValue("compiler.process.debug.port");
+      if (debugPort <= 0) {
+        try {
+          debugPort = NetUtils.findAvailableSocketPort();
+        }
+        catch (IOException e) {
+          throw new ExecutionException("Cannot find free port to debug build process", e);
+        }
+      }
+      if (debugPort > 0) {
+        cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
+        cmdLine.addParameter("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + debugPort);
+      }
     }
 
     if (!Registry.is("compiler.process.use.memory.temp.cache")) {
@@ -1326,6 +1345,17 @@ public class BuildManager implements Disposable {
       builder.append(FileUtil.toCanonicalPath(file));
     }
     return builder.toString();
+  }
+
+  public boolean isBuildProcessDebuggingEnabled() {
+    return myBuildProcessDebuggingEnabled;
+  }
+
+  public void setBuildProcessDebuggingEnabled(boolean buildProcessDebuggingEnabled) {
+    myBuildProcessDebuggingEnabled = buildProcessDebuggingEnabled;
+    if (myBuildProcessDebuggingEnabled) {
+      cancelAllPreloadedBuilds();
+    }
   }
 
   private static abstract class BuildManagerPeriodicTask implements Runnable {
