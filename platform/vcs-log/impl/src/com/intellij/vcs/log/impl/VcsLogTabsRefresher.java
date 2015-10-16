@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,6 +38,8 @@ import com.intellij.vcs.log.data.VcsLogFilterer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -142,10 +145,10 @@ public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
     myToolWindowManager.removeToolWindowManagerListener(myPostponedEventsListener);
   }
 
-  private class MyRefreshPostponedEventsListener extends ContentManagerAdapter implements ToolWindowManagerListener {
+  private class MyRefreshPostponedEventsListener extends ContentManagerAdapter
+    implements ToolWindowManagerListener, PropertyChangeListener {
 
-    @Override
-    public void selectionChanged(ContentManagerEvent event) {
+    private void selectionChanged() {
       String tabName = getSelectedTabName();
       if (tabName != null) {
         VcsLogFilterer filterer = myTabToFiltererMap.get(tabName);
@@ -156,12 +159,40 @@ public class VcsLogTabsRefresher implements VcsLogRefresher, Disposable {
     }
 
     @Override
+    public void selectionChanged(ContentManagerEvent event) {
+      selectionChanged();
+    }
+
+    @Override
+    public void contentAdded(ContentManagerEvent event) {
+      Content content = event.getContent();
+      if (content instanceof TabbedContent) {
+        content.addPropertyChangeListener(this);
+      }
+    }
+
+    @Override
+    public void contentRemoved(ContentManagerEvent event) {
+      Content content = event.getContent();
+      if (content instanceof TabbedContent) {
+        content.removePropertyChangeListener(this);
+      }
+    }
+
+    @Override
     public void stateChanged() {
       refreshPostponedRoots();
     }
 
     @Override
     public void toolWindowRegistered(@NotNull String id) {
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+      if (evt.getPropertyName().equals(Content.PROP_COMPONENT)) {
+        selectionChanged();
+      }
     }
   }
 }
