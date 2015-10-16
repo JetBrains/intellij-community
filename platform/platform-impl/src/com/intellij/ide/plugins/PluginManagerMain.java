@@ -129,7 +129,8 @@ public abstract class PluginManagerMain implements Disposable {
     return isDevelopedByJetBrains(plugin.getVendor());
   }
 
-  public static boolean isDevelopedByJetBrains(String vendorString) {
+  public static boolean isDevelopedByJetBrains(@Nullable String vendorString) {
+    if (vendorString == null) return false;
     for (String vendor : StringUtil.split(vendorString, ",")) {
       if (vendor.trim().equals(JETBRAINS_VENDOR)) {
         return true;
