@@ -133,7 +133,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
 
   protected fun doSetBreakpoint(breakpoint: XLineBreakpoint<*>?, location: Location, isTemporary: Boolean): Breakpoint {
     if (breakpointResolvedListenerAdded.compareAndSet(false, true)) {
-      breakpointManager.addBreakpointListener(object : BreakpointManager.BreakpointListener {
+      breakpointManager.addBreakpointListener(object : BreakpointListener {
         override fun resolved(breakpoint: Breakpoint) {
           var breakpoints = synchronized (lock) { vmToIdeBreakpoint.get(breakpoint) }
           for (ideBreakpoint in breakpoints) {
