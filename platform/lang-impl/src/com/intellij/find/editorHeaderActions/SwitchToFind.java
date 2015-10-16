@@ -13,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
+
 /**
 * Created by IntelliJ IDEA.
 * User: zajac
@@ -52,7 +54,7 @@ public class SwitchToFind extends AnAction implements DumbAware {
 
     EditorSearchSession search = e.getRequiredData(EditorSearchSession.SESSION_KEY);
     final FindModel findModel = search.getFindModel();
-    FindUtil.configureFindModel(false, null, findModel, false);
+    FindUtil.configureFindModel(false, EDITOR.getData(e.getDataContext()), findModel, false);
     search.getComponent().getSearchTextComponent().selectAll();
   }
 }
