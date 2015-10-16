@@ -89,7 +89,7 @@ public class ProjectStartupRunner implements StartupActivity {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          if (! canRun(executor, configuration)) {
+          if (! canBeRun(configuration)) {
             ProjectStartupTaskManager.NOTIFICATION_GROUP
               .createNotification(ProjectStartupTaskManager.PREFIX + " Run Configuration '" + configuration.getName() + "' can not be started with Run executor.", MessageType.ERROR)
               .notify(project);
@@ -104,7 +104,7 @@ public class ProjectStartupRunner implements StartupActivity {
     }
   }
 
-  public static boolean canRun(Executor executor, RunnerAndConfigurationSettings configuration) {
-    return RunnerRegistry.getInstance().getRunner(executor.getId(), configuration.getConfiguration()) != null;
+  public static boolean canBeRun(@NotNull RunnerAndConfigurationSettings configuration) {
+    return RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, configuration.getConfiguration()) != null;
   }
 }

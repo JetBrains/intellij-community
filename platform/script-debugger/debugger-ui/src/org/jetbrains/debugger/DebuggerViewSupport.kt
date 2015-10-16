@@ -51,7 +51,8 @@ interface DebuggerViewSupport {
    */
   fun canNavigateToSource(variable: Variable, context: VariableContext) = false
 
-  fun computeSourcePosition(name: String, variable: Variable, context: VariableContext, navigatable: XNavigatable)
+  fun computeSourcePosition(name: String, value: Value?, variable: Variable, context: VariableContext, navigatable: XNavigatable) {
+  }
 
   fun computeInlineDebuggerData(name: String, variable: Variable, context: VariableContext, callback: XInlineDebuggerDataCallback) = ThreeState.UNSURE
 
