@@ -139,7 +139,7 @@ public class PyStructuredDocstringFormatter {
     final Map<String, String> env = new HashMap<String, String>();
     PythonEnvUtil.setPythonDontWriteBytecode(env);
 
-    final GeneralCommandLine commandLine = formatter.newCommandLine(sdkHome, Lists.<String>newArrayList());
+    final GeneralCommandLine commandLine = formatter.newCommandLine(sdk, Lists.<String>newArrayList());
     LOG.debug("Command for launching docstring formatter: " + commandLine.getCommandLineString());
     
     final ProcessOutput output = PySdkUtil.getProcessOutput(commandLine, new File(sdkHome).getParent(), env, 5000, data, true);

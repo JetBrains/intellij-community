@@ -1,12 +1,5 @@
 import re
 import sys
-import os
-
-_helpers_dir = os.path.dirname(__file__)
-if sys.version_info[0] == 2:
-    sys.path.insert(0, os.path.join(_helpers_dir, 'py2only'))
-else:
-    sys.path.insert(0, os.path.join(_helpers_dir, 'py3only'))
 
 from docutils import nodes
 from docutils.core import publish_string

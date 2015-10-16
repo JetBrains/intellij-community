@@ -17,6 +17,7 @@ package com.jetbrains.python;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
+import com.intellij.openapi.projectRoots.Sdk;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -38,4 +39,16 @@ public interface HelperPackage {
 
   @NotNull
   GeneralCommandLine newCommandLine(@NotNull String sdkPath, @NotNull List<String> parameters);
+  
+  /**
+   * Version-sensitive version of {@link #newCommandLine(String, List)}. It adds additional directories with libraries inside python-helpers
+   * depending on the version of pythonSdk: either {@link PythonHelper#PY2_HELPER_DEPENDENCIES_DIR} or 
+   * {@link PythonHelper#PY3_HELPER_DEPENDENCIES_DIR}.
+   *
+   * @param pythonSdk   Python SDK containing interpreter that will be used to run this helper    
+   * @param parameters  additional command line parameters of this helper
+   * @return instance {@link GeneralCommandLine} used to start the process
+   */
+  @NotNull
+  GeneralCommandLine newCommandLine(@NotNull Sdk pythonSdk, @NotNull List<String> parameters);
 }
