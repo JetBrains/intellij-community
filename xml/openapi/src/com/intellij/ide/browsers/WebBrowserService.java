@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,10 @@ import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.Url;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Collections;
 
 public abstract class WebBrowserService {
   public static WebBrowserService getInstance() {
@@ -34,14 +32,6 @@ public abstract class WebBrowserService {
 
   @NotNull
   public abstract Collection<Url> getUrlsToOpen(@NotNull OpenInBrowserRequest request, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException;
-
-  @SuppressWarnings("unused")
-  @NotNull
-  @Deprecated
-  public Collection<Url> getUrlsToOpen(@NotNull final PsiElement element, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException {
-    OpenInBrowserRequest request = OpenInBrowserRequest.create(element);
-    return request == null ? Collections.<Url>emptyList() : getUrlsToOpen(request, preferLocalUrl);
-  }
 
   public static boolean isHtmlOrXmlFile(@NotNull Language language) {
     return language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE || language == XMLLanguage.INSTANCE;
