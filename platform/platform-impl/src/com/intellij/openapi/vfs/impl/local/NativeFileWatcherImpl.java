@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
@@ -66,13 +67,13 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   private static final int MAX_PROCESS_LAUNCH_ATTEMPT_COUNT = 10;
 
   private ManagingFS myManagingFS;
+  private FileWatcherNotificationSink myNotificationSink;
   private File myExecutable;
+
   private volatile MyProcessHandler myProcessHandler;
   private volatile int myStartAttemptCount = 0;
   private volatile boolean myIsShuttingDown = false;
   private final AtomicInteger mySettingRoots = new AtomicInteger(0);
-  private final Object myLock = new Object();
-  private FileWatcherNotificationSink myNotificationSink;
 
   private volatile List<String> myRecursiveWatchRoots = emptyList();
   private volatile List<String> myFlatWatchRoots = emptyList();
@@ -280,7 +281,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
   @Override
   public void resetChangedPaths() {
-    synchronized (myLock) {
+    synchronized (myLastChangedPaths) {
       myLastChangedPathIndex = 0;
       for (int i = 0; i < myLastChangedPaths.length; ++i) myLastChangedPaths[i] = null;
     }
@@ -375,7 +376,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
     @Override
     public void processTerminated(ProcessEvent event) {
-      LOG.warn("Watcher terminated with exit code " + event.getExitCode());
+      String message = "Watcher terminated with exit code " + event.getExitCode();
+      if (myIsShuttingDown) LOG.info(message); else LOG.warn(message);
 
       myProcessHandler = null;
 
@@ -444,7 +446,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
         }
       }
       else {
-        String path = line.replace('\0', '\n');  // unescape
+        String path = StringUtil.trimEnd(line.replace('\0', '\n'), File.separator);  // unescape
         processChange(path, myLastOp);
         myLastOp = null;
       }
@@ -482,7 +484,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
 
     private void processChange(String path, WatcherOp op) {
-      if (SystemInfo.isWindows && op == WatcherOp.RECDIRTY && path.length() == 3 && Character.isLetter(path.charAt(0))) {
+      if (SystemInfo.isWindows && op == WatcherOp.RECDIRTY) {
         VirtualFile root = LocalFileSystem.getInstance().findFileByPath(path);
         if (root != null) {
           myNotificationSink.notifyPathsRecursive(list(root.getPresentableUrl()));
@@ -491,25 +493,13 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
         return;
       }
 
-      if (op == WatcherOp.CHANGE) {
-        // collapse subsequent change file change notifications that happen once we copy large file,
-        // this allows reduction of path checks at least 20% for Windows
-        synchronized (myLock) {
-          for (int i = 0; i < myLastChangedPaths.length; ++i) {
-            int last = myLastChangedPathIndex - i - 1;
-            if (last < 0) last += myLastChangedPaths.length;
-            String lastChangedPath = myLastChangedPaths[last];
-            if (lastChangedPath != null && lastChangedPath.equals(path)) {
-              return;
-            }
-          }
-          myLastChangedPaths[myLastChangedPathIndex++] = path;
-          if (myLastChangedPathIndex == myLastChangedPaths.length) myLastChangedPathIndex = 0;
+      if ((op == WatcherOp.CHANGE || op == WatcherOp.STATS) && isRepetition(path)) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Repetition: " + path);
         }
+        return;
       }
 
-      int length = path.length();
-      if (length > 1 && path.charAt(length - 1) == '/') path = path.substring(0, length - 1);
       boolean exactPath = op != WatcherOp.DIRTY && op != WatcherOp.RECDIRTY;
       Collection<String> paths = checkWatchable(path, exactPath, false);
 
@@ -545,6 +535,26 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
       notifyOnAnyEvent();
     }
+  }
+
+  private boolean isRepetition(String path) {
+    // collapse subsequent change file change notifications that happen once we copy large file,
+    // this allows reduction of path checks at least 20% for Windows
+    synchronized (myLastChangedPaths) {
+      for (int i = 0; i < myLastChangedPaths.length; ++i) {
+        int last = myLastChangedPathIndex - i - 1;
+        if (last < 0) last += myLastChangedPaths.length;
+        String lastChangedPath = myLastChangedPaths[last];
+        if (lastChangedPath != null && lastChangedPath.equals(path)) {
+          return true;
+        }
+      }
+
+      myLastChangedPaths[myLastChangedPathIndex++] = path;
+      if (myLastChangedPathIndex == myLastChangedPaths.length) myLastChangedPathIndex = 0;
+    }
+
+    return false;
   }
 
   @SuppressWarnings("TestOnlyProblems")

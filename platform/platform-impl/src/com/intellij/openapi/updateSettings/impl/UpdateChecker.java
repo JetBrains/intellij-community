@@ -119,7 +119,7 @@ public final class UpdateChecker {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, IdeBundle.message("updates.checking.progress"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        doUpdateAndShowResult(getProject(), !fromSettings, true, settings, indicator, null);
+        doUpdateAndShowResult(getProject(), fromSettings, true, settings, indicator, null);
       }
 
       @Override
@@ -135,7 +135,7 @@ public final class UpdateChecker {
   }
 
   private static void doUpdateAndShowResult(@Nullable final Project project,
-                                            final boolean enableLink,
+                                            final boolean fromSettings,
                                             final boolean manualCheck,
                                             @NotNull final UpdateSettings updateSettings,
                                             @Nullable ProgressIndicator indicator,
@@ -186,7 +186,13 @@ public final class UpdateChecker {
       }
 
       incompatiblePlugins = buildNumber != null ? new HashSet<IdeaPluginDescriptor>() : null;
-      updatedPlugins = checkPluginsUpdate(manualCheck, updateSettings, indicator, incompatiblePlugins, buildNumber);
+      try {
+        updatedPlugins = checkPluginsUpdate(updateSettings, indicator, incompatiblePlugins, buildNumber);
+      }
+      catch (IOException e) {
+        showErrorMessage(manualCheck, IdeBundle.message("updates.error.connection.failed", e.getMessage()));
+        return;
+      }
     }
 
     // show result
@@ -194,12 +200,12 @@ public final class UpdateChecker {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        showUpdateResult(project, result, updateSettings, updatedPlugins, incompatiblePlugins, enableLink, manualCheck);
+        showUpdateResult(project, result, updateSettings, updatedPlugins, incompatiblePlugins, !fromSettings, manualCheck);
         if (callback != null) {
           callback.setDone();
         }
       }
-    }, ModalityState.NON_MODAL);
+    }, fromSettings ? ModalityState.any() : ModalityState.NON_MODAL);
   }
 
   @NotNull
@@ -244,11 +250,10 @@ public final class UpdateChecker {
     return strategy.checkForUpdates();
   }
 
-  private static Collection<PluginDownloader> checkPluginsUpdate(boolean manualCheck,
-                                                                 @NotNull UpdateSettings updateSettings,
+  private static Collection<PluginDownloader> checkPluginsUpdate(@NotNull UpdateSettings updateSettings,
                                                                  @Nullable ProgressIndicator indicator,
                                                                  @Nullable Collection<IdeaPluginDescriptor> incompatiblePlugins,
-                                                                 @Nullable BuildNumber buildNumber) {
+                                                                 @Nullable BuildNumber buildNumber) throws IOException {
     // collect installed plugins and plugins imported from a previous installation
     Map<PluginId, IdeaPluginDescriptor> updateable = ContainerUtil.newTroveMap();
 
@@ -309,7 +314,7 @@ public final class UpdateChecker {
           LOG.info("failed to load plugin descriptions from " + host + ": " + e.getMessage());
         }
         else {
-          showErrorMessage(manualCheck, IdeBundle.message("updates.error.connection.failed", e.getMessage()));
+          throw e;
         }
       }
     }

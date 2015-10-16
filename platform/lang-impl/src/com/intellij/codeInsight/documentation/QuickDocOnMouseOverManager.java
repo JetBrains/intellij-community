@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.Project;
@@ -202,7 +203,13 @@ public class QuickDocOnMouseOverManager {
       return;
     }
 
-    VisualPosition visualPosition = editor.xyToVisualPosition(e.getMouseEvent().getPoint());
+    Point point = e.getMouseEvent().getPoint();
+    if (editor instanceof EditorEx && ((EditorEx)editor).getFoldingModel().getFoldingPlaceholderAt(point) != null) {
+      closeQuickDocIfPossible();
+      return;
+    }
+    
+    VisualPosition visualPosition = editor.xyToVisualPosition(point);
     if (editor.getSoftWrapModel().isInsideOrBeforeSoftWrap(visualPosition)) {
       closeQuickDocIfPossible();
       return;

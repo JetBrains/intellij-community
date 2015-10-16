@@ -59,7 +59,8 @@ public class ManualRangeMarker {
     if (mySurviveOnExternalChange && PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, myRange)) {
       PersistentRangeMarker.LinesCols linesCols = myLinesCols != null ? myLinesCols
                                                                       : PersistentRangeMarker.storeLinesAndCols(myRange, documentBefore);
-      Pair<ProperTextRange, PersistentRangeMarker.LinesCols> pair = PersistentRangeMarker.translateViaDiff((DocumentEventImpl)event, linesCols);
+      Pair<ProperTextRange, PersistentRangeMarker.LinesCols> pair =
+        linesCols == null ? null : PersistentRangeMarker.translateViaDiff((DocumentEventImpl)event, linesCols);
       if (pair != null) {
         return new ManualRangeMarker(pair.first, myGreedyLeft, myGreedyRight, true, pair.second);
       }
