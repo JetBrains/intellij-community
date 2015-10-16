@@ -29,6 +29,11 @@ public class GenerateSetterHandler extends GenerateGetterSetterHandlerBase {
     super(CodeInsightBundle.message("generate.setter.fields.chooser.title"));
   }
 
+  @Override
+  protected String getHelpId() {
+    return "Generate_Setter_Dialog";
+  }
+
   @Nullable
   @Override
   protected JComponent getHeaderPanel(final Project project) {
