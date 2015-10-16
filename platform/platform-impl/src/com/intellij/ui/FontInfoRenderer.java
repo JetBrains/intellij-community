@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.util.ui.FontInfo;
+import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
 
 import java.awt.Font;
@@ -39,6 +40,9 @@ public class FontInfoRenderer extends ListCellRendererWrapper {
       setFont(list.getFont());
     }
     setText(value == null ? "" : value.toString());
+    setForeground(list.isEnabled()
+                  ? UIUtil.getListForeground(selected)
+                  : UIUtil.getLabelDisabledForeground());
 
     AntialiasingType type = getAntialiasingType();
     if (type == null) type = AntialiasingType.GREYSCALE;
