@@ -167,7 +167,10 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
 
       final ArrayList<JdkBundleDescriptor> pathsList = JdkUtil.findJdkPaths();
       if (!jdkBundlesList.isEmpty()) {
-        pathsList.add(0, jdkBundlesList.get(0));
+        JdkBundleDescriptor jdkBundleDescription = jdkBundlesList.get(0);
+        if (jdkBundleDescription != null) {
+          pathsList.add(0, jdkBundleDescription);
+        }
       }
 
       myComboBox = new ComboBox();
@@ -191,7 +194,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
             JdkBundleDescriptor jdkBundleDescriptor = ((JdkBundleDescriptor)value);
             setText(jdkBundleDescriptor.getVisualRepresentation());
           } else {
-            LOG.error("Null value has been passed to a cell renderer. Available JDKs count: " +  pathsList.size());
+            LOG.debug("Null value has been passed to a cell renderer. Available JDKs count: " +  pathsList.size());
             StringBuilder jdkNames = new StringBuilder();
             for (JdkBundleDescriptor jdkBundlePath : pathsList) {
               if (!jdkBundlesList.isEmpty()) {
@@ -199,7 +202,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
               }
               jdkNames.append(jdkBundlePath.getVisualRepresentation()).append("; ");
             }
-            LOG.error("Available JDKs names: " + jdkNames.toString());
+            LOG.debug("Available JDKs names: " + jdkNames.toString());
           }
         }
       });

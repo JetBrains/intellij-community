@@ -452,4 +452,8 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
   public VirtualFile getVirtualFile() {
     return myFile;
   }
+
+  public JScrollPane getScrollPane() {
+    return myScrollPane;
+  }
 }
