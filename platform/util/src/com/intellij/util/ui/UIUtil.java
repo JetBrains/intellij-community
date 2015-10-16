@@ -1647,7 +1647,7 @@ public class UIUtil {
       } else {
         g.setColor(isUnderDarcula() ? Gray._255.withAlpha(30) : new Color(255, 255, 255, 100));
       }
-      if (isRetina()) {
+      if (isRetina() && SystemInfo.isMac && isUnderIntelliJLaF()) {
         Graphics2D g2 = (Graphics2D)g.create(0, 0, width, height);
         g2.scale(0.5, 0.5);
 
