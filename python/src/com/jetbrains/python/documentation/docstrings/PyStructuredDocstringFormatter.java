@@ -28,6 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.psi.PyIndentUtil;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -53,6 +54,10 @@ public class PyStructuredDocstringFormatter {
   private PyStructuredDocstringFormatter() {
   }
 
+  /**
+   * @param docstring docstring text without string literal prefix, without quotes and already escaped. 
+   *                  Supposedly result of {@link PyStringLiteralExpression#getStringValue()}.
+   */
   @Nullable
   public static List<String> formatDocstring(@NotNull final PsiElement element, @NotNull final String docstring) {
     Module module = ModuleUtilCore.findModuleForPsiElement(element);
@@ -71,20 +76,20 @@ public class PyStructuredDocstringFormatter {
     final DocStringFormat format = DocStringUtil.guessDocStringFormat(preparedDocstring, element);
     if (format == DocStringFormat.GOOGLE) {
       formatter = PythonHelper.GOOGLE_FORMATTER;
-      structuredDocString = DocStringUtil.parseDocString(DocStringFormat.GOOGLE, preparedDocstring);
+      structuredDocString = DocStringUtil.parseDocStringContent(DocStringFormat.GOOGLE, preparedDocstring);
     }
     else if (format == DocStringFormat.NUMPY) {
       formatter = PythonHelper.NUMPY_FORMATTER;
-      structuredDocString = DocStringUtil.parseDocString(DocStringFormat.NUMPY, preparedDocstring);
+      structuredDocString = DocStringUtil.parseDocStringContent(DocStringFormat.NUMPY, preparedDocstring);
     }
     else if (format == DocStringFormat.EPYTEXT) {
       formatter = PythonHelper.EPYDOC_FORMATTER;
-      structuredDocString = DocStringUtil.parseDocString(DocStringFormat.EPYTEXT, preparedDocstring);
+      structuredDocString = DocStringUtil.parseDocStringContent(DocStringFormat.EPYTEXT, preparedDocstring);
       result.add(formatStructuredDocString(structuredDocString));
     }
     else if (format == DocStringFormat.REST) {
       formatter = PythonHelper.REST_FORMATTER;
-      structuredDocString = DocStringUtil.parseDocString(DocStringFormat.REST, preparedDocstring);
+      structuredDocString = DocStringUtil.parseDocStringContent(DocStringFormat.REST, preparedDocstring);
     }
 
     else {
@@ -106,8 +111,17 @@ public class PyStructuredDocstringFormatter {
   private static String runExternalTool(@NotNull final Module module,
                                         @NotNull final HelperPackage formatter,
                                         @NotNull final String docstring) {
-    final Sdk sdk = PythonSdkType.findPython2Sdk(module);
-    if (sdk == null) return null;
+    final Sdk sdk;
+    if (formatter == PythonHelper.EPYDOC_FORMATTER) {
+      sdk = PythonSdkType.findPython2Sdk(module);
+    }
+    else {
+      sdk = PythonSdkType.findLocalCPython(module);
+    }
+    if (sdk == null) {
+      LOG.info("Python SDK for docstring formatter " + formatter +  " is not found");
+      return null;
+    }
 
     final String sdkHome = sdk.getHomePath();
     if (sdkHome == null) return null;

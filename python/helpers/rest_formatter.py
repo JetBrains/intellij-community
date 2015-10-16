@@ -1,16 +1,35 @@
 import re
 import sys
-
 from docutils import nodes
 from docutils.core import publish_string
+from docutils.frontend import OptionParser
 from docutils.nodes import Text, field_body, field_name, rubric
-from docutils.writers.html4css1 import HTMLTranslator
-from epydoc.markup import DocstringLinker
-from epydoc.markup.restructuredtext import ParsedRstDocstring, _EpydocHTMLTranslator, \
-    _DocumentPseudoWriter, _EpydocReader
+from docutils.writers.html4css1 import HTMLTranslator, Writer as HTMLWriter
+from docutils.writers import Writer
 
 
-class RestHTMLTranslator(_EpydocHTMLTranslator):
+class RestHTMLTranslator(HTMLTranslator):
+    settings = None
+
+    def __init__(self, document):
+        # Copied from epydoc.markup.restructuredtext._EpydocHTMLTranslator
+        if self.settings is None:
+            settings = OptionParser([HTMLWriter()]).get_default_values()
+            self.__class__.settings = settings
+        document.settings = self.settings
+
+        HTMLTranslator.__init__(self, document)
+
+    def visit_document(self, node): pass
+
+    def depart_document(self, node): pass
+
+    def visit_docinfo(self, node): pass
+
+    def depart_docinfo(self, node): pass
+
+    def unimplemented_visit(self, node): pass
+
     def visit_field_name(self, node):
         atts = {}
         if self.in_docinfo:
@@ -166,7 +185,7 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
         if m:
             _, directive, text = m.groups('')
             if directive[1:-1] == 'exc':
-                self.body.append(self.starttag(node, 'a', '', href = 'psi_element://#typename#' + text))
+                self.body.append(self.starttag(node, 'a', '', href='psi_element://#typename#' + text))
                 self.body.append(text)
                 self.body.append('</a>')
             else:
@@ -215,51 +234,34 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
         raise nodes.SkipNode
 
 
-class MyParsedRstDocstring(ParsedRstDocstring):
-    def __init__(self, document):
-        ParsedRstDocstring.__init__(self, document)
+def format_docstring(docstring):
+    class _DocumentPseudoWriter(Writer):
+        def __init__(self):
+            self.document = None
+            Writer.__init__(self)
 
-    def to_html(self, docstring_linker, directory=None,
-                docindex=None, context=None, **options):
-        visitor = RestHTMLTranslator(self._document, docstring_linker,
-                                     directory, docindex, context)
-        self._document.walkabout(visitor)
-        return ''.join(visitor.body)
+        def translate(self):
+            self.output = ''
 
-
-def parse_docstring(docstring, errors, **options):
     writer = _DocumentPseudoWriter()
-    reader = _EpydocReader(errors)  # Outputs errors to the list.
-    publish_string(docstring, writer=writer, reader=reader,
-                   settings_overrides={'report_level': 10000,
-                                       'halt_level': 10000,
-                                       'warning_stream': None})
-    return MyParsedRstDocstring(writer.document)
+    publish_string(docstring, writer=writer, settings_overrides={'report_level': 10000,
+                                                                 'halt_level': 10000,
+                                                                 'warning_stream': None})
+    document = writer.document
+    document.settings.xml_declaration = None
+    visitor = RestHTMLTranslator(document)
+    document.walkabout(visitor)
+    return ''.join(visitor.body)
 
 
 def main(text=None):
     src = sys.stdin.read() if text is None else text
 
-    errors = []
-
-    class EmptyLinker(DocstringLinker):
-        def translate_indexterm(self, indexterm):
-            return ""
-
-        def translate_identifier_xref(self, identifier, label=None):
-            return identifier
-
-    docstring = parse_docstring(src, errors)
-    html = docstring.to_html(EmptyLinker())
-
-    if errors and not html:
-        sys.stderr.write("Error parsing docstring:\n")
-        for error in errors:
-            sys.stderr.write(str(error) + "\n")
-        sys.exit(1)
+    html = format_docstring(src)
 
     sys.stdout.write(html)
     sys.stdout.flush()
+
 
 if __name__ == '__main__':
     main()
