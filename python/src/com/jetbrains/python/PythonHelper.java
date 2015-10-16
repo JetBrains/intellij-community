@@ -89,7 +89,7 @@ public enum PythonHelper implements HelperPackage {
     return new ModuleHelperPackage(moduleEntryPoint, path);
   }
 
-  private PathHelperPackage myModule;
+  private final PathHelperPackage myModule;
 
   PythonHelper(String pythonPath, String moduleName) {
     this(pythonPath, moduleName, false);
@@ -104,6 +104,8 @@ public enum PythonHelper implements HelperPackage {
   }
 
 
+  @NotNull
+  @Override
   public String getPythonPath() {
     return myModule.getPythonPath();
   }
@@ -126,18 +128,20 @@ public enum PythonHelper implements HelperPackage {
       group.addParameter(asParamString());
     }
 
+    @NotNull
     @Override
     public String asParamString() {
       return FileUtil.toSystemDependentName(myPath.getAbsolutePath());
     }
 
+    @NotNull
     @Override
-    public GeneralCommandLine newCommandLine(String sdkPath, List<String> parameters) {
-      List<String> args = Lists.newArrayList();
+    public GeneralCommandLine newCommandLine(@NotNull String sdkPath, @NotNull List<String> parameters) {
+      final List<String> args = Lists.newArrayList();
       args.add(sdkPath);
       args.add(asParamString());
       args.addAll(parameters);
-      GeneralCommandLine cmd = new GeneralCommandLine(args);
+      final GeneralCommandLine cmd = new GeneralCommandLine(args);
       addToPythonPath(cmd.getEnvironment());
       return cmd;
     }
@@ -154,11 +158,13 @@ public enum PythonHelper implements HelperPackage {
       this.myModuleName = moduleName;
     }
 
+    @NotNull
     @Override
     public String asParamString() {
       return "-m" + myModuleName;
     }
 
+    @NotNull
     @Override
     public String getPythonPath() {
       return FileUtil.toSystemDependentName(myPath.getAbsolutePath());
@@ -171,7 +177,7 @@ public enum PythonHelper implements HelperPackage {
    * with .pyc files
    */
   public static class ScriptPythonHelper extends PathHelperPackage {
-    private String myPythonPath;
+    private final String myPythonPath;
 
     public ScriptPythonHelper(String script, File pythonPath) {
       super(new File(pythonPath, script).getAbsolutePath());
@@ -184,6 +190,7 @@ public enum PythonHelper implements HelperPackage {
       PythonEnvUtil.addToPythonPath(environment, myPythonPath);
     }
 
+    @NotNull
     @Override
     public String getPythonPath() {
       return myPythonPath;
@@ -201,14 +208,15 @@ public enum PythonHelper implements HelperPackage {
     myModule.addToGroup(group, cmd);
   }
 
-
+  @NotNull
   @Override
   public String asParamString() {
     return myModule.asParamString();
   }
 
+  @NotNull
   @Override
-  public GeneralCommandLine newCommandLine(String sdkPath, List<String> parameters) {
+  public GeneralCommandLine newCommandLine(@NotNull String sdkPath, @NotNull List<String> parameters) {
     return myModule.newCommandLine(sdkPath, parameters);
   }
 
