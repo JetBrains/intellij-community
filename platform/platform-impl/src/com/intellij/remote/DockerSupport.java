@@ -62,6 +62,22 @@ public abstract class DockerSupport {
   @NotNull
   public abstract ConnectionInfo getConnectionInfo();
 
+  /**
+   * Returns list of set of repository tags for every available (built and pulled) image. E.g.:
+   * <pre>
+   * {
+   *    ["django:1.8.5", "django:python3", "django:latest"],
+   *    ["python:2", "python:2.7"],
+   *    ["python:3", "python:3.4.3", "python:latest"]
+   * }
+   * </pre>
+   *
+   * @param machineName Docker machine name
+   * @return list of set of repository tags for every available (built and pulled) image
+   */
+  @NotNull
+  public abstract List<String[]> getImages(@NotNull String machineName);
+
   public static class ConnectionInfo {
     @NotNull private final String myApiUrl;
     @Nullable private final String myCertificatesPath;

@@ -54,7 +54,7 @@ public class RepoBuilder(val repo: GitRepository) {
       }
     }
     else {
-      if (git("branch").splitBy("\n").map({ it.replace("*", "") }).contains(branch)) {
+      if (git("branch").split("\n").map({ it.replace("*", "") }).contains(branch)) {
         git("checkout $branch")
       }
       else {

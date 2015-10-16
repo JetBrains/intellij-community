@@ -156,9 +156,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   protected boolean canUninstallPackage(InstalledPackage pkg) {
     if (!myHasManagement) return false;
 
-    if (PythonSdkType.isDocker(getSelectedSdk())) {
-      return false;
-    }
+    if (!PyPackageUtil.packageManagementEnabled(getSelectedSdk())) return false;
 
     if (PythonSdkType.isVirtualEnv(getSelectedSdk()) && pkg instanceof PyPackage) {
       final String location = ((PyPackage)pkg).getLocation();
@@ -183,18 +181,14 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
 
   @Override
   protected boolean installEnabled() {
-    if (PythonSdkType.isDocker(getSelectedSdk())) {
-      return false;
-    }
+    if (!PyPackageUtil.packageManagementEnabled(getSelectedSdk())) return false;
 
     return myHasManagement;
   }
 
   @Override
   protected boolean canUpgradePackage(InstalledPackage pyPackage) {
-    if (PythonSdkType.isDocker(getSelectedSdk())) {
-      return false;
-    }
+    if (!PyPackageUtil.packageManagementEnabled(getSelectedSdk())) return false;
 
     return myHasManagement && !PyCondaPackageManagerImpl.PYTHON.equals(pyPackage.getName());
   }

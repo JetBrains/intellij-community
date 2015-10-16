@@ -67,7 +67,7 @@ public abstract class Promise<T> {
   }
 
   @NotNull
-  public static Promise<Void> all(@NotNull Collection<Promise<?>> promises) {
+  public static Promise<?> all(@NotNull Collection<Promise<?>> promises) {
     return all(promises, null);
   }
 

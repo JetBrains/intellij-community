@@ -30,7 +30,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ComponentConfig;
-import com.intellij.openapi.components.ComponentsPackage;
+import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
@@ -165,7 +165,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @NotNull
   @Deprecated
   public IComponentStore getStateStore() {
-    return ComponentsPackage.getStateStore(this);
+    return ServiceKt.getStateStore(this);
   }
 
   public ApplicationImpl(boolean isInternal,
@@ -473,7 +473,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           }
 
           // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
-          ComponentsPackage.getStateStore(ApplicationImpl.this).setPath(effectiveConfigPath);
+          ServiceKt.getStateStore(ApplicationImpl.this).setPath(effectiveConfigPath);
         }
       });
       t = System.currentTimeMillis() - t;
@@ -1422,7 +1422,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     if (mySaveSettingsIsInProgress.compareAndSet(false, true)) {
       try {
-        StoreUtil.save(ComponentsPackage.getStateStore(this), null);
+        StoreUtil.save(ServiceKt.getStateStore(this), null);
       }
       finally {
         mySaveSettingsIsInProgress.set(false);

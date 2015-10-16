@@ -77,13 +77,14 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private boolean myShowOtherProjectVirtualenvs = true;
   private final Module myModule;
+  private Runnable mySdkSettingsWereModified;
   private NullableConsumer<Sdk> myShowMoreCallback;
   private SdkModel.Listener myListener;
 
-  public PythonSdkDetailsDialog(Project project, NullableConsumer<Sdk> showMoreCallback) {
+  public PythonSdkDetailsDialog(Project project, NullableConsumer<Sdk> showMoreCallback, Runnable sdkSettingsWereModified) {
     super(project, true);
     myModule = null;
-
+    mySdkSettingsWereModified = sdkSettingsWereModified;
     setTitle(PyBundle.message("sdk.details.dialog.title"));
     myShowMoreCallback = showMoreCallback;
     myProject = project;
@@ -99,9 +100,10 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     super.dispose();
   }
 
-  public PythonSdkDetailsDialog(Module module, NullableConsumer<Sdk> showMoreCallback) {
+  public PythonSdkDetailsDialog(Module module, NullableConsumer<Sdk> showMoreCallback, Runnable sdkSettingsWereModified) {
     super(module.getProject());
     myModule = module;
+    mySdkSettingsWereModified = sdkSettingsWereModified;
 
     setTitle(PyBundle.message("sdk.details.dialog.title"));
     myShowMoreCallback = showMoreCallback;
@@ -191,8 +193,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       projectSdk = myProjectSdksModel.findSdk(projectSdk.getName());
     }
     return getSelectedSdk() != projectSdk || mySdkListChanged ||
-           myProjectSdksModel.isModified() ||
-           !myModifiedModificators.isEmpty();
+           myProjectSdksModel.isModified() || !myModifiedModificators.isEmpty();
   }
 
   protected void updateOkButton() {
@@ -210,6 +211,9 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   public void apply() throws ConfigurationException {
+    if (!myModifiedModificators.isEmpty()) {
+      mySdkSettingsWereModified.run();
+    }
     for (SdkModificator modificator : myModifiedModificators) {
       modificator.commitChanges();
     }
@@ -414,7 +418,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private void reloadSdk(Sdk currentSdk) {
-    PythonSdkType.setupSdkPaths(currentSdk, myProject, null, myModificators.get(currentSdk)); // or must it be a RunWriteAction?
+    PythonSdkType.getInstance().setupSdkPaths(currentSdk, myProject, null, myModificators.get(currentSdk)); // or must it be a RunWriteAction?
   }
 
   private class ToggleVirtualEnvFilterButton extends ToggleActionButton implements DumbAware {

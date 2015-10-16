@@ -23,7 +23,9 @@ package com.intellij.codeEditor.printing;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.LineMarkersPass;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -43,9 +45,15 @@ public class FileSeparatorProvider {
 
     Collections.sort(result, new Comparator<LineMarkerInfo>() {
       public int compare(final LineMarkerInfo i1, final LineMarkerInfo i2) {
-        return i1.startOffset - i2.startOffset;
+        return getDisplayLine(i1, document) - getDisplayLine(i2, document);
       }
     });
     return result;
+  }
+
+  public static int getDisplayLine(@NotNull LineMarkerInfo lineMarkerInfo, @NotNull Document document) {
+    int offset = lineMarkerInfo.separatorPlacement == SeparatorPlacement.TOP ? lineMarkerInfo.startOffset : lineMarkerInfo.endOffset;
+    return document.getLineNumber(Math.min(document.getTextLength(), Math.max(0, offset))) +
+           (lineMarkerInfo.separatorPlacement == SeparatorPlacement.TOP ? 0 : 1);
   }
 }

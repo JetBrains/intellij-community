@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -165,24 +164,13 @@ class IdeStartupScripts extends ApplicationComponent.Adapter {
 
   @NotNull
   private static List<VirtualFile> getScripts() {
-    List<VirtualFile> scripts = ContainerUtil.emptyList();
-
     VirtualFile root = getScriptsRootDirectory();
-    if (root != null) {
-      VfsUtil.markDirtyAndRefresh(false, true, true, root);
-      scripts = VfsUtil.collectChildrenRecursively(root);
-    }
+    if (root == null) return ContainerUtil.emptyList();
 
-    scripts = ContainerUtil.filter(scripts, new Condition<VirtualFile>() {
-      private final ExtensionsRootType myExtensionsRootType = ExtensionsRootType.getInstance();
-      @Override
-      public boolean value(VirtualFile file) {
-        return !file.isDirectory() && !myExtensionsRootType.isBackupFile(file);
-      }
-    });
-
+    VfsUtil.markDirtyAndRefresh(false, true, true, root);
+    List<VirtualFile> scripts = VfsUtil.collectChildrenRecursively(root);
+    scripts = ContainerUtil.filter(scripts, ExtensionsRootType.regularFileFilter());
     ContainerUtil.sort(scripts, new FileNameComparator());
-
     return scripts;
   }
 

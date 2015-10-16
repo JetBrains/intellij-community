@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.rpc.CommandProcessor;
+import org.jetbrains.rpc.CommandProcessorKt;
 
 public final class RejectErrorReporter implements Consumer<Throwable> {
   private final XDebugSession session;
@@ -38,7 +38,7 @@ public final class RejectErrorReporter implements Consumer<Throwable> {
 
   @Override
   public void consume(Throwable error) {
-    Promise.logError(CommandProcessor.LOG, error);
+    Promise.logError(CommandProcessorKt.getLOG(), error);
     if (error != AsyncPromise.OBSOLETE_ERROR) {
       session.reportError((description == null ? "" : description + ": ") + error.getMessage());
     }

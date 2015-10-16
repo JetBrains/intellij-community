@@ -41,3 +41,4 @@ def foo(a, <weak_warning descr="Missing parameter c in docstring">c</weak_warnin
   @return:
   """
   pass
+  

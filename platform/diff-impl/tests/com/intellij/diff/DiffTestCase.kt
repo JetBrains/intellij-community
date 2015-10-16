@@ -194,14 +194,14 @@ public abstract class DiffTestCase : UsefulTestCase() {
   // Helpers
   //
 
-  public data open class Trio<T>(val data1: T, val data2: T, val data3: T) {
+  public open class Trio<T: Any>(val data1: T, val data2: T, val data3: T) {
     companion object {
-      public fun <V> from(f: (ThreeSide) -> V): Trio<V> = Trio(f(ThreeSide.LEFT), f(ThreeSide.BASE), f(ThreeSide.RIGHT))
+      public fun <V: Any> from(f: (ThreeSide) -> V): Trio<V> = Trio(f(ThreeSide.LEFT), f(ThreeSide.BASE), f(ThreeSide.RIGHT))
     }
 
-    public fun <V> map(f: (T) -> V): Trio<V> = Trio(f(data1), f(data2), f(data3))
+    public fun <V: Any> map(f: (T) -> V): Trio<V> = Trio(f(data1), f(data2), f(data3))
 
-    public fun <V> map(f: (T, ThreeSide) -> V): Trio<V> = Trio(f(data1, ThreeSide.LEFT), f(data2, ThreeSide.BASE), f(data3, ThreeSide.RIGHT))
+    public fun <V: Any> map(f: (T, ThreeSide) -> V): Trio<V> = Trio(f(data1, ThreeSide.LEFT), f(data2, ThreeSide.BASE), f(data3, ThreeSide.RIGHT))
 
     public fun forEach(f: (T, ThreeSide) -> Unit): Unit {
       f(data1, ThreeSide.LEFT)
@@ -213,6 +213,14 @@ public abstract class DiffTestCase : UsefulTestCase() {
 
     override fun toString(): String {
       return "($data1, $data2, $data3)"
+    }
+
+    override fun equals(other: Any?): Boolean {
+      return other is Trio<*> && other.data1 == data1 && other.data2 == data2 && other.data3 == data3
+    }
+
+    override fun hashCode(): Int {
+      return data1.hashCode() * 37 * 37 + data2.hashCode() * 37 + data3.hashCode()
     }
   }
 }

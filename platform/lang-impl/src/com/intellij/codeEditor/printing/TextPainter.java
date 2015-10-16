@@ -374,7 +374,7 @@ class TextPainter extends BasePainter {
     double lineY = position.getY();
 
     if (myPerformActualDrawing) {
-      setInitialMethodSeparatorIndex(lIterator.getEnd());
+      getMethodSeparator(lIterator.getLineNumber());
     }
 
     while (!hIterator.atEnd() && !lIterator.atEnd()) {
@@ -390,9 +390,12 @@ class TextPainter extends BasePainter {
         drawLineNumber(g, 0, lineY);
         lIterator.advance();
         myLineNumber++;
+        position.setLocation(0, position.getY() + lineHeight);
+        lineY = position.getY();
+        myOffset = lEnd;
 
         if (myPerformActualDrawing) {
-          LineMarkerInfo marker = getMethodSeparator(lEnd);
+          LineMarkerInfo marker = getMethodSeparator(lIterator.getLineNumber());
           if (marker != null) {
             Color save = g.getColor();
             setForegroundColor(g, marker.separatorColor);
@@ -401,9 +404,6 @@ class TextPainter extends BasePainter {
           }
         }
 
-        position.setLocation(0, position.getY() + lineHeight);
-        lineY = position.getY();
-        myOffset = lEnd;
         if (position.getY() > clip.getY() + clip.getHeight() - lineHeight) {
           break;
         }
@@ -443,24 +443,17 @@ class TextPainter extends BasePainter {
 
     g.translate(-clip.getX(), 0);
   }
-  
-  private void setInitialMethodSeparatorIndex(int initialOffset) {
-    while (myCurrentMethodSeparator < myMethodSeparators.length) {
-      LineMarkerInfo marker = myMethodSeparators[myCurrentMethodSeparator];
-      if (marker != null && marker.startOffset >= initialOffset) break;
+
+  private LineMarkerInfo getMethodSeparator(int line) {
+    LineMarkerInfo marker = null;
+    LineMarkerInfo tmpMarker;
+    while (myCurrentMethodSeparator < myMethodSeparators.length &&
+           (tmpMarker = myMethodSeparators[myCurrentMethodSeparator]) != null &&
+           FileSeparatorProvider.getDisplayLine(tmpMarker, myDocument) <= line) {
+      marker = tmpMarker;
       myCurrentMethodSeparator++;
     }
-  }
-
-  private LineMarkerInfo getMethodSeparator(int currentOffset) {
-    if (myCurrentMethodSeparator < myMethodSeparators.length) {
-      LineMarkerInfo marker = myMethodSeparators[myCurrentMethodSeparator];
-      if (marker != null && marker.startOffset < currentOffset) {
-        myCurrentMethodSeparator++;
-        return marker;
-      }
-    }
-    return null;
+    return marker;
   }
 
   private double drawHeader(Graphics2D g, Rectangle2D clip) {

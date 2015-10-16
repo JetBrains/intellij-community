@@ -17,8 +17,8 @@ package com.intellij.openapi.components.impl;
 
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +51,7 @@ public abstract class PlatformComponentManagerImpl extends ComponentManagerImpl 
   @Override
   public void initializeComponent(@NotNull Object component, boolean service) {
     if (!service || !(component instanceof PathMacroManager || component instanceof IComponentStore)) {
-      ComponentsPackage.getStateStore(this).initComponent(component, service);
+      ServiceKt.getStateStore(this).initComponent(component, service);
     }
   }
 }

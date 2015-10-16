@@ -175,6 +175,11 @@ if [ -n "$@@product_uc@@_CLASSPATH" ]; then
   CLASSPATH="$CLASSPATH:$@@product_uc@@_CLASSPATH"
 fi
 
+if [ -n "$JAVA_TOOL_OPTIONS" -a "$JAVA_TOOL_OPTIONS" != "${JAVA_TOOL_OPTIONS%-javaagent*jayatanaag.jar*}" ] ; then
+  export _ORIGINAL_JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS"
+  JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS%-javaagent*jayatanaag.jar*}${JAVA_TOOL_OPTIONS#*jayatanaag.jar}"
+fi
+
 # ---------------------------------------------------------------------
 # Run the IDE.
 # ---------------------------------------------------------------------

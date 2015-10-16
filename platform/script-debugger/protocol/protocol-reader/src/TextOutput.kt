@@ -1,23 +1,23 @@
 package org.jetbrains.protocolReader
 
-import java.util.Arrays
+import java.util.*
 
-public val EMPTY_CHARS: CharArray = CharArray(0)
+val EMPTY_CHARS: CharArray = CharArray(0)
 private val indentGranularity = 2
 
-public class TextOutput(public val out: StringBuilder) {
+class TextOutput(public val out: StringBuilder) {
   private var identLevel: Int = 0
   private var indents = arrayOf(EMPTY_CHARS)
   private var justNewLined: Boolean = false
 
-  public fun indentIn(): TextOutput {
+  fun indentIn(): TextOutput {
     ++identLevel
-    if (identLevel >= indents.size) {
+    if (identLevel >= indents.size()) {
       // Cache a new level of indentation string.
       val newIndentLevel = CharArray(identLevel * indentGranularity)
       Arrays.fill(newIndentLevel, ' ')
-      val newIndents = arrayOfNulls<CharArray>(indents.size + 1)
-      System.arraycopy(indents, 0, newIndents, 0, indents.size)
+      val newIndents = arrayOfNulls<CharArray>(indents.size() + 1)
+      System.arraycopy(indents, 0, newIndents, 0, indents.size())
       newIndents[identLevel] = newIndentLevel
       indents = newIndents as Array<CharArray>
     }
@@ -89,32 +89,24 @@ public class TextOutput(public val out: StringBuilder) {
     indentIn()
   }
 
-  public fun closeBlock() {
+  fun closeBlock() {
     indentOut().newLine().append('}')
   }
 
-  public fun comma(): TextOutput {
-    return append(',').space()
-  }
+  fun comma() = append(',').space()
 
-  public fun space(): TextOutput {
-    return append(' ')
-  }
+  fun space() = append(' ')
 
-  public fun semi(): TextOutput {
-    return append(';')
-  }
+  fun semi() = append(';')
 
-  public fun doc(description: String?): TextOutput {
+  fun doc(description: String?): TextOutput {
     if (description == null) {
       return this
     }
     return append("/**").newLine().append(" * ").append(description).newLine().append(" */").newLine()
   }
 
-  public fun quote(s: CharSequence): TextOutput {
-    return append('"').append(s).append('"')
-  }
+  fun quote(s: CharSequence) = append('"').append(s).append('"')
 
   public fun maybeIndent() {
     if (justNewLined) {

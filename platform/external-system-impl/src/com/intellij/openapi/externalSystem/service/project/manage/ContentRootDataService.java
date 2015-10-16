@@ -122,7 +122,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
       final ContentRootData contentRoot = node.getData();
 
       final ContentEntry contentEntry = findOrCreateContentRoot(modifiableRootModel, contentRoot.getRootPath());
-      contentEntry.clearExcludeFolders();
+      // clear source folders but do not remove existing excluded folders
       contentEntry.clearSourceFolders();
       LOG.debug(String.format("Importing content root '%s' for module '%s'", contentRoot.getRootPath(), module.getName()));
       for (SourceRoot path : contentRoot.getPaths(ExternalSystemSourceType.SOURCE)) {

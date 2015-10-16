@@ -38,6 +38,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, Disposable {
@@ -178,7 +179,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   }
 
   public void createAndAddCell(final boolean below) {
-    final IpnbCodeCell cell = new IpnbCodeCell("python", new String[]{""}, null, new ArrayList<IpnbOutputCell>());
+    final IpnbCodeCell cell = new IpnbCodeCell("python", Collections.<String>emptyList(), null, new ArrayList<IpnbOutputCell>());
     final IpnbCodePanel codePanel = new IpnbCodePanel(myProject, myParent, cell);
 
     addCell(codePanel, below);
@@ -493,7 +494,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
         ipnbPanel.setEditing(false);
         ipnbPanel.requestFocus();
         repaint();
-        setSelectedCell(ipnbPanel);
+        setSelectedCell(ipnbPanel, true);
       }
     }
   }
@@ -503,6 +504,10 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   }
 
   public void setSelectedCell(@NotNull final IpnbEditablePanel ipnbPanel) {
+    setSelectedCell(ipnbPanel, false);
+  }
+
+  public void setSelectedCell(@NotNull final IpnbEditablePanel ipnbPanel, boolean mouse) {
     if (ipnbPanel.equals(mySelectedCell)) return;
     if (mySelectedCell != null)
       mySelectedCell.setEditing(false);
@@ -511,7 +516,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     UIUtil.requestFocus(this);
     repaint();
     if (ipnbPanel.getBounds().getHeight() != 0) {
-      myListener.selectionChanged(ipnbPanel);
+      myListener.selectionChanged(ipnbPanel, mouse);
     }
   }
 
@@ -579,5 +584,10 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
   public Project getProject() {
     return myProject;
+  }
+
+  @NotNull
+  public VirtualFile getVirtualFile() {
+    return myVirtualFile;
   }
 }

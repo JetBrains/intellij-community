@@ -18,6 +18,6 @@ public class IpnbLatexPanel extends IpnbCodeOutputPanel<IpnbLatexOutputCell> {
 
   @Override
   protected JComponent createViewPanel() {
-    return IpnbUtils.createLatexPane(StringUtil.join(myCell.getLatex()));
+    return IpnbUtils.createLatexPane(StringUtil.join(myCell.getLatex(), ""));
   }
 }

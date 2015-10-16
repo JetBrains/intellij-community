@@ -18,8 +18,8 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.stores.BatchUpdateListener;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
@@ -236,7 +236,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     else {
       flat.add(projectFilePath);
       // may be not existing yet
-      ContainerUtil.addIfNotNull(flat, ((IProjectStore)ComponentsPackage.getStateStore(myProject)).getWorkspaceFilePath());
+      ContainerUtil.addIfNotNull(flat, ((IProjectStore)ServiceKt.getStateStore(myProject)).getWorkspaceFilePath());
     }
 
     for (WatchedRootsProvider extension : Extensions.getExtensions(WatchedRootsProvider.EP_NAME, myProject)) {

@@ -14,6 +14,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 
 public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEditableCell> extends IpnbPanel<T, K> {
   private static final Logger LOG = Logger.getInstance(IpnbEditablePanel.class);
@@ -190,7 +191,7 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
 
   public void updateCellSource() {
     final String text = myEditablePanel.getText();
-    myCell.setSource(StringUtil.splitByLinesKeepSeparators(text != null ? text : ""));
+    myCell.setSource(Arrays.asList(StringUtil.splitByLinesKeepSeparators(text != null ? text : "")));
   }
 
   @SuppressWarnings("CloneDoesntDeclareCloneNotSupportedException")

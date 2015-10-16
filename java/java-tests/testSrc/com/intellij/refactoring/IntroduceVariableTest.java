@@ -476,6 +476,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("c", false, false, false, "int"));
   }
 
+  public void testPutInLambdaBodyMultipleOccurrences() {
+    doTest(new MockIntroduceVariableHandler("c", true, false, false, "java.lang.Class<?>"));
+  }
+
   public void testPutInLambdaBodyVoidValueConflict() {
     doTest(new MockIntroduceVariableHandler("c", false, false, false, "int"));
   }

@@ -67,6 +67,7 @@ public class PyDebugRunner extends GenericProgramRunner {
   public static final String FILE_PARAM = "--file";
   public static final String MODULE_PARAM = "--module";
   public static final String IDE_PROJECT_ROOTS = "IDE_PROJECT_ROOTS";
+  public static final String PYTHON_ASYNCIO_DEBUG = "PYTHONASYNCIODEBUG";
   @SuppressWarnings("SpellCheckingInspection")
   public static final String GEVENT_SUPPORT = "GEVENT_SUPPORT";
   public static boolean isModule = false;
@@ -216,13 +217,13 @@ public class PyDebugRunner extends GenericProgramRunner {
     return runConfigPatcher;
   }
 
-  public static CommandLinePatcher[] createCommandLinePatchers(final Project project, final PythonCommandLineState state,
+  public CommandLinePatcher[] createCommandLinePatchers(final Project project, final PythonCommandLineState state,
                                                                RunProfile profile,
                                                                final int serverLocalPort) {
     return new CommandLinePatcher[]{createDebugServerPatcher(project, state, serverLocalPort), createRunConfigPatcher(state, profile)};
   }
 
-  private static CommandLinePatcher createDebugServerPatcher(final Project project,
+  private CommandLinePatcher createDebugServerPatcher(final Project project,
                                                              final PythonCommandLineState pyState,
                                                              final int serverLocalPort) {
     return new CommandLinePatcher() {
@@ -275,13 +276,35 @@ public class PyDebugRunner extends GenericProgramRunner {
     };
   }
 
-  private static void fillDebugParameters(@NotNull Project project,
+  private void fillDebugParameters(@NotNull Project project,
                                           @NotNull ParamsGroup debugParams,
                                           int serverLocalPort,
                                           @NotNull PythonCommandLineState pyState,
                                           @NotNull GeneralCommandLine cmd) {
     PythonHelper.DEBUGGER.addToGroup(debugParams, cmd);
 
+    configureDebugParameters(project, debugParams, pyState, cmd);
+
+    if (PyDebuggerOptionsProvider.getInstance(project).isSupportGeventDebugging()) {
+      cmd.getEnvironment().put(GEVENT_SUPPORT, "True");
+    }
+
+    addProjectRootsToEnv(project, cmd);
+
+    final String[] debuggerArgs = new String[]{
+      CLIENT_PARAM, "127.0.0.1",
+      PORT_PARAM, String.valueOf(serverLocalPort),
+      FILE_PARAM
+    };
+    for (String s : debuggerArgs) {
+      debugParams.addParameter(s);
+    }
+  }
+
+  protected void configureDebugParameters(@NotNull Project project,
+                                        @NotNull ParamsGroup debugParams,
+                                        @NotNull PythonCommandLineState pyState,
+                                        @NotNull GeneralCommandLine cmd) {
     if (pyState.isMultiprocessDebug()) {
       //noinspection SpellCheckingInspection
       debugParams.addParameter("--multiproc");
@@ -297,21 +320,6 @@ public class PyDebugRunner extends GenericProgramRunner {
 
     if (PyDebuggerOptionsProvider.getInstance(project).isSaveCallSignatures()) {
       debugParams.addParameter("--save-signatures");
-    }
-
-    if (PyDebuggerOptionsProvider.getInstance(project).isSupportGeventDebugging()) {
-      cmd.getEnvironment().put(GEVENT_SUPPORT, "True");
-    }
-
-    addProjectRootsToEnv(project, cmd);
-
-    final String[] debuggerArgs = new String[]{
-      CLIENT_PARAM, "127.0.0.1",
-      PORT_PARAM, String.valueOf(serverLocalPort),
-      FILE_PARAM
-    };
-    for (String s : debuggerArgs) {
-      debugParams.addParameter(s);
     }
   }
 

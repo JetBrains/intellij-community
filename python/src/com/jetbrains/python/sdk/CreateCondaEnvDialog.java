@@ -20,10 +20,12 @@ import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.components.JBLabel;
 import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
+import com.jetbrains.python.packaging.PyCondaPackageService;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import com.jetbrains.python.validation.UnsupportedFeaturesUtil;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +64,23 @@ public class CreateCondaEnvDialog extends AbstractCreateVirtualEnvDialog {
     final List<VirtualFile> locations = VirtualEnvSdkFlavor.getCondaDefaultLocations();
     if (!locations.isEmpty()) {
       myInitialPath = locations.get(0).getPath();
+      return;
     }
+    else {
+      final String conda = PyCondaPackageService.getCondaExecutable();
+      if (conda != null) {
+        final VirtualFile condaFile = LocalFileSystem.getInstance().findFileByPath(conda);
+        if (condaFile != null) {
+          final VirtualFile condaDir = condaFile.getParent().getParent();
+          final VirtualFile envs = condaDir.findChild("envs");
+          if (envs != null) {
+            myInitialPath = envs.getPath();
+            return;
+          }
+        }
+      }
+    }
+    super.setInitialDestination();
   }
 
   protected void layoutPanel(final List<Sdk> allSdks) {
@@ -125,15 +143,14 @@ public class CreateCondaEnvDialog extends AbstractCreateVirtualEnvDialog {
   }
 
   protected void checkValid() {
+    setOKActionEnabled(true);
+    setErrorText(null);
+
     super.checkValid();
     if (mySdkCombo.getSelectedItem() == null) {
       setOKActionEnabled(false);
       setErrorText("Select python version");
-      return;
     }
-
-    setOKActionEnabled(true);
-    setErrorText(null);
   }
 
   protected void registerValidators(final FacetValidatorsManager validatorsManager) {

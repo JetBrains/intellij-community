@@ -158,10 +158,38 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
 
     def visit_problematic(self, node):
         """Don't insert hyperlinks to nowhere for e.g. unclosed asterisks."""
-        # Note that children text elements will be visited anyway
+        if not self._is_text_wrapper(node):
+            return HTMLTranslator.visit_problematic(self, node)
+
+        node_text = node.astext()
+        m = re.match(r'(:\w+)?(:\S+:)?`(.+?)`', node_text)
+        if m:
+            _, directive, text = m.groups('')
+            if directive[1:-1] == 'exc':
+                self.body.append(self.starttag(node, 'a', '', href = 'psi_element://#typename#' + text))
+                self.body.append(text)
+                self.body.append('</a>')
+            else:
+                self.body.append(text)
+        else:
+            self.body.append(node_text)
+        raise nodes.SkipNode
 
     def depart_problematic(self, node):
-        pass
+        if not self._is_text_wrapper(node):
+            return HTMLTranslator.depart_problematic(self, node)
+
+    def visit_Text(self, node):
+        text = node.astext()
+        encoded = self.encode(text)
+        if not isinstance(node.parent, (nodes.literal, nodes.literal_block)):
+            encoded = encoded.replace('---', '&mdash;').replace('--', '&ndash;')
+        if self.in_mailto and self.settings.cloak_email_addresses:
+            encoded = self.cloak_email(encoded)
+        self.body.append(encoded)
+
+    def _is_text_wrapper(self, node):
+        return len(node.children) == 1 and isinstance(node.children[0], Text)
 
     def visit_block_quote(self, node):
         self.body.append(self.emptytag(node, "br"))

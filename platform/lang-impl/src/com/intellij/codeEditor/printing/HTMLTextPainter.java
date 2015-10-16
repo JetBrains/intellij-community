@@ -37,6 +37,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.io.*;
@@ -53,6 +54,7 @@ class HTMLTextPainter {
   private final String myHTMLFileName;
   private int mySegmentEnd;
   private final PsiFile myPsiFile;
+  private final Document myDocument;
   private int lineCount;
   private int myFirstLineNumber;
   private final boolean myPrintLineNumbers;
@@ -61,6 +63,7 @@ class HTMLTextPainter {
   private int myCurrentMethodSeparator;
   private final Project myProject;
   private final Map<TextAttributes, String> myStyleMap = new HashMap<TextAttributes, String>();
+  private final Map<Color, String> mySeparatorStyles = new HashMap<Color, String>();
 
   public HTMLTextPainter(PsiFile psiFile, Project project, String dirName, boolean printLineNumbers) {
     myProject = project;
@@ -81,11 +84,11 @@ class HTMLTextPainter {
     myHTMLFileName = dirName + File.separator + ExportToHTMLManager.getHTMLFileName(psiFile);
 
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-    Document document = psiDocumentManager.getDocument(psiFile);
+    myDocument = psiDocumentManager.getDocument(psiFile);
 
     ArrayList<LineMarkerInfo> methodSeparators = new ArrayList<LineMarkerInfo>();
-    if (document != null) {
-      final List<LineMarkerInfo> separators = FileSeparatorProvider.getFileSeparators(psiFile, document);
+    if (myDocument != null) {
+      final List<LineMarkerInfo> separators = FileSeparatorProvider.getFileSeparators(psiFile, myDocument);
       if (separators != null) {
         methodSeparators.addAll(separators);
       }
@@ -129,11 +132,7 @@ class HTMLTextPainter {
       }
       String closeTag = null;
 
-      while (myCurrentMethodSeparator < myMethodSeparators.length) {
-        LineMarkerInfo marker = myMethodSeparators[myCurrentMethodSeparator];
-        if (marker != null && marker.startOffset >= hIterator.getStart()) break;
-        myCurrentMethodSeparator++;
-      }
+      getMethodSeparator(hIterator.getStart());
 
       while(!hIterator.atEnd()) {
         TextAttributes textAttributes = hIterator.getTextAttributes();
@@ -168,14 +167,6 @@ class HTMLTextPainter {
           prevAttributes = textAttributes;
         }
 
-        if (myCurrentMethodSeparator < myMethodSeparators.length) {
-          LineMarkerInfo marker = myMethodSeparators[myCurrentMethodSeparator];
-          if (marker != null && marker.startOffset <= hEnd) {
-            writer.write("<hr>");
-            myCurrentMethodSeparator++;
-          }
-        }
-
         writeString(writer, myText, hStart, hEnd - hStart, fileType);
 //        if(closeTag != null) {
 //          writer.write(closeTag);
@@ -207,6 +198,20 @@ class HTMLTextPainter {
         LOG.error(e.getMessage(), e);
       }
     }
+  }
+
+  private LineMarkerInfo getMethodSeparator(int offset) {
+    if (myDocument == null) return null;
+    int line = myDocument.getLineNumber(Math.max(0, Math.min(myDocument.getTextLength(), offset)));
+    LineMarkerInfo marker = null;
+    LineMarkerInfo tmpMarker;
+    while (myCurrentMethodSeparator < myMethodSeparators.length &&
+           (tmpMarker = myMethodSeparators[myCurrentMethodSeparator]) != null &&
+           FileSeparatorProvider.getDisplayLine(tmpMarker, myDocument) <= line) {
+      marker = tmpMarker;
+      myCurrentMethodSeparator++;
+    }
+    return marker;
   }
 
   private int writeReferenceTag(Writer writer, PsiReference ref) throws IOException {
@@ -269,12 +274,26 @@ class HTMLTextPainter {
         }
       }
       else if (c == '\n' || c == '\r') {
+        boolean writeSlashR = false;
         if (c == '\r' && i+1 < start+length && charArray.charAt(i+1) == '\n') {
-          writeChar(writer, " \r");
+          writeSlashR = true;
+          //noinspection AssignmentToForLoopParameter
           i++;
         }
         else if (c == '\n') {
           writeChar(writer, " ");
+        }
+        
+        LineMarkerInfo marker = getMethodSeparator(i + 1);
+        if (marker != null) {
+          Color color = marker.separatorColor;
+          writer.write("<hr class=\"" + mySeparatorStyles.get(color) + "\">");
+        }
+        else {
+          if (writeSlashR) {
+            writeChar(writer, "\r");
+          }
+          writer.write('\n');
         }
         writeLineNumber(writer);
       }
@@ -290,7 +309,6 @@ class HTMLTextPainter {
   }
 
   private void writeLineNumber(@NonNls Writer writer) throws IOException {
-    writer.write('\n');
     myColumn = 0;
     lineCount++;
     if (myPrintLineNumbers) {
@@ -336,16 +354,16 @@ class HTMLTextPainter {
     writer.write("<style type=\"text/css\">\n");
     writer.write(".ln { color: rgb(0,0,0); font-weight: normal; font-style: normal; }\n");
     HighlighterIterator hIterator = myHighlighter.createIterator(myOffset);
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     while(!hIterator.atEnd()) {
       TextAttributes textAttributes = hIterator.getTextAttributes();
       if (!myStyleMap.containsKey(textAttributes)) {
         @NonNls String styleName = "s" + myStyleMap.size();
         myStyleMap.put(textAttributes, styleName);
         writer.write("." + styleName + " { ");
-        final Color foreColor = textAttributes.getForegroundColor();
-        if (foreColor != null) {
-          writer.write("color: rgb(" + foreColor.getRed() + "," + foreColor.getGreen() + "," + foreColor.getBlue() + "); ");
-        }
+        Color foreColor = textAttributes.getForegroundColor();
+        if (foreColor == null) foreColor = scheme.getDefaultForeground();
+        writer.write("color: " + colorToHtml(foreColor) + "; ");
         if ((textAttributes.getFontType() & Font.BOLD) != 0) {
           writer.write("font-weight: bold; ");
         }
@@ -356,7 +374,20 @@ class HTMLTextPainter {
       }
       hIterator.advance();
     }
+    for (LineMarkerInfo separator : myMethodSeparators) {
+      Color color = separator.separatorColor;
+      if (color != null && !mySeparatorStyles.containsKey(color)) {
+        @NonNls String styleName = "ls" + mySeparatorStyles.size();
+        mySeparatorStyles.put(color, styleName);
+        String htmlColor = colorToHtml(color);
+        writer.write("." + styleName + " { height: 1px; border-width: 0; color: " + htmlColor + "; background-color:" + htmlColor + "}\n");
+      }
+    }
     writer.write("</style>\n");
+  }
+  
+  private static String colorToHtml(@NotNull Color color) {
+    return "rgb(" + color.getRed() + "," + color.getGreen() + "," + color.getBlue() + ")";
   }
 
   private static void writeFooter(@NonNls Writer writer) throws IOException {

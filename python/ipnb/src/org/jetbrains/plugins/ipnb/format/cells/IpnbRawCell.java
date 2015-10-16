@@ -2,15 +2,17 @@ package org.jetbrains.plugins.ipnb.format.cells;
 
 import org.jetbrains.annotations.NotNull;
 
-public class IpnbRawCell implements IpnbCell {
-  @NotNull private String[] mySource;
+import java.util.List;
 
-  public IpnbRawCell(@NotNull final String[] source) {
+public class IpnbRawCell implements IpnbCell {
+  @NotNull private List<String> mySource;
+
+  public IpnbRawCell(@NotNull final List<String> source) {
     mySource = source;
   }
 
   @NotNull
-  public String[] getSource() {
+  public List<String> getSource() {
     return mySource;
   }
 }

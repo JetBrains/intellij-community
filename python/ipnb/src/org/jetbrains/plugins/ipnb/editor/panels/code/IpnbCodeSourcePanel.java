@@ -131,7 +131,7 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
         if (InputEvent.CTRL_DOWN_MASK == e.getModifiersEx()) return;
         final Container ipnbFilePanel = myParent.getParent();
         if (ipnbFilePanel instanceof IpnbFilePanel) {
-          ((IpnbFilePanel)ipnbFilePanel).setSelectedCell(myParent);
+          ((IpnbFilePanel)ipnbFilePanel).setSelectedCell(myParent, true);
           myParent.switchToEditing();
         }
         UIUtil.requestFocus(contentComponent);

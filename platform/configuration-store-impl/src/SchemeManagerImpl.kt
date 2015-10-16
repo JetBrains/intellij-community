@@ -734,7 +734,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
 
         toReplace = i
         if (replaceExisting && existing is ExternalizableScheme) {
-          val oldInfo = schemeToInfo.remove(existing)
+          val oldInfo = schemeToInfo.remove(existing as E)
           if (oldInfo != null && scheme is ExternalizableScheme && !schemeToInfo.containsKey(scheme)) {
             @Suppress("UNCHECKED_CAST")
             schemeToInfo.put(scheme as E, oldInfo)
@@ -813,7 +813,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
         }
 
         if (s is ExternalizableScheme) {
-          schemeToInfo.remove(s)?.scheduleDelete()
+          schemeToInfo.remove(s as E)?.scheduleDelete()
         }
         schemes.remove(i)
         break
