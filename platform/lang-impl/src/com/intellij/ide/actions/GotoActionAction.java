@@ -45,6 +45,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,6 +93,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     if (oldPopup != null) {
       oldPopup.close(false);
     }
+    final Disposable disposable = Disposer.newDisposable();
     final ChooseByNamePopup popup = new ChooseByNamePopup(project, model, new GotoActionItemProvider(model), oldPopup, initialText, false, initialIndex) {
       @Override
       protected void initUI(Callback callback, ModalityState modalityState, boolean allowMultipleSelection) {
@@ -133,9 +135,20 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
         return element instanceof GotoActionModel.MatchedValue && processOptionInplace(((GotoActionModel.MatchedValue)element).value, this, component, e)
                || super.closeForbidden(true);
       }
+
+      @Override
+      public void setDisposed(boolean disposedFlag) {
+        super.setDisposed(disposedFlag);
+        Disposer.dispose(disposable);
+        
+        for (ListSelectionListener listener : myList.getListSelectionListeners()) {
+          myList.removeListSelectionListener(listener);
+        }
+        UIUtil.dispose(myList);
+      }
     };
 
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProgressWindow.TOPIC, new ProgressWindow.Listener() {
+    ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(ProgressWindow.TOPIC, new ProgressWindow.Listener() {
       @Override
       public void progressWindowCreated(ProgressWindow pw) {
         Disposer.register(pw, new Disposable() {
@@ -187,8 +200,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
           }
         }
       }
-    }.registerCustomShortcutSet(shortcutSet, popup.getTextField());
-
+    }.registerCustomShortcutSet(shortcutSet, popup.getTextField(), disposable);
     return popup;
   }
 
