@@ -102,16 +102,24 @@ public class GuavaInspection extends BaseJavaBatchLocalInspectionTool {
       @Override
       public void visitVariable(PsiVariable variable) {
         final PsiType type = variable.getType();
-        if (type instanceof PsiClassType) {
-          final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
-          final PsiClass psiClass = resolveResult.getElement();
-          if (psiClass != null) {
-            final String qName = psiClass.getQualifiedName();
-            final PsiClass targetClass = myGuavaClassConversions.getValue().get(qName);
-            if (targetClass != null) {
-              final VariableTypeFix fix = TypeMigrationVariableTypeFixProvider.createTypeMigrationFix(variable, addTypeParameters(type, resolveResult, targetClass));
-              holder.registerProblem(variable, PROBLEM_DESCRIPTION_FOR_VARIABLE, fix);
-            }
+        final PsiClassType targetType = getConversionClassType(type);
+        if (targetType != null) {
+          holder.registerProblem(variable,
+                                 PROBLEM_DESCRIPTION_FOR_VARIABLE,
+                                 TypeMigrationVariableTypeFixProvider.createTypeMigrationFix(variable, targetType));
+        }
+      }
+
+      @Override
+      public void visitMethod(PsiMethod method) {
+        super.visitMethod(method);
+        final PsiClassType targetType = getConversionClassType(method.getReturnType());
+        if (targetType != null) {
+          final PsiTypeElement typeElement = method.getReturnTypeElement();
+          if (typeElement != null) {
+            holder.registerProblem(typeElement,
+                                   PROBLEM_DESCRIPTION_FOR_VARIABLE,
+                                   new MigrateMethodReturnTypeFix(method, targetType));
           }
         }
       }
@@ -145,6 +153,21 @@ public class GuavaInspection extends BaseJavaBatchLocalInspectionTool {
 
         holder.registerProblem(chain, PROBLEM_DESCRIPTION_FOR_METHOD_CHAIN, new MigrateFluentIterableChainQuickFix(chain, initialType, targetType));
       }
+
+      private PsiClassType getConversionClassType(PsiType initialType) {
+        if (initialType instanceof PsiClassType) {
+          final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)initialType).resolveGenerics();
+          final PsiClass psiClass = resolveResult.getElement();
+          if (psiClass != null) {
+            final String qName = psiClass.getQualifiedName();
+            final PsiClass targetClass = myGuavaClassConversions.getValue().get(qName);
+            if (targetClass != null) {
+              return addTypeParameters(initialType, resolveResult, targetClass);
+            }
+          }
+        }
+        return null;
+      };
 
       private boolean isFluentIterableFromCall(PsiMethodCallExpression expression) {
         PsiMethod method = expression.resolveMethod();
@@ -248,6 +271,49 @@ public class GuavaInspection extends BaseJavaBatchLocalInspectionTool {
     @Override
     public String getFamilyName() {
       return "Replace FluentIterable method chain by Java API";
+    }
+  }
+
+  public static class MigrateMethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+
+    private final PsiClassType myTargetType;
+
+    private MigrateMethodReturnTypeFix(@NotNull PsiMethod method, PsiClassType targetType) {
+      super(method);
+      myTargetType = targetType;
+    }
+
+    @Override
+    public void invoke(@NotNull Project project,
+                       @NotNull PsiFile file,
+                       @Nullable("is null when called from inspection") Editor editor,
+                       @NotNull PsiElement startElement,
+                       @NotNull PsiElement endElement) {
+      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+      try {
+        PsiMethod method = (PsiMethod)getStartElement();
+        final TypeMigrationRules rules = new TypeMigrationRules(TypeMigrationLabeler.getElementType(method));
+        rules.setMigrationRootType(myTargetType);
+        rules.setBoundScope(method.getUseScope());
+        TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, method);
+        UndoUtil.markPsiFileForUndo(file);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }
+
+    @NotNull
+    @Override
+    public String getText() {
+      return "Migrate method return type to '" + myTargetType.getCanonicalText(false) + "'";
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Migrate method return type";
     }
   }
 }

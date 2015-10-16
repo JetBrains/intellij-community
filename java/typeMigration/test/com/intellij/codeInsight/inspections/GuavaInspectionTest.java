@@ -134,6 +134,10 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testReturnType() {
+    doTest();
+  }
+
   private void doTestNoQuickFixes(final Class<? extends IntentionAction>... quickFixesClasses) {
     myFixture.configureByFile(getTestName(true) + ".java");
     myFixture.enableInspections(new GuavaInspection());
@@ -151,7 +155,9 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     boolean actionFound = false;
     myFixture.doHighlighting();
     for (IntentionAction action : myFixture.getAvailableIntentions()) {
-      if (action instanceof VariableTypeFix || action instanceof GuavaInspection.MigrateFluentIterableChainQuickFix) {
+      if (action instanceof VariableTypeFix ||
+          action instanceof GuavaInspection.MigrateFluentIterableChainQuickFix ||
+          action instanceof GuavaInspection.MigrateMethodReturnTypeFix) {
         myFixture.launchAction(action);
         actionFound = true;
         break;
