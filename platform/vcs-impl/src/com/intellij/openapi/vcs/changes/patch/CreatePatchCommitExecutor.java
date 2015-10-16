@@ -36,6 +36,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
+import com.intellij.openapi.vcs.changes.ui.SessionDialog;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -144,9 +145,9 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
         }
       }));
       myPanel.showTextStoreOption();
-      JComponent component = myPanel.getPanel();
-      component.setName("Patch File Settings");
-      return component;
+      JComponent panel = myPanel.getPanel();
+      panel.putClientProperty(SessionDialog.VCS_CONFIGURATION_UI_TITLE, "Patch File Settings");
+      return panel;
     }
 
     public boolean canExecute(Collection<Change> changes, String commitMessage) {
