@@ -84,6 +84,6 @@ private fun Scope.createScopeNodeName(): String {
     Scope.Type.BLOCK -> return XDebuggerBundle.message("scope.block")
     Scope.Type.SCRIPT -> return XDebuggerBundle.message("scope.script")
     Scope.Type.UNKNOWN -> return XDebuggerBundle.message("scope.unknown")
-    else -> throw IllegalArgumentException(type.name)
+    else -> throw IllegalArgumentException(type.name())
   }
 }
