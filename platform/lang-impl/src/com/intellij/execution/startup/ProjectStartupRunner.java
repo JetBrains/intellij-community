@@ -45,7 +45,7 @@ public class ProjectStartupRunner implements StartupActivity {
     RunManagerImpl.getInstanceImpl(project).addRunManagerListener(new RunManagerAdapter() {
       @Override
       public void runConfigurationRemoved(@NotNull RunnerAndConfigurationSettings settings) {
-        projectStartupTaskManager.delete(settings.getName());
+        projectStartupTaskManager.delete(settings.getUniqueID());
       }
 
       @Override
@@ -65,7 +65,7 @@ public class ProjectStartupRunner implements StartupActivity {
     alarm.addRequest(createRequest(project, alarm), DELAY_MILLIS);
   }
 
-  private Runnable createRequest(final Project project, final Alarm alarm) {
+  private static Runnable createRequest(final Project project, final Alarm alarm) {
     return new Runnable() {
       @Override
       public void run() {
@@ -78,7 +78,7 @@ public class ProjectStartupRunner implements StartupActivity {
     };
   }
 
-  private void runActivities(final Project project) {
+  private static void runActivities(final Project project) {
     final ProjectStartupTaskManager projectStartupTaskManager = ProjectStartupTaskManager.getInstance(project);
     final List<RunnerAndConfigurationSettings> configurations =
       new ArrayList<RunnerAndConfigurationSettings>(projectStartupTaskManager.getLocalConfigurations());
@@ -89,17 +89,13 @@ public class ProjectStartupRunner implements StartupActivity {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          Executor currentExecutor = executor;
-          if (! canRun(executor, configuration)) {
-            currentExecutor = findExecutor(configuration);
-            if (currentExecutor == null) {
-              ProjectStartupTaskManager.NOTIFICATION_GROUP
-                .createNotification(ProjectStartupTaskManager.PREFIX + " could not find executor to start '" + configuration.getName() + "'", MessageType.ERROR)
-                .notify(project);
-              return;
-            }
+          if (! canBeRun(configuration)) {
+            ProjectStartupTaskManager.NOTIFICATION_GROUP
+              .createNotification(ProjectStartupTaskManager.PREFIX + " Run Configuration '" + configuration.getName() + "' can not be started with Run executor.", MessageType.ERROR)
+              .notify(project);
+            return;
           }
-          ProgramRunnerUtil.executeConfiguration(project, configuration, currentExecutor);
+          ProgramRunnerUtil.executeConfiguration(project, configuration, executor);
           ProjectStartupTaskManager.NOTIFICATION_GROUP
             .createNotification(ProjectStartupTaskManager.PREFIX + " started '" + configuration.getName() + "'", MessageType.INFO)
             .notify(project);
@@ -108,15 +104,7 @@ public class ProjectStartupRunner implements StartupActivity {
     }
   }
 
-  private Executor findExecutor(RunnerAndConfigurationSettings configuration) {
-    final Executor[] executors = ExecutorRegistry.getInstance().getRegisteredExecutors();
-    for (Executor executor : executors) {
-      if (canRun(executor, configuration)) return executor;
-    }
-    return null;
-  }
-
-  private boolean canRun(Executor executor, RunnerAndConfigurationSettings configuration) {
-    return RunnerRegistry.getInstance().getRunner(executor.getId(), configuration.getConfiguration()) != null;
+  public static boolean canBeRun(@NotNull RunnerAndConfigurationSettings configuration) {
+    return RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, configuration.getConfiguration()) != null;
   }
 }

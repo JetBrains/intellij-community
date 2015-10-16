@@ -104,10 +104,7 @@ class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS>(privat
     val keys = map.keys()
     Arrays.sort(keys)
     for (key in keys) {
-      val callback = map.get(key)
-      if (callback != null) {
-        MessageManagerBase.rejectCallback(callback)
-      }
+      map.get(key)?.reject()
     }
   }
 }
