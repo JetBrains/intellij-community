@@ -28,11 +28,14 @@ import java.util.Map;
 public interface HelperPackage {
   void addToPythonPath(@NotNull Map<String, String> environment);
 
+  @NotNull
   String getPythonPath();
 
   void addToGroup(@NotNull ParamsGroup group, @NotNull GeneralCommandLine cmd);
 
+  @NotNull
   String asParamString();
 
-  GeneralCommandLine newCommandLine(String sdkPath, List<String> parameters);
+  @NotNull
+  GeneralCommandLine newCommandLine(@NotNull String sdkPath, @NotNull List<String> parameters);
 }
