@@ -18,6 +18,7 @@ package com.intellij.refactoring.typeMigration.inspections;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeFix;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -38,10 +39,12 @@ import com.intellij.reference.SoftLazyValue;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -51,9 +54,8 @@ import java.util.Set;
  * @author Dmitry Batkovich
  */
 @SuppressWarnings("DialogTitleCapitalization")
-//TODO it is not batch inspection
-//public class GuavaInspection extends BaseJavaLocalInspectionTool {
-public class GuavaInspection extends BaseJavaBatchLocalInspectionTool {
+public class GuavaInspection extends BaseJavaLocalInspectionTool {
+//public class GuavaInspection extends BaseJavaBatchLocalInspectionTool {
   private final static Logger LOG = Logger.getInstance(GuavaInspection.class);
 
   private final static String PROBLEM_DESCRIPTION_FOR_VARIABLE = "Guava's functional primitives can be replaced by Java API";
@@ -66,6 +68,20 @@ public class GuavaInspection extends BaseJavaBatchLocalInspectionTool {
       return ContainerUtil.newHashSet("append", "cycle", "uniqueIndex", "index");
     }
   };
+
+  public boolean checkVariables = true;
+  public boolean checkChains = true;
+  public boolean checkReturnTypes = true;
+
+  @SuppressWarnings("Duplicates")
+  @Override
+  public JComponent createOptionsPanel() {
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox("Report variables", "checkVariables");
+    panel.addCheckbox("Report method chains", "checkChains");
+    panel.addCheckbox("Report return types", "checkReturnTypes");
+    return panel;
+  }
 
   @NotNull
   @Override
@@ -101,6 +117,7 @@ public class GuavaInspection extends BaseJavaBatchLocalInspectionTool {
 
       @Override
       public void visitVariable(PsiVariable variable) {
+        if (!checkVariables) return;
         final PsiType type = variable.getType();
         final PsiClassType targetType = getConversionClassType(type);
         if (targetType != null) {
@@ -113,6 +130,7 @@ public class GuavaInspection extends BaseJavaBatchLocalInspectionTool {
       @Override
       public void visitMethod(PsiMethod method) {
         super.visitMethod(method);
+        if (!checkReturnTypes) return;
         final PsiClassType targetType = getConversionClassType(method.getReturnType());
         if (targetType != null) {
           final PsiTypeElement typeElement = method.getReturnTypeElement();
@@ -126,6 +144,7 @@ public class GuavaInspection extends BaseJavaBatchLocalInspectionTool {
 
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        if (!checkChains) return;
         if (!isFluentIterableFromCall(expression)) return;
 
         final PsiMethodCallExpression chain = findGuavaMethodChain(expression);
