@@ -124,7 +124,7 @@ public class PyStructuredDocstringFormatter {
     }
     if (sdk == null) {
       LOG.warn("Python SDK for docstring formatter " + formatter +  " is not found");
-      return "<font color=\"red\">" + missingInterpreterMessage + "</font>";
+      return "<p color=\"red\">" + missingInterpreterMessage + "</p>";
     }
 
     final String sdkHome = sdk.getHomePath();
