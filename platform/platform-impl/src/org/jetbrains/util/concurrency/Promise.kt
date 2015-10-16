@@ -46,7 +46,7 @@ interface Promise<T> {
      * Log error if not message error
      */
     fun logError(logger: Logger, e: Throwable) {
-      if (e !is MessageError || ApplicationManager.getApplication().isUnitTestMode) {
+      if (e !is org.jetbrains.concurrency.Promise.MessageError || ApplicationManager.getApplication().isUnitTestMode) {
         logger.error(e)
       }
     }
@@ -78,13 +78,9 @@ interface Promise<T> {
 }
 
 private val DONE: Promise<*> = DonePromise(null)
-private val REJECTED: Promise<*> = RejectedPromise<Any>(MessageError("rejected"))
+private val REJECTED: Promise<*> = RejectedPromise<Any>(org.jetbrains.concurrency.Promise.MessageError("rejected"))
 
-internal class MessageError(error: String) : RuntimeException(error) {
-  @Synchronized fun fillInStackTrace(): Throwable? = this
-}
-
-fun <T> RejectedPromise(error: String): Promise<T> = RejectedPromise(MessageError(error))
+fun <T> RejectedPromise(error: String): Promise<T> = RejectedPromise(org.jetbrains.concurrency.Promise.MessageError(error))
 
 fun ResolvedPromise(): Promise<*> = DONE
 

@@ -23,7 +23,7 @@ class AsyncPromise<T> : Promise<T> {
   companion object {
     private val LOG = Logger.getInstance(AsyncPromise::class.java)
 
-    val OBSOLETE_ERROR = MessageError("Obsolete")
+    val OBSOLETE_ERROR = org.jetbrains.concurrency.Promise.MessageError("Obsolete")
 
     private fun <T> setHandler(oldConsumer: ((T) -> Unit)?, newConsumer: (T) -> Unit): (T) -> Unit {
       return when (oldConsumer) {
@@ -211,7 +211,7 @@ class AsyncPromise<T> : Promise<T> {
     }
   }
 
-  fun setError(error: String) = setError(MessageError(error))
+  fun setError(error: String) = setError(org.jetbrains.concurrency.Promise.MessageError(error))
 
   fun setError(error: Throwable): Boolean {
     if (state != Promise.State.PENDING) {
