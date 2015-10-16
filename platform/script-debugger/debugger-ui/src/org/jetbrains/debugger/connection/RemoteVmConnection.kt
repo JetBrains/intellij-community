@@ -65,7 +65,7 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
             if (it !is ConnectException) {
               Promise.logError(LOG, it)
             }
-            setState(ConnectionStatus.CONNECTION_FAILED, it.message)
+            setState(ConnectionStatus.CONNECTION_FAILED, it.getMessage())
           }
           .processed { connectCancelHandler.set(null) }
 
@@ -88,7 +88,7 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
 }
 
 fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, itemToString: (T) -> String): Promise<T> {
-  if (targets.size == 1) {
+  if (targets.size() == 1) {
     return ResolvedPromise(ContainerUtil.getFirstItem(targets)!!)
   }
   else if (targets.isEmpty()) {

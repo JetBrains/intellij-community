@@ -43,9 +43,9 @@ open class MemberFilterWithNameMappings(rawNameToSource: Map<String, String>?) :
       return null
     }
 
-    for (entry in rawNameToSource.entries) {
-      if (entry.value == name) {
-        return entry.key
+    for (entry in rawNameToSource.entrySet()) {
+      if (entry.getValue() == name) {
+        return entry.getKey()
       }
     }
     return null

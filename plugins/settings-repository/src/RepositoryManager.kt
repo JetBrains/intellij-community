@@ -18,7 +18,7 @@ package org.jetbrains.settingsRepository
 import com.intellij.openapi.progress.ProgressIndicator
 import gnu.trove.THashSet
 import java.io.InputStream
-import java.util.*
+import java.util.Collections
 
 public interface RepositoryManager {
   public fun createRepositoryIfNeed(): Boolean
@@ -138,4 +138,4 @@ public fun UpdateResult?.concat(result: UpdateResult?): UpdateResult? {
   }
 }
 
-public class AuthenticationException(cause: Throwable) : RuntimeException(cause.message, cause)
+public class AuthenticationException(cause: Throwable) : RuntimeException(cause.getMessage(), cause)

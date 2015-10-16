@@ -63,7 +63,7 @@ internal class BinaryRequestHandlerTest {
     try {
       result.rejected(object : Consumer<Throwable> {
         override fun consume(error: Throwable) {
-          TestCase.fail(error.message)
+          TestCase.fail(error.getMessage())
         }
       })
 

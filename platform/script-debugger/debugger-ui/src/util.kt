@@ -26,7 +26,7 @@ import org.jetbrains.util.concurrency.AsyncPromise
 fun XDebugSession.rejectedErrorReporter(description: String? = null): (Throwable) -> Unit = {
   Promise.logError(LOG, it)
   if (it != AsyncPromise.OBSOLETE_ERROR) {
-    reportError("${if (description == null) "" else description + ": "}${it.message}")
+    reportError("${if (description == null) "" else description + ": "}${it.getMessage()}")
   }
 }
 
