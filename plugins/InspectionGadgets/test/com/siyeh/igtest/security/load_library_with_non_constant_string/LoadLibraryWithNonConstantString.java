@@ -2,16 +2,16 @@ package com.siyeh.igtest.security;
 
 import java.io.IOException;
 
-public class LoadLibraryWithNonConstantStringInspection extends ClassLoader
+public class LoadLibraryWithNonConstantString extends ClassLoader
 {
-    public LoadLibraryWithNonConstantStringInspection()
+    public LoadLibraryWithNonConstantString()
     {
     }
 
     public void foo() throws IOException
     {
         String i = bar();
-        System.loadLibrary("foo" + i);
+        System.<warning descr="Call to 'System.loadLibrary()' with non-constant argument">loadLibrary</warning>("foo" + i);
         System.loadLibrary("foo");
     }
 

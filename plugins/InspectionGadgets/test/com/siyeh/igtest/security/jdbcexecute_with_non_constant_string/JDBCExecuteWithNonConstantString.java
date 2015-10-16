@@ -5,9 +5,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-public class JDBCExecuteQueryWithNonConstantStringInspection
+public class JDBCExecuteWithNonConstantString
 {
-    public JDBCExecuteQueryWithNonConstantStringInspection()
+    public JDBCExecuteWithNonConstantString()
     {
     }
 
@@ -15,8 +15,8 @@ public class JDBCExecuteQueryWithNonConstantStringInspection
     {
         Statement statement = null;
         statement.executeQuery("foo" );
-        statement.executeQuery("foo" + bar());
-        statement.addBatch("foo" + bar());
+        statement.<warning descr="Call to 'Statement.executeQuery()' with non-constant argument">executeQuery</warning>("foo" + bar());
+        statement.<warning descr="Call to 'Statement.addBatch()' with non-constant argument">addBatch</warning>("foo" + bar());
     }
 
     private String bar() {

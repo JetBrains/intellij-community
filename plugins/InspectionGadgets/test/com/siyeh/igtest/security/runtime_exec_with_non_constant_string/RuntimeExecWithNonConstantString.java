@@ -2,9 +2,9 @@ package com.siyeh.igtest.security;
 
 import java.io.IOException;
 
-public class RuntimeExecWithNonConstantStringInspection
+public class RuntimeExecWithNonConstantString
 {
-    public RuntimeExecWithNonConstantStringInspection()
+    public RuntimeExecWithNonConstantString()
     {
     }
 
@@ -12,7 +12,7 @@ public class RuntimeExecWithNonConstantStringInspection
     {
         String i = bar();
         final Runtime runtime = Runtime.getRuntime();
-        runtime.exec("foo" + i);
+        runtime.<warning descr="Call to 'Runtime.exec()' with non-constant argument">exec</warning>("foo" + i);
         runtime.exec("foo");
     }
 

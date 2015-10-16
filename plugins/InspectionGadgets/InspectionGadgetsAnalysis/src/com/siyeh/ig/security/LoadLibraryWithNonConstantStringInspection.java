@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,11 @@
  */
 package com.siyeh.ig.security;
 
-import com.intellij.psi.*;
-import com.intellij.psi.util.ConstantExpressionUtil;
-import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import org.jetbrains.annotations.NonNls;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class LoadLibraryWithNonConstantStringInspection
@@ -49,44 +47,9 @@ public class LoadLibraryWithNonConstantStringInspection
   private static class RuntimeExecVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      @NonNls final String methodName =
-        methodExpression.getReferenceName();
-      if (!"loadLibrary".equals(methodName)) {
-        return;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiClass aClass = method.getContainingClass();
-      if (aClass == null) {
-        return;
-      }
-      if (!InheritanceUtil.isInheritor(aClass, "java.lang.System")) {
-        return;
-      }
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      final PsiExpression[] args = argumentList.getExpressions();
-      if (args.length == 0) {
-        return;
-      }
-      final PsiExpression arg = args[0];
-      final PsiType type = arg.getType();
-      if (type == null) {
-        return;
-      }
-      final String typeText = type.getCanonicalText();
-      if (!CommonClassNames.JAVA_LANG_STRING.equals(typeText)) {
-        return;
-      }
-      final String stringValue =
-        (String)ConstantExpressionUtil.computeCastTo(arg, type);
-      if (stringValue != null) {
+      if (!MethodCallUtils.callWithNonConstantString(expression, "java.lang.System", "loadLibrary")) {
         return;
       }
       registerMethodCallError(expression);
