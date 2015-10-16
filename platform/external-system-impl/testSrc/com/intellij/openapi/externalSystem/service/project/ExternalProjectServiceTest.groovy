@@ -15,13 +15,24 @@
  */
 package com.intellij.openapi.externalSystem.service.project
 
+import com.intellij.openapi.application.Result
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.test.AbstractExternalSystemTest
 import com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.IdeaTestUtil
+import org.jetbrains.annotations.NotNull
 
 import static com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.*
 /**
@@ -182,5 +193,37 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
       }
     }
     assertEquals(new HashSet<>(folders), new HashSet<>([".gradle", "build", "newExclDir"]));
+  }
+
+  void 'test project SDK configuration import'() {
+    String myJdkName = "My JDK";
+    String myJdkHome = IdeaTestUtil.requireRealJdkHome();
+
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        Sdk oldJdk = ProjectJdkTable.getInstance().findJdk(myJdkName);
+        if (oldJdk != null) {
+          ProjectJdkTable.getInstance().removeJdk(oldJdk);
+        }
+        VirtualFile jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myJdkHome));
+        Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, JavaSdk.getInstance(), true, null, myJdkName);
+        assertNotNull("Cannot create JDK for " + myJdkHome, jdk);
+        ProjectJdkTable.getInstance().addJdk(jdk);
+      }
+    }.execute();
+
+    DataNode<ProjectData> projectNode = buildExternalProjectInfo {
+      project {
+        javaProject(jdk: '1.7', languageLevel: '1.7') {
+        } } }
+
+    applyProjectState([projectNode])
+
+    ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
+    Sdk sdk = rootManager.getProjectSdk();
+    assertNotNull(sdk)
+    LanguageLevelProjectExtension languageLevelExtension = LanguageLevelProjectExtension.getInstance(project);
+    assertEquals(LanguageLevel.JDK_1_7, languageLevelExtension.languageLevel)
   }
 }

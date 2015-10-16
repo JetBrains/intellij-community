@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.test
 
+import com.intellij.externalSystem.JavaProjectData
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -64,6 +65,14 @@ class ExternalProjectBuilder extends BuilderSupport {
         ProjectData projectData = new ProjectData(projectSystemId, attributes.name ?: 'project', projectPath, projectPath)
         projectNode = new DataNode<ProjectData>(ProjectKeys.PROJECT, projectData, null)
         return projectNode
+      case 'javaProject':
+        ProjectSystemId projectSystemId = attributes.projectSystemId ?: TEST_EXTERNAL_SYSTEM_ID
+        String jdk = attributes.jdk ?: ""
+        String languageLevel = attributes.languageLevel ?: ""
+        JavaProjectData javaProjectData = new JavaProjectData(projectSystemId, "")
+        javaProjectData.setJdkVersion(jdk)
+        javaProjectData.setLanguageLevel(languageLevel)
+        return (current as DataNode).createChild(JavaProjectData.KEY, javaProjectData)
       case 'module':
         ProjectSystemId projectSystemId = attributes.projectSystemId ?: TEST_EXTERNAL_SYSTEM_ID
         String moduleFilePath = attributes.moduleFilePath ?: projectPath

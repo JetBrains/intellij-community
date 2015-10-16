@@ -24,10 +24,11 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
-import com.intellij.openapi.externalSystem.model.*;
+import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.Key;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
-import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
@@ -629,24 +630,13 @@ public class ExternalSystemApiUtil {
       return false;
     }
 
-    Set<String> externalModulePaths = ContainerUtilRt.newHashSet();
-    for (DataNode<ModuleData> moduleNode : findAll(externalProject, ProjectKeys.MODULE)) {
-      if(!moduleNode.isIgnored()) {
-        externalModulePaths.add(moduleNode.getData().getLinkedExternalProjectPath());
-      }
-    }
-    externalModulePaths.remove(linkedExternalProjectPath);
-
     for (Module module : ModuleManager.getInstance(ideProject).getModules()) {
-      String path = getExternalProjectPath(module);
-      if (!StringUtil.isEmpty(path) && !externalModulePaths.remove(path)) {
+      if (!isExternalSystemAwareModule(projectData.getOwner(), module)) {
         return false;
       }
     }
-    return externalModulePaths.isEmpty();
+    return true;
   }
-
-
 
   public static void storeLastUsedExternalProjectPath(@Nullable String path, @NotNull ProjectSystemId externalSystemId) {
     if (path != null) {

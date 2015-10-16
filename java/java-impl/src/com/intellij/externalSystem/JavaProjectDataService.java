@@ -77,22 +77,34 @@ public class JavaProjectDataService extends AbstractProjectDataService<JavaProje
     JavaSdk javaSdk = JavaSdk.getInstance();
     ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
     Sdk sdk = rootManager.getProjectSdk();
-    if (sdk instanceof JavaSdk) {
+    if(sdk != null) {
       JavaSdkVersion currentVersion = javaSdk.getVersion(sdk);
       if (currentVersion == null || !currentVersion.isAtLeast(version)) {
-        Sdk newJdk = findJdk(version);
-        if (newJdk != null) {
-          rootManager.setProjectSdk(sdk);
-          LanguageLevel level = version.getMaxLanguageLevel();
-          LanguageLevelProjectExtension ext = LanguageLevelProjectExtension.getInstance(project);
-          if (level.compareTo(ext.getLanguageLevel()) < 0) {
-            ext.setLanguageLevel(level);
-          }
-        }
+        updateSdk(project, version);
       }
+    } else {
+      updateSdk(project, version);
     }
+
     // Language level.
     setLanguageLevel(javaProjectData.getLanguageLevel(), project);
+  }
+
+  private static void updateSdk(@NotNull final Project project, @NotNull final JavaSdkVersion version) {
+    final Sdk sdk = findJdk(version);
+    if (sdk == null) return;
+
+    ExternalSystemApiUtil.executeProjectChangeAction(new DisposeAwareProjectChange(project) {
+      @Override
+      public void execute() {
+        ProjectRootManager.getInstance(project).setProjectSdk(sdk);
+        LanguageLevel level = version.getMaxLanguageLevel();
+        LanguageLevelProjectExtension languageLevelExtension = LanguageLevelProjectExtension.getInstance(project);
+        if (level.compareTo(languageLevelExtension.getLanguageLevel()) < 0) {
+          languageLevelExtension.setLanguageLevel(level);
+        }
+      }
+    });
   }
 
   @Nullable
