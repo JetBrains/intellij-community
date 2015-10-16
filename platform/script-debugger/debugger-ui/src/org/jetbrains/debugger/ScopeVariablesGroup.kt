@@ -20,7 +20,7 @@ import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.frame.XValueGroup
 
-class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, callFrame: CallFrame?) : XValueGroup(createScopeNodeName(scope)) {
+class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, callFrame: CallFrame?) : XValueGroup(scope.createScopeNodeName()) {
   private val context = createVariableContext(scope, parentContext, callFrame)
 
   private val callFrame = if (scope.type == Scope.Type.LOCAL) callFrame else null
@@ -39,17 +39,11 @@ class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, call
     }
 
     promise
-      .done(object : ObsolescentConsumer<Any?>(node) {
-        override fun consume(ignored: Any?) {
-          callFrame.receiverVariable
-            .done(object : ObsolescentConsumer<Variable>(node) {
-              override fun consume(variable: Variable?) = node.addChildren(if (variable == null) XValueChildrenList.EMPTY else XValueChildrenList.singleton(VariableView(variable, context)), true)
-            })
-            .rejected(object : ObsolescentConsumer<Throwable>(node) {
-              override fun consume(error: Throwable?) = node.addChildren(XValueChildrenList.EMPTY, true)
-            })
-        }
-      })
+      .done(node) {
+        callFrame.receiverVariable
+          .done(node) { node.addChildren(if (it == null) XValueChildrenList.EMPTY else XValueChildrenList.singleton(VariableView(it, context)), true) }
+          .rejected(node) { node.addChildren(XValueChildrenList.EMPTY, true) }
+      }
   }
 }
 
@@ -77,8 +71,8 @@ private class ParentlessVariableContext(parentContext: VariableContext, scope: S
   override fun getParent() = null
 }
 
-private fun createScopeNodeName(scope: Scope): String {
-  when (scope.type) {
+private fun Scope.createScopeNodeName(): String {
+  when (type) {
     Scope.Type.GLOBAL -> return XDebuggerBundle.message("scope.global")
     Scope.Type.LOCAL -> return XDebuggerBundle.message("scope.local")
     Scope.Type.WITH -> return XDebuggerBundle.message("scope.with")
@@ -87,7 +81,9 @@ private fun createScopeNodeName(scope: Scope): String {
     Scope.Type.LIBRARY -> return XDebuggerBundle.message("scope.library")
     Scope.Type.INSTANCE -> return XDebuggerBundle.message("scope.instance")
     Scope.Type.CLASS -> return XDebuggerBundle.message("scope.class")
+    Scope.Type.BLOCK -> return XDebuggerBundle.message("scope.block")
+    Scope.Type.SCRIPT -> return XDebuggerBundle.message("scope.script")
     Scope.Type.UNKNOWN -> return XDebuggerBundle.message("scope.unknown")
-    else -> throw IllegalArgumentException(scope.type.name())
+    else -> throw IllegalArgumentException(type.name())
   }
 }

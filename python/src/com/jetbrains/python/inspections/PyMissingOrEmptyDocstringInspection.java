@@ -18,6 +18,7 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -32,15 +33,17 @@ import org.jetbrains.annotations.NotNull;
 public class PyMissingOrEmptyDocstringInspection extends PyBaseDocstringInspection {
   @NotNull
   @Override
-  public Visitor buildVisitor(@NotNull ProblemsHolder holder,
-                              boolean isOnTheFly,
-                              @NotNull LocalInspectionToolSession session) {
+  public Visitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, session) {
       @Override
       protected void checkDocString(@NotNull PyDocStringOwner node) {
-        super.checkDocString(node);
         final PyStringLiteralExpression docStringExpression = node.getDocStringExpression();
         if (docStringExpression == null) {
+          for (PyInspectionExtension extension : Extensions.getExtensions(PyInspectionExtension.EP_NAME)) {
+            if (extension.ignoreMissingDocstring(node)) {
+              return;
+            }
+          }
           PsiElement marker = null;
           if (node instanceof PyClass) {
             final ASTNode n = ((PyClass)node).getNameNode();

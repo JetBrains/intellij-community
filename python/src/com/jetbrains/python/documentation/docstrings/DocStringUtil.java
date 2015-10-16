@@ -55,8 +55,9 @@ public class DocStringUtil {
    * Attempts to detect docstring format from given text and parses it into corresponding structured docstring.
    * It's recommended to use more reliable {@link #parse(String, PsiElement)} that fallbacks to format specified in settings.
    *
+   * @param text docstring text <em>with both quotes and string prefix stripped</em> 
    * @return structured docstring for one of supported formats or instance of {@link PlainDocString} if none was recognized.
-   * @see #parse(String, PsiElement) 
+   * @see #parse(String, PsiElement)
    */
   @NotNull
   public static StructuredDocString parse(@NotNull String text) {
@@ -66,6 +67,8 @@ public class DocStringUtil {
   /**
    * Attempts to detects docstring format first from given text, next from settings and parses text into corresponding structured docstring.
    *
+   * @param text   docstring text <em>with both quotes and string prefix stripped</em>
+   * @param anchor PSI element that will be used to retrieve docstring format from the containing file or the project module
    * @return structured docstring for one of supported formats or instance of {@link PlainDocString} if none was recognized.
    * @see DocStringFormat#ALL_NAMES_BUT_PLAIN
    * @see #guessDocStringFormat(String, PsiElement)
@@ -75,11 +78,22 @@ public class DocStringUtil {
     final DocStringFormat format = guessDocStringFormat(text, anchor);
     return parseDocStringContent(format, text);
   }
-  
+
+  /**
+   * Attempts to detects docstring format first from the text of given string node, next from settings using given expression as an anchor 
+   * and parses text into corresponding structured docstring.
+   *
+   * @param stringLiteral supposedly result of {@link PyDocStringOwner#getDocStringExpression()}
+   * @return structured docstring for one of supported formats or instance of {@link PlainDocString} if none was recognized.
+   */
   @NotNull
-  public static StructuredDocString parseDocString(@NotNull DocStringFormat format,
-                                                   @NotNull PyStringLiteralExpression literalExpression) {
-    return parseDocString(format, literalExpression.getStringNodes().get(0));
+  public static StructuredDocString parseDocString(@NotNull PyStringLiteralExpression stringLiteral) {
+    return parseDocString(guessDocStringFormat(stringLiteral.getStringValue(), stringLiteral), stringLiteral);
+  }
+
+  @NotNull
+  public static StructuredDocString parseDocString(@NotNull DocStringFormat format, @NotNull PyStringLiteralExpression stringLiteral) {
+    return parseDocString(format, stringLiteral.getStringNodes().get(0));
   }
 
   @NotNull
@@ -88,12 +102,18 @@ public class DocStringUtil {
     return parseDocString(format, node.getText());
   }
 
-
+  /**
+   * @param stringText docstring text with possible string prefix and quotes
+   */
   @NotNull
   public static StructuredDocString parseDocString(@NotNull DocStringFormat format, @NotNull String stringText) {
-    return parseDocString(format, stripSuffixAndQuotes(stringText));
+    return parseDocString(format, stripPrefixAndQuotes(stringText));
   }
 
+  /**
+   * @param stringContent docstring text without string prefix and quotes, but not escaped, otherwise ranges of {@link Substring} returned
+   *                      from {@link StructuredDocString} may be invalid
+   */
   @NotNull
   public static StructuredDocString parseDocStringContent(@NotNull DocStringFormat format, @NotNull String stringContent) {
     return parseDocString(format, new Substring(stringContent));
@@ -116,7 +136,7 @@ public class DocStringUtil {
   }
 
   @NotNull
-  private static Substring stripSuffixAndQuotes(@NotNull String text) {
+  private static Substring stripPrefixAndQuotes(@NotNull String text) {
     final TextRange contentRange = PyStringLiteralExpressionImpl.getNodeTextRange(text);
     return new Substring(text, contentRange.getStartOffset(), contentRange.getEndOffset());
   }
@@ -144,8 +164,10 @@ public class DocStringUtil {
   }
 
   /**
-   * @return docstring inferred heuristically and if unsuccessful fallback to configured format retrieved from anchor PSI element 
-   * @see #getConfiguredDocStringFormat(PsiElement) 
+   * @param text   docstring text <em>with both quotes and string prefix stripped</em>
+   * @param anchor PSI element that will be used to retrieve docstring format from the containing file or the project module
+   * @return docstring inferred heuristically and if unsuccessful fallback to configured format retrieved from anchor PSI element
+   * @see #getConfiguredDocStringFormat(PsiElement)
    */
   @NotNull
   public static DocStringFormat guessDocStringFormat(@NotNull String text, @Nullable PsiElement anchor) {
@@ -154,6 +176,7 @@ public class DocStringUtil {
   }
 
   /**
+   * @param anchor PSI element that will be used to retrieve docstring format from the containing file or the project module
    * @return docstring format configured for file or module containing given anchor PSI element
    * @see PyDocumentationSettings#getFormatForFile(PsiFile)
    */

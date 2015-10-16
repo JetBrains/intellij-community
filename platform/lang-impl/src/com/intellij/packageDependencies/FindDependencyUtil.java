@@ -59,15 +59,7 @@ public class FindDependencyUtil {
         precomputedDeps = Collections.unmodifiableSet(searchFor);
       }
 
-      DependenciesBuilder.analyzeFileDependencies(psiFile, new DependenciesBuilder.DependencyProcessor() {
-        @Override
-        public void process(PsiElement place, PsiElement dependency) {
-          PsiFile dependencyFile = dependency.getContainingFile();
-          if (precomputedDeps.contains(dependencyFile)) {
-            usages.add(new UsageInfo(place));
-          }
-        }
-      });
+      analyzeFileDependencies(psiFile, precomputedDeps, usages);
     }
 
     return usages.toArray(new UsageInfo[usages.size()]);
@@ -95,24 +87,28 @@ public class FindDependencyUtil {
     for (final PsiFile psiFile : deps) {
       count = updateIndicator(indicator, totalCount, count, psiFile);
 
-      DependenciesBuilder.analyzeFileDependencies(psiFile, new DependenciesBuilder.DependencyProcessor() {
-        @Override
-        public void process(PsiElement place, PsiElement dependency) {
-          PsiFile dependencyFile = dependency.getContainingFile();
-          if (dependencyFile != null) {
-            final PsiElement navigationElement = dependencyFile.getNavigationElement();
-            if (navigationElement instanceof PsiFile) {
-              dependencyFile = (PsiFile)navigationElement;
-            }
-          }
-          if (searchFor.contains(dependencyFile)) {
-            usages.add(new UsageInfo(place));
-          }
-        }
-      });
+      analyzeFileDependencies(psiFile, searchFor, usages);
     }
 
     return usages.toArray(new UsageInfo[usages.size()]);
+  }
+
+  private static void analyzeFileDependencies(PsiFile psiFile, final Set<PsiFile> searchFor, final List<UsageInfo> result) {
+    DependenciesBuilder.analyzeFileDependencies(psiFile, new DependenciesBuilder.DependencyProcessor() {
+      @Override
+      public void process(PsiElement place, PsiElement dependency) {
+        PsiFile dependencyFile = dependency.getContainingFile();
+        if (dependencyFile != null) {
+          final PsiElement navigationElement = dependencyFile.getNavigationElement();
+          if (navigationElement instanceof PsiFile) {
+            dependencyFile = (PsiFile)navigationElement;
+          }
+        }
+        if (searchFor.contains(dependencyFile)) {
+          result.add(new UsageInfo(place));
+        }
+      }
+    });
   }
 
   private static int updateIndicator(final ProgressIndicator indicator, final int totalCount, int count, final PsiFile psiFile) {

@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -732,7 +733,7 @@ public class JavaDocInfoGenerator {
       if (packageInfoFile != null) {
         final ASTNode node = packageInfoFile.getNode();
         if (node != null) {
-          final ASTNode docCommentNode = node.findChildByType(JavaDocElementType.DOC_COMMENT);
+          final ASTNode docCommentNode = findRelevantCommentNode(node);
           if (docCommentNode != null) {
             final PsiDocComment docComment = (PsiDocComment)docCommentNode.getPsi();
 
@@ -753,6 +754,19 @@ public class JavaDocInfoGenerator {
         break;
       }
     }
+  }
+
+  /**
+   * Finds doc comment immediately preceding package statement
+   */
+  @Nullable
+  private static ASTNode findRelevantCommentNode(@NotNull ASTNode fileNode) {
+    ASTNode node = fileNode.findChildByType(JavaElementType.PACKAGE_STATEMENT);
+    if (node == null) node = fileNode.getLastChildNode();
+    while (node != null && node.getElementType() != JavaDocElementType.DOC_COMMENT) {
+      node = node.getTreePrev();
+    }
+    return node;
   }
 
   public void generateCommonSection(StringBuilder buffer, PsiDocComment docComment) {

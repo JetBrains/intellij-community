@@ -346,6 +346,10 @@ public class XDebuggerManagerImpl extends XDebuggerManager
     return new XDebuggerState(myBreakpointManager.getState(), myWatchesManager.getState());
   }
 
+  public boolean isFullLineHighlighter() {
+    return myExecutionPointHighlighter.isFullLineHighlighter();
+  }
+
   @Override
   public void loadState(final XDebuggerState state) {
     myBreakpointManager.loadState(state.myBreakpointManagerState);
