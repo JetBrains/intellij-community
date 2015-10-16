@@ -35,7 +35,7 @@ interface Vm {
 
   val breakpointManager: BreakpointManager
 
-  fun getSuspendContextManager(): SuspendContextManager<out CallFrame>
+  val suspendContextManager: SuspendContextManager<out CallFrame>
 
   /**
    * Controls whether VM stops on exceptions

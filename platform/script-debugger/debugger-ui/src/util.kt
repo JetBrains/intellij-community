@@ -33,7 +33,7 @@ fun XDebugSession.rejectedErrorReporter(description: String? = null): (Throwable
 inline fun <T> contextDependentResultConsumer(context: SuspendContext, crossinline done: (result: T, vm: Vm) -> Unit) : (T) -> Unit {
   return {
     val vm = context.valueManager.vm
-    if (vm.attachStateManager.isAttached() && !vm.getSuspendContextManager().isContextObsolete(context)) {
+    if (vm.attachStateManager.isAttached() && !vm.suspendContextManager.isContextObsolete(context)) {
       done(it, vm)
     }
   }
