@@ -18,7 +18,6 @@
 package org.jetbrains.debugger
 
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
-import com.intellij.xdebugger.frame.XNavigatable
 import com.intellij.xdebugger.frame.XValueNode
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.frame.CallFrameView
@@ -39,9 +38,6 @@ open class BasicDebuggerViewSupport : MemberFilter, DebuggerViewSupport {
 
   override fun createFrameEvaluator(frame: CallFrameView): XDebuggerEvaluator {
     throw UnsupportedOperationException()
-  }
-
-  override fun computeSourcePosition(name: String, variable: Variable, context: VariableContext, navigatable: XNavigatable) {
   }
 
   override fun getMemberFilter(context: VariableContext): Promise<MemberFilter> {

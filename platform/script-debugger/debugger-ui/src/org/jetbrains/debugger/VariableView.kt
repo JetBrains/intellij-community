@@ -366,7 +366,7 @@ class VariableView(name: String, private val variable: Variable, private val con
         }
     }
     else {
-      viewSupport.computeSourcePosition(name, variable, context, navigatable)
+      viewSupport.computeSourcePosition(name, value!!, variable, context, navigatable)
     }
   }
 
