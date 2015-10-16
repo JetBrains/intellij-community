@@ -39,17 +39,11 @@ class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, call
     }
 
     promise
-      .done(object : ObsolescentConsumer<Any?>(node) {
-        override fun consume(ignored: Any?) {
-          callFrame.receiverVariable
-            .done(object : ObsolescentConsumer<Variable>(node) {
-              override fun consume(variable: Variable?) = node.addChildren(if (variable == null) XValueChildrenList.EMPTY else XValueChildrenList.singleton(VariableView(variable, context)), true)
-            })
-            .rejected(object : ObsolescentConsumer<Throwable>(node) {
-              override fun consume(error: Throwable?) = node.addChildren(XValueChildrenList.EMPTY, true)
-            })
-        }
-      })
+      .done(node) {
+        callFrame.receiverVariable
+          .done(node) { node.addChildren(if (it == null) XValueChildrenList.EMPTY else XValueChildrenList.singleton(VariableView(it, context)), true) }
+          .rejected(node) { node.addChildren(XValueChildrenList.EMPTY, true) }
+      }
   }
 }
 
