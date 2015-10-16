@@ -72,17 +72,22 @@ class IntIntegerTest {
     System.out.println("behavoiur 2");
   }
 
+  public static void g(int val) {}
+
   public IntIntegerTest() {
   }
 
   public void test() {
     new IntIntegerTest(new Integer(1)); // <-- incorrectly triggered
     f(new Integer(1)); // <-- not triggered
+    g(((<warning descr="Unnecessary boxing 'Integer.valueOf(1)'">Integer.valueOf(1)</warning>)));
+    g(((<warning descr="Unnecessary boxing 'new Integer(1)'">new Integer(1)</warning>)));
   }
 
-  void m(@org.jetbrains.annotations.NotNull Boolean p) {
+  boolean m(@org.jetbrains.annotations.NotNull Boolean p) {
     Boolean o = null;
-    boolean b = o != Boolean.valueOf(false) || p != <warning descr="Unnecessary boxing 'Boolean.valueOf(false)'">Boolean.valueOf(false)</warning>;
+    boolean b = o != Boolean.valueOf(false) || p != Boolean.valueOf(false); // object comparison
+    return b == <warning descr="Unnecessary boxing 'Boolean.valueOf(false)'">Boolean.valueOf(false)</warning>;
   }
 }
 class test {

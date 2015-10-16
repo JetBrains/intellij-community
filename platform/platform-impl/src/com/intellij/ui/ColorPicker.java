@@ -1138,7 +1138,6 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
         myGraphics = (Graphics2D)myImage.getGraphics();
         myGraphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-        pickerDialog.setBackground(UIUtil.TRANSPARENT_COLOR);
       }
 
       return pickerDialog;

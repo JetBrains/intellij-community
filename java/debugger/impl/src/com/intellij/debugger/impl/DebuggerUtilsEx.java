@@ -872,7 +872,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   @Nullable
-  public static PsiParameterListOwner getContainingMethod(@NotNull SourcePosition position) {
+  public static PsiParameterListOwner getContainingMethod(@Nullable SourcePosition position) {
+    if (position == null) return null;
     return getContainingMethod(position.getElementAt());
   }
 

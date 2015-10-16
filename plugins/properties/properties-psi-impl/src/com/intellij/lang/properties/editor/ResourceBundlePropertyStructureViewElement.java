@@ -19,6 +19,7 @@
  */
 package com.intellij.lang.properties.editor;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
@@ -31,6 +32,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
@@ -93,7 +95,7 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
   }
 
   @NotNull
-  public ResourceBundleEditorProblemDescriptor[] getProblemDescriptors() {
+  public Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey>[] getProblemDescriptors() {
     return myInspectionPassInfo.getDescriptors();
   }
 

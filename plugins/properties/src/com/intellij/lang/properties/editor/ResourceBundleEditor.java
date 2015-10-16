@@ -163,7 +163,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         if (!arePropertiesEquivalent(selectedProperty, getSelectedProperty()) ||
             !Comparing.equal(selectedPropertiesFile, getSelectedPropertiesFile())) {
 
-          if (e.getOldLeadSelectionPath() != null) {
+          if (selectedProperty != null && e.getOldLeadSelectionPath() != null) {
             for (Map.Entry<PropertiesFile, Editor> entry : myEditors.entrySet()) {
               if (entry.getValue() == mySelectedEditor) {
                 writeEditorPropertyValue(selectedProperty.getName(), mySelectedEditor, entry.getKey());

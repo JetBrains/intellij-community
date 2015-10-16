@@ -78,7 +78,14 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
       }
       return null;
     }
-    return null;
+    if (!(context instanceof PsiMethodCallExpression)) {
+      return null;
+    }
+    final PsiClass aClass = method.getContainingClass();
+    if (aClass == null || !GuavaFluentIterableConversionRule.FLUENT_ITERABLE.equals(aClass.getQualifiedName())) {
+      return null;
+    }
+    return GuavaFluentIterableConversionRule.buildCompoundDescriptor((PsiMethodCallExpression) context, to, labeler);
   }
 
   private PsiClass getParameterClass(PsiMethod method) {

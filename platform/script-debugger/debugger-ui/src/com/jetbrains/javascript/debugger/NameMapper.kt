@@ -24,8 +24,8 @@ import gnu.trove.THashMap
 import org.jetbrains.debugger.sourcemap.MappingEntry
 import org.jetbrains.debugger.sourcemap.MappingList
 import org.jetbrains.debugger.sourcemap.SourceMap
+import org.jetbrains.rpc.LOG
 
-import org.jetbrains.rpc.CommandProcessor.LOG
 
 private val S1 = ",()[]{}="
 // don't trim trailing .&: - could be part of expression
@@ -73,7 +73,7 @@ open class NameMapper(private val document: Document, private val generatedDocum
   protected open fun extractName(rawGeneratedName: CharSequence) = NAME_TRIMMER.trimFrom(rawGeneratedName)
 
   companion object {
-    protected val NAME_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1 + ".&:"))
+    val NAME_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1 + ".&:"))
 
     fun trimName(rawGeneratedName: CharSequence, isLastToken: Boolean) = (if (isLastToken) NAME_TRIMMER else OPERATOR_TRIMMER).trimFrom(rawGeneratedName)
   }

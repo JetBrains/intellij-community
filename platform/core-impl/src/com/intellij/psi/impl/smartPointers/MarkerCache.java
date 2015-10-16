@@ -71,7 +71,7 @@ class MarkerCache {
           long key = info.markerCacheKey();
           if (range != null && key != 0) {
             boolean forInjected = info.isForInjected();
-            answer.put(key, new ManualRangeMarker(frozen, range, forInjected, forInjected, !forInjected));
+            answer.put(key, new ManualRangeMarker(range, forInjected, forInjected, !forInjected, null));
           }
         }
         frozen = applyEvents(frozen, events, answer);
@@ -86,6 +86,7 @@ class MarkerCache {
                                             @NotNull List<DocumentEvent> events,
                                             final TLongObjectHashMap<ManualRangeMarker> map) {
     for (DocumentEvent event : events) {
+      final FrozenDocument before = frozen;
       final DocumentEvent corrected;
       if ((event instanceof RetargetRangeMarkers)) {
         RetargetRangeMarkers retarget = (RetargetRangeMarkers)event;
@@ -101,7 +102,7 @@ class MarkerCache {
       map.transformValues(new TObjectFunction<ManualRangeMarker, ManualRangeMarker>() {
         @Override
         public ManualRangeMarker execute(ManualRangeMarker currentRange) {
-          return currentRange == null ? null : currentRange.getUpdatedRange(corrected);
+          return currentRange == null ? null : currentRange.getUpdatedRange(corrected, before);
         }
       });
     }

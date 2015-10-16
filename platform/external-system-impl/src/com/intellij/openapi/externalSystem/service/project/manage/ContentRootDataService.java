@@ -126,7 +126,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
 
       final ContentEntry contentEntry = findOrCreateContentRoot(modifiableRootModel, contentRoot.getRootPath());
       if(!importedContentEntries.contains(contentEntry)) {
-        contentEntry.clearExcludeFolders();
+        // clear source folders but do not remove existing excluded folders
         contentEntry.clearSourceFolders();
         importedContentEntries.add(contentEntry);
       }

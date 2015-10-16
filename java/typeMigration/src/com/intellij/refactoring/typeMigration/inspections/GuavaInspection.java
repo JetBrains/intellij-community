@@ -128,7 +128,8 @@ public class GuavaInspection extends BaseJavaBatchLocalInspectionTool {
         final PsiElement maybeLocalVariable = chain.getParent();
         if (maybeLocalVariable instanceof PsiLocalVariable) {
           final PsiClass aClass = PsiUtil.resolveClassInType(chain.getType());
-          if (aClass != null && GuavaFluentIterableConversionRule.FLUENT_ITERABLE.equals(aClass.getQualifiedName())) {
+          if (aClass != null && (GuavaFluentIterableConversionRule.FLUENT_ITERABLE.equals(aClass.getQualifiedName()) ||
+                                 GuavaOptionalConversionRule.GUAVA_OPTIONAL.equals(aClass.getQualifiedName()))) {
             return;
           }
         }

@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManagerImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -68,7 +69,8 @@ public class ResourceBundleEditorInspectionPass {
     final PsiFile containingFile = representativeFile.getContainingFile();
     final InspectionToolWrapper[] propertiesTools = profileToUse.getInspectionTools(containingFile);
 
-    List<ResourceBundleEditorProblemDescriptor> allDescriptors = new SmartList<ResourceBundleEditorProblemDescriptor>();
+    List<Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey>> allDescriptors =
+      new SmartList<Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey>>();
     SortedSet<HighlightInfoType> highlightTypes = new TreeSet<HighlightInfoType>(new Comparator<HighlightInfoType>() {
       @Override
       public int compare(HighlightInfoType o1, HighlightInfoType o2) {
@@ -87,30 +89,32 @@ public class ResourceBundleEditorInspectionPass {
         if (descriptors != null) {
           for (ResourceBundleEditorProblemDescriptor descriptor : descriptors) {
             final QuickFix[] currentFixes = descriptor.getFixes();
-            if (currentFixes != null && currentFixes.length != 0) {
-              Collections.addAll(allDescriptors, descriptor);
+            if (currentFixes != null) {
+              allDescriptors.add(Pair.create(descriptor, toolKey));
             }
             HighlightSeverity severity = profileToUse.getInspectionProfile().getErrorLevel(toolKey, containingFile).getSeverity();
             final HighlightInfoType infoType =
-              ProblemDescriptorUtil.highlightTypeFromDescriptor(descriptor, severity, SeverityRegistrar.getSeverityRegistrar(project));
+              ProblemDescriptorUtil.getHighlightInfoType(descriptor.getHighlightType(),
+                                                         severity,
+                                                         SeverityRegistrar.getSeverityRegistrar(project));
             highlightTypes.add(infoType);
           }
         }
       }
     }
-    return new InspectionPassInfo(allDescriptors.toArray(new ResourceBundleEditorProblemDescriptor[allDescriptors.size()]), highlightTypes);
+    return new InspectionPassInfo(allDescriptors.toArray(new Pair[allDescriptors.size()]), highlightTypes);
   }
 
   public static class InspectionPassInfo {
-    private final ResourceBundleEditorProblemDescriptor[] myDescriptors;
+    private final Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey>[] myDescriptors;
     private final SortedSet<HighlightInfoType> myHighlightTypes;
 
-    public InspectionPassInfo(ResourceBundleEditorProblemDescriptor[] descriptors, SortedSet<HighlightInfoType> types) {
+    public InspectionPassInfo(Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey>[] descriptors, SortedSet<HighlightInfoType> types) {
       myDescriptors = descriptors;
       myHighlightTypes = types;
     }
 
-    public ResourceBundleEditorProblemDescriptor[] getDescriptors() {
+    public Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey>[] getDescriptors() {
       return myDescriptors;
     }
 

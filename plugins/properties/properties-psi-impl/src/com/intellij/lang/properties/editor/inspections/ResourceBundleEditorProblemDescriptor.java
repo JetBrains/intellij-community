@@ -15,25 +15,21 @@
  */
 package com.intellij.lang.properties.editor.inspections;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.QuickFix;
-import com.intellij.lang.annotation.ProblemGroup;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Batkovich
  */
-public class ResourceBundleEditorProblemDescriptor implements ProblemDescriptor {
+public class ResourceBundleEditorProblemDescriptor implements CommonProblemDescriptor {
   private final ProblemHighlightType myHighlightType;
   private final String myDescriptionTemplate;
   private final QuickFix[] myFixes;
 
-  public ResourceBundleEditorProblemDescriptor(final ProblemHighlightType type, String template, QuickFix<ResourceBundleEditorProblemDescriptor>... fixes) {
+  public ResourceBundleEditorProblemDescriptor(final ProblemHighlightType type, String template, QuickFix... fixes) {
     myHighlightType = type;
     myDescriptionTemplate = template;
     myFixes = fixes;
@@ -54,56 +50,5 @@ public class ResourceBundleEditorProblemDescriptor implements ProblemDescriptor 
   @Override
   public QuickFix[] getFixes() {
     return myFixes;
-  }
-
-  @Override
-  public PsiElement getPsiElement() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public PsiElement getStartElement() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public PsiElement getEndElement() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public TextRange getTextRangeInElement() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public int getLineNumber() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean isAfterEndOfLine() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void setTextAttributes(TextAttributesKey key) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Nullable
-  @Override
-  public ProblemGroup getProblemGroup() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void setProblemGroup(@Nullable ProblemGroup problemGroup) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean showTooltip() {
-    throw new UnsupportedOperationException();
   }
 }

@@ -57,8 +57,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
 
 public class MarkerType {
 
@@ -285,11 +284,12 @@ public class MarkerType {
       new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(2, new THashSet<PsiMethod>());
     final PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression> collectExprProcessor = 
       new PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression>(2, new THashSet<PsiFunctionalExpression>());
+    final boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
         OverridingMethodsSearch.search(method, true).forEach(new PsiElementProcessorAdapter<PsiMethod>(collectProcessor));
-        if (collectProcessor.getCollection().isEmpty()) {
+        if (isAbstract && collectProcessor.getCollection().size() < 2) {
           final PsiClass aClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
             @Override
             public PsiClass compute() {
@@ -306,13 +306,15 @@ public class MarkerType {
     }
 
     final PsiMethod[] methodOverriders = collectProcessor.toArray(PsiMethod.EMPTY_ARRAY);
-    NavigatablePsiElement[] overridings = ArrayUtil.mergeArrays(methodOverriders, collectExprProcessor.toArray(PsiFunctionalExpression.EMPTY_ARRAY));
-    if (overridings.length == 0) return;
+    final List<NavigatablePsiElement> overridings = new ArrayList<NavigatablePsiElement>();
+    overridings.addAll(collectProcessor.getCollection());
+    overridings.addAll(collectExprProcessor.getCollection());
+    if (overridings.isEmpty()) return;
     boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(methodOverriders);
     MethodOrFunctionalExpressionCellRenderer renderer = new MethodOrFunctionalExpressionCellRenderer(showMethodNames);
-    Arrays.sort(overridings, renderer.getComparator());
+    Collections.sort(overridings, renderer.getComparator());
     final OverridingMethodsUpdater methodsUpdater = new OverridingMethodsUpdater(method, renderer);
-    PsiElementListNavigator.openTargets(e, overridings, methodsUpdater.getCaption(overridings.length), "Overriding methods of " + method.getName(), renderer, methodsUpdater);
+    PsiElementListNavigator.openTargets(e, overridings.toArray(new NavigatablePsiElement[overridings.size()]), methodsUpdater.getCaption(overridings.size()), "Overriding methods of " + method.getName(), renderer, methodsUpdater);
   }
 
   private static final String SEARCHING_FOR_OVERRIDDEN_METHODS = "Searching for Overridden Methods";
@@ -380,7 +382,7 @@ public class MarkerType {
       @Override
       public void run() {
         ClassInheritorsSearch.search(aClass, true).forEach(new PsiElementProcessorAdapter<PsiClass>(collectProcessor));
-        if (collectProcessor.getCollection().isEmpty()) {
+        if (collectProcessor.getCollection().size() < 2) {
           FunctionalExpressionSearch.search(aClass).forEach(new PsiElementProcessorAdapter<PsiFunctionalExpression>(collectExprProcessor));
         }
       }
@@ -388,13 +390,14 @@ public class MarkerType {
       return;
     }
 
-    NavigatablePsiElement[] inheritors = ArrayUtil.mergeArrays(collectProcessor.toArray(PsiClass.EMPTY_ARRAY),
-                                                               collectExprProcessor.toArray(PsiFunctionalExpression.EMPTY_ARRAY));
-    if (inheritors.length == 0) return;
+    final List<NavigatablePsiElement> inheritors = new ArrayList<NavigatablePsiElement>();
+    inheritors.addAll(collectProcessor.getCollection());
+    inheritors.addAll(collectExprProcessor.getCollection());
+    if (inheritors.isEmpty()) return;
     final PsiClassOrFunctionalExpressionListCellRenderer renderer = new PsiClassOrFunctionalExpressionListCellRenderer();
     final SubclassUpdater subclassUpdater = new SubclassUpdater(aClass, renderer);
-    Arrays.sort(inheritors, renderer.getComparator());
-    PsiElementListNavigator.openTargets(e, inheritors, subclassUpdater.getCaption(inheritors.length), CodeInsightBundle.message("goto.implementation.findUsages.title", aClass.getName()), renderer, subclassUpdater);
+    Collections.sort(inheritors, renderer.getComparator());
+    PsiElementListNavigator.openTargets(e, inheritors.toArray(new NavigatablePsiElement[inheritors.size()]), subclassUpdater.getCaption(inheritors.size()), CodeInsightBundle.message("goto.implementation.findUsages.title", aClass.getName()), renderer, subclassUpdater);
   }
 
   private static class SubclassUpdater extends ListBackgroundUpdaterTask {

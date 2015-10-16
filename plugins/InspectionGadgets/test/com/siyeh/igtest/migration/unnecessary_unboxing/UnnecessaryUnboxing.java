@@ -37,11 +37,20 @@ public class UnnecessaryUnboxing {
 
     void casting(Byte b) {
         System.out.println((byte)<warning descr="Unnecessary unboxing 'b.byteValue()'">b.byteValue()</warning>);
+        casting((((<warning descr="Unnecessary unboxing 'b.byteValue()'">b.byteValue()</warning>))));
     }
 
 
     byte cast(Integer v) {
        return (byte)v.intValue();
+    }
+
+    void comparison() {
+        Integer a = Integer.valueOf(1024);
+        Integer b = Integer.valueOf(1024);
+        System.out.println(a == b == true); // false
+        System.out.println(a.intValue() == b.intValue() == true); // true
+        System.out.println(<warning descr="Unnecessary unboxing 'a.intValue()'">a.intValue()</warning> == 1024);
     }
 }
 

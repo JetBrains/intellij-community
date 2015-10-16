@@ -86,9 +86,9 @@
                      key="wrong.property.key.value.delimiter.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
                      enabledByDefault="true" level="WEAK WARNING" cleanupTool="true"
                      implementationClass="com.intellij.codeInspection.WrongPropertyKeyValueDelimiterInspection"/>
-    <localInspection language="Properties" shortName="IncompleteProperty" bundle="messages.PropertiesBundle"
+    <localInspection language="Properties" shortName="IncompleteProperty" unfair="true" bundle="messages.PropertiesBundle"
                      key="incomplete.property.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
-                     enabledByDefault="true" level="ERROR" cleanupTool="false"
+                     enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.lang.properties.editor.inspections.incomplete.IncompletePropertyInspection"/>
 
     <idIndexer filetype="Properties" implementationClass="com.intellij.psi.impl.cache.impl.idCache.PropertiesIdIndexer"/>

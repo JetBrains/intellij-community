@@ -51,12 +51,13 @@ interface DebuggerViewSupport {
    */
   fun canNavigateToSource(variable: Variable, context: VariableContext) = false
 
-  fun computeSourcePosition(name: String, variable: Variable, context: VariableContext, navigatable: XNavigatable)
+  fun computeSourcePosition(name: String, value: Value?, variable: Variable, context: VariableContext, navigatable: XNavigatable) {
+  }
 
   fun computeInlineDebuggerData(name: String, variable: Variable, context: VariableContext, callback: XInlineDebuggerDataCallback) = ThreeState.UNSURE
 
   // return null if you don't need to add additional properties
-  fun computeAdditionalObjectProperties(value: ObjectValue, variable: Variable, context: VariableContext, node: XCompositeNode): Promise<Void>? = null
+  fun computeAdditionalObjectProperties(value: ObjectValue, variable: Variable, context: VariableContext, node: XCompositeNode): Promise<*>? = null
 
   fun getMemberFilter(context: VariableContext): Promise<MemberFilter>
 

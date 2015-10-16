@@ -79,7 +79,7 @@ class PersistentRangeMarker extends RangeMarkerImpl {
   }
 
   @Nullable
-  private static Pair<ProperTextRange, LinesCols> translateViaDiff(final DocumentEventImpl event, LinesCols linesCols) {
+  static Pair<ProperTextRange, LinesCols> translateViaDiff(final DocumentEventImpl event, LinesCols linesCols) {
     try {
       int myStartLine = event.translateLineViaDiffStrict(linesCols.myStartLine);
       Document document = event.getDocument();
@@ -97,6 +97,13 @@ class PersistentRangeMarker extends RangeMarkerImpl {
 
       int end = document.getLineStartOffset(myEndLine) + linesCols.myEndColumn;
       if (end > document.getTextLength() || end < start) return null;
+
+      if (end > event.getDocument().getTextLength() ||
+          myEndLine < myStartLine ||
+          myStartLine == myEndLine && linesCols.myEndColumn < linesCols.myStartColumn ||
+          event.getDocument().getLineCount() < myEndLine) {
+        return null;
+      }
 
       return Pair.create(new ProperTextRange(start, end), new LinesCols(myStartLine, linesCols.myStartColumn, myEndLine, linesCols.myEndColumn));
     }
@@ -122,7 +129,7 @@ class PersistentRangeMarker extends RangeMarkerImpl {
   }
 
   @Nullable
-  static Pair<ProperTextRange, LinesCols> applyChange(DocumentEvent event, Segment range, int intervalStart, int intervalEnd, boolean greedyLeft, boolean greedyRight, LinesCols linesCols) {
+  private static Pair<ProperTextRange, LinesCols> applyChange(DocumentEvent event, Segment range, int intervalStart, int intervalEnd, boolean greedyLeft, boolean greedyRight, LinesCols linesCols) {
     final boolean shouldTranslateViaDiff = PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, range);
     Pair<ProperTextRange, LinesCols> translated = null;
     if (shouldTranslateViaDiff) {
@@ -137,13 +144,6 @@ class PersistentRangeMarker extends RangeMarkerImpl {
 
       translated = Pair.create(fallback, lc);
     }
-    if (translated.first.getEndOffset() > event.getDocument().getTextLength() ||
-        translated.second.myEndLine < translated.second.myStartLine ||
-        translated.second.myStartLine == translated.second.myEndLine && translated.second.myEndColumn < translated.second.myStartColumn ||
-        event.getDocument().getLineCount() < translated.second.myEndLine) {
-      return null;
-    }
-
     return translated;
   }
 

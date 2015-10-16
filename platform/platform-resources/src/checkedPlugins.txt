@@ -21,3 +21,6 @@ AWSCloudFormation
 Dart
 IdeaVIM
 IDETalk
+Commander
+SourceSafe
+TFS

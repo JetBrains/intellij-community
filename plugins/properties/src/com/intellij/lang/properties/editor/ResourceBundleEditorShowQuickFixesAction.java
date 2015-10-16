@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.properties.editor;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -30,6 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.IncorrectOperationException;
@@ -58,13 +60,20 @@ public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
     final ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
 
     boolean isQuickFixListEmpty = true;
-    ResourceBundleEditorProblemDescriptor[] descriptors = element.getProblemDescriptors();
-    for (ResourceBundleEditorProblemDescriptor d : descriptors) {
+    Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey>[] descriptorsAndSources = element.getProblemDescriptors();
+    for (Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey> p : descriptorsAndSources) {
+      final ResourceBundleEditorProblemDescriptor d = p.getFirst();
+      final HighlightDisplayKey sourceKey = p.getSecond();
       QuickFix[] fixes = d.getFixes();
       if (fixes != null) {
         for (int i = 0; i < fixes.length; i++) {
           intentions.inspectionFixesToShow.add(new HighlightInfo.IntentionActionDescriptor(new RBEQuickFixWrapper(d, i),
-                                                                                           AllIcons.Actions.IntentionBulb));
+                                                                                           null,
+                                                                                           null,
+                                                                                           AllIcons.Actions.IntentionBulb,
+                                                                                           sourceKey,
+                                                                                           null,
+                                                                                           null));
           isQuickFixListEmpty = false;
         }
       }

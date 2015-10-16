@@ -294,7 +294,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
         String value = myValue;
         if (myValueDescriptor.isString()) {
-          renderer.renderStringValue(myValue, "\"\\", XValueNode.MAX_VALUE_LENGTH);
+          renderer.renderStringValue(myValue, "\"", XValueNode.MAX_VALUE_LENGTH);
           return;
         }
         else if (myValueDescriptor.getLastRenderer() instanceof ToStringRenderer ||

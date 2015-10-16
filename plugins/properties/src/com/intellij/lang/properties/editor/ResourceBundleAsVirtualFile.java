@@ -156,7 +156,8 @@ public class ResourceBundleAsVirtualFile extends VirtualFile {
   @Override
   @NotNull
   public byte[] contentsToByteArray() throws IOException {
-    throw new UnsupportedOperationException();
+    //TODO compare files action uses this method
+    return new byte[0];
   }
 
   @Override

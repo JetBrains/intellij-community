@@ -268,10 +268,10 @@ public class ExceptionUtil {
     else if (element instanceof PsiMethodReferenceExpression) {
       PsiExpression qualifierExpression = ((PsiMethodReferenceExpression)element).getQualifierExpression();
       return qualifierExpression != null ? collectUnhandledExceptions(qualifierExpression, topElement, null, false) 
-                                         : Collections.<PsiClassType>emptySet();
+                                         : null;
     }
     else if (element instanceof PsiLambdaExpression) {
-      return Collections.emptySet();
+      return null;
     }
     else if (element instanceof PsiThrowStatement) {
       PsiThrowStatement statement = (PsiThrowStatement)element;

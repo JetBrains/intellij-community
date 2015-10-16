@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitSession;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,6 +32,9 @@ import java.awt.*;
 import java.util.List;
 
 public class SessionDialog extends DialogWrapper {
+
+  @NonNls public static final String VCS_CONFIGURATION_UI_TITLE = "Vcs.SessionDialog.title";
+
   private final CommitSession mySession;
   private final List<Change> myChanges;
 
@@ -49,7 +53,8 @@ public class SessionDialog extends DialogWrapper {
     myCommitMessage = commitMessage;
     myConfigurationComponent =
       configurationComponent == null ? createConfigurationUI(mySession, myChanges, myCommitMessage) : configurationComponent;
-    String configurationComponentName = myConfigurationComponent.getName();
+    String configurationComponentName =
+      myConfigurationComponent != null ? (String)myConfigurationComponent.getClientProperty(VCS_CONFIGURATION_UI_TITLE) : null;
     setTitle(StringUtil.isEmptyOrSpaces(configurationComponentName)
              ? CommitChangeListDialog.trimEllipsis(title) : configurationComponentName);
     init();
@@ -62,6 +67,7 @@ public class SessionDialog extends DialogWrapper {
     this(title, project, session, changes, commitMessage, null);
   }
 
+  @Nullable
   public static JComponent createConfigurationUI(final CommitSession session, final List<Change> changes, final String commitMessage) {
     try {
       return session.getAdditionalConfigurationUI(changes, commitMessage);

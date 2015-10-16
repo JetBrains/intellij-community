@@ -25,7 +25,7 @@ import com.intellij.util.io.socketConnection.ConnectionStatus
 import io.netty.bootstrap.Bootstrap
 import org.jetbrains.debugger.Vm
 import org.jetbrains.io.NettyUtil
-import org.jetbrains.rpc.CommandProcessor
+import org.jetbrains.rpc.LOG
 import org.jetbrains.util.concurrency.AsyncPromise
 import org.jetbrains.util.concurrency.Promise
 import org.jetbrains.util.concurrency.RejectedPromise
@@ -37,11 +37,10 @@ import java.util.concurrent.atomic.AtomicReference
 abstract class RemoteVmConnection : VmConnection<Vm>() {
   private val connectCancelHandler = AtomicReference<Runnable>()
 
-  override fun getBrowser() = null
+  abstract fun createBootstrap(address: InetSocketAddress, vmResult: AsyncPromise<Vm>): Bootstrap
 
-  public abstract fun createBootstrap(address: InetSocketAddress, vmResult: AsyncPromise<Vm>): Bootstrap
-
-  public fun open(address: InetSocketAddress, stopCondition: Condition<Void>? = null) {
+  @JvmOverloads
+  fun open(address: InetSocketAddress, stopCondition: Condition<Void>? = null) {
     setState(ConnectionStatus.WAITING_FOR_CONNECTION, "Connecting to ${address.hostName}:${address.port}")
     val future = ApplicationManager.getApplication().executeOnPooledThread(object : Runnable {
       override fun run() {
@@ -63,7 +62,7 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
           }
           .rejected {
             if (it !is ConnectException) {
-              Promise.logError(CommandProcessor.LOG, it)
+              Promise.logError(LOG, it)
             }
             setState(ConnectionStatus.CONNECTION_FAILED, it.getMessage())
           }

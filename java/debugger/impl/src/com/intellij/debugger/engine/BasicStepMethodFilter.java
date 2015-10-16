@@ -17,7 +17,10 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.psi.PsiMethod;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
+import com.intellij.psi.*;
 import com.intellij.util.Range;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
@@ -29,6 +32,8 @@ import org.jetbrains.annotations.Nullable;
  *         Date: 10/26/13
  */
 public class BasicStepMethodFilter implements NamedMethodFilter {
+  private static final Logger LOG = Logger.getInstance(BasicStepMethodFilter.class);
+
   @NotNull
   protected final JVMName myDeclaringClassName;
   @NotNull
@@ -59,17 +64,40 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
     return myTargetMethodName;
   }
 
-  public boolean locationMatches(DebugProcessImpl process, Location location) throws EvaluateException {
+  public boolean locationMatches(final DebugProcessImpl process, final Location location) throws EvaluateException {
     final Method method = location.method();
-    if (!myTargetMethodName.equals(method.name())) {
-      return false;
+    boolean lambdaMatched = false;
+    String name = method.name();
+    if (!myTargetMethodName.equals(name)) {
+      if (LambdaMethodFilter.isLambdaName(name)) {
+        lambdaMatched = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+          @Override
+          public Boolean compute() {
+            PsiParameterListOwner psiMethod = DebuggerUtilsEx.getContainingMethod(process.getPositionManager().getSourcePosition(location));
+            if (psiMethod instanceof PsiLambdaExpression) {
+              PsiType type = ((PsiLambdaExpression)psiMethod).getFunctionalInterfaceType();
+              PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(type);
+              if (type != null && interfaceMethod != null && myTargetMethodName.equals(interfaceMethod.getName())) {
+                try {
+                  return type.getCanonicalText().equals(myDeclaringClassName.getName(process).replace('$', '.'));
+                }
+                catch (EvaluateException e) {
+                  LOG.info(e);
+                }
+              }
+            }
+            return false;
+          }
+        });
+      }
+      if (!lambdaMatched) return false;
     }
     if (myTargetMethodSignature != null) {
       if (!signatureMatches(method, myTargetMethodSignature.getName(process))) {
         return false;
       }
     }
-    return DebuggerUtilsEx.isAssignableFrom(myDeclaringClassName.getName(process), location.declaringType());
+    return lambdaMatched || DebuggerUtilsEx.isAssignableFrom(myDeclaringClassName.getName(process), location.declaringType());
   }
 
   private static boolean signatureMatches(Method method, final String expectedSignature) throws EvaluateException {

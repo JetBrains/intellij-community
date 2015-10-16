@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -63,7 +62,7 @@ public class FileTypeUsagesCollector extends AbstractApplicationUsagesCollector 
       if (project.isDisposed()) {
         throw new CollectUsagesException("Project is disposed");
       }
-      final String ideaDirPath = getIdeaDirPath(project.getBasePath());
+      final String ideaDirPath = getIdeaDirPath(project);
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
         public void run() {
@@ -95,17 +94,12 @@ public class FileTypeUsagesCollector extends AbstractApplicationUsagesCollector 
   }
 
   @Nullable
-  private static String getIdeaDirPath(@Nullable String projectPath) {
+  private static String getIdeaDirPath(@NotNull Project project) {
+    String projectPath = project.getBasePath();
     if (projectPath != null) {
-      File projectDir = new File(projectPath);
-      File[] ideaDirs = projectDir.listFiles(new FilenameFilter() {
-        @Override
-        public boolean accept(File dir, String name) {
-          return Project.DIRECTORY_STORE_FOLDER.equals(name);
-        }
-      });
-      if (ideaDirs.length == 1) {
-        return ideaDirs[0].getPath();
+      String ideaDirPath = projectPath + "/" + Project.DIRECTORY_STORE_FOLDER;
+      if (new File(ideaDirPath).isDirectory()) {
+        return ideaDirPath;
       }
     }
     return null;
