@@ -1,11 +1,12 @@
 <html>
 <body>
-Reports the calls to <b>java.sql.Connection.prepareStatement()</b>,
-<b>java.sql.Connection.prepareCall()</b>or any
-of their variants which take a dynamically-constructed string as the statement to prepare.
+Reports calls to <b>java.sql.Connection.prepareStatement()</b>,
+<b>java.sql.Connection.prepareCall()</b>, or any
+of their variants, which take a dynamically-constructed string as the statement to prepare.
 Constructed SQL statements are a common source of security breaches.
 <!-- tooltip end -->
 <p>
-
+Use the checkbox below to consider any <b>static</b> <b>final</b> fields as constant.
+<p>
 </body>
 </html>

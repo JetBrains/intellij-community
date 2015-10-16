@@ -31,6 +31,8 @@ public class JDBCExecuteWithNonConstantStringInspectionTest extends LightInspect
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new JDBCExecuteWithNonConstantStringInspection();
+    final JDBCExecuteWithNonConstantStringInspection inspection = new JDBCExecuteWithNonConstantStringInspection();
+    inspection.considerStaticFinalConstant = true;
+    return inspection;
   }
 }

@@ -15,14 +15,21 @@
  */
 package com.siyeh.ig.security;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class RuntimeExecWithNonConstantStringInspection extends BaseInspection {
+
+  @SuppressWarnings("PublicField")
+  public boolean considerStaticFinalConstant = false;
 
   @Override
   @NotNull
@@ -42,17 +49,24 @@ public class RuntimeExecWithNonConstantStringInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("runtime.exec.with.non.constant.string.problem.descriptor");
   }
 
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("consider.static.final.fields.constant.option"),
+                                          this, "considerStaticFinalConstant");
+  }
+
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new RuntimeExecVisitor();
   }
 
-  private static class RuntimeExecVisitor extends BaseInspectionVisitor {
+  private class RuntimeExecVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (!MethodCallUtils.callWithNonConstantString(expression, "java.lang.Runtime", "exec")) {
+      if (!MethodCallUtils.callWithNonConstantString(expression, considerStaticFinalConstant, "java.lang.Runtime", "exec")) {
         return;
       }
       registerMethodCallError(expression);

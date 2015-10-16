@@ -246,7 +246,8 @@ public class MethodCallUtils {
     return visitor.isSuperCallFound();
   }
 
-  public static boolean callWithNonConstantString(@NotNull PsiMethodCallExpression expression, String className, String... methodNames) {
+  public static boolean callWithNonConstantString(@NotNull PsiMethodCallExpression expression, boolean considerStaticFinalConstant,
+                                                  String className, String... methodNames) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     final String methodName = methodExpression.getReferenceName();
     boolean found = false;
@@ -271,13 +272,23 @@ public class MethodCallUtils {
       return false;
     }
     final PsiExpressionList argumentList = expression.getArgumentList();
-    final PsiExpression argument = ExpressionUtils.getFirstExpressionInList(argumentList);
+    final PsiExpression argument = ParenthesesUtils.stripParentheses(ExpressionUtils.getFirstExpressionInList(argumentList));
     if (argument == null) {
       return false;
     }
     final PsiType type = argument.getType();
     if (type == null || !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
       return false;
+    }
+    if (considerStaticFinalConstant && argument instanceof PsiReferenceExpression) {
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)argument;
+      final PsiElement target = referenceExpression.resolve();
+      if (target instanceof PsiField) {
+        final PsiField field = (PsiField)target;
+        if (field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL)) {
+          return false;
+        }
+      }
     }
     return !PsiUtil.isConstantExpression(argument);
   }

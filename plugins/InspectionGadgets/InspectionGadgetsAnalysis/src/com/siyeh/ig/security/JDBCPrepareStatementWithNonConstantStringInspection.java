@@ -15,27 +15,39 @@
  */
 package com.siyeh.ig.security;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class JDBCPrepareStatementWithNonConstantStringInspection extends BaseInspection {
+
+  @SuppressWarnings("PublicField")
+  public boolean considerStaticFinalConstant = false;
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "jdbc.prepare.statement.with.non.constant.string.display.name");
+    return InspectionGadgetsBundle.message("jdbc.prepare.statement.with.non.constant.string.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "jdbc.prepare.statement.with.non.constant.string.problem.descriptor");
+    return InspectionGadgetsBundle.message("jdbc.prepare.statement.with.non.constant.string.problem.descriptor");
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("consider.static.final.fields.constant.option"),
+                                          this, "considerStaticFinalConstant");
   }
 
   @Override
@@ -43,12 +55,13 @@ public class JDBCPrepareStatementWithNonConstantStringInspection extends BaseIns
     return new RuntimeExecVisitor();
   }
 
-  private static class RuntimeExecVisitor extends BaseInspectionVisitor {
+  private class RuntimeExecVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (!MethodCallUtils.callWithNonConstantString(expression, "java.sql.Connection", "prepareStatement", "prepareCall")) {
+      if (!MethodCallUtils.callWithNonConstantString(expression, considerStaticFinalConstant, "java.sql.Connection",
+                                                     "prepareStatement", "prepareCall")) {
         return;
       }
       registerMethodCallError(expression);
