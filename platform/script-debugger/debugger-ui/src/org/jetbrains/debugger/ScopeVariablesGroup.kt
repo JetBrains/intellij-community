@@ -54,7 +54,7 @@ class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, call
 }
 
 fun createAndAddScopeList(node: XCompositeNode, scopes: List<Scope>, context: VariableContext, callFrame: CallFrame?) {
-  val list = XValueChildrenList(scopes.size)
+  val list = XValueChildrenList(scopes.size())
   for (scope in scopes) {
     list.addTopGroup(ScopeVariablesGroup(scope, context, callFrame))
   }
