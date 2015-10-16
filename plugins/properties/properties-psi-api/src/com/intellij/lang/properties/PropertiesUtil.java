@@ -146,11 +146,9 @@ public class PropertiesUtil {
   @NotNull
   public static Locale getLocale(final @NotNull PropertiesFile propertiesFile) {
     String name = propertiesFile.getName();
-    if (!StringUtil.containsChar(name, '_')) {
-      return DEFAULT_LOCALE;
-    }
+    if (!StringUtil.containsChar(name, '_')) return DEFAULT_LOCALE;
     final String containingResourceBundleBaseName = propertiesFile.getResourceBundle().getBaseName();
-    LOG.assertTrue(name.startsWith(containingResourceBundleBaseName));
+    if (!name.startsWith(containingResourceBundleBaseName)) return DEFAULT_LOCALE;
     return getLocale(name.substring(containingResourceBundleBaseName.length()));
   }
 
