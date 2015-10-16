@@ -39,7 +39,7 @@ public class SwitchToReplace extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     EditorSearchSession search = e.getRequiredData(EditorSearchSession.SESSION_KEY);
     FindModel findModel = search.getFindModel();
-    FindUtil.configureFindModel(true, null, findModel, false);
+    FindUtil.configureFindModel(true, e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE), findModel, false);
     search.getComponent().getSearchTextComponent().selectAll();
   }
 }
