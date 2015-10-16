@@ -28,7 +28,9 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.inline.InlineOptionsDialog;
 import com.intellij.refactoring.ui.DocCommentPanel;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Function;
+import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,13 +85,16 @@ public class InlineSuperClassRefactoringDialog extends InlineOptionsDialog {
                                        }
                                      }, "\',<br>&nbsp;&nbsp;&nbsp;\'") +
                                      "\'</html>");
-    label.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 5));
     final JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints gc =
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                              new Insets(0, 0, 0, 0), 0, 0);
     panel.add(myDocPanel, gc);
-    panel.add(label, gc);
+    JScrollPane pane = ScrollPaneFactory.createScrollPane(label);
+    pane.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 5));
+    pane.setMinimumSize(JBDimension.create(new Dimension(-1, 100)));
+    pane.setMaximumSize(JBDimension.create(new Dimension(-1, 400)));
+    panel.add(pane, gc);
     gc.weighty = 1;
     gc.fill = GridBagConstraints.BOTH;
     panel.add(super.createCenterPanel(), gc);
