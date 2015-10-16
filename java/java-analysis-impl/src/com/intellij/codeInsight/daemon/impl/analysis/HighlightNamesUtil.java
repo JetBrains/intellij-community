@@ -191,9 +191,9 @@ public class HighlightNamesUtil {
       return HighlightInfoType.LOCAL_VARIABLE;
     }
     if (var instanceof PsiField) {
-      return var.hasModifierProperty(PsiModifier.STATIC) ? var.hasModifierProperty(PsiModifier.FINAL)
-                                                            ? HighlightInfoType.STATIC_FINAL_FIELD
-                                                            : HighlightInfoType.STATIC_FIELD : HighlightInfoType.INSTANCE_FIELD;
+      return var.hasModifierProperty(PsiModifier.STATIC) 
+             ? var.hasModifierProperty(PsiModifier.FINAL) ? HighlightInfoType.STATIC_FINAL_FIELD : HighlightInfoType.STATIC_FIELD
+             : var.hasModifierProperty(PsiModifier.FINAL) ? HighlightInfoType.INSTANCE_FINAL_FIELD : HighlightInfoType.INSTANCE_FIELD;
     }
     if (var instanceof PsiParameter) {
       return HighlightInfoType.PARAMETER;
