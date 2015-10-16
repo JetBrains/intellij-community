@@ -26,6 +26,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.HelperPackage;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.psi.PyIndentUtil;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
@@ -112,15 +113,18 @@ public class PyStructuredDocstringFormatter {
                                         @NotNull final HelperPackage formatter,
                                         @NotNull final String docstring) {
     final Sdk sdk;
+    final String missingInterpreterMessage;
     if (formatter == PythonHelper.EPYDOC_FORMATTER) {
       sdk = PythonSdkType.findPython2Sdk(module);
+      missingInterpreterMessage = PyBundle.message("QDOC.epydoc.python2.sdk.not.found");
     }
     else {
       sdk = PythonSdkType.findLocalCPython(module);
+      missingInterpreterMessage = PyBundle.message("QDOC.sdk.not.found");
     }
     if (sdk == null) {
-      LOG.info("Python SDK for docstring formatter " + formatter +  " is not found");
-      return null;
+      LOG.warn("Python SDK for docstring formatter " + formatter +  " is not found");
+      return "<font color=\"red\">" + missingInterpreterMessage + "</font>";
     }
 
     final String sdkHome = sdk.getHomePath();
