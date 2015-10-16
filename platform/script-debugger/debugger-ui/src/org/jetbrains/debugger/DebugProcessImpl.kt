@@ -136,7 +136,10 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
     continueVm(StepAction.CONTINUE)
   }
 
-  protected final fun continueVm(stepAction: StepAction) {
+  /**
+   * You can override this method to avoid SuspendContextManager implementation, but it is not recommended.
+   */
+  protected open fun continueVm(stepAction: StepAction) {
     val suspendContextManager = vm!!.suspendContextManager
     if (stepAction === StepAction.CONTINUE) {
       if (suspendContextManager.context == null) {
@@ -155,11 +158,11 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
     suspendContextManager.continueVm(stepAction, 1)
   }
 
-  protected final fun setOverlay() {
+  protected fun setOverlay() {
     vm!!.suspendContextManager.setOverlayMessage("Paused in debugger")
   }
 
-  protected final fun processBreakpoint(suspendContext: SuspendContext, breakpoint: XBreakpoint<*>, xSuspendContext: SuspendContextImpl) {
+  protected fun processBreakpoint(suspendContext: SuspendContext, breakpoint: XBreakpoint<*>, xSuspendContext: SuspendContextImpl) {
     val condition = breakpoint.conditionExpression?.expression
     if (!processBreakpointConditionsAtIdeSide || condition == null) {
       processBreakpointLogExpressionAndSuspend(breakpoint, xSuspendContext, suspendContext)
