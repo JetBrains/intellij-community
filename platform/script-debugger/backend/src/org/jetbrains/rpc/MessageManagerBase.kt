@@ -31,10 +31,8 @@ abstract class MessageManagerBase {
   fun closed() {
     closed = true
   }
+}
 
-  companion object {
-    protected fun rejectCallback(callback: RequestCallback<*>) {
-      callback.onError(Promise.createError("Connection closed"))
-    }
-  }
+fun RequestCallback<*>.reject() {
+  onError(Promise.createError("Connection closed"))
 }

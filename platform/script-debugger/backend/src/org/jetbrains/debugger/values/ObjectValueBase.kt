@@ -47,42 +47,40 @@ abstract class ObjectValueBase<VALUE_LOADER : ValueManager<out Vm>>(type: ValueT
   @Suppress("CAST_NEVER_SUCCEEDS")
   override val variablesHost: VariablesHost<ValueManager<Vm>>
     get() = childrenManager as VariablesHost<ValueManager<Vm>>
+}
 
-  companion object {
-    protected fun getSpecifiedProperties(variables: List<Variable>, names: List<String>, evaluateContext: EvaluateContext): Promise<List<Variable>> {
-      val properties = SmartList<Variable>()
-      var getterCount = 0
-      for (property in variables) {
-        if (!property.isReadable || !names.contains(property.name)) {
-          continue
-        }
+fun getSpecifiedProperties(variables: List<Variable>, names: List<String>, evaluateContext: EvaluateContext): Promise<List<Variable>> {
+  val properties = SmartList<Variable>()
+  var getterCount = 0
+  for (property in variables) {
+    if (!property.isReadable || !names.contains(property.name)) {
+      continue
+    }
 
-        if (!properties.isEmpty()) {
-          Collections.sort(properties, object : Comparator<Variable> {
-            override fun compare(o1: Variable, o2: Variable) = names.indexOf(o1.name) - names.indexOf(o2.name)
-          })
-        }
+    if (!properties.isEmpty()) {
+      Collections.sort(properties, object : Comparator<Variable> {
+        override fun compare(o1: Variable, o2: Variable) = names.indexOf(o1.name) - names.indexOf(o2.name)
+      })
+    }
 
-        properties.add(property)
-        if (property.value == null) {
-          getterCount++
-        }
-      }
+    properties.add(property)
+    if (property.value == null) {
+      getterCount++
+    }
+  }
 
-      if (getterCount == 0) {
-        return Promise.resolve(properties)
-      }
-      else {
-        val promises = SmartList<Promise<*>>()
-        for (variable in properties) {
-          if (variable.value == null) {
-            val valueModifier = variable.valueModifier
-            assert(valueModifier != null)
-            promises.add(valueModifier!!.evaluateGet(variable, evaluateContext))
-          }
-        }
-        return Promise.all<List<Variable>>(promises, properties)
+  if (getterCount == 0) {
+    return Promise.resolve(properties)
+  }
+  else {
+    val promises = SmartList<Promise<*>>()
+    for (variable in properties) {
+      if (variable.value == null) {
+        val valueModifier = variable.valueModifier
+        assert(valueModifier != null)
+        promises.add(valueModifier!!.evaluateGet(variable, evaluateContext))
       }
     }
+    return Promise.all<List<Variable>>(promises, properties)
   }
 }
