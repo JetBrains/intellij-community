@@ -181,7 +181,6 @@ public abstract class PsiNameHelper {
   @NotNull
   public static String[] getClassParametersText(@NotNull String referenceText) {
     if (referenceText.indexOf('<') < 0) return ArrayUtil.EMPTY_STRING_ARRAY;
-    referenceText = removeWhitespace(referenceText);
     final char[] chars = referenceText.toCharArray();
     int afterLastDotIndex = 0;
 
