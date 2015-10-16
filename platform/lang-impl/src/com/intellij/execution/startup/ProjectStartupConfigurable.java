@@ -258,7 +258,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
   }
 
   private void addConfiguration(RunnerAndConfigurationSettings configuration) {
-    if (!ProjectStartupRunner.canRun(DefaultRunExecutor.getRunExecutorInstance(), configuration)) {
+    if (!ProjectStartupRunner.canBeRun(configuration)) {
       final String message = "Can not add Run Configuration '" + configuration.getName() + "' to Startup Tasks," +
                              " since it can not be started with 'Run' action.";
       final Balloon balloon = JBPopupFactory.getInstance()
@@ -290,7 +290,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
     for (ChooseRunConfigurationPopup.ItemWrapper setting : allSettings) {
       if (setting.getValue() instanceof RunnerAndConfigurationSettings) {
         final RunnerAndConfigurationSettings settings = (RunnerAndConfigurationSettings)setting.getValue();
-        if (!settings.isTemporary() && ProjectStartupRunner.canRun(executor, settings) && !existing.contains(settings)) {
+        if (!settings.isTemporary() && ProjectStartupRunner.canBeRun(settings) && !existing.contains(settings)) {
           wrappers.add(setting);
         }
       }
