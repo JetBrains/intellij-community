@@ -113,10 +113,12 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   protected void assertDefaultGradleJavaProjectFolders(@NotNull String mainModuleName) {
     assertExcludes(mainModuleName, ".gradle", "build");
     final String mainSourceSetModuleName = mainModuleName + "_main";
-    assertSources(mainSourceSetModuleName, "src/main/java");
-    assertResources(mainSourceSetModuleName, "src/main/resources");
+    assertContentRoots(mainSourceSetModuleName, getProjectPath() + "/src/main");
+    assertSources(mainSourceSetModuleName, "java");
+    assertResources(mainSourceSetModuleName, "resources");
     final String testSourceSetModuleName = mainModuleName + "_test";
-    assertTestSources(testSourceSetModuleName, "src/test/java");
-    assertTestResources(testSourceSetModuleName, "src/test/resources");
+    assertContentRoots(testSourceSetModuleName, getProjectPath() + "/src/test");
+    assertTestSources(testSourceSetModuleName, "java");
+    assertTestResources(testSourceSetModuleName, "resources");
   }
 }
