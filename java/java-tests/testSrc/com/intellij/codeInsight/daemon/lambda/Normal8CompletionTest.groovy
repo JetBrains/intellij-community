@@ -196,4 +196,10 @@ class Test88 {
     selectItem(myItems.find { it.lookupString.contains('toSet') })
     checkResultByFile(getTestName(false) + "_after.java")
   }
+
+  public void testNoExplicitTypeArgsInTernary() {
+    configureByTestName()
+    selectItem(myItems.find { it.lookupString.contains('empty') })
+    checkResultByFile(getTestName(false) + "_after.java")
+  }
 }
