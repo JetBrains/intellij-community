@@ -344,6 +344,14 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       return size == 0;
     }
 
+    Reference<SmartPointerEx>[] getReferences() {
+      return references;
+    }
+
+    int getSize() {
+      return size;
+    }
+
     @NotNull
     List<SmartPsiElementPointerImpl> getAlivePointers() {
       return ContainerUtil.mapNotNull(references, new Function<PointerReference, SmartPsiElementPointerImpl>() {

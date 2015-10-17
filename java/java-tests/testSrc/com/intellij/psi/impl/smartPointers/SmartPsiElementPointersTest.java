@@ -38,6 +38,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -46,17 +47,19 @@ import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.*;
 import com.intellij.util.FileContentUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.io.IOException;
 import java.lang.ref.SoftReference;
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @PlatformTestCase.WrapInCommand
 @SkipSlowTestLocally
@@ -847,6 +850,27 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     assertNotNull(pointer.getElement());
+  }
+
+  public void testManyPsiChangesWithManySmartPointersPerformance() {
+    String eachTag = "<a>\n" + StringUtil.repeat("   <a> </a>\n", 9) + "</a>\n";
+    XmlFile file = (XmlFile)configureByText(XmlFileType.INSTANCE, "<root>\n" + StringUtil.repeat(eachTag, 500) + "</root>");
+    List<XmlTag> tags = ContainerUtil.newArrayList(PsiTreeUtil.findChildrenOfType(file.getDocument(), XmlTag.class));
+    List<SmartPsiElementPointer> pointers = tags.stream().map(this::createPointer).collect(Collectors.toList());
+    Random random = new Random();
+    PlatformTestUtil.startPerformanceTest("smart pointer range update after PSI change", 21000, () -> {
+      for (int i = 0; i < tags.size(); i++) {
+        XmlTag tag = tags.get(i);
+        SmartPsiElementPointer pointer = pointers.get(i);
+        assertEquals(tag.getName().length(), TextRange.create(pointer.getRange()).getLength());
+        assertEquals(tag.getName().length(), TextRange.create(pointer.getPsiRange()).getLength());
+
+        tag.setName("bar" + random.nextInt(20));
+        assertEquals(tag.getName().length(), TextRange.create(pointer.getRange()).getLength());
+        assertEquals(tag.getName().length(), TextRange.create(pointer.getPsiRange()).getLength());
+      }
+      PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting();
+    }).cpuBound().assertTiming();
   }
 
   @NotNull

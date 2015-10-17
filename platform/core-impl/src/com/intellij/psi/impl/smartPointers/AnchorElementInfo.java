@@ -45,7 +45,7 @@ class AnchorElementInfo extends SelfElementInfo {
                     @NotNull PsiFileWithStubSupport containingFile,
                     int stubId,
                     @NotNull IStubElementType stubElementType) {
-    super(containingFile.getProject(), new ProperTextRange(0, 0), anchor.getClass(), containingFile, containingFile.getLanguage(), false);
+    super(containingFile.getProject(), null, anchor.getClass(), containingFile, containingFile.getLanguage(), false);
     myStubElementTypeAndId = pack(stubId, stubElementType);
     assert !(anchor instanceof PsiFile) : "FileElementInfo must be used for file: "+anchor;
   }
@@ -130,7 +130,7 @@ class AnchorElementInfo extends SelfElementInfo {
       if (anchor == null) anchor = element;
       myType = anchor.getClass();
       setRange(anchor.getTextRange());
-      myMarkerCache.rangeChanged(markerCacheKey());
+      myMarkerCache.rangeChanged();
       myStubElementTypeAndId = pack(-1, null);
     }
   }

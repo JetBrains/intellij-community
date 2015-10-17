@@ -42,12 +42,11 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   protected final Language myLanguage;
   protected final MarkerCache myMarkerCache;
   private final boolean myForInjected;
-  private boolean myHasRange;
   private int myStartOffset;
   private int myEndOffset;
 
   SelfElementInfo(@NotNull Project project,
-                  @NotNull ProperTextRange range,
+                  @Nullable ProperTextRange range,
                   @NotNull Class anchorClass,
                   @NotNull PsiFile containingFile,
                   @NotNull Language language,
@@ -60,35 +59,30 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     myManager = (SmartPointerManagerImpl)SmartPointerManager.getInstance(project);
     myMarkerCache = myManager.getMarkerCache(containingFile.getViewProvider().getVirtualFile());
     setRange(range);
-    myMarkerCache.rangeChanged(markerCacheKey());
+    myMarkerCache.rangeChanged();
   }
 
   void setRange(@Nullable Segment range) {
     if (range != null) {
-      myHasRange = true;
       myStartOffset = range.getStartOffset();
       myEndOffset = range.getEndOffset();
     } else {
-      myHasRange = false;
+      myStartOffset = -1;
+      myEndOffset = -1;
     }
   }
 
-  long markerCacheKey() {
-    if (!myHasRange) return 0;
-
-    long start = myStartOffset;
-    assert start >= 0;
-    assert start < Integer.MAX_VALUE;
-
-    long packed = (start + 1) | ((long)myEndOffset << 32);
-    assert packed > 0;
-    assert packed != Long.MIN_VALUE;
-
-    long result = myForInjected ? -packed : packed;
-    assert result != 0;
-    return result;
+  boolean hasRange() {
+    return myStartOffset >= 0;
   }
 
+  int getPsiStartOffset() {
+    return myStartOffset;
+  }
+
+  int getPsiEndOffset() {
+    return myEndOffset;
+  }
 
   boolean isForInjected() {
     return myForInjected;
@@ -118,7 +112,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   @Nullable
   private ProperTextRange calcPsiRange() {
-    return myHasRange ? ProperTextRange.create(myStartOffset, myEndOffset) : null;
+    return hasRange() ? ProperTextRange.create(myStartOffset, myEndOffset) : null;
   }
 
   @Override
@@ -179,7 +173,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   @Override
   public void cleanup() {
-    myHasRange = false;
+    setRange(null);
   }
 
   @Nullable
@@ -270,13 +264,13 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   @Override
   @Nullable
   public Segment getRange() {
-    if (myHasRange) {
+    if (hasRange()) {
       Document document = getDocumentToSynchronize();
       if (document != null) {
         PsiDocumentManagerBase documentManager = myManager.getPsiDocumentManager();
         List<DocumentEvent> events = documentManager.getEventsSinceCommit(document);
         if (!events.isEmpty()) {
-          return myMarkerCache.getUpdatedRange(markerCacheKey(), (FrozenDocument)documentManager.getLastCommittedDocument(document), events);
+          return myMarkerCache.getUpdatedRange(this, (FrozenDocument)documentManager.getLastCommittedDocument(document), events);
         }
       }
     }
