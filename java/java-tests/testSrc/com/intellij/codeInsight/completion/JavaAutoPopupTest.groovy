@@ -199,17 +199,6 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assertTrue lookup.focused
   }
 
-  public void testNoLookupFocusInJavaVariable() {
-    myFixture.configureByText("a.java", """
-      class Foo {
-        String foo(String st<caret>) {
-        }
-      }
-    """)
-    type 'r'
-    assertFalse lookup.focused
-  }
-
   public void testNoStupidNameSuggestions() {
     myFixture.configureByText("a.java", """
       class Foo {
@@ -487,7 +476,7 @@ class Foo {
     assert !lookup
   }
 
-  void testArrows(String toType, int indexDown, int indexUp) {
+  void testArrows(String toType, LookupImpl.FocusDegree focusDegree, int indexDown, int indexUp) {
     Closure checkArrow = { String action, int expectedIndex ->
       myFixture.configureByText("a.java", """
       class A {
@@ -500,7 +489,7 @@ class Foo {
 
       type toType
       assert lookup
-      assert !lookup.focused
+      lookup.focusDegree = focusDegree
 
       edt { myFixture.performEditorAction(action) }
       if (lookup) {
@@ -520,11 +509,11 @@ class Foo {
 
   public void "test vertical arrows in non-focused lookup"() {
     String toType = "ArrayIndexOutOfBoundsException ind"
-    testArrows toType, 0, 1
+    testArrows toType, LookupImpl.FocusDegree.UNFOCUSED, 0, 1
 
     UISettings.instance.CYCLE_SCROLLING = false
     try {
-      testArrows toType, 0, -1
+      testArrows toType, LookupImpl.FocusDegree.UNFOCUSED, 0, -1
     }
     finally {
       UISettings.instance.CYCLE_SCROLLING = true
@@ -536,11 +525,11 @@ class Foo {
     UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true
 
     String toType = "fo"
-    testArrows toType, 2, 0
+    testArrows toType, LookupImpl.FocusDegree.SEMI_FOCUSED, 2, 0
 
     UISettings.instance.CYCLE_SCROLLING = false
     try {
-      testArrows toType, 2, 0
+      testArrows toType, LookupImpl.FocusDegree.SEMI_FOCUSED, 2, 0
     }
     finally {
       UISettings.instance.CYCLE_SCROLLING = true
@@ -1579,21 +1568,6 @@ class Foo {
   }
 }
 '''
-  }
-
-  public void "test no focus in variable name"() {
-    myFixture.configureByText 'a.java', '''
-class FooBar {
-  void foo() {
-    FooBar <caret>
-  }
-}
-'''
-    type 'f'
-    assert lookup
-    assert !lookup.focused
-    type '\n'
-    assert !myFixture.editor.document.text.contains('fooBar')
   }
 
   public void "test middle matching and overwrite"() {

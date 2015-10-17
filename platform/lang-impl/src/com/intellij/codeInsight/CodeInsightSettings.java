@@ -65,12 +65,6 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public static final int NONE = 2;
   public static final int FIRST_LETTER = 3;
 
-  @MagicConstant(intValues = {NEVER, SMART, ALWAYS})
-  public int AUTOPOPUP_FOCUS_POLICY = SMART;
-  public static final int NEVER = 1;
-  public static final int SMART = 2;
-  public static final int ALWAYS = 3;
-
   public boolean SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false;
   public boolean AUTOCOMPLETE_ON_CODE_COMPLETION = true;
   public boolean AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = true;
