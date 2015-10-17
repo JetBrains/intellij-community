@@ -697,7 +697,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     }
   }
 
-  void saveRemainingPatches(final ShelvedChangeList changeList, final List<FilePatch> remainingPatches,
+  public void saveRemainingPatches(final ShelvedChangeList changeList, final List<FilePatch> remainingPatches,
                             final List<ShelvedBinaryFile> remainingBinaries, CommitContext commitContext) {
     final File newPatchDir = generateUniqueSchemePatchDir(changeList.DESCRIPTION, true);
     final File newPath = getPatchFileInConfigDir(newPatchDir);
@@ -790,7 +790,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     }
   }
 
-  private void recycleChangeList(@NotNull final ShelvedChangeList changeList) {
+  public void recycleChangeList(@NotNull final ShelvedChangeList changeList) {
     recycleChangeList(changeList, null);
     notifyStateChanged();
   }
