@@ -21,8 +21,10 @@ import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.ClassConditionKey;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -169,17 +171,18 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     return myMayNeedExplicitTypeParameters && !getInferenceSubstitutor().equals(PsiSubstitutor.EMPTY) && myMethod.getParameterList().getParametersCount() == 0;
   }
 
-  public static boolean mayNeedTypeParameters(final PsiElement leaf) {
+  public static boolean mayNeedTypeParameters(@Nullable final PsiElement leaf) {
     if (PsiTreeUtil.getParentOfType(leaf, PsiExpressionList.class, true, PsiCodeBlock.class, PsiModifierListOwner.class) == null) {
       if (PsiTreeUtil.getParentOfType(leaf, PsiConditionalExpression.class, true, PsiCodeBlock.class, PsiModifierListOwner.class) == null) {
         return false;
       }
     }
-    if (leaf != null) {
-      final PsiElement parent = leaf.getParent();
-      if (parent instanceof PsiReferenceExpression && ((PsiReferenceExpression)parent).getTypeParameters().length > 0) {
-        return false;
-      }
+
+    if (PsiUtil.getLanguageLevel(leaf).isAtLeast(LanguageLevel.JDK_1_8)) return false;
+
+    final PsiElement parent = leaf.getParent();
+    if (parent instanceof PsiReferenceExpression && ((PsiReferenceExpression)parent).getTypeParameters().length > 0) {
+      return false;
     }
     return true;
   }
