@@ -426,11 +426,28 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   private void markPathRecent(String path) {
     synchronized (myStateLock) {
       myState.lastPath = path;
+      ProjectGroup group = getProjectGroup(path);
       removePath(path);
       myState.recentPaths.add(0, path);
+      if (group != null) {
+        List<String> projects = group.getProjects();
+        projects.add(0, path);
+        group.save(projects);
+      }
       myState.additionalInfo.remove(path);
       myState.additionalInfo.put(path, RecentProjectMetaInfo.create());
     }
+  }
+
+  @Nullable
+  private ProjectGroup getProjectGroup(String path) {
+    if (path == null) return null;
+    for (ProjectGroup group : myState.groups) {
+      if (group.getProjects().contains(path)) {
+        return group;
+      }
+    }
+    return null;
   }
 
   @Nullable
