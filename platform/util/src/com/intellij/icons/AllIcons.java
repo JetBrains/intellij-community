@@ -1088,6 +1088,7 @@ public class AllIcons {
       public static final Icon Green2 = IconLoader.getIcon("/runConfigurations/testState/green2.png"); // 12x12
       public static final Icon Red2 = IconLoader.getIcon("/runConfigurations/testState/red2.png"); // 12x12
       public static final Icon Run = IconLoader.getIcon("/runConfigurations/testState/run.png"); // 12x12
+      public static final Icon Yellow2 = IconLoader.getIcon("/runConfigurations/testState/yellow2.png"); // 12x12
 
     }
     public static final Icon TestTerminated = IconLoader.getIcon("/runConfigurations/testTerminated.png"); // 16x16
