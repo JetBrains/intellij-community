@@ -106,7 +106,7 @@ public class IndexingStamp {
 
   public static boolean versionDiffers(@NotNull File versionFile, final int currentIndexVersion) {
     try {
-      ourLastStamp = Math.max(ourLastStamp, versionFile.lastModified());
+      updateLastIndexingStamp(versionFile);
       final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(versionFile)));
       try {
         final int savedIndexVersion = DataInputOutputUtil.readINT(in);
@@ -125,6 +125,10 @@ public class IndexingStamp {
     catch (IOException e) {
       return true;
     }
+  }
+
+  protected static void updateLastIndexingStamp(@NotNull File versionFile) {
+    ourLastStamp = Math.max(ourLastStamp, versionFile.lastModified());
   }
 
   private static long getIndexCreationStamp(@NotNull ID<?, ?> indexName) {
