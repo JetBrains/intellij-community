@@ -271,7 +271,7 @@ public class DvcsUtil {
                                                                 @Nullable AbstractVcs vcs,
                                                                 @Nullable VirtualFile file,
                                                                 @Nullable String defaultRootPathValue) {
-    T repository = manager.getRepositoryForRoot(getVcsRoot(project, file));
+    T repository = manager.getRepositoryForRoot(guessVcsRoot(project, file));
     return repository != null ? repository : manager.getRepositoryForRoot(guessRootForVcs(project, vcs, defaultRootPathValue));
   }
 
@@ -393,7 +393,7 @@ public class DvcsUtil {
   }
 
   @Nullable
-  public static VirtualFile getVcsRoot(@NotNull Project project, @Nullable VirtualFile file) {
+  private static VirtualFile guessVcsRoot(@NotNull Project project, @Nullable VirtualFile file) {
     VirtualFile root = null;
     if (file != null) {
       root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
