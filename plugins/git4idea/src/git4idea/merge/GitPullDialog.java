@@ -180,8 +180,6 @@ public class GitPullDialog extends DialogWrapper {
 
   public GitLineHandler makeHandler(@NotNull List<String> urls) {
     GitLineHandler h = new GitLineHandler(myProject, gitRoot(), GitCommand.PULL);
-    // ignore merge failure for the pull
-    h.ignoreErrorCode(1);
     h.setUrls(urls);
     h.addProgressParameter();
     h.addParameters("--no-stat");
