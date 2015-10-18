@@ -133,7 +133,7 @@ class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void rebase(@NotNull final List<GitRepository> repositories, @NotNull final String branchName) {
-    new CommonBackgroundTask(myProject, "Rebasing " + branchName, null) {
+    new CommonBackgroundTask(myProject, "Rebasing onto " + branchName, null) {
       @Override
       void execute(@NotNull ProgressIndicator indicator) {
         newWorker(indicator).rebase(repositories, branchName);
