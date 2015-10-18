@@ -392,7 +392,7 @@ public class GitRebaseProcess {
   private String mentionSkippedCommits() {
     if (mySkippedCommits.isEmpty()) return "";
     String message = "<br/>";
-    if (mySkippedCommits.size() == 1) {
+    if (mySkippedCommits.values().size() == 1) {
       message += "The following commit was skipped during rebase:<br/>";
     }
     else {
