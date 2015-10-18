@@ -9,7 +9,7 @@ public class ManualArrayToCollectionCopy {
 
     void foo(Object[] xs, Object[] ys) {
         List list = new ArrayList();
-        for (int i = 0; (i < (int)(xs.length)); i++) {
+        <warning descr="Manual array to collection copy">for</warning> (int i = 0; (i < (int)(xs.length)); i++) {
             list.add(xs[i]);
         }
         list.addAll(Arrays.asList(xs).subList(0, xs.length));
@@ -17,7 +17,7 @@ public class ManualArrayToCollectionCopy {
 
     List arg(Object[] os) {
         List list = new ArrayList();
-        for (int i = 0; i < os.length - 1; i++) {
+        <warning descr="Manual array to collection copy">for</warning> (int i = 0; i < os.length - 1; i++) {
             list.add(os[i + 1]);
         }
         Object[] ps = new Object[os.length - 1];
@@ -38,14 +38,14 @@ public class ManualArrayToCollectionCopy {
 
     List<String> shouldWorkForForeachToo(String[] strings) {
         List<String> list = new ArrayList();
-        for (String string : strings) {
+        <warning descr="Manual array to collection copy">for</warning> (String string : strings) {
             list.add(string);
         }
         return list;
     }
 
     void replaceWithSubList(List<String> parameters, String[] args) {
-        for (int i = 2; i < args.length; ++i)
+        <warning descr="Manual array to collection copy">for</warning> (int i = 2; i < args.length; ++i)
         {
             parameters.add(args[i]);
         }
