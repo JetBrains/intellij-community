@@ -111,7 +111,9 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   public void cancel() {
     myCanceled = true;
     stopSystemActivity();
-    ProgressManager.canceled(this);
+    if (ApplicationManager.getApplication() != null) {
+      ProgressManager.canceled(this);
+    }
   }
 
   @Override
