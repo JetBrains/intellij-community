@@ -169,8 +169,6 @@ public class GitMergeDialog extends DialogWrapper {
     }
     VirtualFile root = (VirtualFile)myGitRoot.getSelectedItem();
     GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.MERGE);
-    // ignore merge failure
-    h.ignoreErrorCode(1);
     if (myNoCommitCheckBox.isSelected()) {
       h.addParameters("--no-commit");
     }
