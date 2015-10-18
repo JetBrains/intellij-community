@@ -388,7 +388,7 @@ class GitBranchPopupActions {
     private final String myBranchName;
 
     public RebaseAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
-      super("Rebase");
+      super("Rebase onto");
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
