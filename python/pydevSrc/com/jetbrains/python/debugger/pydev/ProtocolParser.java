@@ -66,7 +66,7 @@ public class ProtocolParser {
     }
     else if (type.equals("thread")) {
       String parentThread = readString(reader, "parent", "");
-      if (!parentThread.equals("")) {
+      if (!parentThread.isEmpty()) {
         threadingEvent = new PyThreadEvent(time, thread_id, name, parentThread, isAsyncio);
       } else {
         threadingEvent = new PyThreadEvent(time, thread_id, name, isAsyncio);
