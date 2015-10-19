@@ -67,7 +67,7 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
 
   private final EditorHyperlinkSupport myHyperlinks;
   private Map<Integer, LastRevision> cache;
-  private int newestLine = -1;
+  private Date newestDate;
   private int maxDateLength = 0;
   private final Editor myEditor;
   private boolean myGutterShowed = false;
@@ -144,7 +144,8 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
 
           @Override
           public EditorFontType getStyle(int line, Editor editor) {
-            return line == newestLine ? EditorFontType.BOLD : EditorFontType.PLAIN;
+            LastRevision revision = cache.get(line);
+            return revision != null && revision.getDate().equals(newestDate) ? EditorFontType.BOLD : EditorFontType.PLAIN;
           }
 
           @Override
@@ -197,7 +198,6 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
           }
         });
 
-        Date newestDate = null;
         for (VirtualFile file : files) {
           indicator.checkCanceled();
 
@@ -208,7 +208,6 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
             final Date date = revision.getDate();
             if (newestDate == null || date.after(newestDate)) {
               newestDate = date;
-              newestLine = lines.get(0);
             }
             final int length = DateFormatUtil.formatPrettyDate(date).length();
             if (length > maxDateLength) {
