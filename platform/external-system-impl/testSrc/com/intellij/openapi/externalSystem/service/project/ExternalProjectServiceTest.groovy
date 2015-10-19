@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.project
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Result
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.externalSystem.model.DataNode
@@ -27,14 +28,19 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.*
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.util.ArrayUtil
 import org.jetbrains.annotations.NotNull
 
 import static com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.*
+import static com.intellij.openapi.externalSystem.test.ExternalSystemTestCase.collectRootsInside
+
 /**
  * @author Denis Zhdanov
  * @since 8/8/13 5:17 PM
@@ -198,6 +204,18 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
   void 'test project SDK configuration import'() {
     String myJdkName = "My JDK";
     String myJdkHome = IdeaTestUtil.requireRealJdkHome();
+
+    List<String> allowedRoots = new ArrayList<String>();
+    allowedRoots.add(myJdkHome);
+    allowedRoots.addAll(collectRootsInside(myJdkHome));
+    final String[] newRootsArray = ArrayUtil.toStringArray(allowedRoots);
+    VfsRootAccess.allowRootAccess(newRootsArray);
+    Disposer.register(myTestRootDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        VfsRootAccess.disallowRootAccess(newRootsArray);
+      }
+    });
 
     new WriteAction() {
       @Override
