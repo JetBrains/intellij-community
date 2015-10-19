@@ -15,6 +15,7 @@
  */
 package org.zmlx.hg4idea.status.ui;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.ui.DvcsStatusWidget;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -52,7 +53,8 @@ public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
   @Nullable
   @Override
   protected HgRepository guessCurrentRepository(@NotNull Project project) {
-    return HgUtil.getCurrentRepository(project);
+    return DvcsUtil.guessCurrentRepositoryQuick(project, HgUtil.getRepositoryManager(project),
+                                                HgProjectSettings.getInstance(project).getRecentRootPath());
   }
 
   @NotNull

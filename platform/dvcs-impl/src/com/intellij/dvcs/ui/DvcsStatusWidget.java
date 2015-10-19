@@ -16,6 +16,8 @@
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.dvcs.repo.VcsRepositoryManager;
+import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -200,6 +202,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
         StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
         if (statusBar != null && !isDisposed()) {
           statusBar.addWidget(widget, "after " + (SystemInfo.isMac ? "Encoding" : "InsertOverwrite"), project);
+          subscribeToMappingChanged();
           subscribeToRepoChangeEvents(project);
           update();
         }
@@ -215,6 +218,16 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
         if (statusBar != null && !isDisposed()) {
           statusBar.removeWidget(widget.ID());
         }
+      }
+    });
+  }
+
+  private void subscribeToMappingChanged() {
+    myProject.getMessageBus().connect().subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, new VcsRepositoryMappingListener() {
+      @Override
+      public void mappingChanged() {
+        LOG.debug("repository mappings changed");
+        updateLater();
       }
     });
   }

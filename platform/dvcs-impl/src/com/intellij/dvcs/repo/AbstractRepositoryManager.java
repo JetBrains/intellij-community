@@ -105,4 +105,10 @@ public abstract class AbstractRepositoryManager<T extends Repository>
     //noinspection unchecked
     return vcsDir != null && vcsDir.exists() ? (T)repository : null;
   }
+
+  @NotNull
+  public AbstractVcs getVcs() {
+    return myVcs;
+  }
+
 }

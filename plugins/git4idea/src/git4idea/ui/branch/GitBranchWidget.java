@@ -15,6 +15,7 @@
  */
 package git4idea.ui.branch;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.ui.DvcsStatusWidget;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -47,7 +48,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
   @Nullable
   @Override
   protected GitRepository guessCurrentRepository(@NotNull Project project) {
-    return GitBranchUtil.getCurrentRepository(project);
+    return DvcsUtil.guessCurrentRepositoryQuick(project, GitUtil.getRepositoryManager(project), mySettings.getRecentRootPath());
   }
 
   @NotNull

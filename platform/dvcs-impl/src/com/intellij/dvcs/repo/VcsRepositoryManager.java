@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * extension point in a thread safe way.
  */
 public class VcsRepositoryManager extends AbstractProjectComponent implements Disposable, VcsListener {
+
+  public static final Topic<VcsRepositoryMappingListener> VCS_REPOSITORY_MAPPING_UPDATED =
+    Topic.create("VCS repository mapping updated", VcsRepositoryMappingListener.class);
+
   @NotNull private final ProjectLevelVcsManager myVcsManager;
 
   @NotNull private final ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
@@ -204,6 +209,7 @@ public class VcsRepositoryManager extends AbstractProjectComponent implements Di
       finally {
         REPO_LOCK.writeLock().unlock();
       }
+      myProject.getMessageBus().syncPublisher(VCS_REPOSITORY_MAPPING_UPDATED).mappingChanged();
     }
     finally {
       MODIFY_LOCK.unlock();

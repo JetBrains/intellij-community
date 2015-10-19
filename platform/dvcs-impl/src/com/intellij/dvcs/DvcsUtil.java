@@ -16,6 +16,7 @@
 package com.intellij.dvcs;
 
 import com.intellij.dvcs.push.PushSupport;
+import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
@@ -273,6 +274,15 @@ public class DvcsUtil {
                                                                 @Nullable String defaultRootPathValue) {
     T repository = manager.getRepositoryForRoot(guessVcsRoot(project, file));
     return repository != null ? repository : manager.getRepositoryForRoot(guessRootForVcs(project, vcs, defaultRootPathValue));
+  }
+
+  @Nullable
+  public static <T extends Repository> T guessCurrentRepositoryQuick(@NotNull Project project,
+                                                                     @NotNull AbstractRepositoryManager<T> manager,
+                                                                     @Nullable String defaultRootPathValue) {
+    T repository = manager.getRepositoryForRootQuick(guessVcsRoot(project, getSelectedFile(project)));
+    return repository != null ? repository
+                              : manager.getRepositoryForRootQuick(guessRootForVcs(project, manager.getVcs(), defaultRootPathValue));
   }
 
   @Nullable
