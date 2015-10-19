@@ -16,6 +16,7 @@
 
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
@@ -24,6 +25,7 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.SmartList;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -96,11 +98,24 @@ public class IndexingStamp {
     finally {
       ourIndexIdToCreationStamp.clear();
       os.close();
-      long max = Math.max(System.currentTimeMillis(), Math.max(prevLastModifiedValue, ourLastStamp) + 2000);
+      long max = Math.max(
+        System.currentTimeMillis(),
+        Math.max(prevLastModifiedValue + MIN_FS_MODIFIED_TIMESTAMP_RESOLUTION, ourLastStamp + OUR_INDICES_TIMESTAMP_INCREMENT)
+      );
       ourLastStamp = max;
-      file.setLastModified(max);
+      final boolean lastModifiedSuccess = file.setLastModified(max);
+      if (!lastModifiedSuccess) {
+        Logger.getInstance(IndexingStamp.class).info("Setting lastModified failed for " + file + " timestamp:" + max);
+        ourLastStamp = Math.max(ourLastStamp, file.lastModified());
+      }
     }
   }
+
+  private static final int MIN_FS_MODIFIED_TIMESTAMP_RESOLUTION = 2000; // https://en.wikipedia.org/wiki/File_Allocation_Table,
+  // 1s for ext3 / hfs+ http://unix.stackexchange.com/questions/11599/determine-file-system-timestamp-accuracy
+  // https://en.wikipedia.org/wiki/HFS_Plus
+
+  private static final int OUR_INDICES_TIMESTAMP_INCREMENT = SystemProperties.getIntProperty("idea.indices.timestamp.resolution", 1);
 
   public static boolean versionDiffers(@NotNull File versionFile, final int currentIndexVersion) {
     try {
