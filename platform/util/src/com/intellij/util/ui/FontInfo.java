@@ -90,9 +90,7 @@ public final class FontInfo {
    * @see GraphicsEnvironment#isHeadless
    */
   public static FontInfo get(String name) {
-    if (name == null || GraphicsEnvironment.isHeadless()) return null;
-    FontInfo info = find(LazyListByName.LIST, name);
-    return info != null ? info : byName(name);
+    return name == null || GraphicsEnvironment.isHeadless() ? null : find(LazyListByName.LIST, name);
   }
 
   /**
@@ -102,9 +100,7 @@ public final class FontInfo {
    * @see GraphicsEnvironment#isHeadless
    */
   public static FontInfo get(Font font) {
-    if (font == null || GraphicsEnvironment.isHeadless()) return null;
-    FontInfo info = find(LazyListByFont.LIST, font.getFontName(ENGLISH));
-    return info != null ? info : byFont(font);
+    return font == null || GraphicsEnvironment.isHeadless() ? null : find(LazyListByFont.LIST, font.getFontName(ENGLISH));
   }
 
   /**
@@ -160,6 +156,10 @@ public final class FontInfo {
     for (Font font : fonts) {
       FontInfo info = byFont(font);
       if (info != null) list.add(info);
+    }
+    for (String name : DEFAULT) {
+      FontInfo info = find(list, name);
+      if (info != null) list.remove(info);
     }
     Collections.sort(list, COMPARATOR);
     return Collections.unmodifiableList(list);
