@@ -1659,6 +1659,9 @@
     <applicationService serviceInterface="org.jetbrains.java.generate.GenerateToStringContext"
                         serviceImplementation="org.jetbrains.java.generate.GenerateToStringContext"/>
 
+    <applicationService serviceInterface="com.intellij.ide.actions.FileFromTemplateService"
+                        serviceImplementation="com.intellij.ide.actions.CreateFileFromTemplateDialog$FileFromTemplateServiceImpl"/>
+
     <localInspection groupPath="Java" language="JAVA" shortName="ClassHasNoToStringMethod" displayName="Class does not override 'toString()' method"
                      groupName="toString() issues" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.java.generate.inspection.ClassHasNoToStringMethodInspection"/>
