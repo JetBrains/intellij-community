@@ -320,7 +320,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     PsiFile psiFile = element.getContainingFile();
     if (psiFile == null) return null;
 
-    VirtualFile file = psiFile.getVirtualFile();
+    final VirtualFile file = psiFile.getVirtualFile();
     if (file == null) return null;
 
     final SmartPsiElementPointer<PsiElement> pointer =
@@ -355,7 +355,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       @NotNull
       @Override
       public VirtualFile getFile() {
-        return getDelegate().getFile();
+        return file;
       }
 
       @NotNull
