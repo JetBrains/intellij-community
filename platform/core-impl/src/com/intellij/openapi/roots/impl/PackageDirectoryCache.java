@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -57,6 +58,10 @@ public class PackageDirectoryCache {
     PackageInfo info = myDirectoriesByPackageNameCache.get(packageName);
     if (info == null) {
       if (myNonExistentPackages.contains(packageName)) return null;
+
+      if (packageName.length() > Registry.intValue("java.max.package.name.length") || StringUtil.containsAnyChar(packageName, ";[/")) {
+        return null;
+      }
 
       List<VirtualFile> result = ContainerUtil.newSmartList();
 
