@@ -42,9 +42,11 @@ import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -90,6 +92,7 @@ public class CustomizableActionsPanel {
     final DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootGroup);
     DefaultTreeModel model = new DefaultTreeModel(root);
     myActionsTree.setModel(model);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(myActionsTree, new TreePathStringConvertor(), true);
 
     myActionsTree.setRootVisible(false);
     myActionsTree.setShowsRootHandles(true);
@@ -419,6 +422,33 @@ public class CustomizableActionsPanel {
     ((DefaultTreeModel)myActionsTree.getModel()).reload();
   }
 
+  private static class TreePathStringConvertor implements Convertor<TreePath, String> {
+    @Override
+    public String convert(TreePath o) {
+      Object node = o.getLastPathComponent();
+      if (node instanceof DefaultMutableTreeNode) {
+        Object object = ((DefaultMutableTreeNode)node).getUserObject();
+        if (object instanceof Group) return ((Group)object).getName();
+        if (object instanceof QuickList) return ((QuickList)object).getName();
+        String actionId;
+        if (object instanceof String) {
+          actionId = (String)object;
+        }
+        else if (object instanceof Pair) {
+          actionId = (String)((Pair)object).first;
+        }
+        else {
+          return "";
+        }
+        AnAction action = ActionManager.getInstance().getAction(actionId);
+        if (action != null) {
+          return action.getTemplatePresentation().getText();
+        }
+      }
+      return "";
+    }
+  }
+
   private static class MyTreeCellRenderer extends DefaultTreeCellRenderer {
     @Override
     public Component getTreeCellRendererComponent(JTree tree,
@@ -639,6 +669,7 @@ public class CustomizableActionsPanel {
       DefaultMutableTreeNode root = ActionsTreeUtil.createNode(rootGroup);
       DefaultTreeModel model = new DefaultTreeModel(root);
       myTree = new Tree();
+      TreeUIHelper.getInstance().installTreeSpeedSearch(myTree, new TreePathStringConvertor(), true);
       myTree.setModel(model);
       myTree.setCellRenderer(new MyTreeCellRenderer());
       final ActionManager actionManager = ActionManager.getInstance();
