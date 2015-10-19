@@ -19,9 +19,18 @@ import com.intellij.openapi.diagnostic.Logger
 
 val LOG: Logger = Logger.getInstance(CredentialsStore::class.java)
 
-public data class Credentials(id: String?, token: String?) {
+public class Credentials(id: String?, token: String?) {
   public val id: String? = if (id.isNullOrEmpty()) null else id
   public val token: String? = if (token.isNullOrEmpty()) null else token
+
+  override fun equals(other: Any?): Boolean {
+    if (other !is Credentials) return false
+    return id == other.id && token == other.token
+  }
+
+  override fun hashCode(): Int {
+    return (id?.hashCode() ?: 0) * 37 + (token?.hashCode() ?: 0)
+  }
 }
 
 public fun Credentials?.isFulfilled(): Boolean = this != null && id != null && token != null
