@@ -46,10 +46,12 @@ import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.CalledWithReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,21 +99,17 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
           @Override
           public void doAction(int lineNum) {
             final LastRevision revision = cache.get(lineNum);
-            final List<RangeHighlighter> links = myHyperlinks.findAllHyperlinksOnLine(lineNum);
-            if (!links.isEmpty() && revision != null) {
-              final RangeHighlighter key = links.get(links.size() - 1);
-              HyperlinkInfo info = EditorHyperlinkSupport.getHyperlinkInfo(key);
+            if (revision == null) return;
 
-              if (info instanceof FileHyperlinkInfo) {
-                final VirtualFile file = ((FileHyperlinkInfo)info).getDescriptor().getFile();
-                final Project project = getProject();
-                final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
-                if (vcs != null) {
-                  final VcsRevisionNumber number = revision.getNumber();
-                  final VcsKey vcsKey = vcs.getKeyInstanceMethod();
-                  ShowAllAffectedGenericAction.showSubmittedFiles(project, number, file, vcsKey);
-                }
-              }
+            VirtualFile file = getHyperlinkVirtualFile(myHyperlinks.findAllHyperlinksOnLine(lineNum));
+            if (file == null) return;
+
+            final Project project = getProject();
+            final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
+            if (vcs != null) {
+              final VcsRevisionNumber number = revision.getNumber();
+              final VcsKey vcsKey = vcs.getKeyInstanceMethod();
+              ShowAllAffectedGenericAction.showSubmittedFiles(project, number, file, vcsKey);
             }
           }
 
@@ -183,25 +181,17 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
           public void run() {
             for (int line = 0; line < myEditor.getDocument().getLineCount(); line++) {
               indicator.checkCanceled();
-              final List<RangeHighlighter> links = myHyperlinks.findAllHyperlinksOnLine(line);
-              if (links.size() > 0) {
-                final RangeHighlighter key = links.get(links.size() - 1);
-                final HyperlinkInfo info = EditorHyperlinkSupport.getHyperlinkInfo(key);
-                if (info instanceof FileHyperlinkInfo) {
-                  final OpenFileDescriptor fileDescriptor = ((FileHyperlinkInfo)info).getDescriptor();
-                  if (fileDescriptor != null) {
-                    final VirtualFile file = fileDescriptor.getFile();
-                    if (files2lines.containsKey(file)) {
-                      files2lines.get(file).add(line);
-                    }
-                    else {
-                      final ArrayList<Integer> lines = new ArrayList<Integer>();
-                      lines.add(line);
-                      files2lines.put(file, lines);
-                      files.add(file);
-                    }
-                  }
-                }
+              VirtualFile file = getHyperlinkVirtualFile(myHyperlinks.findAllHyperlinksOnLine(line));
+              if (file == null) continue;
+
+              if (files2lines.containsKey(file)) {
+                files2lines.get(file).add(line);
+              }
+              else {
+                final ArrayList<Integer> lines = new ArrayList<Integer>();
+                lines.add(line);
+                files2lines.put(file, lines);
+                files.add(file);
               }
             }
           }
@@ -278,6 +268,17 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
   @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(!myGutterShowed);
+  }
+
+  @Nullable
+  @CalledWithReadLock
+  private static VirtualFile getHyperlinkVirtualFile(@NotNull List<RangeHighlighter> links) {
+    RangeHighlighter key = ContainerUtil.getLastItem(links);
+    if (key == null) return null;
+    HyperlinkInfo info = EditorHyperlinkSupport.getHyperlinkInfo(key);
+    if (!(info instanceof FileHyperlinkInfo)) return null;
+    OpenFileDescriptor descriptor = ((FileHyperlinkInfo)info).getDescriptor();
+    return descriptor != null ? descriptor.getFile() : null;
   }
 
   private static class LastRevision {
