@@ -80,7 +80,7 @@ public class PyMoveModuleMembersDelegate extends MoveHandlerDelegate {
     if (initialPath == null) {
       initialPath = StringUtil.notNullize(PyPsiUtils.getContainingFilePath(elements[0]));
     }
-    final PyMoveModuleMembersDialog dialog = PyMoveModuleMembersDialog.getInstance(project, initialElements, initialPath, initialPath);
+    final PyMoveModuleMembersDialog dialog = new PyMoveModuleMembersDialog(project, initialElements, initialPath, initialPath);
     if (!dialog.showAndGet()) {
       return;
     }
