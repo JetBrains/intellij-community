@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class UnnecessaryInitCauseInspection extends UnnecessaryInitCauseInspectionBase {
+public class UnnecessaryInitCauseInspection extends UnnecessaryInitCauseInspectionBase implements CleanupLocalInspectionTool {
 
   @Nullable
   @Override
