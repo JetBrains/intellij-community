@@ -112,6 +112,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     myThreadList.setCellRenderer(new ThreadListCellRenderer());
     myThreadList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myThreadList.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(final ListSelectionEvent e) {
         int index = myThreadList.getSelectedIndex();
         if (index >= 0) {
@@ -264,6 +265,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
 
   private static class ThreadListCellRenderer extends ColoredListCellRenderer {
 
+    @Override
     protected void customizeCellRenderer(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
       ThreadState threadState = (ThreadState) value;
       setIcon(getThreadStateIcon(threadState));
@@ -302,6 +304,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
 
   private class SortThreadsAction extends DumbAwareAction {
     private final Comparator<ThreadState> BY_TYPE = new Comparator<ThreadState>() {
+      @Override
       public int compare(ThreadState o1, ThreadState o2) {
         final int s1 = getThreadStateCode(o1).ordinal();
         final int s2 = getThreadStateCode(o2).ordinal();
@@ -314,6 +317,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     };
 
     private final Comparator<ThreadState> BY_NAME = new Comparator<ThreadState>() {
+      @Override
       public int compare(ThreadState o1, ThreadState o2) {
         return o1.getName().compareToIgnoreCase(o2.getName());
       }
@@ -321,7 +325,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     private Comparator<ThreadState> COMPARATOR = BY_TYPE;
     private static final String TYPE_LABEL = "Sort threads by type";
     private static final String NAME_LABEL = "Sort threads by name";
-    public SortThreadsAction() {
+    private SortThreadsAction() {
       super(TYPE_LABEL);
     }
 
@@ -345,12 +349,13 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     private final List<ThreadState> myThreadDump;
     private final Project myProject;
 
-    public CopyToClipboardAction(List<ThreadState> threadDump, Project project) {
+    private CopyToClipboardAction(List<ThreadState> threadDump, Project project) {
       super("Copy to Clipboard", "Copy whole thread dump to clipboard", PlatformIcons.COPY_ICON);
       myThreadDump = threadDump;
       myProject = project;
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       final StringBuilder buf = new StringBuilder();
       buf.append("Full thread dump").append("\n\n");
@@ -365,7 +370,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
 
   private class FilterAction extends ToggleAction implements DumbAware {
 
-    FilterAction() {
+    private FilterAction() {
       super("Filter", "Show only threads containing a specific string", AllIcons.General.Filter);
     }
 
@@ -386,7 +391,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
   }
 
   private class MergeStacktracesAction extends ToggleAction implements DumbAware {
-    MergeStacktracesAction() {
+    private MergeStacktracesAction() {
       super("Merge Identical Stacktraces", "Group threads with identical stacktraces", AllIcons.General.CollapseAll);
     }
 
@@ -410,7 +415,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     private final Project myProject;
     private final List<ThreadState> myThreadStates;
 
-    public MyToFileExporter(Project project, List<ThreadState> threadStates) {
+    private MyToFileExporter(Project project, List<ThreadState> threadStates) {
       myProject = project;
       myThreadStates = threadStates;
     }
@@ -436,7 +441,8 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
       return sb.toString();
     }
 
-    private static final @NonNls String DEFAULT_REPORT_FILE_NAME = "threads_report.txt";
+    @NonNls
+    private static final String DEFAULT_REPORT_FILE_NAME = "threads_report.txt";
 
     @NotNull
     @Override
