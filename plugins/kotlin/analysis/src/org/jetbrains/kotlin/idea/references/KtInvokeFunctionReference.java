@@ -23,7 +23,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor;
-import org.jetbrains.kotlin.lexer.JetTokens;
+import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.resolve.BindingContext;
 import org.jetbrains.kotlin.resolve.calls.callUtil.CallUtilKt;
@@ -35,9 +35,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class JetInvokeFunctionReference extends JetSimpleReference<JetCallExpression> implements MultiRangeReference {
+public class KtInvokeFunctionReference extends KtSimpleReference<KtCallExpression> implements MultiRangeReference {
 
-    public JetInvokeFunctionReference(@NotNull JetCallExpression expression) {
+    public KtInvokeFunctionReference(@NotNull KtCallExpression expression) {
         super(expression);
     }
 
@@ -64,16 +64,16 @@ public class JetInvokeFunctionReference extends JetSimpleReference<JetCallExpres
     @Override
     public List<TextRange> getRanges() {
         List<TextRange> list = new ArrayList<TextRange>();
-        JetValueArgumentList valueArgumentList = getExpression().getValueArgumentList();
+        KtValueArgumentList valueArgumentList = getExpression().getValueArgumentList();
         if (valueArgumentList != null) {
             if (valueArgumentList.getArguments().size() > 0) {
                 ASTNode valueArgumentListNode = valueArgumentList.getNode();
-                ASTNode lPar = valueArgumentListNode.findChildByType(JetTokens.LPAR);
+                ASTNode lPar = valueArgumentListNode.findChildByType(KtTokens.LPAR);
                 if (lPar != null) {
                     list.add(getRange(lPar));
                 }
 
-                ASTNode rPar = valueArgumentListNode.findChildByType(JetTokens.RPAR);
+                ASTNode rPar = valueArgumentListNode.findChildByType(KtTokens.RPAR);
                 if (rPar != null) {
                     list.add(getRange(rPar));
                 }
@@ -83,9 +83,9 @@ public class JetInvokeFunctionReference extends JetSimpleReference<JetCallExpres
             }
         }
 
-        List<JetFunctionLiteralArgument> functionLiteralArguments = getExpression().getFunctionLiteralArguments();
-        for (JetFunctionLiteralArgument functionLiteralArgument : functionLiteralArguments) {
-            JetFunctionLiteralExpression functionLiteralExpression = functionLiteralArgument.getFunctionLiteral();
+        List<KtFunctionLiteralArgument> functionLiteralArguments = getExpression().getFunctionLiteralArguments();
+        for (KtFunctionLiteralArgument functionLiteralArgument : functionLiteralArguments) {
+            KtFunctionLiteralExpression functionLiteralExpression = functionLiteralArgument.getFunctionLiteral();
             list.add(getRange(functionLiteralExpression.getLeftCurlyBrace()));
             ASTNode rightCurlyBrace = functionLiteralExpression.getRightCurlyBrace();
             if (rightCurlyBrace != null) {

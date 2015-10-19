@@ -25,8 +25,8 @@ import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
 import org.jetbrains.kotlin.idea.intentions.OperatorToFunctionIntention
 import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.idea.util.ShortenReferences
-import org.jetbrains.kotlin.lexer.JetToken
-import org.jetbrains.kotlin.lexer.JetTokens
+import org.jetbrains.kotlin.lexer.KtToken
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.isOneSegmentFQN
@@ -39,7 +39,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.dataClassUtils.isComponentLike
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
-class JetSimpleNameReference(expression: JetSimpleNameExpression) : JetSimpleReference<JetSimpleNameExpression>(expression) {
+class KtSimpleNameReference(expression: KtSimpleNameExpression) : KtSimpleReference<KtSimpleNameExpression>(expression) {
     override fun isReferenceTo(element: PsiElement?): Boolean {
         if (element != null) {
             if (!canBeReferenceTo(element)) return false
@@ -63,10 +63,10 @@ class JetSimpleNameReference(expression: JetSimpleNameExpression) : JetSimpleRef
     }
 
     override fun canRename(): Boolean {
-        if (expression.getParentOfTypeAndBranch<JetWhenConditionInRange>(strict = true){ getOperationReference() } != null) return false
+        if (expression.getParentOfTypeAndBranch<KtWhenConditionInRange>(strict = true){ getOperationReference() } != null) return false
 
         val elementType = expression.getReferencedNameElementType()
-        if (elementType == JetTokens.PLUSPLUS || elementType == JetTokens.MINUSMINUS) return false
+        if (elementType == KtTokens.PLUSPLUS || elementType == KtTokens.MINUSMINUS) return false
 
         return true
     }
@@ -78,14 +78,14 @@ class JetSimpleNameReference(expression: JetSimpleNameExpression) : JetSimpleRef
         // Do not rename if the reference corresponds to synthesized component function
         val expressionText = expression.getText()
         if (expressionText != null && Name.isValidIdentifier(expressionText)) {
-            if (isComponentLike(Name.identifier(expressionText)) && resolve() is JetParameter) {
+            if (isComponentLike(Name.identifier(expressionText)) && resolve() is KtParameter) {
                 return expression
             }
         }
 
-        val psiFactory = JetPsiFactory(expression)
+        val psiFactory = KtPsiFactory(expression)
         val element = when (expression.getReferencedNameElementType()) {
-            JetTokens.FIELD_IDENTIFIER -> psiFactory.createFieldIdentifier(newElementName)
+            KtTokens.FIELD_IDENTIFIER -> psiFactory.createFieldIdentifier(newElementName)
 
             else -> {
                 Extensions.getArea(expression.getProject()).getExtensionPoint(SimpleNameReferenceExtension.EP_NAME).getExtensions()
@@ -98,8 +98,8 @@ class JetSimpleNameReference(expression: JetSimpleNameExpression) : JetSimpleRef
         val nameElement = expression.getReferencedNameElement()
 
         val elementType = nameElement.getNode().getElementType()
-        if (elementType is JetToken && OperatorConventions.getNameForOperationSymbol(elementType) != null) {
-            val opExpression = expression.getParent() as? JetOperationExpression
+        if (elementType is KtToken && OperatorConventions.getNameForOperationSymbol(elementType) != null) {
+            val opExpression = expression.getParent() as? KtOperationExpression
             if (opExpression != null) {
                 val (newExpression, newNameElement) = OperatorToFunctionIntention.convert(opExpression)
                 newNameElement.replace(element)
@@ -129,16 +129,16 @@ class JetSimpleNameReference(expression: JetSimpleNameExpression) : JetSimpleRef
         if (fqName.isRoot) return expression
 
         // not supported for infix calls and operators
-        if (expression !is JetNameReferenceExpression) return expression
-        if (expression.parent is JetThisExpression || expression.parent is JetSuperExpression) return expression // TODO: it's a bad design of PSI tree, we should change it
+        if (expression !is KtNameReferenceExpression) return expression
+        if (expression.parent is KtThisExpression || expression.parent is KtSuperExpression) return expression // TODO: it's a bad design of PSI tree, we should change it
 
-        val newExpression = expression.changeQualifiedName(fqName).getQualifiedElementSelector() as JetNameReferenceExpression
+        val newExpression = expression.changeQualifiedName(fqName).getQualifiedElementSelector() as KtNameReferenceExpression
         val newQualifiedElement = newExpression.getQualifiedElement()
 
         if (shorteningMode == ShorteningMode.NO_SHORTENING) return newExpression
 
         val needToShorten =
-                PsiTreeUtil.getParentOfType(expression, javaClass<JetImportDirective>(), javaClass<JetPackageDirective>()) == null
+                PsiTreeUtil.getParentOfType(expression, javaClass<KtImportDirective>(), javaClass<KtPackageDirective>()) == null
         if (needToShorten) {
             if (shorteningMode == ShorteningMode.FORCED_SHORTENING) {
                 ShortenReferences.DEFAULT.process(newQualifiedElement)
@@ -152,17 +152,17 @@ class JetSimpleNameReference(expression: JetSimpleNameExpression) : JetSimpleRef
     }
 
     /**
-     * Replace [[JetNameReferenceExpression]] (and its enclosing qualifier) with qualified element given by FqName
-     * Result is either the same as original element, or [[JetQualifiedExpression]], or [[JetUserType]]
+     * Replace [[KtNameReferenceExpression]] (and its enclosing qualifier) with qualified element given by FqName
+     * Result is either the same as original element, or [[KtQualifiedExpression]], or [[KtUserType]]
      * Note that FqName may not be empty
      */
-    private fun JetNameReferenceExpression.changeQualifiedName(fqName: FqName): JetElement {
+    private fun KtNameReferenceExpression.changeQualifiedName(fqName: FqName): KtElement {
         assert(!fqName.isRoot()) { "Can't set empty FqName for element $this" }
 
         val shortName = fqName.shortName().asString()
-        val psiFactory = JetPsiFactory(this)
-        val fqNameBase = (getParent() as? JetCallExpression)?.let { parent ->
-            val callCopy = parent.copy() as JetCallExpression
+        val psiFactory = KtPsiFactory(this)
+        val fqNameBase = (getParent() as? KtCallExpression)?.let { parent ->
+            val callCopy = parent.copy() as KtCallExpression
             callCopy.getCalleeExpression()!!.replace(psiFactory.createSimpleName(shortName)).getParent()!!.getText()
         } ?: shortName
 
@@ -170,12 +170,12 @@ class JetSimpleNameReference(expression: JetSimpleNameExpression) : JetSimpleRef
 
         val elementToReplace = getQualifiedElement()
         return when (elementToReplace) {
-            is JetUserType -> {
+            is KtUserType -> {
                 val typeText = "$text${elementToReplace.getTypeArgumentList()?.getText() ?: ""}"
                 elementToReplace.replace(psiFactory.createType(typeText).typeElement!!)
             }
             else -> elementToReplace.replace(psiFactory.createExpression(text))
-        } as JetElement
+        } as KtElement
     }
 
     override fun getCanonicalText(): String = expression.getText()

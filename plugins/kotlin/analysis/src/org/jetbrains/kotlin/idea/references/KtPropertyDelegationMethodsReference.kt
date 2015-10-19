@@ -19,13 +19,13 @@ package org.jetbrains.kotlin.idea.references
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
-import org.jetbrains.kotlin.psi.JetProperty
-import org.jetbrains.kotlin.psi.JetPropertyDelegate
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyDelegate
 import org.jetbrains.kotlin.resolve.BindingContext
 import java.util.Collections
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-public class JetPropertyDelegationMethodsReference(element: JetPropertyDelegate) : JetMultiReference<JetPropertyDelegate>(element) {
+public class KtPropertyDelegationMethodsReference(element: KtPropertyDelegate) : KtMultiReference<KtPropertyDelegate>(element) {
 
     override fun getRangeInElement(): TextRange {
         val byKeywordNode = expression.getByKeywordNode()
@@ -34,7 +34,7 @@ public class JetPropertyDelegationMethodsReference(element: JetPropertyDelegate)
     }
 
     override fun getTargetDescriptors(context: BindingContext): Collection<DeclarationDescriptor> {
-        val property = expression.getStrictParentOfType<JetProperty>()
+        val property = expression.getStrictParentOfType<KtProperty>()
         if (property == null) {
             return Collections.emptyList()
         }

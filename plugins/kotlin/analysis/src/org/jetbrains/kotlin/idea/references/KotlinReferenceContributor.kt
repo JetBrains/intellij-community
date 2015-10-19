@@ -21,18 +21,18 @@ import com.intellij.psi.*
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.idea.kdoc.KDocReference
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
-import org.jetbrains.kotlin.lexer.JetTokens
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
-public class JetReferenceContributor() : PsiReferenceContributor() {
+public class KotlinReferenceContributor() : PsiReferenceContributor() {
     public override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
         with(registrar) {
-            registerProvider(javaClass<JetSimpleNameExpression>()) {
-                JetSimpleNameReference(it)
+            registerProvider(javaClass<KtSimpleNameExpression>()) {
+                KtSimpleNameReference(it)
             }
 
-            registerMultiProvider(javaClass<JetNameReferenceExpression>()) {
-                if (it.getReferencedNameElementType() != JetTokens.IDENTIFIER) return@registerMultiProvider emptyArray()
+            registerMultiProvider(javaClass<KtNameReferenceExpression>()) {
+                if (it.getReferencedNameElementType() != KtTokens.IDENTIFIER) return@registerMultiProvider emptyArray()
 
                 when (it.readWriteAccess(useResolveForReadWrite = false)) {
                     ReferenceAccess.READ -> arrayOf(SyntheticPropertyAccessorReference.Getter(it))
@@ -41,28 +41,28 @@ public class JetReferenceContributor() : PsiReferenceContributor() {
                 }
             }
 
-            registerProvider(javaClass<JetConstructorDelegationReferenceExpression>()) {
-                JetConstructorDelegationReference(it)
+            registerProvider(javaClass<KtConstructorDelegationReferenceExpression>()) {
+                KtConstructorDelegationReference(it)
             }
 
-            registerProvider(javaClass<JetCallExpression>()) {
-                JetInvokeFunctionReference(it)
+            registerProvider(javaClass<KtCallExpression>()) {
+                KtInvokeFunctionReference(it)
             }
 
-            registerProvider(javaClass<JetArrayAccessExpression>()) {
-                JetArrayAccessReference(it)
+            registerProvider(javaClass<KtArrayAccessExpression>()) {
+                KtArrayAccessReference(it)
             }
 
-            registerProvider(javaClass<JetForExpression>()) {
-                JetForLoopInReference(it)
+            registerProvider(javaClass<KtForExpression>()) {
+                KtForLoopInReference(it)
             }
 
-            registerProvider(javaClass<JetPropertyDelegate>()) {
-                JetPropertyDelegationMethodsReference(it)
+            registerProvider(javaClass<KtPropertyDelegate>()) {
+                KtPropertyDelegationMethodsReference(it)
             }
 
-            registerProvider(javaClass<JetMultiDeclaration>()) {
-                JetMultiDeclarationReference(it)
+            registerProvider(javaClass<KtMultiDeclaration>()) {
+                KtMultiDeclarationReference(it)
             }
 
             registerProvider(javaClass<KDocName>()) {
@@ -71,11 +71,11 @@ public class JetReferenceContributor() : PsiReferenceContributor() {
         }
     }
 
-    private fun <E : JetElement> PsiReferenceRegistrar.registerProvider(elementClass: Class<E>, factory: (E) -> JetReference) {
+    private fun <E : KtElement> PsiReferenceRegistrar.registerProvider(elementClass: Class<E>, factory: (E) -> KtReference) {
         registerMultiProvider(elementClass, { arrayOf(factory(it)) })
     }
 
-    private fun <E : JetElement> PsiReferenceRegistrar.registerMultiProvider(elementClass: Class<E>, factory: (E) -> Array<PsiReference>) {
+    private fun <E : KtElement> PsiReferenceRegistrar.registerMultiProvider(elementClass: Class<E>, factory: (E) -> Array<PsiReference>) {
         registerReferenceProvider(PlatformPatterns.psiElement(elementClass), object: PsiReferenceProvider() {
             override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
                 @Suppress("UNCHECKED_CAST")

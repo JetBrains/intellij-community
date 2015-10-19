@@ -22,22 +22,22 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PackageViewDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.psi.JetElement
-import org.jetbrains.kotlin.psi.JetReferenceExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getReferenceTargets
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.singletonOrEmptyList
-import java.util.Collections
+import java.util.*
 
-public interface JetReference : PsiPolyVariantReference {
+public interface KtReference : PsiPolyVariantReference {
     fun resolveToDescriptors(bindingContext: BindingContext): Collection<DeclarationDescriptor>
 
-    override fun getElement(): JetElement
+    override fun getElement(): KtElement
 }
 
-public abstract class AbstractJetReference<T : JetElement>(element: T)
-: PsiPolyVariantReferenceBase<T>(element), JetReference {
+public abstract class AbstractJetReference<T : KtElement>(element: T)
+: PsiPolyVariantReferenceBase<T>(element), KtReference {
 
     public val expression: T
         get() = getElement()
@@ -107,7 +107,7 @@ public abstract class AbstractJetReference<T : JetElement>(element: T)
 
     private fun getLabelTargets(context: BindingContext): Collection<PsiElement>? {
         val reference = expression
-        if (reference !is JetReferenceExpression) {
+        if (reference !is KtReferenceExpression) {
             return null
         }
         val labelTarget = context[BindingContext.LABEL_TARGET, reference]
@@ -120,8 +120,8 @@ public abstract class AbstractJetReference<T : JetElement>(element: T)
     override fun toString() = javaClass.getSimpleName() + ": " + expression.getText()
 }
 
-public abstract class JetSimpleReference<T : JetReferenceExpression>(expression: T) : AbstractJetReference<T>(expression) {
+public abstract class KtSimpleReference<T : KtReferenceExpression>(expression: T) : AbstractJetReference<T>(expression) {
     override fun getTargetDescriptors(context: BindingContext) = expression.getReferenceTargets(context)
 }
 
-public abstract class JetMultiReference<T : JetElement>(expression: T) : AbstractJetReference<T>(expression)
+public abstract class KtMultiReference<T : KtElement>(expression: T) : AbstractJetReference<T>(expression)

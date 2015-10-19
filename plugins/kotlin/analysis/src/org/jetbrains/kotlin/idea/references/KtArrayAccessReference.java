@@ -25,9 +25,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor;
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor;
-import org.jetbrains.kotlin.lexer.JetTokens;
-import org.jetbrains.kotlin.psi.JetArrayAccessExpression;
-import org.jetbrains.kotlin.psi.JetContainerNode;
+import org.jetbrains.kotlin.lexer.KtTokens;
+import org.jetbrains.kotlin.psi.KtArrayAccessExpression;
+import org.jetbrains.kotlin.psi.KtContainerNode;
 import org.jetbrains.kotlin.resolve.BindingContext;
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall;
 
@@ -38,9 +38,9 @@ import java.util.List;
 import static org.jetbrains.kotlin.resolve.BindingContext.INDEXED_LVALUE_GET;
 import static org.jetbrains.kotlin.resolve.BindingContext.INDEXED_LVALUE_SET;
 
-public class JetArrayAccessReference extends JetSimpleReference<JetArrayAccessExpression> implements MultiRangeReference {
+public class KtArrayAccessReference extends KtSimpleReference<KtArrayAccessExpression> implements MultiRangeReference {
 
-    public JetArrayAccessReference(@NotNull JetArrayAccessExpression expression) {
+    public KtArrayAccessReference(@NotNull KtArrayAccessExpression expression) {
         super(expression);
     }
 
@@ -71,13 +71,13 @@ public class JetArrayAccessReference extends JetSimpleReference<JetArrayAccessEx
     public List<TextRange> getRanges() {
         List<TextRange> list = new ArrayList<TextRange>();
 
-        JetContainerNode indices = getExpression().getIndicesNode();
-        TextRange textRange = indices.getNode().findChildByType(JetTokens.LBRACKET).getTextRange();
+        KtContainerNode indices = getExpression().getIndicesNode();
+        TextRange textRange = indices.getNode().findChildByType(KtTokens.LBRACKET).getTextRange();
         TextRange lBracketRange = textRange.shiftRight(-getExpression().getTextOffset());
 
         list.add(lBracketRange);
 
-        ASTNode rBracket = indices.getNode().findChildByType(JetTokens.RBRACKET);
+        ASTNode rBracket = indices.getNode().findChildByType(KtTokens.RBRACKET);
         if (rBracket != null) {
             textRange = rBracket.getTextRange();
             TextRange rBracketRange = textRange.shiftRight(-getExpression().getTextOffset());

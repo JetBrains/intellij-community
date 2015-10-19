@@ -18,11 +18,11 @@ package org.jetbrains.kotlin.idea.references
 
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.psi.JetForExpression
+import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.resolve.BindingContext
-import java.util.Collections
+import java.util.*
 
-public class JetForLoopInReference(element: JetForExpression) : JetMultiReference<JetForExpression>(element) {
+public class KtForLoopInReference(element: KtForExpression) : KtMultiReference<KtForExpression>(element) {
 
     override fun getRangeInElement(): TextRange {
         val inKeywordNode = expression.getInKeywordNode()

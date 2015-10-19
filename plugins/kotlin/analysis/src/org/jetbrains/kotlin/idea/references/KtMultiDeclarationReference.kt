@@ -16,7 +16,7 @@
 
 package org.jetbrains.kotlin.idea.references
 
-import org.jetbrains.kotlin.psi.JetMultiDeclaration
+import org.jetbrains.kotlin.psi.KtMultiDeclaration
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import com.intellij.openapi.util.TextRange
@@ -25,7 +25,7 @@ import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 
-class JetMultiDeclarationReference(element: JetMultiDeclaration) : JetMultiReference<JetMultiDeclaration>(element) {
+class KtMultiDeclarationReference(element: KtMultiDeclaration) : KtMultiReference<KtMultiDeclaration>(element) {
     override fun getTargetDescriptors(context: BindingContext): Collection<DeclarationDescriptor> {
         return expression.getEntries().map { entry ->
             context.get(BindingContext.COMPONENT_RESOLVED_CALL, entry)?.getCandidateDescriptor()
