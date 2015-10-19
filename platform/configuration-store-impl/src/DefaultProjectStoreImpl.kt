@@ -20,7 +20,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.StateStorageManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
-import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
 import java.io.File
 
@@ -94,7 +93,7 @@ internal class DefaultProjectStoreImpl(override val project: ProjectImpl, privat
       externalizationSession.setState(component, componentName, state)
     }
 
-    override fun createSaveSessions() = ContainerUtil.createMaybeSingletonList(externalizationSession.createSaveSession())
+    override fun createSaveSessions() = listOfNotNull(externalizationSession.createSaveSession())
   }
 }
 
