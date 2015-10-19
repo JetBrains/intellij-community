@@ -246,7 +246,7 @@ public class FontEditorDialog extends DialogWrapper {
 
     public FontInfo findElement(String name) {
       for (FontInfo info : myList) {
-        if (info.toString().equals(name)) {
+        if (info.toString().equalsIgnoreCase(name)) {
           return info;
         }
       }

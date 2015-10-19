@@ -127,7 +127,7 @@ public final class FontComboBox extends ComboBox {
 
     private FontInfo getInfo(Object item) {
       for (FontInfo info : myMonospacedOnly ? myMonoFonts : myAllFonts) {
-        if (item instanceof String ? info.toString().equals(item) : info.equals(item)) {
+        if (item instanceof String ? info.toString().equalsIgnoreCase((String)item) : info.equals(item)) {
           return info;
         }
       }

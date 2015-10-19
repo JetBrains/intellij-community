@@ -33,6 +33,7 @@ public final class FontInfo {
   private static final FontInfoComparator COMPARATOR = new FontInfoComparator();
   private static final FontRenderContext DEFAULT_CONTEXT = new FontRenderContext(null, false, false);
   private static final String[] WRONG_SUFFIX = {".plain", ".bold", ".italic", ".bolditalic"};
+  private static final String[] DEFAULT = {Font.DIALOG, Font.DIALOG_INPUT, Font.MONOSPACED, Font.SANS_SERIF, Font.SERIF};
   private static final int DEFAULT_SIZE = 12;
 
   private final String myName;
@@ -121,7 +122,7 @@ public final class FontInfo {
 
   private static FontInfo find(List<FontInfo> list, String name) {
     for (FontInfo info : list) {
-      if (info.toString().equals(name)) {
+      if (info.toString().equalsIgnoreCase(name)) {
         return info;
       }
     }
@@ -138,6 +139,12 @@ public final class FontInfo {
     for (String name : names) {
       FontInfo info = byName(name);
       if (info != null) list.add(info);
+    }
+    for (String name : DEFAULT) {
+      if (find(list, name) == null) {
+        FontInfo info = byName(name);
+        if (info != null) list.add(info);
+      }
     }
     Collections.sort(list, COMPARATOR);
     return Collections.unmodifiableList(list);
@@ -159,15 +166,21 @@ public final class FontInfo {
   }
 
   private static FontInfo create(String name, Font font) {
+    boolean plainOnly = name == null;
     try {
       if (font == null) {
         font = new Font(name, Font.PLAIN, DEFAULT_SIZE);
+        // Java uses Dialog family for nonexistent fonts 
+        if (!Font.DIALOG.equals(name) && Font.DIALOG.equals(font.getFamily(ENGLISH))) {
+          throw new IllegalArgumentException("not supported " + font);
+        }
       }
       else if (DEFAULT_SIZE != font.getSize()) {
         font = font.deriveFont((float)DEFAULT_SIZE);
+        name = font.getFontName(ENGLISH);
       }
       int width = getFontWidth(font, Font.PLAIN);
-      if (name != null) {
+      if (!plainOnly) {
         if (width != getFontWidth(font, Font.BOLD)) width = 0;
         if (width != getFontWidth(font, Font.ITALIC)) width = 0;
         if (width != getFontWidth(font, Font.BOLD | Font.ITALIC)) width = 0;
