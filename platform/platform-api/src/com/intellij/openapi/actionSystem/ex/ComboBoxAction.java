@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -58,7 +59,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    ComboBoxButton button = (ComboBoxButton)e.getPresentation().getClientProperty(CUSTOM_COMPONENT_PROPERTY);
+    JComponent button = (JComponent)e.getPresentation().getClientProperty(CUSTOM_COMPONENT_PROPERTY);
     if (button == null) {
       Component contextComponent = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
       JRootPane rootPane = UIUtil.getParentOfType(JRootPane.class, contextComponent);
@@ -74,7 +75,18 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       if (button == null) return;
     }
     if (!button.isShowing()) return;
-    button.showPopup();
+    if (button instanceof ComboBoxButton) {
+      ((ComboBoxButton)button).showPopup();
+    } else {
+      DataContext context = e.getDataContext();
+      Project project = e.getProject();
+      if (project == null) return;
+      DefaultActionGroup group = createPopupActionGroup(button);
+      ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
+        myPopupTitle, group, context, false, shouldShowDisabledActions(), false, null, getMaxRows(), getPreselectCondition());
+      popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
+      popup.showCenteredInCurrentWindow(project);
+    }
   }
 
   @Override
