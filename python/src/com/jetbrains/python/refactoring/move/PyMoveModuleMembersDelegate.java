@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -36,6 +37,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,14 +70,17 @@ public class PyMoveModuleMembersDelegate extends MoveHandlerDelegate {
       }
       initialElements.add(e);
     }
-    String initialDestination = null;
+    String initialPath = null;
     if (targetContainer instanceof PsiFile) {
       final VirtualFile virtualFile = ((PsiFile)targetContainer).getVirtualFile();
       if (virtualFile != null) {
-        initialDestination = FileUtil.toSystemDependentName(virtualFile.getPath());
+        initialPath = FileUtil.toSystemDependentName(virtualFile.getPath());
       }
     }
-    final PyMoveModuleMembersDialog dialog = PyMoveModuleMembersDialog.getInstance(project, initialElements, initialDestination);
+    if (initialPath == null) {
+      initialPath = StringUtil.notNullize(PyPsiUtils.getContainingFilePath(elements[0]));
+    }
+    final PyMoveModuleMembersDialog dialog = PyMoveModuleMembersDialog.getInstance(project, initialElements, initialPath, initialPath);
     if (!dialog.showAndGet()) {
       return;
     }
