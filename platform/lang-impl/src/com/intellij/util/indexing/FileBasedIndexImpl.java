@@ -1493,9 +1493,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       indicesToDrop.remove(key.toString());
     }
     for (String s : indicesToDrop) {
-      final ID<Object, Object> unregisteredIndexId = ID.create(s);
-      IndexingStamp.updateLastIndexingStamp(IndexInfrastructure.getVersionFile(unregisteredIndexId));
-      FileUtil.deleteWithRenaming(IndexInfrastructure.getIndexRootDir(unregisteredIndexId));
+      FileUtil.deleteWithRenaming(IndexInfrastructure.getIndexRootDir(ID.create(s)));
     }
   }
 
