@@ -99,7 +99,7 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
           public void doAction(int lineNum) {
             final LastRevision revision = cache.get(lineNum);
             final List<RangeHighlighter> links = myHyperlinks.findAllHyperlinksOnLine(lineNum);
-            if (!links.isEmpty()) {
+            if (!links.isEmpty() && revision != null) {
               final RangeHighlighter key = links.get(links.size() - 1);
               HyperlinkInfo info = EditorHyperlinkSupport.getHyperlinkInfo(key);
 
