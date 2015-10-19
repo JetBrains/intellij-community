@@ -445,6 +445,7 @@ public class InferenceSession {
     if (callExpression instanceof PsiNewExpression) {
       final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)callExpression).getClassOrAnonymousClassReference();
       if (classReference != null) {
+        PsiUtilCore.ensureValid(argumentList);
         return CachedValuesManager.getCachedValue(classReference, new CachedValueProvider<JavaResolveResult>() {
           @Nullable
           @Override
@@ -693,7 +694,7 @@ public class InferenceSession {
         }
       }
     } else if (parent instanceof PsiConditionalExpression) {
-      return getTargetType((PsiExpression)parent);
+      return getTargetType(parent);
     }
     else if (parent instanceof PsiLambdaExpression) {
       return getTargetTypeByContainingLambda((PsiLambdaExpression)parent);
@@ -1612,7 +1613,7 @@ public class InferenceSession {
   }
 
   public boolean hasCapture(InferenceVariable inferenceVariable) {
-    return myIncorporationPhase.hasCaptureConstraints(Arrays.asList(inferenceVariable));
+    return myIncorporationPhase.hasCaptureConstraints(Collections.singletonList(inferenceVariable));
   }
 
   public static boolean wasUncheckedConversionPerformed(PsiElement call) {
