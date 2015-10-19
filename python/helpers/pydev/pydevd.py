@@ -1,11 +1,8 @@
 #IMPORTANT: pydevd_constants must be the 1st thing defined because it'll keep a reference to the original sys._getframe
 from __future__ import nested_scopes # Jython 2.1 support
 
-import pydev_monkey_qt
 import pydevd_utils
 from pydevd_utils import save_main_module
-
-pydev_monkey_qt.patch_qt()
 
 import traceback
 
@@ -1821,6 +1818,11 @@ def set_debug(setup):
     setup['DEBUG_TRACE_LEVEL'] = 3
 
 
+def enable_qt_support():
+    import pydev_monkey_qt
+    pydev_monkey_qt.patch_qt()
+
+
 def processCommandLine(argv):
     """ parses the arguments.
         removes our arguments from the command line """
@@ -1834,6 +1836,7 @@ def processCommandLine(argv):
     setup['save-signatures'] = False
     setup['save-threading'] = False
     setup['save-asyncio'] = False
+    setup['qt-support'] = False
     setup['print-in-debugger-startup'] = False
     setup['cmd-line'] = False
     setup['module'] = False
@@ -1884,6 +1887,10 @@ def processCommandLine(argv):
         elif argv[i] == '--save-asyncio':
             del argv[i]
             setup['save-asyncio'] = True
+        elif argv[i] == '--qt-support':
+            del argv[i]
+            setup['qt-support'] = True
+
         elif argv[i] == '--print-in-debugger-startup':
             del argv[i]
             setup['print-in-debugger-startup'] = True
@@ -2372,6 +2379,8 @@ if __name__ == '__main__':
                 # Only import it if we're going to use it!
                 from pydevd_signature import SignatureFactory
                 debugger.signature_factory = SignatureFactory()
+        if setup['qt-support']:
+            enable_qt_support()
         if setup['save-threading']:
             debugger.thread_analyser = ThreadingLogger()
         if setup['save-asyncio']:
