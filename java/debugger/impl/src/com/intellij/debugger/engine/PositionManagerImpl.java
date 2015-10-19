@@ -590,7 +590,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     }
 
     @Override public void visitClass(PsiClass aClass) {
-      final List<ReferenceType> allClasses = myDebugProcess.getPositionManager().getAllClasses(SourcePosition.createFromElement(aClass));
+      final List<ReferenceType> allClasses = getClassReferences(aClass, SourcePosition.createFromElement(aClass));
       for (ReferenceType referenceType : allClasses) {
         if (referenceType.name().equals(myClassName)) {
           myCompiledClass = aClass;
