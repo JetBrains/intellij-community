@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -151,6 +152,10 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         public void computed(XSourcePosition position) {
           if (position == null) return;
           VirtualFile file = position.getFile();
+          // filter out values from other files
+          if (!Comparing.equal(debuggerPosition.getFile(), file)) {
+            return;
+          }
           final Document document = FileDocumentManager.getInstance().getDocument(file);
           if (document == null) return;
 
