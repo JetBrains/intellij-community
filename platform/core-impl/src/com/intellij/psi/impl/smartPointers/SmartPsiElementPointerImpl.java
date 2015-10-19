@@ -202,7 +202,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     }
     ProperTextRange proper = ProperTextRange.create(elementRange);
 
-    return new SelfElementInfo(project, proper, element.getClass(), containingFile, LanguageUtil.getRootLanguage(element), false);
+    return new SelfElementInfo(project, proper, AnchorTypeInfo.obtainInfo(element, LanguageUtil.getRootLanguage(element)), containingFile, false);
   }
 
   @Override

@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.impl.smartPointers.AnchorTypeInfo;
 import com.intellij.psi.impl.smartPointers.SelfElementInfo;
 import com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -112,7 +113,7 @@ public abstract class PsiAnchor {
       return wrapperOrHardReference(element);
     }
 
-    return new TreeRangeReference(file, textRange.getStartOffset(), textRange.getEndOffset(), element.getClass(), lang, virtualFile);
+    return new TreeRangeReference(file, textRange.getStartOffset(), textRange.getEndOffset(), AnchorTypeInfo.obtainInfo(element, lang), virtualFile);
   }
 
   @NotNull
@@ -178,25 +179,20 @@ public abstract class PsiAnchor {
   private static class TreeRangeReference extends PsiAnchor {
     private final VirtualFile myVirtualFile;
     private final Project myProject;
-    private final Language myLanguage;
-    private final Language myFileLanguage;
+    private final AnchorTypeInfo myInfo;
     private final int myStartOffset;
     private final int myEndOffset;
-    private final Class myClass;
 
     private TreeRangeReference(@NotNull PsiFile file,
                                int startOffset,
                                int endOffset,
-                               @NotNull Class aClass,
-                               @NotNull Language language,
+                               @NotNull AnchorTypeInfo info,
                                @NotNull VirtualFile virtualFile) {
       myVirtualFile = virtualFile;
       myProject = file.getProject();
       myStartOffset = startOffset;
       myEndOffset = endOffset;
-      myClass = aClass;
-      myLanguage = language;
-      myFileLanguage = file.getLanguage();
+      myInfo = info;
     }
 
     @Override
@@ -205,13 +201,13 @@ public abstract class PsiAnchor {
       PsiFile psiFile = getFile();
       if (psiFile == null || !psiFile.isValid()) return null;
 
-      return SelfElementInfo.findElementInside(psiFile, myStartOffset, myEndOffset, myClass, myLanguage);
+      return SelfElementInfo.findElementInside(psiFile, myStartOffset, myEndOffset, myInfo);
     }
 
     @Override
     @Nullable
     public PsiFile getFile() {
-      return SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myProject, myFileLanguage);
+      return SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myProject, myInfo.getFileLanguage());
     }
 
     @Override
@@ -232,12 +228,12 @@ public abstract class PsiAnchor {
 
       return myEndOffset == that.myEndOffset &&
              myStartOffset == that.myStartOffset &&
-             myClass.equals(that.myClass) &&
+             myInfo.equals(that.myInfo) &&
              myVirtualFile.equals(that.myVirtualFile);
     }
 
     public int hashCode() {
-      int result = myClass.getName().hashCode();
+      int result = myInfo.hashCode();
       result = 31 * result + myStartOffset;
       result = 31 * result + myEndOffset;
       result = 31 * result + myVirtualFile.hashCode();

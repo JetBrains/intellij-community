@@ -37,9 +37,8 @@ import java.util.List;
 */
 public class SelfElementInfo extends SmartPointerElementInfo {
   private static final FileDocumentManager ourFileDocManager = FileDocumentManager.getInstance();
-  protected volatile Class myType;
+  protected volatile AnchorTypeInfo myType;
   private final SmartPointerManagerImpl myManager;
-  protected final Language myLanguage;
   protected final MarkerCache myMarkerCache;
   private final boolean myForInjected;
   private int myStartOffset;
@@ -47,14 +46,11 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   SelfElementInfo(@NotNull Project project,
                   @Nullable ProperTextRange range,
-                  @NotNull Class anchorClass,
+                  @NotNull AnchorTypeInfo info,
                   @NotNull PsiFile containingFile,
-                  @NotNull Language language,
                   boolean forInjected) {
-    myLanguage = language;
     myForInjected = forInjected;
-    myType = anchorClass;
-    assert !PsiFile.class.isAssignableFrom(anchorClass) : "FileElementInfo must be used for files";
+    myType = info;
 
     myManager = (SmartPointerManagerImpl)SmartPointerManager.getInstance(project);
     myMarkerCache = myManager.getMarkerCache(containingFile.getViewProvider().getVirtualFile());
@@ -101,7 +97,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     PsiFile file = restoreFile();
     if (file == null || !file.isValid()) return null;
 
-    return findElementInside(file, segment.getStartOffset(), segment.getEndOffset(), myType, myLanguage);
+    return findElementInside(file, segment.getStartOffset(), segment.getEndOffset(), myType);
   }
 
   @Nullable
@@ -117,17 +113,16 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   @Override
   public PsiFile restoreFile() {
-    return restoreFileFromVirtual(getVirtualFile(), getProject(), myLanguage);
+    return restoreFileFromVirtual(getVirtualFile(), getProject(), myType.getFileLanguage());
   }
 
   public static PsiElement findElementInside(@NotNull PsiFile file,
                                       int syncStartOffset,
                                       int syncEndOffset,
-                                      @NotNull Class type,
-                                      @NotNull Language language) {
-    PsiElement anchor = file.getViewProvider().findElementAt(syncStartOffset, language);
+                                      @NotNull AnchorTypeInfo type) {
+    PsiElement anchor = file.getViewProvider().findElementAt(syncStartOffset, type.getFileLanguage());
     if (anchor == null && syncStartOffset == file.getTextLength()) {
-      PsiElement lastChild = file.getViewProvider().getPsi(language).getLastChild();
+      PsiElement lastChild = file.getViewProvider().getPsi(type.getFileLanguage()).getLastChild();
       if (lastChild != null) {
         anchor = PsiTreeUtil.getDeepestLast(lastChild);
       }
@@ -147,7 +142,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Nullable
-  private static PsiElement findParent(int syncStartOffset, int syncEndOffset, @NotNull Class type, PsiElement anchor) {
+  private static PsiElement findParent(int syncStartOffset, int syncEndOffset, @NotNull AnchorTypeInfo type, PsiElement anchor) {
     TextRange range = anchor.getTextRange();
 
     if (range.getStartOffset() != syncStartOffset) return null;
@@ -160,7 +155,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     }
 
     while (range.getEndOffset() == syncEndOffset) {
-      if (type.equals(anchor.getClass())) {
+      if (type.isAcceptable(anchor)) {
         return anchor;
       }
       anchor = anchor.getParent();
