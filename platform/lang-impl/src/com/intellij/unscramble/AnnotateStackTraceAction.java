@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
@@ -94,7 +93,7 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
       }
 
       private void showGutter() {
-        final EditorGutterAction action = new EditorGutterAction() {
+        ActiveAnnotationGutter gutter = new ActiveAnnotationGutter() {
           @Override
           public void doAction(int lineNum) {
             final LastRevision revision = cache.get(lineNum);
@@ -119,17 +118,6 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
           @Override
           public Cursor getCursor(int lineNum) {
             return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
-          }
-        };
-
-        myEditor.getGutter().registerTextAnnotation(new ActiveAnnotationGutter() {
-          @Override
-          public void doAction(int lineNum) {
-          }
-
-          @Override
-          public Cursor getCursor(int lineNum) {
-            return Cursor.getDefaultCursor();
           }
 
           @Override
@@ -180,16 +168,16 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
           public void gutterClosed() {
             myGutterShowed = false;
           }
-        }, action);
+        };
+        myEditor.getGutter().registerTextAnnotation(gutter, gutter);
 
         myGutterShowed = true;
       }
 
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
-        Date newestDate = null;
-
         final List<VirtualFile> files = new ArrayList<VirtualFile>();
+
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
           public void run() {
@@ -219,6 +207,7 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
           }
         });
 
+        Date newestDate = null;
         for (VirtualFile file : files) {
           indicator.checkCanceled();
 
@@ -288,7 +277,7 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(cache == null || !myGutterShowed);
+    e.getPresentation().setEnabled(!myGutterShowed);
   }
 
   private static class LastRevision {
