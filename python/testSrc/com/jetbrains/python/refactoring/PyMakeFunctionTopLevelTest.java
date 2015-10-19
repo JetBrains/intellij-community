@@ -15,71 +15,73 @@
  */
 package com.jetbrains.python.refactoring;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.TestActionEvent;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.refactoring.makeFunctionTopLevel.PyMakeFunctionTopLevelRefactoring;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.refactoring.makeFunctionTopLevel.PyMakeLocalFunctionTopLevelProcessor;
+import com.jetbrains.python.refactoring.makeFunctionTopLevel.PyMakeMethodTopLevelProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
 
 /**
  * @author Mikhail Golubev
  */
 public class PyMakeFunctionTopLevelTest extends PyTestCase {
 
-  public void doTest(boolean enabled, @Nullable String message) {
+  public void doTest(@Nullable String message) {
     myFixture.configureByFile(getTestName(true) + ".py");
-    final PyMakeFunctionTopLevelRefactoring action = new PyMakeFunctionTopLevelRefactoring();
-    // Similar to com.intellij.testFramework.fixtures.CodeInsightTestFixture.testAction()
-    final TestActionEvent event = new TestActionEvent(action);
-    action.beforeActionPerformedUpdate(event);
-    assertEquals(enabled, event.getPresentation().isEnabledAndVisible());
-    if (enabled) {
-      try {
-        action.actionPerformed(event);
-        myFixture.checkResultByFile(getTestName(true) + ".after.py");
-      }
-      catch (IncorrectOperationException e) {
-        if (message == null) {
-          fail("Refactoring failed unexpectedly with message: " + e.getMessage());
+    final PyFunction function = assertInstanceOf(myFixture.getElementAtCaret(), PyFunction.class);
+    final String destination = PyPsiUtils.getContainingFilePath(function);
+    assertNotNull(destination);
+    try {
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
+        @Override
+        public void run() {
+          if (function.getContainingClass() != null) {
+            new PyMakeMethodTopLevelProcessor(function, destination).run();
+          }
+          else {
+            new PyMakeLocalFunctionTopLevelProcessor(function, destination).run();
+          }
         }
-        assertEquals(message, e.getMessage());
+      });
+      myFixture.checkResultByFile(getTestName(true) + ".after.py");
+    }
+    catch (IncorrectOperationException e) {
+      if (message == null) {
+        fail("Refactoring failed unexpectedly with message: " + e.getMessage());
       }
+      assertEquals(message, e.getMessage());
     }
   }
 
-  private void doMultiFileTest() throws IOException {
-    final String rootBeforePath = getTestName(true) + "/before";
-    final String rootAfterPath = getTestName(true) + "/after";
-    final VirtualFile copiedDirectory = myFixture.copyDirectoryToProject(rootBeforePath, "");
-    myFixture.configureByFile("main.py");
-    myFixture.testAction(new PyMakeFunctionTopLevelRefactoring());
-    PlatformTestUtil.assertDirectoriesEqual(getVirtualFileByName(getTestDataPath() + rootAfterPath), copiedDirectory);
-  }
+  //private void doMultiFileTest() throws IOException {
+  //  final String rootBeforePath = getTestName(true) + "/before";
+  //  final String rootAfterPath = getTestName(true) + "/after";
+  //  final VirtualFile copiedDirectory = myFixture.copyDirectoryToProject(rootBeforePath, "");
+  //  myFixture.configureByFile("main.py");
+  //  myFixture.testAction(new PyMakeFunctionTopLevelRefactoring());
+  //  PlatformTestUtil.assertDirectoriesEqual(getVirtualFileByName(getTestDataPath() + rootAfterPath), copiedDirectory);
+  //}
 
   private void doTestSuccess() {
-    doTest(true, null);
+    doTest(null);
   }
 
   private void doTestFailure(@NotNull String message) {
-    doTest(true, message);
+    doTest(message);
   }
 
-  private static boolean isActionEnabled() {
-    final PyMakeFunctionTopLevelRefactoring action = new PyMakeFunctionTopLevelRefactoring();
-    final TestActionEvent event = new TestActionEvent(action);
-    action.beforeActionPerformedUpdate(event);
-    return event.getPresentation().isEnabled();
-  }
+  //private static boolean isActionEnabled() {
+  //  final PyMakeFunctionTopLevelRefactoring action = new PyMakeFunctionTopLevelRefactoring();
+  //  final TestActionEvent event = new TestActionEvent(action);
+  //  action.beforeActionPerformedUpdate(event);
+  //  return event.getPresentation().isEnabled();
+  //}
 
   // PY-6637
   public void testLocalFunctionSimple() {
@@ -87,43 +89,43 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
   }
 
   // PY-6637
-  public void testRefactoringAvailability() {
-    myFixture.configureByFile(getTestName(true) + ".py");
-
-    final PsiFile file = myFixture.getFile();
-    moveByText("func");
-    assertFalse(isActionEnabled());
-    moveByText("local");
-    assertTrue(isActionEnabled());
-
-    // move to "def" keyword
-    myFixture.getEditor().getCaretModel().moveCaretRelatively(-3, 0, false, false, false);
-    final PsiElement tokenAtCaret = file.findElementAt(myFixture.getCaretOffset());
-    assertNotNull(tokenAtCaret);
-    assertEquals(tokenAtCaret.getNode().getElementType(), PyTokenTypes.DEF_KEYWORD);
-    assertTrue(isActionEnabled());
-
-    moveByText("method");
-    assertTrue(isActionEnabled());
-
-    moveByText("static_method");
-    assertFalse(isActionEnabled());
-    moveByText("class_method");
-    assertFalse(isActionEnabled());
-
-    // Overridden method
-    moveByText("overridden_method");
-    assertFalse(isActionEnabled());
-
-    // Overriding method
-    moveByText("upper");
-    assertFalse(isActionEnabled());
-
-    moveByText("property");
-    assertFalse(isActionEnabled());
-    moveByText("__magic__");
-    assertFalse(isActionEnabled());
-  }
+  //public void testRefactoringAvailability() {
+  //  myFixture.configureByFile(getTestName(true) + ".py");
+  //
+  //  final PsiFile file = myFixture.getFile();
+  //  moveByText("func");
+  //  assertFalse(isActionEnabled());
+  //  moveByText("local");
+  //  assertTrue(isActionEnabled());
+  //
+  //  // move to "def" keyword
+  //  myFixture.getEditor().getCaretModel().moveCaretRelatively(-3, 0, false, false, false);
+  //  final PsiElement tokenAtCaret = file.findElementAt(myFixture.getCaretOffset());
+  //  assertNotNull(tokenAtCaret);
+  //  assertEquals(tokenAtCaret.getNode().getElementType(), PyTokenTypes.DEF_KEYWORD);
+  //  assertTrue(isActionEnabled());
+  //
+  //  moveByText("method");
+  //  assertTrue(isActionEnabled());
+  //
+  //  moveByText("static_method");
+  //  assertFalse(isActionEnabled());
+  //  moveByText("class_method");
+  //  assertFalse(isActionEnabled());
+  //
+  //  // Overridden method
+  //  moveByText("overridden_method");
+  //  assertFalse(isActionEnabled());
+  //
+  //  // Overriding method
+  //  moveByText("upper");
+  //  assertFalse(isActionEnabled());
+  //
+  //  moveByText("property");
+  //  assertFalse(isActionEnabled());
+  //  moveByText("__magic__");
+  //  assertFalse(isActionEnabled());
+  //}
 
   // PY-6637
   public void testLocalFunctionNonlocalReferenceToOuterScope() {
@@ -182,9 +184,9 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
     doTestSuccess();
   }
 
-  public void testMethodImportUpdates() throws IOException {
-    doMultiFileTest();
-  }
+  //public void testMethodImportUpdates() throws IOException {
+  //  doMultiFileTest();
+  //}
 
   public void testMethodCalledViaClass() {
     doTestSuccess();

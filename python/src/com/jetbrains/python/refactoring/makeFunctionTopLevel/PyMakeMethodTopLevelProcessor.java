@@ -17,8 +17,6 @@ package com.jetbrains.python.refactoring.makeFunctionTopLevel;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -53,16 +51,14 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
   private final MultiMap<String, PyReferenceExpression> myAttributeReferences = MultiMap.create();
   private final Set<PsiElement> myReadsOfSelfParam = new HashSet<>();
 
-  public PyMakeMethodTopLevelProcessor(@NotNull PyFunction targetFunction, @NotNull Editor editor) {
-    super(targetFunction, editor);
-    // It's easier to debug without preview
-    setPreviewUsages(!ApplicationManager.getApplication().isInternal());
+  public PyMakeMethodTopLevelProcessor(@NotNull PyFunction targetFunction, @NotNull String destination) {
+    super(targetFunction, destination);
   }
 
   @NotNull
   @Override
   protected String getRefactoringName() {
-    return PyBundle.message("refactoring.make.method.top.level");
+    return PyBundle.message("refactoring.make.method.top.level.dialog.title");
   }
 
   @Override

@@ -16,7 +16,6 @@
 package com.jetbrains.python.refactoring.makeFunctionTopLevel;
 
 import com.google.common.collect.Lists;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
@@ -41,15 +40,14 @@ import static com.jetbrains.python.psi.PyUtil.as;
  */
 public class PyMakeLocalFunctionTopLevelProcessor extends PyBaseMakeFunctionTopLevelProcessor {
 
-  protected PyMakeLocalFunctionTopLevelProcessor(@NotNull PyFunction targetFunction, @NotNull Editor editor) {
-    super(targetFunction, editor);
-    setPreviewUsages(false);
+  public PyMakeLocalFunctionTopLevelProcessor(@NotNull PyFunction targetFunction, @NotNull String destination) {
+    super(targetFunction, destination);
   }
 
   @Override
   @NotNull
   protected String getRefactoringName() {
-    return PyBundle.message("refactoring.make.local.function.top.level");
+    return PyBundle.message("refactoring.make.local.function.top.level.dialog.title");
   }
 
   @Override

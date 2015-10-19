@@ -18,7 +18,6 @@ package com.jetbrains.python.refactoring.makeFunctionTopLevel;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -52,13 +51,13 @@ import static com.jetbrains.python.psi.PyUtil.as;
 public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactoringProcessor {
   protected final PyFunction myFunction;
   protected final PyResolveContext myResolveContext;
-  protected final Editor myEditor;
   protected final PyElementGenerator myGenerator;
+  protected final String myDestinationPath;
 
-  public PyBaseMakeFunctionTopLevelProcessor(@NotNull PyFunction targetFunction, @NotNull Editor editor) {
+  public PyBaseMakeFunctionTopLevelProcessor(@NotNull PyFunction targetFunction, @NotNull String destinationPath) {
     super(targetFunction.getProject());
     myFunction = targetFunction;
-    myEditor = editor;
+    myDestinationPath = destinationPath;
     final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(myProject, targetFunction.getContainingFile());
     myResolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext);
     myGenerator = PyElementGenerator.getInstance(myProject);
@@ -99,10 +98,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
 
     updateUsages(newParameters, usages);
-    final PyFunction newFunction = replaceFunction(createNewFunction(newParameters));
-
-    myEditor.getSelectionModel().removeSelection();
-    myEditor.getCaretModel().moveToOffset(newFunction.getTextOffset());
+    replaceFunction(createNewFunction(newParameters));
   }
 
   @NotNull
