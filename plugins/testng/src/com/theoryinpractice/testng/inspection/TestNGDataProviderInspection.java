@@ -53,7 +53,7 @@ public class TestNGDataProviderInspection extends BaseJavaLocalInspectionTool {
                 final PsiClass providerClass = TestNGUtil.getProviderClass(element, topLevelClass);
                 if (!(dataProviderMethod instanceof PsiMethod)) {
                   final LocalQuickFix[] fixes;
-                  if (isOnTheFly) {
+                  if (isOnTheFly && providerClass != null) {
                     fixes = new LocalQuickFix[] {createMethodFix(provider, providerClass, topLevelClass)};
                   }
                   else {
@@ -76,7 +76,9 @@ public class TestNGDataProviderInspection extends BaseJavaLocalInspectionTool {
     };
   }
 
-  private static CreateMethodQuickFix createMethodFix(PsiAnnotationMemberValue provider, PsiClass providerClass, PsiClass topLevelClass) {
+  private static CreateMethodQuickFix createMethodFix(PsiAnnotationMemberValue provider, 
+                                                      @NotNull PsiClass providerClass,
+                                                      PsiClass topLevelClass) {
     final String name = StringUtil.unquoteString(provider.getText());
 
     FileTemplateDescriptor templateDesc = new TestNGFramework().getParametersMethodFileTemplateDescriptor();
