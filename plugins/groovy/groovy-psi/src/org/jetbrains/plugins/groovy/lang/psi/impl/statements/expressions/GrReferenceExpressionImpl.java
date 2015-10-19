@@ -194,7 +194,15 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       ResolverProcessor classProcessor = new ClassResolverProcessor(name, this, kinds);
       resolveRunner.resolveImpl(classProcessor);
       classCandidates = classProcessor.getCandidates();
-      if (classCandidates.length > 0 && containsPackage(classCandidates)) return classCandidates;
+      if (classCandidates.length > 0 && containsPackage(classCandidates)) {
+        final GrReferenceExpression topRef = PsiTreeUtil.getTopmostParentOfType(this, GrReferenceExpression.class);
+        if (topRef != null) {
+          final String fqn = topRef.getText();
+          if (JavaPsiFacade.getInstance(getProject()).findClass(fqn, getResolveScope()) != null) {
+            return classCandidates;
+          }
+        }
+      }
     }
 
     //if reference expression is in class we need to return field instead of accessor method
