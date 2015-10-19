@@ -85,14 +85,6 @@ public class ExecUtil {
     }
   };
 
-  private static final NotNullLazyValue<Boolean> hasSh = new NotNullLazyValue<Boolean>() {
-    @NotNull
-    @Override
-    protected Boolean compute() {
-      return new File("/bin/sh").canExecute();
-    }
-  };
-
   private ExecUtil() { }
 
   @NotNull
@@ -226,24 +218,6 @@ public class ExecUtil {
       sudoCommandLine = new GeneralCommandLine(sudoCommand);
     }
     else if (hasPkExec.getValue()) {
-      //workaround for RUBY-16963
-      String homeDirectory = commandLine.getEnvironment().get("HOME");
-      if (hasSh.getValue() && homeDirectory != null) {
-        String escapedCommandLine = StringUtil.join(command, new Function<String, String>() {
-          @Override
-          public String fun(String s) {
-            return escapeUnixShellArgument(s);
-          }
-        }, " ");
-
-        File exportHomeScript = createTempExecutableScript("pkexec-homeDirectory", ".sh",
-                                                           "#!/bin/sh\n" +
-                                                           "HOME=" + escapeUnixShellArgument(homeDirectory) + " " + escapedCommandLine);
-        command.clear();
-        command.add("sh");
-        command.add(exportHomeScript.getAbsolutePath());
-      }
-
       command.add(0, "pkexec");
       sudoCommandLine = new GeneralCommandLine(command);
     }
@@ -288,7 +262,7 @@ public class ExecUtil {
   }
 
   @NotNull
-  private static String escapeUnixShellArgument(@NotNull String arg) {
+  public static String escapeUnixShellArgument(@NotNull String arg) {
     return "'" + arg.replace("'", "'\"'\"'") + "'";
   }
 
