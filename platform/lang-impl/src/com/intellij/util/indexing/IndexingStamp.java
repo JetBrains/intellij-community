@@ -16,6 +16,7 @@
 
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
@@ -24,6 +25,7 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.SmartList;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -54,9 +56,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * and set its indexed state to outdated
  * if we get other event we set indexed state to outdated
  *
- * Index stamp is file timestamp of the index directory, it is assumed that index stamps are monotonically increasing, but
+ * Index stamp is file modified timestamp of the index's version file, it is assumed that index stamps are monotonically increasing, but
  * still << Long.MAX_VALUE: there is one negative special timestamp used for marking outdated index state.
- * The code doesn't take overflow of real file timestaps (or their coincidence to negative special timestamps) into account because
+ * The code doesn't take overflow of real file timestamps (or their coincidence to negative special timestamps) into account because
  * it will happen (if time will go as forward as it does today) near year 292277094 (=new java.util.Date(Long.MAX_VALUE).getYear()).
  * At that time (if this code will be still actual) we can use positive small timestamps for special cases.
  */
@@ -98,11 +100,24 @@ public class IndexingStamp {
     finally {
       ourIndexIdToCreationStamp.clear();
       os.close();
-      long max = Math.max(System.currentTimeMillis(), Math.max(prevLastModifiedValue, ourLastStamp) + 2000);
+      long max = Math.max(
+        System.currentTimeMillis(),
+        Math.max(prevLastModifiedValue + MIN_FS_MODIFIED_TIMESTAMP_RESOLUTION, ourLastStamp + OUR_INDICES_TIMESTAMP_INCREMENT)
+      );
       ourLastStamp = max;
-      file.setLastModified(max);
+      final boolean lastModifiedSuccess = file.setLastModified(max);
+      if (!lastModifiedSuccess) {
+        Logger.getInstance(IndexingStamp.class).info("Setting lastModified failed for " + file + " timestamp:" + max);
+        ourLastStamp = Math.max(ourLastStamp, file.lastModified());
+      }
     }
   }
+
+  private static final int MIN_FS_MODIFIED_TIMESTAMP_RESOLUTION = 2000; // https://en.wikipedia.org/wiki/File_Allocation_Table,
+  // 1s for ext3 / hfs+ http://unix.stackexchange.com/questions/11599/determine-file-system-timestamp-accuracy
+  // https://en.wikipedia.org/wiki/HFS_Plus
+
+  private static final int OUR_INDICES_TIMESTAMP_INCREMENT = SystemProperties.getIntProperty("idea.indices.timestamp.resolution", 1);
 
   public static boolean versionDiffers(@NotNull File versionFile, final int currentIndexVersion) {
     try {
