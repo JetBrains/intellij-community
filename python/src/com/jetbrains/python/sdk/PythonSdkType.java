@@ -991,24 +991,16 @@ public class PythonSdkType extends SdkType {
 
   @Nullable
   public static Sdk findPython2Sdk(@Nullable Module module) {
-    Sdk moduleSDK = findPythonSdk(module);
+    final Sdk moduleSDK = findPythonSdk(module);
     if (moduleSDK != null && !getLanguageLevelForSdk(moduleSDK).isPy3K()) {
       return moduleSDK;
     }
-    List<Sdk> allSdks = getAllSdks();
-    Collections.sort(allSdks, PreferredSdkComparator.INSTANCE);
-    for (Sdk sdk : allSdks) {
-      if (!getLanguageLevelForSdk(sdk).isPy3K()) {
-        return sdk;
-      }
-    }
-    return null;
+    return findPython2Sdk(getAllSdks());
   }
 
   @Nullable
-  public static Sdk findPython2Sdk(List<Sdk> sdks) {
-    Collections.sort(sdks, PreferredSdkComparator.INSTANCE);
-    for (Sdk sdk : sdks) {
+  public static Sdk findPython2Sdk(@NotNull List<Sdk> sdks) {
+    for (Sdk sdk : ContainerUtil.sorted(sdks, PreferredSdkComparator.INSTANCE)) {
       if (!getLanguageLevelForSdk(sdk).isPy3K()) {
         return sdk;
       }
@@ -1018,13 +1010,11 @@ public class PythonSdkType extends SdkType {
 
   @Nullable
   public static Sdk findLocalCPython(@Nullable Module module) {
-    Sdk moduleSDK = findPythonSdk(module);
+    final Sdk moduleSDK = findPythonSdk(module);
     if (moduleSDK != null && !isRemote(moduleSDK) && PythonSdkFlavor.getFlavor(moduleSDK) instanceof CPythonSdkFlavor) {
       return moduleSDK;
     }
-    List<Sdk> allSdks = getAllSdks();
-    Collections.sort(allSdks, PreferredSdkComparator.INSTANCE);
-    for (Sdk sdk : allSdks) {
+    for (Sdk sdk : ContainerUtil.sorted(getAllSdks(), PreferredSdkComparator.INSTANCE)) {
       if (!isRemote(sdk)) {
         return sdk;
       }
