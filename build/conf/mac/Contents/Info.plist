@@ -54,6 +54,9 @@
     <key>NSHighResolutionCapable</key>
     <true/>
 
+    <key>NSSupportsAutomaticGraphicsSwitching</key>
+    <true/>
+
     @@archs@@
     <key>LSRequiresNativeExecution</key>
     <string>YES</string>
