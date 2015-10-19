@@ -59,10 +59,16 @@ public class AnalyzeStacktraceUtil {
   private AnalyzeStacktraceUtil() {
   }
 
-  public static void printStacktrace(final ConsoleView consoleView, final String unscrambledTrace) {
-    consoleView.clear();
-    consoleView.print(unscrambledTrace+"\n", ConsoleViewContentType.ERROR_OUTPUT);
-    consoleView.scrollTo(0);
+  public static void printStacktrace(@NotNull ConsoleView consoleView, @NotNull String unscrambledTrace) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    String text = unscrambledTrace + "\n";
+    String consoleText = ((ConsoleViewImpl)consoleView).getText();
+    if (!text.equals(consoleText)) {
+      consoleView.clear();
+      consoleView.print(text, ConsoleViewContentType.ERROR_OUTPUT);
+
+      consoleView.scrollTo(0);
+    }
   }
 
   @Nullable
