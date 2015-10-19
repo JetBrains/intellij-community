@@ -17,7 +17,6 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.extensions.Extensions;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.testing.PythonUnitTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,9 +28,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class PyBaseDocstringInspection extends PyInspection {
   @NotNull
   @Override
-  public abstract Visitor buildVisitor(@NotNull ProblemsHolder holder,
-                                                                 boolean isOnTheFly,
-                                                                 @NotNull LocalInspectionToolSession session);
+  public abstract Visitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session);
 
   protected static abstract class Visitor extends PyInspectionVisitor {
     public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
@@ -39,12 +36,12 @@ public abstract class PyBaseDocstringInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFile(@NotNull PyFile node) {
+    public final void visitPyFile(@NotNull PyFile node) {
       checkDocString(node);
     }
 
     @Override
-    public void visitPyFunction(@NotNull PyFunction node) {
+    public final void visitPyFunction(@NotNull PyFunction node) {
       if (PythonUnitTestUtil.isUnitTestCaseFunction(node)) return;
       final PyClass containingClass = node.getContainingClass();
       if (containingClass != null && PythonUnitTestUtil.isUnitTestCaseClass(containingClass)) return;
@@ -57,7 +54,7 @@ public abstract class PyBaseDocstringInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyClass(@NotNull PyClass node) {
+    public final void visitPyClass(@NotNull PyClass node) {
       if (PythonUnitTestUtil.isUnitTestCaseClass(node)) return;
       final String name = node.getName();
       if (name == null || name.startsWith("_")) {
@@ -66,12 +63,6 @@ public abstract class PyBaseDocstringInspection extends PyInspection {
       checkDocString(node);
     }
 
-    protected void checkDocString(@NotNull PyDocStringOwner node) {
-      for (PyInspectionExtension extension : Extensions.getExtensions(PyInspectionExtension.EP_NAME)) {
-        if (extension.ignoreMissingDocstring(node)) {
-          return;
-        }
-      }
-    }
+    protected abstract void checkDocString(@NotNull PyDocStringOwner node);
   }
 }

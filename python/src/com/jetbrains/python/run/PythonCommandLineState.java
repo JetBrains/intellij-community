@@ -137,7 +137,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   protected ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler, Executor executor)
     throws ExecutionException {
     final ConsoleView consoleView = createConsoleBuilder(project).getConsole();
-    consoleView.addMessageFilter(new UrlFilter());
+    consoleView.addMessageFilter(createUrlFilter(processHandler));
 
     addTracebackFilter(project, consoleView, processHandler);
 
@@ -154,7 +154,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     else {
       consoleView.addMessageFilter(new PythonTracebackFilter(project, myConfig.getWorkingDirectorySafe()));
     }
-    consoleView.addMessageFilter(new UrlFilter()); // Url filter is always nice to have
+    consoleView.addMessageFilter(createUrlFilter(processHandler)); // Url filter is always nice to have
   }
 
   private TextConsoleBuilder createConsoleBuilder(Project project) {
@@ -513,5 +513,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   public void setMultiprocessDebug(boolean multiprocessDebug) {
     myMultiprocessDebug = multiprocessDebug;
+  }
+
+  @NotNull
+  protected UrlFilter createUrlFilter(ProcessHandler handler) {
+    return new UrlFilter();
   }
 }
