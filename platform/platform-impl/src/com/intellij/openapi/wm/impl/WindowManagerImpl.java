@@ -518,8 +518,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
     if (myFrameBounds == null || !ScreenUtil.isVisible(myFrameBounds)) { //avoid situations when IdeFrame is out of all screens
       final Rectangle rect = ScreenUtil.getMainScreenBounds();
       int yParts = rect.height / 6;
-      int xParts = rect.width / 5;
-      myFrameBounds = new Rectangle(xParts, yParts, xParts * 3, yParts * 4);
+      int xParts = rect.width / 4;
+      myFrameBounds = new Rectangle(xParts / 2, yParts / 2, xParts * 3, yParts * 5);
     }
 
     fixForOracleBug8007219(frame);
