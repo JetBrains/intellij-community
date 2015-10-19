@@ -28,6 +28,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.*;
 import com.intellij.util.Producer;
 import com.intellij.util.ui.UIUtil;
@@ -65,6 +67,21 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     mySplitterProportionProperty = splitterProportionProperty;
     mySplitterDefaultProportion = splitterDefaultProportion;
     myStatisticsSplitterProportionProperty = mySplitterProportionProperty + "_Statistics";
+    final ToolWindowManagerListener listener = new ToolWindowManagerListener() {
+      @Override
+      public void toolWindowRegistered(@NotNull String id) {
+      }
+
+      @Override
+      public void stateChanged() {
+        final boolean splitVertically = splitVertically();
+        myStatusLine.setPreferredSize(splitVertically);
+        mySplitter.setOrientation(splitVertically);
+        revalidate();
+        repaint();
+      }
+    };
+    ToolWindowManagerEx.getInstanceEx(properties.getProject()).addToolWindowManagerListener(listener, this);
   }
 
   public void initUI() {
@@ -75,13 +92,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     JComponent testTreeView = createTestTreeView();
     myToolbarPanel = createToolbarPanel();
     Disposer.register(this, myToolbarPanel);
-    final String windowId = myProperties.getExecutor().getToolWindowId();
-    final ToolWindow toolWindow = ToolWindowManager.getInstance(myProperties.getProject()).getToolWindow(windowId);
-    boolean splitVertically = false;
-    if (toolWindow != null) {
-      final ToolWindowAnchor anchor = toolWindow.getAnchor();
-      splitVertically = anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT;
-    }
+    boolean splitVertically = splitVertically();
     myStatusLine.setPreferredSize(splitVertically);
     
     mySplitter = createSplitter(mySplitterProportionProperty,
@@ -134,6 +145,17 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     mySplitter.setSecondComponent(rightPanel);
     testTreeView.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
     setLeftComponent(testTreeView);
+  }
+
+  private boolean splitVertically() {
+    final String windowId = myProperties.getExecutor().getToolWindowId();
+    final ToolWindow toolWindow = ToolWindowManager.getInstance(myProperties.getProject()).getToolWindow(windowId);
+    boolean splitVertically = false;
+    if (toolWindow != null) {
+      final ToolWindowAnchor anchor = toolWindow.getAnchor();
+      splitVertically = anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT;
+    }
+    return splitVertically;
   }
 
   private void showStatistics() {
