@@ -254,13 +254,17 @@ public class IconUtilTest extends PlatformTestCase {
       };
   }
 
-  public void testLockedPatchSmallIconAppliedOnlyOnce() throws IOException {
+  public void testLockedPatchSmallIconAppliedOnlyOnceToJavaFile() throws IOException {
     File dir = createTempDir("my");
 
     VirtualFile sourceRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+    PsiTestUtil.addSourceRoot(getModule(), sourceRoot);
     VirtualFile file = createChildData(sourceRoot, "X.java");
 
-    PsiTestUtil.addSourceRoot(getModule(), sourceRoot);
+    assertJustOneLockedIcon(file);
+  }
+
+  private void assertJustOneLockedIcon(VirtualFile file) throws IOException {
     WriteCommandAction.runWriteCommandAction(getProject(),
                                              (ThrowableComputable<Void,IOException>)() -> {
                                                file.setBinaryContent("class X {}".getBytes(CharsetToolkit.UTF8_CHARSET));
@@ -286,6 +290,17 @@ public class IconUtilTest extends PlatformTestCase {
                                                  return null;
                                                });
     }
+  }
+
+  public void testLockedPatchSmallIconAppliedOnlyOnceToTxtFile() throws IOException {
+    File dir = createTempDir("my");
+
+    VirtualFile sourceRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+    VirtualFile file = createChildData(sourceRoot, "X.txt");
+
+    PsiTestUtil.addSourceRoot(getModule(), sourceRoot);
+
+    assertJustOneLockedIcon(file);
   }
 
   @NotNull

@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.WritingAccessProvider;
 import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
@@ -150,11 +151,16 @@ public class IconUtil {
           continue;
         }
 
-        icon = patcher.patchIcon(icon, file, flags, project);
+        // render without locked icon patch since we are going to apply it later anyway
+        icon = patcher.patchIcon(icon, file, flags & ~Iconable.ICON_FLAG_READ_STATUS, project);
       }
 
       if (file.is(VFileProperty.SYMLINK)) {
         icon = new LayeredIcon(icon, PlatformIcons.SYMLINK_ICON);
+      }
+      if (BitUtil.isSet(flags, Iconable.ICON_FLAG_READ_STATUS) &&
+          (!file.isWritable() || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
+        icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
       }
 
       Iconable.LastComputedIcon.put(file, icon, flags);
