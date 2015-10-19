@@ -83,8 +83,8 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertContentRoots("project", getProjectPath());
 
     assertDefaultGradleJavaProjectFolders("project");
-    assertGeneratedSources("project_main", "src/main/java");
-    assertGeneratedTestSources("project_test", "src/test/java");
+    assertGeneratedSources("project_main", "java");
+    assertGeneratedTestSources("project_test", "java");
   }
 
   @Test
