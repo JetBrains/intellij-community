@@ -36,7 +36,6 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
@@ -52,40 +51,9 @@ import java.util.List;
 public class PyMoveModuleMembersDialog extends PyBaseMoveDialog {
   @NonNls private final static String BULK_MOVE_TABLE_VISIBLE = "python.move.module.members.dialog.show.table";
 
-  /**
-   * Instance to be injected to mimic this class in tests
-   */
-  private static PyMoveModuleMembersDialog ourInstanceToReplace = null;
-
   private final TopLevelSymbolsSelectionTable myMemberSelectionTable;
   private final PyModuleMemberInfoModel myModuleMemberModel;
   private final boolean mySeveralElementsSelected;
-
-  /**
-   * Either creates new dialog or return singleton instance initialized with {@link #setInstanceToReplace)}.
-   * Singleton dialog is intended to be used in tests.
-   *
-   * @param project dialog project
-   * @param elements elements to move
-   * @param source
-   *@param destination destination where elements have to be moved  @return dialog
-   */
-  public static PyMoveModuleMembersDialog getInstance(@NotNull Project project,
-                                                      @NotNull List<PsiNamedElement> elements,
-                                                      @NotNull String source, 
-                                                      @NotNull String destination) {
-    return ourInstanceToReplace != null ? ourInstanceToReplace : new PyMoveModuleMembersDialog(project, elements, source, destination);
-  }
-
-  /**
-   * Injects instance to be used in tests
-   *
-   * @param instanceToReplace instance to be used in tests
-   */
-  @TestOnly
-  public static void setInstanceToReplace(@NotNull final PyMoveModuleMembersDialog instanceToReplace) {
-    ourInstanceToReplace = instanceToReplace;
-  }
 
   /**
    * @param project dialog project
@@ -93,10 +61,10 @@ public class PyMoveModuleMembersDialog extends PyBaseMoveDialog {
    * @param source
    * @param destination destination where elements have to be moved
    */
-  protected PyMoveModuleMembersDialog(@NotNull Project project,
-                                      @NotNull List<PsiNamedElement> elements,
-                                      @NotNull String source, 
-                                      @NotNull String destination) {
+  public PyMoveModuleMembersDialog(@NotNull Project project,
+                                   @NotNull List<PsiNamedElement> elements,
+                                   @NotNull String source,
+                                   @NotNull String destination) {
     super(project, source, destination);
 
     assert !elements.isEmpty();
