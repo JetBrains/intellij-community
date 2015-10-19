@@ -158,6 +158,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private void scheduleCacheUpdate(@NotNull final DumbModeTask task, boolean forceDumbMode) {
     final Throwable trace = ourForcedTrace != null ? ourForcedTrace : new Throwable(); // please report exceptions here to peter
+    final DumbModePermission schedulerPermission = getExplicitPermission();
     if (LOG.isDebugEnabled()) LOG.debug("Scheduling task " + task, trace);
     final Application application = ApplicationManager.getApplication();
 
@@ -189,8 +190,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
           return;
         }
 
-        ModalityState modality = ModalityState.current();
-        final DumbModePermission permission = getDumbModePermission(modality);
+        final DumbModePermission permission = schedulerPermission != null ? schedulerPermission : getEdtPermission();
 
         myProgresses.put(task, new ProgressIndicatorBase());
         Disposer.register(task, new Disposable() {
@@ -204,9 +204,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         // ok to test and set the flag like this, because the change is always done from dispatch thread
         if (!myDumb) {
           if (permission == null) {
-            LOG.info("Dumb mode not permitted in modal environment; see DumbService.allowStartingDumbModeInside documentation." +
-                      "\n Current modality: " + modality +
-                      "\n all permissions: " + ourPermissionService.getPermissions(), trace);
+            LOG.info("Dumb mode not permitted in modal environment; see DumbService.allowStartingDumbModeInside documentation", trace);
           }
           else if (permission == DumbModePermission.MAY_START_MODAL) {
             LOG.info("Starting modal dumb mode, caused by the following trace", trace);
@@ -243,7 +241,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
                 LOG.error("Failed to start background index update task", e);
               }
             }
-          }, modality, myProject.getDisposed());
+          }, myProject.getDisposed());
         }
       }
     });
@@ -259,13 +257,13 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   @Nullable
-  private DumbModePermission getDumbModePermission(ModalityState modality) {
-    DumbModePermission permission = getExplicitPermission(modality);
+  private DumbModePermission getEdtPermission() {
+    DumbModePermission permission = getExplicitPermission();
     if (permission != null) {
       return permission;
     }
 
-    if (modality == ModalityState.NON_MODAL || !StartupManagerEx.getInstanceEx(myProject).postStartupActivityPassed()) {
+    if (ModalityState.current() == ModalityState.NON_MODAL || !StartupManagerEx.getInstanceEx(myProject).postStartupActivityPassed()) {
       return DumbModePermission.MAY_START_BACKGROUND;
     }
 
@@ -273,8 +271,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   @Nullable
-  public static DumbModePermission getExplicitPermission(@NotNull ModalityState modality) {
-    return ourPermissionService.getPermissions().get(modality);
+  public static DumbModePermission getExplicitPermission() {
+    return ourPermissionService.getPermission();
   }
 
   @NotNull
