@@ -30,11 +30,6 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class SkipAutopopupInStrings extends CompletionConfidence {
-  @NotNull
-  @Override
-  public ThreeState shouldFocusLookup(@NotNull CompletionParameters parameters) {
-    return ThreeState.UNSURE;
-  }
 
   @NotNull
   @Override
