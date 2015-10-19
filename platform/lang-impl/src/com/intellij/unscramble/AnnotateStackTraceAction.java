@@ -117,7 +117,7 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
 
           @Override
           public Cursor getCursor(int lineNum) {
-            return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+            return cache.containsKey(lineNum) ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor();
           }
 
           @Override
