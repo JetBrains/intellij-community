@@ -168,9 +168,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
       final ArrayList<JdkBundleDescriptor> pathsList = JdkUtil.findJdkPaths();
       if (!jdkBundlesList.isEmpty()) {
         JdkBundleDescriptor jdkBundleDescription = jdkBundlesList.get(0);
-        if (jdkBundleDescription != null) {
-          pathsList.add(0, jdkBundleDescription);
-        }
+        pathsList.add(0, jdkBundleDescription);
       }
 
       myComboBox = new ComboBox();
@@ -199,15 +197,19 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
             JdkBundleDescriptor jdkBundleDescriptor = ((JdkBundleDescriptor)value);
             setText(jdkBundleDescriptor.getVisualRepresentation());
           } else {
-            LOG.debug("Null value has been passed to a cell renderer. Available JDKs count: " +  pathsList.size());
-            StringBuilder jdkNames = new StringBuilder();
-            for (JdkBundleDescriptor jdkBundlePath : pathsList) {
-              if (!jdkBundlesList.isEmpty()) {
-                continue;
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Null value has been passed to a cell renderer. Available JDKs count: " + pathsList.size());
+              StringBuilder jdkNames = new StringBuilder();
+              for (JdkBundleDescriptor jdkBundlePath : pathsList) {
+                if (!jdkBundlesList.isEmpty()) {
+                  continue;
+                }
+                jdkNames.append(jdkBundlePath.getVisualRepresentation()).append("; ");
               }
-              jdkNames.append(jdkBundlePath.getVisualRepresentation()).append("; ");
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Available JDKs names: " + jdkNames.toString());
+              }
             }
-            LOG.debug("Available JDKs names: " + jdkNames.toString());
           }
         }
       });
@@ -247,7 +249,6 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
       ArrayList<JdkBundleDescriptor> jdkPathsList = new ArrayList<JdkBundleDescriptor>();
       if (!SystemInfo.isMac) return jdkPathsList;
 
-
       if (customJdkFile.exists()) {
           jdkPathsList.add(new JdkBundleDescriptor(customJdkFile, "JDK bundled with IDE"));
       }
@@ -270,7 +271,9 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
       File standardJdkLocationOnMacFile = new File(jdkLocationOnMacOsX);
 
       if (!standardJdkLocationOnMacFile.exists()) {
-        LOG.debug("Location does not exists: " + jdkLocationOnMacOsX);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Location does not exists: " + jdkLocationOnMacOsX);
+        }
         return localJdkPathsList;
       }
 
@@ -302,7 +305,9 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
               latestBundle = new JdkBundleDescriptor(possibleJdkBundle, possibleJdkBundle.getName());
             }
           } catch (NumberFormatException nfe) {
-            LOG.debug("Fail parsing update number");
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Fail parsing update number");
+            }
           }
         }
 
