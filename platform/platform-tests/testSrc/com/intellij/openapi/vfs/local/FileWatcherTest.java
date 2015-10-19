@@ -853,7 +853,6 @@ public class FileWatcherTest extends PlatformTestCase {
     }
   }
 
-
   @NotNull
   private LocalFileSystem.WatchRequest watch(File watchFile) {
     return watch(watchFile, true);
