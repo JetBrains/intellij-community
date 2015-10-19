@@ -18,7 +18,7 @@ package org.jetbrains.idea.devkit.internal;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
-public class IconsGeneratedSourcesFilterTest extends LightCodeInsightFixtureTestCase {
+public class IconsGeneratedSourcesTest extends LightCodeInsightFixtureTestCase {
   public void testGeneratedFile() {
     PsiFile file = myFixture.configureByText("MyIcons.java", "package icons;\n" +
                                                              "/**\n" +
