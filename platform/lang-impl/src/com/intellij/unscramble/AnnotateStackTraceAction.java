@@ -186,33 +186,38 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
       }
 
       @Override
-      public void run(@NotNull ProgressIndicator indicator) {
+      public void run(@NotNull final ProgressIndicator indicator) {
         Date newestDate = null;
 
-        List<VirtualFile> files = new ArrayList<VirtualFile>();
-        for (int line = 0; line < myEditor.getDocument().getLineCount(); line++) {
-          indicator.checkCanceled();
-          final List<RangeHighlighter> links = myHyperlinks.findAllHyperlinksOnLine(line);
-          if (links.size() > 0) {
-            final RangeHighlighter key = links.get(links.size() - 1);
-            final HyperlinkInfo info = EditorHyperlinkSupport.getHyperlinkInfo(key);
-            if (info instanceof FileHyperlinkInfo) {
-              final OpenFileDescriptor fileDescriptor = ((FileHyperlinkInfo)info).getDescriptor();
-              if (fileDescriptor != null) {
-                final VirtualFile file = fileDescriptor.getFile();
-                if (files2lines.containsKey(file)) {
-                  files2lines.get(file).add(line);
-                } else {
-                  final ArrayList<Integer> lines = new ArrayList<Integer>();
-                  lines.add(line);
-                  files2lines.put(file, lines);
-                  files.add(file);
+        final List<VirtualFile> files = new ArrayList<VirtualFile>();
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            for (int line = 0; line < myEditor.getDocument().getLineCount(); line++) {
+              indicator.checkCanceled();
+              final List<RangeHighlighter> links = myHyperlinks.findAllHyperlinksOnLine(line);
+              if (links.size() > 0) {
+                final RangeHighlighter key = links.get(links.size() - 1);
+                final HyperlinkInfo info = EditorHyperlinkSupport.getHyperlinkInfo(key);
+                if (info instanceof FileHyperlinkInfo) {
+                  final OpenFileDescriptor fileDescriptor = ((FileHyperlinkInfo)info).getDescriptor();
+                  if (fileDescriptor != null) {
+                    final VirtualFile file = fileDescriptor.getFile();
+                    if (files2lines.containsKey(file)) {
+                      files2lines.get(file).add(line);
+                    }
+                    else {
+                      final ArrayList<Integer> lines = new ArrayList<Integer>();
+                      lines.add(line);
+                      files2lines.put(file, lines);
+                      files.add(file);
+                    }
+                  }
                 }
               }
             }
           }
-        }
-
+        });
 
         for (VirtualFile file : files) {
           indicator.checkCanceled();
