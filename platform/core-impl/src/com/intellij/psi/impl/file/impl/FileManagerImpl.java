@@ -74,17 +74,6 @@ public class FileManagerImpl implements FileManager {
 
     myFileDocumentManager = fileDocumentManager;
 
-    myConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-      @Override
-      public void enteredDumbMode() {
-        updateAllViewProviders();
-      }
-
-      @Override
-      public void exitDumbMode() {
-        updateAllViewProviders();
-      }
-    });
     Disposer.register(manager.getProject(), this);
     LowMemoryWatcher.register(new Runnable() {
       @Override
@@ -308,6 +297,18 @@ public class FileManagerImpl implements FileManager {
     LOG.assertTrue(!myInitialized);
     myDisposed = false;
     myInitialized = true;
+
+    myConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      @Override
+      public void enteredDumbMode() {
+        updateAllViewProviders();
+      }
+
+      @Override
+      public void exitDumbMode() {
+        updateAllViewProviders();
+      }
+    });
   }
 
   public boolean isInitialized() {
