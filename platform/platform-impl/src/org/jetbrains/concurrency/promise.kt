@@ -25,7 +25,7 @@ inline fun <T, SUB_RESULT> Promise<T>.thenAsync(crossinline handler: (T) -> Prom
   override fun `fun`(param: T) = handler(param)
 })
 
-inline fun <T> Promise<T>.thenAsyncVoid(crossinline handler: (T) -> Promise<*>) = then(object : AsyncFunction<T, Any?> {
+inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>) = then(object : AsyncFunction<T, Any?> {
   override fun `fun`(param: T): Promise<Any?> {
     @Suppress("UNCHECKED_CAST")
     return handler(param) as Promise<Any?>
