@@ -4,9 +4,20 @@ import com.google.common.collect.Lists;
 import com.google.gson.*;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.stream.JsonWriter;
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.text.VersionComparatorUtil;
+import com.jetbrains.python.packaging.PyPackage;
+import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditablePanel;
@@ -39,9 +50,17 @@ public class IpnbParser {
   }
 
   @NotNull
-  public static IpnbFile parseIpnbFile(@NotNull final CharSequence fileText, String path) throws IOException {
+  public static IpnbFile parseIpnbFile(@NotNull final CharSequence fileText, @NotNull final VirtualFile virtualFile) throws IOException {
+    final String path = virtualFile.getPath();
     IpnbFileRaw rawFile = gson.fromJson(fileText.toString(), IpnbFileRaw.class);
-    if (rawFile == null) return new IpnbFile(new IpnbFileRaw(), Lists.<IpnbCell>newArrayList(), path);
+    if (rawFile == null) {
+      final IpnbFileRaw ipnbFileRaw = new IpnbFileRaw();
+
+      if (!isIpythonNewFormat(virtualFile)) {
+        ipnbFileRaw.nbformat = 3;
+      }
+      return new IpnbFile(ipnbFileRaw, Lists.<IpnbCell>newArrayList(), path);
+    }
     List<IpnbCell> cells = new ArrayList<IpnbCell>();
     final IpnbWorksheet[] worksheets = rawFile.worksheets;
     if (worksheets == null) {
@@ -60,9 +79,30 @@ public class IpnbParser {
     return new IpnbFile(rawFile, cells, path);
   }
 
+  public static boolean isIpythonNewFormat(@NotNull final VirtualFile virtualFile) {
+    final Project project = ProjectUtil.guessProjectForFile(virtualFile);
+    if (project != null) {
+      final Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(virtualFile);
+      if (module != null) {
+        final Sdk sdk = PythonSdkType.findPythonSdk(module);
+        if (sdk != null) {
+          try {
+            final PyPackage ipython = PyPackageManager.getInstance(sdk).findPackage("ipython", true);
+            if (ipython != null && VersionComparatorUtil.compare(ipython.getVersion(), "3.0") <= 0) {
+              return false;
+            }
+          }
+          catch (ExecutionException ignored) {
+          }
+        }
+      }
+    }
+    return true;
+  }
+
   @NotNull
-  public static IpnbFile parseIpnbFile(@NotNull Document document, @NotNull final String path) throws IOException {
-    return parseIpnbFile(document.getImmutableCharSequence(), path);
+  public static IpnbFile parseIpnbFile(@NotNull Document document, @NotNull final VirtualFile virtualFile) throws IOException {
+    return parseIpnbFile(document.getImmutableCharSequence(), virtualFile);
   }
 
   public static void saveIpnbFile(@NotNull final IpnbFilePanel ipnbPanel) {
@@ -132,7 +172,7 @@ public class IpnbParser {
     IpnbWorksheet[] worksheets;
     List<IpnbCellRaw> cells = new ArrayList<IpnbCellRaw>();
     Map<String, Object> metadata = new HashMap<String, Object>();
-    int nbformat = 3;
+    int nbformat = 4;
     int nbformat_minor;
   }
 
