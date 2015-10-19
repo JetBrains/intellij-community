@@ -321,6 +321,10 @@ public class PyDebugRunner extends GenericProgramRunner {
     if (PyDebuggerOptionsProvider.getInstance(project).isSaveCallSignatures()) {
       debugParams.addParameter("--save-signatures");
     }
+
+    if (PyDebuggerOptionsProvider.getInstance(project).isSupportQtDebugging()) {
+      debugParams.addParameter("--qt-support");
+    }
   }
 
   private static void addProjectRootsToEnv(@NotNull Project project, @NotNull GeneralCommandLine commandLine) {

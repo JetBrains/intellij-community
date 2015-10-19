@@ -144,7 +144,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
     private File bundleAsFile;
     private String visualRepresentation;
 
-    public JdkBundleDescriptor(File bundleAsFile, String visualRepresentation) {
+    public JdkBundleDescriptor(@NotNull File bundleAsFile, @NotNull String visualRepresentation) {
       this.bundleAsFile = bundleAsFile;
       this.visualRepresentation = visualRepresentation;
     }
@@ -168,9 +168,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
       final ArrayList<JdkBundleDescriptor> pathsList = JdkUtil.findJdkPaths();
       if (!jdkBundlesList.isEmpty()) {
         JdkBundleDescriptor jdkBundleDescription = jdkBundlesList.get(0);
-        if (jdkBundleDescription != null) {
-          pathsList.add(0, jdkBundleDescription);
-        }
+        pathsList.add(0, jdkBundleDescription);
       }
 
       myComboBox = new ComboBox();
@@ -187,6 +185,11 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
       }
 
       myComboBox.setModel(model);
+
+      if (pathsList.isEmpty()) {
+        myComboBox.setEnabled(false);
+      }
+
       myComboBox.setRenderer(new ListCellRendererWrapper() {
         @Override
         public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
@@ -194,15 +197,19 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
             JdkBundleDescriptor jdkBundleDescriptor = ((JdkBundleDescriptor)value);
             setText(jdkBundleDescriptor.getVisualRepresentation());
           } else {
-            LOG.debug("Null value has been passed to a cell renderer. Available JDKs count: " +  pathsList.size());
-            StringBuilder jdkNames = new StringBuilder();
-            for (JdkBundleDescriptor jdkBundlePath : pathsList) {
-              if (!jdkBundlesList.isEmpty()) {
-                continue;
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Null value has been passed to a cell renderer. Available JDKs count: " + pathsList.size());
+              StringBuilder jdkNames = new StringBuilder();
+              for (JdkBundleDescriptor jdkBundlePath : pathsList) {
+                if (!jdkBundlesList.isEmpty()) {
+                  continue;
+                }
+                jdkNames.append(jdkBundlePath.getVisualRepresentation()).append("; ");
               }
-              jdkNames.append(jdkBundlePath.getVisualRepresentation()).append("; ");
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Available JDKs names: " + jdkNames.toString());
+              }
             }
-            LOG.debug("Available JDKs names: " + jdkNames.toString());
           }
         }
       });
@@ -242,12 +249,16 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
       ArrayList<JdkBundleDescriptor> jdkPathsList = new ArrayList<JdkBundleDescriptor>();
       if (!SystemInfo.isMac) return jdkPathsList;
 
-
       if (customJdkFile.exists()) {
           jdkPathsList.add(new JdkBundleDescriptor(customJdkFile, "JDK bundled with IDE"));
       }
 
-      jdkPathsList.addAll(jdkBundlesFromLocation(STANDARD_JDK_6_LOCATION_ON_MAC_OS_X, "1.6.0"));
+      ArrayList<JdkBundleDescriptor> jdk6List = jdkBundlesFromLocation(STANDARD_JDK_6_LOCATION_ON_MAC_OS_X, "1.6.0");
+
+      if (jdk6List.isEmpty()) {
+        jdkPathsList.addAll(jdkBundlesFromLocation(STANDARD_JDK_LOCATION_ON_MAC_OS_X, "1.6.0"));
+      }
+
       jdkPathsList.addAll(jdkBundlesFromLocation(STANDARD_JDK_LOCATION_ON_MAC_OS_X, "jdk1.8.0_(\\d*).jdk"));
 
       return jdkPathsList;
@@ -260,26 +271,30 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
       File standardJdkLocationOnMacFile = new File(jdkLocationOnMacOsX);
 
       if (!standardJdkLocationOnMacFile.exists()) {
-        LOG.info("Location does not exists: " + jdkLocationOnMacOsX);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Location does not exists: " + jdkLocationOnMacOsX);
+        }
         return localJdkPathsList;
       }
 
       File[] filesInStandardJdkLocation = standardJdkLocationOnMacFile.listFiles();
 
+      if (filesInStandardJdkLocation == null) {
+        LOG.debug("Some IO  exception happened.");
+        return localJdkPathsList;
+      }
+
       int latestUpdateNumber = 0;
       JdkBundleDescriptor latestBundle = null;
 
-      String regex = filter;
-
-      Pattern p = Pattern.compile(regex);
+      Pattern p = Pattern.compile(filter);
 
       for (File possibleJdkBundle : filesInStandardJdkLocation) {
         // todo add some logic to verify the bundle
 
         Matcher m = p.matcher(possibleJdkBundle.getName());
 
-
-        while(m.find()) {
+        while (m.find()) {
           try {
             if (m.groupCount() > 0) {
               int updateNumber = Integer.parseInt(m.group(1));
@@ -290,7 +305,9 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
               latestBundle = new JdkBundleDescriptor(possibleJdkBundle, possibleJdkBundle.getName());
             }
           } catch (NumberFormatException nfe) {
-            LOG.error("Fail parsing update number");
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Fail parsing update number");
+            }
           }
         }
 

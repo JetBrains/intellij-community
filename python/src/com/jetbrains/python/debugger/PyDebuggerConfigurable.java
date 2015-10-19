@@ -19,6 +19,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,6 +36,7 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
   private JCheckBox mySaveSignatures;
   private JButton myClearCacheButton;
   private JCheckBox mySupportGevent;
+  private JBCheckBox mySupportQt;
 
   private final Project myProject;
 
@@ -73,19 +75,22 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
   public boolean isModified() {
     return myAttachToSubprocess.isSelected() != mySettings.isAttachToSubprocess() ||
            mySaveSignatures.isSelected() != mySettings.isSaveCallSignatures() ||
-           mySupportGevent.isSelected() != mySettings.isSupportGeventDebugging();
+           mySupportGevent.isSelected() != mySettings.isSupportGeventDebugging() ||
+           mySupportQt.isSelected() != mySettings.isSupportQtDebugging();
   }
 
   public void apply() throws ConfigurationException {
     mySettings.setAttachToSubprocess(myAttachToSubprocess.isSelected());
     mySettings.setSaveCallSignatures(mySaveSignatures.isSelected());
     mySettings.setSupportGeventDebugging(mySupportGevent.isSelected());
+    mySettings.setSupportQtDebugging(mySupportQt.isSelected());
   }
 
   public void reset() {
     myAttachToSubprocess.setSelected(mySettings.isAttachToSubprocess());
     mySaveSignatures.setSelected(mySettings.isSaveCallSignatures());
     mySupportGevent.setSelected(mySettings.isSupportGeventDebugging());
+    mySupportQt.setSelected(mySettings.isSupportQtDebugging());
   }
 
   public void disposeUIResources() {
