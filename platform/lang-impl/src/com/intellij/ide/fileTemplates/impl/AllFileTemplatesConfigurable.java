@@ -23,7 +23,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentsPackage;
+import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
@@ -220,7 +220,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     final List<FileTemplateTab> allTabs = new ArrayList<FileTemplateTab>(Arrays.asList(myTemplatesList, myIncludesList, myCodeTemplatesList));
 
     final Set<FileTemplateGroupDescriptorFactory> factories = new THashSet<FileTemplateGroupDescriptorFactory>();
-    factories.addAll(ComponentsPackage.getComponents(ApplicationManager.getApplication(), FileTemplateGroupDescriptorFactory.class));
+    factories.addAll(ServiceKt.getComponents(ApplicationManager.getApplication(), FileTemplateGroupDescriptorFactory.class));
     ContainerUtil.addAll(factories, Extensions.getExtensions(FileTemplateGroupDescriptorFactory.EXTENSION_POINT_NAME));
 
     if (!factories.isEmpty()) {

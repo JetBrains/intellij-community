@@ -16,7 +16,7 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.components.ComponentsPackage;
+import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
@@ -49,7 +49,7 @@ public abstract class ConfigurablesGroupBase implements ConfigurableGroup {
         return new Configurable[0];
       }
       final ConfigurableEP<Configurable>[] extensions = myComponentManager.getExtensions(myConfigurablesExtensionPoint);
-      List<Configurable> components = myLoadComponents ? ComponentsPackage.getComponents(myComponentManager, Configurable.class) : Collections.<Configurable>emptyList();
+      List<Configurable> components = myLoadComponents ? ServiceKt.getComponents(myComponentManager, Configurable.class) : Collections.<Configurable>emptyList();
       List<Configurable> result = ConfigurableExtensionPointUtil.buildConfigurablesList(extensions, components, getConfigurableFilter());
       myChildren = result.toArray(new Configurable[result.size()]);
     }

@@ -17,7 +17,7 @@ package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentsPackage;
+import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
@@ -324,7 +324,7 @@ public class ConfigurableExtensionPointUtil {
       Application application = ApplicationManager.getApplication();
       if (application != null) {
         if (loadComponents) {
-          for (Configurable configurable : ComponentsPackage.getComponents(application, Configurable.class)) {
+          for (Configurable configurable : ServiceKt.getComponents(application, Configurable.class)) {
             addValid(list, configurable, project);
           }
         }
@@ -335,7 +335,7 @@ public class ConfigurableExtensionPointUtil {
     }
     if (project != null && !project.isDisposed()) {
       //noinspection unchecked
-      for (Configurable configurable : ComponentsPackage.getComponents(project, Configurable.class)) {
+      for (Configurable configurable : ServiceKt.getComponents(project, Configurable.class)) {
         addValid(list, configurable, project);
       }
       for (ConfigurableEP<Configurable> extension : project.getExtensions(Configurable.PROJECT_CONFIGURABLE)) {

@@ -18,7 +18,7 @@ package org.jetbrains.settingsRepository
 import com.intellij.openapi.progress.ProgressIndicator
 import gnu.trove.THashSet
 import java.io.InputStream
-import java.util.Collections
+import java.util.*
 
 public interface RepositoryManager {
   public fun createRepositoryIfNeed(): Boolean
@@ -96,7 +96,7 @@ public data class ImmutableUpdateResult(override val changed: Collection<String>
   public fun toMutable(): MutableUpdateResult = MutableUpdateResult(changed, deleted)
 }
 
-public data class MutableUpdateResult(changed: Collection<String>, deleted: Collection<String>) : UpdateResult {
+public class MutableUpdateResult(changed: Collection<String>, deleted: Collection<String>) : UpdateResult {
   override val changed = THashSet(changed)
   override val deleted = THashSet(deleted)
 
