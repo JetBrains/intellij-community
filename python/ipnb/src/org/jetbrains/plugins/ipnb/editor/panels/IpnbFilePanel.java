@@ -102,7 +102,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     try {
       myIpnbPanels.clear();
       mySelectedCell = null;
-      myIpnbFile = IpnbParser.parseIpnbFile(myDocument, myVirtualFile.getPath());
+      myIpnbFile = IpnbParser.parseIpnbFile(myDocument, myVirtualFile);
       if (myIpnbFile.getCells().isEmpty()) {
         CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
           public void run() {
