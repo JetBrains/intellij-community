@@ -24,6 +24,7 @@ import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -122,8 +123,11 @@ public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityActi
     if (myCreateSetter) {
       Collections.addAll(methods, GetterSetterPrototypeProvider.generateGetterSetters(myField, false));
     }
+    assert aClass != null;
+    final JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(aClass.getProject());
     for (PsiMethod method : methods) {
-      aClass.add(method);
+      final PsiElement newMember = GenerateMembersUtil.insert(aClass, method, null, true);
+      manager.shortenClassReferences(newMember);
     }
   }
 
