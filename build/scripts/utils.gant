@@ -231,6 +231,14 @@ binding.setVariable("prepareOutputFolder", {
   }
 })
 
+binding.setVariable("clearBuildCaches", {
+  //todo[nik] this is temporary solution until we update bootstrap jps-builders jars to the new version where cleaning is performed in JpsGantProjectBuilder#cleanOutput
+  def storageRoot = projectBuilder.dataStorageRoot
+  if (storageRoot != null) {
+    FileUtil.delete(storageRoot)
+  }
+})
+
 boolean hasSourceRoots(JpsModule module) {
   return module.getSourceRoots(JavaSourceRootType.SOURCE).iterator().hasNext()
 }
@@ -847,6 +855,7 @@ binding.setVariable("bundledJDKs"){
   requireProperty("jdk.bundled.linux", "false")
   requireProperty("jdk.bundled.mac", "1.8")
   requireProperty("jdk.custom.mac", "true")
+  requireProperty("jdk.custom.linux", "false")
   if (new File("${home}/build/jdk").exists()) {
     if (p("jdk.bundled.win") != "false") {
       setProperty("winJDK", getPathToBundledJDK(new File("${home}/build/jdk/win"), "jdk" + p("jdk.bundled.win"), "x32.zip"))
@@ -855,6 +864,11 @@ binding.setVariable("bundledJDKs"){
     if (p("jdk.bundled.linux") != "false") {
       setProperty("linuxJDK", getPathToBundledJDK(new File("${home}/build/jdk/linux"), "jdk" + p("jdk.bundled.linux"), ".tar"))
       extractRedistJre(linuxJDK, "${paths.sandbox}/bundled.linux.jdk/jre")
+    }
+    def customLinuxJdkDir = new File("${home}/build/jdk/custom/linux")
+    if (p("jdk.custom.linux") == "true" && (customLinuxJdkDir.exists() && customLinuxJdkDir.isDirectory())) {
+      setProperty("linuxCustomJDK", getPathToBundledJDK(customLinuxJdkDir, "openjdk.1.8", ".tar.gz"))
+      extractRedistJre(linuxCustomJDK, "${paths.sandbox}/custom.linux.jdk")
     }
     if (p("jdk.bundled.mac") != "false") {
       setProperty("macJDK", getPathToBundledJDK(new File("${home}/build/jdk/mac"), "jdk" + p("jdk.bundled.mac"), ".tar"))
@@ -1151,6 +1165,7 @@ binding.setVariable("collectUsedJars", { List modules, List approvedJars, List f
 binding.setVariable("buildModulesAndCollectUsedJars", { List modules, List approvedJars, List forbiddenJars ->
   def modulesToBuild = []
   def usedJars = collectUsedJars(modules, approvedJars, forbiddenJars, modulesToBuild)
+  clearBuildCaches()
   projectBuilder.cleanOutput()
   projectBuilder.buildModules(modulesToBuild)
 
