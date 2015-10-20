@@ -18,8 +18,7 @@ import com.intellij.util.net.NetUtils
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.AsyncValueLoader
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.util.concurrency.AsyncPromise as OJUCAsyncPromise
-import org.jetbrains.util.concurrency.toPromise
+import org.jetbrains.concurrency.isRejected
 import javax.swing.Icon
 
 val LOG: Logger = Logger.getInstance(NetService::class.java)
@@ -46,33 +45,31 @@ public abstract class NetService @JvmOverloads protected constructor(protected v
         return promise
       }
 
-      promise.rejected(Consumer {
+      promise.rejected {
         processHandler.destroyProcess()
         Promise.logError(LOG, it)
-      })
+      }
 
       val processListener = MyProcessAdapter()
       processHandler.addProcessListener(processListener)
       processHandler.startNotify()
 
-      if (promise.getState() == Promise.State.REJECTED) {
+      if (promise.isRejected) {
         return promise
       }
 
-      ApplicationManager.getApplication().executeOnPooledThread(object : Runnable {
-        override fun run() {
-          if (promise.getState() != Promise.State.REJECTED) {
-            try {
-              connectToProcess(promise.toPromise(), port, processHandler, processListener)
-            }
-            catch (e: Throwable) {
-              if (!promise.setError(e)) {
-                LOG.error(e)
-              }
+      ApplicationManager.getApplication().executeOnPooledThread {
+        if (!promise.isRejected) {
+          try {
+            connectToProcess(promise, port, processHandler, processListener)
+          }
+          catch (e: Throwable) {
+            if (!promise.setError(e)) {
+              LOG.error(e)
             }
           }
         }
-      })
+      }
       return promise
     }
 
@@ -89,7 +86,7 @@ public abstract class NetService @JvmOverloads protected constructor(protected v
   @Throws(ExecutionException::class)
   protected abstract fun createProcessHandler(project: Project, port: Int): OSProcessHandler?
 
-  protected open fun connectToProcess(promise: OJUCAsyncPromise<OSProcessHandler>, port: Int, processHandler: OSProcessHandler, errorOutputConsumer: Consumer<String>) {
+  protected open fun connectToProcess(promise: AsyncPromise<OSProcessHandler>, port: Int, processHandler: OSProcessHandler, errorOutputConsumer: Consumer<String>) {
     promise.setResult(processHandler)
   }
 

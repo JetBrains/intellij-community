@@ -20,16 +20,15 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Condition
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.components.JBList
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.socketConnection.ConnectionStatus
 import io.netty.bootstrap.Bootstrap
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.rejectedPromise
+import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.debugger.Vm
 import org.jetbrains.io.NettyUtil
 import org.jetbrains.rpc.LOG
-import org.jetbrains.util.concurrency.AsyncPromise
-import org.jetbrains.util.concurrency.Promise
-import org.jetbrains.util.concurrency.RejectedPromise
-import org.jetbrains.util.concurrency.ResolvedPromise
 import java.net.ConnectException
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicReference
@@ -37,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference
 abstract class RemoteVmConnection : VmConnection<Vm>() {
   private val connectCancelHandler = AtomicReference<Runnable>()
 
-  abstract fun createBootstrap(address: InetSocketAddress, vmResult: AsyncPromise<Vm>): Bootstrap
+  abstract fun createBootstrap(address: InetSocketAddress, vmResult: org.jetbrains.concurrency.AsyncPromise<Vm>): Bootstrap
 
   @JvmOverloads
   fun open(address: InetSocketAddress, stopCondition: Condition<Void>? = null) {
@@ -48,7 +47,7 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
           return
         }
 
-        val result = AsyncPromise<Vm>()
+        val result = org.jetbrains.concurrency.AsyncPromise<Vm>()
         connectCancelHandler.set(Runnable { result.setError("Closed explicitly") })
 
         val connectionPromise = AsyncPromise<Any?>()
@@ -86,16 +85,16 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
   }
 }
 
-fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, itemToString: (T) -> String): Promise<T> {
+fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, itemToString: (T) -> String): org.jetbrains.concurrency.Promise<T> {
   if (targets.size() == 1) {
-    return ResolvedPromise(ContainerUtil.getFirstItem(targets)!!)
+    return resolvedPromise(targets.first())
   }
   else if (targets.isEmpty()) {
-    return RejectedPromise("No tabs to inspect")
+    return rejectedPromise("No tabs to inspect")
   }
 
-  val result = AsyncPromise<T>()
-  ApplicationManager.getApplication().invokeLater({
+  val result = org.jetbrains.concurrency.AsyncPromise<T>()
+  ApplicationManager.getApplication().invokeLater {
     val list = JBList(targets)
     list.cellRenderer = object : ColoredListCellRenderer.KotlinFriendlyColoredListCellRenderer<T>() {
       override fun customizeCellRenderer(value: T, index: Int, selected: Boolean, hasFocus: Boolean) {
@@ -109,20 +108,18 @@ fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, itemToString:
     JBPopupFactory.getInstance()
       .createListPopupBuilder(list)
       .setTitle("Choose Page to Debug")
-      .setItemChoosenCallback(object : Runnable {
-        override fun run() {
-          @Suppress("UNCHECKED_CAST")
-          val value = list.selectedValue as T
-          if (value == null) {
-            result.setError("No target to inspect")
-          }
-          else {
-            result.setResult(value)
-          }
+      .setItemChoosenCallback {
+        @Suppress("UNCHECKED_CAST")
+        val value = list.selectedValue as T
+        if (value == null) {
+          result.setError("No target to inspect")
         }
-      })
+        else {
+          result.setResult(value)
+        }
+      }
       .createPopup()
       .showInFocusCenter()
-  })
+  }
   return result
 }

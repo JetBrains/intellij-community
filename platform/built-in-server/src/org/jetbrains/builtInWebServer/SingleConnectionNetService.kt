@@ -6,7 +6,7 @@ import com.intellij.util.Consumer
 import com.intellij.util.net.NetUtils
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.Channel
-import org.jetbrains.util.concurrency.AsyncPromise
+import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.io.NettyUtil
 
 import java.net.InetSocketAddress

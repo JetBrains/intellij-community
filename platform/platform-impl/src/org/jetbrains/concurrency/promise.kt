@@ -35,3 +35,20 @@ inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>
 fun resolvedPromise(): Promise<*> = Promise.DONE
 
 fun <T> resolvedPromise(result: T) = Promise.resolve(result)
+
+fun <T> rejectedPromise(error: String): Promise<T> = Promise.reject(error)
+
+val Promise<*>.isRejected: Boolean
+  get() = state == Promise.State.REJECTED
+
+val Promise<*>.isPending: Boolean
+  get() = state == Promise.State.PENDING
+
+inline fun AsyncPromise<out Any?>.catchError(task: () -> Unit) {
+  try {
+    task()
+  }
+  catch (e: Throwable) {
+    setError(e)
+  }
+}

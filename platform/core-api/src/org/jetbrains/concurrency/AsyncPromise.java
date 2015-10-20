@@ -168,7 +168,7 @@ public class AsyncPromise<T> extends Promise<T> implements Getter<T> {
   }
 
   @Override
-  void notify(@NotNull final AsyncPromise<T> child) {
+  public void notify(@NotNull final AsyncPromise<T> child) {
     LOG.assertTrue(child != this);
 
     switch (state) {

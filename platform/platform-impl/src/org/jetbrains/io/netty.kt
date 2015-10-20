@@ -19,7 +19,7 @@ import io.netty.bootstrap.Bootstrap
 import io.netty.channel.Channel
 import io.netty.channel.ChannelInitializer
 
-public inline fun Bootstrap.handler(crossinline task: (Channel) -> Unit): Bootstrap {
+inline fun Bootstrap.handler(crossinline task: (Channel) -> Unit): Bootstrap {
   handler(object : ChannelInitializer<Channel>() {
     override fun initChannel(channel: Channel) {
       task(channel)
