@@ -32,4 +32,6 @@ inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>
   }
 })
 
-fun ResolvedPromise(): Promise<*> = Promise.DONE
+fun resolvedPromise(): Promise<*> = Promise.DONE
+
+fun <T> resolvedPromise(result: T) = Promise.resolve(result)
