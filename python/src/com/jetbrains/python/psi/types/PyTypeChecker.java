@@ -214,7 +214,7 @@ public class PyTypeChecker {
 
   @NotNull
   public static Set<String> getClassTypeAttributes(@NotNull PyClassType type, boolean inherited, @NotNull TypeEvalContext context) {
-    final Set<String> attributes = getClassAttributes(type.getPyClass(), inherited, context);
+    final Set<String> attributes = getClassAttributes(type.getPyClass(), inherited, type.isDefinition(), context);
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       final Collection<PyCustomMember> members = provider.getMembers(type, null);
       for (PyCustomMember member : members) {
@@ -225,7 +225,10 @@ public class PyTypeChecker {
   }
 
   @NotNull
-  private static Set<String> getClassAttributes(@NotNull PyClass cls, boolean inherited, @NotNull TypeEvalContext context) {
+  private static Set<String> getClassAttributes(@NotNull PyClass cls,
+                                                boolean inherited,
+                                                boolean isDefinition,
+                                                @NotNull TypeEvalContext context) {
     final Set<String> attributes = new HashSet<String>();
     for (PyFunction function : cls.getMethods(false)) {
       attributes.add(function.getName());
@@ -239,8 +242,11 @@ public class PyTypeChecker {
     if (inherited) {
       for (PyClass ancestor : cls.getAncestorClasses(null)) {
         final PyType ancestorType = context.getType(ancestor);
-        if (ancestorType instanceof PyClassType) {
-          attributes.addAll(getClassTypeAttributes((PyClassType)ancestorType, false, context));
+        if (ancestorType instanceof PyClassLikeType) {
+          final PyClassLikeType classType = isDefinition ? (PyClassLikeType)ancestorType : ((PyClassLikeType)ancestorType).toInstance();
+          if (classType instanceof PyClassType) {
+            attributes.addAll(getClassTypeAttributes((PyClassType)classType, false, context));
+          }
         }
       }
     }
