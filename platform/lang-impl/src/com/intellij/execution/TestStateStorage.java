@@ -146,10 +146,12 @@ public class TestStateStorage implements Disposable {
     if (myMap == null) return;
     try {
       myMap.close();
-      myMap = null;
     }
     catch (IOException e) {
       LOG.error(e);
+    }
+    finally {
+      myMap = null;
     }
   }
 
