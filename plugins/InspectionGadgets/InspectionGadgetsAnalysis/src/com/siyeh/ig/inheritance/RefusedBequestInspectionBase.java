@@ -109,7 +109,8 @@ public class RefusedBequestInspectionBase extends BaseInspection {
         return;
       }
       if (ignoreEmptySuperMethods) {
-        final PsiMethod superMethod = (PsiMethod)leastConcreteSuperMethod.getNavigationElement();
+        final PsiElement element = leastConcreteSuperMethod.getNavigationElement();
+        final PsiMethod superMethod = element instanceof PsiMethod ? (PsiMethod)element : leastConcreteSuperMethod;
         if (MethodUtils.isTrivial(superMethod, true)) {
           return;
         }
