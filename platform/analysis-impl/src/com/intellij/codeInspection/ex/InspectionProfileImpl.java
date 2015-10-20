@@ -905,7 +905,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     getTools(toolId, project).removeScope(scopeIdx);
   }
 
-  private void removeScope(@NotNull String toolId, @NotNull String scopeName, Project project) {
+  public void removeScope(@NotNull String toolId, @NotNull String scopeName, Project project) {
     getTools(toolId, project).removeScope(scopeName);
   }
 
