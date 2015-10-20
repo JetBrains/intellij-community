@@ -19,7 +19,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
@@ -30,10 +29,7 @@ import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.codeInsight.imports.AddImportHelper;
-import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.refactoring.NameSuggesterUtil;
 import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
 import org.jetbrains.annotations.NotNull;
@@ -138,16 +134,6 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
           }
         }
         
-        final PsiFile usageFile = usage.getFile();
-        final PsiFile origFile = myFunction.getContainingFile();
-        if (usageFile != origFile) {
-          final String funcName = myFunction.getName();
-          final String origModuleName = QualifiedNameFinder.findShortestImportableName(origFile, origFile.getVirtualFile());
-          if (usageFile != null && origModuleName != null && funcName != null) {
-            AddImportHelper.addOrUpdateFromImportStatement(usageFile, origModuleName, funcName, null, ImportPriority.PROJECT, null);
-          }
-        }
-
         // Will replace/invalidate entire expression
         removeQualifier((PyReferenceExpression)usageElem);
       }
