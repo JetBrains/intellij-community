@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,7 +120,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
           myAquaSelectedBackgroundPainter.paintBorder(comp, g, 0, 0, j1, k1);
         } else {
           g.setColor(selectionBackground);
-          if (icon2 != null){
+          if (icon2 != null && !(UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())){
             g.fillRect(k, 0, j1 - k, k1);
           }
           else{
