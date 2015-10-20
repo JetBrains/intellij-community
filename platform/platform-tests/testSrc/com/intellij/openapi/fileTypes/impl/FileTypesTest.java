@@ -35,6 +35,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -169,7 +170,7 @@ public class FileTypesTest extends PlatformTestCase {
     File file = createTempFile(".svn", "");
     VirtualFile vFile = getVirtualFile(file);
     assertTrue(FileTypeManager.getInstance().isFileIgnored(vFile));
-    delete(vFile);
+    VfsTestUtil.deleteFile(vFile);
 
     file = createTempFile("a.txt", "");
     vFile = getVirtualFile(file);
