@@ -23,12 +23,12 @@ import com.intellij.util.io.socketConnection.ConnectionState
 import com.intellij.util.io.socketConnection.ConnectionStatus
 import com.intellij.util.io.socketConnection.SocketConnectionListener
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.isPending
+import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.debugger.DebugEventListener
 import org.jetbrains.debugger.Vm
-import org.jetbrains.util.concurrency.AsyncPromise
-import org.jetbrains.util.concurrency.Promise
-import org.jetbrains.util.concurrency.ResolvedPromise
-import org.jetbrains.util.concurrency.isPending
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.event.HyperlinkListener
@@ -107,7 +107,7 @@ abstract class VmConnection<T : Vm> : Disposable {
     val currentVm = vm
     val callback: Promise<*>
     if (currentVm == null) {
-      callback = ResolvedPromise()
+      callback = resolvedPromise()
     }
     else {
       vm = null

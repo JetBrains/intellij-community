@@ -173,5 +173,5 @@ public abstract class Promise<T> {
     }
   }
 
-  abstract void notify(@NotNull AsyncPromise<T> child);
+  public abstract void notify(@NotNull AsyncPromise<T> child);
 }

@@ -20,9 +20,9 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.TObjectHashingStrategy
-import org.jetbrains.util.concurrency.Promise
-import org.jetbrains.util.concurrency.RejectedPromise
-import org.jetbrains.util.concurrency.ResolvedPromise
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.rejectedPromise
+import org.jetbrains.concurrency.resolvedPromise
 import java.util.concurrent.ConcurrentMap
 
 abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager {
@@ -46,7 +46,7 @@ abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager 
 
   protected abstract fun createBreakpoint(target: BreakpointTarget, line: Int, column: Int, condition: String?, ignoreCount: Int, enabled: Boolean): T
 
-  protected abstract fun doSetBreakpoint(target: BreakpointTarget, breakpoint: T): Promise<Breakpoint>
+  protected abstract fun doSetBreakpoint(target: BreakpointTarget, breakpoint: T): Promise<out Breakpoint>
 
   override final fun setBreakpoint(target: BreakpointTarget, line: Int, column: Int, condition: String?, ignoreCount: Int, enabled: Boolean): Breakpoint {
     val breakpoint = createBreakpoint(target, line, column, condition, ignoreCount, enabled)
@@ -69,7 +69,7 @@ abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager 
     if (existed) {
       breakpointDuplicationByTarget.remove(b)
     }
-    return if (!existed || !b.isVmRegistered()) ResolvedPromise() else doClearBreakpoint(b)
+    return if (!existed || !b.isVmRegistered()) resolvedPromise() else doClearBreakpoint(b)
   }
 
   override final fun removeAll(): Promise<*> {
@@ -100,7 +100,7 @@ abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager 
   @Suppress("UNCHECKED_CAST")
   override fun flush(breakpoint: Breakpoint) = (breakpoint as T).flush(this)
 
-  override fun enableBreakpoints(enabled: Boolean): Promise<*> = RejectedPromise<Any?>("Unsupported")
+  override fun enableBreakpoints(enabled: Boolean): Promise<*> = rejectedPromise<Any?>("Unsupported")
 }
 
 class DummyBreakpointManager : BreakpointManager {
@@ -111,14 +111,14 @@ class DummyBreakpointManager : BreakpointManager {
     throw UnsupportedOperationException()
   }
 
-  override fun remove(breakpoint: Breakpoint) = ResolvedPromise()
+  override fun remove(breakpoint: Breakpoint) = resolvedPromise()
 
   override fun addBreakpointListener(listener: BreakpointListener) {
   }
 
-  override fun removeAll() = ResolvedPromise()
+  override fun removeAll() = resolvedPromise()
 
-  override fun flush(breakpoint: Breakpoint) = ResolvedPromise()
+  override fun flush(breakpoint: Breakpoint) = resolvedPromise()
 
-  override fun enableBreakpoints(enabled: Boolean) = ResolvedPromise()
+  override fun enableBreakpoints(enabled: Boolean) = resolvedPromise()
 }

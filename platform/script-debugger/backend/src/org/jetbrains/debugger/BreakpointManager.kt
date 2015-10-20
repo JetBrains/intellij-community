@@ -15,7 +15,7 @@
  */
 package org.jetbrains.debugger
 
-import org.jetbrains.util.concurrency.Promise
+import org.jetbrains.concurrency.Promise
 import java.util.*
 
 interface BreakpointManager {
@@ -42,7 +42,7 @@ interface BreakpointManager {
 
   fun removeAll(): Promise<*>
 
-  fun getMuteMode(): MUTE_MODE = BreakpointManager.MUTE_MODE.ONE
+  fun getMuteMode() = BreakpointManager.MUTE_MODE.ONE
 
   /**
    * Flushes the breakpoint parameter changes (set* methods) into the browser

@@ -20,13 +20,13 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.oio.OioEventLoopGroup
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.catchError
+import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.jsonProtocol.Request
 import org.jetbrains.rpc.MessageProcessor
 import org.jetbrains.rpc.MessageWriter
-import org.jetbrains.util.concurrency.AsyncPromise
-import org.jetbrains.util.concurrency.Promise
-import org.jetbrains.util.concurrency.ResolvedPromise
-import org.jetbrains.util.concurrency.catchError
 import java.util.concurrent.TimeUnit
 import org.jetbrains.concurrency.Promise as OJCPromise
 
@@ -67,7 +67,7 @@ open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: 
   override fun isAttached() = channel != null
 
   override fun detach(): Promise<*> {
-    val currentChannel = channel ?: return ResolvedPromise()
+    val currentChannel = channel ?: return resolvedPromise()
 
     messageProcessor.cancelWaitingRequests()
     val disconnectRequest = (vm as? VmEx)?.createDisconnectRequest()
