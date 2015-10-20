@@ -106,6 +106,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
   public JComponent createComponent() {
     myModel = new ProjectStartupTasksTableModel(RunManagerEx.getInstanceEx(myProject));
     myTable = new JBTable(myModel);
+    myTable.getEmptyText().setText("Add run configurations with the + button");
     new TableSpeedSearch(myTable);
     DefaultCellEditor defaultEditor = (DefaultCellEditor)myTable.getDefaultEditor(Object.class);
     defaultEditor.setClickCountToStart(1);
