@@ -57,7 +57,7 @@ public class PyExpressionCodeFragmentImpl extends PyFileImpl implements PyExpres
   }
 
   public PsiElement getContext() {
-    return myContext;
+    return myContext != null && myContext.isValid() ? myContext : super.getContext();
   }
 
   @NotNull
