@@ -41,7 +41,6 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.Alarm;
 import com.intellij.util.BooleanFunction;
@@ -346,6 +345,10 @@ public class AbstractPopup implements JBPopup {
 
   public boolean isToDrawMacCorner() {
     if (!SystemInfo.isMac || myComponent.getComponentCount() <= 0) {
+      return false;
+    }
+
+    if (SystemInfo.isMacOSYosemite) {
       return false;
     }
 
