@@ -9,7 +9,7 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.util.CharsetUtil
 import org.jetbrains.io.Decoder
 
-class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>, private val responseHandler: FastCgiService) : Decoder(), Decoder.FullMessageConsumer<Void> {
+internal class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>, private val responseHandler: FastCgiService) : Decoder(), Decoder.FullMessageConsumer<Void> {
   private enum class State {
     HEADER,
     CONTENT
