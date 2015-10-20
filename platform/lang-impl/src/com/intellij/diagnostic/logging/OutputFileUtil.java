@@ -15,6 +15,7 @@
  */
 package com.intellij.diagnostic.logging;
 
+import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
@@ -52,7 +53,7 @@ public class OutputFileUtil {
   private OutputFileUtil() {
   }
 
-  public static void attachDumpListener(@NotNull final RunConfigurationBase configuration, @NotNull final ProcessHandler startedProcess, @Nullable ExecutionConsole console) {
+  public static void attachDumpListener(@NotNull final RunConfigurationBase configuration, @NotNull final ProcessHandler startedProcess, @Nullable final ExecutionConsole console) {
     if (!configuration.isSaveOutputToFile()) {
       return;
     }
@@ -72,7 +73,14 @@ public class OutputFileUtil {
         @Override
         public void startNotified(ProcessEvent event) {
           try {
-            myOutput = new PrintStream(new FileOutputStream(new File(filePath)));
+            File file = new File(filePath);
+            if (configuration instanceof CommonProgramRunConfigurationParameters && !FileUtil.isAbsolute(filePath)) {
+              String directory = ((CommonProgramRunConfigurationParameters)configuration).getWorkingDirectory();
+              if (directory != null) {
+                file = new File(new File(directory), filePath);
+              }
+            }
+            myOutput = new PrintStream(new FileOutputStream(file));
           }
           catch (FileNotFoundException ignored) {
           }
