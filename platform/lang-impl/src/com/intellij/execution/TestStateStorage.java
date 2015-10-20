@@ -150,6 +150,9 @@ public class TestStateStorage implements Disposable {
     catch (IOException e) {
       LOG.error(e);
     }
+    finally {
+      myMap = null;
+    }
   }
 
   private void thingsWentWrongLetsReinitialize(IOException e) {
