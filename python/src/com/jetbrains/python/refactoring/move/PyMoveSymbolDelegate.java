@@ -41,9 +41,12 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.refactoring.makeFunctionTopLevel.PyMakeFunctionTopLevelDialog;
-import com.jetbrains.python.refactoring.makeFunctionTopLevel.PyMakeLocalFunctionTopLevelProcessor;
-import com.jetbrains.python.refactoring.makeFunctionTopLevel.PyMakeMethodTopLevelProcessor;
+import com.jetbrains.python.refactoring.move.makeFunctionTopLevel.PyMakeFunctionTopLevelDialog;
+import com.jetbrains.python.refactoring.move.makeFunctionTopLevel.PyMakeLocalFunctionTopLevelProcessor;
+import com.jetbrains.python.refactoring.move.makeFunctionTopLevel.PyMakeMethodTopLevelProcessor;
+import com.jetbrains.python.refactoring.move.moduleMembers.PyMoveModuleMembersDialog;
+import com.jetbrains.python.refactoring.move.moduleMembers.PyMoveModuleMembersHelper;
+import com.jetbrains.python.refactoring.move.moduleMembers.PyMoveModuleMembersProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
