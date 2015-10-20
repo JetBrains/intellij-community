@@ -17,7 +17,6 @@ package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
@@ -41,16 +40,8 @@ public class ConfigurableExtensionPointUtil {
   }
 
 
-  public static List<Configurable> buildConfigurablesList(final ConfigurableEP<Configurable>[] extensions,
-                                                          final List<Configurable> components,
-                                                          @Nullable ConfigurableFilter filter) {
+  public static List<Configurable> buildConfigurablesList(final ConfigurableEP<Configurable>[] extensions, @Nullable ConfigurableFilter filter) {
     final List<Configurable> result = new ArrayList<Configurable>();
-    for (Configurable component : components) {
-      if (!isSuppressed(component, filter)) {
-        result.add(component);
-      }
-    }
-
     final Map<String, ConfigurableWrapper> idToConfigurable = ContainerUtil.newHashMap();
     List<String> idsInEpOrder = ContainerUtil.newArrayList();
     for (ConfigurableEP<Configurable> ep : extensions) {
@@ -138,7 +129,7 @@ public class ConfigurableExtensionPointUtil {
    * @return the root configurable group that represents a tree of settings
    */
   public static ConfigurableGroup getConfigurableGroup(@Nullable Project project, boolean withIdeSettings) {
-    return getConfigurableGroup(getConfigurables(project, withIdeSettings, true), project);
+    return getConfigurableGroup(getConfigurables(project, withIdeSettings), project);
   }
 
   /**
@@ -315,29 +306,19 @@ public class ConfigurableExtensionPointUtil {
   /**
    * @param project         a project used to load project settings or {@code null}
    * @param withIdeSettings specifies whether to load application settings or not
-   * @param loadComponents  specifies whether to load Configurable components or not
    * @return the list of all valid settings according to parameters
    */
-  private static List<Configurable> getConfigurables(@Nullable Project project, boolean withIdeSettings, boolean loadComponents) {
+  private static List<Configurable> getConfigurables(@Nullable Project project, boolean withIdeSettings) {
     List<Configurable> list = ContainerUtil.newArrayList();
     if (withIdeSettings) {
       Application application = ApplicationManager.getApplication();
       if (application != null) {
-        if (loadComponents) {
-          for (Configurable configurable : ServiceKt.getComponents(application, Configurable.class)) {
-            addValid(list, configurable, project);
-          }
-        }
         for (ConfigurableEP<Configurable> extension : application.getExtensions(Configurable.APPLICATION_CONFIGURABLE)) {
           addValid(list, ConfigurableWrapper.wrapConfigurable(extension), null);
         }
       }
     }
     if (project != null && !project.isDisposed()) {
-      //noinspection unchecked
-      for (Configurable configurable : ServiceKt.getComponents(project, Configurable.class)) {
-        addValid(list, configurable, project);
-      }
       for (ConfigurableEP<Configurable> extension : project.getExtensions(Configurable.PROJECT_CONFIGURABLE)) {
         addValid(list, ConfigurableWrapper.wrapConfigurable(extension), project);
       }

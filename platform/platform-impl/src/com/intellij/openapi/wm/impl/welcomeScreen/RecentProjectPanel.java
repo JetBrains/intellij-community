@@ -134,10 +134,12 @@ public class RecentProjectPanel extends JPanel {
     myList.registerKeyboardAction(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        Object selection = myList.getSelectedValue();
-
-        if (selection != null) {
-          ((AnAction)selection).actionPerformed(AnActionEvent.createFromInputEvent((AnAction)selection, null, ActionPlaces.WELCOME_SCREEN));
+        final Object[] selectedValued = myList.getSelectedValues();
+        if (selectedValued != null) {
+          for (Object selection : selectedValued) {
+            AnActionEvent event = AnActionEvent.createFromInputEvent((AnAction)selection, null, ActionPlaces.WELCOME_SCREEN);
+            ((AnAction)selection).actionPerformed(event);
+          }
         }
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);

@@ -215,6 +215,7 @@ public class LineStatusTrackerDrawing {
                                     @NotNull Editor editor,
                                     @NotNull LineStatusTracker tracker,
                                     @Nullable Point mousePosition) {
+    if (tracker.isReleased()) return;
     final Disposable disposable = Disposer.newDisposable();
 
     List<DiffFragment> wordDiff = computeWordDiff(range, tracker);
@@ -385,6 +386,7 @@ public class LineStatusTrackerDrawing {
   }
 
   public static void moveToRange(final Range range, final Editor editor, final LineStatusTracker tracker) {
+    if (tracker.isReleased()) return;
     final Document document = tracker.getDocument();
     int line = Math.min(range.getType() == Range.DELETED ? range.getLine2() : range.getLine2() - 1, getLineCount(document) - 1);
     final int lastOffset = document.getLineStartOffset(line);

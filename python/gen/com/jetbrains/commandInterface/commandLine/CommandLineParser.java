@@ -1,17 +1,18 @@
 // This is a generated file. Not intended for manual editing.
 package com.jetbrains.commandInterface.commandLine;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.LightPsiParser;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
+import com.intellij.lang.PsiParser;
+import com.intellij.psi.tree.IElementType;
+
 import static com.jetbrains.commandInterface.commandLine.CommandLineElementTypes.*;
 import static com.jetbrains.commandInterface.commandLine.CommandLineParserUtil.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.tree.TokenSet;
-import com.intellij.lang.PsiParser;
 
 @SuppressWarnings({"SimplifiableIfStatement", "UnusedAssignment"})
-public class CommandLineParser implements PsiParser {
+public class CommandLineParser implements PsiParser, LightPsiParser {
 
   public ASTNode parse(IElementType t, PsiBuilder b) {
     parseLight(t, b);
@@ -42,14 +43,14 @@ public class CommandLineParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // LITERAL_STARTS_FROM_LETTER | LITERAL_STARTS_FROM_DIGIT
+  // LITERAL_STARTS_FROM_LETTER | LITERAL_STARTS_FROM_DIGIT | LITERAL_STARTS_FROM_SYMBOL
   public static boolean argument(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "argument")) return false;
-    if (!nextTokenIs(b, "<argument>", LITERAL_STARTS_FROM_DIGIT, LITERAL_STARTS_FROM_LETTER)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, "<argument>");
     r = consumeToken(b, LITERAL_STARTS_FROM_LETTER);
     if (!r) r = consumeToken(b, LITERAL_STARTS_FROM_DIGIT);
+    if (!r) r = consumeToken(b, LITERAL_STARTS_FROM_SYMBOL);
     exit_section_(b, l, m, ARGUMENT, r, false, null);
     return r;
   }

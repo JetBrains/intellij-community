@@ -14,7 +14,6 @@ import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodeSourcePanel;
 
 public class IpnbPyFragment extends PyFileImpl {
-  private PsiElement myContext;
   private boolean myPhysical;
   private final IpnbFilePanel myFilePanel;
   private final IpnbCodeSourcePanel myCodeSourcePanel;
@@ -45,28 +44,14 @@ public class IpnbPyFragment extends PyFileImpl {
     return clone;
   }
 
-  public PsiElement getContext() {
-    return myContext;
-  }
-
   @NotNull
   public FileViewProvider getViewProvider() {
     if(myViewProvider != null) return myViewProvider;
     return super.getViewProvider();
   }
 
-  public boolean isValid() {
-    if (!super.isValid()) return false;
-    if (myContext != null && !myContext.isValid()) return false;
-    return true;
-  }
-
   public boolean isPhysical() {
     return myPhysical;
-  }
-
-  public void setContext(PsiElement context) {
-    myContext = context;
   }
 
   public IpnbFilePanel getFilePanel() {

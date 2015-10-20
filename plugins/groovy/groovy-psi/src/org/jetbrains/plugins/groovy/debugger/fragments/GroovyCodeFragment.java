@@ -87,13 +87,6 @@ public class GroovyCodeFragment extends GroovyFileImpl implements JavaCodeFragme
     return super.getViewProvider();
   }
 
-  @Override
-  public boolean isValid() {
-    if (!super.isValid()) return false;
-    PsiElement context = getContext();
-    return context == null || context.isValid();
-  }
-
   /**
    * @return list of imports in format "qname[:imported_name](,qname[:imported_name])*"
    */
