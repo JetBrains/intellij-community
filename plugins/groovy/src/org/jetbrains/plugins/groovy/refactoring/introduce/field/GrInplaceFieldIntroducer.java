@@ -271,12 +271,14 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
     if (isReplaceAllOccurrences()) {
       PsiElement parent = PsiTreeUtil.findCommonParent(occurrences);
       PsiElement container = GrIntroduceHandlerBase.getEnclosingContainer(parent);
-      if (container != null) {
+      if (container != null && PsiTreeUtil.isAncestor(scope, container, false)) {
         PsiElement anchor = GrIntroduceHandlerBase.findAnchor(occurrences, container);
         if (anchor != null) {
           result.add(GrIntroduceFieldSettings.Init.CUR_METHOD);
         }
       }
+    } else {
+      result.add(GrIntroduceFieldSettings.Init.CUR_METHOD);
     }
 
     if (scope instanceof GrTypeDefinition && TestFrameworks.getInstance().isTestClass((PsiClass)scope)) {
