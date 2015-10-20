@@ -105,8 +105,12 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
               }
             }
           }
-        } else if (myS instanceof PsiClassType) {
+        }
+        else if (myS instanceof PsiClassType) {
           SResult = ((PsiClassType)myS).resolveGenerics();
+        }
+        else if (myS instanceof PsiArrayType) {
+          return myT.isAssignableFrom(myS);
         }
 
         if (SResult == null) return false;
