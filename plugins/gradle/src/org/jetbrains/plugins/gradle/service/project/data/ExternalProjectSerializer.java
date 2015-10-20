@@ -246,21 +246,21 @@ public class ExternalProjectSerializer {
   public ExternalProject load(@NotNull ProjectSystemId externalSystemId, File externalProjectPath) {
     LOG.debug("Attempt to load project data from: " + externalProjectPath);
     ExternalProject externalProject = null;
-    Input input = null;
     try {
       final File configurationFile = getProjectConfigurationFile(externalSystemId, externalProjectPath);
-      if (configurationFile.isFile()) {
-        input = new Input(new FileInputStream(configurationFile));
+      if (!configurationFile.isFile()) return null;
+
+      Input input = new Input(new FileInputStream(configurationFile));
+      try {
         externalProject = myKryo.readObject(input, DefaultExternalProject.class);
+      }
+      finally {
+        StreamUtil.closeStream(input);
       }
     }
     catch (Exception e) {
-      LOG.error(e);
+      LOG.debug(e);
     }
-    finally {
-      StreamUtil.closeStream(input);
-    }
-
     if (externalProject != null) {
       LOG.debug("Loaded project: " + externalProject.getProjectDir());
     }
