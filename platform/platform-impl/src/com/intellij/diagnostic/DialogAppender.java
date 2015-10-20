@@ -19,12 +19,10 @@ import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.diagnostic.ErrorLogger;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.Level;
 import org.apache.log4j.spi.LoggingEvent;
@@ -33,8 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -55,27 +51,6 @@ public class DialogAppender extends AppenderSkeleton {
       return;
     }
 
-    Runnable action = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          List<ErrorLogger> loggers = new ArrayList<ErrorLogger>();
-          loggers.add(DEFAULT_LOGGER);
-
-          Application application = ApplicationManager.getApplication();
-          if (application != null) {
-            if (application.isHeadlessEnvironment() || application.isDisposed()) return;
-            ContainerUtil.addAll(loggers, ServiceKt.getComponents(application, ErrorLogger.class));
-          }
-
-          appendToLoggers(event, loggers.toArray(new ErrorLogger[loggers.size()]));
-        }
-        finally {
-          myPendingAppendCounts.decrementAndGet();
-        }
-      }
-    };
-
     if (myPendingAppendCounts.addAndGet(1) > MAX_ASYNC_LOGGING_EVENTS) {
       // Stop adding requests to the queue or we can get OOME on pending logging requests (IDEA-95327)
       myPendingAppendCounts.decrementAndGet(); // number of pending logging events should not increase
@@ -83,7 +58,17 @@ public class DialogAppender extends AppenderSkeleton {
     else {
       // Note, we MUST avoid SYNCHRONOUS invokeAndWait to prevent deadlocks
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(action);
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            appendToLoggers(event, new ErrorLogger[]{ DEFAULT_LOGGER });
+          }
+          finally {
+            myPendingAppendCounts.decrementAndGet();
+          }
+        }
+      });
     }
   }
 
