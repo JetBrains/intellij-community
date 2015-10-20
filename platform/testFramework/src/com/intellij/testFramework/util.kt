@@ -15,7 +15,9 @@
  */
 package com.intellij.testFramework
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.vfs.VirtualFile
 import org.picocontainer.MutablePicoContainer
 
 fun <T> ComponentManager.registerServiceInstance(interfaceClass: Class<T>, instance: T) {
@@ -23,4 +25,8 @@ fun <T> ComponentManager.registerServiceInstance(interfaceClass: Class<T>, insta
   val key = interfaceClass.name
   picoContainer.unregisterComponent(key)
   picoContainer.registerComponentInstance(key, instance)
+}
+
+fun deleteFile(file: VirtualFile) {
+  EdtTestUtil.runInEdtAndWait { runWriteAction { file.delete(null) } }
 }

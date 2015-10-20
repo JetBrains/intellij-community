@@ -905,20 +905,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }.execute().throwException().getResultObject();
   }
 
-  protected static void delete(@NotNull final VirtualFile file) {
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        try {
-          file.delete(null);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
-  }
-
   protected static void rename(@NotNull final VirtualFile vFile1, @NotNull final String newName) {
     new WriteCommandAction.Simple(null) {
       @Override
