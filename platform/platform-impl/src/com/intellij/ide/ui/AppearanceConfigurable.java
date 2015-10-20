@@ -20,7 +20,6 @@ import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
