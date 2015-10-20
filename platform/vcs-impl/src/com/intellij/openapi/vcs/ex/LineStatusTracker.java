@@ -231,6 +231,12 @@ public class LineStatusTracker {
     return highlighter;
   }
 
+  public boolean isReleased() {
+    synchronized (myLock) {
+      return myReleased;
+    }
+  }
+
   public void release() {
     synchronized (myLock) {
       myReleased = true;
@@ -832,7 +838,7 @@ public class LineStatusTracker {
     myApplication.assertWriteAccessAllowed();
 
     synchronized (myLock) {
-      if (myBulkUpdate) return;
+      if (myReleased || myBulkUpdate || mySuppressUpdate || myAnathemaThrown) return;
 
       try {
         mySuppressUpdate = true;
