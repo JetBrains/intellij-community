@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.MessagesServiceImpl;
 import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.text.StringUtil;
@@ -175,7 +176,7 @@ public class PluginHostsConfigurable extends BaseConfigurable implements Configu
   }
 
   private static class HostMessages extends Messages {
-    public static class InputHostDialog extends InputDialog {
+    public static class InputHostDialog extends MessagesServiceImpl.InputDialog {
       public InputHostDialog(Component parent, String message, String title, Icon icon, String initialValue, InputValidator validator) {
         super(parent, message, title, icon, initialValue, validator);
       }

@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.MessagesServiceImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
@@ -213,7 +214,7 @@ public class MessagesEx extends Messages {
 
     @Override
     public UserInput askUser() {
-      ChooseDialog dialog = new ChooseDialog(getProject(), getMessage(), getTitle(), getIcon(), myChoises, myDefaultChoice, getOptions(), getDefaultOption());
+      MessagesServiceImpl.ChooseDialog dialog = new MessagesServiceImpl.ChooseDialog(getProject(), getMessage(), getTitle(), getIcon(), myChoises, myDefaultChoice, getOptions(), getDefaultOption());
       dialog.setValidator(null);
       JComboBox comboBox = dialog.getComboBox();
       comboBox.setEditable(false);
@@ -252,7 +253,7 @@ public class MessagesEx extends Messages {
 
     @Override
     public UserInput askUser() {
-      InputDialog dialog = new InputDialog(getProject(), getMessage(), getTitle(), getIcon(), myDefaultValue, null, getOptions(), getDefaultOption());
+      MessagesServiceImpl.InputDialog dialog = new MessagesServiceImpl.InputDialog(getProject(), getMessage(), getTitle(), getIcon(), myDefaultValue, null, getOptions(), getDefaultOption());
       dialog.show();
       return new UserInput(dialog.getTextField().getText(), dialog.getExitCode());
     }

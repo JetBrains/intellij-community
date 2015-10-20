@@ -32,13 +32,18 @@
 
     <applicationService serviceInterface="com.intellij.openapi.project.ProjectLocator"
                         serviceImplementation="com.intellij.openapi.project.impl.DefaultProjectLocator"/>
-    
+
     <applicationService serviceInterface="com.intellij.ui.IconDeferrer"
                         serviceImplementation="com.intellij.ui.DefaultIconDeferrer"/>
 
+
+    <applicationService serviceInterface="com.intellij.openapi.ui.MessagesService"
+                        serviceImplementation="com.intellij.openapi.ui.MessagesServiceImpl"/>
+
+
     <applicationService serviceInterface="com.intellij.ui.mac.MacMessagesEmulation"
                         serviceImplementation="com.intellij.ui.messages.JBMacMessages"/>
-    
+
     <projectService serviceInterface="com.intellij.openapi.roots.FileIndexFacade"
                     serviceImplementation="com.intellij.openapi.vcs.impl.DefaultFileIndexFacade"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy"

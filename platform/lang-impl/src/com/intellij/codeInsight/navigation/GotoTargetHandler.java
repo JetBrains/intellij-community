@@ -33,6 +33,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
@@ -169,7 +170,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       }
     };
 
-    final PopupChooserBuilder builder = new PopupChooserBuilder(list);
+    final PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(list);
     builder.setFilteringEnabled(new Function<Object, String>() {
       @Override
       public String fun(Object o) {
