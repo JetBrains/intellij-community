@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2012 Bas Leijdekkers
+ * Copyright 2008-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,7 +68,7 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
       if (!reportLocalVariables && !reportMethodParameters) {
         return;
       }
-      final PsiExpression lockExpression = statement.getLockExpression();
+      final PsiExpression lockExpression = ParenthesesUtils.stripParentheses(statement.getLockExpression());
       if (!(lockExpression instanceof PsiReferenceExpression)) {
         return;
       }
@@ -78,7 +79,8 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
       boolean localVariable = false;
       final PsiElement target = referenceExpression.resolve();
       if (target instanceof PsiLocalVariable) {
-        if (!reportLocalVariables) {
+        final PsiLocalVariable variable = (PsiLocalVariable)target;
+        if (!reportLocalVariables || isSynchronizedCollection(variable)) {
           return;
         }
         localVariable = true;
@@ -111,6 +113,24 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
 
     private PsiElement getScope(PsiElement element) {
       return PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class, PsiClassInitializer.class);
+    }
+
+    private boolean isSynchronizedCollection(@NotNull PsiVariable variable) {
+      final PsiExpression initializer = ParenthesesUtils.stripParentheses(variable.getInitializer());
+      if (!(initializer instanceof PsiMethodCallExpression)) {
+        return false;
+      }
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)initializer;
+      final PsiMethod method = methodCallExpression.resolveMethod();
+      if (method == null) {
+        return false;
+      }
+      final String methodName = method.getName();
+      if (!methodName.startsWith("synchronized")) {
+        return false;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      return containingClass != null && "java.util.Collections".equals(containingClass.getQualifiedName());
     }
   }
 }
