@@ -16,10 +16,10 @@
 package com.jetbrains.python.refactoring.move.makeFunctionTopLevel;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.refactoring.move.PyBaseMoveDialog;
+import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,10 +33,7 @@ public class PyMakeFunctionTopLevelDialog extends PyBaseMoveDialog {
                                       @NotNull String sourcePath,
                                       @NotNull String destinationPath) {
     super(project, sourcePath, destinationPath);
-    String functionName = function.getName();
-    if (StringUtil.isNotEmpty(functionName)) {
-      functionName += "()";
-    }
+    final String functionName = PyMoveRefactoringUtil.getCompactPresentableName(function);
     if (function.getContainingClass() != null) {
       setTitle(PyBundle.message("refactoring.make.method.top.level.dialog.title"));
       myDescription.setText(PyBundle.message("refactoring.make.method.top.level.dialog.description", functionName));

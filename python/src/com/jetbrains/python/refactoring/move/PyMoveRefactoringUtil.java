@@ -15,11 +15,14 @@
  */
 package com.jetbrains.python.refactoring.move;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,5 +46,25 @@ public class PyMoveRefactoringUtil {
     if (!PyClassRefactoringUtil.isValidQualifiedName(qName)) {
       throw new IncorrectOperationException(PyBundle.message("refactoring.move.error.cannot.use.module.name.$0", file.getName()));
     }
+  }
+
+  /**
+   * Returns short name of the element suitable for displaying inside dialogs. Function have parentheses after their name,
+   * names of another named elements are returned as is. If {@link PsiNamedElement#getName()} returns {@code null} or emtpy string,
+   * empty string is returned.
+   *
+   * @param element named PSI element
+   * @return element name as described
+   */
+  @NotNull
+  public static String getCompactPresentableName(@NotNull PsiNamedElement element) {
+    final String name = element.getName();
+    if (StringUtil.isNotEmpty(name)) {
+      if (element instanceof PyFunction) {
+        return name + "()";
+      }
+      return name;
+    }
+    return "";
   }
 }

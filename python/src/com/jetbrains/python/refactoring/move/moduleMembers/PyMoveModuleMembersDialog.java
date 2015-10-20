@@ -34,6 +34,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.move.PyBaseMoveDialog;
+import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,14 +94,15 @@ public class PyMoveModuleMembersDialog extends PyBaseMoveDialog {
     final boolean tableIsVisible = mySeveralElementsSelected || PropertiesComponent.getInstance().getBoolean(BULK_MOVE_TABLE_VISIBLE);
     final String description;
     if (!tableIsVisible && elements.size() == 1) {
+      final String name = PyMoveRefactoringUtil.getCompactPresentableName(firstElement);
       if (firstElement instanceof PyFunction) {
-        description =  PyBundle.message("refactoring.move.module.members.dialog.description.function.$0", firstElement.getName());
+        description =  PyBundle.message("refactoring.move.module.members.dialog.description.function.$0", name);
       }
       else if (firstElement instanceof PyClass) {
-        description = PyBundle.message("refactoring.move.module.members.dialog.description.class.$0", firstElement.getName());
+        description = PyBundle.message("refactoring.move.module.members.dialog.description.class.$0", name);
       }
       else {
-        description = PyBundle.message("refactoring.move.module.members.dialog.description.variable.$0", firstElement.getName());
+        description = PyBundle.message("refactoring.move.module.members.dialog.description.variable.$0", name);
       }
     }
     else {
