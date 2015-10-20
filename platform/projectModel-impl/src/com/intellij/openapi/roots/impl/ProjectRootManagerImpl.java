@@ -202,7 +202,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   @NotNull
   @Override
   public OrderEnumerator orderEntries(@NotNull Collection<? extends Module> modules) {
-    return new ModulesOrderEnumerator(myProject, modules);
+    return new ModulesOrderEnumerator(modules);
   }
 
   @Override
