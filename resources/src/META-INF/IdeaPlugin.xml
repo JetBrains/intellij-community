@@ -1707,6 +1707,7 @@
     <action id="ShowSiblings" class="com.intellij.codeInsight.hint.actions.ShowSiblingsAction">
       <add-to-group group-id="QuickActions" anchor="after" relative-to-action="QuickImplementations"/>
     </action>
+    <action id="ShowRecentTests" class="com.intellij.testIntegration.ShowRecentTests"/>
   </actions>
 
 </idea-plugin>

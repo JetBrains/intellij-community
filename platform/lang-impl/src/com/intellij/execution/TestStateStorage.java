@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.IOUtil;
@@ -35,7 +36,9 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 
 /**
@@ -127,6 +130,29 @@ public class TestStateStorage implements Disposable {
       thingsWentWrongLetsReinitialize(e, "Can't get state for " + testUrl);
       return null;
     }
+  }
+
+  @Nullable
+  public Map<String, Record> getRecentTests(int limit, Date since) {
+    if (myMap == null) return null;
+
+    Map<String, Record> result = ContainerUtil.newHashMap();
+    try {
+      for (String key : myMap.getAllKeysWithExistingMapping()) {
+        Record record = myMap.get(key);
+        if (record != null && record.date.compareTo(since) > 0) {
+          result.put(key, record);
+          if (result.size() >= limit) {
+            break;
+          }
+        }
+      }
+    }
+    catch (IOException e) {
+      thingsWentWrongLetsReinitialize(e, "Can't get recent tests");
+    }
+    
+    return result;
   }
 
   public synchronized void writeState(@NotNull String testUrl, Record record) {

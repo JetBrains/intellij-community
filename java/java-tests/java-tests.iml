@@ -48,5 +48,6 @@
     <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
     <orderEntry type="module" module-name="jetgroovy" scope="TEST" />
     <orderEntry type="module" module-name="lang-tests" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="mockito" level="project" />
   </component>
 </module>
