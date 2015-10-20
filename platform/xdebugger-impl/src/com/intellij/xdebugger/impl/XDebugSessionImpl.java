@@ -920,6 +920,10 @@ public class XDebugSessionImpl implements XDebugSession {
           myDebuggerManager.removeSession(XDebugSessionImpl.this);
           myDispatcher.getMulticaster().sessionStopped();
           myProject.putUserData(XDebuggerEditorLinePainter.CACHE, null);
+
+          synchronized (myRegisteredBreakpoints) {
+            myRegisteredBreakpoints.clear();
+          }
         }
       });
     }
