@@ -18,6 +18,7 @@ package com.intellij.pom.core.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -316,11 +317,17 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
     final PsiFile containingFileByTree = getContainingFileByTree(changeScope);
     boolean physical = changeScope.isPhysical();
-    if (physical && synchronizer.toProcessPsiEvent() && isDocumentUncommitted(containingFileByTree)) {
+    if (physical && synchronizer.toProcessPsiEvent()) {
       // fail-fast to prevent any psi modifications that would cause psi/document text mismatch
       // PsiToDocumentSynchronizer assertions happen inside event processing and are logged by PsiManagerImpl.fireEvent instead of being rethrown
       // so it's important to throw something outside event processing
-      throw new IllegalStateException("Attempt to modify PSI for non-committed Document!");
+      if (isDocumentUncommitted(containingFileByTree)) {
+        throw new IllegalStateException("Attempt to modify PSI for non-committed Document!");
+      }
+      CommandProcessor commandProcessor = CommandProcessor.getInstance();
+      if (!commandProcessor.isUndoTransparentActionInProgress() && commandProcessor.getCurrentCommand() == null) {
+        throw new IncorrectOperationException("Must not change document outside command or undo-transparent action. See com.intellij.openapi.command.WriteCommandAction or com.intellij.openapi.command.CommandProcessor");
+      }
     }
 
     if (containingFileByTree != null) {

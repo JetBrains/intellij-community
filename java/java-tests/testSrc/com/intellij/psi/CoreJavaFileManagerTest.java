@@ -19,12 +19,14 @@ import com.intellij.core.CoreJavaFileManager;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 
+@PlatformTestCase.WrapInCommand
 public class CoreJavaFileManagerTest extends PsiTestCase {
 
   public void testCommon() throws Exception {
