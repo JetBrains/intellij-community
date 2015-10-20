@@ -20,13 +20,14 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.HelpSetPath;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -41,21 +42,25 @@ public class HelpManagerImpl extends HelpManager {
 
   @NonNls private static final String HELP_HS = "Help.hs";
 
-  private HelpSet myHelpSet = null;
-  private IdeaHelpBroker myBroker = null;
+  private final NullableLazyValue<IdeaHelpBroker> myBrokerValue = new NullableLazyValue<IdeaHelpBroker>() {
+    @Nullable
+    @Override
+    protected IdeaHelpBroker compute() {
+      HelpSet set = createHelpSet();
+      return set == null ? null : new IdeaHelpBroker(set);
+    }
+  };
 
   public void invokeHelp(@Nullable String id) {
     UsageTrigger.trigger("ide.help." + id);
-
-    if (myHelpSet == null) {
-      myHelpSet = createHelpSet();
-    }
 
     if (MacHelpUtil.isApplicable() && MacHelpUtil.invokeHelp(id)) {
       return;
     }
 
-    if (myHelpSet == null) {
+    IdeaHelpBroker broker = myBrokerValue.getValue();
+
+    if (broker == null) {
       ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
       String url = info.getWebHelpUrl() + "?";
       if (PlatformUtils.isCLion()) {
@@ -72,23 +77,19 @@ public class HelpManagerImpl extends HelpManager {
       return;
     }
 
-    if (myBroker == null) {
-      myBroker = new IdeaHelpBroker(myHelpSet);
-    }
-
     Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-    myBroker.setActivationWindow(activeWindow);
+    broker.setActivationWindow(activeWindow);
 
     if (id != null) {
       try {
-        myBroker.setCurrentID(id);
+        broker.setCurrentID(id);
       }
       catch (BadIDException e) {
         Messages.showErrorDialog(IdeBundle.message("help.topic.not.found.error", id), CommonBundle.getErrorTitle());
         return;
       }
     }
-    myBroker.setDisplayed(true);
+    broker.setDisplayed(true);
   }
 
   @Nullable
@@ -98,7 +99,7 @@ public class HelpManagerImpl extends HelpManager {
     if (mainHelpSet == null) return null;
 
     // merge plugins help sets
-    IdeaPluginDescriptor[] pluginDescriptors = PluginManager.getPlugins();
+    IdeaPluginDescriptor[] pluginDescriptors = PluginManagerCore.getPlugins();
     for (IdeaPluginDescriptor pluginDescriptor : pluginDescriptors) {
       HelpSetPath[] sets = pluginDescriptor.getHelpSets();
       for (HelpSetPath hsPath : sets) {
