@@ -16,6 +16,7 @@
 package com.intellij.execution;
 
 import com.intellij.execution.actions.RunContextAction;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
@@ -246,6 +247,15 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
 
     private Icon getInformativeIcon(Project project, final RunnerAndConfigurationSettings selectedConfiguration) {
       final ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(project);
+
+      RunConfiguration configuration = selectedConfiguration.getConfiguration();
+      if (configuration instanceof RunnerIconProvider) {
+        RunnerIconProvider provider = (RunnerIconProvider)configuration;
+        Icon icon = provider.getExecutorIcon(configuration, myExecutor);
+        if (icon != null) {
+          return icon;
+        }
+      }
 
       List<RunContentDescriptor> runningDescriptors =
         executionManager.getRunningDescriptors(new Condition<RunnerAndConfigurationSettings>() {
