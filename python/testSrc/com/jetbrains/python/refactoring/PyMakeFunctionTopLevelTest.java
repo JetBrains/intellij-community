@@ -26,8 +26,8 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.refactoring.makeFunctionTopLevel.PyMakeLocalFunctionTopLevelProcessor;
-import com.jetbrains.python.refactoring.makeFunctionTopLevel.PyMakeMethodTopLevelProcessor;
+import com.jetbrains.python.refactoring.move.makeFunctionTopLevel.PyMakeLocalFunctionTopLevelProcessor;
+import com.jetbrains.python.refactoring.move.makeFunctionTopLevel.PyMakeMethodTopLevelProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
