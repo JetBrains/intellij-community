@@ -183,6 +183,9 @@ public abstract class PythonRemoteInterpreterManager {
 
   public abstract String getInterpreterVersion(@Nullable Project project, PyRemoteSdkAdditionalDataBase data) throws RemoteSdkException;
 
+  public abstract String[] chooseRemoteFiles(Project project, @NotNull PyRemoteSdkAdditionalDataBase data, boolean foldersOnly)
+    throws ExecutionException, InterruptedException;
+
   public static class PyRemoteInterpreterExecutionException extends ExecutionException {
 
     public PyRemoteInterpreterExecutionException() {
