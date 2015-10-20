@@ -338,7 +338,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
           public void run() {
             Disposer.dispose(module);
           }
-        });
+        }, module.getDisposed());
       }
     }
 
