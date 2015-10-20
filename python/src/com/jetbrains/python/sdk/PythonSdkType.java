@@ -556,6 +556,19 @@ public class PythonSdkType extends SdkType {
     }, ModalityState.NON_MODAL);
   }
 
+  public void setupSdkPathsImmediately(final Sdk sdk, @Nullable final Project project) {
+    scheduledToRefresh.add(sdk.getHomePath());
+    final boolean success = doSetupSdkPaths(project, null, PySdkUpdater.fromSdkPath(sdk.getHomePath()));
+
+    if (!success) {
+      Messages.showErrorDialog(
+        project,
+        PyBundle.message("MSG.cant.setup.sdk.$0", FileUtil.toSystemDependentName(sdk.getSdkModificator().getHomePath())),
+        PyBundle.message("MSG.title.bad.sdk")
+      );
+    }
+  }
+
   private boolean doSetupSdkPaths(@Nullable final Project project,
                                          @Nullable final Component ownerComponent,
                                          @NotNull final PySdkUpdater sdkUpdater) {

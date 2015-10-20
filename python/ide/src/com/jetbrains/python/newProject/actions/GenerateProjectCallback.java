@@ -68,7 +68,7 @@ public class GenerateProjectCallback implements NullableConsumer<ProjectSettings
       PySdkService.getInstance().solidifySdk(sdk);
       sdk = SdkConfigurationUtil.createAndAddSDK(sdkHome.getPath(), PythonSdkType.getInstance());
       if (sdk != null) {
-        PythonSdkType.getInstance().setupSdkPaths(sdk, project, null);
+        PythonSdkType.getInstance().setupSdkPathsImmediately(sdk, project);
       }
 
       model.addSdk(sdk);
