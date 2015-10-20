@@ -275,7 +275,7 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
         # >>>
         #
         super(PyDevTerminalInteractiveShell, self).ask_exit()
-        print('To exit the PyDev Console, terminate the console within Eclipse.')
+        print('To exit the PyDev Console, terminate the console within IDE.')
 
     #-------------------------------------------------------------------------
     # Things related to magics
