@@ -58,7 +58,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectRootManagerImpl");
 
   @NonNls public static final String PROJECT_JDK_NAME_ATTR = "project-jdk-name";
-  @NonNls private static final String PROJECT_JDK_TYPE_ATTR = "project-jdk-type";
+  @NonNls public static final String PROJECT_JDK_TYPE_ATTR = "project-jdk-type";
 
   protected final Project myProject;
 
