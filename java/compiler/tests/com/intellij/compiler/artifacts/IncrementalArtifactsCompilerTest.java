@@ -75,7 +75,7 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     make(a);
     assertOutput(a, fs().file("file.txt"));
 
-    delete(getOutputDir(a));
+    VfsTestUtil.deleteFile(getOutputDir(a));
     make(a);
     assertOutput(a, fs().file("file.txt", "123"));
   }
@@ -100,7 +100,7 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     make(a);
     assertOutput(a, fs().file("1.txt").file("2.txt"));
 
-    delete(file1);
+    VfsTestUtil.deleteFile(file1);
     make(a);
     assertOutput(a, fs().file("2.txt"));
   }
