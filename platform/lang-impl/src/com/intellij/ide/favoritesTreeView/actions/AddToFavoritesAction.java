@@ -65,7 +65,7 @@ public class AddToFavoritesAction extends AnAction implements DumbAware {
 
     Collection<AbstractTreeNode> nodesToAdd = getNodesToAdd(dataContext, true);
 
-    if (nodesToAdd.isEmpty()) {
+    if (!nodesToAdd.isEmpty()) {
       Project project = e.getProject();
       FavoritesManager.getInstance(project).addRoots(myFavoritesListName, nodesToAdd);
     }
