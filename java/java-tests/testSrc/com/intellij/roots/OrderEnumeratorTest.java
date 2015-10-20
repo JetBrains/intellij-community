@@ -4,6 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -113,6 +114,8 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     assertClassRoots(orderEntries(myModule).withoutSdk().recursively(), getAsmJar(), getJDomJar());
     assertClassRoots(orderEntries(myModule).withoutSdk().recursively().exportedOnly(), getAsmJar());
     assertClassRoots(orderEntries(myModule).withoutSdk().exportedOnly().recursively());
+
+    assertClassRoots(orderEntriesForModulesList(myModule).withoutSdk().recursively(), getAsmJar(), getJDomJar());
   }
 
   public void testJdkIsNotExported() throws Exception {
@@ -169,10 +172,15 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     final VirtualFile output = setModuleOutput(myModule, false);
     final VirtualFile testOutput = setModuleOutput(myModule, true);
 
-    assertClassRoots(ProjectRootManager.getInstance(myProject).orderEntries(Collections.singletonList(myModule)).withoutSdk(),
+    assertClassRoots(orderEntriesForModulesList(myModule).withoutSdk(),
                      testOutput, output, getJDomJar());
-    assertSourceRoots(ProjectRootManager.getInstance(myProject).orderEntries(Collections.singletonList(myModule)).withoutSdk(),
+    assertSourceRoots(orderEntriesForModulesList(myModule).withoutSdk(),
                       srcRoot, testRoot, getJDomSources());
+  }
+
+  @NotNull
+  private OrderEnumerator orderEntriesForModulesList(final Module module) {
+    return ProjectRootManager.getInstance(myProject).orderEntries(Collections.singletonList(module));
   }
 
   public void testDoNotAddJdkRootFromModuleDependency() {

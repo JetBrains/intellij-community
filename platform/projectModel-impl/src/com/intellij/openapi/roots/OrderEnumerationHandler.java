@@ -18,9 +18,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -32,14 +30,17 @@ public abstract class OrderEnumerationHandler {
     ExtensionPointName.create("com.intellij.orderEnumerationHandlerFactory");
 
   public static abstract class Factory {
-
-    public abstract boolean isApplicable(@NotNull Project project);
+    /**
+     * @deprecated this method isn't called anymore, override {@link #isApplicable(Module)} instead
+     */
+    public boolean isApplicable(@NotNull Project project) {
+      return true;
+    }
 
     public abstract boolean isApplicable(@NotNull Module module);
 
-    public abstract OrderEnumerationHandler createHandler(@Nullable Module module);
+    public abstract OrderEnumerationHandler createHandler(@NotNull Module module);
   }
-
 
   public enum AddDependencyType {ADD, DO_NOT_ADD, DEFAULT}
 

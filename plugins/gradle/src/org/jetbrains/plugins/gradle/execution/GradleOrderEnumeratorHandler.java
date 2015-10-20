@@ -27,7 +27,6 @@ import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataMan
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEnumerationHandler;
@@ -50,11 +49,6 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
 
   public static class FactoryImpl extends Factory {
     @Override
-    public boolean isApplicable(@NotNull Project project) {
-      return true;
-    }
-
-    @Override
     public boolean isApplicable(@NotNull Module module) {
       CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
       if (compilerModuleExtension != null && compilerModuleExtension.isCompilerOutputPathInherited()) return false;
@@ -62,7 +56,7 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
     }
 
     @Override
-    public OrderEnumerationHandler createHandler(@Nullable Module module) {
+    public OrderEnumerationHandler createHandler(@NotNull Module module) {
       return INSTANCE;
     }
   }
