@@ -106,17 +106,21 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
               // TODO: Check for resulting circular imports
               CommonRefactoringUtil.checkReadOnlyStatus(myProject, e);
               assert e instanceof PyClass || e instanceof PyFunction || e instanceof PyTargetExpression;
-              if (e instanceof PyClass && destination.findTopLevelClass(e.getName()) != null) {
-                throw new IncorrectOperationException(
-                  PyBundle.message("refactoring.move.error.destination.file.contains.class.$0", e.getName()));
+              final String name = e.getName();
+              if (name == null) {
+                continue;
               }
-              if (e instanceof PyFunction && destination.findTopLevelFunction(e.getName()) != null) {
+              if (e instanceof PyClass && destination.findTopLevelClass(name) != null) {
                 throw new IncorrectOperationException(
-                  PyBundle.message("refactoring.move.error.destination.file.contains.function.$0", e.getName()));
+                  PyBundle.message("refactoring.move.error.destination.file.contains.class.$0", name));
               }
-              if (e instanceof PyTargetExpression && destination.findTopLevelAttribute(e.getName()) != null) {
+              if (e instanceof PyFunction && destination.findTopLevelFunction(name) != null) {
                 throw new IncorrectOperationException(
-                  PyBundle.message("refactoring.move.error.destination.file.contains.global.variable.$0", e.getName()));
+                  PyBundle.message("refactoring.move.error.destination.file.contains.function.$0", name));
+              }
+              if (e instanceof PyTargetExpression && destination.findTopLevelAttribute(name) != null) {
+                throw new IncorrectOperationException(
+                  PyBundle.message("refactoring.move.error.destination.file.contains.global.variable.$0", name));
               }
               final Collection<UsageInfo> usageInfos = usagesByElement.get(e);
               final boolean usedFromOutside = ContainerUtil.exists(usageInfos, new Condition<UsageInfo>() {
