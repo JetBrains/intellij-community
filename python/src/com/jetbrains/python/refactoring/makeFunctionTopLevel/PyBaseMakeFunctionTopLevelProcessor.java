@@ -21,27 +21,32 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
+import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -50,9 +55,11 @@ import static com.jetbrains.python.psi.PyUtil.as;
  */
 public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactoringProcessor {
   protected final PyFunction myFunction;
+  protected final PsiFile mySourceFile;
   protected final PyResolveContext myResolveContext;
   protected final PyElementGenerator myGenerator;
   protected final String myDestinationPath;
+  protected final List<PsiElement> myExternalReads = new ArrayList<PsiElement>();
 
   public PyBaseMakeFunctionTopLevelProcessor(@NotNull PyFunction targetFunction, @NotNull String destinationPath) {
     super(targetFunction.getProject());
@@ -61,6 +68,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(myProject, targetFunction.getContainingFile());
     myResolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext);
     myGenerator = PyElementGenerator.getInstance(myProject);
+    mySourceFile = myFunction.getContainingFile();
   }
 
   @NotNull
@@ -97,8 +105,36 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
 
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
 
+    // We should update usages before we generate and insert new function, because we have to update its usages inside 
+    // (e.g. recursive calls) it first 
     updateUsages(newParameters, usages);
-    replaceFunction(createNewFunction(newParameters));
+    final PyFile newFile = PyUtil.getOrCreateFile(myDestinationPath, myProject);
+    final PyFunction newFunction = insertFunction(createNewFunction(newParameters), newFile);
+
+    myFunction.delete();
+
+    updateImports(newFunction, usages);
+  }
+
+  private void updateImports(@NotNull PyFunction newFunction, @NotNull UsageInfo[] usages) {
+    final Set<PsiFile> usageFiles = new HashSet<PsiFile>();
+    for (UsageInfo usage : usages) {
+      usageFiles.add(usage.getFile());
+    }
+    for (PsiFile file : usageFiles) {
+      if (file != newFunction.getContainingFile()) {
+        PyClassRefactoringUtil.insertImport(file, newFunction, null, true);
+      }
+    }
+    // References inside the body of function 
+    if (newFunction.getContainingFile() != mySourceFile) {
+      for (PsiElement read : myExternalReads) {
+        if (read instanceof PsiNamedElement && read.isValid()) {
+          PyClassRefactoringUtil.insertImport(newFunction, (PsiNamedElement)read, null, true);
+        }
+      }
+      PyClassRefactoringUtil.optimizeImports(mySourceFile);
+    }
   }
 
   @NotNull
@@ -137,12 +173,17 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
   }
 
   @NotNull
-  protected PyFunction replaceFunction(@NotNull PyFunction newFunction) {
-    final PsiFile file = myFunction.getContainingFile();
-    final PsiElement anchor = PyPsiUtils.getParentRightBefore(myFunction, file);
-
-    myFunction.delete();
-    return (PyFunction)file.addAfter(newFunction, anchor);
+  protected PyFunction insertFunction(@NotNull PyFunction newFunction, PyFile newFile) {
+    final PyFunction replacement;
+    if (mySourceFile == newFile) {
+      final PsiElement anchor;
+      anchor = PyPsiUtils.getParentRightBefore(myFunction, mySourceFile);
+      replacement = (PyFunction)mySourceFile.addAfter(newFunction, anchor);
+    }
+    else {
+      replacement = (PyFunction)newFile.addAfter(newFunction, AddImportHelper.getFileInsertPosition(newFile));
+    }
+    return replacement;
   }
 
   @NotNull
@@ -164,6 +205,9 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
               }
               if (isFromEnclosingScope(resolved)) {
                 result.readsFromEnclosingScope.add(element);
+              }
+              else if (!PsiTreeUtil.isAncestor(myFunction, resolved, false)) {
+                myExternalReads.add(resolved);
               }
               if (resolved instanceof PyParameter && ((PyParameter)resolved).isSelf()) {
                 if (PsiTreeUtil.getParentOfType(resolved, PyFunction.class) == myFunction) {
@@ -200,7 +244,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
   }
 
   private boolean isFromEnclosingScope(@NotNull PsiElement element) {
-    return element.getContainingFile() == myFunction.getContainingFile() &&
+    return element.getContainingFile() == mySourceFile &&
            !PsiTreeUtil.isAncestor(myFunction, element, false) &&
            !(ScopeUtil.getScopeOwner(element) instanceof PsiFile); 
   }

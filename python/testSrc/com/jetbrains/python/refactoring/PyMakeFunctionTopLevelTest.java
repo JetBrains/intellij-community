@@ -16,6 +16,10 @@
 package com.jetbrains.python.refactoring;
 
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -27,46 +31,20 @@ import com.jetbrains.python.refactoring.makeFunctionTopLevel.PyMakeMethodTopLeve
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+
 /**
  * @author Mikhail Golubev
  */
 public class PyMakeFunctionTopLevelTest extends PyTestCase {
 
-  public void doTest(@Nullable String message) {
+  public void doTest(@Nullable String errorMessage) {
     myFixture.configureByFile(getTestName(true) + ".py");
-    final PyFunction function = assertInstanceOf(myFixture.getElementAtCaret(), PyFunction.class);
-    final String destination = PyPsiUtils.getContainingFilePath(function);
-    assertNotNull(destination);
-    try {
-      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
-        @Override
-        public void run() {
-          if (function.getContainingClass() != null) {
-            new PyMakeMethodTopLevelProcessor(function, destination).run();
-          }
-          else {
-            new PyMakeLocalFunctionTopLevelProcessor(function, destination).run();
-          }
-        }
-      });
+    runRefactoring(null, errorMessage);
+    if (errorMessage == null) {
       myFixture.checkResultByFile(getTestName(true) + ".after.py");
     }
-    catch (IncorrectOperationException e) {
-      if (message == null) {
-        fail("Refactoring failed unexpectedly with message: " + e.getMessage());
-      }
-      assertEquals(message, e.getMessage());
-    }
   }
-
-  //private void doMultiFileTest() throws IOException {
-  //  final String rootBeforePath = getTestName(true) + "/before";
-  //  final String rootAfterPath = getTestName(true) + "/after";
-  //  final VirtualFile copiedDirectory = myFixture.copyDirectoryToProject(rootBeforePath, "");
-  //  myFixture.configureByFile("main.py");
-  //  myFixture.testAction(new PyMakeFunctionTopLevelRefactoring());
-  //  PlatformTestUtil.assertDirectoriesEqual(getVirtualFileByName(getTestDataPath() + rootAfterPath), copiedDirectory);
-  //}
 
   private void doTestSuccess() {
     doTest(null);
@@ -74,6 +52,49 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
 
   private void doTestFailure(@NotNull String message) {
     doTest(message);
+  }
+
+  private void runRefactoring(@Nullable String destination, @Nullable String errorMessage) {
+    final PyFunction function = assertInstanceOf(myFixture.getElementAtCaret(), PyFunction.class);
+    if (destination == null) {
+      destination = PyPsiUtils.getContainingFilePath(function);
+    }
+    else {
+      final VirtualFile srcRoot = ModuleRootManager.getInstance(myFixture.getModule()).getSourceRoots()[0];
+      destination = FileUtil.join(srcRoot.getPath(), destination);
+    }
+    assertNotNull(destination);
+    final String finalDestination = destination;
+    try {
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
+        @Override
+        public void run() {
+          if (function.getContainingClass() != null) {
+            new PyMakeMethodTopLevelProcessor(function, finalDestination).run();
+          }
+          else {
+            new PyMakeLocalFunctionTopLevelProcessor(function, finalDestination).run();
+          }
+        }
+      });
+    }
+    catch (IncorrectOperationException e) {
+      if (errorMessage == null) {
+        fail("Refactoring failed unexpectedly with message: " + e.getMessage());
+      }
+      assertEquals(errorMessage, e.getMessage());
+    }
+  }
+
+  private void doMultiFileTest(@Nullable String destination, @Nullable String errorMessage) throws IOException {
+    final String rootBeforePath = getTestName(true) + "/before";
+    final String rootAfterPath = getTestName(true) + "/after";
+    final VirtualFile copiedDirectory = myFixture.copyDirectoryToProject(rootBeforePath, "");
+    myFixture.configureByFile("main.py");
+    runRefactoring(destination, errorMessage);
+    if (errorMessage == null) {
+      PlatformTestUtil.assertDirectoriesEqual(getVirtualFileByName(getTestDataPath() + rootAfterPath), copiedDirectory);
+    }
   }
 
   //private static boolean isActionEnabled() {
@@ -184,9 +205,13 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
     doTestSuccess();
   }
 
-  //public void testMethodImportUpdates() throws IOException {
-  //  doMultiFileTest();
-  //}
+  public void testMethodImportUpdates() throws IOException {
+    doMultiFileTest(null, null);
+  }
+
+  public void testMethodMoveToOtherFile() throws IOException {
+    doMultiFileTest("util.py", null);
+  }
 
   public void testMethodCalledViaClass() {
     doTestSuccess();

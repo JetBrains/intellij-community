@@ -7,3 +7,6 @@ class C:
     def me<caret>thod(self, x):
         print(self.foo)
         print(sys.path)
+
+
+C().main('spam')
