@@ -130,7 +130,8 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     }
   }
 
-  override final fun getStateStorage(storageSpec: Storage) = getOrCreateStorage(storageSpec.file, storageSpec.roamingType, storageSpec.storageClass.java as Class<out StateStorage>, storageSpec.stateSplitter.java)
+  override final fun getStateStorage(storageSpec: Storage) = getOrCreateStorage(storageSpec.file, storageSpec.roamingType,
+          JavaAnnotationHelperForKotlin.getStorageClass(storageSpec), JavaAnnotationHelperForKotlin.getStateSplitterClass(storageSpec))
 
   protected open fun normalizeFileSpec(fileSpec: String): String {
     val path = FileUtilRt.toSystemIndependentName(fileSpec)
