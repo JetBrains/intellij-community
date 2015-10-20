@@ -45,7 +45,7 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
   @SuppressWarnings("PublicField")
   public final ExternalizableStringSet queryNames =
     new ExternalizableStringSet("compute", "copyInto", "drainTo", "forEach", "parallelStream", "propertyNames", "replaceAll", "save",
-                                "store", "stream", "write");
+                                "store", "stream", "toArray", "write");
   @SuppressWarnings("PublicField")
   public final ExternalizableStringSet updateNames =
     new ExternalizableStringSet("add", "clear", "compute", "drainTo", "insert", "load", "offer", "poll", "push", "put", "remove", "replace",

@@ -322,3 +322,8 @@ class EnumConstant {
     }
   }
 }
+class ToArray {{
+  List list = new ArrayList();
+  list.add("A thing");
+  list.toArray(new Object[1]);
+}}
