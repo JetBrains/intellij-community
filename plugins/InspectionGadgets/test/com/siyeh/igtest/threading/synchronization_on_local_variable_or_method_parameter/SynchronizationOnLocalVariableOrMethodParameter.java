@@ -27,7 +27,7 @@ class SynchronizationOnLocalVariableOrMethodParameter {
 
   void bar() {
     final Object lock = new Object();
-    synchronized (lock) {
+    synchronized (<warning descr="Synchronization on local variable 'lock'">lock</warning>) {
 
     }
   }

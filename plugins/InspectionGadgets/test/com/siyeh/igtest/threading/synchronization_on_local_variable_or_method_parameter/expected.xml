@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>SynchronizationOnLocalVariableOrMethodParameter.java</file>
-    <line>30</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Synchronization on local variable or method parameter</problem_class>
-    <description>Synchronization on local variable &lt;code&gt;lock&lt;/code&gt; #loc</description>
-  </problem>
-</problems>
