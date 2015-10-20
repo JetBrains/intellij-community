@@ -25,6 +25,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -195,7 +196,7 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
     synchronized (isRunning) {
       isRunning[0] = false;
     }
-    alarm.dispose();
+    Disposer.dispose(alarm);
   }
 
   public void waitFor(Runnable r) {
