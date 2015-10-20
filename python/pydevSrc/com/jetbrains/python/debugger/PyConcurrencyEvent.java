@@ -23,12 +23,13 @@ import java.util.List;
 
 public abstract class PyConcurrencyEvent {
   protected final @NotNull String myThreadId;
+  protected final @NotNull String myPid;
   protected final @NotNull String myName;
   protected @NotNull EventType myType;
   protected @NotNull String myFileName;
   protected @NotNull Integer myLine;
   protected final boolean myIsAsyncio;
-  protected final long myTime;
+  protected long myTime; // microseconds
   protected @NotNull List<PyStackFrameInfo> myFrames;
 
   public enum EventType {
@@ -38,6 +39,7 @@ public abstract class PyConcurrencyEvent {
   public PyConcurrencyEvent(long time, @NotNull String threadId, @NotNull String name, boolean isAsyncio) {
     myTime = time;
     myThreadId = threadId;
+    myPid = threadId.split("_")[0];
     myName = name;
     myIsAsyncio = isAsyncio;
     myType = EventType.CREATE;
@@ -87,9 +89,18 @@ public abstract class PyConcurrencyEvent {
     return myTime;
   }
 
+  public void setTime(long time) {
+    myTime = time;
+  }
+
   @NotNull
   public Integer getLine() {
     return myLine;
+  }
+
+  @NotNull
+  public String getPid() {
+    return myPid;
   }
 
   @NotNull
