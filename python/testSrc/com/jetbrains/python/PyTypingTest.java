@@ -365,6 +365,18 @@ public class PyTypingTest extends PyTestCase {
            "expr = foo()\n");
   }
 
+  // PY-16303
+  public void testUnionInDocstring() {
+    doTest("Optional[int]",
+           "from typing import Union\n" +
+           "\n" +
+           "def foo(expr):\n" +
+           "    '''\n" +
+           "    :type expr: Union[int, None]\n" +
+           "    '''\n" +
+           "    pass\n");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

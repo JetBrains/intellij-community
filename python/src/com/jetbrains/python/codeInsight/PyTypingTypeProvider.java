@@ -240,7 +240,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (unionType != null) {
       return unionType;
     }
-    final Ref<PyType> optionalType = getOptionalTypeFromDefaultNone(resolved, context);
+    final Ref<PyType> optionalType = getOptionalType(resolved, context);
     if (optionalType != null) {
       return optionalType.get();
     }
@@ -272,6 +272,29 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
+  public static PyType getType(@NotNull PsiElement resolved, @NotNull List<PyType> elementTypes) {
+    final String qualifiedName = getQualifiedName(resolved);
+    if ("typing.Union".equals(qualifiedName)) {
+      return PyUnionType.union(elementTypes);
+    }
+    if ("typing.Optional".equals(qualifiedName) && elementTypes.size() == 1) {
+      return PyUnionType.union(elementTypes.get(0), PyNoneType.INSTANCE);
+    }
+    if ("typing.Callable".equals(qualifiedName) && elementTypes.size() == 2) {
+      return new PyCallableTypeImpl(null, elementTypes.get(1));
+    }
+    if ("typing.Tuple".equals(qualifiedName)) {
+      return PyTupleType.create(resolved, elementTypes.toArray(new PyType[elementTypes.size()]));
+    }
+    final PyType builtinCollection = getBuiltinCollection(resolved);
+    if (builtinCollection instanceof PyClassType) {
+      final PyClassType classType = (PyClassType)builtinCollection;
+      return new PyCollectionTypeImpl(classType.getPyClass(), false, elementTypes);
+    }
+    return null;
+  }
+
+  @Nullable
   private static Ref<PyType> getClassType(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
     if (element instanceof PyTypedElement) {
       final PyType type = context.getType((PyTypedElement)element);
@@ -293,7 +316,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static Ref<PyType> getOptionalTypeFromDefaultNone(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+  private static Ref<PyType> getOptionalType(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
     if (element instanceof PySubscriptionExpression) {
       final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)element;
       final PyExpression operand = subscriptionExpr.getOperand();
