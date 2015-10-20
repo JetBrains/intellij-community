@@ -313,4 +313,22 @@ public class MethodUtils {
     }
     return false;
   }
+
+  public static boolean isChainable(PsiMethod method) {
+    if (method == null) {
+      return false;
+    }
+    final PsiElement navigationElement = method.getNavigationElement();
+    if (!(navigationElement instanceof PsiMethod)) {
+      return false;
+    }
+    method = (PsiMethod)navigationElement;
+    final PsiStatement lastStatement = ControlFlowUtils.getLastStatementInBlock(method.getBody());
+    if (!(lastStatement instanceof PsiReturnStatement)) {
+      return false;
+    }
+    final PsiReturnStatement returnStatement = (PsiReturnStatement)lastStatement;
+    final PsiExpression returnValue = returnStatement.getReturnValue();
+    return returnValue instanceof PsiThisExpression;
+  }
 }

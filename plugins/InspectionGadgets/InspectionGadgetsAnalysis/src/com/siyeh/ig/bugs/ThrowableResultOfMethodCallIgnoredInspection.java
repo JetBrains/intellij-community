@@ -24,6 +24,7 @@ import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,8 +54,7 @@ public class ThrowableResultOfMethodCallIgnoredInspection extends BaseInspection
     return new ThrowableResultOfMethodCallIgnoredVisitor();
   }
 
-  private static class ThrowableResultOfMethodCallIgnoredVisitor
-    extends BaseInspectionVisitor {
+  private static class ThrowableResultOfMethodCallIgnoredVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
@@ -73,19 +73,17 @@ public class ThrowableResultOfMethodCallIgnoredInspection extends BaseInspection
       if (method == null || PropertyUtil.isSimpleGetter(method)) {
         return;
       }
-      if (!method.hasModifierProperty(PsiModifier.STATIC)) {
-        final PsiClass containingClass = method.getContainingClass();
-        if (InheritanceUtil.isInheritor(containingClass, CommonClassNames.JAVA_LANG_THROWABLE)) {
-          return;
-        }
-      }
-
-      if ("propagate".equals(method.getName())
-          && method.getContainingClass() != null
-          && "com.google.common.base.Throwables".equals(method.getContainingClass().getQualifiedName())) {
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
         return;
       }
-
+      if (!method.hasModifierProperty(PsiModifier.STATIC) &&
+          InheritanceUtil.isInheritor(containingClass, CommonClassNames.JAVA_LANG_THROWABLE)) {
+        return;
+      }
+      if ("propagate".equals(method.getName()) && "com.google.common.base.Throwables".equals(containingClass.getQualifiedName())) {
+        return;
+      }
       final PsiElement var = getVariable(parent, expression);
       if (var == null) {
         return;
@@ -108,10 +106,21 @@ public class ThrowableResultOfMethodCallIgnoredInspection extends BaseInspection
     }
 
     private static boolean canBeThrown(PsiElement parent) {
-      return parent instanceof PsiReturnStatement ||
-             parent instanceof PsiThrowStatement ||
-             parent instanceof PsiExpressionList ||
-             parent instanceof PsiLambdaExpression;
+      if (parent instanceof PsiReturnStatement ||
+          parent instanceof PsiThrowStatement ||
+          parent instanceof PsiExpressionList ||
+          parent instanceof PsiLambdaExpression) {
+        return true;
+      }
+      final PsiElement grandParent = parent.getParent();
+      if (grandParent instanceof PsiMethodCallExpression) {
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+        final PsiMethod method = methodCallExpression.resolveMethod();
+        if (MethodUtils.isChainable(method)) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 

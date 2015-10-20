@@ -19,7 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nullable;
 
 public class NonNlsUtils {
@@ -249,7 +249,7 @@ public class NonNlsUtils {
       if (method == null) {
         return false;
       }
-      if (isChainable(method)) {
+      if (MethodUtils.isChainable(method)) {
         final PsiMethodCallExpression expression =
           (PsiMethodCallExpression)qualifier;
         if (isQualifierNonNlsAnnotated(expression)) {
@@ -258,24 +258,6 @@ public class NonNlsUtils {
       }
     }
     return false;
-  }
-
-  private static boolean isChainable(PsiMethod method) {
-    if (method == null) {
-      return false;
-    }
-    final PsiElement navigationElement = method.getNavigationElement();
-    if (!(navigationElement instanceof PsiMethod)) {
-      return false;
-    }
-    method = (PsiMethod)navigationElement;
-    final PsiStatement lastStatement = ControlFlowUtils.getLastStatementInBlock(method.getBody());
-    if (!(lastStatement instanceof PsiReturnStatement)) {
-      return false;
-    }
-    final PsiReturnStatement returnStatement = (PsiReturnStatement)lastStatement;
-    final PsiExpression returnValue = returnStatement.getReturnValue();
-    return returnValue instanceof PsiThisExpression;
   }
 
   private static boolean isNonNlsAnnotatedModifierListOwner(
