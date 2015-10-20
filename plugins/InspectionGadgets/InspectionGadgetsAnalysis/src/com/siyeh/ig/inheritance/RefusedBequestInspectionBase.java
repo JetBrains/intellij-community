@@ -19,6 +19,8 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -99,7 +101,7 @@ public class RefusedBequestInspectionBase extends BaseInspection {
       if (method.getNameIdentifier() == null) {
         return;
       }
-      final PsiMethod leastConcreteSuperMethod = getLeastConcreteSuperMethod(method);
+      final PsiMethod leastConcreteSuperMethod = getDirectSuperMethod(method);
       if (leastConcreteSuperMethod == null) {
         return;
       }
@@ -126,15 +128,20 @@ public class RefusedBequestInspectionBase extends BaseInspection {
     }
 
     @Nullable
-    private PsiMethod getLeastConcreteSuperMethod(PsiMethod method) {
-      final PsiMethod[] superMethods = method.findSuperMethods(true);
-      for (final PsiMethod superMethod : superMethods) {
-        final PsiClass containingClass = superMethod.getContainingClass();
-        if (containingClass != null && !superMethod.hasModifierProperty(PsiModifier.ABSTRACT) && !containingClass.isInterface()) {
-          return superMethod;
-        }
+    private PsiMethod getDirectSuperMethod(PsiMethod method) {
+      final MethodSignatureBackedByPsiMethod superSignature = SuperMethodsSearch.search(method, null, true, false).findFirst();
+      if (superSignature == null) {
+        return null;
       }
-      return null;
+      final PsiMethod superMethod = superSignature.getMethod();
+      if (superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return null;
+      }
+      final PsiClass containingClass = superMethod.getContainingClass();
+      if (containingClass == null || containingClass.isInterface()) {
+        return null;
+      }
+      return superMethod;
     }
 
     private boolean containsSuperCall(@NotNull PsiElement context, @NotNull PsiMethod method) {
