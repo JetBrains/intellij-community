@@ -18,6 +18,7 @@ package com.jetbrains.python.refactoring.makeFunctionTopLevel;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -28,7 +29,10 @@ import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
@@ -41,6 +45,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
+import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -105,16 +110,42 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
 
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
 
+    final PyFile targetFile = PyUtil.getOrCreateFile(myDestinationPath, myProject);
+    if (targetFile.findTopLevelFunction(myFunction.getName()) != null) {
+      throw new IncorrectOperationException(
+        PyBundle.message("refactoring.move.error.destination.file.contains.function.$0", myFunction.getName()));
+    }
+    if (importsRequired(usages, targetFile)) {
+      PyMoveRefactoringUtil.checkValidImportableFile(targetFile, targetFile.getVirtualFile());
+    }
+    
     // We should update usages before we generate and insert new function, because we have to update its usages inside 
     // (e.g. recursive calls) it first 
     updateUsages(newParameters, usages);
-    final PyFile newFile = PyUtil.getOrCreateFile(myDestinationPath, myProject);
-    final PyFunction newFunction = insertFunction(createNewFunction(newParameters), newFile);
+    final PyFunction newFunction = insertFunction(createNewFunction(newParameters), targetFile);
 
     myFunction.delete();
 
     updateImports(newFunction, usages);
   }
+
+  private boolean importsRequired(@NotNull UsageInfo[] usages, final PyFile targetFile) {
+    return ContainerUtil.exists(usages, new Condition<UsageInfo>() {
+      @Override
+      public boolean value(UsageInfo info) {
+        final PsiElement element = info.getElement();
+        if (element == null) {
+          return false;
+        }
+        return !belongsToFunction(element) && info.getFile() != targetFile;
+      }
+    });
+  }
+
+  private boolean belongsToFunction(PsiElement element) {
+    return PsiTreeUtil.isAncestor(myFunction, element, false);
+  }
+
 
   private void updateImports(@NotNull PyFunction newFunction, @NotNull UsageInfo[] usages) {
     final Set<PsiFile> usageFiles = new HashSet<PsiFile>();
@@ -206,7 +237,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
               if (isFromEnclosingScope(resolved)) {
                 result.readsFromEnclosingScope.add(element);
               }
-              else if (!PsiTreeUtil.isAncestor(myFunction, resolved, false)) {
+              else if (!belongsToFunction(resolved)) {
                 myExternalReads.add(resolved);
               }
               if (resolved instanceof PyParameter && ((PyParameter)resolved).isSelf()) {
@@ -244,8 +275,8 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
   }
 
   private boolean isFromEnclosingScope(@NotNull PsiElement element) {
-    return element.getContainingFile() == mySourceFile &&
-           !PsiTreeUtil.isAncestor(myFunction, element, false) &&
+    return PyUtil.inSameFile(element, myFunction) &&
+           !belongsToFunction(element) &&
            !(ScopeUtil.getScopeOwner(element) instanceof PsiFile); 
   }
 
