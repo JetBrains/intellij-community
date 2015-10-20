@@ -25,6 +25,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.javadoc.PsiDocToken;
+import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -164,6 +165,9 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
         }
         offset = 0;
         element = element.getNextSibling();
+        if (element instanceof PsiInlineDocTag) {
+          return false;
+        }
       }
       return false;
     }
