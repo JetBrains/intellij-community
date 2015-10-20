@@ -40,7 +40,7 @@ public class RunLineMarkerProvider implements LineMarkerProvider {
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
     List<RunLineMarkerContributor> contributors = RunLineMarkerContributor.EXTENSION.allForLanguage(element.getLanguage());
-    final DefaultActionGroup actionGroup = new DefaultActionGroup();
+    DefaultActionGroup actionGroup = null;
     Icon icon = null;
     for (RunLineMarkerContributor contributor : contributors) {
       RunLineMarkerContributor.Info info = contributor.getInfo(element);
@@ -50,6 +50,9 @@ public class RunLineMarkerProvider implements LineMarkerProvider {
       if (icon == null) {
         icon = info.icon;
       }
+      if (actionGroup == null) {
+        actionGroup = new DefaultActionGroup();
+      }
       for (AnAction action : info.actions) {
         actionGroup.add(new LineMarkerActionWrapper(element, action));
       }
@@ -57,7 +60,9 @@ public class RunLineMarkerProvider implements LineMarkerProvider {
     }
     if (icon == null) return null;
 
-    return new LineMarkerInfo<PsiElement>(element, element.getTextOffset(), icon, Pass.UPDATE_ALL, null, null, GutterIconRenderer.Alignment.CENTER) {
+    final DefaultActionGroup finalActionGroup = actionGroup;
+    return new LineMarkerInfo<PsiElement>(element, element.getTextOffset(), icon, Pass.UPDATE_ALL, null, null,
+                                          GutterIconRenderer.Alignment.CENTER) {
       @Nullable
       @Override
       public GutterIconRenderer createGutterRenderer() {
@@ -75,7 +80,7 @@ public class RunLineMarkerProvider implements LineMarkerProvider {
           @Nullable
           @Override
           public ActionGroup getPopupMenuActions() {
-            return actionGroup;
+            return finalActionGroup;
           }
         };
       }
