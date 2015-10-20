@@ -32,76 +32,9 @@ import java.util.concurrent.atomic.AtomicInteger
 val LOG: Logger = Logger.getInstance(FastCgiService::class.java)
 
 // todo send FCGI_ABORT_REQUEST if client channel disconnected
-public abstract class FastCgiService(project: Project) : SingleConnectionNetService(project) {
+abstract class FastCgiService(project: Project) : SingleConnectionNetService(project) {
   private val requestIdCounter = AtomicInteger()
   protected val requests: ConcurrentIntObjectMap<Channel> = ContainerUtil.createConcurrentIntObjectMap<Channel>()
-
-  companion object {
-    private fun sendBadGateway(channel: Channel) {
-      try {
-        if (channel.isActive()) {
-          Responses.sendStatus(HttpResponseStatus.BAD_GATEWAY, channel)
-        }
-      }
-      catch (e: Throwable) {
-        NettyUtil.log(e, LOG)
-      }
-    }
-
-    private fun parseHeaders(response: HttpResponse, buffer: ByteBuf) {
-      val builder = StringBuilder()
-      while (buffer.isReadable) {
-        builder.setLength(0)
-
-        var key: String? = null
-        var valueExpected = true
-        while (true) {
-          val b = buffer.readByte().toInt()
-          if (b < 0 || b.toChar() == '\n') {
-            break
-          }
-
-          if (b.toChar() != '\r') {
-            if (valueExpected && b.toChar() == ':') {
-              valueExpected = false
-
-              key = builder.toString()
-              builder.setLength(0)
-              MessageDecoder.skipWhitespace(buffer)
-            }
-            else {
-              builder.append(b.toChar())
-            }
-          }
-        }
-
-        if (builder.length() == 0) {
-          // end of headers
-          return
-        }
-
-        // skip standard headers
-        if (key.isNullOrEmpty() || key!!.startsWith("http", ignoreCase = true) || key!!.startsWith("X-Accel-", ignoreCase = true)) {
-          continue
-        }
-
-        val value = builder.toString()
-        if (key!!.equals("status", ignoreCase = true)) {
-          val index = value.indexOf(' ')
-          if (index == -1) {
-            LOG.warn("Cannot parse status: " + value)
-            response.setStatus(HttpResponseStatus.OK)
-          }
-          else {
-            response.setStatus(HttpResponseStatus.valueOf(Integer.parseInt(value.substring(0, index))))
-          }
-        }
-        else if (!(key.startsWith("http") || key.startsWith("HTTP"))) {
-          response.headers().add(key, value)
-        }
-      }
-    }
-  }
 
   override fun closeProcessConnections() {
     try {
@@ -110,7 +43,7 @@ public abstract class FastCgiService(project: Project) : SingleConnectionNetServ
     finally {
       requestIdCounter.set(0)
       if (!requests.isEmpty()) {
-        val waitingClients = ContainerUtil.toList(requests.elements())
+        val waitingClients = requests.elements().toList()
         requests.clear()
         for (channel in waitingClients) {
           sendBadGateway(channel)
@@ -170,7 +103,7 @@ public abstract class FastCgiService(project: Project) : SingleConnectionNetServ
     }
   }
 
-  public fun allocateRequestId(channel: Channel): Int {
+  fun allocateRequestId(channel: Channel): Int {
     var requestId = requestIdCounter.getAndIncrement()
     if (requestId >= java.lang.Short.MAX_VALUE) {
       requestIdCounter.set(0)
@@ -212,5 +145,70 @@ public abstract class FastCgiService(project: Project) : SingleConnectionNetServ
     }
 
     channel.writeAndFlush(httpResponse)
+  }
+}
+
+private fun sendBadGateway(channel: Channel) {
+  try {
+    if (channel.isActive()) {
+      Responses.sendStatus(HttpResponseStatus.BAD_GATEWAY, channel)
+    }
+  }
+  catch (e: Throwable) {
+    NettyUtil.log(e, LOG)
+  }
+}
+
+private fun parseHeaders(response: HttpResponse, buffer: ByteBuf) {
+  val builder = StringBuilder()
+  while (buffer.isReadable) {
+    builder.setLength(0)
+
+    var key: String? = null
+    var valueExpected = true
+    while (true) {
+      val b = buffer.readByte().toInt()
+      if (b < 0 || b.toChar() == '\n') {
+        break
+      }
+
+      if (b.toChar() != '\r') {
+        if (valueExpected && b.toChar() == ':') {
+          valueExpected = false
+
+          key = builder.toString()
+          builder.setLength(0)
+          MessageDecoder.skipWhitespace(buffer)
+        }
+        else {
+          builder.append(b.toChar())
+        }
+      }
+    }
+
+    if (builder.length() == 0) {
+      // end of headers
+      return
+    }
+
+    // skip standard headers
+    if (key.isNullOrEmpty() || key!!.startsWith("http", ignoreCase = true) || key!!.startsWith("X-Accel-", ignoreCase = true)) {
+      continue
+    }
+
+    val value = builder.toString()
+    if (key!!.equals("status", ignoreCase = true)) {
+      val index = value.indexOf(' ')
+      if (index == -1) {
+        LOG.warn("Cannot parse status: " + value)
+        response.setStatus(HttpResponseStatus.OK)
+      }
+      else {
+        response.setStatus(HttpResponseStatus.valueOf(Integer.parseInt(value.substring(0, index))))
+      }
+    }
+    else if (!(key.startsWith("http") || key.startsWith("HTTP"))) {
+      response.headers().add(key, value)
+    }
   }
 }
