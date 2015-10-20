@@ -71,7 +71,6 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
   private int maxDateLength = 0;
   private final Editor myEditor;
   private boolean myGutterShowed = false;
-  private final HashMap<VirtualFile, List<Integer>> files2lines = new HashMap<VirtualFile, List<Integer>>();
 
   public AnnotateStackTraceAction(@NotNull Editor editor, @NotNull EditorHyperlinkSupport hyperlinks) {
     super("Show files modification info", null, AllIcons.Actions.Annotate);
@@ -176,6 +175,7 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         final List<VirtualFile> files = new ArrayList<VirtualFile>();
+        final HashMap<VirtualFile, List<Integer>> files2lines = new HashMap<VirtualFile, List<Integer>>();
 
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
