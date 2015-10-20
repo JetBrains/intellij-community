@@ -38,9 +38,9 @@ import io.netty.handler.codec.http.cors.CorsHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.ide.PooledThreadExecutor;
-import org.jetbrains.util.concurrency.AsyncPromise;
-import org.jetbrains.util.concurrency.Promise;
 
 import java.io.IOException;
 import java.net.BindException;

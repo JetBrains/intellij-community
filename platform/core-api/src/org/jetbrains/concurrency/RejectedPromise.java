@@ -75,7 +75,7 @@ class RejectedPromise<T> extends Promise<T> {
   }
 
   @Override
-  void notify(@NotNull AsyncPromise<T> child) {
+  public void notify(@NotNull AsyncPromise<T> child) {
     child.setError(error);
   }
 }

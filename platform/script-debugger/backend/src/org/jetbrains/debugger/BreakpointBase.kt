@@ -16,7 +16,6 @@
 package org.jetbrains.debugger
 
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.util.concurrency.Promise
 
 public abstract class BreakpointBase<L : Any>(override val target: BreakpointTarget,
                                         override var line: Int,
@@ -77,5 +76,5 @@ public abstract class BreakpointBase<L : Any>(override val target: BreakpointTar
     return result
   }
 
-  public abstract fun flush(breakpointManager: BreakpointManager): Promise<*>
+  public abstract fun flush(breakpointManager: BreakpointManager): org.jetbrains.concurrency.Promise<*>
 }

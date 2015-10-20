@@ -15,10 +15,10 @@
  */
 package org.jetbrains.debugger
 
-import org.jetbrains.util.concurrency.ResolvedPromise
+import org.jetbrains.concurrency.resolvedPromise
 
 interface AttachStateManager {
-  fun detach() = ResolvedPromise()
+  fun detach() = resolvedPromise()
 
   fun isAttached() = true
 }
@@ -39,5 +39,5 @@ interface Vm {
   /**
    * Controls whether VM stops on exceptions
    */
-  fun setBreakOnException(catchMode: ExceptionCatchMode) = ResolvedPromise()
+  fun setBreakOnException(catchMode: ExceptionCatchMode) = resolvedPromise()
 }
