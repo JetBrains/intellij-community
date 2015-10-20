@@ -1,11 +1,30 @@
-<project name="Download Kotlin" default="extract">
-  <property name="kotlin.build.type.id" value="Kotlin_M14_Idea142branch150versionNoTests"/>
-  <property name="kotlin.build.selector" value=".lastSuccessful"/>
+<project name="Download Kotlin" default="extract" xmlns:if="ant:if" xmlns:unless="ant:unless">
+  <property name="kotlin.public.build.type.id" value="Kotlin_M15_2_Idea142branch150versionNoTests"/>
+  <property name="kotlin.public.build.selector" value="status:SUCCESS"/>
+  <property name="kotlin.public.teamcity.host" value="https://teamcity.jetbrains.com"/>
+
+  <property name="kotlin.build.type.id" value="${kotlin.public.build.type.id}"/>
+  <property name="kotlin.build.selector" value="${kotlin.public.build.selector}"/>
+  <property name="kotlin.teamcity.host" value="${kotlin.public.teamcity.host}"/>
 
   <target name="get_latest">
-    <loadresource property="kotlin.build.number">
-      <url url="https://teamcity.jetbrains.com/guestAuth/app/rest/buildTypes/id:${kotlin.build.type.id}/builds/status:SUCCESS,count:1/number"/>
+    <loadresource property="kotlin.build.number" failonerror="false">
+      <url url="${kotlin.teamcity.host}/guestAuth/app/rest/buildTypes/id:${kotlin.build.type.id}/builds/${kotlin.build.selector},count:1/number"/>
     </loadresource>
+
+    <loadresource property="kotlin.build.number" unless:set="kotlin.build.number">
+      <url url="${kotlin.public.teamcity.host}/guestAuth/app/rest/buildTypes/id:${kotlin.public.build.type.id}/builds/${kotlin.public.build.selector},count:1/number"/>
+    </loadresource>
+
+    <loadresource property="kotlin.build.number.escaped">
+      <propertyresource name="kotlin.build.number"/>
+      <filterchain>
+        <tokenfilter>
+          <replacestring from="+" to="%2B"/>
+        </tokenfilter>
+      </filterchain>
+    </loadresource>
+
   </target>
 
   <target name="check_present" depends="get_latest">
@@ -20,8 +39,11 @@
     <delete dir="${basedir}" includes="kotlin-plugin*.zip"/>
     <echo message="Downloading Kotlin build ${kotlin.build.number}"/>
     <property name="kotlin.path" value="${basedir}/kotlin-plugin-${kotlin.build.number}.zip"/>
-    <get src="https://teamcity.jetbrains.com/guestAuth/repository/download/${kotlin.build.type.id}/${kotlin.build.number}/kotlin-plugin-${kotlin.build.number}.zip"
-         dest="${kotlin.path}"/>
+    <get src="${kotlin.teamcity.host}/guestAuth/repository/download/${kotlin.build.type.id}/${kotlin.build.number.escaped}/kotlin-plugin-${kotlin.build.number.escaped}.zip"
+         dest="${kotlin.path}" ignoreerrors="true"/>
+    <available file="${kotlin.path}" property="kotlin.download.success"/>
+    <get src="${kotlin.public.teamcity.host}/guestAuth/repository/download/${kotlin.public.build.type.id}/${kotlin.build.number.escaped}/kotlin-plugin-${kotlin.build.number.escaped}.zip"
+         dest="${kotlin.path}" unless:set="kotlin.download.success"/>
   </target>
 
   <target name="extract" depends="download">
