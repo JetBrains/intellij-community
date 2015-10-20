@@ -266,8 +266,8 @@ public class ShowFilePathAction extends AnAction {
 
   public static boolean isSupported() {
     return SystemInfo.isWindows ||
-           Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN) ||
-           SystemInfo.hasXdgOpen() || canUseNautilus.getValue();
+           SystemInfo.hasXdgOpen() || canUseNautilus.getValue() ||
+           Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN);
   }
 
   @NotNull
@@ -285,9 +285,7 @@ public class ShowFilePathAction extends AnAction {
     if (!file.exists()) return;
     file = file.getAbsoluteFile();
     File parent = file.getParentFile();
-    if (parent == null) {
-      return;
-    }
+    if (parent == null) return;
     try {
       doOpen(parent, file);
     }
