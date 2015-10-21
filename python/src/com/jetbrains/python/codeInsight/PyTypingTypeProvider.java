@@ -236,6 +236,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static PyType getType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
     final PsiElement resolved = tryResolving(expression, context);
+    return getTypeForResolvedElement(resolved, context);
+  }
+
+  @Nullable
+  private static PyType getTypeForResolvedElement(@NotNull PsiElement resolved, @NotNull TypeEvalContext context) {
     final PyType unionType = getUnionType(resolved, context);
     if (unionType != null) {
       return unionType;
@@ -292,6 +297,13 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return new PyCollectionTypeImpl(classType.getPyClass(), false, elementTypes);
     }
     return null;
+  }
+
+  @Nullable
+  public static PyType getTypeFromTargetExpression(@NotNull PyTargetExpression expression, @NotNull TypeEvalContext context) {
+    // XXX: Requires switching from stub to AST
+    final PyExpression assignedValue = expression.findAssignedValue();
+    return assignedValue != null ? getTypeForResolvedElement(assignedValue, context) : null;
   }
 
   @Nullable
