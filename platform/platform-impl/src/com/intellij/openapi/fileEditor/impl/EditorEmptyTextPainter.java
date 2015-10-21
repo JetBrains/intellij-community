@@ -47,7 +47,7 @@ public class EditorEmptyTextPainter {
     UISettings.setupAntialiasing(g);
     g.setColor(new JBColor(Gray._80, Gray._160));
     g.setFont(JBUI.Fonts.label(16f));
-    UIUtil.TextPainter painter = new UIUtil.TextPainter().withLineSpacing(1.6f);
+    UIUtil.TextPainter painter = new UIUtil.TextPainter().withLineSpacing(1.8f);
     advertiseActions(splitters, painter);
     painter.draw(g, new PairFunction<Integer, Integer, Couple<Integer>>() {
       @Override
@@ -62,15 +62,15 @@ public class EditorEmptyTextPainter {
 
   protected void advertiseActions(@NotNull JComponent splitters, @NotNull UIUtil.TextPainter painter) {
     appendSearchEverywhere(painter);
-    appendToolWindow(painter, "Open Project View", ToolWindowId.PROJECT_VIEW, splitters);
-    appendAction(painter, "Open a file by name", getActionShortcutText("GotoFile"));
-    appendAction(painter, "Open Recent Files", getActionShortcutText(IdeActions.ACTION_RECENT_FILES));
-    appendAction(painter, "Open Navigation Bar", getActionShortcutText("ShowNavBar"));
+    appendToolWindow(painter, "Project View", ToolWindowId.PROJECT_VIEW, splitters);
+    appendAction(painter, "Go to File", getActionShortcutText("GotoFile"));
+    appendAction(painter, "Recent Files", getActionShortcutText(IdeActions.ACTION_RECENT_FILES));
+    appendAction(painter, "Navigation Bar", getActionShortcutText("ShowNavBar"));
     appendDnd(painter);
   }
 
   protected void appendDnd(@NotNull UIUtil.TextPainter painter) {
-    appendLine(painter, "Drag and drop files from " + ShowFilePathAction.getFileManagerName());
+    appendLine(painter, "Drop files from " + ShowFilePathAction.getFileManagerName());
   }
 
   protected void appendSearchEverywhere(@NotNull UIUtil.TextPainter painter) {
