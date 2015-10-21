@@ -403,10 +403,7 @@ public class PyMoveTest extends PyTestCase {
 
     VirtualFile toVirtualFile = dir1.findFileByRelativePath(toFileName);
     String path = toVirtualFile != null ? toVirtualFile.getPath() : (dir1.getPath() + "/" + toFileName);
-    new PyMoveModuleMembersProcessor(myFixture.getProject(),
-                                     symbols,
-                                     path,
-                                     false).run();
+    new PyMoveModuleMembersProcessor(symbols, path).run();
 
     VirtualFile dir2 = getVirtualFileByName(PythonTestUtil.getTestDataPath() + rootAfter);
     try {
