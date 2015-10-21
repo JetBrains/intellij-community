@@ -441,29 +441,32 @@ public class PyTypeParser {
       PsiElement resolved = file.getElementNamed(firstText);
       if (resolved != null) {
         // Local or imported name
-        if (resolved instanceof PyTypedElement) {
+        if (resolved instanceof PyTargetExpression) {
+          type = PyTypingTypeProvider.getTypeFromTargetExpression((PyTargetExpression)resolved, context);
+        }
+        if (type == null && resolved instanceof PyTypedElement) {
           type = context.getType((PyTypedElement)resolved);
-          if (type != null) {
-            tokens.remove(0);
-            if (!allowResolveToType(type)) {
-              return null;
-            }
-            if (type instanceof PyClassLikeType) {
-              type = ((PyClassLikeType)type).toInstance();
-            }
-            types.put(firstRange, type);
-            fullRanges.put(type, firstRange);
-            for (PyFromImportStatement fromImportStatement : file.getFromImports()) {
-              for (PyImportElement importElement : fromImportStatement.getImportElements()) {
-                if (firstText.equals(importElement.getVisibleName())) {
-                  imports.put(type, importElement);
-                }
-              }
-            }
-            for (PyImportElement importElement : file.getImportTargets()) {
+        }
+        if (type != null) {
+          tokens.remove(0);
+          if (!allowResolveToType(type)) {
+            return null;
+          }
+          if (type instanceof PyClassLikeType) {
+            type = ((PyClassLikeType)type).toInstance();
+          }
+          types.put(firstRange, type);
+          fullRanges.put(type, firstRange);
+          for (PyFromImportStatement fromImportStatement : file.getFromImports()) {
+            for (PyImportElement importElement : fromImportStatement.getImportElements()) {
               if (firstText.equals(importElement.getVisibleName())) {
                 imports.put(type, importElement);
               }
+            }
+          }
+          for (PyImportElement importElement : file.getImportTargets()) {
+            if (firstText.equals(importElement.getVisibleName())) {
+              imports.put(type, importElement);
             }
           }
         }
@@ -497,7 +500,8 @@ public class PyTypeParser {
     }
 
     private static boolean allowResolveToType(@NotNull PyType type) {
-      return type instanceof PyClassLikeType || type instanceof PyModuleType || type instanceof PyImportedModuleType;
+      return type instanceof PyClassLikeType || type instanceof PyModuleType || type instanceof PyImportedModuleType ||
+             type instanceof PyGenericType;
     }
 
     @Nullable
