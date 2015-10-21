@@ -18,10 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -195,9 +192,15 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       resolveRunner.resolveImpl(classProcessor);
       classCandidates = classProcessor.getCandidates();
       if (classCandidates.length > 0 && containsPackage(classCandidates)) {
-        final GrReferenceExpression topRef = PsiTreeUtil.getTopmostParentOfType(this, GrReferenceExpression.class);
+        final PsiElement firstNonReferenceExprParent = PsiTreeUtil.skipParentsOfType(this, GrReferenceExpressionImpl.class);
+        final GrReferenceExpressionImpl topRef = (GrReferenceExpressionImpl)PsiTreeUtil.findFirstParent(this, new Condition<PsiElement>() {
+          @Override
+          public boolean value(PsiElement parent) {
+            return parent.getParent() == firstNonReferenceExprParent && parent instanceof GrReferenceExpressionImpl;
+          }
+        });
         if (topRef != null) {
-          final String fqn = topRef.getText();
+          final String fqn = topRef.getTextSkipWhiteSpaceAndComments();
           if (JavaPsiFacade.getInstance(getProject()).findClass(fqn, getResolveScope()) != null) {
             return classCandidates;
           }
