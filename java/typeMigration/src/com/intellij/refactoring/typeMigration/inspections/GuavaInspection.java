@@ -16,7 +16,6 @@
 package com.intellij.refactoring.typeMigration.inspections;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -28,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.*;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
@@ -39,7 +39,6 @@ import com.intellij.reference.SoftLazyValue;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -154,7 +153,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
 
         final PsiElement maybeLocalVariable = chain.getParent();
         if (maybeLocalVariable instanceof PsiLocalVariable) {
-          final PsiClass aClass = PsiUtil.resolveClassInType(chain.getType());
+          final PsiClass aClass = PsiUtil.resolveClassInType(((PsiLocalVariable)maybeLocalVariable).getType());
           if (aClass != null && (GuavaFluentIterableConversionRule.FLUENT_ITERABLE.equals(aClass.getQualifiedName()) ||
                                  GuavaOptionalConversionRule.GUAVA_OPTIONAL.equals(aClass.getQualifiedName()))) {
             return;
@@ -259,19 +258,41 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
       if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
       try {
         final PsiMethodCallExpression expr = (PsiMethodCallExpression)startElement;
+        final boolean isIterableAssignment = isIterableAssignment(expr);
         final TypeMigrationRules rules = new TypeMigrationRules(myInitialType);
         rules.setMigrationRootType(myTargetType);
         rules.setBoundScope(GlobalSearchScope.fileScope(file));
         final TypeConversionDescriptorBase conversion =
           rules.findConversion(myInitialType, myTargetType, expr.resolveMethod(), expr, new TypeMigrationLabeler(rules));
         LOG.assertTrue(conversion != null);
-        final PsiElement replacedExpression = TypeMigrationReplacementUtil.replaceExpression(expr, project, conversion);
+        PsiElement replacedExpression = TypeMigrationReplacementUtil.replaceExpression(expr, project, conversion);
+        if (isIterableAssignment) {
+          final String expressionText = replacedExpression.getText() + ".collect(java.util.stream.Collectors.toList())";
+          replacedExpression = replacedExpression.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(expressionText, replacedExpression));
+        }
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(replacedExpression);
         UndoUtil.markPsiFileForUndo(file);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
+    }
+
+    private boolean isIterableAssignment(PsiMethodCallExpression expression) {
+      final PsiElement maybeVariable = expression.getParent();
+      PsiClass variableClass;
+      if (maybeVariable instanceof PsiLocalVariable
+          && (variableClass = PsiTypesUtil.getPsiClass(((PsiLocalVariable)maybeVariable).getType())) != null
+          && CommonClassNames.JAVA_LANG_ITERABLE.equals(variableClass.getQualifiedName())) {
+        final PsiMethod method = expression.resolveMethod();
+        if (method != null) {
+          final PsiClass returnClass = PsiTypesUtil.getPsiClass(method.getReturnType());
+          if (returnClass != null && GuavaFluentIterableConversionRule.FLUENT_ITERABLE.equals(returnClass.getQualifiedName())) {
+            return true;
+          }
+        }
+      }
+      return false;
     }
 
     @Override
