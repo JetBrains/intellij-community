@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.containers.HashMap
 import com.intellij.util.text.CharSequenceSubSequence
+import junit.framework.ComparisonFailure
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 
@@ -57,6 +58,21 @@ public abstract class DiffTestCase : UsefulTestCase() {
     super.tearDown()
   }
 
+  //
+  // Assertions
+  //
+
+  public fun assertTrue(actual: Boolean, message: String = "") {
+    assertTrue(message, actual)
+  }
+
+  public fun assertEquals(expected: Any?, actual: Any?, message: String = "") {
+    assertEquals(message, expected, actual)
+  }
+
+  public fun assertEquals(expected: CharSequence?, actual: CharSequence?, message: String = "") {
+    if (!StringUtil.equals(expected, actual)) throw ComparisonFailure(message, expected?.toString(), actual?.toString())
+  }
 
   public fun assertEqualsCharSequences(chunk1: CharSequence, chunk2: CharSequence, ignoreSpaces: Boolean, skipLastNewline: Boolean) {
     if (ignoreSpaces) {
@@ -102,7 +118,7 @@ public abstract class DiffTestCase : UsefulTestCase() {
     return Math.max(1, document.getLineCount())
   }
 
-  public fun Int.until(a: Int): IntRange = this..a - 1
+  public infix fun Int.until(a: Int): IntRange = this..a - 1
 
   //
   // AutoTests
@@ -139,7 +155,7 @@ public abstract class DiffTestCase : UsefulTestCase() {
 
     for (i in 1..length) {
       val rnd = RNG.nextInt(charCount)
-      val char = predefinedChars.get(rnd) ?: (rnd + 97).toChar()
+      val char = predefinedChars[rnd] ?: (rnd + 97).toChar()
       builder.append(char)
     }
     return builder.toString()
@@ -158,20 +174,20 @@ public abstract class DiffTestCase : UsefulTestCase() {
       return seedFieldValue.get() xor 0x5DEECE66DL
     } catch (e: Exception) {
       gotSeedException = true
-      System.err.println("Can't get random seed: " + e.getMessage())
+      System.err.println("Can't get random seed: " + e.message)
       return -1
     }
   }
 
   private fun stripNewline(text: CharSequence): CharSequence? {
     return when (StringUtil.endsWithChar(text, '\n') ) {
-      true -> CharSequenceSubSequence(text, 0, text.length() - 1)
+      true -> CharSequenceSubSequence(text, 0, text.length - 1)
       false -> null
     }
   }
 
   public class DebugData() {
-    private val data: MutableList<Pair<String, Any>> = ArrayList<Pair<String, Any>>()
+    private val data: MutableList<Pair<String, Any>> = ArrayList()
 
     public fun put(key: String, value: Any) {
       data.add(Pair(key, value))
@@ -205,7 +221,7 @@ public abstract class DiffTestCase : UsefulTestCase() {
       f(data3, ThreeSide.RIGHT)
     }
 
-    public fun invoke(side: ThreeSide): T = side.select(data1, data2, data3) as T
+    public operator fun invoke(side: ThreeSide): T = side.select(data1, data2, data3) as T
 
     override fun toString(): String {
       return "($data1, $data2, $data3)"

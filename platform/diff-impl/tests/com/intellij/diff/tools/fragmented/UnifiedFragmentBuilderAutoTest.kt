@@ -16,8 +16,6 @@
 package com.intellij.diff.tools.fragmented
 
 import com.intellij.diff.DiffTestCase
-import com.intellij.diff.assertEquals
-import com.intellij.diff.assertTrue
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Side
@@ -41,8 +39,8 @@ public class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
       debugData.put("Text1", textToReadableFormat(text1.getCharsSequence()))
       debugData.put("Text2", textToReadableFormat(text2.getCharsSequence()))
 
-      for (side in Side.values()) {
-        for (comparisonPolicy in ComparisonPolicy.values()) {
+      for (side in Side.values) {
+        for (comparisonPolicy in ComparisonPolicy.values) {
           debugData.put("Policy", comparisonPolicy)
           debugData.put("Current side", side)
           doTest(text1, text2, comparisonPolicy, side)
@@ -91,10 +89,10 @@ public class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
     }
 
     // changed fragments and changed blocks should have same content
-    assertEquals(blocks.size(), fragments.size())
+    assertEquals(blocks.size, fragments.size)
     for (i in fragments.indices) {
-      val fragment = fragments.get(i)
-      val block = blocks.get(i)
+      val fragment = fragments[i]
+      val block = blocks[i]
 
       val fragment1 = sequence1.subSequence(fragment.getStartOffset1(), fragment.getEndOffset1())
       val fragment2 = sequence2.subSequence(fragment.getStartOffset2(), fragment.getEndOffset2())
@@ -119,15 +117,15 @@ public class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
     var index1 = 0
     var index2 = 0
 
-    while (index2 < sequence.length()) {
-      val c2 = sequence.charAt(index2)
+    while (index2 < sequence.length) {
+      val c2 = sequence[index2]
       if (c2 == '\n' || (StringUtil.isWhiteSpace(c2) && ignoreWhitespaces)) {
         index2++
         continue
       }
 
-      assertTrue(index1 < text.length())
-      val c1 = text.charAt(index1)
+      assertTrue(index1 < text.length)
+      val c1 = text[index1]
       if (c1 == '\n' || (StringUtil.isWhiteSpace(c1) && ignoreWhitespaces)) {
         index1++
         continue
