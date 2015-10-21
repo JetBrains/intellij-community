@@ -135,6 +135,9 @@ public class ProjectStartupTasksTableModel extends AbstractTableModel implements
     if (myAllConfigurations.contains(configuration)) return;
     if (! myAllConfigurations.add(configuration)) return;
     Collections.sort(myAllConfigurations, RunnerAndConfigurationSettingsComparator.getInstance());
+    if (myRunManager.isConfigurationShared(configuration)) {
+      mySharedConfigurations.add(configuration);
+    }
     fireTableDataChanged();
   }
 
