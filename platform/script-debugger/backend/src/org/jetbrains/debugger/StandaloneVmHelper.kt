@@ -17,12 +17,11 @@ package org.jetbrains.debugger
 
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
-import io.netty.channel.ChannelFuture
-import io.netty.channel.ChannelFutureListener
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.catchError
 import org.jetbrains.concurrency.resolvedPromise
+import org.jetbrains.io.addListener
 import org.jetbrains.io.shutdownIfOio
 import org.jetbrains.jsonProtocol.Request
 import org.jetbrains.rpc.MessageProcessor
@@ -50,13 +49,9 @@ open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: 
 
   fun setChannel(channel: Channel) {
     this.channel = channel
-    channel.closeFuture().addListener(MyChannelFutureListener())
-  }
-
-  private inner class MyChannelFutureListener : ChannelFutureListener {
-    override fun operationComplete(future: ChannelFuture) {
+    channel.closeFuture().addListener {
       // don't report in case of explicit detach()
-      if (channel != null) {
+      if (this.channel != null) {
         messageProcessor.closed()
         vm.debugListener.disconnected()
       }
@@ -81,8 +76,7 @@ open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: 
 
     messageProcessor.closed()
     channel = null
-    val p = messageProcessor.send(disconnectRequest)
-    p.processed {
+    messageProcessor.send(disconnectRequest).processed {
       promise.catchError {
         messageProcessor.cancelWaitingRequests()
         closeChannel(currentChannel, promise)
@@ -97,21 +91,18 @@ open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: 
 }
 
 fun doCloseChannel(channel: Channel, promise: AsyncPromise<Any?>) {
-  val eventLoop = channel.eventLoop()
-  channel.close().addListener(object : ChannelFutureListener {
-    override fun operationComplete(future: ChannelFuture) {
-      try {
-        eventLoop.shutdownIfOio()
+  channel.close().addListener {
+    try {
+      it.channel().eventLoop().shutdownIfOio()
+    }
+    finally {
+      val error = it.cause()
+      if (error == null) {
+        promise.setResult(null)
       }
-      finally {
-        val error = future.cause()
-        if (error == null) {
-          promise.setResult(null)
-        }
-        else {
-          promise.setError(error)
-        }
+      else {
+        promise.setError(error)
       }
     }
-  })
+  }
 }
