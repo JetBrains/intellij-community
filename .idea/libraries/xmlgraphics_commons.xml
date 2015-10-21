@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="xmlgraphics-commons">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/xmlgraphics-commons-1.5.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
