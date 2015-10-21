@@ -30,6 +30,7 @@ target(compile: "Compile project") {
   prepareOutputFolder()
 
   if (!isDefined("avoid.project.rebuild")) {
+    clearBuildCaches()
     projectBuilder.cleanOutput()
     projectBuilder.buildAll()
   }

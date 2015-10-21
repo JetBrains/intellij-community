@@ -20,36 +20,35 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Condition
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.components.JBList
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.socketConnection.ConnectionStatus
 import io.netty.bootstrap.Bootstrap
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.rejectedPromise
+import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.debugger.Vm
 import org.jetbrains.io.NettyUtil
-import org.jetbrains.rpc.CommandProcessor
-import org.jetbrains.util.concurrency.AsyncPromise
-import org.jetbrains.util.concurrency.Promise
-import org.jetbrains.util.concurrency.RejectedPromise
-import org.jetbrains.util.concurrency.ResolvedPromise
+import org.jetbrains.io.connect
+import org.jetbrains.rpc.LOG
 import java.net.ConnectException
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicReference
 
-public abstract class RemoteVmConnection : VmConnection<Vm>() {
+abstract class RemoteVmConnection : VmConnection<Vm>() {
   private val connectCancelHandler = AtomicReference<Runnable>()
 
-  override fun getBrowser() = null
+  abstract fun createBootstrap(address: InetSocketAddress, vmResult: org.jetbrains.concurrency.AsyncPromise<Vm>): Bootstrap
 
-  public abstract fun createBootstrap(address: InetSocketAddress, vmResult: AsyncPromise<Vm>): Bootstrap
-
-  public fun open(address: InetSocketAddress, stopCondition: Condition<Void>? = null) {
-    setState(ConnectionStatus.WAITING_FOR_CONNECTION, "Connecting to ${address.getHostName()}:${address.getPort()}")
+  @JvmOverloads
+  fun open(address: InetSocketAddress, stopCondition: Condition<Void>? = null) {
+    setState(ConnectionStatus.WAITING_FOR_CONNECTION, "Connecting to ${address.hostName}:${address.port}")
     val future = ApplicationManager.getApplication().executeOnPooledThread(object : Runnable {
       override fun run() {
         if (Thread.interrupted()) {
           return
         }
 
-        val result = AsyncPromise<Vm>()
+        val result = org.jetbrains.concurrency.AsyncPromise<Vm>()
         connectCancelHandler.set(Runnable { result.setError("Closed explicitly") })
 
         val connectionPromise = AsyncPromise<Any?>()
@@ -63,19 +62,19 @@ public abstract class RemoteVmConnection : VmConnection<Vm>() {
           }
           .rejected {
             if (it !is ConnectException) {
-              Promise.logError(CommandProcessor.LOG, it)
+              Promise.logError(LOG, it)
             }
             setState(ConnectionStatus.CONNECTION_FAILED, it.getMessage())
           }
           .processed { connectCancelHandler.set(null) }
 
-        NettyUtil.connect(createBootstrap(address, result), address, connectionPromise, if (stopCondition == null) NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT else -1, stopCondition)
+        createBootstrap(address, result).connect(address, connectionPromise, maxAttemptCount = if (stopCondition == null) NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT else -1, stopCondition = stopCondition)
       }
     })
     connectCancelHandler.set(Runnable { future.cancel(true) })
   }
 
-  protected open fun connectedAddressToPresentation(address: InetSocketAddress, vm: Vm): String = address.getHostName() + ":" + address.getPort()
+  protected open fun connectedAddressToPresentation(address: InetSocketAddress, vm: Vm): String = address.hostName + ":" + address.port
 
   override fun detachAndClose(): Promise<*> {
     try {
@@ -87,43 +86,41 @@ public abstract class RemoteVmConnection : VmConnection<Vm>() {
   }
 }
 
-public fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, itemToString: (T) -> String): Promise<T> {
+fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, itemToString: (T) -> String): org.jetbrains.concurrency.Promise<T> {
   if (targets.size() == 1) {
-    return ResolvedPromise(ContainerUtil.getFirstItem(targets)!!)
+    return resolvedPromise(targets.first())
   }
   else if (targets.isEmpty()) {
-    return RejectedPromise("No tabs to inspect")
+    return rejectedPromise("No tabs to inspect")
   }
 
-  val result = AsyncPromise<T>()
-  ApplicationManager.getApplication().invokeLater(Runnable {
+  val result = org.jetbrains.concurrency.AsyncPromise<T>()
+  ApplicationManager.getApplication().invokeLater {
     val list = JBList(targets)
-    list.setCellRenderer(object : ColoredListCellRenderer.KotlinFriendlyColoredListCellRenderer<T>() {
+    list.cellRenderer = object : ColoredListCellRenderer.KotlinFriendlyColoredListCellRenderer<T>() {
       override fun customizeCellRenderer(value: T, index: Int, selected: Boolean, hasFocus: Boolean) {
         append(itemToString(value))
       }
-    })
+    }
     if (selectedIndex != -1) {
-      list.setSelectedIndex(selectedIndex)
+      list.selectedIndex = selectedIndex
     }
 
     JBPopupFactory.getInstance()
       .createListPopupBuilder(list)
       .setTitle("Choose Page to Debug")
-      .setItemChoosenCallback(object : Runnable {
-        override fun run() {
-          @suppress("UNCHECKED_CAST")
-          val value = list.getSelectedValue() as T
-          if (value == null) {
-            result.setError("No target to inspect")
-          }
-          else {
-            result.setResult(value)
-          }
+      .setItemChoosenCallback {
+        @Suppress("UNCHECKED_CAST")
+        val value = list.selectedValue as T
+        if (value == null) {
+          result.setError("No target to inspect")
         }
-      })
+        else {
+          result.setResult(value)
+        }
+      }
       .createPopup()
       .showInFocusCenter()
-  })
+  }
   return result
 }

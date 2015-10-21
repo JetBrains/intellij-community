@@ -360,9 +360,6 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
               }
               JDOMUtil.writeDocument(new Document(element), filePath, SystemProperties.getLineSeparator());
             }
-            catch (WriteExternalException e1) {
-              LOG.error(e1);
-            }
             catch (IOException e1) {
               LOG.error(e1);
             }

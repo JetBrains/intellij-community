@@ -65,24 +65,26 @@ public class CellRendererPanel extends JPanel {
   // BEGIN no validation methods --------------
   @Override
   public void doLayout() {
-    int count = getComponentCount();
-    if (count == 1) {
-      Rectangle bounds = new Rectangle(getWidth(), getHeight());
-      JBInsets.removeFrom(bounds, getInsets());
-      Component child = getComponent(0);
-      child.setBounds(bounds);
-      if (child instanceof CellRendererPanel) {
-        ((CellRendererPanel)child).invalidateLayout();
-        child.doLayout();
+    synchronized (getTreeLock()) {
+      int count = getComponentCount();
+      if (count == 1) {
+        Rectangle bounds = new Rectangle(getWidth(), getHeight());
+        JBInsets.removeFrom(bounds, getInsets());
+        Component child = getComponent(0);
+        child.setBounds(bounds);
+        if (child instanceof CellRendererPanel) {
+          ((CellRendererPanel)child).invalidateLayout();
+          child.doLayout();
+        }
       }
-    }
-    else {
-      invalidateLayout();
-      super.doLayout();
-      for (int i = 0; i < count; i++) {
-        Component c = getComponent(i);
-        if (c instanceof CellRendererPanel) {
-          c.doLayout();
+      else {
+        invalidateLayout();
+        super.doLayout();
+        for (int i = 0; i < count; i++) {
+          Component c = getComponent(i);
+          if (c instanceof CellRendererPanel) {
+            c.doLayout();
+          }
         }
       }
     }

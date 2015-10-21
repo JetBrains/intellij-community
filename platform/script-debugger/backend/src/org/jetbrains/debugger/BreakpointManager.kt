@@ -15,35 +15,34 @@
  */
 package org.jetbrains.debugger
 
-import org.jetbrains.util.concurrency.Promise
+import org.jetbrains.concurrency.Promise
+import java.util.*
 
-import java.util.EventListener
-
-public interface BreakpointManager {
-  public enum class MUTE_MODE {
+interface BreakpointManager {
+  enum class MUTE_MODE {
     ALL,
     ONE,
     NONE
   }
 
-  public val breakpoints: Iterable<Breakpoint>
+  val breakpoints: Iterable<Breakpoint>
 
-  public val regExpBreakpointSupported: Boolean
+  val regExpBreakpointSupported: Boolean
     get() = false
 
-  public fun setBreakpoint(target: BreakpointTarget, line: Int, column: Int, condition: String?, ignoreCount: Int, enabled: Boolean): Breakpoint
+  fun setBreakpoint(target: BreakpointTarget, line: Int, column: Int, condition: String?, ignoreCount: Int, enabled: Boolean): Breakpoint
 
-  public fun remove(breakpoint: Breakpoint): Promise<*>
+  fun remove(breakpoint: Breakpoint): Promise<*>
 
-  public val functionSupport: FunctionSupport?
+  val functionSupport: FunctionSupport?
     get() = null
 
   // Could be called multiple times for breakpoint
-  public fun addBreakpointListener(listener: BreakpointListener)
+  fun addBreakpointListener(listener: BreakpointListener)
 
-  public fun removeAll(): Promise<*>
+  fun removeAll(): Promise<*>
 
-  public fun getMuteMode(): MUTE_MODE = BreakpointManager.MUTE_MODE.ONE
+  fun getMuteMode() = BreakpointManager.MUTE_MODE.ONE
 
   /**
    * Flushes the breakpoint parameter changes (set* methods) into the browser
@@ -51,7 +50,7 @@ public interface BreakpointManager {
    * be called for the set* method invocations to take effect.
 
    */
-  public fun flush(breakpoint: Breakpoint): Promise<*>
+  fun flush(breakpoint: Breakpoint): Promise<*>
 
   /**
    * Asynchronously enables or disables all breakpoints on remote. 'Enabled' means that
@@ -59,11 +58,11 @@ public interface BreakpointManager {
    * It doesn't update individual properties of [Breakpoint]s. Method call
    * with a null value and not null callback simply returns current value.
    */
-  public fun enableBreakpoints(enabled: Boolean): Promise<*>
+  fun enableBreakpoints(enabled: Boolean): Promise<*>
+}
 
-  public interface BreakpointListener : EventListener {
-    public fun resolved(breakpoint: Breakpoint)
+interface BreakpointListener : EventListener {
+  fun resolved(breakpoint: Breakpoint)
 
-    public fun errorOccurred(breakpoint: Breakpoint, errorMessage: String?)
-  }
+  fun errorOccurred(breakpoint: Breakpoint, errorMessage: String?)
 }

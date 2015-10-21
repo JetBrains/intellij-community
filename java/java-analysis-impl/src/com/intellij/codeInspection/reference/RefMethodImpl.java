@@ -208,6 +208,9 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (mySuperMethods.size() > 10) {
       LOG.info("method: " + getName() + " owner:" + getOwnerClass().getQualifiedName());
     }
+    if (getRefManager().isOfflineView()) {
+      LOG.debug("Should not traverse graph offline");
+    }
     return mySuperMethods;
   }
 
@@ -234,6 +237,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   private void initializeSuperMethods(PsiMethod method) {
+    if (getRefManager().isOfflineView()) return;
     for (PsiMethod psiSuperMethod : method.findSuperMethods()) {
       if (getRefManager().belongsToScope(psiSuperMethod)) {
         RefMethodImpl refSuperMethod = (RefMethodImpl)getRefManager().getReference(psiSuperMethod);
@@ -298,6 +302,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   private void collectUncaughtExceptions(@NotNull PsiMethod method) {
     if (isExternalOverride()) return;
+    if (getRefManager().isOfflineView()) return;
     @NonNls final String name = method.getName();
     if (getOwnerClass().isTestCase() && name.startsWith("test")) return;
 
@@ -460,7 +465,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       public void run() {
         final PsiMethod psiMethod = (PsiMethod)getElement();
         LOG.assertTrue(psiMethod != null);
-        result[0] = PsiFormatUtil.getExternalName(psiMethod);
+        result[0] = PsiFormatUtil.getExternalName(psiMethod, true, Integer.MAX_VALUE);
       }
     };
 
@@ -629,6 +634,9 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   @Override
   @Nullable
   public PsiClass[] getUnThrownExceptions() {
+    if (getRefManager().isOfflineView()) {
+      LOG.debug("Should not traverse graph offline");
+    }
     if (myUnThrownExceptions == null) return null;
     JavaPsiFacade facade = JavaPsiFacade.getInstance(myManager.getProject());
     List<PsiClass> result = new ArrayList<PsiClass>(myUnThrownExceptions.size());

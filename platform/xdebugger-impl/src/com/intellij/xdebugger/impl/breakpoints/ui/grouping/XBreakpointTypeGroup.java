@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.xdebugger.impl.breakpoints.ui.grouping;
 
 import com.intellij.util.ArrayUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
-import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
@@ -27,7 +26,7 @@ import javax.swing.*;
 
 public class XBreakpointTypeGroup extends XBreakpointGroup {
 
-  private XBreakpointType myBreakpointType;
+  private final XBreakpointType myBreakpointType;
 
   public XBreakpointTypeGroup(XBreakpointType type) {
     myBreakpointType = type;

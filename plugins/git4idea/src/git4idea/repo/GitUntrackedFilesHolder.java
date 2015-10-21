@@ -15,11 +15,11 @@
  */
 package git4idea.repo;
 
-import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -90,6 +90,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   private final VirtualFile myRoot;
   private final ChangeListManager myChangeListManager;
   private final VcsDirtyScopeManager myDirtyScopeManager;
+  private final ProjectLevelVcsManager myVcsManager;
   private final GitRepositoryFiles myRepositoryFiles;
   private final Git myGit;
 
@@ -105,6 +106,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     myChangeListManager = ChangeListManager.getInstance(myProject);
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
     myGit = ServiceManager.getService(Git.class);
+    myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
 
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
     myRepositoryFiles = GitRepositoryFiles.getInstance(repository.getGitDir());
@@ -302,7 +304,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   private boolean belongsToThisRepository(VirtualFile file) {
     // this check should be quick
     // we shouldn't create a full instance repository here because it may lead to SOE while many unversioned files will be processed
-    final GitRepository repository = myRepositoryManager.getRepositoryForRootQuick(DvcsUtil.getVcsRoot(myProject, file));
+    GitRepository repository = myRepositoryManager.getRepositoryForRootQuick(myVcsManager.getVcsRootFor(file));
     return repository != null && repository.getRoot().equals(myRoot);
   }
 }

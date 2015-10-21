@@ -27,8 +27,8 @@ import java.util.Collection;
 public interface Function<Param, Result> {
   Result fun(Param param);
 
-  Function ID = new Function() {
-    public Object fun(final Object o) {
+  Function ID = new Function.Mono() {
+    public Object fun(Object o) {
       return o;
     }
   };
@@ -40,12 +40,6 @@ public interface Function<Param, Result> {
       return String.valueOf(o);
     }
   };
-
-  final class Self<P, R> implements Function<P, R> {
-    public R fun(P p) {
-      return (R)p;
-    }
-  }
 
   interface Mono<T> extends Function<T, T> {}
 

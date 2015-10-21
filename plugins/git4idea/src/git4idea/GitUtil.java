@@ -66,6 +66,8 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
 
+import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
+
 /**
  * Git utility/helper methods
  */
@@ -257,7 +259,7 @@ public class GitUtil {
    * @param value a value to parse
    * @return timestamp as {@link Date} object
    */
-  private static Date parseTimestamp(String value) {
+  public static Date parseTimestamp(String value) {
     final long parsed;
     parsed = Long.parseLong(value.trim());
     return new Date(parsed * 1000);
@@ -992,5 +994,10 @@ public class GitUtil {
         return repository.getPresentableUrl();
       }
     }, "<br/>");
+  }
+
+  @NotNull
+  public static String mention(@NotNull GitRepository repository) {
+    return getRepositoryManager(repository.getProject()).moreThanOneRoot() ? " in " + getShortRepositoryName(repository) : "";
   }
 }

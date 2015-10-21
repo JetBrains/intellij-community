@@ -44,7 +44,7 @@ public abstract class WebSocketHandshakeHandler extends HttpRequestHandler imple
   @Override
   public boolean isSupported(@NotNull FullHttpRequest request) {
     return request.method() == HttpMethod.GET &&
-           "WebSocket".equalsIgnoreCase(request.headers().get(HttpHeaderNames.UPGRADE)) &&
+           "WebSocket".equalsIgnoreCase(request.headers().getAsString(HttpHeaderNames.UPGRADE)) &&
            request.uri().length() > 2;
   }
 
@@ -63,7 +63,7 @@ public abstract class WebSocketHandshakeHandler extends HttpRequestHandler imple
   }
 
   private void handleWebSocketRequest(@NotNull final ChannelHandlerContext context, @NotNull FullHttpRequest request, @NotNull final QueryStringDecoder uriDecoder) {
-    WebSocketServerHandshakerFactory factory = new WebSocketServerHandshakerFactory("ws://" + request.headers().get(HttpHeaderNames.HOST) + uriDecoder.path(), null, false, NettyUtil.MAX_CONTENT_LENGTH);
+    WebSocketServerHandshakerFactory factory = new WebSocketServerHandshakerFactory("ws://" + request.headers().getAsString(HttpHeaderNames.HOST) + uriDecoder.path(), null, false, NettyUtil.MAX_CONTENT_LENGTH);
     WebSocketServerHandshaker handshaker = factory.newHandshaker(request);
     if (handshaker == null) {
       WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(context.channel());

@@ -32,6 +32,7 @@ import com.intellij.profile.codeInspection.ui.LevelChooserAction;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -99,6 +100,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
       for (Language language : languages) {
         add(new LanguageFilterAction(language));
       }
+      add(new LanguageFilterAction(null));
       addSeparator();
     }
 
@@ -209,9 +211,9 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
 
     private final String myLanguageId;
 
-    public LanguageFilterAction(final Language language) {
-      super(language.getDisplayName());
-      myLanguageId = language.getID();
+    public LanguageFilterAction(final @Nullable Language language) {
+      super(language == null ? "Language is not specified" : language.getDisplayName());
+      myLanguageId = language == null ? null : language.getID();
     }
 
     @Override

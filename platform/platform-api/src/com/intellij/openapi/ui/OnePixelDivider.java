@@ -106,6 +106,9 @@ public class OnePixelDivider extends Divider {
     public void mousePressed(MouseEvent e) {
       setDragging(isInDragZone(e));
       _processMouseEvent(e);
+      if (myDragging) {
+        e.consume();
+      }
     }
 
     boolean isInDragZone(MouseEvent e) {

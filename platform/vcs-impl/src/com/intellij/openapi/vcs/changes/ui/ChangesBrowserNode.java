@@ -24,7 +24,6 @@ import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.vcsUtil.UIVcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +32,8 @@ import javax.swing.tree.MutableTreeNode;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+
+import static com.intellij.vcsUtil.UIVcsUtil.spaceAndThinSpace;
 
 /**
  * @author max
@@ -209,22 +210,24 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     appendCount(renderer);
   }
 
+  @NotNull
   protected String getCountText() {
     int count = getCount();
     int dirCount = getDirectoryCount();
+    if (dirCount == 0 && count == 0) return "";
     if (dirCount == 0) {
-      return UIVcsUtil.SPACE_AND_THIN_SPACE + VcsBundle.message("changes.nodetitle.changecount", count);
+      return spaceAndThinSpace() + VcsBundle.message("changes.nodetitle.changecount", count);
     }
     else if (count == 0 && dirCount > 0) {
-      return UIVcsUtil.SPACE_AND_THIN_SPACE + VcsBundle.message("changes.nodetitle.directory.changecount", dirCount);
+      return spaceAndThinSpace() + VcsBundle.message("changes.nodetitle.directory.changecount", dirCount);
     }
     else {
-      return UIVcsUtil.SPACE_AND_THIN_SPACE + VcsBundle.message("changes.nodetitle.directory.file.changecount", dirCount, count);
+      return spaceAndThinSpace() + VcsBundle.message("changes.nodetitle.directory.file.changecount", dirCount, count);
     }
   }
 
   protected void appendCount(final ColoredTreeCellRenderer renderer) {
-    final String countText = getCountText();
+    String countText = getCountText();
     renderer.append(countText, SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 

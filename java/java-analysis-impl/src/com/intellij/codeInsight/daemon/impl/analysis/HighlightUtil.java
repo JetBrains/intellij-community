@@ -60,10 +60,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -485,7 +482,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   private static void registerChangeVariableTypeFixes(@NotNull PsiExpression expression,
                                                       @NotNull PsiType type,
-                                                      @Nullable PsiExpression lExpr,
+                                                      @Nullable final PsiExpression lExpr,
                                                       @Nullable HighlightInfo highlightInfo) {
     if (highlightInfo == null || !(expression instanceof  PsiReferenceExpression)) return;
 
@@ -493,6 +490,16 @@ public class HighlightUtil extends HighlightUtilBase {
     if (!(element instanceof PsiVariable)) return;
 
     registerChangeVariableTypeFixes((PsiVariable)element, type, lExpr, highlightInfo);
+    
+    if (lExpr instanceof PsiMethodCallExpression && lExpr.getParent() instanceof PsiAssignmentExpression) {
+      final PsiElement parent = lExpr.getParent();
+      if (parent.getParent() instanceof PsiStatement) {
+        final PsiMethod method = ((PsiMethodCallExpression)lExpr).resolveMethod();
+        if (method != null && PsiType.VOID.equals(method.getReturnType())) {
+          QuickFixAction.registerQuickFixAction(highlightInfo, new ReplaceAssignmentFromVoidWithStatementIntentionAction(parent, lExpr));
+        }
+      }
+    }
   }
 
   private static boolean isCastIntentionApplicable(@NotNull PsiExpression expression, @Nullable PsiType toType) {
@@ -1023,39 +1030,40 @@ public class HighlightUtil extends HighlightUtilBase {
 
     final PsiElement parent = expression.getParent();
     if (type == JavaTokenType.INTEGER_LITERAL) {
+      String cleanText = StringUtil.replace(text, "_", "");
       //literal 2147483648 may appear only as the operand of the unary negation operator -.
-      if (!(text.equals(PsiLiteralExpressionImpl._2_IN_31) &&
+      if (!(cleanText.equals(PsiLiteralExpressionImpl._2_IN_31) &&
             parent instanceof PsiPrefixExpression &&
             ((PsiPrefixExpression)parent).getOperationTokenType() == JavaTokenType.MINUS)) {
-        if (text.equals(PsiLiteralExpressionImpl.HEX_PREFIX)) {
+        if (cleanText.equals(PsiLiteralExpressionImpl.HEX_PREFIX)) {
           String message = JavaErrorMessages.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
-        if (text.equals(PsiLiteralExpressionImpl.BIN_PREFIX)) {
+        if (cleanText.equals(PsiLiteralExpressionImpl.BIN_PREFIX)) {
           String message = JavaErrorMessages.message("binary.numbers.must.contain.at.least.one.hexadecimal.digit");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
-        if (value == null || text.equals(PsiLiteralExpressionImpl._2_IN_31)) {
+        if (value == null || cleanText.equals(PsiLiteralExpressionImpl._2_IN_31)) {
           String message = JavaErrorMessages.message("integer.number.too.large");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
       }
     }
     else if (type == JavaTokenType.LONG_LITERAL) {
-      String mText = text.endsWith("l") ? text.substring(0, text.length() - 1) : text;
+      String cleanText = StringUtil.replace(StringUtil.trimEnd(text, 'l'), "_", "");
       //literal 9223372036854775808L may appear only as the operand of the unary negation operator -.
-      if (!(mText.equals(PsiLiteralExpressionImpl._2_IN_63) &&
+      if (!(cleanText.equals(PsiLiteralExpressionImpl._2_IN_63) &&
             parent instanceof PsiPrefixExpression &&
             ((PsiPrefixExpression)parent).getOperationTokenType() == JavaTokenType.MINUS)) {
-        if (mText.equals(PsiLiteralExpressionImpl.HEX_PREFIX)) {
+        if (cleanText.equals(PsiLiteralExpressionImpl.HEX_PREFIX)) {
           String message = JavaErrorMessages.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
-        if (mText.equals(PsiLiteralExpressionImpl.BIN_PREFIX)) {
+        if (cleanText.equals(PsiLiteralExpressionImpl.BIN_PREFIX)) {
           String message = JavaErrorMessages.message("binary.numbers.must.contain.at.least.one.hexadecimal.digit");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
-        if (value == null || mText.equals(PsiLiteralExpressionImpl._2_IN_63)) {
+        if (value == null || cleanText.equals(PsiLiteralExpressionImpl._2_IN_63)) {
           String message = JavaErrorMessages.message("long.number.too.large");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }

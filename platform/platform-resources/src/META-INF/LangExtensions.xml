@@ -335,7 +335,10 @@
     <projectService serviceInterface="com.intellij.slicer.SliceManager"
                     serviceImplementation="com.intellij.slicer.SliceManager"/>
 
-    <moduleService serviceInterface="com.intellij.openapi.components.impl.stores.IComponentStore" serviceImplementation="com.intellij.configurationStore.ModuleStoreImpl"/>
+    <moduleService serviceInterface="com.intellij.openapi.components.impl.stores.IComponentStore"
+                   serviceImplementation="com.intellij.configurationStore.ModuleStoreImpl"
+                   testServiceImplementation="com.intellij.configurationStore.ModuleStoreImpl$TestModuleStore"/>
+
     <moduleService serviceImplementation="com.intellij.openapi.module.impl.ModuleImpl$DeprecatedModuleOptionManager"/>
     <moduleService serviceInterface="com.intellij.openapi.components.PathMacroManager" serviceImplementation="com.intellij.openapi.components.impl.ModulePathMacroManager"/>
 
@@ -448,6 +451,7 @@
     <refactoring.elementListenerProvider implementation="com.intellij.packageDependencies.ui.RefactoringScopeElementListenerProvider"/>
 
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor"/>
+    <projectService serviceImplementation="com.intellij.codeInsight.daemon.impl.CachedAnnotators"/>
     <daemon.changeLocalityDetector implementation="com.intellij.codeInsight.daemon.impl.DefaultChangeLocalityDetector"/>
 
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentDateMacro"/>
@@ -722,27 +726,6 @@
 
     <liveTemplateContext id="OTHER" implementation="com.intellij.codeInsight.template.EverywhereContextType" order="last"/>
 
-    <!-- Graph API -->
-    <applicationService serviceInterface="com.intellij.openapi.graph.GraphManager"
-                        serviceImplementation="com.intellij.openapi.graph.impl.GraphManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.graph.builder.util.NodeFactory"
-                        serviceImplementation="com.intellij.openapi.graph.impl.builder.NodeFactoryImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.graph.builder.util.CustomGraphActionsFactory"
-                        serviceImplementation="com.intellij.openapi.graph.impl.builder.util.CustomGraphActionsFactoryImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.graph.GraphPeerFactory"
-                        serviceImplementation="com.intellij.openapi.graph.impl.GraphPeerFactoryImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.graph.GraphSvgExporter"
-                        serviceImplementation="com.intellij.openapi.graph.impl.GraphSvgExporterImpl"/>
-
-    <projectService serviceInterface="com.intellij.openapi.graph.builder.GraphBuilderFactory"
-                    serviceImplementation="com.intellij.openapi.graph.impl.builder.GraphBuilderFactoryImpl"/>
-    <projectService serviceInterface="com.intellij.openapi.graph.builder.dnd.ProjectViewDnDHelper"
-                    serviceImplementation="com.intellij.openapi.graph.impl.builder.dnd.ProjectViewDnDHelperImpl"/>
-    <projectService serviceInterface="com.intellij.openapi.graph.settings.GraphSettingsProvider"
-                    serviceImplementation="com.intellij.openapi.graph.impl.builder.GraphSettingsProviderImpl"/>
-    <projectService serviceInterface="com.intellij.openapi.graph.impl.builder.GraphEditModeFactory"
-                    serviceImplementation="com.intellij.openapi.graph.impl.builder.GraphEditModeFactoryImpl"/>
-
     <dynamicContextProvider implementation="com.intellij.openapi.paths.GenericDynamicContextProvider"/>
 
     <codeStyleSettingsProvider implementation="com.intellij.application.options.GeneralCodeStyleSettingsProvider"/>
@@ -796,9 +779,9 @@
                         serviceImplementation="com.intellij.ui.debugger.extensions.PlaybackDebugger$PlaybackDebuggerState"/>
 
     <globalInspection shortName="Annotator" displayName="Annotator" groupName="General" enabledByDefault="true" level="ERROR"
-                      implementationClass="com.intellij.codeInspection.DefaultHighlightVisitorBasedInspection$AnnotatorBasedInspection"/>
+                      implementationClass="com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitorBasedInspection$AnnotatorBasedInspection"/>
     <globalInspection shortName="SyntaxError" displayName="Syntax error" groupName="General" enabledByDefault="true" level="ERROR"
-                      implementationClass="com.intellij.codeInspection.DefaultHighlightVisitorBasedInspection$SyntaxErrorInspection"/>
+                      implementationClass="com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitorBasedInspection$SyntaxErrorInspection"/>
     <localInspection shortName="LossyEncoding" bundle="messages.InspectionsBundle" key="lossy.encoding"
                      groupKey="group.names.internationalization.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.LossyEncodingInspection"/>
@@ -946,6 +929,11 @@
     <smartPointerElementInfoFactory implementation="com.intellij.psi.impl.smartPointers.AnchorElementInfoFactory"/>
     <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.execution.lineMarker.RunLineMarkerProvider"/>
     <projectService serviceImplementation="com.intellij.execution.TestStateStorage"/>
+
+    <schemeExporter
+      name="Code Style XML File"
+      schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
+      implementationClass="com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeCopyExporter"/>
   </extensions>
 </idea-plugin>
 

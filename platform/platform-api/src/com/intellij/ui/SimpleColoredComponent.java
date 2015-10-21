@@ -733,7 +733,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
     final List<Object[]> searchMatches = new ArrayList<Object[]>();
 
-    UISettings.setupAntialiasing(g);
     applyAdditionalHints(g);
     final Font ownFont = getFont();
     if (ownFont != null) {
@@ -915,6 +914,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   protected void applyAdditionalHints(@NotNull Graphics2D g) {
+    UISettings.setupAntialiasing(g);
   }
 
   @Override
@@ -1033,7 +1033,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   private class MyAccessibleContext extends JComponent.AccessibleJComponent {
     @Override
     public String getAccessibleName() {
-      return StringUtil.join(myFragments, " ");
+      return SimpleColoredComponent.this.toString();
     }
   }
 

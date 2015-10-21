@@ -38,10 +38,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
-import com.intellij.testFramework.ModuleTestCase;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.*;
 import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.TestFileSystemBuilder;
@@ -90,15 +87,18 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    for (Artifact artifact : getArtifactManager().getArtifacts()) {
-      final String outputPath = artifact.getOutputPath();
-      if (!StringUtil.isEmpty(outputPath)) {
-        FileUtil.delete(new File(FileUtil.toSystemDependentName(outputPath)));
+    try {
+      for (Artifact artifact : getArtifactManager().getArtifacts()) {
+        final String outputPath = artifact.getOutputPath();
+        if (!StringUtil.isEmpty(outputPath)) {
+          FileUtil.delete(new File(FileUtil.toSystemDependentName(outputPath)));
+        }
       }
+      CompilerTestUtil.disableExternalCompiler(getProject());
     }
-    CompilerTestUtil.disableExternalCompiler(getProject());
-
-    super.tearDown();
+    finally {
+      super.tearDown();
+    }
   }
 
   protected ArtifactManager getArtifactManager() {
@@ -280,7 +280,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
             }
           }
         };
-        myProject.save();
+        PlatformTestUtil.saveProject(myProject);
         CompilerTestUtil.saveApplicationSettings();
         action.run(callback);
       }

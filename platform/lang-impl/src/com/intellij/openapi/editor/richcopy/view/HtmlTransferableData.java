@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.richcopy.model.ColorRegistry;
 import com.intellij.openapi.editor.richcopy.model.FontNameRegistry;
 import com.intellij.openapi.editor.richcopy.model.MarkupHandler;
 import com.intellij.openapi.editor.richcopy.model.SyntaxInfo;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -83,7 +84,11 @@ public class HtmlTransferableData extends AbstractSyntaxAwareReaderTransferableD
       else {
         myFontFamily = myDefaultFontFamily = -1;
       }
-      myResultBuffer.append(String.format("font-size:%.1fpt;\">", mySyntaxInfo.getFontSize()));
+      float fontSize = mySyntaxInfo.getFontSize();
+      // on Mac OS font size in points declared in HTML doesn't mean the same value as when declared e.g. in TextEdit (and in Java),
+      // this is the correction factor
+      if (SystemInfo.isMac) fontSize *= 0.75f;
+      myResultBuffer.append(String.format("font-size:%.1fpt;\">", fontSize));
 
       mySyntaxInfo.processOutputInfo(this);
 

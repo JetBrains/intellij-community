@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,16 +80,11 @@ class ProjectViewDropTarget implements DnDNativeTarget {
     final Point point = event.getPoint();
     final TreeNode targetNode = getTargetNode(point);
 
-    if (targetNode == null || (dropAction & DnDConstants.ACTION_COPY_OR_MOVE) == 0) {
-      return false;
-    }
-    else if (sourceNodes == null && !FileCopyPasteUtil.isFileListFlavorAvailable(event)) {
-      return false;
-    }
-    else if (sourceNodes != null && ArrayUtilRt.find(sourceNodes, targetNode) != -1) {
-      return false;
-    }
-    else if (sourceNodes != null && !dropHandler.isValidSource(sourceNodes, targetNode)) {
+    if (targetNode == null ||
+        (dropAction & DnDConstants.ACTION_COPY_OR_MOVE) == 0 ||
+        sourceNodes == null && !FileCopyPasteUtil.isFileListFlavorAvailable(event) ||
+        sourceNodes != null && ArrayUtilRt.find(sourceNodes, targetNode) != -1 ||
+        sourceNodes != null && !dropHandler.isValidSource(sourceNodes, targetNode)) {
       return false;
     }
 
@@ -113,6 +108,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
     }
 
     final Rectangle pathBounds = myTree.getPathBounds(myTree.getClosestPathForLocation(point.x, point.y));
+    if (pathBounds != null && pathBounds.y + pathBounds.height < point.y) return false;
     event.setHighlighting(new RelativeRectangle(myTree, pathBounds), DnDEvent.DropTargetHighlightingType.RECTANGLE);
     event.setDropPossible(true);
     return false;
@@ -317,6 +313,13 @@ class ProjectViewDropTarget implements DnDNativeTarget {
       
       final Module module = getModule(targetNode);
       final DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+      if (!targetElement.isValid()) return;
+      for (PsiElement sourceElement : sourceElements) {
+        if (!sourceElement.isValid()) return;
+      }
+
       getActionHandler().invoke(myProject, sourceElements, new DataContext() {
         @Override
         @Nullable

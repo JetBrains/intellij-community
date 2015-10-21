@@ -60,7 +60,6 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
                 .put("arguments", PARAMETERS_SECTION)
                 .put("args", PARAMETERS_SECTION)
                 .put("parameters", PARAMETERS_SECTION)
-                .put("params", PARAMETERS_SECTION)
                 .put("keyword args", KEYWORD_ARGUMENTS_SECTION)
                 .put("keyword arguments", KEYWORD_ARGUMENTS_SECTION)
                 .put("other parameters", OTHER_PARAMETERS_SECTION)
@@ -204,8 +203,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
 
   @NotNull
   protected Pair<SectionField, Integer> parseGenericField(int lineNum, int sectionIndent) {
-    // We want to let section content has the same indent as section header, in particular for Numpy
-    final Pair<List<Substring>, Integer> pair = parseIndentedBlock(lineNum, Math.max(sectionIndent - 1, 0));
+    final Pair<List<Substring>, Integer> pair = parseIndentedBlock(lineNum, getSectionIndentationThreshold(sectionIndent));
     final Substring firstLine = ContainerUtil.getFirstItem(pair.getFirst());
     final Substring lastLine = ContainerUtil.getLastItem(pair.getFirst());
     if (firstLine != null && lastLine != null) {
@@ -225,7 +223,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   protected boolean isSectionBreak(int lineNum, int curSectionIndent) {
     return lineNum >= getLineCount() || 
            // note that field may have the same indent as its containing section
-           (!isEmpty(lineNum) && getLineIndentSize(lineNum) < curSectionIndent) || 
+           (!isEmpty(lineNum) && getLineIndentSize(lineNum) <= getSectionIndentationThreshold(curSectionIndent)) || 
            isSectionStart(lineNum);
   }
 
@@ -239,6 +237,17 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   protected Pair<List<Substring>, Integer> parseIndentedBlock(int lineNum, int blockIndent) {
     final int blockEnd = consumeIndentedBlock(lineNum, blockIndent);
     return Pair.create(myLines.subList(lineNum, blockEnd), blockEnd);
+  }
+
+  /**
+   * Inside section any indentation that is equal or smaller to returned one signals about section break.
+   * It's safe to return negative value, because it's used only for comparisons.
+   *
+   * @see #isSectionBreak(int, int)
+   * @see #parseGenericField(int, int)
+   */
+  protected int getSectionIndentationThreshold(int sectionIndent) {
+    return sectionIndent;
   }
 
   @Override
@@ -289,9 +298,10 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     return mySummary != null ? mySummary.concatTrimmedLines("\n") : "";
   }
 
+  @NotNull
   @Override
   public String getDescription() {
-    return null;
+    return "";
   }
 
   @NotNull
@@ -318,13 +328,8 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @Nullable
   @Override
   public String getParamType(@Nullable String paramName) {
-    if (paramName != null) {
-      final SectionField field = getFirstFieldForParameter(paramName);
-      if (field != null) {
-        return field.getType();
-      }
-    }
-    return null;
+    final Substring sub = getParamTypeSubstring(paramName);
+    return sub != null ? sub.toString() : null;
   }
 
   @Nullable
@@ -429,8 +434,8 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
   @Nullable
   @Override
   public String getReturnType() {
-    final SectionField field = getFirstReturnField();
-    return field != null ? field.getType() : null;
+    final Substring sub = getReturnTypeSubstring();
+    return sub != null ? sub.toString() : null;
   }
 
   @Nullable
@@ -468,7 +473,7 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     return ContainerUtil.mapNotNull(getExceptionFields(), new Function<SectionField, String>() {
       @Override
       public String fun(SectionField field) {
-        return field.getType();
+        return StringUtil.nullize(field.getType());
       }
     });
   }
@@ -609,9 +614,9 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
       myDescription = description;
     }
 
-    @NotNull
+    @Nullable
     public String getName() {
-      return myNames.isEmpty() ? "" : myNames.get(0).toString();
+      return myNames.isEmpty() ? null : myNames.get(0).toString();
     }
 
     @Nullable
@@ -634,9 +639,9 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
       });
     }
 
-    @NotNull
+    @Nullable
     public String getType() {
-      return myType == null ? "" : myType.toString();
+      return myType == null ? null : myType.toString();
     }
 
     @Nullable
@@ -644,9 +649,9 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
       return myType;
     }
 
-    @NotNull 
+    @Nullable 
     public String getDescription() {
-      return myDescription == null ? "" : PyIndentUtil.removeCommonIndent(myDescription.getValue(), true);
+      return myDescription == null ? null : PyIndentUtil.removeCommonIndent(myDescription.getValue(), true);
     }
 
     @Nullable

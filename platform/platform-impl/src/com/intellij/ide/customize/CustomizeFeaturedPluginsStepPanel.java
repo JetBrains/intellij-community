@@ -190,6 +190,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
             public void run() {
               wrapperLayout.show(buttonWrapper, "button");
               progressBar.setValue(0);
+              progressBar.setString("0%");
             }
           });
         }

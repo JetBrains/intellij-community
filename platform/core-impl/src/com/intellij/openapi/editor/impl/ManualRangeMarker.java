@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.event.RetargetRangeMarkers;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
@@ -23,47 +24,50 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A range marker that has to be manually updated with {@link #getUpdatedRange(DocumentEvent)}.
+ * A range marker that has to be manually updated with {@link #getUpdatedRange(DocumentEvent, FrozenDocument)}.
  * Can hold PSI-based range and be updated when the document is committed.
  */
 public class ManualRangeMarker {
   private final ProperTextRange myRange;
   private final boolean myGreedyLeft;
   private final boolean myGreedyRight;
+  private final boolean mySurviveOnExternalChange;
   private final PersistentRangeMarker.LinesCols myLinesCols;
 
-  public ManualRangeMarker(@NotNull FrozenDocument document, @NotNull ProperTextRange range, boolean greedyLeft, boolean greedyRight, boolean surviveOnExternalChange) {
-    this(range, greedyLeft, greedyRight, surviveOnExternalChange ? PersistentRangeMarker.storeLinesAndCols(range, document) : null);
-  }
-
-  private ManualRangeMarker(@NotNull ProperTextRange range,
+  public ManualRangeMarker(@NotNull ProperTextRange range,
                             boolean greedyLeft,
                             boolean greedyRight,
+                            boolean surviveOnExternalChange,
                             @Nullable PersistentRangeMarker.LinesCols linesCols) {
     myRange = range;
     myGreedyLeft = greedyLeft;
     myGreedyRight = greedyRight;
+    mySurviveOnExternalChange = surviveOnExternalChange;
     myLinesCols = linesCols;
   }
 
   @Nullable
-  public ManualRangeMarker getUpdatedRange(@NotNull DocumentEvent event) {
+  public ManualRangeMarker getUpdatedRange(@NotNull DocumentEvent event, @NotNull FrozenDocument documentBefore) {
     if (event instanceof RetargetRangeMarkers) {
       int start = ((RetargetRangeMarkers)event).getStartOffset();
       if (myRange.getStartOffset() >= start && myRange.getEndOffset() <= ((RetargetRangeMarkers)event).getEndOffset()) {
         ProperTextRange range = myRange.shiftRight(((RetargetRangeMarkers)event).getMoveDestinationOffset() - start);
-        return new ManualRangeMarker(range, myGreedyLeft, myGreedyRight, myLinesCols == null ? null : PersistentRangeMarker.storeLinesAndCols(range, event.getDocument()));
+        return new ManualRangeMarker(range, myGreedyLeft, myGreedyRight, mySurviveOnExternalChange, null);
       }
     }
 
-    if (myLinesCols != null) {
-      Pair<ProperTextRange, PersistentRangeMarker.LinesCols> pair = PersistentRangeMarker
-        .applyChange(event, myRange, myRange.getStartOffset(), myRange.getEndOffset(), myGreedyLeft, myGreedyRight, myLinesCols);
-      return pair == null ? null : new ManualRangeMarker(pair.first, myGreedyLeft, myGreedyRight, pair.second);
+    if (mySurviveOnExternalChange && PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, myRange)) {
+      PersistentRangeMarker.LinesCols linesCols = myLinesCols != null ? myLinesCols
+                                                                      : PersistentRangeMarker.storeLinesAndCols(myRange, documentBefore);
+      Pair<ProperTextRange, PersistentRangeMarker.LinesCols> pair =
+        linesCols == null ? null : PersistentRangeMarker.translateViaDiff((DocumentEventImpl)event, linesCols);
+      if (pair != null) {
+        return new ManualRangeMarker(pair.first, myGreedyLeft, myGreedyRight, true, pair.second);
+      }
     }
-    
+
     ProperTextRange range = RangeMarkerImpl.applyChange(event, myRange.getStartOffset(), myRange.getEndOffset(), myGreedyLeft, myGreedyRight);
-    return range == null ? null : new ManualRangeMarker(range, myGreedyLeft, myGreedyRight, null);
+    return range == null ? null : new ManualRangeMarker(range, myGreedyLeft, myGreedyRight, mySurviveOnExternalChange, null);
   }
 
   @NotNull

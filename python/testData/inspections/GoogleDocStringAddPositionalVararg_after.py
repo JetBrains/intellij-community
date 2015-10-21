@@ -1,5 +1,5 @@
 def f(*args):
     """
     Args:
-      *args: 
+        *args: 
     """

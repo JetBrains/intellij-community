@@ -25,7 +25,24 @@ import java.util.Map;
  */
 public class Functions {
 
+  public static <A> Function.Mono<A> id() {
+    return (Function.Mono<A>)Function.ID;
+  }
+
+  public static <A, B> Function<A, B> constant(final B b) {
+    return new Function<A, B>() {
+      @Override
+      public B fun(A a) {
+        return b;
+      }
+    };
+  }
+
   public static <A, B> Function<A, B> identity() {
+    return Function.ID;
+  }
+
+  public static <A, B> Function<A, B> cast(Class<B> clazz) {
     return Function.ID;
   }
 
@@ -73,5 +90,14 @@ public class Functions {
 
   public static <B> Function<Pair<?, B>, B> pairSecond() {
     return (Function<Pair<?, B>, B>)PAIR_SECOND;
+  }
+
+  public static Function.Mono<Integer> intIncrement() {
+    return new Function.Mono<Integer>() {
+      @Override
+      public Integer fun(Integer integer) {
+        return integer + 1;
+      }
+    };
   }
 }

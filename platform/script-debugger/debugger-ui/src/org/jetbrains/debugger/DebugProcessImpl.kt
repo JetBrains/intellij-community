@@ -28,6 +28,7 @@ import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
@@ -35,24 +36,23 @@ import org.jetbrains.debugger.connection.VmConnection
 import org.jetbrains.debugger.frame.SuspendContextImpl
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.properties.Delegates
 
-public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
-                                                             public val connection: C,
-                                                             private val editorsProvider: XDebuggerEditorsProvider,
-                                                             private val smartStepIntoHandler: XSmartStepIntoHandler<*>?,
-                                                             protected val executionResult: ExecutionResult?) : XDebugProcess(session) {
+abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
+                                                     val connection: C,
+                                                     private val editorsProvider: XDebuggerEditorsProvider,
+                                                     private val smartStepIntoHandler: XSmartStepIntoHandler<*>?,
+                                                     protected val executionResult: ExecutionResult?) : XDebugProcess(session) {
   protected val repeatStepInto: AtomicBoolean = AtomicBoolean()
-  volatile protected var lastStep: StepAction? = null
-  volatile protected var lastCallFrame: CallFrame? = null
-  volatile protected var isForceStep: Boolean = false
-  volatile protected var disableDoNotStepIntoLibraries: Boolean = false
+  @Volatile protected var lastStep: StepAction? = null
+  @Volatile protected var lastCallFrame: CallFrame? = null
+  @Volatile protected var isForceStep: Boolean = false
+  @Volatile protected var disableDoNotStepIntoLibraries: Boolean = false
 
   protected val urlToFileCache: ConcurrentMap<Url, VirtualFile> = ContainerUtil.newConcurrentMap<Url, VirtualFile>()
 
-  public var processBreakpointConditionsAtIdeSide: Boolean = false
+  var processBreakpointConditionsAtIdeSide: Boolean = false
 
-  private val _breakpointHandlers: Array<XBreakpointHandler<*>> by Delegates.lazy { createBreakpointHandlers() }
+  private val _breakpointHandlers: Array<XBreakpointHandler<*>> by lazy(LazyThreadSafetyMode.NONE) { createBreakpointHandlers() }
 
   init {
     connection.addListener(object : SocketConnectionListener {
@@ -62,13 +62,13 @@ public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSessi
             if (status == ConnectionStatus.DETACHED) {
               if (realProcessHandler != null) {
                 // here must we must use effective process handler
-                getProcessHandler().detachProcess()
+                processHandler.detachProcess()
               }
             }
             getSession().stop()
           }
           ConnectionStatus.CONNECTION_FAILED -> {
-            getSession().reportError(status.getStatusText())
+            getSession().reportError(status.statusText)
             getSession().stop()
           }
           else -> {
@@ -80,21 +80,24 @@ public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSessi
   }
 
   protected final val realProcessHandler: ProcessHandler?
-    get() = executionResult?.getProcessHandler()
+    get() = executionResult?.processHandler
 
   override final fun getSmartStepIntoHandler() = smartStepIntoHandler
 
-  override final fun getBreakpointHandlers() = _breakpointHandlers
+  override final fun getBreakpointHandlers() = when (connection.state.status) {
+    ConnectionStatus.DISCONNECTED, ConnectionStatus.DETACHED, ConnectionStatus.CONNECTION_FAILED -> XBreakpointHandler.EMPTY_ARRAY
+    else -> _breakpointHandlers
+  }
 
   override final fun getEditorsProvider() = editorsProvider
 
-  public val vm: Vm?
+  val vm: Vm?
     get() = connection.vm
 
   protected abstract fun createBreakpointHandlers(): Array<XBreakpointHandler<*>>
 
   private fun updateLastCallFrame() {
-    lastCallFrame = vm?.getSuspendContextManager()?.getContext()?.getTopFrame()
+    lastCallFrame = vm?.suspendContextManager?.context?.topFrame
   }
 
   override final fun checkCanPerformCommands() = vm != null
@@ -127,16 +130,19 @@ public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSessi
   }
 
   // some VM (firefox for example) doesn't implement step out correctly, so, we need to fix it
-  protected open fun isVmStepOutCorrect(): Boolean = true
+  protected open fun isVmStepOutCorrect() = true
 
   override final fun resume() {
     continueVm(StepAction.CONTINUE)
   }
 
-  protected final fun continueVm(stepAction: StepAction) {
-    val suspendContextManager = vm!!.getSuspendContextManager()
+  /**
+   * You can override this method to avoid SuspendContextManager implementation, but it is not recommended.
+   */
+  protected open fun continueVm(stepAction: StepAction) {
+    val suspendContextManager = vm!!.suspendContextManager
     if (stepAction === StepAction.CONTINUE) {
-      if (suspendContextManager.getContext() == null) {
+      if (suspendContextManager.context == null) {
         // on resumed we ask session to resume, and session then call our "resume", but we have already resumed, so, we don't need to send "continue" message
         return
       }
@@ -152,12 +158,12 @@ public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSessi
     suspendContextManager.continueVm(stepAction, 1)
   }
 
-  protected final fun setOverlay() {
-    vm!!.getSuspendContextManager().setOverlayMessage("Paused in debugger")
+  protected fun setOverlay() {
+    vm!!.suspendContextManager.setOverlayMessage("Paused in debugger")
   }
 
-  protected final fun processBreakpoint(suspendContext: SuspendContext, breakpoint: XBreakpoint<*>, xSuspendContext: SuspendContextImpl) {
-    val condition = breakpoint.getConditionExpression()?.getExpression()
+  protected fun processBreakpoint(suspendContext: SuspendContext, breakpoint: XBreakpoint<*>, xSuspendContext: SuspendContextImpl) {
+    val condition = breakpoint.conditionExpression?.expression
     if (!processBreakpointConditionsAtIdeSide || condition == null) {
       processBreakpointLogExpressionAndSuspend(breakpoint, xSuspendContext, suspendContext)
     }
@@ -182,7 +188,7 @@ public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSessi
   }
 
   private fun processBreakpointLogExpressionAndSuspend(breakpoint: XBreakpoint<*>, xSuspendContext: SuspendContextImpl, suspendContext: SuspendContext) {
-    val logExpression = breakpoint.getLogExpressionObject()?.getExpression()
+    val logExpression = breakpoint.logExpressionObject?.expression
     if (logExpression == null) {
       breakpointReached(breakpoint, null, xSuspendContext)
     }
@@ -202,7 +208,7 @@ public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSessi
   }
 
   private fun breakpointReached(breakpoint: XBreakpoint<*>, evaluatedLogExpression: String?, suspendContext: XSuspendContext) {
-    if (getSession().breakpointReached(breakpoint, evaluatedLogExpression, suspendContext)) {
+    if (session.breakpointReached(breakpoint, evaluatedLogExpression, suspendContext)) {
       setOverlay()
     }
     else {
@@ -211,18 +217,30 @@ public abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSessi
   }
 
   override final fun startPausing() {
-    connection.vm.getSuspendContextManager().suspend().rejected(RejectErrorReporter(getSession(), "Cannot pause"))
+    connection.vm.suspendContextManager.suspend().rejected(RejectErrorReporter(session, "Cannot pause"))
   }
 
-  override final fun getCurrentStateMessage() = connection.getState().getMessage()
+  override final fun getCurrentStateMessage() = connection.state.message
 
-  override final fun getCurrentStateHyperlinkListener() = connection.getState().getMessageLinkListener()
+  override final fun getCurrentStateHyperlinkListener() = connection.state.messageLinkListener
 
-  override fun doGetProcessHandler() = executionResult?.getProcessHandler() ?: object : DefaultDebugProcessHandler() { override fun isSilentlyDestroyOnClose() = true }
+  override fun doGetProcessHandler() = executionResult?.processHandler ?: object : DefaultDebugProcessHandler() { override fun isSilentlyDestroyOnClose() = true }
 
-  public fun saveResolvedFile(url: Url, file: VirtualFile) {
+  fun saveResolvedFile(url: Url, file: VirtualFile) {
     urlToFileCache.putIfAbsent(url, file)
   }
 
-  public abstract fun getLocationsForBreakpoint(breakpoint: XLineBreakpoint<*>, onlySourceMappedBreakpoints: Boolean): List<Location>
+  abstract fun getLocationsForBreakpoint(breakpoint: XLineBreakpoint<*>, onlySourceMappedBreakpoints: Boolean): List<Location>
+}
+
+class LineBreakpointHandler(breakpointTypeClass: Class<out XLineBreakpointType<*>>,
+                            private val manager: LineBreakpointManager,
+                            private val onlySourceMappedBreakpoints: Boolean) : XBreakpointHandler<XLineBreakpoint<*>>(breakpointTypeClass) {
+  override fun registerBreakpoint(breakpoint: XLineBreakpoint<*>) {
+    manager.setBreakpoint(breakpoint, onlySourceMappedBreakpoints)
+  }
+
+  override fun unregisterBreakpoint(breakpoint: XLineBreakpoint<*>, temporary: Boolean) {
+    manager.removeBreakpoint(breakpoint, temporary)
+  }
 }

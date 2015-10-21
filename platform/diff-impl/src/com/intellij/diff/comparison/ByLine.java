@@ -520,7 +520,7 @@ public class ByLine {
     }
   }
 
-  static class LineWrapper implements ChangeCorrector.CorrectableData {
+  static class LineWrapper {
     @NotNull private final Line myLine;
     private final int myIndex;
 
@@ -551,7 +551,6 @@ public class ByLine {
       return myLine.equals(((LineWrapper)o).myLine);
     }
 
-    @Override
     public int getOriginalIndex() {
       return myIndex;
     }

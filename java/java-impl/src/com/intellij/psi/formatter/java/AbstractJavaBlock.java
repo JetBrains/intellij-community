@@ -288,7 +288,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
 
     final ASTNode prevElement = FormatterUtil.getPreviousNonWhitespaceSibling(child);
-    if (prevElement != null && prevElement.getElementType() == JavaElementType.MODIFIER_LIST) {
+    if (prevElement != null && prevElement.getElementType() == JavaElementType.MODIFIER_LIST && !isMethodParameterAnnotation(prevElement)) {
       return Indent.getNoneIndent();
     }
 
@@ -304,6 +304,15 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
 
     return null;
+  }
+
+  private static boolean isMethodParameterAnnotation(@NotNull ASTNode element) {
+    ASTNode parent = element.getTreeParent();
+    if (parent != null && parent.getElementType() == JavaElementType.PARAMETER) {
+      ASTNode lastChild = element.getLastChildNode();
+      return lastChild != null && lastChild.getElementType() == JavaElementType.ANNOTATION;
+    }
+    return false;
   }
 
   @Nullable

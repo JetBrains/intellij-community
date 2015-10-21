@@ -135,6 +135,10 @@ public class AppMain {
       System.err.println("main method should be static");
       return;
     }
+    if (!void.class.isAssignableFrom(m.getReturnType())) {
+      System.err.println("main method must return a value of type void");
+      return;
+    }
     try {
       ensureAccess(m);
       m.invoke(null, new Object[]{parms});

@@ -21,71 +21,100 @@ import com.intellij.openapi.editor.impl.ManualRangeMarker;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.event.RetargetRangeMarkers;
 import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.util.NullableFunction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TLongObjectHashMap;
-import gnu.trove.TLongObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
  * @author peter
  */
 class MarkerCache {
+  private static final Comparator<SelfElementInfo> BY_RANGE_KEY = new Comparator<SelfElementInfo>() {
+    @Override
+    public int compare(SelfElementInfo info1, SelfElementInfo info2) {
+      int o1 = info1.getPsiStartOffset();
+      int o2 = info2.getPsiStartOffset();
+      if (o1 != o2) return o1 > o2 ? 1 : -1;
+
+      o1 = info1.getPsiEndOffset();
+      o2 = info2.getPsiEndOffset();
+      if (o1 != o2) return o1 > o2 ? 1 : -1;
+
+      return (info1.isForInjected() ? 1 : 0) - (info2.isForInjected() ? 1 : 0);
+    }
+  };
   private final SmartPointerManagerImpl.FilePointersList myPointers;
   private final VirtualFile myVirtualFile;
-  private volatile Trinity<Integer, TLongObjectHashMap<ManualRangeMarker>, FrozenDocument> myUpdatedRanges;
+  private volatile UpdatedRanges myUpdatedRanges;
 
   MarkerCache(SmartPointerManagerImpl.FilePointersList pointers, VirtualFile virtualFile) {
     myPointers = pointers;
     myVirtualFile = virtualFile;
   }
 
-  private TLongObjectHashMap<ManualRangeMarker> getUpdatedMarkers(@NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
+  private UpdatedRanges getUpdatedMarkers(@NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
     int eventCount = events.size();
     assert eventCount > 0;
 
-    Trinity<Integer, TLongObjectHashMap<ManualRangeMarker>, FrozenDocument> cache = myUpdatedRanges;
-    if (cache != null && cache.first.intValue() == eventCount) return cache.second;
+    UpdatedRanges cache = myUpdatedRanges;
+    if (cache != null && cache.myEventCount == eventCount) return cache;
 
     //noinspection SynchronizeOnThis
     synchronized (this) {
       cache = myUpdatedRanges;
-      if (cache != null && cache.first.intValue() == eventCount) return cache.second;
+      if (cache != null && cache.myEventCount == eventCount) return cache;
 
-      TLongObjectHashMap<ManualRangeMarker> answer;
-      if (cache != null && cache.first < eventCount) {
+      UpdatedRanges answer;
+      if (cache != null && cache.myEventCount < eventCount) {
         // apply only the new events
-        answer = cache.second.clone();
-        frozen = applyEvents(cache.third, events.subList(cache.first, eventCount), answer);
+        answer = applyEvents(events.subList(cache.myEventCount, eventCount), cache);
       }
       else {
-        answer = new TLongObjectHashMap<ManualRangeMarker>();
-        for (SelfElementInfo info : getInfos()) {
-          ProperTextRange range = info.getPsiRange();
-          long key = info.markerCacheKey();
-          if (range != null && key != 0) {
-            boolean forInjected = info.isForInjected();
-            answer.put(key, new ManualRangeMarker(frozen, range, forInjected, forInjected, !forInjected));
-          }
-        }
-        frozen = applyEvents(frozen, events, answer);
+        List<SelfElementInfo> infos = getSortedInfos();
+        ManualRangeMarker[] markers = createMarkers(infos);
+        answer = applyEvents(events, new UpdatedRanges(0, frozen, infos, markers));
       }
 
-      myUpdatedRanges = Trinity.create(eventCount, answer, frozen);
+      myUpdatedRanges = answer;
       return answer;
     }
   }
 
-  private static FrozenDocument applyEvents(@NotNull FrozenDocument frozen,
-                                            @NotNull List<DocumentEvent> events,
-                                            final TLongObjectHashMap<ManualRangeMarker> map) {
+  @NotNull
+  private static ManualRangeMarker[] createMarkers(List<SelfElementInfo> infos) {
+    ManualRangeMarker[] markers = new ManualRangeMarker[infos.size()];
+    int i = 0;
+    while (i < markers.length) {
+      SelfElementInfo info = infos.get(i);
+      boolean forInjected = info.isForInjected();
+      ProperTextRange range = ObjectUtils.assertNotNull(info.getPsiRange());
+      markers[i] = new ManualRangeMarker(range, forInjected, forInjected, !forInjected, null);
+
+      i++;
+      while (i < markers.length && rangeEquals(infos.get(i), range, forInjected)) {
+        markers[i] = markers[i - 1];
+        i++;
+      }
+    }
+    return markers;
+  }
+
+  private static boolean rangeEquals(SelfElementInfo info, ProperTextRange range, boolean injected) {
+    return range.getStartOffset() == info.getPsiStartOffset() && range.getEndOffset() == info.getPsiEndOffset() && injected == info.isForInjected();
+  }
+
+  private static UpdatedRanges applyEvents(@NotNull List<DocumentEvent> events, final UpdatedRanges struct) {
+    FrozenDocument frozen = struct.myResultDocument;
+    ManualRangeMarker[] resultMarkers = struct.myMarkers.clone();
     for (DocumentEvent event : events) {
+      final FrozenDocument before = frozen;
       final DocumentEvent corrected;
       if ((event instanceof RetargetRangeMarkers)) {
         RetargetRangeMarkers retarget = (RetargetRangeMarkers)event;
@@ -98,79 +127,83 @@ class MarkerCache {
                                           ((DocumentEventImpl) event).getInitialStartOffset(), ((DocumentEventImpl) event).getInitialOldLength());
       }
 
-      map.forEachEntry(new TLongObjectProcedure<ManualRangeMarker>() {
-        @Override
-        public boolean execute(long key, ManualRangeMarker currentRange) {
-          if (currentRange != null) {
-            map.put(key, currentRange.getUpdatedRange(corrected));
-          }
-          return true;
+      int i = 0;
+      while (i < resultMarkers.length) {
+        ManualRangeMarker currentRange = resultMarkers[i];
+
+        int sameMarkersEnd = i + 1;
+        while (sameMarkersEnd < resultMarkers.length && resultMarkers[sameMarkersEnd] == currentRange) {
+          sameMarkersEnd++;
         }
-      });
+
+        ManualRangeMarker updatedRange = currentRange == null ? null : currentRange.getUpdatedRange(corrected, before);
+        while (i < sameMarkersEnd) {
+          resultMarkers[i] = updatedRange;
+          i++;
+        }
+      }
     }
-    return frozen;
+    return new UpdatedRanges(struct.myEventCount + events.size(), frozen, struct.mySortedInfos, resultMarkers);
   }
 
   synchronized void updateMarkers(@NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
-    TLongObjectHashMap<ManualRangeMarker> updated = getUpdatedMarkers(frozen, events);
+    UpdatedRanges updated = getUpdatedMarkers(frozen, events);
 
-    for (SmartPsiElementPointerImpl pointer : myPointers.getAlivePointers()) {
-      SmartPointerElementInfo info = pointer.getElementInfo();
-      if (info instanceof SelfElementInfo) {
-        long key = ((SelfElementInfo)info).markerCacheKey();
-        if (key != 0) {
-          ManualRangeMarker newRangeMarker = updated.get(key);
-          ProperTextRange newRange = newRangeMarker == null ? null : newRangeMarker.getRange();
-          ((SelfElementInfo)info).setRange(newRange);
-
-          if (newRange != null && !(pointer instanceof SmartPsiFileRangePointerImpl)) {
-            updatePointerTarget(pointer, newRange);
-          }
-        }
-
-      }
+    for (int i = 0; i < updated.myMarkers.length; i++) {
+      ManualRangeMarker newRangeMarker = updated.myMarkers[i];
+      updated.mySortedInfos.get(i).setRange(newRangeMarker == null ? null : newRangeMarker.getRange());
     }
 
     myUpdatedRanges = null;
   }
 
-  // after reparse and its complex tree diff, the element might have "moved" to other range
-  // but if an element of the same type can still be found at the old range, let's point there
-  private static <E extends PsiElement> void updatePointerTarget(@NotNull SmartPsiElementPointerImpl<E> pointer, @NotNull ProperTextRange newRange) {
-    E cachedElement = pointer.getCachedElement();
-    if (cachedElement == null || cachedElement.isValid() && newRange.equals(cachedElement.getTextRange())) {
-      return;
-    }
-
-    E newTarget = pointer.doRestoreElement();
-    if (newTarget != null) {
-      pointer.cacheElement(newTarget);
-    }
-  }
-
   @NotNull
-  private List<SelfElementInfo> getInfos() {
-    return ContainerUtil.findAll(ContainerUtil.map(myPointers.getAlivePointers(), new NullableFunction<SmartPsiElementPointerImpl, SmartPointerElementInfo>() {
-        @Override
-        public SmartPointerElementInfo fun(SmartPsiElementPointerImpl pointer) {
-          return pointer.getElementInfo();
+  private List<SelfElementInfo> getSortedInfos() {
+    List<SelfElementInfo> infos = ContainerUtil.newArrayListWithCapacity(myPointers.getSize());
+    for (Reference<SmartPointerEx> reference : myPointers.getReferences()) {
+      if (reference != null) {
+        SmartPointerEx pointer = reference.get();
+        if (pointer != null) {
+          SmartPointerElementInfo info = ((SmartPsiElementPointerImpl)pointer).getElementInfo();
+          if (info instanceof SelfElementInfo && ((SelfElementInfo)info).hasRange()) {
+            infos.add((SelfElementInfo)info);
+          }
         }
-      }), SelfElementInfo.class);
+      }
+    }
+    Collections.sort(infos, BY_RANGE_KEY);
+    return infos;
   }
 
   @Nullable
-  ProperTextRange getUpdatedRange(long rangeKey, @NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
-    ManualRangeMarker updated = getUpdatedMarkers(frozen, events).get(rangeKey);
+  ProperTextRange getUpdatedRange(@NotNull SelfElementInfo info, @NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
+    UpdatedRanges struct = getUpdatedMarkers(frozen, events);
+    int i = Collections.binarySearch(struct.mySortedInfos, info, BY_RANGE_KEY);
+    ManualRangeMarker updated = i >= 0 ? struct.myMarkers[i] : null;
     return updated == null ? null : updated.getRange();
   }
 
-  synchronized void rangeChanged(long rangeKey) {
-    if (myUpdatedRanges != null && !myUpdatedRanges.second.contains(rangeKey)) {
-      myUpdatedRanges = null;
-    }
+  void rangeChanged() {
+    myUpdatedRanges = null;
   }
 
   VirtualFile getVirtualFile() {
     return myVirtualFile;
+  }
+
+  private static class UpdatedRanges {
+    private final int myEventCount;
+    private final FrozenDocument myResultDocument;
+    private final List<SelfElementInfo> mySortedInfos;
+    private final ManualRangeMarker[] myMarkers;
+
+    public UpdatedRanges(int eventCount,
+                         FrozenDocument resultDocument,
+                         List<SelfElementInfo> sortedInfos, ManualRangeMarker[] markers) {
+      myEventCount = eventCount;
+      myResultDocument = resultDocument;
+      mySortedInfos = sortedInfos;
+      myMarkers = markers;
+    }
   }
 }

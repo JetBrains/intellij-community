@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.module;
 
+import com.intellij.facet.impl.ui.FacetErrorPanel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.extensions.Extensions;
@@ -49,12 +50,14 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
   private final Module myModule;
   private Disposable myFilePointersDisposable;
   private MyContentEntryEditor myContentEntryEditor;
+  private FacetErrorPanel myWarningPanel;
 
   public PyContentEntriesEditor(Module module, ModuleConfigurationState moduleConfigurationState,
                                       JpsModuleSourceRootType<?>... rootTypes) {
     super(module.getName(), moduleConfigurationState, rootTypes);
     myRootTypeProviders = Extensions.getExtensions(PyRootTypeProvider.EP_NAME);
     myModule = module;
+    myWarningPanel = new FacetErrorPanel();
     reset();
   }
 
@@ -101,6 +104,10 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
     super.disposeUIResources();
     if (myFilePointersDisposable != null) {
       Disposer.dispose(myFilePointersDisposable);
+    }
+
+    for (PyRootTypeProvider provider : myRootTypeProviders) {
+      provider.disposeUIResources(myModule);
     }
   }
 
@@ -285,5 +292,14 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
         }
       };
     }
+  }
+
+  @Override
+  protected void addAdditionalSettingsToPanel(JPanel mainPanel) {
+    mainPanel.add(myWarningPanel.getComponent(), BorderLayout.SOUTH);
+  }
+
+  public FacetErrorPanel getWarningPanel() {
+    return myWarningPanel;
   }
 }

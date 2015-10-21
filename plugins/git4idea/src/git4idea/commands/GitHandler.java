@@ -510,12 +510,14 @@ public abstract class GitHandler {
         public void onLineAvailable(@NonNls String line, Key outputType) {
           String lowerCaseLine = line.toLowerCase();
           if (lowerCaseLine.contains("authentication failed") || lowerCaseLine.contains("403 forbidden")) {
+            LOG.debug("auth listener: auth failure detected: " + line);
             myHttpAuthFailed = true;
           }
         }
 
         @Override
         public void processTerminated(int exitCode) {
+          LOG.debug("auth listener: process terminated. auth failed=" + myHttpAuthFailed + ", cancelled=" + authenticator.wasCancelled());
           if (!authenticator.wasCancelled()) {
             if (myHttpAuthFailed) {
               authenticator.forgetPassword();
@@ -580,7 +582,12 @@ public abstract class GitHandler {
    * @param exitCode a exit code for process
    */
   protected synchronized void setExitCode(int exitCode) {
-    myExitCode = exitCode;
+    if (myExitCode == null) {
+      myExitCode = exitCode;
+    }
+    else {
+      LOG.info("Not setting exit code " + exitCode + ", because it was already set to " + myExitCode);
+    }
   }
 
   /**

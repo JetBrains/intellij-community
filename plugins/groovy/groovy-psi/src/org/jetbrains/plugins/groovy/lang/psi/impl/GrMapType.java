@@ -34,7 +34,6 @@ import java.util.*;
  * @author peter
  */
 public abstract class GrMapType extends GrLiteralClassType {
-  private final String myJavaClassName;
 
   private final VolatileNotNullLazyValue<PsiType[]> myParameters = new VolatileNotNullLazyValue<PsiType[]>() {
     @NotNull
@@ -58,22 +57,18 @@ public abstract class GrMapType extends GrLiteralClassType {
                       GlobalSearchScope scope,
                       LanguageLevel languageLevel) {
     super(languageLevel, scope, facade);
-
-    myJavaClassName = facade.findClass(
-      GroovyCommonClassNames.JAVA_UTIL_LINKED_HASH_MAP, scope) != null ? GroovyCommonClassNames.JAVA_UTIL_LINKED_HASH_MAP
-                                                                       : CommonClassNames.JAVA_UTIL_MAP;
   }
 
   @NotNull
   @Override
   protected String getJavaClassName() {
-    return myJavaClassName;
+    return GroovyCommonClassNames.JAVA_UTIL_LINKED_HASH_MAP;
   }
 
   @Override
   @NotNull
   public String getClassName() {
-    return StringUtil.getShortName(myJavaClassName);
+    return "LinkedHashMap";
   }
 
   @Nullable

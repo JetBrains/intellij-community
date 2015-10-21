@@ -15,7 +15,6 @@
  */
 package com.intellij.diff.tools.fragmented
 
-import com.intellij.diff.assertEquals
 import com.intellij.diff.util.Side
 import com.intellij.testFramework.UsefulTestCase
 

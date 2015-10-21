@@ -223,16 +223,15 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       if (name != null && !name.equals(myExpectedClassName)) {
         return null;
       }
-      PsiElement method = DebuggerUtilsEx.getContainingMethod(element);
+      PsiParameterListOwner method = DebuggerUtilsEx.getContainingMethod(element);
       if (!StringUtil.isEmpty(myExpectedMethodName)) {
         if (method == null) {
           return null;
         }
-        else if ((method instanceof PsiMethod && myExpectedMethodName.equals(((PsiMethod)method).getName()))) {
-          if (insideBody(element, ((PsiMethod)method).getBody())) return element;
-        }
-        else if (method instanceof PsiLambdaExpression && LambdaMethodFilter.isLambdaName(myExpectedMethodName)) {
-          if (insideBody(element, ((PsiLambdaExpression)method).getBody())) return element;
+        else if (((method instanceof PsiMethod && myExpectedMethodName.equals(((PsiMethod)method).getName())) ||
+                  (method instanceof PsiLambdaExpression && LambdaMethodFilter.isLambdaName(myExpectedMethodName))) &&
+                 insideBody(element, method.getBody())) {
+          return element;
         }
       }
       return null;
@@ -591,7 +590,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     }
 
     @Override public void visitClass(PsiClass aClass) {
-      final List<ReferenceType> allClasses = myDebugProcess.getPositionManager().getAllClasses(SourcePosition.createFromElement(aClass));
+      final List<ReferenceType> allClasses = getClassReferences(aClass, SourcePosition.createFromElement(aClass));
       for (ReferenceType referenceType : allClasses) {
         if (referenceType.name().equals(myClassName)) {
           myCompiledClass = aClass;

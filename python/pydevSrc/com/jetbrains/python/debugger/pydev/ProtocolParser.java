@@ -41,6 +41,85 @@ public class ProtocolParser {
     return signature;
   }
 
+  public static PyConcurrencyEvent parseConcurrencyEvent(String payload,
+                                                         final PyPositionConverter positionConverter) throws PyDebuggerException {
+    final XppReader reader = openReader(payload, true);
+    reader.moveDown();
+    String eventName = reader.getNodeName();
+    boolean isAsyncio;
+    if (eventName.equals("threading_event")) {
+      isAsyncio = false;
+    } else if (eventName.equals("asyncio_event")) {
+      isAsyncio = true;
+    } else {
+      throw new PyDebuggerException("Expected <threading_event> or <asyncio_event>, found " + reader.getNodeName());
+    }
+
+    final Long time = Long.parseLong(readString(reader, "time", ""));
+    final String name = readString(reader, "name", "");
+    final String thread_id = readString(reader, "thread_id", "");
+    final String type = readString(reader, "type", "");
+    PyConcurrencyEvent threadingEvent;
+    if (type.equals("lock")) {
+      String lock_id = readString(reader, "lock_id", "0");
+      threadingEvent = new PyLockEvent(time, thread_id, name, lock_id, isAsyncio);
+    }
+    else if (type.equals("thread")) {
+      String parentThread = readString(reader, "parent", "");
+      if (!parentThread.isEmpty()) {
+        threadingEvent = new PyThreadEvent(time, thread_id, name, parentThread, isAsyncio);
+      } else {
+        threadingEvent = new PyThreadEvent(time, thread_id, name, isAsyncio);
+      }
+    }
+    else {
+      throw new PyDebuggerException("Unknown type " + type);
+    }
+
+    final String eventType = readString(reader, "event", "");
+    if (eventType.equals("__init__")) {
+      threadingEvent.setType(PyConcurrencyEvent.EventType.CREATE);
+    }
+    else if (eventType.equals("start")) {
+      threadingEvent.setType(PyConcurrencyEvent.EventType.START);
+    }
+    else if (eventType.equals("join")) {
+      threadingEvent.setType(PyConcurrencyEvent.EventType.JOIN);
+    }
+    else if (eventType.equals("stop")) {
+      threadingEvent.setType(PyConcurrencyEvent.EventType.STOP);
+    }
+    else if (eventType.equals("acquire_begin") || eventType.equals("__enter___begin")
+             || (eventType.equals("get_begin")) || (eventType.equals("put_begin"))) {
+      threadingEvent.setType(PyConcurrencyEvent.EventType.ACQUIRE_BEGIN);
+    }
+    else if (eventType.equals("acquire_end") || eventType.equals("__enter___end")
+             || (eventType.equals("get_end")) || (eventType.equals("put_end"))) {
+      threadingEvent.setType(PyConcurrencyEvent.EventType.ACQUIRE_END);
+    }
+    else if (eventType.startsWith("release") || eventType.startsWith("__exit__")) {
+      // we record release begin and end on the Python side, but it is not important info
+      // for user. Maybe use it later
+      threadingEvent.setType(PyConcurrencyEvent.EventType.RELEASE);
+    }
+    else {
+      throw new PyDebuggerException("Unknown event " + eventType);
+    }
+
+    threadingEvent.setFileName(readString(reader, "file", ""));
+    threadingEvent.setLine(Integer.parseInt(readString(reader, "line", "")) - 1);
+    reader.moveUp();
+
+    final List<PyStackFrameInfo> frames = new LinkedList<PyStackFrameInfo>();
+    while (reader.hasMoreChildren()) {
+      reader.moveDown();
+      frames.add(parseFrame(reader, thread_id, positionConverter));
+      reader.moveUp();
+    }
+    threadingEvent.setFrames(frames);
+    return threadingEvent;
+  }
+
   public static String parseSourceContent(String payload) throws PyDebuggerException {
     return payload;
   }

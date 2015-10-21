@@ -27,6 +27,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.Map;
@@ -38,8 +39,10 @@ public class JavaTreeCopyHandler implements TreeCopyHandler {
   public TreeElement decodeInformation(TreeElement element, final Map<Object, Object> decodingState) {
     boolean shallDecodeEscapedTexts = shallEncodeEscapedTexts(element, decodingState);
     if (element instanceof CompositeElement) {
-      if (element.getElementType() == JavaElementType.JAVA_CODE_REFERENCE ||
-          element.getElementType() == JavaElementType.REFERENCE_EXPRESSION) {
+      final IElementType elementType = element.getElementType();
+      if (elementType == JavaElementType.JAVA_CODE_REFERENCE ||
+          elementType == JavaElementType.REFERENCE_EXPRESSION ||
+          elementType == JavaElementType.METHOD_REF_EXPRESSION) {
         PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(element);
         final PsiClass refClass = element.getCopyableUserData(JavaTreeGenerator.REFERENCED_CLASS_KEY);
         if (refClass != null) {
@@ -190,7 +193,8 @@ public class JavaTreeCopyHandler implements TreeCopyHandler {
       final JavaResolveResult resolveResult = javaRefElement.advancedResolve(false);
       final PsiElement target = resolveResult.getElement();
       if (target instanceof PsiClass &&
-          original.getTreeParent().getElementType() == JavaElementType.REFERENCE_EXPRESSION) {
+          (original.getTreeParent().getElementType() == JavaElementType.REFERENCE_EXPRESSION ||
+           original.getTreeParent().getElementType() == JavaElementType.METHOD_REF_EXPRESSION)) {
         ref.putCopyableUserData(JavaTreeGenerator.REFERENCED_CLASS_KEY, (PsiClass)target);
       }
       else if ((target instanceof PsiMethod || target instanceof PsiField) &&

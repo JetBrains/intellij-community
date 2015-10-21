@@ -183,7 +183,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     }
 
     for(SmartPointerElementInfoFactory factory: Extensions.getExtensions(SmartPointerElementInfoFactory.EP_NAME)) {
-      final SmartPointerElementInfo result = factory.createElementInfo(element);
+      final SmartPointerElementInfo result = factory.createElementInfo(element, containingFile);
       if (result != null) return result;
     }
 
@@ -202,7 +202,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     }
     ProperTextRange proper = ProperTextRange.create(elementRange);
 
-    return new SelfElementInfo(project, proper, element.getClass(), containingFile, LanguageUtil.getRootLanguage(element), false);
+    return new SelfElementInfo(project, proper, AnchorTypeInfo.obtainInfo(element, LanguageUtil.getRootLanguage(element)), containingFile, false);
   }
 
   @Override

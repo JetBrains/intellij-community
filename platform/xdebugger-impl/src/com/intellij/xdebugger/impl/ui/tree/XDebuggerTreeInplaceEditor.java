@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import javax.swing.tree.TreePath;
 public abstract class XDebuggerTreeInplaceEditor extends TreeInplaceEditor {
   private final XDebuggerTreeNode myNode;
   protected final XDebuggerExpressionComboBox myExpressionEditor;
-  protected XDebuggerTree myTree;
+  protected final XDebuggerTree myTree;
 
   public XDebuggerTreeInplaceEditor(final XDebuggerTreeNode node, @NonNls final String historyId) {
     myNode = node;

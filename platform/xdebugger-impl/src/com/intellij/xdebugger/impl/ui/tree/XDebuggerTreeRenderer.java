@@ -69,7 +69,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     node.appendToComponent(this);
     setIcon(node.getIcon());
 
-    Rectangle treeVisibleRect = tree.getVisibleRect();
+    Rectangle treeVisibleRect = tree.getParent() instanceof JViewport ? ((JViewport)tree.getParent()).getViewRect() : tree.getVisibleRect();
     TreePath path = tree.getPathForRow(row);
     int rowX = path != null ? getRowX((BasicTreeUI)tree.getUI(), row, path.getPathCount() - 1) : 0;
 

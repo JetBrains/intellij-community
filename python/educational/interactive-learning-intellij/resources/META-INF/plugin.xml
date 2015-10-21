@@ -6,15 +6,14 @@
   <description><![CDATA[
       Educational plugin core for students. 
       ]]></description>
+  <vendor>JetBrains</vendor>
 
   <change-notes><![CDATA[
 
       ]]>
   </change-notes>
 
-  <depends>com.intellij.modules.python</depends>
   <depends>com.jetbrains.edu.interactivelearning</depends>
-  <depends>com.jetbrains.python.edu.interactivelearning.python</depends>
 
   <!-- please see http://confluence.jetbrains.net/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
        on how to target different products -->

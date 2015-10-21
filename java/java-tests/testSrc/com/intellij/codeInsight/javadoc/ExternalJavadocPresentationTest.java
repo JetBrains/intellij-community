@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,10 @@ public class ExternalJavadocPresentationTest extends LightCodeInsightTestCase {
 
   public void testPackageSummary() throws Exception {
     doTest("java/lang/package-summary.html", "packageSummary/util/page.html", "packageSummary/util/expected.html");
+  }
+  
+  public void testNoMethodsOrFieldsInClass() throws Exception {
+    doTest("SimpleInterface.html", "noMethodsOrFieldsInClass/SimpleInterface.html", "noMethodsOrFieldsInClass/expected.html");
   }
 
   private void doTest(@NonNls String url, @NonNls String pageText, @NonNls String expected) throws Exception {

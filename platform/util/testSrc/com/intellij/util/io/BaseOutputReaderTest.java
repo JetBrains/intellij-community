@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -71,6 +72,12 @@ public class BaseOutputReaderTest {
   @AfterClass
   public static void tearDown() {
     ourExecutor.shutdown();
+    try {
+      ourExecutor.awaitTermination(1000, TimeUnit.SECONDS);
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
     ourExecutor = null;
   }
 

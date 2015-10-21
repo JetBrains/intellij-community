@@ -15,10 +15,7 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -65,15 +62,16 @@ public final class ToolWindowsGroup extends ActionGroup implements DumbAware {
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     Project project = getEventProject(e);
     if (project == null) return EMPTY_ARRAY;
-    List<ActivateToolWindowAction> result = getToolWindowActions(project);
+    List<ActivateToolWindowAction> result = getToolWindowActions(project, false);
     return result.toArray(new AnAction[result.size()]);
   }
 
-  public static List<ActivateToolWindowAction> getToolWindowActions(@NotNull Project project) {
+  public static List<ActivateToolWindowAction> getToolWindowActions(@NotNull Project project, boolean shouldSkipHidden) {
     ActionManager actionManager = ActionManager.getInstance();
     ToolWindowManager manager = ToolWindowManager.getInstance(project);
     List<ActivateToolWindowAction> result = ContainerUtil.newArrayList();
     for (String id : manager.getToolWindowIds()) {
+      if (shouldSkipHidden && !manager.getToolWindow(id).isShowStripeButton()) continue;
       String actionId = ActivateToolWindowAction.getActionIdForToolWindow(id);
       AnAction action = actionManager.getAction(actionId);
       if (action instanceof ActivateToolWindowAction) {

@@ -114,49 +114,14 @@ public class JavaI18nUtil extends I18nUtil {
     return false;
   }
 
-  private static final Key<CachedValue<PsiExpression>> TOP_LEVEL_EXPRESSION = Key.create("TOP_LEVEL_EXPRESSION");
-
   @NotNull
-  static PsiExpression getTopLevelExpression(@NotNull final PsiExpression expression) {
-    if (expression instanceof PsiBinaryExpression || expression.getParent() instanceof PsiBinaryExpression) {  //can be large, cache
-      CachedValue<PsiExpression> cachedValue = expression.getUserData(TOP_LEVEL_EXPRESSION);
-      if (cachedValue == null) {
-        expression.putUserData(TOP_LEVEL_EXPRESSION, cachedValue = CachedValuesManager.getManager(expression.getProject()).createCachedValue(new CachedValueProvider<PsiExpression>() {
-          @Nullable
-          @Override
-          public Result<PsiExpression> compute() {
-            PsiExpression topLevel = getTopLevel(expression);
-            CachedValue<PsiExpression> cachedValue = expression.getUserData(TOP_LEVEL_EXPRESSION);
-            assert cachedValue != null;
-            int i = 0;
-            for (PsiElement element = expression; element != topLevel; element = element.getParent(), i++) {
-              if (i % 10 == 0) {   // optimization: store up link to the top level expression in each 10nth element
-                element.putUserData(TOP_LEVEL_EXPRESSION, cachedValue);
-              }
-            }
-            return Result.create(topLevel, expression, PsiModificationTracker.MODIFICATION_COUNT);
-          }
-        }, false));
-      }
-      return cachedValue.getValue();
-    }
-    return getTopLevel(expression);
-  }
-
-  @NotNull
-  private static PsiExpression getTopLevel(@NotNull PsiExpression expression) {
+  static PsiExpression getTopLevelExpression(@NotNull PsiExpression expression) {
     while (expression.getParent() instanceof PsiExpression) {
       final PsiExpression parent = (PsiExpression)expression.getParent();
       if (parent instanceof PsiConditionalExpression &&
           ((PsiConditionalExpression)parent).getCondition() == expression) break;
       expression = parent;
       if (expression instanceof PsiAssignmentExpression) break;
-      if (expression instanceof PsiBinaryExpression) {
-        CachedValue<PsiExpression> value = expression.getUserData(TOP_LEVEL_EXPRESSION);
-        if (value != null) {
-          return value.getValue(); // optimization: use caching for big hierarchies
-        }
-      }
     }
     return expression;
   }

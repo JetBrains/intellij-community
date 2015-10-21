@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.profiling.ResolveProfiler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -62,7 +63,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
-import com.intellij.util.profiling.ResolveProfiler;
 
 import java.util.*;
 
@@ -191,7 +191,21 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       ResolverProcessor classProcessor = new ClassResolverProcessor(name, this, kinds);
       resolveRunner.resolveImpl(classProcessor);
       classCandidates = classProcessor.getCandidates();
-      if (classCandidates.length > 0 && containsPackage(classCandidates)) return classCandidates;
+      if (classCandidates.length > 0 && containsPackage(classCandidates)) {
+        final PsiElement firstNonReferenceExprParent = PsiTreeUtil.skipParentsOfType(this, GrReferenceExpressionImpl.class);
+        final GrReferenceExpressionImpl topRef = (GrReferenceExpressionImpl)PsiTreeUtil.findFirstParent(this, new Condition<PsiElement>() {
+          @Override
+          public boolean value(PsiElement parent) {
+            return parent.getParent() == firstNonReferenceExprParent && parent instanceof GrReferenceExpressionImpl;
+          }
+        });
+        if (topRef != null) {
+          final String fqn = topRef.getTextSkipWhiteSpaceAndComments();
+          if (JavaPsiFacade.getInstance(getProject()).findClass(fqn, getResolveScope()) != null) {
+            return classCandidates;
+          }
+        }
+      }
     }
 
     //if reference expression is in class we need to return field instead of accessor method
@@ -569,8 +583,14 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   private static final ResolveCache.PolyVariantResolver<GrReferenceExpressionImpl> POLY_RESOLVER = new ResolveCache.PolyVariantResolver<GrReferenceExpressionImpl>() {
     @Override
     @NotNull
-    public GroovyResolveResult[] resolve(@NotNull GrReferenceExpressionImpl refExpr, boolean incompleteCode) {
-      return refExpr.doPolyResolve(incompleteCode, true);
+    public GroovyResolveResult[] resolve(@NotNull final GrReferenceExpressionImpl refExpr, final boolean incompleteCode) {
+      final GroovyResolveResult[] result = RecursionManager.doPreventingRecursion(refExpr, true, new Computable<GroovyResolveResult[]>() {
+        @Override
+        public GroovyResolveResult[] compute() {
+          return refExpr.doPolyResolve(incompleteCode, true);
+        }
+      });
+      return result == null ? GroovyResolveResult.EMPTY_ARRAY : result;
     }
   };
   private static final OurTypesCalculator TYPES_CALCULATOR = new OurTypesCalculator();

@@ -37,6 +37,26 @@
       <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
     </action>
 
+    <action id="StubHierarchy" class="com.intellij.psi.stubsHierarchy.impl.test.BuildStubsHierarchyAction" text="Build Stub Hierarchy">
+      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
+    </action>
+
+    <action id="TestStubHierarchy" class="com.intellij.psi.stubsHierarchy.impl.test.TestStubHierarchyAction" text="Test Stub Hierarchy">
+      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
+    </action>
+
+    <action id="LogSubtypes" class="com.intellij.psi.stubsHierarchy.impl.test.LogSubtypesAction" text="Log Subtypes">
+      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
+    </action>
+
+    <action id="CountInheritors" class="com.intellij.psi.stubsHierarchy.impl.test.GetAllInheritorsAction" text="Count Inheritors">
+      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
+    </action>
+
+    <action id="ClearSubtypes" class="com.intellij.psi.stubsHierarchy.impl.test.ClearSubtypesAction" text="Clear Subtypes">
+      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
+    </action>
+
     <group id="AnalyzeJavaMenu">
       <action id="ShowPackageCycles" class="com.intellij.cyclicDependencies.actions.CyclicDependenciesAction"/>
       <separator/>
@@ -108,6 +128,10 @@
       <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="ForceRunToCursor"/>
       <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="first"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" anchor="before" relative-to-action="RunToCursor"/>
+    </action>
+
+    <action id="Debugger.ForceEarlyReturn" class="com.intellij.debugger.actions.ForceEarlyReturnAction">
+      <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
     </action>
 
     <action id="Debugger.ShowLibraryFrames" class="com.intellij.debugger.actions.ShowLibraryFramesAction">

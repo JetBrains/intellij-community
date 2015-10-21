@@ -172,7 +172,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     });
   }
 
-  protected boolean showTabForType(OrderRootType type) {
+  protected boolean showTabForType(@NotNull OrderRootType type) {
     return ((SdkType) mySdk.getSdkType()).isRootTypeApplicable(type);
   }
 

@@ -139,20 +139,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   @Override
   protected void collectAllowedRoots(final List<String> roots) throws IOException {
     roots.add(myJdkHome);
-    FileUtil.processFilesRecursively(new File(myJdkHome), new Processor<File>() {
-      @Override
-      public boolean process(File file) {
-        try {
-          String path = file.getCanonicalPath();
-          if (!FileUtil.isAncestor(myJdkHome, path, false)) {
-            roots.add(path);
-          }
-        }
-        catch (IOException ignore) { }
-        return true;
-      }
-    });
-
+    roots.addAll(collectRootsInside(myJdkHome));
     roots.add(PathManager.getConfigPath());
   }
 
@@ -188,6 +175,11 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
       }
     });
     super.importProject();
+  }
+
+  @Override
+  protected void importProject(@NonNls @Language("Groovy") String config) throws IOException {
+    super.importProject(config);
   }
 
   @Override

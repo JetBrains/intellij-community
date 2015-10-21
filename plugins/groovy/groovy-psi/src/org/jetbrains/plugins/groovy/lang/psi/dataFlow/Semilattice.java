@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,17 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 
 /**
  * @author ven
  */
 public interface Semilattice<E> {
-  E join(ArrayList<E> ins);
+
+  @NotNull
+  E join(@NotNull ArrayList<E> ins);
 
   boolean eq(E e1, E e2);
 }

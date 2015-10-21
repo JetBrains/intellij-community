@@ -81,12 +81,12 @@ public class ProjectStartupConfigurationBase implements PersistentStateComponent
     setList(names);
   }
 
-  public boolean deleteConfiguration(String name) {
+  public boolean deleteConfiguration(String id) {
     final List<ConfigurationDescriptor> list = getList();
     final Iterator<ConfigurationDescriptor> iterator = list.iterator();
     while (iterator.hasNext()) {
       final ConfigurationDescriptor descriptor = iterator.next();
-      if (descriptor.getName().equals(name)) {
+      if (descriptor.getId().equals(id)) {
         iterator.remove();
         return true;
       }

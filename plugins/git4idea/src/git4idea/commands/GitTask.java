@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,21 +38,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * A Task to run the given GitHandler with ability to cancel it.
- *
- * <b>Cancellation</b> is implemented with a {@link java.util.Timer} which checks whether the ProgressIndicator was cancelled and kills
- * the GitHandler in that case.
- *
- * A GitTask may be executed synchronously ({@link #executeModal()} or asynchronously ({@link #executeAsync(GitTask.ResultHandler)}.
- * Result of the execution is encapsulated in {@link GitTaskResult}.
- *
- * <p>
- * <b>GitTaskResultHandler</b> is called from AWT-thread. Use {@link #setExecuteResultInAwt(boolean) setExecuteResultInAwt(false)}
- * to execute the result {@link com.intellij.openapi.application.Application#executeOnPooledThread(Runnable) on the pooled thread}.
- * </p>
- *
- * @author Kirill Likhodedov
+ * @deprecated All Git commands are cancellable when called via {@link GitHandler}. <br/>
+ * To execute the command synchronously, call {@link GitHandler#runInCurrentThread(Runnable)}
+ * or better {@link Git#runCommand(Computable)}.<br/>
+ * To execute in the background or under a modal progress, use the standard {@link Task}. <br/>
+ * To watch the progress, call {@link GitStandardProgressAnalyzer#createListener(ProgressIndicator)}.
  */
+@Deprecated
 public class GitTask {
 
   private static final Logger LOG = Logger.getInstance(GitTask.class);

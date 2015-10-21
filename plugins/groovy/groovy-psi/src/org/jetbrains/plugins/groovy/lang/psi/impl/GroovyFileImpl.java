@@ -463,10 +463,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   @Override
   public PsiElement getContext() {
-    if (myContext != null) {
-      return myContext;
-    }
-    return super.getContext();
+    return myContext != null && myContext.isValid() ? myContext : super.getContext();
   }
 
   @Override

@@ -84,7 +84,7 @@ class DonePromise<T> extends Promise<T> implements Getter<T> {
   }
 
   @Override
-  void notify(@NotNull AsyncPromise<T> child) {
+  public void notify(@NotNull AsyncPromise<T> child) {
     child.setResult(result);
   }
 }

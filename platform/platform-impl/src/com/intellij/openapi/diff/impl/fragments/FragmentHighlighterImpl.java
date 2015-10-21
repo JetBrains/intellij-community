@@ -18,6 +18,7 @@ package com.intellij.openapi.diff.impl.fragments;
 import com.intellij.openapi.diff.actions.MergeOperations;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.highlighting.DiffMarkup;
+import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
@@ -69,12 +70,13 @@ public class FragmentHighlighterImpl implements FragmentHighlighter {
   private static void addModifyActions(final LineFragment fragment, DiffMarkup wrapper, DiffMarkup otherWrapper) {
     if (fragment.isEqual()) return;
     if (fragment.isHasLineChildren()) return;
-    TextRange range = fragment.getRange(wrapper.getSide());
-    TextRange otherRange = fragment.getRange(wrapper.getSide().otherSide());
+    FragmentSide side = wrapper.getSide();
+    TextRange range = fragment.getRange(side);
+    TextRange otherRange = fragment.getRange(side.otherSide());
     Document document = wrapper.getDocument();
     Document otherDocument = otherWrapper.getDocument();
-    wrapper.addAction(MergeOperations.mostSensible(document, otherDocument, range, otherRange), range.getStartOffset());
-    otherWrapper.addAction(MergeOperations.mostSensible(otherDocument, document, otherRange, range), otherRange.getStartOffset());
+    wrapper.addAction(MergeOperations.mostSensible(document, otherDocument, range, otherRange, side), range.getStartOffset());
+    otherWrapper.addAction(MergeOperations.mostSensible(otherDocument, document, otherRange, range, side.otherSide()), otherRange.getStartOffset());
   }
 
   private static void addSeparatingLine(@NotNull LineFragment fragment, @NotNull DiffMarkup appender, int startLine, int endLine) {

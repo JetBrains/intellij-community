@@ -24,10 +24,11 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
-import com.intellij.openapi.externalSystem.model.*;
+import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.Key;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
-import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
@@ -237,7 +238,7 @@ public class ExternalSystemApiUtil {
   }
 
   public static MultiMap<Key<?>, DataNode<?>> recursiveGroup(@NotNull Collection<DataNode<?>> nodes) {
-    MultiMap<Key<?>, DataNode<?>> result = new KeyOrderedMultiMap<Key<?>, DataNode<?>>();
+    MultiMap<Key<?>, DataNode<?>> result = new ContainerUtil.KeyOrderedMultiMap<Key<?>, DataNode<?>>();
     Queue<Collection<DataNode<?>>> queue = ContainerUtil.newLinkedList();
     queue.add(nodes);
     while (!queue.isEmpty()) {
@@ -252,41 +253,29 @@ public class ExternalSystemApiUtil {
 
   @NotNull
   public static MultiMap<Key<?>, DataNode<?>> group(@NotNull Collection<DataNode<?>> nodes) {
-    return groupBy(nodes, GROUPER);
+    return ContainerUtil.groupBy(nodes, GROUPER);
+  }
+
+  @NotNull
+  public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<DataNode<V>> nodes, final Class<K> moduleDataClass) {
+    return ContainerUtil.groupBy(nodes, new NullableFunction<DataNode<V>, DataNode<K>>() {
+      @Nullable
+      @Override
+      public DataNode<K> fun(DataNode<V> node) {
+        return node.getParent(moduleDataClass);
+      }
+    });
   }
 
   @NotNull
   public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<DataNode<V>> nodes, @NotNull final Key<K> key) {
-    return groupBy(nodes, new NullableFunction<DataNode<V>, DataNode<K>>() {
+    return ContainerUtil.groupBy(nodes, new NullableFunction<DataNode<V>, DataNode<K>>() {
       @Nullable
       @Override
       public DataNode<K> fun(DataNode<V> node) {
         return node.getDataNode(key);
       }
     });
-  }
-
-  @NotNull
-  public static <K, V> MultiMap<K, V> groupBy(@NotNull Collection<V> nodes, @NotNull NullableFunction<V, K> grouper) {
-    MultiMap<K, V> result = MultiMap.createLinked();
-    for (V data : nodes) {
-      K key = grouper.fun(data);
-      if (key == null) {
-        LOG.warn(String.format(
-          "Skipping entry '%s' during grouping. Reason: it's not possible to build a grouping key with grouping strategy '%s'. "
-          + "Given entries: %s",
-          data,
-          grouper.getClass(),
-          nodes));
-        continue;
-      }
-      result.putValue(key, data);
-    }
-
-    if (!result.isEmpty() && result.keySet().iterator().next() instanceof Comparable) {
-      return new KeyOrderedMultiMap<K, V>(result);
-    }
-    return result;
   }
 
   @SuppressWarnings("unchecked")
@@ -348,17 +337,7 @@ public class ExternalSystemApiUtil {
   @SuppressWarnings("unchecked")
   @NotNull
   public static <T> Collection<DataNode<T>> findAll(@NotNull DataNode<?> parent, @NotNull Key<T> key) {
-    Collection<DataNode<T>> result = null;
-    for (DataNode<?> child : parent.getChildren()) {
-      if (!key.equals(child.getKey())) {
-        continue;
-      }
-      if (result == null) {
-        result = ContainerUtilRt.newArrayList();
-      }
-      result.add((DataNode<T>)child);
-    }
-    return result == null ? Collections.<DataNode<T>>emptyList() : result;
+    return getChildren(parent, key);
   }
 
   public static void visit(@Nullable DataNode node, @NotNull Consumer<DataNode<?>> consumer) {
@@ -651,24 +630,13 @@ public class ExternalSystemApiUtil {
       return false;
     }
 
-    Set<String> externalModulePaths = ContainerUtilRt.newHashSet();
-    for (DataNode<ModuleData> moduleNode : findAll(externalProject, ProjectKeys.MODULE)) {
-      if(!moduleNode.isIgnored()) {
-        externalModulePaths.add(moduleNode.getData().getLinkedExternalProjectPath());
-      }
-    }
-    externalModulePaths.remove(linkedExternalProjectPath);
-
     for (Module module : ModuleManager.getInstance(ideProject).getModules()) {
-      String path = getExternalProjectPath(module);
-      if (!StringUtil.isEmpty(path) && !externalModulePaths.remove(path)) {
+      if (!isExternalSystemAwareModule(projectData.getOwner(), module)) {
         return false;
       }
     }
-    return externalModulePaths.isEmpty();
+    return true;
   }
-
-
 
   public static void storeLastUsedExternalProjectPath(@Nullable String path, @NotNull ProjectSystemId externalSystemId) {
     if (path != null) {
@@ -916,32 +884,16 @@ public class ExternalSystemApiUtil {
     return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION_KEY) : null;
   }
 
+  @Nullable
+  @Contract(pure=true)
+  public static String getExternalModuleType(@Nullable Module module) {
+    return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_TYPE_KEY) : null;
+  }
+
   public static void subscribe(@NotNull Project project,
                                @NotNull ProjectSystemId systemId,
                                @NotNull ExternalSystemSettingsListener listener) {
     //noinspection unchecked
     getSettings(project, systemId).subscribe(listener);
-  }
-
-  public static class KeyOrderedMultiMap<K, V> extends MultiMap<K, V> {
-
-    public KeyOrderedMultiMap() {
-    }
-
-    public KeyOrderedMultiMap(@NotNull MultiMap<? extends K, ? extends V> toCopy) {
-      super(toCopy);
-    }
-
-    @NotNull
-    @Override
-    protected Map<K, Collection<V>> createMap() {
-      return new TreeMap<K, Collection<V>>();
-    }
-
-    @NotNull
-    @Override
-    protected Map<K, Collection<V>> createMap(int initialCapacity, float loadFactor) {
-      return new TreeMap<K, Collection<V>>();
-    }
   }
 }

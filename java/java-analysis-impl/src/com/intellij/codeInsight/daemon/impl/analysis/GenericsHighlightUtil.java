@@ -333,12 +333,6 @@ public class GenericsHighlightUtil {
         JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(extendFrom, resolveResult.getSubstitutor());
       QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createExtendsListFix(aClass, type, false), null);
     }
-    if (errorResult == null && languageLevel.isAtLeast(LanguageLevel.JDK_1_7) &&
-        referenceElements.length > 1) {
-      //todo suppress erased methods which come from the same class
-      final Collection<HighlightInfo> result = checkOverrideEquivalentMethods(aClass);
-      return result != null && !result.isEmpty() ? result.iterator().next() : null;
-    }
     return errorResult;
   }
 
@@ -740,7 +734,7 @@ public class GenericsHighlightUtil {
       if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == aClass) return null;
     }
 
-    if (PsiUtil.isCompileTimeConstant(field)) return null;
+    if (PsiUtil.isCompileTimeConstant((PsiVariable)field)) return null;
 
     String description = JavaErrorMessages.message(
       "illegal.to.access.static.member.from.enum.constructor.or.instance.initializer",
@@ -847,41 +841,23 @@ public class GenericsHighlightUtil {
   static HighlightInfo checkInstanceOfGenericType(PsiInstanceOfExpression expression) {
     final PsiTypeElement checkTypeElement = expression.getCheckType();
     if (checkTypeElement == null) return null;
-    PsiElement ref = checkTypeElement.getInnermostComponentReferenceElement();
-    while (ref instanceof PsiJavaCodeReferenceElement) {
-      final HighlightInfo result = isIllegalForInstanceOf((PsiJavaCodeReferenceElement)ref, checkTypeElement);
-      if (result != null) return result;
-      ref = ((PsiQualifiedReference)ref).getQualifier();
-    }
-    return null;
+    return isIllegalForInstanceOf(checkTypeElement.getType(), checkTypeElement);
   }
 
-  private static HighlightInfo isIllegalForInstanceOf(PsiJavaCodeReferenceElement ref, final PsiTypeElement typeElement) {
-    final PsiElement resolved = ref.resolve();
+  /**
+   * 15.20.2 Type Comparison Operator instanceof
+   * ReferenceType mentioned after the instanceof operator is reifiable
+   */
+  private static HighlightInfo isIllegalForInstanceOf(PsiType type, final PsiTypeElement typeElement) {
+    final PsiClass resolved = PsiUtil.resolveClassInClassTypeOnly(type);
     if (resolved instanceof PsiTypeParameter) {
       String description = JavaErrorMessages.message("generics.cannot.instanceof.type.parameters");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(description).create();
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
     }
 
-    if (resolved instanceof PsiClass) {
-      final PsiClass containingClass = ((PsiClass)resolved).getContainingClass();
-      if (containingClass != null &&
-          ref.getQualifier() == null &&
-          containingClass.getTypeParameters().length > 0 &&
-          !((PsiClass)resolved).hasModifierProperty(PsiModifier.STATIC) &&
-          ((PsiClass)resolved).getTypeParameters().length == 0) {
-        String description = JavaErrorMessages.message("illegal.generic.type.for.instanceof");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
-      }
-    }
-
-    final PsiType[] parameters = ref.getTypeParameters();
-    for (PsiType parameterType : parameters) {
-      if (parameterType != null &&
-          !(parameterType instanceof PsiWildcardType && ((PsiWildcardType)parameterType).getBound() == null)) {
-        String description = JavaErrorMessages.message("illegal.generic.type.for.instanceof");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
-      }
+    if (!JavaGenericsUtil.isReifiableType(type)) {
+      String description = JavaErrorMessages.message("illegal.generic.type.for.instanceof");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
     }
 
     return null;
@@ -1407,6 +1383,20 @@ public class GenericsHighlightUtil {
         final String notAccessibleMessage = isSuperTypeAccessible(type, classes, resolveScope, factory);
         if (notAccessibleMessage != null) {
           return notAccessibleMessage;
+        }
+      }
+    }
+    return null;
+  }
+
+  public static HighlightInfo checkTypeParameterOverrideEquivalentMethods(PsiClass aClass, LanguageLevel level) {
+    if (aClass instanceof PsiTypeParameter && level.isAtLeast(LanguageLevel.JDK_1_7)) {
+      final PsiReferenceList extendsList = aClass.getExtendsList();
+      if (extendsList != null && extendsList.getReferenceElements().length > 1) {
+        //todo suppress erased methods which come from the same class
+        final Collection<HighlightInfo> result = GenericsHighlightUtil.checkOverrideEquivalentMethods(aClass);
+        if (result != null && !result.isEmpty()) {
+          return result.iterator().next();
         }
       }
     }

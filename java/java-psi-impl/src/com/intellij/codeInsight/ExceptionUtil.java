@@ -266,7 +266,12 @@ public class ExceptionUtil {
       unhandledExceptions = getUnhandledExceptions(expression, topElement, includeSelfCalls);
     }
     else if (element instanceof PsiMethodReferenceExpression) {
-      unhandledExceptions = getUnhandledExceptions((PsiMethodReferenceExpression)element, topElement);
+      PsiExpression qualifierExpression = ((PsiMethodReferenceExpression)element).getQualifierExpression();
+      return qualifierExpression != null ? collectUnhandledExceptions(qualifierExpression, topElement, null, false) 
+                                         : null;
+    }
+    else if (element instanceof PsiLambdaExpression) {
+      return null;
     }
     else if (element instanceof PsiThrowStatement) {
       PsiThrowStatement statement = (PsiThrowStatement)element;
@@ -326,7 +331,13 @@ public class ExceptionUtil {
     }
 
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      foundExceptions = collectUnhandledExceptions(child, topElement, foundExceptions, includeSelfCalls);
+      Set<PsiClassType> foundInChild = collectUnhandledExceptions(child, topElement, foundExceptions, includeSelfCalls);
+      if (foundExceptions == null) {
+        foundExceptions = foundInChild;
+      }
+      else if (foundInChild != null) {
+        foundExceptions.addAll(foundInChild);
+      }
     }
 
     return foundExceptions;

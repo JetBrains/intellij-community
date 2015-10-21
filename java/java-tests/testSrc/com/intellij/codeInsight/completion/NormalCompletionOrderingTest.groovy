@@ -696,8 +696,9 @@ interface TxANotAnno {}
   }
 
   public void testPreferValueTypesReturnedFromMethod() {
-    checkPreferredItems 0, 'StringBuffer', 'String', 'Serializable', 'SomeInterface', 'SomeOtherClass'
+    checkPreferredItems 0, 'StringBuffer', 'String', 'Serializable', 'SomeInterface', 'SomeInterface', 'SomeOtherClass'
     assert 'SomeInterface<String>' == LookupElementPresentation.renderElement(myFixture.lookupElements[3]).itemText
+    assert 'SomeInterface' == LookupElementPresentation.renderElement(myFixture.lookupElements[4]).itemText
   }
 
   public void testPreferCastTypesHavingSpecifiedMethod() {

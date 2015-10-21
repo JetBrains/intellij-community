@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public class CompositeFilter implements Filter, FilterMixin {
 
   private final List<Filter> myFilters = new ArrayList<Filter>();
   private boolean myIsAnyHeavy;
-  private boolean forceUseAllFilters = false;
+  private boolean forceUseAllFilters;
   private final DumbService myDumbService;
 
   public CompositeFilter(@NotNull Project project) {
@@ -138,7 +138,7 @@ public class CompositeFilter implements Filter, FilterMixin {
   }
 
   @Override
-  public void applyHeavyFilter(Document copiedFragment, int startOffset, int startLineNumber, Consumer<AdditionalHighlight> consumer) {
+  public void applyHeavyFilter(@NotNull Document copiedFragment, int startOffset, int startLineNumber, @NotNull Consumer<AdditionalHighlight> consumer) {
     final boolean dumb = myDumbService.isDumb();
     List<Filter> filters = myFilters;
     int count = filters.size();
@@ -152,6 +152,7 @@ public class CompositeFilter implements Filter, FilterMixin {
     }
   }
 
+  @NotNull
   @Override
   public String getUpdateMessage() {
     final boolean dumb = myDumbService.isDumb();

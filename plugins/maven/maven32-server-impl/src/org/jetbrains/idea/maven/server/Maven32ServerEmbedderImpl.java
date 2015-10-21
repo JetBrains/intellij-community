@@ -1185,9 +1185,18 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
     try {
       setConsoleAndIndicator(null, null);
 
-      ((CustomMaven3ArtifactFactory)getComponent(ArtifactFactory.class)).reset();
-      ((CustomMaven32ArtifactResolver)getComponent(ArtifactResolver.class)).reset();
-      ((CustomMaven3RepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).reset();
+      final ArtifactFactory artifactFactory = getComponent(ArtifactFactory.class);
+      if (artifactFactory instanceof CustomMaven3ArtifactFactory) {
+        ((CustomMaven3ArtifactFactory)artifactFactory).reset();
+      }
+      final ArtifactResolver artifactResolver = getComponent(ArtifactResolver.class);
+      if(artifactResolver instanceof CustomMaven32ArtifactResolver) {
+        ((CustomMaven32ArtifactResolver)artifactResolver).reset();
+      }
+      final RepositoryMetadataManager repositoryMetadataManager = getComponent(RepositoryMetadataManager.class);
+      if(repositoryMetadataManager instanceof CustomMaven3RepositoryMetadataManager) {
+        ((CustomMaven3RepositoryMetadataManager)repositoryMetadataManager).reset();
+      }
       //((CustomWagonManager)getComponent(WagonManager.class)).reset();
     }
     catch (Exception e) {

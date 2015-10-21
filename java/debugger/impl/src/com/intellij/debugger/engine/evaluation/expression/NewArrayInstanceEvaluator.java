@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@ package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.*;
 
@@ -60,7 +60,7 @@ class NewArrayInstanceEvaluator implements Evaluator {
     Object[] initialValues = null;
     if (myDimensionEvaluator != null) {
       Object o = myDimensionEvaluator.evaluate(context);
-      if (!(o instanceof Value && DebuggerUtilsEx.isNumeric((Value)o))) {
+      if (!(o instanceof Value && DebuggerUtils.isNumeric((Value)o))) {
         throw EvaluateExceptionUtil.createEvaluateException(
           DebuggerBundle.message("evaluation.error.array.dimention.numeric.value.expected")
         );

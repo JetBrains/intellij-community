@@ -256,6 +256,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
           trigger.prepare();
           for (PatchApplier applier : group) {
             refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.executeWritable()));
+            if (refStatus.get() == ApplyPatchStatus.ABORT) break;
           }
         }
       }, VcsBundle.message("patch.apply.command"), null);
@@ -306,9 +307,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
 
     try {
       markInternalOperation(textPatches, true);
-
-      final ApplyPatchStatus status = actualApply(myVerifier, myCommitContext);
-      return status;
+      return actualApply(myVerifier, myCommitContext);
     }
     finally {
       markInternalOperation(textPatches, false);
@@ -396,6 +395,8 @@ public class PatchApplier<BinaryType extends FilePatch> {
     try {
       status = applyList(textPatches, context, status, commitContext);
 
+      if (status == ApplyPatchStatus.ABORT) return status;
+
       if (myCustomForBinaries == null) {
         status = applyList(verifier.getBinaryPatches(), context, status, commitContext);
       } else {
@@ -431,14 +432,13 @@ public class PatchApplier<BinaryType extends FilePatch> {
     for (Pair<VirtualFile, T> patch : patches) {
       ApplyPatchStatus patchStatus = ApplyPatchAction.applyOnly(myProject, patch.getSecond(), context, patch.getFirst(), commiContext,
                                                                 myReverseConflict, myLeftConflictPanelTitle, myRightConflictPanelTitle);
-      myVerifier.doMoveIfNeeded(patch.getFirst());
 
+      if (patchStatus == ApplyPatchStatus.ABORT) return patchStatus;
       status = ApplyPatchStatus.and(status, patchStatus);
-      if (patchStatus != ApplyPatchStatus.FAILURE) {
+      if (patchStatus == ApplyPatchStatus.FAILURE) return status;
+      if (patchStatus != ApplyPatchStatus.SKIP) {
+        myVerifier.doMoveIfNeeded(patch.getFirst());
         myRemainingPatches.remove(patch.getSecond().getPatch());
-      } else {
-        // interrupt if failure
-        return status;
       }
     }
     return status;

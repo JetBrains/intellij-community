@@ -35,8 +35,9 @@ class AnchorElementInfo extends SelfElementInfo {
   private volatile long myStubElementTypeAndId; // stubId in the lower 32 bits; stubElementTypeIndex in the high 32 bits packed together for atomicity
 
   AnchorElementInfo(@NotNull PsiElement anchor, @NotNull PsiFile containingFile) {
-    super(containingFile.getProject(), ProperTextRange.create(anchor.getTextRange()), anchor.getClass(), containingFile, LanguageUtil.getRootLanguage(
-      anchor), false);
+    super(containingFile.getProject(), ProperTextRange.create(anchor.getTextRange()),
+          AnchorTypeInfo.obtainInfo(anchor, LanguageUtil.getRootLanguage(containingFile)),
+          containingFile, false);
     assert !(anchor instanceof PsiFile) : "FileElementInfo must be used for file: "+anchor;
     myStubElementTypeAndId = pack(-1, null);
   }
@@ -45,7 +46,9 @@ class AnchorElementInfo extends SelfElementInfo {
                     @NotNull PsiFileWithStubSupport containingFile,
                     int stubId,
                     @NotNull IStubElementType stubElementType) {
-    super(containingFile.getProject(), new ProperTextRange(0, 0), anchor.getClass(), containingFile, containingFile.getLanguage(), false);
+    super(containingFile.getProject(), null,
+          AnchorTypeInfo.obtainInfo(anchor.getClass(), stubElementType, LanguageUtil.getRootLanguage(containingFile)),
+          containingFile, false);
     myStubElementTypeAndId = pack(stubId, stubElementType);
     assert !(anchor instanceof PsiFile) : "FileElementInfo must be used for file: "+anchor;
   }
@@ -78,7 +81,7 @@ class AnchorElementInfo extends SelfElementInfo {
 
     PsiFile file = restoreFile();
     if (file == null) return null;
-    PsiElement anchor = findElementInside(file, psiRange.getStartOffset(), psiRange.getEndOffset(), myType, myLanguage);
+    PsiElement anchor = findElementInside(file, psiRange.getStartOffset(), psiRange.getEndOffset(), myType);
     if (anchor == null) return null;
 
     TextRange range = anchor.getTextRange();
@@ -128,8 +131,9 @@ class AnchorElementInfo extends SelfElementInfo {
       // switch to tree
       PsiElement anchor = AnchorElementInfoFactory.getAnchor(element);
       if (anchor == null) anchor = element;
-      myType = anchor.getClass();
+      myType = AnchorTypeInfo.obtainInfo(anchor, myType.getFileLanguage());
       setRange(anchor.getTextRange());
+      myMarkerCache.rangeChanged();
       myStubElementTypeAndId = pack(-1, null);
     }
   }

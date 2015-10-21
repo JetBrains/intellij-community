@@ -35,6 +35,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,7 +48,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 @SuppressWarnings("ConstantConditions")
@@ -166,7 +170,7 @@ public class FileTypesTest extends PlatformTestCase {
     File file = createTempFile(".svn", "");
     VirtualFile vFile = getVirtualFile(file);
     assertTrue(FileTypeManager.getInstance().isFileIgnored(vFile));
-    delete(vFile);
+    VfsTestUtil.deleteFile(vFile);
 
     file = createTempFile("a.txt", "");
     vFile = getVirtualFile(file);
@@ -601,9 +605,9 @@ public class FileTypesTest extends PlatformTestCase {
     });
   }
 
-  public void testIfDetectorRunThenIdeaReopenedTheDetectorShouldBeReRun() throws IOException {
-    final UserBinaryFileType myType = new UserBinaryFileType();
-    myType.setName("myType");
+  public void testIfDetectorRanThenIdeaReopenedTheDetectorShouldBeReRun() throws IOException {
+    final UserBinaryFileType stuffType = new UserBinaryFileType();
+    stuffType.setName("stuffType");
 
     final Set<VirtualFile> detectorCalled = ContainerUtil.newConcurrentSet();
 
@@ -612,7 +616,7 @@ public class FileTypesTest extends PlatformTestCase {
       @Override
       public FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {
         detectorCalled.add(file);
-        FileType result = FileUtil.isHashBangLine(firstCharsIfText, "stuff") ? myType : null;
+        FileType result = FileUtil.isHashBangLine(firstCharsIfText, "stuff") ? stuffType : null;
         log("T: my detector for file "+file.getName()+" run. result="+(result == null ? null : result.getName()));
         return result;
       }
@@ -635,7 +639,7 @@ public class FileTypesTest extends PlatformTestCase {
       log("T: ------ my");
       setFileText(file,  "#!stuff\nxx");
       ensureRedetected(file, detectorCalled);
-      assertTrue(file.getFileType().toString(), file.getFileType() == myType);
+      assertEquals(stuffType, file.getFileType());
 
       log("T: ------ reload");
       myFileTypeManager.drainReDetectQueue();
@@ -643,7 +647,7 @@ public class FileTypesTest extends PlatformTestCase {
       file.putUserData(FileTypeManagerImpl.DETECTED_FROM_CONTENT_FILE_TYPE_KEY, null);
 
       ensureRedetected(file, detectorCalled);
-      assertTrue(file.getFileType().toString(), file.getFileType() == myType);
+      assertTrue(file.getFileType().toString(), file.getFileType() == stuffType);
       log("T: ------");
     }
     finally {

@@ -18,6 +18,7 @@ package com.jetbrains.python.inspections.quickfix;
 import com.google.common.collect.Lists;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
@@ -38,7 +39,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
@@ -78,8 +79,9 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
     final List<GenerateBinaryStubsFix> result = new ArrayList<GenerateBinaryStubsFix>(names.size());
     if (importStatementBase instanceof PyFromImportStatement && names.isEmpty()) {
       final QualifiedName qName = ((PyFromImportStatement)importStatementBase).getImportSourceQName();
-      if (qName != null)
+      if (qName != null) {
         result.add(new GenerateBinaryStubsFix(importStatementBase, qName.toString()));
+      }
     }
     for (final String qualifiedName : names) {
       result.add(new GenerateBinaryStubsFix(importStatementBase, qualifiedName));
@@ -118,6 +120,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
 
   /**
    * Returns fix task that is used to generate stubs
+   *
    * @param fileToRunTaskIn file where task should run
    * @return task itself
    */
@@ -170,12 +173,10 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
     indicator.setIndeterminate(false);
     final String homePath = mySdk.getHomePath();
     if (homePath == null) return false;
-    final ProcessOutput runResult = PySdkUtil.getProcessOutput(
-      new File(homePath).getParent(),
-      new String[]{
-        homePath,
-        PythonHelpersLocator.getHelperPath("extra_syspath.py"), myQualifiedName},
-      PythonSdkType.getVirtualEnvExtraEnv(homePath), 5000
+    GeneralCommandLine cmd = PythonHelper.EXTRA_SYSPATH.newCommandLine(homePath, Lists.newArrayList(myQualifiedName));
+    final ProcessOutput runResult = PySdkUtil.getProcessOutput(cmd,
+                                                               new File(homePath).getParent(),
+                                                               PythonSdkType.getVirtualEnvExtraEnv(homePath), 5000
     );
     if (runResult.getExitCode() == 0 && !runResult.isTimeout()) {
       final String extraPath = runResult.getStdout();

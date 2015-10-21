@@ -33,7 +33,7 @@ import java.util.*;
 /**
  * @author Dmitry Batkovich
  */
-class PseudoLambdaReplaceTemplate {
+public class PseudoLambdaReplaceTemplate {
   private final static Logger LOG = Logger.getInstance(PseudoLambdaReplaceTemplate.class);
 
   public enum LambdaRole {
@@ -512,7 +512,7 @@ class PseudoLambdaReplaceTemplate {
     return expression;
   }
 
-  private static String createPipelineHeadText(PsiExpression collectionExpression, boolean force) {
+  public static PsiExpression replaceTypeParameters(PsiExpression collectionExpression) {
     if (collectionExpression instanceof PsiNewExpression) {
       final PsiDiamondType.DiamondInferenceResult diamondResolveResult =
         PsiDiamondTypeImpl.resolveInferredTypesNoCheck((PsiNewExpression)collectionExpression, collectionExpression);
@@ -528,12 +528,16 @@ class PseudoLambdaReplaceTemplate {
       final PsiExpression copiedExpression = (PsiExpression) collectionExpression.copy();
       final PsiType newType = copiedExpression.getType();
       if (!currentType.equals(newType)) {
-        collectionExpression = AddTypeArgumentsFix.addTypeArguments(copiedExpression, currentType);
-        if (collectionExpression == null) {
-          return null;
-        }
+        final PsiExpression newExpression = AddTypeArgumentsFix.addTypeArguments(copiedExpression, currentType);
+        return newExpression == null ? collectionExpression : newExpression;
       }
     }
+    return collectionExpression;
+  }
+
+  private static String createPipelineHeadText(PsiExpression collectionExpression, boolean force) {
+    collectionExpression = replaceTypeParameters(collectionExpression);
+    if (collectionExpression == null) return null;
     final PsiType type = collectionExpression.getType();
     if (type instanceof PsiClassType) {
       final PsiClass resolved = ((PsiClassType)type).resolve();

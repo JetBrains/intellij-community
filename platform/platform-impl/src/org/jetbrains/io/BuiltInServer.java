@@ -17,6 +17,8 @@ package org.jetbrains.io;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.net.NetUtils;
 import io.netty.bootstrap.ServerBootstrap;
@@ -30,42 +32,22 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 public class BuiltInServer implements Disposable {
-  static final Logger LOG = Logger.getInstance(BuiltInServer.class);
-
   // Some antiviral software detect viruses by the fact of accessing these ports so we should not touch them to appear innocent.
   private static final int[] FORBIDDEN_PORTS = {6953, 6969, 6970};
 
-  private final ChannelRegistrar channelRegistrar = new ChannelRegistrar();
-  private final boolean isOwnerOfEventLoopGroup;
-
   private final EventLoopGroup eventLoopGroup;
   private final int port;
+  private final ChannelRegistrar channelRegistrar;
+  private final boolean isOwnerOfEventLoopGroup;
 
-  public boolean isRunning() {
-    return !channelRegistrar.isEmpty();
-  }
-
-  private BuiltInServer(@NotNull EventLoopGroup eventLoopGroup, int port, boolean isOwnerOfEventLoopGroup) {
+  private BuiltInServer(@NotNull EventLoopGroup eventLoopGroup,
+                        int port,
+                        @NotNull ChannelRegistrar channelRegistrar,
+                        boolean isOwnerOfEventLoopGroup) {
     this.eventLoopGroup = eventLoopGroup;
     this.port = port;
+    this.channelRegistrar = channelRegistrar;
     this.isOwnerOfEventLoopGroup = isOwnerOfEventLoopGroup;
-  }
-
-  @NotNull
-  public static BuiltInServer start(int workerCount, int firstPort, int portsCount, boolean tryAnyPort, @Nullable NotNullProducer<ChannelHandler> channelHandler) throws Throwable {
-    return start(new NioEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE), true, firstPort, portsCount, tryAnyPort, channelHandler);
-  }
-
-  @NotNull
-  public static BuiltInServer start(@NotNull EventLoopGroup eventLoopGroup, boolean isOwnerOfEventLoopGroup, int firstPort, int portsCount, boolean tryAnyPort, @Nullable NotNullProducer<ChannelHandler> channelHandler) throws Throwable {
-    ChannelRegistrar channelRegistrar = new ChannelRegistrar();
-    ServerBootstrap bootstrap = NettyUtil.nioServerBootstrap(eventLoopGroup);
-    configureChildHandler(bootstrap, channelRegistrar, channelHandler);
-    return new BuiltInServer(eventLoopGroup, bind(firstPort, portsCount, tryAnyPort, bootstrap, channelRegistrar), isOwnerOfEventLoopGroup);
-  }
-
-  public int getPort() {
-    return port;
   }
 
   @NotNull
@@ -73,7 +55,46 @@ public class BuiltInServer implements Disposable {
     return eventLoopGroup;
   }
 
-  static void configureChildHandler(@NotNull ServerBootstrap bootstrap, @NotNull final ChannelRegistrar channelRegistrar, final @Nullable NotNullProducer<ChannelHandler> channelHandler) {
+  public int getPort() {
+    return port;
+  }
+
+  public boolean isRunning() {
+    return !channelRegistrar.isEmpty();
+  }
+
+  @Override
+  public void dispose() {
+    channelRegistrar.close(isOwnerOfEventLoopGroup);
+    Logger.getInstance(BuiltInServer.class).info("web server stopped");
+  }
+
+  @NotNull
+  public static BuiltInServer start(int workerCount,
+                                    int firstPort,
+                                    int portsCount,
+                                    boolean tryAnyPort,
+                                    @Nullable NotNullProducer<ChannelHandler> handler) throws Exception {
+    return start(new NioEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE), true, firstPort, portsCount, tryAnyPort, handler);
+  }
+
+  @NotNull
+  public static BuiltInServer start(@NotNull EventLoopGroup eventLoopGroup,
+                                    boolean isEventLoopGroupOwner,
+                                    int firstPort,
+                                    int portsCount,
+                                    boolean tryAnyPort,
+                                    @Nullable NotNullProducer<ChannelHandler> handler) throws Exception {
+    ChannelRegistrar channelRegistrar = new ChannelRegistrar();
+    ServerBootstrap bootstrap = NettyUtil.nioServerBootstrap(eventLoopGroup);
+    configureChildHandler(bootstrap, channelRegistrar, handler);
+    int port = bind(firstPort, portsCount, tryAnyPort, bootstrap, channelRegistrar);
+    return new BuiltInServer(eventLoopGroup, port, channelRegistrar, isEventLoopGroupOwner);
+  }
+
+  static void configureChildHandler(@NotNull ServerBootstrap bootstrap,
+                                    @NotNull final ChannelRegistrar channelRegistrar,
+                                    final @Nullable NotNullProducer<ChannelHandler> channelHandler) {
     final PortUnificationServerHandler portUnificationServerHandler = channelHandler == null ? new PortUnificationServerHandler() : null;
     bootstrap.childHandler(new ChannelInitializer() {
       @Override
@@ -83,47 +104,41 @@ public class BuiltInServer implements Disposable {
     });
   }
 
-  public static boolean isPortForbidden(int port) {
-    for (int forbiddenPort : FORBIDDEN_PORTS) {
-      if (port == forbiddenPort) return true;
-    }
-    return false;
-  }
+  private static int bind(int firstPort,
+                          int portsCount,
+                          boolean tryAnyPort,
+                          @NotNull ServerBootstrap bootstrap,
+                          @NotNull ChannelRegistrar channelRegistrar) throws Exception {
+    InetAddress address = NetUtils.getLoopbackAddress();
 
-  private static int bind(int firstPort, int portsCount, boolean tryAnyPort, @NotNull ServerBootstrap bootstrap, @NotNull ChannelRegistrar channelRegistrar) throws Throwable {
-    InetAddress loopbackAddress = NetUtils.getLoopbackAddress();
     for (int i = 0; i < portsCount; i++) {
       int port = firstPort + i;
 
-      if (isPortForbidden(i)) {
+      if (ArrayUtil.indexOf(FORBIDDEN_PORTS, i) >= 0) {
         continue;
       }
 
-      ChannelFuture future = bootstrap.bind(loopbackAddress, port).awaitUninterruptibly();
+      ChannelFuture future = bootstrap.bind(address, port).awaitUninterruptibly();
       if (future.isSuccess()) {
         channelRegistrar.add(future.channel());
         return port;
       }
       else if (!tryAnyPort && i == (portsCount - 1)) {
-        throw future.cause();
+        ExceptionUtil.rethrowAll(future.cause());
       }
     }
 
-    LOG.info("We cannot bind to our default range, so, try to bind to any free port");
-    ChannelFuture future = bootstrap.bind(loopbackAddress, 0).awaitUninterruptibly();
+    Logger.getInstance(BuiltInServer.class).info("We cannot bind to our default range, so, try to bind to any free port");
+    ChannelFuture future = bootstrap.bind(address, 0).awaitUninterruptibly();
     if (future.isSuccess()) {
       channelRegistrar.add(future.channel());
       return ((InetSocketAddress)future.channel().localAddress()).getPort();
     }
     else {
-      throw future.cause();
+      ExceptionUtil.rethrowAll(future.cause());
     }
-  }
 
-  @Override
-  public void dispose() {
-    channelRegistrar.close(isOwnerOfEventLoopGroup);
-    LOG.info("web server stopped");
+    return -1;  // unreachable
   }
 
   public static void replaceDefaultHandler(@NotNull ChannelHandlerContext context, @NotNull ChannelHandler channelHandler) {

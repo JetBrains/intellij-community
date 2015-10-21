@@ -246,7 +246,7 @@
                     key="rmi.compiler.description" bundle="messages.CompilerBundle"/>
     </projectConfigurable>
 
-    <projectConfigurable groupId="language" instance="com.intellij.psi.templateLanguages.TemplateDataLanguageConfigurable" id="Template Data Languages" key="template.data.language.configurable" bundle="messages.LangBundle" />
+    <projectConfigurable groupId="language" instance="com.intellij.psi.templateLanguages.TemplateDataLanguageConfigurable" id="Template Data Languages" key="template.data.language.configurable" bundle="messages.LangBundle" nonDefaultProject="true"/>
 
     <!-- Scopes -->
     <projectConfigurable groupId="appearance" groupWeight="111" instance="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable" id="project.scopes" key="scopes.display.name" bundle="messages.IdeBundle" />

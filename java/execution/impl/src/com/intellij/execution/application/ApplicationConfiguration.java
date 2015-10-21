@@ -259,12 +259,15 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
       final JavaParameters params = new JavaParameters();
       params.setUseClasspathJar(true);
       final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
-      
-      final int classPathType = JavaParametersUtil.getClasspathType(module,
-                                                                    myConfiguration.MAIN_CLASS_NAME,
-                                                                    false);
       final String jreHome = myConfiguration.ALTERNATIVE_JRE_PATH_ENABLED ? myConfiguration.ALTERNATIVE_JRE_PATH : null;
-      JavaParametersUtil.configureModule(module, params, classPathType, jreHome);
+
+      if (module.getModule() != null) {
+        final int classPathType = JavaParametersUtil.getClasspathType(module, myConfiguration.MAIN_CLASS_NAME, false);
+        JavaParametersUtil.configureModule(module, params, classPathType, jreHome);
+      }
+      else {
+        JavaParametersUtil.configureProject(module.getProject(), params, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
+      }
       params.setMainClass(myConfiguration.MAIN_CLASS_NAME);
       setupJavaParameters(params);
 

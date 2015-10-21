@@ -17,12 +17,12 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.ex.ProjectEx
 import java.io.File
 
-class ModuleStoreImpl(module: Module, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
-  override val project = module.getProject()
+private open class ModuleStoreImpl(module: Module, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
+  override val project = module.project
 
   override val storageManager = ModuleStateStorageManager(pathMacroManager.createTrackingSubstitutor(), module)
 
@@ -32,7 +32,20 @@ class ModuleStoreImpl(module: Module, private val pathMacroManager: PathMacroMan
     }
   }
 
-  override fun optimizeTestLoading() = (project as ProjectEx).isOptimiseTestLoadSpeed()
-
   override final fun getPathMacroManagerForDefaults() = pathMacroManager
+
+  private class TestModuleStore(module: Module, pathMacroManager: PathMacroManager) : ModuleStoreImpl(module, pathMacroManager) {
+    private var moduleComponentLoadPolicy: StateLoadPolicy? = null
+
+    override fun setPath(path: String) {
+      super.setPath(path)
+
+      if (File(path).exists()) {
+        moduleComponentLoadPolicy = StateLoadPolicy.LOAD
+      }
+    }
+
+    override val loadPolicy: StateLoadPolicy
+      get() = moduleComponentLoadPolicy ?: (project.stateStore as ComponentStoreImpl).loadPolicy
+  }
 }

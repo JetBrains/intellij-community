@@ -53,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
+import java.applet.Applet;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
@@ -636,11 +637,6 @@ public class IdeEventQueue extends EventQueue {
           }
         });
       }
-      if (me.getButton() != 0) {
-        setLastClickEvent(me);
-      } else if (lastClickEvent != null && Math.abs(System.currentTimeMillis() - lastClickTime) > 200){
-        setLastClickEvent(null);//Obsolete event
-      }
       if (!myMouseEventDispatcher.dispatchMouseEvent(me)) {
         defaultDispatchEvent(e);
       }
@@ -682,19 +678,6 @@ public class IdeEventQueue extends EventQueue {
         LOG.warn("Error accessing java.awt.event.InvocationEvent.runnable field");
       }
     }
-  }
-
-  private MouseEvent lastClickEvent;
-  private long lastClickTime;
-
-  private void setLastClickEvent(@Nullable MouseEvent event) {
-    lastClickEvent = event;
-    lastClickTime = System.currentTimeMillis();
-  }
-
-  public boolean wasRootRecentlyClicked(Component component) {
-    return component != null && lastClickEvent != null && lastClickEvent.getComponent() != null &&
-           SwingUtilities.getRoot(lastClickEvent.getComponent()) == SwingUtilities.getRoot(component);
   }
 
   private static void fixStickyWindow(KeyboardFocusManager mgr, Window wnd, String resetMethod) {

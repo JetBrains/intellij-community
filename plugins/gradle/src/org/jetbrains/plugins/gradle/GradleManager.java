@@ -140,8 +140,9 @@ public class GradleManager
 
       @Override
       public GradleExecutionSettings fun(Pair<Project, String> pair) {
-        GradleSettings settings = GradleSettings.getInstance(pair.first);
-        File gradleHome = myInstallationManager.getGradleHome(pair.first, pair.second);
+        final Project project = pair.first;
+        GradleSettings settings = GradleSettings.getInstance(project);
+        File gradleHome = myInstallationManager.getGradleHome(project, pair.second);
         String localGradlePath = null;
         if (gradleHome != null) {
           try {
@@ -174,12 +175,13 @@ public class GradleManager
           result.addResolverExtensionClass(ClassHolder.from(extension.getClass()));
         }
 
-        final Sdk gradleJdk = myInstallationManager.getGradleJdk(pair.first, pair.second);
+        final Sdk gradleJdk = myInstallationManager.getGradleJdk(project, pair.second);
         final String javaHome = gradleJdk != null ? gradleJdk.getHomePath() : null;
         if (!StringUtil.isEmpty(javaHome)) {
           LOG.info("Instructing gradle to use java from " + javaHome);
         }
         result.setJavaHome(javaHome);
+        result.setIdeProjectPath(project.getBasePath());
         return result;
       }
     };

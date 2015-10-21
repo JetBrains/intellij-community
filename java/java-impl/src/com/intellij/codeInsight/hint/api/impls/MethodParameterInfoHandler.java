@@ -29,6 +29,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.CompletionParameterTypeInferencePolicy;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.scope.MethodProcessorSetupFailedException;
+import com.intellij.psi.scope.PsiConflictResolver;
+import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
+import com.intellij.psi.scope.processor.MethodResolverProcessor;
+import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtilBase;
@@ -308,12 +313,14 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return null;
   }
 
+  
+  
   private static CandidateInfo[] getMethods(PsiExpressionList argList) {
     final PsiCall call = getCall(argList);
     PsiResolveHelper helper = JavaPsiFacade.getInstance(argList.getProject()).getResolveHelper();
 
     if (call instanceof PsiCallExpression) {
-      CandidateInfo[] candidates = helper.getReferencedMethodCandidates((PsiCallExpression)call, true);
+      CandidateInfo[] candidates = getCandidates((PsiCallExpression)call);
       ArrayList<CandidateInfo> result = new ArrayList<CandidateInfo>();
 
       if (!(argList.getParent() instanceof PsiAnonymousClass)) {
@@ -358,6 +365,24 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       }
       return result;
     }
+  }
+
+  private static CandidateInfo[] getCandidates(PsiCallExpression call) {
+    final MethodCandidatesProcessor processor = new MethodResolverProcessor(call, call.getContainingFile(), new PsiConflictResolver[0]) {
+      @Override
+      protected boolean acceptVarargs() {
+        return false;
+      }
+    };
+
+    try {
+      PsiScopesUtil.setupAndRunProcessor(processor, call, true);
+    }
+    catch (MethodProcessorSetupFailedException e) {
+      return CandidateInfo.EMPTY_ARRAY;
+    }
+    final List<CandidateInfo> results = processor.getResults();
+    return results.toArray(new CandidateInfo[results.size()]);
   }
 
   public static String updateMethodPresentation(@NotNull PsiMethod method, @Nullable PsiSubstitutor substitutor, @NotNull ParameterInfoUIContext context) {

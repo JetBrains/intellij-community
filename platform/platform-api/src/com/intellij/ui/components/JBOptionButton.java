@@ -17,6 +17,7 @@ package com.intellij.ui.components;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Disposer;
@@ -26,6 +27,7 @@ import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -362,10 +364,12 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
   protected void paintChildren(Graphics g) {
     super.paintChildren(g);
     if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
-      int x = getWidth() - getInsets().right - 8;
+      int x = getWidth() - getInsets().right - 10;
       Icon icon = AllIcons.Mac.YosemiteOptionButtonSelector;
       int y = (getHeight() - icon.getIconHeight()) / 2;
+      GraphicsConfig config = isEnabled() ? new GraphicsConfig(g) : GraphicsUtil.paintWithAlpha(g, 0.6f);
       icon.paintIcon(this, g, x, y);
+      config.restore();
       return;
     }
 

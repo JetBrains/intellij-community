@@ -344,7 +344,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     }
   }
 
-  private final List<Pair<NamedScope, NamedScopesHolder>> myScopes = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<Pair<NamedScope, NamedScopesHolder>> myScopePairs = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private void reloadScopes() {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -354,8 +354,8 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
         List<Pair<NamedScope, NamedScopesHolder>> scopeList = new ArrayList<Pair<NamedScope, NamedScopesHolder>>();
         addScopesToList(scopeList, DependencyValidationManagerImpl.this);
         addScopesToList(scopeList, myNamedScopeManager);
-        myScopes.clear();
-        myScopes.addAll(scopeList);
+        myScopePairs.clear();
+        myScopePairs.addAll(scopeList);
         reloadRules();
       }
     });
@@ -370,7 +370,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
   @NotNull
   public List<Pair<NamedScope, NamedScopesHolder>> getScopeBasedHighlightingCachedScopes() {
-    return myScopes;
+    return myScopePairs;
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,14 @@
 package com.intellij.profile;
 
 import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.util.JDOMExternalizable;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
  * Date: 20-Nov-2005
  */
-public interface Profile extends JDOMExternalizable, Comparable, Scheme {
+public interface Profile extends Comparable, Scheme {
   void copyFrom(@NotNull Profile profile);
 
   void setLocal(boolean isLocal);
@@ -48,4 +48,8 @@ public interface Profile extends JDOMExternalizable, Comparable, Scheme {
 
   @NotNull
   ProfileManager getProfileManager();
+
+  void readExternal(Element element);
+
+  void writeExternal(Element element);
 }

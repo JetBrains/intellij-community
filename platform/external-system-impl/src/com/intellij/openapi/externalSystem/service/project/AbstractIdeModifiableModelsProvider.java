@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -33,30 +32,22 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ArtifactModel;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.elements.ManifestFileProvider;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.artifacts.DefaultManifestFileProvider;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 
-public abstract class AbstractIdeModifiableModelsProvider implements IdeModifiableModelsProvider {
-  @NotNull
-  protected final Project myProject;
+public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProviderImpl implements IdeModifiableModelsProvider {
   private ModifiableModuleModel myModifiableModuleModel;
   private Map<Module, ModifiableRootModel> myModifiableRootModels = new THashMap<Module, ModifiableRootModel>();
   private Map<Module, ModifiableFacetModel> myModifiableFacetModels = new THashMap<Module, ModifiableFacetModel>();
@@ -66,7 +57,7 @@ public abstract class AbstractIdeModifiableModelsProvider implements IdeModifiab
   private final ArtifactExternalDependenciesImporter myArtifactExternalDependenciesImporter;
 
   public AbstractIdeModifiableModelsProvider(@NotNull Project project) {
-    myProject = project;
+    super(project);
     myArtifactExternalDependenciesImporter = new ArtifactExternalDependenciesImporterImpl();
   }
 
@@ -87,20 +78,7 @@ public abstract class AbstractIdeModifiableModelsProvider implements IdeModifiab
   @NotNull
   @Override
   public Module[] getModules() {
-    return myModifiableModuleModel == null ? ModuleManager.getInstance(myProject).getModules() : getModifiableModuleModel().getModules();
-  }
-
-  @NotNull
-  @Override
-  public Module[] getModules(@NotNull final ProjectData projectData) {
-    final List<Module> modules = ContainerUtil.filter(getModules(), new Condition<Module>() {
-      @Override
-      public boolean value(Module module) {
-        return isExternalSystemAwareModule(projectData.getOwner(), module) &&
-               StringUtil.equals(projectData.getLinkedExternalProjectPath(), getExternalRootProjectPath(module));
-      }
-    });
-    return ContainerUtil.toArray(modules, new Module[modules.size()]);
+    return getModifiableModuleModel().getModules();
   }
 
   protected void processExternalArtifactDependencies() {
@@ -118,7 +96,7 @@ public abstract class AbstractIdeModifiableModelsProvider implements IdeModifiab
   @NotNull
   @Override
   public OrderEntry[] getOrderEntries(@NotNull Module module) {
-    return getRootModel(module, false).getOrderEntries();
+    return getRootModel(module).getOrderEntries();
   }
 
   @NotNull
@@ -132,24 +110,6 @@ public abstract class AbstractIdeModifiableModelsProvider implements IdeModifiab
 
   @Nullable
   @Override
-  public Module findIdeModule(@NotNull ModuleData module) {
-    final Module ideModule = findIdeModule(module.getInternalName());
-    return isExternalSystemAwareModule(module.getOwner(), ideModule) ? ideModule : null;
-  }
-
-  @Nullable
-  @Override
-  public Module findIdeModule(@NotNull String ideModuleName) {
-    for (Module module : getModules()) {
-      if (ideModuleName.equals(module.getName())) {
-        return module;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  @Override
   public Library findIdeLibrary(@NotNull LibraryData libraryData) {
     final LibraryTable.ModifiableModel libraryTable = getModifiableProjectLibrariesModel();
     for (Library ideLibrary : libraryTable.getLibraries()) {
@@ -158,41 +118,22 @@ public abstract class AbstractIdeModifiableModelsProvider implements IdeModifiab
     return null;
   }
 
-  @Nullable
-  @Override
-  public ModuleOrderEntry findIdeModuleDependency(@NotNull ModuleDependencyData dependency, @NotNull Module module) {
-    for (OrderEntry entry : getRootModel(module, false).getOrderEntries()) {
-      if (entry instanceof ModuleOrderEntry) {
-        ModuleOrderEntry candidate = (ModuleOrderEntry)entry;
-        if (dependency.getInternalName().equals(candidate.getModuleName()) && dependency.getScope().equals(candidate.getScope())) {
-          return candidate;
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public OrderEntry findIdeModuleOrderEntry(LibraryDependencyData data) {
-    Module ownerIdeModule = findIdeModule(data.getOwnerModule());
-    if (ownerIdeModule == null) return null;
-    for (OrderEntry entry : getOrderEntries(ownerIdeModule)) {
-      if (entry instanceof LibraryOrderEntry) {
-        if (((LibraryOrderEntry)entry).isModuleLevel() && data.getLevel() != LibraryLevel.MODULE) continue;
-      }
-
-      if (data.getInternalName().equals(entry.getPresentableName())) {
-        return entry;
-      }
-    }
-    return null;
-  }
-
   @Override
   @NotNull
   public VirtualFile[] getContentRoots(Module module) {
-    return getRootModel(module, false).getContentRoots();
+    return getRootModel(module).getContentRoots();
+  }
+
+  @NotNull
+  @Override
+  public VirtualFile[] getSourceRoots(Module module) {
+    return getRootModel(module).getSourceRoots();
+  }
+
+  @NotNull
+  @Override
+  public VirtualFile[] getSourceRoots(Module module, boolean includingTests) {
+    return getRootModel(module).getSourceRoots(includingTests);
   }
 
   @NotNull
@@ -207,14 +148,13 @@ public abstract class AbstractIdeModifiableModelsProvider implements IdeModifiab
   @Override
   @NotNull
   public ModifiableRootModel getModifiableRootModel(Module module) {
-    return (ModifiableRootModel)getRootModel(module, true);
+    return (ModifiableRootModel)getRootModel(module);
   }
 
   @NotNull
-  private ModuleRootModel getRootModel(Module module, boolean modifiableModelNeeded) {
+  private ModuleRootModel getRootModel(Module module) {
     ModifiableRootModel result = myModifiableRootModels.get(module);
     if (result == null) {
-      if (!modifiableModelNeeded) return ModuleRootManager.getInstance(module);
       result = doGetModifiableRootModel(module);
       myModifiableRootModels.put(module, result);
     }
@@ -416,7 +356,9 @@ public abstract class AbstractIdeModifiableModelsProvider implements IdeModifiab
       Disposer.dispose(each);
     }
 
-    myModifiableModuleModel.dispose();
+    if(myModifiableModuleModel != null) {
+      myModifiableModuleModel.dispose();
+    }
     if (myModifiableArtifactModel != null) {
       myModifiableArtifactModel.dispose();
     }

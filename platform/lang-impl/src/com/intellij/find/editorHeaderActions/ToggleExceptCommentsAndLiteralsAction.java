@@ -15,24 +15,10 @@
  */
 package com.intellij.find.editorHeaderActions;
 
-import com.intellij.find.EditorSearchComponent;
 import com.intellij.find.FindModel;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 
-public class ToggleExceptCommentsAndLiteralsAction extends EditorHeaderToggleAction {
-  private static final String TEXT = "Except Comments and Li&terals";
-
-  public ToggleExceptCommentsAndLiteralsAction(EditorSearchComponent editorSearchComponent) {
-    super(editorSearchComponent, TEXT);
-  }
-
-  @Override
-  public boolean isSelected(AnActionEvent e) {
-    return myEditorSearchComponent.getFindModel().isExceptCommentsAndStringLiterals();
-  }
-
-  @Override
-  public void setSelected(AnActionEvent e, boolean state) {
-    myEditorSearchComponent.getFindModel().setSearchContext(state ? FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS : FindModel.SearchContext.ANY);
+public class ToggleExceptCommentsAndLiteralsAction extends EditorHeaderSetSearchContextAction {
+  public ToggleExceptCommentsAndLiteralsAction() {
+    super("Except Comments and Li&terals", FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS);
   }
 }

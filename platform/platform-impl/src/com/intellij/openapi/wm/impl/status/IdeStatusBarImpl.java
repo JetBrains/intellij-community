@@ -633,16 +633,6 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   }
 
   @Override
-  public void paint(Graphics g) {
-    super.paint(g);
-    if (UIUtil.isUnderDarcula()) {
-      //IDEA-112093
-      g.setColor(UIUtil.getPanelBackground());
-      g.drawLine(0, getHeight(), getWidth(), getHeight());
-    }
-  }
-
-  @Override
   public void removeWidget(@NotNull final String id) {
     assert EventQueue.isDispatchThread() : "Must be EDT";
     final WidgetBean bean = myWidgetMap.get(id);

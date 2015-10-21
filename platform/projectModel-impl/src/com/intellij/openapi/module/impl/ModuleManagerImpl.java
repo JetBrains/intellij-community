@@ -338,7 +338,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
           public void run() {
             Disposer.dispose(module);
           }
-        });
+        }, module.getDisposed());
       }
     }
 
@@ -771,15 +771,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         throw new FileNotFoundException(ProjectBundle.message("module.file.does.not.exist.error", filePath));
       }
 
-      final String name = moduleFile.getName();
-
-      if (name.endsWith(IML_EXTENSION)) {
-        final String moduleName = name.substring(0, name.length() - 4);
-        if (myModules.containsKey(moduleName)) {
-          throw new ModuleWithNameAlreadyExists(ProjectBundle.message("module.already.exists.error", moduleName), moduleName);
-        }
-      }
-
       String path = moduleFile.getPath();
       ModuleEx module = getModuleByFilePath(path);
       if (module == null) {
@@ -1014,6 +1005,10 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   }
 
   public void fireModuleRenamedByVfsEvent(@NotNull final Module module, @NotNull final String oldName) {
+    Module moduleInMap = myModuleModel.myModules.remove(oldName);
+    LOG.assertTrue(moduleInMap == null || moduleInMap == module);
+    myModuleModel.myModules.put(module.getName(), module);
+
     ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(new Runnable() {
       @Override
       public void run() {

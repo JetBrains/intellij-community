@@ -57,6 +57,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -184,13 +185,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
     });
 
-    new DoubleClickListener() {
-      @Override
-      protected boolean onDoubleClick(MouseEvent e) {
-        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(InspectionResultsView.this), true);
-        return true;
-      }
-    }.installOn(myTree);
+    EditSourceOnDoubleClickHandler.install(myTree);
 
     myTree.addKeyListener(new KeyAdapter() {
       @Override
@@ -528,7 +523,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     for (Tools currentTools : tools.values()) {
       InspectionToolWrapper defaultToolWrapper = currentTools.getDefaultState().getTool();
       final HighlightDisplayKey key = HighlightDisplayKey.find(defaultToolWrapper.getShortName());
-      for (ScopeToolState state : currentTools.getTools()) {
+      for (ScopeToolState state : myProvider.getTools(currentTools)) {
         InspectionToolWrapper toolWrapper = state.getTool();
         if (myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper)) {
           addTool(toolWrapper, ((InspectionProfileImpl)profile).getErrorLevel(key, state.getScope(myProject), myProject), isGroupedBySeverity);

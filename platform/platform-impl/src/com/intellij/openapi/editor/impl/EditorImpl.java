@@ -328,7 +328,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     assertIsDispatchThread();
     myProject = project;
     myDocument = (DocumentEx)document;
-    if (myDocument instanceof DocumentImpl) {
+    if (myDocument instanceof DocumentImpl && !myUseNewRendering) {
       ((DocumentImpl)myDocument).requestTabTracking();
     }
     myScheme = createBoundColorSchemeDelegate(null);
@@ -571,8 +571,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     updateCaretCursor();
     
-    addEditorMouseListener(new MyEditorPopupHandler());
-
     // This hacks context layout problem where editor appears scrolled to the right just after it is created.
     if (!ourIsUnitTestMode) {
       UiNotifyConnector.doWhenFirstShown(myEditorComponent, new Runnable() {
@@ -888,7 +886,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myConnection != null) {
       myConnection.disconnect();
     }
-    if (myDocument instanceof DocumentImpl) {
+    if (myDocument instanceof DocumentImpl && !myUseNewRendering) {
       ((DocumentImpl)myDocument).giveUpTabTracking();
     }
     Disposer.dispose(myDisposable);
@@ -1511,6 +1509,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     return result;
   }
+  
+  public int visualLineStartOffset(int visualLine) {
+    if (myUseNewRendering) return myView.visualLineStartOffset(visualLine);
+    throw new UnsupportedOperationException();
+  }
 
   private int logicalToVisualLine(int line) {
     assertReadAccess();
@@ -1525,8 +1528,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private int logicalLineToY(int line) {
-    VisualPosition visible = logicalToVisualPosition(new LogicalPosition(line, 0));
-    return visibleLineToY(visible.line);
+    int visualLine = myUseNewRendering && line < myDocument.getLineCount() ? offsetToVisualLine(myDocument.getLineStartOffset(line)) : 
+                     logicalToVisualPosition(new LogicalPosition(line, 0)).line;
+    return visibleLineToY(visualLine);
   }
 
   @Override
@@ -1954,7 +1958,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public boolean hasTabs() {
-    return !(myDocument instanceof DocumentImpl) || ((DocumentImpl)myDocument).mightContainTabs();
+    return myUseNewRendering || !(myDocument instanceof DocumentImpl) || ((DocumentImpl)myDocument).mightContainTabs();
   }
 
   public boolean isScrollToCaret() {
@@ -1996,6 +2000,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   void validateSize() {
+    if (myUseNewRendering && isReleased) return;
+    
     Dimension dim = getPreferredSize();
 
     if (!dim.equals(myPreferredSize) && !myDocument.isInBulkUpdate()) {
@@ -3791,7 +3797,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public Dimension getPreferredSize() {
-    if (myUseNewRendering) return myView.getPreferredSize();
+    if (myUseNewRendering) return isReleased ? new Dimension() : myView.getPreferredSize();
     if (ourIsUnitTestMode && getUserData(DO_DOCUMENT_UPDATE_TEST) == null) {
       return new Dimension(1, 1);
     }
@@ -4308,6 +4314,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     };
   }
 
+  private boolean isInsideGutterOnlyFoldingArea(@NotNull MouseEvent e) {
+    EditorMouseEventArea area = getMouseEventArea(e);
+    return area == EditorMouseEventArea.FOLDING_OUTLINE_AREA &&
+           myGutterComponent.convertX(e.getX()) <= myGutterComponent.getWhitespaceSeparatorOffset();
+  }
 
   @Override
   public EditorMouseEventArea getMouseEventArea(@NotNull MouseEvent e) {
@@ -5786,6 +5797,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       else {
         processMousePressed(e);
       }
+      
+      invokePopupIfNeeded(event);
     }
 
     private void runMouseClickedCommand(@NotNull final MouseEvent e) {
@@ -5812,6 +5825,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       myScrollingTimer.stop();
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
+      invokePopupIfNeeded(event);
+      if (event.isConsumed()) {
+        return;
+      }
       for (EditorMouseListener listener : myMouseListeners) {
         listener.mouseReleased(event);
         if (event.isConsumed()) {
@@ -5934,7 +5951,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // are drawn) and annotations area. E.g. we don't want to change caret position if a user sets new break point (clicks
       // at 'line markers' area).
       if (e.getSource() != myGutterComponent ||
-          eventArea != EditorMouseEventArea.LINE_MARKERS_AREA && eventArea != EditorMouseEventArea.ANNOTATIONS_AREA)
+          (eventArea != EditorMouseEventArea.LINE_MARKERS_AREA &&
+          eventArea != EditorMouseEventArea.ANNOTATIONS_AREA &&
+          !isInsideGutterOnlyFoldingArea(e)))
       {
         VisualPosition visualPosition = myUseNewRendering ? getTargetPosition(x, y, true) : null;
         LogicalPosition pos = myUseNewRendering ? visualToLogicalPosition(visualPosition) : getLogicalPositionForScreenPos(x, y, true);
@@ -6983,6 +7002,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     info.put("caret", visual.getLine() + ":" + visual.getColumn());
   }
 
+  private void invokePopupIfNeeded(EditorMouseEvent event) {
+    if (myContextMenuGroupId != null &&
+        event.getArea() == EditorMouseEventArea.EDITING_AREA &&
+        event.getMouseEvent().isPopupTrigger() &&
+        !event.isConsumed()) {
+      AnAction action = CustomActionsSchema.getInstance().getCorrectedAction(myContextMenuGroupId);
+      if (action instanceof ActionGroup) {
+        ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, (ActionGroup)action);
+        MouseEvent e = event.getMouseEvent();
+        final Component c = e.getComponent();
+        if (c != null && c.isShowing()) {
+          popupMenu.getComponent().show(c, e.getX(), e.getY());
+        }
+        e.consume();
+      }
+    }
+  }
+
   private class MyScrollPane extends JBScrollPane {
     private MyScrollPane() {
       super(0);
@@ -7174,41 +7211,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
              && (offset < currentLeadingEdge ? myLeadingWhitespaceShown :
                  offset >= currentTrailingEdge ? myTrailingWhitespaceShown :
                  myInnerWhitespaceShown);
-    }
-  }
-  
-  private class MyEditorPopupHandler extends EditorMouseAdapter {
-    @Override
-    public void mouseReleased(EditorMouseEvent e) {
-      invokePopupIfNeeded(e);
-    }
-
-    @Override
-    public void mousePressed(EditorMouseEvent e) {
-      invokePopupIfNeeded(e);
-    }
-
-    @Override
-    public void mouseClicked(EditorMouseEvent e) {
-      invokePopupIfNeeded(e);
-    }
-
-    private void invokePopupIfNeeded(EditorMouseEvent event) {
-      if (myContextMenuGroupId != null && 
-          event.getArea() == EditorMouseEventArea.EDITING_AREA && 
-          event.getMouseEvent().isPopupTrigger() && 
-          !event.isConsumed()) {
-        AnAction action = CustomActionsSchema.getInstance().getCorrectedAction(myContextMenuGroupId);
-        if (action instanceof ActionGroup) {
-          ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, (ActionGroup)action);
-          MouseEvent e = event.getMouseEvent();
-          final Component c = e.getComponent();
-          if (c != null && c.isShowing()) {
-            popupMenu.getComponent().show(c, e.getX(), e.getY());
-          }
-          e.consume();
-        }
-      }
     }
   }
 }

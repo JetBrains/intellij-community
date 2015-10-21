@@ -39,7 +39,7 @@ class ModuleStoreTest {
       }
     }
 
-    private fun VirtualFile.loadModule() = runWriteAction { ModuleManager.getInstance(projectRule.project).loadModule(getPath()) }
+    private fun VirtualFile.loadModule() = runWriteAction { ModuleManager.getInstance(projectRule.project).loadModule(path) }
 
     fun Path.createModule() = projectRule.createModule(this)
   }
@@ -47,12 +47,11 @@ class ModuleStoreTest {
   private val tempDirManager = TemporaryDirectory()
 
   private val ruleChain = RuleChain(tempDirManager, EdtRule(), ActiveStoreRule(projectRule), DisposeModulesRule(projectRule))
-  public Rule fun getChain(): RuleChain = ruleChain
+  @Rule fun getChain() = ruleChain
 
   @Test fun `set option`() {
     val moduleFile = runWriteAction {
-      VfsTestUtil.createFile(tempDirManager.newVirtualDirectory("module"), "test.iml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-        "<module type=\"JAVA_MODULE\" foo=\"bar\" version=\"4\" />")
+      VfsTestUtil.createFile(tempDirManager.newVirtualDirectory("module"), "test.iml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<module type=\"JAVA_MODULE\" foo=\"bar\" version=\"4\" />")
     }
 
     moduleFile.loadModule().useAndDispose {
@@ -92,11 +91,11 @@ class ModuleStoreTest {
     val root = tempDirManager.newPath()
 
     fun Module.addContentRoot() {
-      val moduleName = getName()
+      val moduleName = name
       var batchUpdateCount = 0
       nameToCount.put(moduleName, batchUpdateCount)
 
-      getMessageBus().connect().subscribe(BatchUpdateListener.TOPIC, object : BatchUpdateListener {
+      messageBus.connect().subscribe(BatchUpdateListener.TOPIC, object : BatchUpdateListener {
         override fun onBatchUpdateStarted() {
           nameToCount.put(moduleName, ++batchUpdateCount)
         }
@@ -112,12 +111,12 @@ class ModuleStoreTest {
     }
 
     fun Module.removeContentRoot() {
-      val modulePath = stateStore.getStateStorageManager().expandMacros(StoragePathMacros.MODULE_FILE)
+      val modulePath = stateStore.stateStorageManager.expandMacros(StoragePathMacros.MODULE_FILE)
       val moduleFile = Paths.get(modulePath)
       assertThat(moduleFile).isRegularFile()
 
       val virtualFile = LocalFileSystem.getInstance().findFileByPath(modulePath)!!
-      val newData = moduleFile.readText().replace("<content url=\"file://\$MODULE_DIR$/${getName()}\" />\n", "").toByteArray()
+      val newData = moduleFile.readText().replace("<content url=\"file://\$MODULE_DIR$/$name\" />\n", "").toByteArray()
       runWriteAction {
         virtualFile.setBinaryContent(newData)
       }
@@ -131,7 +130,7 @@ class ModuleStoreTest {
     val m2 = root.resolve("m2.iml").createModule()
 
     var projectBatchUpdateCount = 0
-    projectRule.project.getMessageBus().connect(m1).subscribe(BatchUpdateListener.TOPIC, object : BatchUpdateListener {
+    projectRule.project.messageBus.connect(m1).subscribe(BatchUpdateListener.TOPIC, object : BatchUpdateListener {
       override fun onBatchUpdateStarted() {
         nameToCount.put("p", ++projectBatchUpdateCount)
       }
@@ -159,6 +158,6 @@ class ModuleStoreTest {
 }
 
 val Module.contentRootUrls: Array<String>
-  get() = ModuleRootManager.getInstance(this).getContentRootUrls()
+  get() = ModuleRootManager.getInstance(this).contentRootUrls
 
 fun ProjectRule.createModule(path: Path) = runWriteAction { ModuleManager.getInstance(project).newModule(path.systemIndependentPath, ModuleTypeId.JAVA_MODULE) }

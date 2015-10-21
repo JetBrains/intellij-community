@@ -22,12 +22,14 @@
  */
 package com.theoryinpractice.testng.configuration;
 
+import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.MethodBrowser;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.testframework.TestSearchScope;
-import com.intellij.execution.ui.AlternativeJREPanel;
+import com.intellij.execution.ui.DefaultJreSelector;
+import com.intellij.execution.ui.JrePathEditor;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.icons.AllIcons;
@@ -71,15 +73,15 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguration> implements PanelWithAnchor {
+public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends SettingsEditor<T> implements PanelWithAnchor {
   //private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
   private final Project project;
 
   private JPanel panel;
 
   private LabeledComponent<EditorTextFieldWithBrowseButton> classField;
-  private LabeledComponent<JComboBox> moduleClasspath;
-  private AlternativeJREPanel alternateJDK;
+  private LabeledComponent<ModulesComboBox> moduleClasspath;
+  private JrePathEditor alternateJDK;
   private final ConfigurationModuleSelector moduleSelector;
   private JRadioButton suiteTest;
   private JRadioButton packageTest;
@@ -135,6 +137,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     model.setListener(this);
     createView();
     moduleSelector = new ConfigurationModuleSelector(project, getModulesComponent());
+    alternateJDK.setDefaultJreSelector(DefaultJreSelector.fromModuleDependencies(getModulesComponent(), false));
     commonJavaParameters.setModuleContext(moduleSelector.getModule());
     moduleClasspath.getComponent().addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -288,7 +291,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     return classField.getComponent().getText();
   }
 
-  public JComboBox getModulesComponent() {
+  public ModulesComboBox getModulesComponent() {
     return moduleClasspath.getComponent();
   }
 
@@ -310,7 +313,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       packagesInProject.setSelected(true);
     }
     evaluateModuleClassPath();
-    alternateJDK.init(config.ALTERNATIVE_JRE_PATH, config.ALTERNATIVE_JRE_PATH_ENABLED);
+    alternateJDK.setPathOrName(config.ALTERNATIVE_JRE_PATH, config.ALTERNATIVE_JRE_PATH_ENABLED);
     propertiesList.clear();
     propertiesList.addAll(data.TEST_PROPERTIES.entrySet());
     propertiesTableModel.setParameterList(propertiesList);
@@ -337,8 +340,8 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       data.setScope(TestSearchScope.MODULE_WITH_DEPENDENCIES);
     }
     commonJavaParameters.applyTo(config);
-    config.ALTERNATIVE_JRE_PATH = alternateJDK.getPath();
-    config.ALTERNATIVE_JRE_PATH_ENABLED = alternateJDK.isPathEnabled();
+    config.ALTERNATIVE_JRE_PATH = alternateJDK.getJrePathOrName();
+    config.ALTERNATIVE_JRE_PATH_ENABLED = alternateJDK.isAlternativeJreSelected();
 
     data.TEST_PROPERTIES.clear();
     for (Map.Entry<String, String> entry : propertiesList) {
@@ -437,7 +440,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     outputDirectoryButton.addBrowseFolderListener("TestNG", "Select test output directory", project,
                                                   FileChooserDescriptorFactory.createSingleFolderDescriptor());
     moduleClasspath.setEnabled(true);
-    moduleClasspath.setComponent(new JComboBox());
+    moduleClasspath.setComponent(new ModulesComboBox());
 
     propertiesTableModel = new TestNGParametersTableModel();
     listenerModel = new TestNGListenersTableModel();

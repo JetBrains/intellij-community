@@ -257,7 +257,8 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       return new ExpressionInputComponent(project, myEditorsProvider, mySourcePosition, text, myDisposable);
     }
     else {
-      return new CodeFragmentInputComponent(project, myEditorsProvider, mySourcePosition, text, myDisposable);
+      return new CodeFragmentInputComponent(project, myEditorsProvider, mySourcePosition, text,
+                                            getDimensionServiceKey() + ".splitter", myDisposable);
     }
   }
 

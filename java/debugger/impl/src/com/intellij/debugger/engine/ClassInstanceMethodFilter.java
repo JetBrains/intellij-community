@@ -30,13 +30,16 @@ import com.sun.jdi.request.EventRequest;
  * @author egor
  */
 public class ClassInstanceMethodFilter extends ConstructorStepMethodFilter implements ActionMethodFilter {
-  private final PsiMethod myPsiMethod;
-  private final AnonymousClassMethodFilter myMethodFilter;
+  private final BreakpointStepMethodFilter myMethodFilter;
 
   public ClassInstanceMethodFilter(PsiMethod psiMethod, Range<Integer> lines) {
     super(psiMethod.getContainingClass(), lines);
-    myPsiMethod = psiMethod;
-    myMethodFilter = new AnonymousClassMethodFilter(myPsiMethod, getCallingExpressionLines());
+    myMethodFilter = new AnonymousClassMethodFilter(psiMethod, getCallingExpressionLines());
+  }
+
+  public ClassInstanceMethodFilter(JVMName classJvmName, BreakpointStepMethodFilter methodFilter, Range<Integer> lines) {
+    super(classJvmName, lines);
+    myMethodFilter = methodFilter;
   }
 
   @Override

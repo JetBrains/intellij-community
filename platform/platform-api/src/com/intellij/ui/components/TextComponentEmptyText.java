@@ -16,6 +16,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.util.ui.StatusText;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.text.JTextComponent;
 import java.awt.*;
@@ -27,6 +28,7 @@ import java.awt.event.FocusListener;
 */
 class TextComponentEmptyText extends StatusText {
   private JTextComponent myOwner;
+  private String myStatusTriggerText = "";
 
   public TextComponentEmptyText(JTextComponent owner) {
     super(owner);
@@ -45,6 +47,15 @@ class TextComponentEmptyText extends StatusText {
     });
   }
 
+  public void setTextToTriggerStatus(@NotNull String defaultText) {
+    myStatusTriggerText = defaultText;
+  }
+
+  @NotNull
+  public String getStatusTriggerText() {
+    return myStatusTriggerText;
+  }
+
   public void paintStatusText(Graphics g) {
     getComponent().setFont(myOwner.getFont());
     paint(myOwner, g);
@@ -52,7 +63,7 @@ class TextComponentEmptyText extends StatusText {
 
   @Override
   protected boolean isStatusVisible() {
-    return myOwner.getText().isEmpty() && !myOwner.isFocusOwner();
+    return myOwner.getText().equals(myStatusTriggerText) && !myOwner.isFocusOwner();
   }
 
   @Override

@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.io.URLUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -32,16 +32,170 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.ImageFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @Deprecated
 public class ImageLoader implements Serializable {
+
+  private static class ImageDesc {
+    public enum Type {
+      PNG,
+
+      SVG {
+        @Override
+        public Image load(URL url, InputStream is, float scale) throws IOException {
+          return SVGLoader.load(url, is, scale);
+        }
+      },
+
+      UNDEFINED;
+
+      public Image load(URL url, InputStream stream, float scale) throws IOException {
+        return ImageLoader.load(stream, (int)scale);
+      }
+    }
+
+    public final String path;
+    public final @Nullable Class cls; // resource class if present
+    public final float scale; // initial scale factor
+    public final Type type;
+
+    public ImageDesc(String path, Class cls, float scale, Type type) {
+      this.path = path;
+      this.cls = cls;
+      this.scale = scale;
+      this.type = type;
+    }
+
+    @Nullable
+    public Image load() throws IOException {
+      InputStream stream = null;
+      URL url = null;
+      if (cls != null) {
+        stream = cls.getResourceAsStream(path);
+        if (stream == null) return null;
+      }
+      if (stream == null) {
+        url = new URL(path);
+        stream = url.openStream();
+      }
+      return type.load(url, stream, scale);
+    }
+  }
+
+  private static class ImageDescList extends ArrayList<ImageDesc> {
+    private ImageDescList() {}
+
+    @Nullable
+    public Image load() {
+      return load(ImageConverterChain.create());
+    }
+
+    @Nullable
+    public Image load(@NotNull ImageConverterChain converters) {
+      for (ImageDesc desc : this) {
+        try {
+          Image image = desc.load();
+          if (image == null) continue;
+          return converters.convert(image, desc);
+        }
+        catch (IOException ignore) {
+        }
+      }
+      return null;
+    }
+
+    public static ImageDescList create(@NotNull String file,
+                                       @Nullable Class cls,
+                                       boolean dark,
+                                       boolean retina,
+                                       boolean allowFloatScaling)
+    {
+      ImageDescList vars = new ImageDescList();
+      if (retina || dark) {
+        final String name = FileUtil.getNameWithoutExtension(file);
+        final String ext = FileUtilRt.getExtension(file);
+
+        float scale = calcScaleFactor(allowFloatScaling);
+
+        // TODO: allow SVG images to freely scale on Retina
+
+        if (Registry.is("ide.svg.icon") && dark) {
+          vars.add(new ImageDesc(name + "_dark.svg", cls, UIUtil.isRetina() ? 2f : scale, ImageDesc.Type.SVG));
+        }
+
+        if (Registry.is("ide.svg.icon")) {
+          vars.add(new ImageDesc(name + ".svg", cls, UIUtil.isRetina() ? 2f : scale, ImageDesc.Type.SVG));
+        }
+
+        if (dark && retina) {
+          vars.add(new ImageDesc(name + "@2x_dark." + ext, cls, 2f, ImageDesc.Type.PNG));
+        }
+
+        if (dark) {
+          vars.add(new ImageDesc(name + "_dark." + ext, cls, 1f, ImageDesc.Type.PNG));
+        }
+
+        if (retina) {
+          vars.add(new ImageDesc(name + "@2x." + ext, cls, 2f, ImageDesc.Type.PNG));
+        }
+      }
+      vars.add(new ImageDesc(file, cls, 1f, ImageDesc.Type.PNG));
+      return vars;
+    }
+  }
+
+  private interface ImageConverter {
+    Image convert(@Nullable Image source, ImageDesc desc);
+  }
+
+  private static class ImageConverterChain extends ArrayList<ImageConverter> {
+    private ImageConverterChain() {}
+
+    public static ImageConverterChain create() {
+      return new ImageConverterChain();
+    }
+
+    public ImageConverterChain withFilter(final ImageFilter filter) {
+      return with(new ImageConverter() {
+        @Override
+        public Image convert(Image source, ImageDesc desc) {
+          return ImageUtil.filter(source, filter);
+        }
+      });
+    }
+
+    public ImageConverterChain withRetina() {
+      return with(new ImageConverter() {
+        @Override
+        public Image convert(Image source, ImageDesc desc) {
+          if (source != null && UIUtil.isRetina() && desc.scale > 1) {
+            return RetinaImage.createFrom(source, (int)desc.scale, ourComponent);
+          }
+          return source;
+        }
+      });
+    }
+
+    public ImageConverterChain with(ImageConverter f) {
+      add(f);
+      return this;
+    }
+
+    public Image convert(Image image, ImageDesc desc) {
+      for (ImageConverter f : this) {
+        image = f.convert(image, desc);
+      }
+      return image;
+    }
+  }
+
   public static final Component ourComponent = new Component() {
   };
 
@@ -68,49 +222,64 @@ public class ImageLoader implements Serializable {
 
   @Nullable
   public static Image loadFromUrl(@NotNull URL url, boolean allowFloatScaling) {
-    for (Pair<String, Integer> each : getFileNames(url.toString())) {
-      try {
-        Image image = loadFromStream(URLUtil.openStream(new URL(each.first)), each.second);
-        float scale = allowFloatScaling ? JBUI.scale(1f) : JBUI.scale(1f) > 1.5f ? 2f : 1f;
-        //we can't check all 3rd party plugins and convince the authors to add @2x icons.
-        // isHiDPI() != isRetina() => we should scale images manually
-        if (image != null && JBUI.isHiDPI() && !each.first.contains("@2x")) {
-          image = upscale(image, scale);
-        } else if (image != null && JBUI.scale(1f) >= 1.5f && JBUI.scale(1f) < 2.0f && each.first.contains("@2x")) {
-          image = downscale(image, scale);
-        }
-        return image;
-      }
-      catch (IOException ignore) {
-      }
-    }
-    return null;
+    return loadFromUrl(url, allowFloatScaling, null);
+  }
+
+  @Nullable
+  public static Image loadFromUrl(@NotNull URL url, boolean allowFloatScaling, ImageFilter filter) {
+    final float scaleFactor = calcScaleFactor(allowFloatScaling);
+
+    // We can't check all 3rd party plugins and convince the authors to add @2x icons.
+    // (scaleFactor > 1.0) != isRetina() => we should scale images manually.
+    // Note we never scale images on Retina displays because scaling is handled by the system.
+    final boolean scaleImages = (scaleFactor > 1.0f) && !UIUtil.isRetina();
+
+    // For any scale factor > 1.0, always prefer retina images, because downscaling
+    // retina images provides a better result than upscaling non-retina images.
+    final boolean loadRetinaImages = UIUtil.isRetina() || scaleImages;
+
+    return ImageDescList.create(url.toString(), null, UIUtil.isUnderDarcula(), loadRetinaImages, allowFloatScaling).load(
+      ImageConverterChain.create().
+        withFilter(filter).
+        withRetina().
+        with(new ImageConverter() {
+              public Image convert(Image source, ImageDesc desc) {
+                if (source != null && scaleImages && desc.type != ImageDesc.Type.SVG) {
+                  if (desc.path.contains("@2x"))
+                    return scaleImage(source, scaleFactor / 2.0f);  // divide by 2.0 as Retina images are 2x the resolution.
+                  else
+                    return scaleImage(source, scaleFactor);
+                }
+                return source;
+              }
+        }));
+  }
+
+  private static float calcScaleFactor(boolean allowFloatScaling) {
+    float scaleFactor = allowFloatScaling ? JBUI.scale(1f) : JBUI.scale(1f) > 1.5f ? 2f : 1f;
+    assert scaleFactor >= 1.0f : "By design, only scale factors >= 1.0 are supported";
+    return scaleFactor;
   }
 
   @NotNull
-  private static Image upscale(Image image, float scale) {
+  private static Image scaleImage(Image image, float scale) {
     int width = (int)(scale * image.getWidth(null));
     int height = (int)(scale * image.getHeight(null));
-    return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, width, height);
-  }
-
-  @NotNull
-  private static Image downscale(Image image, float scale) {
-    int width = (int)(image.getWidth(null)  / 2f * scale);
-    int height = (int)(image.getHeight(null)/ 2f * scale);
-    return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, width, height);
+    // Using "QUALITY" instead of "ULTRA_QUALITY" results in images that are less blurry
+    // because ultra quality performs a few more passes when scaling, which introduces blurriness
+    // when the scaling factor is relatively small (i.e. <= 3.0f) -- which is the case here.
+    return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.QUALITY, width, height);
   }
 
   @Nullable
   public static Image loadFromUrl(URL url, boolean dark, boolean retina) {
-    for (Pair<String, Integer> each : getFileNames(url.toString(), dark, retina || JBUI.isHiDPI())) {
-      try {
-        return loadFromStream(URLUtil.openStream(new URL(each.first)), each.second);
-      }
-      catch (IOException ignore) {
-      }
-    }
-    return null;
+    return loadFromUrl(url, dark, retina, null);
+  }
+
+  @Nullable
+  public static Image loadFromUrl(URL url, boolean dark, boolean retina, ImageFilter filter) {
+    return ImageDescList.create(url.toString(), null, dark, retina, true).
+      load(ImageConverterChain.create().withFilter(filter).withRetina());
   }
 
   @Nullable
@@ -122,43 +291,8 @@ public class ImageLoader implements Serializable {
 
   @Nullable
   public static Image loadFromResource(@NonNls @NotNull String path, @NotNull Class aClass) {
-    for (Pair<String, Integer> each : getFileNames(path)) {
-      InputStream stream = aClass.getResourceAsStream(each.first);
-      if (stream == null) continue;
-      Image image = loadFromStream(stream, each.second);
-      if (image != null) return image;
-    }
-    return null;
-  }
-
-  public static List<Pair<String, Integer>> getFileNames(@NotNull String file) {
-    return getFileNames(file, UIUtil.isUnderDarcula(), UIUtil.isRetina() || JBUI.scale(1.0f) >= 1.5f);
-  }
-
-  public static List<Pair<String, Integer>> getFileNames(@NotNull String file, boolean dark, boolean retina) {
-    if (retina || dark) {
-      List<Pair<String, Integer>> answer = new ArrayList<Pair<String, Integer>>(4);
-
-      final String name = FileUtil.getNameWithoutExtension(file);
-      final String ext = FileUtilRt.getExtension(file);
-      if (dark && retina) {
-        answer.add(Pair.create(name + "@2x_dark." + ext, 2));
-      }
-
-      if (dark) {
-        answer.add(Pair.create(name + "_dark." + ext, 1));
-      }
-
-      if (retina) {
-        answer.add(Pair.create(name + "@2x." + ext, 2));
-      }
-
-      answer.add(Pair.create(file, 1));
-
-      return answer;
-    }
-
-    return Collections.singletonList(Pair.create(file, 1));
+    return ImageDescList.create(path, aClass, UIUtil.isUnderDarcula(), UIUtil.isRetina() || JBUI.scale(1.0f) >= 1.5f, true).
+      load(ImageConverterChain.create().withRetina());
   }
 
   public static Image loadFromStream(@NotNull final InputStream inputStream) {
@@ -166,7 +300,17 @@ public class ImageLoader implements Serializable {
   }
 
   public static Image loadFromStream(@NotNull final InputStream inputStream, final int scale) {
-    if (scale <= 0) throw new IllegalArgumentException("Scale must 1 or more");
+    return loadFromStream(inputStream, scale, null);
+  }
+
+  public static Image loadFromStream(@NotNull final InputStream inputStream, final int scale, ImageFilter filter) {
+    Image image = load(inputStream, scale);
+    ImageDesc desc = new ImageDesc("", null, scale, ImageDesc.Type.UNDEFINED);
+    return ImageConverterChain.create().withFilter(filter).withRetina().convert(image, desc);
+  }
+
+  private static Image load(@NotNull final InputStream inputStream, final int scale) {
+    if (scale <= 0) throw new IllegalArgumentException("Scale must be 1 or greater");
     try {
       BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
       try {
@@ -185,10 +329,6 @@ public class ImageLoader implements Serializable {
 
       waitForImage(image);
 
-      if (UIUtil.isRetina() && scale > 1) {
-        image = RetinaImage.createFrom(image, scale, ourComponent);
-      }
-
       return image;
     }
     catch (Exception ex) {
@@ -200,5 +340,20 @@ public class ImageLoader implements Serializable {
 
   public static boolean isGoodSize(final Icon icon) {
     return IconLoader.isGoodSize(icon);
+  }
+
+  /**
+   * @deprecated use {@link ImageDescList}
+   */
+  public static List<Pair<String, Integer>> getFileNames(@NotNull String file) {
+    return getFileNames(file, false, false);
+  }
+
+  /**
+   * @deprecated use {@link ImageDescList}
+   */
+  public static List<Pair<String, Integer>> getFileNames(@NotNull String file, boolean dark, boolean retina) {
+    new UnsupportedOperationException("unsupported method").printStackTrace();
+    return new ArrayList<Pair<String, Integer>>();
   }
 }

@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Two contents for general diff
  */
+@Deprecated
 public class SimpleDiffRequest extends DiffRequest {
   private final DiffContent[] myContents = new DiffContent[2];
   private final String[] myContentTitles = new String[2];

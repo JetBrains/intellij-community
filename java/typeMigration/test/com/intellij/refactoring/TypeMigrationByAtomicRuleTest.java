@@ -34,6 +34,12 @@ public class TypeMigrationByAtomicRuleTest extends TypeMigrationTestBase{
     doTestFieldType("b", PsiType.BOOLEAN, myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicBoolean", null));
   }
 
+  public void testDirectConditionalExpression() throws Exception {
+    doTestFieldType("s",
+                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null),
+                    myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicReference<java.lang.String>", null));
+  }
+
 
   public void testDirectByte() throws Exception {
     doTestFieldType("b", PsiType.BYTE, myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicReference<java.lang.Byte>", null));

@@ -270,7 +270,9 @@ public class PsiClassImplUtil {
                         ? r.symbolIcon
                         : ElementPresentationUtil.getClassIconOfKind(r.psiClass, ElementPresentationUtil.getClassKind(r.psiClass));
       RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(symbolIcon, r.psiClass, isLocked);
-      return ElementPresentationUtil.addVisibilityIcon(r.psiClass, r.flags, baseIcon);
+      Icon result = ElementPresentationUtil.addVisibilityIcon(r.psiClass, r.flags, baseIcon);
+      Iconable.LastComputedIcon.put(r.psiClass, result, r.flags);
+      return result;
     }
   };
 

@@ -28,6 +28,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.ObjectUtils;
@@ -69,6 +70,17 @@ public class ExtensionsRootType extends RootType {
   @NotNull
   public static ExtensionsRootType getInstance() {
     return findByClass(ExtensionsRootType.class);
+  }
+
+  @NotNull
+  public static Condition<VirtualFile> regularFileFilter() {
+    return new Condition<VirtualFile>() {
+      private final ExtensionsRootType myRootType = getInstance();
+      @Override
+      public boolean value(VirtualFile file) {
+        return !file.isDirectory() && !myRootType.isBackupFile(file);
+      }
+    };
   }
 
   @Nullable

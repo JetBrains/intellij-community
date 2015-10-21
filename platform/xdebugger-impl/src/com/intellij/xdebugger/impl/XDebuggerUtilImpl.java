@@ -38,9 +38,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.AsyncResult;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
+import com.intellij.pom.NonNavigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -307,6 +310,68 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   @Nullable
   public XSourcePosition createPositionByOffset(final VirtualFile file, final int offset) {
     return XSourcePositionImpl.createByOffset(file, offset);
+  }
+
+  @Override
+  @Nullable
+  public XSourcePosition createPositionByElement(PsiElement element) {
+    if (element == null) return null;
+
+    PsiFile psiFile = element.getContainingFile();
+    if (psiFile == null) return null;
+
+    final VirtualFile file = psiFile.getVirtualFile();
+    if (file == null) return null;
+
+    final SmartPsiElementPointer<PsiElement> pointer =
+      SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
+
+    return new XSourcePosition() {
+      private volatile XSourcePosition myDelegate;
+
+      private XSourcePosition getDelegate() {
+        if (myDelegate == null) {
+          myDelegate = ApplicationManager.getApplication().runReadAction(new Computable<XSourcePosition>() {
+            @Override
+            public XSourcePosition compute() {
+              PsiElement elem = pointer.getElement();
+              return XSourcePositionImpl.createByOffset(pointer.getVirtualFile(), elem != null ? elem.getTextOffset() : -1);
+            }
+          });
+        }
+        return myDelegate;
+      }
+
+      @Override
+      public int getLine() {
+        return getDelegate().getLine();
+      }
+
+      @Override
+      public int getOffset() {
+        return getDelegate().getOffset();
+      }
+
+      @NotNull
+      @Override
+      public VirtualFile getFile() {
+        return file;
+      }
+
+      @NotNull
+      @Override
+      public Navigatable createNavigatable(@NotNull Project project) {
+        // no need to create delegate here, it may be expensive
+        if (myDelegate != null) {
+          return myDelegate.createNavigatable(project);
+        }
+        PsiElement elem = pointer.getElement();
+        if (elem instanceof Navigatable) {
+          return ((Navigatable)elem);
+        }
+        return NonNavigatable.INSTANCE;
+      }
+    };
   }
 
   @Override

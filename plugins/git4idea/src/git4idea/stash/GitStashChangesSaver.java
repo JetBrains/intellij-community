@@ -20,6 +20,7 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -48,6 +49,7 @@ import java.util.Set;
 public class GitStashChangesSaver extends GitChangesSaver {
 
   private static final Logger LOG = Logger.getInstance(GitStashChangesSaver.class);
+  private static final String NO_LOCAL_CHANGES_TO_SAVE = "No local changes to save";
 
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @NotNull private final Set<VirtualFile> myStashedRoots = ContainerUtil.newHashSet(); // save stashed roots to unstash only them
@@ -76,7 +78,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
       }
       else {
         GitCommandResult result = myGit.stashSave(repository, myStashMessage);
-        if (result.success() && !result.getErrorOutputAsJoinedString().contains("No local changes to save")) {
+        if (result.success() && somethingWasStashed(result)) {
           myStashedRoots.add(root);
         }
         else {
@@ -91,6 +93,11 @@ public class GitStashChangesSaver extends GitChangesSaver {
       }
       myProgressIndicator.setText(oldProgressTitle);
     }
+  }
+
+  private static boolean somethingWasStashed(@NotNull GitCommandResult result) {
+    return !StringUtil.containsIgnoreCase(result.getErrorOutputAsJoinedString(), NO_LOCAL_CHANGES_TO_SAVE) &&
+           !StringUtil.containsIgnoreCase(result.getOutputAsJoinedString(), NO_LOCAL_CHANGES_TO_SAVE);
   }
 
   @Override

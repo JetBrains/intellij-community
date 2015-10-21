@@ -53,6 +53,16 @@ gradle.taskGraph.beforeTask { Task task ->
 
   if (task instanceof Test) {
     try {
+      try {
+        def urls = task.classpath.files.findAll{
+          it.name.equals('idea_rt.jar') || it.name.startsWith('junit')
+        }.collect { it.toURI().toURL()}
+        Class.forName("org.gradle.launcher.daemon.bootstrap.DaemonMain").getClassLoader().addURLs(urls)
+      }
+      catch (all) {
+        logger.error("unable to enhance gradle daemon classloader with idea_rt.jar", all)
+      }
+
       logTestReportLocation(task.reports?.html?.entryPoint?.path)
 
       task.beforeSuite { descriptor ->
@@ -112,12 +122,33 @@ Object logTestEvent(def testEventType, TestDescriptorInternal testDescriptor, de
             failureType('comparison')
             xml.mkp.yieldUnescaped("<expected>$expected</expected>")
             xml.mkp.yieldUnescaped("<actual>$actual</actual>")
-          } else if('junit.framework.AssertionFailedError'.equals(testResult.exception?.class?.name) ||
+            return
+          }
+          try {
+            if ('com.intellij.rt.execution.junit.FileComparisonFailure'.equals(testResult.exception?.class?.name)) {
+              def expected = escapeCdata(testResult.exception.expected)
+              def actual = escapeCdata(testResult.exception.actual)
+              def filePath = escapeCdata(testResult.exception.filePath)
+              def actualFilePath
+              if (testResult.exception.hasProperty('actualFilePath')) {
+                actualFilePath = escapeCdata(testResult.exception.actualFilePath)
+              }
+              failureType('comparison')
+              xml.mkp.yieldUnescaped("<expected>$expected</expected>")
+              xml.mkp.yieldUnescaped("<actual>$actual</actual>")
+              xml.mkp.yieldUnescaped("<filePath>$filePath</filePath>")
+              if (actualFilePath) xml.mkp.yieldUnescaped("<actualFilePath>$actualFilePath</actualFilePath>")
+              return
+            }
+          }
+          catch (ignore) {
+          }
+          if ('junit.framework.AssertionFailedError'.equals(testResult.exception?.class?.name) ||
                     testResult.exception instanceof AssertionError) {
             failureType('assertionFailed')
-          } else {
-            failureType('error')
+            return
           }
+          failureType('error')
         }
       }
     }

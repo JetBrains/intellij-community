@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class SimplifiableEqualsExpressionInspection extends BaseInspection {
+public class SimplifiableEqualsExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
   @Nls
   @NotNull
   @Override

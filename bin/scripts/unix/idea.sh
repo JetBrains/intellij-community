@@ -8,9 +8,7 @@
 message()
 {
   TITLE="Cannot start @@product_full@@"
-  if [ -t 1 ]; then
-    echo "ERROR: $TITLE\n$1"
-  elif [ -n `which zenity` ]; then
+  if [ -n `which zenity` ]; then
     zenity --error --title="$TITLE" --text="$1"
   elif [ -n `which kdialog` ]; then
     kdialog --error --title "$TITLE" "$1"
@@ -118,7 +116,7 @@ if [ -z "$JDK" ] || [ ! -x "$JAVA_BIN" ]; then
 fi
 
 VERSION_LOG=`"$MKTEMP" -t java.version.log.XXXXXX`
-"$JAVA_BIN" -version 2> "$VERSION_LOG"
+JAVA_TOOL_OPTIONS= "$JAVA_BIN" -version 2> "$VERSION_LOG"
 "$GREP" "64-Bit|x86_64|amd64" "$VERSION_LOG" > /dev/null
 BITS=$?
 "$RM" -f "$VERSION_LOG"
@@ -155,8 +153,8 @@ fi
 
 VM_OPTIONS=""
 if [ -r "$vm_options_file" ]; then
-    VM_OPTIONS_DATA=`"$CAT" "$vm_options_file" | "$GREP" -v "^#.*" | "$TR" '\n' ' '`
-    VM_OPTIONS="$VM_OPTIONS $VM_OPTIONS_DATA"
+  VM_OPTIONS_DATA=`"$CAT" "$vm_options_file" | "$GREP" -v "^#.*" | "$TR" '\n' ' '`
+  VM_OPTIONS="$VM_OPTIONS $VM_OPTIONS_DATA"
 else
   message "Cannot find VM options file."
 fi
@@ -177,6 +175,11 @@ if [ -n "$@@product_uc@@_CLASSPATH" ]; then
   CLASSPATH="$CLASSPATH:$@@product_uc@@_CLASSPATH"
 fi
 
+if [ -n "$JAVA_TOOL_OPTIONS" -a "$JAVA_TOOL_OPTIONS" != "${JAVA_TOOL_OPTIONS%-javaagent*jayatanaag.jar*}" ] ; then
+  export _ORIGINAL_JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS"
+  JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS%-javaagent*jayatanaag.jar*}${JAVA_TOOL_OPTIONS#*jayatanaag.jar}"
+fi
+
 # ---------------------------------------------------------------------
 # Run the IDE.
 # ---------------------------------------------------------------------
@@ -192,11 +195,13 @@ LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JAVA_BIN" \
   com.intellij.idea.Main \
   "$@"
 EC=$?
+
 test $EC -ne 88 && exit $EC
-if [ -x "$HOME/.@@system_selector@@/restart/restarter.sh" ]; then
-  $HOME/.@@system_selector@@/restart/restarter.sh
-  "$RM" -f "$HOME/.@@system_selector@@/restart/restarter.sh"
-else
-  echo "No restarter found."
+
+RESTARTER="$HOME/.@@system_selector@@/restart/restarter.sh"
+if [ -x "$RESTARTER" ]; then
+  "$RESTARTER"
+  "$RM" -f "$RESTARTER"
 fi
+
 exec "$0" "$@"

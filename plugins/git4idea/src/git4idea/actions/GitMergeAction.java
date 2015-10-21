@@ -77,7 +77,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
     final Computable<GitLineHandler> handlerProvider = dialogState.handlerProvider;
     final Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, "Before update");
 
-    new Task.Backgroundable(project, dialogState.progressTitle, false) {
+    new Task.Backgroundable(project, dialogState.progressTitle, true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);

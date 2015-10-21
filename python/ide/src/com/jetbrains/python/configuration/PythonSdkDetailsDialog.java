@@ -15,10 +15,13 @@
  */
 package com.jetbrains.python.configuration;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -26,7 +29,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -37,18 +39,20 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.FactoryMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
+import com.jetbrains.python.remote.PyRemoteSourceItem;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -58,12 +62,13 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.HashSet;
+import java.io.File;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class PythonSdkDetailsDialog extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.configuration.PythonSdkDetailsDialog");
+
   private JPanel myMainPanel;
   private JList mySdkList;
   private boolean mySdkListChanged = false;
@@ -81,13 +86,14 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private boolean myShowOtherProjectVirtualenvs = true;
   private final Module myModule;
+  private Runnable mySdkSettingsWereModified;
   private NullableConsumer<Sdk> myShowMoreCallback;
   private SdkModel.Listener myListener;
 
-  public PythonSdkDetailsDialog(Project project, NullableConsumer<Sdk> showMoreCallback) {
+  public PythonSdkDetailsDialog(Project project, NullableConsumer<Sdk> showMoreCallback, Runnable sdkSettingsWereModified) {
     super(project, true);
     myModule = null;
-
+    mySdkSettingsWereModified = sdkSettingsWereModified;
     setTitle(PyBundle.message("sdk.details.dialog.title"));
     myShowMoreCallback = showMoreCallback;
     myProject = project;
@@ -103,9 +109,10 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     super.dispose();
   }
 
-  public PythonSdkDetailsDialog(Module module, NullableConsumer<Sdk> showMoreCallback) {
+  public PythonSdkDetailsDialog(Module module, NullableConsumer<Sdk> showMoreCallback, Runnable sdkSettingsWereModified) {
     super(module.getProject());
     myModule = module;
+    mySdkSettingsWereModified = sdkSettingsWereModified;
 
     setTitle(PyBundle.message("sdk.details.dialog.title"));
     myShowMoreCallback = showMoreCallback;
@@ -195,8 +202,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       projectSdk = myProjectSdksModel.findSdk(projectSdk.getName());
     }
     return getSelectedSdk() != projectSdk || mySdkListChanged ||
-           myProjectSdksModel.isModified() ||
-           !myModifiedModificators.isEmpty();
+           myProjectSdksModel.isModified() || !myModifiedModificators.isEmpty();
   }
 
   protected void updateOkButton() {
@@ -214,6 +220,9 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   public void apply() throws ConfigurationException {
+    if (!myModifiedModificators.isEmpty()) {
+      mySdkSettingsWereModified.run();
+    }
     for (SdkModificator modificator : myModifiedModificators) {
       modificator.commitChanges();
     }
@@ -393,6 +402,8 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       });
 
       myProjectSdksModel.removeSdk(sdk);
+      myProjectSdksModel.removeSdk(currentSdk);
+
       if (myModificators.containsKey(currentSdk)) {
         SdkModificator modificator = myModificators.get(currentSdk);
         myModifiedModificators.remove(modificator);
@@ -416,7 +427,8 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private void reloadSdk(Sdk currentSdk) {
-    PythonSdkType.setupSdkPaths(currentSdk, myProject, null, myModificators.get(currentSdk)); // or must it be a RunWriteAction?
+    PythonSdkType.getInstance()
+      .setupSdkPaths(currentSdk, myProject, null, myModificators.get(currentSdk)); // or must it be a RunWriteAction?
   }
 
   private class ToggleVirtualEnvFilterButton extends ToggleActionButton implements DumbAware {
@@ -467,29 +479,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private PythonPathEditor createPathEditor(final Sdk sdk) {
     if (PySdkUtil.isRemote(sdk)) {
-      return new PythonPathEditor("Classes", OrderRootType.CLASSES, FileChooserDescriptorFactory.createAllButJarContentsDescriptor()) {
-        private final PyRemoteSdkAdditionalDataBase myRemoteSdkData = (PyRemoteSdkAdditionalDataBase) sdk.getSdkAdditionalData();
-        @Override
-        protected void onReloadButtonClicked() {
-          reloadSdk();
-        }
-
-        @Override
-        protected String getPresentablePath(VirtualFile value) {
-          String path = value.getPath();
-          return myRemoteSdkData.getPathMappings().convertToRemote(path);
-        }
-
-        @Override
-        protected void addToolbarButtons(ToolbarDecorator toolbarDecorator) {
-          toolbarDecorator.setAddActionUpdater(new AnActionButtonUpdater() {
-            @Override
-            public boolean isEnabled(AnActionEvent e) {
-              return false; //TODO: implement adding remote path
-            }
-          });
-        }
-      };
+      return new PyRemotePathEditor(sdk);
     }
     else {
       return new PythonPathEditor("Classes", OrderRootType.CLASSES, FileChooserDescriptorFactory.createAllButJarContentsDescriptor()) {
@@ -498,6 +488,95 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
           reloadSdk();
         }
       };
+    }
+  }
+
+  private class PyRemotePathEditor extends PythonPathEditor {
+    private final PyRemoteSdkAdditionalDataBase myRemoteSdkData;
+    private final Sdk mySdk;
+
+    private List<PathMappingSettings.PathMapping> myNewMappings = Lists.newArrayList();
+
+    public PyRemotePathEditor(Sdk sdk) {
+      super("Classes", OrderRootType.CLASSES, FileChooserDescriptorFactory.createAllButJarContentsDescriptor());
+      mySdk = sdk;
+      myRemoteSdkData = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
+    }
+
+    @Override
+    protected void onReloadButtonClicked() {
+      reloadSdk();
+    }
+
+    @Override
+    protected String getPresentablePath(VirtualFile value) {
+      String path = value.getPath();
+      return myRemoteSdkData.getPathMappings().convertToRemote(path);
+    }
+
+    @Override
+    protected void addToolbarButtons(ToolbarDecorator toolbarDecorator) {
+      toolbarDecorator.setAddAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          final VirtualFile[] added = doAddItems();
+          if (added.length > 0) {
+            setModified(true);
+          }
+          requestDefaultFocus();
+          setSelectedRoots(added);
+        }
+      });
+    }
+
+    @Override
+    protected VirtualFile[] doAddItems() {
+      Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
+      try {
+        String[] files = PythonRemoteInterpreterManager
+          .getInstance().chooseRemoteFiles(project, (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData(), false);
+
+        final String sourcesLocalPath = PySdkUtil.getRemoteSourcesLocalPath(mySdk.getHomePath());
+
+        VirtualFile[] vFiles = new VirtualFile[files.length];
+
+        int i = 0;
+        for (String file : files) {
+          String localRoot = PyRemoteSourceItem.localPathForRemoteRoot(sourcesLocalPath, file);
+
+          myNewMappings.add(new PathMappingSettings.PathMapping(localRoot, file));
+          myRemoteSdkData.getPathMappings().addMappingCheckUnique(localRoot, file);
+
+          if (!new File(localRoot).exists()) {
+            new File(localRoot).mkdirs();
+          }
+          vFiles[i++] = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(localRoot));
+        }
+
+        vFiles = adjustAddedFileSet(myPanel, vFiles);
+        List<VirtualFile> added = new ArrayList<VirtualFile>(vFiles.length);
+        for (VirtualFile vFile : vFiles) {
+          if (addElement(vFile)) {
+            added.add(vFile);
+          }
+        }
+        return VfsUtilCore.toVirtualFileArray(added);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+      return new VirtualFile[0];
+    }
+
+    @Override
+    public void apply(SdkModificator sdkModificator) {
+      if (sdkModificator.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataBase) {
+        for (PathMappingSettings.PathMapping mapping : myNewMappings) {
+          ((PyRemoteSdkAdditionalDataBase)sdkModificator.getSdkAdditionalData()).getPathMappings()
+            .addMappingCheckUnique(mapping.getLocalRoot(), mapping.getRemoteRoot());
+        }
+      }
+      super.apply(sdkModificator);
     }
   }
 }

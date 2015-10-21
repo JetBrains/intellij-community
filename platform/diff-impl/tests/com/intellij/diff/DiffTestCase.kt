@@ -16,6 +16,7 @@
 package com.intellij.diff
 
 import com.intellij.diff.comparison.ComparisonManagerImpl
+import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.util.ThreeSide
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.DumbProgressIndicator
@@ -26,13 +27,12 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.containers.HashMap
 import com.intellij.util.text.CharSequenceSubSequence
+import junit.framework.ComparisonFailure
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 
 public abstract class DiffTestCase : UsefulTestCase() {
   companion object {
-    private val REGISTRY = Registry.get("diff.verify.iterable")
-
     private val DEFAULT_CHAR_COUNT = 12
     private val DEFAULT_CHAR_TABLE: Map<Int, Char> = {
       val map = HashMap<Int, Char>()
@@ -44,23 +44,35 @@ public abstract class DiffTestCase : UsefulTestCase() {
   public val RNG: Random = Random()
   private var gotSeedException = false
 
-  private var oldRegistryValue: Boolean = false
-
   public val INDICATOR: ProgressIndicator = DumbProgressIndicator.INSTANCE
   public val MANAGER: ComparisonManagerImpl = ComparisonManagerImpl()
 
 
   override fun setUp() {
     super.setUp()
-    oldRegistryValue = REGISTRY.asBoolean()
-    REGISTRY.setValue(true)
+    DiffIterableUtil.setVerifyEnabled(true)
   }
 
   override fun tearDown() {
-    REGISTRY.setValue(oldRegistryValue)
+    DiffIterableUtil.setVerifyEnabled(Registry.`is`("diff.verify.iterable"))
     super.tearDown()
   }
 
+  //
+  // Assertions
+  //
+
+  public fun assertTrue(actual: Boolean, message: String = "") {
+    assertTrue(message, actual)
+  }
+
+  public fun assertEquals(expected: Any?, actual: Any?, message: String = "") {
+    assertEquals(message, expected, actual)
+  }
+
+  public fun assertEquals(expected: CharSequence?, actual: CharSequence?, message: String = "") {
+    if (!StringUtil.equals(expected, actual)) throw ComparisonFailure(message, expected?.toString(), actual?.toString())
+  }
 
   public fun assertEqualsCharSequences(chunk1: CharSequence, chunk2: CharSequence, ignoreSpaces: Boolean, skipLastNewline: Boolean) {
     if (ignoreSpaces) {
@@ -106,7 +118,7 @@ public abstract class DiffTestCase : UsefulTestCase() {
     return Math.max(1, document.getLineCount())
   }
 
-  public fun Int.until(a: Int): IntRange = this..a - 1
+  public infix fun Int.until(a: Int): IntRange = this..a - 1
 
   //
   // AutoTests
@@ -143,7 +155,7 @@ public abstract class DiffTestCase : UsefulTestCase() {
 
     for (i in 1..length) {
       val rnd = RNG.nextInt(charCount)
-      val char = predefinedChars.get(rnd) ?: (rnd + 97).toChar()
+      val char = predefinedChars[rnd] ?: (rnd + 97).toChar()
       builder.append(char)
     }
     return builder.toString()
@@ -162,20 +174,20 @@ public abstract class DiffTestCase : UsefulTestCase() {
       return seedFieldValue.get() xor 0x5DEECE66DL
     } catch (e: Exception) {
       gotSeedException = true
-      System.err.println("Can't get random seed: " + e.getMessage())
+      System.err.println("Can't get random seed: " + e.message)
       return -1
     }
   }
 
   private fun stripNewline(text: CharSequence): CharSequence? {
     return when (StringUtil.endsWithChar(text, '\n') ) {
-      true -> CharSequenceSubSequence(text, 0, text.length() - 1)
+      true -> CharSequenceSubSequence(text, 0, text.length - 1)
       false -> null
     }
   }
 
   public class DebugData() {
-    private val data: MutableList<Pair<String, Any>> = ArrayList<Pair<String, Any>>()
+    private val data: MutableList<Pair<String, Any>> = ArrayList()
 
     public fun put(key: String, value: Any) {
       data.add(Pair(key, value))
@@ -194,14 +206,14 @@ public abstract class DiffTestCase : UsefulTestCase() {
   // Helpers
   //
 
-  public data open class Trio<T>(val data1: T, val data2: T, val data3: T) {
+  public open class Trio<T: Any>(val data1: T, val data2: T, val data3: T) {
     companion object {
-      public fun <V> from(f: (ThreeSide) -> V): Trio<V> = Trio(f(ThreeSide.LEFT), f(ThreeSide.BASE), f(ThreeSide.RIGHT))
+      public fun <V: Any> from(f: (ThreeSide) -> V): Trio<V> = Trio(f(ThreeSide.LEFT), f(ThreeSide.BASE), f(ThreeSide.RIGHT))
     }
 
-    public fun <V> map(f: (T) -> V): Trio<V> = Trio(f(data1), f(data2), f(data3))
+    public fun <V: Any> map(f: (T) -> V): Trio<V> = Trio(f(data1), f(data2), f(data3))
 
-    public fun <V> map(f: (T, ThreeSide) -> V): Trio<V> = Trio(f(data1, ThreeSide.LEFT), f(data2, ThreeSide.BASE), f(data3, ThreeSide.RIGHT))
+    public fun <V: Any> map(f: (T, ThreeSide) -> V): Trio<V> = Trio(f(data1, ThreeSide.LEFT), f(data2, ThreeSide.BASE), f(data3, ThreeSide.RIGHT))
 
     public fun forEach(f: (T, ThreeSide) -> Unit): Unit {
       f(data1, ThreeSide.LEFT)
@@ -209,10 +221,18 @@ public abstract class DiffTestCase : UsefulTestCase() {
       f(data3, ThreeSide.RIGHT)
     }
 
-    public fun invoke(side: ThreeSide): T = side.select(data1, data2, data3) as T
+    public operator fun invoke(side: ThreeSide): T = side.select(data1, data2, data3) as T
 
     override fun toString(): String {
       return "($data1, $data2, $data3)"
+    }
+
+    override fun equals(other: Any?): Boolean {
+      return other is Trio<*> && other.data1 == data1 && other.data2 == data2 && other.data3 == data3
+    }
+
+    override fun hashCode(): Int {
+      return data1.hashCode() * 37 * 37 + data2.hashCode() * 37 + data3.hashCode()
     }
   }
 }

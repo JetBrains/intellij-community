@@ -16,17 +16,13 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/expressions";
@@ -44,6 +40,14 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testInfinitiveParameterBoundsCheck() throws Exception {
+    doTestAllMethodCallExpressions();
+  }
+
+  public void testProoveThatInferenceInsideLambdaBodyDontInfluenceOuterCallInference() throws Exception {
+    doTestAllMethodCallExpressions();
+  }
+
+  public void testDontCollectUnhandledReferencesInsideLambdaBody() throws Exception {
     doTestAllMethodCallExpressions();
   }
 

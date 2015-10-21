@@ -38,18 +38,23 @@ public class UrlFilter implements Filter {
     List<ResultItem> items = null;
     while (m.find()) {
       if (item == null) {
-        item = new ResultItem(textStartOffset + m.start(), textStartOffset + m.end(), new BrowserHyperlinkInfo(m.group()));
+        item = new ResultItem(textStartOffset + m.start(), textStartOffset + m.end(), buildHyperlinkInfo(m.group()));
       } else {
         if (items == null) {
           items = new ArrayList<ResultItem>(2);
           items.add(item);
         }
-        items.add(new ResultItem(textStartOffset + m.start(), textStartOffset + m.end(), new BrowserHyperlinkInfo(m.group())));
+        items.add(new ResultItem(textStartOffset + m.start(), textStartOffset + m.end(), buildHyperlinkInfo(m.group())));
       }
     }
     return items != null ? new Result(items)
                          : item != null ? new Result(item.getHighlightStartOffset(), item.getHighlightEndOffset(), item.getHyperlinkInfo())
                                         : null;
+  }
+
+  @NotNull
+  protected HyperlinkInfo buildHyperlinkInfo(@NotNull String url) {
+    return new BrowserHyperlinkInfo(url);
   }
 
   public static class UrlFilterProvider implements ConsoleFilterProviderEx {

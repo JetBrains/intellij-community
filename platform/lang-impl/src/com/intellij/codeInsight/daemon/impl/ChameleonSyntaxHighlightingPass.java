@@ -145,7 +145,6 @@ class ChameleonSyntaxHighlightingPass extends TextEditorHighlightingPass {
           createUnconditionally());
       }
     }
-    if (infos.isEmpty()) return;
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, infos, getColorsScheme(), getId());
   }
 

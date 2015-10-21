@@ -35,9 +35,9 @@ class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor,
     return path
   }
 
-  override fun expandNormalizedPath(path: String): String {
+  override fun expandMacros(path: String): String {
     if (path[0] == '$') {
-      return super.expandNormalizedPath(path)
+      return super.expandMacros(path)
     }
     else {
       return "${expandMacro(StoragePathMacros.PROJECT_CONFIG_DIR)}/$path"

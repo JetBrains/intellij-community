@@ -17,7 +17,7 @@ package com.jetbrains.python.console;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
-import com.intellij.remote.RemoteProcessHandlerBase;
+import com.intellij.remote.RemoteProcessControl;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.jetbrains.python.debugger.PyDebugProcess;
@@ -78,9 +78,9 @@ public class PyConsoleDebugProcess extends PyDebugProcess {
 
   public void connect(PydevConsoleCommunication consoleCommunication) throws Exception {
     int portToConnect;
-    if (myConsoleDebugProcessHandler.getConsoleProcessHandler() instanceof RemoteProcessHandlerBase) {
+    if (myConsoleDebugProcessHandler.getConsoleProcessHandler() instanceof RemoteProcessControl) {
       portToConnect = getRemoteTunneledPort(myLocalPort,
-                                            ((RemoteProcessHandlerBase)myConsoleDebugProcessHandler.getConsoleProcessHandler()));
+                                            ((RemoteProcessControl)myConsoleDebugProcessHandler.getConsoleProcessHandler()));
     } else {
       portToConnect = myLocalPort;
     }

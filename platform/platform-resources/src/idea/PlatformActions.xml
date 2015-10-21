@@ -206,7 +206,11 @@
         <group id="FileOpenGroup">
           <action id="NewDummyProject" class="com.intellij.ide.actions.NewDummyProjectAction" text="New Dummy Project" internal="true"/>
           <action id="OpenFile" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.Actions.Menu_open"/>
-          <group id="$LRU" class="com.intellij.ide.actions.RecentProjectsGroup" popup="true"/>
+          <group id="$LRU" popup="true">
+            <group id="RecentProjectListGroup" class="com.intellij.ide.actions.RecentProjectsGroup" popup="false"/>
+            <separator/>
+            <action class="com.intellij.ide.ManageRecentProjectsAction" id="ManageRecentProjects"/>
+          </group>
           <action id="CloseProject" class="com.intellij.ide.actions.CloseProjectAction"/>
         </group>
         <separator/>
@@ -685,12 +689,16 @@
           <keyboard-shortcut first-keystroke="control shift F11" keymap="$default"/>
         </action>
 
-        <action id="UiInspector" internal="true" class="com.intellij.internal.inspector.UiInspectorAction" text="UI &amp;Inspector"/>
+        <action id="UiInspector" internal="true" class="com.intellij.internal.inspector.UiInspectorAction" text="UI &amp;Inspector">
+          <abbreviation value="uii"/>
+        </action>
         <action id="ShowSplash" internal="true" class="com.intellij.ui.ShowSplashAction" text="Show Splash" />
         <action id="ValidationTest" internal="true" class="com.intellij.internal.validation.TestDialogWithValidationAction" text="Validation Dialog Test" />
         <action id="MacMessagesTest" internal="true" class="com.intellij.internal.validation.TestMacMessagesAction" text="Test Mac Messages" />
         <action id="TreeExpandAll" internal="true" class="com.intellij.internal.tree.ExpandAll" text="Expand Tree" />
-        <action id="UIDefaults" internal="true" class="com.intellij.ui.ShowUIDefaultsAction" text="LaF Defaults"/>
+        <action id="UIDefaults" internal="true" class="com.intellij.ui.ShowUIDefaultsAction" text="LaF Defaults">
+          <abbreviation value="laf"/>
+        </action>
         <separator/>
         <action id="AddTestProcessAction" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessAction" text="Add Test Process"/>
         <action id="AddTestProcessActionIndefinte" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessActionIndefinite" text="Add Test Process Indefinite"/>

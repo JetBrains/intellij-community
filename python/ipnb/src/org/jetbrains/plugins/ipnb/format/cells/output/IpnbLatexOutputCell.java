@@ -2,16 +2,18 @@ package org.jetbrains.plugins.ipnb.format.cells.output;
 
 import org.jetbrains.annotations.NotNull;
 
-public class IpnbLatexOutputCell extends IpnbOutputCell {
-  @NotNull private final String[] myLatex;
+import java.util.List;
 
-  public IpnbLatexOutputCell(@NotNull final String[] latex, Integer promptNumber, @NotNull final String[] text) {
+public class IpnbLatexOutputCell extends IpnbOutputCell {
+  @NotNull private final List<String> myLatex;
+
+  public IpnbLatexOutputCell(@NotNull final List<String> latex, Integer promptNumber, @NotNull final List<String> text) {
     super(text, promptNumber);
     myLatex = latex;
   }
 
   @NotNull
-  public String[] getLatex() {
+  public List<String> getLatex() {
     return myLatex;
   }
 }

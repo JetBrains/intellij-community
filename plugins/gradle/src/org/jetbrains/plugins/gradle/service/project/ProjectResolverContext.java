@@ -17,9 +17,10 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import org.gradle.tooling.CancellationTokenSource;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.idea.IdeaModule;
-import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
@@ -36,6 +37,7 @@ public class ProjectResolverContext {
   @NotNull private final String myProjectPath;
   @Nullable private final GradleExecutionSettings mySettings;
   @NotNull private final ProjectConnection myConnection;
+  @Nullable private CancellationTokenSource myCancellationTokenSource;
   @NotNull private final ExternalSystemTaskNotificationListener myListener;
   private final boolean myIsPreviewMode;
   @NotNull
@@ -60,6 +62,11 @@ public class ProjectResolverContext {
     return myExternalSystemTaskId;
   }
 
+  @Nullable
+  public String getIdeProjectPath() {
+    return mySettings != null ? mySettings.getIdeProjectPath() : null;
+  }
+
   @NotNull
   public String getProjectPath() {
     return myProjectPath;
@@ -73,6 +80,15 @@ public class ProjectResolverContext {
   @NotNull
   public ProjectConnection getConnection() {
     return myConnection;
+  }
+
+  @Nullable
+  public CancellationTokenSource getCancellationTokenSource() {
+    return myCancellationTokenSource;
+  }
+
+  public void setCancellationTokenSource(@Nullable CancellationTokenSource cancellationTokenSource) {
+    myCancellationTokenSource = cancellationTokenSource;
   }
 
   @NotNull
@@ -106,5 +122,11 @@ public class ProjectResolverContext {
   @NotNull
   public Collection<String> findModulesWithModel(@NotNull Class modelClazz) {
     return myModels.findModulesWithModel(modelClazz);
+  }
+
+  public void checkCancelled() {
+    if (myCancellationTokenSource != null && myCancellationTokenSource.token().isCancellationRequested()) {
+      throw new ProcessCanceledException();
+    }
   }
 }

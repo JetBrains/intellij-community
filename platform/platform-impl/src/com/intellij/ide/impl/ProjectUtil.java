@@ -23,7 +23,7 @@ import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ComponentsPackage;
+import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
@@ -233,22 +233,25 @@ public class ProjectUtil {
     return confirmOpenNewProject;
   }
 
-  private static boolean isSameProject(String path, Project p) {
-    final IProjectStore projectStore = (IProjectStore)ComponentsPackage.getStateStore(p);
+  private static boolean isSameProject(String path, @NotNull Project project) {
+    IProjectStore projectStore = (IProjectStore)ServiceKt.getStateStore(project);
 
     String toOpen = FileUtil.toSystemIndependentName(path);
-    String existing = FileUtil.toSystemIndependentName(projectStore.getProjectFilePath());
+    String existing = projectStore.getProjectFilePath();
 
-    final VirtualFile existingBaseDir = projectStore.getProjectBaseDir();
-    if (existingBaseDir == null) return false; // could be null if not yet initialized
+    String existingBaseDir = projectStore.getProjectBasePath();
+    if (existingBaseDir == null) {
+      // could be null if not yet initialized
+      return false;
+    }
 
     final File openFile = new File(toOpen);
     if (openFile.isDirectory()) {
-      return FileUtil.pathsEqual(toOpen, existingBaseDir.getPath());
+      return FileUtil.pathsEqual(toOpen, existingBaseDir);
     }
     if (StorageScheme.DIRECTORY_BASED == projectStore.getStorageScheme()) {
       // todo: check if IPR is located not under the project base dir
-      return FileUtil.pathsEqual(FileUtil.toSystemIndependentName(openFile.getParentFile().getPath()), existingBaseDir.getPath());
+      return FileUtil.pathsEqual(FileUtil.toSystemIndependentName(openFile.getParentFile().getPath()), existingBaseDir);
     }
 
     return FileUtil.pathsEqual(toOpen, existing);
@@ -288,7 +291,7 @@ public class ProjectUtil {
   }
 
   public static boolean isDirectoryBased(@NotNull Project project) {
-    IComponentStore store = ComponentsPackage.getStateStore(project);
+    IComponentStore store = ServiceKt.getStateStore(project);
     return store instanceof IProjectStore && StorageScheme.DIRECTORY_BASED.equals(((IProjectStore)store).getStorageScheme());
   }
 }

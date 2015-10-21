@@ -216,6 +216,7 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     if (ANNOTATION_ATTRIBUTE_NAME.accepts(position) && !JavaKeywordCompletion.isAfterPrimitiveOrArrayType(position)) {
       JavaKeywordCompletion.addExpectedTypeMembers(parameters, result);
+      JavaKeywordCompletion.addPrimitiveTypes(result, position);
       completeAnnotationAttributeName(result, position, parameters);
       result.stopHere();
       return;
@@ -654,14 +655,19 @@ public class JavaCompletionContributor extends CompletionContributor {
         PsiType type = expectedTypes.size() == 1 ? expectedTypes.iterator().next() : null;
         if (type != null) {
           final PsiType deepComponentType = type.getDeepComponentType();
+          String expectedType = type.getPresentableText();
+          if (expectedType.contains(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)) {
+            return null;
+          }
+
           if (deepComponentType instanceof PsiClassType) {
             if (((PsiClassType)deepComponentType).resolve() != null) {
-              return CompletionBundle.message("completion.no.suggestions.of.type", type.getPresentableText()) + suffix;
+              return CompletionBundle.message("completion.no.suggestions.of.type", expectedType) + suffix;
             }
-            return CompletionBundle.message("completion.unknown.type", type.getPresentableText()) + suffix;
+            return CompletionBundle.message("completion.unknown.type", expectedType) + suffix;
           }
           if (!PsiType.NULL.equals(type)) {
-            return CompletionBundle.message("completion.no.suggestions.of.type", type.getPresentableText()) + suffix;
+            return CompletionBundle.message("completion.no.suggestions.of.type", expectedType) + suffix;
           }
         }
       }
@@ -763,7 +769,8 @@ public class JavaCompletionContributor extends CompletionContributor {
       iterator.advance();
     }
 
-    if (!iterator.atEnd() && (iterator.getTokenType() == JavaTokenType.LPARENTH)) {
+    if (!iterator.atEnd() && iterator.getTokenType() == JavaTokenType.LPARENTH && PsiTreeUtil.getParentOfType(ref, PsiExpression.class, PsiClass.class) == null) {
+      // looks like a method declaration, e.g. StringBui<caret>methodName() inside a class
       return true;
     }
 

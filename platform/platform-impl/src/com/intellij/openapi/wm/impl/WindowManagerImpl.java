@@ -40,6 +40,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.platform.WindowUtils;
 import org.jdom.Element;
@@ -516,10 +517,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
     myProject2Frame.put(null, frame);
 
     if (myFrameBounds == null || !ScreenUtil.isVisible(myFrameBounds)) { //avoid situations when IdeFrame is out of all screens
-      final Rectangle rect = ScreenUtil.getMainScreenBounds();
-      int yParts = rect.height / 6;
-      int xParts = rect.width / 5;
-      myFrameBounds = new Rectangle(xParts, yParts, xParts * 3, yParts * 4);
+      myFrameBounds = ScreenUtil.getMainScreenBounds();
+      int xOff = myFrameBounds.width / 8;
+      int yOff = myFrameBounds.height / 8;
+      JBInsets.removeFrom(myFrameBounds, new Insets(yOff, xOff, yOff, xOff));
     }
 
     fixForOracleBug8007219(frame);

@@ -345,17 +345,15 @@ public class FormatProcessor {
   }
 
   /**
-   * Decides whether applying formatter changes should be applied incrementally one-by-one or merge result should be
-   * constructed locally and the whole document text should be replaced. Performs such single bulk change if necessary.
+   * Performs formatter changes in a series of blocks, for each block a new contents of document is calculated 
+   * and whole document is replaced in one operation.
    *
    * @param blocksToModify        changes introduced by formatter
    * @param model                 current formatting model
    * @param indentOption          indent options to use
-   * @return                      <code>true</code> if given changes are applied to the document (i.e. no further processing is required);
-   *                              <code>false</code> otherwise
    */
   @SuppressWarnings({"deprecation"})
-  private boolean applyChangesAtRewriteMode(@NotNull final List<LeafBlockWrapper> blocksToModify,
+  private void applyChangesAtRewriteMode(@NotNull final List<LeafBlockWrapper> blocksToModify,
                                             @NotNull final FormattingModel model,
                                             @NotNull CommonCodeStyleSettings.IndentOptions indentOption)
   {
@@ -363,33 +361,39 @@ public class FormatProcessor {
     Document document = documentModel.getDocument();
     CaretOffsetUpdater caretOffsetUpdater = new CaretOffsetUpdater(document);
 
-    List<TextChange> changes = new ArrayList<TextChange>();
-    int shift = 0;
-    int currentIterationShift = 0;
-    for (LeafBlockWrapper block : blocksToModify) {
-      WhiteSpace whiteSpace = block.getWhiteSpace();
-      CharSequence newWs = documentModel.adjustWhiteSpaceIfNecessary(
-        whiteSpace.generateWhiteSpace(getIndentOptionsToUse(block, indentOption)), whiteSpace.getStartOffset(),
-        whiteSpace.getEndOffset(), block.getNode(), false
-      );
-      if (changes.size() > 10000) {
-        caretOffsetUpdater.update(changes);
-        CharSequence mergeResult = BulkChangesMerger.INSTANCE.mergeToCharSequence(document.getChars(), document.getTextLength(), changes);
-        document.replaceString(0, document.getTextLength(), mergeResult);
-        shift += currentIterationShift;
-        currentIterationShift = 0;
-        changes.clear();
+    if (document instanceof DocumentEx) ((DocumentEx)document).setInBulkUpdate(true);
+    try {
+      List<TextChange> changes = new ArrayList<TextChange>();
+      int shift = 0;
+      int currentIterationShift = 0;
+      for (LeafBlockWrapper block : blocksToModify) {
+        WhiteSpace whiteSpace = block.getWhiteSpace();
+        CharSequence newWs = documentModel.adjustWhiteSpaceIfNecessary(
+          whiteSpace.generateWhiteSpace(getIndentOptionsToUse(block, indentOption)), whiteSpace.getStartOffset(),
+          whiteSpace.getEndOffset(), block.getNode(), false
+        );
+        if (changes.size() > 10000) {
+          caretOffsetUpdater.update(changes);
+          CharSequence mergeResult = BulkChangesMerger.INSTANCE.mergeToCharSequence(document.getChars(), document.getTextLength(), changes);
+          document.replaceString(0, document.getTextLength(), mergeResult);
+          shift += currentIterationShift;
+          currentIterationShift = 0;
+          changes.clear();
+        }
+        TextChangeImpl change = new TextChangeImpl(newWs, whiteSpace.getStartOffset() + shift, whiteSpace.getEndOffset() + shift);
+        currentIterationShift += change.getDiff();
+        changes.add(change);
       }
-      TextChangeImpl change = new TextChangeImpl(newWs, whiteSpace.getStartOffset() + shift, whiteSpace.getEndOffset() + shift);
-      currentIterationShift += change.getDiff();
-      changes.add(change);
+      caretOffsetUpdater.update(changes);
+      CharSequence mergeResult = BulkChangesMerger.INSTANCE.mergeToCharSequence(document.getChars(), document.getTextLength(), changes);
+      document.replaceString(0, document.getTextLength(), mergeResult);
     }
-    caretOffsetUpdater.update(changes);
-    CharSequence mergeResult = BulkChangesMerger.INSTANCE.mergeToCharSequence(document.getChars(), document.getTextLength(), changes);
-    document.replaceString(0, document.getTextLength(), mergeResult);
+    finally {
+      if (document instanceof DocumentEx) ((DocumentEx)document).setInBulkUpdate(false);
+    }
+
     caretOffsetUpdater.restoreCaretLocations();
     cleanupBlocks(blocksToModify);
-    return true;
   }
 
   private static void cleanupBlocks(List<LeafBlockWrapper> blocks) {
@@ -1472,16 +1476,16 @@ public class FormatProcessor {
       myProgressCallback.beforeApplyingFormatChanges(myBlocksToModify);
 
       final int blocksToModifyCount = myBlocksToModify.size();
-      final boolean bulkReformat = blocksToModifyCount > 50;
-      DocumentEx updatedDocument = bulkReformat ? getAffectedDocument(myModel) : null;
-      if (updatedDocument != null) {
-        updatedDocument.setInBulkUpdate(true);
-        myResetBulkUpdateState = true;
-      }
-      if (blocksToModifyCount > BULK_REPLACE_OPTIMIZATION_CRITERIA
-          && applyChangesAtRewriteMode(myBlocksToModify, myModel, myDefaultIndentOption))
-      {
+      if (blocksToModifyCount > BULK_REPLACE_OPTIMIZATION_CRITERIA) {
+        applyChangesAtRewriteMode(myBlocksToModify, myModel, myDefaultIndentOption);
         setDone(true);
+      }
+      else if (blocksToModifyCount > 50) {
+        DocumentEx updatedDocument = getAffectedDocument(myModel);
+        if (updatedDocument != null) {
+          updatedDocument.setInBulkUpdate(true);
+          myResetBulkUpdateState = true;
+        }
       }
     }
 
@@ -1629,14 +1633,48 @@ public class FormatProcessor {
       }
 
       if (last != null) {
-        AbstractBlockWrapper prev = getPreviousBlock(last);
-        return prev != null && prev.getWhiteSpace().containsLineFeeds();
+        AbstractBlockWrapper next = getNextBlock(last);
+        if (next != null && next.getWhiteSpace().containsLineFeeds()) {
+          int nextNewLineBlockIndent = next.getNumberOfSymbolsBeforeBlock().getTotalSpaces();
+          if (nextNewLineBlockIndent >= finMinNewLineIndent(blocksToExpandIndent)) {
+            return true;  
+          }
+        }
       }
       
       return false;
     }
+
+    private int finMinNewLineIndent(@NotNull Collection<AbstractBlockWrapper> wrappers) {
+      int totalMinimum = Integer.MAX_VALUE;
+      for (AbstractBlockWrapper wrapper : wrappers) {
+        int minNewLineIndent = findMinNewLineIndent(wrapper);
+        if (minNewLineIndent < totalMinimum) {
+          totalMinimum = minNewLineIndent;
+        }
+      }
+      return totalMinimum;
+    }
     
-    private AbstractBlockWrapper getPreviousBlock(AbstractBlockWrapper block) {
+    private int findMinNewLineIndent(@NotNull AbstractBlockWrapper block) {
+      if (block instanceof LeafBlockWrapper && block.getWhiteSpace().containsLineFeeds()) {
+        return block.getNumberOfSymbolsBeforeBlock().getTotalSpaces();
+      }
+      else if (block instanceof CompositeBlockWrapper) {
+        List<AbstractBlockWrapper> children = ((CompositeBlockWrapper)block).getChildren();
+        int currentMin = Integer.MAX_VALUE;
+        for (AbstractBlockWrapper child : children) {
+          int childIndent = findMinNewLineIndent(child);
+          if (childIndent < currentMin) {
+            currentMin = childIndent;
+          }
+        }
+        return currentMin;
+      }
+      return Integer.MAX_VALUE;
+    }
+    
+    private AbstractBlockWrapper getNextBlock(AbstractBlockWrapper block) {
       List<AbstractBlockWrapper> children = block.getParent().getChildren();
       int nextBlockIndex = children.indexOf(block) + 1;
       if (nextBlockIndex < children.size()) {

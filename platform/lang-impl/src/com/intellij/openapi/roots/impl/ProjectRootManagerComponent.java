@@ -18,8 +18,8 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.stores.BatchUpdateListener;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
@@ -59,7 +59,7 @@ import java.util.Set;
  * ProjectRootManager extended with ability to watch events.
  */
 public class ProjectRootManagerComponent extends ProjectRootManagerImpl implements ProjectComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ProjectManagerComponent");
+  private static final Logger LOG = Logger.getInstance(ProjectRootManagerComponent.class);
 
   private boolean myPointerChangesDetected = false;
   private int myInsideRefresh = 0;
@@ -229,14 +229,14 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     final Set<String> flat = new HashSet<String>();
 
     final String projectFilePath = myProject.getProjectFilePath();
-    final File projectDirFile = new File(projectFilePath).getParentFile();
+    final File projectDirFile = projectFilePath == null ? null : new File(projectFilePath).getParentFile();
     if (projectDirFile != null && projectDirFile.getName().equals(Project.DIRECTORY_STORE_FOLDER)) {
       recursive.add(projectDirFile.getAbsolutePath());
     }
     else {
       flat.add(projectFilePath);
       // may be not existing yet
-      ContainerUtil.addIfNotNull(flat, ((IProjectStore)ComponentsPackage.getStateStore(myProject)).getWorkspaceFilePath());
+      ContainerUtil.addIfNotNull(flat, ((IProjectStore)ServiceKt.getStateStore(myProject)).getWorkspaceFilePath());
     }
 
     for (WatchedRootsProvider extension : Extensions.getExtensions(WatchedRootsProvider.EP_NAME, myProject)) {

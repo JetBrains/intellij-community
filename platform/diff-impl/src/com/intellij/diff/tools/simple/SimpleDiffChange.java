@@ -267,7 +267,7 @@ public class SimpleDiffChange {
 
   @Nullable
   private GutterIconRenderer createApplyRenderer(@NotNull final Side side) {
-    return createIconRenderer(side, "Replace", AllIcons.Diff.Arrow, new Runnable() {
+    return createIconRenderer(side, "Replace", DiffUtil.getArrowIcon(side), new Runnable() {
       @Override
       public void run() {
         myViewer.replaceChange(SimpleDiffChange.this, side);
@@ -277,7 +277,7 @@ public class SimpleDiffChange {
 
   @Nullable
   private GutterIconRenderer createAppendRenderer(@NotNull final Side side) {
-    return createIconRenderer(side, "Insert", AllIcons.Diff.ArrowLeftDown, new Runnable() {
+    return createIconRenderer(side, "Insert", DiffUtil.getArrowDownIcon(side), new Runnable() {
       @Override
       public void run() {
         myViewer.appendChange(SimpleDiffChange.this, side);

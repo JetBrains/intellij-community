@@ -17,14 +17,8 @@ package com.intellij.diff.merge
 
 import com.intellij.diff.DiffContentFactoryImpl
 import com.intellij.diff.DiffTestCase
-import com.intellij.diff.DiffTestCase.Trio
-import com.intellij.diff.assertEquals
-import com.intellij.diff.assertTrue
 import com.intellij.diff.contents.DocumentContent
-import com.intellij.diff.merge.MergeTestBase.SidesState.BOTH
-import com.intellij.diff.merge.MergeTestBase.SidesState.LEFT
-import com.intellij.diff.merge.MergeTestBase.SidesState.NONE
-import com.intellij.diff.merge.MergeTestBase.SidesState.RIGHT
+import com.intellij.diff.merge.MergeTestBase.SidesState.*
 import com.intellij.diff.merge.TextMergeTool.TextMergeViewer
 import com.intellij.diff.merge.TextMergeTool.TextMergeViewer.MyThreesideViewer
 import com.intellij.diff.util.DiffUtil
@@ -111,8 +105,8 @@ public abstract class MergeTestBase : DiffTestCase() {
     private val undoManager = UndoManager.getInstance(project!!)
 
     public fun change(num: Int): TextMergeChange {
-      if (changes.size() < num) throw Exception("changes: ${changes.size()}, index: $num")
-      return changes.get(num)
+      if (changes.size < num) throw Exception("changes: ${changes.size}, index: $num")
+      return changes[num]
     }
 
     public fun activeChanges(): List<TextMergeChange> = viewer.getChanges()
@@ -123,8 +117,8 @@ public abstract class MergeTestBase : DiffTestCase() {
 
     public fun runActionByTitle(name: String): Boolean {
       val action = actions.filter { name.equals(it.getTemplatePresentation().getText()) }
-      assertTrue(action.size() == 1, action.toString())
-      return runAction(action.get(0))
+      assertTrue(action.size == 1, action.toString())
+      return runAction(action[0])
     }
 
     private fun runAction(action: AnAction): Boolean {
@@ -219,7 +213,7 @@ public abstract class MergeTestBase : DiffTestCase() {
       assertTrue(index1 >= 0, "content - '\n$oldContent\n'\ntext - '\n$text'")
       val index2 = StringUtil.indexOf(text, oldContent, index1 + 1)
       assertTrue(index2 == -1, "content - '\n$oldContent\n'\ntext - '\n$text'")
-      return Couple(index1, index1 + oldContent.length())
+      return Couple(index1, index1 + oldContent.length)
     }
 
     //
@@ -279,7 +273,7 @@ public abstract class MergeTestBase : DiffTestCase() {
 
     public fun assertChangesCount(expected: Int) {
       if (expected == -1) return
-      val actual = activeChanges().size()
+      val actual = activeChanges().size
       assertEquals(expected, actual)
     }
 
@@ -335,13 +329,13 @@ public abstract class MergeTestBase : DiffTestCase() {
     // Helpers
     //
 
-    public fun Int.not(): LineColHelper = LineColHelper(this)
-    public fun LineColHelper.minus(col: Int): LineCol = LineCol(this.line, col)
+    public operator fun Int.not(): LineColHelper = LineColHelper(this)
+    public operator fun LineColHelper.minus(col: Int): LineCol = LineCol(this.line, col)
 
     public inner class LineColHelper(val line: Int) {
     }
 
-    public inner data class LineCol(val line: Int, val col: Int) {
+    public inner class LineCol(val line: Int, val col: Int) {
       public fun toOffset(): Int = editor.getDocument().getLineStartOffset(line) + col
     }
   }
@@ -401,7 +395,7 @@ public abstract class MergeTestBase : DiffTestCase() {
     }
 
     override fun equals(other: Any?): Boolean {
-      if (this identityEquals other) return true
+      if (this === other) return true
       if (other !is ViewerState) return false
 
       if (!StringUtil.equals(content, other.content)) return false
@@ -416,7 +410,7 @@ public abstract class MergeTestBase : DiffTestCase() {
                                    private val ends: Trio<Int>,
                                    private val resolved: SidesState) {
       override fun equals(other: Any?): Boolean {
-        if (this identityEquals other) return true
+        if (this === other) return true
         if (other !is ChangeState) return false
 
         if (!StringUtil.equals(content, other.content)) return false
@@ -425,6 +419,8 @@ public abstract class MergeTestBase : DiffTestCase() {
         if (!resolved.equals(other.resolved)) return false
         return true
       }
+
+      override fun hashCode(): Int = StringUtil.hashCode(content)
     }
   }
 }

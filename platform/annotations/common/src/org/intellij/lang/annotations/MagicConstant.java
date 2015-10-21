@@ -68,7 +68,6 @@ import java.lang.annotation.*;
  * IDEA will check constructs annotated with @FontStyle for allowed values:<br>
  * <tt>@FontStyle int myStyle = 3; // not allowed<br></tt>
  * <tt>@FontStyle int myStyle = Font.BOLD | Font.ITALIC; // OK</tt><br>
- * </tt>
  *
  * </ul>
  *
@@ -84,11 +83,11 @@ public @interface MagicConstant {
   /**
    * @return int values (typically named constants) which are allowed here.
    * E.g.
-   * <tt><pre>
+   * <pre><tt>
    * {@code
    * void setConfirmOpenNewProject(@MagicConstant(intValues = {OPEN_PROJECT_ASK, OPEN_PROJECT_NEW_WINDOW, OPEN_PROJECT_SAME_WINDOW})
    *                               int confirmOpenNewProject);
-   * }</pre></tt>
+   * }</tt></pre>
    */
   long[] intValues() default {};
 
@@ -101,13 +100,13 @@ public @interface MagicConstant {
    * @return allowed int flags (i.e. values (typically named constants) which can be combined with bitwise or operator (|).
    *         Also 0 and -1 are considered allowed.
    * E.g.
-   * <tt><pre>
+   * <pre><tt>
    * {@code @MagicConstant(flags = {HierarchyEvent.PARENT_CHANGED,HierarchyEvent.DISPLAYABILITY_CHANGED,HierarchyEvent.SHOWING_CHANGED})
    * int hFlags;
    *
    * hFlags = 3; // not allowed
    * if (hFlags & (HierarchyEvent.PARENT_CHANGED | HierarchyEvent.SHOWING_CHANGED) != 0); // OK
-   * }</pre></tt>
+   * }</tt></pre>
    */
   long[] flags() default {};
 
@@ -115,13 +114,13 @@ public @interface MagicConstant {
    * @return allowed values which are defined in the specified class public static final constants.
    *
    * E.g.
-   * <tt><pre>
+   * <pre><tt>
    * {@code @MagicConstant(valuesFromClass = Cursor.class)
    * int cursorType;
    *
    * cursorType = 11; // not allowed;
    * cursorType = Cursor.E_RESIZE_CURSOR; // OK
-   * }</pre></tt>
+   * }</tt></pre>
    */
   Class valuesFromClass() default void.class;
 
@@ -129,13 +128,13 @@ public @interface MagicConstant {
    * @return allowed int flags which are defined in the specified class public static final constants.
    *
    * E.g.
-   * <tt><pre>
+   * <pre><tt>
    * {@code @MagicConstant(flagsFromClass = java.awt.InputEvent.class)
    * int eventMask;
    *
    * eventMask = 10; // not allowed;
    * eventMask = InputEvent.CTRL_MASK | InputEvent.ALT_MASK; // OK
-   * }</pre></tt>
+   * }</tt></pre>
    */
   Class flagsFromClass() default void.class;
 }

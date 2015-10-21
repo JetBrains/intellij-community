@@ -455,7 +455,7 @@ public class PyExtractMethodUtil {
       }
     }
     // Change signature according to pass settings and
-    final PyFunctionBuilder builder = new PyFunctionBuilder("foo");
+    final PyFunctionBuilder builder = new PyFunctionBuilder("foo", generatedMethod);
     if (isClassMethod) {
       builder.parameter("cls");
     }
@@ -489,7 +489,7 @@ public class PyExtractMethodUtil {
     final PsiNamedElement parent = PsiTreeUtil.getParentOfType(anchor, PyFile.class, PyClass.class, PyFunction.class);
 
     final PsiElement result;
-    // The only safe case to insert extracted function *after* original scope owner is function.
+    // The only safe case to insert extracted function *after* the original scope owner is when it's function.
     if (parent instanceof PyFunction) {
       result = parent.getParent().addAfter(generatedMethod, parent);
     }
@@ -517,7 +517,7 @@ public class PyExtractMethodUtil {
                                                          @NotNull final AbstractVariableData[] variableData,
                                                          @NotNull final PsiElement expression,
                                                          @Nullable final PyUtil.MethodFlags flags, boolean isAsync) {
-    final PyFunctionBuilder builder = new PyFunctionBuilder(methodName);
+    final PyFunctionBuilder builder = new PyFunctionBuilder(methodName, expression);
     addDecorators(builder, flags);
     addFakeParameters(builder, variableData);
     if (isAsync) {
@@ -543,7 +543,7 @@ public class PyExtractMethodUtil {
                                                        boolean isAsync) {
     assert !elementsRange.isEmpty() : "Empty statements list was selected!";
 
-    final PyFunctionBuilder builder = new PyFunctionBuilder(methodName);
+    final PyFunctionBuilder builder = new PyFunctionBuilder(methodName, elementsRange.get(0));
     if (isAsync) {
       builder.makeAsync();
     }

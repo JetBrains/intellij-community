@@ -1114,6 +1114,10 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     return icon;
   }
 
+  public RunnerAndConfigurationSettings getConfigurationById(@NotNull final String id) {
+    return myConfigurations.get(id);
+  }
+
   @Override
   @Nullable
   public RunnerAndConfigurationSettings findConfigurationByName(@Nullable String name) {

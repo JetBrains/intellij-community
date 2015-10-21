@@ -16,7 +16,9 @@
 package com.siyeh.ig.resources;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
@@ -64,6 +66,22 @@ public class AutoCloseableResourceInspectionTest extends LightInspectionTestCase
            "  void m(String s) {" +
            "    System.out.printf(\"asdf %s\", s);" +
            "    System.err.format(\"asdf %s\", s);" +
+           "  }" +
+           "}");
+  }
+
+  public void testMethodReference() {
+    doTest("import java.util.*;" +
+           "class X {" +
+           "  void m(List<String> list) {" +
+           "    final Z<String, Y> f = /*'X.Y' used without 'try'-with-resources statement*/Y::new/**/;" +
+           "  }" +
+           "  class Y implements java.io.Closeable {" +
+           "    Y(String s) {}" +
+           "    public void close() throws java.io.IOException {}" +
+           "  }" +
+           "  interface Z<T, R> {\n" +
+           "    R apply(T t);" +
            "  }" +
            "}");
   }

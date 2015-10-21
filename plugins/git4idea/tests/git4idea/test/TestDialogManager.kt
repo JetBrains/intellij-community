@@ -18,10 +18,8 @@ package git4idea.test
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.openapi.ui.Messages
 import git4idea.DialogManager
-
-import javax.swing.*
+import javax.swing.Icon
 
 /**
  *
@@ -45,7 +43,7 @@ import javax.swing.*
  */
 public class TestDialogManager : DialogManager() {
 
-  private val myHandlers = ContainerUtil.newHashMap<Class<Any>, TestDialogHandler<DialogWrapper>>()
+  private val myHandlers = ContainerUtil.newHashMap<Class<out Any>, TestDialogHandler<DialogWrapper>>()
   private var myOnMessage: (String) -> Int = { throw IllegalStateException() }
 
   override fun showDialog(dialog: DialogWrapper) {
@@ -72,14 +70,14 @@ public class TestDialogManager : DialogManager() {
   }
 
   public fun <T : DialogWrapper> registerDialogHandler(dialogClass: Class<T>, handler: TestDialogHandler<T>) {
-    myHandlers.put(dialogClass.javaClass, handler as TestDialogHandler<DialogWrapper>)
+    myHandlers.put(dialogClass, handler as TestDialogHandler<DialogWrapper>)
   }
 
   fun onMessage(handler: (String) -> Int) {
     myOnMessage = handler
   }
 
-  @deprecated("Use onMessage")
+  @Deprecated("Use onMessage")
   public fun registerMessageHandler(handler: TestMessageHandler) {
     myOnMessage = { handler.handleMessage(it) }
   }

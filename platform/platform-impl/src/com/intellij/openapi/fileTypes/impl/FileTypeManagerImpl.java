@@ -28,7 +28,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.*;
-import com.intellij.openapi.options.BaseSchemeProcessor;
+import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.project.Project;
@@ -71,7 +71,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @State(
   name = "FileTypeManager",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/filetypes.xml"),
+  storages = @Storage(file = "filetypes.xml"),
   additionalExportFile = FileTypeManagerImpl.FILE_SPEC
 )
 public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, ApplicationComponent, Disposable {
@@ -156,7 +156,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     autoDetectedAttribute = new FileAttribute("AUTO_DETECTION_CACHE_ATTRIBUTE", fileTypeChangedCounter, true);
 
     myMessageBus = bus;
-    mySchemesManager = schemesManagerFactory.create(FILE_SPEC, new BaseSchemeProcessor<AbstractFileType>() {
+    mySchemesManager = schemesManagerFactory.create(FILE_SPEC, new SchemeProcessor<AbstractFileType>() {
       @NotNull
       @Override
       public AbstractFileType readScheme(@NotNull Element element, boolean duringLoad) {

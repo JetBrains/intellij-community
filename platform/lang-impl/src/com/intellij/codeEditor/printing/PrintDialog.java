@@ -20,6 +20,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.FontComboBox;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.MappingListCellRenderer;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -31,7 +32,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
-import java.util.List;
 
 class PrintDialog extends DialogWrapper {
   private JRadioButton myRbCurrentFile = null;
@@ -48,7 +48,7 @@ class PrintDialog extends DialogWrapper {
   private JRadioButton myRbPortrait = null;
   private JRadioButton myRbLandscape = null;
 
-  private JComboBox myFontNameCombo = null;
+  private FontComboBox myFontNameCombo = null;
   private JComboBox myFontSizeCombo = null;
 
   private JCheckBox myCbLineNumbers = null;
@@ -70,7 +70,7 @@ class PrintDialog extends DialogWrapper {
   private JComboBox myLinePlacementCombo2 = null;
   private JComboBox myLineAlignmentCombo2 = null;
   private JComboBox myFooterFontSizeCombo = null;
-  private JComboBox myFooterFontNameCombo = null;
+  private FontComboBox myFooterFontNameCombo = null;
   private String myFileName = null;
   private String myDirectoryName = null;
   private final boolean isSelectedTextEnabled;
@@ -188,7 +188,7 @@ class PrintDialog extends DialogWrapper {
     gbConstraints.gridy++;
     panel.add(fontLabel, gbConstraints);
 
-    myFontNameCombo = createFontNamesComboBox();
+    myFontNameCombo = new FontComboBox(true);
     gbConstraints.gridx = 1;
     panel.add(myFontNameCombo, gbConstraints);
 
@@ -407,7 +407,7 @@ class PrintDialog extends DialogWrapper {
     gbConstraints.gridwidth = 1;
     gbConstraints.gridx = 0;
     panel.add(new MyLabel(CodeEditorBundle.message("print.header.font.label")), gbConstraints);
-    myFooterFontNameCombo = createFontNamesComboBox();
+    myFooterFontNameCombo = new FontComboBox(true);
     gbConstraints.gridx = 1;
     panel.add(myFooterFontNameCombo, gbConstraints);
 
@@ -465,27 +465,6 @@ class PrintDialog extends DialogWrapper {
     panel.add(lineAlignmentCombo, gbConstraints);
 
     return panel;
-  }
-
-  private static JComboBox createFontNamesComboBox() {
-    GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
-    Font[] fonts = graphicsEnvironment.getAllFonts();
-    List<String> fontNames = new ArrayList<String>(fonts.length + 5);
-    for (Font font : fonts) {
-      fontNames.add(font.getName());
-    }
-    fontNames.add(Font.DIALOG);
-    fontNames.add(Font.DIALOG_INPUT);
-    fontNames.add(Font.SERIF);
-    fontNames.add(Font.SANS_SERIF);
-    fontNames.add(Font.MONOSPACED);
-    Collections.sort(fontNames);
-    
-    JComboBox comboBox = new ComboBox();
-    for (String fontName : fontNames) {
-      comboBox.addItem(fontName);
-    }
-    return comboBox;
   }
 
   private static JComboBox createFontSizesComboBox() {
@@ -547,7 +526,7 @@ class PrintDialog extends DialogWrapper {
     else {
       myRbLandscape.setSelected(true);
     }
-    myFontNameCombo.setSelectedItem(printSettings.FONT_NAME);
+    myFontNameCombo.setFontName(printSettings.FONT_NAME);
     myFontSizeCombo.setSelectedItem(String.valueOf(printSettings.FONT_SIZE));
 
     myCbLineNumbers.setSelected(printSettings.PRINT_LINE_NUMBERS);
@@ -576,7 +555,7 @@ class PrintDialog extends DialogWrapper {
     myLineAlignmentCombo2.setSelectedItem(printSettings.FOOTER_HEADER_ALIGNMENT2);
 
     myFooterFontSizeCombo.setSelectedItem(String.valueOf(printSettings.FOOTER_HEADER_FONT_SIZE));
-    myFooterFontNameCombo.setSelectedItem(printSettings.FOOTER_HEADER_FONT_NAME);
+    myFooterFontNameCombo.setFontName(printSettings.FOOTER_HEADER_FONT_NAME);
   }
 
   public void apply() {
@@ -600,7 +579,7 @@ class PrintDialog extends DialogWrapper {
 
     printSettings.PORTRAIT_LAYOUT = myRbPortrait.isSelected();
 
-    printSettings.FONT_NAME = (String)myFontNameCombo.getSelectedItem();
+    printSettings.FONT_NAME = myFontNameCombo.getFontName();
 
     try {
       String fontSizeStr = (String)myFontSizeCombo.getSelectedItem();
@@ -647,7 +626,7 @@ class PrintDialog extends DialogWrapper {
     }
     catch(NumberFormatException ignored) { }
 
-    printSettings.FOOTER_HEADER_FONT_NAME = (String)myFooterFontNameCombo.getSelectedItem();
+    printSettings.FOOTER_HEADER_FONT_NAME = myFooterFontNameCombo.getFontName();
 
   }
 

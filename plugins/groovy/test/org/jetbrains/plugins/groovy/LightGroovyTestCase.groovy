@@ -102,19 +102,6 @@ public class HashSet<E>
 ''')
   }
 
-  protected final void addLinkedHashMap() {
-    myFixture.addClass """\
-package java.util;
-
-public class LinkedHashMap<K,V> extends HashMap<K,V> implements Map<K,V> {
-    public LinkedHashMap(int initialCapacity, float loadFactor) {}
-    public LinkedHashMap(int initialCapacity) {}
-    public LinkedHashMap() {}
-    public LinkedHashMap(Map<? extends K, ? extends V> m) {}
-    public LinkedHashMap(int initialCapacity, float loadFactor, boolean accessOrder) {}
-}"""
-  }
-
   protected final void addAnnotationCollector() {
     myFixture.addClass '''\
 package groovy.transform;

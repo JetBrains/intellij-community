@@ -26,6 +26,7 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
@@ -37,17 +38,25 @@ import com.theoryinpractice.testng.model.TestNGTestObject;
 
 public abstract class TestNGConfigurationProducer extends JavaRunConfigurationProducerBase<TestNGConfiguration> implements Cloneable {
 
+  public TestNGConfigurationProducer(ConfigurationType configurationType) {
+    super(configurationType);
+  }
+
+  @SuppressWarnings("unused") //used in kotlin
   public TestNGConfigurationProducer() {
     super(TestNGConfigurationType.getInstance());
   }
-
+  
   @Override
   public boolean isConfigurationFromContext(TestNGConfiguration testNGConfiguration, ConfigurationContext context) {
-    if (RunConfigurationProducer.getInstance(TestNGPatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
+    if (RunConfigurationProducer.getInstance(AbstractTestNGPatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
       return false;
     }
     final RunConfiguration predefinedConfiguration = context.getOriginalConfiguration(TestNGConfigurationType.getInstance());
     final Location contextLocation = context.getLocation();
+    if (contextLocation == null) {
+      return false;
+    }
     Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
     if (location == null) {
       return false;

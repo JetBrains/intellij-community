@@ -34,8 +34,8 @@ import java.awt.*;
 public class EditClassFiltersDialog extends DialogWrapper {
   private ClassFilterEditor myClassFilterEditor;
   private ClassFilterEditor myClassExclusionFilterEditor;
-  private Project myProject;
-  private ClassFilter myChooserFilter;
+  private final Project myProject;
+  private final ClassFilter myChooserFilter;
 
   public EditClassFiltersDialog(Project project) {
     this(project, null);

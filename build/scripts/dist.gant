@@ -80,6 +80,7 @@ target(compile: "Compile project") {
   }
 
   projectBuilder.targetFolder = "$out/classes"
+  clearBuildCaches()
   projectBuilder.cleanOutput()
   bundledJDKs()
   projectBuilder.buildProduction()
@@ -202,6 +203,9 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
   buildTarGz(linuxAppRoot, "$paths.artifacts/${archiveName}.tar", [paths.distAll, paths.distUnix], productProperties.extraLinuxBins)
   if (p("jdk.bundled.linux") != "false") {
     buildTarGz(linuxAppRoot, "$paths.artifacts/${archiveName}-jdk-bundled.tar", [paths.distAll, paths.distUnix, "${paths.sandbox}/bundled.linux.jdk"], ["jre/jre/bin/*"] + productProperties.extraLinuxBins)
+  }
+  if (p("jdk.custom.linux") != "false") {
+    buildTarGz(linuxAppRoot, "$paths.artifacts/${archiveName}-custom-jdk-linux.tar", [paths.distAll, paths.distUnix, "${paths.sandbox}/custom.linux.jdk"], ["jre/jre/bin/*"] + productProperties.extraLinuxBins)
   }
   return info
 }

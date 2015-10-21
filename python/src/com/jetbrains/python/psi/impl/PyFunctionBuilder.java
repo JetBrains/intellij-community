@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
+import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,7 @@ public class PyFunctionBuilder {
   @NotNull
   private final Map<String, String> myDecoratorValues = new HashMap<String, String>();
   private boolean myAsync = false;
-  private PyDocstringGenerator myDocStringGenerator = PyDocstringGenerator.create(DocStringFormat.REST, "    ");
+  private PyDocstringGenerator myDocStringGenerator;
 
   /**
    * Creates builder copying signature and doc from another one.
@@ -51,7 +52,7 @@ public class PyFunctionBuilder {
   @NotNull
   public static PyFunctionBuilder copySignature(@NotNull final PyFunction source, @NotNull final String... decoratorsToCopyIfExist) {
     final String name = source.getName();
-    final PyFunctionBuilder functionBuilder = new PyFunctionBuilder((name != null) ? name : "");
+    final PyFunctionBuilder functionBuilder = new PyFunctionBuilder((name != null) ? name : "", source);
     for (final PyParameter parameter : source.getParameterList().getParameters()) {
       final String parameterName = parameter.getName();
       if (parameterName != null) {
@@ -73,22 +74,43 @@ public class PyFunctionBuilder {
     return functionBuilder;
   }
 
+  @Deprecated
   public PyFunctionBuilder(@NotNull String name) {
     myName = name;
+    myDocStringGenerator = null;
+  }
+
+  /**
+   * @param settingsAnchor any PSI element, presumably in the same file/module where generated function is going to be inserted.
+   *                       It's needed to detect configured docstring format and Python indentation size and, as result, 
+   *                       generate properly formatted docstring. 
+   */
+  public PyFunctionBuilder(@NotNull String name, @NotNull PsiElement settingsAnchor) {
+    myName = name;
+    myDocStringGenerator = PyDocstringGenerator.create(DocStringUtil.getConfiguredDocStringFormat(settingsAnchor), 
+                                                       PyIndentUtil.getIndentFromSettings(settingsAnchor.getProject()), 
+                                                       settingsAnchor);
   }
 
   /**
    * Adds param and its type to doc
+   * @param format what docstyle to use to doc param type
    * @param name param name
    * @param type param type
-   * @param format what docstyle to use to doc param type
    */
   @NotNull
+  public PyFunctionBuilder parameterWithType(@NotNull String name, @NotNull String type) {
+    parameter(name);
+    myDocStringGenerator.withParamTypedByName(name, type);
+    return this;
+  }
+
+  @NotNull
+  @Deprecated
   public PyFunctionBuilder parameterWithType(@NotNull final String name,
                                              @NotNull final String type,
                                              @NotNull final DocStringFormat format) {
     parameter(name);
-    myDocStringGenerator.setDocStringFormat(format);
     myDocStringGenerator.withParamTypedByName(name, type);
     return this;
   }
@@ -158,7 +180,6 @@ public class PyFunctionBuilder {
     List<String> statements = myStatements.isEmpty() ? Collections.singletonList(PyNames.PASS) : myStatements;
 
     final String indent = PyIndentUtil.getIndentFromSettings(project);
-    myDocStringGenerator.setDocStringIndent(indent);
     // There was original docstring or some parameters were added via parameterWithType()
     if (!myDocStringGenerator.isNewMode() || myDocStringGenerator.hasParametersToAdd()) {
       final String docstring = PyIndentUtil.changeIndent(myDocStringGenerator.buildDocString(), true, indent);

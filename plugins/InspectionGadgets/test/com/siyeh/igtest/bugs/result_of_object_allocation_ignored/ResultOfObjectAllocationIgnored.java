@@ -7,11 +7,11 @@ public class ResultOfObjectAllocationIgnored {
     }
 
     public static void foo() {
-        new Integer(3);
+        new <warning descr="Result of 'new Integer()' is ignored">Integer</warning>(3);
     }
 
     void boom() {
-        new Comparable<String>() {
+        new <warning descr="Result of 'new Comparable<String>()' is ignored">Comparable<String></warning>() {
 
             public int compareTo(String o) {
                 return 0;

@@ -15,15 +15,19 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -73,5 +77,18 @@ public class JavaProjectCodeInsightSettings implements PersistentStateComponent<
   @Override
   public void loadState(JavaProjectCodeInsightSettings state) {
     XmlSerializerUtil.copyBean(state, this);
+  }
+
+  @TestOnly
+  public static void setExcludedNames(Project project, Disposable parentDisposable, String... excludes) {
+    final JavaProjectCodeInsightSettings instance = getSettings(project);
+    assert instance.excludedNames.isEmpty();
+    instance.excludedNames = Arrays.asList(excludes);
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        instance.excludedNames = ContainerUtil.newArrayList();
+      }
+    });
   }
 }

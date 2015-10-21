@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,19 @@
 package org.jetbrains.java.decompiler;
 
 import com.intellij.AbstractBundle;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class IdeaDecompilerBundle extends AbstractBundle {
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
-    return INSTANCE.getMessage(key, params);
+  private static final String BUNDLE = "messages.Decompiler";
+
+  private static class Holder {
+    private static final AbstractBundle INSTANCE = new IdeaDecompilerBundle();
   }
 
-  public static final AbstractBundle INSTANCE = new IdeaDecompilerBundle();
-  @NonNls private static final String BUNDLE = "messages.Decompiler";
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+    return Holder.INSTANCE.getMessage(key, params);
+  }
 
   private IdeaDecompilerBundle() {
     super(BUNDLE);

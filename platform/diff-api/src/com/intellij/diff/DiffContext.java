@@ -37,7 +37,7 @@ public abstract class DiffContext implements UserDataHolder {
 
   /**
    * Request focus on diff panel ({@link FrameDiffTool.DiffViewer#getPreferredFocusedComponent()} in current viewer)
-   * NB: focus requested via {@link java.awt.Component#requestFocus()}, ignoring {@link com.intellij.openapi.wm.IdeFocusManager}
+   * NB: focus requested via {@link java.awt.Component#requestFocusInWindow()}, ignoring {@link com.intellij.openapi.wm.IdeFocusManager}
    * <p/>
    * This method can be used in pair with {@link #isFocused()} to keep focus on modifications of component tree
    */

@@ -780,23 +780,29 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myCachedTokenType = null;
   }
 
+  private IElementType remapCurrentToken() {
+    if (myCachedTokenType != null) return myCachedTokenType;
+    if (myRemapper != null) {
+      remapCurrentToken(myRemapper.filter(myLexTypes[myCurrentLexeme], myLexStarts[myCurrentLexeme],
+                                          myLexStarts[myCurrentLexeme + 1], myLexer.getBufferSequence()));
+    }
+    return myLexTypes[myCurrentLexeme];
+  }
+
   private IElementType calcTokenType() {
     if (eof()) return null;
 
     if (myRemapper != null) {
-      IElementType type = myLexTypes[myCurrentLexeme];
-      type = myRemapper.filter(type, myLexStarts[myCurrentLexeme], myLexStarts[myCurrentLexeme + 1], myLexer.getBufferSequence());
-      myLexTypes[myCurrentLexeme] = type; // filter may have changed the type
+      //remaps current token, and following, which remaps to spaces and comments
       skipWhitespace();
-      type = myLexTypes[myCurrentLexeme];
-      return type;
     }
     return myLexTypes[myCurrentLexeme];
   }
 
   @Override
-  public void setTokenTypeRemapper(final ITokenTypeRemapper remapper) {
+  public void setTokenTypeRemapper(ITokenTypeRemapper remapper) {
     myRemapper = remapper;
+    myTokenTypeChecked = false;
     clearCachedTokenType();
   }
 
@@ -870,7 +876,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private void skipWhitespace() {
-    while (myCurrentLexeme < myLexemeCount && whitespaceOrComment(myLexTypes[myCurrentLexeme])) {
+    while (myCurrentLexeme < myLexemeCount && whitespaceOrComment(remapCurrentToken())) {
       onSkip(myLexTypes[myCurrentLexeme], myLexStarts[myCurrentLexeme], myCurrentLexeme + 1 < myLexemeCount ? myLexStarts[myCurrentLexeme + 1] : myText.length());
       myCurrentLexeme++;
       clearCachedTokenType();

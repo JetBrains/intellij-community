@@ -63,7 +63,7 @@ public class RestFileViewProvider extends MultiplePsiFilesPerDocumentFileViewPro
   @NotNull
   public Set<Language> getLanguages() {
     if (myLanguages == null) {
-      myLanguages = Sets.newLinkedHashSet();
+      myLanguages = Sets.newConcurrentHashSet();
       myLanguages.add(getBaseLanguage());
       Language djangoTemplateLanguage = Language.findLanguageByID("DjangoTemplate");
       if (djangoTemplateLanguage != null) {

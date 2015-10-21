@@ -56,7 +56,7 @@ public class GoogleDocStringSectionFixer extends PyFixer<PyStringLiteralExpressi
       if (SectionBasedDocString.isValidSectionTitle(header)) {
         final String patch = (trimmedLine.endsWith(":") ? "\n" : ":\n") +
                              PyIndentUtil.getLineIndent(line) +
-                             GoogleCodeStyleDocStringBuilder.DEFAULT_SECTION_INDENT;
+                             GoogleCodeStyleDocStringBuilder.getDefaultSectionIndent(pyString.getProject());
         final int insertionOffset = lineStart + StringUtil.trimTrailing(line).length();
         document.replaceString(insertionOffset, lineEnd, patch);
         processor.registerUnresolvedError(insertionOffset + patch.length());

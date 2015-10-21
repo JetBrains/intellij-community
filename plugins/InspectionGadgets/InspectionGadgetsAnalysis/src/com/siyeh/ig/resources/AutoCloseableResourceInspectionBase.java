@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.resources;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -59,9 +60,7 @@ public class AutoCloseableResourceInspectionBase extends BaseInspection {
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    final PsiExpression expression = (PsiExpression)infos[0];
-    final PsiType type = expression.getType();
-    assert type != null;
+    final PsiType type = (PsiType)infos[0];
     final String text = type.getPresentableText();
     return InspectionGadgetsBundle.message("auto.closeable.resource.problem.descriptor", text);
   }
@@ -108,7 +107,7 @@ public class AutoCloseableResourceInspectionBase extends BaseInspection {
       if (!isNotSafelyClosedResource(expression)) {
         return;
       }
-      registerNewExpressionError(expression, expression);
+      registerNewExpressionError(expression, expression.getType());
     }
 
     @Override
@@ -120,11 +119,29 @@ public class AutoCloseableResourceInspectionBase extends BaseInspection {
       if (!isNotSafelyClosedResource(expression)) {
         return;
       }
-      registerMethodCallError(expression, expression);
+      registerMethodCallError(expression, expression.getType());
+    }
+
+    @Override
+    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+      super.visitMethodReferenceExpression(expression);
+      if (!expression.isConstructor()) {
+        return;
+      }
+      final PsiType type = PsiMethodReferenceUtil.getQualifierType(expression);
+      if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE)) {
+        return;
+      }
+      for (String ignoredType : ignoredTypes) {
+        if (InheritanceUtil.isInheritor(type, ignoredType)) {
+          return;
+        }
+      }
+      registerError(expression, type);
     }
 
     private boolean isNotSafelyClosedResource(PsiExpression expression) {
-      if (!TypeUtils.expressionHasTypeOrSubtype(expression, "java.lang.AutoCloseable")) {
+      if (!TypeUtils.expressionHasTypeOrSubtype(expression, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE)) {
         return false;
       }
       if (TypeUtils.expressionHasTypeOrSubtype(expression, ignoredTypes)) {

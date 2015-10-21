@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion
 
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.psi.PsiClass
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
@@ -48,13 +49,56 @@ class Foo {
     assert !myFixture.complete(CompletionType.SMART)
   }
 
-  private PsiClass addModifierList() {
-    myFixture.addClass """
-package org.intellij.lang.annotations;
-public @interface MagicConstant {
-  String[] stringValues() default {};
+  public void "test magic constant in equality"() {
+    addMagicConstant()
+
+    myFixture.configureByText "a.java", """
+class Bar {
+  static void foo() {
+    if (getConstant() == <caret>) {}
+  }
+
+  @org.intellij.lang.annotations.MagicConstant(flagsFromClass = Foo.class)
+  public native int getConstant();
+}
+
+interface Foo {
+    int FOO = 1;
+    int BAR = 2;
 }
 """
+    myFixture.complete(CompletionType.SMART)
+    myFixture.assertPreferredCompletionItems 0, 'BAR', 'FOO'
+    LookupManager.getInstance(project).hideActiveLookup()
+
+    myFixture.complete(CompletionType.BASIC)
+    myFixture.assertPreferredCompletionItems 0, 'BAR', 'FOO'
+  }
+
+  public void "test magic constant in equality before another equality"() {
+    addMagicConstant()
+
+    myFixture.configureByText "a.java", """
+class Bar {
+  static void foo() {
+    if (getConstant() == <caret>getConstant() == 2) {}
+  }
+
+  @org.intellij.lang.annotations.MagicConstant(flagsFromClass = Foo.class)
+  public native int getConstant();
+}
+
+interface Foo {
+    int FOO = 1;
+    int BAR = 2;
+}
+"""
+    myFixture.complete(CompletionType.SMART)
+    myFixture.assertPreferredCompletionItems 0, 'BAR', 'FOO'
+  }
+
+  private PsiClass addModifierList() {
+    addMagicConstant()
 
     myFixture.addClass """
 import org.intellij.lang.annotations.MagicConstant;
@@ -69,6 +113,16 @@ interface PsiModifier {
 
 interface ModifierList {
   boolean hasModifierProperty(@PsiModifier.ModifierConstant String m) {}
+}
+"""
+  }
+
+  private PsiClass addMagicConstant() {
+    myFixture.addClass """
+package org.intellij.lang.annotations;
+public @interface MagicConstant {
+  String[] stringValues() default {};
+  Class flagsFromClass() default void.class;
 }
 """
   }

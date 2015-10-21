@@ -24,6 +24,7 @@ import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.debugger.PySignatureUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
+import com.jetbrains.python.documentation.docstrings.PlainDocString;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
@@ -83,13 +84,8 @@ public class PyDocstringTypesInspection extends PyInspection {
     }
 
     private void checkParameters(PyFunction function, PyStringLiteralExpression node, PySignature signature) {
-      final String text = node.getText();
-      if (text == null) {
-        return;
-      }
-
-      StructuredDocString docString = DocStringUtil.parse(text, function);
-      if (docString == null) {
+      final StructuredDocString docString = DocStringUtil.parseDocString(node);
+      if (docString instanceof PlainDocString) {
         return;
       }
 

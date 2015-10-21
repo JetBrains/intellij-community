@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ public class MessageDescriptor extends NodeDescriptorImpl {
   public static final int WARNING = 1;
   public static final int INFORMATION = 2;
   public static final int SPECIAL = 3;
-  private int myKind;
-  private String myMessage;
+  private final int myKind;
+  private final String myMessage;
 
   public static final MessageDescriptor DEBUG_INFO_UNAVAILABLE = new MessageDescriptor(DebuggerBundle.message("message.node.debug.info.not.available"));
   public static final MessageDescriptor LOCAL_VARIABLES_INFO_UNAVAILABLE = new MessageDescriptor(

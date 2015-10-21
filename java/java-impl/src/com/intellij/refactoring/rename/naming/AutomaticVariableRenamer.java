@@ -26,11 +26,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.ArrayList;
 
 /**
  * @author dsl
@@ -123,7 +124,7 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
     return RefactoringBundle.message("entity.name.variable");
   }
 
-  public String nameToCanonicalName(String name, PsiNamedElement psiVariable) {
+  public String nameToCanonicalName(@NotNull String name, PsiNamedElement psiVariable) {
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(psiVariable.getProject());
     final String propertyName = codeStyleManager.variableNameToPropertyName(name, codeStyleManager.getVariableKind((PsiVariable)psiVariable));
     if (myToUnpluralize.contains(psiVariable)) {

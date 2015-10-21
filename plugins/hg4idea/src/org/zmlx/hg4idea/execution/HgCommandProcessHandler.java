@@ -15,6 +15,8 @@
  */
 package org.zmlx.hg4idea.execution;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BinaryOutputReader;
@@ -23,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.concurrent.Future;
 
 class HgCommandProcessHandler extends OSProcessHandler {
@@ -31,12 +32,9 @@ class HgCommandProcessHandler extends OSProcessHandler {
   private final boolean myBinary;
   private final ByteArrayOutputStream myBinaryOutput;
 
-  public HgCommandProcessHandler(@NotNull final Process process,
-                                 @Nullable final String commandLine,
-                                 @Nullable final Charset charset,
-                                 boolean isBinary) {
-    super(process, commandLine, charset);
-    myBinary = isBinary;
+  public HgCommandProcessHandler(@NotNull GeneralCommandLine commandLine, boolean binary) throws ExecutionException {
+    super(commandLine);
+    myBinary = binary;
     myBinaryOutput = new ByteArrayOutputStream();
   }
 

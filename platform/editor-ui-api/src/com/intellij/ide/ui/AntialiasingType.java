@@ -15,77 +15,51 @@
  */
 package com.intellij.ide.ui;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
 
 import java.awt.*;
 
 public enum AntialiasingType {
-  SUBPIXEL,
-  GREYSCALE,
-  OFF;
-
-  private static final SwingUtilities2.AATextInfo aaEnabled =
-    new SwingUtilities2.AATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_ON, 140);
-
-  private static final SwingUtilities2.AATextInfo lcdEnabled =
-    new SwingUtilities2.AATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB, 140);
-
-  private static final SwingUtilities2.AATextInfo aaDisabled = null;
+  SUBPIXEL("Subpixel", RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB, true),
+  GREYSCALE("Greyscale", RenderingHints.VALUE_TEXT_ANTIALIAS_ON, true),
+  OFF("No antialiasing", RenderingHints.VALUE_TEXT_ANTIALIAS_OFF, false);
 
   public static Object getAAHintForSwingComponent() {
-    UISettings uiSettings = UISettings.getInstance();
-
-    if (uiSettings == null) return aaEnabled;
-
-    switch (uiSettings.IDE_AA_TYPE) {
-      case SUBPIXEL:
-        return lcdEnabled;
-      case GREYSCALE:
-        return aaEnabled;
-      case OFF:
-        return aaDisabled;
+    Application application = ApplicationManager.getApplication();
+    if (application != null) {
+      AntialiasingType type = UISettings.getInstance().IDE_AA_TYPE;
+      if (type != null) {
+        return type.getTextInfo();
+      }
     }
-
-    return aaEnabled;
-  }
-
-  public Object getRenderingHintValue () {
-    Object value = RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB;
-    switch (this) {
-      case SUBPIXEL:
-        break;
-      case GREYSCALE:
-        value = RenderingHints.VALUE_TEXT_ANTIALIAS_ON;
-        break;
-      case OFF:
-        value = RenderingHints.VALUE_TEXT_ANTIALIAS_OFF;
-        break;
-    }
-    return value;
+    return GREYSCALE.getTextInfo();
   }
 
   public static Object getKeyForCurrentScope(boolean inEditor) {
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings == null) return RenderingHints.VALUE_TEXT_ANTIALIAS_ON;
-    return inEditor ? uiSettings.EDITOR_AA_TYPE.getRenderingHintValue() : uiSettings.IDE_AA_TYPE.getRenderingHintValue();
+    return inEditor ? uiSettings.EDITOR_AA_TYPE.myHint : uiSettings.IDE_AA_TYPE.myHint;
+  }
+
+  private final String myName;
+  private final Object myHint;
+  private final boolean isEnabled;
+
+  AntialiasingType(String name, Object hint, boolean enabled) {
+    myName = name;
+    myHint = hint;
+    isEnabled = enabled;
+  }
+
+  public SwingUtilities2.AATextInfo getTextInfo() {
+    return !isEnabled ? null : new SwingUtilities2.AATextInfo(myHint, UIUtil.getLcdContrastValue());
   }
 
   @Override
   public String toString() {
-    String description ;
-    switch (this) {
-      case SUBPIXEL:
-        description = "Subpixel";
-        break;
-      case GREYSCALE:
-        description = "Greyscale";
-        break;
-      case OFF:
-        description = "No antialiasing";
-        break;
-      default:
-        description = "Subpixel";
-    }
-    return description;
+    return myName;
   }
  }

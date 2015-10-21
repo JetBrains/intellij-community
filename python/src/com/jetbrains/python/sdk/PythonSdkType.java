@@ -16,6 +16,7 @@
 package com.jetbrains.python.sdk;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
@@ -60,14 +61,17 @@ import com.intellij.reference.SoftReference;
 import com.intellij.remote.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.NullableConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.facet.PythonFacetSettings;
+import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
@@ -107,6 +111,8 @@ public class PythonSdkType extends SdkType {
 
   private static final Key<WeakReference<Component>> SDK_CREATOR_COMPONENT_KEY = Key.create("#com.jetbrains.python.sdk.creatorComponent");
 
+  private Set<String> scheduledToRefresh = ContainerUtil.newConcurrentSet();
+
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
   }
@@ -129,6 +135,7 @@ public class PythonSdkType extends SdkType {
     return "reference.project.structure.sdk.python";
   }
 
+  @NotNull
   public Icon getIconForAddAction() {
     return PythonFileType.INSTANCE.getIcon();
   }
@@ -248,10 +255,17 @@ public class PythonSdkType extends SdkType {
     return false;
   }
 
+  public static boolean isDocker(@Nullable final Sdk sdk) {
+    return sdk != null && sdk.getSdkAdditionalData() instanceof  RemoteSdkAdditionalData &&
+           ((RemoteSdkAdditionalData) sdk.getSdkAdditionalData()).getRemoteConnectionType() == CredentialsType.DOCKER;
+
+  }
+
   public static boolean isRemote(@Nullable String sdkPath) {
     return isRemote(findSdkByPath(sdkPath));
   }
 
+  @NotNull
   @Override
   public FileChooserDescriptor getHomeChooserDescriptor() {
     final boolean isWindows = SystemInfo.isWindows;
@@ -290,7 +304,7 @@ public class PythonSdkType extends SdkType {
     return true;
   }
 
-  public void showCustomCreateUI(SdkModel sdkModel, final JComponent parentComponent, final Consumer<Sdk> sdkCreatedCallback) {
+  public void showCustomCreateUI(@NotNull SdkModel sdkModel, @NotNull final JComponent parentComponent, @NotNull final Consumer<Sdk> sdkCreatedCallback) {
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
     final PointerInfo pointerInfo = MouseInfo.getPointerInfo();
     if (pointerInfo == null) return;
@@ -310,6 +324,11 @@ public class PythonSdkType extends SdkType {
   public static boolean isVirtualEnv(Sdk sdk) {
     final String path = sdk.getHomePath();
     return path != null && getVirtualEnvRoot(path) != null;
+  }
+
+  public static boolean isCondaVirtualEnv(Sdk sdk) {
+    final String path = sdk.getHomePath();
+    return path != null && PyCondaPackageManagerImpl.isCondaVEnv(sdk);
   }
 
   @Nullable
@@ -439,7 +458,7 @@ public class PythonSdkType extends SdkType {
   }
 
   @Nullable
-  public AdditionalDataConfigurable createAdditionalDataConfigurable(final SdkModel sdkModel, final SdkModificator sdkModificator) {
+  public AdditionalDataConfigurable createAdditionalDataConfigurable(@NotNull final SdkModel sdkModel, @NotNull final SdkModificator sdkModificator) {
     return null;
   }
 
@@ -465,13 +484,14 @@ public class PythonSdkType extends SdkType {
     return path.contains(SKELETON_DIR_NAME);
   }
 
+  @NotNull
   @NonNls
   public String getPresentableName() {
     return "Python SDK";
   }
 
   @Override
-  public String sdkPath(VirtualFile homePath) {
+  public String sdkPath(@NotNull VirtualFile homePath) {
     String path = super.sdkPath(homePath);
     PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(path);
     if (flavor != null) {
@@ -503,19 +523,21 @@ public class PythonSdkType extends SdkType {
   }
 
   @Override
-  public boolean setupSdkPaths(Sdk sdk, SdkModel sdkModel) {
+  public boolean setupSdkPaths(@NotNull Sdk sdk, @NotNull SdkModel sdkModel) {
     return true;  // run setupSdkPaths only once (from PythonSdkDetailsStep). Skip this from showCustomCreateUI
   }
 
-  public static void setupSdkPaths(@NotNull final Sdk sdk,
+  public void setupSdkPaths(@NotNull final Sdk sdk,
                                    @Nullable final Project project,
                                    @Nullable final Component ownerComponent,
                                    @NotNull final SdkModificator sdkModificator) {
+    scheduledToRefresh.add(sdk.getHomePath());
     doSetupSdkPaths(project, ownerComponent, PySdkUpdater.fromSdkModificator(sdk, sdkModificator));
   }
 
 
-  public static void setupSdkPaths(final Sdk sdk, @Nullable final Project project, @Nullable final Component ownerComponent) {
+  public void setupSdkPaths(final Sdk sdk, @Nullable final Project project, @Nullable final Component ownerComponent) {
+    scheduledToRefresh.add(sdk.getHomePath());
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -529,14 +551,28 @@ public class PythonSdkType extends SdkType {
               PyBundle.message("MSG.title.bad.sdk")
             );
           }
-        } catch (PySdkUpdater.PySdkNotFoundException e) {
+        }
+        catch (PySdkUpdater.PySdkNotFoundException e) {
           // sdk was removed from sdk table so no need to setup paths
         }
       }
     }, ModalityState.NON_MODAL);
   }
 
-  private static boolean doSetupSdkPaths(@Nullable final Project project,
+  public void setupSdkPathsImmediately(final Sdk sdk, @Nullable final Project project) {
+    scheduledToRefresh.add(sdk.getHomePath());
+    final boolean success = doSetupSdkPaths(project, null, PySdkUpdater.fromSdkPath(sdk.getHomePath()));
+
+    if (!success) {
+      Messages.showErrorDialog(
+        project,
+        PyBundle.message("MSG.cant.setup.sdk.$0", FileUtil.toSystemDependentName(sdk.getSdkModificator().getHomePath())),
+        PyBundle.message("MSG.title.bad.sdk")
+      );
+    }
+  }
+
+  private boolean doSetupSdkPaths(@Nullable final Project project,
                                          @Nullable final Component ownerComponent,
                                          @NotNull final PySdkUpdater sdkUpdater) {
     if (isRemote(sdkUpdater.getSdk()) && project == null && ownerComponent == null) {
@@ -557,6 +593,10 @@ public class PythonSdkType extends SdkType {
       application.invokeLater(new Runnable() {
         @Override
         public void run() {
+          if (!scheduledToRefresh.contains(sdkUpdater.getHomePath())) {
+            return;
+          }
+          scheduledToRefresh.remove(sdkUpdater.getHomePath());
           progressManager.run(new Task.Backgroundable(project, PyBundle.message("sdk.gen.updating.skels"), false) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
@@ -565,7 +605,7 @@ public class PythonSdkType extends SdkType {
               }
               catch (InvalidSdkException e) {
                 // If the SDK is invalid, the user should worry about the SDK itself, not about skeletons generation errors
-                if (isVagrant(sdkUpdater.getSdk())) {
+                if (isVagrant(sdkUpdater.getSdk()) || isDocker(sdkUpdater.getSdk())) {
                   notifyRemoteSdkSkeletonsFail(e, new Runnable() {
                     @Override
                     public void run() {
@@ -597,8 +637,6 @@ public class PythonSdkType extends SdkType {
     try {
       updateSdkRootsFromSysPath(sdkUpdater);
       updateUserAddedPaths(sdkUpdater);
-      PythonSdkUpdater.getInstance()
-        .markAlreadyUpdated(sdkUpdater.getHomePath());
       return true;
     }
     catch (InvalidSdkException ignored) {
@@ -608,7 +646,7 @@ public class PythonSdkType extends SdkType {
 
   public static void notifyRemoteSdkSkeletonsFail(final InvalidSdkException e, @Nullable final Runnable restartAction) {
     NotificationListener notificationListener;
-
+    String notificationMessage;
     if (e.getCause() instanceof VagrantNotStartedException) {
       notificationListener =
         new NotificationListener() {
@@ -629,15 +667,36 @@ public class PythonSdkType extends SdkType {
             }
           }
         };
+      notificationMessage = e.getMessage() + "\n<a href=\"#\">Launch vagrant and refresh skeletons</a>";
+    }
+    else if (ExceptionUtil.causedBy(e, DockerMachineNotStartedException.class)) {
+      //noinspection ThrowableResultOfMethodCallIgnored
+      DockerMachineNotStartedException cause = ExceptionUtil.findCause(e, DockerMachineNotStartedException.class);
+      final String machineName = cause.getMachineName();
+      notificationListener =
+        new NotificationListener() {
+          @Override
+          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+            final DockerSupport dockerSupport = DockerSupport.getInstance();
+            if (dockerSupport != null) {
+              dockerSupport.startMachineWithProgressIndicator(null, machineName);
+            }
+            if (restartAction != null) {
+              restartAction.run();
+            }
+          }
+        };
+      notificationMessage = e.getMessage() + "\n<a href=\"#\">Start Docker Machine '" + machineName + "' and refresh skeletons</a>";
     }
     else {
       notificationListener = null;
+      notificationMessage = e.getMessage();
     }
 
     Notifications.Bus.notify(
       new Notification(
         SKELETONS_TOPIC, "Couldn't refresh skeletons for remote interpreter",
-        e.getMessage() + "\n<a href=\"#\">Launch vagrant and refresh skeletons</a>",
+        notificationMessage,
         NotificationType.WARNING,
         notificationListener
       )
@@ -754,6 +813,9 @@ public class PythonSdkType extends SdkType {
     return path;
   }
 
+  /**
+   * Returns skeletons location on the local machine. Independent of SDK credentials type (e.g. ssh, Vagrant, Docker or else).
+   */
   public static String getSkeletonsPath(String basePath, String sdkHome) {
     String sep = File.separator;
     return getSkeletonsRootPath(basePath) + sep + FileUtil.toSystemIndependentName(sdkHome).hashCode() + sep;
@@ -779,17 +841,17 @@ public class PythonSdkType extends SdkType {
 
   @NotNull
   public static List<String> getSysPathsFromScript(@NotNull String binaryPath) throws InvalidSdkException {
-    String scriptFile = PythonHelpersLocator.getHelperPath("syspath.py");
     // to handle the situation when PYTHONPATH contains ., we need to run the syspath script in the
     // directory of the script itself - otherwise the dir in which we run the script (e.g. /usr/bin) will be added to SDK path
-    final ProcessOutput run_result = PySdkUtil.getProcessOutput(new File(scriptFile).getParent(), new String[]{binaryPath, scriptFile},
+    GeneralCommandLine cmd = PythonHelper.SYSPATH.newCommandLine(binaryPath, Lists.<String>newArrayList());
+    final ProcessOutput runResult = PySdkUtil.getProcessOutput(cmd, new File(binaryPath).getParent(),
                                                                 getVirtualEnvExtraEnv(binaryPath), MINUTE);
-    if (!run_result.checkSuccess(LOG)) {
+    if (!runResult.checkSuccess(LOG)) {
       throw new InvalidSdkException(String.format("Failed to determine Python's sys.path value:\nSTDOUT: %s\nSTDERR: %s",
-                                                  run_result.getStdout(),
-                                                  run_result.getStderr()));
+                                                  runResult.getStdout(),
+                                                  runResult.getStderr()));
     }
-    return run_result.getStdoutLines();
+    return runResult.getStdoutLines();
   }
 
   /**
@@ -802,6 +864,34 @@ public class PythonSdkType extends SdkType {
       return ImmutableMap.of("PATH", root.toString());
     }
     return null;
+  }
+
+  @Nullable
+  @Override
+  public String getVersionString(@NotNull Sdk sdk) {
+    if (isRemote(sdk)) {
+      final PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
+      assert data != null;
+      String versionString = data.getVersionString();
+      if (StringUtil.isEmpty(versionString)) {
+        final PythonRemoteInterpreterManager remoteInterpreterManager = PythonRemoteInterpreterManager.getInstance();
+        if (remoteInterpreterManager != null) {
+          try {
+            versionString =
+              remoteInterpreterManager.getInterpreterVersion(null, data);
+          }
+          catch (Exception e) {
+            LOG.warn("Couldn't get interpreter version:" + e.getMessage(), e);
+            versionString = "undefined";
+          }
+        }
+        data.setVersionString(versionString);
+      }
+      return versionString;
+    }
+    else {
+      return getVersionString(sdk.getHomePath());
+    }
   }
 
   @Nullable
@@ -860,7 +950,7 @@ public class PythonSdkType extends SdkType {
     return LanguageLevel.getDefault();
   }
 
-  public boolean isRootTypeApplicable(final OrderRootType type) {
+  public boolean isRootTypeApplicable(@NotNull final OrderRootType type) {
     return type == OrderRootType.CLASSES;
   }
 
@@ -1035,6 +1125,10 @@ public class PythonSdkType extends SdkType {
 
         @Override
         public void deployment(@NotNull WebDeploymentCredentialsHolder cred) {
+        }
+
+        @Override
+        public void docker(@NotNull DockerCredentialsHolder credentials) {
         }
       });
       return result.get();

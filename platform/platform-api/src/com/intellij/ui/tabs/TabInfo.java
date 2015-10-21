@@ -17,6 +17,7 @@ package com.intellij.ui.tabs;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.reference.SoftReference;
@@ -107,22 +108,24 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
 
   public TabInfo setText(String text) {
     List<SimpleTextAttributes> attributes = myText.getAttributes();
-    SimpleTextAttributes textAttributes = attributes.isEmpty() ? null : attributes.get(0);
-    SimpleTextAttributes defaultAttributes = getDefaultAttributes();
+    TextAttributes textAttributes = attributes.size() == 1 ? attributes.get(0).toTextAttributes() : null;
+    TextAttributes defaultAttributes = getDefaultAttributes().toTextAttributes();
     if (!myText.toString().equals(text) || !Comparing.equal(textAttributes, defaultAttributes)) {
       clearText(false);
-      append(text, defaultAttributes);
+      append(text, getDefaultAttributes());
     }
     return this;
   }
 
+  @NotNull
   private SimpleTextAttributes getDefaultAttributes() {
-    if (myDefaultAttributes != null) return myDefaultAttributes;
+    SimpleTextAttributes attributes = myDefaultAttributes;
+    if (attributes == null) {
+      myDefaultAttributes = attributes = new SimpleTextAttributes(myDefaultStyle != -1 ? myDefaultStyle : SimpleTextAttributes.STYLE_PLAIN,
+                                                     myDefaultForeground, myDefaultWaveColor);
 
-    myDefaultAttributes = new SimpleTextAttributes(myDefaultStyle != -1 ? myDefaultStyle : SimpleTextAttributes.STYLE_PLAIN,
-                                                   myDefaultForeground, myDefaultWaveColor);
-
-    return myDefaultAttributes;
+    }
+    return attributes;
   }
 
   public TabInfo clearText(final boolean invalidate) {

@@ -41,7 +41,6 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.Alarm;
 import com.intellij.util.BooleanFunction;
@@ -349,6 +348,10 @@ public class AbstractPopup implements JBPopup {
       return false;
     }
 
+    if (SystemInfo.isMacOSYosemite) {
+      return false;
+    }
+
     if (myComponent.getComponentCount() > 0) {
       Component component = myComponent.getComponent(0);
       if (component instanceof JComponent && Boolean.TRUE.equals(((JComponent)component).getClientProperty(SUPPRESS_MAC_CORNER))) {
@@ -548,7 +551,16 @@ public class AbstractPopup implements JBPopup {
       return preferredLocation;
     }
     int adjustedY = preferredBounds.y - editor.getLineHeight() * 3 / 2 - preferredSize.height;
-    return adjustedY >= 0 ? RelativePoint.fromScreen(new Point(preferredBounds.x, adjustedY)) : preferredLocation;
+    if (adjustedY < 0) {
+      return preferredLocation;
+    }
+    Point point = new Point(preferredBounds.x, adjustedY);
+    Component component = preferredLocation.getComponent();
+    if (component == null) {
+      return RelativePoint.fromScreen(point);
+    }
+    SwingUtilities.convertPointFromScreen(point, component);
+    return new RelativePoint(component, point);
   }
 
   public void addPopupListener(JBPopupListener listener) {
@@ -1134,7 +1146,7 @@ public class AbstractPopup implements JBPopup {
   private Window updateMaskAndAlpha(Window window) {
     if (window == null) return null;
 
-    if (window.isDisplayable() && window.isShowing()) return window;
+    if (!window.isDisplayable() || !window.isShowing()) return window;
 
     final WindowManagerEx wndManager = getWndManager();
     if (wndManager == null) return window;

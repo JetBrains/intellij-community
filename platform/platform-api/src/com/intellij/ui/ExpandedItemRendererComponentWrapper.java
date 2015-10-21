@@ -25,7 +25,10 @@ import javax.swing.border.Border;
 import java.awt.*;
 
 public class ExpandedItemRendererComponentWrapper extends JComponent {
-  private ExpandedItemRendererComponentWrapper(@NotNull final Component rendererComponent) {
+  /**
+   * @deprecated use {@link #wrap(Component)}} instead to create an instance
+   */
+  public ExpandedItemRendererComponentWrapper(@NotNull final Component rendererComponent) {
     add(rendererComponent);
     setOpaque(false);
     setLayout(new AbstractLayoutManager() {
@@ -47,15 +50,16 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
 
   public static ExpandedItemRendererComponentWrapper wrap(@NotNull Component rendererComponent) {
     if (rendererComponent instanceof Accessible) {
-      return new MyAccessibleComponent((Accessible)rendererComponent);
+      return new MyAccessibleComponent(rendererComponent, (Accessible)rendererComponent);
     }
     return new ExpandedItemRendererComponentWrapper(rendererComponent);
   }
 
   private static class MyAccessibleComponent extends ExpandedItemRendererComponentWrapper implements Accessible {
     private Accessible myAccessible;
-    MyAccessibleComponent(Accessible comp) {
-      myAccessible = comp;
+    MyAccessibleComponent(@NotNull Component comp, @NotNull Accessible accessible) {
+      super(comp);
+      myAccessible = accessible;
     }
     @Override
     public AccessibleContext getAccessibleContext() {

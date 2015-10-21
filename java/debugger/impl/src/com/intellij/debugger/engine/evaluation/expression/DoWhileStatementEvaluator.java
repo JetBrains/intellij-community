@@ -37,7 +37,7 @@ public class DoWhileStatementEvaluator extends LoopEvaluator {
   }
 
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    Object value = context.getDebugProcess().getVirtualMachineProxy().mirrorOf();
+    Object value = context.getDebugProcess().getVirtualMachineProxy().mirrorOfVoid();
     while (true) {
       if (body(context)) break;
 

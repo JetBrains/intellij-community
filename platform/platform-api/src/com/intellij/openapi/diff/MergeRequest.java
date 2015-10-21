@@ -23,7 +23,9 @@ import org.jetbrains.annotations.Nullable;
  * A request for a merge operation.
  *
  * @see DiffRequestFactory#createMergeRequest
+ * @deprecated use {@link com.intellij.diff.merge.MergeRequest} instead
  */
+@Deprecated
 public abstract class MergeRequest extends DiffRequest {
   protected MergeRequest(@Nullable Project project) {
     super(project);

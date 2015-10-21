@@ -68,7 +68,7 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.execution.impl.JavaScratchCompilationSupport</implementation-class>
+      <implementation-class>com.intellij.execution.scratch.JavaScratchCompilationSupport</implementation-class>
     </component>
   </project-components>
 
@@ -221,7 +221,7 @@
     </extensionPoint>
 
     <extensionPoint name="expressionConverter" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.refactoring.introduceParameter.ExpressionConverter"/>
+      <with attribute="implementationClass" implements="com.intellij.psi.impl.ExpressionConverter"/>
     </extensionPoint>
 
     <extensionPoint name="refactoring.pullUpHelperFactory" beanClass="com.intellij.lang.LanguageExtensionPoint">
@@ -369,10 +369,8 @@
     <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ExcludeFromCompletionLookupActionProvider"
                            id="excludeFromCompletion" order="last"/>
 
-    <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.UnfocusedNameIdentifier" id="javaNameIdentifier"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavadocCompletionConfidence" id="javadoc" order="before javaComments"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInComments" id="javaComments"/>
-    <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.AlwaysFocusLookup" id="javaTrue" order="last"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionCompletionConfidence" id="javaReflection" />
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings" id="javaSkipAutopopupInStrings"/>
 
@@ -1031,6 +1029,7 @@
     <lang.whiteSpaceFormattingStrategy language="JAVA"
                                        implementationClass="com.intellij.psi.formatter.JavadocWhiteSpaceFormattingStrategy"/>
     <lang.rearranger language="JAVA" implementationClass="com.intellij.psi.codeStyle.arrangement.JavaRearranger"/>
+    <lang.formatting.extractor language="JAVA" implementationClass="com.intellij.psi.codeStyle.extractor.differ.JavaExtractor"/>
 
     <lang.documentationProvider language="JAVA" implementationClass="com.intellij.lang.java.JavaDocumentationProvider"/>
     <documentationProvider implementation="com.intellij.lang.java.FileDocumentationProvider" order="last"/>
@@ -1326,8 +1325,10 @@
     <configurationProducer implementation="com.intellij.execution.applet.AppletConfigurationProducer"/>
     <configurationType implementation="com.intellij.execution.application.ApplicationConfigurationType"/>
     <configurationType implementation="com.intellij.execution.jar.JarApplicationConfigurationType"/>
+    <configurationType implementation="com.intellij.execution.scratch.JavaScratchConfigurationType"/>
     <runConfigurationProducer implementation="com.intellij.execution.jar.JarApplicationConfigurationProducer"/>
     <runConfigurationProducer implementation="com.intellij.execution.application.ApplicationConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.intellij.execution.scratch.JavaScratchConfigurationProducer"/>
     <configurationType implementation="com.intellij.execution.remote.RemoteConfigurationType"/>
 
     <runLineMarkerContributor language="JAVA" implementationClass="com.intellij.execution.application.ApplicationRunLineMarkerProvider"/>
@@ -1486,6 +1487,7 @@
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaSuperClassNameOccurenceIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaMethodParameterTypesIndex"/>
+    <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaUnitIndex"/>
 
     <fileBasedIndex implementation="com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.RefQueueIndex"/>
@@ -1548,6 +1550,7 @@
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
                         serviceImplementation="com.intellij.profile.codeInspection.JavaAwareInspectionProfileManager"/>
 
+    <resolveScopeProvider implementation="com.intellij.psi.impl.file.impl.JavaOutOfSourcesResolveScopeProvider"/>
     <resolveScopeEnlarger implementation="com.intellij.psi.NonClasspathResolveScopeEnlarger"/>
 
     <xdebugger.debuggerSupport implementation="com.intellij.debugger.ui.JavaDebuggerSupport"/>
@@ -1618,7 +1621,6 @@
 
     <applicationService serviceImplementation="com.intellij.execution.JavaRunConfigurationExtensionManager"/>
     <runConfigurationExtension implementation="com.intellij.execution.testDiscovery.TestDiscoveryExtension"/>
-    <runConfigurationExtension implementation="com.intellij.execution.impl.JavaScratchRunConfigurationExtension"/>
 
     <regExpLanguageHost forClass="com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl"
                         implementationClass="com.intellij.psi.impl.JavaRegExpHost"/>
@@ -1676,6 +1678,8 @@
                     serviceImplementation="com.intellij.platform.ProjectBaseDirectory"/>
     <projectService serviceInterface="com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis"
                     serviceImplementation="com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis"/>
+    <projectService serviceInterface="com.intellij.psi.stubsHierarchy.impl.HierarchyService"
+                    serviceImplementation="com.intellij.psi.stubsHierarchy.impl.HierarchyService"/>
     <spellchecker.support language="JAVA" implementationClass="com.intellij.spellchecker.JavaSpellcheckingStrategy"/>
 
     <codeInsight.template.postfixTemplateProvider language="JAVA"

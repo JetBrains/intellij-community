@@ -25,19 +25,46 @@ import javax.swing.*;
 import java.awt.*;
 
 public class DiffNotifications {
-  @NotNull public static final JPanel INSERTED_CONTENT =
-    createNotification("Content added", TextDiffType.INSERTED.getColor(null));
-  @NotNull public static final JPanel REMOVED_CONTENT =
-    createNotification("Content removed", TextDiffType.DELETED.getColor(null));
+  @Deprecated @NotNull public static final JPanel INSERTED_CONTENT = createInsertedContent();
+  @Deprecated @NotNull public static final JPanel REMOVED_CONTENT = createRemovedContent();
+  @Deprecated @NotNull public static final JPanel EQUAL_CONTENTS = createEqualContents();
+  @Deprecated @NotNull public static final JPanel ERROR = createError();
+  @Deprecated @NotNull public static final JPanel OPERATION_CANCELED = createOperationCanceled();
+  @Deprecated @NotNull public static final JPanel DIFF_TOO_BIG = createDiffTooBig();
 
-  @NotNull public static final JPanel EQUAL_CONTENTS =
-    createNotification(DiffBundle.message("diff.contents.are.identical.message.text"));
-  @NotNull public static final JPanel ERROR =
-    createNotification("Can not calculate diff");
-  @NotNull public static final JPanel OPERATION_CANCELED =
-    createNotification("Can not calculate diff. Operation canceled.");
-  @NotNull public static final JPanel DIFF_TOO_BIG =
-    createNotification("Can not calculate diff. " + DiffTooBigException.MESSAGE);
+  @NotNull
+  public static JPanel createInsertedContent() {
+    return createNotification("Content added", TextDiffType.INSERTED.getColor(null));
+  }
+
+  @NotNull
+  public static JPanel createRemovedContent() {
+    return createNotification("Content removed", TextDiffType.DELETED.getColor(null));
+  }
+
+  @NotNull
+  public static JPanel createEqualContents() {
+    return createNotification(DiffBundle.message("diff.contents.are.identical.message.text"));
+  }
+
+  @NotNull
+  public static JPanel createError() {
+    return createNotification("Can not calculate diff");
+  }
+
+  @NotNull
+  public static JPanel createOperationCanceled() {
+    return createNotification("Can not calculate diff. Operation canceled.");
+  }
+
+  @NotNull
+  public static JPanel createDiffTooBig() {
+    return createNotification("Can not calculate diff. " + DiffTooBigException.MESSAGE);
+  }
+
+  //
+  // Impl
+  //
 
   @NotNull
   public static JPanel createNotification(@NotNull String text) {

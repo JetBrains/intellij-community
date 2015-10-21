@@ -229,6 +229,9 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
 
     final List<LookupElement> zeroPriority = ContainerUtil.newArrayList();
 
+    PsiClass qualifierClass = com.intellij.psi.util.PsiUtil.resolveClassInClassTypeOnly(qualifierType);
+    final boolean honorExcludes = qualifierClass == null || !JavaCompletionUtil.isInExcludedPackage(qualifierClass, false);
+
     GroovyCompletionUtil.processVariants(reference, matcher, parameters, new Consumer<LookupElement>() {
       @Override
       public void consume(LookupElement lookupElement) {
@@ -245,7 +248,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
           return;
         }
 
-        if (object instanceof PsiMember && JavaCompletionUtil.isInExcludedPackage((PsiMember)object, true)) {
+        if (honorExcludes && object instanceof PsiMember && JavaCompletionUtil.isInExcludedPackage((PsiMember)object, true)) {
           return;
         }
 

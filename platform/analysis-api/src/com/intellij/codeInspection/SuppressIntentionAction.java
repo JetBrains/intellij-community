@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,8 +65,7 @@ public abstract class SuppressIntentionAction implements Iconable, IntentionActi
 
   @Override
   public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!file.getManager().isInProject(file)) return;
-    final PsiElement element = getElement(editor, file);
+    PsiElement element = getElement(editor, file);
     if (element != null) {
       invoke(project, editor, element);
     }
@@ -79,7 +77,7 @@ public abstract class SuppressIntentionAction implements Iconable, IntentionActi
    * @param project the project in which the file is opened.
    * @param editor  the editor for the file.
    * @param element the element under cursor.
-   * @throws com.intellij.util.IncorrectOperationException
+   * @throws IncorrectOperationException
    *
    */
   public abstract void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException;
@@ -87,10 +85,7 @@ public abstract class SuppressIntentionAction implements Iconable, IntentionActi
   @Override
   public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (file == null) return false;
-    final PsiManager manager = file.getManager();
-    if (manager == null) return false;
-    if (!manager.isInProject(file)) return false;
-    final PsiElement element = getElement(editor, file);
+    PsiElement element = getElement(editor, file);
     return element != null && isAvailable(project, editor, element);
   }
 

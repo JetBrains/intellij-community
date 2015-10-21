@@ -90,7 +90,9 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
     setCommandName(members);
 
-    myTargetClass = JavaPsiFacade.getInstance(myProject).findClass(dialog.getTargetClassName(), GlobalSearchScope.projectScope(myProject));
+    final String targetClassName = dialog.getTargetClassName();
+    myTargetClass = JavaPsiFacade.getInstance(myProject).findClass(targetClassName, GlobalSearchScope.projectScope(myProject));
+    LOG.assertTrue(myTargetClass != null, "target class: " + targetClassName);
     myNewVisibility = dialog.getMemberVisibility();
   }
 

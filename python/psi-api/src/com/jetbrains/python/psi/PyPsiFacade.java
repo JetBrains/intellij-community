@@ -39,6 +39,10 @@ public abstract class PyPsiFacade {
   public abstract QualifiedNameResolver qualifiedNameResolver(String qNameString);
   public abstract QualifiedNameResolver qualifiedNameResolver(QualifiedName qualifiedName);
 
+  /**
+   * @deprecated use {@link #createClassByQName(String, PsiElement)} or skeleton may be found
+   */
+  @Deprecated
   @Nullable
   public abstract PyClass findClass(String qName);
 
@@ -53,6 +57,9 @@ public abstract class PyPsiFacade {
 
   @Nullable
   public abstract PyType parseTypeAnnotation(@NotNull String annotation, @NotNull PsiElement anchor);
+
+  @Nullable
+  public abstract PyClass createClassByQName(@NotNull String qName, @NotNull PsiElement anchor);
 
   @Nullable
   public abstract String findShortestImportableName(@NotNull VirtualFile targetFile, @NotNull PsiElement anchor);

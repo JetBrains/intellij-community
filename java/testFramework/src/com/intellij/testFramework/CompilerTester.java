@@ -207,7 +207,7 @@ public class CompilerTester {
     EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
       @Override
       public void run() throws Throwable {
-        getProject().save();
+        PlatformTestUtil.saveProject(getProject());
         CompilerTestUtil.saveApplicationSettings();
         for (Module module : myModules) {
           File ioFile = new File(module.getModuleFilePath());

@@ -63,4 +63,13 @@ public abstract class AbstractProjectDataService<E, I> implements ProjectDataSer
                          @NotNull Project project,
                          @NotNull IdeModifiableModelsProvider modelsProvider) {
   }
+
+  public void postProcess(@NotNull Collection<DataNode<E>> toImport,
+                          @Nullable ProjectData projectData,
+                          @NotNull Project project,
+                          @NotNull IdeModifiableModelsProvider modelsProvider) {
+  }
+
+  public void onSuccessImport(@NotNull Project project) {
+  }
 }

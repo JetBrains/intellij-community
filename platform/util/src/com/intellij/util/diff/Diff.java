@@ -16,6 +16,7 @@
 package com.intellij.util.diff;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 
 /**
@@ -51,19 +53,43 @@ public class Diff {
     final int startShift = getStartShift(objects1, objects2);
     final int endCut = getEndCut(objects1, objects2, startShift);
 
-    ChangeBuilder builder = new ChangeBuilder(startShift);
-    int trimmedLength1 = objects1.length - startShift - endCut;
-    int trimmedLength2 = objects2.length - startShift - endCut;
-    if (trimmedLength1 == 0 || trimmedLength2 == 0) {
-      if (trimmedLength1 != 0 || trimmedLength2 != 0) {
-        builder.addChange(trimmedLength1, trimmedLength2);
-      }
-      return builder.getFirstChange();
-    }
+    Ref<Change> changeRef = doBuildChangesFast(objects1.length, objects2.length, startShift, endCut);
+    if (changeRef != null) return changeRef.get();
 
-    Enumerator<T> enumerator = new Enumerator<T>(trimmedLength1 + trimmedLength2, ContainerUtil.<T>canonicalStrategy());
+    int trimmedLength = objects1.length + objects2.length - 2 * startShift - 2 * endCut;
+    Enumerator<T> enumerator = new Enumerator<T>(trimmedLength, ContainerUtil.<T>canonicalStrategy());
     int[] ints1 = enumerator.enumerate(objects1, startShift, endCut);
     int[] ints2 = enumerator.enumerate(objects2, startShift, endCut);
+    return doBuildChanges(ints1, ints2, new ChangeBuilder(startShift));
+  }
+
+  @Nullable
+  public static <T> Change buildChanges(@NotNull int[] array1, @NotNull int[] array2) throws FilesTooBigForDiffException {
+    final int startShift = getStartShift(array1, array2);
+    final int endCut = getEndCut(array1, array2, startShift);
+
+    Ref<Change> changeRef = doBuildChangesFast(array1.length, array2.length, startShift, endCut);
+    if (changeRef != null) return changeRef.get();
+
+    boolean copyArray = startShift != 0 || endCut != 0;
+    int[] ints1 = copyArray ? Arrays.copyOfRange(array1, startShift, array1.length - endCut) : array1;
+    int[] ints2 = copyArray ? Arrays.copyOfRange(array2, startShift, array2.length - endCut) : array2;
+    return doBuildChanges(ints1, ints2, new ChangeBuilder(startShift));
+  }
+
+  @Nullable
+  private static Ref<Change> doBuildChangesFast(int length1, int length2, int startShift, int endCut) {
+    int trimmedLength1 = length1 - startShift - endCut;
+    int trimmedLength2 = length2 - startShift - endCut;
+    if (trimmedLength1 != 0 && trimmedLength2 != 0) return null;
+    Change change = trimmedLength1 != 0 || trimmedLength2 != 0 ?
+                    new Change(startShift, startShift, trimmedLength1, trimmedLength2, null) :
+                    null;
+    return new Ref<Change>(change);
+  }
+
+  private static Change doBuildChanges(@NotNull int[] ints1, @NotNull int[] ints2, @NotNull ChangeBuilder builder)
+    throws FilesTooBigForDiffException {
     Reindexer reindexer = new Reindexer(); // discard unique elements, that have no chance to be matched
     int[][] discarded = reindexer.discardUnique(ints1, ints2);
 
@@ -115,6 +141,27 @@ public class Diff {
     for (int i = 0; i < size; i++) {
       if (! o1[o1.length - i - 1].equals(o2[o2.length - i - 1])) break;
       ++ idx;
+    }
+    return idx;
+  }
+
+  private static int getStartShift(final int[] o1, final int[] o2) {
+    final int size = Math.min(o1.length, o2.length);
+    int idx = 0;
+    for (int i = 0; i < size; i++) {
+      if (o1[i] != o2[i]) break;
+      ++idx;
+    }
+    return idx;
+  }
+
+  private static int getEndCut(final int[] o1, final int[] o2, final int startShift) {
+    final int size = Math.min(o1.length, o2.length) - startShift;
+    int idx = 0;
+
+    for (int i = 0; i < size; i++) {
+      if (o1[o1.length - i - 1] != o2[o2.length - i - 1]) break;
+      ++idx;
     }
     return idx;
   }

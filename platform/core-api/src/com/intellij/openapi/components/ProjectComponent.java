@@ -20,7 +20,11 @@ package com.intellij.openapi.components;
  * It should have constructor with a single parameter of {@link com.intellij.openapi.project.Project}
  * type or with no parameters.
  * <p>
- * See <a href=../../../../../plugins.html>plugins.html</a> for more information.
+ * <strong>Note that if you register a class as a project component it will be loaded, its instance will be created and
+ * {@link #initComponent()} and {@link #projectOpened()} methods will be called for each project even if user doesn't use any feature of your
+ * plugin. So consider using specific extensions instead to ensure that the plugin will not impact IDE performance until user calls its
+ * actions explicitly.</strong>
+ *
  * @see AbstractProjectComponent
  */
 public interface ProjectComponent extends BaseComponent {

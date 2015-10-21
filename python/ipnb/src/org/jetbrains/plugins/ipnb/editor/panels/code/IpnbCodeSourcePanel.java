@@ -26,6 +26,7 @@ import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
+import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction;
 import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellBaseAction;
 import org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellInplaceAction;
@@ -97,6 +98,24 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
         }
       }
 
+      private void updateVisibleArea(boolean up) {
+        final IpnbFileEditor fileEditor = myParent.getFileEditor();
+        final IpnbFilePanel ipnbPanel = fileEditor.getIpnbFilePanel();
+        final Rectangle rect = ipnbPanel.getVisibleRect();
+
+        final Rectangle cellBounds = IpnbCodeSourcePanel.this.getIpnbCodePanel().getBounds();
+        final JScrollPane scrollPane = fileEditor.getScrollPane();
+
+        final int y = cellBounds.y + myEditor.visualPositionToXY(myEditor.getCaretModel().getVisualPosition()).y;
+        int delta = myEditor.getLineHeight() * 2;
+        if (y <= rect.getY() && up) {
+          scrollPane.getVerticalScrollBar().setValue(y);
+        }
+        if (y + delta > rect.getY() + rect.getHeight() && !up) {
+          scrollPane.getVerticalScrollBar().setValue(y - rect.height + delta);
+        }
+      }
+
       @Override
       public void keyReleased(KeyEvent e) {
         final int keyCode = e.getKeyCode();
@@ -120,6 +139,10 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
           else if (keyCode == KeyEvent.VK_ENTER && InputEvent.SHIFT_DOWN_MASK == e.getModifiersEx()) {
             IpnbRunCellBaseAction.runCell(ipnbFilePanel, true);
           }
+          else if (keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_DOWN || keyCode == KeyEvent.VK_PAGE_DOWN ||
+                   keyCode == KeyEvent.VK_PAGE_UP) {
+            updateVisibleArea(keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_PAGE_UP);
+          }
         }
 
       }
@@ -131,7 +154,7 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
         if (InputEvent.CTRL_DOWN_MASK == e.getModifiersEx()) return;
         final Container ipnbFilePanel = myParent.getParent();
         if (ipnbFilePanel instanceof IpnbFilePanel) {
-          ((IpnbFilePanel)ipnbFilePanel).setSelectedCell(myParent);
+          ((IpnbFilePanel)ipnbFilePanel).setSelectedCell(myParent, true);
           myParent.switchToEditing();
         }
         UIUtil.requestFocus(contentComponent);

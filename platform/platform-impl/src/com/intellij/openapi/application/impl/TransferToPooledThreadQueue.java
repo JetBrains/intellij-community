@@ -16,13 +16,14 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.TransferToEDTQueue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.ide.PooledThreadExecutor;
 
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.Executor;
 
 /**
  * Passes elements for processing in the dedicated thread.
@@ -30,14 +31,14 @@ import java.util.concurrent.ThreadPoolExecutor;
  * Usage: {@link #offer(Object)}} : schedules element for processing in a pooled thread
  */
 public class TransferToPooledThreadQueue<T> extends TransferToEDTQueue<T> {
-  private final ThreadPoolExecutor myExecutor;
+  private final Executor myExecutor;
 
   public TransferToPooledThreadQueue(@NonNls @NotNull String name,
                                      @NotNull Condition<?> shutUpCondition,
                                      int maxUnitOfWorkThresholdMs,
                                      @NotNull Processor<T> processor) {
     super(name, processor, shutUpCondition, maxUnitOfWorkThresholdMs);
-    myExecutor = ConcurrencyUtil.newSingleThreadExecutor(name);
+    myExecutor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 1);
   }
 
   @Override

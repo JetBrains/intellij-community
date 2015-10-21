@@ -21,12 +21,11 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiAssignmentExpression;
-import com.intellij.psi.PsiBinaryExpression;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.siyeh.ig.fixes.IntroduceVariableFix;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -62,6 +61,17 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   @Override
   protected AddAssertStatementFix createAssertFix(PsiBinaryExpression binary, PsiExpression expression) {
     return RefactoringUtil.getParentStatement(expression, false) == null ? null : new AddAssertStatementFix(binary);
+  }
+
+  @Override
+  protected LocalQuickFix createIntroduceVariableFix(final PsiExpression expression) {
+    return new IntroduceVariableFix(false) {
+      @Nullable
+      @Override
+      public PsiExpression getExpressionToExtract(PsiElement element) {
+        return (PsiExpression)element;
+      }
+    };
   }
 
   private class OptionsPanel extends JPanel {

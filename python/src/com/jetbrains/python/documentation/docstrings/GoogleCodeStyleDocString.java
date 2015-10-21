@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.documentation.docstrings;
 
+import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.toolbox.Substring;
@@ -31,7 +32,20 @@ import java.util.regex.Pattern;
  */
 public class GoogleCodeStyleDocString extends SectionBasedDocString {
   public static final Pattern SECTION_HEADER = Pattern.compile("^[ \t]*([\\w \t]+):[ \t]*$", Pattern.MULTILINE);
-  private static final Pattern FIELD_NAME_AND_TYPE = Pattern.compile("^[ \t]*(.+?)[ \t]*\\([ \t]*(.*?)[ \t]*\\)[ \t]*$", Pattern.MULTILINE);
+  private static final Pattern FIELD_NAME_AND_TYPE = Pattern.compile("^[ \t]*(.+?)[ \t]*\\([ \t]*(.*?)[ \t]*\\)?[ \t]*$", Pattern.MULTILINE);
+
+  public static final List<String> PREFERRED_SECTION_HEADERS = ImmutableList.of("Args",
+                                                                                "Keyword Args",
+                                                                                "Returns",
+                                                                                "Yields",
+                                                                                "Raises",
+                                                                                "Attributes",
+                                                                                "See Also",
+                                                                                "Methods",
+                                                                                "References",
+                                                                                "Examples",
+                                                                                "Notes",
+                                                                                "Warnings");
 
   public GoogleCodeStyleDocString(@NotNull Substring text) {
     super(text);

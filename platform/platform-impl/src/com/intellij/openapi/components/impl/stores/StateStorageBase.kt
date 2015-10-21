@@ -17,27 +17,26 @@ package com.intellij.openapi.components.impl.stores
 
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import org.jdom.Element
 import java.util.concurrent.atomic.AtomicReference
 
-public abstract class StateStorageBase<T : Any> : StateStorage {
-  companion object {
-    private val LOG: Logger = Logger.getInstance(javaClass<StateStorageBase<Any>>())
-  }
+private val LOG: Logger = Logger.getInstance(StateStorageBase::class.java)
 
+abstract class StateStorageBase<T : Any> : StateStorage {
   private var mySavingDisabled = false
 
   protected val storageDataRef: AtomicReference<T> = AtomicReference()
 
-  override final fun <S> getState(component: Any?, componentName: String, stateClass: Class<S>, mergeInto: S?, reload: Boolean): S? {
+  override final fun <S : Any> getState(component: Any?, componentName: String, stateClass: Class<S>, mergeInto: S?, reload: Boolean): S? {
     return getState(component, componentName, stateClass, true, reload, mergeInto)
   }
 
-  fun <S> getState(component: Any?, componentName: String, stateClass: Class<S>, archive: Boolean = true, reload: Boolean = false, mergeInto: S? = null): S? {
+  fun <S: Any> getState(component: Any?, componentName: String, stateClass: Class<S>, archive: Boolean = true, reload: Boolean = false, mergeInto: S? = null): S? {
     return deserializeState(getSerializedState(getStorageData(reload), component, componentName, archive), stateClass, mergeInto)
   }
 
-  open fun <S> deserializeState(serializedState: Element?, stateClass: Class<S>, mergeInto: S?): S? {
+  open fun <S: Any> deserializeState(serializedState: Element?, stateClass: Class<S>, mergeInto: S?): S? {
     return DefaultStateSerializer.deserializeState(serializedState, stateClass, mergeInto)
   }
 
@@ -45,13 +44,11 @@ public abstract class StateStorageBase<T : Any> : StateStorage {
 
   protected abstract fun hasState(storageData: T, componentName: String): Boolean
 
-  override fun hasState(componentName: String, reloadData: Boolean): Boolean {
+  override final fun hasState(componentName: String, reloadData: Boolean): Boolean {
     return hasState(getStorageData(reloadData), componentName)
   }
 
-  public fun getStorageData(): T = getStorageData(false)
-
-  protected fun getStorageData(reload: Boolean): T {
+  protected fun getStorageData(reload: Boolean = false): T {
     val storageData = storageDataRef.get()
     if (storageData != null && !reload) {
       return storageData
@@ -69,23 +66,17 @@ public abstract class StateStorageBase<T : Any> : StateStorage {
   protected abstract fun loadData(): T
 
   public fun disableSaving() {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Disabled saving for " + toString())
-    }
+    LOG.debug { "Disabled saving for ${toString()}" }
     mySavingDisabled = true
   }
 
   public fun enableSaving() {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Enabled saving " + toString())
-    }
+    LOG.debug { "Enabled saving ${toString()}" }
     mySavingDisabled = false
   }
 
   protected fun checkIsSavingDisabled(): Boolean {
-    if (mySavingDisabled && LOG.isDebugEnabled()) {
-      LOG.debug("Saving disabled for " + toString())
-    }
+    LOG.debug { "Saving disabled for ${toString()}" }
     return mySavingDisabled
   }
 }

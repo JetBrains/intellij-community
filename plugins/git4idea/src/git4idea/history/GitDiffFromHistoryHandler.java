@@ -164,7 +164,7 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
   private void checkIfFileWasTouchedAndFindParentsInBackground(@NotNull final FilePath filePath, @NotNull final GitFileRevision rev,
                                                                @NotNull final Collection<String> parentHashes,
                                                                @NotNull final Consumer<MergeCommitPreCheckInfo> resultHandler) {
-    new Task.Backgroundable(myProject, "Loading changes...", false) {
+    new Task.Backgroundable(myProject, "Loading changes...", true) {
       private MergeCommitPreCheckInfo myInfo;
 
       @Override public void run(@NotNull ProgressIndicator indicator) {
@@ -310,7 +310,7 @@ public class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<GitFil
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      doShowDiff(myFilePath, myParentRevision, myRevision, false);
+      doShowDiff(myFilePath, myParentRevision, myRevision);
     }
 
   }

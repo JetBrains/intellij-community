@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.nio.charset.Charset;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
@@ -199,17 +198,9 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
           throw new ExecutionException("No sdk is defined. Params: " + params);
         }
 
-        final GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(
-          ((JavaSdkType)sdk.getSdkType()).getVMExecutablePath(sdk),
-          params,
-          false
-        );
-        final OSProcessHandler processHandler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString()) {
-          @Override
-          public Charset getCharset() {
-            return commandLine.getCharset();
-          }
-        };
+        String executablePath = ((JavaSdkType)sdk.getSdkType()).getVMExecutablePath(sdk);
+        GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(executablePath, params, false);
+        OSProcessHandler processHandler = new OSProcessHandler(commandLine);
         ProcessTerminatedListener.attach(processHandler);
         return processHandler;
       }

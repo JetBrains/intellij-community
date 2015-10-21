@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,14 +34,14 @@ import java.awt.*;
 * Date: 8/8/11
 * Time: 3:13 PM
 */
-public class MyDiffContainer extends JBLayeredPane implements Disposable {
+class MyDiffContainer extends JBLayeredPane implements Disposable {
   private final AnimatedIcon myIcon = new AsyncProcessIcon(getClass().getName());
 
   private final JComponent myContent;
   private final JComponent myLoadingPanel;
   private final JLabel myJLabel;
 
-  public MyDiffContainer(JComponent content, final String text) {
+  MyDiffContainer(@NotNull JComponent content, @NotNull String text) {
     setLayout(new MyOverlayLayout());
     myContent = content;
     myLoadingPanel = new JPanel(new MyPanelLayout());
@@ -61,12 +62,12 @@ public class MyDiffContainer extends JBLayeredPane implements Disposable {
   public void dispose() {
   }
 
-  public void startUpdating() {
+  void startUpdating() {
     myLoadingPanel.setVisible(true);
     myIcon.resume();
   }
 
-  public void finishUpdating() {
+  void finishUpdating() {
     myIcon.suspend();
     myLoadingPanel.setVisible(false);
   }

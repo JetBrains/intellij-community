@@ -25,6 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -51,9 +52,21 @@ public class InlineUtil {
 
     PsiClass thisClass = RefactoringChangeUtil.getThisClass(initializer);
     PsiClass refParent = RefactoringChangeUtil.getThisClass(ref);
-    boolean insertCastWhenUnchecked = ref.getParent() instanceof PsiForeachStatement;
+    final PsiElement parent = ref.getParent();
+    boolean insertCastWhenUnchecked = parent instanceof PsiForeachStatement;
     final PsiType varType = variable.getType();
     initializer = RefactoringUtil.convertInitializerToNormalExpression(initializer, varType);
+    if (initializer instanceof PsiPolyadicExpression) {
+      final IElementType operationTokenType = ((PsiPolyadicExpression)initializer).getOperationTokenType();
+      if ((operationTokenType == JavaTokenType.PLUS || operationTokenType == JavaTokenType.MINUS) &&
+          parent instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)parent).getOperationTokenType() == JavaTokenType.PLUS) {
+        final PsiType type = ((PsiPolyadicExpression)parent).getType();
+        if (type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+          final PsiElementFactory factory = JavaPsiFacade.getElementFactory(initializer.getProject());
+          initializer = factory.createExpressionFromText("(" + initializer.getText() + ")", initializer);
+        }
+      }
+    }
     solveVariableNameConflicts(initializer, ref, initializer);
 
     ChangeContextUtil.encodeContextInfo(initializer, false);

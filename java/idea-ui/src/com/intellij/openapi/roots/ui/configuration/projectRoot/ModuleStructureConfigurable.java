@@ -113,10 +113,17 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   private final FacetEditorFacadeImpl myFacetEditorFacade = new FacetEditorFacadeImpl(this, TREE_UPDATER);
 
+  private final List<RemoveConfigurableHandler<?>> myRemoveHandlers;
 
   public ModuleStructureConfigurable(Project project, ModuleManager manager) {
     super(project);
     myModuleManager = manager;
+    myRemoveHandlers = new ArrayList<RemoveConfigurableHandler<?>>();
+    myRemoveHandlers.add(new ModuleRemoveHandler());
+    myRemoveHandlers.add(new FacetInModuleRemoveHandler());
+    for (ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
+      myRemoveHandlers.addAll(extension.getRemoveHandlers());
+    }
   }
 
   @Override
@@ -639,30 +646,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
                                              PlatformIcons.CLOSED_MODULE_GROUP_ICON);
   }
 
-  @Override
-  protected boolean canBeRemoved(final Object[] editableObjects) {
-    if (super.canBeRemoved(editableObjects)) {
-      return true;
-    }
-    for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
-      if (extension.canBeRemoved(editableObjects)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  @Override
-  protected boolean removeObject(final Object editableObject) {
-    for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
-      if (extension.removeObject(editableObject)) {
-        return true;
-      }
-    }
-    return super.removeObject(editableObject);
-  }
-
   private boolean canBeCopiedByExtension(final NamedConfigurable configurable) {
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
       if (extension.canBeCopied(configurable)) {
@@ -675,6 +658,46 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   private void copyByExtension(final NamedConfigurable configurable) {
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
       extension.copy(configurable, TREE_UPDATER);
+    }
+  }
+
+  private class FacetInModuleRemoveHandler extends RemoveConfigurableHandler<Facet> {
+    public FacetInModuleRemoveHandler() {
+      super(FacetConfigurable.class);
+    }
+
+    @Override
+    public boolean remove(@NotNull Collection<Facet> facets) {
+      for (Facet facet : facets) {
+        List<Facet> removed = myContext.myModulesConfigurator.getFacetsConfigurator().removeFacet(facet);
+        FacetStructureConfigurable.getInstance(myProject).removeFacetNodes(removed);
+      }
+      return true;
+    }
+  }
+
+  private class ModuleRemoveHandler extends RemoveConfigurableHandler<Module> {
+    public ModuleRemoveHandler() {
+      super(ModuleConfigurable.class);
+    }
+
+    @Override
+    public boolean remove(@NotNull Collection<Module> modules) {
+      ModulesConfigurator modulesConfigurator = myContext.myModulesConfigurator;
+      List<Module> deleted = modulesConfigurator.deleteModules(modules);
+      if (deleted.isEmpty()) {
+        return false;
+      }
+      for (Module module : deleted) {
+        List<Facet> removed = modulesConfigurator.getFacetsConfigurator().removeAllFacets(module);
+        FacetStructureConfigurable.getInstance(myProject).removeFacetNodes(removed);
+        myContext.getDaemonAnalyzer().removeElement(new ModuleProjectStructureElement(myContext, module));
+
+        for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
+          extension.moduleRemoved(module);
+        }
+      }
+      return true;
     }
   }
 
@@ -826,27 +849,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   @Override
-  protected List<Facet> removeFacet(final Facet facet) {
-    List<Facet> removed = super.removeFacet(facet);
-    FacetStructureConfigurable.getInstance(myProject).removeFacetNodes(removed);
-    return removed;
-  }
-
-  @Override
-  protected boolean removeModule(final Module module) {
-    ModulesConfigurator modulesConfigurator = myContext.myModulesConfigurator;
-    if (!modulesConfigurator.deleteModule(module)) {
-      //wait for confirmation
-      return false;
-    }
-    List<Facet> removed = modulesConfigurator.getFacetsConfigurator().removeAllFacets(module);
-    FacetStructureConfigurable.getInstance(myProject).removeFacetNodes(removed);
-    myContext.getDaemonAnalyzer().removeElement(new ModuleProjectStructureElement(myContext, module));
-
-    for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
-      extension.moduleRemoved(module);
-    }
-    return true;
+  protected List<RemoveConfigurableHandler<?>> getRemoveHandlers() {
+    return myRemoveHandlers;
   }
 
   @Override

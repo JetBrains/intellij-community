@@ -63,8 +63,8 @@ public class DuplicateThrowsInspection extends BaseJavaBatchLocalInspectionTool 
         PsiJavaCodeReferenceElement[] refs = throwsList.getReferenceElements();
         PsiClassType[] types = throwsList.getReferencedTypes();
         for (int i = 0; i < types.length; i++) {
-          PsiClassType type = types[i];
           for (int j = i+1; j < types.length; j++) {
+            PsiClassType type = types[i];
             PsiClassType otherType = types[j];
             String problem = null;
             PsiJavaCodeReferenceElement ref = refs[i];

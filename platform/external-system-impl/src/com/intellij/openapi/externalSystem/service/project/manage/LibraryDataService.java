@@ -155,41 +155,28 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
     }
   }
 
-  @NotNull
+  /**
+   * Remove orphan project libraries during postprocess phase (after execution of LibraryDependencyDataService#import)
+   * in order to use LibraryDataService.isOrphanProjectLibrary method properly
+   */
   @Override
-  public Computable<Collection<Library>> computeOrphanData(@NotNull Collection<DataNode<LibraryData>> toImport,
-                                                           @NotNull final ProjectData projectData,
-                                                           @NotNull Project project,
-                                                           @NotNull final IdeModifiableModelsProvider modelsProvider) {
-    return new Computable<Collection<Library>>() {
-      @Override
-      public Collection<Library> compute() {
-        final List<Library> orphanIdeLibraries = ContainerUtil.newSmartList();
-        final LibraryTable.ModifiableModel librariesModel = modelsProvider.getModifiableProjectLibrariesModel();
-        for (Library library : librariesModel.getLibraries()) {
-          if (!ExternalSystemApiUtil.isExternalSystemLibrary(library, projectData.getOwner())) continue;
-          if (isOrphanProjectLibrary(library, modelsProvider)) {
-            orphanIdeLibraries.add(library);
-          }
-        }
-        return orphanIdeLibraries;
-      }
-    };
-  }
+  public void postProcess(@NotNull Collection<DataNode<LibraryData>> toImport,
+                          @Nullable ProjectData projectData,
+                          @NotNull Project project,
+                          @NotNull IdeModifiableModelsProvider modelsProvider) {
 
-  @Override
-  public void removeData(@NotNull final Computable<Collection<Library>> toRemoveComputable,
-                         @NotNull Collection<DataNode<LibraryData>> toIgnore,
-                         @NotNull ProjectData projectData,
-                         @NotNull final Project project,
-                         @NotNull final IdeModifiableModelsProvider modelsProvider) {
-    final Collection<Library> toRemove = toRemoveComputable.compute();
-    if (toRemove.isEmpty()) {
-      return;
+    if (projectData == null) return;
+
+    final List<Library> orphanIdeLibraries = ContainerUtil.newSmartList();
+    final LibraryTable.ModifiableModel librariesModel = modelsProvider.getModifiableProjectLibrariesModel();
+    for (Library library : librariesModel.getLibraries()) {
+      if (!ExternalSystemApiUtil.isExternalSystemLibrary(library, projectData.getOwner())) continue;
+      if (isOrphanProjectLibrary(library, modelsProvider)) {
+        orphanIdeLibraries.add(library);
+      }
     }
 
-    final LibraryTable.ModifiableModel librariesModel = modelsProvider.getModifiableProjectLibrariesModel();
-    for (Library library : toRemove) {
+    for (Library library : orphanIdeLibraries) {
       String libraryName = library.getName();
       if (libraryName != null) {
         Library libraryToRemove = librariesModel.getLibraryByName(libraryName);

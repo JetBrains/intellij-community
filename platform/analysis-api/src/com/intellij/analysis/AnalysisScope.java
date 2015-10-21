@@ -283,7 +283,7 @@ public class AnalysisScope {
         if (file.isDirectory()) return true;
         if (ProjectCoreUtil.isProjectOrWorkspaceFile(file)) return true;
         if (fileIndex.isInContent(file) && (myIncludeTestSource || !fileIndex.isInTestSourceContent(file))
-            && !isInGeneratedSources(file, myProject)) {
+            && !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
           return processFile(file, visitor, psiManager, needReadAction, clearResolveCache);
         }
         return true;
@@ -310,7 +310,7 @@ public class AnalysisScope {
             @Override
             public Boolean compute() {
               if (!myIncludeTestSource && projectFileIndex.isInTestSourceContent(fileOrDir)) return false;
-              if (isInGeneratedSources(fileOrDir, myProject)) return false;
+              if (GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(fileOrDir, myProject)) return false;
               return ((GlobalSearchScope)myScope).contains(fileOrDir);
             }
           }).booleanValue();
@@ -342,7 +342,7 @@ public class AnalysisScope {
       }
       return true;
     }
-    List<Module> modules = myModule != null ? Collections.<Module>singletonList(myModule) : myModules;
+    List<Module> modules = myModule != null ? Collections.singletonList(myModule) : myModules;
     if (modules != null) {
       for (final Module module : modules) {
         final FileIndex moduleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
@@ -375,15 +375,6 @@ public class AnalysisScope {
         return processor.process(fileOrDir);
       }
     });
-  }
-
-  private static boolean isInGeneratedSources(@NotNull VirtualFile file, @NotNull Project project) {
-    for (GeneratedSourcesFilter filter : GeneratedSourcesFilter.EP_NAME.getExtensions()) {
-      if (filter.isGeneratedSource(file, project)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private static boolean processFile(@NotNull final VirtualFile vFile,
@@ -460,13 +451,13 @@ public class AnalysisScope {
     final Project project = dir.getProject();
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     //we should analyze generated source files only if the action is explicitly invoked for a directory located under generated roots
-    final boolean processGeneratedFiles = isInGeneratedSources(dir.getVirtualFile(), project);
+    final boolean processGeneratedFiles = GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(dir.getVirtualFile(), project);
     return VfsUtilCore.iterateChildrenRecursively(dir.getVirtualFile(), VirtualFileFilter.ALL, new ContentIterator() {
       @Override
       @SuppressWarnings({"SimplifiableIfStatement"})
       public boolean processFile(@NotNull final VirtualFile fileOrDir) {
         if (!myIncludeTestSource && index.isInTestSourceContent(fileOrDir)) return true;
-        if (!processGeneratedFiles && isInGeneratedSources(fileOrDir, project)) return true;
+        if (!processGeneratedFiles && GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(fileOrDir, project)) return true;
         if (!fileOrDir.isDirectory()) {
           return processor.process(fileOrDir);
         }
@@ -740,6 +731,7 @@ public class AnalysisScope {
         return new GlobalSearchScope() {
           @Override
           public boolean contains(@NotNull VirtualFile file) {
+            if (myFilesSet == null) initFilesSet();
             return myFilesSet.contains(file);
           }
 

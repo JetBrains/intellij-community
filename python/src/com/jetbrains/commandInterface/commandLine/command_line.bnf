@@ -25,8 +25,9 @@
   tokens=[
     space='regexp:\s+' // WARNING: Comment out or remove this (space) before generating Flex file! It is here only for live preview.
     EQ = '='
-    LITERAL_STARTS_FROM_LETTER='regexp:\p{Alpha}(\w|:|\\|/|\.)*'
-    LITERAL_STARTS_FROM_DIGIT='regexp:\p{Digit}(\w|:|\\\|/|\.)*'
+    LITERAL_STARTS_FROM_LETTER='regexp:\p{Alpha}(\w|:|\\|/|\.|-)*'
+    LITERAL_STARTS_FROM_DIGIT='regexp:\p{Digit}(\w|:|\\|/|\.|-)*'
+    LITERAL_STARTS_FROM_SYMBOL='regexp:([/\~\.](\w|:|\\|/|\.|-)*)'
     SHORT_OPTION_NAME_TOKEN='regexp:-\p{Alpha}'
     LONG_OPTION_NAME_TOKEN='regexp:--\p{Alpha}(-|\w)*'
   ]
@@ -40,7 +41,6 @@ methods=[ getOptionName isLong findRealOption ]
 }
 private short_option_name ::= SHORT_OPTION_NAME_TOKEN
 private long_option_name ::= LONG_OPTION_NAME_TOKEN
-argument ::= LITERAL_STARTS_FROM_LETTER | LITERAL_STARTS_FROM_DIGIT {
+argument ::= LITERAL_STARTS_FROM_LETTER | LITERAL_STARTS_FROM_DIGIT | LITERAL_STARTS_FROM_SYMBOL {
 methods=[ findOptionForOptionArgument findRealArgument findBestHelp ]
 }
-

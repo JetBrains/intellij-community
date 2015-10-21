@@ -67,7 +67,7 @@ public abstract class Promise<T> {
   }
 
   @NotNull
-  public static Promise<Void> all(@NotNull Collection<Promise<?>> promises) {
+  public static Promise<?> all(@NotNull Collection<Promise<?>> promises) {
     return all(promises, null);
   }
 
@@ -125,7 +125,7 @@ public abstract class Promise<T> {
     }).doWhenRejected(new Consumer<String>() {
       @Override
       public void consume(String error) {
-        promise.setError(createError(error));
+        promise.setError(error);
       }
     });
     return promise;
@@ -152,7 +152,7 @@ public abstract class Promise<T> {
   public abstract State getState();
 
   @SuppressWarnings("ExceptionClassNameDoesntEndWithException")
-  static class MessageError extends RuntimeException {
+  public static class MessageError extends RuntimeException {
     public MessageError(@NotNull String error) {
       super(error);
     }
@@ -173,5 +173,5 @@ public abstract class Promise<T> {
     }
   }
 
-  abstract void notify(@NotNull AsyncPromise<T> child);
+  public abstract void notify(@NotNull AsyncPromise<T> child);
 }

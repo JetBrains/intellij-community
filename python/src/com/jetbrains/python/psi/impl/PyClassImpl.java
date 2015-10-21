@@ -19,7 +19,6 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -73,8 +72,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   public static final PyClass[] EMPTY_ARRAY = new PyClassImpl[0];
 
   /**
-   * Ancestors cache is lazy because provider ({@link com.jetbrains.python.psi.impl.PyClassImpl.CachedAncestorsProvider}) needs
-   * {@link #getProject()} which is notavailable during consructor time.
+   * Ancestors cache is lazy because provider ({@link PyClassImpl.CachedAncestorsProvider}) needs
+   * {@link #getProject()} which is not available during constructor time.
    */
   private TypeEvalContextBasedCache<List<PyClassLikeType>> myAncestorsCache;
 
@@ -121,9 +120,6 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   private volatile Map<String, Property> myPropertyCache;
 
-  private final Key<ParameterizedCachedValue<List<PyClassLikeType>, TypeEvalContext>> myCachedValueKey = Key.create("cached ancestors");
-  private final CachedAncestorsProvider myCachedAncestorsProvider = new CachedAncestorsProvider();
-
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return new PyClassTypeImpl(this, true);
@@ -151,7 +147,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   /**
-   * @return ancestors cache. It is created lazyly if needed.
+   * @return ancestors cache. It is created lazily if needed.
    */
   @NotNull
   private TypeEvalContextBasedCache<List<PyClassLikeType>> getAncestorsCache() {
@@ -960,7 +956,6 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     if (!ContainerUtil.process(methods, processor)) return false;
     if (inherited) {
       for (PyClass ancestor : getAncestorClasses(context)) {
-        // TODO: Why there is FALSE here? We support only one level of inheritance?
         if (!ancestor.visitClassAttributes(processor, false, context)) {
           return false;
         }

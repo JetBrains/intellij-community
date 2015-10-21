@@ -118,7 +118,12 @@ class TypeCorrector extends PsiTypeMapper {
   private PsiSubstitutor mapSubstitutor(PsiClass originalClass, PsiClass mappedClass, PsiSubstitutor substitutor) {
     PsiTypeParameter[] typeParameters = mappedClass.getTypeParameters();
     PsiTypeParameter[] originalTypeParameters = originalClass.getTypeParameters();
-    if (typeParameters.length != originalTypeParameters.length) return substitutor;
+    if (typeParameters.length != originalTypeParameters.length) {
+      if (originalTypeParameters.length == 0) {
+        return JavaPsiFacade.getElementFactory(mappedClass.getProject()).createRawSubstitutor(mappedClass);
+      }
+      return substitutor;
+    }
 
     Map<PsiTypeParameter, PsiType> substitutionMap = substitutor.getSubstitutionMap();
 

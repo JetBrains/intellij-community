@@ -17,6 +17,7 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
@@ -48,7 +49,7 @@ public abstract class BaseRepositoryManager(protected val dir: File) : Repositor
     }
 
     for (file in files!!) {
-      if (file.isDirectory() || file.isHidden()) {
+      if (file.isDirectory || file.isHidden) {
         continue;
       }
 
@@ -80,9 +81,7 @@ public abstract class BaseRepositoryManager(protected val dir: File) : Repositor
 
   override fun read(path: String): InputStream? {
     if (isPathIgnored(path)) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("$path is ignored")
-      }
+      LOG.debug { "$path is ignored" }
       return null
     }
 
@@ -114,15 +113,11 @@ public abstract class BaseRepositoryManager(protected val dir: File) : Repositor
 
   override fun write(path: String, content: ByteArray, size: Int): Boolean {
     if (isPathIgnored(path)) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("$path is ignored")
-      }
+      LOG.debug { "$path is ignored" }
       return false
     }
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Write $path")
-    }
+    LOG.debug { "Write $path" }
 
     try {
       lock.write {
@@ -145,9 +140,7 @@ public abstract class BaseRepositoryManager(protected val dir: File) : Repositor
   protected abstract fun addToIndex(file: File, path: String, content: ByteArray, size: Int)
 
   override fun delete(path: String) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Remove $path")
-    }
+    LOG.debug { "Remove $path"}
 
     lock.write {
       val file = File(dir, path)
@@ -159,7 +152,7 @@ public abstract class BaseRepositoryManager(protected val dir: File) : Repositor
   }
 
   private fun delete(file: File, path: String) {
-    val isFile = file.isFile()
+    val isFile = file.isFile
     file.removeWithParentsIfEmpty(dir, isFile)
     deleteFromIndex(path, isFile)
   }
@@ -174,9 +167,9 @@ fun File.removeWithParentsIfEmpty(root: File, isFile: Boolean = true) {
 
   if (isFile) {
     // remove empty directories
-    var parent = this.getParentFile()
+    var parent = this.parentFile
     while (parent != null && parent != root && parent.delete()) {
-      parent = parent.getParentFile()
+      parent = parent.parentFile
     }
   }
 }
@@ -184,7 +177,7 @@ fun File.removeWithParentsIfEmpty(root: File, isFile: Boolean = true) {
 var conflictResolver: ((files: List<VirtualFile>, mergeProvider: MergeProvider2) -> Unit)? = null
 
 fun resolveConflicts(files: List<VirtualFile>, mergeProvider: MergeProvider2): List<VirtualFile> {
-  if (ApplicationManager.getApplication()!!.isUnitTestMode()) {
+  if (ApplicationManager.getApplication()!!.isUnitTestMode) {
     if (conflictResolver == null) {
       throw CannotResolveConflictInTestMode()
     }
@@ -200,7 +193,7 @@ fun resolveConflicts(files: List<VirtualFile>, mergeProvider: MergeProvider2): L
       override fun getMultipleFileDialogTitle() = "Settings Repository: Files Merged with Conflicts"
     })
     fileMergeDialog.show()
-    processedFiles = fileMergeDialog.getProcessedFiles()
+    processedFiles = fileMergeDialog.processedFiles
   }
   return processedFiles!!
 }
@@ -212,7 +205,7 @@ class RepositoryVirtualFile(private val path: String) : LightVirtualFile(PathUti
   override fun getPath() = path
 
   override fun setBinaryContent(content: ByteArray, newModificationStamp: Long, newTimeStamp: Long, requestor: Any?) {
-    $content = content
+    this.content = content
   }
 
   override fun getOutputStream(requestor: Any?, newModificationStamp: Long, newTimeStamp: Long): OutputStream {

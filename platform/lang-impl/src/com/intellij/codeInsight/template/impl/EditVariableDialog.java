@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -258,11 +258,13 @@ class EditVariableDialog extends DialogWrapper {
     public void setValueAt(Object aValue, int row, int col) {
       Variable variable = myVariables.get(row);
       if (col == 0) {
-         String varName = (String) aValue;
-        Variable newVar = new Variable (varName, variable.getExpressionString(), variable.getDefaultValueString(),
-                        variable.isAlwaysStopAt());
-        myVariables.set(row, newVar);
-        updateTemplateTextByVarNameChange(variable, newVar);
+        String varName = (String) aValue;
+        if (TemplateImplUtil.isValidVariableName(varName)) {
+          Variable newVar = new Variable(varName, variable.getExpressionString(), variable.getDefaultValueString(),
+                                         variable.isAlwaysStopAt());
+          myVariables.set(row, newVar);
+          updateTemplateTextByVarNameChange(variable, newVar);
+        }
       }
       else if (col == 1) {
         variable.setExpressionString((String)aValue);

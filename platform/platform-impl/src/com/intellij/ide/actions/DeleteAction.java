@@ -1,6 +1,5 @@
-
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +21,6 @@ import com.intellij.ide.TitledHandler;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +32,13 @@ import java.awt.event.KeyEvent;
 public class DeleteAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.DeleteAction");
 
+  public DeleteAction() { }
+
+  public DeleteAction(String text, String description, Icon icon) {
+    super(text, description, icon);
+  }
+
+  @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     DeleteProvider provider = getDeleteProvider(dataContext);
@@ -42,9 +47,6 @@ public class DeleteAction extends AnAction implements DumbAware {
       provider.deleteElement(dataContext);
     }
     catch (Throwable t) {
-      if (t instanceof StackOverflowError){
-        t.printStackTrace();
-      }
       LOG.error(t);
     }
   }
@@ -54,22 +56,26 @@ public class DeleteAction extends AnAction implements DumbAware {
     return PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getData(dataContext);
   }
 
-  public void update(AnActionEvent event){
-    String place = event.getPlace();
-    Presentation presentation = event.getPresentation();
-    if (ActionPlaces.PROJECT_VIEW_POPUP.equals(place) || ActionPlaces.COMMANDER_POPUP.equals(place))
+  @Override
+  public void update(AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
+
+    if (ActionPlaces.PROJECT_VIEW_POPUP.equals(e.getPlace()) || ActionPlaces.COMMANDER_POPUP.equals(e.getPlace())) {
       presentation.setText(IdeBundle.message("action.delete.ellipsis"));
-    else
+    }
+    else {
       presentation.setText(IdeBundle.message("action.delete"));
-    DataContext dataContext = event.getDataContext();
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null) {
+    }
+
+    if (e.getProject() == null) {
       presentation.setEnabled(false);
       return;
     }
+
+    DataContext dataContext = e.getDataContext();
     DeleteProvider provider = getDeleteProvider(dataContext);
-    if (event.getInputEvent() instanceof KeyEvent) {
-      KeyEvent keyEvent = (KeyEvent)event.getInputEvent();
+    if (e.getInputEvent() instanceof KeyEvent) {
+      KeyEvent keyEvent = (KeyEvent)e.getInputEvent();
       Object component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       if (component instanceof JTextComponent) provider = null; // Do not override text deletion
       if (keyEvent.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
@@ -88,19 +94,12 @@ public class DeleteAction extends AnAction implements DumbAware {
     if (provider instanceof TitledHandler) {
       presentation.setText(((TitledHandler)provider).getActionTitle());
     }
-    final boolean canDelete = provider != null && provider.canDeleteElement(dataContext);
-    if (ActionPlaces.isPopupPlace(event.getPlace())) {
+    boolean canDelete = provider != null && provider.canDeleteElement(dataContext);
+    if (ActionPlaces.isPopupPlace(e.getPlace())) {
       presentation.setVisible(canDelete);
     }
     else {
       presentation.setEnabled(canDelete);
     }
-  }
-
-  public DeleteAction(String text, String description, Icon icon) {
-    super(text, description, icon);
-  }
-
-  public DeleteAction() {
   }
 }

@@ -47,6 +47,14 @@ public class ByWord {
     List<InlineChunk> words1 = getInlineChunks(text1);
     List<InlineChunk> words2 = getInlineChunks(text2);
 
+    return compare(text1, words1, text2, words2, policy, indicator);
+  }
+
+  @NotNull
+  public static List<DiffFragment> compare(@NotNull CharSequence text1, @NotNull List<InlineChunk> words1,
+                                           @NotNull CharSequence text2, @NotNull List<InlineChunk> words2,
+                                           @NotNull ComparisonPolicy policy,
+                                           @NotNull ProgressIndicator indicator) {
     FairDiffIterable wordChanges = diff(words1, words2, indicator);
     wordChanges = optimizeWordChunks(text1, text2, words1, words2, wordChanges, indicator);
 
@@ -601,7 +609,7 @@ public class ByWord {
   }
 
   @NotNull
-  private static List<InlineChunk> getInlineChunks(@NotNull final CharSequence text) {
+  public static List<InlineChunk> getInlineChunks(@NotNull final CharSequence text) {
     final List<InlineChunk> chunks = new ArrayList<InlineChunk>();
 
     final int len = text.length();
@@ -640,9 +648,8 @@ public class ByWord {
   // Helpers
   //
 
-  interface InlineChunk {
+  public interface InlineChunk {
     int getOffset1();
-
     int getOffset2();
   }
 

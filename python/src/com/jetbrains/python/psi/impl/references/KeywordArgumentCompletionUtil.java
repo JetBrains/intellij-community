@@ -26,7 +26,7 @@ import com.jetbrains.python.psi.impl.PyKeywordArgumentProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -34,7 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 
 public class KeywordArgumentCompletionUtil {
-  public static void collectFunctionArgNames(PyElement element, List<LookupElement> ret,  final @NotNull TypeEvalContext context) {
+  public static void collectFunctionArgNames(PyElement element, List<LookupElement> ret, @NotNull final TypeEvalContext context) {
     PyCallExpression callExpr = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
     if (callExpr != null) {
       PyExpression callee = callExpr.getCallee();
@@ -42,8 +42,8 @@ public class KeywordArgumentCompletionUtil {
         final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
         final QualifiedResolveResult result = ((PyReferenceExpression)callee).followAssignmentsChain(resolveContext);
         PsiElement def = result.getElement();
-        if (def instanceof PyFunction) {
-          addKeywordArgumentVariants((PyFunction)def, callExpr, ret);
+        if (def instanceof PyCallable) {
+          addKeywordArgumentVariants((PyCallable)def, callExpr, ret);
         }
         else if (def instanceof PyClass) {
           PyFunction init = ((PyClass)def).findMethodByName(PyNames.INIT, true);  // search in superclasses
@@ -51,50 +51,100 @@ public class KeywordArgumentCompletionUtil {
             addKeywordArgumentVariants(init, callExpr, ret);
           }
         }
+
+        final PyUnionType unionType = PyUtil.as(context.getType(callee), PyUnionType.class);
+        if (unionType != null) {
+          fetchCallablesFromUnion(ret, callExpr, unionType);
+        }
       }
     }
   }
 
-  public static void addKeywordArgumentVariants(PyFunction def, PyCallExpression callExpr, final List<LookupElement> ret) {
-    addKeywordArgumentVariants(def, callExpr, ret, new HashSet<PyFunction>());
+  private static void fetchCallablesFromUnion(@NotNull final List<LookupElement> ret,
+                                              @NotNull final PyCallExpression callExpr,
+                                              @NotNull final PyUnionType unionType) {
+    for (final PyType memberType : unionType.getMembers()) {
+      if (memberType instanceof PyUnionType) {
+        fetchCallablesFromUnion(ret, callExpr, (PyUnionType)memberType);
+      }
+      if (memberType instanceof PyFunctionType) {
+        final PyFunctionType type = (PyFunctionType)memberType;
+        if (type.isCallable()) {
+          addKeywordArgumentVariants(type.getCallable(), callExpr, ret);
+        }
+      }
+    }
   }
 
-  public static void addKeywordArgumentVariants(PyFunction def, PyCallExpression callExpr, List<LookupElement> ret,
-                                                Collection<PyFunction> visited) {
-    if (visited.contains(def)) {
+  public static void addKeywordArgumentVariants(PyCallable callable, PyCallExpression callExpr, final List<LookupElement> ret) {
+    addKeywordArgumentVariants(callable, callExpr, ret, new HashSet<PyCallable>());
+  }
+
+  public static void addKeywordArgumentVariants(PyCallable callable, PyCallExpression callExpr, List<LookupElement> ret,
+                                                Collection<PyCallable> visited) {
+    if (visited.contains(callable)) {
       return;
     }
-    visited.add(def);
-    boolean needSelf = def.getContainingClass() != null && def.getModifier() != PyFunction.Modifier.STATICMETHOD;
+    visited.add(callable);
+
+    final TypeEvalContext context = TypeEvalContext.codeCompletion(callable.getProject(), callable.getContainingFile());
+    final List<PyParameter> parameters = PyUtil.getParameters(callable, context);
+
+    if (callable instanceof PyFunction) {
+      addKeywordArgumentVariantsForFunction(callExpr, ret, visited, (PyFunction)callable, parameters, context);
+    }
+    else {
+      addKeywordArgumentVariantsForCallable(callExpr, ret, parameters);
+    }
+  }
+
+  private static void addKeywordArgumentVariantsForCallable(@NotNull final PyCallExpression callExpr,
+                                                            @NotNull final List<LookupElement> ret,
+                                                            @NotNull final List<PyParameter> parameters) {
+    for (final PyParameter parameter : parameters) {
+      final String name = parameter.getName();
+      if (name != null && parameter.getAsNamed() != null) {
+        ret.add(PyUtil.createNamedParameterLookup(name, callExpr.getProject()));
+      }
+    }
+  }
+
+  private static void addKeywordArgumentVariantsForFunction(@NotNull final PyCallExpression callExpr,
+                                                            @NotNull final List<LookupElement> ret,
+                                                            @NotNull final Collection<PyCallable> visited,
+                                                            @NotNull final PyFunction function,
+                                                            @NotNull final List<PyParameter> parameters,
+                                                            @NotNull final TypeEvalContext context) {
+    boolean needSelf = function.getContainingClass() != null && function.getModifier() != PyFunction.Modifier.STATICMETHOD;
     final KwArgParameterCollector collector = new KwArgParameterCollector(needSelf, ret);
-    final TypeEvalContext context = TypeEvalContext.codeCompletion(def.getProject(), def.getContainingFile());
-    final List<PyParameter> parameters = PyUtil.getParameters(def, context);
+
+
     for (PyParameter parameter : parameters) {
       parameter.accept(collector);
     }
     if (collector.hasKwArgs()) {
       for (PyKeywordArgumentProvider provider : Extensions.getExtensions(PyKeywordArgumentProvider.EP_NAME)) {
-        final List<String> arguments = provider.getKeywordArguments(def, callExpr);
+        final List<String> arguments = provider.getKeywordArguments(function, callExpr);
         for (String argument : arguments) {
           ret.add(PyUtil.createNamedParameterLookup(argument, callExpr.getProject()));
         }
       }
       KwArgFromStatementCallCollector fromStatementCallCollector = new KwArgFromStatementCallCollector(ret, collector.getKwArgs());
-      final PyStatementList statementList = def.getStatementList();
-      if (statementList != null)
+      final PyStatementList statementList = function.getStatementList();
+      if (statementList != null) {
         statementList.acceptChildren(fromStatementCallCollector);
+      }
 
       //if (collector.hasOnlySelfAndKwArgs()) {
       // nothing interesting besides self and **kwargs, let's look at superclass (PY-778)
       if (fromStatementCallCollector.isKwArgsTransit()) {
 
-        final PsiElement superMethod = PySuperMethodsSearch.search(def, context).findFirst();
+        final PsiElement superMethod = PySuperMethodsSearch.search(function, context).findFirst();
         if (superMethod instanceof PyFunction) {
           addKeywordArgumentVariants((PyFunction)superMethod, callExpr, ret, visited);
         }
       }
     }
-//}
   }
 
   public static class KwArgParameterCollector extends PyElementVisitor {

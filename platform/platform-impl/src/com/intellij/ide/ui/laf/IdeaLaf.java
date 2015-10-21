@@ -16,10 +16,7 @@
 package com.intellij.ide.ui.laf;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.plaf.beg.*;
 import com.intellij.util.ui.UIUtil;
@@ -29,6 +26,7 @@ import com.sun.java.swing.plaf.windows.WindowsTreeUI;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.ColorUIResource;
+import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 import java.awt.*;
 
@@ -46,10 +44,10 @@ public final class IdeaLaf extends MetalLookAndFeel {
 
     Pair<String, Integer> systemFont = UIUtil.getSystemFontData();
     if (systemFont != null) {
-      LafManagerImpl.initFontDefaults(defaults, systemFont.first, systemFont.second);
+      LafManagerImpl.initFontDefaults(defaults, systemFont.second, new FontUIResource(systemFont.first, Font.PLAIN, systemFont.second));
     }
     else {
-      LafManagerImpl.initFontDefaults(defaults, "Tahoma", 11);
+      LafManagerImpl.initFontDefaults(defaults, 11, new FontUIResource("Tahoma", Font.PLAIN, 11));
     }
   }
 

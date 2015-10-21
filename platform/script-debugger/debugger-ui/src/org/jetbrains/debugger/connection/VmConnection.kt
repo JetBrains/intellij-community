@@ -15,6 +15,7 @@
  */
 package org.jetbrains.debugger.connection
 
+import com.intellij.ide.browsers.WebBrowser
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
@@ -22,63 +23,67 @@ import com.intellij.util.io.socketConnection.ConnectionState
 import com.intellij.util.io.socketConnection.ConnectionStatus
 import com.intellij.util.io.socketConnection.SocketConnectionListener
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.isPending
+import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.debugger.DebugEventListener
 import org.jetbrains.debugger.Vm
-import org.jetbrains.util.concurrency.AsyncPromise
-import org.jetbrains.util.concurrency.Promise
-import org.jetbrains.util.concurrency.ResolvedPromise
-import org.jetbrains.util.concurrency.isPending
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.event.HyperlinkListener
 
-public abstract class VmConnection<T : Vm> : Disposable, BrowserConnection {
-  private val state = AtomicReference(ConnectionState(ConnectionStatus.NOT_CONNECTED))
-  private val dispatcher = EventDispatcher.create(javaClass<DebugEventListener>())
-  private val connectionDispatcher = EventDispatcher.create(javaClass<SocketConnectionListener>())
+abstract class VmConnection<T : Vm> : Disposable {
+  open val browser: WebBrowser? = null
 
-  public volatile var vm: T? = null
+  private val stateRef = AtomicReference(ConnectionState(ConnectionStatus.NOT_CONNECTED))
+
+  private val dispatcher = EventDispatcher.create(DebugEventListener::class.java)
+  private val connectionDispatcher = EventDispatcher.create(SocketConnectionListener::class.java)
+
+  @Volatile var vm: T? = null
     protected set
 
   private val opened = AsyncPromise<Any?>()
   private val closed = AtomicBoolean()
 
-  override fun getState() = state.get()
+  val state: ConnectionState
+    get() = stateRef.get()
 
-  public fun addDebugListener(listener: DebugEventListener) {
+  fun addDebugListener(listener: DebugEventListener) {
     dispatcher.addListener(listener)
   }
 
   @TestOnly
-  public fun opened(): Promise<*> = opened
+  fun opened(): Promise<*> = opened
 
-  override fun executeOnStart(runnable: Runnable) {
+  fun executeOnStart(runnable: Runnable) {
     opened.done { runnable.run() }
   }
 
   protected fun setState(status: ConnectionStatus, message: String? = null, messageLinkListener: HyperlinkListener? = null) {
     val newState = ConnectionState(status, message, messageLinkListener)
-    val oldState = state.getAndSet(newState)
-    if (oldState == null || oldState.getStatus() != status) {
+    val oldState = stateRef.getAndSet(newState)
+    if (oldState == null || oldState.status != status) {
       if (status == ConnectionStatus.CONNECTION_FAILED) {
-        opened.setError(newState.getMessage())
+        opened.setError(newState.message)
       }
-      connectionDispatcher.getMulticaster().statusChanged(status)
+      connectionDispatcher.multicaster.statusChanged(status)
     }
   }
 
-  override fun addListener(listener: SocketConnectionListener) {
+  fun addListener(listener: SocketConnectionListener) {
     connectionDispatcher.addListener(listener)
   }
 
   protected val debugEventListener: DebugEventListener
-    get() = dispatcher.getMulticaster()
+    get() = dispatcher.multicaster
 
   protected open fun startProcessing() {
     opened.setResult(null)
   }
 
-  public fun close(message: String?, status: ConnectionStatus) {
+  fun close(message: String?, status: ConnectionStatus) {
     if (!closed.compareAndSet(false, true)) {
       return
     }
@@ -94,7 +99,7 @@ public abstract class VmConnection<T : Vm> : Disposable, BrowserConnection {
     vm = null
   }
 
-  public open fun detachAndClose(): Promise<*> {
+  open fun detachAndClose(): Promise<*> {
     if (opened.isPending) {
       opened.setError("detached and closed")
     }
@@ -102,7 +107,7 @@ public abstract class VmConnection<T : Vm> : Disposable, BrowserConnection {
     val currentVm = vm
     val callback: Promise<*>
     if (currentVm == null) {
-      callback = ResolvedPromise()
+      callback = resolvedPromise()
     }
     else {
       vm = null

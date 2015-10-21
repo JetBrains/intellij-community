@@ -25,7 +25,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 public class CloseAllUnmodifiedEditorsAction extends CloseEditorsActionBase {
 
   protected boolean isFileToClose(final EditorComposite editor, final EditorWindow window) {
-    return !window.getManager().isChanged (editor);
+    return !window.getManager().isChanged(editor) && !window.isFilePinned(editor.getFile());
   }
 
   @Override

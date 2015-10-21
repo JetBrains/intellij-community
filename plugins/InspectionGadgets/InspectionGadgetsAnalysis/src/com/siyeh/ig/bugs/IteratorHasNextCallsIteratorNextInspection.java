@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.IteratorUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class IteratorHasNextCallsIteratorNextInspection
@@ -48,15 +47,12 @@ public class IteratorHasNextCallsIteratorNextInspection
     return new IteratorHasNextCallsIteratorNext();
   }
 
-  private static class IteratorHasNextCallsIteratorNext
-    extends BaseInspectionVisitor {
+  private static class IteratorHasNextCallsIteratorNext extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
       // note: no call to super
-      @NonNls final String name = method.getName();
-      if (!MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_ITERATOR, null,
-                                     HardcodedMethodConstants.HAS_NEXT)) {
+      if (!MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_ITERATOR, null, HardcodedMethodConstants.HAS_NEXT)) {
         return;
       }
       if (!IteratorUtils.containsCallToIteratorNext(method, null, true)) {

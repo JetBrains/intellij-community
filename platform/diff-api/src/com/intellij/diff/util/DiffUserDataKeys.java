@@ -44,6 +44,7 @@ public interface DiffUserDataKeys {
 
   Key<Boolean> DO_NOT_IGNORE_WHITESPACES = Key.create("Diff.DoNotIgnoreWhitespaces");
   Key<String> DIALOG_GROUP_KEY = Key.create("Diff.DialogGroupKey");
+  Key<String> PLACE = Key.create("Diff.Place");
 
   Key<Boolean> DO_NOT_CHANGE_WINDOW_TITLE = Key.create("Diff.DoNotChangeWindowTitle");
 

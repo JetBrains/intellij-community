@@ -5,6 +5,7 @@ import com.intellij.codeInspection.emptyMethod.EmptyMethodInspection;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.i18n.I18nInspection;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.intellij.testFramework.InspectionTestCase;
 import com.siyeh.ig.migration.RawUseOfParameterizedTypeInspection;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +51,13 @@ public class RedundantSuppressTest extends InspectionTestCase {
     finally {
       ((RedundantSuppressInspection)myWrapper.getTool()).IGNORE_ALL = false;
     }
+  }
+
+  public void testInjections() throws Exception {
+    MyTestInjector testInjector = new MyTestInjector(getPsiManager());
+    testInjector.injectAll(myTestRootDisposable);
+    
+    doTest();
   }
 
   private void doTest() throws Exception {

@@ -29,8 +29,8 @@ import java.awt.*;
 import java.util.Map;
 
 public class StudyDirectoryNode extends PsiDirectoryNode {
-  private final PsiDirectory myValue;
-  private final Project myProject;
+  protected final PsiDirectory myValue;
+  protected final Project myProject;
 
   public StudyDirectoryNode(@NotNull final Project project,
                             PsiDirectory value,
@@ -45,7 +45,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     String valueName = myValue.getName();
     StudyTaskManager studyTaskManager = StudyTaskManager.getInstance(myProject);
     Course course = studyTaskManager.getCourse();
-    if (course == null) {
+    if (course == null || valueName == null) {
       return;
     }
     if (valueName.equals(myProject.getName())) {
@@ -76,7 +76,8 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     }
     else if (valueName.contains(EduNames.SANDBOX_DIR)) {
       if (myValue.getParent() != null) {
-        if (!myValue.getParent().getName().contains(EduNames.SANDBOX_DIR)) {
+        final String parentName = myValue.getParent().getName();
+        if (parentName!= null && !parentName.contains(EduNames.SANDBOX_DIR)) {
           data.setPresentableText(EduNames.SANDBOX_DIR);
           data.setIcon(InteractiveLearningIcons.Sandbox);
         }
@@ -112,7 +113,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     }
   }
 
-  private void setStudyAttributes(Task task, PresentationData data, String additionalName) {
+  protected void setStudyAttributes(Task task, PresentationData data, String additionalName) {
     StudyStatus taskStatus = StudyTaskManager.getInstance(myProject).getStatus(task);
     switch (taskStatus) {
       case Unchecked: {
@@ -130,7 +131,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
     }
   }
 
-  private static void updatePresentation(PresentationData data, String additionalName, JBColor color, Icon icon) {
+  protected static void updatePresentation(PresentationData data, String additionalName, JBColor color, Icon icon) {
     data.clearText();
     data.addText(additionalName, new SimpleTextAttributes(Font.PLAIN, color));
     data.setIcon(icon);
@@ -148,7 +149,8 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
 
   @Override
   public void navigate(boolean requestFocus) {
-    if (myValue.getName().contains(EduNames.TASK)) {
+    final String myValueName = myValue.getName();
+    if (myValueName != null && myValueName.contains(EduNames.TASK)) {
       TaskFile taskFile = null;
       VirtualFile virtualFile =  null;
       for (PsiElement child : myValue.getChildren()) {
@@ -191,7 +193,8 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
 
   @Override
   public boolean expandOnDoubleClick() {
-    if (myValue.getName().contains(EduNames.TASK)) {
+    final String myValueName = myValue.getName();
+    if (myValueName!= null && myValueName.contains(EduNames.TASK)) {
       return false;
     }
     return super.expandOnDoubleClick();

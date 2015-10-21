@@ -408,10 +408,35 @@ public class PythonCompletionTest extends PyTestCase {
   // PY-16877
   public void testSectionNamesInGoogleDocstring() {
     runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      @Override
       public void run() {
         final List<String> variants = doTestByFile();
         assertNotNull(variants);
-        assertContainsElements(variants, "Args", "Parameters", "Keyword arguments", "Returns");
+        assertContainsElements(variants, "Args", "Keyword Args", "Returns");
+        assertDoesntContain(variants, "Parameters", "Return", "Yield");
+      }
+    });
+  }
+
+  // PY-17023
+  public void testSectionNamesInNumpyDocstrings() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, new Runnable() {
+      @Override
+      public void run() {
+        final List<String> variants = doTestByFile();
+        assertNotNull(variants);
+        assertContainsElements(variants, "Parameters", "Other Parameters", "Returns");
+        assertDoesntContain(variants, "Args", "Return", "Yield");
+      }
+    });
+  }
+
+  // PY-16991
+  public void testSecondSectionNameInGoogleDocstring() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      @Override
+      public void run() {
+        doTest();
       }
     });
   }
@@ -458,6 +483,28 @@ public class PythonCompletionTest extends PyTestCase {
         final List<String> variants = doTestByFile();
         assertNotNull(variants);
         assertSameElements(variants, "param2");
+      }
+    });
+  }
+
+  // PY-16870, PY-16972
+  public void testClassNameInDocstring() {
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, new Runnable() {
+      @Override
+      public void run() {
+        doTest();
+      }
+    });
+  }
+
+  // PY-17002
+  public void testParamTypeInGoogleDocstringWithoutClosingParenthesis() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      @Override
+      public void run() {
+        final List<String> variants = doTestByFile();
+        assertNotNull(variants);
+        assertSameElements(variants, "str", "basestring");
       }
     });
   }

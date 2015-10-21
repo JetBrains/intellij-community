@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
@@ -249,8 +250,8 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
 
   public final void setEditor(final ComboBoxEditor editor) {
     ComboBoxEditor _editor = editor;
-    if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) {
-      if ("AquaComboBoxEditor".equals(editor.getClass().getSimpleName())) {
+    if (SystemInfo.isMac && (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderIntelliJLaF())) {
+      if (editor instanceof UIResource) {
         _editor = new FixedComboBoxEditor();
       }
     }

@@ -80,34 +80,34 @@ public open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("eleme
     assertEquals(out, actual)
   }
 
-  Test
+  @Test
   public fun oneNode() {
     doTest("oneNode")
   }
 
-  Test
+  @Test
   public fun manyNodes() {
     doTest("manyNodes")
   }
 
-  Test
+  @Test
   public fun longEdges() {
     doTest("longEdges")
   }
 
-  Test
+  @Test
   public fun specialElements() {
     doTest("specialElements")
   }
 
 //  oneUpOneDown tests were created in order to investigate some arrow behavior in upsource
-  Test
+  @Test
   public fun oneUpOneDown1() {
     val testName = "oneUpOneDown1"
     runTest(loadText(testName + AbstractTestWithTwoTextFile.IN_POSTFIX), loadText(testName + AbstractTestWithTwoTextFile.OUT_POSTFIX), 7, 1, 10)
   }
 
-  Test
+  @Test
   public fun oneUpOneDown2() {
     val testName = "oneUpOneDown2"
     runTest(loadText(testName + AbstractTestWithTwoTextFile.IN_POSTFIX), loadText(testName + AbstractTestWithTwoTextFile.OUT_POSTFIX), 10, 1, 10)

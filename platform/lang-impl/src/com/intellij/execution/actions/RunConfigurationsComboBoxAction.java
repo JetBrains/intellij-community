@@ -30,6 +30,8 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -49,6 +51,18 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   public static final Icon CHECKED_ICON = new SizedIcon(AllIcons.Actions.Checked, 16, 16);
   public static final Icon CHECKED_SELECTED_ICON = new SizedIcon(AllIcons.Actions.Checked_selected, 16, 16);
   public static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
+
+  @Override
+  public void actionPerformed(AnActionEvent e) {
+    if (e.getPresentation().getClientProperty(CUSTOM_COMPONENT_PROPERTY) == null) {
+      Project project = e.getProject();
+      IdeFrameImpl frame = project != null ? WindowManagerEx.getInstanceEx().getFrame(project) : null;
+      if (frame != null) {
+        e.getPresentation().putClientProperty(CUSTOM_COMPONENT_PROPERTY, frame.getComponent());
+      }
+    }
+    super.actionPerformed(e);
+  }
 
   @Override
   public void update(AnActionEvent e) {

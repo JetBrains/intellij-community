@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -283,7 +284,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     VirtualFile subdir2 = createChildDirectory(subdir1, "subdir2");
     createChildDirectory(subdir2, "subdir3");
 
-    delete(subdir1);
+    VfsTestUtil.deleteFile(subdir1);
   }
 
   public void testMoveDir() throws Exception {
@@ -533,10 +534,10 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertExcluded(module2Output, myModule);
     assertExcluded(module2TestOutput, myModule2);
 
-    delete(excluded);
-    delete(projectOutput);
-    delete(module2Output);
-    delete(module2TestOutput);
+    VfsTestUtil.deleteFile(excluded);
+    VfsTestUtil.deleteFile(projectOutput);
+    VfsTestUtil.deleteFile(module2Output);
+    VfsTestUtil.deleteFile(module2TestOutput);
 
     final List<VirtualFile> created = new ArrayList<VirtualFile>();
     VirtualFileListener l = new VirtualFileAdapter() {
@@ -569,7 +570,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     final VirtualFile dir = createChildDirectory(myModule1Dir, "dir");
     final VirtualFile excluded = createChildDirectory(dir, "excluded");
     PsiTestUtil.addExcludedRoot(myModule, excluded);
-    delete(dir);
+    VfsTestUtil.deleteFile(dir);
 
 
     boolean created = new File(myModule1Dir.getPath(), "dir/excluded/foo").mkdirs();
@@ -654,7 +655,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertExcludedFromProject(myModule1OutputDir);
     String moduleOutputUrl = myModule1OutputDir.getUrl();
 
-    delete(myOutputDir);
+    VfsTestUtil.deleteFile(myOutputDir);
 
     PsiTestUtil.setCompilerOutputPath(myModule, moduleOutputUrl, false);
     myOutputDir = createChildDirectory(myRootVFile, "out");
@@ -681,7 +682,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertNotExcluded(myOutputDir);
     assertExcluded(projectOutputUnderContent, myModule);
 
-    delete(projectOutputUnderContent);
+    VfsTestUtil.deleteFile(projectOutputUnderContent);
     projectOutputUnderContent = createChildDirectory(myModule1Dir, "projectOutputUnderContent");
     assertNotExcluded(myOutputDir);
     assertExcluded(projectOutputUnderContent, myModule);
@@ -829,7 +830,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertTrue(myFileIndex.isInSource(fileSourceRoot));
 
     // delete and recreate
-    delete(fileSourceRoot);
+    VfsTestUtil.deleteFile(fileSourceRoot);
     assertNotInProject(fileSourceRoot);
     assertFalse(myFileIndex.isInContent(fileSourceRoot));
     assertFalse(myFileIndex.isInSource(fileSourceRoot));
@@ -839,7 +840,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertTrue(myFileIndex.isInSource(fileSourceRoot));
 
     // delete and move from another dir 
-    delete(fileSourceRoot);
+    VfsTestUtil.deleteFile(fileSourceRoot);
     assertNotInProject(fileSourceRoot);
     assertFalse(myFileIndex.isInContent(fileSourceRoot));
     assertFalse(myFileIndex.isInSource(fileSourceRoot));
@@ -851,7 +852,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertTrue(myFileIndex.isInSource(fileSourceRoot));
 
     // delete and copy from another dir 
-    delete(fileSourceRoot);
+    VfsTestUtil.deleteFile(fileSourceRoot);
     assertNotInProject(fileSourceRoot);
     assertFalse(myFileIndex.isInContent(fileSourceRoot));
     assertFalse(myFileIndex.isInSource(fileSourceRoot));
@@ -863,7 +864,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertTrue(myFileIndex.isInSource(fileSourceRoot));
     
     // delete and rename from another file
-    delete(fileSourceRoot);
+    VfsTestUtil.deleteFile(fileSourceRoot);
     assertNotInProject(fileSourceRoot);
     assertFalse(myFileIndex.isInContent(fileSourceRoot));
     assertFalse(myFileIndex.isInSource(fileSourceRoot));

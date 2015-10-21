@@ -93,6 +93,8 @@
 
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageService"
                         serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
+    <applicationService serviceInterface="com.jetbrains.python.packaging.PyCondaPackageService"
+                        serviceImplementation="com.jetbrains.python.packaging.PyCondaPackageService"/>
     <applicationService serviceInterface="com.jetbrains.python.module.PyModuleService"
                         serviceImplementation="com.jetbrains.python.module.PyModuleServiceImpl"/>
 
@@ -167,7 +169,7 @@
       <className>com.jetbrains.python.codeInsight.intentions.PyConvertStaticMethodToFunctionIntention</className>
       <category>Python</category>
     </intentionAction>
-
+    
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.SpecifyTypeInDocstringIntention</className>
       <category>Python</category>
@@ -319,7 +321,8 @@
     <localInspection language="Python" shortName="PyExceptionInheritInspection" suppressId="PyExceptionInherit" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.exception.not.inherit" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyExceptionInheritInspection"/>
     <localInspection language="Python" shortName="PyDefaultArgumentInspection" suppressId="PyDefaultArgument" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.default.argument" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyDefaultArgumentInspection"/>
     <localInspection language="Python" shortName="PyRaisingNewStyleClassInspection" suppressId="PyRaisingNewStyleClass" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.raising.new.style.class" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyRaisingNewStyleClassInspection"/>
-    <localInspection language="Python" shortName="PyDocstringInspection" suppressId="PyDocstring" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.docstring" groupKey="INSP.GROUP.python" enabledByDefault="false"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyDocstringInspection"/>
+    <localInspection language="Python" shortName="PyIncorrectDocstringInspection" suppressId="PyIncorrectDocstring" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.incorrect.docstring" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyIncorrectDocstringInspection"/>
+    <localInspection language="Python" shortName="PyMissingOrEmptyDocstringInspection" suppressId="PyMissingOrEmptyDocstring" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.missing.or.empty.docstring" groupKey="INSP.GROUP.python" enabledByDefault="false" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyMissingOrEmptyDocstringInspection"/>
     <localInspection language="Python" shortName="PyUnboundLocalVariableInspection" suppressId="PyUnboundLocalVariable" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.unbound" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyUnboundLocalVariableInspection"/>
     <localInspection language="Python" shortName="PyStatementEffectInspection" suppressId="PyStatementEffect" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.statement.effect" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyStatementEffectInspection"/>
     <localInspection language="Python" shortName="PySimplifyBooleanCheckInspection" suppressId="PySimplifyBooleanCheck" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.check.can.be.simplified" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PySimplifyBooleanCheckInspection"/>
@@ -523,7 +526,7 @@
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/PythonDarcula.xml"/>
 
     <postStartupActivity implementation="com.jetbrains.python.sdk.PythonSdkUpdater"/>
-    <postStartupActivity implementation="com.jetbrains.python.packaging.PyPIPackagesUpdater"/>
+    <postStartupActivity implementation="com.jetbrains.python.packaging.PyPackagesUpdater"/>
     <directoryProjectConfigurator implementation="com.jetbrains.python.testing.PyIntegratedToolsProjectConfigurator" id="integratedTools" order="after sdk"/>
 
 
@@ -598,6 +601,7 @@
     <extensionPoint qualifiedName="Pythonid.runConfigurationExtension" interface="com.jetbrains.python.run.PythonRunConfigurationExtension"/>
     <extensionPoint qualifiedName="Pythonid.visitorFilter" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
     <extensionPoint qualifiedName="Pythonid.remoteInterpreterManager" interface="com.jetbrains.python.remote.PythonRemoteInterpreterManager"/>
+    <extensionPoint qualifiedName="Pythonid.remoteProcessStarterManager" interface="com.jetbrains.python.run.PyRemoteProcessStarterManager"/>
     <extensionPoint qualifiedName="Pythonid.keywordArgumentProvider" interface="com.jetbrains.python.psi.impl.PyKeywordArgumentProvider"/>
     <extensionPoint qualifiedName="Pythonid.canonicalPathProvider" interface="com.jetbrains.python.psi.resolve.PyCanonicalPathProvider"/>
     <extensionPoint qualifiedName="Pythonid.templateContextProvider" interface="com.jetbrains.python.templateLanguages.TemplateContextProvider"/>
@@ -781,13 +785,13 @@
       <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.Tree.AddToWatches"/>
     </action>
 
-    <action id="PyConvertModuleToPackage" class="com.jetbrains.python.refactoring.convert.PyConvertModuleToPackageAction"
+    <action id="PyConvertModuleToPackage" class="com.jetbrains.python.refactoring.convertModulePackage.PyConvertModuleToPackageAction"
             text="Convert to Python Package"
             description="Create package with the same name and move content of the module to its __init__.py">
       <add-to-group group-id="RefactoringMenu" anchor="last" />
     </action>
 
-    <action id="PyConvertPackageToModuleAction" class="com.jetbrains.python.refactoring.convert.PyConvertPackageToModuleAction"
+    <action id="PyConvertPackageToModuleAction" class="com.jetbrains.python.refactoring.convertModulePackage.PyConvertPackageToModuleAction"
             text="Convert to Python Module"
             description="Create module with the same name and move content of __init__.py to that module">
       <add-to-group group-id="RefactoringMenu" anchor="last" />
@@ -798,6 +802,12 @@
             use-shortcut-of="ForceStepInto">
       <add-to-group group-id="DebugMainMenu" relative-to-action="StepInto" anchor="after"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" relative-to-action="StepInto" anchor="after"/>
+    </action>
+
+    <action id="PyConvertLocalFunctionToTopLevelFunctionAction" class="com.jetbrains.python.refactoring.makeFunctionTopLevel.PyMakeFunctionTopLevelRefactoring"
+            text="Make Top-Level Function"
+            description="Convert local function or method to top-level function, transforming names from enclosing scope and instance attributes into parameters">
+      <add-to-group group-id="RefactoringMenu"/>
     </action>
 
   </actions>

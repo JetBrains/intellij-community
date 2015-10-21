@@ -15,7 +15,6 @@
  */
 package com.intellij.diff.tools.fragmented
 
-import com.intellij.diff.assertEquals
 import com.intellij.testFramework.UsefulTestCase
 
 public class LineNumberConvertorTest : UsefulTestCase() {

@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 
@@ -74,8 +75,8 @@ public class RootsChangedTest extends ModuleTestCase {
 
     assertEventsCount(1);
     assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir1);
-    
-    delete(vDir1);
+
+    VfsTestUtil.deleteFile(vDir1);
     assertEventsCount(1);
     assertEmpty(ModuleRootManager.getInstance(moduleA).getContentRoots());
  
@@ -127,9 +128,7 @@ public class RootsChangedTest extends ModuleTestCase {
   public void testEditLibraryForModuleLoadFromXml() throws IOException {
     final File tempDirectory = createTempDirectory();
     ApplicationManager.getApplication().runWriteAction(() -> {
-      File moduleFile =
-        PathManagerEx.findFileUnderProjectHome("java/java-tests/testData/moduleRootManager/rootsChanged/emptyModule/a.iml", RootsChangedTest.this.getClass());
-      Module a = loadModule(moduleFile, true);
+      Module a = loadModule(PathManagerEx.getHomePath(getClass()) + "/java/java-tests/testData/moduleRootManager/rootsChanged/emptyModule/a.iml");
       assertEventsCount(1);
 
       final Sdk jdk = IdeaTestUtil.getMockJdk17();

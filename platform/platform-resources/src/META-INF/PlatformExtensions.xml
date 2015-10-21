@@ -38,7 +38,6 @@
                         serviceImplementation="com.intellij.openapi.progress.impl.ProgressManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.ide.ui.customization.CustomActionsSchema"/>
-    <exportable serviceInterface="com.intellij.ide.ui.customization.CustomActionsSchema"/>
 
     <applicationService serviceInterface="com.intellij.openapi.project.DefaultProjectFactory"
                         serviceImplementation="com.intellij.openapi.project.DefaultProjectFactoryImpl"/>
@@ -169,9 +168,9 @@
                         serviceImplementation="com.intellij.execution.process.impl.OSProcessManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.options.SchemesManagerFactory"
-                        serviceImplementation="com.intellij.configurationStore.ApplicationSchemeManagerFactory"/>
+                        serviceImplementation="com.intellij.configurationStore.SchemeManagerFactoryBase$ApplicationSchemeManagerFactory"/>
     <projectService serviceInterface="com.intellij.openapi.options.SchemesManagerFactory"
-                    serviceImplementation="com.intellij.configurationStore.ProjectSchemeManagerFactory"/>
+                    serviceImplementation="com.intellij.configurationStore.SchemeManagerFactoryBase$ProjectSchemeManagerFactory"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.colors.TextAttributesKey$TextAttributeKeyDefaultsProvider"
@@ -226,8 +225,7 @@
     <projectService serviceInterface="com.intellij.ui.content.MessageView"
                     serviceImplementation="com.intellij.ui.content.impl.MessageViewImpl"/>
 
-    <projectService serviceInterface="com.intellij.ui.tabs.FileColorSharedConfigurationManager"
-                    serviceImplementation="com.intellij.ui.tabs.FileColorSharedConfigurationManager"/>
+    <projectService serviceImplementation="com.intellij.ui.tabs.FileColorProjectLevelConfigurationManager"/>
 
     <projectService serviceInterface="com.intellij.openapi.project.DumbService" serviceImplementation="com.intellij.openapi.project.DumbServiceImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.project.DumbPermissionService" serviceImplementation="com.intellij.openapi.project.DumbPermissionServiceImpl"/>

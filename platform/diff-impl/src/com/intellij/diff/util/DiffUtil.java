@@ -32,6 +32,7 @@ import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -66,6 +67,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
@@ -73,6 +75,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.Function;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
@@ -242,6 +245,20 @@ public class DiffUtil {
   }
 
   //
+  // Icons
+  //
+
+  @NotNull
+  public static Icon getArrowIcon(@NotNull Side sourceSide) {
+    return sourceSide.select(AllIcons.Diff.ArrowRight, AllIcons.Diff.Arrow);
+  }
+
+  @NotNull
+  public static Icon getArrowDownIcon(@NotNull Side sourceSide) {
+    return sourceSide.select(AllIcons.Diff.ArrowRightDown, AllIcons.Diff.ArrowLeftDown);
+  }
+
+  //
   // UI
   //
 
@@ -267,7 +284,7 @@ public class DiffUtil {
   @NotNull
   public static JPanel createMessagePanel(@NotNull JComponent comp) {
     JPanel wrapper = new JPanel(new GridBagLayout());
-    wrapper.add(comp, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, JBUI.insets(1), 0, 0));
+    wrapper.add(comp, new GridBag().insets(JBUI.insets(1)));
     return wrapper;
   }
 
@@ -293,13 +310,27 @@ public class DiffUtil {
 
   @NotNull
   public static String createTooltipText(@NotNull String text, @Nullable String appendix) {
-    @NonNls StringBuilder result = new StringBuilder();
+    StringBuilder result = new StringBuilder();
     result.append("<html><body>");
     result.append(text);
     if (appendix != null) {
       result.append("<br><div style='margin-top: 5px'><font size='2'>");
       result.append(appendix);
       result.append("</font></div>");
+    }
+    result.append("</body></html>");
+    return result.toString();
+  }
+
+  @NotNull
+  public static String createNotificationText(@NotNull String text, @Nullable String appendix) {
+    StringBuilder result = new StringBuilder();
+    result.append("<html><body>");
+    result.append(text);
+    if (appendix != null) {
+      result.append("<br><span style='color:#").append(ColorUtil.toHex(JBColor.gray)).append("'><small>");
+      result.append(appendix);
+      result.append("</small></span>");
     }
     result.append("</body></html>");
     return result.toString();
@@ -916,25 +947,13 @@ public class DiffUtil {
     return false;
   }
 
-  public static <T> T getUserData(@Nullable DiffRequest request, @Nullable DiffContext context, @NotNull Key<T> key) {
-    if (request != null) {
-      T data = request.getUserData(key);
+  public static <T> T getUserData(@Nullable UserDataHolder first, @Nullable UserDataHolder second, @NotNull Key<T> key) {
+    if (first != null) {
+      T data = first.getUserData(key);
       if (data != null) return data;
     }
-    if (context != null) {
-      T data = context.getUserData(key);
-      if (data != null) return data;
-    }
-    return null;
-  }
-
-  public static <T> T getUserData(@Nullable DiffContext context, @Nullable DiffRequest request, @NotNull Key<T> key) {
-    if (context != null) {
-      T data = context.getUserData(key);
-      if (data != null) return data;
-    }
-    if (request != null) {
-      T data = request.getUserData(key);
+    if (second != null) {
+      T data = second.getUserData(key);
       if (data != null) return data;
     }
     return null;

@@ -12,6 +12,7 @@ import gc
 from pydevd_comm import CMD_SIGNATURE_CALL_TRACE, NetCommand
 import pydevd_vars
 from pydevd_constants import xrange
+import pydevd_utils
 
 class Signature(object):
     def __init__(self, file, name):

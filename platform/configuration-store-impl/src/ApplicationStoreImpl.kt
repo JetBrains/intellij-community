@@ -32,14 +32,19 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import org.jdom.Element
 
-class ApplicationPathMacroManager : BasePathMacroManager(null)
+private class ApplicationPathMacroManager : BasePathMacroManager(null)
 
-class ApplicationStoreImpl(private val application: Application, pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
+class ApplicationStoreImpl(private val application: Application, pathMacroManager: PathMacroManager? = null) : ComponentStoreImpl() {
   override val storageManager = ApplicationStorageManager(application, pathMacroManager)
 
+  // number of app components require some state, so, we load default state in test mode
+  override val loadPolicy: StateLoadPolicy
+    get() = if (application.isUnitTestMode) StateLoadPolicy.LOAD_ONLY_DEFAULT else StateLoadPolicy.LOAD
+
   override fun setPath(path: String) {
-    storageManager.addMacro(ROOT_CONFIG, path)
+    // app config must be first, because collapseMacros collapse from fist to last, so, at first we must replace APP_CONFIG because it overlaps ROOT_CONFIG value
     storageManager.addMacro(StoragePathMacros.APP_CONFIG, "$path/${ApplicationStorageManager.FILE_STORAGE_DIR}")
+    storageManager.addMacro(ROOT_CONFIG, path)
 
     val configDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(path)
     if (configDir != null) {
@@ -70,7 +75,7 @@ class ApplicationStorageManager(private val application: Application, pathMacroM
 
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
     if (component is NamedJDOMExternalizable) {
-      return "${component.getExternalFileName()}${FileStorageCoreUtil.DEFAULT_EXT}"
+      return "${component.externalFileName}${FileStorageCoreUtil.DEFAULT_EXT}"
     }
     else {
       return DEFAULT_STORAGE_SPEC
@@ -106,9 +111,9 @@ class ApplicationStorageManager(private val application: Application, pathMacroM
     return path
   }
 
-  override fun expandNormalizedPath(path: String): String {
+  override fun expandMacros(path: String): String {
     if (path[0] == '$') {
-      return super.expandNormalizedPath(path)
+      return super.expandMacros(path)
     }
     else {
       return "${expandMacro(StoragePathMacros.APP_CONFIG)}/$path"

@@ -18,7 +18,6 @@ package com.jetbrains.python.codeInsight;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.icons.AllIcons;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.Function;
 import com.jetbrains.python.psi.PyClass;
@@ -170,8 +169,11 @@ public class PyCustomMember {
     if (myTarget != null) {
       return myTarget;
     }
-    PyClass targetClass =
-      myTypeName != null && myTypeName.indexOf('.') > 0 ? PyPsiFacade.getInstance(context.getProject()).findClass(myTypeName) : null;
+
+    PyClass targetClass = null;
+    if (myTypeName != null) {
+      targetClass = PyPsiFacade.getInstance(context.getProject()).createClassByQName(myTypeName, context);
+    }
     final PsiElement resolveTarget = findResolveTarget(context);
     if (resolveTarget instanceof PyFunction && !myAlwaysResolveToCustomElement) {
       return resolveTarget;

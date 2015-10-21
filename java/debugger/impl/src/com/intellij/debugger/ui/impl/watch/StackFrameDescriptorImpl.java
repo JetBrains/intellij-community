@@ -32,9 +32,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.FileColorManager;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.TextTransferable;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
@@ -53,7 +51,6 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   private int myUiIndex;
   private String myName = null;
   private Location myLocation;
-  private final XStackFrame myXStackFrame;
   private MethodsTracker.MethodOccurrence myMethodOccurrence;
   private boolean myIsSynthetic;
   private boolean myIsInLibraryContent;
@@ -112,13 +109,6 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       myIsSynthetic = false;
       myIsInLibraryContent = false;
     }
-
-    myXStackFrame = myLocation == null ? null : ((DebugProcessImpl)getDebugProcess()).getPositionManager().createStackFrame(frame, (DebugProcessImpl)getDebugProcess(), myLocation);
-  }
-
-  @Nullable
-  public XStackFrame getXStackFrame() {
-    return myXStackFrame;
   }
 
   public int getUiIndex() {
@@ -180,12 +170,6 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   @Override
   protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener descriptorLabelListener) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-
-    if (myXStackFrame != null) {
-      TextTransferable.ColoredStringBuilder builder = new TextTransferable.ColoredStringBuilder();
-      myXStackFrame.customizePresentation(builder);
-      return builder.getBuilder().toString();
-    }
 
     if (myLocation == null) {
       return "";

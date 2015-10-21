@@ -29,6 +29,7 @@ public class VcsApplicationSettings implements PersistentStateComponent<VcsAppli
   public String PATCH_STORAGE_LOCATION = null;
   public boolean SHOW_WHITESPACES_IN_LST = false;
   public boolean SHOW_LST_GUTTER_MARKERS = true;
+  public boolean SHOW_LST_WORD_DIFFERENCES = true;
 
   public static VcsApplicationSettings getInstance() {
     return ServiceManager.getService(VcsApplicationSettings.class);

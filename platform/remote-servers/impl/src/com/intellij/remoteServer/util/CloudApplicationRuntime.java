@@ -72,6 +72,11 @@ public abstract class CloudApplicationRuntime extends DeploymentRuntime {
 
   protected abstract ServerType<?> getCloudType();
 
+  @Nullable
+  public String getGroup() {
+    return null;
+  }
+
   protected abstract class LoggingTask {
 
     public void perform(final Project project, final Runnable onDone) {

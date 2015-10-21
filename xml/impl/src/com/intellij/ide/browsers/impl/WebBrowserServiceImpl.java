@@ -39,9 +39,18 @@ public class WebBrowserServiceImpl extends WebBrowserService {
   public Collection<Url> getUrlsToOpen(@NotNull OpenInBrowserRequest request, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException {
     boolean isHtmlOrXml = isHtmlOrXmlFile(request.getFile().getViewProvider().getBaseLanguage());
     if (!preferLocalUrl || !isHtmlOrXml) {
-      Collection<Url> urls = getUrls(request);
-      if (!isHtmlOrXml || !urls.isEmpty()) {
-        return urls;
+      DumbService dumbService = DumbService.getInstance(request.getProject());
+      for (WebBrowserUrlProvider urlProvider : WebBrowserUrlProvider.EP_NAME.getExtensions()) {
+        if ((!dumbService.isDumb() || DumbService.isDumbAware(urlProvider)) && urlProvider.canHandleElement(request)) {
+          Collection<Url> urls = getUrls(urlProvider, request);
+          if (!urls.isEmpty()) {
+            return urls;
+          }
+        }
+      }
+
+      if (!isHtmlOrXml) {
+        return Collections.emptyList();
       }
     }
 
@@ -52,8 +61,7 @@ public class WebBrowserServiceImpl extends WebBrowserService {
   }
 
   @NotNull
-  private static Collection<Url> getUrls(@NotNull OpenInBrowserRequest request) throws WebBrowserUrlProvider.BrowserException {
-    WebBrowserUrlProvider provider = getProvider(request);
+  private static Collection<Url> getUrls(@Nullable WebBrowserUrlProvider provider, @NotNull OpenInBrowserRequest request) throws WebBrowserUrlProvider.BrowserException {
     if (provider != null) {
       if (request.getResult() != null) {
         return request.getResult();
@@ -86,7 +94,7 @@ public class WebBrowserServiceImpl extends WebBrowserService {
   public static Collection<Url> getDebuggableUrls(@Nullable PsiElement context) {
     try {
       OpenInBrowserRequest request = context == null ? null : OpenInBrowserRequest.create(context);
-      return request == null || request.getFile().getViewProvider().getBaseLanguage() == XMLLanguage.INSTANCE ? Collections.<Url>emptyList() : getUrls(request);
+      return request == null || request.getFile().getViewProvider().getBaseLanguage() == XMLLanguage.INSTANCE ? Collections.<Url>emptyList() : getUrls(getProvider(request), request);
     }
     catch (WebBrowserUrlProvider.BrowserException ignored) {
       return Collections.emptyList();

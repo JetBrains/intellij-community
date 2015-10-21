@@ -50,6 +50,10 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText {
     myEmptyText = new TextComponentEmptyText(this);
   }
 
+  public void setTextToTriggerEmptyTextStatus(String t) {
+    myEmptyText.setTextToTriggerStatus(t);
+  }
+
   @Override
   public void setText(String t) {
     super.setText(t);
@@ -65,6 +69,11 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText {
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
+    if (!myEmptyText.getStatusTriggerText().isEmpty() && myEmptyText.isStatusVisible()) {
+      g.setColor(getBackground());
+      g.fillRect(0, 0, getWidth(), getHeight());
+      g.setColor(getForeground());
+    }
     myEmptyText.paintStatusText(g);
   }
 }

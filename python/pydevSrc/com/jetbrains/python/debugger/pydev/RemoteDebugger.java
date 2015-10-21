@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -537,6 +536,9 @@ public class RemoteDebugger implements ProcessDebugger {
         else if (AbstractCommand.isCallSignatureTrace(frame.getCommand())) {
           recordCallSignature(ProtocolParser.parseCallSignature(frame.getPayload()));
         }
+        else if (AbstractCommand.isConcurrencyEvent(frame.getCommand())) {
+          recordConcurrencyEvent(ProtocolParser.parseConcurrencyEvent(frame.getPayload(), myDebugProcess.getPositionConverter()));
+        }
         else {
           placeResponse(frame.getSequence(), frame);
         }
@@ -549,6 +551,10 @@ public class RemoteDebugger implements ProcessDebugger {
 
     private void recordCallSignature(PySignature signature) {
       myDebugProcess.recordSignature(signature);
+    }
+
+    private void recordConcurrencyEvent(PyConcurrencyEvent event) {
+      myDebugProcess.recordLogEvent(event);
     }
 
     // todo: extract response processing

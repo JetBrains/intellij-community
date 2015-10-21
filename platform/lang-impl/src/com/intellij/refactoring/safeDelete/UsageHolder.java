@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ class UsageHolder {
     Project project = element.getProject();
     myElementPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(element);
 
-    GeneratedSourcesFilter[] filters = GeneratedSourcesFilter.EP_NAME.getExtensions();
     for (UsageInfo usageInfo : usageInfos) {
       if (!(usageInfo instanceof SafeDeleteReferenceUsageInfo)) continue;
       final SafeDeleteReferenceUsageInfo usage = (SafeDeleteReferenceUsageInfo)usageInfo;
@@ -48,23 +47,16 @@ class UsageHolder {
 
       if (!usage.isSafeDelete()) {
         myUnsafeUsages++;
-        if (usage.isNonCodeUsage || isInGeneratedCode(usage, project, filters)) {
+        if (usage.isNonCodeUsage || isInGeneratedCode(usage, project)) {
           myNonCodeUnsafeUsages++;
         }
       }
     }
   }
 
-  private static boolean isInGeneratedCode(SafeDeleteReferenceUsageInfo usage, Project project, GeneratedSourcesFilter[] filters) {
+  private static boolean isInGeneratedCode(SafeDeleteReferenceUsageInfo usage, Project project) {
     VirtualFile file = usage.getVirtualFile();
-    if (file == null) return false;
-
-    for (GeneratedSourcesFilter filter : filters) {
-      if (filter.isGeneratedSource(file, project)) {
-        return true;
-      }
-    }
-    return false;
+    return file != null && GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, project);
   }
 
   @NotNull

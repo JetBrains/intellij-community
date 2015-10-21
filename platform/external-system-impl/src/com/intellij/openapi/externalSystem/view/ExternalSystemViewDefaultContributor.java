@@ -20,10 +20,9 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
-import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData;
-import com.intellij.openapi.externalSystem.model.project.ModuleData;
-import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.project.*;
+import com.intellij.openapi.externalSystem.service.project.IdeModelsProviderImpl;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -31,16 +30,23 @@ import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+
+import static com.intellij.openapi.externalSystem.model.ProjectKeys.PROJECT;
 
 /**
  * @author Vladislav.Soroka
@@ -55,6 +61,11 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
     ProjectKeys.TASK
   };
 
+  @NotNull
+  @Override
+  public ProjectSystemId getSystemId() {
+    return ProjectSystemId.IDE;
+  }
 
   @NotNull
   @Override
@@ -70,11 +81,15 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
 
     addModuleNodes(externalProjectsView, dataNodes, result);
     // add tasks
-    TasksNode tasksNode = new TasksNode(externalProjectsView, dataNodes.get(ProjectKeys.TASK));
-    if(externalProjectsView.useTasksNode()) {
-      result.add(tasksNode);
-    } else {
-      ContainerUtil.addAll(result, tasksNode.getChildren());
+    Collection<DataNode<?>> tasksNodes = dataNodes.get(ProjectKeys.TASK);
+    if (!tasksNodes.isEmpty()) {
+      TasksNode tasksNode = new TasksNode(externalProjectsView, tasksNodes);
+      if (externalProjectsView.useTasksNode()) {
+        result.add(tasksNode);
+      }
+      else {
+        ContainerUtil.addAll(result, tasksNode.getChildren());
+      }
     }
 
     addDependenciesNode(externalProjectsView, dataNodes, result);
@@ -94,7 +109,14 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
       for (DataNode<?> dataNode : moduleDeps) {
         if (!(dataNode.getData() instanceof ModuleDependencyData)) continue;
         //noinspection unchecked
-        depNode.add(new ModuleDependencyDataExternalSystemNode(externalProjectsView, (DataNode<ModuleDependencyData>)dataNode));
+        ModuleDependencyDataExternalSystemNode moduleDependencyDataExternalSystemNode =
+          new ModuleDependencyDataExternalSystemNode(externalProjectsView, (DataNode<ModuleDependencyData>)dataNode);
+        if (dataNode.getParent() != null && dataNode.getParent().getData() instanceof ModuleDependencyData) {
+          result.add(moduleDependencyDataExternalSystemNode);
+        }
+        else {
+          depNode.add(moduleDependencyDataExternalSystemNode);
+        }
       }
 
       for (DataNode<?> dataNode : libDeps) {
@@ -102,14 +124,25 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
         //noinspection unchecked
         final ExternalSystemNode<LibraryDependencyData> libraryDependencyDataExternalSystemNode =
           new LibraryDependencyDataExternalSystemNode(externalProjectsView, (DataNode<LibraryDependencyData>)dataNode);
-
-        depNode.add(libraryDependencyDataExternalSystemNode);
-        libraryDependencyDataExternalSystemNode.setErrorLevel(((LibraryDependencyData)dataNode.getData()).getTarget().isUnresolved()
-                                                              ? ExternalProjectsStructure.ErrorLevel.ERROR
-                                                              : ExternalProjectsStructure.ErrorLevel.NONE);
+        if (((LibraryDependencyData)dataNode.getData()).getTarget().isUnresolved()) {
+          libraryDependencyDataExternalSystemNode.setErrorLevel(
+            ExternalProjectsStructure.ErrorLevel.ERROR,
+            "Unable to resolve " + ((LibraryDependencyData)dataNode.getData()).getTarget().getExternalName());
+        }
+        else {
+          libraryDependencyDataExternalSystemNode.setErrorLevel(ExternalProjectsStructure.ErrorLevel.NONE);
+        }
+        if (dataNode.getParent() != null && dataNode.getParent().getData() instanceof ModuleData) {
+          depNode.add(libraryDependencyDataExternalSystemNode);
+        }
+        else {
+          result.add(libraryDependencyDataExternalSystemNode);
+        }
       }
 
-      result.add(depNode);
+      if (depNode.hasChildren()) {
+        result.add(depNode);
+      }
     }
   }
 
@@ -125,8 +158,10 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
         final ModuleData data = (ModuleData)dataNode.getData();
 
         final ExternalProjectSettings projectSettings = systemSettings.getLinkedProjectSettings(data.getLinkedExternalProjectPath());
+        DataNode<ProjectData> projectDataNode = ExternalSystemApiUtil.findParent(dataNode, PROJECT);
         final boolean isRoot =
-          projectSettings != null && data.getLinkedExternalProjectPath().equals(projectSettings.getExternalProjectPath());
+          projectSettings != null && data.getLinkedExternalProjectPath().equals(projectSettings.getExternalProjectPath()) &&
+          projectDataNode != null && projectDataNode.getData().getInternalName().equals(data.getInternalName());
         //noinspection unchecked
         final ModuleNode moduleNode = new ModuleNode(externalProjectsView, (DataNode<ModuleData>)dataNode, isRoot);
         result.add(moduleNode);
@@ -153,7 +188,66 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
     }
   }
 
-  private static class ModuleDependencyDataExternalSystemNode extends ExternalSystemNode<ModuleDependencyData> {
+  private static abstract class DependencyDataExternalSystemNode<T extends DependencyData> extends ExternalSystemNode<T> {
+
+    public DependencyDataExternalSystemNode(@NotNull ExternalProjectsView externalProjectsView,
+                                            @Nullable ExternalSystemNode parent,
+                                            @Nullable DataNode<T> dataNode) {
+      super(externalProjectsView, parent, dataNode);
+    }
+
+    @Nullable
+    @Override
+    public Navigatable getNavigatable() {
+      return new Navigatable() {
+        @Nullable
+        private OrderEntry myOrderEntry;
+
+        @Override
+        public void navigate(boolean requestFocus) {
+          if (myOrderEntry != null) {
+            ProjectSettingsService.getInstance(myProject).openModuleDependenciesSettings(myOrderEntry.getOwnerModule(), myOrderEntry);
+          }
+        }
+
+        @Override
+        public boolean canNavigate() {
+          myOrderEntry = getOrderEntry();
+          return myOrderEntry != null;
+        }
+
+        @Override
+        public boolean canNavigateToSource() {
+          return true;
+        }
+      };
+    }
+
+    @Nullable
+    private OrderEntry getOrderEntry() {
+      final T data = getData();
+      if (data == null) return null;
+      final Project project = getProject();
+      if (project == null) return null;
+      return new IdeModelsProviderImpl(project).findIdeModuleOrderEntry(data);
+    }
+
+    @Override
+    public int compareTo(@NotNull ExternalSystemNode node) {
+      final T myData = getData();
+      final Object thatData = node.getData();
+      if (myData instanceof OrderAware && thatData instanceof OrderAware) {
+        int order1 = ((OrderAware)myData).getOrder();
+        int order2 = ((OrderAware)thatData).getOrder();
+        if (order1 != order2) {
+          return order1 < order2 ? -1 : 1;
+        }
+      }
+      return super.compareTo(node);
+    }
+  }
+
+  private static class ModuleDependencyDataExternalSystemNode extends DependencyDataExternalSystemNode<ModuleDependencyData> {
 
     public ModuleDependencyDataExternalSystemNode(ExternalProjectsView externalProjectsView, DataNode<ModuleDependencyData> dataNode) {
       super(externalProjectsView, null, dataNode);
@@ -178,11 +272,11 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
 
     @Override
     public boolean isAlwaysLeaf() {
-      return true;
+      return false;
     }
   }
 
-  private static class LibraryDependencyDataExternalSystemNode extends ExternalSystemNode<LibraryDependencyData> {
+  private static class LibraryDependencyDataExternalSystemNode extends DependencyDataExternalSystemNode<LibraryDependencyData> {
 
     public LibraryDependencyDataExternalSystemNode(ExternalProjectsView externalProjectsView, DataNode<LibraryDependencyData> dataNode) {
       super(externalProjectsView, null, dataNode);
@@ -202,48 +296,32 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
     @Override
     public String getName() {
       final LibraryDependencyData data = getData();
-      return data != null ? data.getExternalName() : "";
+      if (data == null) return "";
+      String externalName = data.getExternalName();
+      if (StringUtil.isEmpty(externalName)) {
+        Set<String> paths = data.getTarget().getPaths(LibraryPathType.BINARY);
+        if (paths.size() == 1) {
+          String relativePathToRoot = null;
+          String path = ExternalSystemApiUtil.toCanonicalPath(paths.iterator().next());
+          DataNode<ProjectData> projectDataDataNode = ExternalSystemApiUtil.findParent(myDataNode, PROJECT);
+          if (projectDataDataNode != null) {
+            relativePathToRoot = FileUtil.getRelativePath(projectDataDataNode.getData().getLinkedExternalProjectPath(), path, '/');
+            relativePathToRoot = relativePathToRoot != null && StringUtil.startsWith(relativePathToRoot, "../../")
+                                 ? new File(relativePathToRoot).getName()
+                                 : relativePathToRoot;
+          }
+          return ObjectUtils.notNull(relativePathToRoot, path);
+        }
+        else {
+          return "<file set>";
+        }
+      }
+      return externalName;
     }
 
     @Override
     public boolean isAlwaysLeaf() {
-      return true;
-    }
-
-    @Nullable
-    @Override
-    public Navigatable getNavigatable() {
-      return new Navigatable() {
-        @Nullable
-        private OrderEntry myOrderEntry;
-
-        @Override
-        public void navigate(boolean requestFocus) {
-          if (myOrderEntry != null) {
-            ProjectSettingsService.getInstance(myProject).openLibraryOrSdkSettings(myOrderEntry);
-          }
-        }
-
-        @Override
-        public boolean canNavigate() {
-          myOrderEntry = getOrderEntry();
-          return myOrderEntry != null;
-        }
-
-        @Override
-        public boolean canNavigateToSource() {
-          return true;
-        }
-      };
-    }
-
-    @Nullable
-    private OrderEntry getOrderEntry() {
-      final LibraryDependencyData data = getData();
-      if (data == null) return null;
-      final Project project = getProject();
-      if (project == null) return null;
-      return new IdeModifiableModelsProviderImpl(project).findIdeModuleOrderEntry(data);
+      return false;
     }
   }
 }

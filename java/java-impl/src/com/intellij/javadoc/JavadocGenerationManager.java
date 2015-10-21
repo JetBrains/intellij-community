@@ -20,7 +20,6 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
-import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,7 +47,7 @@ public final class JavadocGenerationManager implements PersistentStateComponent<
 
   JavadocGenerationManager(Project project) {
     myProject = project;
-    myConfiguration = new JavadocConfiguration(project);
+    myConfiguration = new JavadocConfiguration();
   }
 
   @Override
@@ -78,9 +77,9 @@ public final class JavadocGenerationManager implements PersistentStateComponent<
   }
 
   public void generateJavadoc(AnalysisScope scope) {
-    myConfiguration.setGenerationScope(scope);
     try {
-      ExecutionEnvironmentBuilder.create(myProject, DefaultRunExecutor.getRunExecutorInstance(), myConfiguration).buildAndExecute();
+      JavadocGeneratorRunProfile profile = new JavadocGeneratorRunProfile(myProject, scope, myConfiguration);
+      ExecutionEnvironmentBuilder.create(myProject, DefaultRunExecutor.getRunExecutorInstance(), profile).buildAndExecute();
     }
     catch (ExecutionException e) {
       ExecutionErrorDialog.show(e, CommonBundle.getErrorTitle(), myProject);

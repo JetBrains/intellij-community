@@ -36,6 +36,7 @@ import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
@@ -79,7 +80,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(element);
     final PsiElement firstChild = element.getFirstChild();
     if (interfaceMethod != null && firstChild != null) {
-      return createSuperMethodLineMarkerInfo(firstChild, AllIcons.Gutter.ImplementingMethod, Pass.UPDATE_ALL);
+      return createSuperMethodLineMarkerInfo(firstChild, AllIcons.Gutter.ImplementingFunctional, Pass.UPDATE_ALL);
     }
 
     if (myDaemonSettings.SHOW_METHOD_SEPARATORS && firstChild == null) {
@@ -94,7 +95,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
       }
       if (isMember && !(element1 instanceof PsiAnonymousClass || element1.getParent() instanceof PsiAnonymousClass)) {
         PsiFile file = element1.getContainingFile();
-        Document document = file == null ? null : PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+        Document document = file == null ? null : PsiDocumentManager.getInstance(file.getProject()).getLastCommittedDocument(file);
         boolean drawSeparator = false;
 
         if (document != null) {
@@ -321,6 +322,15 @@ public class JavaLineMarkerProvider implements LineMarkerProvider {
           return "Multiple method overrides";
         }
       };
+    }
+
+    @Override
+    public String getElementPresentation(PsiElement element) {
+      final PsiElement parent = element.getParent();
+      if (parent instanceof PsiFunctionalExpression) {
+        return PsiExpressionTrimRenderer.render((PsiExpression)parent);
+      }
+      return super.getElementPresentation(element);
     }
   }
 }

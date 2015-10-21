@@ -23,10 +23,10 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.HashSet;
-import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ThreadReference;
@@ -57,7 +57,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   private final EventSet myEventSet;
   private volatile boolean myIsResumed;
 
-  public ConcurrentLinkedQueue<SuspendContextCommandImpl> myPostponedCommands = new ConcurrentLinkedQueue<SuspendContextCommandImpl>();
+  private final ConcurrentLinkedQueue<SuspendContextCommandImpl> myPostponedCommands = new ConcurrentLinkedQueue<SuspendContextCommandImpl>();
   public volatile boolean myInProgress;
   private final HashSet<ObjectReference> myKeptReferences = new HashSet<ObjectReference>();
   private EvaluationContextImpl myEvaluationContext = null;
@@ -85,6 +85,9 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   protected void resume(){
     assertNotResumed();
+    if (isEvaluating()) {
+      LOG.error("Resuming context while evaluating", ThreadDumper.dumpThreadsToString());
+    }
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
       if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
@@ -229,15 +232,18 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   @Nullable
   @Override
-  public XExecutionStack getActiveExecutionStack() {
+  public JavaExecutionStack getActiveExecutionStack() {
     return myActiveExecutionStack;
   }
 
-  public void initExecutionStacks(ThreadReferenceProxyImpl newThread) {
+  public void initExecutionStacks(ThreadReferenceProxyImpl activeThread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    myThread = newThread;
-    if (newThread != null) {
-      myActiveExecutionStack = new JavaExecutionStack(newThread, myDebugProcess, true);
+    if (myThread == null) {
+      myThread = activeThread;
+    }
+    if (activeThread != null) {
+      myActiveExecutionStack = new JavaExecutionStack(activeThread, myDebugProcess, myThread == activeThread);
+      myActiveExecutionStack.initTopFrame();
     }
   }
 

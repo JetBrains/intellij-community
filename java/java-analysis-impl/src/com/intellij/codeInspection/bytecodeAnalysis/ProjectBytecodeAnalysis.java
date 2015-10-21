@@ -283,7 +283,7 @@ public class ProjectBytecodeAnalysis {
       (Value.NotNull == notNullSolutions.get(notNullKey)) || (Value.NotNull == notNullSolutions.get(notNullKey.mkUnstable()));
 
     final Solver nullableSolver = new Solver(new ELattice<Value>(Value.Null, Value.Top), Value.Top);
-    final HKey nullableKey = new HKey(notNullKey.key, notNullKey.dirKey + 1, true);
+    final HKey nullableKey = new HKey(notNullKey.key, notNullKey.dirKey + 1, true, false);
     collectEquations(Collections.singletonList(nullableKey), nullableSolver, equationsCache);
     HashMap<HKey, Value> nullableSolutions = nullableSolver.solve();
     // subtle point
@@ -313,7 +313,7 @@ public class ProjectBytecodeAnalysis {
         collectSingleEquation(nullableKey, nullableMethodSolver, equationsCache);
       }
       HashMap<HKey, Value> nullableSolutions = nullableMethodSolver.solve();
-      if (nullableSolutions.get(nullableKey) == Value.Null || nullableSolutions.get(nullableKey.negate()) == Value.Null) {
+      if (nullableSolutions.get(nullableKey) == Value.Null || nullableSolutions.get(nullableKey.invertStability()) == Value.Null) {
         result.nullables.add(key);
       }
     }
@@ -354,7 +354,7 @@ public class ProjectBytecodeAnalysis {
           if (dirKey == hKey.dirKey) {
             HResult result = pair.hResult;
 
-            solver.addEquation(new HEquation(new HKey(bytes.bytes, dirKey, stable), result));
+            solver.addEquation(new HEquation(new HKey(bytes.bytes, dirKey, stable, false), result));
             if (result instanceof HPending) {
               HPending pending = (HPending)result;
               for (HComponent component : pending.delta) {
@@ -392,7 +392,7 @@ public class ProjectBytecodeAnalysis {
         int dirKey = pair.directionKey;
         if (dirKey == hKey.dirKey) {
           HResult result = pair.hResult;
-          solver.addEquation(new HEquation(new HKey(bytes.bytes, dirKey, stable), result));
+          solver.addEquation(new HEquation(new HKey(bytes.bytes, dirKey, stable, false), result));
         }
       }
     }

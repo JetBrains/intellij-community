@@ -81,7 +81,9 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
 
   @Override
   public void add(@NotNull PsiElement element, @NotNull PsiSubstitutor substitutor) {
-    final boolean staticProblem = myStaticScopeFlag && !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC);
+    final boolean staticProblem = myStaticScopeFlag && 
+                                  !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC) &&
+                                  !(element instanceof PsiVariable && PsiUtil.isCompileTimeConstant((PsiVariable)element));
     add(new CandidateInfo(element, substitutor, myPlace, myAccessClass, staticProblem, myCurrentFileContext));
   }
 

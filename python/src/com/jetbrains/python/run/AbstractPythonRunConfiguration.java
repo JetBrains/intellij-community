@@ -436,4 +436,15 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     }
     return result;
   }
+
+  @Override
+  public String getModuleName() {
+    Module module = getModule();
+    return module != null? module.getName() : null;
+  }
+
+  @Override
+  public boolean isCompileBeforeLaunchAddedByDefault() {
+    return false;
+  }
 }

@@ -142,6 +142,7 @@
     <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl.runReadAction("/>
     <stacktrace.fold substring="at com.intellij.openapi.application.RunResult.run("/>
     <stacktrace.fold substring="at com.intellij.openapi.command.impl.CoreCommandProcessor.executeCommand("/>
+    <stacktrace.fold substring="at com.intellij.testFramework.EdtTestUtil"/>
 
     <codeInsight.lineMarkerProvider language="JAVA"
                                     implementationClass="org.jetbrains.idea.devkit.navigation.DescriptionTypeRelatedItemLineMarkerProvider"/>
@@ -150,6 +151,7 @@
     <codeInsight.implementedAtRuntime implementation="org.jetbrains.idea.devkit.inspections.DevKitImplementedAtRuntimeCondition"/>
 
     <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
+    <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.internal.IconsGeneratedSourcesFilter"/>
   </extensions>
 
   <project-components>
@@ -164,7 +166,7 @@
       <action class="org.jetbrains.idea.devkit.build.PrepareToDeployAction" id="MakeJarAction"/>
       <action class="org.jetbrains.idea.devkit.build.PrepareAllToDeployAction" id="MakeAllJarsAction"/>
       <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="Compile"/>
-      <add-to-group anchor="after" group-id="BuildMenu" relative-to-action="BuildJar"/>
+      <add-to-group anchor="after" group-id="BuildMenu" relative-to-action="BuildArtifact"/>
     </group>
 
     <action class="org.jetbrains.idea.devkit.actions.NewApplicationComponentAction" text="Application Component"

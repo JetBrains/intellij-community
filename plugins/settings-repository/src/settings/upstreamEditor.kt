@@ -39,7 +39,7 @@ fun updateSyncButtonState(url: String?, syncActions: Array<Action>) {
   }
 
   for (syncAction in syncActions) {
-    syncAction.setEnabled(enabled);
+    syncAction.isEnabled = enabled;
   }
 }
 
@@ -53,9 +53,9 @@ fun createMergeActions(project: Project?, urlTextField: TextFieldWithBrowseButto
 
   return Array(3) {
     val syncType = syncTypes[it]
-    object : AbstractAction(IcsBundle.message("action.${if (syncType == SyncType.MERGE) "Merge" else (if (syncType == SyncType.OVERWRITE_LOCAL) "ResetToTheirs" else "ResetToMy")}Settings.text")) {
+    object : AbstractAction(icsMessage("action.${if (syncType == SyncType.MERGE) "Merge" else (if (syncType == SyncType.OVERWRITE_LOCAL) "ResetToTheirs" else "ResetToMy")}Settings.text")) {
       private fun saveRemoteRepositoryUrl(): Boolean {
-        val url = StringUtil.nullize(urlTextField.getText())
+        val url = StringUtil.nullize(urlTextField.text)
         if (url != null && !icsManager.repositoryService.checkUrl(url, dialogParent)) {
           return false
         }
@@ -97,16 +97,16 @@ fun createMergeActions(project: Project?, urlTextField: TextFieldWithBrowseButto
           LOG.warn(e)
 
           if (!upstreamSet || e is NoRemoteRepositoryException) {
-            Messages.showErrorDialog(dialogParent, IcsBundle.message("set.upstream.failed.message", e.getMessage()), IcsBundle.message("set.upstream.failed.title"))
+            Messages.showErrorDialog(dialogParent, icsMessage("set.upstream.failed.message", e.getMessage()), icsMessage("set.upstream.failed.title"))
           }
           else {
-            Messages.showErrorDialog(dialogParent, StringUtil.notNullize(e.getMessage(), "Internal error"), IcsBundle.message(if (e is AuthenticationException) "sync.not.authorized.title" else "sync.rejected.title"))
+            Messages.showErrorDialog(dialogParent, StringUtil.notNullize(e.getMessage(), "Internal error"), icsMessage(if (e is AuthenticationException) "sync.not.authorized.title" else "sync.rejected.title"))
           }
           return
         }
 
 
-        NOTIFICATION_GROUP.createNotification(IcsBundle.message("sync.done.message"), NotificationType.INFORMATION).notify(project)
+        NOTIFICATION_GROUP.createNotification(icsMessage("sync.done.message"), NotificationType.INFORMATION).notify(project)
         okAction()
       }
     }

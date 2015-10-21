@@ -25,26 +25,20 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-
-import static com.intellij.openapi.externalSystem.model.ProjectKeys.MODULE;
+import java.util.*;
 
 /**
  * @author Denis Zhdanov
@@ -67,29 +61,6 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
     return ProjectKeys.LIBRARY_DEPENDENCY;
   }
 
-  @Override
-  public void importData(@NotNull Collection<DataNode<LibraryDependencyData>> toImport,
-                         @Nullable ProjectData projectData,
-                         @NotNull Project project,
-                         @NotNull IdeModifiableModelsProvider modelsProvider) {
-    if (toImport.isEmpty()) {
-      return;
-    }
-
-    MultiMap<DataNode<ModuleData>, DataNode<LibraryDependencyData>> byModule = ExternalSystemApiUtil.groupBy(toImport, MODULE);
-    for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<LibraryDependencyData>>> entry : byModule.entrySet()) {
-      Module module = modelsProvider.findIdeModule(entry.getKey().getData());
-      if (module == null) {
-        LOG.warn(String.format(
-          "Can't import library dependencies %s. Reason: target module (%s) is not found at the ide and can't be imported",
-          entry.getValue(), entry.getKey()
-        ));
-        continue;
-      }
-      importData(entry.getValue(), module, modelsProvider);
-    }
-  }
-
   @NotNull
   @Override
   public Class<LibraryOrderEntry> getOrderEntryType() {
@@ -97,13 +68,9 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
   }
 
   @Override
-  protected String getOrderEntryName(@NotNull LibraryOrderEntry orderEntry) {
-    return orderEntry.getLibraryName();
-  }
-
-  private void importData(@NotNull final Collection<DataNode<LibraryDependencyData>> nodesToImport,
-                          @NotNull final Module module,
-                          @NotNull final IdeModifiableModelsProvider modelsProvider) {
+  protected Map<OrderEntry, OrderAware> importData(@NotNull final Collection<DataNode<LibraryDependencyData>> nodesToImport,
+                                                 @NotNull final Module module,
+                                                 @NotNull final IdeModifiableModelsProvider modelsProvider) {
     // The general idea is to import all external project library dependencies and module libraries which don't present at the
     // ide side yet and remove all project library dependencies and module libraries which present at the ide but not at
     // the given collection.
@@ -112,6 +79,7 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
     final Map<Set<String>/* library paths */, LibraryDependencyData> moduleLibrariesToImport = ContainerUtilRt.newHashMap();
     final Map<String/* library name + scope */, LibraryDependencyData> projectLibrariesToImport = ContainerUtilRt.newHashMap();
     final Set<LibraryDependencyData> toImport = ContainerUtilRt.newLinkedHashSet();
+    final Map<OrderEntry, OrderAware> orderEntryDataMap = ContainerUtil.newLinkedHashMap();
 
     boolean hasUnresolved = false;
     for (DataNode<LibraryDependencyData> dependencyNode : nodesToImport) {
@@ -120,14 +88,12 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
       hasUnresolved |= libraryData.isUnresolved();
       switch (dependencyData.getLevel()) {
         case MODULE:
-          if (!libraryData.isUnresolved()) {
             Set<String> paths = ContainerUtilRt.newHashSet();
             for (String path : libraryData.getPaths(LibraryPathType.BINARY)) {
               paths.add(ExternalSystemApiUtil.toCanonicalPath(path) + dependencyData.getScope().name());
             }
             moduleLibrariesToImport.put(paths, dependencyData);
             toImport.add(dependencyData);
-          }
           break;
         case PROJECT:
           projectLibrariesToImport.put(libraryData.getInternalName() + dependencyData.getScope().name(), dependencyData);
@@ -140,15 +106,18 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
     final ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
     LibraryTable moduleLibraryTable = modifiableRootModel.getModuleLibraryTable();
     syncExistingAndRemoveObsolete(
-      modelsProvider, moduleLibrariesToImport, projectLibrariesToImport, toImport, modifiableRootModel, finalHasUnresolved);
+      modelsProvider, moduleLibrariesToImport, projectLibrariesToImport, toImport, orderEntryDataMap, modifiableRootModel,
+      finalHasUnresolved);
     // Import missing library dependencies.
     if (!toImport.isEmpty()) {
-      importMissing(modelsProvider, toImport, modifiableRootModel, moduleLibraryTable, module);
+      importMissing(modelsProvider, toImport, orderEntryDataMap, modifiableRootModel, moduleLibraryTable, module);
     }
+    return orderEntryDataMap;
   }
 
   private void importMissing(@NotNull IdeModifiableModelsProvider modelsProvider,
                              @NotNull Set<LibraryDependencyData> toImport,
+                             @NotNull Map<OrderEntry, OrderAware> orderEntryDataMap,
                              @NotNull ModifiableRootModel moduleRootModel,
                              @NotNull LibraryTable moduleLibraryTable,
                              @NotNull Module module) {
@@ -157,17 +126,27 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
       final String libraryName = libraryData.getInternalName();
       switch (dependencyData.getLevel()) {
         case MODULE:
-          final Library moduleLib = moduleLibraryTable.createLibrary(libraryName);
-          syncExistingLibraryDependency(modelsProvider, dependencyData, moduleLib, moduleRootModel, module);
+          final Library moduleLib;
+          if (libraryName.isEmpty()) {
+            moduleLib = moduleLibraryTable.createLibrary();
+          }
+          else {
+            moduleLib = moduleLibraryTable.createLibrary(libraryName);
+          }
+          final LibraryOrderEntry existingLibraryDependency =
+            syncExistingLibraryDependency(modelsProvider, dependencyData, moduleLib, moduleRootModel, module);
+          orderEntryDataMap.put(existingLibraryDependency, dependencyData);
           break;
         case PROJECT:
           final Library projectLib = modelsProvider.getLibraryByName(libraryName);
           if (projectLib == null) {
-            syncExistingLibraryDependency(modelsProvider, dependencyData, moduleLibraryTable.createLibrary(libraryName), moduleRootModel,
-                                          module);
+            final LibraryOrderEntry existingProjectLibraryDependency = syncExistingLibraryDependency(
+              modelsProvider, dependencyData, moduleLibraryTable.createLibrary(libraryName), moduleRootModel, module);
+            orderEntryDataMap.put(existingProjectLibraryDependency, dependencyData);
             break;
           }
           LibraryOrderEntry orderEntry = moduleRootModel.addLibraryEntry(projectLib);
+          orderEntryDataMap.put(orderEntry, dependencyData);
           setLibraryScope(orderEntry, projectLib, module, dependencyData);
       }
     }
@@ -177,12 +156,11 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
                                       @NotNull Library lib,
                                       @NotNull Module module,
                                       @NotNull LibraryDependencyData dependencyData) {
-    LOG.debug(String.format("Adding library dependency '%s' to module '%s'", lib.getName(), module.getName()));
     orderEntry.setExported(dependencyData.isExported());
     orderEntry.setScope(dependencyData.getScope());
     LOG.debug(String.format(
-      "Configuring library dependency '%s' of module '%s' to be%s exported and have scope %s",
-      lib.getName(), module.getName(), dependencyData.isExported() ? " not" : "", dependencyData.getScope()
+      "Configuring library '%s' of module '%s' to be%s exported and have scope %s",
+      lib, module.getName(), dependencyData.isExported() ? " not" : "", dependencyData.getScope()
     ));
   }
 
@@ -190,9 +168,9 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
                                              @NotNull Map<Set<String>, LibraryDependencyData> moduleLibrariesToImport,
                                              @NotNull Map<String, LibraryDependencyData> projectLibrariesToImport,
                                              @NotNull Set<LibraryDependencyData> toImport,
+                                             @NotNull Map<OrderEntry, OrderAware> orderEntryDataMap,
                                              @NotNull ModifiableRootModel moduleRootModel,
                                              boolean hasUnresolvedLibraries) {
-    Set<String> moduleLibraryKey = ContainerUtilRt.newHashSet();
     for (OrderEntry entry : moduleRootModel.getOrderEntries()) {
       if (entry instanceof ModuleLibraryOrderEntryImpl) {
         ModuleLibraryOrderEntryImpl moduleLibraryOrderEntry = (ModuleLibraryOrderEntryImpl)entry;
@@ -201,15 +179,17 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
           LOG.warn("Skipping module-level library entry because it doesn't have backing Library object. Entry: " + entry);
           continue;
         }
-        moduleLibraryKey.clear();
-        for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
+        final VirtualFile[] libraryFiles = library.getFiles(OrderRootType.CLASSES);
+        final Set<String> moduleLibraryKey = ContainerUtilRt.newHashSet(libraryFiles.length);
+        for (VirtualFile file : libraryFiles) {
           moduleLibraryKey.add(ExternalSystemApiUtil.getLocalFileSystemPath(file) + moduleLibraryOrderEntry.getScope().name());
         }
         LibraryDependencyData existing = moduleLibrariesToImport.remove(moduleLibraryKey);
-        if (existing == null) {
+        if (existing == null || !StringUtil.equals(existing.getInternalName(), library.getName())) {
           moduleRootModel.removeOrderEntry(entry);
         }
         else {
+          orderEntryDataMap.put(entry, existing);
           syncExistingLibraryDependency(modelsProvider, existing, library, moduleRootModel, moduleLibraryOrderEntry.getOwnerModule());
           toImport.remove(existing);
         }
@@ -220,6 +200,7 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
         LibraryDependencyData existing = projectLibrariesToImport.remove(libraryName + libraryOrderEntry.getScope().name());
         if (existing != null) {
           toImport.remove(existing);
+          orderEntryDataMap.put(entry, existing);
         }
         else if (!hasUnresolvedLibraries) {
           // There is a possible case that a project has been successfully imported from external model and after
@@ -230,17 +211,43 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
     }
   }
 
-  private void syncExistingLibraryDependency(@NotNull IdeModifiableModelsProvider modelsProvider,
-                                             @NotNull final LibraryDependencyData libraryDependencyData,
-                                             @NotNull final Library library,
-                                             @NotNull final ModifiableRootModel moduleRootModel,
-                                             @NotNull final Module module) {
+  private LibraryOrderEntry syncExistingLibraryDependency(@NotNull IdeModifiableModelsProvider modelsProvider,
+                                                          @NotNull final LibraryDependencyData libraryDependencyData,
+                                                          @NotNull final Library library,
+                                                          @NotNull final ModifiableRootModel moduleRootModel,
+                                                          @NotNull final Module module) {
     final Library.ModifiableModel libraryModel = modelsProvider.getModifiableLibraryModel(library);
     final String libraryName = libraryDependencyData.getInternalName();
     Map<OrderRootType, Collection<File>> files = myLibraryManager.prepareLibraryFiles(libraryDependencyData.getTarget());
     myLibraryManager.registerPaths(files, libraryModel, libraryName);
-    LibraryOrderEntry orderEntry = moduleRootModel.findLibraryOrderEntry(library);
+    LibraryOrderEntry orderEntry = findLibraryOrderEntry(moduleRootModel, library, libraryDependencyData.getScope());
+
     assert orderEntry != null;
     setLibraryScope(orderEntry, library, module, libraryDependencyData);
+    return orderEntry;
+  }
+
+  @Nullable
+  private static LibraryOrderEntry findLibraryOrderEntry(@NotNull ModifiableRootModel moduleRootModel,
+                                                         @NotNull Library library,
+                                                         @NotNull DependencyScope scope) {
+    LibraryOrderEntry candidate = null;
+    for (OrderEntry orderEntry : moduleRootModel.getOrderEntries()) {
+      if (orderEntry instanceof LibraryOrderEntry) {
+        final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
+        if (library == libraryOrderEntry.getLibrary()) {
+          return libraryOrderEntry;
+        }
+        if (library.equals(libraryOrderEntry.getLibrary())) {
+          if (libraryOrderEntry.getScope() == scope) {
+            return libraryOrderEntry;
+          }
+          else {
+            candidate = libraryOrderEntry;
+          }
+        }
+      }
+    }
+    return candidate;
   }
 }

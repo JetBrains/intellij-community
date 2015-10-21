@@ -46,6 +46,8 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   @Nullable private String wrapperPropertyFile;
 
   @Nullable private String myJavaHome;
+  @Nullable
+  private String myIdeProjectPath;
 
   public GradleExecutionSettings(@Nullable String gradleHome,
                                  @Nullable String serviceDirectory,
@@ -59,6 +61,15 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     myDaemonVmOptions = daemonVmOptions;
     myIsOfflineWork = isOfflineWork;
     setVerboseProcessing(USE_VERBOSE_GRADLE_API_BY_DEFAULT);
+  }
+
+  public void setIdeProjectPath(@Nullable String ideProjectPath) {
+    myIdeProjectPath = ideProjectPath;
+  }
+
+  @Nullable
+  public String getIdeProjectPath() {
+    return myIdeProjectPath;
   }
 
   @Nullable

@@ -121,7 +121,7 @@ public class ExecutionPointHighlighter {
   }
 
   public void navigateTo() {
-    if (myOpenFileDescriptor != null) {
+    if (myOpenFileDescriptor != null && myOpenFileDescriptor.getFile().isValid()) {
       myOpenFileDescriptor.navigateInEditor(myProject, true);
     }
   }
@@ -144,7 +144,7 @@ public class ExecutionPointHighlighter {
     }
   }
 
-  public void updateGutterIcon(@NotNull final GutterIconRenderer renderer) {
+  public void updateGutterIcon(@Nullable final GutterIconRenderer renderer) {
     AppUIUtil.invokeOnEdt(new Runnable() {
       @Override
       public void run() {
@@ -207,8 +207,9 @@ public class ExecutionPointHighlighter {
     if (mySourcePosition instanceof HighlighterProvider) {
       TextRange range = ((HighlighterProvider)mySourcePosition).getHighlightRange();
       if (range != null) {
-        range = range.intersection(DocumentUtil.getLineTextRange(document, line));
-        if (range != null && !range.isEmpty()) {
+        TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
+        range = range.intersection(lineRange);
+        if (range != null && !range.isEmpty() && !range.equals(lineRange)) {
           myRangeHighlighter = markupModel.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
                                                                DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER, attributes,
                                                                HighlighterTargetArea.EXACT_RANGE);
@@ -220,6 +221,11 @@ public class ExecutionPointHighlighter {
     }
     myRangeHighlighter.putUserData(EXECUTION_POINT_HIGHLIGHTER_KEY, true);
     myRangeHighlighter.setGutterIconRenderer(myGutterIconRenderer);
+  }
+
+  public boolean isFullLineHighlighter() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    return myRangeHighlighter != null && myRangeHighlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE;
   }
 
   private static void adjustCounter(@NotNull final Editor editor, final int increment) {

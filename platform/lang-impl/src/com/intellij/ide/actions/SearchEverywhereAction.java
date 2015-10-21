@@ -38,6 +38,8 @@ import com.intellij.ide.ui.OptionsTopHitProvider;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
+import com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder;
+import com.intellij.ide.ui.laf.intellij.MacIntelliJTextFieldUI;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
@@ -1005,14 +1007,20 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private static class MySearchTextField extends SearchTextField implements DataProvider, Disposable {
     public MySearchTextField() {
       super(false);
-      getTextEditor().setOpaque(false);
-      getTextEditor().setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(getTextEditor()));
-      getTextEditor().setBorder(new DarculaTextBorder());
+      JTextField editor = getTextEditor();
+      editor.setOpaque(false);
+      if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+        editor.setUI((MacIntelliJTextFieldUI)MacIntelliJTextFieldUI.createUI(editor));
+        editor.setBorder(new MacIntelliJTextBorder());
+      } else {
+        editor.setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(editor));
+        editor.setBorder(new DarculaTextBorder());
+      }
 
-      getTextEditor().putClientProperty("JTextField.Search.noBorderRing", Boolean.TRUE);
+      editor.putClientProperty("JTextField.Search.noBorderRing", Boolean.TRUE);
       if (UIUtil.isUnderDarcula()) {
-        getTextEditor().setBackground(Gray._45);
-        getTextEditor().setForeground(Gray._240);
+        editor.setBackground(Gray._45);
+        editor.setForeground(Gray._240);
       }
     }
 
@@ -1213,7 +1221,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
         else if (isSetting(value)) {
           String text = getSettingText((OptionDescription)value);
-          append(text);
+          SimpleTextAttributes attrs = SimpleTextAttributes.REGULAR_ATTRIBUTES;
+          if (value instanceof Changeable && ((Changeable)value).hasChanged()) {
+            if (selected) {
+              attrs = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
+            } else {
+              SimpleTextAttributes base = SimpleTextAttributes.LINK_BOLD_ATTRIBUTES;
+              attrs = base.derive(SimpleTextAttributes.STYLE_BOLD, base.getFgColor(), null, null);
+            }
+          }
+          append(text, attrs);
           final String id = ((OptionDescription)value).getConfigurableId();
           final String name = myConfigurables.get(id);
           if (name != null) {
@@ -1446,7 +1463,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         return;
       }
       final List<ActivateToolWindowAction> actions = new ArrayList<ActivateToolWindowAction>();
-      for (ActivateToolWindowAction action : ToolWindowsGroup.getToolWindowActions(project)) {
+      for (ActivateToolWindowAction action : ToolWindowsGroup.getToolWindowActions(project, false)) {
         String text = action.getTemplatePresentation().getText();
         if (text != null && StringUtil.startsWithIgnoreCase(text, pattern)) {
           actions.add(action);

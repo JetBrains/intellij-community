@@ -1,5 +1,5 @@
 def f(x):
     """
-    Params:
+    Parameters:
       x: foo
     """

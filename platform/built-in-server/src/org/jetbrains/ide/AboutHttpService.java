@@ -18,6 +18,7 @@ package org.jetbrains.ide;
 import com.google.gson.stream.JsonWriter;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -77,7 +78,8 @@ class AboutHttpService extends RestService {
     JsonWriter writer = createJsonWriter(byteOut);
     writer.beginObject();
 
-    String appName = ApplicationInfoEx.getInstanceEx().getFullApplicationName();
+    ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+    String appName = appInfo.getFullApplicationName();
     if (!PlatformUtils.isIdeaUltimate()) {
       String productName = ApplicationNamesInfo.getInstance().getProductName();
       appName = appName.replace(productName + " (" + productName + ")", productName);
@@ -103,6 +105,20 @@ class AboutHttpService extends RestService {
         writer.endObject();
       }
       writer.endArray();
+    }
+
+    String uri = request.getUri();
+    if (uri != null && uri.endsWith("?more")) {
+      writer.name("vendor").value(appInfo.getCompanyName());
+      writer.name("isEAP").value(appInfo.isEAP());
+      writer.name("productCode").value(appInfo.getBuild().getProductCode());
+      writer.name("buildDate").value(appInfo.getBuildDate().getTime().getTime());
+      writer.name("isSnapshot").value(appInfo.getBuild().isSnapshot());
+      writer.name("configPath").value(PathManager.getConfigPath());
+      writer.name("systemPath").value(PathManager.getSystemPath());
+      writer.name("binPath").value(PathManager.getBinPath());
+      writer.name("logPath").value(PathManager.getLogPath());
+      writer.name("homePath").value(PathManager.getHomePath());
     }
 
     writer.endObject();

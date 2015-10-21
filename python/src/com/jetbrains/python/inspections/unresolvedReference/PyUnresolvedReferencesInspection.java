@@ -54,6 +54,7 @@ import com.jetbrains.python.documentation.docstrings.DocStringTypeReference;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.packaging.PyPIPackageUtil;
+import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -273,14 +274,20 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     @Override
+    public void visitComment(PsiComment comment) {
+      super.visitComment(comment);
+      if (comment instanceof PsiLanguageInjectionHost) {
+        processInjection((PsiLanguageInjectionHost)comment);
+      }
+    }
+
+    @Override
     public void visitPyElement(final PyElement node) {
       super.visitPyElement(node);
       final PsiFile file = node.getContainingFile();
-      final InjectedLanguageManager injectedLanguageManager =
-        InjectedLanguageManager.getInstance(node.getProject());
+      final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(node.getProject());
       if (injectedLanguageManager.isInjectedFragment(file)) {
-        final PsiLanguageInjectionHost host =
-          injectedLanguageManager.getInjectionHost(node);
+        final PsiLanguageInjectionHost host = injectedLanguageManager.getInjectionHost(node);
         processInjection(host);
       }
       if (node instanceof PyReferenceOwner) {
@@ -299,8 +306,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
     private void processInjection(@Nullable PsiLanguageInjectionHost node) {
       if (node == null) return;
-      final List<Pair<PsiElement, TextRange>>
-        files = InjectedLanguageManager.getInstance(node.getProject()).getInjectedPsiFiles(node);
+      final List<Pair<PsiElement, TextRange>> files = InjectedLanguageManager.getInstance(node.getProject()).getInjectedPsiFiles(node);
       if (files != null) {
         for (Pair<PsiElement, TextRange> pair : files) {
           new PyRecursiveElementVisitor() {
@@ -607,7 +613,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           final String packageName = components.get(0);
           final Module module = ModuleUtilCore.findModuleForPsiElement(node);
           final Sdk sdk = PythonSdkType.findPythonSdk(module);
-          if (module != null && sdk != null) {
+          if (module != null && sdk != null && PyPackageUtil.packageManagementEnabled(sdk)) {
             if (PyPIPackageUtil.INSTANCE.isInPyPI(packageName)) {
               addInstallPackageAction(actions, packageName, module, sdk);
             }
@@ -913,12 +919,13 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         final List<String> components = qname.getComponents();
         if (!components.isEmpty()) {
           final String packageName = components.get(0);
-          if (PyPIPackageUtil.INSTANCE.isInPyPI(packageName)) {
+          final Module module = ModuleUtilCore.findModuleForPsiElement(node);
+          if (PyPIPackageUtil.INSTANCE.isInPyPI(packageName) && PythonSdkType.findPythonSdk(module) != null) {
             actions.add(new PyPackageRequirementsInspection.InstallAndImportQuickFix(packageName, packageName, node));
           }
           else {
             final String packageAlias = PyPackageAliasesProvider.commonImportAliases.get(packageName);
-            if (packageAlias != null && PyPIPackageUtil.INSTANCE.isInPyPI(packageName)) {
+            if (packageAlias != null && PyPIPackageUtil.INSTANCE.isInPyPI(packageName) && PythonSdkType.findPythonSdk(module) != null) {
               actions.add(new PyPackageRequirementsInspection.InstallAndImportQuickFix(packageAlias, packageName, node));
             }
           }

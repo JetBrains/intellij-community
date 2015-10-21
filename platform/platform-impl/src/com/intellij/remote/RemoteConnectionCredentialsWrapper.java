@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class RemoteConnectionCredentialsWrapper {
   public static final String VAGRANT_PREFIX = "vagrant://";
   public static final String SFTP_DEPLOYMENT_PREFIX = "sftp://";
+  public static final String DOCKER_PREFIX = "docker://";
 
   /**
    * Connection types
@@ -36,6 +37,7 @@ public class RemoteConnectionCredentialsWrapper {
   public final Key<VagrantBasedCredentialsHolder> VAGRANT_BASED_CREDENTIALS = Key.create("VAGRANT_BASED_CREDENTIALS");
   public final Key<WebDeploymentCredentialsHolder> WEB_DEPLOYMENT_BASED_CREDENTIALS = Key.create("WEB_DEPLOYMENT_BASED_CREDENTIALS");
   public final Key<RemoteCredentialsHolder> PLAIN_SSH_CREDENTIALS = Key.create("PLAIN_SSH_CREDENTIALS");
+  public final Key<DockerCredentialsHolder> DOCKER_CREDENTIALS = Key.create("DOCKER_CREDENTIALS");
 
   private UserDataHolderBase myCredentialsTypeHolder = new UserDataHolderBase();
 
@@ -68,6 +70,10 @@ public class RemoteConnectionCredentialsWrapper {
     return myCredentialsTypeHolder.getUserData(WEB_DEPLOYMENT_BASED_CREDENTIALS);
   }
 
+  private DockerCredentialsHolder getDockerCredentials() {
+    return myCredentialsTypeHolder.getUserData(DOCKER_CREDENTIALS);
+  }
+
   private boolean isVagrantConnection() {
     return getVagrantCredentials() != null;
   }
@@ -80,6 +86,9 @@ public class RemoteConnectionCredentialsWrapper {
     return getWebDeploymentCredentials() != null;
   }
 
+  private boolean isDockerConnection() {
+    return getDockerCredentials() != null;
+  }
 
   public Object getConnectionKey() {
     if (isVagrantConnection()) {
@@ -112,6 +121,11 @@ public class RemoteConnectionCredentialsWrapper {
       public void deployment(@NotNull WebDeploymentCredentialsHolder cred) {
         cred.save(rootElement);
       }
+
+      @Override
+      public void docker(@NotNull DockerCredentialsHolder cred) {
+        cred.save(rootElement);
+      }
     });
   }
 
@@ -136,6 +150,11 @@ public class RemoteConnectionCredentialsWrapper {
       public void deployment(@NotNull WebDeploymentCredentialsHolder cred) {
         copy.setWebDeploymentCredentials(getWebDeploymentCredentials());
       }
+
+      @Override
+      public void docker(@NotNull DockerCredentialsHolder credentials) {
+        copy.setDockerDeploymentCredentials(getDockerCredentials());
+      }
     });
   }
 
@@ -158,6 +177,13 @@ public class RemoteConnectionCredentialsWrapper {
       @Override
       public void deployment(@NotNull WebDeploymentCredentialsHolder cred) {
         result.set(constructSftpCredentialsFullPath(cred.getSshCredentials()));
+      }
+
+      @Override
+      public void docker(@NotNull DockerCredentialsHolder cred) {
+        // TODO [Docker] review
+        String name = StringUtil.isNotEmpty(cred.getContainerName()) ? cred.getContainerName() : cred.getImageName();
+        result.set(DOCKER_PREFIX + name + "/");
       }
     });
 
@@ -184,6 +210,9 @@ public class RemoteConnectionCredentialsWrapper {
     }
     else if (isWebDeploymentConnection()) {
       acceptor.deployment(getWebDeploymentCredentials());
+    }
+    else if (isDockerConnection()) {
+      acceptor.docker(getDockerCredentials());
     }
     else {
       throw unknownConnectionType();
@@ -229,8 +258,21 @@ public class RemoteConnectionCredentialsWrapper {
       public void deployment(@NotNull WebDeploymentCredentialsHolder cred) {
         result.set("(" + constructSftpCredentialsFullPath(cred.getSshCredentials()) + interpreterPath + ")");
       }
+
+      @Override
+      public void docker(@NotNull DockerCredentialsHolder credentials) {
+        String containerName = StringUtil.isNotEmpty(credentials.getContainerName())
+                               ? credentials.getContainerName() + " " : "";
+        result.set("Docker " + containerName + "(" + credentials.getImageName() + ")");
+      }
     });
 
     return result.get();
+  }
+
+
+  public void setDockerDeploymentCredentials(DockerCredentialsHolder credentials) {
+    myCredentialsTypeHolder = new UserDataHolderBase();
+    myCredentialsTypeHolder.putUserData(DOCKER_CREDENTIALS, credentials);
   }
 }

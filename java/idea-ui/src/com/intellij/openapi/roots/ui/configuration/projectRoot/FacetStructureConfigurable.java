@@ -284,16 +284,6 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   }
 
   @Override
-  protected List<Facet> removeFacet(final Facet facet) {
-    List<Facet> removed = super.removeFacet(facet);
-    ModuleStructureConfigurable.getInstance(myProject).removeFacetNodes(removed);
-    for (Facet removedFacet : removed) {
-      myContext.getDaemonAnalyzer().removeElement(new FacetProjectStructureElement(myContext, removedFacet));
-    }
-    return removed;
-  }
-
-  @Override
   protected boolean updateMultiSelection(final List<NamedConfigurable> selectedConfigurables) {
     return updateMultiSelection(selectedConfigurables, getDetailsComponent());
   }
@@ -353,6 +343,11 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   }
 
   @Override
+  protected List<? extends RemoveConfigurableHandler<?>> getRemoveHandlers() {
+    return Collections.singletonList(new FacetRemoveHandler());
+  }
+
+  @Override
   protected void processRemovedItems() {
   }
 
@@ -405,6 +400,24 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
 
   @Override
   public void dispose() {
+  }
+
+  private class FacetRemoveHandler extends RemoveConfigurableHandler<Facet> {
+    public FacetRemoveHandler() {
+      super(FacetConfigurable.class);
+    }
+
+    @Override
+    public boolean remove(@NotNull Collection<Facet> facets) {
+      for (Facet facet : facets) {
+        List<Facet> removed = myContext.myModulesConfigurator.getFacetsConfigurator().removeFacet(facet);
+        ModuleStructureConfigurable.getInstance(myProject).removeFacetNodes(removed);
+        for (Facet removedFacet : removed) {
+          myContext.getDaemonAnalyzer().removeElement(new FacetProjectStructureElement(myContext, removedFacet));
+        }
+      }
+      return true;
+    }
   }
 
   private class FacetConfigurableNode extends MyNode {

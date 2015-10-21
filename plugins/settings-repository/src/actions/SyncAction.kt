@@ -22,15 +22,16 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import org.jetbrains.settingsRepository.*
 
-val NOTIFICATION_GROUP = NotificationGroup.balloonGroup(PLUGIN_NAME)
+internal val NOTIFICATION_GROUP = NotificationGroup.balloonGroup(PLUGIN_NAME)
 
-abstract class SyncAction(private val syncType: SyncType) : DumbAwareAction() {
+internal abstract class SyncAction(private val syncType: SyncType) : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    e.getPresentation().setEnabledAndVisible(icsManager.repositoryManager.hasUpstream())
+    val repositoryManager = icsManager.repositoryManager
+    e.presentation.isEnabledAndVisible = repositoryManager.isRepositoryExists() && repositoryManager.hasUpstream()
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    syncAndNotify(syncType, event.getProject())
+    syncAndNotify(syncType, event.project)
   }
 }
 
@@ -39,27 +40,26 @@ fun syncAndNotify(syncType: SyncType, project: Project?, notifyIfUpToDate: Boole
     if (icsManager.sync(syncType, project) == null && !notifyIfUpToDate) {
       return
     }
+    NOTIFICATION_GROUP.createNotification(icsMessage("sync.done.message"), NotificationType.INFORMATION).notify(project)
   }
   catch (e: Exception) {
     LOG.warn(e)
-    NOTIFICATION_GROUP.createNotification(IcsBundle.message("sync.rejected.title"), e.getMessage() ?: "Internal error", NotificationType.ERROR, null).notify(project)
+    NOTIFICATION_GROUP.createNotification(icsMessage("sync.rejected.title"), e.getMessage() ?: "Internal error", NotificationType.ERROR, null).notify(project)
   }
-  NOTIFICATION_GROUP.createNotification(IcsBundle.message("sync.done.message"), NotificationType.INFORMATION).notify(project)
 }
 
-// we don't
-class MergeAction : SyncAction(SyncType.MERGE)
-class ResetToTheirsAction : SyncAction(SyncType.OVERWRITE_LOCAL)
-class ResetToMyAction : SyncAction(SyncType.OVERWRITE_REMOTE)
+internal class MergeAction : SyncAction(SyncType.MERGE)
+internal class ResetToTheirsAction : SyncAction(SyncType.OVERWRITE_LOCAL)
+internal class ResetToMyAction : SyncAction(SyncType.OVERWRITE_REMOTE)
 
-class ConfigureIcsAction : DumbAwareAction() {
+internal class ConfigureIcsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     icsManager.runInAutoCommitDisabledMode {
-      IcsSettingsPanel(e.getProject()).show()
+      IcsSettingsPanel(e.project).show()
     }
   }
 
   override fun update(e: AnActionEvent) {
-    e.getPresentation().setIcon(null)
+    e.presentation.icon = null
   }
 }

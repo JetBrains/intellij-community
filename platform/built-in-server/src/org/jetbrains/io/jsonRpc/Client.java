@@ -12,13 +12,10 @@ import io.netty.channel.EventLoop;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
 
 import java.util.Enumeration;
 
 public abstract class Client extends UserDataHolderBase {
-  static final RuntimeException REJECTED = Promise.createError("rejected");
-
   protected final Channel channel;
 
   final ConcurrentIntObjectMap<AsyncPromise<Object>> messageCallbackMap = ContainerUtil.createConcurrentIntObjectMap();
@@ -60,7 +57,7 @@ public abstract class Client extends UserDataHolderBase {
       Enumeration<AsyncPromise<Object>> elements = messageCallbackMap.elements();
       while (elements.hasMoreElements()) {
         try {
-          elements.nextElement().setError(REJECTED);
+          elements.nextElement().setError("rejected");
         }
         catch (Throwable e) {
           exceptionHandler.exceptionCaught(e);

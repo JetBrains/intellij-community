@@ -29,7 +29,7 @@ import java.awt.*;
 
 public class CheckboxTreeBase extends Tree {
   private final CheckboxTreeHelper myHelper;
-  private final EventDispatcher<CheckboxTreeListener> myEventDispatcher;
+  private final EventDispatcher<CheckboxTreeListener> myEventDispatcher = EventDispatcher.create(CheckboxTreeListener.class);;
 
   public CheckboxTreeBase() {
     this(new CheckboxTreeCellRendererBase(), null);
@@ -40,7 +40,12 @@ public class CheckboxTreeBase extends Tree {
   }
 
   public CheckboxTreeBase(CheckboxTreeCellRendererBase cellRenderer, @Nullable CheckedTreeNode root, CheckPolicy checkPolicy) {
-    myEventDispatcher = EventDispatcher.create(CheckboxTreeListener.class);
+    myHelper = new CheckboxTreeHelper(checkPolicy, myEventDispatcher);
+    if (root != null) {
+      // override default model ("colors", etc.) ASAP to avoid CCE in renderers
+      setModel(new DefaultTreeModel(root));
+      setSelectionRow(0);
+    }
     myEventDispatcher.addListener(new CheckboxTreeListener() {
       @Override
       public void mouseDoubleClicked(@NotNull CheckedTreeNode node) {
@@ -57,13 +62,7 @@ public class CheckboxTreeBase extends Tree {
         CheckboxTreeBase.this.nodeStateWillChange(node);
       }
     });
-    myHelper = new CheckboxTreeHelper(checkPolicy, myEventDispatcher);
     myHelper.initTree(this, this, cellRenderer);
-
-    setSelectionRow(0);
-    if (root != null) {
-      setModel(new DefaultTreeModel(root));
-    }
   }
 
   @Deprecated

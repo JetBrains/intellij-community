@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -229,6 +230,15 @@ public class KeyedExtensionCollector<T, KeyT> {
 
   public void addListener(@NotNull ExtensionPointListener<T> listener) {
     myListeners.add(listener);
+  }
+  public void addListener(@NotNull final ExtensionPointListener<T> listener, @NotNull Disposable parent) {
+    myListeners.add(listener);
+    Disposer.register(parent, new Disposable() {
+      @Override
+      public void dispose() {
+        myListeners.remove(listener);
+      }
+    });
   }
 
   public void removeListener(@NotNull ExtensionPointListener<T> listener) {

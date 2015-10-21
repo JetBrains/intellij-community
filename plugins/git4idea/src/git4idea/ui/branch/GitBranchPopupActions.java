@@ -172,6 +172,7 @@ class GitBranchPopupActions {
         new CheckoutAction(myProject, myRepositories, myBranchName),
         new CheckoutAsNewBranch(myProject, myRepositories, myBranchName),
         new CompareAction(myProject, myRepositories, myBranchName, mySelectedRepository),
+        new RebaseAction(myProject, myRepositories, myBranchName),
         new MergeAction(myProject, myRepositories, myBranchName, true),
         new DeleteAction(myProject, myRepositories, myBranchName)
       };
@@ -268,6 +269,7 @@ class GitBranchPopupActions {
       return new AnAction[] {
         new CheckoutRemoteBranchAction(myProject, myRepositories, myBranchName),
         new CompareAction(myProject, myRepositories, myBranchName, mySelectedRepository),
+        new RebaseAction(myProject, myRepositories, myBranchName),
         new MergeAction(myProject, myRepositories, myBranchName, false),
         new RemoteDeleteAction(myProject, myRepositories, myBranchName)
       };
@@ -376,6 +378,26 @@ class GitBranchPopupActions {
         return GitBrancher.DeleteOnMergeOption.PROPOSE;
       }
       return GitBrancher.DeleteOnMergeOption.NOTHING;
+    }
+  }
+
+  private static class RebaseAction extends DumbAwareAction {
+
+    private final Project myProject;
+    private final List<GitRepository> myRepositories;
+    private final String myBranchName;
+
+    public RebaseAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
+      super("Rebase onto");
+      myProject = project;
+      myRepositories = repositories;
+      myBranchName = branchName;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
+      brancher.rebase(myRepositories, myBranchName);
     }
   }
 }

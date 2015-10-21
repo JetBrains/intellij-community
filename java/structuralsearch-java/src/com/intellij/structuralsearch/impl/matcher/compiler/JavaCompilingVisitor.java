@@ -137,19 +137,6 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitClassInitializer(final PsiClassInitializer initializer) {
-    super.visitClassInitializer(initializer);
-    PsiStatement[] psiStatements = initializer.getBody().getStatements();
-    if (psiStatements.length == 1 && psiStatements[0] instanceof PsiExpressionStatement) {
-      MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(psiStatements[0]);
-
-      if (handler instanceof SubstitutionHandler) {
-        myCompilingVisitor.getContext().getPattern().setHandler(initializer, new SubstitutionHandler((SubstitutionHandler)handler));
-      }
-    }
-  }
-
-  @Override
   public void visitField(PsiField psiField) {
     super.visitField(psiField);
     CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();

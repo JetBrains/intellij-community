@@ -50,7 +50,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
   private final Object myLock = new Object();
   private final Set<WatchRequestImpl> myRootsToWatch = new THashSet<WatchRequestImpl>();
-  private TreeNode myNormalizedTree = null;
+  private TreeNode myNormalizedTree;
   private final ManagingFS myManagingFS;
   private final FileWatcher myWatcher;
 
@@ -96,8 +96,8 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   }
 
   private static class TreeNode {
-    private WatchRequestImpl watchRequest = null;
-    private Map<String, TreeNode> nodes = new THashMap<String, TreeNode>(1, FileUtil.PATH_HASHING_STRATEGY);
+    private WatchRequestImpl watchRequest;
+    private final Map<String, TreeNode> nodes = new THashMap<String, TreeNode>(1, FileUtil.PATH_HASHING_STRATEGY);
   }
 
   public LocalFileSystemImpl(@NotNull ManagingFS managingFS) {
@@ -106,14 +106,14 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     if (myWatcher.isOperational()) {
       final int PERIOD = 1000;
       Runnable runnable = new Runnable() {
+        @Override
         public void run() {
           final Application application = ApplicationManager.getApplication();
           if (application == null || application.isDisposed()) return;
           storeRefreshStatusToFiles();
-          JobScheduler.getScheduler().schedule(this, PERIOD, TimeUnit.MILLISECONDS);
         }
       };
-      JobScheduler.getScheduler().schedule(runnable, PERIOD, TimeUnit.MILLISECONDS);
+      JobScheduler.getScheduler().scheduleWithFixedDelay(runnable, PERIOD, PERIOD, TimeUnit.MILLISECONDS);
     }
   }
 

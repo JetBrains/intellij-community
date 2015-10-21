@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 /**
  * @author Konstantin Bulenkov
  */
+@Deprecated
 public interface DiffPanel extends DiffViewer, Disposable {
   void setTitle1(String title);
   void setTitle2(String title);

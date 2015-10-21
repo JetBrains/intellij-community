@@ -232,7 +232,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
   @Nullable
   @Override
   public String getHelpTopic() {
-    return null;
+    return "Required_Plugin";
   }
 
   @Override

@@ -23,12 +23,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.TransferToEDTQueue;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,20 +47,20 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   protected final SMTRunnerEventsListener myEventPublisher;
   private final String myTestFrameworkName;
   private final Project myProject;
-  private TransferToEDTQueue<Runnable> myTransferToEDTQueue =
-    new TransferToEDTQueue<Runnable>("SM queue", new Processor<Runnable>() {
-      @Override
-      public boolean process(Runnable runnable) {
-        runnable.run();
-        return true;
-      }
-    }, getDisposedCondition(), 300);
+  private TransferToEDTQueue<Runnable> myTransferToEDTQueue;
   protected List<SMTRunnerEventsListener> myListenerAdapters = new ArrayList<SMTRunnerEventsListener>();
 
   public GeneralTestEventsProcessor(Project project, @NotNull String testFrameworkName) {
     myProject = project;
     myEventPublisher = project.getMessageBus().syncPublisher(SMTRunnerEventsListener.TEST_STATUS);
     myTestFrameworkName = testFrameworkName;
+    myTransferToEDTQueue = new TransferToEDTQueue<Runnable>("SM queue", new Processor<Runnable>() {
+      @Override
+      public boolean process(Runnable runnable) {
+        runnable.run();
+        return true;
+      }
+    }, project.getDisposed(), 300);
   }
   // tree construction events
 
@@ -241,7 +238,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   }
 
   public Condition getDisposedCondition() {
-    return Conditions.alwaysFalse();
+    return Condition.FALSE;
   }
 
   public void addToInvokeLater(final Runnable runnable) {

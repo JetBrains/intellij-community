@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.psi.stubs.StubIndexKey;
 
 /**
@@ -32,6 +33,7 @@ public class JavaStubIndexKeys {
   public static final StubIndexKey<String, PsiMethod> METHOD_TYPES = StubIndexKey.createIndexKey("java.method.parameter.types");
   public static final StubIndexKey<String, PsiClass> CLASS_SHORT_NAMES = StubIndexKey.createIndexKey("java.class.shortname");
   public static final StubIndexKey<Integer,PsiClass> CLASS_FQN = StubIndexKey.createIndexKey("java.class.fqn");
+  public static final StubIndexKey<IndexTree.Unit, PsiClassOwner> UNITS = StubIndexKey.createIndexKey("java.unit.tree");
 
   private JavaStubIndexKeys() {
   }

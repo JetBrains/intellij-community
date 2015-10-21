@@ -56,7 +56,7 @@ public class IdeaMenuUI extends BasicMenuUI{
   public IdeaMenuUI() {
     myMaxGutterIconWidth = JBUI.scale(18);
 
-    if (UIUtil.isUnderAquaLookAndFeel()) {
+    if (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderIntelliJLaF()) {
       if (myAquaSelectedBackgroundPainter == null) myAquaSelectedBackgroundPainter = (Border) UIManager.get("MenuItem.selectedBackgroundPainter");
       if (myAquaInvertedArrowIcon == null) myAquaInvertedArrowIcon = (Icon) UIManager.get("Menu.invertedArrowIcon");
       if (myAquaDisabledArrowIcon == null) myAquaDisabledArrowIcon = (Icon) UIManager.get("Menu.disabledArrowIcon");
@@ -117,7 +117,7 @@ public class IdeaMenuUI extends BasicMenuUI{
            myAquaSelectedBackgroundPainter.paintBorder(comp, g, 0, 0, jMenu.getWidth(), jMenu.getHeight());
         } else {
           g.setColor(selectionBackground);
-          if (allowedIcon != null) {
+          if (allowedIcon != null && !(UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
             g.fillRect(k, 0, jMenu.getWidth() - k, jMenu.getHeight());
           }
           else {
@@ -188,9 +188,9 @@ public class IdeaMenuUI extends BasicMenuUI{
       }
       if (useCheckAndArrow()){
         try {
-          if (SystemInfo.isMac && myAquaInvertedArrowIcon != null && (buttonmodel.isArmed() || buttonmodel.isSelected()) && UIUtil.isUnderAquaLookAndFeel()) {
+          if (SystemInfo.isMac && myAquaInvertedArrowIcon != null && (buttonmodel.isArmed() || buttonmodel.isSelected()) && (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderIntelliJLaF())) {
             myAquaInvertedArrowIcon.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
-          } else if (SystemInfo.isMac && myAquaDisabledArrowIcon != null && !buttonmodel.isEnabled() && UIUtil.isUnderAquaLookAndFeel()) {
+          } else if (SystemInfo.isMac && myAquaDisabledArrowIcon != null && !buttonmodel.isEnabled() && (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderIntelliJLaF())) {
             myAquaDisabledArrowIcon.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
           } else arrowIcon.paintIcon(comp, g, ourArrowIconRect.x, ourArrowIconRect.y);
         }

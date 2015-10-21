@@ -88,13 +88,12 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
+        myModificationCount++;
         queue(SyncAction.SyncLibrariesInPluginsModule, myProject);
         queue(SyncAction.UpgradeFramework, myProject);
         queue(SyncAction.CreateAppStructureIfNeeded, myProject);
         queue(SyncAction.UpdateProjectStructure, myProject);
         queue(SyncAction.EnsureRunConfigurationExists, myProject);
-        myModificationCount++;
-
         updateProjectViewVisibility();
       }
     });
@@ -241,7 +240,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     queue(SyncAction.CreateAppStructureIfNeeded, myProject);
   }
 
-  private void queue(SyncAction action, Object on) {
+  public void queue(SyncAction action, Object on) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDisposed()) return;
 
@@ -276,7 +275,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       @Override
       public void computeInReadAction(@NotNull ProgressIndicator indicator) {
         if (!isUpToDate()) {
-          indicator.cancel();
+          scheduleRunActions();
           return;
         }
 
@@ -386,7 +385,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     return rawActions;
   }
 
-  private enum SyncAction {
+  public enum SyncAction {
     SyncLibrariesInPluginsModule {
       @Override
       void doAction(Module module, MvcFramework framework) {
@@ -469,7 +468,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
               if (MvcToolWindowDescriptor.class.isAssignableFrom(ep.getFactoryClass())) {
                 MvcToolWindowDescriptor descriptor = (MvcToolWindowDescriptor)ep.getToolWindowFactory();
                 String id = descriptor.getToolWindowId();
-                boolean shouldShow = MvcModuleStructureUtil.hasModulesWithSupport(myProject, descriptor.getFramework());
+                boolean shouldShow = descriptor.value(myProject);
 
                 ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
 

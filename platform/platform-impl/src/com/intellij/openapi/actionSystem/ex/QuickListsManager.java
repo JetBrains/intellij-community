@@ -21,7 +21,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
-import com.intellij.openapi.options.BaseSchemeProcessor;
+import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.project.Project;
@@ -44,7 +44,7 @@ public class QuickListsManager implements ExportableApplicationComponent {
   public QuickListsManager(@NotNull ActionManager actionManager, @NotNull SchemesManagerFactory schemesManagerFactory) {
     myActionManager = actionManager;
     mySchemeManager = schemesManagerFactory.create("quicklists",
-                                                   new BaseSchemeProcessor<QuickList>() {
+                                                   new SchemeProcessor<QuickList>() {
                                                      @NotNull
                                                      @Override
                                                      public QuickList readScheme(@NotNull Element element) {

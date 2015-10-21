@@ -280,6 +280,7 @@
 
     <codeInsight.createFieldFromUsageHelper language="Groovy"
                                             implementationClass="org.jetbrains.plugins.groovy.annotator.intentions.GroovyCreateFieldFromUsageHelper"/>
+    <codeInsight.typeInfo language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyExpressionTypeProvider"/>
 
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <fileTypeFactory implementation="org.jetbrains.plugins.groovy.GroovyFileTypeLoader"/>
@@ -432,14 +433,10 @@
 
     <completion.contributor language="Properties" implementationClass="org.jetbrains.plugins.groovy.dgm.DGMCompletionContributor"/>
 
-    <completion.confidence language="Groovy" implementationClass="com.intellij.codeInsight.completion.UnfocusedNameIdentifier"
-                           id="groovyNameIdentifier"/>
     <completion.confidence language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionConfidence"
                            id="groovyAdvanced" order="after groovyNameIdentifier"/>
     <completion.confidence language="Groovy" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInComments"
                            id="groovyComments"/>
-    <completion.confidence language="Groovy" implementationClass="com.intellij.codeInsight.completion.AlwaysFocusLookup" id="groovyTrue"
-                           order="last"/>
     <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.geb.GebPageFieldNameCompletionContributor"/>
 
     <cantBeStatic implementation="org.jetbrains.plugins.groovy.codeInspection.declaration.GrCategoryMethodsCantBeStaticExtension"/>
@@ -1615,10 +1612,6 @@
     </action>
 
     <group id="Internal.Groovy" text="Groovy" popup="true" internal="true">
-      <action id="GetPsiTypeAction" class="org.jetbrains.plugins.groovy.actions.GrGetPsiTypeAction"
-              text="get PsiType" description=""
-              internal="true"/>
-
       <action id="DumpGroovyControlFlowAction"
               class="org.jetbrains.plugins.groovy.actions.DumpGroovyControlFlowAction"
               text="dump groovy control flow"

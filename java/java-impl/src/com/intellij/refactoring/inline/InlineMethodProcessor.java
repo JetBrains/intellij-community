@@ -785,7 +785,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
       PsiExpression initializer = myFactory.createExpressionFromText(defaultValue, null);
       PsiDeclarationStatement declaration =
-        myFactory.createVariableDeclarationStatement(name, callSubstitutor.substitute(paramType), initializer);
+        myFactory.createVariableDeclarationStatement(name, GenericsUtil.getVariableTypeByExpressionType(callSubstitutor.substitute(paramType)), initializer);
       declaration = (PsiDeclarationStatement)block.addAfter(declaration, null);
       parmVars[i] = (PsiLocalVariable)declaration.getDeclaredElements()[0];
       PsiUtil.setModifierProperty(parmVars[i], PsiModifier.FINAL, parm.hasModifierProperty(PsiModifier.FINAL));
@@ -794,9 +794,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     PsiLocalVariable thisVar = null;
     PsiClass containingClass = myMethod.getContainingClass();
     if (!myMethod.hasModifierProperty(PsiModifier.STATIC) && containingClass != null) {
-      PsiType thisType = myFactory.createType(containingClass, callSubstitutor);
-      String[] names = myJavaCodeStyle.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, thisType)
-        .names;
+      PsiType thisType = GenericsUtil.getVariableTypeByExpressionType(myFactory.createType(containingClass, callSubstitutor));
+      String[] names = myJavaCodeStyle.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, thisType).names;
       String thisVarName = names[0];
       thisVarName = myJavaCodeStyle.suggestUniqueVariableName(thisVarName, myMethod.getFirstChild(), true);
       PsiExpression initializer = myFactory.createExpressionFromText("null", null);
@@ -1523,19 +1522,5 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       if (!checkReadOnly()) return Collections.emptyList();
       return myReference == null ? Collections.singletonList(myMethod) : Arrays.asList(myReference, myMethod);
     }
-  }
-}
-enum E {A, B, C;}
-class FooBar {
-  public FooBar(E e) {
-  }
-
-  // TODO(jayen): inline (bug in intellij 142.4859.6)
-  public FooBar() {
-    this(E.A);
-  }
-
-  public static void main(String[] args) {
-    new FooBar(E.A);
   }
 }

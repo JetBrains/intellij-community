@@ -15,10 +15,6 @@
  */
 package com.intellij.diff.tools.fragmented
 
-import com.intellij.diff.assertEmpty
-import com.intellij.diff.assertEquals
-import com.intellij.diff.assertFalse
-import com.intellij.diff.assertTrue
 import com.intellij.diff.comparison.ComparisonManagerImpl
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.util.LineRange
@@ -56,8 +52,8 @@ public class UnifiedFragmentBuilderTest : UsefulTestCase() {
     assertEquals(builder.getText().toString(), "A\nB\nC\nD\n")
     assertEquals(builder.getChangedLines(), listOf(LineRange(1, 3)))
 
-    assertEquals(builder.getBlocks().size(), 1)
-    val block = builder.getBlocks().get(0)
+    assertEquals(builder.getBlocks().size, 1)
+    val block = builder.getBlocks()[0]
     assertEquals(block.getLine1(), 1)
     assertEquals(block.getLine2(), 3)
     assertEquals(block.getStartOffset1(), 2)

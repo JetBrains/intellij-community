@@ -5,18 +5,25 @@ import com.intellij.execution.process.SelfKiller;
 /**
  * @author traff
  */
-abstract public class RemoteSshProcess extends Process implements SelfKiller {
+abstract public class RemoteSshProcess extends RemoteProcess implements SelfKiller, Tunnelable {
   /**
-   * Makes host:localPort server which is available on local side available on remote side as localhost:remotePort.
+   * @deprecated use {@link #killProcessTree()}
    */
-  public abstract void addRemoteTunnel(int remotePort, String host, int localPort) throws RemoteSdkException;
+  @Deprecated
+  protected abstract boolean hasPty();
 
   /**
-   * Makes host:remotePort server which is available on remote side available on local side as localhost:localPort.
+   * @deprecated use {@link #killProcessTree()}
    */
-  public abstract void addLocalTunnel(int localPort, String host, int remotePort) throws RemoteSdkException;
+  @Deprecated
+  protected abstract boolean sendCtrlC();
 
-  public abstract boolean hasPty();
-
-  public abstract boolean sendCtrlC();
+  public boolean killProcessTree() {
+    if (hasPty()) {
+      return sendCtrlC();
+    }
+    else {
+      return false;
+    }
+  }
 }

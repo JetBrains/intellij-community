@@ -303,7 +303,6 @@ public @interface DelegatesTo {
   }
 
   void testNamedArgs() {
-    addLinkedHashMap()
     assertScript '''
 def with(@DelegatesTo.Target Object target, @DelegatesTo(strategy = Closure.DELEGATE_FIRST) Closure arg) {
     for (Closure a : arg) {
@@ -321,12 +320,10 @@ def test() {
 }
 
 test()
-''', 'HashMap'
+''', 'LinkedHashMap'
   }
 
   void testEllipsisArgs() {
-    addLinkedHashMap()
-
     assertScript '''
 def with(@DelegatesTo.Target Object target, @DelegatesTo(strategy = Closure.DELEGATE_FIRST) Closure... arg) {
     for (Closure a : arg) {
@@ -347,7 +344,7 @@ def test() {
 
 test()
 
-''', 'HashMap'
+''', 'LinkedHashMap'
   }
   void testShouldChooseMethodFromOwnerInJava() {
     myFixture.configureByText("Abc.java", '''\
@@ -567,7 +564,6 @@ class Abc {
 }
 ''')
 
-    addLinkedHashMap()
     assertScript '''
 @CompileStatic
 def test() {
@@ -577,7 +573,7 @@ def test() {
 }
 
 test()
-''', 'HashMap'
+''', 'LinkedHashMap'
   }
 
   void testEllipsisArgsInJava() {
@@ -596,8 +592,6 @@ class Abc {
 }
 ''')
 
-    addLinkedHashMap()
-
     assertScript '''
 @CompileStatic
 def test() {
@@ -610,7 +604,7 @@ def test() {
 
 test()
 
-''', 'HashMap'
+''', 'LinkedHashMap'
   }
 
   void testTarget() {
@@ -634,7 +628,6 @@ foo(4) {
   }
 
   void testGenericTypeIndex() {
-    addLinkedHashMap()
     assertScript('''\
 public <K, V> void foo(@DelegatesTo.Target Map<K, V> map, @DelegatesTo(genericTypeIndex = 1) Closure c) {}
 
@@ -645,7 +638,6 @@ foo([1:'ab', 2:'cde']) {
   }
 
   void testGenericTypeIndex1() {
-    addLinkedHashMap()
     assertScript('''\
 public <K, V> void foo(@DelegatesTo.Target Map<K, V> map, @DelegatesTo(genericTypeIndex = 0) Closure c) {}
 

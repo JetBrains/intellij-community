@@ -155,6 +155,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     }
   }
 
+  @Nullable
   @Override
   public DebuggerSession getSession(DebugProcess process) {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -164,6 +165,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     return null;
   }
 
+  @NotNull
   @Override
   public Collection<DebuggerSession> getSessions() {
     synchronized (mySessions) {
@@ -363,16 +365,19 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     return "DebuggerManager";
   }
 
+  @NotNull
   @Override
   public BreakpointManager getBreakpointManager() {
     return myBreakpointManager;
   }
 
+  @NotNull
   @Override
   public DebuggerContextImpl getContext() {
     return getContextManager().getContext();
   }
 
+  @NotNull
   @Override
   public DebuggerStateManager getContextManager() {
     return myDebuggerStateManager;

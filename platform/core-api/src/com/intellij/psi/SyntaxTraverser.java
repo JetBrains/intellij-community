@@ -7,6 +7,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteredTraverserBase;
@@ -295,7 +296,8 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
     @NotNull
     @Override
     public IElementType typeOf(@NotNull PsiElement node) {
-      return node.getNode().getElementType();
+      IElementType type = PsiUtilCore.getElementType(node);
+      return type != null ? type : IElementType.find((short)0);
     }
 
     @NotNull

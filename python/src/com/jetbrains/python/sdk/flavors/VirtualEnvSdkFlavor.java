@@ -42,7 +42,7 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
   private VirtualEnvSdkFlavor() {
   }
   private final static String[] NAMES = new String[]{"jython", "pypy", "python.exe", "jython.bat", "pypy.exe"};
-  private final static String[] CONDA_DEFAULT_ROOTS = new String[]{"anaconda", "anaconda3", "miniconda", "miniconda3",
+  public final static String[] CONDA_DEFAULT_ROOTS = new String[]{"anaconda", "anaconda3", "miniconda", "miniconda3",
     "Anaconda", "Anaconda3", "Miniconda", "Miniconda3"};
 
   public static VirtualEnvSdkFlavor INSTANCE = new VirtualEnvSdkFlavor();
@@ -75,6 +75,8 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
         VirtualFile condaFolder = userHome.findChild(root);
         addEnvsFolder(roots, condaFolder);
         if (SystemInfo.isWindows) {
+          final VirtualFile appData = userHome.findFileByRelativePath("AppData\\Local\\Continuum\\" + root);
+          addEnvsFolder(roots, appData);
           condaFolder = LocalFileSystem.getInstance().findFileByPath("C:\\" + root);
           addEnvsFolder(roots, condaFolder);
         }

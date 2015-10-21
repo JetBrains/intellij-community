@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.FileStructurePopup;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.ide.util.treeView.smartTree.*;
-import com.intellij.ide.util.treeView.smartTree.TreeModel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -60,7 +59,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -128,7 +130,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     };
 
     final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.getRootElement()));
-    JTree tree = new JBTreeWithHintProvider(model);
+    JTree tree = new MyTree(model);
     tree.setRootVisible(showRootNode);
     tree.setShowsRootHandles(true);
 
@@ -165,6 +167,17 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         return getSelectedPsiElements();
       }
     };
+  }
+  
+  private static class MyTree extends JBTreeWithHintProvider implements PlaceProvider<String> {
+    public MyTree(javax.swing.tree.TreeModel treemodel) {
+      super(treemodel);
+    }
+
+    @Override
+    public String getPlace() {
+      return ActionPlaces.STRUCTURE_VIEW_TOOLBAR;
+    }
   }
 
   public void showToolbar() {
@@ -518,17 +531,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return false;
   }
 
-  private static DefaultMutableTreeNode findInChildren(DefaultMutableTreeNode currentTreeNode, AbstractTreeNode topPathElement) {
-    for (int i = 0; i < currentTreeNode.getChildCount(); i++) {
-      TreeNode child = currentTreeNode.getChildAt(i);
-      if (((DefaultMutableTreeNode)child).getUserObject().equals(topPathElement))
-      {
-        return (DefaultMutableTreeNode)child;
-      }
-    }
-    return null;
-  }
-
   private void scrollToSelectedElement() {
     if (myAutoscrollFeedback) {
       myAutoscrollFeedback = false;
@@ -814,8 +816,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       return value == null ? this : value;
     }
 
-
-
     @Override
     @NotNull
     public Collection<AbstractTreeNode> getChildren() {
@@ -910,7 +910,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       return o != null ? o.hashCode() : 0;
     }
 
-    private class StructureViewGroup extends GroupWrapper {
+    private static class StructureViewGroup extends GroupWrapper {
       public StructureViewGroup(Project project, Group group, TreeModel treeModel) {
         super(project, group, treeModel);
       }

@@ -149,7 +149,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
   @Nullable
   @Override
   public PyFunction getContainingFunction() {
-    final PsiElement parent = getStubOrPsiParent();
+    final PsiElement parent = getParentByStub();
     return parent instanceof PyFunction ? (PyFunction) parent : null;
   }
 

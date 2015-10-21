@@ -60,11 +60,11 @@ public class PyDocstringGenerator {
   private final List<DocstringParam> myAddedParams = Lists.newArrayList();
   private final List<DocstringParam> myRemovedParams = Lists.newArrayList();
   private final String myDocStringText;
-
   // Updated after buildAndInsert()
   @Nullable private PyDocStringOwner myDocStringOwner;
-  private String myDocStringIndent;
-  private DocStringFormat myDocStringFormat;
+  private final String myDocStringIndent;
+  private final DocStringFormat myDocStringFormat;
+  private final PsiElement mySettingsAnchor;
 
   private boolean myUseTypesFromDebuggerSignature = true;
   private boolean myNewMode = false; // true - generate new string, false - update existing
@@ -75,12 +75,14 @@ public class PyDocstringGenerator {
   private PyDocstringGenerator(@Nullable PyDocStringOwner docStringOwner,
                                @Nullable String docStringText,
                                @NotNull DocStringFormat format,
-                               @NotNull String indentation) {
+                               @NotNull String indentation,
+                               @NotNull PsiElement settingsAnchor) {
     myDocStringOwner = docStringOwner;
     myDocStringIndent = indentation;
     myDocStringFormat = format;
     myDocStringText = docStringText;
     myNewMode = myDocStringText == null;
+    mySettingsAnchor = settingsAnchor;
   }
 
   @NotNull
@@ -90,26 +92,38 @@ public class PyDocstringGenerator {
       indentation = PyIndentUtil.getElementIndent(((PyStatementListContainer)owner).getStatementList());
     }
     final String docStringText = owner.getDocStringExpression() == null ? null : owner.getDocStringExpression().getText();
-    return new PyDocstringGenerator(owner, docStringText, DocStringUtil.getConfiguredDocStringFormat(owner), indentation);
+    return new PyDocstringGenerator(owner, docStringText, DocStringUtil.getConfiguredDocStringFormat(owner), indentation, owner);
   }
   
+  /**
+   * @param settingsAnchor any PSI element, presumably in the same file/module where generated function is going to be inserted.
+   *                       It's needed to detect configured docstring format and Python indentation size and, as result, 
+   *                       generate properly formatted docstring. 
+   */
   @NotNull
-  public static PyDocstringGenerator create(@NotNull DocStringFormat format, @NotNull String indentation) {
-    return new PyDocstringGenerator(null, null, format, indentation);
+  public static PyDocstringGenerator create(@NotNull DocStringFormat format, @NotNull String indentation, @NotNull PsiElement settingsAnchor) {
+    return new PyDocstringGenerator(null, null, format, indentation, settingsAnchor);
   }
 
   @NotNull
   public static PyDocstringGenerator update(@NotNull PyStringLiteralExpression docString) {
     return new PyDocstringGenerator(PsiTreeUtil.getParentOfType(docString, PyDocStringOwner.class),
-                                    docString.getText(), DocStringUtil.getConfiguredDocStringFormat(docString),
-                                    PyIndentUtil.getElementIndent(docString));
+                                    docString.getText(), 
+                                    DocStringUtil.getConfiguredDocStringFormat(docString),
+                                    PyIndentUtil.getElementIndent(docString), 
+                                    docString);
   }
 
+  /**
+   * @param settingsAnchor any PSI element, presumably in the same file/module where generated function is going to be inserted.
+   *                       It's needed to detect configured docstring format and Python indentation size and, as result, 
+   *                       generate properly formatted docstring. 
+   */
   @NotNull
   public static PyDocstringGenerator update(@NotNull DocStringFormat format,
                                             @NotNull String indentation,
-                                            @NotNull String text) {
-    return new PyDocstringGenerator(null, text, format, indentation);
+                                            @NotNull String text, PsiElement settingsAnchor) {
+    return new PyDocstringGenerator(null, text, format, indentation, settingsAnchor);
   }
 
   @NotNull
@@ -208,17 +222,9 @@ public class PyDocstringGenerator {
     return myDocStringIndent;
   }
 
-  public void setDocStringFormat(@NotNull DocStringFormat format) {
-    myDocStringFormat = format;
-  }
-
   @NotNull
   public DocStringFormat getDocStringFormat() {
     return myDocStringFormat;
-  }
-
-  public void setDocStringIndent(@NotNull String docStringIndent) {
-    myDocStringIndent = docStringIndent;
   }
 
   public boolean isNewMode() {
@@ -412,7 +418,7 @@ public class PyDocstringGenerator {
       }
     }
     else if (myDocStringFormat == DocStringFormat.GOOGLE || myDocStringFormat == DocStringFormat.NUMPY) {
-      builder = myDocStringFormat == DocStringFormat.GOOGLE ? new GoogleCodeStyleDocStringBuilder() : new NumpyDocStringBuilder();
+      builder = myDocStringFormat == DocStringFormat.GOOGLE ? GoogleCodeStyleDocStringBuilder.forProject(mySettingsAnchor.getProject()) : new NumpyDocStringBuilder();
       final SectionBasedDocStringBuilder sectionBuilder = (SectionBasedDocStringBuilder)builder;
       if (myAddFirstEmptyLine) {
         sectionBuilder.addEmptyLine();
@@ -467,7 +473,9 @@ public class PyDocstringGenerator {
     }
     else if (myDocStringFormat == DocStringFormat.GOOGLE) {
       //noinspection ConstantConditions
-      updater = new GoogleCodeStyleDocStringUpdater((SectionBasedDocString)getStructuredDocString(), myDocStringIndent);
+      updater = GoogleCodeStyleDocStringUpdater.forProject((GoogleCodeStyleDocString)getStructuredDocString(), 
+                                                           myDocStringIndent, 
+                                                           mySettingsAnchor.getProject());
     }
     else if (myDocStringFormat == DocStringFormat.NUMPY) {
       //noinspection ConstantConditions

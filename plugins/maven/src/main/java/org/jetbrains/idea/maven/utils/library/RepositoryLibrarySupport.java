@@ -19,9 +19,6 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
@@ -100,18 +97,12 @@ public class RepositoryLibrarySupport {
         modifiableModel.commit();
       }
     });
-    Task task = new Task.Backgroundable(project, "Maven", false) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        RepositoryUtils.loadDependencies(
-          indicator,
-          module.getProject(),
-          library,
-          model.isDownloadSources(),
-          model.isDownloadJavaDocs());
-      }
-    };
-    ProgressManager.getInstance().run(task);
-
+    RepositoryUtils.loadDependencies(
+      module.getProject(),
+      library,
+      model.isDownloadSources(),
+      model.isDownloadJavaDocs(),
+      null);
     return library;
   }
 

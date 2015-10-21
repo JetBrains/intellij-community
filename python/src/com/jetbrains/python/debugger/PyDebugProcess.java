@@ -35,7 +35,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -44,7 +43,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.remote.RemoteProcessHandlerBase;
+import com.intellij.remote.RemoteProcessControl;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -283,19 +282,17 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public int handleDebugPort(int localPort) throws IOException {
-    if (myProcessHandler instanceof RemoteProcessHandlerBase) {
-      return getRemoteTunneledPort(localPort, (RemoteProcessHandlerBase)myProcessHandler);
+    if (myProcessHandler instanceof RemoteProcessControl) {
+      return getRemoteTunneledPort(localPort, (RemoteProcessControl)myProcessHandler);
     }
     else {
       return localPort;
     }
   }
 
-  protected static int getRemoteTunneledPort(int localPort, @NotNull RemoteProcessHandlerBase handler) throws IOException {
+  protected static int getRemoteTunneledPort(int localPort, @NotNull RemoteProcessControl handler) throws IOException {
     try {
-      Pair<String, Integer> remoteSocket = handler.obtainRemoteSocket();
-      handler.addRemoteForwarding(remoteSocket.getSecond(), localPort);
-      return remoteSocket.getSecond();
+      return handler.getRemoteSocket(localPort).getSecond();
     }
     catch (Exception e) {
       throw new IOException(e);
@@ -305,6 +302,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @Override
   public void recordSignature(PySignature signature) {
     PySignatureCacheManager.getInstance(getSession().getProject()).recordSignature(myPositionConverter.convertSignature(signature));
+  }
+
+  @Override
+  public void recordLogEvent(PyConcurrencyEvent event) {
+    PyConcurrencyService.getInstance(getSession().getProject()).recordEvent(getSession(), event, event.isAsyncio());
   }
 
   @Override

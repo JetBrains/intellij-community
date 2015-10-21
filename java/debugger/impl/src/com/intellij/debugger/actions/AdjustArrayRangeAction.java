@@ -37,9 +37,6 @@ public class AdjustArrayRangeAction extends DebuggerAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
-    if(debuggerContext == null) {
-      return;
-    }
 
     DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
     if(debugProcess == null) {

@@ -14,16 +14,26 @@ public class Utils {
     return fileName.endsWith(".zip") || fileName.endsWith(".jar");
   }
 
+  public static File getTempFile(String path) throws IOException {
+    int index = 0;
+    File myTempFile = new File(path + ".tmp." + index++);
+    while (myTempFile.exists()) {
+      myTempFile = new File(path + ".tmp." + index++);
+    }
+    if (myTempFile.setWritable(true, false)) throw new IOException("Cannot set write permissions for dir: " + myTempFile);
+    return myTempFile;
+  }
+
   @SuppressWarnings({"SSBasedInspection"})
   public static File createTempFile() throws IOException {
     if (myTempDir == null) {
-      myTempDir = File.createTempFile("idea.updater.", ".tmp");
+      long requiredFreeSpace = 1000000000;
+      myTempDir = getTempFile(Runner.getDir(requiredFreeSpace) + "/idea.updater.files");
       delete(myTempDir);
       myTempDir.mkdirs();
       Runner.logger.info("created temp file: " + myTempDir.getPath());
     }
-
-    return File.createTempFile("temp.", ".tmp", myTempDir);
+    return getTempFile(myTempDir + "/temp");
   }
 
   public static File createTempDir() throws IOException {
@@ -32,6 +42,7 @@ public class Utils {
     Runner.logger.info("deleted tmp dir: " + result.getPath());
     result.mkdirs();
     Runner.logger.info("created tmp dir: " + result.getPath());
+    if (! result.exists()) throw new IOException("Cannot create temp dir: " + result);
     return result;
   }
 

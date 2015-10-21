@@ -18,15 +18,18 @@ package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * This is internal API, please don't use it.
  * @author yole
  */
-public interface SmartPointerElementInfoFactory {
-  ExtensionPointName<SmartPointerElementInfoFactory> EP_NAME = ExtensionPointName.create("com.intellij.smartPointerElementInfoFactory");
+@Deprecated
+public abstract class SmartPointerElementInfoFactory {
+  public static final ExtensionPointName<SmartPointerElementInfoFactory> EP_NAME = ExtensionPointName.create("com.intellij.smartPointerElementInfoFactory");
 
   @Nullable
-  SmartPointerElementInfo createElementInfo(@NotNull PsiElement element);
+  public abstract SmartPointerElementInfo createElementInfo(@NotNull PsiElement element, @NotNull PsiFile containingFile);
 }

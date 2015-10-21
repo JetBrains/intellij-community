@@ -22,6 +22,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -265,7 +266,7 @@ public class Switcher extends AnAction implements DumbAware {
       descriptions.add(pathLabel, BorderLayout.CENTER);
       twManager = ToolWindowManager.getInstance(project);
       DefaultListModel twModel = new DefaultListModel();
-      List<ActivateToolWindowAction> actions = ToolWindowsGroup.getToolWindowActions(project);
+      List<ActivateToolWindowAction> actions = ToolWindowsGroup.getToolWindowActions(project, true);
       List<ToolWindow> windows = ContainerUtil.newArrayList();
       for (ActivateToolWindowAction action : actions) {
         ToolWindow tw = twManager.getToolWindow(action.getToolWindowId());
@@ -685,12 +686,13 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     private void closeTabOrToolWindow() {
-      final int[] selected = getSelectedList().getSelectedIndices();
+      final JBList selectedList = getSelectedList();
+      final int[] selected = selectedList.getSelectedIndices();
       Arrays.sort(selected);
       int selectedIndex = 0;
       for (int i = selected.length - 1; i >= 0; i--) {
         selectedIndex = selected[i];
-        Object value = getSelectedList().getModel().getElementAt(selectedIndex);
+        Object value = selectedList.getModel().getElementAt(selectedIndex);
         if (value instanceof FileInfo) {
           final FileInfo info = (FileInfo)value;
           final VirtualFile virtualFile = info.first;
@@ -709,7 +711,11 @@ public class Switcher extends AnAction implements DumbAware {
           myAlarm.addRequest(new Runnable() {
             @Override
             public void run() {
-              focusManager.requestFocus(SwitcherPanel.this, true);
+              JComponent focusTarget = selectedList;
+              if (selectedList.getModel().getSize() == 0) {
+                focusTarget = selectedList == files ? toolWindows : files;
+              }
+              focusManager.requestFocus(focusTarget, true);
             }
           }, 300);
           if (jList.getModel().getSize() == 1) {
@@ -890,7 +896,17 @@ public class Switcher extends AnAction implements DumbAware {
                   }
                 }
                 else {
+                  boolean oldValue = UISettings.getInstance().REUSE_NOT_MODIFIED_TABS;
+                  UISettings.getInstance().REUSE_NOT_MODIFIED_TABS = false;
                   manager.openFile(file, true, true);
+                  if (oldValue) {
+                    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+                      @Override
+                      public void run() {
+                        UISettings.getInstance().REUSE_NOT_MODIFIED_TABS = true;
+                      }
+                    }, "", null);
+                  }
                 }
               }
             }

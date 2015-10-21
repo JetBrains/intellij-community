@@ -103,8 +103,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final RequestManagerImpl myRequestManager;
 
   private volatile VirtualMachineProxyImpl myVirtualMachineProxy = null;
-  protected EventDispatcher<DebugProcessListener> myDebugProcessDispatcher = EventDispatcher.create(DebugProcessListener.class);
-  protected EventDispatcher<EvaluationListener> myEvaluationDispatcher = EventDispatcher.create(EvaluationListener.class);
+  protected final EventDispatcher<DebugProcessListener> myDebugProcessDispatcher = EventDispatcher.create(DebugProcessListener.class);
+  protected final EventDispatcher<EvaluationListener> myEvaluationDispatcher = EventDispatcher.create(EvaluationListener.class);
 
   private final List<ProcessListener> myProcessListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -147,12 +147,21 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final Disposable myDisposable = Disposer.newDisposable();
   private final Alarm myStatusUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myDisposable);
 
+  private final ThreadBlockedMonitor myThreadBlockedMonitor = new ThreadBlockedMonitor(this, myDisposable);
+
   protected DebugProcessImpl(Project project) {
     myProject = project;
     myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, myProject);
     myRequestManager = new RequestManagerImpl(this);
     NodeRendererSettings.getInstance().addListener(mySettingsListener);
     loadRenderers();
+    myDebugProcessDispatcher.addListener(new DebugProcessAdapter() {
+      @Override
+      public void paused(SuspendContext suspendContext) {
+        myThreadBlockedMonitor.stopWatching(
+          suspendContext.getSuspendPolicy() != EventRequest.SUSPEND_ALL ? suspendContext.getThread() : null);
+      }
+    });
   }
 
   private void loadRenderers() {
@@ -353,6 +362,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
+  @NotNull
   protected CompoundPositionManager createPositionManager() {
     return new CompoundPositionManager(new PositionManagerImpl(this));
   }
@@ -405,8 +415,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       // suspend policy to match the suspend policy of the context:
       // if all threads were suspended, then during stepping all the threads must be suspended
       // if only event thread were suspended, then only this particular thread must be suspended during stepping
-      stepRequest.setSuspendPolicy(Registry.is("debugger.step.resumes.one.thread") ? EventRequest.SUSPEND_EVENT_THREAD
-                                                                                   : suspendContext.getSuspendPolicy());
+      stepRequest.setSuspendPolicy(suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD
+                                   ? EventRequest.SUSPEND_EVENT_THREAD
+                                   : EventRequest.SUSPEND_ALL);
 
       if (hint != null) {
         //noinspection HardCodedStringLiteral
@@ -700,6 +711,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return myExecutionResult;
   }
 
+  @NotNull
   @Override
   public Project getProject() {
     return myProject;
@@ -739,6 +751,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return myRequestManager;
   }
 
+  @NotNull
   @Override
   public VirtualMachineProxyImpl getVirtualMachineProxy() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
@@ -1295,12 +1308,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                  ClassLoaderReference classLoader) throws EvaluateException {
     try {
       DebuggerManagerThreadImpl.assertIsManagerThread();
-      final VirtualMachineProxyImpl vmProxy = getVirtualMachineProxy();
-      if (vmProxy == null) {
-        throw new VMDisconnectedException();
-      }
       ReferenceType result = null;
-      for (final ReferenceType refType : vmProxy.classesByName(className)) {
+      for (final ReferenceType refType : getVirtualMachineProxy().classesByName(className)) {
         if (refType.isPrepared() && isVisibleFromClassLoader(classLoader, refType)) {
           result = refType;
           break;
@@ -1430,6 +1439,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     getManagerThread().terminateAndInvoke(createStopCommand(forceTerminate), DebuggerManagerThreadImpl.COMMAND_TIMEOUT);
   }
 
+  @NotNull
   public StopCommand createStopCommand(boolean forceTerminate) {
     return new StopCommand(forceTerminate);
   }
@@ -1637,9 +1647,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     @Override
     protected void resumeAction() {
       SuspendContextImpl context = getSuspendContext();
+      if (context != null &&
+          (context.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD || Registry.is("debugger.step.resumes.one.thread"))) {
+        myThreadBlockedMonitor.startWatching(myContextThread);
+      }
       if (context != null
           && Registry.is("debugger.step.resumes.one.thread")
-          && context.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
+          && context.getSuspendPolicy() == EventRequest.SUSPEND_ALL
+          && myContextThread != null) {
         getSuspendManager().resumeThread(context, myContextThread);
       }
       else {
@@ -1649,7 +1664,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public abstract class ResumeCommand extends SuspendContextCommandImpl {
-    protected final ThreadReferenceProxyImpl myContextThread;
+    @Nullable protected final ThreadReferenceProxyImpl myContextThread;
 
     public ResumeCommand(SuspendContextImpl suspendContext) {
       super(suspendContext);
@@ -1710,7 +1725,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private class ResumeThreadCommand extends SuspendContextCommandImpl {
     private final ThreadReferenceProxyImpl myThread;
 
-    public ResumeThreadCommand(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl thread) {
+    public ResumeThreadCommand(SuspendContextImpl suspendContext, @NotNull ThreadReferenceProxyImpl thread) {
       super(suspendContext);
       myThread = thread;
     }
@@ -1725,7 +1740,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       final Set<SuspendContextImpl> suspendingContexts = SuspendManagerUtil.getSuspendingContexts(getSuspendManager(), myThread);
       for (SuspendContextImpl suspendContext : suspendingContexts) {
-        if (suspendContext.getThread() == myThread) {
+        if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD && suspendContext.getThread() == myThread) {
           getSession().getXDebugSession().sessionResumed();
           getManagerThread().invoke(createResumeCommand(suspendContext));
         }
@@ -2030,14 +2045,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return vm != null && vm.isPausePressed();
   }
 
+  @NotNull
   public DebuggerCommandImpl createPauseCommand() {
     return new PauseCommand();
   }
 
+  @NotNull
   public ResumeCommand createResumeCommand(SuspendContextImpl suspendContext) {
     return createResumeCommand(suspendContext, PrioritizedTask.Priority.HIGH);
   }
 
+  @NotNull
   public ResumeCommand createResumeCommand(SuspendContextImpl suspendContext, final PrioritizedTask.Priority priority) {
     final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager();
     return new ResumeCommand(suspendContext) {
@@ -2054,31 +2072,38 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     };
   }
 
+  @NotNull
   public ResumeCommand createStepOverCommand(SuspendContextImpl suspendContext, boolean ignoreBreakpoints) {
     return createStepOverCommand(suspendContext, ignoreBreakpoints, StepRequest.STEP_LINE);
   }
 
+  @NotNull
   public ResumeCommand createStepOverCommand(SuspendContextImpl suspendContext, boolean ignoreBreakpoints, int stepSize) {
     return new StepOverCommand(suspendContext, ignoreBreakpoints, stepSize);
   }
 
+  @NotNull
   public ResumeCommand createStepOutCommand(SuspendContextImpl suspendContext) {
     return createStepOutCommand(suspendContext, StepRequest.STEP_LINE);
   }
 
+  @NotNull
   public ResumeCommand createStepOutCommand(SuspendContextImpl suspendContext, int stepSize) {
     return new StepOutCommand(suspendContext, stepSize);
   }
 
+  @NotNull
   public ResumeCommand createStepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, final MethodFilter smartStepFilter) {
     return createStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter, StepRequest.STEP_LINE);
   }
 
+  @NotNull
   public ResumeCommand createStepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, final MethodFilter smartStepFilter,
                                              int stepSize) {
     return new StepIntoCommand(suspendContext, ignoreFilters, smartStepFilter, stepSize);
   }
 
+  @NotNull
   public ResumeCommand createRunToCursorCommand(SuspendContextImpl suspendContext,
                                                 @NotNull XSourcePosition position,
                                                 boolean ignoreBreakpoints)
@@ -2092,14 +2117,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return runToCursorCommand;
   }
 
+  @NotNull
   public DebuggerCommandImpl createFreezeThreadCommand(ThreadReferenceProxyImpl thread) {
     return new FreezeThreadCommand(thread);
   }
 
-  public SuspendContextCommandImpl createResumeThreadCommand(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl thread) {
+  @NotNull
+  public SuspendContextCommandImpl createResumeThreadCommand(SuspendContextImpl suspendContext, @NotNull ThreadReferenceProxyImpl thread) {
     return new ResumeThreadCommand(suspendContext, thread);
   }
 
+  @NotNull
   public SuspendContextCommandImpl createPopFrameCommand(DebuggerContextImpl context, StackFrameProxyImpl stackFrame) {
     final SuspendContextImpl contextByThread =
       SuspendManagerUtil.findContextByThread(context.getDebugProcess().getSuspendManager(), stackFrame.threadProxy());
@@ -2130,6 +2158,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   //  }
   //}
 
+  @NotNull
   public DebuggerContextImpl getDebuggerContext() {
     return mySession.getContextManager().getContext();
   }

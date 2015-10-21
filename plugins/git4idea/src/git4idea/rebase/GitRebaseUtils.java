@@ -15,20 +15,31 @@
  */
 package git4idea.rebase;
 
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
+import git4idea.branch.GitRebaseParams;
+import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryFiles;
+import git4idea.stash.GitChangesSaver;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The utilities related to rebase functionality
@@ -43,6 +54,66 @@ public class GitRebaseUtils {
    * A private constructor for utility class
    */
   private GitRebaseUtils() {
+  }
+
+  public static void rebase(@NotNull final Project project,
+                            @NotNull final List<GitRepository> repositories,
+                            @NotNull final GitRebaseParams params,
+                            @NotNull final ProgressIndicator indicator) {
+    if (!isRebaseAllowed(project, repositories)) return;  // TODO maybe move to the outside
+    new GitRebaseProcess(project, repositories, params, indicator).rebase();
+  }
+
+  /**
+   * Abort the ongoing rebase process in the {@code repositoryToAbort},
+   * and optionally rollback rebase which has already successfully completed in some other repositories.
+   *
+   * @param repositoryToAbort      Repository to perform {@code git rebase --abort}.
+   * @param repositoriesToRollback Repositories to rollback the successful rebase, together with commit hashes which were HEAD revisions
+   *                               before that successful rebase started - these are the revisions which the method will rollback to
+   *                               via {@code git reset --keep}.
+   */
+  public static void abort(@NotNull final Project project,
+                           @Nullable final GitRepository repositoryToAbort,
+                           @NotNull final Map<GitRepository, String> repositoriesToRollback,
+                           @NotNull ProgressIndicator progressIndicator) {
+    new GitAbortRebaseProcess(project, repositoryToAbort, repositoriesToRollback, progressIndicator, null).abortWithConfirmation();
+  }
+
+  private static boolean isRebaseAllowed(@NotNull Project project, @NotNull Collection<GitRepository> repositories) {
+    // TODO links to 'rebase', 'resolve conflicts', etc.
+    for (GitRepository repository : repositories) {
+      Repository.State state = repository.getState();
+      String in = GitUtil.mention(repository);
+      String message = null;
+      switch (state) {
+        case NORMAL:
+          if (repository.isFresh()) {
+            message = "Repository" + in + " is empty.";
+          }
+          break;
+        case MERGING:
+          message = "There is an unfinished merge process" + in + ".<br/>You should complete the merge before starting a rebase";
+          break;
+        case REBASING:
+          message = "There is an unfinished rebase process" + in + ".<br/>You should complete it before starting another rebase";
+          break;
+        case GRAFTING:
+          message = "There is an unfinished cherry-pick process" + in + ".<br/>You should finish it before starting a rebase.";
+          break;
+        case DETACHED:
+          message = "You are in the detached HEAD state" + in + ".<br/>Rebase is not possible.";
+          break;
+        default:
+          LOG.error("Unknown state [" + state.name() + "]");
+          message = "Rebase is not possible" + in;
+      }
+      if (message != null) {
+        VcsNotifier.getInstance(project).notifyError("Rebase not Allowed", message);
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
@@ -138,6 +209,18 @@ public class GitRebaseUtils {
       return null;
     }
     return new CommitInfo(new GitRevisionNumber(hash), subject);
+  }
+
+  @NotNull
+  static String mentionLocalChangesRemainingInStash(@Nullable GitChangesSaver saver) {
+    return saver != null && saver.wereChangesSaved() ?
+           "<br/>Note that some local changes were <a href='stash'>" + toPast(saver.getOperationName()) + "</a> before rebase." :
+           "";
+  }
+
+  @NotNull
+  private static String toPast(@NotNull String word) {
+    return word.endsWith("e") ? word + "d" : word + "ed";
   }
 
   /**

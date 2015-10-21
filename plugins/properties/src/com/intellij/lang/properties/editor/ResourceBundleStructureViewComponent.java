@@ -21,20 +21,17 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorRenderer;
 import com.intellij.lang.properties.projectView.ResourceBundleDeleteProvider;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.PomTargetPsiElement;
-import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiTarget;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.PopupHandler;
@@ -43,6 +40,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,6 +64,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     super(resourceBundle.getProject(), editor, new ResourceBundleStructureViewModel(resourceBundle, anchorizer));
     myResourceBundle = resourceBundle;
     tunePopupActionGroup();
+    getTree().setCellRenderer(new ResourceBundleEditorRenderer());
   }
 
   @Override
@@ -234,6 +233,11 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     public boolean canDeleteElement(@NotNull final DataContext dataContext) {
       return true;
     }
+  }
+
+  @NonNls
+  public String getHelpID() {
+    return "editing.propertyFile.bundleEditor";
   }
 }
 

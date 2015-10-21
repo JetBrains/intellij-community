@@ -30,7 +30,7 @@ import java.util.List;
 
 public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain>
   extends GoToChangePopupBuilder.BaseGoToChangePopupAction<Chain>{
-  public ChangeGoToChangePopupAction(@NotNull Chain chain, @NotNull Consumer onSelected) {
+  public ChangeGoToChangePopupAction(@NotNull Chain chain, @NotNull Consumer<Integer> onSelected) {
     super(chain, onSelected);
   }
 
@@ -54,6 +54,7 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
                 .setMovable(true)
                 .setCancelKeyEnabled(true)
                 .setCancelOnClickOutside(true)
+                .setDimensionServiceKey(project, "Diff.GoToChangePopup", false)
                 .createPopup());
 
     return popup.get();
@@ -127,7 +128,7 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
     private final int mySelection;
 
     @SuppressWarnings("AbstractMethodCallInConstructor")
-    public Fake(@NotNull Chain chain, int selection, @NotNull Consumer onSelected) {
+    public Fake(@NotNull Chain chain, int selection, @NotNull Consumer<Integer> onSelected) {
       super(chain, onSelected);
 
       mySelection = selection;

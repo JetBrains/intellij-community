@@ -38,6 +38,7 @@ import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
@@ -80,7 +81,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.vcsUtil.UIVcsUtil.SPACE_AND_THIN_SPACE;
+import static com.intellij.vcsUtil.UIVcsUtil.spaceAndThinSpace;
 
 public class ShelvedChangesViewManager implements ProjectComponent {
   private final ChangesViewContentManager myContentManager;
@@ -164,7 +165,16 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   }
 
   public void projectOpened() {
-    updateChangesContent();
+    StartupManager startupManager = StartupManager.getInstance(myProject);
+    if (startupManager == null) {
+      return;
+    }
+    startupManager.registerPostStartupActivity(new Runnable() {
+      @Override
+      public void run() {
+        updateChangesContent();
+      }
+    });
   }
 
   public void projectClosed() {
@@ -464,7 +474,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
           myIssueLinkRenderer.appendTextWithLinks(changeListData.DESCRIPTION);
         }
         int count = node.getChildCount();
-        String numFilesText = SPACE_AND_THIN_SPACE + count + " " + StringUtil.pluralize("file", 1) + ",";
+        String numFilesText = spaceAndThinSpace() + count + " " + StringUtil.pluralize("file", count) + ",";
         append(numFilesText, SimpleTextAttributes.GRAYED_ATTRIBUTES);
         
         String date = DateFormatUtil.formatPrettyDateTime(changeListData.DATE);
@@ -504,7 +514,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       if (movedMessage != null) {
         append(movedMessage, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
-      append(SPACE_AND_THIN_SPACE + directory, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      append(spaceAndThinSpace() + directory, SimpleTextAttributes.GRAYED_ATTRIBUTES);
       setIcon(FileTypeManager.getInstance().getFileTypeByFileName(fileName).getIcon());
     }
   }

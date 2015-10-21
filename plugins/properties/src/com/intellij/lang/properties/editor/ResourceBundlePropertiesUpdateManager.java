@@ -86,6 +86,25 @@ public class ResourceBundlePropertiesUpdateManager {
     }
   }
 
+  public void deletePropertyIfExist(String key, PropertiesFile file) {
+    final IProperty property = file.findPropertyByKey(key);
+    if (property != null && myKeysOrder != null) {
+      boolean keyExistInOtherPropertiesFiles = false;
+      for (PropertiesFile propertiesFile : myResourceBundle.getPropertiesFiles()) {
+        if (!propertiesFile.equals(file) && propertiesFile.findPropertyByKey(key) != null) {
+          keyExistInOtherPropertiesFiles = true;
+          break;
+        }
+      }
+      if (!keyExistInOtherPropertiesFiles) {
+        myKeysOrder.remove(key);
+      }
+    }
+    if (property != null) {
+      property.getPsiElement().delete();
+    }
+  }
+
   private Pair<IProperty, Integer> findExistedPrevSiblingProperty(String key, PropertiesFile file) {
     if (myKeysOrder.isEmpty()) {
       return null;
@@ -101,7 +120,7 @@ public class ResourceBundlePropertiesUpdateManager {
     return null;
   }
 
-  public void insertPropertyLast(String key, String value, PropertiesFile propertiesFile) {
+  private void insertPropertyLast(String key, String value, PropertiesFile propertiesFile) {
     final List<IProperty> properties = propertiesFile.getProperties();
     final IProperty lastProperty = properties.isEmpty() ? null : properties.get(properties.size() - 1);
     propertiesFile.addPropertyAfter(key, value, lastProperty);

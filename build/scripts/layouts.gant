@@ -34,6 +34,9 @@ boolean maySkipAndroidPlugin() {
   return isDefined("productProperties") && productProperties.maySkipAndroidPlugin
 }
 
+boolean setPluginAndIDEVersionInPluginXml() {
+  return !isDefined("productProperties") || productProperties.setPluginAndIDEVersionInPluginXml
+}
 
 String appInfoModule() {
   return isDefined("productProperties") ? productProperties.appInfoModule : "community-resources"
@@ -178,7 +181,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
       jar("extensions.jar") { module("extensions")}
 
-      jar("idea.jar") {
+      jar([name: "idea.jar", duplicate: "preserve"]) {
         implementationModules.each { module it}
       }
 
@@ -651,7 +654,7 @@ public def layoutCommunityPlugins(String home, boolean maySkipAndroidPlugin = fa
     }
 
     layoutPlugin("settings-repository") {
-      fileset(dir: "$home/plugins/settings-repository/lib", excludes: "**/*-sources.jar,**/*.xml,**/com/**,**/org/**,**/java/**")
+      fileset(dir: "$home/plugins/settings-repository/lib", excludes: "**/*-sources.jar,**/*.xml,**/com/**,**/org/**,**/java/**,**/dev/**")
     }
   }
 }
@@ -661,7 +664,9 @@ def setPluginVersionAndSince(String moduleName, String version) {
   if (file.isFile()) {
     def text = file.text
     if (!text.contains("<version>")) {
-      file.text = text.replace("</id>", "</id>\n  <version>${version}</version>\n  <idea-version since-build=\"${version}\" until-build=\"${version}\"/>\n")
+      def dotIndex = version.indexOf('.')
+      def untilBuild = dotIndex > 0 ? (Integer.parseInt(version.substring(0, dotIndex)) + 1).toString() + ".0" : version
+      file.text = text.replace("</id>", "</id>\n  <version>${version}</version>\n  <idea-version since-build=\"${version}\" until-build=\"${untilBuild}\"/>\n")
     }
   }
 }
@@ -696,7 +701,9 @@ def layoutPlugin(String pluginName, String moduleName, String jarName, Closure c
     return
   }
 
-  setPluginVersionAndSince(moduleName, requireProperty("buildNumber", requireProperty("build.number", snapshot)))
+  if (setPluginAndIDEVersionInPluginXml()) {
+    setPluginVersionAndSince(moduleName, requireProperty("buildNumber", requireProperty("build.number", snapshot)))
+  }
 
   dir(pluginName) {
     dir("lib") {
@@ -961,6 +968,8 @@ def layout_core(String home, String target) {
       include(name: "snappy-in-java-0.3.1.jar")
       include(name: "jayatana-1.2.4.jar")
       include(name: "imgscalr-lib-4.2.jar")
+      include(name: "batik-all-1.8.jar")
+      include(name: "xmlgraphics-commons-1.5.jar")
     }
   }
 }

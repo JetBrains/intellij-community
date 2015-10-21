@@ -15,9 +15,8 @@
  */
 package com.intellij.ide.scratch;
 
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.lang.Language;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -74,5 +73,18 @@ public class ScratchFileType extends LanguageFileType implements FileTypeIdentif
   @Override
   public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
     return null;
+  }
+
+  @Nullable
+  public static FileType getOriginalFileType(@Nullable VirtualFile file) {
+    if (file == null || file.getFileType() != INSTANCE) return null;
+    String extension = file.getExtension();
+    return extension != null ? FileTypeManager.getInstance().getFileTypeByExtension(extension) : null;
+  }
+
+  @Nullable
+  public static Language getOriginalLanguage(@Nullable VirtualFile file) {
+    FileType fileType = getOriginalFileType(file);
+    return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
   }
 }

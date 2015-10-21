@@ -15,11 +15,13 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
+import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -38,19 +40,18 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
 
   @Override
   public void paintBorder(Component c, Graphics g2d, int x, int y, int width, int height) {
+    if (TextFieldWithPopupHandlerUI.isSearchField(c)) {
+      return;
+    }
     Graphics2D g = (Graphics2D)g2d;
+    //todo[kb]: make a better solution
+    if (c.getParent() instanceof JComboBox) return;
     if (c.hasFocus()) {
       MacIntelliJBorderPainter.paintBorder(c, g, 0, 0, c.getWidth(), c.getHeight());
     }
-    g.setColor(UIUtil.isRetina() ? Gray.xF0 : Gray.xB1);
-    g.drawRect(3, 3, c.getWidth() - 6, c.getHeight() - 6);
-    if (UIUtil.isRetina()) {
-      Graphics2D gr = (Graphics2D)g.create(2, 2, c.getWidth() - 4, c.getHeight() - 4);
-      gr.scale(0.5, 0.5);
-      gr.setColor(Gray.xB1);
-      gr.drawRect(1, 1, gr.getClipBounds().width - 3, gr.getClipBounds().height - 3);
-      gr.scale(2, 2);
-      gr.dispose();
+    if (!IntelliJLaf.isGraphite() || !c.hasFocus()) {
+      g.setColor(Gray.xB4);
+      g.drawRect(3, 3, c.getWidth() - 6, c.getHeight() - 6);
     }
   }
 }

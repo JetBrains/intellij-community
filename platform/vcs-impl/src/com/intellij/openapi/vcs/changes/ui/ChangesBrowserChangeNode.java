@@ -32,7 +32,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
-import static com.intellij.vcsUtil.UIVcsUtil.SPACE_AND_THIN_SPACE;
+import static com.intellij.vcsUtil.UIVcsUtil.spaceAndThinSpace;
 
 /**
  * @author yole
@@ -71,13 +71,13 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
 
     final String originText = change.getOriginText(myProject);
     if (originText != null) {
-      renderer.append(SPACE_AND_THIN_SPACE + originText, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      renderer.append(spaceAndThinSpace() + originText, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
 
     if (renderer.isShowFlatten()) {
       final File parentFile = filePath.getIOFile().getParentFile();
       if (parentFile != null) {
-        renderer.append(SPACE_AND_THIN_SPACE + FileUtil.getLocationRelativeToUserHome(parentFile.getPath()), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        renderer.append(spaceAndThinSpace() + FileUtil.getLocationRelativeToUserHome(parentFile.getPath()), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
       appendSwitched(renderer);
     }
@@ -111,7 +111,7 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
     if (virtualFile != null && ! myProject.isDefault()) {
       String branch = ChangeListManager.getInstance(myProject).getSwitchedBranch(virtualFile);
       if (branch != null) {
-        renderer.append(SPACE_AND_THIN_SPACE + "[switched to " + branch + "]", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        renderer.append(spaceAndThinSpace() + "[switched to " + branch + "]", SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     }
   }

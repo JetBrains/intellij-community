@@ -17,12 +17,8 @@ package org.zmlx.hg4idea.ui;
 
 import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.dvcs.ui.CloneDvcsDialog;
-import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgRememberedInputs;
@@ -58,16 +54,9 @@ public class HgCloneDialog extends CloneDvcsDialog {
 
   @Override
   protected boolean test(@NotNull final String url) {
-    final boolean[] testResult = new boolean[1];
-    ProgressManager.getInstance().run(new Task.Modal(myProject, DvcsBundle.message("clone.testing", url), true) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        final HgIdentifyCommand identifyCommand = new HgIdentifyCommand(myProject);
-        identifyCommand.setSource(url);
-        final HgCommandResult result = identifyCommand.execute(ModalityState.stateForComponent(getRootPane()));
-        testResult[0] = result != null && result.getExitValue() == 0;
-      }
-    });
-    return testResult[0];
+    HgIdentifyCommand identifyCommand = new HgIdentifyCommand(myProject);
+    identifyCommand.setSource(url);
+    HgCommandResult result = identifyCommand.execute(ModalityState.stateForComponent(getRootPane()));
+    return result != null && result.getExitValue() == 0;
   }
 }

@@ -38,6 +38,7 @@ import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import com.sun.jdi.VMDisconnectedException;
 import com.sun.jdi.request.StepRequest;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +47,9 @@ public class RequestHint {
   public static final int RESUME = -100;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.RequestHint");
+  @MagicConstant (intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE})
   private final int mySize;
+  @MagicConstant (intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT})
   private final int myDepth;
   private final SourcePosition myPosition;
   private final int myFrameCount;
@@ -64,11 +67,17 @@ public class RequestHint {
     this(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_INTO, methodFilter);
   }
 
-  public RequestHint(final ThreadReferenceProxyImpl stepThread, final SuspendContextImpl suspendContext, int depth) {
+  public RequestHint(final ThreadReferenceProxyImpl stepThread,
+                     final SuspendContextImpl suspendContext,
+                     @MagicConstant (intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT}) int depth) {
     this(stepThread, suspendContext, StepRequest.STEP_LINE, depth, null);
   }
 
-  private RequestHint(final ThreadReferenceProxyImpl stepThread, final SuspendContextImpl suspendContext, int stepSize, int depth, @Nullable MethodFilter methodFilter) {
+  private RequestHint(final ThreadReferenceProxyImpl stepThread,
+                      final SuspendContextImpl suspendContext,
+                      @MagicConstant (intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE}) int stepSize,
+                      @MagicConstant (intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT}) int depth,
+                      @Nullable MethodFilter methodFilter) {
     mySize = stepSize;
     myDepth = depth;
     myMethodFilter = methodFilter;
@@ -134,10 +143,12 @@ public class RequestHint {
     return myIgnoreFilters;
   }
 
+  @MagicConstant (intValues = {StepRequest.STEP_MIN, StepRequest.STEP_LINE})
   public int getSize() {
     return mySize;
   }
 
+  @MagicConstant (intValues = {StepRequest.STEP_INTO, StepRequest.STEP_OVER, StepRequest.STEP_OUT})
   public int getDepth() {
     return myDepth;
   }

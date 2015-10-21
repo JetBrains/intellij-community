@@ -46,4 +46,8 @@ public abstract class ScratchFileService {
 
   @NotNull
   public abstract PerFileMappings<Language> getScratchesMapping();
+
+  public static boolean isInScratchRoot(@Nullable VirtualFile file) {
+    return getInstance().getRootType(file) != null;
+  }
 }

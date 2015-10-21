@@ -33,6 +33,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -118,7 +119,7 @@ public final class UpdateChecker {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, IdeBundle.message("updates.checking.progress"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        doUpdateAndShowResult(getProject(), !fromSettings, true, settings, indicator, null);
+        doUpdateAndShowResult(getProject(), fromSettings, true, settings, indicator, null);
       }
 
       @Override
@@ -134,7 +135,7 @@ public final class UpdateChecker {
   }
 
   private static void doUpdateAndShowResult(@Nullable final Project project,
-                                            final boolean enableLink,
+                                            final boolean fromSettings,
                                             final boolean manualCheck,
                                             @NotNull final UpdateSettings updateSettings,
                                             @Nullable ProgressIndicator indicator,
@@ -185,7 +186,13 @@ public final class UpdateChecker {
       }
 
       incompatiblePlugins = buildNumber != null ? new HashSet<IdeaPluginDescriptor>() : null;
-      updatedPlugins = checkPluginsUpdate(manualCheck, updateSettings, indicator, incompatiblePlugins, buildNumber);
+      try {
+        updatedPlugins = checkPluginsUpdate(updateSettings, indicator, incompatiblePlugins, buildNumber);
+      }
+      catch (IOException e) {
+        showErrorMessage(manualCheck, IdeBundle.message("updates.error.connection.failed", e.getMessage()));
+        return;
+      }
     }
 
     // show result
@@ -193,17 +200,17 @@ public final class UpdateChecker {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        showUpdateResult(project, result, updateSettings, updatedPlugins, incompatiblePlugins, enableLink, manualCheck);
+        showUpdateResult(project, result, updateSettings, updatedPlugins, incompatiblePlugins, !fromSettings, manualCheck);
         if (callback != null) {
           callback.setDone();
         }
       }
-    }, ModalityState.NON_MODAL);
+    }, fromSettings ? ModalityState.any() : ModalityState.NON_MODAL);
   }
 
   @NotNull
   private static CheckForUpdateResult checkPlatformUpdate(@NotNull UpdateSettings settings) {
-    UpdatesInfo info;
+    UpdatesInfo updateInfo;
     try {
       URIBuilder uriBuilder = new URIBuilder(getUpdateUrl());
       if (!URLUtil.FILE_PROTOCOL.equals(uriBuilder.getScheme())) {
@@ -212,7 +219,7 @@ public final class UpdateChecker {
       String updateUrl = uriBuilder.build().toString();
       LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl);
 
-      info = HttpRequests.request(updateUrl).forceHttps(settings.canUseSecureConnection()).connect(new HttpRequests.RequestProcessor<UpdatesInfo>() {
+      updateInfo = HttpRequests.request(updateUrl).forceHttps(settings.canUseSecureConnection()).connect(new HttpRequests.RequestProcessor<UpdatesInfo>() {
         @Override
         public UpdatesInfo process(@NotNull HttpRequests.Request request) throws IOException {
           try {
@@ -232,21 +239,21 @@ public final class UpdateChecker {
     catch (IOException e) {
       return new CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, e);
     }
-    if (info == null) {
-      return new CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED);
+    if (updateInfo == null) {
+      return new CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null);
     }
 
     ApplicationInfo appInfo = ApplicationInfo.getInstance();
     int majorVersion = Integer.parseInt(appInfo.getMajorVersion());
-    UpdateStrategy strategy = new UpdateStrategy(majorVersion, appInfo.getBuild(), info, settings);
+    UpdateStrategyCustomization customization = UpdateStrategyCustomization.getInstance();
+    UpdateStrategy strategy = new UpdateStrategy(majorVersion, appInfo.getBuild(), updateInfo, settings, customization);
     return strategy.checkForUpdates();
   }
 
-  private static Collection<PluginDownloader> checkPluginsUpdate(boolean manualCheck,
-                                                                 @NotNull UpdateSettings updateSettings,
+  private static Collection<PluginDownloader> checkPluginsUpdate(@NotNull UpdateSettings updateSettings,
                                                                  @Nullable ProgressIndicator indicator,
                                                                  @Nullable Collection<IdeaPluginDescriptor> incompatiblePlugins,
-                                                                 @Nullable BuildNumber buildNumber) {
+                                                                 @Nullable BuildNumber buildNumber) throws IOException {
     // collect installed plugins and plugins imported from a previous installation
     Map<PluginId, IdeaPluginDescriptor> updateable = ContainerUtil.newTroveMap();
 
@@ -269,6 +276,8 @@ public final class UpdateChecker {
       catch (IOException e) {
         LOG.error(onceInstalled.getPath(), e);
       }
+
+      //noinspection SSBasedInspection
       onceInstalled.deleteOnExit();
     }
 
@@ -305,7 +314,7 @@ public final class UpdateChecker {
           LOG.info("failed to load plugin descriptions from " + host + ": " + e.getMessage());
         }
         else {
-          showErrorMessage(manualCheck, IdeBundle.message("updates.error.connection.failed", e.getMessage()));
+          throw e;
         }
       }
     }
@@ -383,7 +392,23 @@ public final class UpdateChecker {
     final UpdateChannel channelToPropose = checkForUpdateResult.getChannelToPropose();
     final UpdateChannel updatedChannel = checkForUpdateResult.getUpdatedChannel();
 
-    if (newChannelReady(channelToPropose)) {
+    if (updatedChannel != null) {
+      Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+          new UpdateInfoDialog(updatedChannel, enableLink, updateSettings.canUseSecureConnection(), updatedPlugins, incompatiblePlugins).show();
+        }
+      };
+
+      if (alwaysShowResults) {
+        runnable.run();
+      }
+      else {
+        String message = IdeBundle.message("updates.ready.message", ApplicationNamesInfo.getInstance().getFullProductName());
+        showNotification(project, message, runnable, NotificationUniqueType.UPDATE_IN_CHANNEL);
+      }
+    }
+    else if (newChannelReady(channelToPropose)) {
       Runnable runnable = new Runnable() {
         @Override
         public void run() {
@@ -405,23 +430,7 @@ public final class UpdateChecker {
       }
       else {
         String message = IdeBundle.message("updates.new.version.available", ApplicationNamesInfo.getInstance().getFullProductName());
-        showNotification(project, message, false, runnable, NotificationUniqueType.NEW_CHANNEL);
-      }
-    }
-    else if (updatedChannel != null) {
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          new UpdateInfoDialog(updatedChannel, enableLink, updateSettings.canUseSecureConnection(), updatedPlugins, incompatiblePlugins).show();
-        }
-      };
-
-      if (alwaysShowResults) {
-        runnable.run();
-      }
-      else {
-        String message = IdeBundle.message("updates.ready.message", ApplicationNamesInfo.getInstance().getFullProductName());
-        showNotification(project, message, false, runnable, NotificationUniqueType.UPDATE_IN_CHANNEL);
+        showNotification(project, message, runnable, NotificationUniqueType.NEW_CHANNEL);
       }
     }
     else if (updatedPlugins != null && !updatedPlugins.isEmpty()) {
@@ -443,7 +452,7 @@ public final class UpdateChecker {
           }
         }, ", ");
         String message = IdeBundle.message("updates.plugins.ready.message", updatedPlugins.size(), plugins);
-        showNotification(project, message, false, runnable, NotificationUniqueType.PLUGINS_UPDATE);
+        showNotification(project, message, runnable, NotificationUniqueType.PLUGINS_UPDATE);
       }
     }
     else if (alwaysShowResults) {
@@ -451,13 +460,8 @@ public final class UpdateChecker {
     }
   }
 
-  private static void showNotification(@Nullable Project project, String message, boolean error, @Nullable final Runnable runnable) {
-    showNotification(project, message, error, runnable, null);
-  }
-
   private static void showNotification(@Nullable Project project,
                                        String message,
-                                       boolean error,
                                        @Nullable final Runnable runnable,
                                        @Nullable final NotificationUniqueType notificationType) {
     if (notificationType != null) {
@@ -478,8 +482,7 @@ public final class UpdateChecker {
     }
 
     String title = IdeBundle.message("update.notifications.title");
-    NotificationType type = error ? NotificationType.ERROR : NotificationType.INFORMATION;
-    NOTIFICATIONS.createNotification(title, XmlStringUtil.wrapInHtml(message), type, listener).whenExpired(new Runnable() {
+    NOTIFICATIONS.createNotification(title, XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION, listener).whenExpired(new Runnable() {
       @Override
       public void run() {
         SHOWN_NOTIFICATION_TYPES.remove(notificationType);

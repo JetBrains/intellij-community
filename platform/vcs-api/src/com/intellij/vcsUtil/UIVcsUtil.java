@@ -17,17 +17,22 @@ package com.intellij.vcsUtil;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.FontUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class UIVcsUtil {
-  public static final String SPACE_AND_THIN_SPACE = " \u2009";
-
   private UIVcsUtil() {
   }
+
+  @NotNull
+  public static String spaceAndThinSpace() {
+    return " " + FontUtil.canDisplay(UIUtil.getLabelFont(), '\u2009', " ");
+  } 
 
   public static JPanel errorPanel(final String text, boolean isError) {
     final JLabel label = new JLabel(XmlStringUtil.wrapInHtml(escapeXmlAndAddBr(text)));

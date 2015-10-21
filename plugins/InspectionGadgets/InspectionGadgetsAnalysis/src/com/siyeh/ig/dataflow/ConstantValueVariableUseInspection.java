@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.dataflow;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -30,7 +31,7 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ConstantValueVariableUseInspection extends BaseInspection {
+public class ConstantValueVariableUseInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

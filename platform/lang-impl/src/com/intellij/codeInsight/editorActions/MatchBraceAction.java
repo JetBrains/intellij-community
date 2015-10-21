@@ -15,24 +15,27 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.project.Project;
-import gnu.trove.TIntHashSet;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
  * @since 10/24/12 11:10 AM
  */
 public class MatchBraceAction extends EditorAction {
-
-  private static final TIntHashSet OPEN_BRACES = new TIntHashSet(new int[] {  '(', '[', '{', '<' });
-  private static final TIntHashSet CLOSE_BRACES = new TIntHashSet(new int[] { ')', ']', '}', '>' });
-
   public MatchBraceAction() {
     super(new MyHandler());
   }
@@ -42,38 +45,61 @@ public class MatchBraceAction extends EditorAction {
       super(true);
     }
 
-    @Override
     public void execute(Editor editor, DataContext dataContext) {
-      Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      if (project == null) {
-        return;
+      final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
+      if (file == null) return;
+
+      final Caret caret = editor.getCaretModel().getCurrentCaret();
+      final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+      final CharSequence text = editor.getDocument().getCharsSequence();
+
+      int offset = caret.getOffset();
+      FileType fileType = getFileType(file, offset);
+      HighlighterIterator iterator = highlighter.createIterator(offset);
+
+      if (iterator.atEnd()) {
+        offset--;
+      }
+      else if (!BraceMatchingUtil.isLBraceToken(iterator, text, fileType)) {
+        offset--;
+
+        if (offset >= 0) {
+          final HighlighterIterator i = highlighter.createIterator(offset);
+          if (!BraceMatchingUtil.isRBraceToken(i, text, getFileType(file, i.getStart()))) offset++;
+        }
       }
 
-      CaretModel caretModel = editor.getCaretModel();
-      int offset = caretModel.getOffset();
-      CharSequence text = editor.getDocument().getCharsSequence();
-      char c = text.charAt(offset);
-      if (!OPEN_BRACES.contains(c) && !CLOSE_BRACES.contains(c)) {
-        boolean canContinue = false;
-        for (offset--; offset >= 0; offset--) {
-          c = text.charAt(offset);
-          if (OPEN_BRACES.contains(c) || CLOSE_BRACES.contains(c)) {
-            canContinue = true;
-            caretModel.moveToOffset(offset);
-            break;
-          }
-        }
-        if (!canContinue) {
-          return;
-        }
+      if (offset < 0) return;
+
+      iterator = highlighter.createIterator(offset);
+      fileType = getFileType(file, iterator.getStart());
+
+      while (!BraceMatchingUtil.isLBraceToken(iterator, text, fileType) &&
+             !BraceMatchingUtil.isRBraceToken(iterator, text, fileType)) {
+        if (iterator.getStart() == 0) return;
+        iterator.retreat();
+        offset = iterator.getStart();
       }
-      
-      if (OPEN_BRACES.contains(c)) {
-        CodeBlockUtil.moveCaretToCodeBlockEnd(project, editor, false);
+
+      if (BraceMatchingUtil.matchBrace(text, fileType, iterator, true)) {
+        moveCaret(editor, caret, iterator.getEnd());
+        return;
       }
-      else if (CLOSE_BRACES.contains(c)) {
-        CodeBlockUtil.moveCaretToCodeBlockStart(project, editor, false);
+      iterator = highlighter.createIterator(offset);
+      if (BraceMatchingUtil.matchBrace(text, fileType, iterator, false)) {
+        moveCaret(editor, caret, iterator.getStart());
       }
     }
+  }
+
+  @NotNull
+  private static FileType getFileType(PsiFile file, int offset) {
+    return PsiUtilBase.getPsiFileAtOffset(file, offset).getFileType();
+  }
+
+  private static void moveCaret(Editor editor, Caret caret, int offset) {
+    caret.removeSelection();
+    caret.moveToOffset(offset);
+    EditorModificationUtil.scrollToCaret(editor);
   }
 }

@@ -16,7 +16,7 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.components.ComponentsPackage;
+import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
@@ -26,7 +26,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.vcsUtil.UIVcsUtil.SPACE_AND_THIN_SPACE;
+import static com.intellij.vcsUtil.UIVcsUtil.spaceAndThinSpace;
 
 /**
  * @author yole
@@ -40,7 +40,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     super(userObject);
     myChangeListRemoteState = changeListRemoteState;
     myClManager = (ChangeListManagerEx) ChangeListManager.getInstance(project);
-    myDecorators = ComponentsPackage.getComponents(project, ChangeListDecorator.class);
+    myDecorators = ServiceKt.getComponents(project, ChangeListDecorator.class);
   }
 
   @Override
@@ -55,12 +55,14 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
       }
       final String freezed = myClManager.isFreezed();
       if (freezed != null) {
-        renderer.append(SPACE_AND_THIN_SPACE + freezed, SimpleTextAttributes.GRAYED_ATTRIBUTES);
-      } else if (myClManager.isInUpdate()) {
-        renderer.append(", " + VcsBundle.message("changes.nodetitle.updating"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        renderer.append(spaceAndThinSpace() + freezed, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      } 
+      else if (myClManager.isInUpdate()) {
+        renderer.append((getCountText().isEmpty() ? spaceAndThinSpace() : ", ") + VcsBundle.message("changes.nodetitle.updating"),
+                        SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
       if (! myChangeListRemoteState.getState()) {
-        renderer.append(SPACE_AND_THIN_SPACE);
+        renderer.append(spaceAndThinSpace());
         renderer.append(VcsBundle.message("changes.nodetitle.have.outdated.files"), SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
     }

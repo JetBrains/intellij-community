@@ -53,7 +53,7 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
   public boolean isAvailable(@NotNull final Project project, Editor editor, PsiFile file) {
     final PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiModifierListOwner owner = ExternalAnnotationsLineMarkerProvider.getAnnotationOwner(leaf);
-    if (owner != null && owner.isWritable() && owner.getLanguage().isKindOf(JavaLanguage.INSTANCE) &&
+    if (owner != null && !(owner instanceof PsiCompiledElement) && owner.getLanguage().isKindOf(JavaLanguage.INSTANCE) &&
         ModuleUtilCore.findModuleForPsiElement(file) != null &&
         PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5)) {
       final PsiAnnotation[] annotations = InferredAnnotationsManager.getInstance(project).findInferredAnnotations(owner);

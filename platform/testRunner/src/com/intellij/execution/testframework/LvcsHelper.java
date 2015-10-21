@@ -35,13 +35,17 @@ public class LvcsHelper {
     String label;
     int color;
 
-    if (model.getRoot().isDefect()) {
-      color = RED.getRGB();
-      label = ExecutionBundle.message("junit.runing.info.tests.failed.label");
-    }
-    else {
+    AbstractTestProxy root = model.getRoot();
+    
+    if (root.isInterrupted()) return;
+    
+    if (root.isPassed() || root.isIgnored()) {
       color = GREEN.getRGB();
       label = ExecutionBundle.message("junit.runing.info.tests.passed.label");
+    }
+    else {
+      color = RED.getRGB();
+      label = ExecutionBundle.message("junit.runing.info.tests.failed.label");
     }
     final TestConsoleProperties consoleProperties = model.getProperties();
     String name = label + " " + consoleProperties.getConfiguration().getName();

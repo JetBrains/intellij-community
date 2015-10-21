@@ -16,7 +16,6 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.application.Application;
@@ -38,8 +37,9 @@ import java.util.*;
 public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcessor {
 
   private final Map<String, SMTestProxy> myRunningTestsFullNameToProxy = new HashMap<String, SMTestProxy>();
-  private final Set<AbstractTestProxy> myFailedTestsSet = new HashSet<AbstractTestProxy>();
   private final TestSuiteStack mySuitesStack;
+  private final Set<SMTestProxy> myCurrentChildren = new LinkedHashSet<SMTestProxy>();
+  private boolean myGetChildren = true;
   private final SMTestProxy.SMRootTestProxy myTestsRootNode;
 
   private boolean myIsTestingFinished;
@@ -231,6 +231,15 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
           }
 
           parentSuite.addChild(testProxy);
+
+          if (myTreeBuildBeforeStart && myGetChildren) {
+            for (SMTestProxy proxy : parentSuite.getChildren()) {
+              if (!proxy.isFinal()) {
+                myCurrentChildren.add(proxy);
+              }
+            }
+            myGetChildren = false;
+          }
         }
 
         // adds to running tests map
@@ -264,6 +273,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
           parentSuite.addChild(newSuite);
         }
 
+        myGetChildren = true;
         mySuitesStack.pushSuite(newSuite);
 
         //Progress started
@@ -277,7 +287,8 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
   private SMTestProxy findChildByName(SMTestProxy parentSuite, String fullName) {
     if (myTreeBuildBeforeStart) {
-      for (SMTestProxy proxy : parentSuite.getChildren()) {
+      final Collection<? extends SMTestProxy> children = myGetChildren ? parentSuite.getChildren() : myCurrentChildren;
+      for (SMTestProxy proxy : children) {
         if (fullName.equals(proxy.getName()) && !proxy.isFinal()) {
           return proxy;
         }
@@ -303,6 +314,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         testProxy.setDuration(duration);
         testProxy.setFinished();
         myRunningTestsFullNameToProxy.remove(fullTestName);
+        myCurrentChildren.remove(testProxy);
 
         //fire events
         fireOnTestFinished(testProxy);
@@ -317,6 +329,8 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         final SMTestProxy mySuite = mySuitesStack.popSuite(suiteName);
         if (mySuite != null) {
           mySuite.setFinished();
+          myCurrentChildren.clear();
+          myGetChildren = true;
 
           //fire events
           fireOnSuiteFinished(mySuite);
@@ -377,15 +391,13 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
                              cannotFindFullTestNameMsg(fullTestName));
           if (inDebugMode) {
             return;
-          } else {
-            // try to fix the problem:
-            if (!myFailedTestsSet.contains(testProxy)) {
-              // if hasn't been already reported
-              // 1. report
-              onTestStarted(new TestStartedEvent(testName, null));
-              // 2. add failure
-              testProxy = getProxyByFullTestName(fullTestName);
-            }
+          }
+          else {
+            // if hasn't been already reported
+            // 1. report
+            onTestStarted(new TestStartedEvent(testName, null));
+            // 2. add failure
+            testProxy = getProxyByFullTestName(fullTestName);
           }
         }
 
@@ -394,29 +406,20 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         }
 
         if (comparisionFailureActualText != null && comparisionFailureExpectedText != null) {
-          if (myFailedTestsSet.contains(testProxy)) {
-            // duplicate message
-            logProblem("Duplicate failure for test [" + fullTestName + "]: msg = " + localizedMessage + ", stacktrace = " + stackTrace);
-
-            if (inDebugMode) {
-              return;
-            }
-          }
-
           testProxy.setTestComparisonFailed(localizedMessage, stackTrace,
                                             comparisionFailureActualText, comparisionFailureExpectedText, 
                                             testFailedEvent.getFilePath(), testFailedEvent.getActualFilePath());
-        } else if (comparisionFailureActualText == null && comparisionFailureExpectedText == null) {
+        }
+        else if (comparisionFailureActualText == null && comparisionFailureExpectedText == null) {
           testProxy.setTestFailed(localizedMessage, stackTrace, isTestError);
-        } else {
+        }
+        else {
           logProblem("Comparison failure actual and expected texts should be both null or not null.\n"
                      + "Expected:\n"
                      + comparisionFailureExpectedText + "\n"
                      + "Actual:\n"
                      + comparisionFailureActualText);
         }
-
-        myFailedTestsSet.add(testProxy);
 
         // fire event
         fireOnTestFailed(testProxy);
@@ -505,6 +508,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     // current suite shouldn't be null otherwise test runner isn't correct
     // or may be we are in debug mode
     logProblem("Current suite is undefined. Root suite will be used.");
+    myGetChildren = true;
     return myTestsRootNode;
 
   }
@@ -516,10 +520,6 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
   protected int getRunningTestsQuantity() {
     return myRunningTestsFullNameToProxy.size();
-  }
-
-  protected Set<AbstractTestProxy> getFailedTestsSet() {
-    return Collections.unmodifiableSet(myFailedTestsSet);
   }
 
   @Nullable

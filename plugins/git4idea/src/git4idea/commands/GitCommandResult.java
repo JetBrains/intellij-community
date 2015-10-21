@@ -89,14 +89,18 @@ public class GitCommandResult {
 
   @NotNull
   public String getErrorOutputAsHtmlString() {
-    // in some cases operation fails but no explicit error messages are given, in this case return the output to display something to user
-    List<String> outputToDisplay = myErrorOutput.isEmpty() && !success() ? myOutput : myErrorOutput;
-    return StringUtil.join(cleanup(outputToDisplay), "<br/>");
+    return StringUtil.join(cleanup(getErrorOrStdOutput()), "<br/>");
   }
 
   @NotNull
   public String getErrorOutputAsJoinedString() {
-    return StringUtil.join(myErrorOutput, "\n");
+    return StringUtil.join(getErrorOrStdOutput(), "\n");
+  }
+
+  // in some cases operation fails but no explicit error messages are given, in this case return the output to display something to user
+  @NotNull
+  private List<String> getErrorOrStdOutput() {
+    return myErrorOutput.isEmpty() && !success() ? myOutput : myErrorOutput;
   }
 
   @NotNull

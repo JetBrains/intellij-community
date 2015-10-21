@@ -19,6 +19,9 @@ import com.intellij.externalDependencies.DependencyOnPlugin;
 import com.intellij.externalDependencies.ExternalDependenciesManager;
 import com.intellij.externalDependencies.ProjectExternalDependency;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.project.DumbAwareRunnable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -42,6 +45,12 @@ import java.util.List;
   }
 )
 public class ExternalDependenciesManagerImpl extends ExternalDependenciesManager implements PersistentStateComponent<ExternalDependenciesManagerImpl.ExternalDependenciesState> {
+  private final Project myProject;
+
+  public ExternalDependenciesManagerImpl(Project project) {
+    myProject = project;
+  }
+
   private static final Comparator<ProjectExternalDependency> DEPENDENCY_COMPARATOR = new Comparator<ProjectExternalDependency>() {
     @Override
     public int compare(ProjectExternalDependency o1, ProjectExternalDependency o2) {
@@ -84,9 +93,18 @@ public class ExternalDependenciesManagerImpl extends ExternalDependenciesManager
 
   @Override
   public void loadState(ExternalDependenciesState state) {
+    ArrayList<ProjectExternalDependency> oldDependencies = new ArrayList<ProjectExternalDependency>(myDependencies);
     myDependencies.clear();
     for (DependencyOnPluginState dependency : state.myDependencies) {
       myDependencies.add(new DependencyOnPlugin(dependency.myId, dependency.myMinVersion, dependency.myMaxVersion));
+    }
+    if (!oldDependencies.equals(myDependencies) && !myDependencies.isEmpty()) {
+      StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
+        @Override
+        public void run() {
+          CheckRequiredPluginsActivity.runCheck(myProject);
+        }
+      });
     }
   }
 

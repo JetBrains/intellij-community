@@ -124,6 +124,9 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     ourLafClassesAliases.put("idea.dark.laf.classname", DarculaLookAndFeelInfo.CLASS_NAME);
   }
 
+  public static boolean useIntelliJInsteadOfAqua() {
+    return Registry.is("ide.mac.yosemite.laf") && isIntelliJLafEnabled() && SystemInfo.isJavaVersionAtLeast("1.8") && SystemInfo.isMacOSYosemite;
+  }
   /**
    * Invoked via reflection.
    */
@@ -133,9 +136,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     List<UIManager.LookAndFeelInfo> lafList = ContainerUtil.newArrayList();
 
     if (SystemInfo.isMac) {
-      lafList.add(new UIManager.LookAndFeelInfo("Default", UIManager.getSystemLookAndFeelClassName()));
-      if (Registry.is("ide.mac.yosemite.laf") && isIntelliJLafEnabled()) {
-        lafList.add(new IntelliJLookAndFeelInfo());
+      if (useIntelliJInsteadOfAqua()) {
+        lafList.add(new UIManager.LookAndFeelInfo("Default", IntelliJLaf.class.getName()));
+      } else {
+        lafList.add(new UIManager.LookAndFeelInfo("Default", UIManager.getSystemLookAndFeelClassName()));
       }
     }
     else {
@@ -319,8 +323,9 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
     final String systemLafClassName = UIManager.getSystemLookAndFeelClassName();
     if (SystemInfo.isMac) {
-      UIManager.LookAndFeelInfo laf = findLaf(systemLafClassName);
-      LOG.assertTrue(laf != null);
+      String className = useIntelliJInsteadOfAqua() ? IntelliJLaf.class.getName() : systemLafClassName;
+      UIManager.LookAndFeelInfo laf = findLaf(className);
+      LOG.assertTrue(laf != null, "Could not find look and feel: " + className);
       return laf;
     }
     if (PlatformUtils.isRubyMine() || PlatformUtils.isPyCharm()) {
@@ -444,23 +449,25 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
   @Nullable
   private static Icon getAquaMenuInvertedIcon() {
-    if (!UIUtil.isUnderAquaLookAndFeel()) return null;
-    final Icon arrow = (Icon)UIManager.get("Menu.arrowIcon");
-    if (arrow == null) return null;
+    if (UIUtil.isUnderAquaLookAndFeel() || (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF())) {
+      final Icon arrow = (Icon)UIManager.get("Menu.arrowIcon");
+      if (arrow == null) return null;
 
-    try {
-      final Method method = ReflectionUtil.getMethod(arrow.getClass(), "getInvertedIcon");
-      if (method != null) {
-        return (Icon)method.invoke(arrow);
+      try {
+        final Method method = ReflectionUtil.getMethod(arrow.getClass(), "getInvertedIcon");
+        if (method != null) {
+          return (Icon)method.invoke(arrow);
+        }
+        return null;
       }
-      return null;
+      catch (InvocationTargetException e1) {
+        return null;
+      }
+      catch (IllegalAccessException e1) {
+        return null;
+      }
     }
-    catch (InvocationTargetException e1) {
-      return null;
-    }
-    catch (IllegalAccessException e1) {
-      return null;
-    }
+    return null;
   }
 
   @Override
@@ -598,7 +605,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   private static void fixMenuIssues(UIDefaults uiDefaults) {
-    if (UIUtil.isUnderAquaLookAndFeel()) {
+    if (UIUtil.isUnderAquaLookAndFeel() || (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF())) {
       // update ui for popup menu to get round corners
       uiDefaults.put("PopupMenuUI", MacPopupMenuUI.class.getCanonicalName());
       uiDefaults.put("Menu.invertedArrowIcon", getAquaMenuInvertedIcon());
@@ -747,7 +754,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     if (uiSettings.OVERRIDE_NONIDEA_LAF_FONTS) {
       storeOriginalFontDefaults(uiDefaults);
       JBUI.setScaleFactor(uiSettings.FONT_SIZE/12f);
-      initFontDefaults(uiDefaults, uiSettings.FONT_FACE, uiSettings.FONT_SIZE);
+      initFontDefaults(uiDefaults, uiSettings.FONT_SIZE, new FontUIResource(uiSettings.FONT_FACE, Font.PLAIN, uiSettings.FONT_SIZE));
     }
     else {
       restoreOriginalFontDefaults(uiDefaults);
@@ -854,9 +861,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  static void initFontDefaults(UIDefaults defaults, String fontFace, int fontSize) {
+  static void initFontDefaults(UIDefaults defaults, int fontSize, FontUIResource uiFont) {
     defaults.put("Tree.ancestorInputMap", null);
-    FontUIResource uiFont = new FontUIResource(fontFace, Font.PLAIN, fontSize);
     FontUIResource textFont = new FontUIResource("Serif", Font.PLAIN, fontSize);
     FontUIResource monoFont = new FontUIResource("Monospaced", Font.PLAIN, fontSize);
 

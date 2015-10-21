@@ -19,7 +19,6 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.StackFrameContext;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.SimpleStackFrameContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -215,7 +214,7 @@ public class LocalVariablesUtil {
 
   @NotNull
   private static List<DecompiledLocalVariable> collectVariablesFromBytecode(StackFrameProxyImpl frame,
-                                                                            final MultiMap<Integer, String> namesMap) throws EvaluateException {
+                                                                            final MultiMap<Integer, String> namesMap) {
     if (!frame.getVirtualMachine().canGetBytecodes()) {
       return Collections.emptyList();
     }
@@ -271,29 +270,27 @@ public class LocalVariablesUtil {
         SourcePosition position = ContextUtil.getSourcePosition(context);
         if (position != null) {
           PsiElement element = position.getElementAt();
-          PsiElement method = DebuggerUtilsEx.getContainingMethod(element);
+          PsiParameterListOwner method = DebuggerUtilsEx.getContainingMethod(element);
           if (method != null) {
-            PsiParameterList params = DebuggerUtilsEx.getParameterList(method);
-            if (params != null) {
-              MultiMap<Integer, String> res = new MultiMap<Integer, String>();
-              int psiFirstLocalsSlot = getFirstLocalsSlot(method);
-              int slot = Math.max(0, firstLocalsSlot - psiFirstLocalsSlot);
-              for (int i = 0; i < params.getParametersCount(); i++) {
-                PsiParameter parameter = params.getParameters()[i];
-                res.putValue(slot, parameter.getName());
-                slot += getTypeSlotSize(parameter.getType());
-              }
-              PsiElement body = DebuggerUtilsEx.getBody(method);
-              if (body != null) {
-                try {
-                  body.accept(new LocalVariableNameFinder(firstLocalsSlot, res, element));
-                }
-                catch (Exception e) {
-                  LOG.info(e);
-                }
-              }
-              return res;
+            PsiParameterList params = method.getParameterList();
+            MultiMap<Integer, String> res = new MultiMap<Integer, String>();
+            int psiFirstLocalsSlot = getFirstLocalsSlot(method);
+            int slot = Math.max(0, firstLocalsSlot - psiFirstLocalsSlot);
+            for (int i = 0; i < params.getParametersCount(); i++) {
+              PsiParameter parameter = params.getParameters()[i];
+              res.putValue(slot, parameter.getName());
+              slot += getTypeSlotSize(parameter.getType());
             }
+            PsiElement body = method.getBody();
+            if (body != null) {
+              try {
+                body.accept(new LocalVariableNameFinder(firstLocalsSlot, res, element));
+              }
+              catch (Exception e) {
+                LOG.info(e);
+              }
+            }
+            return res;
           }
         }
         return MultiMap.empty();
@@ -309,22 +306,37 @@ public class LocalVariablesUtil {
     private int myCurrentSlotIndex;
     private final PsiElement myElement;
     private final Stack<Integer> myIndexStack;
+    private boolean myReached = false;
 
     public LocalVariableNameFinder(int startSlot, MultiMap<Integer, String> names, PsiElement element) {
       myNames = names;
       myCurrentSlotIndex = startSlot;
       myElement = element;
       myIndexStack = new Stack<Integer>();
+
     }
 
     private boolean shouldVisit(PsiElement scope) {
-      return PsiTreeUtil.isContextAncestor(scope, myElement, false);
+      return !myReached && PsiTreeUtil.isContextAncestor(scope, myElement, false);
+    }
+
+    @Override
+    public void visitElement(PsiElement element) {
+      if (element == myElement) {
+        myReached = true;
+      }
+      else {
+        super.visitElement(element);
+      }
     }
 
     @Override
     public void visitLocalVariable(PsiLocalVariable variable) {
-      appendName(variable.getName());
-      myCurrentSlotIndex += getTypeSlotSize(variable.getType());
+      super.visitLocalVariable(variable);
+      if (!myReached) {
+        appendName(variable.getName());
+        myCurrentSlotIndex += getTypeSlotSize(variable.getType());
+      }
     }
 
     public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
@@ -416,16 +428,14 @@ public class LocalVariablesUtil {
     }
   }
 
-  private static int getFirstLocalsSlot(PsiElement method) {
+  private static int getFirstLocalsSlot(PsiParameterListOwner method) {
     int startSlot = 0;
     if (method instanceof PsiModifierListOwner) {
       startSlot = ((PsiModifierListOwner)method).hasModifierProperty(PsiModifier.STATIC) ? 0 : 1;
     }
-    PsiParameterList params = DebuggerUtilsEx.getParameterList(method);
-    if (params != null) {
-      for (PsiParameter parameter : params.getParameters()) {
-        startSlot += getTypeSlotSize(parameter.getType());
-      }
+    PsiParameterList params = method.getParameterList();
+    for (PsiParameter parameter : params.getParameters()) {
+      startSlot += getTypeSlotSize(parameter.getType());
     }
     return startSlot;
   }

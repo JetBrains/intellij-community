@@ -28,6 +28,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonFileType;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -37,6 +38,9 @@ import java.util.List;
  * @author Mikhail Golubev
  */
 public class PyIndentUtil {
+  @NonNls public static final String TWO_SPACES = "  ";
+  @NonNls public static final String FOUR_SPACES = "    ";
+
   private PyIndentUtil() {
   }
 

@@ -148,6 +148,17 @@ public class FindUtil {
     model.setPromptOnReplace(false);
   }
 
+  public static void updateFindInFileModel(@Nullable Project project, @NotNull FindModel with) {
+    FindModel model = FindManager.getInstance(project).getFindInFileModel();
+    model.setCaseSensitive(with.isCaseSensitive());
+    model.setWholeWordsOnly(with.isWholeWordsOnly());
+    model.setRegularExpressions(with.isRegularExpressions());
+    model.setSearchContext(with.getSearchContext());
+    if (with.isReplaceState()) {
+      model.setPreserveCase(with.isPreserveCase());
+    }
+  }
+
   private enum Direction {
     UP, DOWN
   }
@@ -192,10 +203,9 @@ public class FindUtil {
     model.setCaseSensitive(true);
     model.setWholeWordsOnly(!editor.getSelectionModel().hasSelection());
 
-    final JComponent header = editor.getHeaderComponent();
-    if (header instanceof EditorSearchComponent) {
-      final EditorSearchComponent searchComponent = (EditorSearchComponent)header;
-      searchComponent.setTextInField(model.getStringToFind());
+    EditorSearchSession searchSession = EditorSearchSession.get(editor);
+    if (searchSession != null) {
+      searchSession.setTextInField(model.getStringToFind());
     }
 
     findManager.setFindNextModel(model);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,8 +82,9 @@ public abstract class DevKitInspectionBase extends BaseJavaLocalInspectionTool {
   @Nullable
   private static Set<PsiClass> checkModule(Module module, PsiClass psiClass, @Nullable Set<PsiClass> types, boolean includeActions) {
     final XmlFile pluginXml = PluginModuleType.getPluginXml(module);
-    if (!DescriptorUtil.isPluginXml(pluginXml)) return types;
-    assert pluginXml != null;
+    if (pluginXml == null) return null;
+    final DomFileElement<IdeaPlugin> fileElement = DescriptorUtil.getIdeaPlugin(pluginXml);
+    if (fileElement == null) return null;
 
     final String qualifiedName = psiClass.getQualifiedName();
     if (qualifiedName != null) {
@@ -93,7 +94,6 @@ public abstract class DevKitInspectionBase extends BaseJavaLocalInspectionTool {
       processPluginXml(pluginXml, finder, includeActions);
 
       // <depends> plugin.xml files
-      final DomFileElement<IdeaPlugin> fileElement = DescriptorUtil.getIdeaPlugin(pluginXml);
       for (Dependency dependency : fileElement.getRootElement().getDependencies()) {
         final GenericAttributeValue<PathReference> configFileAttribute = dependency.getConfigFile();
         if (!DomUtil.hasXml(configFileAttribute)) continue;

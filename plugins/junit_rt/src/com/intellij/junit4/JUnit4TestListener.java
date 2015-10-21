@@ -220,6 +220,11 @@ public class JUnit4TestListener extends RunListener {
       if (methodName != null && (parent == null || !isParameter(parent))) {
         methodName = getShortName(JUnit4ReflectionUtil.getClassName(description)) + "." + methodName;
       }
+
+      if (methodName == null && description.getChildren().isEmpty()) {
+        methodName = getShortName(description.getDisplayName());
+      }
+
       myMethodNames.put(description, methodName);
     }
     return methodName;

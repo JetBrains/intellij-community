@@ -17,7 +17,6 @@ package com.intellij.diff.comparison;
 
 import com.intellij.diff.util.IntPair;
 import com.intellij.diff.util.Range;
-import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -26,21 +25,18 @@ import static com.intellij.openapi.util.text.StringUtil.isWhiteSpace;
 
 @SuppressWarnings({"Duplicates", "unused", "TypeParameterExplicitlyExtendsObject"})
 public class TrimUtil {
-  private static final String PUNCTUATION = "(){}[],./?`~!@#$%^&*-=+|\\;:'\"<>";
-  private static final TIntHashSet PUNCTUATION_SET = new TIntHashSet();
-
-  static {
-    for (char punctuation : PUNCTUATION.toCharArray()) {
-      PUNCTUATION_SET.add(punctuation);
-    }
-  }
-
   public static boolean isPunctuation(char c) {
-    return PUNCTUATION_SET.contains(c);
+    if (c == '_') return false;
+    boolean isPunctuation = false;
+    isPunctuation |= c >= 33 & c <= 47; // !"#$%&'()*+,-./
+    isPunctuation |= c >= 58 & c <= 64; // :;<=>?@
+    isPunctuation |= c >= 91 & c <= 96; // [\]^_`
+    isPunctuation |= c >= 123 & c <= 126; // {|}~
+    return isPunctuation;
   }
 
   public static boolean isAlpha(char c) {
-    return !isWhiteSpace(c) && !PUNCTUATION_SET.contains(c);
+    return !isWhiteSpace(c) && !isPunctuation(c);
   }
 
   //

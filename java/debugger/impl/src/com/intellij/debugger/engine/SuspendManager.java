@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.event.EventSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -37,7 +38,7 @@ public interface SuspendManager {
   void freezeThread(ThreadReferenceProxyImpl invokeThread);
   void unfreezeThread(ThreadReferenceProxyImpl thread);
 
-  void resumeThread(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl invokeThread);
+  void resumeThread(SuspendContextImpl suspendContext, @NotNull ThreadReferenceProxyImpl invokeThread);
   void suspendThread(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl invokeThread);
 
   void voteResume(SuspendContextImpl suspendContext);

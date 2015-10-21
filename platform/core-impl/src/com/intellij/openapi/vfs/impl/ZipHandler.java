@@ -186,7 +186,15 @@ public class ZipHandler extends ArchiveHandler {
   @NotNull
   @Override
   public byte[] contentsToByteArray(@NotNull String relativePath) throws IOException {
-    FileAccessorCache.Handle<ZipFile> zipRef = ourZipFileFileAccessorCache.get(this);
+    FileAccessorCache.Handle<ZipFile> zipRef;
+
+    try {
+      zipRef = ourZipFileFileAccessorCache.get(this);
+    } catch (RuntimeException ex) {
+      final Throwable cause = ex.getCause();
+      if (cause instanceof IOException) throw (IOException)cause;
+      throw ex;
+    }
     ZipFile zip = zipRef.get();
     try {
       ZipEntry entry = zip.getEntry(relativePath);
@@ -209,5 +217,10 @@ public class ZipHandler extends ArchiveHandler {
     }
 
     return ArrayUtil.EMPTY_BYTE_ARRAY;
+  }
+
+  // used in Kotlin
+  public static void clearFileAccessorCache() {
+    ourZipFileFileAccessorCache.clear();
   }
 }

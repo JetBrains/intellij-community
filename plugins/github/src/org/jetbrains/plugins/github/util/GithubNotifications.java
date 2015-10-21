@@ -17,6 +17,7 @@ package org.jetbrains.plugins.github.util;
 
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -32,6 +33,11 @@ import static org.jetbrains.plugins.github.util.GithubUtil.getErrorTextFromExcep
 public class GithubNotifications {
   private static final Logger LOG = GithubUtil.LOG;
 
+  private static boolean isOperationCanceled(@NotNull Exception e) {
+    return e instanceof GithubOperationCanceledException ||
+           e instanceof ProcessCanceledException;
+  }
+
   public static void showInfo(@NotNull Project project, @NotNull String title, @NotNull String message) {
     LOG.info(title + "; " + message);
     VcsNotifier.getInstance(project).notifyImportantInfo(title, message);
@@ -44,7 +50,7 @@ public class GithubNotifications {
 
   public static void showWarning(@NotNull Project project, @NotNull String title, @NotNull Exception e) {
     LOG.info(title + "; ", e);
-    if (e instanceof GithubOperationCanceledException) return;
+    if (isOperationCanceled(e)) return;
     VcsNotifier.getInstance(project).notifyImportantWarning(title, getErrorTextFromException(e));
   }
 
@@ -60,7 +66,7 @@ public class GithubNotifications {
 
   public static void showError(@NotNull Project project, @NotNull String title, @NotNull Exception e) {
     LOG.warn(title + "; ", e);
-    if (e instanceof GithubOperationCanceledException) return;
+    if (isOperationCanceled(e)) return;
     VcsNotifier.getInstance(project).notifyError(title, getErrorTextFromException(e));
   }
 
@@ -119,19 +125,19 @@ public class GithubNotifications {
 
   public static void showErrorDialog(@Nullable Project project, @NotNull String title, @NotNull Exception e) {
     LOG.warn(title, e);
-    if (e instanceof GithubOperationCanceledException) return;
+    if (isOperationCanceled(e)) return;
     Messages.showErrorDialog(project, getErrorTextFromException(e), title);
   }
 
   public static void showErrorDialog(@NotNull Component component, @NotNull String title, @NotNull Exception e) {
     LOG.info(title, e);
-    if (e instanceof GithubOperationCanceledException) return;
+    if (isOperationCanceled(e)) return;
     Messages.showErrorDialog(component, getErrorTextFromException(e), title);
   }
 
   public static void showErrorDialog(@NotNull Component component, @NotNull String title, @NotNull String prefix, @NotNull Exception e) {
     LOG.info(title, e);
-    if (e instanceof GithubOperationCanceledException) return;
+    if (isOperationCanceled(e)) return;
     Messages.showErrorDialog(component, prefix + getErrorTextFromException(e), title);
   }
 

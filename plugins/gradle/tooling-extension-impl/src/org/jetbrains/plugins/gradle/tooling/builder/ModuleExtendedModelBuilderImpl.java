@@ -241,7 +241,7 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
                                                Set<String> testDirectories,
                                                Set<String> ideaGeneratedDirectories) {
 
-    IdeaPlugin ideaPlugin = project.getPlugins().getPlugin(IdeaPlugin.class);
+    IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class);
     if (ideaPlugin == null) return;
 
     IdeaModel ideaModel = ideaPlugin.getModel();

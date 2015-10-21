@@ -27,8 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.Alarm;
-import com.intellij.util.io.HttpRequests;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -36,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
+import org.jetbrains.plugins.ipnb.format.IpnbParser;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnection;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnectionListenerBase;
@@ -177,30 +177,19 @@ public final class IpnbConnectionManager implements ProjectComponent {
         }
       };
 
-      HttpRequests.request(urlString + "/api").connect(new HttpRequests.RequestProcessor<Object>() {
-        @Override
-        public Object process(@NotNull HttpRequests.Request request) throws IOException {
-          final IpnbConnection connection;
-          try {
-            if (request.isSuccessful()) {
-              connection = new IpnbConnectionV3(urlString, listener);
-            }
-            else {
-              connection = new IpnbConnection(urlString, listener);
-            }
-            myKernels.put(path, connection);
-          }
-          catch (URISyntaxException e) {
-            if (showNotification) {
-              showWarning(codePanel.getFileEditor(),
-                          "Please, check IPython Notebook URL in <a href=\"\">Settings->Tools->IPython Notebook</a>",
-                          new IpnbSettingsAdapter());
-              LOG.warn("IPython Notebook connection refused: " + e.getMessage());
-            }
-          }
-          return null;
+      try {
+        final IpnbConnection connection = getConnection(codePanel, urlString, listener);
+        myKernels.put(path, connection);
+      }
+      catch (URISyntaxException e) {
+        if (showNotification) {
+          showWarning(codePanel.getFileEditor(),
+                      "Please, check IPython Notebook URL in <a href=\"\">Settings->Tools->IPython Notebook</a>",
+                      new IpnbSettingsAdapter());
+          LOG.warn("IPython Notebook connection refused: " + e.getMessage());
         }
-      });
+        return false;
+      }
     }
     catch (IOException e) {
       if (showNotification) {
@@ -209,6 +198,16 @@ public final class IpnbConnectionManager implements ProjectComponent {
       return false;
     }
     return true;
+  }
+
+  @NotNull
+  private static IpnbConnection getConnection(@NotNull final IpnbCodePanel codePanel, @NotNull final String urlString,
+                                              @NotNull final IpnbConnectionListenerBase listener)
+    throws IOException, URISyntaxException {
+    if (!IpnbParser.isIpythonNewFormat(codePanel.getFileEditor().getVirtualFile())) {
+      return new IpnbConnection(urlString, listener);
+    }
+    return new IpnbConnectionV3(urlString, listener);
   }
 
   public void interruptKernel(@NotNull final String filePath) {
@@ -280,7 +279,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
     String ipython = findIPythonRunner(homePath);
     Map<String, String> env = null;
     if (ipython == null) {
-      ipython = PythonHelpersLocator.getHelperPath("pycharm/pycharm_load_entry_point.py");
+      ipython = PythonHelper.LOAD_ENTRY_POINT.asParamString();
       env = ImmutableMap.of("PYCHARM_EP_DIST", "ipython", "PYCHARM_EP_NAME", "ipython");
     }
 

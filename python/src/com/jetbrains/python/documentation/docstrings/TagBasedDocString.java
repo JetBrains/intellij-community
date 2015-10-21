@@ -74,6 +74,7 @@ public abstract class TagBasedDocString extends DocStringLineParser implements S
 
   public abstract List<String> getAdditionalTags();
 
+  @NotNull
   @Override
   public String getDescription() {
     return myDescription;

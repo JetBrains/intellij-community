@@ -15,14 +15,21 @@
  */
 package com.intellij.ide.ui.laf.darcula;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.laf.DarculaMetalTheme;
 import com.intellij.ide.ui.laf.IdeaLaf;
 import com.intellij.ide.ui.laf.LafManagerImpl;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.Alarm;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -37,6 +44,7 @@ import javax.swing.plaf.metal.MetalLookAndFeel;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -51,6 +59,9 @@ import java.util.List;
 public class DarculaLaf extends BasicLookAndFeel {
   public static final String NAME = "Darcula";
   BasicLookAndFeel base;
+  private static Disposable myDisposable;
+  private static Alarm myMnemonicAlarm;
+  private static boolean myAltPressed;
 
   public DarculaLaf() {
     try {
@@ -410,12 +421,65 @@ public class DarculaLaf extends BasicLookAndFeel {
 
   @Override
   public void initialize() {
-    call("initialize");
+    try {
+      base.initialize();
+    } catch (Exception ignore) {}
+    myDisposable = Disposer.newDisposable();
+    Application application = ApplicationManager.getApplication();
+    if (application != null) {
+      Disposer.register(application, myDisposable);
+    }
+    myMnemonicAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myDisposable);
+    IdeEventQueue.getInstance().addDispatcher(new IdeEventQueue.EventDispatcher() {
+      @Override
+      public boolean dispatch(AWTEvent e) {
+        if (e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT) {
+          myAltPressed = e.getID() == KeyEvent.KEY_PRESSED;
+          myMnemonicAlarm.cancelAllRequests();
+          final Component focusOwner = IdeFocusManager.findInstance().getFocusOwner();
+          if (focusOwner != null) {
+            myMnemonicAlarm.addRequest(new Runnable() {
+              @Override
+              public void run() {
+                repaintMnemonics(focusOwner, myAltPressed);
+              }
+            }, 10);
+          }
+        }
+        return false;
+      }
+    }, myDisposable);
+  }
+
+  public static boolean isAltPressed() {
+    return myAltPressed;
+  }
+
+  private static void repaintMnemonics(@NotNull Component focusOwner, boolean pressed) {
+    if (pressed != myAltPressed) return;
+    Window window = SwingUtilities.windowForComponent(focusOwner);
+    if (window != null) {
+      for (Component component : window.getComponents()) {
+        if (component instanceof JComponent) {
+          for (JComponent c : UIUtil.findComponentsOfType((JComponent)component, JComponent.class)) {
+            if ((c instanceof JLabel && ((JLabel)c).getDisplayedMnemonicIndex() != -1)
+              || (c instanceof AbstractButton && ((AbstractButton)c).getDisplayedMnemonicIndex() != -1)
+              ) {
+              c.repaint();
+            }
+          }
+        }
+      }
+    }
   }
 
   @Override
   public void uninitialize() {
-    call("uninitialize");
+    try {
+      base.initialize();
+    } catch (Exception ignore) {}
+    Disposer.dispose(myDisposable);
+    myDisposable = null;
   }
 
   @Override
@@ -432,6 +496,8 @@ public class DarculaLaf extends BasicLookAndFeel {
       log(ignore);
     }
   }
+
+
 
   @Override
   public boolean getSupportsWindowDecorations() {

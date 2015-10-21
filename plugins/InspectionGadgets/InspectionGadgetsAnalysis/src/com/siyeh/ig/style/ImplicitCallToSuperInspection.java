@@ -25,6 +25,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -130,16 +131,11 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
           }
         }
       }
-      final PsiCodeBlock body = method.getBody();
-      if (body == null) {
-        return;
-      }
-      final PsiStatement[] statements = body.getStatements();
-      if (statements.length == 0) {
+      final PsiStatement firstStatement = ControlFlowUtils.getFirstStatementInBlock(method.getBody());
+      if (firstStatement == null) {
         registerMethodError(method);
         return;
       }
-      final PsiStatement firstStatement = statements[0];
       if (isConstructorCall(firstStatement) || PsiUtilCore.hasErrorElementChild(firstStatement)) {
         return;
       }

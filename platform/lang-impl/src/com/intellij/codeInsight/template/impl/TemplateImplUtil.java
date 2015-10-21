@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,20 +29,24 @@ public class TemplateImplUtil {
     TemplateTextLexer lexer = new TemplateTextLexer();
     lexer.start(text);
 
-    while(true){
+    while (true) {
       IElementType tokenType = lexer.getTokenType();
       if (tokenType == null) break;
       int start = lexer.getTokenStart();
       int end = lexer.getTokenEnd();
       String token = text.subSequence(start, end).toString();
-      if (tokenType == TemplateTokenType.VARIABLE){
+      if (tokenType == TemplateTokenType.VARIABLE) {
         String name = token.substring(1, token.length() - 1);
-        if (!variables.containsKey(name)){
+        if (!variables.containsKey(name)) {
           variables.put(name, new Variable(name, "", "", true));
         }
       }
       lexer.advance();
     }
     return variables;
+  }
+
+  public static boolean isValidVariableName(String varName) {
+    return parseVariables("$" + varName + "$").containsKey(varName);
   }
 }

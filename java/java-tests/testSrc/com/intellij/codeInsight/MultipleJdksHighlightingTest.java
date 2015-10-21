@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -163,6 +162,14 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
   public void testStaticCallOnChildWithNotAccessibleParent() throws Exception {
     addDependencies_37_78();
     doTest3Modules();
+  }
+
+  public void testRawAssignmentToGenerics() throws Exception {
+    ModuleRootModificationUtil.addDependency(myJava7Module, myJava3Module);
+    final String name = getTestName(false);
+    myFixture.copyFileToProject("java3/p/" + name + ".java");
+    myFixture.configureByFiles("java7/p/" + name + ".java");
+    myFixture.checkHighlighting();
   }
 
   public void testCloseableAutoCloseable() {

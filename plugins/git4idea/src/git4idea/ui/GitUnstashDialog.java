@@ -148,7 +148,7 @@ public class GitUnstashDialog extends DialogWrapper {
                                                      GitBundle.message("git.unstash.drop.confirmation.message", stash.getStash(), stash.getMessage()),
                                                      GitBundle.message("git.unstash.drop.confirmation.title", stash.getStash()), Messages.getQuestionIcon())) {
           final ModalityState current = ModalityState.current();
-          ProgressManager.getInstance().run(new Task.Modal(myProject, "Removing stash " + stash.getStash(), false) {
+          ProgressManager.getInstance().run(new Task.Modal(myProject, "Removing stash " + stash.getStash(), true) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
               final GitSimpleHandler h = dropHandler(stash.getStash());
@@ -361,14 +361,17 @@ public class GitUnstashDialog extends DialogWrapper {
     AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
     try {
       final Ref<GitCommandResult> result = Ref.create();
-      ProgressManager.getInstance().run(new Task.Modal(h.project(), GitBundle.getString("unstash.unstashing"), false) {
-        public void run(@NotNull final ProgressIndicator indicator) {
-          indicator.setIndeterminate(true);
-          h.addLineListener(new GitHandlerUtil.GitLineHandlerListenerProgress(indicator, h, "stash", false));
+      final ProgressManager progressManager = ProgressManager.getInstance();
+      boolean completed = progressManager.runProcessWithProgressSynchronously(new Runnable() {
+        @Override
+        public void run() {
+          h.addLineListener(new GitHandlerUtil.GitLineHandlerListenerProgress(progressManager.getProgressIndicator(), h, "stash", false));
           Git git = ServiceManager.getService(Git.class);
           result.set(git.runCommand(new Computable.PredefinedValueComputable<GitLineHandler>(h)));
         }
-      });
+      }, GitBundle.getString("unstash.unstashing"), true, myProject);
+
+      if (!completed) return;
 
       ServiceManager.getService(myProject, GitPlatformFacade.class).hardRefresh(root);
       GitCommandResult res = result.get();

@@ -281,7 +281,7 @@ final class Solver {
     if (previousEquation == null) {
       equations.put(coreKey, equation);
     } else {
-      HKey joinKey = new HKey(coreKey.key, coreKey.dirKey, equation.key.stable && previousEquation.key.stable);
+      HKey joinKey = new HKey(coreKey.key, coreKey.dirKey, equation.key.stable && previousEquation.key.stable, true);
       HResult joinResult = resultUtil.join(equation.result, previousEquation.result);
       HEquation joinEquation = new HEquation(joinKey, joinResult);
       equations.put(coreKey, joinEquation);
@@ -317,6 +317,17 @@ final class Solver {
     }
   }
 
+  Value negate(Value value) {
+    switch (value) {
+      case True:
+        return Value.False;
+      case False:
+        return Value.True;
+      default:
+        return value;
+    }
+  }
+
   HashMap<HKey, Value> solve() {
     for (HEquation hEquation : equations.values()) {
       queueEquation(hEquation);
@@ -325,8 +336,11 @@ final class Solver {
       HKey id = moving.pop();
       Value value = solved.get(id);
 
-      HKey[] pIds  = id.stable ? new HKey[]{id, id.negate()} : new HKey[]{id.negate(), id};
-      Value[] pVals = id.stable ? new Value[]{value, value} : new Value[]{value, unstableValue};
+      HKey[] initialPIds  = id.stable ? new HKey[]{id, id.invertStability()} : new HKey[]{id.invertStability(), id};
+      Value[] initialPVals = id.stable ? new Value[]{value, value} : new Value[]{value, unstableValue};
+
+      HKey[] pIds = new HKey[]{initialPIds[0], initialPIds[1], initialPIds[0].negate(), initialPIds[1].negate()};
+      Value[] pVals = new Value[]{initialPVals[0], initialPVals[1], negate(initialPVals[0]), negate(initialPVals[1])};
 
       for (int i = 0; i < pIds.length; i++) {
         HKey pId = pIds[i];

@@ -51,8 +51,8 @@ public class PseudoSplitter extends Splitter {
 
   public void fixFirst(final float proportion) {
     assert getFirstComponent() != null;
-    int comp = getSizeForComp(this);
-    myFirstFixedSize = (int)(comp * proportion - getDividerWidth());
+    int total = getSizeForComp(this);
+    myFirstFixedSize = (int)(proportion * (total - getDividerWidth()));
     myFirstIsFixed = true;
     mySecondIsFixed = false;
   }

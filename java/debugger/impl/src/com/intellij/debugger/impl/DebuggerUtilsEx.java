@@ -123,14 +123,14 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
 
-  public static boolean isAssignableFrom(final String baseQualifiedName, ReferenceType checkedType) {
+  public static boolean isAssignableFrom(@NotNull final String baseQualifiedName, @NotNull ReferenceType checkedType) {
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(baseQualifiedName)) {
       return true;
     }
     return getSuperClass(baseQualifiedName, checkedType) != null;
   }
 
-  public static ReferenceType getSuperClass(final String baseQualifiedName, ReferenceType checkedType) {
+  public static ReferenceType getSuperClass(@NotNull final String baseQualifiedName, @NotNull ReferenceType checkedType) {
     if (baseQualifiedName.equals(checkedType.name())) {
       return checkedType;
     }
@@ -867,34 +867,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   @Nullable
-  public static PsiElement getContainingMethod(@Nullable PsiElement elem) {
+  public static PsiParameterListOwner getContainingMethod(@Nullable PsiElement elem) {
     return PsiTreeUtil.getContextOfType(elem, PsiMethod.class, PsiLambdaExpression.class);
   }
 
   @Nullable
-  public static PsiElement getBody(@Nullable PsiElement containingMethod) {
-    if (containingMethod instanceof PsiMethod) {
-      return ((PsiMethod)containingMethod).getBody();
-    }
-    else if (containingMethod instanceof PsiLambdaExpression) {
-      return ((PsiLambdaExpression)containingMethod).getBody();
-    }
-    return null;
-  }
-
-  @Nullable
-  public static PsiParameterList getParameterList(@Nullable PsiElement containingMethod) {
-    if (containingMethod instanceof PsiMethod) {
-      return ((PsiMethod)containingMethod).getParameterList();
-    }
-    else if (containingMethod instanceof PsiLambdaExpression) {
-      return ((PsiLambdaExpression)containingMethod).getParameterList();
-    }
-    return null;
-  }
-
-  @Nullable
-  public static PsiElement getContainingMethod(@NotNull SourcePosition position) {
+  public static PsiParameterListOwner getContainingMethod(@Nullable SourcePosition position) {
+    if (position == null) return null;
     return getContainingMethod(position.getElementAt());
   }
 

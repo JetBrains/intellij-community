@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.vcsUtil.UIVcsUtil.SPACE_AND_THIN_SPACE;
+import static com.intellij.vcsUtil.UIVcsUtil.spaceAndThinSpace;
 
 public class ChangesBrowserLockedFoldersNode extends ChangesBrowserNode implements TreeLinkMouseListener.HaveTooltip {
   private final Project myProject;
@@ -55,7 +55,7 @@ public class ChangesBrowserLockedFoldersNode extends ChangesBrowserNode implemen
   public void render(final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
     renderer.append(userObject.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     renderer.append(getCountText(), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
-    renderer.append(SPACE_AND_THIN_SPACE, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    renderer.append(spaceAndThinSpace(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     final CleanupStarter starter = new CleanupStarter(myProject, this);
     renderer.append("do cleanup...", new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, JBColor.RED), starter);
   }

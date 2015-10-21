@@ -15,14 +15,14 @@
  */
 package com.intellij.diff.comparison
 
-import com.intellij.diff.*
+import com.intellij.diff.DiffTestCase
 import com.intellij.diff.fragments.DiffFragment
 import com.intellij.diff.fragments.LineFragment
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Couple
 import com.intellij.util.containers.ContainerUtil
-import java.util.BitSet
+import java.util.*
 
 public abstract class ComparisonUtilTestBase : DiffTestCase() {
   private fun doLineTest(before: Document, after: Document, expected: List<Change>?, policy: ComparisonPolicy) {
@@ -36,7 +36,7 @@ public abstract class ComparisonUtilTestBase : DiffTestCase() {
     val fragments = MANAGER.squash(rawFragments)
     checkConsistencyWord(fragments, before, after)
 
-    val diffFragments = fragments.get(0).getInnerFragments()!!
+    val diffFragments = fragments[0].getInnerFragments()!!
     if (matchings != null) checkDiffMatching(diffFragments, matchings)
     if (expected != null) checkDiffChanges(diffFragments, expected)
   }
@@ -62,8 +62,8 @@ public abstract class ComparisonUtilTestBase : DiffTestCase() {
   }
 
   private fun checkConsistencyWord(fragments: List<LineFragment>, before: Document, after: Document) {
-    assertTrue(fragments.size() == 1)
-    val fragment = fragments.get(0)
+    assertTrue(fragments.size == 1)
+    val fragment = fragments[0]
 
     assertTrue(fragment.getStartOffset1() == 0)
     assertTrue(fragment.getStartOffset2() == 0)
@@ -93,7 +93,7 @@ public abstract class ComparisonUtilTestBase : DiffTestCase() {
         checkLineOffsets(fragment, before, after)
 
         val innerFragments = fragment.getInnerFragments()
-        innerFragments?.let { checkConsistency(innerFragments!!, before, after) }
+        innerFragments?.let { checkConsistency(innerFragments, before, after) }
       }
       else {
         assertTrue(fragment.getStartOffset1() != fragment.getEndOffset1() || fragment.getStartOffset2() != fragment.getEndOffset2())
@@ -211,7 +211,7 @@ public abstract class ComparisonUtilTestBase : DiffTestCase() {
         }
       }
       catch (e: Throwable) {
-        println("Policy: " + policy.name())
+        println("Policy: " + policy.name)
         throw e
       }
     }
@@ -237,7 +237,7 @@ public abstract class ComparisonUtilTestBase : DiffTestCase() {
     }
 
 
-    public fun String.minus(v: String): Helper {
+    public operator fun String.minus(v: String): Helper {
       return Helper(this, v)
     }
 
@@ -330,7 +330,7 @@ public abstract class ComparisonUtilTestBase : DiffTestCase() {
 
   public data class Change(val start1: Int, val end1: Int, val start2: Int, val end2: Int) {
     override fun toString(): String {
-      return "(" + start1 + ", " + end1 + ") - (" + start2 + ", " + end2 + ")"
+      return "($start1, $end1) - ($start2, $end2)"
     }
   }
 }

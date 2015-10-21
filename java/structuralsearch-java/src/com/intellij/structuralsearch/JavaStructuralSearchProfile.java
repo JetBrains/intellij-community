@@ -194,9 +194,9 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     if (physical) {
       throw new UnsupportedOperationException(getClass() + " cannot create physical PSI");
     }
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     if (context == PatternTreeContext.Block) {
-      PsiElement element = elementFactory.createStatementFromText("{\n" + text + "\n}", null);
+      final PsiElement element = elementFactory.createStatementFromText("{\n" + text + "\n}", null);
       final PsiElement[] children = ((PsiBlockStatement)element).getCodeBlock().getChildren();
       final int extraChildCount = 4;
 
@@ -204,6 +204,14 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         PsiElement[] result = new PsiElement[children.length - extraChildCount];
         final int extraChildStart = 2;
         System.arraycopy(children, extraChildStart, result, 0, children.length - extraChildCount);
+
+        if (shouldTryClassPattern(result)) {
+          final PsiElement[] classPattern =
+            createPatternTree(text, PatternTreeContext.Class, fileType, language, contextName, extension, project, false);
+          if (classPattern.length == 1) {
+            result = classPattern;
+          }
+        }
         return result;
       }
       else {
@@ -211,8 +219,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       }
     }
     else if (context == PatternTreeContext.Class) {
-      PsiElement element = elementFactory.createStatementFromText("class A {\n" + text + "\n}", null);
-      PsiClass clazz = (PsiClass)((PsiDeclarationStatement)element).getDeclaredElements()[0];
+      final PsiClass clazz = elementFactory.createClassFromText(text, null);
       PsiElement startChild = clazz.getLBrace();
       if (startChild != null) startChild = startChild.getNextSibling();
 
@@ -220,11 +227,12 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       if (endChild != null) endChild = endChild.getPrevSibling();
       if (startChild == endChild) return PsiElement.EMPTY_ARRAY; // nothing produced
 
+      final PsiCodeBlock codeBlock = elementFactory.createCodeBlock();
       final List<PsiElement> result = new ArrayList<PsiElement>(3);
       assert startChild != null;
       for (PsiElement el = startChild.getNextSibling(); el != endChild && el != null; el = el.getNextSibling()) {
         if (el instanceof PsiErrorElement) continue;
-        result.add(el);
+        result.add(codeBlock.add(el));
       }
 
       return PsiUtilCore.toPsiElementArray(result);
@@ -232,6 +240,19 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     else {
       return PsiFileFactory.getInstance(project).createFileFromText("__dummy.java", text).getChildren();
     }
+  }
+
+  private static boolean shouldTryClassPattern(PsiElement[] result) {
+    if (result.length == 3 && PsiModifier.STATIC.equals(result[0].getText()) && result[1] instanceof PsiWhiteSpace &&
+        result[2] instanceof PsiBlockStatement) {
+      // looks like static initializer
+      return true;
+    }
+    else if (result.length > 1 && result[0] instanceof PsiDeclarationStatement && !result[0].getText().endsWith(";")) {
+      // might be method
+      return true;
+    }
+    return false;
   }
 
   @NotNull

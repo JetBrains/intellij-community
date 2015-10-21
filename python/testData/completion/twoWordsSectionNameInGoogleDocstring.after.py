@@ -1,4 +1,4 @@
 def f():
     """
-    Keyword arguments:
+    Keyword Args:
     """

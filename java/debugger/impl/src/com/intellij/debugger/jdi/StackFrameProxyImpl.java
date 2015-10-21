@@ -25,6 +25,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ThreeState;
 import com.sun.jdi.*;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -46,10 +47,10 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
   private StackFrame myStackFrame;
   private ObjectReference myThisReference;
   private ClassLoaderReference myClassLoader;
-  private Boolean myIsObsolete = null;
+  private ThreeState myIsObsolete = ThreeState.UNSURE;
   private Map<LocalVariable, Value> myAllValues;
 
-  public StackFrameProxyImpl(ThreadReferenceProxyImpl threadProxy, @NotNull StackFrame frame, int fromBottomIndex /* 1-based */) {
+  public StackFrameProxyImpl(@NotNull ThreadReferenceProxyImpl threadProxy, @NotNull StackFrame frame, int fromBottomIndex /* 1-based */) {
     super(threadProxy.getVirtualMachine());
     myThreadProxy = threadProxy;
     myFrameFromBottomIndex = fromBottomIndex;
@@ -59,14 +60,14 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
   public boolean isObsolete() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     checkValid();
-    if (myIsObsolete != null) {
-      return myIsObsolete.booleanValue();
+    if (myIsObsolete != ThreeState.UNSURE) {
+      return myIsObsolete.toBoolean();
     }
     InvalidStackFrameException error = null;
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
         boolean isObsolete = (getVirtualMachine().canRedefineClasses() && location().method().isObsolete());
-        myIsObsolete = isObsolete? Boolean.TRUE : Boolean.FALSE;
+        myIsObsolete = ThreeState.fromBoolean(isObsolete);
         return isObsolete;
       }
       catch (InvalidStackFrameException e) {
@@ -75,7 +76,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
       }
       catch (InternalException e) {
         if (e.errorCode() == 23 /*INVALID_METHODID according to JDI sources*/) {
-          myIsObsolete = Boolean.TRUE;
+          myIsObsolete = ThreeState.YES;
           return true;
         }
         throw e;
@@ -108,7 +109,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     }
     myFrameIndex = -1;
     myStackFrame = null;
-    myIsObsolete = null;
+    myIsObsolete = ThreeState.UNSURE;
     myThisReference = null;
     myClassLoader = null;
     myAllValues = null;
@@ -171,6 +172,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
 //    return false;
 //  }
 
+  @NotNull
   @Override
   public VirtualMachineProxyImpl getVirtualMachine() {
     return (VirtualMachineProxyImpl) myTimer;
@@ -191,6 +193,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     throw new EvaluateException(error.getMessage(), error);
   }
 
+  @NotNull
   @Override
   public ThreadReferenceProxyImpl threadProxy() {
     return myThreadProxy;
@@ -303,11 +306,24 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     InvalidStackFrameException error = null;
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        return getAllValues().get(localVariable.getVariable());
+        Map<LocalVariable, Value> values = getAllValues();
+        LocalVariable variable = localVariable.getVariable();
+        if (values.containsKey(variable)) {
+          return values.get(variable);
+        }
+        else { // try direct get
+          return getStackFrame().getValue(variable);
+        }
       }
       catch (InvalidStackFrameException e) {
         error = e;
         clearCaches();
+      }
+      catch (InternalException e) {
+        if (e.errorCode() == 35 || e.errorCode() == 101) {
+          throw new EvaluateException(DebuggerBundle.message("error.corrupt.debug.info", e.getMessage()), e);
+        }
+        else throw e;
       }
     }
     throw new EvaluateException(error.getMessage(), error);
@@ -355,6 +371,14 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
       }
       catch (AbsentInformationException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
+      }
+      catch (InternalException e) {
+        // extra logging for IDEA-141270
+        if (e.errorCode() == 35 || e.errorCode() == 101) {
+          LOG.info(e);
+          myAllValues = Collections.emptyMap();
+        }
+        else throw e;
       }
     }
     return myAllValues;

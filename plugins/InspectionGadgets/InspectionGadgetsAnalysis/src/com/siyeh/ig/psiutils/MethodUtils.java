@@ -227,14 +227,13 @@ public class MethodUtils {
   }
 
   public static boolean isEmpty(PsiMethod method) {
-    final PsiCodeBlock body = method.getBody();
-    if (body == null) {
-      return true;
-    }
-    final PsiStatement[] statements = body.getStatements();
-    return statements.length == 0;
+    return ControlFlowUtils.isEmptyCodeBlock(method.getBody());
   }
 
+  /**
+   * Returns true if the method or constructor is trivial, i.e. does nothing of consequence. This is true when the method is empty, but
+   * also when it is a constructor which only calls super, contains empty statements or "if (false)" statements.
+   */
   public static boolean isTrivial(PsiMethod method, boolean throwIsTrivial) {
     return isTrivial(method.getBody(), throwIsTrivial);
   }
@@ -313,5 +312,23 @@ public class MethodUtils {
       }
     }
     return false;
+  }
+
+  public static boolean isChainable(PsiMethod method) {
+    if (method == null) {
+      return false;
+    }
+    final PsiElement navigationElement = method.getNavigationElement();
+    if (!(navigationElement instanceof PsiMethod)) {
+      return false;
+    }
+    method = (PsiMethod)navigationElement;
+    final PsiStatement lastStatement = ControlFlowUtils.getLastStatementInBlock(method.getBody());
+    if (!(lastStatement instanceof PsiReturnStatement)) {
+      return false;
+    }
+    final PsiReturnStatement returnStatement = (PsiReturnStatement)lastStatement;
+    final PsiExpression returnValue = returnStatement.getReturnValue();
+    return returnValue instanceof PsiThisExpression;
   }
 }

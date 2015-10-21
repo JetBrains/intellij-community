@@ -106,9 +106,6 @@ class ReloadClassesWorker {
 
     final DebugProcessImpl debugProcess = getDebugProcess();
     final VirtualMachineProxyImpl virtualMachineProxy = debugProcess.getVirtualMachineProxy();
-    if(virtualMachineProxy == null) {
-      return;
-    }
 
     final Project project = debugProcess.getProject();
     final BreakpointManager breakpointManager = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();
@@ -176,7 +173,7 @@ class ReloadClassesWorker {
     SuspendContextImpl suspendContext = context.getSuspendContext();
     if (suspendContext != null) {
       XExecutionStack stack = suspendContext.getActiveExecutionStack();
-      if (stack instanceof JavaExecutionStack) {
+      if (stack != null) {
         ((JavaExecutionStack)stack).initTopFrame();
       }
     }

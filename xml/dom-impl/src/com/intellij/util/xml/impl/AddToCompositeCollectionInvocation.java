@@ -38,12 +38,12 @@ class AddToCompositeCollectionInvocation implements Invocation {
 
   @Override
   public Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
+    final XmlTag tag = handler.ensureTagExists();
+
     Set<XmlTag> set = ContainerUtil.newTroveSet();
     for (final CollectionChildDescriptionImpl qname : myQnames) {
-      set.addAll(qname.getTagsGetter().fun(handler));
+      set.addAll(qname.getCollectionSubTags(handler, tag));
     }
-
-    final XmlTag tag = handler.ensureTagExists();
     int index = args != null && args.length == 1 ? (Integer)args[0] : Integer.MAX_VALUE;
 
     XmlTag lastTag = null;

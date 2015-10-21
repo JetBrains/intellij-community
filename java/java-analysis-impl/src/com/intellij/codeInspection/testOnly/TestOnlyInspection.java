@@ -62,18 +62,19 @@ public class TestOnlyInspection extends BaseJavaBatchLocalInspectionTool {
       public void visitReferenceExpression(PsiReferenceExpression reference) {
         PsiElement resolve = reference.resolve();
         if (resolve instanceof PsiField) {
-          validate(reference, ((PsiField)resolve), h);
+          validate(reference, (PsiField)resolve, h);
         }
       }
 
       @Override
       public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
         if (reference.getParent() instanceof PsiNewExpression 
+            || reference.getParent() instanceof PsiAnonymousClass
             || PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class) != null) {
           return;
         }
         PsiElement resolve = reference.resolve();
-        if (resolve instanceof PsiClass) validate(reference, ((PsiClass)resolve), h);
+        if (resolve instanceof PsiClass) validate(reference, (PsiClass)resolve, h);
       }
     };
   }

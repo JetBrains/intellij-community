@@ -276,11 +276,19 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTest();
   }
 
+  public void testStringPlusOverload() throws Exception {
+    doTest();
+  }
+  
   public void testReturnStatementWithoutBraces() throws Exception {
     doTestInlineThisOnly();
   }
 
   public void testUnresolvedArgPassedToSameNameParameter() throws Exception {
+    doTestInlineThisOnly();
+  }
+
+  public void testMakeTypesDenotable() throws Exception {
     doTestInlineThisOnly();
   }
 

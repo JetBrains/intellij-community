@@ -1218,6 +1218,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void generateBoxingUnboxingInstructionFor(PsiExpression expression, PsiType expectedType) {
+    if (expectedType == PsiType.VOID) return;
+
     PsiType exprType = expression.getType();
 
     if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) && TypeConversionUtil.isPrimitiveWrapper(exprType)) {
@@ -1513,12 +1515,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   static List<MethodContract> getMethodContracts(@NotNull final PsiMethod method) {
-    final PsiAnnotation contractAnno = findContractAnnotation(method);
-    if (contractAnno != null) {
-      return CachedValuesManager.getCachedValue(contractAnno, new CachedValueProvider<List<MethodContract>>() {
-        @Nullable
-        @Override
-        public Result<List<MethodContract>> compute() {
+    return CachedValuesManager.getCachedValue(method, new CachedValueProvider<List<MethodContract>>() {
+      @Nullable
+      @Override
+      public Result<List<MethodContract>> compute() {
+        final PsiAnnotation contractAnno = findContractAnnotation(method);
+        if (contractAnno != null) {
           String text = AnnotationUtil.getStringAttributeValue(contractAnno, null);
           if (text != null) {
             try {
@@ -1534,12 +1536,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
             catch (Exception ignored) {
             }
           }
-          return Result.create(Collections.<MethodContract>emptyList(), contractAnno, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
         }
-      });
-    }
-
-    return Collections.emptyList();
+        return Result.create(Collections.<MethodContract>emptyList(), method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      }
+    });
   }
 
   @Nullable

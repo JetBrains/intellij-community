@@ -1,4 +1,4 @@
 def f():
     """
-    Keyword argu<caret>:
+    Keyword ar<caret>:
     """

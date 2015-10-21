@@ -18,18 +18,48 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 
 public class EditConfigurationsDialog extends SingleConfigurableEditor implements RunConfigurable.RunDialogBase {
   protected Executor myExecutor;
 
   public EditConfigurationsDialog(final Project project) {
-    super(project, new RunConfigurable(project), "#com.intellij.execution.impl.EditConfigurationsDialog", IdeModalityType.PROJECT);
+    this(project, null);
+  }
+
+  public EditConfigurationsDialog(final Project project, @Nullable final ConfigurationFactory factory) {
+    super(project, new RunConfigurable(project).selectConfigurableOnShow(factory == null), "#com.intellij.execution.impl.EditConfigurationsDialog", IdeModalityType.PROJECT);
     ((RunConfigurable)getConfigurable()).setRunDialog(this);
     setTitle(ExecutionBundle.message("run.debug.dialog.title"));
     setHorizontalStretch(1.3F);
+    if (factory != null) {
+      addRunConfiguration(factory);
+    }
+  }
+
+  public void addRunConfiguration(@NotNull final ConfigurationFactory factory) {
+    final RunConfigurable configurable = (RunConfigurable)getConfigurable();
+    final SingleConfigurationConfigurable<RunConfiguration> configuration = configurable.createNewConfiguration(factory);
+
+    if (!isVisible()) {
+       getContentPanel().addComponentListener(new ComponentAdapter() {
+         @Override
+         public void componentShown(ComponentEvent e) {
+           if (configuration != null) {
+             configurable.updateRightPanel(configuration);
+             getContentPanel().removeComponentListener(this);
+           }
+         }
+       });
+    }
   }
 
   @Override

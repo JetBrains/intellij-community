@@ -24,6 +24,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -354,12 +355,12 @@ public class GenericsUtil {
     return internalCanonicalText != null && internalCanonicalText.equals(type.getCanonicalText());
   }
 
-  @Nullable
+  @Contract("null -> null")
   public static PsiType getVariableTypeByExpressionType(@Nullable PsiType type) {
     return getVariableTypeByExpressionType(type, true);
   }
 
-  @Nullable
+  @Contract("null, _ -> null")
   public static PsiType getVariableTypeByExpressionType(@Nullable PsiType type, final boolean openCaptured) {
     if (type == null) return null;
     if (type instanceof PsiCapturedWildcardType) {

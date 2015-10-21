@@ -27,7 +27,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.vcsUtil.UIVcsUtil.SPACE_AND_THIN_SPACE;
+import static com.intellij.vcsUtil.UIVcsUtil.spaceAndThinSpace;
 
 /**
  * @author yole
@@ -62,7 +62,7 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> impl
     if (renderer.isShowFlatten() && file.isValid()) {
       final VirtualFile parentFile = file.getParent();
       assert parentFile != null;
-      renderer.append(SPACE_AND_THIN_SPACE + FileUtil.getLocationRelativeToUserHome(parentFile.getPresentableUrl()), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      renderer.append(spaceAndThinSpace() + FileUtil.getLocationRelativeToUserHome(parentFile.getPresentableUrl()), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
     else if (getCount() != 1 || getDirectoryCount() != 0) {
       appendCount(renderer);

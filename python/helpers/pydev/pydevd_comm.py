@@ -58,11 +58,11 @@ each command has a format:
     * PYDB - pydevd, the python end
 '''
 
-from pydevd_constants import * #@UnusedWildImport
-from _pydev_imps import _pydev_time as time, _pydev_thread
 import _pydev_threading as threading
+from _pydev_imps import _pydev_time as time, _pydev_thread
 from _pydev_imps._pydev_socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR
 from pydev_imports import _queue
+from pydevd_constants import * #@UnusedWildImport
 
 try:
     from urllib import quote, quote_plus, unquote, unquote_plus
@@ -135,6 +135,7 @@ CMD_SHOW_CONSOLE = 142
 
 CMD_GET_ARRAY = 143
 CMD_STEP_INTO_MY_CODE = 144
+CMD_GET_CONCURRENCY_EVENT = 145
 
 CMD_VERSION = 501
 CMD_RETURN = 502
@@ -190,6 +191,7 @@ ID_TO_MEANING = {
 
     '143':'CMD_GET_ARRAY',
     '144':'CMD_STEP_INTO_MY_CODE',
+    '145':'CMD_GET_CONCURRENCY_EVENT',
     }
 
 MAX_IO_MSG_SIZE = 1000  #if the io is too big, we'll not send all (could make the debugger too non-responsive)
@@ -327,6 +329,7 @@ class ReaderThread(PyDBDaemonThread):
                     r = self.sock.recv(1024)
                 except:
                     if not self.killReceived:
+                        traceback.print_exc()
                         self.handleExcept()
                     return #Finished communication.
 
