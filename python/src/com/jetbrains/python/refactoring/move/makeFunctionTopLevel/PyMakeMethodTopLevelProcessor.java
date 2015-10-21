@@ -15,9 +15,9 @@
  */
 package com.jetbrains.python.refactoring.move.makeFunctionTopLevel;
 
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
@@ -30,8 +30,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.refactoring.NameSuggesterUtil;
-import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
+import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -122,7 +121,9 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
             // Class().method() -> inst = Class(); method(inst.foo, inst.bar)
             else if (!newParamNames.isEmpty()) {
               final PyStatement anchor = PsiTreeUtil.getParentOfType(callExpr, PyStatement.class);
-              final String targetName = selectUniqueName(usageElem);
+              //noinspection ConstantConditions
+              final String className = StringUtil.notNullize(myFunction.getContainingClass().getName(), PyNames.OBJECT);
+              final String targetName = PyRefactoringUtil.selectUniqueNameFromType(className, usageElem);
               final String assignmentText = targetName + " = " + instanceExpr.getText();
               final PyAssignmentStatement assignment = myGenerator.createFromText(LanguageLevel.forElement(callExpr),
                                                                                   PyAssignmentStatement.class,
@@ -138,42 +139,6 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
         removeQualifier((PyReferenceExpression)usageElem);
       }
     }
-  }
-
-  @NotNull
-  private String selectUniqueName(@NotNull PsiElement scopeAnchor) {
-    final PyClass pyClass = myFunction.getContainingClass();
-    assert pyClass != null;
-    final Collection<String> suggestions;
-    if (pyClass.getName() != null) {
-      suggestions = NameSuggesterUtil.generateNamesByType(pyClass.getName());
-    }
-    else {
-      suggestions = Collections.singleton("inst");
-    }
-    for (String name : suggestions) {
-      if (isValidName(name, scopeAnchor)) {
-        return name;
-      }
-    }
-
-    //noinspection ConstantConditions
-    return appendNumberUntilValid(Iterables.getLast(suggestions), scopeAnchor);
-  }
-
-  private static boolean isValidName(@NotNull String name, @NotNull PsiElement scopeAnchor) {
-    return !(IntroduceValidator.isDefinedInScope(name, scopeAnchor) || PyNames.isReserved(name));
-  }
-
-  @NotNull
-  private static String appendNumberUntilValid(@NotNull String name, @NotNull PsiElement scopeAnchor) {
-    int counter = 1;
-    String candidate = name;
-    while (!isValidName(candidate, scopeAnchor)) {
-      candidate = name + counter;
-      counter++;
-    }
-    return candidate;
   }
 
   private boolean resolvesToClass(@NotNull PyExpression qualifier) {
@@ -264,8 +229,8 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
       final Collection<PyReferenceExpression> reads = myAttributeReferences.get(name);
       final PsiElement anchor = ContainerUtil.getFirstItem(reads);
       //noinspection ConstantConditions
-      if (!isValidName(name, anchor)) {
-        final String indexedName = appendNumberUntilValid(name, anchor);
+      if (!PyRefactoringUtil.isValidNewName(name, anchor)) {
+        final String indexedName = PyRefactoringUtil.appendNumberUntilValid(name, anchor);
         myAttributeToParameterName.put(name, indexedName);
       }
       else {
