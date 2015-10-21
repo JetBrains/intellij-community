@@ -37,7 +37,6 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubTree;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
@@ -151,8 +150,9 @@ public abstract class PsiAnchor {
     if (!(file instanceof PsiFileImpl)) return false;
 
     VirtualFile vFile = file.getVirtualFile();
-    IElementType elementType = ((PsiFileImpl)file).getContentElementType();
-    return elementType instanceof IStubFileElementType && vFile != null && ((IStubFileElementType)elementType).shouldBuildStubFor(vFile);
+
+    IStubFileElementType elementType = ((PsiFileImpl)file).getElementTypeForStubBuilder();
+    return elementType != null && vFile != null && elementType.shouldBuildStubFor(vFile);
   }
 
   public static int calcStubIndex(@NotNull StubBasedPsiElement psi) {
