@@ -104,7 +104,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
       replaceSimplifiableAssignmentNegated(statement);
     }
     else if (isSimplifiableReturnNegated(statement)) {
-      repaceSimplifiableReturnNegated(statement);
+      replaceSimplifiableReturnNegated(statement);
     }
     else if (isSimplifiableImplicitReturnNegated(statement)) {
       replaceSimplifiableImplicitReturnNegated(statement);
@@ -163,6 +163,9 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     final String conditionText = condition.getText();
     final PsiStatement thenBranch = statement.getThenBranch();
     final PsiExpressionStatement assignmentStatement = (PsiExpressionStatement)ControlFlowUtils.stripBraces(thenBranch);
+    if (assignmentStatement == null) {
+      return;
+    }
     final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)assignmentStatement.getExpression();
     final PsiJavaToken operator = assignmentExpression.getOperationSign();
     final String operand = operator.getText();
@@ -189,6 +192,9 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     final PsiExpressionStatement assignmentStatement =
       (PsiExpressionStatement)
         ControlFlowUtils.stripBraces(thenBranch);
+    if (assignmentStatement == null) {
+      return;
+    }
     final PsiAssignmentExpression assignmentExpression =
       (PsiAssignmentExpression)assignmentStatement.getExpression();
     final PsiJavaToken operator =
@@ -209,6 +215,9 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     final String conditionText = BoolUtils.getNegatedExpressionText(condition);
     final PsiStatement thenBranch = statement.getThenBranch();
     final PsiExpressionStatement assignmentStatement = (PsiExpressionStatement)ControlFlowUtils.stripBraces(thenBranch);
+    if (assignmentStatement == null) {
+      return;
+    }
     final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression) assignmentStatement.getExpression();
     final PsiJavaToken operator =
       assignmentExpression.getOperationSign();
@@ -235,7 +244,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     nextStatement.delete();
   }
 
-  private static void repaceSimplifiableReturnNegated(PsiIfStatement statement) {
+  private static void replaceSimplifiableReturnNegated(PsiIfStatement statement) {
     final PsiExpression condition = statement.getCondition();
     if (condition == null) {
       return;
@@ -253,9 +262,11 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     final String conditionText = BoolUtils.getNegatedExpressionText(condition);
     final PsiStatement thenBranch = statement.getThenBranch();
     final PsiExpressionStatement assignmentStatement = (PsiExpressionStatement)ControlFlowUtils.stripBraces(thenBranch);
+    if (assignmentStatement == null) {
+      return;
+    }
     final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)assignmentStatement.getExpression();
-    final PsiJavaToken operator =
-      assignmentExpression.getOperationSign();
+    final PsiJavaToken operator = assignmentExpression.getOperationSign();
     final String operand = operator.getText();
     final PsiExpression lhs = assignmentExpression.getLExpression();
     final String lhsText = lhs.getText();
