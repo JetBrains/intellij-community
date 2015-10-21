@@ -55,7 +55,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
 
     if (pathInfo.isDirectory()) {
       if (!endsWithSlash(decodedRawPath)) {
-        WebServerPathHandler.redirectToDirectory(request, channel, if (isCustomHost) path else ("$projectName/$path"))
+        redirectToDirectory(request, channel, if (isCustomHost) path else ("$projectName/$path"))
         return true
       }
 
@@ -79,7 +79,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
         // FallbackResource feature in action, /login requested, /index.php retrieved, we must not redirect /login to /login/
         val parentPath = getParentPath(pathInfo.path)
         if (parentPath != null && endsWithName(path, PathUtilRt.getFileName(parentPath))) {
-          WebServerPathHandler.redirectToDirectory(request, channel, if (isCustomHost) path else ("$projectName/$path"))
+          redirectToDirectory(request, channel, if (isCustomHost) path else ("$projectName/$path"))
           return true
         }
       }
@@ -102,7 +102,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
         }
       }
       catch (e: Throwable) {
-        BuiltInWebServer.LOG.error(e)
+        LOG.error(e)
       }
     }
     return false

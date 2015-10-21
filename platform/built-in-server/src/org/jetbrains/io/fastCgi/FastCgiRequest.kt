@@ -1,12 +1,12 @@
 package org.jetbrains.io.fastCgi
 
+import com.intellij.openapi.util.io.FileUtil
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufUtil
 import io.netty.buffer.ByteBufUtilEx
 import io.netty.channel.Channel
 import io.netty.handler.codec.http.FullHttpRequest
-import io.netty.handler.codec.http.HttpHeaderNames
 import org.jetbrains.builtInWebServer.PathInfo
 import org.jetbrains.io.Responses
 import java.net.InetSocketAddress
@@ -32,7 +32,7 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
 
   fun writeFileHeaders(pathInfo: PathInfo, canonicalRequestPath: CharSequence) {
     val root = pathInfo.root
-    addHeader("DOCUMENT_ROOT", root.path.separatorsToSystem())
+    addHeader("DOCUMENT_ROOT", FileUtil.toSystemDependentName(root.path))
     addHeader("SCRIPT_FILENAME", pathInfo.filePath)
     addHeader("SCRIPT_NAME", canonicalRequestPath)
   }
@@ -87,7 +87,6 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
 
     addHeader("GATEWAY_INTERFACE", "CGI/1.1")
     addHeader("SERVER_PROTOCOL", request.protocolVersion().text())
-    addHeader("CONTENT_TYPE", request.headers().getAsString(HttpHeaderNames.CONTENT_TYPE))
 
     // PHP only, required if PHP was built with --enable-force-cgi-redirect
     addHeader("REDIRECT_STATUS", "200")
@@ -102,7 +101,9 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
     addHeader("CONTENT_LENGTH", request.content().readableBytes().toString())
 
     for ((key, value) in request.headers().iteratorAsString()) {
-      addHeader("HTTP_${key.replace('-', '_').toUpperCase(Locale.ENGLISH)}", value)
+      if (!key.equals("keep-alive", ignoreCase = true)) {
+        addHeader("HTTP_${key.replace('-', '_').toUpperCase(Locale.ENGLISH)}", value)
+      }
     }
   }
 

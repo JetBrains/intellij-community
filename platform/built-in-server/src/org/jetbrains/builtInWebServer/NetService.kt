@@ -10,7 +10,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.util.Consumer
@@ -21,9 +20,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.isRejected
 import javax.swing.Icon
 
-val LOG: Logger = Logger.getInstance(NetService::class.java)
-
-public abstract class NetService @JvmOverloads protected constructor(protected val project: Project, private val consoleManager: ConsoleManager = ConsoleManager()) : Disposable {
+abstract class NetService @JvmOverloads protected constructor(protected val project: Project, private val consoleManager: ConsoleManager = ConsoleManager()) : Disposable {
   protected val processHandler: AsyncValueLoader<OSProcessHandler> = object : AsyncValueLoader<OSProcessHandler>() {
     override fun isCancelOnReject() = true
 
@@ -103,7 +100,7 @@ public abstract class NetService @JvmOverloads protected constructor(protected v
 
   protected abstract fun getConsoleToolWindowIcon(): Icon
 
-  public open fun getConsoleToolWindowActions(): ActionGroup = DefaultActionGroup()
+  open fun getConsoleToolWindowActions(): ActionGroup = DefaultActionGroup()
 
   private inner class MyProcessAdapter : ProcessAdapter(), Consumer<String> {
     override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
