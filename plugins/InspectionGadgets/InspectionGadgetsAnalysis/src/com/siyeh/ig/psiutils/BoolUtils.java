@@ -70,12 +70,18 @@ public class BoolUtils {
     if (expression == null) {
       return "";
     }
-    if (isNegation(expression)) {
+    if (expression instanceof PsiConditionalExpression) {
+      final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
+      return conditionalExpression.getCondition().getText() +
+             '?' + getNegatedExpressionText(conditionalExpression.getThenExpression()) +
+             ':' + getNegatedExpressionText(conditionalExpression.getElseExpression());
+    }
+    else if (isNegation(expression)) {
       final PsiExpression negated = getNegated(expression);
       if (negated == null) {
         return "";
       }
-      return ParenthesesUtils.getPrecedence(negated) > precedence ? '(' + negated.getText() + ')' : negated.getText();
+      return ParenthesesUtils.getText(negated, precedence);
     }
     else if (ComparisonUtils.isComparison(expression)) {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
@@ -100,9 +106,7 @@ public class BoolUtils {
       }
       return result.toString();
     }
-    else return ParenthesesUtils.getPrecedence(expression) > ParenthesesUtils.PREFIX_PRECEDENCE
-                ? "!(" + expression.getText() + ')'
-                : '!' + expression.getText();
+    else return '!' + ParenthesesUtils.getText(expression, ParenthesesUtils.PREFIX_PRECEDENCE);
   }
 
   @Nullable
