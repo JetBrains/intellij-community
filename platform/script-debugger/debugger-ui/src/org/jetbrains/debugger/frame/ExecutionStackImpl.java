@@ -13,76 +13,62 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.debugger.frame;
+package org.jetbrains.debugger.frame
 
-import com.intellij.xdebugger.frame.XExecutionStack;
-import com.intellij.xdebugger.frame.XStackFrame;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.debugger.*;
+import com.intellij.xdebugger.frame.XExecutionStack
+import com.intellij.xdebugger.frame.XStackFrame
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager
+import org.jetbrains.debugger.DebuggerViewSupport
+import org.jetbrains.debugger.Script
+import org.jetbrains.debugger.SuspendContext
+import org.jetbrains.debugger.done
+import java.util.*
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+internal class ExecutionStackImpl(private val suspendContext: SuspendContext, private val viewSupport: DebuggerViewSupport, private val topFrameScript: Script?) : XExecutionStack("") {
+  private var topCallFrameView: CallFrameView? = null
 
-class ExecutionStackImpl extends XExecutionStack {
-  private final SuspendContext suspendContext;
-  private final Script topFrameScript;
-  private CallFrameView topCallFrameView;
-  private final DebuggerViewSupport debugProcess;
-
-  public ExecutionStackImpl(@NotNull SuspendContext suspendContext, @NotNull DebuggerViewSupport debugProcess, @Nullable Script topFrameScript) {
-    super("");
-
-    this.debugProcess = debugProcess;
-    this.suspendContext = suspendContext;
-    this.topFrameScript = topFrameScript;
-  }
-
-  @Override
-  @Nullable
-  public CallFrameView getTopFrame() {
-    CallFrame topCallFrame = suspendContext.getTopFrame();
-    if (topCallFrameView == null || topCallFrameView.getCallFrame() != topCallFrame) {
-      topCallFrameView = topCallFrame == null ? null : new CallFrameView(topCallFrame, debugProcess, topFrameScript);
+  override fun getTopFrame(): CallFrameView? {
+    val topCallFrame = suspendContext.topFrame
+    if (topCallFrameView == null || topCallFrameView!!.callFrame != topCallFrame) {
+      topCallFrameView = if (topCallFrame == null) null else CallFrameView(topCallFrame, viewSupport, topFrameScript)
     }
-    return topCallFrameView;
+    return topCallFrameView
   }
 
-  @Override
-  public final void computeStackFrames(final int firstFrameIndex, final XStackFrameContainer container) {
-    SuspendContext suspendContext = debugProcess.getVm().getSuspendContextManager().getContext();
+  override fun computeStackFrames(firstFrameIndex: Int, container: XExecutionStack.XStackFrameContainer) {
+    val suspendContext = viewSupport.vm!!.suspendContextManager.context ?: return
     // WipSuspendContextManager set context to null on resume _before_ vm.getDebugListener().resumed() call() (in any case, XFramesView can queue event to EDT), so, IDE state could be outdated compare to VM (our) state
-    if (suspendContext == null) {
-      return;
-    }
 
-    suspendContext.getFrames().done(new ContextDependentAsyncResultConsumer<CallFrame[]>(suspendContext) {
-      @Override
-      protected void consume(CallFrame[] frames, @NotNull Vm vm) {
-        int count = frames.length - firstFrameIndex;
-        List<XStackFrame> result;
+    suspendContext.frames
+      .done(suspendContext) { frames, vm ->
+        val count = frames.size() - firstFrameIndex
+        val result: List<XStackFrame>
         if (count < 1) {
-          result = Collections.emptyList();
+          result = emptyList()
         }
         else {
-          result = new ArrayList<XStackFrame>(count);
-          for (int i = firstFrameIndex; i < frames.length; i++) {
+          result = ArrayList<XStackFrame>(count)
+          for (i in firstFrameIndex..frames.size() - 1) {
             if (i == 0) {
-              result.add(topCallFrameView);
-              continue;
+              result.add(getTopFrame()!!)
+              continue
             }
 
-            CallFrame frame = frames[i];
+            val frame = frames[i]
             // if script is null, it is native function (Object.forEach for example), so, skip it
-            Script script = vm.getScriptManager().getScript(frame);
+            val script = vm.scriptManager.getScript(frame)
             if (script != null) {
-              result.add(new CallFrameView(frame, debugProcess, script));
+              val sourceInfo = viewSupport.getSourceInfo(script, frame)
+              val isInLibraryContent = sourceInfo != null && viewSupport.isInLibraryContent(sourceInfo, script)
+              if (isInLibraryContent && !XDebuggerSettingsManager.getInstance().dataViewSettings.isShowLibraryStackFrames) {
+                continue
+              }
+
+              result.add(CallFrameView(frame, viewSupport, script, sourceInfo, isInLibraryContent))
             }
           }
         }
-        container.addStackFrames(result, true);
+        container.addStackFrames(result, true)
       }
-    });
   }
 }
