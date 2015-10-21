@@ -1162,6 +1162,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setHighlighter(@NotNull final EditorHighlighter highlighter) {
+    if (isReleased) return; // do not set highlighter to the released editor
     assertIsDispatchThread();
     final Document document = getDocument();
     Disposer.dispose(myHighlighterDisposable);
