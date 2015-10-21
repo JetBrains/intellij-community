@@ -17,14 +17,12 @@ package com.intellij.testIntegration;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.TestStateStorage;
-import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.TestIconMapper;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,13 +34,11 @@ import java.util.Map;
 
 public class SelectTestStep extends BaseListPopupStep<String> {
   private final Map<String, TestStateStorage.Record> myRecords;
-  private final LocationTestRunner myRunner;
-  private final Project myProject;
-
-  public SelectTestStep(Project project, Map<String, TestStateStorage.Record> records, LocationTestRunner runner) {
+  private final RecentTestRunner myRunner;
+  
+  public SelectTestStep(Map<String, TestStateStorage.Record> records, RecentTestRunner runner) {
     super("Debug Recent Tests", getUrls(records));
     myRunner = runner;
-    myProject = project;
     myRecords = records;
   }
 
@@ -76,24 +72,10 @@ public class SelectTestStep extends BaseListPopupStep<String> {
     TestStateInfo.Magnitude magnitude = TestIconMapper.getMagnitude(record.magnitude);
     return TestIconMapper.getIcon(magnitude);
   }
-
-  private Location getLocation(String url) {
-    String protocol = VirtualFileManager.extractProtocol(url);
-    String path = VirtualFileManager.extractPath(url);
-
-    if (protocol != null) {
-      List<Location> locations = JavaTestLocator.INSTANCE.getLocation(protocol, path, myProject, GlobalSearchScope.allScope(myProject));
-      if (!locations.isEmpty()) {
-        return locations.get(0);
-      }
-    }
-
-    return null;
-  }
-
+  
   @Override
   public PopupStep onChosen(String url, boolean finalChoice) {
-    Location location = getLocation(url);
+    Location location = myRunner.getLocation(url);
     myRunner.run(location);
     return null;
   }
