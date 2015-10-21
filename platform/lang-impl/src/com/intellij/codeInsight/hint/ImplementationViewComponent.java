@@ -76,6 +76,7 @@ public class ImplementationViewComponent extends JPanel {
   private int myIndex;
 
   private final Editor myEditor;
+  private volatile boolean myEditorReleased;
   private final JPanel myViewingPanel;
   private final JLabel myLocationLabel;
   private final JLabel myCountLabel;
@@ -461,10 +462,11 @@ public class ImplementationViewComponent extends JPanel {
   @Override
   public void removeNotify() {
     super.removeNotify();
-    if (!ScreenUtil.isStandardAddRemoveNotify(this))
-      return;
-    EditorFactory.getInstance().releaseEditor(myEditor);
-    disposeNonTextEditor();
+    if (ScreenUtil.isStandardAddRemoveNotify(this) && !myEditorReleased) {
+      myEditorReleased = true; // remove notify can be called several times for popup windows
+      EditorFactory.getInstance().releaseEditor(myEditor);
+      disposeNonTextEditor();
+    }
   }
 
   private void updateLabels() {
