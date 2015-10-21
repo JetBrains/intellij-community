@@ -16,6 +16,7 @@
 package org.jetbrains.debugger
 
 import com.intellij.util.ThreeState
+import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XInlineDebuggerDataCallback
@@ -25,6 +26,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.frame.CallFrameView
 import org.jetbrains.debugger.values.ObjectValue
 import org.jetbrains.debugger.values.Value
+import org.jetbrains.rpc.LOG
 import javax.swing.Icon
 
 interface DebuggerViewSupport {
@@ -44,7 +46,7 @@ interface DebuggerViewSupport {
 
   fun computeArrayPresentation(value: Value, variable: Variable, context: VariableContext, node: XValueNode, icon: Icon)
 
-  fun createFrameEvaluator(frame: CallFrameView): XDebuggerEvaluator
+  fun createFrameEvaluator(frame: CallFrameView): XDebuggerEvaluator = PromiseDebuggerEvaluator(frame)
 
   /**
    * [org.jetbrains.debugger.values.FunctionValue] is special case and handled by SDK
@@ -64,4 +66,21 @@ interface DebuggerViewSupport {
   fun transformErrorOnGetUsedReferenceValue(value: Value?, error: String?) = value
 
   fun isInLibraryContent(sourceInfo: SourceInfo, script: Script?) = false
+}
+
+open class PromiseDebuggerEvaluator(protected val context: VariableContext) : XDebuggerEvaluator() {
+  override final fun evaluate(expression: String, callback: XDebuggerEvaluator.XEvaluationCallback, expressionPosition: XSourcePosition?) {
+    try {
+      evaluate(expression, expressionPosition)
+        .done { callback.evaluated(VariableView(VariableImpl(expression, it.value), context)) }
+        .rejected { callback.errorOccurred(it.toString()) }
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
+      callback.errorOccurred(e.toString())
+      return
+    }
+  }
+
+  protected open fun evaluate(expression: String, expressionPosition: XSourcePosition?): Promise<EvaluateResult> = context.evaluateContext.evaluate(expression)
 }
