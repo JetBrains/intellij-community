@@ -1,6 +1,6 @@
 <component>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com/?fromIDE"/>
-  <version major="2" minor="0.1" eap="false"/>
+  <version major="2" minor="0.2" eap="false"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/pycharm_edu_logo.png" textcolor="5a8179" progressColor="ffaa16" progressY="230" progressTailIcon="/community_progress_tail.png"/>
   <about url="/pycharm_edu_about.png" logoX="300" logoY="265" logoW="75" logoH="30" foreground="ffffff" linkColor="fca11a"/>
