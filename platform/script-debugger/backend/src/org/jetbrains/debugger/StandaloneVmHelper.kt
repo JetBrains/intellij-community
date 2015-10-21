@@ -19,15 +19,14 @@ import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelFutureListener
-import io.netty.channel.oio.OioEventLoopGroup
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.catchError
 import org.jetbrains.concurrency.resolvedPromise
+import org.jetbrains.io.shutdownIfOio
 import org.jetbrains.jsonProtocol.Request
 import org.jetbrains.rpc.MessageProcessor
 import org.jetbrains.rpc.MessageWriter
-import java.util.concurrent.TimeUnit
 import org.jetbrains.concurrency.Promise as OJCPromise
 
 open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: MessageProcessor) : MessageWriter(), AttachStateManager {
@@ -102,11 +101,7 @@ fun doCloseChannel(channel: Channel, promise: AsyncPromise<Any?>) {
   channel.close().addListener(object : ChannelFutureListener {
     override fun operationComplete(future: ChannelFuture) {
       try {
-        // if NIO, so, it is shared and we don't need to release it
-        if (eventLoop is OioEventLoopGroup) {
-          @Suppress("USELESS_CAST")
-          (eventLoop as OioEventLoopGroup).shutdownGracefully(1L, 2L, TimeUnit.NANOSECONDS)
-        }
+        eventLoop.shutdownIfOio()
       }
       finally {
         val error = future.cause()

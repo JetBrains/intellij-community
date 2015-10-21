@@ -28,6 +28,7 @@ import org.jetbrains.concurrency.rejectedPromise
 import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.debugger.Vm
 import org.jetbrains.io.NettyUtil
+import org.jetbrains.io.connect
 import org.jetbrains.rpc.LOG
 import java.net.ConnectException
 import java.net.InetSocketAddress
@@ -67,7 +68,7 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
           }
           .processed { connectCancelHandler.set(null) }
 
-        NettyUtil.connect(createBootstrap(address, result), address, connectionPromise, if (stopCondition == null) NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT else -1, stopCondition)
+        createBootstrap(address, result).connect(address, connectionPromise, maxAttemptCount = if (stopCondition == null) NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT else -1, stopCondition = stopCondition)
       }
     })
     connectCancelHandler.set(Runnable { future.cancel(true) })

@@ -15,9 +15,17 @@
  */
 package org.jetbrains.io
 
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.Conditions
 import io.netty.bootstrap.Bootstrap
-import io.netty.channel.Channel
-import io.netty.channel.ChannelInitializer
+import io.netty.channel.*
+import io.netty.channel.oio.OioEventLoopGroup
+import io.netty.channel.socket.oio.OioSocketChannel
+import io.netty.util.concurrent.GenericFutureListener
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.ide.PooledThreadExecutor
+import java.net.InetSocketAddress
+import java.util.concurrent.TimeUnit
 
 inline fun Bootstrap.handler(crossinline task: (Channel) -> Unit): Bootstrap {
   handler(object : ChannelInitializer<Channel>() {
@@ -26,4 +34,48 @@ inline fun Bootstrap.handler(crossinline task: (Channel) -> Unit): Bootstrap {
     }
   })
   return this
+}
+
+fun oioClientBootstrap(): Bootstrap {
+  val bootstrap = Bootstrap().group(OioEventLoopGroup(1, PooledThreadExecutor.INSTANCE)).channel(OioSocketChannel::class.java)
+  bootstrap.option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true)
+  return bootstrap
+}
+
+inline fun ChannelFuture.addListener(crossinline listener: (future: ChannelFuture) -> Unit) {
+  addListener(object : GenericFutureListener<ChannelFuture> {
+    override fun operationComplete(future: ChannelFuture) {
+      listener(future)
+    }
+  })
+}
+
+// if NIO, so, it is shared and we must not shutdown it
+fun EventLoop.shutdownIfOio() {
+  if (this is OioEventLoopGroup) {
+    @Suppress("USELESS_CAST")
+    (this as OioEventLoopGroup).shutdownGracefully(1L, 2L, TimeUnit.NANOSECONDS)
+  }
+}
+
+// Event loop will be shut downed only if OIO
+fun Channel.closeAndShutdownEventLoop() {
+  val eventLoop = eventLoop()
+  try {
+    close().awaitUninterruptibly()
+  }
+  finally {
+    eventLoop.shutdownIfOio()
+  }
+}
+
+@JvmOverloads
+fun Bootstrap.connect(remoteAddress: InetSocketAddress, promise: AsyncPromise<*>? = null, maxAttemptCount: Int = NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT, stopCondition: Condition<Void>? = null): Channel? {
+  try {
+    return NettyUtil.doConnect(this, remoteAddress, promise, maxAttemptCount, stopCondition ?: Conditions.alwaysFalse<Void>())
+  }
+  catch (e: Throwable) {
+    promise?.setError(e)
+    return null
+  }
 }
