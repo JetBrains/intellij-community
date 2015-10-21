@@ -334,5 +334,10 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
     public String getFamilyName() {
       return "Migrate method return type";
     }
+
+    @Override
+    public boolean startInWriteAction() {
+      return true;
+    }
   }
 }
