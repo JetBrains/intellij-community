@@ -29,8 +29,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.groovy.compiler.rt.ClassDependencyLoader;
+import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -38,7 +38,10 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.regex.Pattern;
 
@@ -71,6 +74,10 @@ class InProcessGroovyc implements GroovycFlavor {
                                                 ? new LinkedBlockingQueue<String>() : null;
 
     final JointCompilationClassLoader loader = createCompilationClassLoader(compilationClassPath);
+    if (loader == null) {
+      parser.addCompilerMessage(parser.reportNoGroovy());
+      return null;
+    }
 
     final Future<Void> future = ourExecutor.submit(new Callable<Void>() {
       @Override
@@ -162,10 +169,26 @@ class InProcessGroovyc implements GroovycFlavor {
     }
   }
 
-  @NotNull
-  private JointCompilationClassLoader createCompilationClassLoader(Collection<String> compilationClassPath) throws MalformedURLException {
+  @Nullable
+  private JointCompilationClassLoader createCompilationClassLoader(Collection<String> compilationClassPath) throws Exception {
     ClassLoader parent = obtainParentLoader(compilationClassPath);
-    return new JointCompilationClassLoader(UrlClassLoader.build().
+
+    ClassLoader groovyClassLoader = null;
+    try {
+      ClassLoader auxiliary = parent != null ? parent : buildCompilationClassLoader(compilationClassPath, null).get();
+      Class<?> gcl = auxiliary.loadClass("groovy.lang.GroovyClassLoader");
+      groovyClassLoader = (ClassLoader)gcl.getConstructor(ClassLoader.class).newInstance(parent);
+    }
+    catch (ClassNotFoundException e) {
+      return null;
+    }
+
+    return new JointCompilationClassLoader(buildCompilationClassLoader(compilationClassPath, groovyClassLoader));
+  }
+
+  private UrlClassLoader.Builder buildCompilationClassLoader(Collection<String> compilationClassPath, ClassLoader parent)
+    throws MalformedURLException {
+    return UrlClassLoader.build().
       urls(toUrls(compilationClassPath)).parent(parent).allowLock().
       useCache(ourLoaderCachePool, new UrlClassLoader.CachingCondition() {
         @Override
@@ -184,7 +207,7 @@ class InProcessGroovyc implements GroovycFlavor {
             return false;
           }
         }
-      }));
+      });
   }
 
   @Nullable
