@@ -517,14 +517,7 @@ public class PyCallExpressionHelper {
       }
     }
 
-
-    if (callResultTypes.size() == 1) {
-      return callResultTypes.iterator().next();
-    }
-    if (callResultTypes.size() > 1) {
-      return PyUnionType.union(callResultTypes);
-    }
-    return null;
+    return PyUnionType.union(callResultTypes);
   }
 
   @Nullable
