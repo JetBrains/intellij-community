@@ -115,9 +115,9 @@ public class PyMoveSymbolDelegate extends MoveHandlerDelegate {
       if (!dialog.showAndGet()) {
         return;
       }
-      final boolean previewUsages = dialog.isPreviewUsages();
       final PsiNamedElement[] selectedElements = ContainerUtil.findAllAsArray(dialog.getSelectedTopLevelSymbols(), PsiNamedElement.class);
-      processor = new PyMoveModuleMembersProcessor(project, selectedElements, dialog.getTargetPath(), previewUsages);
+      processor = new PyMoveModuleMembersProcessor(selectedElements, dialog.getTargetPath());
+      processor.setPreviewUsages(dialog.isPreviewUsages());
     }
     
     try {

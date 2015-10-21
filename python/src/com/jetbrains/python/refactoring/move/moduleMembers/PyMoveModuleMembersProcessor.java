@@ -17,7 +17,6 @@ package com.jetbrains.python.refactoring.move.moduleMembers;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -55,12 +54,10 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
   private final PsiNamedElement[] myElements;
   private final String myDestination;
 
-  public PyMoveModuleMembersProcessor(Project project, PsiNamedElement[] elements, String destination, boolean previewUsages) {
-    super(project);
-    assert elements.length > 0;
+  public PyMoveModuleMembersProcessor(@NotNull PsiNamedElement[] elements, @NotNull String destination) {
+    super(elements[0].getProject());
     myElements = elements;
     myDestination = destination;
-    setPreviewUsages(previewUsages);
   }
 
   @NotNull
