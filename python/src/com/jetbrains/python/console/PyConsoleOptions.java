@@ -254,7 +254,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     @Nullable
     @Override
     public PathMappingSettings getMappingSettings() {
-      return null;
+      return getMappings();
     }
 
     @Override
