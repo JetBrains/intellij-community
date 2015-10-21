@@ -145,15 +145,15 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
   // to clearly separate data
   private static class ReturnStatementAdder {
-    private final PsiElementFactory factory;
-    private final PsiType myTargetType;
+    @NotNull private final PsiElementFactory factory;
+    @NotNull private final PsiType myTargetType;
 
     private ReturnStatementAdder(@NotNull final PsiElementFactory factory, @NotNull final PsiType targetType) {
       this.factory = factory;
       myTargetType = targetType;
     }
 
-    public PsiReturnStatement addReturnForMethod(final PsiFile file, final PsiMethod method) {
+    private PsiReturnStatement addReturnForMethod(final PsiFile file, final PsiMethod method) {
       final PsiModifierList modifiers = method.getModifierList();
       if (modifiers.hasModifierProperty(PsiModifier.ABSTRACT) || method.getBody() == null) {
         return null;
@@ -170,7 +170,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
           return null; //must be an error
         }
         PsiReturnStatement returnStatement;
-        if (controlFlow != null && ControlFlowUtil.processReturns(controlFlow, visitor)) {
+        if (ControlFlowUtil.processReturns(controlFlow, visitor)) {
           // extra return statement not needed
           // get latest modified return statement and select...
           returnStatement = visitor.getLatestReturn();
