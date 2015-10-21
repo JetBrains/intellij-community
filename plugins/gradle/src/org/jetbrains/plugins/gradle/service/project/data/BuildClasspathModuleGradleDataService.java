@@ -129,6 +129,8 @@ public class BuildClasspathModuleGradleDataService extends AbstractProjectDataSe
       }
     };
 
+    final Map<String, ExternalProjectBuildClasspathPojo> localProjectBuildClasspath =
+      ContainerUtil.newHashMap(localSettings.getProjectBuildClasspath());
     for (final DataNode<BuildScriptClasspathData> node : toImport) {
       if (GradleConstants.SYSTEM_ID.equals(node.getData().getOwner())) {
         DataNode<ModuleData> moduleDataNode = ExternalSystemApiUtil.findParent(node, ProjectKeys.MODULE);
@@ -152,14 +154,13 @@ public class BuildClasspathModuleGradleDataService extends AbstractProjectDataSe
           }
         }
 
-        ExternalProjectBuildClasspathPojo projectBuildClasspathPojo =
-          localSettings.getProjectBuildClasspath().get(linkedExternalProjectPath);
+        ExternalProjectBuildClasspathPojo projectBuildClasspathPojo = localProjectBuildClasspath.get(linkedExternalProjectPath);
         if (projectBuildClasspathPojo == null) {
           projectBuildClasspathPojo = new ExternalProjectBuildClasspathPojo(
             moduleDataNode.getData().getExternalName(),
             ContainerUtil.<String>newArrayList(),
             ContainerUtil.<String, ExternalModuleBuildClasspathPojo>newHashMap());
-          localSettings.getProjectBuildClasspath().put(linkedExternalProjectPath, projectBuildClasspathPojo);
+          localProjectBuildClasspath.put(linkedExternalProjectPath, projectBuildClasspathPojo);
         }
 
         List<String> projectBuildClasspath = ContainerUtil.newArrayList(externalProjectGradleSdkLibs.getValue());
@@ -170,6 +171,7 @@ public class BuildClasspathModuleGradleDataService extends AbstractProjectDataSe
           externalModulePath, new ExternalModuleBuildClasspathPojo(externalModulePath, ContainerUtil.newArrayList(buildClasspath)));
       }
     }
+    localSettings.setProjectBuildClasspath(localProjectBuildClasspath);
 
     GradleBuildClasspathManager.getInstance(project).reload();
   }
