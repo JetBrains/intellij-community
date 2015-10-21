@@ -28,14 +28,13 @@ import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Dmitry Batkovich
@@ -269,34 +268,33 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     private final PsiType myToType;
 
     private GuavaChainedConversionDescriptor(List<TypeConversionDescriptorBase> descriptors, PsiType to) {
-      myMethodDescriptors = descriptors;
+      myMethodDescriptors = new ArrayList<TypeConversionDescriptorBase>(descriptors);
+      Collections.reverse(myMethodDescriptors);
       myToType = to;
     }
 
     @Override
     public PsiExpression replace(PsiExpression expression) throws IncorrectOperationException {
-      PsiExpression toReturn = null;
-      PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression) expression;
-      final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(expression.getProject());
+      Stack<PsiMethodCallExpression> methodChainStack = new Stack<PsiMethodCallExpression>();
+      PsiMethodCallExpression current = (PsiMethodCallExpression) expression;
+      while (current != null) {
+        methodChainStack.add(current);
+        final PsiExpression qualifier = current.getMethodExpression().getQualifierExpression();
+        current = qualifier instanceof PsiMethodCallExpression ? (PsiMethodCallExpression)qualifier : null;
+      }
+
+      if (methodChainStack.size() != myMethodDescriptors.size()) {
+        return expression;
+      }
+
+      PsiExpression converted = null;
 
       for (TypeConversionDescriptorBase descriptor : myMethodDescriptors) {
-        final PsiExpression oldQualifier = methodCallExpression.getMethodExpression().getQualifierExpression();
-        final SmartPsiElementPointer<PsiExpression> qualifierRef = oldQualifier == null
-                                                                   ? null
-                                                                   : smartPointerManager.createSmartPsiElementPointer(oldQualifier);
-        final PsiExpression replaced = descriptor.replace(methodCallExpression);
-        if (toReturn == null) {
-          toReturn = replaced;
-        }
-
-        final PsiExpression newQualifier = qualifierRef == null ? null : qualifierRef.getElement();
-        if (newQualifier instanceof PsiMethodCallExpression) {
-          methodCallExpression = (PsiMethodCallExpression)newQualifier;
-        } else {
-          return toReturn;
-        }
+        final PsiMethodCallExpression toConvert = methodChainStack.pop();
+        converted = descriptor.replace(toConvert);
       }
-      return toReturn;
+
+      return converted;
     }
 
     @Nullable

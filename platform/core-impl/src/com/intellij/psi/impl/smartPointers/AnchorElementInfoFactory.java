@@ -23,7 +23,6 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubTree;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
@@ -41,8 +40,9 @@ public class AnchorElementInfoFactory extends SmartPointerElementInfoFactory {
         StubBasedPsiElement stubPsi = (StubBasedPsiElement)element;
         int stubId = PsiAnchor.calcStubIndex(stubPsi);
         IStubElementType myStubElementType = stubPsi.getElementType();
-        IElementType contentElementType = ((PsiFileImpl)containingFile).getContentElementType();
-        if (stubId != -1 && contentElementType instanceof IStubFileElementType) { // TemplateDataElementType is not IStubFileElementType
+
+        IStubFileElementType elementTypeForStubBuilder = ((PsiFileImpl)containingFile).getElementTypeForStubBuilder();
+        if (stubId != -1 && elementTypeForStubBuilder != null) { // TemplateDataElementType is not IStubFileElementType
           return new AnchorElementInfo(element, stubFile, stubId, myStubElementType);
         }
       }

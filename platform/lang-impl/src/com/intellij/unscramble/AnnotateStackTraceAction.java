@@ -130,11 +130,8 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
           public String getToolTip(int line, Editor editor) {
             final LastRevision revision = cache.get(line);
             if (revision != null) {
-              return XmlStringUtil.wrapInHtml(
-                revision.getAuthor() +
-                " " +
-                DateFormatUtil.formatDateTime(revision.getDate()) +
-                "<br/>" +
+              return XmlStringUtil.escapeString(
+                revision.getAuthor() + " " + DateFormatUtil.formatDateTime(revision.getDate()) + "\n" +
                 revision.getMessage()
               );
             }

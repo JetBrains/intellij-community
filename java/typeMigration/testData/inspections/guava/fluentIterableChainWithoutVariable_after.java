@@ -19,7 +19,7 @@ import com.google.common.collect.FluentIterable;
 class A {
   int m1() {
     ArrayList<String> strings = new ArrayList<String>();
-    int size = (int) FluentIterable.from(strings).transform(s -> s + s).limit(10).count();
+    int size = (int) strings.stream().map(s -> s + s).limit(10).count();
     return size
   }
 }
