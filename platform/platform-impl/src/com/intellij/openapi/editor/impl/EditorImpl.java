@@ -122,7 +122,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable, Dumpable {
-  private static final boolean isOracleRetina = UIUtil.isRetina() && SystemInfo.isOracleJvm;
+  private static final boolean isOracleRetina = UIUtil.isRetina() /*&& SystemInfo.isOracleJvm*/;
   private static final int MIN_FONT_SIZE = 8;
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorImpl");
   private static final Key DND_COMMAND_KEY = Key.create("DndCommand");
