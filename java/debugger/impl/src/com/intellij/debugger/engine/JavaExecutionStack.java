@@ -22,12 +22,12 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.impl.watch.MethodsTracker;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.Location;
 import com.sun.jdi.ThreadReference;
 import org.jetbrains.annotations.NotNull;
@@ -202,7 +202,7 @@ public class JavaExecutionStack extends XExecutionStack {
   }
 
   private static boolean showFrame(@NotNull XStackFrame frame) {
-    if (DebuggerSettings.getInstance().SHOW_LIBRARY_STACKFRAMES) return true;
+    if (XDebuggerSettingsManager.getInstance().getDataViewSettings().isShowLibraryStackFrames()) return true;
     if (frame instanceof JavaStackFrame) {
       StackFrameDescriptorImpl descriptor = ((JavaStackFrame)frame).getDescriptor();
       return !descriptor.isSynthetic() && !descriptor.isInLibraryContent();
