@@ -31,6 +31,8 @@ private val S1 = ",()[]{}="
 // don't trim trailing .&: - could be part of expression
 private val OPERATOR_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1))
 
+val NAME_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1 + ".&:"))
+
 open class NameMapper(private val document: Document, private val generatedDocument: Document, private val sourceMappings: MappingList, private val sourceMap: SourceMap) {
   var rawNameToSource: MutableMap<String, String>? = null
     private set
@@ -73,8 +75,6 @@ open class NameMapper(private val document: Document, private val generatedDocum
   protected open fun extractName(rawGeneratedName: CharSequence) = NAME_TRIMMER.trimFrom(rawGeneratedName)
 
   companion object {
-    protected val NAME_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1 + ".&:"))
-
     fun trimName(rawGeneratedName: CharSequence, isLastToken: Boolean) = (if (isLastToken) NAME_TRIMMER else OPERATOR_TRIMMER).trimFrom(rawGeneratedName)
   }
 }
