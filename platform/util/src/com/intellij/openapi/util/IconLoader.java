@@ -93,15 +93,6 @@ public final class IconLoader {
     ourDeprecatedIconsReplacements.put("/vcs/messageHistory.png", "AllIcons.General.MessageHistory");
   }
 
-  private static Disposable myDisposable = Disposer.newDisposable();
-  static {
-    Registry.get("ide.svg.icon").addListener(new RegistryValueListener.Adapter() {
-      public void afterValueChanged(RegistryValue value) {
-        clearCache();
-      }
-    }, myDisposable);
-  }
-
   private static final ImageIcon EMPTY_ICON = new ImageIcon(UIUtil.createImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
     @NonNls
     public String toString() {
