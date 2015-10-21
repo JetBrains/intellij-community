@@ -449,23 +449,25 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
   @Nullable
   private static Icon getAquaMenuInvertedIcon() {
-    if (!UIUtil.isUnderAquaLookAndFeel()) return null;
-    final Icon arrow = (Icon)UIManager.get("Menu.arrowIcon");
-    if (arrow == null) return null;
+    if (UIUtil.isUnderAquaLookAndFeel() || (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF())) {
+      final Icon arrow = (Icon)UIManager.get("Menu.arrowIcon");
+      if (arrow == null) return null;
 
-    try {
-      final Method method = ReflectionUtil.getMethod(arrow.getClass(), "getInvertedIcon");
-      if (method != null) {
-        return (Icon)method.invoke(arrow);
+      try {
+        final Method method = ReflectionUtil.getMethod(arrow.getClass(), "getInvertedIcon");
+        if (method != null) {
+          return (Icon)method.invoke(arrow);
+        }
+        return null;
       }
-      return null;
+      catch (InvocationTargetException e1) {
+        return null;
+      }
+      catch (IllegalAccessException e1) {
+        return null;
+      }
     }
-    catch (InvocationTargetException e1) {
-      return null;
-    }
-    catch (IllegalAccessException e1) {
-      return null;
-    }
+    return null;
   }
 
   @Override
@@ -603,7 +605,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   private static void fixMenuIssues(UIDefaults uiDefaults) {
-    if (UIUtil.isUnderAquaLookAndFeel()) {
+    if (UIUtil.isUnderAquaLookAndFeel() || (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF())) {
       // update ui for popup menu to get round corners
       uiDefaults.put("PopupMenuUI", MacPopupMenuUI.class.getCanonicalName());
       uiDefaults.put("Menu.invertedArrowIcon", getAquaMenuInvertedIcon());
