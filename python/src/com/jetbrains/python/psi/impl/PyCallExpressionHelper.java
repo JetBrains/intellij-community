@@ -205,7 +205,7 @@ public class PyCallExpressionHelper {
       }
     }
     final List<PyExpression> resolvedQualifiers = resolveResult != null ? resolveResult.getQualifiers() : null;
-    final List<PyExpression> qualifiers = resolvedQualifiers != null ?  resolvedQualifiers : Collections.<PyExpression>emptyList();
+    final List<PyExpression> qualifiers = resolvedQualifiers != null ? resolvedQualifiers : Collections.<PyExpression>emptyList();
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
     if (resolved instanceof PyFunction) {
       final PyFunction function = (PyFunction)resolved;
@@ -254,8 +254,8 @@ public class PyCallExpressionHelper {
    * Calls the {@link #getImplicitArgumentCount(PyCallable, PyFunction.Modifier, boolean, boolean, boolean)} full version}
    * with null flags and with isByInstance inferred directly from call site (won't work with reassigned bound methods).
    *
-   * @param callReference       the call site, where arguments are given.
-   * @param function resolved method which is being called; plain functions are OK but make little sense.
+   * @param callReference the call site, where arguments are given.
+   * @param function      resolved method which is being called; plain functions are OK but make little sense.
    * @return a non-negative number of parameters that are implicit to this call.
    */
   public static int getImplicitArgumentCount(@NotNull final PyReferenceExpression callReference, @NotNull PyFunction function,
@@ -481,12 +481,43 @@ public class PyCallExpressionHelper {
           final PyCallableType callableType = (PyCallableType)type;
           return callableType.getCallType(context, call);
         }
+        if (type instanceof PyUnionType) {
+          return getCallResultTypeFromUnion(call, context, (PyUnionType)type);
+        }
         return null;
       }
     }
     finally {
       TypeEvalStack.evaluated(call);
     }
+  }
+
+  /**
+   * @return type that union will return if you call it
+   */
+  @Nullable
+  private static PyType getCallResultTypeFromUnion(@NotNull final PyCallSiteExpression call,
+                                                   @NotNull final TypeEvalContext context,
+                                                   @NotNull final PyUnionType type) {
+    final Collection<PyType> callResultTypes = new HashSet<PyType>();
+
+    for (final PyType memberType : type.getMembers()) {
+      final Boolean callable = PyTypeChecker.isCallable(memberType);
+      if (!((callable != null && callable && memberType instanceof PyCallableType))) {
+        continue;
+      }
+      final PyCallableType callableMemberType = (PyCallableType)memberType;
+
+      if (!callableMemberType.isCallable()) {
+        continue;
+      }
+      final PyType callResultType = callableMemberType.getCallType(context, call);
+      if (callResultType != null) {
+        callResultTypes.add(callResultType);
+      }
+    }
+
+    return PyUnionType.union(callResultTypes);
   }
 
   @Nullable
@@ -686,7 +717,8 @@ public class PyCallExpressionHelper {
     final PositionalArgumentsAnalysisResults positionalResults = filterPositionalAndVariadicArguments(arguments);
     final List<PyKeywordArgument> keywordArguments = filterKeywordArguments(arguments);
     final List<PyExpression> variadicPositionalArguments = positionalResults.variadicPositionalArguments;
-    final Set<PyExpression> positionalComponentsOfVariadicArguments = new LinkedHashSet<PyExpression>(positionalResults.componentsOfVariadicPositionalArguments);
+    final Set<PyExpression> positionalComponentsOfVariadicArguments =
+      new LinkedHashSet<PyExpression>(positionalResults.componentsOfVariadicPositionalArguments);
     final List<PyExpression> variadicKeywordArguments = filterVariadicKeywordArguments(arguments);
 
     final List<PyExpression> allPositionalArguments = positionalResults.allPositionalArguments;

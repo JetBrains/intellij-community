@@ -258,7 +258,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
       if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
       try {
         final PsiMethodCallExpression expr = (PsiMethodCallExpression)startElement;
-        final boolean isIterableAssignment = isIterableAssignment(expr);
+        final boolean isIterableAssignment = isIterable(expr);
         final TypeMigrationRules rules = new TypeMigrationRules(myInitialType);
         rules.setMigrationRootType(myTargetType);
         rules.setBoundScope(GlobalSearchScope.fileScope(file));
@@ -278,21 +278,35 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
       }
     }
 
-    private boolean isIterableAssignment(PsiMethodCallExpression expression) {
-      final PsiElement maybeVariable = expression.getParent();
-      PsiClass variableClass;
-      if (maybeVariable instanceof PsiLocalVariable
-          && (variableClass = PsiTypesUtil.getPsiClass(((PsiLocalVariable)maybeVariable).getType())) != null
-          && CommonClassNames.JAVA_LANG_ITERABLE.equals(variableClass.getQualifiedName())) {
-        final PsiMethod method = expression.resolveMethod();
-        if (method != null) {
-          final PsiClass returnClass = PsiTypesUtil.getPsiClass(method.getReturnType());
-          if (returnClass != null && GuavaFluentIterableConversionRule.FLUENT_ITERABLE.equals(returnClass.getQualifiedName())) {
-            return true;
-          }
+    private static boolean isIterable(PsiMethodCallExpression expression) {
+      final PsiElement parent = expression.getParent();
+      final PsiMethod method = expression.resolveMethod();
+      if (method != null) {
+        final PsiClass returnClass = PsiTypesUtil.getPsiClass(method.getReturnType());
+        if (returnClass == null || !GuavaFluentIterableConversionRule.FLUENT_ITERABLE.equals(returnClass.getQualifiedName())) {
+          return false;
         }
       }
+      if (parent instanceof PsiLocalVariable) {
+        return isIterable(((PsiLocalVariable)parent).getType());
+      }
+      else if (parent instanceof PsiReturnStatement) {
+        final PsiElement methodOrLambda = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiLambdaExpression.class);
+        PsiType methodReturnType = null;
+        if (methodOrLambda instanceof PsiMethod) {
+          methodReturnType = ((PsiMethod)methodOrLambda).getReturnType();
+        }
+        else if (methodOrLambda instanceof PsiLambdaExpression) {
+          methodReturnType = LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)methodOrLambda);
+        }
+        return isIterable(methodReturnType);
+      }
       return false;
+    }
+
+    private static boolean isIterable(@Nullable PsiType type) {
+      PsiClass aClass;
+      return (aClass = PsiTypesUtil.getPsiClass(type)) != null && CommonClassNames.JAVA_LANG_ITERABLE.equals(aClass.getQualifiedName());
     }
 
     @Override

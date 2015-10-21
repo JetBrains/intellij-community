@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ public class XDebuggerDataViewSettings implements XDebuggerSettingsManager.DataV
   private boolean autoExpressions = true;
   private int valueLookupDelay = DEFAULT_VALUE_TOOLTIP_DELAY;
 
+  private boolean showLibraryStackFrames = true;
+
   @Override
   @Tag("sort-values")
   public boolean isSortValues() {
@@ -56,5 +58,14 @@ public class XDebuggerDataViewSettings implements XDebuggerSettingsManager.DataV
 
   public void setAutoExpressions(boolean autoExpressions) {
     this.autoExpressions = autoExpressions;
+  }
+
+  @Override
+  public boolean isShowLibraryStackFrames() {
+    return showLibraryStackFrames;
+  }
+
+  public void setShowLibraryStackFrames(boolean value) {
+    showLibraryStackFrames = value;
   }
 }

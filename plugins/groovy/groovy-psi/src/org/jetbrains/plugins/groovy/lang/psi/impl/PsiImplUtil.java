@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.AstBufferUtil;
 import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -34,6 +36,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -523,8 +526,38 @@ public class PsiImplUtil {
            TypesUtil.isAssignableByMethodCallConversion(PsiType.INT, argTypes[0], context);
   }
 
+  /**
+   * see {@link com.intellij.psi.impl.source.tree.AstBufferUtil#getTextSkippingWhitespaceComments(com.intellij.lang.ASTNode)}
+   */
   public static String getTextSkipWhiteSpaceAndComments(ASTNode node) {
-    return AstBufferUtil.getTextSkippingWhitespaceComments(node);
+    final TreeElement treeElement = (TreeElement)node;
+    final int length;
+    {
+      final GroovyBufferVisitor lengthVisitor = new GroovyBufferVisitor(true, true, 0, null);
+      treeElement.acceptTree(lengthVisitor);
+      length = lengthVisitor.getEnd();
+    }
+    final char[] buffer = new char[length];
+    {
+      final GroovyBufferVisitor textVisitor = new GroovyBufferVisitor(true, true, 0, buffer);
+      treeElement.acceptTree(textVisitor);
+    }
+    return StringFactory.createShared(buffer);
+  }
+
+  public static class GroovyBufferVisitor extends AstBufferUtil.BufferVisitor {
+
+    private final boolean mySkipWhiteSpace;
+
+    public GroovyBufferVisitor(boolean skipWhitespace, boolean skipComments, int offset, @Nullable char[] buffer) {
+      super(skipWhitespace, skipComments, offset, buffer);
+      mySkipWhiteSpace = skipWhitespace;
+    }
+
+    @Override
+    protected boolean isIgnored(LeafElement element) {
+      return super.isIgnored(element) || (mySkipWhiteSpace && element.getElementType() == GroovyTokenTypes.mNLS) ;
+    }
   }
 
   public static PsiCodeBlock getOrCreatePsiCodeBlock(GrOpenBlock block) {

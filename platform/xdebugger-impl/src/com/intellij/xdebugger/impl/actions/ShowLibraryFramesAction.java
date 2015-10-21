@@ -13,27 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.actions;
+package com.intellij.xdebugger.impl.actions;
 
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author egor
  */
-public class ShowLibraryFramesAction extends ToggleAction {
+final class ShowLibraryFramesAction extends ToggleAction {
   private volatile boolean myShouldShow;
   private static final String ourTextWhenShowIsOn = "Hide Frames from Libraries";
   private static final String ourTextWhenShowIsOff = "Show All Frames";
 
   public ShowLibraryFramesAction() {
     super("", "", AllIcons.Debugger.Class_filter);
-    myShouldShow = DebuggerSettings.getInstance().SHOW_LIBRARY_STACKFRAMES;
+    myShouldShow = XDebuggerSettingManagerImpl.getInstanceImpl().getDataViewSettings().isShowLibraryStackFrames();
   }
 
   @Override
@@ -52,7 +52,7 @@ public class ShowLibraryFramesAction extends ToggleAction {
   @Override
   public void setSelected(AnActionEvent e, boolean enabled) {
     myShouldShow = !enabled;
-    DebuggerSettings.getInstance().SHOW_LIBRARY_STACKFRAMES = myShouldShow;
+    XDebuggerSettingManagerImpl.getInstanceImpl().getDataViewSettings().setShowLibraryStackFrames(myShouldShow);
     XDebuggerUtilImpl.rebuildAllSessionsViews(e.getProject());
   }
 }

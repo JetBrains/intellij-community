@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -33,9 +34,7 @@ import java.util.*;
 
 /**
  * @author nik
- * todo rename to XDebuggerSettingsManagerImpl
  */
-@SuppressWarnings("ClassNameSameAsAncestorName")
 @State(
   name = "XDebuggerSettings",
   storages = {
@@ -43,14 +42,14 @@ import java.util.*;
     @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
   }
 )
-public class XDebuggerSettingsManager extends com.intellij.xdebugger.settings.XDebuggerSettingsManager implements PersistentStateComponent<XDebuggerSettingsManager.SettingsState> {
+public class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager implements PersistentStateComponent<XDebuggerSettingManagerImpl.SettingsState> {
   private Map<String, XDebuggerSettings<?>> mySettingsById;
   private Map<Class<? extends XDebuggerSettings>, XDebuggerSettings<?>> mySettingsByClass;
   private XDebuggerDataViewSettings myDataViewSettings = new XDebuggerDataViewSettings();
   private XDebuggerGeneralSettings myGeneralSettings = new XDebuggerGeneralSettings();
 
-  public static XDebuggerSettingsManager getInstanceImpl() {
-    return (XDebuggerSettingsManager)com.intellij.xdebugger.settings.XDebuggerSettingsManager.getInstance();
+  public static XDebuggerSettingManagerImpl getInstanceImpl() {
+    return (XDebuggerSettingManagerImpl)XDebuggerSettingsManager.getInstance();
   }
 
   @Override
