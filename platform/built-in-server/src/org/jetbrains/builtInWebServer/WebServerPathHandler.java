@@ -13,42 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.builtInWebServer;
+package org.jetbrains.builtInWebServer
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.io.Responses;
-
-import java.net.URI;
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VfsUtil
+import io.netty.channel.Channel
+import io.netty.channel.ChannelHandlerContext
+import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpHeaderNames
+import io.netty.handler.codec.http.HttpRequest
+import io.netty.handler.codec.http.HttpResponseStatus
+import org.jetbrains.io.Responses
 
 /**
- * By default {@link WebServerPathToFileManager} will be used to map request to file.
- * If file physically exists in the file system, you must use {@link WebServerRootsProvider}.
- *
- * Consider to extend {@link WebServerPathHandlerAdapter} instead of implement low-level {@link #process)}
+ * By default [WebServerPathToFileManager] will be used to map request to file.
+ * If file physically exists in the file system, you must use [WebServerRootsProvider].
+
+ * Consider to extend [WebServerPathHandlerAdapter] instead of implement low-level [)][.process]
  */
-public abstract class WebServerPathHandler {
-  static final ExtensionPointName<WebServerPathHandler> EP_NAME = ExtensionPointName.create("org.jetbrains.webServerPathHandler");
-
-  public abstract boolean process(@NotNull String path,
-                                  @NotNull Project project,
-                                  @NotNull FullHttpRequest request,
-                                  @NotNull ChannelHandlerContext context,
-                                  @Nullable String projectName,
-                                  @NotNull String decodedRawPath,
-                                  boolean isCustomHost);
-
-  protected static void redirectToDirectory(@NotNull HttpRequest request, @NotNull Channel channel, @NotNull String path) {
-    FullHttpResponse response = Responses.response(HttpResponseStatus.MOVED_PERMANENTLY);
-    URI url = VfsUtil.toUri("http://" + request.headers().getAsString(HttpHeaderNames.HOST) + '/' + path + '/');
-    BuiltInWebServer.LOG.assertTrue(url != null);
-    response.headers().add(HttpHeaderNames.LOCATION, url.toASCIIString());
-    Responses.send(response, channel, request);
+abstract class WebServerPathHandler {
+  companion object {
+    internal val EP_NAME = ExtensionPointName.create<WebServerPathHandler>("org.jetbrains.webServerPathHandler")
   }
+
+  abstract fun process(path: String,
+                       project: Project,
+                       request: FullHttpRequest,
+                       context: ChannelHandlerContext,
+                       projectName: String?,
+                       decodedRawPath: String,
+                       isCustomHost: Boolean): Boolean
+}
+
+fun redirectToDirectory(request: HttpRequest, channel: Channel, path: String) {
+  val response = Responses.response(HttpResponseStatus.MOVED_PERMANENTLY)
+  val url = VfsUtil.toUri("http://${request.headers().getAsString(HttpHeaderNames.HOST)}/$path/")!!
+  response.headers().add(HttpHeaderNames.LOCATION, url.toASCIIString())
+  Responses.send(response, channel, request)
 }
