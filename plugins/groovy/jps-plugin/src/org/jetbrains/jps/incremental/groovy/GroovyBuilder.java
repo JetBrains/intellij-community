@@ -129,7 +129,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         rememberStubSources(context, compiled);
       }
 
-      for (CompilerMessage message : parser.getCompilerMessages(chunk.representativeTarget().getModule().getName())) {
+      for (CompilerMessage message : parser.getCompilerMessages()) {
         context.processMessage(message);
       }
 
