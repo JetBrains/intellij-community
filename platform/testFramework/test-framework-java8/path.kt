@@ -1,5 +1,6 @@
 package com.intellij.testFramework
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -18,13 +19,22 @@ fun Path.createDirectories(): Path = Files.createDirectories(this)
 
 fun Path.deleteRecursively(): Path = if (exists()) Files.walkFileTree(this, object : SimpleFileVisitor<Path>() {
   override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-    Files.delete(file)
+    deleteFile(file)
     return FileVisitResult.CONTINUE
   }
 
   override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
-    Files.delete(dir)
+    deleteFile(dir)
     return FileVisitResult.CONTINUE
+  }
+
+  private fun deleteFile(file: Path) {
+    try {
+      Files.delete(file)
+    }
+    catch (e: Exception) {
+      FileUtil.delete(file.toFile())
+    }
   }
 }) else this
 

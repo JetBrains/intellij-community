@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +98,7 @@ public abstract class AbstractLayoutCodeProcessorTest extends PsiTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    delete(myWorkingDirectory.getVirtualFile());
+    VfsTestUtil.deleteFile(myWorkingDirectory.getVirtualFile());
     super.tearDown();
   }
 

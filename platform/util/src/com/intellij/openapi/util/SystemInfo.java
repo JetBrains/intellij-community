@@ -113,22 +113,22 @@ public class SystemInfo extends SystemInfoRt {
     @NotNull
     @Override
     protected Boolean compute() {
-      return isUnix && new File("/usr/bin/xdg-open").canExecute();
+      return new File("/usr/bin/xdg-open").canExecute();
     }
   };
   public static boolean hasXdgOpen() {
-    return ourHasXdgOpen.getValue();
+    return isXWindow && ourHasXdgOpen.getValue();
   }
 
   private static final NotNullLazyValue<Boolean> ourHasXdgMime = new AtomicNotNullLazyValue<Boolean>() {
     @NotNull
     @Override
     protected Boolean compute() {
-      return isUnix && new File("/usr/bin/xdg-mime").canExecute();
+      return new File("/usr/bin/xdg-mime").canExecute();
     }
   };
   public static boolean hasXdgMime() {
-    return ourHasXdgOpen.getValue();
+    return isXWindow && ourHasXdgMime.getValue();
   }
 
   public static final boolean isMacOSTiger = isMac && isOsVersionAtLeast("10.4");

@@ -31,10 +31,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.Timings;
+import com.intellij.testFramework.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
@@ -126,7 +123,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     final LoggingListener fileToDeleteListener = new LoggingListener();
     final VirtualFilePointer fileToDeletePointer = createPointerByFile(fileToDelete, fileToDeleteListener);
     assertTrue(fileToDeletePointer.isValid());
-    delete(getVirtualFile(fileToDelete));
+    VfsTestUtil.deleteFile(getVirtualFile(fileToDelete));
     assertFalse(fileToDeletePointer.isValid());
     assertEquals("[before:true, after:false]", fileToDeleteListener.getLog().toString());
   }
@@ -213,7 +210,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     assertTrue(fileToCreatePointer.isValid());
     assertEquals(child, fileToCreatePointer.getFile());
 
-    delete(child);
+    VfsTestUtil.deleteFile(child);
     assertFalse(fileToCreatePointer.isValid());
     assertNull(fileToCreatePointer.getFile());
   }

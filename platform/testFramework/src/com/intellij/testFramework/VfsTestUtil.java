@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.text.StringTokenizer;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.io.File;
@@ -91,19 +92,8 @@ public class VfsTestUtil {
     }
   }
 
-  public static void deleteFile(final VirtualFile file) {
-    try {
-      AccessToken token = WriteAction.start();
-      try {
-        file.delete(VfsTestUtil.class);
-      }
-      finally {
-        token.finish();
-      }
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  public static void deleteFile(@NotNull VirtualFile file) {
+    UtilKt.deleteFile(file);
   }
 
   public static void clearContent(VirtualFile file) {
