@@ -550,5 +550,31 @@ bar.lower<caret>case
 ''', GrAccessorMethod)
   }
 
+  void 'test class vs property capitalized with whitespaces and comments'() {
+    myFixture.addFileToProject('bar/Foo.groovy', '''\
+package bar
+
+class Foo {
+    def Capitalized
+}
+''')
+    resolveByText('''
+def bar = new bar.Foo()
+bar/*comment*/
+    .Capital<caret>ized
+''', GrAccessorMethod)
+
+    myFixture.addFileToProject('bar/Capitalized.groovy', '''\
+package bar
+
+class Capitalized {}
+''')
+    resolveByText('''
+def bar = new bar.Foo()
+bar/*comment*/
+    .Capital<caret>ized
+''', GrTypeDefinition)
+  }
+
   private void doTest(String fileName = getTestName(false) + ".groovy") { resolve(fileName, PsiClass) }
 }
