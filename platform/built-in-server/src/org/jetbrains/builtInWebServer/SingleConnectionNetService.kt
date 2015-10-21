@@ -11,7 +11,7 @@ import org.jetbrains.io.NettyUtil
 
 import java.net.InetSocketAddress
 
-public abstract class SingleConnectionNetService(project: Project) : NetService(project) {
+abstract class SingleConnectionNetService(project: Project) : NetService(project) {
   protected @Volatile var processChannel: Channel? = null
 
   protected abstract fun configureBootstrap(bootstrap: Bootstrap, errorOutputConsumer: Consumer<String>)
@@ -19,9 +19,8 @@ public abstract class SingleConnectionNetService(project: Project) : NetService(
   override fun connectToProcess(promise: AsyncPromise<OSProcessHandler>, port: Int, processHandler: OSProcessHandler, errorOutputConsumer: Consumer<String>) {
     val bootstrap = NettyUtil.oioClientBootstrap()
     configureBootstrap(bootstrap, errorOutputConsumer)
-    val channel = NettyUtil.connect(bootstrap, InetSocketAddress(NetUtils.getLoopbackAddress(), port), promise)
-    if (channel != null) {
-      processChannel = channel
+    NettyUtil.connect(bootstrap, InetSocketAddress(NetUtils.getLoopbackAddress(), port), promise)?.let {
+      processChannel = it
       promise.setResult(processHandler)
     }
   }

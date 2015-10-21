@@ -59,7 +59,7 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
     }
   }
 
-  public fun send(fastCgiRequest: FastCgiRequest, content: ByteBuf) {
+  fun send(fastCgiRequest: FastCgiRequest, content: ByteBuf) {
     val notEmptyContent: ByteBuf?
     if (content.isReadable()) {
       content.retain()

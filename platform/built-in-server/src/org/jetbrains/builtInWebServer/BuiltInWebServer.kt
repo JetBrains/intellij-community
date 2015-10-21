@@ -34,10 +34,10 @@ import org.jetbrains.ide.HttpRequestHandler
 import java.net.InetAddress
 import java.net.UnknownHostException
 
+internal val LOG = Logger.getInstance(BuiltInWebServer::class.java)
+
 class BuiltInWebServer : HttpRequestHandler() {
   companion object {
-    val LOG = Logger.getInstance(BuiltInWebServer::class.java)
-
     private fun doProcess(request: FullHttpRequest, context: ChannelHandlerContext, projectNameAsHost: String?): Boolean {
       val decodedPath = URLUtil.unescapePercentSequences(UriUtil.trimParameters(request.uri()))
       var offset: Int
@@ -95,7 +95,7 @@ class BuiltInWebServer : HttpRequestHandler() {
         }
 
         // we must redirect "jsdebug" to "jsdebug/" as nginx does, otherwise browser will treat it as file instead of directory, so, relative path will not work
-        WebServerPathHandler.redirectToDirectory(request, context.channel(), projectName)
+        redirectToDirectory(request, context.channel(), projectName)
         return true
       }
 
