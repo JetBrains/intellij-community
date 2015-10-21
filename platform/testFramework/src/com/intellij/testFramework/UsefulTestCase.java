@@ -139,7 +139,7 @@ public abstract class UsefulTestCase extends TestCase {
       String testName =  FileUtil.sanitizeFileName(getTestName(true));
       if (StringUtil.isEmptyOrSpaces(testName)) testName = "";
       testName = new File(testName).getName(); // in case the test name contains file separators
-      myTempDir = FileUtil.toSystemDependentName(ORIGINAL_TEMP_DIR + "/" + TEMP_DIR_MARKER + testName + "_"+ RNG.nextInt(1000));
+      myTempDir = new File(ORIGINAL_TEMP_DIR, TEMP_DIR_MARKER + testName).getPath();
       FileUtil.resetCanonicalTempPathCache(myTempDir);
     }
     ApplicationInfoImpl.setInPerformanceTest(isPerformanceTest());
