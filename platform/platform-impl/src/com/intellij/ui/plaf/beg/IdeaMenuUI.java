@@ -117,7 +117,7 @@ public class IdeaMenuUI extends BasicMenuUI{
            myAquaSelectedBackgroundPainter.paintBorder(comp, g, 0, 0, jMenu.getWidth(), jMenu.getHeight());
         } else {
           g.setColor(selectionBackground);
-          if (allowedIcon != null) {
+          if (allowedIcon != null && !(UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
             g.fillRect(k, 0, jMenu.getWidth() - k, jMenu.getHeight());
           }
           else {
