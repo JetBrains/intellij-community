@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.HyperlinkLabel;
@@ -231,7 +232,7 @@ public class IntentionDescriptionPanel {
 
   private static void disposeUsagePanels(List<IntentionUsagePanel> usagePanels) {
     for (final IntentionUsagePanel usagePanel : usagePanels) {
-      usagePanel.dispose();
+      Disposer.dispose(usagePanel);
     }
     usagePanels.clear();
   }

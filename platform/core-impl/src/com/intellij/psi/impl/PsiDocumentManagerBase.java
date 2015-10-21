@@ -527,13 +527,18 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (!hasUncommitedDocuments() && !actionsWhenAllDocumentsAreCommitted.isEmpty()) {
       List<Object> keys = new ArrayList<Object>(actionsWhenAllDocumentsAreCommitted.keySet());
       for (Object key : keys) {
+        Runnable action = actionsWhenAllDocumentsAreCommitted.remove(key);
         try {
-          Runnable action = actionsWhenAllDocumentsAreCommitted.remove(key);
           myDocumentCommitProcessor.log("Running after commit runnable: ", null, false, key, action);
+          int before = actionsWhenAllDocumentsAreCommitted.size();
           action.run();
+          int after = actionsWhenAllDocumentsAreCommitted.size();
+          if (before != after) {
+            LOG.error("You must not call performWhenAllCommitted() from within after-commit handler " + action + ": "+action.getClass());
+          }
         }
         catch (Throwable e) {
-          LOG.error(e);
+          LOG.error("During running "+action, e);
         }
       }
     }

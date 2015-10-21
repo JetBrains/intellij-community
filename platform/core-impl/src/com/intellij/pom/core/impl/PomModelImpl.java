@@ -326,7 +326,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       }
       CommandProcessor commandProcessor = CommandProcessor.getInstance();
       if (!commandProcessor.isUndoTransparentActionInProgress() && commandProcessor.getCurrentCommand() == null) {
-        throw new IncorrectOperationException("Must not change document outside command or undo-transparent action. See com.intellij.openapi.command.WriteCommandAction or com.intellij.openapi.command.CommandProcessor");
+        throw new IncorrectOperationException("Must not change PSI outside command or undo-transparent action. See com.intellij.openapi.command.WriteCommandAction or com.intellij.openapi.command.CommandProcessor");
       }
     }
 

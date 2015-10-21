@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +85,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
       if (text == null) continue;
       texts.add(escapeQuickFixText(text));
     }
-    return texts.toArray(new String[texts.size()]);
+    return ArrayUtil.toStringArray(texts);
   }
 
   private static String escapeQuickFixText(String text) {

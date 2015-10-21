@@ -100,11 +100,10 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
 
     DESCRIPTORS_MAP.put("first", new TypeConversionDescriptorFactory("$it$.first()", "$it$." + StreamApiConstants.FIND_FIRST + "()", false));
     DESCRIPTORS_MAP.put("firstMatch", new TypeConversionDescriptorFactory("$it$.firstMatch($p$)", "$it$.filter($p$).findFirst()", true, true, false));
-    DESCRIPTORS_MAP.put("get", new TypeConversionDescriptorFactory("$it$.get($p$)", "$it$.collect(java.util.stream.Collectors.toList()).get($p$)", false));
     DESCRIPTORS_MAP.put("size", new TypeConversionDescriptorFactory("$it$.size()", "(int) $it$.count()", false));
 
     DESCRIPTORS_MAP.put("toMap", new TypeConversionDescriptorFactory("$it$.toMap($f$)",
-                                                              "$it$.collect(java.util.stream.Collectors.toMap(java.util.function.Function.identity(), $f$))", false));
+                                                              "$it$.collect(java.util.stream.Collectors.toMap(java.util.function.Function.identity(), $f$))", true));
     DESCRIPTORS_MAP.put("toList", new TypeConversionDescriptorFactory("$it$.toList()", "$it$.collect(java.util.stream.Collectors.toList())", false));
     DESCRIPTORS_MAP.put("toSet", new TypeConversionDescriptorFactory("$it$.toSet()", "$it$.collect(java.util.stream.Collectors.toSet())", false));
     DESCRIPTORS_MAP.put("toSortedList", new TypeConversionDescriptorFactory("$it$.toSortedList($c$)", "$it$.sorted($c$).collect(java.util.stream.Collectors.toList())", false));
@@ -161,6 +160,24 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     }
     else if (methodName.equals("copyInto")) {
       descriptorBase = new FluentIterableConversionUtil.CopyIntoDescriptor();
+      needSpecifyType = false;
+    }
+    else if (methodName.equals("get")) {
+      descriptorBase = new TypeConversionDescriptor("$it$.get($p$)", null) {
+        @Override
+        public PsiExpression replace(PsiExpression expression) {
+          PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
+          final PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
+          setReplaceByString("$it$.skip($p$).findFirst().get()");
+          if (arguments.length == 1 && arguments[0] instanceof PsiLiteralExpression) {
+            final Object value = ((PsiLiteralExpression)arguments[0]).getValue();
+            if (value != null && value.equals(0)) {
+              setReplaceByString("$it$.findFirst().get()");
+            }
+          }
+          return super.replace(expression);
+        }
+      };
       needSpecifyType = false;
     }
     else {

@@ -731,6 +731,7 @@ public class AnalysisScope {
         return new GlobalSearchScope() {
           @Override
           public boolean contains(@NotNull VirtualFile file) {
+            if (myFilesSet == null) initFilesSet();
             return myFilesSet.contains(file);
           }
 

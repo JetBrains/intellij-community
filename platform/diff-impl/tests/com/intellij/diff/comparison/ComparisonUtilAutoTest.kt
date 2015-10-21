@@ -16,9 +16,6 @@
 package com.intellij.diff.comparison
 
 import com.intellij.diff.DiffTestCase
-import com.intellij.diff.assertEquals
-import com.intellij.diff.assertFalse
-import com.intellij.diff.assertTrue
 import com.intellij.diff.fragments.DiffFragment
 import com.intellij.diff.fragments.LineFragment
 import com.intellij.diff.util.DiffUtil
@@ -271,8 +268,8 @@ public class ComparisonUtilAutoTest : DiffTestCase() {
       last1 = fragment.getEndOffset1()
       last2 = fragment.getEndOffset2()
     }
-    val chunk1 = text1.subSequence(last1, text1.length())
-    val chunk2 = text2.subSequence(last2, text2.length())
+    val chunk1 = text1.subSequence(last1, text1.length)
+    val chunk2 = text2.subSequence(last2, text2.length)
     assertEqualsCharSequences(chunk1, chunk2, ignoreSpaces, skipNewline)
   }
 
@@ -297,8 +294,8 @@ public class ComparisonUtilAutoTest : DiffTestCase() {
 
   private fun countNonWhitespaceCharacters(line: CharSequence): Int {
     var count = 0
-    for (i in 0 until line.length()) {
-      if (!StringUtil.isWhiteSpace(line.charAt(i))) count++
+    for (i in 0 until line.length) {
+      if (!StringUtil.isWhiteSpace(line[i])) count++
     }
     return count
   }

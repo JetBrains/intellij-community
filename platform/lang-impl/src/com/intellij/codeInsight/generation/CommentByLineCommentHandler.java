@@ -394,8 +394,8 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
     int lineStartOffset = document.getLineStartOffset(line);
     int lineEndOffset = document.getLineEndOffset(line) - 1;
     final CharSequence charSequence = document.getCharsSequence();
-    lineStartOffset = CharArrayUtil.shiftForward(charSequence, lineStartOffset, " \t");
-    lineEndOffset = CharArrayUtil.shiftBackward(charSequence, lineEndOffset < 0 ? 0 : lineEndOffset, " \t");
+    lineStartOffset = Math.max(0, CharArrayUtil.shiftForward(charSequence, lineStartOffset, " \t"));
+    lineEndOffset = Math.max(0, CharArrayUtil.shiftBackward(charSequence, lineEndOffset < 0 ? 0 : lineEndOffset, " \t"));
     final Language lineStartLanguage = PsiUtilCore.getLanguageAtOffset(file, lineStartOffset);
     final Language lineEndLanguage = PsiUtilCore.getLanguageAtOffset(file, lineEndOffset);
     return CommentByBlockCommentHandler.getCommenter(file, editor, lineStartLanguage, lineEndLanguage);

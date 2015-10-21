@@ -16,8 +16,6 @@
 package com.intellij.diff.comparison
 
 import com.intellij.diff.DiffTestCase
-import com.intellij.diff.assertEquals
-import com.intellij.diff.assertTrue
 import com.intellij.diff.util.IntPair
 
 public class ComparisonUtilTest : DiffTestCase() {
@@ -132,8 +130,8 @@ public class ComparisonUtilTest : DiffTestCase() {
                                  offsets1: IntPair, offsets2: IntPair,
                                  lines1: IntPair, lines2: IntPair) {
     val fragments = MANAGER.compareLines(parseSource(string1), parseSource(string2), ComparisonPolicy.DEFAULT, INDICATOR)
-    assertTrue(fragments.size() == 1, "Side: ${fragments.size()})")
-    val fragment = fragments.get(0)
+    assertTrue(fragments.size == 1, "Side: ${fragments.size})")
+    val fragment = fragments[0]
 
     assertEquals(offsets1.val1, fragment.getStartOffset1(), fragment.toString())
     assertEquals(offsets1.val2, fragment.getEndOffset1(), fragment.toString())
@@ -151,15 +149,15 @@ public class ComparisonUtilTest : DiffTestCase() {
 
   private fun doTest(expected: Boolean, string1: String, string2: String, policy: ComparisonPolicy) {
     val result = MANAGER.isEquals(string1, string2, policy)
-    assertEquals(expected, result, "---\n" + string1 + "\n---\n" + string2 + "\n---")
+    assertEquals(expected, result, "---\n$string1\n---\n$string2\n---")
   }
 
   //
   // Helpers
   //
 
-  public fun Int.not(): LineColHelper = LineColHelper(this)
-  public fun LineColHelper.minus(col: Int): IntPair = IntPair(this.line, col)
+  public operator fun Int.not(): LineColHelper = LineColHelper(this)
+  public operator fun LineColHelper.minus(col: Int): IntPair = IntPair(this.line, col)
 
   public inner class LineColHelper(val line: Int) {
   }

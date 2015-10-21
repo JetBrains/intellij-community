@@ -15,8 +15,11 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
@@ -88,6 +91,15 @@ public final class IconLoader {
     ourDeprecatedIconsReplacements.put("/actions/showSource.png", "AllIcons.Actions.Preview");
     ourDeprecatedIconsReplacements.put("/actions/consoleHistory.png", "AllIcons.General.MessageHistory");
     ourDeprecatedIconsReplacements.put("/vcs/messageHistory.png", "AllIcons.General.MessageHistory");
+  }
+
+  private static Disposable myDisposable = Disposer.newDisposable();
+  static {
+    Registry.get("ide.svg.icon").addListener(new RegistryValueListener.Adapter() {
+      public void afterValueChanged(RegistryValue value) {
+        clearCache();
+      }
+    }, myDisposable);
   }
 
   private static final ImageIcon EMPTY_ICON = new ImageIcon(UIUtil.createImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {

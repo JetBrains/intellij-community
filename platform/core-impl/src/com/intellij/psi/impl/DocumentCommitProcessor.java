@@ -70,7 +70,7 @@ public abstract class DocumentCommitProcessor {
     private final CharSequence myLastCommittedText;
     public boolean removed; // task marked as removed should be ignored.
 
-    public CommitTask(@NotNull Document document,
+    protected CommitTask(@NotNull Document document,
                       @NotNull Project project,
                       @NotNull ProgressIndicator indicator,
                       @NotNull Object reason,
