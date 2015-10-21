@@ -17,7 +17,6 @@ package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.util.SystemProperties;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.BootstrapUtil;
@@ -25,7 +24,6 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.oio.OioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.channel.socket.oio.OioSocketChannel;
@@ -48,7 +46,6 @@ import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 
 public final class NettyUtil {
   public static final int MAX_CONTENT_LENGTH = 100 * 1024 * 1024;
@@ -91,34 +88,11 @@ public final class NettyUtil {
   }
 
   @Nullable
-  public static Channel connect(@NotNull Bootstrap bootstrap, @NotNull InetSocketAddress remoteAddress, @Nullable AsyncPromise<?> promise) {
-    return connect(bootstrap, remoteAddress, promise, DEFAULT_CONNECT_ATTEMPT_COUNT);
-  }
-
-  @Nullable
-  public static Channel connect(@NotNull Bootstrap bootstrap, @NotNull InetSocketAddress remoteAddress, @Nullable AsyncPromise<?> promise, int maxAttemptCount) {
-    return connect(bootstrap, remoteAddress, promise, maxAttemptCount, null);
-  }
-
-  @Nullable
-  public static Channel connect(@NotNull Bootstrap bootstrap, @NotNull InetSocketAddress remoteAddress, @Nullable AsyncPromise<?> promise, int maxAttemptCount, @Nullable Condition<Void> stopCondition) {
-    try {
-      return doConnect(bootstrap, remoteAddress, promise, maxAttemptCount, stopCondition == null ? Conditions.<Void>alwaysFalse() : stopCondition);
-    }
-    catch (Throwable e) {
-      if (promise != null) {
-        promise.setError(e);
-      }
-      return null;
-    }
-  }
-
-  @Nullable
-  private static Channel doConnect(@NotNull Bootstrap bootstrap,
-                                   @NotNull InetSocketAddress remoteAddress,
-                                   @Nullable AsyncPromise<?> promise,
-                                   int maxAttemptCount,
-                                   @NotNull Condition<Void> stopCondition) throws Throwable {
+  static Channel doConnect(@NotNull Bootstrap bootstrap,
+                           @NotNull InetSocketAddress remoteAddress,
+                           @Nullable AsyncPromise<?> promise,
+                           int maxAttemptCount,
+                           @NotNull Condition<Void> stopCondition) throws Throwable {
     int attemptCount = 0;
 
     if (bootstrap.group() instanceof NioEventLoopGroup) {
@@ -200,18 +174,6 @@ public final class NettyUtil {
            (message.startsWith("Connection reset") || message.equals("Operation timed out") || message.equals("Connection timed out"));
   }
 
-  // applicable only in case of ClientBootstrap&OioClientSocketChannelFactory
-  public static void closeAndReleaseFactory(@NotNull Channel channel) {
-    EventLoop eventLoop = channel.eventLoop();
-    try {
-      channel.close().awaitUninterruptibly();
-    }
-    finally {
-      // in our case it does nothing, we don't use ExecutorService, but we are aware of future changes
-      eventLoop.shutdownGracefully(1, 2, TimeUnit.NANOSECONDS);
-    }
-  }
-
   @NotNull
   public static ServerBootstrap nioServerBootstrap(@NotNull EventLoopGroup eventLoopGroup) {
     ServerBootstrap bootstrap = new ServerBootstrap().group(eventLoopGroup).channel(eventLoopGroup instanceof NioEventLoopGroup ? NioServerSocketChannel.class : EpollServerSocketChannel.class);
@@ -219,14 +181,13 @@ public final class NettyUtil {
     return bootstrap;
   }
 
+  @SuppressWarnings("unused")
+  @Deprecated
   @NotNull
   public static Bootstrap oioClientBootstrap() {
-    Bootstrap bootstrap = new Bootstrap().group(new OioEventLoopGroup(1, PooledThreadExecutor.INSTANCE)).channel(OioSocketChannel.class);
-    bootstrap.option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true);
-    return bootstrap;
+    return NettyKt.oioClientBootstrap();
   }
 
-  @SuppressWarnings("UnusedDeclaration")
   public static Bootstrap nioClientBootstrap() {
     return nioClientBootstrap(new NioEventLoopGroup(1, PooledThreadExecutor.INSTANCE));
   }

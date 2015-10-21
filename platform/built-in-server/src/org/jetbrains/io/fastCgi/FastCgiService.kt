@@ -36,26 +36,21 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
   private val requestIdCounter = AtomicInteger()
   protected val requests: ConcurrentIntObjectMap<Channel> = ContainerUtil.createConcurrentIntObjectMap<Channel>()
 
-  override fun closeProcessConnections() {
-    try {
-      super.closeProcessConnections()
-    }
-    finally {
-      requestIdCounter.set(0)
-      if (!requests.isEmpty()) {
-        val waitingClients = requests.elements().toList()
-        requests.clear()
-        for (channel in waitingClients) {
-          sendBadGateway(channel)
-        }
-      }
-    }
-  }
-
   override fun configureBootstrap(bootstrap: Bootstrap, errorOutputConsumer: Consumer<String>) {
     bootstrap.handler {
       it.pipeline().addLast("fastCgiDecoder", FastCgiDecoder(errorOutputConsumer, this@FastCgiService))
       it.pipeline().addLast("exceptionHandler", ChannelExceptionHandler.getInstance())
+
+      it.closeFuture().addListener {
+        requestIdCounter.set(0)
+        if (!requests.isEmpty()) {
+          val waitingClients = requests.elements().toList()
+          requests.clear()
+          for (channel in waitingClients) {
+            sendBadGateway(channel)
+          }
+        }
+      }
     }
   }
 
@@ -71,17 +66,28 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
     }
 
     try {
+      val promise: Promise<*>
       if (processHandler.has()) {
-        fastCgiRequest.writeToServerChannel(notEmptyContent, processChannel!!)
+        val channel = processChannel.get()
+        if (channel == null || !channel.isOpen) {
+          // channel disconnected for some reason
+          promise = connectAgain()
+        }
+        else {
+          fastCgiRequest.writeToServerChannel(notEmptyContent, channel)
+          return
+        }
       }
       else {
-        processHandler.get()
-          .done { fastCgiRequest.writeToServerChannel(notEmptyContent, processChannel!!) }
-          .rejected {
-            Promise.logError(LOG, it)
-            handleError(fastCgiRequest, notEmptyContent)
-          }
+        promise = processHandler.get()
       }
+
+      promise
+        .done { fastCgiRequest.writeToServerChannel(notEmptyContent, processChannel.get()!!) }
+        .rejected {
+          Promise.logError(LOG, it)
+          handleError(fastCgiRequest, notEmptyContent)
+        }
     }
     catch (e: Throwable) {
       LOG.error(e)
