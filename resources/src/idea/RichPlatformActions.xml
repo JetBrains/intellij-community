@@ -110,9 +110,7 @@
       <add-to-group group-id="MainMenu" anchor="before" relative-to-action="RunMenu"/>
     </group>
 
-    <action id="DebugBuildProcess" class="com.intellij.compiler.actions.DebugBuildProcessToggleAction">
-      <add-to-group group-id="Internal" anchor="last"/>
-    </action>
+    <action id="DebugBuildProcess" class="com.intellij.compiler.actions.DebugBuildProcessToggleAction"/>
 
     <group id="CompilerErrorViewPopupMenu">
       <action id="ExcludeFromValidation" class="com.intellij.compiler.options.ExcludeFromValidationAction"/>
