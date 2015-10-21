@@ -16,7 +16,6 @@
 package com.intellij.diff.comparison
 
 import com.intellij.diff.DiffTestCase
-import com.intellij.diff.assertEquals
 import com.intellij.openapi.util.text.StringUtil
 
 public class TrimUtilTest : DiffTestCase() {

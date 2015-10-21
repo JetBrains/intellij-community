@@ -16,10 +16,6 @@
 package com.intellij.diff.comparison
 
 import com.intellij.diff.DiffTestCase
-import com.intellij.diff.DiffTestCase.Trio
-import com.intellij.diff.assertEquals
-import com.intellij.diff.assertOrderedEquals
-import com.intellij.diff.assertTrue
 import com.intellij.diff.fragments.MergeLineFragment
 import com.intellij.diff.util.IntPair
 import com.intellij.diff.util.ThreeSide
@@ -51,7 +47,7 @@ public abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
 
       var empty = true
       var squashed = true
-      ThreeSide.values().forEach {
+      ThreeSide.values.forEach {
         val start = starts(it)
         val end = ends(it)
         val last = lasts(it)
@@ -122,11 +118,11 @@ public abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
     }
 
 
-    public fun String.minus(v: String): Couple<String> {
+    public operator fun String.minus(v: String): Couple<String> {
       return Couple(this, v)
     }
 
-    public fun Couple<String>.minus(v: String): Helper {
+    public operator fun Couple<String>.minus(v: String): Helper {
       return Helper(Trio(this.first, this.second, v))
     }
 
