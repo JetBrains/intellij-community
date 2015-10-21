@@ -72,6 +72,7 @@ public class ExcludedEntriesConfiguration implements PersistentStateComponent<Ex
   }
 
   public void readExternal(final Element node) {
+    removeAllExcludeEntryDescriptions();
     for (final Object o : node.getChildren()) {
       Element element = (Element)o;
       String url = element.getAttributeValue(URL);
