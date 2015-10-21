@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.actions;
+package com.intellij.xdebugger.impl.actions;
 
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -34,7 +33,7 @@ final class ShowLibraryFramesAction extends ToggleAction {
 
   public ShowLibraryFramesAction() {
     super("", "", AllIcons.Debugger.Class_filter);
-    myShouldShow = DebuggerSettings.getInstance().SHOW_LIBRARY_STACKFRAMES;
+    myShouldShow = XDebuggerSettingManagerImpl.getInstanceImpl().getDataViewSettings().isShowLibraryStackFrames();
   }
 
   @Override
