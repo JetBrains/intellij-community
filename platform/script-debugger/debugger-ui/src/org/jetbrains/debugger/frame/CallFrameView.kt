@@ -70,7 +70,7 @@ class CallFrameView(val callFrame: CallFrame,
     if (sourceInfo == null) {
       val scriptName = if (script == null) "unknown" else script.url.trimParameters().toDecodedForm()
       val line = callFrame.line
-      component.append(if (line != -1) scriptName + ':' + line else scriptName, SimpleTextAttributes.ERROR_ATTRIBUTES)
+      component.append(if (line == -1) scriptName else "$scriptName:$line", SimpleTextAttributes.ERROR_ATTRIBUTES)
       return
     }
 
@@ -81,7 +81,12 @@ class CallFrameView(val callFrame: CallFrame,
 
     val functionName = sourceInfo.functionName
     if (functionName == null || (functionName.isEmpty() && callFrame.hasOnlyGlobalScope())) {
-      component.append(fileName + ":" + line, textAttributes)
+      if (fileName.startsWith("index.")) {
+        sourceInfo.file.parent?.let {
+          component.append("${it.name}/", textAttributes)
+        }
+      }
+      component.append("$fileName:$line", textAttributes)
     }
     else {
       if (functionName.isEmpty()) {
