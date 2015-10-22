@@ -15,7 +15,6 @@
  */
 package org.jetbrains.debugger
 
-import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -25,15 +24,22 @@ import org.jetbrains.io.addListener
 import org.jetbrains.io.shutdownIfOio
 import org.jetbrains.jsonProtocol.Request
 import org.jetbrains.rpc.MessageProcessor
-import org.jetbrains.rpc.MessageWriter
 import org.jetbrains.concurrency.Promise as OJCPromise
 
-open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: MessageProcessor) : MessageWriter(), AttachStateManager {
-  private @Volatile var channel: Channel? = null
+open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: MessageProcessor, channel: Channel) : AttachStateManager {
+  private @Volatile var channel: Channel? = channel
 
-  override fun write(content: ByteBuf) = write((content as Any))
+  init {
+    channel.closeFuture().addListener {
+      // don't report in case of explicit detach()
+      if (this.channel != null) {
+        messageProcessor.closed()
+        vm.debugListener.disconnected()
+      }
+    }
+  }
 
-  public fun getChannelIfActive(): Channel? {
+  fun getChannelIfActive(): Channel? {
     val currentChannel = channel
     return if (currentChannel == null || !currentChannel.isActive) null else currentChannel
   }
@@ -45,17 +51,6 @@ open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: 
 
   interface VmEx : Vm {
     fun createDisconnectRequest(): Request<out Any>?
-  }
-
-  fun setChannel(channel: Channel) {
-    this.channel = channel
-    channel.closeFuture().addListener {
-      // don't report in case of explicit detach()
-      if (this.channel != null) {
-        messageProcessor.closed()
-        vm.debugListener.disconnected()
-      }
-    }
   }
 
   override fun isAttached() = channel != null
