@@ -60,24 +60,24 @@ abstract class ChangeCorrector {
     return fair(myBuilder.finish());
   }
 
-  private int offset1 = 0;
-  private int offset2 = 0;
-
   protected void execute() {
+    int last1 = 0;
+    int last2 = 0;
+
     for (Range ch : myChanges.iterateUnchanged()) {
       int count = ch.end1 - ch.start1;
       for (int i = 0; i < count; i++) {
-        matchedPair(getOriginalIndex1(ch.start1 + i), getOriginalIndex2(ch.start2 + i));
+        int index1 = getOriginalIndex1(ch.start1 + i);
+        int index2 = getOriginalIndex2(ch.start2 + i);
+
+        matchGap(last1, index1, last2, index2);
+        myBuilder.markEqual(index1, index2);
+
+        last1 = index1 + 1;
+        last2 = index2 + 1;
       }
     }
-    matchGap(offset1, myLength1, offset2, myLength2);
-  }
-
-  private void matchedPair(int off1, int off2) {
-    matchGap(offset1, off1, offset2, off2);
-    myBuilder.markEqual(off1, off2);
-    offset1 = off1 + 1;
-    offset2 = off2 + 1;
+    matchGap(last1, myLength1, last2, myLength2);
   }
 
   // match elements in range [start1 - end1) -> [start2 - end2)
