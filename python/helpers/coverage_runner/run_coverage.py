@@ -40,6 +40,8 @@ for arg in sys.argv:
         argv.append(arg)
 sys.argv = argv
 
+cwd = os.getcwd()
 main()
 if run_cov:
+    os.chdir(cwd)
     main(["xml", "-o", coverage_file + ".xml", "--ignore-errors"])
