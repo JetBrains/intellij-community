@@ -23,16 +23,13 @@ import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XStackFrame
 import org.jetbrains.debugger.*
 
-class CallFrameView(val callFrame: CallFrame,
-                    private val sourceInfo: SourceInfo?,
-                    private val viewSupport: DebuggerViewSupport,
-                    val script: Script?) : XStackFrame(), VariableContext {
-  // isInLibraryContent call could be costly, so we compute it only once (our customizePresentation called on each repaint)
-  private val inLibraryContent = sourceInfo != null && viewSupport.isInLibraryContent(sourceInfo, script)
+// isInLibraryContent call could be costly, so we compute it only once (our customizePresentation called on each repaint)
+class CallFrameView @JvmOverloads constructor(val callFrame: CallFrame,
+                                              private val viewSupport: DebuggerViewSupport,
+                                              val script: Script? = null,
+                                              private val sourceInfo: SourceInfo? = viewSupport.getSourceInfo(script, callFrame),
+                                              private val isInLibraryContent: Boolean = sourceInfo != null && viewSupport.isInLibraryContent(sourceInfo, script)) : XStackFrame(), VariableContext {
   private var evaluator: XDebuggerEvaluator? = null
-
-  constructor(callFrame: CallFrame, viewSupport: DebuggerViewSupport, script: Script?) : this(callFrame, viewSupport.getSourceInfo(script, callFrame), viewSupport, script) {
-  }
 
   override fun getEqualityObject() = callFrame.equalityObject
 
@@ -70,22 +67,27 @@ class CallFrameView(val callFrame: CallFrame,
     if (sourceInfo == null) {
       val scriptName = if (script == null) "unknown" else script.url.trimParameters().toDecodedForm()
       val line = callFrame.line
-      component.append(if (line != -1) scriptName + ':' + line else scriptName, SimpleTextAttributes.ERROR_ATTRIBUTES)
+      component.append(if (line == -1) scriptName else "$scriptName:$line", SimpleTextAttributes.ERROR_ATTRIBUTES)
       return
     }
 
     val fileName = sourceInfo.file.name
     val line = sourceInfo.line + 1
 
-    val textAttributes = if (inLibraryContent) SimpleTextAttributes.GRAYED_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES
+    val textAttributes = if (isInLibraryContent) SimpleTextAttributes.GRAYED_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES
 
     val functionName = sourceInfo.functionName
     if (functionName == null || (functionName.isEmpty() && callFrame.hasOnlyGlobalScope())) {
-      component.append(fileName + ":" + line, textAttributes)
+      if (fileName.startsWith("index.")) {
+        sourceInfo.file.parent?.let {
+          component.append("${it.name}/", textAttributes)
+        }
+      }
+      component.append("$fileName:$line", textAttributes)
     }
     else {
       if (functionName.isEmpty()) {
-        component.append("anonymous", if (inLibraryContent) SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES else SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES)
+        component.append("anonymous", if (isInLibraryContent) SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES else SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES)
       }
       else {
         component.append(functionName, textAttributes)

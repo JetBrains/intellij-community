@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,6 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
 
   public volatile boolean WATCH_RETURN_VALUES = false;
   public volatile boolean AUTO_VARIABLES_MODE = false;
-  public volatile boolean SHOW_LIBRARY_STACKFRAMES = true;
 
   public String EVALUATE_FINALLY_ON_POP_FRAME = EVALUATE_FINALLY_ASK;
 

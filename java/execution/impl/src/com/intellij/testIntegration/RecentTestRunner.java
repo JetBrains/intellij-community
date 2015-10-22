@@ -16,24 +16,39 @@
 package com.intellij.testIntegration;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-public interface LocationTestRunner {
+import java.util.List;
+
+public interface RecentTestRunner {
   enum Mode { RUN, DEBUG }
+  
   void setMode(Mode mode);
+  
   void run(Location location);
+
+  Location getLocation(String url);
 }
 
-class LocationTestRunnerImpl implements LocationTestRunner {
+class RecentTestRunnerImpl implements RecentTestRunner {
   private static AnAction RUN = ActionManager.getInstance().getAction("RunClass");
   private static AnAction DEBUG = ActionManager.getInstance().getAction("DebugClass");
-  
+
   protected AnAction myCurrentAction = DEBUG;
+  private final Project myProject;
+
+  public RecentTestRunnerImpl(Project project) {
+    myProject = project;
+  }
 
   public void setMode(Mode mode) {
     switch (mode) {
@@ -44,6 +59,20 @@ class LocationTestRunnerImpl implements LocationTestRunner {
         myCurrentAction = DEBUG;
         break;
     }
+  }
+  
+  public Location getLocation(String url) {
+    String protocol = VirtualFileManager.extractProtocol(url);
+    String path = VirtualFileManager.extractPath(url);
+
+    if (protocol != null) {
+      List<Location> locations = JavaTestLocator.INSTANCE.getLocation(protocol, path, myProject, GlobalSearchScope.allScope(myProject));
+      if (!locations.isEmpty()) {
+        return locations.get(0);
+      }
+    }
+
+    return null;
   }
 
   public void run(final Location location) {

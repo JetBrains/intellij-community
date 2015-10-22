@@ -20,7 +20,7 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,12 +37,12 @@ public class SortValuesToggleAction extends ToggleAction implements DumbAware {
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    return XDebuggerSettingsManager.getInstanceImpl().getDataViewSettings().isSortValues();
+    return XDebuggerSettingManagerImpl.getInstanceImpl().getDataViewSettings().isSortValues();
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    XDebuggerSettingsManager.getInstanceImpl().getDataViewSettings().setSortValues(state);
+    XDebuggerSettingManagerImpl.getInstanceImpl().getDataViewSettings().setSortValues(state);
     XDebuggerUtilImpl.rebuildAllSessionsViews(e.getProject());
   }
 }

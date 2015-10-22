@@ -44,3 +44,18 @@ inline fun <T> Promise<T>.rejected(node: Obsolescent, crossinline handler: (Thro
 abstract class ObsolescentConsumer<T>(private val obsolescent: Obsolescent) : Obsolescent, Consumer<T> {
   override fun isObsolete() = obsolescent.isObsolete
 }
+
+inline fun <T> Promise<T>.done(context: SuspendContext, crossinline handler: (result: T, vm: Vm) -> Unit) = done(object : ContextDependentAsyncResultConsumer<T>(context) {
+  override fun consume(result: T, vm: Vm) = handler(result, vm)
+})
+
+abstract class ContextDependentAsyncResultConsumer<T>(private val context: SuspendContext) : Consumer<T> {
+  override final fun consume(result: T) {
+    val vm = context.valueManager.vm
+    if (vm.attachStateManager.isAttached() && !vm.suspendContextManager.isContextObsolete(context)) {
+      consume(result, vm)
+    }
+  }
+
+  protected abstract fun consume(result: T, vm: Vm)
+}

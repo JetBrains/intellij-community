@@ -435,7 +435,7 @@ public class UIUtil {
               return ourRetina.get();
             }
           }
-          else if (SystemInfo.isJavaVersionAtLeast("1.7.0_40") && SystemInfo.isOracleJvm) {
+          else if (SystemInfo.isJavaVersionAtLeast("1.7.0_40") /*&& !SystemInfo.isOracleJvm*/) {
             try {
               GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
               final GraphicsDevice device = env.getDefaultScreenDevice();

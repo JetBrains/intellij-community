@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.utils.library.remote;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenVersionComparable;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
@@ -49,10 +50,12 @@ public class MavenVersionsRemoteManager
     schedule(this, RepositoryLibraryDescription.findDescription(groupId, artifactId), resultProcessor, false);
   }
 
+  @Nullable
   public List<String> getMavenArtifactVersions(String groupId, String artifactId) {
     return getSynchronously(this, RepositoryLibraryDescription.findDescription(groupId, artifactId));
   }
 
+  @NotNull
   @Override
   public List<String> execute(@NotNull RepositoryLibraryDescription repositoryLibraryDescription, ProgressIndicator indicator) {
     MavenEmbeddersManager manager = MavenProjectsManager.getInstance(myProject).getEmbeddersManager();

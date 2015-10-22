@@ -60,6 +60,7 @@ import org.gradle.tooling.model.idea.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.DefaultExternalDependencyId;
 import org.jetbrains.plugins.gradle.ExternalDependencyId;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
@@ -403,11 +404,48 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       processSourceSets(externalProject, ideModule, new SourceSetsProcessor() {
         @Override
         public void process(@NotNull DataNode<GradleSourceSetData> dataNode, @NotNull ExternalSourceSet sourceSet) {
-          Map<ExternalDependencyId, ExternalDependency> dependencyMap = ContainerUtil.newLinkedHashMap();
-          for (ExternalDependency dependency : sourceSet.getDependencies()) {
-            ExternalDependency d = dependencyMap.get(dependency.getId());
-            if (d != null) {
-              DependencyScope prevScope = d.getScope() == null ? DependencyScope.COMPILE : DependencyScope.valueOf(d.getScope());
+          Map<ExternalDependencyId, ExternalDependency> dependencyMap = ContainerUtil.newHashMap();
+
+          Queue<ExternalDependency> queue = ContainerUtil.newLinkedList(sourceSet.getDependencies());
+          while (!queue.isEmpty()) {
+            final ExternalDependency dependency = queue.remove();
+            ExternalDependency seenDependency = dependencyMap.get(dependency.getId());
+            if (seenDependency != null) {
+              if (dependency instanceof ExternalLibraryDependency) {
+                if (seenDependency instanceof ExternalLibraryDependency &&
+                    !FileUtil.filesEqual(((ExternalLibraryDependency)seenDependency).getFile(),
+                                         ((ExternalLibraryDependency)dependency).getFile())) {
+                  DefaultExternalMultiLibraryDependency mergedDependency = new DefaultExternalMultiLibraryDependency();
+                  mergedDependency.setName(dependency.getId().getName());
+                  mergedDependency.setGroup(dependency.getId().getGroup());
+                  mergedDependency.setVersion(dependency.getId().getVersion());
+                  mergedDependency.setPackaging(dependency.getId().getPackaging());
+                  mergedDependency.setClassifier(dependency.getId().getClassifier());
+                  mergedDependency.setScope(dependency.getScope());
+                  mergedDependency.setClasspathOrder(dependency.getClasspathOrder());
+                  mergedDependency.getDependencies().addAll(dependency.getDependencies());
+
+                  mergedDependency.getFiles().addAll(ContainerUtil.packNullables(
+                    ((ExternalLibraryDependency)seenDependency).getFile(), ((ExternalLibraryDependency)dependency).getFile()));
+                  mergedDependency.getSources().addAll((ContainerUtil.packNullables(
+                    ((ExternalLibraryDependency)seenDependency).getSource(), ((ExternalLibraryDependency)dependency).getSource())));
+                  mergedDependency.getJavadoc().addAll((ContainerUtil.packNullables(
+                    ((ExternalLibraryDependency)seenDependency).getJavadoc(), ((ExternalLibraryDependency)dependency).getJavadoc())));
+
+                  dependencyMap.put(dependency.getId(), mergedDependency);
+                  continue;
+                }
+                else if (seenDependency instanceof DefaultExternalMultiLibraryDependency) {
+                  DefaultExternalMultiLibraryDependency mergedDependency = (DefaultExternalMultiLibraryDependency)seenDependency;
+                  mergedDependency.getFiles().addAll(ContainerUtil.packNullables(((ExternalLibraryDependency)dependency).getFile()));
+                  mergedDependency.getSources().addAll(ContainerUtil.packNullables(((ExternalLibraryDependency)dependency).getSource()));
+                  mergedDependency.getJavadoc().addAll(ContainerUtil.packNullables(((ExternalLibraryDependency)dependency).getJavadoc()));
+                  continue;
+                }
+              }
+
+              DependencyScope prevScope =
+                seenDependency.getScope() == null ? DependencyScope.COMPILE : DependencyScope.valueOf(seenDependency.getScope());
               DependencyScope currentScope =
                 dependency.getScope() == null ? DependencyScope.COMPILE : DependencyScope.valueOf(dependency.getScope());
 
@@ -415,12 +453,11 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
               if (prevScope.isForProductionRuntime() && currentScope.isForProductionRuntime()) continue;
             }
 
-            dependencyMap.put(dependency.getId(), dependency);
+            dependencyMap.put(new DefaultExternalDependencyId(dependency.getId()), dependency);
+            queue.addAll(dependency.getDependencies());
           }
 
-          for (ExternalDependency dependency : dependencyMap.values()) {
-            buildSourceSetDependency(sourceSetMap, dataNode, dependency, ideProject);
-          }
+          buildSourceSetDependency(sourceSetMap, dependencyMap, dataNode, sourceSet.getDependencies(), ideProject);
         }
       });
 
@@ -928,125 +965,120 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   }
 
   private static void buildSourceSetDependency(@NotNull Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap,
-                                               @NotNull DataNode<? extends ModuleData> ownerModule,
-                                               @NotNull ExternalDependency dependency,
-                                               @NotNull DataNode<ProjectData> ideProject)
-    throws IllegalStateException {
+                                               @NotNull Map<ExternalDependencyId, ExternalDependency> mergedDependencyMap,
+                                               @NotNull DataNode<? extends ExternalEntityData> ownerDataNode,
+                                               @NotNull Collection<ExternalDependency> dependencies,
+                                               @NotNull DataNode<ProjectData> ideProject) throws IllegalStateException {
 
-    DependencyScope dependencyScope = getDependencyScope(dependency.getScope());
-
-    if (dependency instanceof ExternalProjectDependency) {
-      String moduleId = getModuleId((ExternalProjectDependency)dependency);
-      Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> projectPair = sourceSetMap.get(moduleId);
-      ModuleDependencyData moduleDependencyData = new ModuleDependencyData(ownerModule.getData(), projectPair.first.getData());
-      moduleDependencyData.setScope(dependencyScope);
-      if ("test".equals(projectPair.second.getName())) {
-        moduleDependencyData.setProductionOnTestDependency(true);
-      }
-      moduleDependencyData.setOrder(dependency.getClasspathOrder());
-      moduleDependencyData.setExported(dependency.getExported());
-      DataNode<ModuleDependencyData> ideModuleDependencyNode = ownerModule.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData);
-      for (ExternalDependency externalDependency : dependency.getDependencies()) {
-        buildTransitiveDependency(sourceSetMap, ideModuleDependencyNode, externalDependency, ideProject);
-      }
+    Map<ExternalDependencyId, ExternalDependency> dependencyMap = ContainerUtil.newLinkedHashMap();
+    for (ExternalDependency dependency : dependencies) {
+      dependencyMap.put(dependency.getId(), dependency);
     }
-    if (dependency instanceof ExternalLibraryDependency) {
-      final LibraryLevel level = LibraryLevel.PROJECT;
-      String libraryName = dependency.getId().getPresentableName();
-      final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName);
-      LibraryDependencyData libraryDependencyData = new LibraryDependencyData(ownerModule.getData(), library, level);
-      libraryDependencyData.setScope(dependencyScope);
-      libraryDependencyData.setOrder(dependency.getClasspathOrder());
-      libraryDependencyData.setExported(dependency.getExported());
 
-      library.addPath(LibraryPathType.BINARY, ((ExternalLibraryDependency)dependency).getFile().getAbsolutePath());
-      File sourcePath = ((ExternalLibraryDependency)dependency).getSource();
+    for (ExternalDependency dependency : dependencyMap.values()) {
+      final ExternalDependency mergedDependency = ContainerUtil.getOrElse(mergedDependencyMap, dependency.getId(), dependency);
+      DependencyScope dependencyScope = getDependencyScope(mergedDependency.getScope());
 
-      if (sourcePath != null) {
-        library.addPath(LibraryPathType.SOURCE, sourcePath.getAbsolutePath());
+      ModuleData ownerModule = null;
+      if (ownerDataNode.getData() instanceof ModuleData) {
+        ownerModule = (ModuleData)ownerDataNode.getData();
       }
-      DataNode<LibraryDependencyData> libraryDependencyDataNode =
-        ownerModule.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
-
-      linkProjectLibrary(ideProject, library);
-
-      for (ExternalDependency externalDependency : dependency.getDependencies()) {
-        buildTransitiveDependency(sourceSetMap, libraryDependencyDataNode, externalDependency, ideProject);
-      }
-    }
-    if (dependency instanceof FileCollectionDependency) {
-      final LibraryLevel level = LibraryLevel.MODULE;
-      String libraryName = "";
-      final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName);
-      LibraryDependencyData libraryDependencyData = new LibraryDependencyData(ownerModule.getData(), library, level);
-      libraryDependencyData.setScope(dependencyScope);
-      libraryDependencyData.setOrder(dependency.getClasspathOrder());
-      libraryDependencyData.setExported(dependency.getExported());
-
-      for (File file : ((FileCollectionDependency)dependency).getFiles()) {
-        library.addPath(LibraryPathType.BINARY, file.getAbsolutePath());
+      else if (ownerDataNode.getData() instanceof DependencyData) {
+        ownerModule = ((DependencyData)ownerDataNode.getData()).getOwnerModule();
       }
 
-      ownerModule.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
-    }
-    if (dependency instanceof UnresolvedExternalDependency) {
-      final LibraryLevel level = LibraryLevel.PROJECT;
-      String libraryName = dependency.getId().getPresentableName();
-      final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName, true);
-      LibraryDependencyData libraryDependencyData = new LibraryDependencyData(ownerModule.getData(), library, level);
-      libraryDependencyData.setScope(dependencyScope);
-      final String failureMessage = ((UnresolvedExternalDependency)dependency).getFailureMessage();
-      if (failureMessage != null) {
-        library.addPath(LibraryPathType.BINARY, failureMessage);
-      }
-      ownerModule.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
-      linkProjectLibrary(ideProject, library);
-    }
-  }
+      assert ownerModule != null;
 
-  private static void buildTransitiveDependency(@NotNull Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap,
-                                                @NotNull DataNode<? extends DependencyData> ownerModule,
-                                                @NotNull ExternalDependency dependency,
-                                                @NotNull DataNode<ProjectData> ideProject)
-    throws IllegalStateException {
-
-    DependencyScope dependencyScope = getDependencyScope(dependency.getScope());
-    if (dependency instanceof ExternalProjectDependency) {
-      String moduleId = getModuleId((ExternalProjectDependency)dependency);
-      Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> projectPair = sourceSetMap.get(moduleId);
-      ModuleDependencyData moduleDependencyData =
-        new ModuleDependencyData(ownerModule.getData().getOwnerModule(), projectPair.first.getData());
-      moduleDependencyData.setScope(dependencyScope);
-      if ("test".equals(projectPair.second.getName())) {
-        moduleDependencyData.setProductionOnTestDependency(true);
+      if (mergedDependency instanceof ExternalProjectDependency) {
+        String moduleId = getModuleId((ExternalProjectDependency)mergedDependency);
+        Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> projectPair = sourceSetMap.get(moduleId);
+        ModuleDependencyData moduleDependencyData = new ModuleDependencyData(ownerModule, projectPair.first.getData());
+        moduleDependencyData.setScope(dependencyScope);
+        if ("test".equals(projectPair.second.getName())) {
+          moduleDependencyData.setProductionOnTestDependency(true);
+        }
+        moduleDependencyData.setOrder(mergedDependency.getClasspathOrder());
+        moduleDependencyData.setExported(mergedDependency.getExported());
+        DataNode<ModuleDependencyData> ideModuleDependencyNode =
+          ownerDataNode.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData);
+        buildSourceSetDependency(sourceSetMap, mergedDependencyMap, ideModuleDependencyNode, dependency.getDependencies(), ideProject);
       }
-      moduleDependencyData.setOrder(dependency.getClasspathOrder());
-      moduleDependencyData.setExported(dependency.getExported());
-      DataNode<ModuleDependencyData> ideModuleDependencyNode = ownerModule.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData);
-      for (ExternalDependency externalDependency : dependency.getDependencies()) {
-        buildTransitiveDependency(sourceSetMap, ideModuleDependencyNode, externalDependency, ideProject);
-      }
-    }
-    if (dependency instanceof ExternalLibraryDependency) {
-      final LibraryLevel level = LibraryLevel.PROJECT;
-      String libraryName = dependency.getId().getPresentableName();
-      final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName);
-      LibraryDependencyData libraryDependencyData = new LibraryDependencyData(ownerModule.getData().getOwnerModule(), library, level);
+      if (mergedDependency instanceof ExternalLibraryDependency) {
+        final LibraryLevel level = LibraryLevel.PROJECT;
+        String libraryName = mergedDependency.getId().getPresentableName();
+        final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName);
+        LibraryDependencyData libraryDependencyData = new LibraryDependencyData(ownerModule, library, level);
+        libraryDependencyData.setScope(dependencyScope);
+        libraryDependencyData.setOrder(mergedDependency.getClasspathOrder());
+        libraryDependencyData.setExported(mergedDependency.getExported());
 
-      libraryDependencyData.setScope(dependencyScope);
-      libraryDependencyData.setOrder(dependency.getClasspathOrder());
-      libraryDependencyData.setExported(dependency.getExported());
-      library.addPath(LibraryPathType.BINARY, ((ExternalLibraryDependency)dependency).getFile().getAbsolutePath());
-      File sourcePath = ((ExternalLibraryDependency)dependency).getSource();
-      if (sourcePath != null) {
-        library.addPath(LibraryPathType.SOURCE, sourcePath.getAbsolutePath());
-      }
-      DataNode<LibraryDependencyData> libraryDependencyDataNode =
-        ownerModule.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
+        library.addPath(LibraryPathType.BINARY, ((ExternalLibraryDependency)mergedDependency).getFile().getAbsolutePath());
+        File sourcePath = ((ExternalLibraryDependency)mergedDependency).getSource();
+        if (sourcePath != null) {
+          library.addPath(LibraryPathType.SOURCE, sourcePath.getAbsolutePath());
+        }
+        File javaDocPath = ((ExternalLibraryDependency)mergedDependency).getJavadoc();
+        if (javaDocPath != null) {
+          library.addPath(LibraryPathType.DOC, javaDocPath.getAbsolutePath());
+        }
+        DataNode<LibraryDependencyData> libraryDependencyDataNode =
+          ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
 
-      linkProjectLibrary(ideProject, library);
-      for (ExternalDependency externalDependency : dependency.getDependencies()) {
-        buildTransitiveDependency(sourceSetMap, libraryDependencyDataNode, externalDependency, ideProject);
+        linkProjectLibrary(ideProject, library);
+
+        buildSourceSetDependency(sourceSetMap, mergedDependencyMap, libraryDependencyDataNode, dependency.getDependencies(), ideProject);
+      }
+      if (mergedDependency instanceof ExternalMultiLibraryDependency) {
+        final LibraryLevel level = LibraryLevel.MODULE;
+        String libraryName = mergedDependency.getId().getPresentableName();
+        final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName);
+        LibraryDependencyData libraryDependencyData = new LibraryDependencyData(ownerModule, library, level);
+        libraryDependencyData.setScope(dependencyScope);
+        libraryDependencyData.setOrder(mergedDependency.getClasspathOrder());
+        libraryDependencyData.setExported(mergedDependency.getExported());
+
+        for (File file : ((ExternalMultiLibraryDependency)mergedDependency).getFiles()) {
+          library.addPath(LibraryPathType.BINARY, file.getAbsolutePath());
+        }
+        for (File file : ((ExternalMultiLibraryDependency)mergedDependency).getSources()) {
+          library.addPath(LibraryPathType.SOURCE, file.getAbsolutePath());
+        }
+        for (File file : ((ExternalMultiLibraryDependency)mergedDependency).getJavadoc()) {
+          library.addPath(LibraryPathType.DOC, file.getAbsolutePath());
+        }
+
+        DataNode<LibraryDependencyData> libraryDependencyDataNode =
+          ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
+
+        buildSourceSetDependency(sourceSetMap, mergedDependencyMap, libraryDependencyDataNode, dependency.getDependencies(), ideProject);
+      }
+      if (mergedDependency instanceof FileCollectionDependency) {
+        final LibraryLevel level = LibraryLevel.MODULE;
+        String libraryName = "";
+        final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName);
+        LibraryDependencyData libraryDependencyData = new LibraryDependencyData(ownerModule, library, level);
+        libraryDependencyData.setScope(dependencyScope);
+        libraryDependencyData.setOrder(mergedDependency.getClasspathOrder());
+        libraryDependencyData.setExported(mergedDependency.getExported());
+
+        for (File file : ((FileCollectionDependency)mergedDependency).getFiles()) {
+          library.addPath(LibraryPathType.BINARY, file.getAbsolutePath());
+        }
+
+        ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
+      }
+      if (mergedDependency instanceof UnresolvedExternalDependency) {
+        final LibraryLevel level = LibraryLevel.PROJECT;
+        String libraryName = mergedDependency.getId().getPresentableName();
+        final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName, true);
+        LibraryDependencyData libraryDependencyData = new LibraryDependencyData(ownerModule, library, level);
+        libraryDependencyData.setScope(dependencyScope);
+        final String failureMessage = ((UnresolvedExternalDependency)mergedDependency).getFailureMessage();
+        if (failureMessage != null) {
+          library.addPath(LibraryPathType.BINARY, failureMessage);
+        }
+        ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
+        linkProjectLibrary(ideProject, library);
       }
     }
   }

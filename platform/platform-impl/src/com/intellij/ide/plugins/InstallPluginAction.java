@@ -91,10 +91,10 @@ public class InstallPluginAction extends AnAction implements DumbAware {
   }
   
   public void install(@Nullable final Runnable onSuccess) {
-    install(onSuccess, false);
+    install(onSuccess, null, false);
   }
 
-  public void install(@Nullable final Runnable onSuccess, boolean confirmed) {
+  public void install(@Nullable final Runnable onSuccess, @Nullable final Runnable cleanup, boolean confirmed) {
     IdeaPluginDescriptor[] selection = getPluginTable().getSelectedObjects();
 
     if (confirmed || userConfirm(selection)) {
@@ -178,6 +178,9 @@ public class InstallPluginAction extends AnAction implements DumbAware {
           @Override
           public void run() {
             ourInstallingNodes.removeAll(list);
+            if (cleanup != null) {
+              cleanup.run();
+            }
           }
         };
         final List<IdeaPluginDescriptor> plugins = myHost.getPluginsModel().getAllPlugins();

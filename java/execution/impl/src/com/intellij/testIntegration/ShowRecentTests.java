@@ -15,6 +15,7 @@
  */
 package com.intellij.testIntegration;
 
+import com.intellij.execution.Location;
 import com.intellij.execution.TestStateStorage;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -22,10 +23,12 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.Time;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.util.Date;
 import java.util.Map;
 
@@ -42,18 +45,18 @@ public class ShowRecentTests extends AnAction {
     if (project == null) return;
 
     Map<String, TestStateStorage.Record> records = TestStateStorage.getInstance(project).getRecentTests(TEST_LIMIT, getSinceDate());
-    LocationTestRunner testRunner = new LocationTestRunnerImpl();
+    RecentTestRunner testRunner = new RecentTestRunnerImpl(project);
     
-    SelectTestStep selectStepTest = new SelectTestStep(project, records, testRunner);
+    SelectTestStep selectStepTest = new SelectTestStep(records, testRunner);
     RecentTestsListPopup popup = new RecentTestsListPopup(selectStepTest, testRunner);
     popup.showCenteredInCurrentWindow(project);
   }
 }
 
 class RecentTestsListPopup extends ListPopupImpl {
-  private final LocationTestRunner myTestRunner;
+  private final RecentTestRunner myTestRunner;
 
-  public RecentTestsListPopup(ListPopupStep<String> popupStep, LocationTestRunner testRunner) {
+  public RecentTestsListPopup(ListPopupStep<String> popupStep, RecentTestRunner testRunner) {
     super(popupStep);
     myTestRunner = testRunner;
     shiftReleased();
@@ -79,16 +82,29 @@ class RecentTestsListPopup extends ListPopupImpl {
         handleSelect(true);
       }
     });
+    popup.registerAction("navigate", KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0), new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        Object[] values = getSelectedValues();
+        if (values.length == 1) {
+          Location location = myTestRunner.getLocation(values[0].toString());
+          if (location != null) {
+            cancel();
+            PsiNavigateUtil.navigate(location.getPsiElement());
+          }
+        }
+      }
+    });
   }
 
   private void shiftPressed() {
     setCaption("Run Recent Tests");
-    myTestRunner.setMode(LocationTestRunner.Mode.RUN);
+    myTestRunner.setMode(RecentTestRunner.Mode.RUN);
   }
 
   private void shiftReleased() {
     setCaption("Debug Recent Tests");
-    myTestRunner.setMode(LocationTestRunner.Mode.DEBUG);
+    myTestRunner.setMode(RecentTestRunner.Mode.DEBUG);
   }
 }
 
