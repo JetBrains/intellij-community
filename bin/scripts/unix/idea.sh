@@ -176,18 +176,21 @@ fi
 # ---------------------------------------------------------------------
 # Run the IDE.
 # ---------------------------------------------------------------------
+IFS="$(printf '\t')"
 LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JAVA_BIN" \
   $AGENT \
   "-Xbootclasspath/a:$IDE_HOME/lib/boot.jar" \
   -classpath "$CLASSPATH" \
-  $VM_OPTIONS "-Djb.vmOptionsFile=$VM_OPTIONS_FILE" \
+  `echo "$VM_OPTIONS" | "$TR" '\n' '\t'` \
+  "-Djb.vmOptionsFile=$VM_OPTIONS_FILE" \
   "-XX:ErrorFile=$HOME/java_error_in_@@product_uc@@_%p.log" \
   -Djb.restart.code=88 -Didea.paths.selector=@@system_selector@@ \
   $IDE_PROPERTIES_PROPERTY \
-  $IDE_JVM_ARGS \
+  `echo "$IDE_JVM_ARGS" | "$TR" ' ' '\t'` \
   com.intellij.idea.Main \
   "$@"
 EC=$?
+unset IFS
 
 test $EC -ne 88 && exit $EC
 
