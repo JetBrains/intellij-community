@@ -64,7 +64,6 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeParser;
-import com.jetbrains.python.run.PythonProcessHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -776,16 +775,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @Override
   public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
     myClosing = true;
-    setKillingStrategy();
-  }
-
-  private void setKillingStrategy() {
-    if (myProcessHandler instanceof PythonProcessHandler) {
-      ((PythonProcessHandler)myProcessHandler).setShouldKillProcessSoftly(false);
-      //while process is suspended it can't terminate softly,
-      //multiple processes in debug mode also can not terminate properly
-      //so its better to kill all the tree in a hard way
-    }
   }
 
   @Override
