@@ -40,6 +40,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -544,8 +545,16 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     String fullPath = getTestDataPath() + filePath;
     allowRootAccess(fullPath);
 
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
+    String vfsPath = FileUtil.toSystemIndependentName(fullPath);
+    VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(vfsPath);
     assertNotNull("file " + fullPath + " not found", vFile);
+    String realVfsPath = vFile.getPath();
+    if (!SystemInfo.isFileSystemCaseSensitive && !vfsPath.equals(realVfsPath) &&
+        vfsPath.equalsIgnoreCase(realVfsPath)) {
+      fail("Please correct case-sensitivity of path to prevent test failure on case-sensitive file systems:\n" +
+           "     path " + vfsPath + "\n" +
+           "real path " + realVfsPath);
+    }
     return vFile;
   }
 

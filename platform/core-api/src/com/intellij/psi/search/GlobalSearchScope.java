@@ -157,7 +157,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       @NonNls
       @Override
       public String toString() {
-        return "UnionToLocal: (" + GlobalSearchScope.this.toString() + ", " + scope + ")";
+        return "UnionToLocal: (" + GlobalSearchScope.this + ", " + scope + ")";
       }
     };
   }
@@ -446,7 +446,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       });
       myNestingLevel = 1 + nested[0];
       if (myNestingLevel > 1000) {
-        throw new IllegalStateException("Too many scopes combined: " + myNestingLevel + StringUtil.first(toString(), 500, true));
+        throw new IllegalStateException("Too many scopes combined: " + myNestingLevel + StringUtil.last(toString(), 500, true));
       }
     }
 

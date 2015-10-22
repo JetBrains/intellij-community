@@ -110,7 +110,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected boolean myAssertionsInTestDetected;
   protected static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.PlatformTestCase");
   public static Thread ourTestThread;
-  private static TestCase ourTestCase = null;
+  private static TestCase ourTestCase;
   public static final long DEFAULT_TEST_TIME = 300L;
   public static long ourTestTime = DEFAULT_TEST_TIME;
   private EditorListenerTracker myEditorListenerTracker;
@@ -191,6 +191,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    File tempDir = new File(FileUtilRt.getTempDirectory());
+    myFilesToDelete.add(tempDir);
+
     if (ourTestCase != null) {
       String message = "Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.";
       ourTestCase = null;
@@ -307,7 +310,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   protected File getIprFile() throws IOException {
-    File tempFile = FileUtil.createTempFile(getName() + "_", ProjectFileType.DOT_DEFAULT_EXTENSION);
+    File tempFile = FileUtil.createTempFile(getName(), ProjectFileType.DOT_DEFAULT_EXTENSION);
     myFilesToDelete.add(tempFile);
     return tempFile;
   }

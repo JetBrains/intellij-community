@@ -66,6 +66,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public static final String NAME_FILE = ".name";
   public static final Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
   public static final Key<String> CREATION_TRACE = Key.create("ProjectImpl.CREATION_TRACE");
+  @TestOnly
+  public static final String LIGHT_PROJECT_NAME = "light_temp";
 
   private ProjectManager myProjectManager;
   private MyProjectManagerListener myProjectManagerListener;
@@ -103,7 +105,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     }
     
     // light project may be changed later during test, so we need to remember its initial state 
-    myLight = ApplicationManager.getApplication().isUnitTestMode() && filePath.contains("light_temp_");
+    myLight = ApplicationManager.getApplication().isUnitTestMode() && filePath.contains(LIGHT_PROJECT_NAME);
   }
 
   @Override

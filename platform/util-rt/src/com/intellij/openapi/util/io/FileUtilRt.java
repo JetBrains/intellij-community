@@ -315,7 +315,7 @@ public class FileUtilRt {
   }
 
   private static class FilesToDeleteHolder {
-    public static final Queue<String> ourFilesToDelete = createFilesToDelete();
+    private static final Queue<String> ourFilesToDelete = createFilesToDelete();
 
     private static Queue<String> createFilesToDelete() {
       final ConcurrentLinkedQueue<String> queue = new ConcurrentLinkedQueue<String>();
@@ -387,62 +387,47 @@ public class FileUtilRt {
       prefix = (prefix + "___").substring(0, 3);
     }
     if (suffix == null) {
-      suffix = ".tmp";
+      suffix = "";
     }
+    // normalize and use only the file name from the prefix
+    prefix = new File(prefix).getName();
 
     int exceptionsCount = 0;
+    int i = 0;
     while (true) {
       try {
-        // If there was an IOException, there's no reason to do sequential search - fallback to random
-        final File temp = createTemp(prefix, suffix, dir, isDirectory, exceptionsCount > 0);
-        return normalizeFile(temp);
+        File f = calcName(dir, prefix, suffix, i);
+
+        boolean success = isDirectory ? f.mkdir() : f.createNewFile();
+        if (!success) {
+          throw new IOException("Unable to create temporary file " + f);
+        }
+
+        return normalizeFile(f);
       }
       catch (IOException e) { // Win32 createFileExclusively access denied
         if (++exceptionsCount >= 100) {
           throw e;
         }
       }
+      i++; // for some reason the file1 can't be created (previous file1 was deleted but got locked by anti-virus?). try file2.
+      if (i > 2) {
+        i = 2 + (int)(System.nanoTime() % 998); // generate random suffix if too many failures
+      }
     }
   }
 
   @NotNull
-  private static File createTemp(@NotNull String prefix,
-                                 @NotNull String suffix,
-                                 @NotNull File directory,
-                                 boolean isDirectory,
-                                 boolean randomName) throws IOException {
-    // Fallback to the original File.createTempFile
-    if (randomName) {
-      @SuppressWarnings("SSBasedInspection")
-      File res = File.createTempFile(prefix, suffix, directory);
-      if (isDirectory) {
-        if (!res.delete() || !res.mkdir()) {
-          throw new IOException("Cannot create directory: " + res);
-        }
-      }
-      return res;
+  private static File calcName(@NotNull File dir, @NotNull String prefix, @NotNull String suffix, int i) throws IOException {
+    prefix += i == 0 ? "" : i;
+    if (prefix.endsWith(".") && suffix.startsWith(".")) {
+      prefix = prefix.substring(0, prefix.length() - 1);
     }
-
-    // normalize and use only the file name from the prefix
-    prefix = new File(prefix).getName();
-
-    File f;
-    int i = 0;
-    do {
-      String name = prefix + i + suffix;
-      f = new File(directory, name);
-      if (!name.equals(f.getName())) {
-        throw new IOException("Unable to create temporary file " + f + " for name " + name);
-      }
-      i++;
+    String name = prefix + suffix;
+    File f = new File(dir, name);
+    if (!name.equals(f.getName())) {
+      throw new IOException("Unable to create temporary file " + f + " for name " + name);
     }
-    while (f.exists());
-
-    boolean success = isDirectory ? f.mkdir() : f.createNewFile();
-    if (!success) {
-      throw new IOException("Unable to create temporary file " + f);
-    }
-
     return f;
   }
 
