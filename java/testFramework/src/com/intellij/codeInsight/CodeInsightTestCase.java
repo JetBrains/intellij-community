@@ -40,7 +40,6 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -119,12 +118,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     if (files.length == 0) return null;
     final VirtualFile[] vFiles = new VirtualFile[files.length];
     for (int i = 0; i < files.length; i++) {
-      String path = files[i];
-      final String fullPath = FileUtil.toSystemIndependentName(getTestDataPath() + path);
-      allowRootAccess(fullPath);
-      VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath);
-      vFiles[i] = vFile;
-      assertNotNull("file " + fullPath + " not found", vFile);
+      vFiles[i] = findVirtualFile(files[i]);
     }
 
     File projectFile = projectRoot == null ? null : new File(getTestDataPath() + projectRoot);
@@ -143,12 +137,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
   protected VirtualFile configureByFile(@NonNls String filePath, @Nullable String projectRoot) throws Exception {
-    String fullPath = getTestDataPath() + filePath;
-    allowRootAccess(fullPath);
-
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
-    assertNotNull("file " + fullPath + " not found", vFile);
-
+    VirtualFile vFile = findVirtualFile(filePath);
     File projectFile = projectRoot == null ? null : new File(getTestDataPath() + projectRoot);
 
     return configureByFile(vFile, projectFile);
@@ -467,11 +456,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-        String fullPath = getTestDataPath() + filePath;
-        allowRootAccess(fullPath);
-
-        final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
-        assertNotNull("Cannot find file " + fullPath, vFile);
+        VirtualFile vFile = findVirtualFile(filePath);
         String ft;
         try {
           ft = VfsUtilCore.loadText(vFile);
@@ -541,21 +526,16 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     }
   }
 
+  @NotNull
   protected VirtualFile getVirtualFile(@NonNls @NotNull String filePath) {
-    String fullPath = getTestDataPath() + filePath;
-    allowRootAccess(fullPath);
+    return findVirtualFile(filePath);
+  }
 
-    String vfsPath = FileUtil.toSystemIndependentName(fullPath);
-    VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(vfsPath);
-    assertNotNull("file " + fullPath + " not found", vFile);
-    String realVfsPath = vFile.getPath();
-    if (!SystemInfo.isFileSystemCaseSensitive && !vfsPath.equals(realVfsPath) &&
-        vfsPath.equalsIgnoreCase(realVfsPath)) {
-      fail("Please correct case-sensitivity of path to prevent test failure on case-sensitive file systems:\n" +
-           "     path " + vfsPath + "\n" +
-           "real path " + realVfsPath);
-    }
-    return vFile;
+  @NotNull
+  private VirtualFile findVirtualFile(@NonNls @NotNull String filePath) {
+    String absolutePath = getTestDataPath() + filePath;
+    allowRootAccess(absolutePath);
+    return VfsTestUtil.findFileByCaseSensitivePath(absolutePath);
   }
 
   @NotNull
