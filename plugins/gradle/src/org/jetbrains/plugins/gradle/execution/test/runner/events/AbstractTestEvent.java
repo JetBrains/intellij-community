@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
@@ -78,5 +79,14 @@ public abstract class AbstractTestEvent implements TestEvent {
 
   protected void addToInvokeLater(final Runnable runnable) {
     ExternalSystemApiUtil.addToInvokeLater(runnable);
+  }
+
+  @Nullable
+  protected SMTestProxy findTestProxy(final String proxyId) {
+    return getConsoleManager().getTestsMap().get(proxyId);
+  }
+
+  protected void registerTestProxy(final String proxyId, SMTestProxy testProxy) {
+    getConsoleManager().getTestsMap().put(proxyId, testProxy);
   }
 }

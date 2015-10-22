@@ -36,7 +36,7 @@ public class OnOutputEvent extends AbstractTestEvent {
     final String destination = eventXml.queryXml("/ijLog/event/test/event/@destination");
     final String output = eventXml.queryXml("/ijLog/event/test/event");
 
-    SMTestProxy testProxy = getConsoleManager().getTestsMap().get(testId);
+    SMTestProxy testProxy = findTestProxy(testId);
     if (testProxy == null) return;
 
     testProxy.addStdOutput(output, "StdOut".equals(destination) ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
