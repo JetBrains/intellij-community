@@ -96,6 +96,16 @@ public class IdeSettingsDialog extends DialogWrapper implements DataProvider {
     init(project, groups, getPreselectedByDisplayName(groups, preselectedConfigurableDisplayName, project));
   }
 
+  @Override
+  public void show() {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        IdeSettingsDialog.super.show();
+      }
+    });
+  }
+
   @Nullable
   @Override
   protected Border createContentPaneBorder() {
@@ -199,20 +209,16 @@ public class IdeSettingsDialog extends DialogWrapper implements DataProvider {
   public void doOKAction() {
     myEditor.flushModifications();
 
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      public void run() {
-        if (myEditor.canApply()) {
-          myEditor.apply();
-          if (!updateStatus()) return;
-        }
+    if (myEditor.canApply()) {
+      myEditor.apply();
+      if (!updateStatus()) return;
+    }
 
-        saveCurrentConfigurable();
+    saveCurrentConfigurable();
 
-        ApplicationManager.getApplication().saveAll();
+    ApplicationManager.getApplication().saveAll();
 
-        IdeSettingsDialog.super.doOKAction();
-      }
-    });
+    super.doOKAction();
   }
 
 
@@ -290,12 +296,7 @@ public class IdeSettingsDialog extends DialogWrapper implements DataProvider {
     }
 
     public void actionPerformed(final ActionEvent e) {
-      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-        @Override
-        public void run() {
-          myEditor.apply();
-        }
-      });
+      myEditor.apply();
       myEditor.revalidate();
       myEditor.repaint();
       updateStatus();
