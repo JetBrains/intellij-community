@@ -182,10 +182,14 @@ public abstract class AbstractCreateVirtualEnvDialog extends IdeaDialog {
 
   protected void checkValid() {
     final String projectName = myName.getText();
-    if (new File(getDestination()).exists()) {
-      setOKActionEnabled(false);
-      setErrorText("Directory already exists");
-      return;
+    final File destFile = new File(getDestination());
+    if (destFile.exists()) {
+      final String[] content = destFile.list();
+      if (content != null && content.length != 0) {
+        setOKActionEnabled(false);
+        setErrorText("Directory is not empty");
+        return;
+      }
     }
     if (StringUtil.isEmptyOrSpaces(projectName)) {
       setOKActionEnabled(false);
@@ -254,6 +258,7 @@ public abstract class AbstractCreateVirtualEnvDialog extends IdeaDialog {
               }
             }
           }, ModalityState.any());
+          throw new RuntimeException(e);
         }
       }
 
