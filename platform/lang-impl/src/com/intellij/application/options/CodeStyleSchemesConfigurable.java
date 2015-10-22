@@ -276,7 +276,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
         @Override
         public void schemeChanged(final CodeStyleScheme scheme) {
-          //do nothing
+          reset();
         }
       });
     }
