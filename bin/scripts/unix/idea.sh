@@ -147,7 +147,7 @@ fi
 
 VM_OPTIONS=""
 if [ -r "$VM_OPTIONS_FILE" ]; then
-  VM_OPTIONS=`"$CAT" "$VM_OPTIONS_FILE" | "$GREP" -v "^#.*" | "$TR" '\n' ' '`
+  VM_OPTIONS=`"$CAT" "$VM_OPTIONS_FILE" | "$GREP" -v "^#.*"`
 else
   message "Cannot find VM options file"
 fi
