@@ -20,6 +20,7 @@ import com.intellij.diff.comparison.iterables.DiffIterableUtil;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -137,20 +138,20 @@ abstract class ChangeCorrector {
   }
 
   public static class SmartLineChangeCorrector extends ChangeCorrector {
-    @NotNull private final List<ByLine.LineWrapper> myNewLines1;
-    @NotNull private final List<ByLine.LineWrapper> myNewLines2;
+    @NotNull private final TIntArrayList myIndexes1;
+    @NotNull private final TIntArrayList myIndexes2;
     @NotNull private final List<Line> myLines1;
     @NotNull private final List<Line> myLines2;
 
-    public SmartLineChangeCorrector(@NotNull List<ByLine.LineWrapper> newLines1,
-                                    @NotNull List<ByLine.LineWrapper> newLines2,
+    public SmartLineChangeCorrector(@NotNull TIntArrayList indexes1,
+                                    @NotNull TIntArrayList indexes2,
                                     @NotNull List<Line> lines1,
                                     @NotNull List<Line> lines2,
                                     @NotNull FairDiffIterable changes,
                                     @NotNull ProgressIndicator indicator) {
       super(lines1.size(), lines2.size(), changes, indicator);
-      myNewLines1 = newLines1;
-      myNewLines2 = newLines2;
+      myIndexes1 = indexes1;
+      myIndexes2 = indexes2;
       myLines1 = lines1;
       myLines2 = lines2;
     }
@@ -173,12 +174,12 @@ abstract class ChangeCorrector {
 
     @Override
     protected int getOriginalIndex1(int index) {
-      return myNewLines1.get(index).getOriginalIndex();
+      return myIndexes1.get(index);
     }
 
     @Override
     protected int getOriginalIndex2(int index) {
-      return myNewLines2.get(index).getOriginalIndex();
+      return myIndexes2.get(index);
     }
   }
 }

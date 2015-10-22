@@ -25,6 +25,7 @@ import com.intellij.diff.util.IntPair;
 import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
@@ -344,20 +345,26 @@ public class ByLine {
     int threshold = Registry.intValue("diff.unimportant.line.char.count");
     if (threshold == 0) return diff(lines1, lines2, indicator);
 
-    List<LineWrapper> newLines1 = new ArrayList<LineWrapper>(lines1.size());
-    List<LineWrapper> newLines2 = new ArrayList<LineWrapper>(lines2.size());
+    Pair<List<Line>, TIntArrayList> bigLines1 = getBigLines(lines1, threshold);
+    Pair<List<Line>, TIntArrayList> bigLines2 = getBigLines(lines2, threshold);
 
-    for (int i = 0; i < lines1.size(); i++) {
-      Line line = lines1.get(i);
-      if (line.getNonSpaceChars() > threshold) newLines1.add(new LineWrapper(line, i));
-    }
-    for (int i = 0; i < lines2.size(); i++) {
-      Line line = lines2.get(i);
-      if (line.getNonSpaceChars() > threshold) newLines2.add(new LineWrapper(line, i));
-    }
+    FairDiffIterable changes = diff(bigLines1.first, bigLines2.first, indicator);
+    return new ChangeCorrector.SmartLineChangeCorrector(bigLines1.second, bigLines2.second, lines1, lines2, changes, indicator).build();
+  }
 
-    FairDiffIterable changes = diff(newLines1, newLines2, indicator);
-    return new ChangeCorrector.SmartLineChangeCorrector(newLines1, newLines2, lines1, lines2, changes, indicator).build();
+  @NotNull
+  private static Pair<List<Line>, TIntArrayList> getBigLines(@NotNull List<Line> lines, int threshold) {
+    List<Line> bigLines = new ArrayList<Line>(lines.size());
+    TIntArrayList indexes = new TIntArrayList(lines.size());
+
+    for (int i = 0; i < lines.size(); i++) {
+      Line line = lines.get(i);
+      if (line.getNonSpaceChars() > threshold) {
+        bigLines.add(line);
+        indexes.add(i);
+      }
+    }
+    return Pair.create(bigLines, indexes);
   }
 
   //
@@ -398,7 +405,7 @@ public class ByLine {
     List<Line> result = new ArrayList<Line>(original.size());
 
     for (Line line : original) {
-      result.add(Line.createIgnore(line));
+      result.add(Line.createIgnore(line.getText(), line.getOffset1()));
     }
 
     return result;
@@ -538,46 +545,6 @@ public class ByLine {
       offset2 = trimEnd(text, offset1, offset2);
 
       return StringUtil.stringHashCode(text, offset1, offset2);
-    }
-
-    public static Line createIgnore(@NotNull Line original) {
-      return createIgnore(original.getText(), original.getOffset1());
-    }
-  }
-
-  static class LineWrapper {
-    @NotNull private final Line myLine;
-    private final int myIndex;
-
-    public LineWrapper(@NotNull Line line, int index) {
-      myLine = line;
-      myIndex = index;
-    }
-
-    @NotNull
-    public Line getLine() {
-      return myLine;
-    }
-
-    public int getIndex() {
-      return myIndex;
-    }
-
-    @Override
-    public int hashCode() {
-      return myLine.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (o == this) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      return myLine.equals(((LineWrapper)o).myLine);
-    }
-
-    public int getOriginalIndex() {
-      return myIndex;
     }
   }
 }
