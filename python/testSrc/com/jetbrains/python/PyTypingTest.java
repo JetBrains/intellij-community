@@ -111,7 +111,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testBuiltinListWithParameter() {
-    doTest("list[int]",
+    doTest("List[int]",
            "from typing import List\n" +
            "\n" +
            "def f(expr: List[int]):\n" +
@@ -119,7 +119,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testBuiltinDictWithParameters() {
-    doTest("dict[str, int]",
+    doTest("Dict[str, int]",
            "from typing import Dict\n" +
            "\n" +
            "def f(expr: Dict[str, int]):\n" +
@@ -379,7 +379,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-16303
   public void testAssignedTypeInDocstring() {
-    doTest("list[int]",
+    doTest("List[int]",
            "from typing import List\n" +
            "\n" +
            "IntList = List[int]\n" +
@@ -393,7 +393,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-16303
   public void testParameterAssignedTypeInDocstring() {
-    doTest("Union[int, list[int]]",
+    doTest("Union[int, List[int]]",
            "from typing import List, Union\n" +
            "\n" +
            "IntList = List[int]\n" +

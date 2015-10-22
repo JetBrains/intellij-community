@@ -79,7 +79,7 @@ def test():
         return xs
     return [
         ''.join(gen(10)),
-        f_1(<warning descr="Expected type 'list[int]', got '__generator[str, Any, None]' instead">gen(11)</warning>),
+        f_1(<warning descr="Expected type 'List[int]', got '__generator[str, Any, None]' instead">gen(11)</warning>),
         f_2(<warning descr="Expected type 'Sequence[int]', got '__generator[str, Any, None]' instead">gen(11)</warning>),
         f_3(<warning descr="Expected type 'Container[int]', got '__generator[str, Any, None]' instead">gen(11)</warning>),
         f_4(<warning descr="Expected type 'Iterator[int]', got '__generator[str, Any, None]' instead">gen(11)</warning>),
@@ -89,7 +89,7 @@ def test():
         f_8(<warning descr="Expected type 'Container', got '__generator[str, Any, None]' instead">gen(11)</warning>),
         f_9(gen(11)),
         f_10(gen(11)),
-        f_11(<warning descr="Expected type 'list[Union[str, unicode]]', got '__generator[str, Any, None]' instead">gen(11)</warning>),
+        f_11(<warning descr="Expected type 'List[Union[str, unicode]]', got '__generator[str, Any, None]' instead">gen(11)</warning>),
         f_12(<warning descr="Expected type 'Sequence[Union[str, unicode]]', got '__generator[str, Any, None]' instead">gen(11)</warning>),
         f_13(<warning descr="Expected type 'Container[Union[str, unicode]]', got '__generator[str, Any, None]' instead">gen(11)</warning>),
         f_14(gen(11)),

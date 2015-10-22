@@ -20,6 +20,7 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.Maps;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.PyTypingTypeProvider;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.ChainIterable;
 import org.jetbrains.annotations.NotNull;
@@ -405,7 +406,9 @@ public class PyTypeModelBuilder {
         add("...");
         return;
       }
-      addType(collectionOf.collectionName);
+      final String name = collectionOf.collectionName;
+      final String typingName = PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.get(name);
+      addType(typingName != null ? typingName : name);
       add("[");
       processList(collectionOf.elementTypes, ", ");
       add("]");
