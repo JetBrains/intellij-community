@@ -16,6 +16,8 @@
 package org.jetbrains.rpc
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.vfs.CharsetToolkit
+import io.netty.buffer.ByteBuf
 import org.jetbrains.jsonProtocol.Request
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -42,4 +44,12 @@ abstract class CommandProcessor<INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS_RESPO
   override final fun <RESULT : Any> doSend(message: Request<RESULT>, callback: CommandSenderBase.RequestPromise<SUCCESS_RESPONSE, RESULT>) {
     messageManager.send(message, callback)
   }
+}
+
+fun requestToByteBuf(message: Request<out Any>, isDebugEnabled: Boolean = LOG.isDebugEnabled): ByteBuf {
+  val content = message.buffer
+  if (isDebugEnabled) {
+    LOG.debug("OUT: ${content.toString(CharsetToolkit.UTF8_CHARSET)}")
+  }
+  return content
 }
