@@ -18,6 +18,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.RichControlFlow;
+import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.Handle;
 import org.jetbrains.org.objectweb.asm.Type;
@@ -71,6 +72,9 @@ class InOutAnalysis extends Analysis<Result<Key, Value>> {
       steps ++;
       if (steps >= STEPS_LIMIT) {
         throw new AnalyzerException(null, "limit is reached, steps: " + steps + " in method " + method);
+      }
+      if (steps % 128 == 0) {
+        ProgressManager.checkCanceled();
       }
       State state = pending[--pendingTop];
       int insnIndex = state.conf.insnIndex;
