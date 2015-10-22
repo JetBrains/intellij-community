@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,17 +22,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DeclarationSearcher {
+class DeclarationSearcher {
   private final PsiMethod myMethod;
   private final PsiType myTargetType;
 
-  private final Map<PsiElement, PsiVariable> cache;
+  private final Map<PsiElement, PsiVariable> cache = new HashMap<PsiElement, PsiVariable>();
 
-  public DeclarationSearcher(final PsiMethod method, final PsiType targetType) {
+  DeclarationSearcher(@NotNull PsiMethod method, @NotNull PsiType targetType) {
     myMethod = method;
     myTargetType = targetType;
-
-    cache = new HashMap<PsiElement, PsiVariable>();
   }
 
   @Nullable
@@ -57,6 +55,7 @@ public class DeclarationSearcher {
   @Nullable
   private PsiVariable getLocalDeclaration(@NotNull PsiElement endPositionElement) {
     final PsiElement parent = endPositionElement.getParent();
+    if (parent == null) return null;
 
     // reuse of cache is possible IF requests are done up-to-down. otherwise - not first declaration can be returned
     final PsiVariable cachedCandidate = cache.get(parent);

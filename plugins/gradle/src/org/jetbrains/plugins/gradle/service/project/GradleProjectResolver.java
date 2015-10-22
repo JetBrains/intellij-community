@@ -368,6 +368,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       final LibraryData libraryData = libraryDependencyData.getTarget();
       final Set<String> libraryPaths = libraryData.getPaths(LibraryPathType.BINARY);
       if (libraryPaths.isEmpty()) continue;
+      if(StringUtil.isNotEmpty(libraryData.getExternalName())) continue;
 
       final LinkedList<String> unprocessedPaths = ContainerUtil.newLinkedList(libraryPaths);
       while (!unprocessedPaths.isEmpty()) {

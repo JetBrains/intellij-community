@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ public class PsiTypesUtil {
 
   private PsiTypesUtil() { }
 
+  @NotNull
   public static String getDefaultValueOfType(PsiType type) {
     if (type instanceof PsiArrayType) {
       int count = type.getArrayDimensions() - 1;
@@ -79,17 +80,10 @@ public class PsiTypesUtil {
       }
       return buffer.toString();
     }
-    else if (type instanceof PsiPrimitiveType) {
-      if (PsiType.BOOLEAN.equals(type)) {
-        return PsiKeyword.FALSE;
-      }
-      else {
-        return "0";
-      }
+    if (type instanceof PsiPrimitiveType) {
+      return PsiType.BOOLEAN.equals(type) ? PsiKeyword.FALSE : "0";
     }
-    else {
-      return PsiKeyword.NULL;
-    }
+    return PsiKeyword.NULL;
   }
 
   /**

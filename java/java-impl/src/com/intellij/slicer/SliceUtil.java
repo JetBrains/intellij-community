@@ -319,7 +319,9 @@ class SliceUtil {
           PsiExpression rExpression = ((PsiAssignmentExpression)parentExpr).getRExpression();
           PsiType rtype = rExpression.getType();
           PsiType ftype = field.getType();
-          if (TypeConversionUtil.isAssignable(parentSubstitutor.substitute(ftype), parentSubstitutor.substitute(rtype))) {
+          PsiType subFType = parentSubstitutor.substitute(ftype);
+          PsiType subRType = parentSubstitutor.substitute(rtype);
+          if (subFType != null && subRType != null && TypeConversionUtil.isAssignable(subFType, subRType)) {
             return handToProcessor(rExpression, processor, parent, parentSubstitutor, parent.indexNesting, "");
           }
         }

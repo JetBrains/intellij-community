@@ -57,6 +57,12 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
     return null;
   };
 
+  @Nullable
+  protected TypeConversionDescriptorBase findConversionForVariableReference(@NotNull PsiReferenceExpression referenceExpression,
+                                                                            @NotNull PsiVariable psiVariable) {
+    return null;
+  }
+
   @NotNull
   public abstract String ruleFromClass();
 
@@ -70,7 +76,7 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
                                                            PsiMember member,
                                                            PsiExpression context,
                                                            TypeMigrationLabeler labeler) {
-    if (from != null && to != null && !canConvert(from, to)) {
+    if (from != null && to != null && !canConvert(from, to, ruleFromClass(), ruleToClass())) {
       return null;
     }
     if (member instanceof PsiMethod) {
@@ -92,10 +98,19 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
         };
       }
     }
+    else if (context instanceof PsiReferenceExpression) {
+      final PsiElement resolvedElement = ((PsiReferenceExpression)context).resolve();
+      if (resolvedElement instanceof PsiVariable) {
+        return findConversionForVariableReference((PsiReferenceExpression)context, (PsiVariable)resolvedElement);
+      }
+    }
     return null;
   }
 
-  private boolean canConvert(PsiType from, PsiType to) {
+  public static boolean canConvert(@Nullable PsiType from,
+                                   @Nullable  PsiType to,
+                                   @NotNull String fromClassName,
+                                   @NotNull String toClassName) {
     if (!(from instanceof PsiClassType)) {
       return false;
     }
@@ -108,13 +123,13 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
     if (fromClass instanceof PsiAnonymousClass) {
       fromClass = ((PsiAnonymousClass)fromClass).getBaseClassType().resolve();
     }
-    if (fromClass == null || !ruleFromClass().equals(fromClass.getQualifiedName())) {
+    if (fromClass == null || !fromClassName.equals(fromClass.getQualifiedName())) {
       return false;
     }
 
     final PsiClassType.ClassResolveResult toResolveResult = ((PsiClassType)to).resolveGenerics();
     final PsiClass toClass = toResolveResult.getElement();
-    if (toClass == null || !ruleToClass().equals(toClass.getQualifiedName())) {
+    if (toClass == null || !toClassName.equals(toClass.getQualifiedName())) {
       return false;
     }
 

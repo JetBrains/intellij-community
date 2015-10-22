@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,16 +27,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 class ConvertReturnStatementsVisitor implements ReturnStatementsVisitor {
-  private final PsiElementFactory myFactory;
-  private final PsiMethod myMethod;
-  private final DeclarationSearcher mySearcher;
+  @NotNull private final PsiElementFactory myFactory;
+  @NotNull private final PsiMethod myMethod;
+  @NotNull private final DeclarationSearcher mySearcher;
+  @NotNull private final String myDefaultValue;
   private PsiReturnStatement myLatestReturn;
-  private final String myDefaultValue;
 
-  public ConvertReturnStatementsVisitor(final PsiElementFactory factory, final PsiMethod method, final PsiType targetType) {
+  ConvertReturnStatementsVisitor(@NotNull PsiElementFactory factory, @NotNull PsiMethod method, @NotNull PsiType targetType) {
     myFactory = factory;
     myMethod = method;
-    mySearcher = new DeclarationSearcher(myMethod, targetType);
+    mySearcher = new DeclarationSearcher(method, targetType);
     myDefaultValue = PsiTypesUtil.getDefaultValueOfType(targetType);
   }
 
