@@ -72,6 +72,10 @@ public class IntelliJLaf extends DarculaLaf {
         }
       }
     }
+
+    FontUIResource uiFont11 = getFont(face, elCapitan, 11, Font.PLAIN);
+    defaults.put("TableHeader.font", uiFont11);
+
     FontUIResource buttonFont = getFont("HelveticaNeue-Medium", elCapitan, 13, Font.PLAIN);
     defaults.put("Button.font", buttonFont);
     Font menuFont = new FontUIResource("Lucida Grande", Font.PLAIN, 14);
