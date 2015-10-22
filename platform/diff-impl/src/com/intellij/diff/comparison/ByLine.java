@@ -405,7 +405,7 @@ public class ByLine {
     List<Line> result = new ArrayList<Line>(original.size());
 
     for (Line line : original) {
-      result.add(Line.createIgnore(line.getText(), line.getOffset1()));
+      result.add(Line.createIgnore(line.getOriginalText(), line.getOffset1()));
     }
 
     return result;
@@ -434,7 +434,7 @@ public class ByLine {
 
     @NotNull
     public CharSequence getContent() {
-      return getText().subSequence(getOffset1(), getOffset2() - (myNewline ? 1 : 0));
+      return getOriginalText().subSequence(getOffset1(), getOffset2() - (myNewline ? 1 : 0));
     }
 
     @Override
