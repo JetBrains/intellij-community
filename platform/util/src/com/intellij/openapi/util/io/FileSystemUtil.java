@@ -386,7 +386,7 @@ public class FileSystemUtil {
     private static final int[] LINUX_64 =  {24, 48, 88, 28, 32};
     private static final int[] LNX_PPC32 = {16, 48, 80, 24, 28};
     private static final int[] LNX_PPC64 = LINUX_64;
-    private static final int[] LINUX_ARM = LNX_PPC32;
+    private static final int[] LNX_ARM32 = LNX_PPC32;
     private static final int[] BSD_32 =    { 8, 48, 32, 12, 16};
     private static final int[] BSD_64 =    { 8, 72, 40, 12, 16};
     private static final int[] SUN_OS_32 = {20, 48, 64, 28, 32};
@@ -408,8 +408,9 @@ public class FileSystemUtil {
       if (SystemInfo.isLinux) {
         if ("arm".equals(SystemInfo.OS_ARCH)) {
           if (SystemInfo.is32Bit) {
-            myOffsets = LINUX_ARM;
-          } else {
+            myOffsets = LNX_ARM32;
+          }
+          else {
             throw new IllegalStateException("AArch64 architecture is not supported");
           }
         }
@@ -464,7 +465,7 @@ public class FileSystemUtil {
       return new FileAttributes(isDirectory, isSpecial, isSymlink, false, size, mTime, writable);
     }
 
-    private boolean loadFileStatus(@NotNull String path, Memory buffer) {
+    private static boolean loadFileStatus(String path, Memory buffer) {
       return (SystemInfo.isLinux ? LinuxLibC.__xstat64(STAT_VER, path, buffer) : UnixLibC.stat(path, buffer)) == 0;
     }
 
