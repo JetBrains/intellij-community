@@ -162,6 +162,14 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testFluentIterableMigrationInInheritance() {
+    doTest();
+  }
+
+  public void testFluentIterableAndOptional() {
+    doTest();
+  }
+
   private void doTestNoQuickFixes(final Class<? extends IntentionAction>... quickFixesClasses) {
     myFixture.configureByFile(getTestName(true) + ".java");
     myFixture.enableInspections(new GuavaInspection());
