@@ -29,7 +29,7 @@ import java.util.Map;
  * @author Alexander Koshevoy
  */
 public class PyRemotePathMapper extends AbstractPathMapper implements Cloneable {
-  private final MultiMap<PyPathMappingType, PathMappingSettings.PathMapping> myPathMappings = MultiMap.create();
+  private final MultiMap<PyPathMappingType, PathMappingSettings.PathMapping> myPathMappings = MultiMap.createSet();
 
   @NotNull
   public static PyRemotePathMapper fromSettings(@NotNull PathMappingSettings settings, @NotNull PyPathMappingType mappingType) {
