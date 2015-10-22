@@ -83,6 +83,11 @@ public class InstalledPluginsState {
     }
 
     boolean newer = PluginDownloader.compareVersionsSkipBroken(existing, descriptor.getVersion()) > 0 && !PluginManagerCore.isIncompatible(descriptor);
+    
+    if (!newer && PluginManagerCore.isIncompatible(existing)) {
+       newer = !PluginManagerCore.isIncompatible(descriptor);
+    }
+    
     String idString = id.getIdString();
 
     synchronized (myLock) {

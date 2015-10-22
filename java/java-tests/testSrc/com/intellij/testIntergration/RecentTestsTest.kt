@@ -16,17 +16,15 @@
 package com.intellij.testIntergration
 
 import com.intellij.execution.TestStateStorage
-import com.intellij.openapi.project.Project
 import com.intellij.testFramework.UsefulTestCase.*
-import com.intellij.testIntegration.LocationTestRunner
+import com.intellij.testIntegration.RecentTestRunner
 import com.intellij.testIntegration.SelectTestStep
 import org.junit.Test
 import org.mockito.Mockito.mock
 import java.util.*
 
 class RecentTestsStepTest {
-  val project = mock(Project::class.java)
-  val runner = mock(LocationTestRunner::class.java)
+  val runner = mock(RecentTestRunner::class.java)
   
   @Test
   fun `suites comes before their children tests`() {
@@ -41,7 +39,7 @@ class RecentTestsStepTest {
     map.put("java:test://Test.textQQQ", TestStateStorage.Record(1, now))  
     map.put("java:test://JavaFormatterSuperDuperTest.testUnconditionalAlignmentErrorneous", TestStateStorage.Record(1, now))  
     
-    val step = SelectTestStep(project, map, runner)
+    val step = SelectTestStep(map, runner)
 
     val expected = listOf(
         "java:suite://JavaFormatterSuperDuperTest",
@@ -60,7 +58,7 @@ class RecentTestsStepTest {
   
   @Test
   fun `shown value without protocol`() {
-    val step = SelectTestStep(project, emptyMap(), runner)
+    val step = SelectTestStep(emptyMap(), runner)
     var shownValue = step.getTextFor("java:suite://JavaFormatterSuperDuperTest")
     assertEquals(shownValue, "JavaFormatterSuperDuperTest")
     

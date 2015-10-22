@@ -69,7 +69,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.remote.RemoteProcess;
 import com.intellij.remote.Tunnelable;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.PathMappingSettings;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.UIUtil;
@@ -155,12 +158,19 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   }
 
   @Nullable
-  public static PathMapper getPathMapper(Project project, Sdk sdk) {
+  public static PyRemotePathMapper getPathMapper(@NotNull Project project, Sdk sdk) {
     if (PySdkUtil.isRemote(sdk)) {
       PythonRemoteInterpreterManager instance = PythonRemoteInterpreterManager.getInstance();
       if (instance != null) {
         //noinspection ConstantConditions
-        return instance.setupMappings(project, (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData(), null);
+        PyRemotePathMapper remotePathMapper =
+          instance.setupMappings(project, (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData(), null);
+
+        PathMappingSettings mappingSettings = PyConsoleOptions.getInstance(project).getPythonConsoleSettings().getMappingSettings();
+
+        remotePathMapper.addAll(mappingSettings.getPathMappings(), PyRemotePathMapper.PyPathMappingType.USER_DEFINED);
+
+        return remotePathMapper;
       }
     }
     return null;
@@ -243,7 +253,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   }
 
   /**
-   * Add requered ENV var to Python task to set its stdout charset to current project charset to allow it print correctly.
+   * Add required ENV var to Python task to set its stdout charset to current project charset to allow it print correctly.
    *
    * @param envs    map of envs to add variable
    * @param project current project
@@ -435,7 +445,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
         return createRemoteConsoleProcess(manager, myGeneralCommandLine.getParametersList().getArray(),
-                                          myGeneralCommandLine.getEnvironment());
+                                          myGeneralCommandLine.getEnvironment(), myGeneralCommandLine.getWorkDirectory());
       }
       throw new PythonRemoteInterpreterManager.PyRemoteInterpreterExecutionException();
     }
@@ -456,13 +466,18 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     }
   }
 
-  private RemoteProcess createRemoteConsoleProcess(PythonRemoteInterpreterManager manager, String[] command, Map<String, String> env)
+  private RemoteProcess createRemoteConsoleProcess(PythonRemoteInterpreterManager manager,
+                                                   String[] command,
+                                                   Map<String, String> env,
+                                                   File workDirectory)
     throws ExecutionException {
     PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
     assert data != null;
 
     GeneralCommandLine commandLine = new GeneralCommandLine();
 
+    commandLine.setWorkDirectory(workDirectory);
+    
     commandLine.withParameters(command);
 
     commandLine.getEnvironment().putAll(env);
@@ -477,13 +492,15 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     commandLine.getParametersList().set(2, "0");
 
     try {
-      PyRemotePathMapper pathMapper = manager.setupMappings(getProject(), data, null);
+      PyRemotePathMapper pathMapper = getPathMapper(getProject(), mySdk);
+      
+      assert pathMapper != null;
 
       commandLine.putUserData(PyRemoteProcessStarter.OPEN_FOR_INCOMING_CONNECTION, true);
 
       myRemoteProcessHandlerBase = PyRemoteProcessStarterManagerUtil
         .getManager(data).startRemoteProcess(getProject(), commandLine, manager, data,
-                                                                      pathMapper);
+                                             pathMapper);
 
       myCommandLine = myRemoteProcessHandlerBase.getCommandLine();
 
@@ -492,7 +509,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       Couple<Integer> remotePorts = getRemotePortsFromProcess(remoteProcess);
 
       if (remoteProcess instanceof Tunnelable) {
-        Tunnelable tunnelableProcess = (Tunnelable) remoteProcess;
+        Tunnelable tunnelableProcess = (Tunnelable)remoteProcess;
         tunnelableProcess.addLocalTunnel(myPorts[0], remotePorts.first);
         tunnelableProcess.addRemoteTunnel(remotePorts.second, "localhost", myPorts[1]);
       }
@@ -564,7 +581,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
         myProcessHandler =
           manager.createConsoleProcessHandler((RemoteProcess)process, getConsoleView(), myPydevConsoleCommunication,
                                               myCommandLine, CharsetToolkit.UTF8_CHARSET,
-                                              manager.setupMappings(getProject(), data, null), myRemoteProcessHandlerBase.getRemoteSocketToLocalHostProvider());
+                                              manager.setupMappings(getProject(), data, null),
+                                              myRemoteProcessHandlerBase.getRemoteSocketToLocalHostProvider());
       }
       else {
         LOG.error("Can't create remote console process handler");
