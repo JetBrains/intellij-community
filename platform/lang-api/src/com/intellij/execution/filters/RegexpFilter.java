@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ public class RegexpFilter implements Filter {
   private final int myFileRegister;
   private final int myLineRegister;
   private final int myColumnRegister;
+
   private final Pattern myPattern;
   private final Project myProject;
 
@@ -52,7 +53,7 @@ public class RegexpFilter implements Filter {
     myProject = project;
     validate(expression);
 
-    if (expression == null || expression.trim().isEmpty()) {
+    if (expression.trim().isEmpty()) {
       throw new InvalidExpressionException("expression == null or empty");
     }
 
@@ -105,12 +106,14 @@ public class RegexpFilter implements Filter {
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
   public static void validate(String expression) {
-    if (expression == null || expression.trim().isEmpty()) {
-      throw new InvalidExpressionException("expression == null or empty");
-    }
+    if (StringUtil.isEmptyOrSpaces(expression)) throw new InvalidExpressionException("expression == null or empty");
 
     expression = substituteMacrosWithRegexps(expression);
     Pattern.compile(expression, Pattern.MULTILINE);
+  }
+
+  public Pattern getPattern() {
+    return myPattern;
   }
 
   private static String substituteMacrosWithRegexps(String expression) {
