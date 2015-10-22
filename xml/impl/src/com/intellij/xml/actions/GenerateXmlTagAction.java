@@ -303,9 +303,44 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     }
   }
 
+  private static boolean isInsideTagBody(@NotNull Editor editor, @NotNull PsiFile file) {
+    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    while (element != null && !(element.getParent() instanceof XmlTag)) {
+      element = element.getParent();
+    }
+    if (element == null) {
+      return false;
+    }
+
+    if (element.getNode().getElementType() == XmlTokenType.XML_START_TAG_START) {
+      return true;
+    } else {
+      PsiElement left = element.getPrevSibling();
+      while (left != null && left.getNode().getElementType() != XmlTokenType.XML_TAG_END) {
+        left = left.getPrevSibling();
+      }
+      if (left == null) {
+        return false;
+      }
+      PsiElement right = element.getNextSibling();
+      while (right != null && right.getNode().getElementType() != XmlTokenType.XML_END_TAG_START) {
+        right = right.getNextSibling();
+      }
+      if (right == null) {
+        return false;
+      }
+      return true;
+    }
+  }
+
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (!(file instanceof XmlFile)) return false;
+
+    if (!isInsideTagBody(editor, file)) {
+      return false;
+    }
+
     XmlTag contextTag = getContextTag(editor, file);
     return contextTag != null && contextTag.getDescriptor() != null;
   }
