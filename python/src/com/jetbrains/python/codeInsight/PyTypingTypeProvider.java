@@ -42,6 +42,7 @@ import java.util.regex.Pattern;
  */
 public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *(.*)");
+
   private static ImmutableMap<String, String> COLLECTION_CLASSES = ImmutableMap.<String, String>builder()
     .put("typing.List", "list")
     .put("typing.Dict", "dict")
@@ -57,6 +58,13 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .put("typing.MutableMapping", PyNames.COLLECTIONS + "." + "MutableMapping")
     .put("typing.AbstractSet", PyNames.COLLECTIONS + "." + "Set")
     .put("typing.MutableSet", PyNames.COLLECTIONS + "." + "MutableSet")
+    .build();
+
+  public static ImmutableMap<String, String> TYPING_COLLECTION_CLASSES = ImmutableMap.<String, String>builder()
+    .put("list", "List")
+    .put("dict", "Dict")
+    .put("set", "Set")
+    .put("frozenset", "FrozenSet")
     .build();
 
   private static ImmutableSet<String> GENERIC_CLASSES = ImmutableSet.<String>builder()

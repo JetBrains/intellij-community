@@ -48,7 +48,7 @@ public class PyTypeTest extends PyTestCase {
            "expr = '1' + '2'");
     doTest("Union[str, unicode]",
            "expr = '%s' % ('a')");
-    doTest("list[int]",
+    doTest("List[int]",
            "expr = [1] + [2]");
   }
 
@@ -97,7 +97,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testSet() {
-    doTest("set[int]",
+    doTest("Set[int]",
            "expr = {1, 2, 3}");
   }
 
@@ -154,7 +154,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testSliceType() {
-    doTest("list[int]",
+    doTest("List[int]",
            "l = [1, 2, 3]; expr = l[0:1]");
   }
 
@@ -439,7 +439,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-7215
   public void testFunctionWithNestedGenerator() {
-    doTest("list[int]",
+    doTest("List[int]",
            "def f():\n" +
            "    def g():\n" +
            "        yield 10\n" +
@@ -619,7 +619,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testFunctionTypeAsUnificationArgument() {
-    doTest("Union[list[int], str, unicode]",
+    doTest("Union[List[int], str, unicode]",
            "def map2(f, xs):\n" +
            "    '''\n" +
            "    :type f: (T) -> V | None\n" +
