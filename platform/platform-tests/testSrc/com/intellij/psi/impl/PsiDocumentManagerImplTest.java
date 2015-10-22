@@ -145,7 +145,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     final Document document = getPsiDocumentManager().getDocument(file);
 
     WriteCommandAction.runWriteCommandAction(null, () -> {
-      getPsiDocumentManager().getSynchronizer().performAtomically(file, () -> changeDocument(document, PsiDocumentManagerImplTest.this.getPsiDocumentManager()));
+      getPsiDocumentManager().getSynchronizer().performAtomically(file, () -> changeDocument(document, getPsiDocumentManager()));
     });
 
 
@@ -156,7 +156,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     final Document document = new MockDocument();
 
     WriteCommandAction.runWriteCommandAction(null, () -> {
-      changeDocument(document, PsiDocumentManagerImplTest.this.getPsiDocumentManager());
+      changeDocument(document, getPsiDocumentManager());
     });
 
 
@@ -169,7 +169,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     final Document document = getPsiDocumentManager().getDocument(file);
 
     WriteCommandAction.runWriteCommandAction(null, () -> {
-      changeDocument(document, PsiDocumentManagerImplTest.this.getPsiDocumentManager());
+      changeDocument(document, getPsiDocumentManager());
     });
 
 
@@ -221,7 +221,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
 
       WriteCommandAction.runWriteCommandAction(null, () -> {
-        changeDocument(alienDocument, PsiDocumentManagerImplTest.this.getPsiDocumentManager());
+        changeDocument(alienDocument, getPsiDocumentManager());
         assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
         assertEquals(0, alienDocManager.getUncommittedDocuments().length);
 
@@ -229,7 +229,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
         assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
         assertEquals(1, alienDocManager.getUncommittedDocuments().length);
 
-        changeDocument(document, PsiDocumentManagerImplTest.this.getPsiDocumentManager());
+        changeDocument(document, getPsiDocumentManager());
         assertEquals(1, getPsiDocumentManager().getUncommittedDocuments().length);
         assertEquals(1, alienDocManager.getUncommittedDocuments().length);
 
@@ -308,7 +308,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   private static void waitAndPump(Semaphore semaphore, int timeout) {
     final long limit = System.currentTimeMillis() + timeout;
     while (System.currentTimeMillis() < limit) {
-      if (semaphore.waitFor(10)) return;
+      if (semaphore.waitFor(1)) return;
       UIUtil.dispatchAllInvocationEvents();
     }
     fail("Timeout");
