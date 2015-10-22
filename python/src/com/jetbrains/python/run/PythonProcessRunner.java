@@ -18,6 +18,7 @@ package com.jetbrains.python.run;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.util.registry.Registry;
 import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 
@@ -39,7 +40,7 @@ public class PythonProcessRunner {
   }
 
   public static ProcessHandler createProcess(GeneralCommandLine commandLine) throws ExecutionException {
-    return createProcess(commandLine, PythonProcessHandler.SOFT_KILL_ON_WIN);
+    return createProcess(commandLine, Registry.is(PythonProcessHandler.KILL_WINDOWS_PROCESSES_SOFTLY));
   }
 
   public static ProcessHandler createProcessHandlingCtrlC(GeneralCommandLine commandLine) throws ExecutionException {
