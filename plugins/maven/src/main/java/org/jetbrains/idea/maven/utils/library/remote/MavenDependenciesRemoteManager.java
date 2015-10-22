@@ -49,7 +49,9 @@ public class MavenDependenciesRemoteManager
     schedule(this, new Argument(libraryProperties, downloadSources, downloadJavaDocs, copyTo), resultProcessor, false);
   }
 
-  public List<OrderRoot> downloadDependencies(
+  public
+  @Nullable
+  List<OrderRoot> downloadDependencies(
     RepositoryLibraryProperties libraryProperties,
     boolean downloadSources,
     boolean downloadJavaDocs,
@@ -57,6 +59,7 @@ public class MavenDependenciesRemoteManager
     return getSynchronously(this, new Argument(libraryProperties, downloadSources, downloadJavaDocs, copyTo));
   }
 
+  @Nullable
   public List<OrderRoot> downloadDependenciesModal(
     final RepositoryLibraryProperties libraryProperties,
     final boolean downloadSources,
@@ -68,6 +71,7 @@ public class MavenDependenciesRemoteManager
   }
 
   @Override
+  @NotNull
   public List<OrderRoot> execute(@NotNull Argument arg, ProgressIndicator indicator) {
     String coordinates = arg.libraryProperties.getGroupId() + ":" +
                          arg.libraryProperties.getArtifactId() + ":" +

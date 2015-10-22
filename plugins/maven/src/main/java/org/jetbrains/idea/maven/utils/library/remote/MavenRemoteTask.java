@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
 public interface MavenRemoteTask<Result, Argument> {
+  @NotNull
   Result execute(@NotNull Argument arg, ProgressIndicator indicator);
 
   String getName(@NotNull Argument arg);
