@@ -13,6 +13,7 @@
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.guava.GuavaFunctionConversionRule"/>
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.guava.GuavaPredicateConversionRule"/>
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.guava.GuavaSupplierConversionRule"/>
+    <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.guava.IterableStreamConversionRule"/>
     <intentionAction>
       <className>com.intellij.refactoring.typeMigration.intentions.ConvertFieldToAtomicIntention</className>
        <category>Java/Concurrency</category>

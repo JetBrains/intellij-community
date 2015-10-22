@@ -45,8 +45,9 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
 
   public static final Set<String> CHAIN_HEAD_METHODS = ContainerUtil.newHashSet("from", "of");
   public static final String FLUENT_ITERABLE = "com.google.common.collect.FluentIterable";
+  public static final String STREAM_COLLECT_TO_LIST = "$it$.collect(java.util.stream.Collectors.toList())";
 
-  private static class TypeConversionDescriptorFactory {
+  static class TypeConversionDescriptorFactory {
     private final String myStringToReplace;
     private final String myReplaceByString;
     private final boolean myWithLambdaParameter;
@@ -103,7 +104,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
 
     DESCRIPTORS_MAP.put("toMap", new TypeConversionDescriptorFactory("$it$.toMap($f$)",
                                                               "$it$.collect(java.util.stream.Collectors.toMap(java.util.function.Function.identity(), $f$))", true));
-    DESCRIPTORS_MAP.put("toList", new TypeConversionDescriptorFactory("$it$.toList()", "$it$.collect(java.util.stream.Collectors.toList())", false));
+    DESCRIPTORS_MAP.put("toList", new TypeConversionDescriptorFactory("$it$.toList()", STREAM_COLLECT_TO_LIST, false));
     DESCRIPTORS_MAP.put("toSet", new TypeConversionDescriptorFactory("$it$.toSet()", "$it$.collect(java.util.stream.Collectors.toSet())", false));
     DESCRIPTORS_MAP.put("toSortedList", new TypeConversionDescriptorFactory("$it$.toSortedList($c$)", "$it$.sorted($c$).collect(java.util.stream.Collectors.toList())", false));
     DESCRIPTORS_MAP.put("toSortedSet", new TypeConversionDescriptorFactory("$it$.toSortedSet($c$)", "$it$.sorted($c$).collect(java.util.stream.Collectors.toSet())", false));
