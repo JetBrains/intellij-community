@@ -18,11 +18,13 @@ package com.intellij.ide.ui.laf;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import java.awt.*;
+import java.io.File;
 import java.util.HashSet;
 
 /**
@@ -67,6 +69,9 @@ public class IntelliJLaf extends DarculaLaf {
         }
       }
     }
+    FontUIResource uiFont11 = new FontUIResource("HelveticaNeue-Medium", Font.PLAIN, 11);
+    defaults.put("TableHeader.font", uiFont11);
+
     FontUIResource buttonFont = new FontUIResource("HelveticaNeue-Medium", Font.PLAIN, 13);
     defaults.put("Button.font", buttonFont);
     Font menuFont = new FontUIResource("Lucida Grande", Font.PLAIN, 14);
@@ -74,6 +79,18 @@ public class IntelliJLaf extends DarculaLaf {
     defaults.put("MenuItem.font", menuFont);
     defaults.put("MenuItem.acceleratorFont", menuFont);
     defaults.put("PasswordField.font", defaults.getFont("TextField.font"));
+  }
+
+  @NotNull
+  private static FontUIResource getFont(String yosemite, String elCapitan, int size, int style) {
+    if (SystemInfo.isMacOSElCapitan && elCapitan != null) {
+      try {
+        final Font sfFont = Font.createFont(Font.TRUETYPE_FONT, new File("/System/Library/Fonts/" + elCapitan + ".otf"));
+        return new FontUIResource(sfFont.deriveFont(size + 0f));
+      } catch (Exception ignored) {
+      }
+    }
+    return new FontUIResource(yosemite, style, size);
   }
 
   public static boolean isGraphite() {
