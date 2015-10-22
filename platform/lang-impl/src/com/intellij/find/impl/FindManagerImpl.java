@@ -845,6 +845,12 @@ public class FindManagerImpl extends FindManager {
       return buffer.toString();
     }
 
+    boolean isReplacementLowercase = true;
+    for (int i = 0; i < toReplace.length(); i++) {
+      isReplacementLowercase = Character.isLowerCase(toReplace.charAt(i));
+      if (!isReplacementLowercase) break;
+    }
+
     boolean isTailUpper = true;
     boolean isTailLower = true;
     for (int i = 1; i < foundString.length(); i++) {
@@ -853,10 +859,10 @@ public class FindManagerImpl extends FindManager {
       if (!isTailUpper && !isTailLower) break;
     }
 
-    if (isTailUpper) {
+    if (isTailUpper && isReplacementLowercase) {
       buffer.append(StringUtil.toUpperCase(toReplace.substring(1)));
     }
-    else if (isTailLower) {
+    else if (isTailLower && isReplacementLowercase) {
       buffer.append(toReplace.substring(1).toLowerCase());
     }
     else {

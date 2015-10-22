@@ -315,7 +315,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     createFile(myModule, "A.test123", "foo fo foo");
 
     // don't use createFile here because it creates PsiFile and runs file type autodetection
-    // in real life some files might not be autodetected as plain text until the search starts 
+    // in real life some files might not be autodetected as plain text until the search starts
     VirtualFile custom = new WriteCommandAction<VirtualFile>(myProject) {
       @Override
       protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
@@ -327,7 +327,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
         result.setResult(VfsUtil.findFileByIoFile(file, true));
       }
     }.execute().getResultObject();
-    
+
     assertNull(FileDocumentManager.getInstance().getCachedDocument(custom));
     assertEquals(PlainTextFileType.INSTANCE, custom.getFileType());
 
@@ -340,7 +340,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
     findModel.setStringToFind("fo");
     assertSize(2, findUsages(findModel));
-    
+
     // and we should get the same with text loaded
     assertNotNull(FileDocumentManager.getInstance().getDocument(custom));
     assertEquals(FileTypes.PLAIN_TEXT, custom.getFileType());
@@ -447,6 +447,26 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertTrue(FindUtil.replace(getProject(), getEditor(), 0, findModel));
 
     assertEquals(text+"\n", getEditor().getDocument().getText());
+  }
+
+  public void testReplacePreserveCase() {
+    configureByText(FileTypes.PLAIN_TEXT, "Bar bar BAR");
+    FindModel model = new FindModel();
+    model.setStringToFind("bar");
+    model.setStringToReplace("foo");
+    model.setPromptOnReplace(false);
+    model.setPreserveCase(true);
+
+    FindUtil.replace(myProject, myEditor, 0, model);
+    assertEquals("Foo foo FOO", myEditor.getDocument().getText());
+
+    configureByText(FileTypes.PLAIN_TEXT, "Bar bar");
+
+    model.setStringToFind("bar");
+    model.setStringToReplace("fooBar");
+
+    FindUtil.replace(myProject, myEditor, 0, model);
+    assertEquals("FooBar fooBar", myEditor.getDocument().getText());
   }
 
   public void testReplaceWithRegExp() {
