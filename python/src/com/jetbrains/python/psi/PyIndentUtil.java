@@ -16,7 +16,9 @@
 package com.jetbrains.python.psi;
 
 import com.google.common.collect.Iterables;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -194,5 +196,12 @@ public class PyIndentUtil {
       return "";
     }
     return StringUtil.notNullize(minIndent);
+  }
+
+  @NotNull
+  public static String getLineIndent(@NotNull Document document, int lineNumber) {
+    final TextRange lineRange = TextRange.create(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lineNumber));
+    final String line = document.getText(lineRange);
+    return (String)getLineIndent(line);
   }
 }
