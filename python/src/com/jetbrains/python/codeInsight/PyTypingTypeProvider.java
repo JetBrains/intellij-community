@@ -42,6 +42,7 @@ import java.util.regex.Pattern;
  */
 public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *(.*)");
+
   private static ImmutableMap<String, String> COLLECTION_CLASSES = ImmutableMap.<String, String>builder()
     .put("typing.List", "list")
     .put("typing.Dict", "dict")
@@ -57,6 +58,13 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .put("typing.MutableMapping", PyNames.COLLECTIONS + "." + "MutableMapping")
     .put("typing.AbstractSet", PyNames.COLLECTIONS + "." + "Set")
     .put("typing.MutableSet", PyNames.COLLECTIONS + "." + "MutableSet")
+    .build();
+
+  public static ImmutableMap<String, String> TYPING_COLLECTION_CLASSES = ImmutableMap.<String, String>builder()
+    .put("list", "List")
+    .put("dict", "Dict")
+    .put("set", "Set")
+    .put("frozenset", "FrozenSet")
     .build();
 
   private static ImmutableSet<String> GENERIC_CLASSES = ImmutableSet.<String>builder()
@@ -236,11 +244,16 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static PyType getType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
     final PsiElement resolved = tryResolving(expression, context);
+    return getTypeForResolvedElement(resolved, context);
+  }
+
+  @Nullable
+  private static PyType getTypeForResolvedElement(@NotNull PsiElement resolved, @NotNull TypeEvalContext context) {
     final PyType unionType = getUnionType(resolved, context);
     if (unionType != null) {
       return unionType;
     }
-    final Ref<PyType> optionalType = getOptionalTypeFromDefaultNone(resolved, context);
+    final Ref<PyType> optionalType = getOptionalType(resolved, context);
     if (optionalType != null) {
       return optionalType.get();
     }
@@ -272,6 +285,36 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
+  public static PyType getType(@NotNull PsiElement resolved, @NotNull List<PyType> elementTypes) {
+    final String qualifiedName = getQualifiedName(resolved);
+    if ("typing.Union".equals(qualifiedName)) {
+      return PyUnionType.union(elementTypes);
+    }
+    if ("typing.Optional".equals(qualifiedName) && elementTypes.size() == 1) {
+      return PyUnionType.union(elementTypes.get(0), PyNoneType.INSTANCE);
+    }
+    if ("typing.Callable".equals(qualifiedName) && elementTypes.size() == 2) {
+      return new PyCallableTypeImpl(null, elementTypes.get(1));
+    }
+    if ("typing.Tuple".equals(qualifiedName)) {
+      return PyTupleType.create(resolved, elementTypes.toArray(new PyType[elementTypes.size()]));
+    }
+    final PyType builtinCollection = getBuiltinCollection(resolved);
+    if (builtinCollection instanceof PyClassType) {
+      final PyClassType classType = (PyClassType)builtinCollection;
+      return new PyCollectionTypeImpl(classType.getPyClass(), false, elementTypes);
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PyType getTypeFromTargetExpression(@NotNull PyTargetExpression expression, @NotNull TypeEvalContext context) {
+    // XXX: Requires switching from stub to AST
+    final PyExpression assignedValue = expression.findAssignedValue();
+    return assignedValue != null ? getTypeForResolvedElement(assignedValue, context) : null;
+  }
+
+  @Nullable
   private static Ref<PyType> getClassType(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
     if (element instanceof PyTypedElement) {
       final PyType type = context.getType((PyTypedElement)element);
@@ -293,7 +336,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static Ref<PyType> getOptionalTypeFromDefaultNone(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+  private static Ref<PyType> getOptionalType(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
     if (element instanceof PySubscriptionExpression) {
       final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)element;
       final PyExpression operand = subscriptionExpr.getOperand();
