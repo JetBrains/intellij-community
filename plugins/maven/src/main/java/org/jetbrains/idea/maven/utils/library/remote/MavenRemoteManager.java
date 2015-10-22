@@ -77,6 +77,7 @@ public abstract class MavenRemoteManager<Result, Argument, RemoteTask extends Ma
     return future;
   }
 
+  @Nullable
   protected Result getSynchronously(@NotNull RemoteTask task, @NotNull Argument argument) {
     try {
       return schedule(task, argument).get();
@@ -90,6 +91,7 @@ public abstract class MavenRemoteManager<Result, Argument, RemoteTask extends Ma
     return null;
   }
 
+  @Nullable
   protected Result getSynchronouslyWithModal(@NotNull final RemoteTask task, @NotNull final Argument argument, String title) {
     final Ref<Result> result = Ref.create();
     new Task.Modal(myProject, title, false) {

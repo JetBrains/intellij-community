@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface MavenRemoteTask<Result, Argument> {
+  @NotNull
   Result execute(@NotNull Argument arg, ProgressIndicator indicator);
 
   String getName(@NotNull Argument arg);
