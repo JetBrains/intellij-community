@@ -36,6 +36,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.JBSplitter;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
@@ -282,11 +283,12 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private void splitWindow() {
     Component console = getComponent(0);
     removeAll();
-    JSplitPane p = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-    p.setBorder(BorderFactory.createEmptyBorder());
-    p.add(console, JSplitPane.LEFT);
-    p.add(mySplitView.getPanel(), JSplitPane.RIGHT);
-    p.setDividerLocation((int)getSize().getWidth() * 2 / 3);
+    JBSplitter p = new JBSplitter(false, 2f/3);
+    p.setFirstComponent((JComponent)console);
+    p.setSecondComponent(mySplitView.getPanel());
+    p.setShowDividerControls(true);
+    p.setHonorComponentsMinimumSize(true);
+
     add(p, BorderLayout.CENTER);
     validate();
     repaint();
