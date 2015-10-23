@@ -40,6 +40,8 @@ import java.awt.datatransfer.Transferable;
  * @author nik
  */
 public class XDebuggerFramesList extends DebuggerFramesList {
+  private final Project myProject;
+
   private static final TransferHandler DEFAULT_TRANSFER_HANDLER = new TransferHandler() {
     @Override
     protected Transferable createTransferable(JComponent c) {
@@ -88,8 +90,8 @@ public class XDebuggerFramesList extends DebuggerFramesList {
 
   private XStackFrame mySelectedFrame;
 
-  public XDebuggerFramesList(@NotNull final Project project) {
-    super(project);
+  public XDebuggerFramesList(@NotNull Project project) {
+    myProject = project;
 
     doInit();
     setTransferHandler(DEFAULT_TRANSFER_HANDLER);
@@ -145,7 +147,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
   private static class XDebuggerFrameListRenderer extends ColoredListCellRenderer {
     private final FileColorManager myColorsManager;
 
-    public XDebuggerFrameListRenderer(Project project) {
+    public XDebuggerFrameListRenderer(@NotNull Project project) {
       myColorsManager = FileColorManager.getInstance(project);
     }
 
