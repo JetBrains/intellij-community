@@ -874,11 +874,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       super.dispose();
 
 
+      removeAll(); // remove root pane from a component's list
       if (rootPane != null) { // Workaround for bug in native code to hold rootPane
         try {
-          ReflectionUtil.resetField(rootPane, "glassPane");
-          ReflectionUtil.resetField(rootPane, "contentPane");
-
+          Disposer.clearOwnFields(rootPane);
           rootPane = null;
 
           ReflectionUtil.resetField(this, "windowListener");
