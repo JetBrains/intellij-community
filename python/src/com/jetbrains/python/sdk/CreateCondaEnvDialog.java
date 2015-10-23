@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.components.JBLabel;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
 import com.jetbrains.python.packaging.PyCondaPackageService;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
@@ -51,7 +52,7 @@ public class CreateCondaEnvDialog extends AbstractCreateVirtualEnvDialog {
 
   protected void setupDialog(Project project, final List<Sdk> allSdks) {
     super.setupDialog(project, allSdks);
-    setTitle("Create Conda Environment");
+    setTitle(PyBundle.message("sdk.create.venv.conda.dialog.title"));
     final List<String> pythonVersions = UnsupportedFeaturesUtil.ALL_LANGUAGE_LEVELS;
     Collections.reverse(pythonVersions);
     mySdkCombo.setModel(new CollectionComboBoxModel<String>(pythonVersions));
@@ -91,7 +92,7 @@ public class CreateCondaEnvDialog extends AbstractCreateVirtualEnvDialog {
     c.gridx = 0;
     c.gridy = 0;
     c.weightx = 0.0;
-    myMainPanel.add(new JBLabel("Name:"), c);
+    myMainPanel.add(new JBLabel(PyBundle.message("sdk.create.venv.dialog.label.name")), c);
 
     c.gridx = 1;
     c.gridy = 0;
@@ -103,7 +104,7 @@ public class CreateCondaEnvDialog extends AbstractCreateVirtualEnvDialog {
     c.gridy = 1;
     c.gridwidth = 1;
     c.weightx = 0.0;
-    myMainPanel.add(new JBLabel("Location:"), c);
+    myMainPanel.add(new JBLabel(PyBundle.message("sdk.create.venv.dialog.label.location")), c);
 
     c.gridx = 1;
     c.gridy = 1;
@@ -115,7 +116,7 @@ public class CreateCondaEnvDialog extends AbstractCreateVirtualEnvDialog {
     c.gridy = 2;
     c.gridwidth = 1;
     c.weightx = 0.0;
-    myMainPanel.add(new JBLabel("Python version:"), c);
+    myMainPanel.add(new JBLabel(PyBundle.message("sdk.create.venv.conda.dialog.label.python.version")), c);
 
     c.gridx = 1;
     c.gridy = 2;
@@ -149,7 +150,7 @@ public class CreateCondaEnvDialog extends AbstractCreateVirtualEnvDialog {
     super.checkValid();
     if (mySdkCombo.getSelectedItem() == null) {
       setOKActionEnabled(false);
-      setErrorText("Select python version");
+      setErrorText(PyBundle.message("sdk.create.venv.conda.dialog.error.no.python.version"));
     }
   }
 

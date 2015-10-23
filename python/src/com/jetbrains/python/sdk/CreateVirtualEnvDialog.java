@@ -33,6 +33,7 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.NullableConsumer;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.PyPackageManager;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +61,7 @@ public class CreateVirtualEnvDialog extends AbstractCreateVirtualEnvDialog {
   void setupDialog(Project project, final List<Sdk> allSdks) {
     super.setupDialog(project, allSdks);
 
-    setTitle("Create Virtual Environment");
+    setTitle(PyBundle.message("sdk.create.venv.dialog.title"));
 
     Iterables.removeIf(allSdks, new Predicate<Sdk>() {
       @Override
@@ -84,7 +85,7 @@ public class CreateVirtualEnvDialog extends AbstractCreateVirtualEnvDialog {
     c.gridx = 0;
     c.gridy = 0;
     c.weightx = 0.0;
-    myMainPanel.add(new JBLabel("Name:"), c);
+    myMainPanel.add(new JBLabel(PyBundle.message("sdk.create.venv.dialog.label.name")), c);
 
     c.gridx = 1;
     c.gridy = 0;
@@ -97,7 +98,7 @@ public class CreateVirtualEnvDialog extends AbstractCreateVirtualEnvDialog {
     c.gridy = 1;
     c.gridwidth = 1;
     c.weightx = 0.0;
-    myMainPanel.add(new JBLabel("Location:"), c);
+    myMainPanel.add(new JBLabel(PyBundle.message("sdk.create.venv.dialog.label.location")), c);
 
     c.gridx = 1;
     c.gridy = 1;
@@ -109,7 +110,7 @@ public class CreateVirtualEnvDialog extends AbstractCreateVirtualEnvDialog {
     c.gridy = 2;
     c.gridwidth = 1;
     c.weightx = 0.0;
-    myMainPanel.add(new JBLabel("Base interpreter:"), c);
+    myMainPanel.add(new JBLabel(PyBundle.message("sdk.create.venv.dialog.label.base.interpreter")), c);
 
     c.gridx = 1;
     c.gridy = 2;
@@ -130,7 +131,7 @@ public class CreateVirtualEnvDialog extends AbstractCreateVirtualEnvDialog {
     c.gridy = 3;
     c.gridwidth = 3;
     c.insets = new Insets(2,2,2,2);
-    mySitePackagesCheckBox = new JBCheckBox("Inherit global site-packages");
+    mySitePackagesCheckBox = new JBCheckBox(PyBundle.message("sdk.create.venv.dialog.label.inherit.global.site.packages"));
     myMainPanel.add(mySitePackagesCheckBox, c);
 
     c.gridx = 0;
@@ -194,7 +195,7 @@ public class CreateVirtualEnvDialog extends AbstractCreateVirtualEnvDialog {
     super.checkValid();
     if (mySdkCombo.getSelectedItem() == null) {
       setOKActionEnabled(false);
-      setErrorText("Select base interpreter");
+      setErrorText(PyBundle.message("sdk.create.venv.dialog.error.no.base.interpreter"));
     }
   }
 
