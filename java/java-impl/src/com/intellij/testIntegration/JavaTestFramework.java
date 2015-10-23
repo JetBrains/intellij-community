@@ -156,4 +156,10 @@ public abstract class JavaTestFramework implements TestFramework {
   public boolean isSingleConfig() {
     return false;
   }
+
+  public boolean isTestMethod(PsiMethod method, PsiClass myClass) {
+    return isTestMethod(method);
+  }
+
+
 }
