@@ -161,8 +161,6 @@ if [ "$IS_EAP" = "true" ]; then
   fi
 fi
 
-IDE_JVM_ARGS="@@ide_jvm_args@@"
-
 @@class_path@@
 if [ -n "$@@product_uc@@_CLASSPATH" ]; then
   CLASSPATH="$CLASSPATH:$@@product_uc@@_CLASSPATH"
