@@ -1,6 +1,7 @@
 __author__ = 'Ilya.Kazakevich'
 import sys
 
+
 class VersionAgnosticUtils(object):
     """
     "six" emulator: this class fabrics appropriate tool to use regardless python version.
@@ -25,21 +26,24 @@ class VersionAgnosticUtils(object):
         raise NotImplementedError()
 
 
-
 class _Py2Utils(VersionAgnosticUtils):
     """
     Util for Py2
     """
+
     def to_unicode(self, obj):
         if isinstance(obj, unicode):
             return obj
-        return unicode(obj.decode("utf-8"))
-
+        try:
+            return unicode(obj) # Obj may have its own __unicode__
+        except (UnicodeDecodeError, AttributeError):
+            return unicode(str(obj).decode("utf-8")) # or it may have __str__
 
 
 class _Py3KUtils(VersionAgnosticUtils):
     """
     Util for Py3
     """
+
     def to_unicode(self, obj):
         return str(obj)
