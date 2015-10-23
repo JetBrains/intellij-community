@@ -100,9 +100,7 @@ import java.util.Set;
  * @author yole
  */
 public abstract class PlatformTestCase extends UsefulTestCase implements DataProvider {
-  public static final String TEST_DIR_PREFIX = "idea_test_";
-
-  protected static IdeaTestApplication ourApplication;
+  private static IdeaTestApplication ourApplication;
   protected ProjectManagerEx myProjectManager;
   protected Project myProject;
   protected Module myModule;
@@ -111,20 +109,16 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.PlatformTestCase");
   public static Thread ourTestThread;
   private static TestCase ourTestCase;
-  public static final long DEFAULT_TEST_TIME = 300L;
+  private static final long DEFAULT_TEST_TIME = 300L;
   public static long ourTestTime = DEFAULT_TEST_TIME;
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
 
-  protected static boolean ourPlatformPrefixInitialized;
+  private static boolean ourPlatformPrefixInitialized;
   private static Set<VirtualFile> ourEternallyLivingFilesCache;
 
   static {
     Logger.setFactory(TestLoggerFactory.class);
-  }
-
-  protected static long getTimeRequired() {
-    return DEFAULT_TEST_TIME;
   }
 
   /**
@@ -533,12 +527,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     myProject = null;
   }
 
-  public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull Project projectToClose) {
-    List<Throwable> exceptions = new SmartList<Throwable>();
-    closeAndDisposeProjectAndCheckThatNoOpenProjects(projectToClose, exceptions);
-    CompoundRuntimeException.throwIfNotEmpty(exceptions);
-  }
-
   public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull Project projectToClose, @NotNull List<Throwable> exceptions) {
     try {
       ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
@@ -648,7 +636,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       @Override
       public void run() throws Throwable {
         ourTestThread = Thread.currentThread();
-        ourTestTime = getTimeRequired();
+        ourTestTime = DEFAULT_TEST_TIME;
         try {
           try {
             setUp();
@@ -704,20 +692,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     if (IdeaLogger.ourErrorsOccurred != null) {
       throw IdeaLogger.ourErrorsOccurred;
     }
-
-    /*
-    if (++LEAK_WALKS % 1 == 0) {
-      LeakHunter.checkLeak(ApplicationManager.getApplication(), ProjectImpl.class, new Processor<ProjectImpl>() {
-        @Override
-        public boolean process(ProjectImpl project) {
-          return !project.isDefault() && !LightPlatformTestCase.isLight(project);
-        }
-      });
-    }
-    */
   }
-
-  private static int LEAK_WALKS;
 
   private static void waitForAllLaters() throws InterruptedException, InvocationTargetException {
     for (int i = 0; i < 3; i++) {
@@ -784,7 +759,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   public static File createTempDir(@NonNls final String prefix, final boolean refresh) throws IOException {
-    final File tempDirectory = FileUtilRt.createTempDirectory(TEST_DIR_PREFIX + prefix, null, false);
+    final File tempDirectory = FileUtilRt.createTempDirectory("idea_test_" + prefix, null, false);
     myFilesToDelete.add(tempDirectory);
     if (refresh) {
       getVirtualFile(tempDirectory);
@@ -792,8 +767,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return tempDirectory;
   }
 
-  @Nullable
-  protected static VirtualFile getVirtualFile(final File file) {
+  protected static VirtualFile getVirtualFile(@NotNull File file) {
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
   }
 
