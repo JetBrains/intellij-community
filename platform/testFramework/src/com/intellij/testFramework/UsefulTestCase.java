@@ -734,39 +734,23 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected String getTestName(boolean lowercaseFirstLetter) {
-    String name = getName();
-    return getTestName(name, lowercaseFirstLetter);
+    return getTestName(getName(), lowercaseFirstLetter);
   }
 
   public static String getTestName(String name, boolean lowercaseFirstLetter) {
-    if (name == null) {
-      return "";
-    }
-    name = StringUtil.trimStart(name, "test");
-    if (StringUtil.isEmpty(name)) {
-      return "";
-    }
-    return lowercaseFirstLetter(name, lowercaseFirstLetter);
+    return name == null ? "" : PlatformTestUtil.getTestName(name, lowercaseFirstLetter);
   }
 
+  /** @deprecated use {@link PlatformTestUtil#lowercaseFirstLetter(String, boolean)} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
   public static String lowercaseFirstLetter(String name, boolean lowercaseFirstLetter) {
-    if (lowercaseFirstLetter && !isAllUppercaseName(name)) {
-      name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
-    }
-    return name;
+    return PlatformTestUtil.lowercaseFirstLetter(name, lowercaseFirstLetter);
   }
 
+  /** @deprecated use {@link PlatformTestUtil#isAllUppercaseName(String)} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
   public static boolean isAllUppercaseName(String name) {
-    int uppercaseChars = 0;
-    for (int i = 0; i < name.length(); i++) {
-      if (Character.isLowerCase(name.charAt(i))) {
-        return false;
-      }
-      if (Character.isUpperCase(name.charAt(i))) {
-        uppercaseChars++;
-      }
-    }
-    return uppercaseChars >= 3;
+    return PlatformTestUtil.isAllUppercaseName(name);
   }
 
   protected String getTestDirectoryName() {
