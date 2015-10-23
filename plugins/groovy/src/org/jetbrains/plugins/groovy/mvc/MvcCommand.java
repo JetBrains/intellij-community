@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.execution.configurations.ParametersList;
@@ -13,8 +28,9 @@ public class MvcCommand {
 
   public static final Collection<String> ourEnvironments = Arrays.asList("prod", "test", "dev");
 
-  private String myEnv;
-  private String myCommand;
+  private @Nullable String myEnv;
+  private @Nullable String myCommand;
+  private @Nullable String myVmOptions;
 
   private final ArrayList<String> myArgs = new ArrayList<String>();
   private final ArrayList<String> myProperties = new ArrayList<String>();
@@ -22,7 +38,7 @@ public class MvcCommand {
   public MvcCommand() {
   }
 
-  public MvcCommand(String command, String ... args) {
+  public MvcCommand(@Nullable String command, String... args) {
     myCommand = command;
     Collections.addAll(myArgs, args);
   }
@@ -32,17 +48,14 @@ public class MvcCommand {
     return myEnv;
   }
 
-  public void setEnv(@Nullable String env) {
-    myEnv = env;
-  }
-
   @Nullable
   public String getCommand() {
     return myCommand;
   }
 
-  public void setCommand(@Nullable String command) {
-    myCommand = command;
+  @Nullable
+  public String getVmOptions() {
+    return myVmOptions;
   }
 
   /**
@@ -88,7 +101,7 @@ public class MvcCommand {
   }
 
   @NotNull
-  public static MvcCommand parse(@NotNull String cmd) {
+  public static MvcCommand parse(@NotNull String cmd, @Nullable String vmOptions) {
     String[] args = ParametersList.parse(cmd);
 
     MvcCommand res = new MvcCommand();
@@ -112,6 +125,7 @@ public class MvcCommand {
     }
 
     res.myArgs.addAll(Arrays.asList(args).subList(i, args.length));
+    res.myVmOptions = vmOptions;
 
     return res;
   }
