@@ -240,4 +240,11 @@ public abstract class XDebugProcess {
     XStackFrame frame = getSession().getCurrentStackFrame();
     return frame == null ? null : frame.getEvaluator();
   }
+
+  /**
+   * Is "isShowLibraryStackFrames" setting respected. If true, ShowLibraryFramesAction will be shown, for example.
+   */
+  public boolean isLibraryFrameFilterSupported() {
+    return false;
+  }
 }
