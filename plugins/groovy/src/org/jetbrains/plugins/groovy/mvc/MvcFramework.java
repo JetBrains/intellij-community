@@ -337,7 +337,6 @@ public abstract class MvcFramework {
                                                       boolean forCreation,
                                                       boolean forTests,
                                                       boolean classpathFromDependencies,
-                                                      @Nullable String jvmParams,
                                                       @NotNull MvcCommand command) throws ExecutionException;
 
   protected static void ensureRunConfigurationExists(Module module, ConfigurationType configurationType, String name) {
@@ -375,23 +374,18 @@ public abstract class MvcFramework {
 
   @Nullable
   public GeneralCommandLine createCommandAndShowErrors(@NotNull Module module, @NotNull String command, String... args) {
-    return createCommandAndShowErrors(null, module, new MvcCommand(command, args));
+    return createCommandAndShowErrors(module, new MvcCommand(command, args));
   }
 
   @Nullable
   public GeneralCommandLine createCommandAndShowErrors(@NotNull Module module, @NotNull MvcCommand command) {
-    return createCommandAndShowErrors(null, module, command);
+    return createCommandAndShowErrors(module, false, command);
   }
 
   @Nullable
-  public GeneralCommandLine createCommandAndShowErrors(@Nullable String vmOptions, @NotNull Module module, @NotNull MvcCommand command) {
-    return createCommandAndShowErrors(vmOptions, module, false, command);
-  }
-
-  @Nullable
-  public GeneralCommandLine createCommandAndShowErrors(@Nullable String vmOptions, @NotNull Module module, final boolean forCreation, @NotNull MvcCommand command) {
+  public GeneralCommandLine createCommandAndShowErrors(@NotNull Module module, final boolean forCreation, @NotNull MvcCommand command) {
     try {
-      return createCommand(module, vmOptions, forCreation, command);
+      return createCommand(module, forCreation, command);
     }
     catch (ExecutionException e) {
       Messages.showErrorDialog(e.getMessage(), "Failed to run grails command: " + command);
@@ -401,10 +395,9 @@ public abstract class MvcFramework {
 
   @NotNull
   public GeneralCommandLine createCommand(@NotNull Module module,
-                                          @Nullable String jvmParams,
                                           boolean forCreation,
                                           @NotNull MvcCommand command) throws ExecutionException {
-    final JavaParameters params = createJavaParameters(module, forCreation, false, true, jvmParams, command);
+    final JavaParameters params = createJavaParameters(module, forCreation, false, true, command);
     addJavaHome(params, module);
 
     final GeneralCommandLine commandLine = createCommandLine(params);
