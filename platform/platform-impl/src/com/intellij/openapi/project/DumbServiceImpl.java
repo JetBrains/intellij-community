@@ -51,8 +51,13 @@ import java.util.Map;
 
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbServiceImpl");
-  private static final DumbPermissionServiceImpl ourPermissionService =
-    (DumbPermissionServiceImpl)ServiceManager.getService(DumbPermissionService.class);
+  private static final NotNullLazyValue<DumbPermissionServiceImpl> ourPermissionService = new NotNullLazyValue<DumbPermissionServiceImpl>() {
+    @NotNull
+    @Override
+    protected DumbPermissionServiceImpl compute() {
+      return (DumbPermissionServiceImpl)ServiceManager.getService(DumbPermissionService.class);
+    }
+  };
   private static Throwable ourForcedTrace;
   private volatile boolean myDumb = false;
   private volatile Throwable myDumbStart;
@@ -272,7 +277,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Nullable
   public static DumbModePermission getExplicitPermission() {
-    return ourPermissionService.getPermission();
+    return ourPermissionService.getValue().getPermission();
   }
 
   @NotNull
