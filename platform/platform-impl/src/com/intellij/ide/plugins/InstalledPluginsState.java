@@ -19,15 +19,14 @@ import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A service to hold a state of plugin changes in a current session (i.e. before the changes are applied on restart).
@@ -45,7 +44,7 @@ public class InstalledPluginsState {
   private final Object myLock = new Object();
   private final Map<PluginId, IdeaPluginDescriptor> myInstalledPlugins = ContainerUtil.newIdentityHashMap();
   private final Map<PluginId, IdeaPluginDescriptor> myUpdatedPlugins = ContainerUtil.newIdentityHashMap();
-  private final List<String> myOutdatedPlugins = new SmartList<String>();
+  private final Set<String> myOutdatedPlugins = ContainerUtil.newHashSet();
 
   @NotNull
   public Collection<IdeaPluginDescriptor> getInstalledPlugins() {
@@ -90,9 +89,7 @@ public class InstalledPluginsState {
 
     synchronized (myLock) {
       if (supersedes) {
-        if (!myOutdatedPlugins.contains(idString)) {
-          myOutdatedPlugins.add(idString);
-        }
+        myOutdatedPlugins.add(idString);
       }
       else {
         myOutdatedPlugins.remove(idString);
