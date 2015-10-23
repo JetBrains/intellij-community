@@ -120,7 +120,7 @@ public enum PythonHelper implements HelperPackage {
 
     @Override
     public void addToPythonPath(@NotNull Map<String, String> environment) {
-      PythonEnvUtil.addToPythonPath(environment, getPythonPath());
+      PythonEnvUtil.addToPythonPath(environment, getPythonPathEntry());
     }
 
     @Override
@@ -155,7 +155,7 @@ public enum PythonHelper implements HelperPackage {
       final GeneralCommandLine cmd = newCommandLine(sdkHomePath, parameters);
       final LanguageLevel version = PythonSdkType.getLanguageLevelForSdk(pythonSdk);
       final String perVersionDependenciesDir = version.isPy3K() ? PY3_HELPER_DEPENDENCIES_DIR : PY2_HELPER_DEPENDENCIES_DIR;
-      PythonEnvUtil.addToPythonPath(cmd.getEnvironment(), FileUtil.join(getPythonPath(), perVersionDependenciesDir));
+      PythonEnvUtil.addToPythonPath(cmd.getEnvironment(), FileUtil.join(getPythonPathEntry(), perVersionDependenciesDir));
       return cmd;
     }
   }
@@ -179,7 +179,7 @@ public enum PythonHelper implements HelperPackage {
 
     @NotNull
     @Override
-    public String getPythonPath() {
+    public String getPythonPathEntry() {
       return FileUtil.toSystemDependentName(myPath.getAbsolutePath());
     }
   }
@@ -205,7 +205,7 @@ public enum PythonHelper implements HelperPackage {
 
     @NotNull
     @Override
-    public String getPythonPath() {
+    public String getPythonPathEntry() {
       return myPythonPath;
     }
   }
@@ -213,8 +213,8 @@ public enum PythonHelper implements HelperPackage {
   
   @NotNull
   @Override
-  public String getPythonPath() {
-    return myModule.getPythonPath();
+  public String getPythonPathEntry() {
+    return myModule.getPythonPathEntry();
   }
 
   @Override

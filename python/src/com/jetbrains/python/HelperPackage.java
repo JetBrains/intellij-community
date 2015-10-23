@@ -29,11 +29,18 @@ import java.util.Map;
 public interface HelperPackage {
   void addToPythonPath(@NotNull Map<String, String> environment);
 
+  /**
+   * @return entry (directory or ZIP archive) that will be added to <tt>PYTHONPATH</tt> environment variable before the process is started.
+   */
   @NotNull
-  String getPythonPath();
+  String getPythonPathEntry();
 
   void addToGroup(@NotNull ParamsGroup group, @NotNull GeneralCommandLine cmd);
 
+  /**
+   * @return the first parameter passed to Python interpreter that indicates which script to run. For scripts started as modules it's 
+   * module name with <tt>-m</tt> flag, like <tt>-mpackage.module.name</tt>, and for average helpers it's full path to the script.
+   */
   @NotNull
   String asParamString();
 
