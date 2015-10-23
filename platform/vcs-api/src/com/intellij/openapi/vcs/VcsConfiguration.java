@@ -124,6 +124,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
 
   public boolean FORCE_NON_EMPTY_COMMENT = false;
   public boolean CLEAR_INITIAL_COMMIT_MESSAGE = false;
+  public boolean USE_COMMIT_TEMPLATE_IF_AVAILABLE = false;
 
   @Property(surroundWithTag = false)
   @AbstractCollection(elementTag = "MESSAGE", elementValueAttribute = "value", surroundWithTag = false)

@@ -78,6 +78,12 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Nullable
+  @Override
+  public Set<String> getCommitTemplatesFor(FilePath[] filesToCheckin) {
+    return null;
+  }
+
+  @Nullable
   public String getHelpId() {
     return null;
   }

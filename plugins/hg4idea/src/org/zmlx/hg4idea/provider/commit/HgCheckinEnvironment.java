@@ -83,6 +83,12 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     myRepos = null;
   }
 
+  @Nullable
+  @Override
+  public Set<String> getCommitTemplatesFor(FilePath[] filesToCheckin) {
+    return null;
+  }
+
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
     return null;
   }

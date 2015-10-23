@@ -42,7 +42,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -73,6 +75,12 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
       return null;
     }
     return CvsUtil.getTemplateFor(filesToCheckin[0]);
+  }
+
+  @Nullable
+  @Override
+  public Set<String> getCommitTemplatesFor(FilePath[] filesToCheckin) {
+    return ContainerUtil.newLinkedHashSet(getDefaultMessageFor(filesToCheckin));
   }
 
   public String getHelpId() {

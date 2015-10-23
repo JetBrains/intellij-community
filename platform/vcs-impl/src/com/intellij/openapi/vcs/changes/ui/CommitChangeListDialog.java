@@ -383,6 +383,18 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           }
           hasVcsOptions = true;
         }
+
+        if (VcsConfiguration.getInstance(project).USE_COMMIT_TEMPLATE_IF_AVAILABLE) {
+          final Collection<FilePath> paths = ChangesUtil.getPaths(getSelectedChanges());
+          final Set<String> templates = checkinEnvironment.getCommitTemplatesFor(paths.toArray(new FilePath[paths.size()]));
+          if(templates != null){
+            if (templates.size() == 1) {
+              myCommitMessageArea.setCommitMessage(templates.iterator().next());
+            } else {
+              myCommitMessageArea.setCommitMessage(templates.size() + " templates found for this commit");
+            }
+          }
+        }
       }
     }
 

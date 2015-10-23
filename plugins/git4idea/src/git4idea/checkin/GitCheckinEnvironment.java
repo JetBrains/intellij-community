@@ -108,6 +108,34 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Nullable
+  public Set<String> getCommitTemplatesFor(FilePath[] filesToCheckin) {
+    LinkedHashSet<String> templates = ContainerUtil.newLinkedHashSet();
+    for (VirtualFile root : GitUtil.gitRoots(Arrays.asList(filesToCheckin))) {
+      try {
+        final String commitTemplateFile = GitConfigUtil.getValue(myProject, root, "commit.template");
+        if (commitTemplateFile != null && commitTemplateFile.length() > 0) {
+          final String encoding = GitConfigUtil.getCommitEncoding(myProject, root);
+          final String templateContent = FileUtil.loadFile(new File(commitTemplateFile), encoding);
+          if (templateContent.length() > 0) {
+            templates.add(templateContent);
+          }
+        }
+      }
+      catch (VcsException e) {
+        if (log.isDebugEnabled()) {
+          log.debug("VcsException: Unable to load commit template for Git repo: " + root.getPath(), e);
+        }
+      }
+      catch (IOException e) {
+        if (log.isDebugEnabled()) {
+          log.debug("IOException: Unable to load commit template for Git repo: " + root.getPath(), e);
+        }
+      }
+    }
+    return templates;
+  }
+
+  @Nullable
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
     LinkedHashSet<String> messages = ContainerUtil.newLinkedHashSet();
     for (VirtualFile root : GitUtil.gitRoots(Arrays.asList(filesToCheckin))) {

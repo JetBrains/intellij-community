@@ -46,6 +46,9 @@ public interface CheckinEnvironment extends VcsProviderMarker {
   String getDefaultMessageFor(FilePath[] filesToCheckin);
 
   @Nullable
+  Set<String> getCommitTemplatesFor(FilePath[] filesToCheckin);
+
+  @Nullable
   @NonNls
   String getHelpId();
 

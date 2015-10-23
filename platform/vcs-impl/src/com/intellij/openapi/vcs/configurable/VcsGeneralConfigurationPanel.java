@@ -65,6 +65,7 @@ public class VcsGeneralConfigurationPanel {
   private JComboBox myFailedCommitChangelistCombo;
   private JComboBox myOnPatchCreation;
   private JCheckBox myClearInitialCommitMessage;
+  private JCheckBox myUseCommitTemplateIfAvailable;
   private ButtonGroup myEmptyChangelistRemovingGroup;
 
   public VcsGeneralConfigurationPanel(final Project project) {
@@ -106,6 +107,7 @@ public class VcsGeneralConfigurationPanel {
 
     settings.FORCE_NON_EMPTY_COMMENT = myForceNonEmptyComment.isSelected();
     settings.CLEAR_INITIAL_COMMIT_MESSAGE = myClearInitialCommitMessage.isSelected();
+    settings.USE_COMMIT_TEMPLATE_IF_AVAILABLE = myUseCommitTemplateIfAvailable.isSelected();
     settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = myCbOfferToMoveChanges.isSelected();
     settings.REMOVE_EMPTY_INACTIVE_CHANGELISTS = getSelected(myEmptyChangelistRemovingGroup);
     settings.MOVE_TO_FAILED_COMMIT_CHANGELIST = getFailedCommitConfirm();
@@ -185,6 +187,9 @@ public class VcsGeneralConfigurationPanel {
     if (settings.CLEAR_INITIAL_COMMIT_MESSAGE != myClearInitialCommitMessage.isSelected()){
       return true;
     }
+    if (settings.USE_COMMIT_TEMPLATE_IF_AVAILABLE != myUseCommitTemplateIfAvailable.isSelected()){
+      return true;
+    }
     if (settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT != myCbOfferToMoveChanges.isSelected()){
       return true;
     }
@@ -215,6 +220,7 @@ public class VcsGeneralConfigurationPanel {
     VcsConfiguration settings = VcsConfiguration.getInstance(myProject);
     myForceNonEmptyComment.setSelected(settings.FORCE_NON_EMPTY_COMMENT);
     myClearInitialCommitMessage.setSelected(settings.CLEAR_INITIAL_COMMIT_MESSAGE);
+    myUseCommitTemplateIfAvailable.setSelected(settings.USE_COMMIT_TEMPLATE_IF_AVAILABLE);
     myCbOfferToMoveChanges.setSelected(settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT);
     VcsShowConfirmationOption.Value value = settings.REMOVE_EMPTY_INACTIVE_CHANGELISTS;
     UIUtil.setSelectedButton(myEmptyChangelistRemovingGroup, value == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION
