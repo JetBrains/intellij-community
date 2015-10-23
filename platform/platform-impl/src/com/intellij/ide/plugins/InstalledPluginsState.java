@@ -82,16 +82,14 @@ public class InstalledPluginsState {
       return;
     }
 
-    boolean newer = PluginDownloader.compareVersionsSkipBroken(existing, descriptor.getVersion()) > 0 && !PluginManagerCore.isIncompatible(descriptor);
-    
-    if (!newer && PluginManagerCore.isIncompatible(existing)) {
-       newer = !PluginManagerCore.isIncompatible(descriptor);
-    }
-    
+    boolean supersedes = !PluginManagerCore.isIncompatible(descriptor) &&
+                         (PluginDownloader.compareVersionsSkipBroken(existing, descriptor.getVersion()) > 0 ||
+                          PluginManagerCore.isIncompatible(existing));
+
     String idString = id.getIdString();
 
     synchronized (myLock) {
-      if (newer) {
+      if (supersedes) {
         if (!myOutdatedPlugins.contains(idString)) {
           myOutdatedPlugins.add(idString);
         }
