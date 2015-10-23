@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.xml.XmlFile;
 
 /**
  * @author yole
@@ -44,6 +45,7 @@ public class XmlSurroundWithRangeAdjuster implements SurroundWithRangeAdjuster {
 
   @Override
   public TextRange adjustSurroundWithRange(final PsiFile file, final TextRange selectedRange) {
+    if (!(file instanceof XmlFile)) return selectedRange;
     int startOffset = selectedRange.getStartOffset();
     int endOffset = selectedRange.getEndOffset();
     PsiElement element1 = file.findElementAt(startOffset);
