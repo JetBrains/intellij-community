@@ -302,6 +302,11 @@ public class XmlTagBlock extends AbstractXmlBlock{
   }
 
   @Override
+  public int getBlankeLinesBeforeTag() {
+    return myXmlFormattingPolicy.getBlankLinesBeforeTag(getTag());
+  }
+
+  @Override
   public boolean removeLineBreakBeforeTag() {
     return myXmlFormattingPolicy.removeLineBreakBeforeTag(getTag());
   }
