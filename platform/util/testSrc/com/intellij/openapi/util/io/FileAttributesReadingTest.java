@@ -81,6 +81,18 @@ public class FileAttributesReadingTest {
   }
 
   @Test
+  public void readOnlyFile() throws Exception {
+    final File file = FileUtil.createTempFile(myTempDirectory, "test.", ".txt");
+
+    String[] cmd = SystemInfo.isWindows ? new String[]{"attrib", "+R", file.getPath()} : new String[]{"chmod", "500", file.getPath()};
+    assertEquals(0, Runtime.getRuntime().exec(cmd).waitFor());
+
+    FileAttributes attributes = getAttributes(file);
+    assertEquals(FileAttributes.Type.FILE, attributes.type);
+    assertFalse(attributes.isWritable());
+  }
+
+  @Test
   public void directory() throws Exception {
     final File file = FileUtil.createTempDirectory(myTempDirectory, "test.", ".tmp");
 
@@ -96,6 +108,18 @@ public class FileAttributesReadingTest {
 
     final String target = FileSystemUtil.resolveSymLink(file);
     assertEquals(file.getPath(), target);
+  }
+
+  @Test
+  public void readOnlyDirectory() throws Exception {
+    File file = FileUtil.createTempDirectory(myTempDirectory, "test.", ".tmp");
+
+    String[] cmd = SystemInfo.isWindows ? new String[]{"attrib", "+R", file.getPath()} : new String[]{"chmod", "500", file.getPath()};
+    assertEquals(0, Runtime.getRuntime().exec(cmd).waitFor());
+
+    FileAttributes attributes = getAttributes(file);
+    assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
+    assertEquals(SystemInfo.isWindows, attributes.isWritable());
   }
 
   @Test
