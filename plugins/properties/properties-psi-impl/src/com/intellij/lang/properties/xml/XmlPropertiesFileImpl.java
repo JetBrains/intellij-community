@@ -66,7 +66,10 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
         for (XmlTag entry : entries) {
           XmlProperty property = new XmlProperty(entry, this);
           propertiesOrder.add(property);
-          propertiesMap.add(property.getKey(), property);
+          final String key = property.getKey();
+          if (key != null) {
+            propertiesMap.add(key, property);
+          }
         }
       }
       final boolean isAlphaSorted = PropertiesImplUtil.isAlphaSorted(propertiesOrder);
