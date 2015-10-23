@@ -43,7 +43,7 @@ public class DuplicatedDataProviderNamesInspection extends BaseJavaLocalInspecti
     final String dataProviderFqn = DataProvider.class.getCanonicalName();
 
     final MultiMap<String, PsiMethod> dataProvidersByName = new MultiMap<String, PsiMethod>();
-    for (PsiMethod method : aClass.getAllMethods()) {
+    for (PsiMethod method : aClass.getMethods()) {
       final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, dataProviderFqn);
       if (annotation != null) {
         final PsiAnnotationMemberValue value = annotation.findAttributeValue(NAME_ATTRIBUTE);
