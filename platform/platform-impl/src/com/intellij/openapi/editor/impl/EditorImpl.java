@@ -184,7 +184,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private MyEditable myEditable;
 
-  @NotNull
   private EditorColorsScheme myScheme;
   private ArrowPainter myTabPainter;
   private boolean myIsViewer;
@@ -878,6 +877,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Disposer.dispose(mySoftWrapModel);
     if (myUseNewRendering) Disposer.dispose(myView);
     clearCaretThread();
+    myScheme = null;
 
     myFocusListeners.clear();
     myMouseListeners.clear();
