@@ -251,6 +251,7 @@ public class PropertiesUtil {
   public static String getSuffix(@NotNull PropertiesFile propertiesFile) {
     final String baseName = propertiesFile.getResourceBundle().getBaseName();
     final String propertiesFileName = propertiesFile.getName();
+    if (baseName.equals(FileUtil.getNameWithoutExtension(propertiesFileName))) return "";
     return FileUtil.getNameWithoutExtension(propertiesFileName.substring(baseName.length() + 1));
   }
 }
