@@ -13,149 +13,141 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.push;
+package git4idea.push
 
-import com.intellij.dvcs.push.PushSpec;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Trinity;
-import com.intellij.util.containers.ContainerUtil;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommandResult;
-import git4idea.commands.GitImpl;
-import git4idea.commands.GitLineHandlerListener;
-import git4idea.repo.GitRemote;
-import git4idea.repo.GitRepository;
-import git4idea.test.GitTestUtil;
-import git4idea.update.GitUpdateResult;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.dvcs.push.PushSpec
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.vcs.Executor
+import com.intellij.util.containers.ContainerUtil
+import git4idea.commands.Git
+import git4idea.commands.GitCommandResult
+import git4idea.commands.GitImpl
+import git4idea.commands.GitLineHandlerListener
+import git4idea.repo.GitRemote
+import git4idea.repo.GitRepository
+import git4idea.test.GitExecutor.*
+import git4idea.test.GitTestUtil
+import git4idea.update.GitUpdateResult
+import java.io.File
+import java.util.*
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.Map;
+class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
 
-import static git4idea.test.GitExecutor.*;
+  private lateinit var myCommunity: GitRepository
+  private lateinit var myRepository: GitRepository
 
-public class GitPushOperationMultiRepoTest extends GitPushOperationBaseTest {
+  private lateinit var myBro: File
+  private lateinit var myBroCommunity: File
 
-  private GitRepository myCommunity;
-  private GitRepository myRepository;
-
-  private File myBro;
-  private File myBroCommunity;
-
-  @Override
-  protected void setUp() throws Exception {
+  @Throws(Exception::class)
+  override fun setUp() {
     try {
-      super.setUp();
+      super.setUp()
     }
-    catch (Exception e) {
-      super.tearDown();
-      throw e;
+    catch (e: Exception) {
+      super.tearDown()
+      throw e
     }
 
     try {
-      Trinity<GitRepository, File, File> mainRepo = setupRepositories(myProjectPath, "parent", "bro");
-      myRepository = mainRepo.first;
-      myBro = mainRepo.third;
+      val mainRepo = setupRepositories(myProjectPath, "parent", "bro")
+      myRepository = mainRepo.first
+      myBro = mainRepo.third
 
-      File community = new File(myProjectPath, "community");
-      assertTrue(community.mkdir());
-      Trinity<GitRepository, File, File> enclosingRepo = setupRepositories(community.getPath(),
-                                                                           "community_parent", "community_bro");
-      myCommunity = enclosingRepo.first;
-      myBroCommunity = enclosingRepo.third;
+      val community = File(myProjectPath, "community")
+      assertTrue(community.mkdir())
+      val enclosingRepo = setupRepositories(community.path,
+          "community_parent", "community_bro")
+      myCommunity = enclosingRepo.first
+      myBroCommunity = enclosingRepo.third
 
-      cd(myProjectPath);
-      refresh();
+      Executor.cd(myProjectPath)
+      refresh()
     }
-    catch (Exception e) {
-      tearDown();
-      throw e;
+    catch (e: Exception) {
+      tearDown()
+      throw e
     }
+
   }
 
-  private static class FailingPushGit extends GitImpl {
-    private Condition<GitRepository> myPushShouldFail;
+  private class FailingPushGit : GitImpl() {
+    var myPushShouldFail: Condition<GitRepository>? = null
 
-    @Override
-    @NotNull
-    public GitCommandResult push(@NotNull GitRepository repository,
-                                 @NotNull GitRemote remote,
-                                 @NotNull String spec,
-                                 boolean force,
-                                 boolean updateTracking,
-                                 @Nullable String tagMode,
-                                 GitLineHandlerListener... listeners) {
-      if (myPushShouldFail.value(repository)) {
-        return new GitCommandResult(false, 128, Collections.singletonList("Failed to push to " + remote.getName()),
-                                    Collections.<String>emptyList(), null);
+    override fun push(repository: GitRepository,
+                      remote: GitRemote,
+                      spec: String,
+                      force: Boolean,
+                      updateTracking: Boolean,
+                      tagMode: String?,
+                      vararg listeners: GitLineHandlerListener): GitCommandResult {
+      if (myPushShouldFail!!.value(repository)) {
+        return GitCommandResult(false, 128, listOf("Failed to push to " + remote.name),
+            emptyList<String>(), null)
       }
-      return super.push(repository, remote, spec, force, updateTracking, tagMode, listeners);
+      return super.push(repository, remote, spec, force, updateTracking, tagMode, *listeners)
     }
   }
 
-  public void test_try_push_from_all_roots_even_if_one_fails() throws IOException {
-    FailingPushGit failingPushGit = GitTestUtil.overrideService(Git.class, FailingPushGit.class);
+  fun test_try_push_from_all_roots_even_if_one_fails() {
+    val failingPushGit = GitTestUtil.overrideService(Git::class.java, FailingPushGit::class.java)
     // fail in the first repo
-    failingPushGit.myPushShouldFail = new Condition<GitRepository>() {
-      @Override
-      public boolean value(GitRepository repository) {
-        return repository.equals(myRepository);
+    failingPushGit.myPushShouldFail = object : Condition<GitRepository> {
+      override fun value(repository: GitRepository): Boolean {
+        return repository == myRepository
       }
-    };
+    }
 
-    cd(myRepository);
-    GitTestUtil.makeCommit("file.txt");
-    cd(myCommunity);
-    GitTestUtil.makeCommit("com.txt");
+    cd(myRepository)
+    GitTestUtil.makeCommit("file.txt")
+    cd(myCommunity)
+    GitTestUtil.makeCommit("com.txt")
 
-    PushSpec<GitPushSource, GitPushTarget> spec1 = makePushSpec(myRepository, "master", "origin/master");
-    PushSpec<GitPushSource, GitPushTarget> spec2 = makePushSpec(myCommunity, "master", "origin/master");
-    Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> map = ContainerUtil.newHashMap();
-    map.put(myRepository, spec1);
-    map.put(myCommunity, spec2);
-    GitPushResult result = new GitPushOperation(myProject, myPushSupport, map, null, false).execute();
+    val spec1 = makePushSpec(myRepository, "master", "origin/master")
+    val spec2 = makePushSpec(myCommunity, "master", "origin/master")
+    val map = ContainerUtil.newHashMap<GitRepository, PushSpec<GitPushSource, GitPushTarget>>()
+    map.put(myRepository, spec1)
+    map.put(myCommunity, spec2)
+    val result = GitPushOperation(myProject, myPushSupport, map, null, false).execute()
 
-    GitPushRepoResult result1 = result.getResults().get(myRepository);
-    GitPushRepoResult result2 = result.getResults().get(myCommunity);
+    val result1 = result.results[myRepository]!!
+    val result2 = result.results[myCommunity]!!
 
-    assertResult(GitPushRepoResult.Type.ERROR, -1, "master", "origin/master", null, result1);
-    assertEquals("Error text is incorrect", "Failed to push to origin", result1.getError());
-    assertResult(GitPushRepoResult.Type.SUCCESS, 1, "master", "origin/master", null, result2);
+    assertResult(GitPushRepoResult.Type.ERROR, -1, "master", "origin/master", null, result1)
+    assertEquals("Error text is incorrect", "Failed to push to origin", result1.error)
+    assertResult(GitPushRepoResult.Type.SUCCESS, 1, "master", "origin/master", null, result2)
   }
 
-  public void test_update_all_roots_on_reject_when_needed_even_if_only_one_in_push_spec() throws IOException {
-    cd(myBro);
-    String broHash = GitTestUtil.makeCommit("bro.txt");
-    git("push");
-    cd(myBroCommunity);
-    String broCommunityHash = GitTestUtil.makeCommit("bro_com.txt");
-    git("push");
+  fun test_update_all_roots_on_reject_when_needed_even_if_only_one_in_push_spec() {
+    Executor.cd(myBro)
+    val broHash = GitTestUtil.makeCommit("bro.txt")
+    git("push")
+    Executor.cd(myBroCommunity)
+    val broCommunityHash = GitTestUtil.makeCommit("bro_com.txt")
+    git("push")
 
-    cd(myRepository);
-    GitTestUtil.makeCommit("file.txt");
+    cd(myRepository)
+    GitTestUtil.makeCommit("file.txt")
 
-    PushSpec<GitPushSource, GitPushTarget> mainSpec = makePushSpec(myRepository, "master", "origin/master");
-    agreeToUpdate(GitRejectedPushUpdateDialog.MERGE_EXIT_CODE); // auto-update-all-roots is selected by default
-    GitPushResult result = new GitPushOperation(myProject, myPushSupport,
-                                                Collections.singletonMap(myRepository, mainSpec), null, false).execute();
+    val mainSpec = makePushSpec(myRepository, "master", "origin/master")
+    agreeToUpdate(GitRejectedPushUpdateDialog.MERGE_EXIT_CODE) // auto-update-all-roots is selected by default
+    val result = GitPushOperation(myProject, myPushSupport,
+        Collections.singletonMap<GitRepository, PushSpec<GitPushSource, GitPushTarget>>(myRepository, mainSpec), null, false).execute()
 
-    GitPushRepoResult result1 = result.getResults().get(myRepository);
-    GitPushRepoResult result2 = result.getResults().get(myCommunity);
+    val result1 = result.results[myRepository]!!
+    val result2 = result.results[myCommunity]
 
-    assertResult(GitPushRepoResult.Type.SUCCESS, 2, "master", "origin/master", GitUpdateResult.SUCCESS, result1);
-    assertNull(result2); // this was not pushed => no result should be generated
+    assertResult(GitPushRepoResult.Type.SUCCESS, 2, "master", "origin/master", GitUpdateResult.SUCCESS, result1)
+    assertNull(result2) // this was not pushed => no result should be generated
 
-    cd(myCommunity);
-    String lastHash = last();
-    assertEquals("Update in community didn't happen", broCommunityHash, lastHash);
+    cd(myCommunity)
+    val lastHash = last()
+    assertEquals("Update in community didn't happen", broCommunityHash, lastHash)
 
-    cd(myRepository);
-    String[] lastCommitParents = git("log -1 --pretty=%P").split(" ");
-    assertEquals("Merge didn't happen in main repository", 2, lastCommitParents.length);
-    assertEquals("Commit from bro repository didn't arrive", broHash, git("log --no-walk HEAD^2 --pretty=%H"));
+    cd(myRepository)
+    val lastCommitParents = git("log -1 --pretty=%P").split(" ".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+    assertEquals("Merge didn't happen in main repository", 2, lastCommitParents.size)
+    assertEquals("Commit from bro repository didn't arrive", broHash, git("log --no-walk HEAD^2 --pretty=%H"))
   }
 
 }
