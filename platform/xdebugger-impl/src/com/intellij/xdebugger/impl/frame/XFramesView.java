@@ -180,8 +180,8 @@ public class XFramesView extends XDebugView {
     final DefaultActionGroup framesGroup = new DefaultActionGroup();
 
     CommonActionsManager actionsManager = CommonActionsManager.getInstance();
-    framesGroup.add(actionsManager.createPrevOccurenceAction(getFramesList()));
-    framesGroup.add(actionsManager.createNextOccurenceAction(getFramesList()));
+    framesGroup.add(actionsManager.createPrevOccurenceAction(myFramesList));
+    framesGroup.add(actionsManager.createNextOccurenceAction(myFramesList));
 
     framesGroup.addAll(ActionManager.getInstance().getAction(XDebuggerActions.FRAMES_TOP_TOOLBAR_GROUP));
 
@@ -296,10 +296,6 @@ public class XFramesView extends XDebugView {
 
   @Override
   public void dispose() {
-  }
-
-  public XDebuggerFramesList getFramesList() {
-    return myFramesList;
   }
 
   public JPanel getMainPanel() {
