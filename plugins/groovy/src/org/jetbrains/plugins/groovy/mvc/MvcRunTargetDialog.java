@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.mvc;
 
+import com.intellij.application.options.ModulesComboBox;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -22,7 +23,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.application.options.ModulesComboBox;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -135,22 +135,27 @@ public class MvcRunTargetDialog extends DialogWrapper {
     return myModule;
   }
 
+  @NotNull
+  public MvcCommand createCommand() {
+    return MvcCommand.parse(getTargetArguments(), getVmOptions());
+  }
+
   @Override
   protected void doOKAction() {
     super.doOKAction();
     MvcRunTargetHistoryService.getInstance().addCommand(getSelectedText(), getVmOptions());
   }
 
-  public String getVmOptions() {
+  private String getVmOptions() {
     return myVmOptionsField.getText();
   }
 
-  public String getSelectedText() {
+  private String getSelectedText() {
     return (String)myTargetField.getEditor().getItem();
   }
 
   @NotNull
-  public String getTargetArguments() {
+  private String getTargetArguments() {
     String text = getSelectedText();
 
     text = text.trim();

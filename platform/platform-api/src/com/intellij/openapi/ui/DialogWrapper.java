@@ -306,7 +306,6 @@ public abstract class DialogWrapper {
   private boolean myDisposed = false;
   private boolean myValidationStarted = false;
   private final ErrorPainter myErrorPainter = new ErrorPainter();
-  private JComponent myErrorPane;
   private boolean myErrorPainterInstalled = false;
 
   /**
@@ -356,7 +355,7 @@ public abstract class DialogWrapper {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        IdeGlassPaneUtil.installPainter(myErrorPane, myErrorPainter, myDisposable);
+        IdeGlassPaneUtil.installPainter(getContentPanel(), myErrorPainter, myDisposable);
       }
     });
   }
@@ -1257,10 +1256,6 @@ public abstract class DialogWrapper {
     final JComponent c = createCenterPanel();
     if (c != null) {
       centerSection.add(c, BorderLayout.CENTER);
-      myErrorPane = c;
-    }
-    if (myErrorPane == null) {
-      myErrorPane = root;
     }
 
     final JPanel southSection = new JPanel(new BorderLayout());

@@ -39,6 +39,10 @@ public class LogSetup {
   private static final String LOG_FILE_MACRO = "$LOG_FILE_PATH$";
 
   public static void initLoggers() {
+    if (Boolean.parseBoolean(System.getProperty(GlobalOptions.DISABLE_DEFAULT_FILE_LOGGING_OPTION))) {
+      return;
+    }
+
     try {
       final String logDir = System.getProperty(GlobalOptions.LOG_DIR_OPTION, null);
       final File configFile = logDir != null? new File(logDir, LOG_CONFIG_FILE_NAME) : new File(LOG_CONFIG_FILE_NAME);

@@ -39,6 +39,10 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.elements.ManifestFileProvider;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.artifacts.DefaultManifestFileProvider;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.graph.CachingSemiGraph;
+import com.intellij.util.graph.Graph;
+import com.intellij.util.graph.GraphGenerator;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -231,6 +235,44 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   @Override
   public ArtifactExternalDependenciesImporter getArtifactExternalDependenciesImporter() {
     return myArtifactExternalDependenciesImporter;
+  }
+
+  @NotNull
+  @Override
+  public List<Module> getAllDependentModules(@NotNull Module module) {
+    final ArrayList<Module> list = new ArrayList<Module>();
+    final Graph<Module> graph = moduleGraph();
+    for (Iterator<Module> i = graph.getOut(module); i.hasNext();) {
+      list.add(i.next());
+    }
+    return list;
+  }
+
+  @NotNull
+  @Override
+  public Graph<Module> moduleGraph() {
+    return moduleGraph(true);
+  }
+
+  @NotNull
+  @Override
+  public Graph<Module> moduleGraph(boolean includeTests){
+    return doGetModuleGraph(includeTests);
+  }
+
+  private Graph<Module> doGetModuleGraph(final boolean includeTests) {
+    return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Module>() {
+      @Override
+      public Collection<Module> getNodes() {
+        return ContainerUtil.list(getModules());
+      }
+
+      @Override
+      public Iterator<Module> getIn(Module m) {
+        Module[] dependentModules = getModifiableRootModel(m).getModuleDependencies(includeTests);
+        return Arrays.asList(dependentModules).iterator();
+      }
+    }));
   }
 
   private class MyPackagingElementResolvingContext implements PackagingElementResolvingContext {

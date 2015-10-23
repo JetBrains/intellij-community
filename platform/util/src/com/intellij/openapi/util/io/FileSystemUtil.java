@@ -266,7 +266,7 @@ public class FileSystemUtil {
         long lastModified = (Long)myToMillis.invoke(attributes.get("lastModifiedTime"));
         if (SystemInfo.isWindows) {
           boolean isHidden = new File(path).getParent() == null ? false : (Boolean)attributes.get("hidden");
-          boolean isWritable = !(Boolean)attributes.get("readonly");
+          boolean isWritable = isDirectory || !(Boolean)attributes.get("readonly");
           return new FileAttributes(isDirectory, isOther, isSymbolicLink, isHidden, size, lastModified, isWritable);
         }
         else {
@@ -546,19 +546,19 @@ public class FileSystemUtil {
       if (myFileSystem != null) {
         final int flags = (Integer)myGetBooleanAttributes.invoke(myFileSystem, file);
         if (flags != 0) {
-          final boolean isDirectory = isSet(flags, BA_DIRECTORY);
-          final boolean isSpecial = notSet(flags, BA_REGULAR | BA_DIRECTORY);
-          final boolean isHidden = isSet(flags, BA_HIDDEN);
-          return new FileAttributes(isDirectory, isSpecial, false, isHidden, file.length(), file.lastModified(), file.canWrite());
+          boolean isDirectory = isSet(flags, BA_DIRECTORY);
+          boolean isSpecial = notSet(flags, BA_REGULAR | BA_DIRECTORY);
+          boolean isHidden = isSet(flags, BA_HIDDEN);
+          boolean isWritable = SystemInfo.isWindows && isDirectory || file.canWrite();
+          return new FileAttributes(isDirectory, isSpecial, false, isHidden, file.length(), file.lastModified(), isWritable);
         }
       }
-      else {
-        if (file.exists()) {
-          final boolean isDirectory = file.isDirectory();
-          final boolean isSpecial = !isDirectory && !file.isFile();
-          final boolean isHidden = file.isHidden();
-          return new FileAttributes(isDirectory, isSpecial, false, isHidden, file.length(), file.lastModified(), file.canWrite());
-        }
+      else if (file.exists()) {
+        boolean isDirectory = file.isDirectory();
+        boolean isSpecial = !isDirectory && !file.isFile();
+        boolean isHidden = file.isHidden();
+        boolean isWritable = SystemInfo.isWindows && isDirectory || file.canWrite();
+        return new FileAttributes(isDirectory, isSpecial, false, isHidden, file.length(), file.lastModified(), isWritable);
       }
 
       return null;
