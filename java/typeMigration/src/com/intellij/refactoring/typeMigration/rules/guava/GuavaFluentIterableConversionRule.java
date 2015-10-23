@@ -17,14 +17,19 @@ package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.codeInspection.java18StreamApi.PseudoLambdaReplaceTemplate;
 import com.intellij.codeInspection.java18StreamApi.StreamApiConstants;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,6 +45,7 @@ import java.util.*;
  * @author Dmitry Batkovich
  */
 public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRule {
+  private static final Logger LOG = Logger.getInstance(GuavaFluentIterableConversionRule.class);
   private static final Map<String, TypeConversionDescriptorFactory> DESCRIPTORS_MAP =
     new HashMap<String, TypeConversionDescriptorFactory>();
 
@@ -87,8 +93,6 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
   static {
     DESCRIPTORS_MAP.put("of", new TypeConversionDescriptorFactory("FluentIterable.of($arr$)", "java.util.Arrays.stream($arr$)", false, true, true));
 
-    DESCRIPTORS_MAP.put("contains",
-                        new TypeConversionDescriptorFactory("$it$.contains($o$)", "$it$.anyMatch(e -> e != null && e.equals($o$))", false));
     DESCRIPTORS_MAP.put("isEmpty", new TypeConversionDescriptorFactory("$q$.isEmpty()", "$q$.findAny().isPresent()", false));
     DESCRIPTORS_MAP.put("skip", new TypeConversionDescriptorFactory("$q$.skip($p$)", "$q$.skip($p$)", false, true, true));
     DESCRIPTORS_MAP.put("limit", new TypeConversionDescriptorFactory("$q$.limit($p$)", "$q$.limit($p$)", false, true, true));
@@ -174,6 +178,29 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
               setReplaceByString("$it$.findFirst().get()");
             }
           }
+          return super.replace(expression);
+        }
+      };
+      needSpecifyType = false;
+    }
+    else if (methodName.equals("contains")) {
+      descriptorBase = new TypeConversionDescriptor("$it$.contains($o$)", null) {
+        @Override
+        public PsiExpression replace(PsiExpression expression) {
+          final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+          final PsiExpression qualifier = methodCallExpression.getMethodExpression().getQualifierExpression();
+          LOG.assertTrue(qualifier != null);
+          final PsiClassType qualifierType = (PsiClassType)qualifier.getType();
+          LOG.assertTrue(qualifierType != null);
+          final PsiType[] parameters = qualifierType.getParameters();
+
+          final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
+          final SuggestedNameInfo suggestedNameInfo = codeStyleManager
+            .suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, parameters.length == 1 ? parameters[0] : null, false);
+          final String suggestedName = codeStyleManager.suggestUniqueVariableName(suggestedNameInfo, expression, false).names[0];
+
+          setReplaceByString("$it$.anyMatch(" + suggestedName + " -> java.util.Objects.equals(" + suggestedName + ", $o$))");
+
           return super.replace(expression);
         }
       };
