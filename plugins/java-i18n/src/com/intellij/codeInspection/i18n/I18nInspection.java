@@ -123,8 +123,8 @@ public class I18nInspection extends BaseLocalInspectionTool {
   public void readSettings(@NotNull Element node) throws InvalidDataException {
     super.readSettings(node);
     for (Object o : node.getChildren()) {
-      if (o instanceof Element && Comparing.strEqual(node.getAttributeValue("name"), SKIP_FOR_ENUM)) {
-        final String ignoreForConstantsAttr = node.getAttributeValue("value");
+      if (o instanceof Element && Comparing.strEqual(((Element)o).getAttributeValue("name"), SKIP_FOR_ENUM)) {
+        final String ignoreForConstantsAttr = ((Element)o).getAttributeValue("value");
         if (ignoreForConstantsAttr != null) {
           ignoreForEnumConstants = Boolean.parseBoolean(ignoreForConstantsAttr);
         }
