@@ -23,35 +23,41 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import org.junit.Assert;
+import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
-public class UpdatePluginsFromCustomRepositoryTest extends PlatformTestCase {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+public class UpdatePluginsFromCustomRepositoryTest extends BareTestFixtureTestCase {
+  @Test
   public void testOnlyCompatiblePluginsAreChecked() throws Exception {
-    final LinkedHashMap<PluginId, PluginDownloader> toUpdate = new LinkedHashMap<PluginId, PluginDownloader>();
-    final IdeaPluginDescriptor[] descriptors = new IdeaPluginDescriptor[] {loadDescriptor("plugin1.xml"), loadDescriptor("plugin2.xml")};
+    Map<PluginId, PluginDownloader> toUpdate = new LinkedHashMap<>();
+    IdeaPluginDescriptor[] descriptors = new IdeaPluginDescriptor[]{loadDescriptor("plugin1.xml"), loadDescriptor("plugin2.xml")};
 
-    final BuildNumber currentBuildNumber = BuildNumber.fromString("IU-142.100");
+    BuildNumber currentBuildNumber = BuildNumber.fromString("IU-142.100");
     for (IdeaPluginDescriptor descriptor : descriptors) {
-      UpdateChecker.checkAndPrepareToInstall(PluginDownloader.createDownloader(descriptor, null, currentBuildNumber), new InstalledPluginsState(),
-                                             toUpdate, new ArrayList<IdeaPluginDescriptor>(), null);
+      PluginDownloader downloader = PluginDownloader.createDownloader(descriptor, null, currentBuildNumber);
+      UpdateChecker.checkAndPrepareToInstall(downloader, new InstalledPluginsState(), toUpdate, new ArrayList<>(), null);
     }
-    Assert.assertEquals("Found: " + toUpdate.size(), 1, toUpdate.size());
-    final PluginDownloader downloader = toUpdate.values().iterator().next();
-    Assert.assertNotNull(downloader);
-    Assert.assertEquals("0.1", downloader.getPluginVersion());
+    assertEquals("Found: " + toUpdate.size(), 1, toUpdate.size());
+
+    PluginDownloader downloader = toUpdate.values().iterator().next();
+    assertNotNull(downloader);
+    assertEquals("0.1", downloader.getPluginVersion());
   }
 
   private IdeaPluginDescriptor loadDescriptor(String filePath) throws InvalidDataException, FileNotFoundException, MalformedURLException {
-    String path = PlatformTestUtil.getCommunityPath() + "/platform/platform-tests/testData/updates/customRepositories/" + getTestName(true) + "/";
-    final File descriptorFile = new File(path, filePath);
+    String path = PlatformTestUtil.getCommunityPath() + "/platform/platform-tests/testData/updates/customRepositories/" + getTestName(true);
+    File descriptorFile = new File(path, filePath);
     IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(descriptorFile.getParentFile());
     descriptor.readExternal(descriptorFile.toURI().toURL());
     return descriptor;

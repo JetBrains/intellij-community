@@ -15,10 +15,16 @@
  */
 package com.intellij.testFramework.fixtures;
 
+import com.intellij.testFramework.PlatformTestUtil;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestName;
 
 public abstract class BareTestFixtureTestCase {
+  @Rule public final TestName myNameRule = new TestName();
+
   private BareTestFixture myFixture;
 
   @Before
@@ -31,5 +37,10 @@ public abstract class BareTestFixtureTestCase {
   public final void tearDownFixture() throws Exception {
     myFixture.tearDown();
     myFixture = null;
+  }
+
+  @NotNull
+  protected final String getTestName(boolean lowercaseFirstLetter) {
+    return PlatformTestUtil.getTestName(myNameRule.getMethodName(), lowercaseFirstLetter);
   }
 }
