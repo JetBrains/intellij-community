@@ -175,7 +175,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
         final TextAttributes textAttributes = NodeRenderer.getSimpleTextAttributes(presentation).toTextAttributes();
         if (isProblemFile) {
           textAttributes.setEffectType(EffectType.WAVE_UNDERSCORE);
-          textAttributes.setEffectColor(Color.red);
+          textAttributes.setEffectColor(JBColor.red);
         }
         textAttributes.setForegroundColor(color);
         SimpleTextAttributes nameAttributes = SimpleTextAttributes.fromTextAttributes(textAttributes);
