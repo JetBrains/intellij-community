@@ -3,12 +3,19 @@ import _pydev_threading as threading
 
 
 def wrapper(fun):
+    def pydev_after_run_call():
+        pass
+
     def inner(*args, **kwargs):
-        print("start_new_thread called with params", args, kwargs)
-        thread = threading.currentThread()
-        thread.additionalInfo.save = True
-        return fun(*args, **kwargs)
+        fun(*args, **kwargs)
+        pydev_after_run_call()
     return inner
+
+
+def wrap_attr(obj, attr):
+    t_save_start = getattr(obj, attr)
+    setattr(obj, attr, wrapper(t_save_start))
+    setattr(obj, "_pydev_run_patched", True)
 
 
 class ObjectWrapper(object):
