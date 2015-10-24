@@ -1040,6 +1040,8 @@ public class ListUtils {
     doTest()
   }
 
+  public void testOuterSuperMethodCall() { doTest('\n') }
+
   public void testTopLevelClassesFromPackaged() throws Throwable {
     myFixture.addClass "public class Fooooo {}"
     final text = "package foo; class Bar { Fooo<caret> }"
