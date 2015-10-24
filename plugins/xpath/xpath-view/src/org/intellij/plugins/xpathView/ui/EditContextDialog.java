@@ -317,7 +317,7 @@ public class EditContextDialog extends DialogWrapper {
       for (int i = 0; i < myVariables.size(); i++) {
         Variable variable = myVariables.get(i);
         if (i != row && variable.getName().equals(_value)) {
-          setForeground(Color.RED);
+          setForeground(JBColor.RED);
           setToolTipText("Duplicate Variable");
         }
         else if (variable.getExpression().length() == 0) {
@@ -404,7 +404,7 @@ public class EditContextDialog extends DialogWrapper {
         for (int i = 0; i < myNamespaces.size(); i++) {
           Namespace namespace = myNamespaces.get(i);
           if (i != row && namespace.getPrefix().equals(value)) {
-            setForeground(Color.RED);
+            setForeground(JBColor.RED);
             break;
           }
         }
