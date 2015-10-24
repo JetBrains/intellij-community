@@ -245,4 +245,9 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     }
     return null;
   }
+
+  @Override
+  public boolean canBeHitInOtherPlaces() {
+    return true; // line breakpoints could be hit in other versions of the same classes
+  }
 }

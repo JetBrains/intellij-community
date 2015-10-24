@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public interface DebugProcess {
   /**
    * The usual place to call this method is vmAttachedEvent. No additional actions are needed in this case.
    * If position manager is appended later, when DebugSession is up and running, one might need to call BreakpointManager.updateAllRequests()
-   * to ensure that just adedd position manager was considered when creating breakpoint requests
+   * to ensure that just added position manager was considered when creating breakpoint requests
    * @param positionManager to be appended
    */
   void appendPositionManager(PositionManager positionManager);

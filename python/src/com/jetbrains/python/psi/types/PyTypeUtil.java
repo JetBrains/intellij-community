@@ -15,21 +15,24 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 /**
- * Tools and wrappers around {@link PyClassLikeType}
+ * Tools and wrappers around {@link PyType} inheritors
  *
  * @author Ilya.Kazakevich
  */
-public final class PyClassLikeTypeUtil {
-  private PyClassLikeTypeUtil() {
+public final class PyTypeUtil {
+  private PyTypeUtil() {
   }
 
   /**
@@ -59,5 +62,32 @@ public final class PyClassLikeTypeUtil {
       }
     }, true, context);
     return result;
+  }
+
+
+  /**
+   * Search for data in dataholder or members of union recursively
+   * @param type start point
+   * @param key key to search
+   * @param <T> result tyoe
+   * @return data or null if not found
+   */
+  @Nullable
+  public static <T> T findData(@NotNull final PyType type, @NotNull final Key<T> key) {
+    if (type instanceof UserDataHolder) {
+      return ((UserDataHolder)type).getUserData(key);
+    }
+    if (type instanceof PyUnionType) {
+      for (final PyType memberType : ((PyUnionType)type).getMembers()) {
+        if (memberType == null) {
+          continue;
+        }
+        final T result = findData(memberType, key);
+        if (result != null) {
+          return result;
+        }
+      }
+    }
+    return null;
   }
 }

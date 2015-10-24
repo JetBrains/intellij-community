@@ -344,6 +344,7 @@ public class TypeMigrationLabeler {
         }
       }
       getTypeEvaluator().setType(new TypeMigrationUsageInfo(expr), migrationType);
+      return;
     } else if (expr instanceof PsiClassObjectAccessExpression) {
       if (!TypeConversionUtil.isAssignable(migrationType, expr.getType())) {
         markFailedConversion(Pair.create(expr.getType(), migrationType), expr);

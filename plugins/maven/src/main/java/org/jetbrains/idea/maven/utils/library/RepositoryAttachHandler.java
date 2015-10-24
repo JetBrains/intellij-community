@@ -94,13 +94,15 @@ public class RepositoryAttachHandler {
     boolean attachJavaDoc = dialog.getAttachJavaDoc();
     boolean attachSources = dialog.getAttachSources();
     List<MavenRepositoryInfo> repositories = dialog.getRepositories();
-    NewLibraryConfiguration configuration = resolveAndDownload(project, coord, attachJavaDoc, attachSources, copyTo, repositories);
+    @Nullable NewLibraryConfiguration configuration =
+      resolveAndDownload(project, coord, attachJavaDoc, attachSources, copyTo, repositories);
     if (configuration == null) {
       Messages.showErrorDialog(parentComponent, ProjectBundle.message("maven.downloading.failed", coord), CommonBundle.getErrorTitle());
     }
     return configuration;
   }
 
+  @Nullable
   public static NewLibraryConfiguration resolveAndDownload(final Project project,
                                                            final String coord,
                                                            boolean attachJavaDoc,
@@ -108,7 +110,7 @@ public class RepositoryAttachHandler {
                                                            @Nullable final String copyTo,
                                                            List<MavenRepositoryInfo> repositories) {
     RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(coord);
-    final List<OrderRoot> roots = MavenDependenciesRemoteManager.getInstance(project)
+    final @Nullable List<OrderRoot> roots = MavenDependenciesRemoteManager.getInstance(project)
       .downloadDependenciesModal(libraryProperties, attachSources, attachJavaDoc, copyTo);
     if (roots == null || roots.size() == 0) {
       return null;
@@ -126,13 +128,15 @@ public class RepositoryAttachHandler {
     };
   }
 
-  public static List<OrderRoot> resolveAndDownloadImpl(final Project project,
-                                                       final String coord,
-                                                       boolean attachJavaDoc,
-                                                       boolean attachSources,
-                                                       @Nullable final String copyTo,
-                                                       List<MavenRepositoryInfo> repositories,
-                                                       ProgressIndicator indicator) {
+  public static
+  @NotNull
+  List<OrderRoot> resolveAndDownloadImpl(final Project project,
+                                         final String coord,
+                                         boolean attachJavaDoc,
+                                         boolean attachSources,
+                                         @Nullable final String copyTo,
+                                         List<MavenRepositoryInfo> repositories,
+                                         ProgressIndicator indicator) {
     final SmartList<MavenExtraArtifactType> extraTypes = new SmartList<MavenExtraArtifactType>();
     if (attachSources) extraTypes.add(MavenExtraArtifactType.SOURCES);
     if (attachJavaDoc) extraTypes.add(MavenExtraArtifactType.DOCS);

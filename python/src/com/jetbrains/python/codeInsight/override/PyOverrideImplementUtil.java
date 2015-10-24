@@ -41,7 +41,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyClassLikeType;
-import com.jetbrains.python.psi.types.PyClassLikeTypeUtil;
+import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -333,7 +333,7 @@ public class PyOverrideImplementUtil {
     final PyClassLikeType type = PyUtil.as(context.getType(pyClass), PyClassLikeType.class);
 
     if (type != null) {
-      functions.addAll(PyClassLikeTypeUtil.getMembersOfType(type, PyFunction.class, context));
+      functions.addAll(PyTypeUtil.getMembersOfType(type, PyFunction.class, context));
     }
     return functions;
   }

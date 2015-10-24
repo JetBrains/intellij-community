@@ -120,43 +120,36 @@ JAVA_TOOL_OPTIONS= "$JAVA_BIN" -version 2> "$VERSION_LOG"
 "$GREP" "64-Bit|x86_64|amd64" "$VERSION_LOG" > /dev/null
 BITS=$?
 "$RM" -f "$VERSION_LOG"
-if [ $BITS -eq 0 ]; then
-  BITS="64"
-else
-  BITS=""
-fi
+test $BITS -eq 0 && BITS="64" || BITS=""
 
 # ---------------------------------------------------------------------
-# Collect JVM options and properties.
+# Collect JVM options and IDE properties.
 # ---------------------------------------------------------------------
-if [ "$OS_TYPE" = "Darwin" ]; then
-  OS_SPECIFIC_BIN_DIR=$IDE_BIN_HOME/mac
-else
-  OS_SPECIFIC_BIN_DIR=$IDE_BIN_HOME/linux
-fi
-
 if [ -n "$@@product_uc@@_PROPERTIES" ]; then
   IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$@@product_uc@@_PROPERTIES"
 fi
 
-vm_options_file="$IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions"
-if [ ! -r "$vm_options_file" ]; then
-  vm_options_file="$OS_SPECIFIC_BIN_DIR/@@vm_options@@$BITS.vmoptions"
-fi
-user_vm_options_file="$HOME/.@@system_selector@@/@@vm_options@@$BITS.vmoptions"
-if [ -r "$user_vm_options_file" ]; then
-  vm_options_file="$user_vm_options_file"
-fi
-if [ -n "$@@product_uc@@_VM_OPTIONS" ] && [ -r "$@@product_uc@@_VM_OPTIONS" ]; then
-  vm_options_file="$@@product_uc@@_VM_OPTIONS"
+VM_OPTIONS_FILE=""
+if [ -n "$@@product_uc@@_VM_OPTIONS" -a -r "$@@product_uc@@_VM_OPTIONS" ]; then
+  # explicit
+  VM_OPTIONS_FILE="$@@product_uc@@_VM_OPTIONS"
+elif [ -r "$HOME/.@@system_selector@@/@@vm_options@@$BITS.vmoptions" ]; then
+  # user-overridden
+  VM_OPTIONS_FILE="$HOME/.@@system_selector@@/@@vm_options@@$BITS.vmoptions"
+elif [ -r "$IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions" ]; then
+  # default, standard installation
+  VM_OPTIONS_FILE="$IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions"
+else
+  # default, universal package
+  test "$OS_TYPE" = "Darwin" && OS_SPECIFIC="mac" || OS_SPECIFIC="linux"
+  VM_OPTIONS_FILE="$IDE_BIN_HOME/$OS_SPECIFIC/@@vm_options@@$BITS.vmoptions"
 fi
 
 VM_OPTIONS=""
-if [ -r "$vm_options_file" ]; then
-  VM_OPTIONS_DATA=`"$CAT" "$vm_options_file" | "$GREP" -v "^#.*" | "$TR" '\n' ' '`
-  VM_OPTIONS="$VM_OPTIONS $VM_OPTIONS_DATA"
+if [ -r "$VM_OPTIONS_FILE" ]; then
+  VM_OPTIONS=`"$CAT" "$VM_OPTIONS_FILE" | "$GREP" -v "^#.*"`
 else
-  message "Cannot find VM options file."
+  message "Cannot find VM options file"
 fi
 
 IS_EAP="@@isEap@@"
@@ -167,8 +160,6 @@ if [ "$IS_EAP" = "true" ]; then
     AGENT="-agentlib:$AGENT_LIB=disablealloc,delay=10000,sessionname=@@system_selector@@"
   fi
 fi
-
-IDE_JVM_ARGS="@@ide_jvm_args@@"
 
 @@class_path@@
 if [ -n "$@@product_uc@@_CLASSPATH" ]; then
@@ -183,18 +174,21 @@ fi
 # ---------------------------------------------------------------------
 # Run the IDE.
 # ---------------------------------------------------------------------
+IFS="$(printf '\n\t')"
 LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JAVA_BIN" \
   $AGENT \
   "-Xbootclasspath/a:$IDE_HOME/lib/boot.jar" \
   -classpath "$CLASSPATH" \
-  $VM_OPTIONS "-Djb.vmOptionsFile=$vm_options_file" \
+  $VM_OPTIONS \
+  "-Djb.vmOptionsFile=$VM_OPTIONS_FILE" \
   "-XX:ErrorFile=$HOME/java_error_in_@@product_uc@@_%p.log" \
   -Djb.restart.code=88 -Didea.paths.selector=@@system_selector@@ \
   $IDE_PROPERTIES_PROPERTY \
-  $IDE_JVM_ARGS \
+  @@ide_jvm_args@@ \
   com.intellij.idea.Main \
   "$@"
 EC=$?
+unset IFS
 
 test $EC -ne 88 && exit $EC
 

@@ -88,6 +88,8 @@ public class DictionaryTest {
   }
 
   private void containsWordPerformanceTest(final Dictionary dictionary, int time) {
+    if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
+
     final Set<String> wordsToCheck = createWordSets(dictionary, 50000, 1).first;
     PlatformTestUtil.startPerformanceTest("contains word", time, new ThrowableRunnable() {
       @Override

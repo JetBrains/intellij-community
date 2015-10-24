@@ -19,15 +19,12 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
 
 public abstract class ResolveTestCase extends PsiTestCase {
   protected static final String MARKER = "<ref>";
@@ -48,8 +45,7 @@ public abstract class ResolveTestCase extends PsiTestCase {
   }
 
   protected PsiReference configureByFile(@TestDataFile @NotNull String filePath, @Nullable VirtualFile parentDir) throws Exception {
-    final String fullPath = getTestDataPath() + filePath;
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
+    final VirtualFile vFile = VfsTestUtil.findFileByCaseSensitivePath(getTestDataPath() + filePath);
     assertNotNull("file " + filePath + " not found", vFile);
 
     String fileText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vFile));

@@ -30,6 +30,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
@@ -279,16 +280,17 @@ public class JUnitUtil {
 
   public static class  TestMethodFilter implements Condition<PsiMethod> {
     private final PsiClass myClass;
-    private final TestFramework framework;
+    private final JavaTestFramework framework;
 
     public TestMethodFilter(final PsiClass aClass) {
       myClass = aClass;
-      framework = TestFrameworks.detectFramework(aClass);
+      TestFramework framework = TestFrameworks.detectFramework(aClass);
+      this.framework = (framework instanceof JavaTestFramework) ? (JavaTestFramework)framework : null;
     }
 
     public boolean value(final PsiMethod method) {
       return framework != null
-             ? framework.isTestMethod(method)
+             ? framework.isTestMethod(method, myClass)
              : isTestMethod(MethodLocation.elementInClass(method, myClass));
     }
   }

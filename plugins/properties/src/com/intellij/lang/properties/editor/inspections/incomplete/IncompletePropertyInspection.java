@@ -66,7 +66,7 @@ public class IncompletePropertyInspection extends ResourceBundleEditorInspection
     mySuffixes.clear();
     final Element element = node.getChild(SUFFIXES_TAG_NAME);
     if (element != null) {
-      mySuffixes.addAll(StringUtil.split(element.getText(), ","));
+      mySuffixes.addAll(StringUtil.split(element.getText(), ",", true, false));
     }
   }
 
@@ -185,12 +185,10 @@ public class IncompletePropertyInspection extends ResourceBundleEditorInspection
   }
 
   public List<PropertiesFile> getPropertiesFilesWithoutTranslation(final ResourceBundle resourceBundle, final String key) {
-    final PropertiesFile defaultPropertiesFile = resourceBundle.getDefaultPropertiesFile();
     return ContainerUtil.filter(resourceBundle.getPropertiesFiles(), new Condition<PropertiesFile>() {
       @Override
       public boolean value(PropertiesFile propertiesFile) {
-        return !defaultPropertiesFile.equals(propertiesFile) &&
-               propertiesFile.findPropertyByKey(key) == null &&
+        return propertiesFile.findPropertyByKey(key) == null &&
                !getIgnoredSuffixes().contains(PropertiesUtil.getSuffix(propertiesFile));
       }
     });

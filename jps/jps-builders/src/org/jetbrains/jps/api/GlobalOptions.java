@@ -26,6 +26,7 @@ public interface GlobalOptions {
   String COMPILE_PARALLEL_MAX_THREADS_OPTION = "compile.parallel.max.threads";
   String REBUILD_ON_DEPENDENCY_CHANGE_OPTION = "rebuild.on.dependency.change";
   String LOG_DIR_OPTION = "jps.log.dir";
+  String DISABLE_DEFAULT_FILE_LOGGING_OPTION = "jps.disable.default.file.logging";
 
   // builder ID for all global build messages sent to the controlling IDE
   String JPS_SYSTEM_BUILDER_ID = "JPS";

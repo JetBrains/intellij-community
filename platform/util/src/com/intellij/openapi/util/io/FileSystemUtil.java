@@ -266,7 +266,7 @@ public class FileSystemUtil {
         long lastModified = (Long)myToMillis.invoke(attributes.get("lastModifiedTime"));
         if (SystemInfo.isWindows) {
           boolean isHidden = new File(path).getParent() == null ? false : (Boolean)attributes.get("hidden");
-          boolean isWritable = !(Boolean)attributes.get("readonly");
+          boolean isWritable = isDirectory || !(Boolean)attributes.get("readonly");
           return new FileAttributes(isDirectory, isOther, isSymbolicLink, isHidden, size, lastModified, isWritable);
         }
         else {
@@ -386,7 +386,7 @@ public class FileSystemUtil {
     private static final int[] LINUX_64 =  {24, 48, 88, 28, 32};
     private static final int[] LNX_PPC32 = {16, 48, 80, 24, 28};
     private static final int[] LNX_PPC64 = LINUX_64;
-    private static final int[] LINUX_ARM = LNX_PPC32;
+    private static final int[] LNX_ARM32 = LNX_PPC32;
     private static final int[] BSD_32 =    { 8, 48, 32, 12, 16};
     private static final int[] BSD_64 =    { 8, 72, 40, 12, 16};
     private static final int[] SUN_OS_32 = {20, 48, 64, 28, 32};
@@ -408,8 +408,9 @@ public class FileSystemUtil {
       if (SystemInfo.isLinux) {
         if ("arm".equals(SystemInfo.OS_ARCH)) {
           if (SystemInfo.is32Bit) {
-            myOffsets = LINUX_ARM;
-          } else {
+            myOffsets = LNX_ARM32;
+          }
+          else {
             throw new IllegalStateException("AArch64 architecture is not supported");
           }
         }
@@ -464,7 +465,7 @@ public class FileSystemUtil {
       return new FileAttributes(isDirectory, isSpecial, isSymlink, false, size, mTime, writable);
     }
 
-    private boolean loadFileStatus(@NotNull String path, Memory buffer) {
+    private static boolean loadFileStatus(String path, Memory buffer) {
       return (SystemInfo.isLinux ? LinuxLibC.__xstat64(STAT_VER, path, buffer) : UnixLibC.stat(path, buffer)) == 0;
     }
 
@@ -545,19 +546,19 @@ public class FileSystemUtil {
       if (myFileSystem != null) {
         final int flags = (Integer)myGetBooleanAttributes.invoke(myFileSystem, file);
         if (flags != 0) {
-          final boolean isDirectory = isSet(flags, BA_DIRECTORY);
-          final boolean isSpecial = notSet(flags, BA_REGULAR | BA_DIRECTORY);
-          final boolean isHidden = isSet(flags, BA_HIDDEN);
-          return new FileAttributes(isDirectory, isSpecial, false, isHidden, file.length(), file.lastModified(), file.canWrite());
+          boolean isDirectory = isSet(flags, BA_DIRECTORY);
+          boolean isSpecial = notSet(flags, BA_REGULAR | BA_DIRECTORY);
+          boolean isHidden = isSet(flags, BA_HIDDEN);
+          boolean isWritable = SystemInfo.isWindows && isDirectory || file.canWrite();
+          return new FileAttributes(isDirectory, isSpecial, false, isHidden, file.length(), file.lastModified(), isWritable);
         }
       }
-      else {
-        if (file.exists()) {
-          final boolean isDirectory = file.isDirectory();
-          final boolean isSpecial = !isDirectory && !file.isFile();
-          final boolean isHidden = file.isHidden();
-          return new FileAttributes(isDirectory, isSpecial, false, isHidden, file.length(), file.lastModified(), file.canWrite());
-        }
+      else if (file.exists()) {
+        boolean isDirectory = file.isDirectory();
+        boolean isSpecial = !isDirectory && !file.isFile();
+        boolean isHidden = file.isHidden();
+        boolean isWritable = SystemInfo.isWindows && isDirectory || file.canWrite();
+        return new FileAttributes(isDirectory, isSpecial, false, isHidden, file.length(), file.lastModified(), isWritable);
       }
 
       return null;

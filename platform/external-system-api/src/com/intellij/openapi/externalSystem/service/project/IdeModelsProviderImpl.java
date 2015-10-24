@@ -18,6 +18,7 @@ package com.intellij.openapi.externalSystem.service.project;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -30,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -203,5 +205,22 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   @Override
   public String[] getLibraryUrls(@NotNull Library library, @NotNull OrderRootType type) {
     return library.getUrls(type);
+  }
+
+  @NotNull
+  public List<Module> getAllDependentModules(@NotNull Module module) {
+    return ModuleUtilCore.getAllDependentModules(module);
+  }
+
+  @NotNull
+  @Override
+  public Graph<Module> moduleGraph() {
+    return moduleGraph(true);
+  }
+
+  @NotNull
+  @Override
+  public Graph<Module> moduleGraph(boolean includeTests){
+    return ModuleManager.getInstance(myProject).moduleGraph();
   }
 }

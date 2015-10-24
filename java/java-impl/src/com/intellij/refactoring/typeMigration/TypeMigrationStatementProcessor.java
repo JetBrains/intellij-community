@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -26,6 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -525,9 +527,12 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
 
     public TypeView(PsiVariable var, PsiSubstitutor varSubstitutor, PsiSubstitutor evalSubstitutor) {
       myOriginType = varSubstitutor != null ? varSubstitutor.substitute(var.getType()) : var.getType();
-      myType = evalSubstitutor != null
-               ? evalSubstitutor.substitute(myTypeEvaluator.getType(var))
-               : myTypeEvaluator.getType(var);
+
+      Map<PsiTypeParameter, PsiType> realMap = new HashMap<PsiTypeParameter, PsiType>();
+      if (varSubstitutor != null) realMap.putAll(varSubstitutor.getSubstitutionMap());
+      if (evalSubstitutor != null) realMap.putAll(evalSubstitutor.getSubstitutionMap());
+
+      myType = PsiSubstitutorImpl.createSubstitutor(realMap).substitute(myTypeEvaluator.getType(var));
       myChanged = (myOriginType == null || myType == null) ? false : !myType.equals(myOriginType);
     }
 

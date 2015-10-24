@@ -145,13 +145,8 @@ class _BehaveRunner(_bdd_utils.BddRunner):
             elif element.status == 'passed':
                 self._test_passed(step_name, element.duration)
             elif element.status == 'failed':
-                try:
-                    trace = traceback.format_exc()
-                except Exception:
-                    trace = "".join(traceback.format_tb(element.exc_traceback))
-                error_message = utils.to_unicode(element.error_message)
-                if "Traceback " in error_message:
-                    error_message = ""  # No reason to duplicate output (see PY-13647)
+                trace = utils.to_unicode("".join(traceback.format_tb(element.exc_traceback)))
+                error_message = u"{0}: ".format(type(element.exception).__name__) + utils.to_unicode(element.exception)
                 self._test_failed(step_name, error_message, trace, duration=element.duration)
             elif element.status == 'undefined':
                 self._test_undefined(step_name, element.location)
@@ -269,5 +264,3 @@ if __name__ == "__main__":
     if what_to_run and not my_config.paths:
         raise Exception("Nothing to run in {0}".format(what_to_run))
     _BehaveRunner(my_config, base_dir).run()
-
-

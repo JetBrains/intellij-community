@@ -151,11 +151,9 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
   }
 
   public boolean hasMultipleDataToSelect() {
-    if(myModulesCount == 1) {
-      Object root = myTree.getModel().getRoot();
-      if(root instanceof CheckedTreeNode && ((CheckedTreeNode)root).getChildCount() == 1) {
-        return ((CheckedTreeNode)root).getChildAt(0).getChildCount() > 0;
-      }
+    Object root = myTree.getModel().getRoot();
+    if (root instanceof CheckedTreeNode && ((CheckedTreeNode)root).getChildCount() == 1) {
+      return false;
     }
     return myModulesCount > 1;
   }

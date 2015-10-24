@@ -65,7 +65,7 @@ import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
@@ -740,7 +740,7 @@ public class XDebugSessionImpl implements XDebugSession {
       @Override
       public void run() {
         if (mySessionTab != null) {
-          if (XDebuggerSettingsManager.getInstanceImpl().getGeneralSettings().isShowDebuggerOnBreakpoint()) {
+          if (XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isShowDebuggerOnBreakpoint()) {
             mySessionTab.toFront(true, new Runnable() {
               @Override
               public void run() {
@@ -914,7 +914,7 @@ public class XDebugSessionImpl implements XDebugSession {
           if (myValueMarkers != null) {
             myValueMarkers.clear();
           }
-          if (XDebuggerSettingsManager.getInstanceImpl().getGeneralSettings().isUnmuteOnStop()) {
+          if (XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isUnmuteOnStop()) {
             mySessionData.setBreakpointsMuted(false);
           }
           myDebuggerManager.removeSession(XDebugSessionImpl.this);

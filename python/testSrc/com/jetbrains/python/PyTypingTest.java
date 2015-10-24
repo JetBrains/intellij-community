@@ -111,7 +111,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testBuiltinListWithParameter() {
-    doTest("list[int]",
+    doTest("List[int]",
            "from typing import List\n" +
            "\n" +
            "def f(expr: List[int]):\n" +
@@ -119,7 +119,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testBuiltinDictWithParameters() {
-    doTest("dict[str, int]",
+    doTest("Dict[str, int]",
            "from typing import Dict\n" +
            "\n" +
            "def f(expr: Dict[str, int]):\n" +
@@ -363,6 +363,60 @@ public class PyTypingTest extends PyTestCase {
            "    pass\n" +
            "\n" +
            "expr = foo()\n");
+  }
+
+  // PY-16303
+  public void testUnionInDocstring() {
+    doTest("Optional[int]",
+           "from typing import Union\n" +
+           "\n" +
+           "def foo(expr):\n" +
+           "    '''\n" +
+           "    :type expr: Union[int, None]\n" +
+           "    '''\n" +
+           "    pass\n");
+  }
+
+  // PY-16303
+  public void testAssignedTypeInDocstring() {
+    doTest("List[int]",
+           "from typing import List\n" +
+           "\n" +
+           "IntList = List[int]\n" +
+           "\n" +
+           "def foo(expr):\n" +
+           "    '''\n" +
+           "    :type expr: IntList\n" +
+           "    '''\n" +
+           "    pass\n");
+  }
+
+  // PY-16303
+  public void testParameterAssignedTypeInDocstring() {
+    doTest("Union[int, List[int]]",
+           "from typing import List, Union\n" +
+           "\n" +
+           "IntList = List[int]\n" +
+           "\n" +
+           "def foo(expr):\n" +
+           "    '''\n" +
+           "    :type expr: Union[int, IntList]\n" +
+           "    '''\n" +
+           "    pass\n");
+  }
+
+  // PY-16303
+  public void testTypeVarInDocstring() {
+    doTest("TypeVar('TV')",
+           "from typing import TypeVar\n" +
+           "\n" +
+           "TV = TypeVar('TV')\n" +
+           "\n" +
+           "def foo(expr):\n" +
+           "    '''\n" +
+           "    :type expr: TV\n" +
+           "    '''\n" +
+           "    pass\n");
   }
 
   private void doTestNoInjectedText(@NotNull String text) {

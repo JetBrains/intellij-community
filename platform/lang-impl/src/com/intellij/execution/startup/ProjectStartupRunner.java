@@ -91,7 +91,8 @@ public class ProjectStartupRunner implements StartupActivity {
         public void run() {
           if (! canBeRun(configuration)) {
             ProjectStartupTaskManager.NOTIFICATION_GROUP
-              .createNotification(ProjectStartupTaskManager.PREFIX + " Run Configuration '" + configuration.getName() + "' can not be started with Run executor.", MessageType.ERROR)
+              .createNotification(ProjectStartupTaskManager.PREFIX + " Run Configuration '" + configuration.getName() +
+                                  "' can not be started with 'Run' action.", MessageType.ERROR)
               .notify(project);
             return;
           }

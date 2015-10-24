@@ -18,6 +18,7 @@ package com.jetbrains.python.run;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.KillableColoredProcessHandler;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
@@ -26,8 +27,14 @@ import java.nio.charset.Charset;
  * @author traff
  */
 public class PythonProcessHandler extends KillableColoredProcessHandler {
-  protected PythonProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    super(commandLine);
+  public static final boolean SOFT_KILL_ON_WIN = Registry.get("kill.windows.processes.softly").asBoolean();
+
+  public PythonProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+    this(commandLine, SOFT_KILL_ON_WIN);
+  }
+
+  public PythonProcessHandler(@NotNull GeneralCommandLine commandLine, boolean softKillOnWin) throws ExecutionException {
+    super(commandLine, softKillOnWin);
   }
 
   public PythonProcessHandler(Process process, String commandLine, @NotNull Charset charset) {
@@ -37,11 +44,5 @@ public class PythonProcessHandler extends KillableColoredProcessHandler {
   @Override
   protected boolean shouldDestroyProcessRecursively() {
     return true;
-  }
-
-  public static PythonProcessHandler createProcessHandler(@NotNull GeneralCommandLine commandLine)
-    throws ExecutionException {
-
-    return new PythonProcessHandler(commandLine);
   }
 }

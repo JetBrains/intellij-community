@@ -226,9 +226,6 @@ class DependencyResolverImpl implements DependencyResolver {
     runtimeClasspathFiles -= sourceSet.output.files
     compileClasspathFiles -= sourceSet.output.files
 
-    mapFileDependencies(runtimeClasspathFiles, runtimeScope, result)
-    mapFileDependencies(compileClasspathFiles, compileScope, result)
-
     Multimap<String, File> resolvedDependenciesMap = ArrayListMultimap.create()
     Project rootProject = myProject.rootProject
 
@@ -292,6 +289,28 @@ class DependencyResolverImpl implements DependencyResolver {
     runtimeClasspathFiles.removeAll(resolvedDependenciesMap.get(runtimeScope))
     runtimeClasspathFiles.removeAll(resolvedDependenciesMap.get(compileScope))
     runtimeClasspathFiles.removeAll(resolvedDependenciesMap.get(providedScope))
+
+    Collection<ExternalDependency> fileDependencies = new ArrayList<>()
+    mapFileDependencies(runtimeClasspathFiles, runtimeScope, fileDependencies)
+    mapFileDependencies(compileClasspathFiles, compileScope, fileDependencies)
+
+    fileDependencies.each {
+      def dependency = it
+      def scope = dependency.scope
+      order = -1;
+      if (dependency instanceof ExternalLibraryDependency) {
+        def classpathOrderMap = scope == compileScope ? compileClasspathOrder :
+                                scope == runtimeScope ? runtimeClasspathOrder : null
+        if (classpathOrderMap) {
+          def fileOrder = classpathOrderMap.get(dependency.file)
+          order = fileOrder != null ? fileOrder : -1
+        }
+      }
+      if (dependency instanceof AbstractExternalDependency) {
+        dependency.classpathOrder = order
+      }
+    }
+    result.addAll(fileDependencies)
 
     if (!compileClasspathFiles.isEmpty()) {
       final compileClasspathFilesDependency = new DefaultFileCollectionDependency(compileClasspathFiles)
@@ -388,15 +407,27 @@ class DependencyResolverImpl implements DependencyResolver {
   @Nullable
   ExternalLibraryDependency resolveLibraryByPath(File file, String scope) {
     File modules2Dir = new File(myProject.gradle.gradleUserHomeDir, "caches/modules-2/files-2.1");
-    def modules2Path = modules2Dir.canonicalPath
-    return resolveLibraryByPath(file, modules2Path, scope)
+    return resolveLibraryByPath(file, modules2Dir, scope)
   }
 
   @Nullable
-  static ExternalLibraryDependency resolveLibraryByPath(File file, String modules2Path, String scope) {
+  static ExternalLibraryDependency resolveLibraryByPath(File file, File modules2Dir, String scope) {
     File sourcesFile = null;
-    if (file.canonicalPath.startsWith(modules2Path)) {
-      def parentFile = file.parentFile?.parentFile
+    def modules2Path = modules2Dir.canonicalPath
+    def filePath = file.canonicalPath
+    if (filePath.startsWith(modules2Path)) {
+      List<File> parents = new ArrayList<>()
+      File parent = file.parentFile;
+      while(parent && !parent.name.equals(modules2Dir.name)) {
+        parents.add(parent)
+        parent = parent.parentFile
+      }
+
+      def groupDir = parents.get(parents.size() - 1)
+      def artifactDir = parents.get(parents.size() - 2)
+      def versionDir = parents.get(parents.size() - 3)
+
+      def parentFile = versionDir
       if (parentFile != null) {
         def hashDirs = parentFile.listFiles()
         if (hashDirs != null) {
@@ -414,9 +445,6 @@ class DependencyResolverImpl implements DependencyResolver {
             }
           }
 
-          def versionDir = parentFile
-          def artifactDir = versionDir.parentFile
-          def groupDir = artifactDir.parentFile
           def packaging = resolvePackagingType(file);
           def classifier = resolveClassifier(artifactDir.name, versionDir.name, file);
           return new DefaultExternalLibraryDependency(
@@ -438,10 +466,9 @@ class DependencyResolverImpl implements DependencyResolver {
 
   def mapFileDependencies(Set<File> fileDependencies, String scope, Collection<ExternalDependency> dependencies) {
     File modules2Dir = new File(myProject.gradle.gradleUserHomeDir, "caches/modules-2/files-2.1");
-    def modules2Path = modules2Dir.canonicalPath
     List toRemove = new ArrayList()
     for (File file : fileDependencies) {
-      def libraryDependency = resolveLibraryByPath(file, modules2Path, scope)
+      def libraryDependency = resolveLibraryByPath(file, modules2Dir, scope)
       if (libraryDependency) {
         dependencies.add(libraryDependency)
         toRemove.add(file)

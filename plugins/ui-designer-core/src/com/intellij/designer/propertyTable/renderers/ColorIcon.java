@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.propertyTable.renderers;
 
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ui.EmptyIcon;
 
@@ -67,7 +68,7 @@ public final class ColorIcon extends EmptyIcon {
       Graphics2D g2d = (Graphics2D)g;
       Object hint = g2d.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g.setColor(Color.red);
+      g.setColor(JBColor.red);
       g.drawLine(x, y + myColorSize, x + myColorSize, y);
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, hint);
     }

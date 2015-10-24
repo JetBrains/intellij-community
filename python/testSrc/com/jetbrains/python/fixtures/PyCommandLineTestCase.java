@@ -41,13 +41,14 @@ public abstract class PyCommandLineTestCase extends PyTestCase {
   protected static int verifyPyDevDParameters(List<String> params) {
     params = Lists.newArrayList(params);
     int debugParam = params.remove("--DEBUG") ? 1 : 0;
+    int qtDebugParam = params.remove("--qt-support") ? 1 : 0;
     assertEquals(PythonHelper.DEBUGGER.asParamString(), params.get(0));
     assertEquals("--multiproc", params.get(1));
     assertEquals("--client", params.get(2));
     assertEquals("--port", params.get(4));
     assertEquals("" + PORT, params.get(5));
     assertEquals("--file", params.get(6));
-    return 7 + debugParam;
+    return 7 + debugParam + qtDebugParam;
   }
 
   protected <T extends AbstractPythonRunConfiguration> T createConfiguration(final ConfigurationType configurationType, Class<T> cls) {

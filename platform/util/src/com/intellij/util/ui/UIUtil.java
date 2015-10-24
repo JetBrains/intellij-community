@@ -435,7 +435,7 @@ public class UIUtil {
               return ourRetina.get();
             }
           }
-          else if (SystemInfo.isJavaVersionAtLeast("1.7.0_40") && SystemInfo.isOracleJvm) {
+          else if (SystemInfo.isJavaVersionAtLeast("1.7.0_40") /*&& !SystemInfo.isOracleJvm*/) {
             try {
               GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
               final GraphicsDevice device = env.getDefaultScreenDevice();
@@ -1647,17 +1647,8 @@ public class UIUtil {
       } else {
         g.setColor(isUnderDarcula() ? Gray._255.withAlpha(30) : Gray.xFF.withAlpha(100));
       }
-      if (isRetina() && SystemInfo.isMac && isUnderIntelliJLaF()) {
-        Graphics2D g2 = (Graphics2D)g.create(0, 0, width, height);
-        g2.scale(0.5, 0.5);
 
-        g2.drawLine(2*x, 0, 2 * width, 0);
-        g2.scale(1, 1);
-        g2.dispose();
-      } else {
-        g.drawLine(x, drawTopLine ? 1 : 0, width, drawTopLine ? 1 : 0);
-      }
-
+      g.drawLine(x, drawTopLine ? 1 : 0, width, drawTopLine ? 1 : 0);
     } finally {
       config.restore();
     }

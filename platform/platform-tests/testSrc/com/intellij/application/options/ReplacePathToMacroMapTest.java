@@ -78,6 +78,18 @@ public class ReplacePathToMacroMapTest {
     assertEquals("/tmp/foobar", substitute("/tmp/foobar"));
   }
 
+  @Test
+  public void testSubstitute_ProperSubstitutionPriorityApplied() throws Exception {
+    myMap.put("/root/project/module", "$MODULE_DIR$");
+    myMap.put("/root/project", "../$MODULE_DIR$");
+    myMap.put("/root", "$APPLICATION_HOME_DIR$");
+
+    assertEquals("$MODULE_DIR$", substitute("/root/project/module"));
+    assertEquals("../$MODULE_DIR$", substitute("/root/project"));
+    assertEquals("$APPLICATION_HOME_DIR$/appsubdir", substitute("/root/appsubdir"));
+    assertEquals("$APPLICATION_HOME_DIR$", substitute("/root"));
+  }
+
   private String substitute(final String s) {
     return myMap.substitute(s, true);
   }

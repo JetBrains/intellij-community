@@ -70,6 +70,10 @@ public class GenerateXmlTagTest extends LightPlatformCodeInsightFixtureTestCase 
     doTest("initParam.xml", "context-param");
   }
 
+  public void testInTagName() {
+    doTest("try_to_generate_in_tag_name.xml", "context-param");
+  }
+
   private void doTest(String file, String tagName) {
     GenerateXmlTagAction.TEST_THREAD_LOCAL.set(tagName);
     CodeInsightTestUtil.doActionTest(new GenerateXmlTagAction(), file, myFixture);

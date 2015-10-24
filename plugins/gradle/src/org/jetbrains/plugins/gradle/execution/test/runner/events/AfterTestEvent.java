@@ -45,7 +45,7 @@ public class AfterTestEvent extends AbstractTestEvent {
     final String exceptionMsg = eventXml.queryXml("/ijLog/event/test/result/errorMsg");
     final String stackTrace = eventXml.queryXml("/ijLog/event/test/result/stackTrace");
 
-    final SMTestProxy testProxy = getConsoleManager().getTestsMap().get(testId);
+    final SMTestProxy testProxy = findTestProxy(testId);
     if (testProxy == null) return;
 
     try {

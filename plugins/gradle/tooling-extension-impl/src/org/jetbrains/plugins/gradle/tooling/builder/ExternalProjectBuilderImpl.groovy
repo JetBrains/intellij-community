@@ -147,12 +147,16 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     boolean inheritOutputDirs = ideaPluginModule?.inheritOutputDirs ?: false
     def ideaOutDir = ideaPluginModule?.outputDir
     def ideaTestOutDir = ideaPluginModule?.testOutputDir
-    def generatedSourceDirs = ideaPluginModule.hasProperty("generatedSourceDirs") ? ideaPluginModule?.generatedSourceDirs: null;
+    def generatedSourceDirs = ideaPluginModule?.hasProperty("generatedSourceDirs") ? ideaPluginModule?.generatedSourceDirs: null;
+    def ideaSourceDirs = ideaPluginModule.sourceDirs;
+    def ideaTestSourceDirs = ideaPluginModule.testSourceDirs;
 
     def result = [:] as Map<String, ExternalSourceSet>
+    //noinspection GrUnresolvedAccess
     if (!project.hasProperty("sourceSets") || !(project.sourceSets instanceof SourceSetContainer)) {
       return result
     }
+    //noinspection GrUnresolvedAccess
     def sourceSets = project.sourceSets as SourceSetContainer
 
     def (resourcesIncludes, resourcesExcludes, filterReaders) = getFilters(project, 'processResources')
@@ -177,6 +181,12 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       javaDirectorySet.inheritedCompilerOutput = inheritOutputDirs
 //      javaDirectorySet.excludes = javaExcludes + sourceSet.java.excludes;
 //      javaDirectorySet.includes = javaIncludes + sourceSet.java.includes;
+
+      if (SourceSet.MAIN_SOURCE_SET_NAME.equals(sourceSet.name)) {
+        javaDirectorySet.srcDirs.addAll(ideaSourceDirs)
+      } else if(SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.name)){
+        javaDirectorySet.srcDirs.addAll(ideaTestSourceDirs)
+      }
 
       ExternalSourceDirectorySet generatedDirectorySet = null
       if(generatedSourceDirs && !generatedSourceDirs.isEmpty()) {

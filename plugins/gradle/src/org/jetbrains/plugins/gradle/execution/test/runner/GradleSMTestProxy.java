@@ -33,6 +33,7 @@ public class GradleSMTestProxy extends SMTestProxy {
 
   @Nullable private final String myClassName;
   @Nullable private String myStacktrace;
+  @Nullable private String myParentId;
 
   public GradleSMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl, @Nullable String className) {
     super(testName, isSuite, locationUrl);
@@ -76,6 +77,15 @@ public class GradleSMTestProxy extends SMTestProxy {
     }
 
     return super.getLocation(project, searchScope);
+  }
+
+  @Nullable
+  public String getParentId() {
+    return myParentId;
+  }
+
+  public void setParentId(@Nullable String parentId) {
+    myParentId = parentId;
   }
 
   private void setStacktraceIfNotSet(@Nullable String stacktrace) {

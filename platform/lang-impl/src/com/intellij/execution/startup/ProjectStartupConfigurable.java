@@ -61,6 +61,8 @@ import javax.swing.*;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -122,6 +124,14 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
         }
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyEvent.VK_SPACE), myTable);
+    myTable.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (e.getClickCount() >= 2) {
+          editRunConfiguration();
+        }
+      }
+    });
 
     installRenderers();
     myDecorator = ToolbarDecorator.createDecorator(myTable)
@@ -134,20 +144,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
       .setEditAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          final int row = myTable.getSelectedRow();
-          if (row < 0) return;
-          final RunnerAndConfigurationSettings selected = myModel.getAllConfigurations().get(row);
-
-          final RunManager runManager = RunManager.getInstance(myProject);
-          final RunnerAndConfigurationSettings was = runManager.getSelectedConfiguration();
-          try {
-            runManager.setSelectedConfiguration(selected);
-            new EditConfigurationsDialog(myProject).showAndGet();
-          } finally {
-            runManager.setSelectedConfiguration(was);
-          }
-          myModel.fireTableDataChanged();
-          refreshDataUpdateSelection(selected);
+          editRunConfiguration();
         }
       })
       .setEditActionUpdater(new AnActionButtonUpdater() {
@@ -172,6 +169,23 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
     main.add(tasksPanel, BorderLayout.CENTER);
 
     return main;
+  }
+
+  private void editRunConfiguration() {
+    final int row = myTable.getSelectedRow();
+    if (row < 0) return;
+    final RunnerAndConfigurationSettings selected = myModel.getAllConfigurations().get(row);
+
+    final RunManager runManager = RunManager.getInstance(myProject);
+    final RunnerAndConfigurationSettings was = runManager.getSelectedConfiguration();
+    try {
+      runManager.setSelectedConfiguration(selected);
+      new EditConfigurationsDialog(myProject).showAndGet();
+    } finally {
+      runManager.setSelectedConfiguration(was);
+    }
+    myModel.fireTableDataChanged();
+    refreshDataUpdateSelection(selected);
   }
 
   private void refreshDataUpdateSelection(RunnerAndConfigurationSettings settings) {

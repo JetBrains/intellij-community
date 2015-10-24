@@ -50,7 +50,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointAdapter;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
@@ -259,7 +259,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
         });
       }
 
-      if (!myProject.isDisposed() && !ApplicationManager.getApplication().isUnitTestMode() && XDebuggerSettingsManager.getInstanceImpl().getGeneralSettings().isHideDebuggerOnProcessTermination()) {
+      if (!myProject.isDisposed() && !ApplicationManager.getApplication().isUnitTestMode() && XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isHideDebuggerOnProcessTermination()) {
         ExecutionManager.getInstance(myProject).getContentManager().hideRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), descriptor);
       }
     }

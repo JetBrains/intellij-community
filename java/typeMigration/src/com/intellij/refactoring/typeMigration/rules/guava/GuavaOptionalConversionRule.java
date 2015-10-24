@@ -88,6 +88,13 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
     return GuavaFluentIterableConversionRule.buildCompoundDescriptor((PsiMethodCallExpression) context, to, labeler);
   }
 
+  @Nullable
+  @Override
+  protected TypeConversionDescriptorBase findConversionForVariableReference(@NotNull PsiReferenceExpression referenceExpression,
+                                                                            @NotNull PsiVariable psiVariable) {
+    return new TypeConversionDescriptor("$o$", "$o$::get");
+  }
+
   private PsiClass getParameterClass(PsiMethod method) {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length != 1) {

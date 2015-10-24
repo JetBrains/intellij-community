@@ -65,7 +65,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
@@ -292,7 +292,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @Override
   public <T extends XDebuggerSettings<?>> T getDebuggerSettings(Class<T> aClass) {
-    return XDebuggerSettingsManager.getInstanceImpl().getSettings(aClass);
+    return XDebuggerSettingManagerImpl.getInstanceImpl().getSettings(aClass);
   }
 
   @Override

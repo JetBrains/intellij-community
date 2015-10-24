@@ -88,6 +88,17 @@ public abstract class XmlFormattingPolicy {
 
   public abstract boolean insertLineBreakBeforeTag(XmlTag xmlTag);
 
+  /**
+   * Tells how many additional blank lines must be added if there is an automatic line break before 
+   * tag ({@link #insertLineBreakBeforeTag(XmlTag)} returns <code>true</code>). Returns 0 by default (i.e. only a line break
+   * will be added).
+   * @param xmlTag The tag to check.
+   * @return The number of blank lines to insert.
+   */
+  public int getBlankLinesBeforeTag(XmlTag xmlTag) {
+    return 0;
+  }
+
   public abstract boolean insertLineBreakBeforeFirstAttribute(XmlAttribute attribute);
 
   public abstract boolean insertLineBreakAfterLastAttribute(XmlAttribute attribute);

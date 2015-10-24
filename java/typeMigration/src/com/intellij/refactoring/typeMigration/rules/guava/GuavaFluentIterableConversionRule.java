@@ -17,14 +17,19 @@ package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.codeInspection.java18StreamApi.PseudoLambdaReplaceTemplate;
 import com.intellij.codeInspection.java18StreamApi.StreamApiConstants;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,13 +45,15 @@ import java.util.*;
  * @author Dmitry Batkovich
  */
 public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRule {
+  private static final Logger LOG = Logger.getInstance(GuavaFluentIterableConversionRule.class);
   private static final Map<String, TypeConversionDescriptorFactory> DESCRIPTORS_MAP =
     new HashMap<String, TypeConversionDescriptorFactory>();
 
   public static final Set<String> CHAIN_HEAD_METHODS = ContainerUtil.newHashSet("from", "of");
   public static final String FLUENT_ITERABLE = "com.google.common.collect.FluentIterable";
+  public static final String STREAM_COLLECT_TO_LIST = "$it$.collect(java.util.stream.Collectors.toList())";
 
-  private static class TypeConversionDescriptorFactory {
+  static class TypeConversionDescriptorFactory {
     private final String myStringToReplace;
     private final String myReplaceByString;
     private final boolean myWithLambdaParameter;
@@ -86,24 +93,21 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
   static {
     DESCRIPTORS_MAP.put("of", new TypeConversionDescriptorFactory("FluentIterable.of($arr$)", "java.util.Arrays.stream($arr$)", false, true, true));
 
-    DESCRIPTORS_MAP.put("contains",
-                        new TypeConversionDescriptorFactory("$it$.contains($o$)", "$it$.anyMatch(e -> e != null && e.equals($o$))", false));
     DESCRIPTORS_MAP.put("isEmpty", new TypeConversionDescriptorFactory("$q$.isEmpty()", "$q$.findAny().isPresent()", false));
     DESCRIPTORS_MAP.put("skip", new TypeConversionDescriptorFactory("$q$.skip($p$)", "$q$.skip($p$)", false, true, true));
     DESCRIPTORS_MAP.put("limit", new TypeConversionDescriptorFactory("$q$.limit($p$)", "$q$.limit($p$)", false, true, true));
-    DESCRIPTORS_MAP.put("first", new TypeConversionDescriptorFactory("$q$.first()", "$q$.findFirst()", false));
+    DESCRIPTORS_MAP.put("first", new TypeConversionDescriptorFactory("$q$.first()", "$q$.findFirst()", false, true, false));
     DESCRIPTORS_MAP.put("transform", new TypeConversionDescriptorFactory("$q$.transform($params$)", "$q$.map($params$)", true, true, true));
 
     DESCRIPTORS_MAP.put("allMatch", new TypeConversionDescriptorFactory("$it$.allMatch($c$)", "$it$." + StreamApiConstants.ALL_MATCH + "($c$)", true));
     DESCRIPTORS_MAP.put("anyMatch", new TypeConversionDescriptorFactory("$it$.anyMatch($c$)", "$it$." + StreamApiConstants.ANY_MATCH + "($c$)", true));
 
-    DESCRIPTORS_MAP.put("first", new TypeConversionDescriptorFactory("$it$.first()", "$it$." + StreamApiConstants.FIND_FIRST + "()", false));
     DESCRIPTORS_MAP.put("firstMatch", new TypeConversionDescriptorFactory("$it$.firstMatch($p$)", "$it$.filter($p$).findFirst()", true, true, false));
     DESCRIPTORS_MAP.put("size", new TypeConversionDescriptorFactory("$it$.size()", "(int) $it$.count()", false));
 
     DESCRIPTORS_MAP.put("toMap", new TypeConversionDescriptorFactory("$it$.toMap($f$)",
                                                               "$it$.collect(java.util.stream.Collectors.toMap(java.util.function.Function.identity(), $f$))", true));
-    DESCRIPTORS_MAP.put("toList", new TypeConversionDescriptorFactory("$it$.toList()", "$it$.collect(java.util.stream.Collectors.toList())", false));
+    DESCRIPTORS_MAP.put("toList", new TypeConversionDescriptorFactory("$it$.toList()", STREAM_COLLECT_TO_LIST, false));
     DESCRIPTORS_MAP.put("toSet", new TypeConversionDescriptorFactory("$it$.toSet()", "$it$.collect(java.util.stream.Collectors.toSet())", false));
     DESCRIPTORS_MAP.put("toSortedList", new TypeConversionDescriptorFactory("$it$.toSortedList($c$)", "$it$.sorted($c$).collect(java.util.stream.Collectors.toList())", false));
     DESCRIPTORS_MAP.put("toSortedSet", new TypeConversionDescriptorFactory("$it$.toSortedSet($c$)", "$it$.sorted($c$).collect(java.util.stream.Collectors.toSet())", false));
@@ -174,6 +178,29 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
               setReplaceByString("$it$.findFirst().get()");
             }
           }
+          return super.replace(expression);
+        }
+      };
+      needSpecifyType = false;
+    }
+    else if (methodName.equals("contains")) {
+      descriptorBase = new TypeConversionDescriptor("$it$.contains($o$)", null) {
+        @Override
+        public PsiExpression replace(PsiExpression expression) {
+          final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+          final PsiExpression qualifier = methodCallExpression.getMethodExpression().getQualifierExpression();
+          LOG.assertTrue(qualifier != null);
+          final PsiClassType qualifierType = (PsiClassType)qualifier.getType();
+          LOG.assertTrue(qualifierType != null);
+          final PsiType[] parameters = qualifierType.getParameters();
+
+          final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
+          final SuggestedNameInfo suggestedNameInfo = codeStyleManager
+            .suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, parameters.length == 1 ? parameters[0] : null, false);
+          final String suggestedName = codeStyleManager.suggestUniqueVariableName(suggestedNameInfo, expression, false).names[0];
+
+          setReplaceByString("$it$.anyMatch(" + suggestedName + " -> java.util.Objects.equals(" + suggestedName + ", $o$))");
+
           return super.replace(expression);
         }
       };

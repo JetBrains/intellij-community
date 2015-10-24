@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -149,7 +150,43 @@ public class ConfigurableExtensionPointUtil {
         LOG.warn("ignore group: " + groupId);
       }
     }
+    if (root != null && root.myList != null && Registry.is("ide.settings.replace.group.with.single.configurable")) {
+      replaceGroupWithSingleConfigurable(root.myList);
+    }
     return root;
+  }
+
+  private static void replaceGroupWithSingleConfigurable(List<Configurable> list) {
+    for (int i = 0; i < list.size(); i++) {
+      Configurable configurable = list.get(i);
+      if (configurable instanceof SortedConfigurableGroup) {
+        SortedConfigurableGroup group = (SortedConfigurableGroup)configurable;
+        configurable = getConfigurableToReplace(group.myList, group.getWeight());
+        if (configurable != null) {
+          list.set(i, configurable);
+        }
+      }
+    }
+  }
+
+  private static Configurable getConfigurableToReplace(List<Configurable> list, int weight) {
+    if (list != null) {
+      replaceGroupWithSingleConfigurable(list);
+      if (1 == list.size()) {
+        Configurable configurable = list.get(0);
+        if (configurable instanceof SortedConfigurableGroup) {
+          SortedConfigurableGroup group = (SortedConfigurableGroup)configurable;
+          group.myWeight = weight; // modify weight according to the replacing group
+          return group;
+        }
+        if (configurable instanceof ConfigurableWrapper) {
+          ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+          wrapper.myWeight = weight; // modify weight according to the replacing group
+          return wrapper;
+        }
+      }
+    }
+    return null;
   }
 
   /**

@@ -440,7 +440,9 @@ public abstract class PluginManagerMain implements Disposable {
             }
           }
           finally {
-            if (cleanup != null) cleanup.run();
+            if (cleanup != null) {
+              ApplicationManager.getApplication().invokeLater(cleanup);
+            }
           }
         }
       });

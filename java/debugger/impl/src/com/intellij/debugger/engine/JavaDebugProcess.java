@@ -449,4 +449,9 @@ public class JavaDebugProcess extends XDebugProcess {
   public XValueMarkerProvider<?, ?> createValueMarkerProvider() {
     return new JavaValueMarker();
   }
+
+  @Override
+  public boolean isLibraryFrameFilterSupported() {
+    return true;
+  }
 }

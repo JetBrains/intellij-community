@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -26,6 +27,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.util.concurrency.FutureResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.project.ProjectBundle;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -75,6 +77,7 @@ public abstract class MavenRemoteManager<Result, Argument, RemoteTask extends Ma
     return future;
   }
 
+  @Nullable
   protected Result getSynchronously(@NotNull RemoteTask task, @NotNull Argument argument) {
     try {
       return schedule(task, argument).get();
@@ -88,6 +91,7 @@ public abstract class MavenRemoteManager<Result, Argument, RemoteTask extends Ma
     return null;
   }
 
+  @Nullable
   protected Result getSynchronouslyWithModal(@NotNull final RemoteTask task, @NotNull final Argument argument, String title) {
     final Ref<Result> result = Ref.create();
     new Task.Modal(myProject, title, false) {
@@ -123,13 +127,17 @@ public abstract class MavenRemoteManager<Result, Argument, RemoteTask extends Ma
 
     new Task.Backgroundable(myProject, "Maven", false) {
       public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setText(item.getTask().getName(item.getArgument()));
+        String taskName = item.getTask().getName(item.getArgument());
+        indicator.setText(taskName);
         Result result = null;
         try {
           result = item.getTask().execute(item.getArgument(), indicator);
         }
+        catch (ProcessCanceledException exc) {
+          LOG.info(ProjectBundle.message("maven.remote.task.cancelled", taskName));
+        }
         catch (Exception exc) {
-          LOG.error("Exception during maven remote task", exc);
+          LOG.error(ProjectBundle.message("maven.remote.task.failed", taskName), exc);
         }
 
         MavenRemoteTask.ResultProcessor<Result> resultProcessor = item.getResultProcessor();
