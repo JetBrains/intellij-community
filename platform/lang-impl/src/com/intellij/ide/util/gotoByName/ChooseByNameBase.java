@@ -22,7 +22,6 @@ import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.actions.GotoFileAction;
 import com.intellij.ide.actions.WindowAction;
@@ -694,7 +693,7 @@ public abstract class ChooseByNameBase {
     myListScrollPane = ScrollPaneFactory.createScrollPane(myList);
     myListScrollPane.setViewportBorder(JBUI.Borders.empty());
 
-    myTextFieldPanel.setBorder(new EmptyBorder(2, 2, 2, 2));
+    myTextFieldPanel.setBorder(JBUI.Borders.empty(5));
 
     showTextFieldPanel();
 
