@@ -304,6 +304,11 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     assertSameElements(usedNames, "foo", "baz", "quux");
   }
 
+  // PY-13133
+  public void testCaretAtExpressionEnd() {
+    doTest();
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/refactoring/introduceVariable";
