@@ -7,6 +7,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,14 +39,24 @@ public class NoArgsConstructorProcessor extends AbstractConstructorClassProcesso
 
   @NotNull
   public Collection<PsiMethod> createNoArgsConstructor(@NotNull PsiClass psiClass, @NotNull String methodVisibility, @NotNull PsiAnnotation psiAnnotation) {
-    return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, Collections.<PsiField>emptyList());
+    final Collection<PsiField> params;
+    final boolean forceConstructorWithJavaDefaults = isForceConstructor(psiAnnotation);
+    if (forceConstructorWithJavaDefaults) {
+      params = getRequiredFields(psiClass);
+    } else {
+      params = Collections.<PsiField>emptyList();
+    }
+    return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, forceConstructorWithJavaDefaults, params);
+  }
+
+  protected boolean isForceConstructor(@NotNull PsiAnnotation psiAnnotation) {
+    return PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "force", false);
   }
 
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getAccessVisibility(psiAnnotation);
     if (null != methodVisibility) {
-      target.addAll(createConstructorMethod(psiClass, methodVisibility, psiAnnotation, Collections.<PsiField>emptyList()));
+      target.addAll(createNoArgsConstructor(psiClass, methodVisibility, psiAnnotation));
     }
   }
-
 }

@@ -16,4 +16,9 @@ public class ConstructorTest extends LombokParsingTestCase {
   public void testConflictingStaticConstructorNames() throws IOException {
     doTest();
   }
+
+  public void testNoArgsConstructorForced() throws IOException {
+    doTest();
+  }
+
 }

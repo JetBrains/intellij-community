@@ -202,7 +202,7 @@
 		<ul>
 		<li>0.9.7
 				<ol>
-				    <li>Fixed #: </li>
+				    <li>Fixed #135: Added support for @NoArgsConstructor(force = true)</li>
 				</ol>
 			</li>
 		<li>0.9.6

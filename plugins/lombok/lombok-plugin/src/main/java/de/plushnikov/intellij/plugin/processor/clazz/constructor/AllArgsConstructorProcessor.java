@@ -40,7 +40,7 @@ public class AllArgsConstructorProcessor extends AbstractConstructorClassProcess
   @NotNull
   public Collection<PsiMethod> createAllArgsConstructor(@NotNull PsiClass psiClass, @NotNull String methodVisibility, @NotNull PsiAnnotation psiAnnotation) {
     final Collection<PsiField> allNotInitializedNotStaticFields = getAllNotInitializedAndNotStaticFields(psiClass);
-    return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, allNotInitializedNotStaticFields);
+    return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, false, allNotInitializedNotStaticFields);
   }
 
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
@@ -63,7 +63,7 @@ public class AllArgsConstructorProcessor extends AbstractConstructorClassProcess
   }
 
   @NotNull
-  public Collection<PsiMethod> createAllArgsConstructor(PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String methodModifier, PsiAnnotation psiAnnotation, String staticName, Collection<PsiField> allNotInitializedNotStaticFields) {
-    return createConstructorMethod(psiClass, methodModifier, psiAnnotation, allNotInitializedNotStaticFields, staticName);
+  public Collection<PsiMethod> createAllArgsConstructor(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String methodModifier, @NotNull PsiAnnotation psiAnnotation, String staticName, Collection<PsiField> allNotInitializedNotStaticFields) {
+    return createConstructorMethod(psiClass, methodModifier, psiAnnotation, false, allNotInitializedNotStaticFields, staticName);
   }
 }
