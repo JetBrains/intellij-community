@@ -16,10 +16,12 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,10 +52,10 @@ class SlowerTypeConversions implements Runnable {
   private final JavaSmartCompletionParameters myParameters;
   private final Consumer<LookupElement> myResult;
 
-  public SlowerTypeConversions(Set<LookupElement> base,
-                               PsiElement element,
-                               PsiJavaCodeReferenceElement reference,
-                               JavaSmartCompletionParameters parameters, Consumer<LookupElement> result) {
+  SlowerTypeConversions(Set<LookupElement> base,
+                        PsiElement element,
+                        PsiJavaCodeReferenceElement reference,
+                        JavaSmartCompletionParameters parameters, Consumer<LookupElement> result) {
     myBase = base;
     myElement = element;
     myReference = reference;
@@ -63,14 +65,28 @@ class SlowerTypeConversions implements Runnable {
 
   @Override
   public void run() {
+    final Set<Pair<LookupElement, String>> processedChains = ContainerUtil.newHashSet();
     for (final LookupElement item : myBase) {
-      addSecondCompletionVariants(myElement, myReference, item, myParameters, myResult);
+      addSecondCompletionVariants(myElement, myReference, item, myParameters, new Consumer<LookupElement>() {
+        @Override
+        public void consume(LookupElement lookupElement) {
+          ContainerUtil.addIfNotNull(processedChains, chainInfo(lookupElement));
+          myResult.consume(lookupElement);
+        }
+      });
     }
     if (!psiElement().afterLeaf(".").accepts(myElement)) {
       BasicExpressionCompletionContributor.processDataflowExpressionTypes(myElement, null, TRUE_MATCHER, new Consumer<LookupElement>() {
         @Override
         public void consume(LookupElement baseItem) {
-          addSecondCompletionVariants(myElement, myReference, baseItem, myParameters, myResult);
+          addSecondCompletionVariants(myElement, myReference, baseItem, myParameters, new Consumer<LookupElement>() {
+            @Override
+            public void consume(LookupElement lookupElement) {
+              if (!processedChains.contains(chainInfo(lookupElement))) {
+                myResult.consume(lookupElement);
+              }
+            }
+          });
         }
       });
     }
@@ -121,4 +137,20 @@ class SlowerTypeConversions implements Runnable {
     }
     return null;
   }
+
+  @Nullable
+  private static Pair<LookupElement, String> chainInfo(LookupElement lookupElement) {
+    if (lookupElement instanceof JavaChainLookupElement) {
+      Object object = lookupElement.getObject();
+      if (object instanceof PsiMember) {
+        LookupElement qualifier = ((JavaChainLookupElement)lookupElement).getQualifier();
+        if (qualifier instanceof CastingLookupElementDecorator) {
+          qualifier = ((CastingLookupElementDecorator)qualifier).getDelegate();
+        }
+        return Pair.create(qualifier, lookupElement.getLookupString());
+      }
+    }
+    return null;
+  }
+
 }
