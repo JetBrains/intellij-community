@@ -230,6 +230,7 @@ public class BuilderHandler {
     return method;
   }
 
+  @NotNull
   public PsiMethod createToBuilderMethod(@NotNull PsiClass containingClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderPsiClass, @NotNull PsiAnnotation psiAnnotation) {
     LombokLightMethodBuilder method = createBuilderMethod(containingClass, psiMethod, builderPsiClass, psiAnnotation, TO_BUILDER_METHOD_NAME);
     method.withModifier(PsiModifier.PUBLIC);
