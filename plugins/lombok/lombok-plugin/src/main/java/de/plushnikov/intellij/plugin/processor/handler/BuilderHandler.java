@@ -70,6 +70,7 @@ public class BuilderHandler {
   private final static String BUILDER_CLASS_NAME = "Builder";
   private final static String BUILD_METHOD_NAME = "build";
   private final static String BUILDER_METHOD_NAME = "builder";
+  public static final String TO_BUILDER_METHOD_NAME = "toBuilder";
 
   @SuppressWarnings("deprecation")
   private static final Collection<String> INVALID_ON_BUILDERS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
@@ -224,12 +225,25 @@ public class BuilderHandler {
 
   @NotNull
   public PsiMethod createBuilderMethod(@NotNull PsiClass containingClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderPsiClass, @NotNull PsiAnnotation psiAnnotation) {
+    LombokLightMethodBuilder method = createBuilderMethod(containingClass, psiMethod, builderPsiClass, psiAnnotation, getBuilderMethodName(psiAnnotation));
+    method.withModifier(PsiModifier.PUBLIC, PsiModifier.STATIC);
+    return method;
+  }
+
+  public PsiMethod createToBuilderMethod(@NotNull PsiClass containingClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderPsiClass, @NotNull PsiAnnotation psiAnnotation) {
+    LombokLightMethodBuilder method = createBuilderMethod(containingClass, psiMethod, builderPsiClass, psiAnnotation, TO_BUILDER_METHOD_NAME);
+    method.withModifier(PsiModifier.PUBLIC);
+    return method;
+  }
+
+  @NotNull
+  private LombokLightMethodBuilder createBuilderMethod(@NotNull PsiClass containingClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderPsiClass, @NotNull PsiAnnotation psiAnnotation, String methodName) {
     final PsiType psiTypeWithGenerics = PsiClassUtil.getTypeWithGenerics(builderPsiClass);
-    final LombokLightMethodBuilder method = new LombokLightMethodBuilder(containingClass.getManager(), getBuilderMethodName(psiAnnotation))
+    final LombokLightMethodBuilder method = new LombokLightMethodBuilder(containingClass.getManager(), methodName)
         .withMethodReturnType(psiTypeWithGenerics)
         .withContainingClass(containingClass)
         .withNavigationElement(psiAnnotation)
-        .withModifier(PsiModifier.PUBLIC, PsiModifier.STATIC);
+        .withModifier(PsiModifier.PUBLIC);
 
     addTypeParameters(builderPsiClass, psiMethod, method);
 
