@@ -361,8 +361,11 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   private boolean smartIntroduce(final IntroduceOperation operation) {
     final Editor editor = operation.getEditor();
     final PsiFile file = operation.getFile();
-    int offset = editor.getCaretModel().getOffset();
+    final int offset = editor.getCaretModel().getOffset();
     PsiElement elementAtCaret = file.findElementAt(offset);
+    if ((elementAtCaret instanceof PsiWhiteSpace && offset == elementAtCaret.getTextOffset() || elementAtCaret == null) && offset > 0) {
+      elementAtCaret = file.findElementAt(offset - 1);
+    }
     if (!checkIntroduceContext(file, editor, elementAtCaret)) return true;
     final List<PyExpression> expressions = new ArrayList<PyExpression>();
     while (elementAtCaret != null) {
