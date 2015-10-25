@@ -24,7 +24,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
 
-    <lombok.version>1.16.4</lombok.version>
+    <lombok.version>1.16.6</lombok.version>
     <hrisey.version>0.3.1</hrisey.version>
   </properties>
 
