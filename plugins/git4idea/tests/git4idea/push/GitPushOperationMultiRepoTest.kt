@@ -41,34 +41,21 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
 
   @Throws(Exception::class)
   override fun setUp() {
-    try {
-      super.setUp()
-    }
-    catch (e: Exception) {
-      super.tearDown()
-      throw e
-    }
+    super.setUp()
 
-    try {
-      val mainRepo = setupRepositories(myProjectPath, "parent", "bro")
-      myRepository = mainRepo.first
-      myBro = mainRepo.third
+    val mainRepo = setupRepositories(myProjectPath, "parent", "bro")
+    myRepository = mainRepo.first
+    myBro = mainRepo.third
 
-      val community = File(myProjectPath, "community")
-      assertTrue(community.mkdir())
-      val enclosingRepo = setupRepositories(community.path,
-          "community_parent", "community_bro")
-      myCommunity = enclosingRepo.first
-      myBroCommunity = enclosingRepo.third
+    val community = File(myProjectPath, "community")
+    assertTrue(community.mkdir())
+    val enclosingRepo = setupRepositories(community.path,
+        "community_parent", "community_bro")
+    myCommunity = enclosingRepo.first
+    myBroCommunity = enclosingRepo.third
 
-      Executor.cd(myProjectPath)
-      refresh()
-    }
-    catch (e: Exception) {
-      tearDown()
-      throw e
-    }
-
+    Executor.cd(myProjectPath)
+    refresh()
   }
 
   private class FailingPushGit : GitImpl() {

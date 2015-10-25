@@ -51,28 +51,15 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
   @Throws(Exception::class)
   override fun setUp() {
-    try {
-      super.setUp()
-    }
-    catch (e: Exception) {
-      super.tearDown()
-      throw e
-    }
+    super.setUp()
 
-    try {
-      val trinity = setupRepositories(myProjectPath, "parent", "bro")
-      myParentRepo = trinity.second
-      myBroRepo = trinity.third
-      myRepository = trinity.first
+    val trinity = setupRepositories(myProjectPath, "parent", "bro")
+    myParentRepo = trinity.second
+    myBroRepo = trinity.third
+    myRepository = trinity.first
 
-      Executor.cd(myProjectPath)
-      refresh()
-    }
-    catch (e: Exception) {
-      tearDown()
-      throw e
-    }
-
+    Executor.cd(myProjectPath)
+    refresh()
   }
 
   fun test_successful_push() {
