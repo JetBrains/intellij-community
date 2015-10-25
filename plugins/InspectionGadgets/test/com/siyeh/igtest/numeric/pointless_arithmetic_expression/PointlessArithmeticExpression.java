@@ -67,6 +67,10 @@ public class PointlessArithmeticExpression
         return 1.1 * d;
     }
 
+    Object boom(){
+        return "" + 1;
+    }
+
     void doubleDoom(int i) {
 
         if (i > Integer.MAX_VALUE) {

@@ -22,7 +22,10 @@ import com.intellij.psi.PsiVariable
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyPointlessArithmeticInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
+
+import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_FILE_TYPE
 
 /**
  * @author Sergey Evdokimov
@@ -229,6 +232,25 @@ class FooSpec extends spock.lang.Specification {
 """)
 
     myFixture.checkHighlighting(true, false, true)
+  }
+
+  public void testPointlessArithmeticWarnings() {
+    myFixture.enableInspections GroovyPointlessArithmeticInspection
+
+    myFixture.configureByText GROOVY_FILE_TYPE, """
+      class Spec extends spock.lang.Specification {
+        def "GroovyPointlessArithmeticInspection"() {
+          given:  def a = Mock(A)
+          and:    <warning descr="1 * 1 can be replaced with '1'">1 * 1</warning>
+          and:    <warning descr="''.hashCode() + 0 can be replaced with '''.hashCode()'">''.hashCode() + 0</warning>
+
+          when:   a.b()
+          then:   1 * a.b()
+        }
+      }
+    """
+
+    myFixture.checkHighlighting()
   }
 
   public void testVariable_NotExistingInCompletion() {

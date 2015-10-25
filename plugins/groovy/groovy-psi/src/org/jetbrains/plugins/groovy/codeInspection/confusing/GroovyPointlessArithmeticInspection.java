@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -122,31 +121,27 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
 
   private static class PointlessArithmeticVisitor extends BaseInspectionVisitor {
 
-    private final TokenSet arithmeticTokens = TokenSet.create(GroovyTokenTypes.mPLUS, GroovyTokenTypes.mMINUS, GroovyTokenTypes.mSTAR,
-                                                              GroovyTokenTypes.mDIV);
-
     @Override
     public void visitBinaryExpression(@NotNull GrBinaryExpression expression) {
       super.visitBinaryExpression(expression);
-      final GrExpression rhs = expression.getRightOperand();
-      if (rhs == null) return;
 
-      final IElementType sign = expression.getOperationTokenType();
-      if (!arithmeticTokens.contains(sign)) return;
+      if (expression.getType() == null) return;
 
       final GrExpression lhs = expression.getLeftOperand();
+      final IElementType operator = expression.getOperationTokenType();
+      final GrExpression rhs = expression.getRightOperand();
 
       final boolean isPointless;
-      if (sign.equals(GroovyTokenTypes.mPLUS)) {
+      if (operator.equals(GroovyTokenTypes.mPLUS)) {
         isPointless = additionExpressionIsPointless(lhs, rhs);
       }
-      else if (sign.equals(GroovyTokenTypes.mMINUS)) {
+      else if (operator.equals(GroovyTokenTypes.mMINUS)) {
         isPointless = subtractionExpressionIsPointless(rhs);
       }
-      else if (sign.equals(GroovyTokenTypes.mSTAR)) {
+      else if (operator.equals(GroovyTokenTypes.mSTAR)) {
         isPointless = multiplyExpressionIsPointless(lhs, rhs);
       }
-      else if (sign.equals(GroovyTokenTypes.mDIV)) {
+      else if (operator.equals(GroovyTokenTypes.mDIV)) {
         isPointless = divideExpressionIsPointless(rhs);
       }
       else {

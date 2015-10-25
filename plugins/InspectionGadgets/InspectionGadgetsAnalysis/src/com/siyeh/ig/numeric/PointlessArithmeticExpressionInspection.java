@@ -28,6 +28,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -200,16 +201,12 @@ public class PointlessArithmeticExpressionInspection
       super.visitPolyadicExpression(expression);
       final PsiType expressionType = expression.getType();
       if (expressionType == null ||
-          PsiType.DOUBLE.equals(expressionType) ||
-          PsiType.FLOAT.equals(expressionType)) {
+          !ClassUtils.isIntegral(expressionType) ||
+          !arithmeticTokens.contains(expression.getOperationTokenType()) ||
+          PsiUtilCore.hasErrorElementChild(expression)) {
         return;
       }
-      if (!arithmeticTokens.contains(expression.getOperationTokenType())) {
-        return;
-      }
-      if (ExpressionUtils.hasStringType(expression) || PsiUtilCore.hasErrorElementChild(expression)) {
-        return;
-      }
+
       final PsiExpression[] operands = expression.getOperands();
       final IElementType tokenType = expression.getOperationTokenType();
       final boolean isPointless;
