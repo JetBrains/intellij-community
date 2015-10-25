@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -53,16 +54,30 @@ public class IdeaActionButtonLook extends ActionButtonLook {
     GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
     try {
       Color bg = background == null ? JBColor.background() : background;
-      if (UIUtil.isUnderAquaLookAndFeel()) {
+      if (UIUtil.isUnderAquaLookAndFeel() || (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF())) {
         if (state == ActionButtonComponent.PUSHED) {
-          ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, ALPHA_40, size.width, size.height, ALPHA_20));
-          ((Graphics2D)g).fill(getShape(size));
-          g.setColor(ALPHA_30);
-          ((Graphics2D)g).draw(getShape(size));
+          if (UIUtil.isUnderAquaLookAndFeel()) {
+            ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, ALPHA_40, size.width, size.height, ALPHA_20));
+            ((Graphics2D)g).fill(getShape(size));
+            g.setColor(ALPHA_30);
+            ((Graphics2D)g).draw(getShape(size));
+          } else {
+            g.setColor(ColorUtil.darker(bg, 1));
+            ((Graphics2D)g).fill(getShape(size));
+            g.setColor(Gray.xC0);
+            ((Graphics2D)g).draw(getShape(size));
+          }
         }
         else if (state == ActionButtonComponent.POPPED) {
-          ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, bg, 0, size.height, ColorUtil.darker(bg, 2)));
-          ((Graphics2D)g).fill(getShape(size));
+          if (UIUtil.isUnderAquaLookAndFeel()) {
+            ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, bg, 0, size.height, ColorUtil.darker(bg, 2)));
+            ((Graphics2D)g).fill(getShape(size));
+          } else {
+            ((Graphics2D)g).setPaint(ColorUtil.darker(bg, 1));
+            ((Graphics2D)g).fill(getShape(size));
+            g.setColor(Gray.xCC);
+            ((Graphics2D)g).draw(getShape(size));
+          }
         }
       }
       else {
@@ -91,6 +106,9 @@ public class IdeaActionButtonLook extends ActionButtonLook {
           g.setColor(JBColor.GRAY);
           ((Graphics2D)g).draw(getShape(size));
         }
+      }
+      else if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+        //do nothing
       }
       else {
         final double shift = UIUtil.isUnderDarcula() ? 1 / 0.49 : 0.49;
