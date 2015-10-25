@@ -28,17 +28,16 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
-import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils;
-import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils;
+import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 
-import java.util.HashSet;
-import java.util.Set;
+import static org.jetbrains.plugins.groovy.spock.SpockUtils.isInSpockWhereBlock;
 
 public class GroovyPointlessBooleanInspection extends BaseInspection {
 
@@ -80,7 +79,7 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
 
   @Nullable
   private static String calculateSimplifiedBinaryExpression(GrBinaryExpression expression) {
-    final IElementType sign = expression.getOperationTokenType();
+    final IElementType operator = expression.getOperationTokenType();
     final GrExpression lhs = expression.getLeftOperand();
 
     final GrExpression rhs = expression.getRightOperand();
@@ -89,21 +88,23 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
     }
     final String rhsText = rhs.getText();
     final String lhsText = lhs.getText();
-    assert sign != null;
-    if (sign.equals(GroovyTokenTypes.mLAND)) {
+    assert operator != null;
+    if (operator.equals(GroovyTokenTypes.mLAND)) {
       if (isTrue(lhs)) {
         return rhsText;
       } else {
         return lhsText;
       }
-    } else if (sign.equals(GroovyTokenTypes.mLOR)) {
+    }
+    else if (operator.equals(GroovyTokenTypes.mLOR)) {
       if (isFalse(lhs)) {
         return rhsText;
       } else {
         return lhsText;
       }
-    } else if (sign.equals(GroovyTokenTypes.mBXOR) ||
-        sign.equals(GroovyTokenTypes.mNOT_EQUAL)) {
+    }
+    else if (operator.equals(GroovyTokenTypes.mBXOR)
+             || operator.equals(GroovyTokenTypes.mNOT_EQUAL)) {
       if (isFalse(lhs)) {
         return rhsText;
       } else if (isFalse(rhs)) {
@@ -113,7 +114,8 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
       } else {
         return createStringForNegatedExpression(lhs);
       }
-    } else if (sign.equals(GroovyTokenTypes.mEQUAL)) {
+    }
+    else if (operator.equals(GroovyTokenTypes.mEQUAL)) {
       if (isTrue(lhs)) {
         return rhsText;
       } else if (isTrue(rhs)) {
@@ -199,42 +201,28 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
   private static class PointlessBooleanExpressionVisitor
       extends BaseInspectionVisitor {
 
-    private final Set<IElementType> booleanTokens =
-        new HashSet<IElementType>(5);
-
-    {
-      booleanTokens.add(GroovyTokenTypes.mLAND);
-      booleanTokens.add(GroovyTokenTypes.mLOR);
-      booleanTokens.add(GroovyTokenTypes.mBXOR);
-      booleanTokens.add(GroovyTokenTypes.mEQUAL);
-      booleanTokens.add(GroovyTokenTypes.mNOT_EQUAL);
-    }
-
     @Override
     public void visitBinaryExpression(@NotNull GrBinaryExpression expression) {
       super.visitBinaryExpression(expression);
-      final GrExpression rhs = expression.getRightOperand();
-      if (rhs == null) {
-        return;
-      }
-      final IElementType sign = expression.getOperationTokenType();
-      if (!booleanTokens.contains(sign)) {
-        return;
-      }
 
+      if (isInSpockWhereBlock(expression)) return;
 
       final GrExpression lhs = expression.getLeftOperand();
+      final IElementType operator = expression.getOperationTokenType();
+      final GrExpression rhs = expression.getRightOperand();
 
-      assert sign != null;
       final boolean isPointless;
-      if (sign.equals(GroovyTokenTypes.mEQUAL) ||
-          sign.equals(GroovyTokenTypes.mNOT_EQUAL)) {
+      if (operator.equals(GroovyTokenTypes.mEQUAL)
+          || operator.equals(GroovyTokenTypes.mNOT_EQUAL)) {
         isPointless = equalityExpressionIsPointless(lhs, rhs);
-      } else if (sign.equals(GroovyTokenTypes.mLAND)) {
+      }
+      else if (operator.equals(GroovyTokenTypes.mLAND)) {
         isPointless = andExpressionIsPointless(lhs, rhs);
-      } else if (sign.equals(GroovyTokenTypes.mLOR)) {
+      }
+      else if (operator.equals(GroovyTokenTypes.mLOR)) {
         isPointless = orExpressionIsPointless(lhs, rhs);
-      } else if (sign.equals(GroovyTokenTypes.mBXOR)) {
+      }
+      else if (operator.equals(GroovyTokenTypes.mBXOR)) {
         isPointless = xorExpressionIsPointless(lhs, rhs);
       } else {
         isPointless = false;

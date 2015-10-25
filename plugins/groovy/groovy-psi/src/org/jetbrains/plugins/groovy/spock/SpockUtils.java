@@ -15,10 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.spock;
 
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,10 +35,19 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import java.util.*;
+
+import static com.intellij.psi.util.InheritanceUtil.isInheritor;
+import static com.intellij.psi.util.PsiTreeUtil.getPrevSiblingOfType;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.isNumericType;
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getContextClass;
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isExpressionStatement;
 
 /**
  * @author Sergey Evdokimov
@@ -46,9 +57,9 @@ public class SpockUtils {
   public static final String SPEC_CLASS_NAME = "spock.lang.Specification";
 
   private static final LightCacheKey<Map<String, SpockVariableDescriptor>> KEY = LightCacheKey.create();
+  public static final String WHERE_LABEL_NAME = "where";
 
   private SpockUtils() {
-
   }
 
   public static Map<String, SpockVariableDescriptor> getVariableMap(@NotNull GrMethod method) {
@@ -93,7 +104,7 @@ public class SpockUtils {
         while (true) {
           GrStatement statement = l.getStatement();
 
-          if ("where".equals(l.getName())) {
+          if (isWhereBlockLabel(l)) {
             elementUnderLabel = statement;
             break main;
           }
@@ -261,5 +272,38 @@ public class SpockUtils {
     else {
       res.add(element);
     }
+  }
+
+  public static boolean isSpockTimesOperator(GrBinaryExpression call) {
+    if (!isInSpockClass(call))
+      return false;
+
+    if ((call.getOperationTokenType() == GroovyTokenTypes.mSTAR) && isExpressionStatement(call)) {
+      GrExpression operand = call.getLeftOperand();
+      if (operand instanceof GrLiteral && isNumericType(operand.getType()))
+        return true;
+    }
+
+    return false;
+  }
+
+  public static boolean isInSpockWhereBlock(GrExpression expression) {
+    if (!isInSpockClass(expression))
+      return false;
+
+    GrLabeledStatement label = getPrevSiblingOfType(expression, GrLabeledStatement.class);
+    if (label == null)
+      return false;
+
+    return isWhereBlockLabel(label);
+  }
+
+  private static boolean isInSpockClass(GrExpression expression) {
+    PsiClass contextClass = getContextClass(expression);
+    return isInheritor(contextClass, false, SPEC_CLASS_NAME);
+  }
+
+  private static boolean isWhereBlockLabel(GrLabeledStatement label) {
+    return WHERE_LABEL_NAME.equals(label.getName());
   }
 }

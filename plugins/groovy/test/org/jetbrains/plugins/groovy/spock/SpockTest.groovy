@@ -22,7 +22,10 @@ import com.intellij.psi.PsiVariable
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyPointlessBooleanInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
+
+import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_FILE_TYPE
 
 /**
  * @author Sergey Evdokimov
@@ -245,4 +248,21 @@ class FooSpec extends spock.lang.Specification {
     assert !elements.contains("_")
   }
 
+  public void testPointlessBooleanWarnings() {
+    myFixture.enableInspections GroovyPointlessBooleanInspection
+
+    myFixture.configureByText GROOVY_FILE_TYPE, '''
+      class Spec extends spock.lang.Specification {
+        def "GroovyPointlessBooleanInspection"() {
+          expect: <warning descr="false || true can be simplified to 'true'">false || true</warning>
+          where:  isA    || isB
+                  false  || true
+                  (a==b) || false
+                  true   || (1==0)
+        }
+      }
+    '''
+
+    myFixture.checkHighlighting()
+  }
 }

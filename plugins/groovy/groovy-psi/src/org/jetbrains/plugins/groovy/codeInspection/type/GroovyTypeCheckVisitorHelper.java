@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.codeInspection.type;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,7 +28,6 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.CallInfo;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.ParameterCastFix;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -45,7 +43,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
@@ -56,7 +53,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureU
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.spock.SpockUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -134,20 +130,6 @@ public class GroovyTypeCheckVisitorHelper {
     for (PsiElement child = e.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiErrorElement) return true;
     }
-    return false;
-  }
-
-  public static boolean isSpockTimesOperator(GrBinaryExpression call) {
-    if (call.getOperationTokenType() == GroovyTokenTypes.mSTAR && PsiUtil.isExpressionStatement(call)) {
-      GrExpression operand = call.getLeftOperand();
-      if (operand instanceof GrLiteral && TypesUtil.isNumericType(operand.getType())) {
-        PsiClass aClass = PsiUtil.getContextClass(call);
-        if (InheritanceUtil.isInheritor(aClass, false, SpockUtils.SPEC_CLASS_NAME)) {
-          return true;
-        }
-      }
-    }
-
     return false;
   }
 

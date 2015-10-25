@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -79,6 +78,7 @@ import java.util.Map;
 
 import static com.intellij.psi.util.PsiUtil.extractIterableTypeParameter;
 import static org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitorHelper.*;
+import static org.jetbrains.plugins.groovy.spock.SpockUtils.isSpockTimesOperator;
 
 public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
