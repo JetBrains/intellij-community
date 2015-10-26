@@ -42,7 +42,6 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +60,15 @@ public class AnalyzeStacktraceUtil {
   }
 
   public static void printStacktrace(@NotNull ConsoleView consoleView, @NotNull String unscrambledTrace) {
-    throw new IncorrectOperationException("didn't compile");
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    String text = unscrambledTrace + "\n";
+    String consoleText = ((ConsoleViewImpl)consoleView).getText();
+    if (!text.equals(consoleText)) {
+      consoleView.clear();
+      consoleView.print(text, ConsoleViewContentType.ERROR_OUTPUT);
+
+      consoleView.scrollTo(0);
+    }
   }
 
   @Nullable
