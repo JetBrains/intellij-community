@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.utils;
 
+import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -86,6 +87,15 @@ public class BoolUtils {
       return "true".equals(text) || "false".equals(text);
     }
     return false;
+  }
+
+  public static boolean isBoxedBoolean(GrExpression expression) {
+    return (expression.getType() != null) &&
+           expression.getType().equalsToText(PsiType.BOOLEAN.getBoxedTypeName());
+  }
+
+  public static boolean isBooleanExpression(GrExpression expression) {
+    return isBooleanLiteral(expression) || isBoxedBoolean(expression);
   }
 
   public static String getNegatedExpressionText(GrExpression condition) {

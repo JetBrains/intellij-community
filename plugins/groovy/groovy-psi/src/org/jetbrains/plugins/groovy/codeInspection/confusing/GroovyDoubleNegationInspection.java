@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.codeInspection.confusing;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -27,14 +26,16 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-public class GroovyDoubleNegationInspection extends BaseInspection {
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils.isBooleanExpression;
 
+public class GroovyDoubleNegationInspection extends BaseInspection {
   @Override
   @Nls
   @NotNull
@@ -57,7 +58,42 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
   @Override
   @Nullable
   protected GroovyFix buildFix(@NotNull PsiElement location) {
-    return new DoubleNegationFix();
+    return new GroovyFix() {
+      @Override
+      @NotNull
+      public String getName() {
+        return "Remove double negation";
+      }
+
+      @Override
+      protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+        final GrUnaryExpression expression = (GrUnaryExpression)descriptor.getPsiElement();
+        GrExpression operand = (GrExpression)PsiUtil.skipParentheses(expression.getOperand(), false);
+        if (operand instanceof GrUnaryExpression)
+          fixUnary(expression, (GrUnaryExpression)operand);
+        else if (operand instanceof GrBinaryExpression)
+          fixBinary(expression, (GrBinaryExpression)operand);
+      }
+
+      private void fixBinary(GrUnaryExpression expression, GrBinaryExpression operand) {
+        final GrExpression lhs = operand.getLeftOperand();
+
+        final StringBuilder builder = new StringBuilder(lhs.getText());
+        builder.append("==");
+        final GrExpression rhs = operand.getRightOperand();
+        if (rhs != null) {
+          builder.append(rhs.getText());
+        }
+        replaceExpression(expression, builder.toString());
+      }
+
+      private void fixUnary(GrUnaryExpression expression, GrUnaryExpression prefixExpression) {
+        final GrExpression innerOperand = prefixExpression.getOperand();
+        if (innerOperand == null) return;
+
+        replaceExpression(expression, innerOperand.getText());
+      }
+    };
   }
 
   @Override
@@ -65,90 +101,46 @@ public class GroovyDoubleNegationInspection extends BaseInspection {
     return true;
   }
 
-  private static class DoubleNegationFix extends GroovyFix {
-
-    @Override
-    @NotNull
-    public String getName() {
-      return "Remove double negation";
-    }
-
-    @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-        throws IncorrectOperationException {
-      final GrUnaryExpression expression =
-          (GrUnaryExpression) descriptor.getPsiElement();
-      GrExpression operand = (GrExpression)PsiUtil.skipParentheses(expression.getOperand(), false);
-      if (operand instanceof GrUnaryExpression) {
-        final GrUnaryExpression prefixExpression =
-            (GrUnaryExpression) operand;
-        final GrExpression innerOperand = prefixExpression.getOperand();
-        if (innerOperand == null) {
-          return;
-        }
-        replaceExpression(expression, innerOperand.getText());
-      } else if (operand instanceof GrBinaryExpression) {
-        final GrBinaryExpression binaryExpression =
-            (GrBinaryExpression) operand;
-        final GrExpression lhs = binaryExpression.getLeftOperand();
-        final String lhsText = lhs.getText();
-        final StringBuilder builder =
-            new StringBuilder(lhsText);
-        builder.append("==");
-        final GrExpression rhs = binaryExpression.getRightOperand();
-        if (rhs != null) {
-          final String rhsText = rhs.getText();
-          builder.append(rhsText);
-        }
-        replaceExpression(expression, builder.toString());
-      }
-    }
-  }
-
   @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new DoubleNegationVisitor();
+    return new BaseInspectionVisitor() {
+      @Override
+      public void visitUnaryExpression(GrUnaryExpression expression) {
+        super.visitUnaryExpression(expression);
+        if (!GroovyTokenTypes.mLNOT.equals(expression.getOperationTokenType()) ||
+            !(isBooleanExpression(expression.getOperand()) || isPartOfConditionalStatement(expression))) return;
+
+        checkParent(expression);
+      }
+
+      @Override
+      public void visitBinaryExpression(GrBinaryExpression expression) {
+        super.visitBinaryExpression(expression);
+        if (!GroovyTokenTypes.mNOT_EQUAL.equals(expression.getOperationTokenType())) return;
+
+        checkParent(expression);
+      }
+
+      private boolean isPartOfConditionalStatement(GrUnaryExpression expression) {
+        PsiElement parent = expression.getParent();
+        while (parent instanceof GrUnaryExpression)
+          parent = parent.getParent();
+        return parent.getNode().getElementType().equals(GroovyElementTypes.IF_STATEMENT);
+      }
+
+      private void checkParent(GrExpression expression) {
+        PsiElement parent = expression.getParent();
+        while (parent instanceof GrParenthesizedExpression)
+          parent = parent.getParent();
+        if (!(parent instanceof GrUnaryExpression)) return;
+
+        final GrUnaryExpression prefixExpression = (GrUnaryExpression)parent;
+        if (!GroovyTokenTypes.mLNOT.equals(prefixExpression.getOperationTokenType())) return;
+
+        registerError(prefixExpression);
+      }
+    };
   }
 
-  private static class DoubleNegationVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitUnaryExpression(GrUnaryExpression expression) {
-      super.visitUnaryExpression(expression);
-      final IElementType tokenType = expression.getOperationTokenType();
-      if (!GroovyTokenTypes.mLNOT.equals(tokenType)) {
-        return;
-      }
-      checkParent(expression);
-    }
-
-    @Override
-    public void visitBinaryExpression(GrBinaryExpression expression) {
-      super.visitBinaryExpression(expression);
-      final IElementType tokenType = expression.getOperationTokenType();
-      if (!GroovyTokenTypes.mNOT_EQUAL.equals(tokenType)) {
-        return;
-      }
-      checkParent(expression);
-    }
-
-    private void checkParent(GrExpression expression) {
-      PsiElement parent = expression.getParent();
-      while (parent instanceof GrParenthesizedExpression) {
-        parent = parent.getParent();
-      }
-      if (!(parent instanceof GrUnaryExpression)) {
-        return;
-      }
-      final GrUnaryExpression prefixExpression =
-          (GrUnaryExpression) parent;
-      final IElementType parentTokenType =
-          prefixExpression.getOperationTokenType();
-      if (!GroovyTokenTypes.mLNOT.equals(parentTokenType)) {
-        return;
-      }
-      registerError(prefixExpression);
-    }
-  }
 }
