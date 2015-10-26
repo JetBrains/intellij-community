@@ -862,19 +862,20 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         try {
           final FileEditorManagerImpl fileEditorManager = getManager();
           Element historyElement = file.getChild(HistoryEntry.TAG);
-          final VirtualFile virtualFile = HistoryEntry.getVirtualFile(historyElement);
+          final HistoryEntry entry = HistoryEntry.createLight(fileEditorManager.getProject(), historyElement);
+          final VirtualFile virtualFile = entry.getFile();
+          if (virtualFile == null) throw new InvalidDataException("No file exists: " + entry.getFilePointer().getUrl());
           Document document = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
             @Override
             public Document compute() {
               return virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null;
             }
           });
-          final HistoryEntry entry = new HistoryEntry(fileEditorManager.getProject(), historyElement);
           final boolean isCurrentInTab = Boolean.valueOf(file.getAttributeValue(CURRENT_IN_TAB)).booleanValue();
           Boolean pin = Boolean.valueOf(file.getAttributeValue(PINNED));
-          fileEditorManager.openFileImpl4(window, entry.myFile, entry, isCurrentInTab, isCurrentInTab, pin, i);
+          fileEditorManager.openFileImpl4(window, virtualFile, entry, isCurrentInTab, isCurrentInTab, pin, i);
           if (isCurrentInTab) {
-            focusedFile = entry.myFile;
+            focusedFile = virtualFile;
           }
           if (document != null) {
             // This is just to make sure document reference is kept on stack till this point
