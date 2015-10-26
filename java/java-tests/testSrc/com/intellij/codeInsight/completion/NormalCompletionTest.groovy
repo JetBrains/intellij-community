@@ -1542,4 +1542,9 @@ class Bar {
 
     assert c1.is(c2)
   }
+
+  public void testShowMostSpecificOverride() {
+    configure()
+    assert 'B' == LookupElementPresentation.renderElement(myFixture.lookup.items[0]).typeText
+  }
 }
