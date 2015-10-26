@@ -72,6 +72,11 @@ public class InferenceVariable extends LightTypeParameter {
       list = new ArrayList<PsiType>();
       myBounds.put(inferenceBound, list);
     }
+
+    if (classType == null) {
+      classType = PsiType.NULL;
+    }
+
     final int idx = list.indexOf(classType);
     if (idx < 0) {
       list.add(classType);
