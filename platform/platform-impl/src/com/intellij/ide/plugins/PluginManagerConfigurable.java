@@ -16,6 +16,8 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.options.BaseConfigurable;
@@ -25,6 +27,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +43,7 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
 
   private PluginManagerMain myPluginManagerMain;
   private boolean myAvailable;
+  private boolean myShutdownRequired;
 
   public PluginManagerConfigurable(final PluginManagerUISettings UISettings) {
     myUISettings = UISettings;
@@ -117,14 +121,31 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
     if (applyMessage != null) {
       throw new ConfigurationException(applyMessage);
     }
+    boolean prev = myShutdownRequired;
+    myShutdownRequired |= myPluginManagerMain.isRequireShutdown();
+    myPluginManagerMain.ignoreChanges();
+    if (prev) return;
 
-    if (myPluginManagerMain.isRequireShutdown()) {
-      if (showRestartDialog() == Messages.YES) {
-        ApplicationManagerEx.getApplicationEx().restart(true);
+    Disposable d = UIUtil.getParents(myPluginManagerMain.getMainPanel()).filter(Disposable.class).first();
+    if (d == null) return;
+    Disposer.register(d, new Disposable() {
+      @Override
+      public void dispose() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            showShutdownDialogIfNeeded();
+          }
+        }, ApplicationManager.getApplication().getDisposed());
       }
-      else {
-        myPluginManagerMain.ignoreChanges();
-      }
+    });
+  }
+
+  private void showShutdownDialogIfNeeded() {
+    if (!myShutdownRequired) return;
+
+    if (showRestartDialog() == Messages.YES) {
+      ApplicationManagerEx.getApplicationEx().restart(true);
     }
   }
 
