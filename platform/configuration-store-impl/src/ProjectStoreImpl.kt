@@ -180,11 +180,11 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
       var temp = PathUtilRt.getFileName(projectFilePath)
       val fileType = FileTypeManager.getInstance().getFileTypeByFileName(temp)
       if (fileType is ProjectFileType) {
-        temp = temp.substring(0, temp.length() - fileType.defaultExtension.length() - 1)
+        temp = temp.substring(0, temp.length - fileType.defaultExtension.length - 1)
       }
       val i = temp.lastIndexOf(File.separatorChar)
       if (i >= 0) {
-        temp = temp.substring(i + 1, temp.length() - i + 1)
+        temp = temp.substring(i + 1, temp.length - i + 1)
       }
       return temp
     }
@@ -268,7 +268,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
       }
     }
 
-    private fun getFilesList(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) = Array(readonlyFiles.size()) { readonlyFiles.get(it).second }
+    private fun getFilesList(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) = Array(readonlyFiles.size) { readonlyFiles.get(it).second }
   }
 
   override fun selectDefaultStorages(storages: Array<Storage>, operation: StateStorageOperation) = selectDefaultStorages(storages, operation, scheme)

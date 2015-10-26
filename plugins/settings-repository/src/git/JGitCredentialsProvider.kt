@@ -62,7 +62,7 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
         if (promptText != null) {
           val marker = "Passphrase for "
           if (promptText.startsWith(marker) /* JSch prompt */) {
-            sshKeyFile = promptText.substring(marker.length())
+            sshKeyFile = promptText.substring(marker.length)
             passwordItem = item
             continue
           }

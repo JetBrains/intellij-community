@@ -77,7 +77,7 @@ class StateMap private constructor(private val names: Array<String>, private val
           LOG.info("Serialization error: serialized are different, but unserialized are equal")
         }
         else {
-          LOG.info("$key ${StringUtil.repeat("=", 80 - key.length())}\nBefore:\n$before\nAfter:\n$after")
+          LOG.info("$key ${StringUtil.repeat("=", 80 - key.length)}\nBefore:\n$before\nAfter:\n$after")
         }
       }
       return newBytes

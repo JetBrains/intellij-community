@@ -55,7 +55,7 @@ fun processScopeVariables(scope: Scope,
                           context: VariableContext,
                           isLast: Boolean) = processVariables(context, scope.variablesHost.get(), node, { memberFilter, variables ->
   val additionalVariables = memberFilter.additionalVariables
-  val properties = ArrayList<Variable>(variables.size() + additionalVariables.size())
+  val properties = ArrayList<Variable>(variables.size + additionalVariables.size)
   val functions = SmartList<Variable>()
   for (variable in variables) {
     if (memberFilter.isMemberVisible(variable)) {
@@ -101,14 +101,14 @@ fun processNamedObjectProperties(variables: List<Variable>,
     return null
   }
 
-  val to = Math.min(maxChildrenToAdd, list.size())
-  val isLast = to == list.size()
+  val to = Math.min(maxChildrenToAdd, list.size)
+  val isLast = to == list.size
   node.addChildren(createVariablesList(list, 0, to, context, memberFilter), defaultIsLast && isLast)
   if (isLast) {
     return null
   }
   else {
-    node.tooManyChildren(list.size() - to)
+    node.tooManyChildren(list.size - to)
     return list
   }
 }
@@ -119,7 +119,7 @@ fun filterAndSort(variables: List<Variable>, memberFilter: MemberFilter): List<V
   }
 
   val additionalVariables = memberFilter.additionalVariables
-  val result = ArrayList<Variable>(variables.size() + additionalVariables.size())
+  val result = ArrayList<Variable>(variables.size + additionalVariables.size)
   for (variable in variables) {
     if (memberFilter.isMemberVisible(variable)) {
       result.add(variable)
@@ -158,8 +158,8 @@ private fun naturalCompare(string1: String?, string2: String?): Int {
     return 1
   }
 
-  val string1Length = string1.length()
-  val string2Length = string2.length()
+  val string1Length = string1.length
+  val string2Length = string2.length
   var i = 0
   var j = 0
   while (i < string1Length && j < string2Length) {
@@ -237,7 +237,7 @@ private fun naturalCompare(string1: String?, string2: String?): Int {
 }
 
 @JvmOverloads fun createVariablesList(variables: List<Variable>, variableContext: VariableContext, memberFilter: MemberFilter? = null): XValueChildrenList {
-  return createVariablesList(variables, 0, variables.size(), variableContext, memberFilter)
+  return createVariablesList(variables, 0, variables.size, variableContext, memberFilter)
 }
 
 fun createVariablesList(variables: List<Variable>, from: Int, to: Int, variableContext: VariableContext, memberFilter: MemberFilter?): XValueChildrenList {

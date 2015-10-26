@@ -257,7 +257,7 @@ fun askToRestart(store: IComponentStore, notReloadableComponents: Collection<Str
   var count = 0
   for (component in notReloadableComponents) {
     if (count == 10) {
-      message.append('\n').append("and ").append(notReloadableComponents.size() - count).append(" more").append('\n')
+      message.append('\n').append("and ").append(notReloadableComponents.size - count).append(" more").append('\n')
     }
     else {
       message.append(component).append('\n')
