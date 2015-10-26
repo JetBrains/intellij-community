@@ -1762,6 +1762,10 @@ class PyDB:
             self.thread_analyser.set_start_time(cur_time())
             send_message("threading_event", 0, t.getName(), GetThreadId(t), "thread", "start", file, 1, None, parent=GetThreadId(t))
 
+        if self.asyncio_analyser is not None:
+            # we don't have main thread in asyncio graph, so we should add a fake event
+            send_message("asyncio_event", 0, "Task", "Task", "thread", "stop", file, 1, frame=None, parent=None)
+
         try:
             self.init_matplotlib_support()
         except:
