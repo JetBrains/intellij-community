@@ -50,12 +50,11 @@ public class SimpleDiffChange {
 
   // TODO: adjust color from inner fragments - configurable
   public SimpleDiffChange(@NotNull SimpleDiffViewer viewer,
-                          @NotNull LineFragment fragment,
-                          boolean inlineHighlight) {
+                          @NotNull LineFragment fragment) {
     myViewer = viewer;
 
     myFragment = fragment;
-    myInnerFragments = inlineHighlight ? fragment.getInnerFragments() : null;
+    myInnerFragments = fragment.getInnerFragments();
 
     installHighlighter();
   }

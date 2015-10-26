@@ -261,7 +261,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         }
       });
 
-      final boolean innerFragments = getDiffConfig().innerFragments;
       final List<LineFragment> fragments = DiffUtil.compare(texts[0], texts[1], getDiffConfig(), indicator);
 
       final DocumentContent content1 = getContent1();
@@ -298,7 +297,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       CombinedEditorData editorData = new CombinedEditorData(builder.getText(), data.getHighlighter(), data.getRangeHighlighter(), fileType,
                                                              convertor.createConvertor1(), convertor.createConvertor2());
 
-      return apply(editorData, builder.getBlocks(), convertor, changedLines, isEqual, innerFragments);
+      return apply(editorData, builder.getBlocks(), convertor, changedLines, isEqual);
     }
     catch (DiffTooBigException e) {
       return new Runnable() {
@@ -373,7 +372,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
                          @NotNull final List<ChangedBlock> blocks,
                          @NotNull final LineNumberConvertor convertor,
                          @NotNull final List<LineRange> changedLines,
-                         final boolean isEqual, final boolean innerFragments) {
+                         final boolean isEqual) {
     return new Runnable() {
       @Override
       public void run() {
@@ -407,7 +406,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
         ArrayList<UnifiedDiffChange> diffChanges = new ArrayList<UnifiedDiffChange>(blocks.size());
         for (ChangedBlock block : blocks) {
-          diffChanges.add(new UnifiedDiffChange(UnifiedDiffViewer.this, block, innerFragments));
+          diffChanges.add(new UnifiedDiffChange(UnifiedDiffViewer.this, block));
         }
 
         List<RangeMarker> guarderRangeBlocks = new ArrayList<RangeMarker>();
