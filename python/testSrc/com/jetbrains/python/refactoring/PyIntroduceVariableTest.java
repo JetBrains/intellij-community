@@ -309,6 +309,11 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     doTest();
   }
 
+  // PY-17360
+  public void testCallExpressionQualifier() {
+    doTest();
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/refactoring/introduceVariable";
