@@ -636,11 +636,17 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         }
       }
     } else if (expr instanceof PsiParenthesizedExpression) {
-      return suggestVariableNameByExpressionOnly(((PsiParenthesizedExpression)expr).getExpression(), variableKind, correctKeywords, useAllMethodNames);
+      final PsiExpression expression = ((PsiParenthesizedExpression)expr).getExpression();
+      if (expression != null) {
+        return suggestVariableNameByExpressionOnly(expression, variableKind, correctKeywords, useAllMethodNames);
+      }
     } else if (expr instanceof PsiTypeCastExpression) {
-      return suggestVariableNameByExpressionOnly(((PsiTypeCastExpression)expr).getOperand(), variableKind, correctKeywords, useAllMethodNames);
+      final PsiExpression operand = ((PsiTypeCastExpression)expr).getOperand();
+      if (operand != null) {
+        return suggestVariableNameByExpressionOnly(operand, variableKind, correctKeywords, useAllMethodNames);
+      }
     } else if (expr instanceof PsiLiteralExpression) {
-      final String text = StringUtil.stripQuotesAroundValue(expr.getText());
+      final String text = StringUtil.unquoteString(expr.getText());
       if (isIdentifier(text)) {
         return new NamesByExprInfo(text, getSuggestionsByName(text, variableKind, false, correctKeywords));
       }
