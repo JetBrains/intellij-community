@@ -899,7 +899,9 @@ public class InferenceSession {
           }
           parameter.putUserData(LOWER_BOUND, lub);
         }
-        var.addBound(elementFactory.createType(parameter), InferenceBound.EQ);
+        if (!var.addBound(elementFactory.createType(parameter), InferenceBound.EQ)) {
+          return null;
+        }
       }
       myIncorporationPhase.forgetCaptures(vars);
       if (!repeatInferencePhases(true)) {
