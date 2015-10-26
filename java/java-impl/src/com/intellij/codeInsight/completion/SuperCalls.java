@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
@@ -48,7 +49,7 @@ class SuperCalls {
 
       for (CompletionElement completionElement : superProcessor.getResults()) {
         for (LookupElement item : JavaCompletionUtil.createLookupElements(completionElement, javaReference)) {
-          set.add(withQuaifiedSuper(className, item));
+          set.add(withQualifiedSuper(className, item));
         }
       }
     }
@@ -56,20 +57,27 @@ class SuperCalls {
   }
 
   @NotNull
-  private static LookupElementDecorator<LookupElement> withQuaifiedSuper(final String className, LookupElement item) {
-    return LookupElementDecorator.withInsertHandler(item, new InsertHandler<LookupElementDecorator<LookupElement>>() {
+  private static LookupElement withQualifiedSuper(final String className, LookupElement item) {
+    return PrioritizedLookupElement.withExplicitProximity(new LookupElementDecorator<LookupElement>(item) {
+
       @Override
-      public void handleInsert(InsertionContext context, LookupElementDecorator<LookupElement> item) {
+      public void renderElement(LookupElementPresentation presentation) {
+        super.renderElement(presentation);
+        presentation.setItemText(className + ".super." + presentation.getItemText());
+      }
+
+      @Override
+      public void handleInsert(InsertionContext context) {
         context.commitDocument();
         PsiJavaCodeReferenceElement ref = PsiTreeUtil
           .findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiJavaCodeReferenceElement.class, false);
         if (ref != null) {
-          context.getDocument().insertString(ref.getTextRange().getStartOffset(), className + ".");
+          context.getDocument().insertString(ref.getTextRange().getStartOffset(),  className + ".");
         }
 
-        item.getDelegate().handleInsert(context);
+        super.handleInsert(context);
       }
-    });
+    }, -1);
   }
 
   private static Set<String> getContainingClassNames(PsiElement position) {

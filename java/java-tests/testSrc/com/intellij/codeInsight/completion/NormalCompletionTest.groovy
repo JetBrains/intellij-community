@@ -1040,7 +1040,11 @@ public class ListUtils {
     doTest()
   }
 
-  public void testOuterSuperMethodCall() { doTest('\n') }
+  public void testOuterSuperMethodCall() {
+    configure()
+    assert 'Class2.super.put' == LookupElementPresentation.renderElement(myItems[0]).itemText
+    type '\n'
+    checkResult() }
 
   public void testTopLevelClassesFromPackaged() throws Throwable {
     myFixture.addClass "public class Fooooo {}"
