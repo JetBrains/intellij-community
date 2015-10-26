@@ -183,7 +183,7 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
     if (myElements == null && event.getMouseEvent().isShiftDown()) {
       alarm.addRequest(new PreviewRequest(point, editor, false), 100);
     }
-    else {
+    else if (myElements != null) {
       Collection<PsiElement> elements = myElements;
       if (!getPsiElementsAt(point, editor).equals(elements)) {
         myElements = null;
