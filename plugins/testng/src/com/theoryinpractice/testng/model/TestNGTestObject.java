@@ -18,6 +18,7 @@ package com.theoryinpractice.testng.model;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.testframework.SourceScope;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -227,9 +228,16 @@ public abstract class TestNGTestObject {
   protected GlobalSearchScope getSearchScope() {
     final TestData data = myConfig.getPersistantData();
     final Module module = myConfig.getConfigurationModule().getModule();
-    return data.TEST_OBJECT.equals(TestType.PACKAGE.getType())
-           ? myConfig.getPersistantData().getScope().getSourceScope(myConfig).getGlobalSearchScope()
-           : module != null ? GlobalSearchScope.moduleWithDependenciesScope(module) : GlobalSearchScope.projectScope(myConfig.getProject());
+    if (data.TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
+      SourceScope scope = myConfig.getPersistantData().getScope().getSourceScope(myConfig);
+      if (scope != null) {
+        return scope.getGlobalSearchScope();
+      }
+    }
+    else if (module != null) {
+      return GlobalSearchScope.moduleWithDependenciesScope(module);
+    }
+    return GlobalSearchScope.projectScope(myConfig.getProject());
   }
 
   public static void collectTestMethods(Map<PsiClass, Map<PsiMethod, List<String>>> classes,

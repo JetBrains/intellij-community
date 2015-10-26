@@ -17,11 +17,13 @@ package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.util.TestNGUtil;
@@ -52,8 +54,9 @@ public class TestNGTestPackage extends TestNGTestObject {
     else {
       TestSearchScope scope = myConfig.getPersistantData().getScope();
       //TODO we should narrow this down by module really, if that's what's specified
+      SourceScope sourceScope = scope.getSourceScope(myConfig);
       TestClassFilter projectFilter =
-        new TestClassFilter(scope.getSourceScope(myConfig).getGlobalSearchScope(), myConfig.getProject(), true, true);
+        new TestClassFilter(sourceScope != null ? sourceScope.getGlobalSearchScope() : GlobalSearchScope.projectScope(myConfig.getProject()), myConfig.getProject(), true, true);
       TestClassFilter filter = projectFilter.intersectionWith(PackageScope.packageScope(psiPackage, true));
       calculateDependencies(null, classes, getSearchScope(), TestNGUtil.getAllTestClasses(filter, false));
       if (classes.size() == 0) {
