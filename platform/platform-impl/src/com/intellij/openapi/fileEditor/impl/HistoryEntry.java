@@ -24,8 +24,8 @@ import com.intellij.openapi.roots.ui.LightFilePointer;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.containers.HashMap;
@@ -195,7 +195,7 @@ final class HistoryEntry {
     List<Pair<FileEditorProvider, FileEditorState>> providerStates = new ArrayList<Pair<FileEditorProvider, FileEditorState>>();
     FileEditorProvider selectedProvider = null;
 
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(url);
+    VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
 
     for (Element _e : e.getChildren(PROVIDER_ELEMENT)) {
       String typeId = _e.getAttributeValue(EDITOR_TYPE_ID_ATTR);
