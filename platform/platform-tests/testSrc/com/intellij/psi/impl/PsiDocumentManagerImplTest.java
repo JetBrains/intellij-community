@@ -45,8 +45,10 @@ import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -94,7 +96,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     VirtualFile vFile = createFile();
     final PsiFile file = new MockPsiFile(vFile, getPsiManager());
 
-    final Document document = getPsiDocumentManager().getDocument(file);
+    final Document document = getDocument(file);
     assertNotNull(document);
     assertSame(document, FileDocumentManager.getInstance().getDocument(vFile));
   }
@@ -111,7 +113,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   public void testDocumentGced() throws Exception {
     VirtualFile vFile = getVirtualFile(createTempFile("txt", "abc"));
     PsiDocumentManagerImpl documentManager = getPsiDocumentManager();
-    long id = System.identityHashCode(documentManager.getDocument(getPsiManager().findFile(vFile)));
+    long id = System.identityHashCode(documentManager.getDocument(findFile(vFile)));
 
     documentManager.commitAllDocuments();
     UIUtil.dispatchAllInvocationEvents();
@@ -121,18 +123,21 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     LeakHunter.checkLeak(documentManager, DocumentImpl.class);
     LeakHunter.checkLeak(documentManager, PsiFileImpl.class,
                          psiFile -> psiFile.getViewProvider().getVirtualFile().getFileSystem() instanceof LocalFileSystem);
-    //Class.forName("com.intellij.util.ProfilingUtil").getDeclaredMethod("forceCaptureMemorySnapshot").invoke(null);
 
     for (int i = 0; i < 1000; i++) {
       PlatformTestUtil.tryGcSoftlyReachableObjects();
       UIUtil.dispatchAllInvocationEvents();
-      if (documentManager.getCachedDocument(getPsiManager().findFile(vFile)) == null) break;
+      if (documentManager.getCachedDocument(findFile(vFile)) == null) break;
       System.gc();
     }
-    assertNull(documentManager.getCachedDocument(getPsiManager().findFile(vFile)));
+    assertNull(documentManager.getCachedDocument(findFile(vFile)));
 
-    Document newDoc = documentManager.getDocument(getPsiManager().findFile(vFile));
+    Document newDoc = documentManager.getDocument(findFile(vFile));
     assertTrue(id != System.identityHashCode(newDoc));
+  }
+
+  private PsiFile findFile(@NotNull VirtualFile vFile) {
+    return getPsiManager().findFile(vFile);
   }
 
   public void testGetUncommittedDocuments_noDocuments() throws Exception {
@@ -140,9 +145,9 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   }
 
   public void testGetUncommittedDocuments_documentChanged_DontProcessEvents() throws Exception {
-    final PsiFile file = getPsiManager().findFile(createFile());
+    final PsiFile file = findFile(createFile());
 
-    final Document document = getPsiDocumentManager().getDocument(file);
+    final Document document = getDocument(file);
 
     WriteCommandAction.runWriteCommandAction(null, () -> {
       getPsiDocumentManager().getSynchronizer().performAtomically(file, () -> changeDocument(document, getPsiDocumentManager()));
@@ -164,17 +169,20 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   }
 
   public void testCommitDocument_RemovesFromUncommittedList() throws Exception {
-    PsiFile file = getPsiManager().findFile(createFile());
+    PsiFile file = findFile(createFile());
 
-    final Document document = getPsiDocumentManager().getDocument(file);
+    final Document document = getDocument(file);
 
     WriteCommandAction.runWriteCommandAction(null, () -> {
       changeDocument(document, getPsiDocumentManager());
     });
 
-
     getPsiDocumentManager().commitDocument(document);
     assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
+  }
+
+  private Document getDocument(PsiFile file) {
+    return getPsiDocumentManager().getDocument(file);
   }
 
   private static void changeDocument(Document document, PsiDocumentManagerImpl manager) {
@@ -184,9 +192,9 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   }
 
   public void testCommitAllDocument_RemovesFromUncommittedList() throws Exception {
-    PsiFile file = getPsiManager().findFile(createFile());
+    PsiFile file = findFile(createFile());
 
-    final Document document = getPsiDocumentManager().getDocument(file);
+    final Document document = getDocument(file);
 
     WriteCommandAction.runWriteCommandAction(null, () -> {
       changeDocument(document, getPsiDocumentManager());
@@ -198,9 +206,9 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   }
 
   public void testDocumentFromAlienProjectDoesNotEndUpInMyUncommittedList() throws Exception {
-    PsiFile file = getPsiManager().findFile(createFile());
+    PsiFile file = findFile(createFile());
 
-    final Document document = getPsiDocumentManager().getDocument(file);
+    final Document document = getDocument(file);
 
     File temp = createTempDirectory();
     final Project alienProject = createProject(temp + "/alien.ipr", DebugUtil.currentStackTrace());
@@ -216,7 +224,6 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       final PsiFile alienFile = alienManager.findFile(alienVirt);
       final PsiDocumentManagerImpl alienDocManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(alienProject);
       final Document alienDocument = alienDocManager.getDocument(alienFile);
-      //alienDocument.putUserData(CACHED_VIEW_PROVIDER, new MockFileViewProvider(alienFile));
       assertEquals(0, alienDocManager.getUncommittedDocuments().length);
       assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
 
@@ -244,10 +251,10 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   }
 
   public void testCommitInBackground() {
-    PsiFile file = getPsiManager().findFile(createFile());
+    PsiFile file = findFile(createFile());
     assertNotNull(file);
     assertTrue(file.isPhysical());
-    final Document document = getPsiDocumentManager().getDocument(file);
+    final Document document = getDocument(file);
     assertNotNull(document);
 
     final Semaphore semaphore = new Semaphore();
@@ -316,9 +323,9 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
   public void testDocumentFromAlienProjectGetsCommittedInBackground() throws Exception {
     LightVirtualFile virtualFile = createFile();
-    PsiFile file = getPsiManager().findFile(virtualFile);
+    PsiFile file = findFile(virtualFile);
 
-    final Document document = getPsiDocumentManager().getDocument(file);
+    final Document document = getDocument(file);
 
     File temp = createTempDirectory();
     final Project alienProject = createProject(temp + "/alien.ipr", DebugUtil.currentStackTrace());
@@ -380,26 +387,26 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
   public void testFileChangesToText() throws IOException {
     VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
-    PsiFile psiFile = getPsiManager().findFile(vFile);
-    Document document = getPsiDocumentManager().getDocument(psiFile);
+    PsiFile psiFile = findFile(vFile);
+    Document document = getDocument(psiFile);
 
     rename(vFile, "a.xml");
     assertFalse(psiFile.isValid());
-    assertNotSame(psiFile, getPsiManager().findFile(vFile));
-    psiFile = getPsiManager().findFile(vFile);
+    assertNotSame(psiFile, findFile(vFile));
+    psiFile = findFile(vFile);
 
     assertSame(document, FileDocumentManager.getInstance().getDocument(vFile));
-    assertSame(document, getPsiDocumentManager().getDocument(psiFile));
+    assertSame(document, getDocument(psiFile));
   }
 
   public void testFileChangesToBinary() throws IOException {
     VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
-    PsiFile psiFile = getPsiManager().findFile(vFile);
-    Document document = getPsiDocumentManager().getDocument(psiFile);
+    PsiFile psiFile = findFile(vFile);
+    Document document = getDocument(psiFile);
 
     rename(vFile, "a.zip");
     assertFalse(psiFile.isValid());
-    psiFile = getPsiManager().findFile(vFile);
+    psiFile = findFile(vFile);
     assertInstanceOf(psiFile, PsiBinaryFile.class);
 
     assertNoFileDocumentMapping(vFile, psiFile, document);
@@ -408,12 +415,12 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
   public void testFileBecomesTooLarge() throws Exception {
     VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
-    PsiFile psiFile = getPsiManager().findFile(vFile);
-    Document document = getPsiDocumentManager().getDocument(psiFile);
+    PsiFile psiFile = findFile(vFile);
+    Document document = getDocument(psiFile);
 
     makeFileTooLarge(vFile);
     assertFalse(psiFile.isValid());
-    psiFile = getPsiManager().findFile(vFile);
+    psiFile = findFile(vFile);
     assertInstanceOf(psiFile, PsiLargeFile.class);
 
     assertNoFileDocumentMapping(vFile, psiFile, document);
@@ -424,7 +431,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertNull(FileDocumentManager.getInstance().getDocument(vFile));
     assertNull(FileDocumentManager.getInstance().getFile(document));
     assertNull(getPsiDocumentManager().getPsiFile(document));
-    assertNull(getPsiDocumentManager().getDocument(psiFile));
+    assertNull(getDocument(psiFile));
   }
 
   private void makeFileTooLarge(final VirtualFile vFile) throws Exception {
@@ -437,8 +444,8 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
   public void testCommitDocumentInModalDialog() throws IOException {
     VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
-    PsiFile psiFile = getPsiManager().findFile(vFile);
-    final Document document = getPsiDocumentManager().getDocument(psiFile);
+    PsiFile psiFile = findFile(vFile);
+    final Document document = getDocument(psiFile);
 
     final DialogWrapper dialog = new DialogWrapper(getProject()) {
       @Nullable
@@ -512,5 +519,30 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     });
     FileDocumentManager.getInstance().saveDocument(document);
     assertEquals("-1\n2\n3\n", VfsUtilCore.loadText(file));
+  }
+
+  public void testPerformWhenAllCommittedMustNotNest() {
+    PsiFile file = findFile(createFile());
+    assertNotNull(file);
+    assertTrue(file.isPhysical());
+    final Document document = getDocument(file);
+    assertNotNull(document);
+
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      document.insertString(0, "class X {}");
+    });
+
+    getPsiDocumentManager().performWhenAllCommitted(() -> {
+      try {
+        getPsiDocumentManager().performWhenAllCommitted(() -> {
+
+        });
+        fail("Must fail");
+      }
+      catch (IncorrectOperationException ignored) {
+      }
+    });
+    getPsiDocumentManager().commitAllDocuments();
+    assertTrue(getPsiDocumentManager().isCommitted(document));
   }
 }

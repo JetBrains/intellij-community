@@ -130,6 +130,10 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         externalTask.QName = task.name
         externalTask.description = task.description
         externalTask.group = task.group ?: "other"
+
+        def clazzName = task.class.canonicalName
+        def prefixIndex = clazzName.lastIndexOf('_Decorated')
+        externalTask.type = prefixIndex == -1 ? clazzName : clazzName.substring(0, prefixIndex)
         result.put(externalTask.name, externalTask)
       }
 

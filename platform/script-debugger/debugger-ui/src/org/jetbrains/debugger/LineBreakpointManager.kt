@@ -74,7 +74,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
         vmBreakpoints = list
         while (iterator.hasNext()) {
           val vmBreakpoint = iterator.next()
-          if (vmToIdeBreakpoint.get(vmBreakpoint).size() > 1) {
+          if (vmToIdeBreakpoint.get(vmBreakpoint).size > 1) {
             // we must not disable vm breakpoint - it is used for another ide breakpoints
             iterator.remove()
           }

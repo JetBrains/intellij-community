@@ -104,7 +104,7 @@ class ReadonlySource(var url: String? = null, var active: Boolean = true) {
         var fileName = PathUtilRt.getFileName(url!!)
         val suffix = ".git"
         if (fileName.endsWith(suffix)) {
-          fileName = fileName.substring(0, fileName.length() - suffix.length())
+          fileName = fileName.substring(0, fileName.length - suffix.length)
         }
         // the convention is that the .git extension should be used for bare repositories
         return "${FileUtil.sanitizeFileName(fileName, false)}.${Integer.toHexString(url!!.hashCode())}.git"

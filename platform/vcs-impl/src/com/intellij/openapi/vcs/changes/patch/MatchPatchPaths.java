@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.ShelvedBinary
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
@@ -77,7 +78,8 @@ public class MatchPatchPaths {
                                    @NotNull List<FilePatch> newOrWithoutMatches,
                                    @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> result) {
     for (FilePatch patch : newOrWithoutMatches) {
-      final String[] strings = patch.getAfterName().replace('\\', '/').split("/");
+      String afterName = patch.getAfterName();
+      final String[] strings = afterName != null ? afterName.replace('\\', '/').split("/") : ArrayUtil.EMPTY_STRING_ARRAY;
       Pair<VirtualFile, Integer> best = null;
       for (int i = strings.length - 2; i >= 0; --i) {
         final String name = strings[i];

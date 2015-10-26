@@ -44,10 +44,10 @@ public class PythonSpaceHandler extends TypedHandlerDelegate {
       }
       if (element == null) return Result.CONTINUE;
       int expectedStringStart = offset - 4;        // """ or ''' plus space char
-      if (PythonEnterHandler.atDocCommentStart(element, expectedStringStart)) {
+      final Document document = editor.getDocument();
+      if (PythonEnterHandler.atDocCommentStart(element, expectedStringStart, document)) {
         final PyDocStringOwner docOwner = PsiTreeUtil.getParentOfType(element, PyDocStringOwner.class);
         if (docOwner != null) {
-          final Document document = editor.getDocument();
           final String quotes = document.getText(TextRange.from(expectedStringStart, 3));
           final String docString = PyDocstringGenerator.forDocStringOwner(docOwner)
             .forceNewMode()

@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
+import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
@@ -33,4 +34,6 @@ public interface ExternalTask extends Serializable {
   String getDescription();
   @Nullable
   String getGroup();
+  @Nullable
+  String getType();
 }

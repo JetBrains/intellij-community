@@ -1040,6 +1040,12 @@ public class ListUtils {
     doTest()
   }
 
+  public void testOuterSuperMethodCall() {
+    configure()
+    assert 'Class2.super.put' == LookupElementPresentation.renderElement(myItems[0]).itemText
+    type '\n'
+    checkResult() }
+
   public void testTopLevelClassesFromPackaged() throws Throwable {
     myFixture.addClass "public class Fooooo {}"
     final text = "package foo; class Bar { Fooo<caret> }"
@@ -1539,5 +1545,10 @@ class Bar {
     assert CompletionUtil.getOriginalElement(c2)
 
     assert c1.is(c2)
+  }
+
+  public void testShowMostSpecificOverride() {
+    configure()
+    assert 'B' == LookupElementPresentation.renderElement(myFixture.lookup.items[0]).typeText
   }
 }

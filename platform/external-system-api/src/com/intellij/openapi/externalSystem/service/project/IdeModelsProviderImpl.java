@@ -31,16 +31,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalRootProjectPath;
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.isExternalSystemAwareModule;
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.isRelated;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 
 /**
  * @author Vladislav.Soroka
@@ -210,17 +207,5 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   @NotNull
   public List<Module> getAllDependentModules(@NotNull Module module) {
     return ModuleUtilCore.getAllDependentModules(module);
-  }
-
-  @NotNull
-  @Override
-  public Graph<Module> moduleGraph() {
-    return moduleGraph(true);
-  }
-
-  @NotNull
-  @Override
-  public Graph<Module> moduleGraph(boolean includeTests){
-    return ModuleManager.getInstance(myProject).moduleGraph();
   }
 }

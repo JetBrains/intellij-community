@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,10 +76,4 @@ public interface IdeModelsProvider {
 
   @NotNull
   List<Module> getAllDependentModules(@NotNull Module module);
-
-  @NotNull
-  Graph<Module> moduleGraph();
-
-  @NotNull
-  Graph<Module> moduleGraph(boolean includeTests);
 }

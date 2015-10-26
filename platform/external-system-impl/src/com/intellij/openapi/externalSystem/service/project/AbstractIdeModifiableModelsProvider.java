@@ -20,7 +20,7 @@ import com.intellij.facet.FacetModel;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.externalSystem.model.project.*;
+import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -49,7 +49,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.isRelated;
 
 public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProviderImpl implements IdeModifiableModelsProvider {
   private ModifiableModuleModel myModifiableModuleModel;
@@ -241,26 +241,14 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   @Override
   public List<Module> getAllDependentModules(@NotNull Module module) {
     final ArrayList<Module> list = new ArrayList<Module>();
-    final Graph<Module> graph = moduleGraph();
+    final Graph<Module> graph = getModuleGraph(true);
     for (Iterator<Module> i = graph.getOut(module); i.hasNext();) {
       list.add(i.next());
     }
     return list;
   }
 
-  @NotNull
-  @Override
-  public Graph<Module> moduleGraph() {
-    return moduleGraph(true);
-  }
-
-  @NotNull
-  @Override
-  public Graph<Module> moduleGraph(boolean includeTests){
-    return doGetModuleGraph(includeTests);
-  }
-
-  private Graph<Module> doGetModuleGraph(final boolean includeTests) {
+  private Graph<Module> getModuleGraph(final boolean includeTests) {
     return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Module>() {
       @Override
       public Collection<Module> getNodes() {

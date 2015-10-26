@@ -16,6 +16,7 @@
 package com.intellij.diff.comparison;
 
 import com.intellij.diff.util.IntPair;
+import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,6 +53,19 @@ public class TrimUtil {
     end2 = trimEnd(text2, start2, end2);
 
     return new Range(start1, end1, start2, end2);
+  }
+
+  @NotNull
+  public static MergeRange trim(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull CharSequence text3,
+                                      int start1, int start2, int start3, int end1, int end2, int end3) {
+    start1 = trimStart(text1, start1, end1);
+    end1 = trimEnd(text1, start1, end1);
+    start2 = trimStart(text2, start2, end2);
+    end2 = trimEnd(text2, start2, end2);
+    start3 = trimStart(text3, start3, end3);
+    end3 = trimEnd(text3, start3, end3);
+
+    return new MergeRange(start1, end1, start2, end2, start3, end3);
   }
 
   @NotNull
@@ -210,6 +224,38 @@ public class TrimUtil {
     return oldEnd1 - end1;
   }
 
+  public static int expandForwardW(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull CharSequence text3,
+                                   int start1, int start2, int start3, int end1, int end2, int end3) {
+    int oldStart1 = start1;
+    while (start1 < end1 && start2 < end2 && start3 < end3) {
+      char c1 = text1.charAt(start1);
+      char c2 = text2.charAt(start2);
+      char c3 = text3.charAt(start3);
+      if (c1 != c2 || c1 != c3 || !isWhiteSpace(c1)) break;
+      start1++;
+      start2++;
+      start3++;
+    }
+
+    return start1 - oldStart1;
+  }
+
+  public static int expandBackwardW(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull CharSequence text3,
+                                    int start1, int start2, int start3, int end1, int end2, int end3) {
+    int oldEnd1 = end1;
+    while (start1 < end1 && start2 < end2 && start3 < end3) {
+      char c1 = text1.charAt(end1 - 1);
+      char c2 = text2.charAt(end2 - 1);
+      char c3 = text3.charAt(end3 - 1);
+      if (c1 != c2 || c1 != c3|| !isWhiteSpace(c1)) break;
+      end1--;
+      end2--;
+      end3--;
+    }
+
+    return oldEnd1 - end1;
+  }
+
   @NotNull
   public static IntPair expandForwardIW(@NotNull CharSequence text1, @NotNull CharSequence text2,
                                         int start1, int start2, int end1, int end2) {
@@ -235,17 +281,8 @@ public class TrimUtil {
       if (!skipped) break;
     }
 
-    while (start1 < end1) {
-      char c1 = text1.charAt(start1);
-      if (!isWhiteSpace(c1)) break;
-      start1++;
-    }
-
-    while (start2 < end2) {
-      char c2 = text2.charAt(start2);
-      if (!isWhiteSpace(c2)) break;
-      start2++;
-    }
+    start1 = trimStart(text1, start1, end1);
+    start2 = trimStart(text2, start2, end2);
 
     return new IntPair(start1, start2);
   }
@@ -275,17 +312,8 @@ public class TrimUtil {
       if (!skipped) break;
     }
 
-    while (start1 < end1) {
-      char c1 = text1.charAt(end1 - 1);
-      if (!isWhiteSpace(c1)) break;
-      end1--;
-    }
-
-    while (start2 < end2) {
-      char c2 = text2.charAt(end2 - 1);
-      if (!isWhiteSpace(c2)) break;
-      end2--;
-    }
+    end1 = trimEnd(text1, start1, end1);
+    end2 = trimEnd(text2, start2, end2);
 
     return new IntPair(end1, end2);
   }
@@ -317,6 +345,12 @@ public class TrimUtil {
   @NotNull
   public static Range trim(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull Range range) {
     return trim(text1, text2, range.start1, range.start2, range.end1, range.end2);
+  }
+
+  @NotNull
+  public static MergeRange trim(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull CharSequence text3,
+                                @NotNull MergeRange range) {
+    return trim(text1, text2, text3, range.start1, range.start2, range.start3, range.end1, range.end2, range.end3);
   }
 
   @NotNull

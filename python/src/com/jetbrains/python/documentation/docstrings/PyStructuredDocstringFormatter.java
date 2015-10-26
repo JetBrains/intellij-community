@@ -64,7 +64,7 @@ public class PyStructuredDocstringFormatter {
     if (module == null) return Lists.newArrayList();
     final List<String> result = new ArrayList<String>();
 
-    final String preparedDocstring = PyIndentUtil.removeCommonIndent(docstring, true);
+    final String preparedDocstring = PyIndentUtil.removeCommonIndent(docstring, true).trim();
 
     final HelperPackage formatter;
     final StructuredDocString structuredDocString;

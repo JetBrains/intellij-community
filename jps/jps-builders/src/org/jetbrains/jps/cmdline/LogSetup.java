@@ -18,6 +18,7 @@ package org.jetbrains.jps.cmdline;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
 import org.apache.log4j.Level;
 import org.apache.log4j.PropertyConfigurator;
 import org.jetbrains.annotations.NonNls;
@@ -39,7 +40,7 @@ public class LogSetup {
   private static final String LOG_FILE_MACRO = "$LOG_FILE_PATH$";
 
   public static void initLoggers() {
-    if (Boolean.parseBoolean(System.getProperty(GlobalOptions.DISABLE_DEFAULT_FILE_LOGGING_OPTION))) {
+    if (!SystemProperties.getBooleanProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, true)) {
       return;
     }
 

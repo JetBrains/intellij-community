@@ -279,14 +279,20 @@ class AsyncioLogger:
 
         if not hasattr(frame, "f_back") or frame.f_back is None:
             return
-
         back = frame.f_back
-        method_name = back.f_code.co_name
 
         if DictContains(frame.f_locals, "self"):
             self_obj = frame.f_locals["self"]
             if isinstance(self_obj, asyncio.Task):
-                if method_name in ("__init__",):
+                method_name = frame.f_code.co_name
+                if method_name == "set_result":
+                    task_id = id(self_obj)
+                    task_name = self.task_mgr.get(str(task_id))
+                    send_message("asyncio_event", event_time, task_name, task_name, "thread", "stop", frame.f_code.co_filename,
+                                 frame.f_lineno, frame)
+
+                method_name = back.f_code.co_name
+                if method_name == "__init__":
                     task_id = id(self_obj)
                     task_name = self.task_mgr.get(str(task_id))
                     send_message("asyncio_event", event_time, task_name, task_name, "thread", "start", frame.f_code.co_filename,

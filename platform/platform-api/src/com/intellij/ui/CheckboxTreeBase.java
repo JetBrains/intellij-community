@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -129,7 +130,7 @@ public class CheckboxTreeBase extends Tree {
 
   public static class CheckboxTreeCellRendererBase extends JPanel implements TreeCellRenderer {
     private final ColoredTreeCellRenderer myTextRenderer;
-    public final JCheckBox myCheckbox;
+    public final ThreeStateCheckBox myCheckbox;
     private final boolean myUsePartialStatusForParentNodes;
 
     public CheckboxTreeCellRendererBase(boolean opaque) {
@@ -139,7 +140,9 @@ public class CheckboxTreeBase extends Tree {
     public CheckboxTreeCellRendererBase(boolean opaque, final boolean usePartialStatusForParentNodes) {
       super(new BorderLayout());
       myUsePartialStatusForParentNodes = usePartialStatusForParentNodes;
-      myCheckbox = new JCheckBox();
+      myCheckbox = new ThreeStateCheckBox();
+      myCheckbox.setSelected(false);
+      myCheckbox.setThirdStateEnabled(false);
       myTextRenderer = new ColoredTreeCellRenderer() {
         public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) { }
       };

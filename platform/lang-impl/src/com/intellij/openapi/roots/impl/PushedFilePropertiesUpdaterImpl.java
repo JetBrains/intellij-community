@@ -20,8 +20,8 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.Extensions;
@@ -45,6 +45,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexProjectHandler;
@@ -126,18 +127,12 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
       queueTasks(delayedTasks);
     }
     if (pushedSomething) {
-      Application application = ApplicationManager.getApplication();
-      Runnable runnable = new Runnable() {
+      GuiUtils.invokeLaterIfNeeded(new Runnable() {
         @Override
         public void run() {
           scheduleDumbModeReindexingIfNeeded();
         }
-      };
-      if (application.isUnitTestMode()) {
-        runnable.run();
-      } else {
-        application.invokeLater(runnable);
-      }
+      }, ModalityState.defaultModalityState());
     }
   }
 

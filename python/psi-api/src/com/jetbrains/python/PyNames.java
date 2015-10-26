@@ -483,7 +483,7 @@ public class PyNames {
     EXCEPT,
     IMPORT,
     PRINT,
-    __CLASS__,
+    CLASS,
     EXEC,
     IN,
     RAISE,

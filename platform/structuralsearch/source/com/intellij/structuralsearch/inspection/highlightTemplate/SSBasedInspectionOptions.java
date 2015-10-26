@@ -15,6 +15,7 @@
  */
 package com.intellij.structuralsearch.inspection.highlightTemplate;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbService;
@@ -32,7 +33,6 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -100,6 +100,7 @@ public class SSBasedInspectionOptions {
 
   public void configurationsChanged(final SearchContext searchContext) {
     ((MyListModel)myTemplatesList.getModel()).fireContentsChanged();
+    DaemonCodeAnalyzer.getInstance(searchContext.getProject()).restart();
   }
 
   public JPanel getComponent() {
@@ -152,18 +153,14 @@ public class SSBasedInspectionOptions {
       }).setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          Object[] selected = myTemplatesList.getSelectedValues();
+          final SearchContext context = createSearchContext();
+          final Object[] selected = myTemplatesList.getSelectedValues();
           for (Object o : selected) {
-            Configuration configuration = (Configuration)o;
-            Iterator<Configuration> iterator = myConfigurations.iterator();
-            while (iterator.hasNext()) {
-              Configuration configuration1 = iterator.next();
-              if (configuration1.getName().equals(configuration.getName())) {
-                iterator.remove();
-              }
-            }
+            final Configuration configuration = (Configuration)o;
+            myConfigurations.remove(configuration);
+            SSBasedInspectionCompiledPatternsCache.removeFromCache(configuration, context.getProject());
           }
-          configurationsChanged(createSearchContext());
+          configurationsChanged(context);
         }
       }).setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
@@ -225,9 +222,11 @@ public class SSBasedInspectionOptions {
     if (configuration == null) return;
 
     SearchDialog dialog = createDialog(new SearchDialogFactory() {
+      @Override
       public SearchDialog createDialog(SearchContext searchContext) {
         if (configuration instanceof SearchConfiguration) {
           return new SearchDialog(searchContext, false, false) {
+            @Override
             public Configuration createConfiguration() {
               SearchConfiguration newConfiguration = new SearchConfiguration();
               copyConfiguration(configuration, newConfiguration);
@@ -237,6 +236,7 @@ public class SSBasedInspectionOptions {
         }
         else {
           return new ReplaceDialog(searchContext, false, false) {
+            @Override
             public Configuration createConfiguration() {
               ReplaceConfiguration newConfiguration = new ReplaceConfiguration();
               copyConfiguration(configuration, newConfiguration);
@@ -251,16 +251,22 @@ public class SSBasedInspectionOptions {
     if (!dialog.showAndGet()) {
       return;
     }
-    Configuration newConfiguration = dialog.getConfiguration();
-    copyConfiguration(newConfiguration, configuration);
-    configurationsChanged(dialog.getSearchContext());
+    final Configuration newConfiguration = dialog.getConfiguration();
+    final int index = myConfigurations.indexOf(configuration);
+    myConfigurations.remove(index);
+    myConfigurations.add(index, newConfiguration);
+    final SearchContext context = dialog.getSearchContext();
+    SSBasedInspectionCompiledPatternsCache.removeFromCache(configuration, context.getProject());
+    configurationsChanged(context);
   }
 
   private class MyListModel extends AbstractListModel {
+    @Override
     public int getSize() {
       return myConfigurations.size();
     }
 
+    @Override
     public Object getElementAt(int index) {
       return index < myConfigurations.size() ? myConfigurations.get(index) : null;
     }

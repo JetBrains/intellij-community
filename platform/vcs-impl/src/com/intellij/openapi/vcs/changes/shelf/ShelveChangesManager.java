@@ -144,7 +144,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
       @Override
       public boolean process(ShelvedChangeList shelvedChangeList) {
-        if (!shelvedChangeList.checkValid()) {
+        if (!shelvedChangeList.isValid()) {
           mySchemeManager.removeScheme(shelvedChangeList);
         }
         return true;
@@ -189,7 +189,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   private void migrateOldShelfInfo(@NotNull Element element, boolean recycled) throws InvalidDataException {
     for (Element changeSetElement : element.getChildren(recycled ? ELEMENT_RECYCLED_CHANGELIST : ELEMENT_CHANGELIST)) {
       ShelvedChangeList list = readOneShelvedChangeList(changeSetElement);
-      if(!list.checkValid()) break;
+      if(!list.isValid()) break;
       File uniqueDir = generateUniqueSchemePatchDir(list.DESCRIPTION, false);
       list.setName(uniqueDir.getName());
       list.setRecycled(recycled);

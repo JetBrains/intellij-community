@@ -42,8 +42,8 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
       return
     }
 
-    val keyLength = key.length()
-    val valLength = value.length()
+    val keyLength = key.length
+    val valLength = value.length
     writeHeader(buffer!!, PARAMS, keyLength + valLength + (if (keyLength < 128) 1 else 4) + (if (valLength < 128) 1 else 4))
 
     if (keyLength < 128) {

@@ -87,6 +87,12 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     assertDoesntContain(suggestions, "select");
   }
 
+  // PY-17331
+  public void testDontSuggestReservedName() {
+    final Collection<String> suggestions = buildSuggestions(PyCallExpression.class);
+    assertDoesntContain(suggestions, "class");
+  }
+
   public void testSuggestNamesNotInScope() {  // PY-4605
     final Collection<String> strings = buildSuggestions(PyExpression.class);
     assertTrue(strings.contains("myfunc1"));
@@ -296,6 +302,16 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     assertInstanceOf(element, PyFunction.class);
     final Collection<String> usedNames = PyRefactoringUtil.collectUsedNames(element);
     assertSameElements(usedNames, "foo", "baz", "quux");
+  }
+
+  // PY-13133
+  public void testCaretAtExpressionEnd() {
+    doTest();
+  }
+
+  // PY-17360
+  public void testCallExpressionQualifier() {
+    doTest();
   }
 
   @Override

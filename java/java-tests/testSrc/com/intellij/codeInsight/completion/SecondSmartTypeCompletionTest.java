@@ -171,6 +171,10 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
     super.checkResultByFile(filePath);
   }
 
+  public void testChainDuplicationAfterInstanceof() {
+    configure();
+    assertStringItems("test.test", "toString");
+  }
 
   private void doTest() throws Exception {
     configure();

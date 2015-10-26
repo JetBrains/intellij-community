@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
@@ -30,11 +31,15 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
+import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
+import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
@@ -43,6 +48,8 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
 import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
 import org.jetbrains.plugins.gradle.execution.test.runner.events.*;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
@@ -90,31 +97,40 @@ public class GradleTestsExecutionConsoleManager implements ExternalSystemExecuti
     final GradleConsoleProperties properties = new GradleConsoleProperties(configuration, executor);
     myExecutionConsole = (SMTRunnerConsoleView)SMTestRunnerConnectionUtil.createAndAttachConsole(
       configuration.getSettings().getExternalSystemId().getReadableName(), processHandler, properties);
-
-    TestTreeRenderer originalRenderer =
-      ObjectUtils.tryCast(myExecutionConsole.getResultsViewer().getTreeView().getCellRenderer(), TestTreeRenderer.class);
-    if (originalRenderer != null) {
-      originalRenderer.setAdditionalRootFormatter(new SMRootTestProxyFormatter() {
-        @Override
-        public void format(@NotNull SMTestProxy.SMRootTestProxy testProxy, @NotNull TestTreeRenderer renderer) {
-          final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
-          if (magnitude == TestStateInfo.Magnitude.RUNNING_INDEX) {
-            renderer.clear();
-            renderer.append(GradleBundle.message(
-                              "gradle.test.runner.ui.tests.tree.presentation.labels.waiting.tests"),
-                            SimpleTextAttributes.REGULAR_ATTRIBUTES
-            );
+    final TestTreeView testTreeView = myExecutionConsole.getResultsViewer().getTreeView();
+    if (testTreeView != null) {
+      TestTreeRenderer originalRenderer = ObjectUtils.tryCast(testTreeView.getCellRenderer(), TestTreeRenderer.class);
+      if (originalRenderer != null) {
+        originalRenderer.setAdditionalRootFormatter(new SMRootTestProxyFormatter() {
+          @Override
+          public void format(@NotNull SMTestProxy.SMRootTestProxy testProxy, @NotNull TestTreeRenderer renderer) {
+            final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
+            if (magnitude == TestStateInfo.Magnitude.RUNNING_INDEX) {
+              renderer.clear();
+              renderer.append(GradleBundle.message(
+                "gradle.test.runner.ui.tests.tree.presentation.labels.waiting.tests"),
+                              SimpleTextAttributes.REGULAR_ATTRIBUTES
+              );
+            }
+            else if (!testProxy.isInProgress() && testProxy.isEmptySuite()) {
+              renderer.clear();
+              renderer.append(GradleBundle.message(
+                "gradle.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found"),
+                              SimpleTextAttributes.REGULAR_ATTRIBUTES
+              );
+            }
           }
-          else if (!testProxy.isInProgress() && testProxy.isEmptySuite()) {
-            renderer.clear();
-            renderer.append(GradleBundle.message(
-                              "gradle.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found"),
-                            SimpleTextAttributes.REGULAR_ATTRIBUTES
-            );
-          }
-        }
-      });
+        });
+      }
     }
+
+    if (task instanceof ExternalSystemExecuteTaskTask) {
+      final ExternalSystemExecuteTaskTask executeTask = (ExternalSystemExecuteTaskTask)task;
+      if (executeTask.getScriptParameters() == null || !StringUtil.contains(executeTask.getScriptParameters(), "--tests")) {
+        executeTask.appendScriptParameters("--tests *");
+      }
+    }
+
     return myExecutionConsole;
   }
 
@@ -179,13 +195,19 @@ public class GradleTestsExecutionConsoleManager implements ExternalSystemExecuti
   @Override
   public boolean isApplicableFor(@NotNull ExternalSystemTask task) {
     if (task instanceof ExternalSystemExecuteTaskTask) {
-      ExternalSystemExecuteTaskTask taskTask = (ExternalSystemExecuteTaskTask)task;
+      final ExternalSystemExecuteTaskTask taskTask = (ExternalSystemExecuteTaskTask)task;
       if (!StringUtil.equals(taskTask.getExternalSystemId().getId(), GradleConstants.SYSTEM_ID.getId())) return false;
 
       return ContainerUtil.find(taskTask.getTasksToExecute(), new Condition<ExternalTaskPojo>() {
         @Override
-        public boolean value(ExternalTaskPojo pojo) {
-          return "test".equals(pojo.getName());
+        public boolean value(final ExternalTaskPojo pojo) {
+          final ExternalProjectInfo externalProjectInfo =
+            ExternalSystemUtil.getExternalProjectInfo(taskTask.getIdeProject(), getExternalSystemId(), pojo.getLinkedExternalProjectPath());
+          if (externalProjectInfo == null) return false;
+
+          final DataNode<TaskData> taskDataNode = GradleProjectResolverUtil.findTask(
+            externalProjectInfo.getExternalProjectStructure(), pojo.getLinkedExternalProjectPath(), pojo.getName());
+          return taskDataNode != null && GradleCommonClassNames.GRADLE_API_TASKS_TESTING_TEST.equals(taskDataNode.getData().getType());
         }
       }) != null;
     }

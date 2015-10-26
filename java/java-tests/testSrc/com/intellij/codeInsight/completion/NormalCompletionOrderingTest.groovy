@@ -709,4 +709,8 @@ interface TxANotAnno {}
     checkPreferredItems 0, 'fun1', 'fun2', 'fun10'
   }
 
+  public void testPreferVarsHavingReferencedMember() {
+    checkPreferredItems 0, 'xzMap', 'xaString'
+  }
+
 }

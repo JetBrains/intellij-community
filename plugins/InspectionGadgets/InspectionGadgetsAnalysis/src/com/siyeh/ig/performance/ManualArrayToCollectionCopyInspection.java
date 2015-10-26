@@ -109,7 +109,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
         (PsiBlockStatement)body;
       final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
       final PsiStatement[] statements = codeBlock.getStatements();
-      body = statements[0];
+      body = statements.length == 0 ? null : statements[0];
     }
     return body;
   }

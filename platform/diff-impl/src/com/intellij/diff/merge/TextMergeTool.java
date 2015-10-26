@@ -19,23 +19,24 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.actions.ProxyUndoRedoAction;
 import com.intellij.diff.comparison.ByLine;
-import com.intellij.diff.comparison.ComparisonMergeUtil;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.DiffTooBigException;
-import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.MergeLineFragment;
+import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx;
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.KeyboardModifierListener;
+import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.util.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,10 +46,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -63,24 +62,20 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.CalledWithWriteLock;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.BitSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public class TextMergeTool implements MergeTool {
   public static final TextMergeTool INSTANCE = new TextMergeTool();
@@ -200,6 +195,7 @@ public class TextMergeTool implements MergeTool {
     public class MyThreesideViewer extends ThreesideTextDiffViewerEx {
       @NotNull private final ModifierProvider myModifierProvider;
       @Nullable private final UndoManager myUndoManager;
+      @NotNull private final MyInnerDiffWorker myInnerDiffWorker;
 
       // all changes - both applied and unapplied ones
       @NotNull private final List<TextMergeChange> myAllMergeChanges = new ArrayList<TextMergeChange>();
@@ -218,6 +214,7 @@ public class TextMergeTool implements MergeTool {
 
         myModifierProvider = new ModifierProvider();
         myUndoManager = getProject() != null ? UndoManager.getInstance(getProject()) : UndoManager.getGlobalInstance();
+        myInnerDiffWorker = new MyInnerDiffWorker();
 
         DiffUtil.registerAction(new ApplySelectedChangesAction(Side.LEFT, true), myPanel);
         DiffUtil.registerAction(new ApplySelectedChangesAction(Side.RIGHT, true), myPanel);
@@ -244,6 +241,7 @@ public class TextMergeTool implements MergeTool {
       protected List<AnAction> createToolbarActions() {
         List<AnAction> group = new ArrayList<AnAction>();
 
+        group.add(new MyHighlightPolicySettingAction());
         group.add(new MyToggleAutoScrollAction());
         group.add(myEditorSettingsAction);
 
@@ -408,10 +406,10 @@ public class TextMergeTool implements MergeTool {
         try {
           indicator.checkCanceled();
 
-          FairDiffIterable fragments1 = ByLine.compareTwoStepFair(sequences.get(1), sequences.get(0), ComparisonPolicy.DEFAULT, indicator);
-          FairDiffIterable fragments2 = ByLine.compareTwoStepFair(sequences.get(1), sequences.get(2), ComparisonPolicy.DEFAULT, indicator);
-          List<MergeLineFragment> mergeFragments = ComparisonMergeUtil.buildFair(fragments1, fragments2, indicator);
-          return apply(mergeFragments, outputModificationStamp);
+          List<MergeLineFragment> lineFragments = ByLine.compareTwoStep(sequences.get(0), sequences.get(1), sequences.get(2),
+                                                                        ComparisonPolicy.DEFAULT, indicator);
+
+          return apply(lineFragments, outputModificationStamp);
         }
         catch (DiffTooBigException e) {
           return applyNotification(DiffNotifications.createDiffTooBig());
@@ -456,6 +454,7 @@ public class TextMergeTool implements MergeTool {
 
             getEditor(ThreeSide.BASE).setViewer(false);
 
+            myInnerDiffWorker.onSettingsChanged();
             myInitialRediffFinished = true;
           }
         };
@@ -463,9 +462,137 @@ public class TextMergeTool implements MergeTool {
 
       protected void destroyChangedBlocks() {
         for (TextMergeChange change : myAllMergeChanges) {
-          change.destroyHighlighter();
+          change.destroy();
         }
         myAllMergeChanges.clear();
+      }
+
+      //
+      // By-word diff
+      //
+
+      private class MyInnerDiffWorker {
+        @NotNull private final Set<TextMergeChange> myScheduled = ContainerUtil.newHashSet();
+
+        @NotNull private final Alarm myAlarm = new Alarm(MyThreesideViewer.this);
+        @Nullable private ProgressIndicator myProgress;
+
+        private boolean myEnabled = false;
+
+        @CalledInAwt
+        public void scheduleRediff(@NotNull TextMergeChange change) {
+          scheduleRediff(Collections.singletonList(change));
+        }
+
+        @CalledInAwt
+        public void scheduleRediff(@NotNull Collection<TextMergeChange> changes) {
+          if (!myEnabled) return;
+
+          putChanges(changes);
+          schedule();
+        }
+
+        @CalledInAwt
+        public void onSettingsChanged() {
+          boolean enabled = getHighlightPolicy() == HighlightPolicy.BY_WORD;
+          if (myEnabled == enabled) return;
+          myEnabled = enabled;
+
+          if (myProgress != null) myProgress.cancel();
+          myProgress = null;
+
+          if (myEnabled) {
+            putChanges(myAllMergeChanges);
+            launchRediff();
+          }
+          else {
+            myStatusPanel.setBusy(false);
+            myScheduled.clear();
+            for (TextMergeChange change : myAllMergeChanges) {
+              change.setInnerFragments(null);
+            }
+          }
+        }
+
+        private void putChanges(@NotNull Collection<TextMergeChange> changes) {
+          for (TextMergeChange change : changes) {
+            if (change.isResolved()) continue;
+            myScheduled.add(change);
+          }
+        }
+
+        @CalledInAwt
+        private void schedule() {
+          if (myProgress != null) return;
+          if (myScheduled.isEmpty()) return;
+
+          myAlarm.cancelAllRequests();
+          myAlarm.addRequest(new Runnable() {
+            @Override
+            public void run() {
+              launchRediff();
+            }
+          }, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+        }
+
+        @CalledInAwt
+        private void launchRediff() {
+          myStatusPanel.setBusy(true);
+          myProgress = new EmptyProgressIndicator();
+
+          final List<TextMergeChange> scheduled = ContainerUtil.newArrayList(myScheduled);
+          myScheduled.clear();
+
+          final Document[] documents = new Document[]{
+            getEditor(ThreeSide.LEFT).getDocument(),
+            getEditor(ThreeSide.BASE).getDocument(),
+            getEditor(ThreeSide.RIGHT).getDocument()};
+
+          final List<InnerChunkData> data = ContainerUtil.map(scheduled, new Function<TextMergeChange, InnerChunkData>() {
+            @Override
+            public InnerChunkData fun(TextMergeChange change) {
+              return new InnerChunkData(change, documents);
+            }
+          });
+
+          final ProgressIndicator indicator = myProgress;
+          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+            @Override
+            public void run() {
+              performRediff(scheduled, data, indicator);
+            }
+          });
+        }
+
+        @CalledInBackground
+        private void performRediff(@NotNull final List<TextMergeChange> scheduled,
+                                   @NotNull final List<InnerChunkData> data,
+                                   @NotNull final ProgressIndicator indicator) {
+          final List<List<MergeWordFragment>> result = new ArrayList<List<MergeWordFragment>>(data.size());
+          for (InnerChunkData chunkData : data) {
+            result.add(DiffUtil.compareThreesideInner(chunkData.text, ComparisonPolicy.DEFAULT, indicator));
+          }
+
+          ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+              indicator.checkCanceled();
+              if (!myEnabled) return;
+              myProgress = null;
+
+              for (int i = 0; i < scheduled.size(); i++) {
+                TextMergeChange change = scheduled.get(i);
+                if (myScheduled.contains(change)) continue;
+                change.setInnerFragments(result.get(i));
+              }
+
+              myStatusPanel.setBusy(false);
+              if (!myScheduled.isEmpty()) {
+                launchRediff();
+              }
+            }
+          }, ModalityState.any());
+        }
       }
 
       //
@@ -546,7 +673,9 @@ public class TextMergeTool implements MergeTool {
           myChangesToUpdate.add(change);
         }
         else {
+          change.markInnerFragmentsDamaged();
           change.doReinstallHighlighter();
+          myInnerDiffWorker.scheduleRediff(change);
         }
       }
 
@@ -562,8 +691,10 @@ public class TextMergeTool implements MergeTool {
 
         if (myBulkChangeUpdateDepth == 0) {
           for (TextMergeChange change : myChangesToUpdate) {
+            change.markInnerFragmentsDamaged();
             change.doReinstallHighlighter();
           }
+          myInnerDiffWorker.scheduleRediff(myChangesToUpdate);
           myChangesToUpdate.clear();
         }
       }
@@ -601,6 +732,14 @@ public class TextMergeTool implements MergeTool {
             }
           });
         }
+      }
+
+      @NotNull
+      private HighlightPolicy getHighlightPolicy() {
+        HighlightPolicy policy = getTextSettings().getHighlightPolicy();
+        if (policy == HighlightPolicy.BY_WORD_SPLIT) return HighlightPolicy.BY_WORD;
+        if (policy == HighlightPolicy.DO_NOT_HIGHLIGHT) return HighlightPolicy.BY_LINE;
+        return policy;
       }
 
       //
@@ -930,6 +1069,29 @@ public class TextMergeTool implements MergeTool {
       // Actions
       //
 
+      private class MyHighlightPolicySettingAction extends TextDiffViewerUtil.HighlightPolicySettingAction {
+        public MyHighlightPolicySettingAction() {
+          super(getTextSettings());
+        }
+
+        @NotNull
+        @Override
+        protected HighlightPolicy getCurrentSetting() {
+          return getHighlightPolicy();
+        }
+
+        @NotNull
+        @Override
+        protected List<HighlightPolicy> getAvailableSettings() {
+          return ContainerUtil.list(HighlightPolicy.BY_LINE, HighlightPolicy.BY_WORD);
+        }
+
+        @Override
+        protected void onSettingsChanged() {
+          myInnerDiffWorker.onSettingsChanged();
+        }
+      }
+
       private abstract class ApplySelectedChangesActionBase extends AnAction implements DumbAware {
         private final boolean myShortcut;
 
@@ -1195,6 +1357,26 @@ public class TextMergeTool implements MergeTool {
         }
       }
 
+    }
+
+    private static class InnerChunkData {
+      @NotNull public final CharSequence[] text = new CharSequence[3];
+
+      public InnerChunkData(@NotNull TextMergeChange change, @NotNull Document[] documents) {
+        for (ThreeSide side : ThreeSide.values()) {
+          if (change.isChange(side) && !change.isResolved(side)) {
+            text[side.getIndex()] = getChunkContent(change, documents, side);
+          }
+        }
+      }
+
+      @Nullable
+      @CalledWithReadLock
+      private static CharSequence getChunkContent(@NotNull TextMergeChange change, @NotNull Document[] documents, @NotNull ThreeSide side) {
+        int startLine = change.getStartLine(side);
+        int endLine = change.getEndLine(side);
+        return startLine != endLine ? DiffUtil.getLinesContent(side.select(documents), startLine, endLine) : null;
+      }
     }
   }
 }

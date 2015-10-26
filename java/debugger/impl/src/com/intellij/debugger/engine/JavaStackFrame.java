@@ -447,7 +447,7 @@ public class JavaStackFrame extends XStackFrame {
 
     @Override
     public void visitMethodCallExpression(final PsiMethodCallExpression expression) {
-      if (myCollectExpressions) {
+      if (myCollectExpressions && expression.isValid()) {
         final PsiMethod psiMethod = expression.resolveMethod();
         if (psiMethod != null && !DebuggerUtils.hasSideEffectsOrReferencesMissingVars(expression, myVisibleLocals)) {
           myExpressions.add(new TextWithImportsImpl(expression));
@@ -458,7 +458,7 @@ public class JavaStackFrame extends XStackFrame {
 
     @Override
     public void visitReferenceExpression(final PsiReferenceExpression reference) {
-      if (myLineRange.intersects(reference.getTextRange())) {
+      if (myLineRange.intersects(reference.getTextRange()) && reference.isValid()) {
         final PsiElement psiElement = reference.resolve();
         if (psiElement instanceof PsiVariable) {
           final PsiVariable var = (PsiVariable)psiElement;
@@ -554,6 +554,8 @@ public class JavaStackFrame extends XStackFrame {
       for (PsiElement _elem = elem; _elem.getTextOffset() >= _start; _elem = _elem.getParent()) {
         alreadyChecked = _elem.getTextRange();
 
+        if (!_elem.isValid()) continue;
+
         if (_elem instanceof PsiDeclarationStatement) {
           final PsiElement[] declared = ((PsiDeclarationStatement)_elem).getDeclaredElements();
           for (PsiElement declaredElement : declared) {
@@ -609,7 +611,7 @@ public class JavaStackFrame extends XStackFrame {
     if (!lineRange.isEmpty()) {
       final int offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), doc.getLineStartOffset(line), " \t");
       PsiElement element = positionFile.findElementAt(offset);
-      if (element != null) {
+      if (element != null && element.isValid()) {
         PsiMethod method = PsiTreeUtil.getNonStrictParentOfType(element, PsiMethod.class);
         if (method != null) {
           element = method;
@@ -628,7 +630,7 @@ public class JavaStackFrame extends XStackFrame {
         }
 
         //noinspection unchecked
-        if (element instanceof PsiCompiledElement) {
+        if (element instanceof PsiCompiledElement || !element.isValid()) {
           return Pair.create(visibleVars, Collections.<TextWithImports>emptySet());
         }
         else {

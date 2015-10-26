@@ -25,7 +25,9 @@ import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.PatternConfigurationProducer;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
@@ -48,8 +50,6 @@ import static org.jetbrains.plugins.gradle.execution.test.runner.TestRunnerUtils
  */
 public class TestClassGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
 
-  private static final List<String> TASKS_TO_RUN = ContainerUtil.newArrayList("cleanTest", "test");
-
   public TestClassGradleConfigurationProducer() {
     super(GradleExternalTaskConfigurationType.getInstance());
   }
@@ -71,16 +71,19 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     if (testClass == null) return false;
     sourceElement.set(testClass);
 
-    if (context.getModule() == null) return false;
+    final Module module = context.getModule();
+    if (module == null) return false;
 
-    if (!StringUtil.equals(
-      context.getModule().getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY),
-      GradleConstants.SYSTEM_ID.toString())) {
-      return false;
-    }
+    if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return false;
 
-    configuration.getSettings().setExternalProjectPath(context.getModule().getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY));
-    configuration.getSettings().setTaskNames(TASKS_TO_RUN);
+    final String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
+    if (projectPath == null) return false;
+
+    List<String> tasksToRun = getTasksToRun(module);
+    if (tasksToRun.isEmpty()) return false;
+
+    configuration.getSettings().setExternalProjectPath(projectPath);
+    configuration.getSettings().setTaskNames(tasksToRun);
     configuration.getSettings()
       .setScriptParameters(String.format("--tests %s", testClass.getQualifiedName()));
     configuration.setName(testClass.getName());
@@ -116,7 +119,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
       configuration.getSettings().getExternalProjectPath())) {
       return false;
     }
-    if (!configuration.getSettings().getTaskNames().containsAll(TASKS_TO_RUN)) return false;
+    if (!configuration.getSettings().getTaskNames().containsAll(getTasksToRun(context.getModule()))) return false;
 
     final String scriptParameters = configuration.getSettings().getScriptParameters() + ' ';
     return scriptParameters.contains(String.format("--tests %s ", testClass.getQualifiedName()));
@@ -124,7 +127,6 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
 
   @Override
   public void onFirstRun(final ConfigurationFromContext fromContext, final ConfigurationContext context, final Runnable performRunnable) {
-    final PsiClass psiClass = (PsiClass)fromContext.getSourceElement();
     final InheritorChooser inheritorChooser = new InheritorChooser() {
       @Override
       protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
@@ -162,14 +164,17 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
   private static boolean applyTestConfiguration(@NotNull ExternalSystemRunConfiguration configuration,
                                                 @NotNull ConfigurationContext context,
                                                 @NotNull PsiClass... containingClasses) {
-    if (!StringUtil.equals(
-      context.getModule().getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY),
-      GradleConstants.SYSTEM_ID.toString())) {
-      return false;
-    }
+    final Module module = context.getModule();
+    if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return false;
 
-    configuration.getSettings().setExternalProjectPath(context.getModule().getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY));
-    configuration.getSettings().setTaskNames(TASKS_TO_RUN);
+    final String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
+    if (projectPath == null) return false;
+
+    List<String> tasksToRun = getTasksToRun(module);
+    if (tasksToRun.isEmpty()) return false;
+
+    configuration.getSettings().setExternalProjectPath(projectPath);
+    configuration.getSettings().setTaskNames(tasksToRun);
 
     StringBuilder buf = new StringBuilder();
     for (PsiClass aClass : containingClasses) {
