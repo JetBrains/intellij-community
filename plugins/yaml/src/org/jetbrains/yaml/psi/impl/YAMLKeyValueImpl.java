@@ -7,7 +7,6 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.PlatformIcons;
@@ -37,7 +36,7 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
   }
 
   public PsiElement getKey() {
-    return getNode().getChildren(TokenSet.create(YAMLTokenTypes.SCALAR_KEY))[0].getPsi();
+    return findChildByType(YAMLTokenTypes.SCALAR_KEY);
   }
 
   @Override
@@ -128,12 +127,12 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
     return "";
   }
 
-  @NotNull
   /**
    * Provide reference contributor with given method registerReferenceProviders implementation:
    * registrar.registerReferenceProvider(PlatformPatterns.psiElement(YAMLKeyValue.class), ReferenceProvider);
    */
+  @NotNull
   public PsiReference[] getReferences() {
-    return ReferenceProvidersRegistry.getReferencesFromProviders(this, YAMLKeyValue.class);
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this);
   }
 }
