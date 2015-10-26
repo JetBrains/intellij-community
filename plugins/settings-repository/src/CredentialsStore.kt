@@ -33,7 +33,7 @@ public fun showAuthenticationForm(credentials: Credentials?, uri: String, host: 
       var username = credentials?.id
       if (username == null && host == "github.com" && path != null && sshKeyFile == null) {
         val firstSlashIndex = path.indexOf('/', 1)
-        username = path.substring(1, if (firstSlashIndex == -1) path.length() else firstSlashIndex)
+        username = path.substring(1, if (firstSlashIndex == -1) path.length else firstSlashIndex)
       }
 
       val authenticationForm = RepositoryAuthenticationForm(if (sshKeyFile == null) {

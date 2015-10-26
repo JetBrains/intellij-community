@@ -306,7 +306,7 @@ private fun resolveConflicts(mergeProvider: JGitMergeProvider<out Any>, unresolv
       mergedFiles.add(file.path)
     }
 
-    if (resolvedFiles.size() == unresolvedFiles.size()) {
+    if (resolvedFiles.size == unresolvedFiles.size) {
       break
     }
     else {

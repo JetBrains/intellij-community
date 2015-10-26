@@ -217,7 +217,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       if (scheme is ExternalizableScheme) {
         val fileName = PathUtilRt.getFileName(url.path)
         val extension = getFileExtension(fileName, true)
-        val info = ExternalInfo(fileName.substring(0, fileName.length() - extension.length()), extension)
+        val info = ExternalInfo(fileName.substring(0, fileName.length - extension.length), extension)
         info.hash = JDOMUtil.getTreeHash(element, true)
         info.schemeName = scheme.name
         @Suppress("UNCHECKED_CAST")
@@ -256,7 +256,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
   private fun isMy(file: VirtualFile) = StringUtilRt.endsWithIgnoreCase(file.nameSequence, schemeExtension)
 
   override fun loadSchemes(): Collection<E> {
-    val newSchemesOffset = schemes.size()
+    val newSchemesOffset = schemes.size
     if (provider != null && provider.enabled) {
       provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input, readOnly ->
         val scheme = loadScheme(name, input, true)
@@ -284,7 +284,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     }
 
     val list = SmartList<E>()
-    for (i in newSchemesOffset..schemes.size() - 1) {
+    for (i in newSchemesOffset..schemes.size - 1) {
       @Suppress("UNCHECKED_CAST")
       val scheme = schemes[i] as E
       processor.initScheme(scheme)
@@ -348,7 +348,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       val scheme = processor.readScheme(element, duringLoad) ?: return null
 
       val extension = getFileExtension(fileName, false)
-      val fileNameWithoutExtension = fileName.subSequence(0, fileName.length() - extension.length()).toString()
+      val fileNameWithoutExtension = fileName.subSequence(0, fileName.length - extension.length).toString()
       if (duringLoad) {
         if (filesToDelete.isNotEmpty() && filesToDelete.contains(fileName.toString())) {
           LOG.warn("Scheme file \"$fileName\" is not loaded because marked to delete")
@@ -774,7 +774,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
   }
 
   private fun collectExistingNames(schemes: Collection<T>): Collection<String> {
-    val result = THashSet<String>(schemes.size())
+    val result = THashSet<String>(schemes.size)
     for (scheme in schemes) {
       result.add(scheme.name)
     }
@@ -835,7 +835,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
   }
 
   override fun removeScheme(scheme: T) {
-    for (i in schemes.size() - 1 downTo 0) {
+    for (i in schemes.size - 1 downTo 0) {
       val s = schemes.get(i)
       if (scheme.name == s.name) {
         if (currentScheme == s) {
@@ -856,7 +856,7 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       return emptyList()
     }
 
-    val names = ArrayList<String>(schemes.size())
+    val names = ArrayList<String>(schemes.size)
     for (scheme in schemes) {
       names.add(scheme.name)
     }

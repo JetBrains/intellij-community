@@ -123,7 +123,7 @@ public class TestGraphBuilder : BaseTestGraphBuilder {
 
     }
 
-    override fun nodesCount() = nodes.size()
+    override fun nodesCount() = nodes.size
 
     override fun getNodeId(nodeIndex: Int): Int = nodeIndexToId[nodeIndex]!!
 

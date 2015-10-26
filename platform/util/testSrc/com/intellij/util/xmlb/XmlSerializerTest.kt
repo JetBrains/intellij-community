@@ -603,7 +603,7 @@ internal class XmlSerializerTest {
 
     TestCase.assertEquals("bye", bean.STRING_V)
     TestCase.assertNotNull(bean.actions)
-    TestCase.assertEquals(2, bean.actions!!.getChildren("action").size())
+    TestCase.assertEquals(2, bean.actions!!.getChildren("action").size)
   }
 
   class BeanWithJDOMElementArray {
@@ -620,8 +620,8 @@ internal class XmlSerializerTest {
     TestCase.assertEquals("bye", bean.STRING_V)
     TestCase.assertNotNull(bean.actions)
     TestCase.assertEquals(2, bean.actions!!.size())
-    TestCase.assertEquals(2, bean.actions!![0].getChildren().size())
-    TestCase.assertEquals(1, bean.actions!![1].getChildren().size())
+    TestCase.assertEquals(2, bean.actions!![0].getChildren().size)
+    TestCase.assertEquals(1, bean.actions!![1].getChildren().size)
 
     assertSerializer(bean, text, null)
 
@@ -870,7 +870,7 @@ private fun assertSerializer(bean: Any, expected: String, filter: SerializationF
   val element = bean.serialize(filter)
   var actual = JDOMUtil.writeElement(element, "\n").trim()
   if (!expected.startsWith(XML_PREFIX) && actual.startsWith(XML_PREFIX)) {
-    actual = actual.substring(XML_PREFIX.length()).trim()
+    actual = actual.substring(XML_PREFIX.length).trim()
   }
 
   assertThat(actual).`as`(description).isEqualTo(expected)

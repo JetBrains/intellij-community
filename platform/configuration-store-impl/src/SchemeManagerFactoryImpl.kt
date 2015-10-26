@@ -93,7 +93,7 @@ sealed class SchemeManagerFactoryBase : SchemesManagerFactory(), SettingsSavingC
     override fun checkPath(originalPath: String): String {
       var path = super.checkPath(originalPath)
       if (path.startsWith(ROOT_CONFIG)) {
-        path = path.substring(ROOT_CONFIG.length() + 1)
+        path = path.substring(ROOT_CONFIG.length + 1)
         val message = "Path must not contains ROOT_CONFIG macro, corrected: $path"
         if (ApplicationManager.getApplication().isUnitTestMode) throw AssertionError(message) else LOG.warn(message)
       }

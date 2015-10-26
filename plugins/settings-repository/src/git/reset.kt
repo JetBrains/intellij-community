@@ -53,7 +53,7 @@ internal class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator
       if (firstMergeResult == null) {
         // nothing to merge, so, we merge latest origin commit
         val fetchRefSpecs = remoteConfig.fetchRefSpecs
-        assert(fetchRefSpecs.size() == 1)
+        assert(fetchRefSpecs.size == 1)
 
         val latestUpstreamCommit = repository.getRef(fetchRefSpecs[0].destination!!)
         if (latestUpstreamCommit == null) {
