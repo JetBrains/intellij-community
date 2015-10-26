@@ -698,8 +698,12 @@ public class DiffUtil {
    * we consider '\n' not as a part of line, but a separator between lines
    * ex: if last line is not empty, the last symbol will not be '\n'
    */
-  @NotNull
   public static TextRange getLinesRange(@NotNull Document document, int line1, int line2) {
+    return getLinesRange(document, line1, line2, false);
+  }
+
+  @NotNull
+  public static TextRange getLinesRange(@NotNull Document document, int line1, int line2, boolean includeNewline) {
     if (line1 == line2) {
       int lineStartOffset = line1 < getLineCount(document) ? document.getLineStartOffset(line1) : document.getTextLength();
       return new TextRange(lineStartOffset, lineStartOffset);
@@ -707,6 +711,7 @@ public class DiffUtil {
     else {
       int startOffset = document.getLineStartOffset(line1);
       int endOffset = document.getLineEndOffset(line2 - 1);
+      if (includeNewline && endOffset < document.getTextLength()) endOffset++;
       return new TextRange(startOffset, endOffset);
     }
   }

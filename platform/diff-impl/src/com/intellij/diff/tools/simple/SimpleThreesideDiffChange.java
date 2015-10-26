@@ -22,11 +22,11 @@ import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.TextDiffType;
 import com.intellij.diff.util.ThreeSide;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -72,23 +72,15 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
 
   private void createHighlighter(@NotNull ThreeSide side) {
     Editor editor = side.select(myEditors);
-    Document document = editor.getDocument();
 
     TextDiffType type = getDiffType();
     int startLine = myFragment.getStartLine(side);
     int endLine = myFragment.getEndLine(side);
     boolean hasInner = myFragment.getInnerFragments() != null;
 
-    int start;
-    int end;
-    if (startLine == endLine) {
-      start = end = startLine < DiffUtil.getLineCount(document) ? document.getLineStartOffset(startLine) : document.getTextLength();
-    }
-    else {
-      start = document.getLineStartOffset(startLine);
-      end = document.getLineEndOffset(endLine - 1);
-      if (end < document.getTextLength()) end++;
-    }
+    TextRange range = DiffUtil.getLinesRange(editor.getDocument(), startLine, endLine, true);
+    int start = range.getStartOffset();
+    int end = range.getStartOffset();
 
     myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, start, end, type, hasInner));
 
