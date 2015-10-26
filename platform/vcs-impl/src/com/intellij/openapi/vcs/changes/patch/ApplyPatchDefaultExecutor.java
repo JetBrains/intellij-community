@@ -20,14 +20,14 @@ import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.Convertor;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.CalledInAwt;
@@ -79,12 +79,13 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
     final Collection<PatchApplier> appliers = new LinkedList<PatchApplier>();
     for (VirtualFile base : patchGroups.keySet()) {
       appliers.add(new PatchApplier<BinaryFilePatch>(myProject, base,
-                                                     ObjectsConvertor.convert(patchGroups.get(base),
-                                                                              new Convertor<AbstractFilePatchInProgress, FilePatch>() {
-                                                                                public FilePatch convert(AbstractFilePatchInProgress patchInProgress) {
-                                                                                  return patchInProgress.getPatch();
-                                                                                }
-                                                                              }), localList, null, commitContext));
+                                                     ContainerUtil
+                                                       .map(patchGroups.get(base), new Function<AbstractFilePatchInProgress, FilePatch>() {
+                                                         @Override
+                                                         public FilePatch fun(AbstractFilePatchInProgress patchInProgress) {
+                                                           return patchInProgress.getPatch();
+                                                         }
+                                                       }), localList, null, commitContext));
     }
     return appliers;
   }

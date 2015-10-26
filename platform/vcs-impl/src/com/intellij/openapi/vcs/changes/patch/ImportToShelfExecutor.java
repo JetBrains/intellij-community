@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -35,7 +34,9 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.Convertor;
+import com.intellij.util.Function;
+import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsCatchingRunnable;
 import org.jetbrains.annotations.NotNull;
@@ -45,11 +46,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * @author irengrig
- *         Date: 2/25/11
- *         Time: 6:21 PM
- */
 public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchInProgress> {
   private static final Logger LOG = Logger.getInstance(ImportToShelfExecutor.class);
 
@@ -82,19 +78,18 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
         final List<FilePatch> allPatches = new ArrayList<FilePatch>();
         for (VirtualFile virtualFile : patchGroups.keySet()) {
           final File ioCurrentBase = new File(virtualFile.getPath());
-          allPatches.addAll(ObjectsConvertor.convert(patchGroups.get(virtualFile),
-                                                     new Convertor<TextFilePatchInProgress, TextFilePatch>() {
-                                                       public TextFilePatch convert(TextFilePatchInProgress o) {
-                                                         final TextFilePatch was = o.getPatch();
-                                                         was.setBeforeName(FileUtil.toSystemIndependentName(FileUtil.getRelativePath(ioBase,
-                                                                                            new File(ioCurrentBase, was.getBeforeName()))));
-                                                         was.setAfterName(FileUtil.toSystemIndependentName(FileUtil.getRelativePath(ioBase,
-                                                                                            new File(ioCurrentBase, was.getAfterName()))));
-                                                         return was;
-                                                       }
-                                                     }));
+          allPatches.addAll(ContainerUtil.map(patchGroups.get(virtualFile), new Function<TextFilePatchInProgress, TextFilePatch>() {
+            public TextFilePatch fun(TextFilePatchInProgress patchInProgress) {
+              final TextFilePatch was = patchInProgress.getPatch();
+              was.setBeforeName(
+                PathUtil.toSystemIndependentName(FileUtil.getRelativePath(ioBase, new File(ioCurrentBase, was.getBeforeName()))));
+              was.setAfterName(
+                PathUtil.toSystemIndependentName(FileUtil.getRelativePath(ioBase, new File(ioCurrentBase, was.getAfterName()))));
+              return was;
+            }
+          }));
         }
-        if (! allPatches.isEmpty()) {
+        if (!allPatches.isEmpty()) {
           PatchEP[] patchTransitExtensions = null;
           if (additionalInfo != null) {
             try {
