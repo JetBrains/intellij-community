@@ -49,7 +49,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeGoToChangePopupAction;
-import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
+import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.*;
 import com.intellij.ui.DocumentAdapter;
@@ -83,7 +83,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private final TextFieldWithBrowseButton myPatchFile;
 
   private final List<AbstractFilePatchInProgress> myPatches;
-  private final List<ShelveChangesManager.ShelvedBinaryFilePatch> myBinaryShelvedPatches;
+  private final List<ShelvedBinaryFilePatch> myBinaryShelvedPatches;
   @NotNull private final MyChangeTreeList myChangesTreeList;
   @Nullable private final Collection<Change> myPreselectedChanges;
 
@@ -129,7 +129,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
                                         @Nullable final VirtualFile patchFile,
                                         @Nullable final List<TextFilePatch> patches,
                                         @Nullable final LocalChangeList defaultList,
-                                        @Nullable List<ShelveChangesManager.ShelvedBinaryFilePatch> binaryShelvedPatches,
+                                        @Nullable List<ShelvedBinaryFilePatch> binaryShelvedPatches,
                                         @Nullable Collection<Change> preselectedChanges, @Nullable String externalCommitMessage) {
     super(project, true);
     myCallback = callback;

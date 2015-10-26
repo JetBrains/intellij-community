@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile;
+import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -41,11 +42,11 @@ public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
   private static final Logger LOG = Logger.getInstance(UnshelvePatchDefaultExecutor.class);
 
   @NotNull private final ShelvedChangeList myCurrentShelveChangeList;
-  @NotNull private final List<ShelveChangesManager.ShelvedBinaryFilePatch> myBinaryShelvedPatches;
+  @NotNull private final List<ShelvedBinaryFilePatch> myBinaryShelvedPatches;
 
   public UnshelvePatchDefaultExecutor(@NotNull Project project,
                                       @NotNull ShelvedChangeList changeList,
-                                      @NotNull List<ShelveChangesManager.ShelvedBinaryFilePatch> binaryShelvedPatches) {
+                                      @NotNull List<ShelvedBinaryFilePatch> binaryShelvedPatches) {
     super(project);
     myCurrentShelveChangeList = changeList;
     myBinaryShelvedPatches = binaryShelvedPatches;
@@ -82,8 +83,8 @@ public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
                                                   ContainerUtil.mapNotNull(remainingBinaries, new Function<FilePatch, ShelvedBinaryFile>() {
                                                     @Override
                                                     public ShelvedBinaryFile fun(FilePatch patch) {
-                                                      return patch instanceof ShelveChangesManager.ShelvedBinaryFilePatch
-                                                             ? ((ShelveChangesManager.ShelvedBinaryFilePatch)patch)
+                                                      return patch instanceof ShelvedBinaryFilePatch
+                                                             ? ((ShelvedBinaryFilePatch)patch)
                                                                .getShelvedBinaryFile()
                                                              : null;
                                                     }

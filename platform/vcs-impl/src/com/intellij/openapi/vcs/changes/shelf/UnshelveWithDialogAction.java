@@ -64,11 +64,11 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
       return;
     }
     Change[] preselectedChanges = e.getData(VcsDataKeys.CHANGES);
-    List<ShelveChangesManager.ShelvedBinaryFilePatch> binaryShelvedPatches =
-      ContainerUtil.map(changeList.getBinaryFiles(), new Function<ShelvedBinaryFile, ShelveChangesManager.ShelvedBinaryFilePatch>() {
+    List<ShelvedBinaryFilePatch> binaryShelvedPatches =
+      ContainerUtil.map(changeList.getBinaryFiles(), new Function<ShelvedBinaryFile, ShelvedBinaryFilePatch>() {
         @Override
-        public ShelveChangesManager.ShelvedBinaryFilePatch fun(ShelvedBinaryFile file) {
-          return new ShelveChangesManager.ShelvedBinaryFilePatch(file);
+        public ShelvedBinaryFilePatch fun(ShelvedBinaryFile file) {
+          return new ShelvedBinaryFilePatch(file);
         }
       });
     final ApplyPatchDifferentiatedDialog dialog =

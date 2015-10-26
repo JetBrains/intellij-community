@@ -837,49 +837,6 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     return textFilePatches;
   }
 
-  public static class ShelvedBinaryFilePatch extends FilePatch {
-    private final ShelvedBinaryFile myShelvedBinaryFile;
-
-    public ShelvedBinaryFilePatch(final ShelvedBinaryFile shelvedBinaryFile) {
-      myShelvedBinaryFile = shelvedBinaryFile;
-      setBeforeName(myShelvedBinaryFile.BEFORE_PATH);
-      setAfterName(myShelvedBinaryFile.AFTER_PATH);
-    }
-
-    public static ShelvedBinaryFilePatch patchCopy(@NotNull final ShelvedBinaryFilePatch patch) {
-      return new ShelvedBinaryFilePatch(patch.getShelvedBinaryFile());
-    }
-
-    @Override
-    public String getBeforeFileName() {
-      return getFileName(myShelvedBinaryFile.BEFORE_PATH);
-    }
-
-    @Override
-    public String getAfterFileName() {
-      return getFileName(myShelvedBinaryFile.AFTER_PATH);
-    }
-
-    @Nullable
-    private static String getFileName(String filePath) {
-      return filePath != null ? PathUtil.getFileName(filePath) : null;
-    }
-
-    @Override
-    public boolean isNewFile() {
-      return myShelvedBinaryFile.BEFORE_PATH == null;
-    }
-
-    @Override
-    public boolean isDeletedFile() {
-      return myShelvedBinaryFile.AFTER_PATH == null;
-    }
-
-    public ShelvedBinaryFile getShelvedBinaryFile() {
-      return myShelvedBinaryFile;
-    }
-  }
-
   public boolean isShowRecycled() {
     return myShowRecycled;
   }
