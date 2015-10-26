@@ -619,12 +619,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     final DataNode<ModuleData> buildSrcModuleDataNode =
-      ExternalSystemApiUtil.find(resultProjectDataNode, ProjectKeys.MODULE, new BooleanFunction<DataNode<ModuleData>>() {
-        @Override
-        public boolean fun(DataNode<ModuleData> node) {
-          return projectConnectionDataNodeFunction.myProjectPath.equals(node.getData().getLinkedExternalProjectPath());
-        }
-      });
+      GradleProjectResolverUtil.findModule(resultProjectDataNode, projectConnectionDataNodeFunction.myProjectPath);
 
     // check if buildSrc project was already exposed in settings.gradle file
     if (buildSrcModuleDataNode != null) return;

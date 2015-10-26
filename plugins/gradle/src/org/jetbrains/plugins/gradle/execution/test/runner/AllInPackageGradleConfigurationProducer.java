@@ -19,13 +19,13 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -37,8 +37,6 @@ import java.util.List;
  * @since 2/14/14
  */
 public class AllInPackageGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
-
-  private static final List<String> TASKS_TO_RUN = ContainerUtil.newArrayList("cleanTest", "test");
 
   public AllInPackageGradleConfigurationProducer() {
     super(GradleExternalTaskConfigurationType.getInstance());
@@ -56,22 +54,21 @@ public class AllInPackageGradleConfigurationProducer extends GradleTestRunConfig
     final Module module = context.getModule();
     if (module == null) return false;
 
-    if (!StringUtil.equals(
-      module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY),
-      GradleConstants.SYSTEM_ID.toString())) {
-      return false;
-    }
+    if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return false;
 
-    final String linkedGradleProject = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
-    if (linkedGradleProject == null) return false;
-    configuration.getSettings().setExternalProjectPath(linkedGradleProject);
-    configuration.getSettings().setTaskNames(TASKS_TO_RUN);
+    final String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
+    if (projectPath == null) return false;
+
+    List<String> tasksToRun = getTasksToRun(module);
+    if (tasksToRun.isEmpty()) return false;
+
+    configuration.getSettings().setExternalProjectPath(projectPath);
+    configuration.getSettings().setTaskNames(tasksToRun);
     if (psiPackage.getQualifiedName().isEmpty()) {
       configuration.getSettings().setScriptParameters("--tests *");
     }
     else {
-      configuration.getSettings()
-        .setScriptParameters(String.format("--tests %s.*", psiPackage.getQualifiedName()));
+      configuration.getSettings().setScriptParameters(String.format("--tests %s.*", psiPackage.getQualifiedName()));
     }
     configuration.setName(suggestName(psiPackage, module));
     return true;
@@ -92,7 +89,7 @@ public class AllInPackageGradleConfigurationProducer extends GradleTestRunConfig
       configuration.getSettings().getExternalProjectPath())) {
       return false;
     }
-    if (!configuration.getSettings().getTaskNames().containsAll(TASKS_TO_RUN)) return false;
+    if (!configuration.getSettings().getTaskNames().containsAll(getTasksToRun(context.getModule()))) return false;
 
     final String scriptParameters = configuration.getSettings().getScriptParameters() + ' ';
     return psiPackage.getQualifiedName().isEmpty()

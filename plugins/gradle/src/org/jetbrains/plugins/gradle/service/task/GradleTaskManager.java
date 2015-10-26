@@ -80,9 +80,6 @@ public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleE
         }
       }
     }
-    if(!scriptParameters.contains("--tests") && taskNames.contains("test")) {
-      ContainerUtil.addAll(scriptParameters, "--tests", "*");
-    }
 
     Function<ProjectConnection, Void> f = new Function<ProjectConnection, Void>() {
       @Override

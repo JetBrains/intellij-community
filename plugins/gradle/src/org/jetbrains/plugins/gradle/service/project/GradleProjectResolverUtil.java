@@ -15,11 +15,18 @@
  */
 package org.jetbrains.plugins.gradle.service.project;
 
+import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.model.task.TaskData;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.BooleanFunction;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.util.GradleVersion;
@@ -124,5 +131,32 @@ public class GradleProjectResolverUtil {
   public static boolean isIdeaTask(final String taskName, @Nullable String group) {
     if ((group == null || "ide".equalsIgnoreCase(group)) && StringUtil.containsIgnoreCase(taskName, "idea")) return true;
     return "other".equalsIgnoreCase(group) && StringUtil.containsIgnoreCase(taskName, "idea");
+  }
+
+  @Nullable
+  public static DataNode<ModuleData> findModule(@Nullable final DataNode<ProjectData> projectNode, @NotNull final String modulePath) {
+    if (projectNode == null) return null;
+
+    return ExternalSystemApiUtil.find(projectNode, ProjectKeys.MODULE, new BooleanFunction<DataNode<ModuleData>>() {
+      @Override
+      public boolean fun(DataNode<ModuleData> node) {
+        return node.getData().getLinkedExternalProjectPath().equals(modulePath);
+      }
+    });
+  }
+
+  @Nullable
+  public static DataNode<TaskData> findTask(@Nullable final DataNode<ProjectData> projectNode,
+                                            @NotNull final String modulePath,
+                                            @NotNull final String taskName) {
+    final DataNode<ModuleData> moduleNode = findModule(projectNode, modulePath);
+    if (moduleNode == null) return null;
+
+    return ExternalSystemApiUtil.find(moduleNode, ProjectKeys.TASK, new BooleanFunction<DataNode<TaskData>>() {
+      @Override
+      public boolean fun(DataNode<TaskData> node) {
+        return node.getData().getName().equals(taskName);
+      }
+    });
   }
 }
