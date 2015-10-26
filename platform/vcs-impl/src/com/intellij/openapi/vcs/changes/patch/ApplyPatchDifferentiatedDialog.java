@@ -868,6 +868,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
                                     });
   }
 
+  @Nullable
   private LocalChangeList getSelectedChangeList() {
     return myChangeListChooser.getSelectedList(myProject);
   }

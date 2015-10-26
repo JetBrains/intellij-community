@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchEP;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
@@ -38,6 +39,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsCatchingRunnable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,7 +51,9 @@ import java.util.*;
  *         Time: 6:21 PM
  */
 public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchInProgress> {
-  public static final String IMPORT_TO_SHELF = "Import to Shelf";
+  private static final Logger LOG = Logger.getInstance(ImportToShelfExecutor.class);
+
+  private static final String IMPORT_TO_SHELF = "Import to Shelf";
   private final Project myProject;
 
   public ImportToShelfExecutor(Project project) {
@@ -62,10 +66,14 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
   }
 
   @Override
-  public void apply(final MultiMap<VirtualFile, TextFilePatchInProgress> patchGroups,
-                    LocalChangeList localList,
-                    final String fileName,
-                    final TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+  public void apply(@NotNull final MultiMap<VirtualFile, TextFilePatchInProgress> patchGroups,
+                    @Nullable LocalChangeList localList,
+                    @Nullable final String fileName,
+                    @Nullable final TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+    if (fileName == null) {
+      LOG.error("Patch file name shouldn't be null");
+      return;
+    }
     final VcsCatchingRunnable vcsCatchingRunnable = new VcsCatchingRunnable() {
       @Override
       public void runImpl() throws VcsException {

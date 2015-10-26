@@ -31,6 +31,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -51,10 +52,10 @@ public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
   }
 
   @Override
-  public void apply(MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroups,
-                    LocalChangeList localList,
-                    String fileName,
-                    TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+  public void apply(@NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroups,
+                    @Nullable LocalChangeList localList,
+                    @Nullable String fileName,
+                    @Nullable TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
     final CommitContext commitContext = new CommitContext();
     applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
     final Collection<PatchApplier> appliers = getPatchAppliers(patchGroups, localList, commitContext);
@@ -71,24 +72,22 @@ public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
       for (PatchApplier applier : appliers) {
         textPatches.removeAll(applier.getPatches());
         textPatches.addAll(applier.getRemainingPatches());
-        remainingBinaries.removeAll(applier.getBinariesPatches());
+        remainingBinaries.removeAll(applier.getBinaryPatches());
       }
       if (textPatches.isEmpty() && remainingBinaries.isEmpty()) {
         shelveChangesManager.recycleChangeList(myCurrentShelveChangeList);
       }
       else {
         shelveChangesManager.saveRemainingPatches(myCurrentShelveChangeList, textPatches,
-                                                  ContainerUtil.mapNotNull(remainingBinaries,
-                                                                           new Function<FilePatch, ShelvedBinaryFile>() {
-                                                                             @Override
-                                                                             public ShelvedBinaryFile fun(
-                                                                               FilePatch patch) {
-                                                                               return patch instanceof ShelveChangesManager.ShelvedBinaryFilePatch
-                                                                                      ? ((ShelveChangesManager.ShelvedBinaryFilePatch)patch)
-                                                                                        .getShelvedBinaryFile()
-                                                                                      : null;
-                                                                             }
-                                                                           }), commitContext);
+                                                  ContainerUtil.mapNotNull(remainingBinaries, new Function<FilePatch, ShelvedBinaryFile>() {
+                                                    @Override
+                                                    public ShelvedBinaryFile fun(FilePatch patch) {
+                                                      return patch instanceof ShelveChangesManager.ShelvedBinaryFilePatch
+                                                             ? ((ShelveChangesManager.ShelvedBinaryFilePatch)patch)
+                                                               .getShelvedBinaryFile()
+                                                             : null;
+                                                    }
+                                                  }), commitContext);
       }
     }
     catch (Exception e) {

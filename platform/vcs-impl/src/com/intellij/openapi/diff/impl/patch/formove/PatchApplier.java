@@ -133,7 +133,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
   }
 
   @NotNull
-  public List<BinaryType> getBinariesPatches() {
+  public List<BinaryType> getBinaryPatches() {
     return ContainerUtil.mapNotNull(myVerifier.getBinaryPatches(),
                                     new Function<Pair<VirtualFile, ApplyFilePatchBase<BinaryType>>, BinaryType>() {
                                       @Override

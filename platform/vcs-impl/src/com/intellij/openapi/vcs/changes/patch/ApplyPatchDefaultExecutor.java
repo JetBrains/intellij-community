@@ -54,10 +54,10 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
 
   @CalledInAwt
   @Override
-  public void apply(MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroups,
-                    LocalChangeList localList,
-                    String fileName,
-                    TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+  public void apply(@NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroups,
+                    @Nullable LocalChangeList localList,
+                    @Nullable String fileName,
+                    @Nullable TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
     final CommitContext commitContext = new CommitContext();
     applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
     final Collection<PatchApplier> appliers = getPatchAppliers(patchGroups, localList, commitContext);
@@ -74,7 +74,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
 
   @NotNull
   protected Collection<PatchApplier> getPatchAppliers(@NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroups,
-                                                      @NotNull LocalChangeList localList,
+                                                      @Nullable LocalChangeList localList,
                                                       @NotNull CommitContext commitContext) {
     final Collection<PatchApplier> appliers = new LinkedList<PatchApplier>();
     for (VirtualFile base : patchGroups.keySet()) {
