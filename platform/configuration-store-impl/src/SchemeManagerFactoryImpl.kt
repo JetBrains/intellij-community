@@ -40,10 +40,11 @@ sealed class SchemeManagerFactoryBase : SchemesManagerFactory(), SettingsSavingC
     val storageManager = (componentManager.stateStore).stateStorageManager
 
     val path = checkPath(directoryName)
-    val manager = SchemeManagerImpl<T, E>(path, processor, (storageManager as? StateStorageManagerImpl)?.streamProvider, pathToFile(path, storageManager), roamingType, componentManager)
+    val manager = SchemeManagerImpl(path, processor, (storageManager as? StateStorageManagerImpl)?.streamProvider, pathToFile(path, storageManager), roamingType, componentManager)
     @Suppress("CAST_NEVER_SUCCEEDS")
     managers.add(manager as SchemeManagerImpl<Scheme, ExternalizableScheme>)
-    return manager
+    @Suppress("CAST_NEVER_SUCCEEDS")
+    return manager as SchemesManager<T, E>
   }
 
   open fun checkPath(originalPath: String): String {
