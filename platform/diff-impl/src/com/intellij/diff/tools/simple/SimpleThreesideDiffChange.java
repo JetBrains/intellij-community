@@ -79,7 +79,7 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
 
     TextRange range = DiffUtil.getLinesRange(editor.getDocument(), startLine, endLine, true);
     int start = range.getStartOffset();
-    int end = range.getStartOffset();
+    int end = range.getEndOffset();
 
     myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, start, end, type, hasInner));
     myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, startLine, endLine, type, false));

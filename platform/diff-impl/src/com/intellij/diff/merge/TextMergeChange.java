@@ -144,7 +144,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
     TextRange range = DiffUtil.getLinesRange(editor.getDocument(), startLine, endLine, true);
     int start = range.getStartOffset();
-    int end = range.getStartOffset();
+    int end = range.getEndOffset();
 
     boolean ignored = !resolved && myInnerFragments != null;
     myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, start, end, type, ignored, HighlighterTargetArea.EXACT_RANGE, resolved));
