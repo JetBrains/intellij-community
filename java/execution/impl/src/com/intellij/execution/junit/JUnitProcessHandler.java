@@ -48,11 +48,13 @@ public class JUnitProcessHandler extends KillableColoredProcessHandler {
     });
   }
 
+  @NotNull
   @Override
   protected Reader createProcessOutReader() {
     return myOut.createReader();
   }
 
+  @NotNull
   @Override
   protected Reader createProcessErrReader() {
     return myErr.createReader();

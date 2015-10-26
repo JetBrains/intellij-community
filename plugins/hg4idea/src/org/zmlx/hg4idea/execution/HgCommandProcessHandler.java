@@ -61,8 +61,9 @@ class HgCommandProcessHandler extends OSProcessHandler {
       myBinaryOutput.write(data, 0, size);
     }
 
+    @NotNull
     @Override
-    protected Future<?> executeOnPooledThread(Runnable runnable) {
+    protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
       return HgCommandProcessHandler.this.executeOnPooledThread(runnable);
     }
   }

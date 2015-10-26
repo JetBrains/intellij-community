@@ -58,8 +58,9 @@ public class BaseOutputReaderTest {
       myLines.add(text);
     }
 
+    @NotNull
     @Override
-    protected Future<?> executeOnPooledThread(Runnable runnable) {
+    protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
       return ourExecutor.submit(runnable);
     }
   }

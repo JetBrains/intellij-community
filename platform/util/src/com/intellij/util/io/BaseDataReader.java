@@ -17,6 +17,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.TimeoutUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
@@ -48,7 +49,8 @@ public abstract class BaseDataReader {
     }
   }
 
-  protected abstract Future<?> executeOnPooledThread(Runnable runnable);
+  @NotNull
+  protected abstract Future<?> executeOnPooledThread(@NotNull Runnable runnable);
 
   public interface SleepingPolicy {
     int sleepTimeWhenWasActive = 1;
