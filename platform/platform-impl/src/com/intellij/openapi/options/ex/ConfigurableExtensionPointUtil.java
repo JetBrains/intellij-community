@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.options.ex;
 
+import com.intellij.BundleBase;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -414,8 +415,10 @@ public class ConfigurableExtensionPointUtil {
   }
 
   private static String getString(ResourceBundle bundle, String resource) {
+    if (bundle == null) return null;
     try {
-      return bundle == null ? null : bundle.getObject(resource).toString();
+      // mimic CommonBundle.message(..) behavior
+      return BundleBase.replaceMnemonicAmpersand(bundle.getString(resource));
     }
     catch (MissingResourceException ignored) {
       return null;
