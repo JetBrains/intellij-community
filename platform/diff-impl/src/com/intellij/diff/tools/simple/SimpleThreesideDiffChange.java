@@ -25,7 +25,6 @@ import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
@@ -83,14 +82,7 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
     int end = range.getStartOffset();
 
     myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, start, end, type, hasInner));
-
-    if (startLine == endLine) {
-      if (startLine != 0) myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, true));
-    }
-    else {
-      myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, startLine, type, SeparatorPlacement.TOP));
-      myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM));
-    }
+    myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, startLine, endLine, type, false));
 
     if (hasInner) {
       for (MergeWordFragment innerFragment : myFragment.getInnerFragments()) {

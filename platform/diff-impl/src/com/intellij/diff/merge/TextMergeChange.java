@@ -27,7 +27,10 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
@@ -145,16 +148,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
     boolean ignored = !resolved && myInnerFragments != null;
     myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, start, end, type, ignored, HighlighterTargetArea.EXACT_RANGE, resolved));
-
-    if (startLine == endLine) {
-      if (startLine != 0) {
-        myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, true, resolved));
-      }
-    }
-    else {
-      myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, startLine, type, SeparatorPlacement.TOP, false, resolved));
-      myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, false, resolved));
-    }
+    myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, startLine, endLine, type, resolved));
   }
 
   private void createInnerHighlighter(@NotNull ThreeSide side) {

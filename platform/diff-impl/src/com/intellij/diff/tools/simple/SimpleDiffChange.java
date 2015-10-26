@@ -23,7 +23,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,22 +109,15 @@ public class SimpleDiffChange {
   private void createHighlighter(@NotNull Side side, boolean ignored) {
     Editor editor = myViewer.getEditor(side);
 
-    int start = side.getStartOffset(myFragment);
-    int end = side.getEndOffset(myFragment);
     TextDiffType type = DiffUtil.getLineDiffType(myFragment);
-
-    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, start, end, type, ignored));
-
     int startLine = side.getStartLine(myFragment);
     int endLine = side.getEndLine(myFragment);
 
-    if (startLine == endLine) {
-      if (startLine != 0) myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM, true));
-    }
-    else {
-      myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, startLine, type, SeparatorPlacement.TOP));
-      myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, endLine - 1, type, SeparatorPlacement.BOTTOM));
-    }
+    int start = side.getStartOffset(myFragment);
+    int end = side.getEndOffset(myFragment);
+
+    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, start, end, type, ignored));
+    myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, startLine, endLine, type, false));
   }
 
   private void createInlineHighlighter(@NotNull DiffFragment fragment, @NotNull Side side) {
