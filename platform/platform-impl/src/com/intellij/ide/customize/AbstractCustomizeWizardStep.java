@@ -17,6 +17,7 @@ package com.intellij.ide.customize;
 
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,6 +49,10 @@ public abstract class AbstractCustomizeWizardStep extends JPanel {
 
   public static BorderLayout createSmallBorderLayout() {
     return new BorderLayout(SMALL_GAP, SMALL_GAP);
+  }
+
+  public static void applyHeaderFooterStyle(@NotNull JBLabel label) {
+    label.setForeground(UIUtil.getLabelDisabledForeground());
   }
 
   protected static JPanel createBigButtonPanel(LayoutManager layout, final JToggleButton anchorButton, final Runnable action) {
