@@ -17,9 +17,10 @@ package com.intellij.diff.tools.util;
 
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -30,15 +31,16 @@ public class StatusPanel extends JPanel {
   private final AnimatedIcon myBusySpinner;
 
   public StatusPanel() {
-    super(new BorderLayout());
+    super(new GridBagLayout());
     myTextLabel = new JLabel("");
     myTextLabel.setVisible(false);
     myBusySpinner = new AsyncProcessIcon("StatusPanelSpinner");
     myBusySpinner.setVisible(false);
 
-    add(myTextLabel, BorderLayout.CENTER);
-    add(myBusySpinner, BorderLayout.WEST);
-    setBorder(IdeBorderFactory.createEmptyBorder(0, 4, 0, 4));
+    GridBag bag = new GridBag().setDefaultInsets(JBUI.insets(0, 2)).setDefaultFill(GridBagConstraints.BOTH);
+    add(myBusySpinner, bag.next());
+    add(myTextLabel, bag.next());
+    setBorder(JBUI.Borders.empty(0, 2));
   }
 
   public void update() {
