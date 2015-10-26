@@ -370,6 +370,14 @@ public class GuiUtils {
     ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.defaultModalityState());
   }
 
+  public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      runnable.run();
+    } else {
+      ApplicationManager.getApplication().invokeLater(runnable, modalityState);
+    }
+  }
+
   public static JTextField createUndoableTextField() {
     return new JBTextField();
   }
