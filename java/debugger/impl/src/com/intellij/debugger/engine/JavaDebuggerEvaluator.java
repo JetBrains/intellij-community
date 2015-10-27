@@ -107,7 +107,7 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator {
       public void run() {
         try {
           PsiElement elementAtCursor = DebuggerUtilsEx.findElementAt(PsiDocumentManager.getInstance(project).getPsiFile(document), offset);
-          if (elementAtCursor == null) {
+          if (elementAtCursor == null || !elementAtCursor.isValid()) {
             return;
           }
           Pair<PsiElement, TextRange> pair = findExpression(elementAtCursor, sideEffectsAllowed);
