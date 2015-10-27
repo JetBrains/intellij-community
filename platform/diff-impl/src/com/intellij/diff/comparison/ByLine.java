@@ -15,7 +15,7 @@
  */
 package com.intellij.diff.comparison;
 
-import com.intellij.diff.comparison.iterables.DiffIterableUtil.TrimChangeBuilder;
+import com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.fragments.LineFragmentImpl;
@@ -38,8 +38,7 @@ import java.util.List;
 
 import static com.intellij.diff.comparison.TrimUtil.trimEnd;
 import static com.intellij.diff.comparison.TrimUtil.trimStart;
-import static com.intellij.diff.comparison.iterables.DiffIterableUtil.diff;
-import static com.intellij.diff.comparison.iterables.DiffIterableUtil.fair;
+import static com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.isWhiteSpace;
 
 public class ByLine {
@@ -55,6 +54,7 @@ public class ByLine {
 
     FairDiffIterable changes = compareSmart(lines1, lines2, indicator);
     changes = optimizeLineChunks(lines1, lines2, changes, indicator);
+    changes = expandRanges(lines1, lines2, changes, indicator);
     return convertIntoFragments(lines1, lines2, changes);
   }
 
@@ -141,7 +141,7 @@ public class ByLine {
      *   c. match equal lines using result of the previous step
      */
 
-    final TrimChangeBuilder builder = new TrimChangeBuilder(lines1, lines2);
+    final ExpandChangeBuilder builder = new ExpandChangeBuilder(lines1, lines2);
     new Object() {
       private CharSequence sample = null;
       private int last1 = -1;
@@ -365,6 +365,21 @@ public class ByLine {
       }
     }
     return Pair.create(bigLines, indexes);
+  }
+
+  @NotNull
+  private static FairDiffIterable expandRanges(@NotNull List<Line> lines1,
+                                               @NotNull List<Line> lines2,
+                                               @NotNull FairDiffIterable iterable,
+                                               @NotNull ProgressIndicator indicator) {
+    List<Range> changes = new ArrayList<Range>();
+
+    for (Range ch : iterable.iterateChanges()) {
+      Range expanded = TrimUtil.expand(lines1, lines2, ch.start1, ch.start2, ch.end1, ch.end2);
+      if (!expanded.isEmpty()) changes.add(expanded);
+    }
+
+    return fair(create(changes, lines1.size(), lines2.size()));
   }
 
   //

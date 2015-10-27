@@ -311,6 +311,14 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
+  fun `test regression - can trim chunks after 'optimizeLineChunks'`() {
+    lines {
+      ("A=====_ B=====_ }_}_B=====_" - "A=====_ }_}_B=====_")
+      default(del(1, 1, 1))
+      testAll()
+    }
+  }
+
   fun `test bad cases caused by 'compareTwoStep' logic`() {
     lines {
       ("x_!" - "!_x_y")
@@ -339,14 +347,6 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
   }
 
   fun `test bad cases caused by 'compareSmart' logic`() {
-    lines {
-      ("A=====_ B=====_ }_}_B=====_" - "A=====_ }_}_B=====_")
-      // TODO: ignore(del(1, 1, 1))
-      default(del(1, 1, 1))
-      ignore(mod(1, 1, 3, 2))
-      testAll()
-    }
-
     lines {
       ("A=====_ B=====_ }_}_B=====" - "A=====_ }_}_B=====")
       // TODO trim(del(1, 1, 1))
