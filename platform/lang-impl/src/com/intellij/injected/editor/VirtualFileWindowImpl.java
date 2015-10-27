@@ -28,8 +28,8 @@ public class VirtualFileWindowImpl extends LightVirtualFile implements VirtualFi
   private final VirtualFile myDelegate;
   private final DocumentWindowImpl myDocumentWindow;
 
-  public VirtualFileWindowImpl(@NotNull VirtualFile delegate, @NotNull DocumentWindowImpl window, @NotNull Language language, @NotNull CharSequence text) {
-    super(delegate.getName(), language, text);
+  public VirtualFileWindowImpl(@NotNull String name, @NotNull VirtualFile delegate, @NotNull DocumentWindowImpl window, @NotNull Language language, @NotNull CharSequence text) {
+    super(name, language, text);
     setCharset(delegate.getCharset());
     setFileType(language.getAssociatedFileType());
 
