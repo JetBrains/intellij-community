@@ -609,7 +609,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     boolean writeAccessAllowed = isInsideWriteActionEDTOnly();
     if (writeAccessAllowed // Disallow running process in separate thread from under write action.
                            // The thread will deadlock trying to get read action otherwise.
-        || isHeadlessEnvironment() && !isUnitTestMode()
+        || isHeadlessEnvironment() && !isUnitTestMode() && !isOnAir()
       ) {
       LOG.debug("Starting process with progress from within write action makes no sense");
       try {

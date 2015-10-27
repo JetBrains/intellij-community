@@ -45,7 +45,9 @@ public class IdentifierHighlighterPassFactory extends AbstractProjectComponent i
   public TextEditorHighlightingPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {
     if (!editor.isOneLineMode() &&
         CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET &&
-        (!ApplicationManager.getApplication().isHeadlessEnvironment() || ourTestingIdentifierHighlighting) &&
+        (!ApplicationManager.getApplication().isHeadlessEnvironment()
+         || ApplicationManager.getApplication().isOnAir()
+         || ourTestingIdentifierHighlighting) &&
         (file.isPhysical() || file.getOriginalFile().isPhysical())) {
       return new IdentifierHighlighterPass(file.getProject(), file, editor);
     }
