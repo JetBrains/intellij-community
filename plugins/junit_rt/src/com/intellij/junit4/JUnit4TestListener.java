@@ -325,15 +325,14 @@ public class JUnit4TestListener extends RunListener {
     String className = JUnit4ReflectionUtil.getClassName(description);
     if (description.getChildren().isEmpty()) {
       final String methodName = getFullMethodName((Description)description, parent);
-      if (methodName != null) {
-        if (parent != null) {
-          List parents = (List)myParents.get(description);
-          if (parents == null) {
-            parents = new ArrayList(1);
-            myParents.put(description, parents);
-          }
-          parents.add(pParents);
+      if (methodName != null && parent != null) {
+        List parents = (List)myParents.get(description);
+        if (parents == null) {
+          parents = new ArrayList(1);
+          myParents.put(description, parents);
         }
+        parents.add(pParents);
+
         if (isWarning(methodName, className)) {
           className = JUnit4ReflectionUtil.getClassName(parent);
         }
