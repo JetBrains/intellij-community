@@ -18,7 +18,6 @@ package com.intellij.junit4;
 import com.intellij.rt.execution.junit.*;
 import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
-import org.junit.ComparisonFailure;
 import org.junit.internal.requests.ClassRequest;
 import org.junit.internal.requests.FilterRequest;
 import org.junit.runner.*;
@@ -64,64 +63,17 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
     }
 
     try {
-      final Description runnerDescription = description;
-      final JUnitCore runner = new JUnitCore();
-      runner.addListener(myTestsListener);
-      for (Iterator iterator = listeners.iterator(); iterator.hasNext();) {
-        final IDEAJUnitListener junitListener = (IDEAJUnitListener)Class.forName((String)iterator.next()).newInstance();
-        runner.addListener(new RunListener() {
-          private boolean mySuccess;
-          public void testStarted(Description description) throws Exception {
-            mySuccess = true;
-            junitListener.testStarted(JUnit4ReflectionUtil.getClassName(description), JUnit4ReflectionUtil.getMethodName(description));
-          }
-
-          public void testFailure(Failure failure) throws Exception {
-            mySuccess = ComparisonFailureData.isAssertionError(failure.getException().getClass());
-          }
-
-          public void testAssumptionFailure(Failure failure) {
-            mySuccess = false;
-          }
-
-          public void testIgnored(Description description) throws Exception {
-            mySuccess = false;
-          }
-
-          public void testFinished(Description description) throws Exception {
-            final String className = JUnit4ReflectionUtil.getClassName(description);
-            final String methodName = JUnit4ReflectionUtil.getMethodName(description);
-            if (junitListener instanceof IDEAJUnitListenerEx) {
-              ((IDEAJUnitListenerEx)junitListener).testFinished(className, methodName, mySuccess);
-            } else {
-              junitListener.testFinished(className, methodName);
-            }
-          }
-
-          public void testRunStarted(Description description) throws Exception {
-            if (junitListener instanceof IDEAJUnitListenerEx) {
-              ((IDEAJUnitListenerEx)junitListener).testRunStarted(description.getDisplayName());
-            }
-          }
-
-          public void testRunFinished(Result result) throws Exception {
-            if (junitListener instanceof IDEAJUnitListenerEx) {
-              ((IDEAJUnitListenerEx)junitListener).testRunFinished(runnerDescription.getDisplayName());
-            }
-          }
-        });
-      }
       long startTime = System.currentTimeMillis();
       Result result;
       if (count == 1) {
-        result = runner.run(testRunner);
+        result = createRunner(listeners, description).run(testRunner);
       }
       else {
         if (count > 0) {
           boolean success = true;
           int i = 0;
           while (i++ < count) {
-            result = runner.run(testRunner);
+            result = createRunner(listeners, description).run(testRunner);
             success &= result.wasSuccessful();
           }
           long endTime = System.currentTimeMillis();
@@ -133,7 +85,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
         else {
           boolean success = true;
           while (true) {
-            result = runner.run(testRunner);
+            result = createRunner(listeners, description).run(testRunner);
             success &= result.wasSuccessful();
             if (count == -2 && !success) {
               long endTime = System.currentTimeMillis();
@@ -157,6 +109,18 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
       e.printStackTrace(System.err);
       return -2;
     }
+  }
+
+  private JUnitCore createRunner(ArrayList listeners, final Description runnerDescription) throws InstantiationException, 
+                                                                                                  IllegalAccessException, 
+                                                                                                  ClassNotFoundException {
+    final JUnitCore runner = new JUnitCore();
+    runner.addListener(myTestsListener);
+    for (Iterator iterator = listeners.iterator(); iterator.hasNext();) {
+      final IDEAJUnitListener junitListener = (IDEAJUnitListener)Class.forName((String)iterator.next()).newInstance();
+      runner.addListener(new MyCustomRunListenerWrapper(junitListener, runnerDescription.getDisplayName()));
+    }
+    return runner;
   }
 
   private static Description getDescription(Request request, Runner testRunner) throws NoSuchFieldException, IllegalAccessException {
@@ -271,5 +235,55 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
     final Description description = (Description)child;
     final String methodName = description.getMethodName();
     return methodName != null ? description.getClassName() + "," + methodName : description.getClassName();
+  }
+
+  private static class MyCustomRunListenerWrapper extends RunListener {
+    private final IDEAJUnitListener myJunitListener;
+    private final String myDisplayName;
+    private boolean mySuccess;
+
+    public MyCustomRunListenerWrapper(IDEAJUnitListener junitListener, String displayName) {
+      myJunitListener = junitListener;
+      myDisplayName = displayName;
+    }
+
+    public void testStarted(Description description) throws Exception {
+      mySuccess = true;
+      myJunitListener.testStarted(JUnit4ReflectionUtil.getClassName(description), JUnit4ReflectionUtil.getMethodName(description));
+    }
+
+    public void testFailure(Failure failure) throws Exception {
+      mySuccess = ComparisonFailureData.isAssertionError(failure.getException().getClass());
+    }
+
+    public void testAssumptionFailure(Failure failure) {
+      mySuccess = false;
+    }
+
+    public void testIgnored(Description description) throws Exception {
+      mySuccess = false;
+    }
+
+    public void testFinished(Description description) throws Exception {
+      final String className = JUnit4ReflectionUtil.getClassName(description);
+      final String methodName = JUnit4ReflectionUtil.getMethodName(description);
+      if (myJunitListener instanceof IDEAJUnitListenerEx) {
+        ((IDEAJUnitListenerEx)myJunitListener).testFinished(className, methodName, mySuccess);
+      } else {
+        myJunitListener.testFinished(className, methodName);
+      }
+    }
+
+    public void testRunStarted(Description description) throws Exception {
+      if (myJunitListener instanceof IDEAJUnitListenerEx) {
+        ((IDEAJUnitListenerEx)myJunitListener).testRunStarted(description.getDisplayName());
+      }
+    }
+
+    public void testRunFinished(Result result) throws Exception {
+      if (myJunitListener instanceof IDEAJUnitListenerEx) {
+        ((IDEAJUnitListenerEx)myJunitListener).testRunFinished(myDisplayName);
+      }
+    }
   }
 }
