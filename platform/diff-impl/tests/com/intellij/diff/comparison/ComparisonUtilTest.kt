@@ -133,14 +133,14 @@ public class ComparisonUtilTest : DiffTestCase() {
     assertTrue(fragments.size == 1, "Side: ${fragments.size})")
     val fragment = fragments[0]
 
-    assertEquals(offsets1.val1, fragment.getStartOffset1(), fragment.toString())
-    assertEquals(offsets1.val2, fragment.getEndOffset1(), fragment.toString())
-    assertEquals(offsets2.val1, fragment.getStartOffset2(), fragment.toString())
-    assertEquals(offsets2.val2, fragment.getEndOffset2(), fragment.toString())
-    assertEquals(lines1.val1, fragment.getStartLine1(), fragment.toString())
-    assertEquals(lines1.val2, fragment.getEndLine1(), fragment.toString())
-    assertEquals(lines2.val1, fragment.getStartLine2(), fragment.toString())
-    assertEquals(lines2.val2, fragment.getEndLine2(), fragment.toString())
+    assertEquals(offsets1.val1, fragment.startOffset1, fragment.toString())
+    assertEquals(offsets1.val2, fragment.endOffset1, fragment.toString())
+    assertEquals(offsets2.val1, fragment.startOffset2, fragment.toString())
+    assertEquals(offsets2.val2, fragment.endOffset2, fragment.toString())
+    assertEquals(lines1.val1, fragment.startLine1, fragment.toString())
+    assertEquals(lines1.val2, fragment.endLine1, fragment.toString())
+    assertEquals(lines2.val1, fragment.startLine2, fragment.toString())
+    assertEquals(lines2.val2, fragment.endLine2, fragment.toString())
   }
 
   private fun doTestTrim(expected: Boolean, string1: String, string2: String) {

@@ -26,31 +26,31 @@ import java.util.*
 
 public abstract class ComparisonUtilTestBase : DiffTestCase() {
   private fun doLineTest(before: Document, after: Document, expected: List<Change>?, policy: ComparisonPolicy) {
-    val fragments = MANAGER.compareLines(before.getCharsSequence(), after.getCharsSequence(), policy, INDICATOR)
+    val fragments = MANAGER.compareLines(before.charsSequence, after.charsSequence, policy, INDICATOR)
     checkConsistency(fragments, before, after)
     if (expected != null) checkLineChanges(fragments, expected)
   }
 
   private fun doWordTest(before: Document, after: Document, matchings: Couple<BitSet>?, expected: List<Change>?, policy: ComparisonPolicy) {
-    val rawFragments = MANAGER.compareLinesInner(before.getCharsSequence(), after.getCharsSequence(), policy, INDICATOR)
+    val rawFragments = MANAGER.compareLinesInner(before.charsSequence, after.charsSequence, policy, INDICATOR)
     val fragments = MANAGER.squash(rawFragments)
     checkConsistencyWord(fragments, before, after)
 
-    val diffFragments = fragments[0].getInnerFragments()!!
+    val diffFragments = fragments[0].innerFragments!!
     if (matchings != null) checkDiffMatching(diffFragments, matchings)
     if (expected != null) checkDiffChanges(diffFragments, expected)
   }
 
   private fun doCharTest(before: Document, after: Document, matchings: Couple<BitSet>?, expected: List<Change>?, policy: ComparisonPolicy) {
-    val fragments = MANAGER.compareChars(before.getCharsSequence(), after.getCharsSequence(), policy, INDICATOR)
+    val fragments = MANAGER.compareChars(before.charsSequence, after.charsSequence, policy, INDICATOR)
     checkConsistency(fragments, before, after)
     if (matchings != null) checkDiffMatching(fragments, matchings)
     if (expected != null) checkDiffChanges(fragments, expected)
   }
 
   private fun doSplitterTest(before: Document, after: Document, squash: Boolean, trim: Boolean, expected: List<Change>?, policy: ComparisonPolicy) {
-    val text1 = before.getCharsSequence()
-    val text2 = after.getCharsSequence()
+    val text1 = before.charsSequence
+    val text2 = after.charsSequence
 
     var fragments = MANAGER.compareLinesInner(text1, text2, policy, INDICATOR)
     checkConsistency(fragments, before, after)
@@ -65,38 +65,38 @@ public abstract class ComparisonUtilTestBase : DiffTestCase() {
     assertTrue(fragments.size == 1)
     val fragment = fragments[0]
 
-    assertTrue(fragment.getStartOffset1() == 0)
-    assertTrue(fragment.getStartOffset2() == 0)
-    assertTrue(fragment.getEndOffset1() == before.getTextLength())
-    assertTrue(fragment.getEndOffset2() == after.getTextLength())
+    assertTrue(fragment.startOffset1 == 0)
+    assertTrue(fragment.startOffset2 == 0)
+    assertTrue(fragment.endOffset1 == before.textLength)
+    assertTrue(fragment.endOffset2 == after.textLength)
 
     // It could be null if there are no common words. We do not test such cases here.
-    checkConsistency(fragment.getInnerFragments()!!, before, after)
+    checkConsistency(fragment.innerFragments!!, before, after)
   }
 
   private fun checkConsistency(fragments: List<DiffFragment>, before: Document, after: Document) {
     for (fragment in fragments) {
-      assertTrue(fragment.getStartOffset1() <= fragment.getEndOffset1())
-      assertTrue(fragment.getStartOffset2() <= fragment.getEndOffset2())
+      assertTrue(fragment.startOffset1 <= fragment.endOffset1)
+      assertTrue(fragment.startOffset2 <= fragment.endOffset2)
 
       if (fragment is LineFragment) {
-        assertTrue(fragment.getStartLine1() <= fragment.getEndLine1())
-        assertTrue(fragment.getStartLine2() <= fragment.getEndLine2())
+        assertTrue(fragment.startLine1 <= fragment.endLine1)
+        assertTrue(fragment.startLine2 <= fragment.endLine2)
 
-        assertTrue(fragment.getStartLine1() != fragment.getEndLine1() || fragment.getStartLine2() != fragment.getEndLine2())
+        assertTrue(fragment.startLine1 != fragment.endLine1 || fragment.startLine2 != fragment.endLine2)
 
-        assertTrue(fragment.getStartLine1() >= 0)
-        assertTrue(fragment.getStartLine2() >= 0)
-        assertTrue(fragment.getEndLine1() <= getLineCount(before))
-        assertTrue(fragment.getEndLine2() <= getLineCount(after))
+        assertTrue(fragment.startLine1 >= 0)
+        assertTrue(fragment.startLine2 >= 0)
+        assertTrue(fragment.endLine1 <= getLineCount(before))
+        assertTrue(fragment.endLine2 <= getLineCount(after))
 
         checkLineOffsets(fragment, before, after)
 
-        val innerFragments = fragment.getInnerFragments()
+        val innerFragments = fragment.innerFragments
         innerFragments?.let { checkConsistency(innerFragments, before, after) }
       }
       else {
-        assertTrue(fragment.getStartOffset1() != fragment.getEndOffset1() || fragment.getStartOffset2() != fragment.getEndOffset2())
+        assertTrue(fragment.startOffset1 != fragment.endOffset1 || fragment.startOffset2 != fragment.endOffset2)
       }
     }
   }
@@ -115,8 +115,8 @@ public abstract class ComparisonUtilTestBase : DiffTestCase() {
     val set1 = BitSet()
     val set2 = BitSet()
     for (fragment in fragments) {
-      set1.set(fragment.getStartOffset1(), fragment.getEndOffset1())
-      set2.set(fragment.getStartOffset2(), fragment.getEndOffset2())
+      set1.set(fragment.startOffset1, fragment.endOffset1)
+      set2.set(fragment.startOffset2, fragment.endOffset2)
     }
 
     assertEquals(matchings.first, set1)
@@ -124,28 +124,28 @@ public abstract class ComparisonUtilTestBase : DiffTestCase() {
   }
 
   private fun convertDiffFragments(fragments: List<DiffFragment>): List<Change> {
-    return fragments.map { Change(it.getStartOffset1(), it.getEndOffset1(), it.getStartOffset2(), it.getEndOffset2()) }
+    return fragments.map { Change(it.startOffset1, it.endOffset1, it.startOffset2, it.endOffset2) }
   }
 
   private fun convertLineFragments(fragments: List<LineFragment>): List<Change> {
-    return fragments.map { Change(it.getStartLine1(), it.getEndLine1(), it.getStartLine2(), it.getEndLine2()) }
+    return fragments.map { Change(it.startLine1, it.endLine1, it.startLine2, it.endLine2) }
   }
 
   private fun checkLineOffsets(fragment: LineFragment, before: Document, after: Document) {
-    checkLineOffsets(before, fragment.getStartLine1(), fragment.getEndLine1(), fragment.getStartOffset1(), fragment.getEndOffset1())
+    checkLineOffsets(before, fragment.startLine1, fragment.endLine1, fragment.startOffset1, fragment.endOffset1)
 
-    checkLineOffsets(after, fragment.getStartLine2(), fragment.getEndLine2(), fragment.getStartOffset2(), fragment.getEndOffset2())
+    checkLineOffsets(after, fragment.startLine2, fragment.endLine2, fragment.startOffset2, fragment.endOffset2)
   }
 
   private fun checkLineOffsets(document: Document, startLine: Int, endLine: Int, startOffset: Int, endOffset: Int) {
     if (startLine != endLine) {
       assertEquals(document.getLineStartOffset(startLine), startOffset)
       var offset = document.getLineEndOffset(endLine - 1)
-      if (offset < document.getTextLength()) offset++
+      if (offset < document.textLength) offset++
       assertEquals(offset, endOffset)
     }
     else {
-      val offset = if (startLine == getLineCount(document)) document.getTextLength() else document.getLineStartOffset(startLine)
+      val offset = if (startLine == getLineCount(document)) document.textLength else document.getLineStartOffset(startLine)
       assertEquals(offset, startOffset)
       assertEquals(offset, endOffset)
     }

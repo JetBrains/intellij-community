@@ -115,7 +115,7 @@ public abstract class DiffTestCase : UsefulTestCase() {
   //
 
   public fun getLineCount(document: Document): Int {
-    return Math.max(1, document.getLineCount())
+    return Math.max(1, document.lineCount)
   }
 
   public infix fun Int.until(a: Int): IntRange = this..a - 1

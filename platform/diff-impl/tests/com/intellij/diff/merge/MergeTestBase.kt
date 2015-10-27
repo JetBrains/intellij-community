@@ -50,7 +50,7 @@ public abstract class MergeTestBase : DiffTestCase() {
     super.setUp()
     projectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName(true)).getFixture()
     projectFixture!!.setUp()
-    project = projectFixture!!.getProject()
+    project = projectFixture!!.project
   }
 
   override fun tearDown() {
@@ -77,7 +77,7 @@ public abstract class MergeTestBase : DiffTestCase() {
     val baseContent: DocumentContent = contentFactory.create(parseSource(base))
     val rightContent: DocumentContent = contentFactory.create(parseSource(right))
     val outputContent: DocumentContent = contentFactory.create(parseSource(""))
-    outputContent.getDocument().setReadOnly(false)
+    outputContent.document.setReadOnly(false)
 
     val context = MockMergeContext(project)
     val request = MockMergeRequest(leftContent, baseContent, rightContent, outputContent)
@@ -96,10 +96,10 @@ public abstract class MergeTestBase : DiffTestCase() {
   }
 
   public inner class TestBuilder(public val mergeViewer: TextMergeViewer, private val actions: List<AnAction>) {
-    public val viewer: MyThreesideViewer = mergeViewer.getViewer()
+    public val viewer: MyThreesideViewer = mergeViewer.viewer
     public val changes: List<TextMergeChange> = viewer.getAllChanges()
     public val editor: EditorEx = viewer.getEditor(ThreeSide.BASE)
-    public val document: Document = editor.getDocument()
+    public val document: Document = editor.document
 
     private val textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
     private val undoManager = UndoManager.getInstance(project!!)
@@ -208,7 +208,7 @@ public abstract class MergeTestBase : DiffTestCase() {
     }
 
     private fun findRange(oldContent: CharSequence): Couple<Int> {
-      val text = document.getImmutableCharSequence()
+      val text = document.charsSequence
       val index1 = StringUtil.indexOf(text, oldContent)
       assertTrue(index1 >= 0, "content - '\n$oldContent\n'\ntext - '\n$text'")
       val index2 = StringUtil.indexOf(text, oldContent, index1 + 1)
@@ -284,16 +284,16 @@ public abstract class MergeTestBase : DiffTestCase() {
 
     public fun Int.assertType(type: TextDiffType) {
       val change = change(this)
-      assertEquals(change.getDiffType(), type)
+      assertEquals(change.diffType, type)
     }
 
     public fun Int.assertType(changeType: SidesState) {
       assertTrue(changeType != NONE)
       val change = change(this)
-      val actual = change.getType()
+      val actual = change.type
       val isLeftChange = changeType != RIGHT
       val isRightChange = changeType != LEFT
-      assertEquals(Pair(isLeftChange, isRightChange), Pair(actual.isLeftChange(), actual.isRightChange()))
+      assertEquals(Pair(isLeftChange, isRightChange), Pair(actual.isLeftChange, actual.isRightChange))
     }
 
     public fun Int.assertResolved(type: SidesState) {
@@ -315,13 +315,13 @@ public abstract class MergeTestBase : DiffTestCase() {
 
     public fun Int.assertContent(expected: String) {
       val change = change(this)
-      val document = editor.getDocument()
+      val document = editor.document
       val actual = DiffUtil.getLinesContent(document, change.getStartLine(ThreeSide.BASE), change.getEndLine(ThreeSide.BASE))
       assertEquals(parseSource(expected), actual)
     }
 
     public fun assertContent(expected: String) {
-      val actual = viewer.getEditor(ThreeSide.BASE).getDocument().getImmutableCharSequence()
+      val actual = viewer.getEditor(ThreeSide.BASE).document.charsSequence
       assertEquals(parseSource(expected), actual)
     }
 
@@ -336,7 +336,7 @@ public abstract class MergeTestBase : DiffTestCase() {
     }
 
     public inner class LineCol(val line: Int, val col: Int) {
-      public fun toOffset(): Int = editor.getDocument().getLineStartOffset(line) + col
+      public fun toOffset(): Int = editor.document.getLineStartOffset(line) + col
     }
   }
 
@@ -376,13 +376,13 @@ public abstract class MergeTestBase : DiffTestCase() {
                                                      private val changes: List<ViewerState.ChangeState>) {
     companion object {
       public fun recordState(viewer: MyThreesideViewer): ViewerState {
-        val content = viewer.getEditor(ThreeSide.BASE).getDocument().getImmutableCharSequence()
+        val content = viewer.getEditor(ThreeSide.BASE).document.getImmutableCharSequence()
         val changes = viewer.getAllChanges().map { recordChangeState(viewer, it) }
         return ViewerState(content, changes)
       }
 
       private fun recordChangeState(viewer: MyThreesideViewer, change: TextMergeChange): ChangeState {
-        val document = viewer.getEditor(ThreeSide.BASE).getDocument();
+        val document = viewer.getEditor(ThreeSide.BASE).document;
         val content = DiffUtil.getLinesContent(document, change.getStartLine(ThreeSide.BASE), change.getEndLine(ThreeSide.BASE))
 
         val resolved = if (change.isResolved()) BOTH else if (change.isResolved(Side.LEFT)) LEFT else if (change.isResolved(Side.RIGHT)) RIGHT else NONE

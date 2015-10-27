@@ -129,7 +129,7 @@ public class LineNumberConvertorCorrectorTest : UsefulTestCase() {
     private var maxLength = 0 // search for strict matchings in this boundaries (*2 - just in case)
 
     public fun equal(onesideStart: Int, twosideStart: Int, length: Int, side: Side) {
-      if (side.isLeft()) {
+      if (side.isLeft) {
         builder.put1(onesideStart, twosideStart, length)
       }
       else {

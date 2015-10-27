@@ -50,8 +50,8 @@ public class ComparisonUtilAutoTest : DiffTestCase() {
     val policies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES)
 
     doTest(seed, runs, maxLength, policies) { text1, text2, policy, debugData ->
-      val sequence1 = text1.getCharsSequence()
-      val sequence2 = text2.getCharsSequence()
+      val sequence1 = text1.charsSequence
+      val sequence2 = text2.charsSequence
 
       val fragments = MANAGER.compareLinesInner(sequence1, sequence2, policy, INDICATOR)
       debugData.put("Fragments", fragments)
@@ -64,8 +64,8 @@ public class ComparisonUtilAutoTest : DiffTestCase() {
     val policies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES)
 
     doTest(seed, runs, maxLength, policies) { text1, text2, policy, debugData ->
-      val sequence1 = text1.getCharsSequence()
-      val sequence2 = text2.getCharsSequence()
+      val sequence1 = text1.charsSequence
+      val sequence2 = text2.charsSequence
 
       val fragments = MANAGER.compareLinesInner(sequence1, sequence2, policy, INDICATOR)
       debugData.put("Fragments", fragments)
@@ -81,8 +81,8 @@ public class ComparisonUtilAutoTest : DiffTestCase() {
     val policies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES)
 
     doTest(seed, runs, maxLength, policies) { text1, text2, policy, debugData ->
-      val sequence1 = text1.getCharsSequence()
-      val sequence2 = text2.getCharsSequence()
+      val sequence1 = text1.charsSequence
+      val sequence2 = text2.charsSequence
 
       val fragments = MANAGER.compareLinesInner(sequence1, sequence2, policy, INDICATOR)
       debugData.put("Fragments", fragments)
@@ -98,8 +98,8 @@ public class ComparisonUtilAutoTest : DiffTestCase() {
     val policies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.IGNORE_WHITESPACES)
 
     doTest(seed, runs, maxLength, policies) { text1, text2, policy, debugData ->
-      val sequence1 = text1.getCharsSequence()
-      val sequence2 = text2.getCharsSequence()
+      val sequence1 = text1.charsSequence
+      val sequence2 = text2.charsSequence
 
       val fragments = MANAGER.compareChars(sequence1, sequence2, policy, INDICATOR)
       debugData.put("Fragments", fragments)
@@ -112,8 +112,8 @@ public class ComparisonUtilAutoTest : DiffTestCase() {
     val policies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES)
 
     doTest(seed, runs, maxLength, policies) { text1, text2, policy, debugData ->
-      val sequence1 = text1.getCharsSequence()
-      val sequence2 = text2.getCharsSequence()
+      val sequence1 = text1.charsSequence
+      val sequence2 = text2.charsSequence
 
       val fragments = MANAGER.compareWords(sequence1, sequence2, policy, INDICATOR)
       debugData.put("Fragments", fragments)
@@ -130,8 +130,8 @@ public class ComparisonUtilAutoTest : DiffTestCase() {
       val text1 = DocumentImpl(generateText(maxLength))
       val text2 = DocumentImpl(generateText(maxLength))
 
-      debugData.put("Text1", textToReadableFormat(text1.getCharsSequence()))
-      debugData.put("Text2", textToReadableFormat(text2.getCharsSequence()))
+      debugData.put("Text1", textToReadableFormat(text1.charsSequence))
+      debugData.put("Text2", textToReadableFormat(text2.charsSequence))
 
       for (comparisonPolicy in policies) {
         debugData.put("Policy", comparisonPolicy)
@@ -144,15 +144,15 @@ public class ComparisonUtilAutoTest : DiffTestCase() {
     checkLineConsistency(text1, text2, fragments, allowNonSquashed)
 
     for (fragment in fragments) {
-      if (fragment.getInnerFragments() != null) {
-        val sequence1 = text1.subsequence(fragment.getStartOffset1(), fragment.getEndOffset1())
-        val sequence2 = text2.subsequence(fragment.getStartOffset2(), fragment.getEndOffset2())
+      if (fragment.innerFragments != null) {
+        val sequence1 = text1.subsequence(fragment.startOffset1, fragment.endOffset1)
+        val sequence2 = text2.subsequence(fragment.startOffset2, fragment.endOffset2)
 
-        checkResultWord(sequence1, sequence2, fragment.getInnerFragments()!!, policy)
+        checkResultWord(sequence1, sequence2, fragment.innerFragments!!, policy)
       }
     }
 
-    checkUnchanged(text1.getCharsSequence(), text2.getCharsSequence(), fragments, policy, true)
+    checkUnchanged(text1.charsSequence, text2.charsSequence, fragments, policy, true)
     checkCantTrimLines(text1, text2, fragments, policy, allowNonSquashed)
   }
 
@@ -173,20 +173,20 @@ public class ComparisonUtilAutoTest : DiffTestCase() {
     var last2 = -1
 
     for (fragment in fragments) {
-      val startOffset1 = fragment.getStartOffset1()
-      val startOffset2 = fragment.getStartOffset2()
-      val endOffset1 = fragment.getEndOffset1()
-      val endOffset2 = fragment.getEndOffset2()
+      val startOffset1 = fragment.startOffset1
+      val startOffset2 = fragment.startOffset2
+      val endOffset1 = fragment.endOffset1
+      val endOffset2 = fragment.endOffset2
 
-      val start1 = fragment.getStartLine1()
-      val start2 = fragment.getStartLine2()
-      val end1 = fragment.getEndLine1()
-      val end2 = fragment.getEndLine2()
+      val start1 = fragment.startLine1
+      val start2 = fragment.startLine2
+      val end1 = fragment.endLine1
+      val end2 = fragment.endLine2
 
       assertTrue(startOffset1 >= 0)
       assertTrue(startOffset2 >= 0)
-      assertTrue(endOffset1 <= text1.getTextLength())
-      assertTrue(endOffset2 <= text2.getTextLength())
+      assertTrue(endOffset1 <= text1.textLength)
+      assertTrue(endOffset2 <= text2.textLength)
 
       assertTrue(start1 >= 0)
       assertTrue(start2 >= 0)
@@ -214,10 +214,10 @@ public class ComparisonUtilAutoTest : DiffTestCase() {
     var last2 = -1
 
     for (diffFragment in fragments) {
-      val start1 = diffFragment.getStartOffset1()
-      val start2 = diffFragment.getStartOffset2()
-      val end1 = diffFragment.getEndOffset1()
-      val end2 = diffFragment.getEndOffset2()
+      val start1 = diffFragment.startOffset1
+      val start2 = diffFragment.startOffset2
+      val end1 = diffFragment.endOffset1
+      val end2 = diffFragment.endOffset2
 
       assertTrue(start1 <= end1)
       assertTrue(start2 <= end2)
@@ -231,21 +231,21 @@ public class ComparisonUtilAutoTest : DiffTestCase() {
   }
 
   private fun checkLineOffsets(fragment: LineFragment, before: Document, after: Document) {
-    checkLineOffsets(before, fragment.getStartLine1(), fragment.getEndLine1(), fragment.getStartOffset1(), fragment.getEndOffset1())
+    checkLineOffsets(before, fragment.startLine1, fragment.endLine1, fragment.startOffset1, fragment.endOffset1)
 
-    checkLineOffsets(after, fragment.getStartLine2(), fragment.getEndLine2(), fragment.getStartOffset2(), fragment.getEndOffset2())
+    checkLineOffsets(after, fragment.startLine2, fragment.endLine2, fragment.startOffset2, fragment.endOffset2)
   }
 
   private fun checkLineOffsets(document: Document, startLine: Int, endLine: Int, startOffset: Int, endOffset: Int) {
     if (startLine != endLine) {
       assertEquals(document.getLineStartOffset(startLine), startOffset)
       var offset = document.getLineEndOffset(endLine - 1)
-      if (offset < document.getTextLength()) offset++
+      if (offset < document.textLength) offset++
       assertEquals(offset, endOffset)
     }
     else {
       val offset = if (startLine == getLineCount(document))
-        document.getTextLength()
+        document.textLength
       else
         document.getLineStartOffset(startLine)
       assertEquals(offset, startOffset)
@@ -260,13 +260,13 @@ public class ComparisonUtilAutoTest : DiffTestCase() {
     var last1 = 0
     var last2 = 0
     for (fragment in fragments) {
-      val chunk1 = text1.subSequence(last1, fragment.getStartOffset1())
-      val chunk2 = text2.subSequence(last2, fragment.getStartOffset2())
+      val chunk1 = text1.subSequence(last1, fragment.startOffset1)
+      val chunk2 = text2.subSequence(last2, fragment.startOffset2)
 
       assertEqualsCharSequences(chunk1, chunk2, ignoreSpaces, skipNewline)
 
-      last1 = fragment.getEndOffset1()
-      last2 = fragment.getEndOffset2()
+      last1 = fragment.endOffset1
+      last2 = fragment.endOffset2
     }
     val chunk1 = text1.subSequence(last1, text1.length)
     val chunk2 = text2.subSequence(last2, text2.length)
@@ -275,8 +275,8 @@ public class ComparisonUtilAutoTest : DiffTestCase() {
 
   private fun checkCantTrimLines(text1: Document, text2: Document, fragments: List<LineFragment>, policy: ComparisonPolicy, allowNonSquashed: Boolean) {
     for (fragment in fragments) {
-      val sequence1 = getFirstLastLines(text1, fragment.getStartLine1(), fragment.getEndLine1())
-      val sequence2 = getFirstLastLines(text2, fragment.getStartLine2(), fragment.getEndLine2())
+      val sequence1 = getFirstLastLines(text1, fragment.startLine1, fragment.endLine1)
+      val sequence2 = getFirstLastLines(text2, fragment.startLine2, fragment.endLine2)
       if (sequence1 == null || sequence2 == null) continue
 
       checkNonEqualsIfLongEnough(sequence1.first, sequence2.first, policy, allowNonSquashed)
@@ -306,13 +306,13 @@ public class ComparisonUtilAutoTest : DiffTestCase() {
     val firstLineRange = DiffUtil.getLinesRange(text, start, start + 1)
     val lastLineRange = DiffUtil.getLinesRange(text, end - 1, end)
 
-    val firstLine = firstLineRange.subSequence(text.getCharsSequence())
-    val lastLine = lastLineRange.subSequence(text.getCharsSequence())
+    val firstLine = firstLineRange.subSequence(text.charsSequence)
+    val lastLine = lastLineRange.subSequence(text.charsSequence)
 
     return Couple.of(firstLine, lastLine)
   }
 
   private fun Document.subsequence(start: Int, end: Int): CharSequence {
-    return this.getCharsSequence().subSequence(start, end)
+    return this.charsSequence.subSequence(start, end)
   }
 }

@@ -78,7 +78,7 @@ public class MergeAutoTest : MergeTestBase() {
   }
 
   private fun TestBuilder.doReplace(): Unit {
-    val length = document.getTextLength()
+    val length = document.textLength
 
     var index1: Int = 0;
     var index2: Int = 0;
