@@ -135,7 +135,7 @@ public abstract class AbstractBlockAlignmentProcessor implements BlockAlignmentP
    */
   protected abstract int getAlignmentIndentDiff(@NotNull IndentData alignmentAnchorIndent, @NotNull Context context);
 
-  private static void reportAlignmentProcessingError(Context context) {
+  protected static void reportAlignmentProcessingError(Context context) {
     ASTNode node = context.targetBlock.getNode();
     Language language = node != null ? node.getPsi().getLanguage() : null;
     LogMessageEx.error(LOG,

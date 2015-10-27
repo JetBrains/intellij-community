@@ -77,6 +77,7 @@ class InitialInfoBuilder {
   private boolean myCollectAlignmentsInsideFormattingRange = false;
 
   private MultiMap<ExpandableIndent, AbstractBlockWrapper> myBlocksToForceChildrenIndent = new LinkedMultiMap<ExpandableIndent, AbstractBlockWrapper>();
+  private MultiMap<Alignment, Block> myBlocksToAlign = new MultiMap<Alignment, Block>();
 
   private InitialInfoBuilder(final Block rootBlock,
                              final FormattingDocumentModel model,
@@ -205,6 +206,10 @@ class InitialInfoBuilder {
       myAlignmentsInsideRangeToModify.add(rootBlock.getAlignment());
     }
 
+    if (rootBlock.getAlignment() != null) {
+      myBlocksToAlign.putValue(rootBlock.getAlignment(), rootBlock);
+    }
+
     ReadOnlyBlockInformationProvider previousProvider = myReadOnlyBlockInformationProvider;
     try {
       if (rootBlock instanceof ReadOnlyBlockInformationProvider) {
@@ -291,6 +296,10 @@ class InitialInfoBuilder {
 
   public MultiMap<ExpandableIndent, AbstractBlockWrapper> getExpandableIndentsBlocks() {
     return myBlocksToForceChildrenIndent;
+  }
+  
+  public MultiMap<Alignment, Block> getBlocksToAlign() {
+    return myBlocksToAlign;
   }
   
   private void doIteration(@NotNull State state) {
