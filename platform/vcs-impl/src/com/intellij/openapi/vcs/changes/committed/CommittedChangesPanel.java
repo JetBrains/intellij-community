@@ -54,6 +54,8 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -102,10 +104,13 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     toolbarPanel.add(toolBar.getComponent());
     toolbarPanel.add(Box.createHorizontalGlue());
     myRegexCheckbox = new JCheckBox(VcsBundle.message("committed.changes.regex.title"));
+    // FIXME: take mnemonic from VcsBundle too ???
+    myRegexCheckbox.setMnemonic('g');		// same as in Editor > Find toolbar
     myRegexCheckbox.setSelected(false);
-    myRegexCheckbox.getModel().addChangeListener(new ChangeListener() {
+    myRegexCheckbox.getModel().addItemListener(new ItemListener() {
       @Override
-      public void stateChanged(ChangeEvent e) {
+      public void itemStateChanged(ItemEvent e) {
+        // TODO: no need to re-filter if the text field is empty anyway
         myFilterComponent.filter();
       }
     });
