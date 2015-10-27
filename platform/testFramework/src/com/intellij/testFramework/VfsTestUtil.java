@@ -20,6 +20,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -131,5 +132,17 @@ public class VfsTestUtil {
                   "real path " + realVfsPath);
     }
     return vFile;
+  }
+
+  public static void assertFilePathEndsWithCaseSensitivePath(@NotNull VirtualFile file, @NotNull String suffixPath) {
+    String vfsSuffixPath = FileUtil.toSystemIndependentName(suffixPath);
+    String vfsPath = file.getPath();
+    if (!SystemInfo.isFileSystemCaseSensitive && !vfsPath.endsWith(vfsSuffixPath) &&
+        StringUtil.endsWithIgnoreCase(vfsPath, vfsSuffixPath)) {
+      String realSuffixPath = vfsPath.substring(vfsPath.length() - vfsSuffixPath.length());
+      Assert.fail("Please correct case-sensitivity of path to prevent test failure on case-sensitive file systems:\n" +
+                  "     path " + suffixPath + "\n" +
+                  "real path " + realSuffixPath);
+    }
   }
 }
