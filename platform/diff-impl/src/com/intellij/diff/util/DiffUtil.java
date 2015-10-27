@@ -20,6 +20,7 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffTool;
 import com.intellij.diff.SuppressiveDiffTool;
+import com.intellij.diff.comparison.ByWord;
 import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.contents.DiffContent;
@@ -28,6 +29,7 @@ import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
+import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
@@ -530,6 +532,57 @@ public class DiffUtil {
                                                          config.policy, config.squashFragments, config.trimFragments);
   }
 
+  @Nullable
+  public static List<MergeWordFragment> compareThreesideInner(@NotNull CharSequence[] chunks,
+                                                              @NotNull ComparisonPolicy comparisonPolicy,
+                                                              @NotNull ProgressIndicator indicator) {
+    if (chunks[0] == null && chunks[1] == null && chunks[2] == null) return null; // ---
+
+    if (comparisonPolicy == ComparisonPolicy.IGNORE_WHITESPACES) {
+      if (isChunksEquals(chunks[0], chunks[1], comparisonPolicy) &&
+          isChunksEquals(chunks[0], chunks[2], comparisonPolicy)) {
+        return Collections.emptyList(); // whitespace-only changes, ex: empty lines added/removed
+      }
+    }
+
+    if (chunks[0] == null && chunks[1] == null ||
+        chunks[0] == null && chunks[2] == null ||
+        chunks[1] == null && chunks[2] == null) { // =--, -=-, --=
+      return null;
+    }
+
+    if (chunks[0] != null && chunks[1] != null && chunks[2] != null) { // ===
+      return ByWord.compare(chunks[0], chunks[1], chunks[2], comparisonPolicy, indicator);
+    }
+
+    // ==-, =-=, -==
+    final ThreeSide side1 = chunks[0] != null ? ThreeSide.LEFT : ThreeSide.BASE;
+    final ThreeSide side2 = chunks[2] != null ? ThreeSide.RIGHT : ThreeSide.BASE;
+    CharSequence chunk1 = side1.select(chunks);
+    CharSequence chunk2 = side2.select(chunks);
+
+    if (chunks[1] != null && isChunksEquals(chunk1, chunk2, comparisonPolicy)) {
+      return null; // unmodified - deleted
+    }
+
+    List<DiffFragment> wordConflicts = ByWord.compare(chunk1, chunk2, comparisonPolicy, indicator);
+
+    return ContainerUtil.map(wordConflicts, new Function<DiffFragment, MergeWordFragment>() {
+      @Override
+      public MergeWordFragment fun(DiffFragment fragment) {
+        return new MyWordFragment(side1, side2, fragment);
+      }
+    });
+  }
+
+  private static boolean isChunksEquals(@Nullable CharSequence chunk1,
+                                        @Nullable CharSequence chunk2,
+                                        @NotNull ComparisonPolicy comparisonPolicy) {
+    if (chunk1 == null) chunk1 = "";
+    if (chunk2 == null) chunk2 = "";
+    return ComparisonManager.getInstance().isEquals(chunk1, chunk2, comparisonPolicy);
+  }
+
   //
   // Document modification
   //
@@ -645,8 +698,12 @@ public class DiffUtil {
    * we consider '\n' not as a part of line, but a separator between lines
    * ex: if last line is not empty, the last symbol will not be '\n'
    */
-  @NotNull
   public static TextRange getLinesRange(@NotNull Document document, int line1, int line2) {
+    return getLinesRange(document, line1, line2, false);
+  }
+
+  @NotNull
+  public static TextRange getLinesRange(@NotNull Document document, int line1, int line2, boolean includeNewline) {
     if (line1 == line2) {
       int lineStartOffset = line1 < getLineCount(document) ? document.getLineStartOffset(line1) : document.getTextLength();
       return new TextRange(lineStartOffset, lineStartOffset);
@@ -654,6 +711,7 @@ public class DiffUtil {
     else {
       int startOffset = document.getLineStartOffset(line1);
       int endOffset = document.getLineEndOffset(line2 - 1);
+      if (includeNewline && endOffset < document.getTextLength()) endOffset++;
       return new TextRange(startOffset, endOffset);
     }
   }
@@ -1064,6 +1122,35 @@ public class DiffUtil {
     public DiffConfig(@NotNull IgnorePolicy ignorePolicy, @NotNull HighlightPolicy highlightPolicy) {
       this(ignorePolicy.getComparisonPolicy(), highlightPolicy.isFineFragments(), highlightPolicy.isShouldSquash(),
            ignorePolicy.isShouldTrimChunks());
+    }
+  }
+
+  private static class MyWordFragment implements MergeWordFragment {
+    @NotNull private final ThreeSide mySide1;
+    @NotNull private final ThreeSide mySide2;
+    @NotNull private final DiffFragment myFragment;
+
+    public MyWordFragment(@NotNull ThreeSide side1,
+                          @NotNull ThreeSide side2,
+                          @NotNull DiffFragment fragment) {
+      assert side1 != side2;
+      mySide1 = side1;
+      mySide2 = side2;
+      myFragment = fragment;
+    }
+
+    @Override
+    public int getStartOffset(@NotNull ThreeSide side) {
+      if (side == mySide1) return myFragment.getStartOffset1();
+      if (side == mySide2) return myFragment.getStartOffset2();
+      return 0;
+    }
+
+    @Override
+    public int getEndOffset(@NotNull ThreeSide side) {
+      if (side == mySide1) return myFragment.getEndOffset1();
+      if (side == mySide2) return myFragment.getEndOffset2();
+      return 0;
     }
   }
 }

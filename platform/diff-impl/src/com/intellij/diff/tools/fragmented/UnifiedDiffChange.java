@@ -46,7 +46,7 @@ public class UnifiedDiffChange {
   @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
   @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<MyGutterOperation>();
 
-  public UnifiedDiffChange(@NotNull UnifiedDiffViewer viewer, @NotNull ChangedBlock block, boolean innerFragments) {
+  public UnifiedDiffChange(@NotNull UnifiedDiffViewer viewer, @NotNull ChangedBlock block) {
     myViewer = viewer;
     myEditor = viewer.getEditor();
 
@@ -57,7 +57,7 @@ public class UnifiedDiffChange {
     TextRange deleted = new TextRange(block.getStartOffset1(), block.getEndOffset1());
     TextRange inserted = new TextRange(block.getStartOffset2(), block.getEndOffset2());
 
-    installHighlighter(deleted, inserted, innerFragments);
+    installHighlighter(deleted, inserted);
   }
 
   public void destroyHighlighter() {
@@ -72,10 +72,10 @@ public class UnifiedDiffChange {
     myOperations.clear();
   }
 
-  private void installHighlighter(@NotNull TextRange deleted, @NotNull TextRange inserted, boolean innerFragments) {
+  private void installHighlighter(@NotNull TextRange deleted, @NotNull TextRange inserted) {
     assert myHighlighters.isEmpty();
 
-    if (innerFragments && myLineFragment.getInnerFragments() != null) {
+    if (myLineFragment.getInnerFragments() != null) {
       doInstallHighlighterWithInner(deleted, inserted);
     }
     else {

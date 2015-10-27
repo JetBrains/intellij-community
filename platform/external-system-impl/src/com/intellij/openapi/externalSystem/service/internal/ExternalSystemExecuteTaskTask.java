@@ -71,6 +71,20 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
     return myTasksToExecute;
   }
 
+  @Nullable
+  public String getVmOptions() {
+    return myVmOptions;
+  }
+
+  @Nullable
+  public String getScriptParameters() {
+    return myScriptParameters;
+  }
+
+  public void appendScriptParameters(@NotNull String scriptParameters) {
+    myScriptParameters = myScriptParameters == null ? scriptParameters : myScriptParameters + ' ' + scriptParameters;
+  }
+
   @NotNull
   private static String getLinkedExternalProjectPath(@NotNull Collection<ExternalTaskPojo> tasks) throws IllegalArgumentException {
     if (tasks.isEmpty()) {

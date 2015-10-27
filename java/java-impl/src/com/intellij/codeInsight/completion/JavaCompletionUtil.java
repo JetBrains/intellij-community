@@ -274,7 +274,7 @@ public class JavaCompletionUtil {
     if (runtimeQualifier != null) {
       PsiType composite = qualifierType == null ? runtimeQualifier : PsiIntersectionType.createIntersection(qualifierType, runtimeQualifier);
       PsiElement ctx = createContextWithXxxVariable(element, composite);
-      javaReference = (PsiReferenceExpression) JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText("xxx.xxx", ctx);
+      javaReference = createReference("xxx.xxx", ctx);
       qualifierType = runtimeQualifier;
       processor.setQualifierType(qualifierType);
     }
@@ -306,19 +306,30 @@ public class JavaCompletionUtil {
       }
     }
 
-    if (javaReference instanceof PsiJavaCodeReferenceElement && !((PsiJavaCodeReferenceElement)javaReference).isQualified()) {
-      final StaticMemberProcessor memberProcessor = new JavaStaticMemberProcessor(parameters);
-      memberProcessor.processMembersOfRegisteredClasses(matcher, new PairConsumer<PsiMember, PsiClass>() {
-        @Override
-        public void consume(PsiMember member, PsiClass psiClass) {
-          if (!mentioned.contains(member) && processor.satisfies(member, ResolveState.initial())) {
-            set.add(memberProcessor.createLookupElement(member, psiClass, true));
+    if (javaReference instanceof PsiJavaCodeReferenceElement) {
+      PsiElement refQualifier = ((PsiJavaCodeReferenceElement)javaReference).getQualifier();
+      if (refQualifier == null) {
+        final StaticMemberProcessor memberProcessor = new JavaStaticMemberProcessor(parameters);
+        memberProcessor.processMembersOfRegisteredClasses(matcher, new PairConsumer<PsiMember, PsiClass>() {
+          @Override
+          public void consume(PsiMember member, PsiClass psiClass) {
+            if (!mentioned.contains(member) && processor.satisfies(member, ResolveState.initial())) {
+              set.add(memberProcessor.createLookupElement(member, psiClass, true));
+            }
           }
-        }
-      });
+        });
+      }
+      else if (refQualifier instanceof PsiSuperExpression && ((PsiSuperExpression)refQualifier).getQualifier() == null) {
+        set.addAll(SuperCalls.suggestQualifyingSuperCalls(element, javaReference, elementFilter, options, nameCondition));
+      }
     }
 
     return set;
+  }
+
+  @NotNull
+  static PsiReferenceExpression createReference(@NotNull String text, @NotNull PsiElement context) {
+    return (PsiReferenceExpression) JavaPsiFacade.getElementFactory(context.getProject()).createExpressionFromText(text, context);
   }
 
   @Nullable
@@ -480,7 +491,7 @@ public class JavaCompletionUtil {
     return false;
   }
 
-  private static List<? extends LookupElement> createLookupElements(CompletionElement completionElement, PsiJavaReference reference) {
+  static List<? extends LookupElement> createLookupElements(CompletionElement completionElement, PsiJavaReference reference) {
     Object completion = completionElement.getElement();
     assert !(completion instanceof LookupElement);
 

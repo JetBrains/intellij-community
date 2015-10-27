@@ -37,6 +37,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.vcs.log.Hash;
@@ -78,6 +79,10 @@ public class PushLog extends JPanel implements DataProvider {
     final AnAction quickDocAction = ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC);
     myTreeCellRenderer = new MyTreeCellRenderer();
     myTree = new CheckboxTree(myTreeCellRenderer, root) {
+
+      protected boolean shouldShowBusyIconIfNeeded() {
+        return true;
+      }
 
       public boolean isPathEditable(TreePath path) {
         return isEditable() && path.getLastPathComponent() instanceof DefaultMutableTreeNode;
@@ -477,7 +482,7 @@ public class PushLog extends JPanel implements DataProvider {
   }
 
   @NotNull
-  public JTree getTree() {
+  public CheckboxTree getTree() {
     return myTree;
   }
 
@@ -569,7 +574,14 @@ public class PushLog extends JPanel implements DataProvider {
       // null border works as expected always.
       if (value instanceof RepositoryNode) {
         //todo simplify, remove instance of
-        myCheckbox.setVisible(((RepositoryNode)value).isCheckboxVisible());
+        RepositoryNode valueNode = (RepositoryNode)value;
+        myCheckbox.setVisible(valueNode.isCheckboxVisible());
+        if (valueNode.isChecked() && valueNode.isLoading()) {
+          myCheckbox.setState(ThreeStateCheckBox.State.DONT_CARE);
+        }
+        else {
+          myCheckbox.setSelected(valueNode.isChecked());
+        }
       }
       Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
       ColoredTreeCellRenderer renderer = getTextRenderer();

@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.ui.laf.intellij;
+package com.intellij.diff.fragments;
 
-import javax.swing.*;
-import javax.swing.plaf.ComponentUI;
-import javax.swing.plaf.basic.BasicLabelUI;
+import com.intellij.diff.util.ThreeSide;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Konstantin Bulenkov
- */
-public class MacIntelliJLabelUI extends BasicLabelUI {
+public interface MergeWordFragment {
+  int getStartOffset(@NotNull ThreeSide side);
 
-  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
-  public static ComponentUI createUI(JComponent c) {
-    return new MacIntelliJLabelUI();
-  }
+  int getEndOffset(@NotNull ThreeSide side);
 }

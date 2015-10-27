@@ -18,6 +18,7 @@ package com.intellij.openapi.externalSystem.service.project;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -36,9 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalRootProjectPath;
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.isExternalSystemAwareModule;
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.isRelated;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 
 /**
  * @author Vladislav.Soroka
@@ -203,5 +202,10 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   @Override
   public String[] getLibraryUrls(@NotNull Library library, @NotNull OrderRootType type) {
     return library.getUrls(type);
+  }
+
+  @NotNull
+  public List<Module> getAllDependentModules(@NotNull Module module) {
+    return ModuleUtilCore.getAllDependentModules(module);
   }
 }

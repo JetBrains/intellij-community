@@ -13,16 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.remote;
+package com.intellij.dvcs.repo;
 
-import com.google.common.net.HostAndPort;
-import com.intellij.openapi.util.Pair;
-import org.jetbrains.annotations.Nullable;
+public interface VcsRepositoryMappingListener {
 
-/**
- * @author Alexander Koshevoy
- */
-public interface Tunnelled {
-  @Nullable
-  HostAndPort getLocalTunnel(int serverPort);
+  void mappingChanged();
 }

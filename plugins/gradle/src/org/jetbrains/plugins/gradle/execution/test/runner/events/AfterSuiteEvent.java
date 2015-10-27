@@ -36,7 +36,7 @@ public class AfterSuiteEvent extends AbstractTestEvent {
     addToInvokeLater(new Runnable() {
       @Override
       public void run() {
-        final SMTestProxy testProxy = getConsoleManager().getTestsMap().get(testId);
+        final SMTestProxy testProxy = findTestProxy(testId);
         if (testProxy == null) return;
 
         switch (result) {
@@ -53,9 +53,6 @@ public class AfterSuiteEvent extends AbstractTestEvent {
             break;
         }
 
-        if (testProxy.isEmptySuite() && !(testProxy instanceof SMTestProxy.SMRootTestProxy)) {
-          testProxy.getParent().getChildren().remove(testProxy);
-        }
         getResultsViewer().onSuiteFinished(testProxy);
       }
     });

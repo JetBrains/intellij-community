@@ -75,7 +75,8 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
       }
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-      arrayAccessExpression = argumentList.getExpressions()[0];
+      PsiExpression[] expressions = argumentList.getExpressions();
+      arrayAccessExpression = expressions.length == 0 ? null : expressions[0];
     }
     else if (body instanceof PsiDeclarationStatement) {
       final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)body;
@@ -108,7 +109,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
         (PsiBlockStatement)body;
       final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
       final PsiStatement[] statements = codeBlock.getStatements();
-      body = statements[0];
+      body = statements.length == 0 ? null : statements[0];
     }
     return body;
   }

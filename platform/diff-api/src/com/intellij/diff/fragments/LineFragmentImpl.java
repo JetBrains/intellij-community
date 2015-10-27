@@ -119,4 +119,11 @@ public class LineFragmentImpl implements LineFragment {
     }
     return fragments;
   }
+
+  @Override
+  public String toString() {
+    return "LineFragmentImpl: Lines [" + myStartLine1 + ", " + myEndLine1 + ") - [" + myStartLine2 + ", " + myEndLine2 + "); " +
+           "Offsets [" + myStartOffset1 + ", " + myEndOffset1 + ") - [" + myStartOffset2 + ", " + myEndOffset2 + "); " +
+           "Inner " + (myInnerFragments != null ? myInnerFragments.size() : null);
+  }
 }

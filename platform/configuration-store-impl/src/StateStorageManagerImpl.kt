@@ -136,7 +136,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   protected open fun normalizeFileSpec(fileSpec: String): String {
     val path = FileUtilRt.toSystemIndependentName(fileSpec)
     // fileSpec for directory based storage could be erroneously specified as "name/"
-    return if (path.endsWith('/')) path.substring(0, path.length() - 1) else path
+    return if (path.endsWith('/')) path.substring(0, path.length - 1) else path
   }
 
   fun getOrCreateStorage(collapsedPath: String,
@@ -375,7 +375,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
         val saveSession = session.createSaveSession()
         if (saveSession != null) {
           if (saveSessions == null) {
-            if (externalizationSessions.size() == 1) {
+            if (externalizationSessions.size == 1) {
               return listOf(saveSession)
             }
             saveSessions = SmartList<SaveSession>()
@@ -397,6 +397,6 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 }
 
 fun String.startsWithMacro(macro: String): Boolean {
-  val i = macro.length()
-  return length() > i && charAt(i) == '/' && startsWith(macro)
+  val i = macro.length
+  return length > i && charAt(i) == '/' && startsWith(macro)
 }

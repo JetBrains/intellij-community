@@ -18,6 +18,7 @@ package com.intellij.diff.comparison
 import com.intellij.diff.DiffTestCase
 import com.intellij.diff.fragments.MergeLineFragment
 import com.intellij.diff.util.IntPair
+import com.intellij.diff.util.MergeRange
 import com.intellij.diff.util.ThreeSide
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
@@ -81,12 +82,12 @@ public abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
     assertEquals(matchings.data3, sets.data3)
   }
 
-  private fun convertDiffFragments(fragments: List<MergeLineFragment>): List<Change> {
+  private fun convertDiffFragments(fragments: List<MergeRange>): List<Change> {
     return fragments.map {
       Change(
-          it.getStartLine(ThreeSide.LEFT), it.getEndLine(ThreeSide.LEFT),
-          it.getStartLine(ThreeSide.BASE), it.getEndLine(ThreeSide.BASE),
-          it.getStartLine(ThreeSide.RIGHT), it.getEndLine(ThreeSide.RIGHT))
+          it.start1, it.end1,
+          it.start2, it.end2,
+          it.start3, it.end3)
     }
   }
 

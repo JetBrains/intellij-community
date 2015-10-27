@@ -27,7 +27,10 @@ import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.concurrent.*;
 
@@ -53,12 +56,14 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
    *
    * @param task a task to run
    */
-  protected Future<?> executeOnPooledThread(Runnable task) {
+  @NotNull
+  protected Future<?> executeOnPooledThread(@NotNull Runnable task) {
     return ExecutorServiceHolder.ourThreadExecutorsService.submit(task);
   }
 
   @Override
-  public Future<?> executeTask(Runnable task) {
+  @NotNull
+  public Future<?> executeTask(@NotNull Runnable task) {
     return executeOnPooledThread(task);
   }
 
@@ -126,6 +131,7 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     super.startNotify();
   }
 
+  @NotNull
   private BaseDataReader.SleepingPolicy getPolicy() {
     if (useNonBlockingRead()) {
       return useAdaptiveSleepingPolicyWhenReadingOutput() ? new AdaptiveSleepingPolicy() : BaseDataReader.SleepingPolicy.SIMPLE;
@@ -150,19 +156,23 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     notifyProcessTerminated(exitCode);
   }
 
+  @NotNull
   protected Reader createProcessOutReader() {
     return createInputStreamReader(myProcess.getInputStream());
   }
 
+  @NotNull
   protected Reader createProcessErrReader() {
     return createInputStreamReader(myProcess.getErrorStream());
   }
 
-  private Reader createInputStreamReader(InputStream streamToRead) {
+  @NotNull
+  private Reader createInputStreamReader(@NotNull InputStream streamToRead) {
     Charset charset = charsetNotNull();
     return new BaseInputStreamReader(streamToRead, charset);
   }
 
+  @NotNull
   private Charset charsetNotNull() {
     Charset charset = getCharset();
     if (charset == null) {
@@ -235,10 +245,11 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
 
     private static ThreadPoolExecutor createServiceImpl() {
       ThreadFactory factory = ConcurrencyUtil.newNamedThreadFactory("OSProcessHandler pooled thread");
-      return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), factory);
+      return new ThreadPoolExecutor(0, Integer.MAX_VALUE, 5, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), factory);
     }
 
-    public static Future<?> submit(Runnable task) {
+    @NotNull
+    public static Future<?> submit(@NotNull Runnable task) {
       return ourThreadExecutorsService.submit(task);
     }
   }
@@ -252,8 +263,9 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
       start();
     }
 
+    @NotNull
     @Override
-    protected Future<?> executeOnPooledThread(Runnable runnable) {
+    protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
       return BaseOSProcessHandler.this.executeOnPooledThread(runnable);
     }
 

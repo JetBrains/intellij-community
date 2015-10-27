@@ -18,6 +18,7 @@ package com.intellij.execution.junit;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -125,6 +126,11 @@ public class JUnit4Framework extends JavaTestFramework {
   @Override
   public boolean isTestMethod(PsiElement element) {
     return element instanceof PsiMethod && JUnitUtil.getTestMethod(element) != null;
+  }
+
+  @Override
+  public boolean isTestMethod(PsiMethod method, PsiClass myClass) {
+    return JUnitUtil.isTestMethod(MethodLocation.elementInClass(method, myClass));
   }
 
   public FileTemplateDescriptor getSetUpMethodFileTemplateDescriptor() {

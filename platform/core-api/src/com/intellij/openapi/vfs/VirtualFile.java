@@ -139,8 +139,10 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /**
    * Gets the URL of this file. The URL is a string which uniquely identifies file in all file systems.
    * It has the following format: <code>&lt;protocol&gt;://&lt;path&gt;</code>.
-   * <p/>
+   * <p>
    * File can be found by its URL using {@link VirtualFileManager#findFileByUrl} method.
+   * <p>
+   * Please note these URLs are intended for use withing VFS - meaning they are not necessarily RFC-compliant.
    *
    * @return the URL consisting of protocol and path
    * @see VirtualFileManager#findFileByUrl

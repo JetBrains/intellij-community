@@ -76,6 +76,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
@@ -2262,7 +2263,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
       final Component owner = mgr.getFocusOwner();
 
-      if (owner instanceof EditorComponentImpl) return;
+      if (owner instanceof EditorComponentImpl && cause instanceof FocusEvent) {
+        JFrame frame = WindowManager.getInstance().getFrame(myProject);
+        Component oppositeComponent = ((FocusEvent)cause).getOppositeComponent();
+        if (oppositeComponent != null && UIUtil.getWindow(oppositeComponent) != frame) {
+          return;
+        }
+      }
 
       IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
         @Override

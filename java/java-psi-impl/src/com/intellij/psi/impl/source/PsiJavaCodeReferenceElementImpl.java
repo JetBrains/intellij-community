@@ -93,7 +93,10 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   public int getKind(@NotNull PsiFile containingFile) {
-    PsiUtilCore.ensureValid(containingFile);
+    if (!containingFile.isValid()) { // optimization to avoid relatively expensive this.isValid check
+      // but still provide diagnostics for this element and not its containing DummyHolder file
+      PsiUtilCore.ensureValid(this);
+    }
     CompositeElement treeParent = getTreeParent();
     IElementType i = treeParent.getElementType();
     if (isDummy(i)) {

@@ -859,7 +859,16 @@ public class RefactoringUtil {
     return false;
   }
 
-  public static PsiStatement putStatementInLoopBody(PsiStatement declaration, PsiElement container, PsiElement finalAnchorStatement)
+  public static PsiStatement putStatementInLoopBody(PsiStatement declaration,
+                                                  PsiElement container,
+                                                  PsiElement finalAnchorStatement) throws IncorrectOperationException {
+    return putStatementInLoopBody(declaration, container, finalAnchorStatement, false);
+  }
+
+  public static PsiStatement putStatementInLoopBody(PsiStatement declaration,
+                                                    PsiElement container,
+                                                    PsiElement finalAnchorStatement,
+                                                    boolean replaceBody)
     throws IncorrectOperationException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(container.getProject()).getElementFactory();
     if(isLoopOrIf(container)) {
@@ -879,7 +888,7 @@ public class RefactoringUtil {
       final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
       declaration = (PsiStatement) codeBlock.add(declaration);
       JavaCodeStyleManager.getInstance(declaration.getProject()).shortenClassReferences(declaration);
-      if (loopBodyCopy != null) codeBlock.add(loopBodyCopy);
+      if (loopBodyCopy != null && !replaceBody) codeBlock.add(loopBodyCopy);
     } else if (container instanceof PsiLambdaExpression) {
       PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)container;
       final PsiElement invalidBody = lambdaExpression.getBody();
@@ -899,8 +908,12 @@ public class RefactoringUtil {
       LOG.assertTrue(lambdaExpressionBody != null);
       final PsiStatement lastBodyStatement;
       if (PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression))) {
-        lastBodyStatement = elementFactory.createStatementFromText("a;", lambdaExpression);
-        ((PsiExpressionStatement)lastBodyStatement).getExpression().replace(lambdaExpressionBody);
+        if (replaceBody) {
+          lastBodyStatement = null;
+        } else {  
+          lastBodyStatement = elementFactory.createStatementFromText("a;", lambdaExpression);
+          ((PsiExpressionStatement)lastBodyStatement).getExpression().replace(lambdaExpressionBody);
+        }
       }
       else {
         lastBodyStatement = elementFactory.createStatementFromText("return a;", lambdaExpression);
@@ -908,7 +921,9 @@ public class RefactoringUtil {
         LOG.assertTrue(returnValue != null);
         returnValue.replace(lambdaExpressionBody);
       }
-      newBody.add(lastBodyStatement);
+      if (lastBodyStatement != null) {
+        newBody.add(lastBodyStatement);
+      }
 
       final PsiLambdaExpression copy = (PsiLambdaExpression)lambdaExpression.replace(expressionFromText);
       newBody = (PsiCodeBlock)copy.getBody();

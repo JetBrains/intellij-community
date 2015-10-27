@@ -100,6 +100,9 @@ public class RemoteConnectionCredentialsWrapper {
     else if (isWebDeploymentConnection()) {
       return getWebDeploymentCredentials();
     }
+    else if (isDockerConnection()) {
+      return getDockerCredentials();
+    }
     else {
       throw unknownConnectionType();
     }

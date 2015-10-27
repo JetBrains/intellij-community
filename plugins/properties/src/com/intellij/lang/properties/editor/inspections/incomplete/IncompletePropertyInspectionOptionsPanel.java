@@ -72,9 +72,13 @@ public class IncompletePropertyInspectionOptionsPanel {
       protected void customizeCellRenderer(JList list, String suffix, int index, boolean selected, boolean hasFocus) {
         append(suffix);
         final Locale locale = PropertiesUtil.getLocale("_" + suffix + ".properties");
-        if (locale != PropertiesUtil.DEFAULT_LOCALE && PropertiesUtil.hasDefaultLanguage(locale)) {
-          append(" ");
-          append(PropertiesUtil.getPresentableLocale(locale), SimpleTextAttributes.GRAY_ATTRIBUTES);
+        if (locale != PropertiesUtil.DEFAULT_LOCALE) {
+          if (PropertiesUtil.hasDefaultLanguage(locale)) {
+            append(" ");
+            append(PropertiesUtil.getPresentableLocale(locale), SimpleTextAttributes.GRAY_ATTRIBUTES);
+          }
+        } else {
+          append("Default locale");
         }
       }
     });

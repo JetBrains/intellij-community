@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actions.SplitLineAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -106,7 +107,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
         comment = file.findElementAt(offset - 1);
       }
       int expectedStringStart = editor.getCaretModel().getOffset() - 3; // """ or '''
-      if (comment != null && atDocCommentStart(comment, expectedStringStart)) {
+      if (comment != null && atDocCommentStart(comment, expectedStringStart, doc)) {
         insertDocStringStub(editor, comment);
         return Result.Continue;
       }
@@ -379,14 +380,22 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     }
   }
 
-  public static boolean atDocCommentStart(@NotNull PsiElement element, int offset) {
+  public static boolean atDocCommentStart(@NotNull PsiElement element, int firstQuoteOffset, @NotNull Document document) {
+    if (firstQuoteOffset < 0 || firstQuoteOffset > document.getTextLength() - 3) {
+      return false;
+    }
+    final String quotes = document.getText(TextRange.from(firstQuoteOffset, 3));
+    if (!quotes.equals("\"\"\"") && !quotes.equals("'''")) {
+      return false;
+    }
     final PyStringLiteralExpression pyString = DocStringUtil.getParentDefinitionDocString(element);
     if (pyString != null) {
-      String text = element.getText();
-      final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(text);
-      text = text.substring(prefixLength);
-      if (pyString.getText().endsWith(text) && (text.startsWith("\"\"\"") || text.startsWith("'''"))) {
-        if (offset == pyString.getTextOffset() + prefixLength) {
+      String nodeText = element.getText();
+      final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(nodeText);
+      nodeText = nodeText.substring(prefixLength);
+      final String literalText = pyString.getText();
+      if (literalText.endsWith(nodeText) && nodeText.startsWith(quotes)) {
+        if (firstQuoteOffset == pyString.getTextOffset() + prefixLength) {
           PsiErrorElement error = PsiTreeUtil.getNextSiblingOfType(pyString, PsiErrorElement.class);
           if (error != null) {
             return true;
@@ -396,8 +405,19 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
             return true;
           }
 
-          if (text.length() < 6 || (!text.endsWith("\"\"\"") && !text.endsWith("'''"))) {
+          if (nodeText.length() < 6 || !nodeText.endsWith(quotes)) {
             return true;
+          }
+          // Sometimes if incomplete docstring is followed by another declaration with a docstring, it might be treated
+          // as complete docstring, because we can't understand that closing quotes actually belong to another docstring.
+          final String docstringIndent = PyIndentUtil.getLineIndent(document, document.getLineNumber(firstQuoteOffset));
+          for (String line : LineTokenizer.tokenizeIntoList(nodeText, false)) {
+            final String lineIndent = (String)PyIndentUtil.getLineIndent(line);
+            final String lineContent = line.substring(lineIndent.length());
+            if ((lineContent.startsWith("def ") || lineContent.startsWith("class ")) &&
+                docstringIndent.length() > lineIndent.length() && docstringIndent.startsWith(lineIndent)) {
+              return true;
+            }
           }
         }
       }

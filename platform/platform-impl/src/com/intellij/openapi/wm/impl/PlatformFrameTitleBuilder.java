@@ -30,10 +30,11 @@ import java.io.File;
  */
 public class PlatformFrameTitleBuilder extends FrameTitleBuilder {
   @Override
-  public String getProjectTitle(@NotNull final Project project) {
-    final String basePath = project.getBasePath();
+  public String getProjectTitle(@NotNull Project project) {
+    String basePath = project.getBasePath();
     if (basePath == null) return project.getName();
 
+    basePath = FileUtil.toSystemDependentName(basePath);
     if (basePath.equals(project.getName())) {
       return "[" + FileUtil.getLocationRelativeToUserHome(basePath) + "]";
     }

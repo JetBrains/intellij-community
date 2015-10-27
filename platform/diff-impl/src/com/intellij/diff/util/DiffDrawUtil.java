@@ -288,15 +288,24 @@ public class DiffDrawUtil {
   }
 
   @NotNull
-  public static List<RangeHighlighter> createLineMarker(@NotNull Editor editor, int line, @NotNull final TextDiffType type,
-                                                        @NotNull final SeparatorPlacement placement) {
-    return createLineMarker(editor, line, type, placement, false);
+  public static List<RangeHighlighter> createLineMarker(@NotNull final Editor editor, int line1, int line2,
+                                                        @NotNull final TextDiffType type, final boolean applied) {
+    if (line1 == line2) {
+      if (line1 == 0) return Collections.emptyList();
+      return createLineMarker(editor, line1 - 1, type, SeparatorPlacement.BOTTOM, true, applied);
+    }
+    else {
+      return ContainerUtil.concat(
+        createLineMarker(editor, line1, type, SeparatorPlacement.TOP, false, applied),
+        createLineMarker(editor, line2 - 1, type, SeparatorPlacement.BOTTOM, false, applied)
+      );
+    }
   }
 
   @NotNull
-  public static List<RangeHighlighter> createLineMarker(@NotNull final Editor editor, int line, @NotNull final TextDiffType type,
-                                                        @NotNull final SeparatorPlacement placement, final boolean doubleLine) {
-    return createLineMarker(editor, line, type, placement, doubleLine, false);
+  public static List<RangeHighlighter> createLineMarker(@NotNull Editor editor, int line, @NotNull final TextDiffType type,
+                                                        @NotNull final SeparatorPlacement placement) {
+    return createLineMarker(editor, line, type, placement, false, false);
   }
 
   @NotNull

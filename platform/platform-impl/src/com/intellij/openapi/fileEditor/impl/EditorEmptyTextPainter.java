@@ -70,7 +70,7 @@ public class EditorEmptyTextPainter {
   }
 
   protected void appendDnd(@NotNull UIUtil.TextPainter painter) {
-    appendLine(painter, "Drop files from " + ShowFilePathAction.getFileManagerName());
+    appendLine(painter, "Drop files here from " + ShowFilePathAction.getFileManagerName());
   }
 
   protected void appendSearchEverywhere(@NotNull UIUtil.TextPainter painter) {

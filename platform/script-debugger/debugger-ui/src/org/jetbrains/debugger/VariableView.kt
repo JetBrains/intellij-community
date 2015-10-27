@@ -125,7 +125,7 @@ class VariableView(name: String, private val variable: Variable, private val con
         node.setPresentation(icon, XStringValuePresentation(value.valueString!!), false)
         // isTruncated in terms of debugger backend, not in our terms (i.e. sometimes we cannot control truncation),
         // so, even in case of StringValue, we check value string length
-        if ((value is StringValue && value.isTruncated) || value.valueString!!.length() > XValueNode.MAX_VALUE_LENGTH) {
+        if ((value is StringValue && value.isTruncated) || value.valueString!!.length > XValueNode.MAX_VALUE_LENGTH) {
           node.setFullValueEvaluator(MyFullValueEvaluator(value))
         }
       }
@@ -144,11 +144,11 @@ class VariableView(name: String, private val variable: Variable, private val con
 
     val list = remainingChildren
     if (list != null) {
-      val to = Math.min(remainingChildrenOffset + XCompositeNode.MAX_CHILDREN_TO_SHOW, list.size())
-      val isLast = to == list.size()
+      val to = Math.min(remainingChildrenOffset + XCompositeNode.MAX_CHILDREN_TO_SHOW, list.size)
+      val isLast = to == list.size
       node.addChildren(createVariablesList(list, remainingChildrenOffset, to, this, memberFilter), isLast)
       if (!isLast) {
-        node.tooManyChildren(list.size() - to)
+        node.tooManyChildren(list.size - to)
         remainingChildrenOffset += XCompositeNode.MAX_CHILDREN_TO_SHOW
       }
       return
@@ -234,7 +234,7 @@ class VariableView(name: String, private val variable: Variable, private val con
 
   private fun computeArrayRanges(properties: List<Variable>, node: XCompositeNode) {
     val variables = filterAndSort(properties, memberFilter!!)
-    var count = variables.size()
+    var count = variables.size
     val bucketSize = XCompositeNode.MAX_CHILDREN_TO_SHOW
     if (count <= bucketSize) {
       node.addChildren(createVariablesList(variables, this, null), true)
@@ -254,8 +254,8 @@ class VariableView(name: String, private val variable: Variable, private val con
     }
 
     var notGroupedVariablesOffset: Int
-    if ((variables.size() - count) > bucketSize) {
-      notGroupedVariablesOffset = variables.size()
+    if ((variables.size - count) > bucketSize) {
+      notGroupedVariablesOffset = variables.size
       while (notGroupedVariablesOffset > 0) {
         if (!variables.get(notGroupedVariablesOffset - 1).name.startsWith("__")) {
           break
@@ -271,7 +271,7 @@ class VariableView(name: String, private val variable: Variable, private val con
       notGroupedVariablesOffset = count
     }
 
-    for (i in notGroupedVariablesOffset..variables.size() - 1) {
+    for (i in notGroupedVariablesOffset..variables.size - 1) {
       val variable = variables.get(i)
       groupList.add(VariableView(memberFilter!!.rawNameToSource(variable), variable, this))
     }
@@ -291,9 +291,9 @@ class VariableView(name: String, private val variable: Variable, private val con
       override fun getInitialValueEditorText(): String? {
         if (value!!.type == ValueType.STRING) {
           val string = value!!.valueString!!
-          val builder = StringBuilder(string.length())
+          val builder = StringBuilder(string.length)
           builder.append('"')
-          StringUtil.escapeStringCharacters(string.length(), string, builder)
+          StringUtil.escapeStringCharacters(string.length, string, builder)
           builder.append('"')
           return builder.toString()
         }
@@ -386,7 +386,7 @@ class VariableView(name: String, private val variable: Variable, private val con
     return context.viewSupport.propertyNamesToString(list, false)
   }
 
-  private class MyFullValueEvaluator(private val value: Value) : XFullValueEvaluator(if (value is StringValue) value.length else value.valueString!!.length()) {
+  private class MyFullValueEvaluator(private val value: Value) : XFullValueEvaluator(if (value is StringValue) value.length else value.valueString!!.length) {
     override fun startEvaluation(callback: XFullValueEvaluator.XFullValueEvaluationCallback) {
       if (value !is StringValue || !value.isTruncated) {
         callback.evaluated(value.valueString!!)
@@ -457,7 +457,7 @@ internal fun trimFunctionDescription(value: Value): String {
   val presentableValue = value.valueString ?: return ""
 
   var endIndex = 0
-  while (endIndex < presentableValue.length() && !StringUtil.isLineBreak(presentableValue.charAt(endIndex))) {
+  while (endIndex < presentableValue.length && !StringUtil.isLineBreak(presentableValue.charAt(endIndex))) {
     endIndex++
   }
   while (endIndex > 0 && Character.isWhitespace(presentableValue.charAt(endIndex - 1))) {

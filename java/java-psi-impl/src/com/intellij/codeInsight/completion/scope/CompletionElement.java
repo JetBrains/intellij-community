@@ -15,7 +15,11 @@
  */
 package com.intellij.codeInsight.completion.scope;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,10 +32,12 @@ import org.jetbrains.annotations.Nullable;
 public class CompletionElement{
   private final Object myElement;
   private final PsiSubstitutor mySubstitutor;
+  private final Object myEqualityObject;
 
   public CompletionElement(Object element, PsiSubstitutor substitutor) {
     myElement = element;
     mySubstitutor = substitutor;
+    myEqualityObject = getUniqueId();
   }
 
   public PsiSubstitutor getSubstitutor(){
@@ -43,9 +49,10 @@ public class CompletionElement{
   }
 
   @Nullable
-  Object getUniqueId(){
+  private Object getUniqueId(){
     if(myElement instanceof PsiClass){
-      return ((PsiClass)myElement).getQualifiedName();
+      String qName = ((PsiClass)myElement).getQualifiedName();
+      return qName == null ? ((PsiClass)myElement).getName() : qName;
     }
     if(myElement instanceof PsiPackage){
       return ((PsiPackage)myElement).getQualifiedName();
@@ -54,13 +61,40 @@ public class CompletionElement{
       return ((PsiMethod)myElement).getSignature(mySubstitutor);
     }
     if (myElement instanceof PsiVariable) {
-      return getVariableUniqueId((PsiVariable)myElement);
+      return "#" + ((PsiVariable)myElement).getName();
     }
 
     return null;
   }
 
-  public static String getVariableUniqueId(final PsiVariable variable) {
-    return "#" + variable.getName();
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) return true;
+    if (!(obj instanceof CompletionElement)) return false;
+
+    Object thatObj = ((CompletionElement)obj).myEqualityObject;
+    if (myEqualityObject instanceof MethodSignature) {
+      return thatObj instanceof MethodSignature &&
+             MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.equals((MethodSignature)myEqualityObject, (MethodSignature)thatObj);
+    }
+    return Comparing.equal(myEqualityObject, thatObj);
   }
+
+  @Override
+  public int hashCode() {
+    if (myEqualityObject instanceof MethodSignature) {
+      return MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.computeHashCode((MethodSignature)myEqualityObject);
+    }
+    return myEqualityObject != null ? myEqualityObject.hashCode() : 0;
+  }
+
+  public boolean isMoreSpecificThan(@NotNull CompletionElement prev) {
+    Object prevElement = prev.getElement();
+    if (!(prevElement instanceof PsiMethod && myElement instanceof PsiMethod)) return false;
+
+    PsiType prevType = prev.getSubstitutor().substitute(((PsiMethod)prevElement).getReturnType());
+    PsiType candidateType = mySubstitutor.substitute(((PsiMethod)myElement).getReturnType());
+    return prevType != null && candidateType != null && !prevType.equals(candidateType) && prevType.isAssignableFrom(candidateType);
+  }
+
 }

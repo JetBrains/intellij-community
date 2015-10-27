@@ -303,11 +303,16 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     }
   }
 
+  private static boolean isInsideTagBody(XmlTag contextTag, @NotNull Editor editor) {
+    return contextTag.getValue().getTextRange().contains(editor.getCaretModel().getOffset());
+  }
+
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (!(file instanceof XmlFile)) return false;
+
     XmlTag contextTag = getContextTag(editor, file);
-    return contextTag != null && contextTag.getDescriptor() != null;
+    return contextTag != null && isInsideTagBody(contextTag, editor) && contextTag.getDescriptor() != null;
   }
 
   @Override

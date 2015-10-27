@@ -304,9 +304,9 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
     }
 
     protected JavaParameters createJavaParametersMVC() throws ExecutionException {
-      MvcCommand cmd = MvcCommand.parse(myCmdLine);
+      MvcCommand cmd = MvcCommand.parse(myCmdLine, vmParams);
 
-      final JavaParameters params = myFramework.createJavaParameters(myModule, false, myForTests, depsClasspath, vmParams, cmd);
+      final JavaParameters params = myFramework.createJavaParameters(myModule, false, myForTests, depsClasspath, cmd);
 
       addEnvVars(params);
 

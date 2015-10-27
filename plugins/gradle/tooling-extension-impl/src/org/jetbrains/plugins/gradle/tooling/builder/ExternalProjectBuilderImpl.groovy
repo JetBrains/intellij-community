@@ -18,6 +18,7 @@ package org.jetbrains.plugins.gradle.tooling.builder
 import com.google.gson.GsonBuilder
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import org.gradle.api.Action
+import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
@@ -26,6 +27,7 @@ import org.gradle.api.file.FileCopyDetails
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.bundling.Jar
+import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.util.PatternFilterable
 import org.gradle.plugins.ide.idea.IdeaPlugin
 import org.jetbrains.annotations.NotNull
@@ -130,6 +132,10 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         externalTask.QName = task.name
         externalTask.description = task.description
         externalTask.group = task.group ?: "other"
+
+        def clazzName = task.class.canonicalName
+        def prefixIndex = clazzName.lastIndexOf('_Decorated')
+        externalTask.type = prefixIndex == -1 ? clazzName : clazzName.substring(0, prefixIndex)
         result.put(externalTask.name, externalTask)
       }
 
@@ -147,12 +153,26 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     boolean inheritOutputDirs = ideaPluginModule?.inheritOutputDirs ?: false
     def ideaOutDir = ideaPluginModule?.outputDir
     def ideaTestOutDir = ideaPluginModule?.testOutputDir
-    def generatedSourceDirs = ideaPluginModule.hasProperty("generatedSourceDirs") ? ideaPluginModule?.generatedSourceDirs: null;
+    def generatedSourceDirs = ideaPluginModule?.hasProperty("generatedSourceDirs") ? ideaPluginModule?.generatedSourceDirs: null;
+    def ideaSourceDirs = ideaPluginModule.sourceDirs;
+    def ideaTestSourceDirs = ideaPluginModule.testSourceDirs;
+
+    def projectSourceCompatibility
+    def projectTargetCompatibility
+
+    if(project.hasProperty('sourceCompatibility') && project.sourceCompatibility instanceof JavaVersion) {
+      projectSourceCompatibility = project.sourceCompatibility.name;
+    }
+    if(project.hasProperty('targetCompatibility') && project.targetCompatibility instanceof JavaVersion) {
+      projectTargetCompatibility = project.targetCompatibility.name;
+    }
 
     def result = [:] as Map<String, ExternalSourceSet>
+    //noinspection GrUnresolvedAccess
     if (!project.hasProperty("sourceSets") || !(project.sourceSets instanceof SourceSetContainer)) {
       return result
     }
+    //noinspection GrUnresolvedAccess
     def sourceSets = project.sourceSets as SourceSetContainer
 
     def (resourcesIncludes, resourcesExcludes, filterReaders) = getFilters(project, 'processResources')
@@ -162,6 +182,15 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     sourceSets.all { SourceSet sourceSet ->
       ExternalSourceSet externalSourceSet = new DefaultExternalSourceSet()
       externalSourceSet.name = sourceSet.name
+
+      def javaCompileTask = project.tasks.findByName(sourceSet.compileJavaTaskName)
+      if(javaCompileTask instanceof JavaCompile) {
+        externalSourceSet.sourceCompatibility = javaCompileTask.sourceCompatibility ?: projectSourceCompatibility
+        externalSourceSet.targetCompatibility = javaCompileTask.targetCompatibility ?: projectTargetCompatibility
+      } else {
+        externalSourceSet.sourceCompatibility = projectSourceCompatibility
+        externalSourceSet.targetCompatibility = projectTargetCompatibility
+      }
 
       def sources = [:] as Map<ExternalSystemSourceType, ExternalSourceDirectorySet>
       ExternalSourceDirectorySet resourcesDirectorySet = new DefaultExternalSourceDirectorySet()
@@ -177,6 +206,12 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       javaDirectorySet.inheritedCompilerOutput = inheritOutputDirs
 //      javaDirectorySet.excludes = javaExcludes + sourceSet.java.excludes;
 //      javaDirectorySet.includes = javaIncludes + sourceSet.java.includes;
+
+      if (SourceSet.MAIN_SOURCE_SET_NAME.equals(sourceSet.name)) {
+        javaDirectorySet.srcDirs.addAll(ideaSourceDirs - sourceSet.resources.srcDirs)
+      } else if(SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.name)){
+        javaDirectorySet.srcDirs.addAll(ideaTestSourceDirs - sourceSet.resources.srcDirs)
+      }
 
       ExternalSourceDirectorySet generatedDirectorySet = null
       if(generatedSourceDirs && !generatedSourceDirs.isEmpty()) {

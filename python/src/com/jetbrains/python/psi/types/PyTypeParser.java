@@ -25,6 +25,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Function;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -49,26 +50,33 @@ import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBa
  * @author vlan
  */
 public class PyTypeParser {
-  private static final ParseResult EMPTY_RESULT = new ParseResult(null, Collections.<TextRange, PyType>emptyMap(), Collections.<PyType, TextRange>emptyMap(),
+  private static final ParseResult EMPTY_RESULT = new ParseResult(null, null, Collections.<TextRange, PyType>emptyMap(), Collections.<PyType, TextRange>emptyMap(),
                                                                   Collections.<PyType, PyImportElement>emptyMap());
 
   public static class ParseResult {
-    @Nullable private PyType myType;
-    @NotNull private Map<TextRange, ? extends PyType> myTypes;
-    @NotNull private Map<? extends PyType, TextRange> myFullRanges;
+    @Nullable private final PsiElement myElement;
+    @Nullable private final PyType myType;
+    @NotNull private final Map<TextRange, ? extends PyType> myTypes;
+    @NotNull private final Map<? extends PyType, TextRange> myFullRanges;
     @NotNull private final Map<? extends PyType, PyImportElement> myImports;
 
-    ParseResult(@Nullable PyType type, @NotNull Map<TextRange, ? extends PyType> types,
+    ParseResult(@Nullable PsiElement element, @Nullable PyType type, @NotNull Map<TextRange, ? extends PyType> types,
                 @NotNull Map<? extends PyType, TextRange> fullRanges,
                 @NotNull Map<? extends PyType, PyImportElement> imports) {
+      myElement = element;
       myType = type;
       myTypes = types;
       myFullRanges = fullRanges;
       myImports = imports;
     }
 
-    ParseResult(@NotNull PyType type, @NotNull TextRange range) {
-      this(type, ImmutableMap.of(range, type), ImmutableMap.of(type, range), ImmutableMap.<PyType, PyImportElement>of());
+    ParseResult(@Nullable PsiElement element, @NotNull PyType type, @NotNull TextRange range) {
+      this(element, type, ImmutableMap.of(range, type), ImmutableMap.of(type, range), ImmutableMap.<PyType, PyImportElement>of());
+    }
+
+    @Nullable
+    private PsiElement getElement() {
+      return myElement;
     }
 
     @Nullable
@@ -101,11 +109,11 @@ public class PyTypeParser {
       fullRanges.putAll(result.getFullRanges());
       imports.putAll(myImports);
       imports.putAll(result.getImports());
-      return new ParseResult(myType, types, fullRanges, imports);
+      return new ParseResult(myElement, myType, types, fullRanges, imports);
     }
 
     private ParseResult withType(@Nullable PyType type) {
-      return new ParseResult(type, myTypes, myFullRanges, myImports);
+      return new ParseResult(myElement, type, myTypes, myFullRanges, myImports);
     }
   }
 
@@ -166,10 +174,10 @@ public class PyTypeParser {
             final ParseResult boundResult = value.getSecond();
             if (boundResult != null) {
               final PyGenericType type = new PyGenericType(name, boundResult.getType());
-              final ParseResult result = new ParseResult(type, range);
+              final ParseResult result = new ParseResult(null, type, range);
               return result.merge(boundResult).withType(type);
             }
-            return new ParseResult(new PyGenericType(name, null), range);
+            return new ParseResult(null, new PyGenericType(name, null), range);
           }
         })
         .named("type-parameter");
@@ -190,17 +198,24 @@ public class PyTypeParser {
             final ParseResult second = firstPair.getSecond();
             final List<ParseResult> third = value.getSecond();
             final PyType firstType = first.getType();
-            if (firstType instanceof PyClassType) {
-              final List<PyType> typesInBrackets = new ArrayList<PyType>();
-              typesInBrackets.add(second.getType());
-              ParseResult result = first;
-              result = result.merge(second);
-              for (ParseResult r : third) {
-                typesInBrackets.add(r.getType());
-                result = result.merge(r);
+            final List<PyType> typesInBrackets = new ArrayList<PyType>();
+            typesInBrackets.add(second.getType());
+            ParseResult result = first;
+            result = result.merge(second);
+            for (ParseResult r : third) {
+              typesInBrackets.add(r.getType());
+              result = result.merge(r);
+            }
+            final List<PyType> elementTypes = third.isEmpty() ? Collections.singletonList(second.getType()) : typesInBrackets;
+            final PsiElement resolved = first.getElement();
+            if (resolved != null) {
+              final PyType typingType = PyTypingTypeProvider.getType(resolved, elementTypes);
+              if (typingType != null) {
+                return result.withType(typingType);
               }
-              final List<PyType> elementTypes = third.isEmpty() ? Collections.singletonList(second.getType()) : typesInBrackets;
-              final PyCollectionTypeImpl type = new PyCollectionTypeImpl(((PyClassType)firstType).getPyClass(), false, elementTypes);
+            }
+            if (firstType instanceof PyClassType) {
+              final PyType type = new PyCollectionTypeImpl(((PyClassType)firstType).getPyClass(), false, elementTypes);
               return result.withType(type);
             }
             return EMPTY_RESULT;
@@ -354,6 +369,7 @@ public class PyTypeParser {
         final Map<PyType, PyImportElement> imports = new HashMap<PyType, PyImportElement>();
 
         PyType type = resolveQualifierType(tokens, pyFile, context, types, fullRanges, imports);
+        PsiElement resolved = type != null ? getElement(type) : null;
 
         if (type != null) {
           final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
@@ -365,7 +381,7 @@ public class PyTypeParser {
             final List<? extends RatedResolveResult> results = qualifierType.resolveMember(token.getText().toString(), expression,
                                                                                            AccessDirection.READ, resolveContext);
             if (results != null && !results.isEmpty()) {
-              final PsiElement resolved = results.get(0).getElement();
+              resolved = results.get(0).getElement();
               if (resolved instanceof PyTypedElement) {
                 type = context.getType((PyTypedElement)resolved);
                 if (type != null && !allowResolveToType(type)) {
@@ -384,12 +400,28 @@ public class PyTypeParser {
             fullRanges.put(type, TextRange.create(firstRange.getStartOffset(), token.getRange().getEndOffset()));
           }
           if (type != null) {
-            return new ParseResult(type, types, fullRanges, imports);
+            return new ParseResult(resolved, type, types, fullRanges, imports);
           }
         }
       }
 
       return EMPTY_RESULT;
+    }
+
+    @Nullable
+    private static PsiElement getElement(@NotNull PyType type) {
+      if (type instanceof PyModuleType) {
+        return ((PyModuleType)type).getModule();
+      }
+      else if (type instanceof PyImportedModuleType) {
+        return ((PyImportedModuleType)type).getImportedModule();
+      }
+      else if (type instanceof PyClassType) {
+        return ((PyClassType)type).getPyClass();
+      }
+      else {
+        return null;
+      }
     }
 
     @Nullable
@@ -409,29 +441,32 @@ public class PyTypeParser {
       PsiElement resolved = file.getElementNamed(firstText);
       if (resolved != null) {
         // Local or imported name
-        if (resolved instanceof PyTypedElement) {
+        if (resolved instanceof PyTargetExpression) {
+          type = PyTypingTypeProvider.getTypeFromTargetExpression((PyTargetExpression)resolved, context);
+        }
+        if (type == null && resolved instanceof PyTypedElement) {
           type = context.getType((PyTypedElement)resolved);
-          if (type != null) {
-            tokens.remove(0);
-            if (!allowResolveToType(type)) {
-              return null;
-            }
-            if (type instanceof PyClassLikeType) {
-              type = ((PyClassLikeType)type).toInstance();
-            }
-            types.put(firstRange, type);
-            fullRanges.put(type, firstRange);
-            for (PyFromImportStatement fromImportStatement : file.getFromImports()) {
-              for (PyImportElement importElement : fromImportStatement.getImportElements()) {
-                if (firstText.equals(importElement.getVisibleName())) {
-                  imports.put(type, importElement);
-                }
-              }
-            }
-            for (PyImportElement importElement : file.getImportTargets()) {
+        }
+        if (type != null) {
+          tokens.remove(0);
+          if (!allowResolveToType(type)) {
+            return null;
+          }
+          if (type instanceof PyClassLikeType) {
+            type = ((PyClassLikeType)type).toInstance();
+          }
+          types.put(firstRange, type);
+          fullRanges.put(type, firstRange);
+          for (PyFromImportStatement fromImportStatement : file.getFromImports()) {
+            for (PyImportElement importElement : fromImportStatement.getImportElements()) {
               if (firstText.equals(importElement.getVisibleName())) {
                 imports.put(type, importElement);
               }
+            }
+          }
+          for (PyImportElement importElement : file.getImportTargets()) {
+            if (firstText.equals(importElement.getVisibleName())) {
+              imports.put(type, importElement);
             }
           }
         }
@@ -465,7 +500,8 @@ public class PyTypeParser {
     }
 
     private static boolean allowResolveToType(@NotNull PyType type) {
-      return type instanceof PyClassLikeType || type instanceof PyModuleType || type instanceof PyImportedModuleType;
+      return type instanceof PyClassLikeType || type instanceof PyModuleType || type instanceof PyImportedModuleType ||
+             type instanceof PyGenericType;
     }
 
     @Nullable
@@ -478,40 +514,40 @@ public class PyTypeParser {
         return EMPTY_RESULT;
       }
       else if (PyNames.NONE.equals(name)) {
-        return new ParseResult(PyNoneType.INSTANCE, range);
+        return new ParseResult(null, PyNoneType.INSTANCE, range);
       }
       else if ("integer".equals(name) || ("long".equals(name) && LanguageLevel.forElement(myAnchor).isPy3K())) {
         final PyClassType type = builtinCache.getIntType();
-        return type != null ? new ParseResult(type, range) : EMPTY_RESULT;
+        return type != null ? new ParseResult(null, type, range) : EMPTY_RESULT;
       }
       else if ("string".equals(name)) {
         final PyType type = builtinCache.getStringType(LanguageLevel.forElement(myAnchor));
-        return type != null ? new ParseResult(type, range) : EMPTY_RESULT;
+        return type != null ? new ParseResult(null, type, range) : EMPTY_RESULT;
       }
       else if ("bytestring".equals(name)) {
         final PyType type = builtinCache.getByteStringType(LanguageLevel.forElement(myAnchor));
-        return type != null ? new ParseResult(type, range) : EMPTY_RESULT;
+        return type != null ? new ParseResult(null, type, range) : EMPTY_RESULT;
       }
       else if ("bytes".equals(name)) {
         final PyClassType type = builtinCache.getBytesType(LanguageLevel.forElement(myAnchor));
-        return type != null ? new ParseResult(type, range) : EMPTY_RESULT;
+        return type != null ? new ParseResult(null, type, range) : EMPTY_RESULT;
       }
       else if ("unicode".equals(name)) {
         final PyClassType type = builtinCache.getUnicodeType(LanguageLevel.forElement(myAnchor));
-        return type != null ? new ParseResult(type, range) : EMPTY_RESULT;
+        return type != null ? new ParseResult(null, type, range) : EMPTY_RESULT;
       }
       else if ("boolean".equals(name)) {
         final PyClassType type = builtinCache.getBoolType();
-        return type != null ? new ParseResult(type, range) : EMPTY_RESULT;
+        return type != null ? new ParseResult(null, type, range) : EMPTY_RESULT;
       }
       else if ("dictionary".equals(name)) {
         final PyClassType type = builtinCache.getDictType();
-        return type != null ? new ParseResult(type, range) : EMPTY_RESULT;
+        return type != null ? new ParseResult(null, type, range) : EMPTY_RESULT;
       }
 
       final PyType builtinType = builtinCache.getObjectType(name);
       if (builtinType != null) {
-        return new ParseResult(builtinType, range);
+        return new ParseResult(null, builtinType, range);
       }
 
       return null;

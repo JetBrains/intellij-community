@@ -18,7 +18,10 @@ package com.intellij.testFramework;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
@@ -113,6 +116,33 @@ public class VfsTestUtil {
     }
     catch (IOException e) {
       throw new AssertionError(e);
+    }
+  }
+
+  @NotNull
+  public static VirtualFile findFileByCaseSensitivePath(@NotNull String absolutePath) {
+    String vfsPath = FileUtil.toSystemIndependentName(absolutePath);
+    VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(vfsPath);
+    Assert.assertNotNull("file " + absolutePath + " not found", vFile);
+    String realVfsPath = vFile.getPath();
+    if (!SystemInfo.isFileSystemCaseSensitive && !vfsPath.equals(realVfsPath) &&
+        vfsPath.equalsIgnoreCase(realVfsPath)) {
+      Assert.fail("Please correct case-sensitivity of path to prevent test failure on case-sensitive file systems:\n" +
+                  "     path " + vfsPath + "\n" +
+                  "real path " + realVfsPath);
+    }
+    return vFile;
+  }
+
+  public static void assertFilePathEndsWithCaseSensitivePath(@NotNull VirtualFile file, @NotNull String suffixPath) {
+    String vfsSuffixPath = FileUtil.toSystemIndependentName(suffixPath);
+    String vfsPath = file.getPath();
+    if (!SystemInfo.isFileSystemCaseSensitive && !vfsPath.endsWith(vfsSuffixPath) &&
+        StringUtil.endsWithIgnoreCase(vfsPath, vfsSuffixPath)) {
+      String realSuffixPath = vfsPath.substring(vfsPath.length() - vfsSuffixPath.length());
+      Assert.fail("Please correct case-sensitivity of path to prevent test failure on case-sensitive file systems:\n" +
+                  "     path " + suffixPath + "\n" +
+                  "real path " + realSuffixPath);
     }
   }
 }

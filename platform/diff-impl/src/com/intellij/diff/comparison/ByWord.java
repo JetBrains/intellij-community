@@ -17,13 +17,19 @@ package com.intellij.diff.comparison;
 
 import com.intellij.diff.comparison.LineFragmentSplitter.WordBlock;
 import com.intellij.diff.comparison.iterables.DiffIterable;
+import com.intellij.diff.comparison.iterables.DiffIterableUtil;
 import com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.fragments.DiffFragment;
+import com.intellij.diff.fragments.MergeWordFragment;
+import com.intellij.diff.fragments.MergeWordFragmentImpl;
+import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MergingCharSequence;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,6 +68,32 @@ public class ByWord {
     DiffIterable iterable = matchAdjustmentWhitespaces(text1, text2, delimitersIterable, policy, indicator);
 
     return convertIntoFragments(iterable);
+  }
+
+  @NotNull
+  public static List<MergeWordFragment> compare(@NotNull CharSequence text1,
+                                                @NotNull CharSequence text2,
+                                                @NotNull CharSequence text3,
+                                                @NotNull ComparisonPolicy policy,
+                                                @NotNull ProgressIndicator indicator) {
+    indicator.checkCanceled();
+
+    List<InlineChunk> words1 = getInlineChunks(text1);
+    List<InlineChunk> words2 = getInlineChunks(text2);
+    List<InlineChunk> words3 = getInlineChunks(text3);
+
+    FairDiffIterable wordChanges1 = diff(words2, words1, indicator);
+    wordChanges1 = optimizeWordChunks(text2, text1, words2, words1, wordChanges1, indicator);
+    FairDiffIterable iterable1 = matchAdjustmentDelimiters(text2, text1, words2, words1, wordChanges1, indicator);
+
+    FairDiffIterable wordChanges2 = diff(words2, words3, indicator);
+    wordChanges2 = optimizeWordChunks(text2, text3, words2, words3, wordChanges2, indicator);
+    FairDiffIterable iterable2 = matchAdjustmentDelimiters(text2, text3, words2, words3, wordChanges2, indicator);
+
+    List<MergeRange> wordConflicts = ComparisonMergeUtil.buildFair(iterable1, iterable2, indicator);
+    List<MergeRange> result = matchAdjustmentWhitespaces(text1, text2, text3, wordConflicts, policy, indicator);
+
+    return convertIntoFragments(result);
   }
 
   @NotNull
@@ -129,6 +161,21 @@ public class ByWord {
   //
 
   @NotNull
+  private static List<MergeWordFragment> convertIntoFragments(@NotNull List<MergeRange> conflicts) {
+    return ContainerUtil.map(conflicts, new Function<MergeRange, MergeWordFragment>() {
+      @Override
+      public MergeWordFragment fun(MergeRange ch) {
+        return new MergeWordFragmentImpl(ch);
+      }
+    });
+  }
+
+  @NotNull
+  private static List<DiffFragment> convertIntoFragments(@NotNull DiffIterable iterable) {
+    return DiffIterableUtil.convertIntoFragments(iterable);
+  }
+
+  @NotNull
   private static FairDiffIterable optimizeWordChunks(@NotNull CharSequence text1,
                                                      @NotNull CharSequence text2,
                                                      @NotNull List<InlineChunk> words1,
@@ -174,6 +221,26 @@ public class ByWord {
         return new TrimSpacesCorrector(defaultIterable, text1, text2, indicator).build();
       case IGNORE_WHITESPACES:
         return new IgnoreSpacesCorrector(iterable, text1, text2, indicator).build();
+      default:
+        throw new IllegalArgumentException(policy.name());
+    }
+  }
+
+  @NotNull
+  private static List<MergeRange> matchAdjustmentWhitespaces(@NotNull CharSequence text1,
+                                                             @NotNull CharSequence text2,
+                                                             @NotNull CharSequence text3,
+                                                             @NotNull List<MergeRange> conflicts,
+                                                             @NotNull ComparisonPolicy policy,
+                                                             @NotNull ProgressIndicator indicator) {
+    switch (policy) {
+      case DEFAULT:
+        return new MergeDefaultCorrector(conflicts, text1, text2, text3, indicator).build();
+      case TRIM_WHITESPACES:
+        List<MergeRange> defaultConflicts = new MergeDefaultCorrector(conflicts, text1, text2, text3, indicator).build();
+        return new MergeTrimSpacesCorrector(defaultConflicts, text1, text2, text3, indicator).build();
+      case IGNORE_WHITESPACES:
+        return new MergeIgnoreSpacesCorrector(conflicts, text1, text2, text3, indicator).build();
       default:
         throw new IllegalArgumentException(policy.name());
     }
@@ -477,6 +544,52 @@ public class ByWord {
     }
   }
 
+  private static class MergeDefaultCorrector {
+    @NotNull private final List<MergeRange> myIterable;
+    @NotNull private final CharSequence myText1;
+    @NotNull private final CharSequence myText2;
+    @NotNull private final CharSequence myText3;
+    @NotNull private final ProgressIndicator myIndicator;
+
+    @NotNull private final List<MergeRange> myChanges;
+
+    public MergeDefaultCorrector(@NotNull List<MergeRange> iterable,
+                                 @NotNull CharSequence text1,
+                                 @NotNull CharSequence text2,
+                                 @NotNull CharSequence text3,
+                                 @NotNull ProgressIndicator indicator) {
+      myIterable = iterable;
+      myText1 = text1;
+      myText2 = text2;
+      myText3 = text3;
+      myIndicator = indicator;
+
+      myChanges = new ArrayList<MergeRange>();
+    }
+
+    @NotNull
+    public List<MergeRange> build() {
+      for (MergeRange range : myIterable) {
+        int endCut = expandBackwardW(myText1, myText2, myText3,
+                                     range.start1, range.start2, range.start3,
+                                     range.end1, range.end2, range.end3);
+        int startCut = expandForwardW(myText1, myText2, myText3,
+                                      range.start1, range.start2, range.start3,
+                                      range.end1 - endCut, range.end2 - endCut, range.end3 - endCut);
+
+        MergeRange expand = new MergeRange(range.start1 + startCut, range.end1 - endCut,
+                                           range.start2 + startCut, range.end2 - endCut,
+                                           range.start3 + startCut, range.end3 - endCut);
+
+        if (!expand.isEmpty()) {
+          myChanges.add(expand);
+        }
+      }
+
+      return myChanges;
+    }
+  }
+
   private static class IgnoreSpacesCorrector {
     @NotNull private final DiffIterable myIterable;
     @NotNull private final CharSequence myText1;
@@ -508,6 +621,43 @@ public class ByWord {
       }
 
       return create(myChanges, myText1.length(), myText2.length());
+    }
+  }
+
+  private static class MergeIgnoreSpacesCorrector {
+    @NotNull private final List<MergeRange> myIterable;
+    @NotNull private final CharSequence myText1;
+    @NotNull private final CharSequence myText2;
+    @NotNull private final CharSequence myText3;
+    @NotNull private final ProgressIndicator myIndicator;
+
+    @NotNull private final List<MergeRange> myChanges;
+
+    public MergeIgnoreSpacesCorrector(@NotNull List<MergeRange> iterable,
+                                      @NotNull CharSequence text1,
+                                      @NotNull CharSequence text2,
+                                      @NotNull CharSequence text3,
+                                      @NotNull ProgressIndicator indicator) {
+      myIterable = iterable;
+      myText1 = text1;
+      myText2 = text2;
+      myText3 = text3;
+      myIndicator = indicator;
+
+      myChanges = new ArrayList<MergeRange>();
+    }
+
+    @NotNull
+    public List<MergeRange> build() {
+      for (MergeRange range : myIterable) {
+        MergeRange trimmed = trim(myText1, myText2, myText3, range);
+
+        if (!trimmed.isEmpty()) {
+          myChanges.add(trimmed);
+        }
+      }
+
+      return myChanges;
     }
   }
 
@@ -560,6 +710,69 @@ public class ByWord {
       }
 
       return create(myChanges, myText1.length(), myText2.length());
+    }
+  }
+
+  private static class MergeTrimSpacesCorrector {
+    @NotNull private final List<MergeRange> myIterable;
+    @NotNull private final CharSequence myText1;
+    @NotNull private final CharSequence myText2;
+    @NotNull private final CharSequence myText3;
+    @NotNull private final ProgressIndicator myIndicator;
+
+    @NotNull private final List<MergeRange> myChanges;
+
+    public MergeTrimSpacesCorrector(@NotNull List<MergeRange> iterable,
+                                    @NotNull CharSequence text1,
+                                    @NotNull CharSequence text2,
+                                    @NotNull CharSequence text3,
+                                    @NotNull ProgressIndicator indicator) {
+      myIterable = iterable;
+      myText1 = text1;
+      myText2 = text2;
+      myText3 = text3;
+      myIndicator = indicator;
+
+      myChanges = new ArrayList<MergeRange>();
+    }
+
+    @NotNull
+    public List<MergeRange> build() {
+      for (MergeRange range : myIterable) {
+        int start1 = range.start1;
+        int start2 = range.start2;
+        int start3 = range.start3;
+        int end1 = range.end1;
+        int end2 = range.end2;
+        int end3 = range.end3;
+
+        if (isLeadingTrailingSpace(myText1, start1)) {
+          start1 = trimStart(myText1, start1, end1);
+        }
+        if (isLeadingTrailingSpace(myText1, end1 - 1)) {
+          end1 = trimEnd(myText1, start1, end1);
+        }
+        if (isLeadingTrailingSpace(myText2, start2)) {
+          start2 = trimStart(myText2, start2, end2);
+        }
+        if (isLeadingTrailingSpace(myText2, end2 - 1)) {
+          end2 = trimEnd(myText2, start2, end2);
+        }
+        if (isLeadingTrailingSpace(myText3, start3)) {
+          start3 = trimStart(myText3, start3, end3);
+        }
+        if (isLeadingTrailingSpace(myText3, end3 - 1)) {
+          end3 = trimEnd(myText3, start3, end3);
+        }
+
+        MergeRange trimmed = new MergeRange(start1, end1, start2, end2, start3, end3);
+
+        if (!trimmed.isEmpty()) {
+          myChanges.add(trimmed);
+        }
+      }
+
+      return myChanges;
     }
   }
 

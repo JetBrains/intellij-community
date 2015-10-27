@@ -25,6 +25,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author Vladislav.Soroka
  * @since 9/11/2015
@@ -71,4 +73,7 @@ public interface IdeModelsProvider {
 
   @NotNull
   String[] getLibraryUrls(@NotNull Library library, @NotNull OrderRootType type);
+
+  @NotNull
+  List<Module> getAllDependentModules(@NotNull Module module);
 }

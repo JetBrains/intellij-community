@@ -84,7 +84,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   private final List<AbstractFilePatchInProgress> myPatches;
   private final List<ShelveChangesManager.ShelvedBinaryFilePatch> myBinaryShelvedPatches;
-  private final MyChangeTreeList myChangesTreeList;
+  @NotNull private final MyChangeTreeList myChangesTreeList;
   @Nullable private final Collection<Change> myPreselectedChanges;
 
   private JComponent myCenterPanel;
@@ -171,6 +171,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
                                                  }
                                                  myInfoCalculator.setIncluded(includedTrinity);
                                                  myCommitLegendPanel.update();
+                                                 updateOkActions();
                                                }
                                              }, new MyChangeNodeDecorator());
     myChangesTreeList.setDoubleClickHandler(new Runnable() {
@@ -243,6 +244,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         }
       });
     }
+    updateOkActions();
+  }
+
+  private void updateOkActions() {
+    setOKActionEnabled(!myChangesTreeList.getIncludedChanges().isEmpty());
   }
 
   private void queueRequest() {

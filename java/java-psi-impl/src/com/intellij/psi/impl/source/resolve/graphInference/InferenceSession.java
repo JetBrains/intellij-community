@@ -899,7 +899,9 @@ public class InferenceSession {
           }
           parameter.putUserData(LOWER_BOUND, lub);
         }
-        var.addBound(elementFactory.createType(parameter), InferenceBound.EQ);
+        if (!var.addBound(elementFactory.createType(parameter), InferenceBound.EQ)) {
+          return null;
+        }
       }
       myIncorporationPhase.forgetCaptures(vars);
       if (!repeatInferencePhases(true)) {
@@ -1118,7 +1120,12 @@ public class InferenceSession {
   }
 
   private boolean proceedWithAdditionalConstraints(Set<ConstraintFormula> additionalConstraints) {
-    final PsiSubstitutor siteSubstitutor = mySiteSubstitutor;
+    //empty substitutor should be used to resolve input variables:
+    //all types in additional constraints are already substituted during collecting phase, 
+    //recursive site substitutors (T -> List<T>) would make additional constraints work with multiple times substituted types, which is incorrect.
+    //at the same time, recursive substitutions should not appear during inference but appear rather on site,
+    //so the problem should not influence consequence substitution of additional constraints
+    final PsiSubstitutor siteSubstitutor = PsiSubstitutor.EMPTY;
 
     while (!additionalConstraints.isEmpty()) {
       //extract subset of constraints

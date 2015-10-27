@@ -580,7 +580,7 @@ public class JavaStackFrame extends XStackFrame {
       return Pair.create(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
     }
     final PsiFile positionFile = position.getFile();
-    if (!positionFile.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+    if (!positionFile.isValid() || !positionFile.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
       return Pair.create(visibleVars, Collections.<TextWithImports>emptySet());
     }
 

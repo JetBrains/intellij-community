@@ -18,6 +18,8 @@ package com.intellij.xdebugger.impl.breakpoints.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
@@ -61,6 +63,11 @@ public class BreakpointsDialogFactory {
     if (myDialogShowing != null) {
       return;
     }
+    final Disposable disposable = new Disposable() {
+      @Override
+      public void dispose() {
+      }
+    };
 
     final BreakpointsDialog dialog = new BreakpointsDialog(myProject, initialBreakpoint != null ? initialBreakpoint : myBreakpoint, XBreakpointUtil.collectPanelProviders()) {
       @Override
@@ -72,8 +79,16 @@ public class BreakpointsDialogFactory {
         myDialogShowing = null;
 
         super.dispose();
+        Disposer.dispose(disposable);
       }
     };
+    ProjectManagerAdapter adapter = new ProjectManagerAdapter() {
+      @Override
+      public void projectClosing(Project project) {
+        dialog.dispose();
+      }
+    };
+    ProjectManager.getInstance().addProjectManagerListener(adapter, disposable);
 
     if (myBalloonToHide != null) {
       if (!myBalloonToHide.isDisposed()) {

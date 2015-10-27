@@ -1,10 +1,10 @@
 import time
-from pydevd_concurrency_analyser.pydevd_thread_wrappers import ObjectWrapper
+from pydevd_concurrency_analyser.pydevd_thread_wrappers import ObjectWrapper, wrap_attr
 
 import pydevd_file_utils
 import pydevd_vars
 from _pydev_filesystem_encoding import getfilesystemencoding
-from pydevd_constants import DictContains, GetThreadId
+from pydevd_constants import DictContains, GetThreadId, IS_PY3K
 
 file_system_encoding = getfilesystemencoding()
 
@@ -86,8 +86,6 @@ def get_text_list_for_frame(frame):
     return cmdTextList
 
 
-
-
 def send_message(event_class, time, name, thread_id, type, event, file, line, frame, lock_id=0, parent=None):
     dbg = GlobalDebuggerHolder.globalDbg
     cmdTextList = ['<xml>']
@@ -135,7 +133,13 @@ class ThreadingLogger:
             self_obj = frame.f_locals["self"]
             if isinstance(self_obj, threading.Thread) or self_obj.__class__ == ObjectWrapper:
                 write_log = True
-
+        if hasattr(frame, "f_back") and frame.f_back is not None:
+            back = frame.f_back
+            if hasattr(back, "f_back") and back.f_back is not None:
+                back = back.f_back
+                if DictContains(back.f_locals, "self"):
+                    if isinstance(back.f_locals["self"], threading.Thread):
+                        write_log = True
         try:
             if write_log:
                 t = threadingCurrentThread()
@@ -146,30 +150,54 @@ class ThreadingLogger:
                 event_time = cur_time() - self.start_time
                 method_name = frame.f_code.co_name
 
-                if isinstance(self_obj, threading.Thread) and method_name in THREAD_METHODS:
-                    if back_base not in DONT_TRACE_THREADING or \
-                            (method_name in INNER_METHODS and back_base in INNER_FILES):
+                if isinstance(self_obj, threading.Thread):
+                    if not hasattr(self_obj, "_pydev_run_patched"):
+                        wrap_attr(self_obj, "run")
+                    if (method_name in THREAD_METHODS) and (back_base not in DONT_TRACE_THREADING or \
+                            (method_name in INNER_METHODS and back_base in INNER_FILES)):
                         thread_id = GetThreadId(self_obj)
                         name = self_obj.getName()
                         real_method = frame.f_code.co_name
+                        parent = None
                         if real_method == "_stop":
-                            # TODO: Python 2
                             if back_base in INNER_FILES and \
                                             back.f_code.co_name == "_wait_for_tstate_lock":
                                 back = back.f_back.f_back
                             real_method = "stop"
+                            if hasattr(self_obj, "_pydev_join_called"):
+                                parent = GetThreadId(t)
                         elif real_method == "join":
                             # join called in the current thread, not in self object
+                            if not self_obj.is_alive():
+                                return
                             thread_id = GetThreadId(t)
                             name = t.getName()
+                            setattr(self_obj, "_pydev_join_called", True)
 
-                        parent = None
-                        if real_method in ("start", "stop"):
+                        if real_method == "start":
                             parent = GetThreadId(t)
                         send_message("threading_event", event_time, name, thread_id, "thread",
                         real_method, back.f_code.co_filename, back.f_lineno, back, parent=parent)
                         # print(event_time, self_obj.getName(), thread_id, "thread",
                         #       real_method, back.f_code.co_filename, back.f_lineno)
+
+                if method_name == "pydev_after_run_call":
+                    if hasattr(frame, "f_back") and frame.f_back is not None:
+                        back = frame.f_back
+                        if hasattr(back, "f_back") and back.f_back is not None:
+                            back = back.f_back
+                        if DictContains(back.f_locals, "self"):
+                            if isinstance(back.f_locals["self"], threading.Thread):
+                                my_self_obj = frame.f_back.f_back.f_locals["self"]
+                                my_back = frame.f_back.f_back
+                                my_thread_id = GetThreadId(my_self_obj)
+                                send_massage = True
+                                if IS_PY3K and hasattr(my_self_obj, "_pydev_join_called"):
+                                    send_massage = False
+                                    # we can't detect stop after join in Python 2 yet
+                                if send_massage:
+                                    send_message("threading_event", event_time, "Thread", my_thread_id, "thread",
+                                                 "stop", my_back.f_code.co_filename, my_back.f_lineno, my_back, parent=None)
 
                 if self_obj.__class__ == ObjectWrapper:
                     if back_base in DONT_TRACE_THREADING:
@@ -205,6 +233,7 @@ class ThreadingLogger:
                                          "release", back.f_code.co_filename, back.f_lineno, back, lock_id=str(id(self_obj)))
                         # print(event_time, t.getName(), GetThreadId(t), "lock",
                         #       real_method, back.f_code.co_filename, back.f_lineno)
+
 
         except Exception:
             traceback.print_exc()
@@ -250,14 +279,20 @@ class AsyncioLogger:
 
         if not hasattr(frame, "f_back") or frame.f_back is None:
             return
-
         back = frame.f_back
-        method_name = back.f_code.co_name
 
         if DictContains(frame.f_locals, "self"):
             self_obj = frame.f_locals["self"]
             if isinstance(self_obj, asyncio.Task):
-                if method_name in ("__init__",):
+                method_name = frame.f_code.co_name
+                if method_name == "set_result":
+                    task_id = id(self_obj)
+                    task_name = self.task_mgr.get(str(task_id))
+                    send_message("asyncio_event", event_time, task_name, task_name, "thread", "stop", frame.f_code.co_filename,
+                                 frame.f_lineno, frame)
+
+                method_name = back.f_code.co_name
+                if method_name == "__init__":
                     task_id = id(self_obj)
                     task_name = self.task_mgr.get(str(task_id))
                     send_message("asyncio_event", event_time, task_name, task_name, "thread", "start", frame.f_code.co_filename,

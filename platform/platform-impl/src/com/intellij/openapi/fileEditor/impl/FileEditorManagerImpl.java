@@ -915,7 +915,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
             .getSelectedFileEditorProvider(myEditorHistoryManager, file, providers);
         }
         else {
-          selectedProvider = entry.mySelectedProvider;
+          selectedProvider = entry.getSelectedProvider();
         }
         if (selectedProvider != null) {
           for (int i = editors.length - 1; i >= 0; i--) {

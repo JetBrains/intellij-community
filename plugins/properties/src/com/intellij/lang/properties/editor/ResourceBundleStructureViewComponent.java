@@ -139,7 +139,10 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
       final IProperty[] properties = (IProperty[])getData(IProperty.ARRAY_KEY.getName());
       if (properties != null) {
         for (IProperty property : properties) {
-          elements.add(property.getPsiElement());
+          final PsiElement element = property.getPsiElement();
+          if (element.isValid()) {
+            elements.add(element);
+          }
         }
       }
       return elements.toArray(new PsiElement[elements.size()]);

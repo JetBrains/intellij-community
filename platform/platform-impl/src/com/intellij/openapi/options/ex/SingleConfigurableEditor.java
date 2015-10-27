@@ -122,6 +122,16 @@ public class SingleConfigurableEditor extends DialogWrapper {
     this(parent, configurable, ShowSettingsUtilImpl.createDimensionKey(configurable));
   }
 
+  @Override
+  public void show() {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        SingleConfigurableEditor.super.show();
+      }
+    });
+  }
+
   public Configurable getConfigurable() {
     return myConfigurable;
   }
@@ -173,30 +183,25 @@ public class SingleConfigurableEditor extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        try {
-          if (myConfigurable.isModified()) {
-            myConfigurable.apply();
-            mySaveAllOnClose = true;
-          }
-        }
-        catch (ConfigurationException e) {
-          if (e.getMessage() != null) {
-            if (myProject != null) {
-              Messages.showMessageDialog(myProject, e.getMessage(), e.getTitle(), Messages.getErrorIcon());
-            }
-            else {
-              Messages.showMessageDialog(getRootPane(), e.getMessage(), e.getTitle(), Messages.getErrorIcon());
-            }
-          }
-          return;
-        }
-
-        SingleConfigurableEditor.super.doOKAction();
+    try {
+      if (myConfigurable.isModified()) {
+        myConfigurable.apply();
+        mySaveAllOnClose = true;
       }
-    });
+    }
+    catch (ConfigurationException e) {
+      if (e.getMessage() != null) {
+        if (myProject != null) {
+          Messages.showMessageDialog(myProject, e.getMessage(), e.getTitle(), Messages.getErrorIcon());
+        }
+        else {
+          Messages.showMessageDialog(getRootPane(), e.getMessage(), e.getTitle(), Messages.getErrorIcon());
+        }
+      }
+      return;
+    }
+
+    super.doOKAction();
   }
 
   protected static String createDimensionKey(Configurable configurable) {
@@ -239,30 +244,25 @@ public class SingleConfigurableEditor extends DialogWrapper {
     @Override
     public void actionPerformed(ActionEvent event) {
       if (myPerformAction) return;
-      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-        @Override
-        public void run() {
-          try {
-            myPerformAction = true;
-            if (myConfigurable.isModified()) {
-              myConfigurable.apply();
-              mySaveAllOnClose = true;
-              setCancelButtonText(CommonBundle.getCloseButtonText());
-            }
-          }
-          catch (ConfigurationException e) {
-            if (myProject != null) {
-              Messages.showMessageDialog(myProject, e.getMessage(), e.getTitle(), Messages.getErrorIcon());
-            }
-            else {
-              Messages.showMessageDialog(getRootPane(), e.getMessage(), e.getTitle(),
-                                         Messages.getErrorIcon());
-            }
-          } finally {
-            myPerformAction = false;
-          }
+      try {
+        myPerformAction = true;
+        if (myConfigurable.isModified()) {
+          myConfigurable.apply();
+          mySaveAllOnClose = true;
+          setCancelButtonText(CommonBundle.getCloseButtonText());
         }
-      });
+      }
+      catch (ConfigurationException e) {
+        if (myProject != null) {
+          Messages.showMessageDialog(myProject, e.getMessage(), e.getTitle(), Messages.getErrorIcon());
+        }
+        else {
+          Messages.showMessageDialog(getRootPane(), e.getMessage(), e.getTitle(),
+                                     Messages.getErrorIcon());
+        }
+      } finally {
+        myPerformAction = false;
+      }
     }
   }
 

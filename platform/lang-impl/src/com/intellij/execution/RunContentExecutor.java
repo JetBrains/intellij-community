@@ -94,7 +94,7 @@ public class RunContentExecutor implements Disposable {
   private ConsoleView createConsole(@NotNull Project project) {
     TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     consoleBuilder.filters(myFilterList);
-    ConsoleView console = consoleBuilder.getConsole();
+    final ConsoleView console = consoleBuilder.getConsole();
 
     if (myHelpId != null) {
       console.setHelpId(myHelpId);
@@ -105,8 +105,9 @@ public class RunContentExecutor implements Disposable {
     final JComponent consolePanel = createConsolePanel(console, actions);
     RunContentDescriptor descriptor = new RunContentDescriptor(console, myProcess, consolePanel, myTitle);
 
-    Disposer.register(console, descriptor);
-
+    Disposer.register(descriptor, this);
+    Disposer.register(descriptor, console);
+    
     actions.add(new RerunAction(consolePanel));
     actions.add(new StopAction());
     actions.add(new CloseAction(executor, descriptor, myProject));
@@ -116,8 +117,7 @@ public class RunContentExecutor implements Disposable {
     if (myActivateToolWindow) {
       activateToolWindow();
     }
-
-    Disposer.register(this, console);
+    
     return console;
   }
 
@@ -162,7 +162,6 @@ public class RunContentExecutor implements Disposable {
 
   @Override
   public void dispose() {
-    Disposer.dispose(this);
   }
 
   /**

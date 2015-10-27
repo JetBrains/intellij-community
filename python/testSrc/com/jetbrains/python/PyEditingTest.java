@@ -257,6 +257,21 @@ public class PyEditingTest extends PyTestCase {
     doDocStringTypingTest("\nparam", DocStringFormat.GOOGLE);
   }
 
+  // PY-17183
+  public void testEnterDocstringStubWhenFunctionDocstringBelow() {
+    doDocStringTypingTest("\n", DocStringFormat.GOOGLE);
+  }
+  
+  // PY-17183
+  public void testEnterDocstringStubWhenClassDocstringBelow() {
+    doDocStringTypingTest("\n", DocStringFormat.GOOGLE);
+  }
+
+  // PY-17183
+  public void testEnterNoDocstringStubWhenCodeExampleInDocstring() {
+    doDocStringTypingTest("\n", DocStringFormat.GOOGLE);
+  }
+
   public void testEnterInString() {  // PY-1738
     doTestEnter("a = \"some <caret>string\"", "a = \"some \" \\\n" +
                                               "    \"string\"");

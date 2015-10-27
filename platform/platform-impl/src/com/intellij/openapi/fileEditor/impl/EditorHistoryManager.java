@@ -29,6 +29,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -45,7 +46,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 @State(name = "editorHistoryManager", storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE))
-public final class EditorHistoryManager implements PersistentStateComponent<Element> {
+public final class EditorHistoryManager implements PersistentStateComponent<Element>, ProjectComponent {
   private static final Logger LOG = Logger.getInstance(EditorHistoryManager.class);
 
   private final Project myProject;
@@ -84,7 +85,13 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
   }
 
   private synchronized void removeEntry(HistoryEntry entry) {
+    boolean removed = myEntriesList.remove(entry);
+    if (removed) entry.destroy();
+  }
+
+  private synchronized void moveOnTop(HistoryEntry entry) {
     myEntriesList.remove(entry);
+    myEntriesList.add(entry);
   }
 
   /**
@@ -122,8 +129,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
 
     final HistoryEntry entry = getEntry(file);
     if(entry != null){
-      removeEntry(entry);
-      addEntry(entry);
+      moveOnTop(entry);
     }
     else {
       final FileEditorState[] states=new FileEditorState[editors.length];
@@ -134,7 +140,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
         providers[i] = provider;
         states[i] = editors[i].getState(FileEditorStateLevel.FULL);
       }
-      addEntry(new HistoryEntry(file, providers, states, providers[selectedProviderIndex]));
+      addEntry(HistoryEntry.createHeavy(myProject, file, providers, states, providers[selectedProviderIndex]));
       trimToSize();
     }
   }
@@ -195,24 +201,11 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
     final Pair <FileEditor, FileEditorProvider> selectedEditorWithProvider = editorManager.getSelectedEditorWithProvider(file);
     if (selectedEditorWithProvider != null) {
       //LOG.assertTrue(selectedEditorWithProvider != null);
-      entry.mySelectedProvider = selectedEditorWithProvider.getSecond ();
-      LOG.assertTrue(entry.mySelectedProvider != null);
+      entry.setSelectedProvider(selectedEditorWithProvider.getSecond());
+      LOG.assertTrue(entry.getSelectedProvider() != null);
 
       if(changeEntryOrderOnly){
-        removeEntry(entry);
-        addEntry(entry);
-      }
-    }
-  }
-
-  /**
-   * Removes all entries that correspond to invalid files
-   */
-  private synchronized void validateEntries(){
-    for(int i=myEntriesList.size()-1; i>=0; i--){
-      final HistoryEntry entry = myEntriesList.get(i);
-      if(!entry.myFile.isValid()){
-        myEntriesList.remove(i);
+        moveOnTop(entry);
       }
     }
   }
@@ -221,12 +214,12 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
    * @return array of valid files that are in the history, oldest first. May contain duplicates.
    */
   public synchronized VirtualFile[] getFiles(){
-    validateEntries();
-    final VirtualFile[] result = new VirtualFile[myEntriesList.size()];
-    for(int i=myEntriesList.size()-1; i>=0 ;i--){
-      result[i] = myEntriesList.get(i).myFile;
+    final List<VirtualFile> result = new ArrayList<VirtualFile>(myEntriesList.size());
+    for (HistoryEntry entry : myEntriesList) {
+      VirtualFile file = entry.getFile();
+      if (file != null) result.add(file);
     }
-    return result;
+    return VfsUtilCore.toVirtualFileArray(result);
   }
 
   /**
@@ -235,7 +228,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
   public LinkedHashSet<VirtualFile> getFileSet() {
     LinkedHashSet<VirtualFile> result = ContainerUtil.newLinkedHashSet();
     for (VirtualFile file : getFiles()) {
-      // if the file occurs several times in the history, only its last occurrence counts 
+      // if the file occurs several times in the history, only its last occurrence counts
       result.remove(file);
       result.add(file);
     }
@@ -244,7 +237,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
 
   public synchronized boolean hasBeenOpen(@NotNull VirtualFile f) {
     for (HistoryEntry each : myEntriesList) {
-      if (Comparing.equal(each.myFile, f)) return true;
+      if (Comparing.equal(each.getFile(), f)) return true;
     }
     return false;
   }
@@ -264,7 +257,6 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
   }
 
   public FileEditorState getState(@NotNull VirtualFile file, final FileEditorProvider provider) {
-    validateEntries();
     final HistoryEntry entry = getEntry(file);
     return entry != null ? entry.getState(provider) : null;
   }
@@ -273,16 +265,15 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
    * @return may be null
    */
   public FileEditorProvider getSelectedProvider(final VirtualFile file) {
-    validateEntries();
     final HistoryEntry entry = getEntry(file);
-    return entry != null ? entry.mySelectedProvider : null;
+    return entry != null ? entry.getSelectedProvider() : null;
   }
 
-  private synchronized HistoryEntry getEntry(@NotNull VirtualFile file){
-    validateEntries();
+  private synchronized HistoryEntry getEntry(@NotNull VirtualFile file) {
     for (int i = myEntriesList.size() - 1; i >= 0; i--) {
       final HistoryEntry entry = myEntriesList.get(i);
-      if(file.equals(entry.myFile)){
+      VirtualFile entryFile = entry.getFile();
+      if (file.equals(entryFile)) {
         return entry;
       }
     }
@@ -296,7 +287,8 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
   private synchronized void trimToSize(){
     final int limit = UISettings.getInstance().RECENT_FILES_LIMIT + 1;
     while(myEntriesList.size()>limit){
-      myEntriesList.remove(0);
+      HistoryEntry removed = myEntriesList.remove(0);
+      removed.destroy();
     }
   }
 
@@ -311,7 +303,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
       public void run() {
         for (Element e : state.getChildren(HistoryEntry.TAG)) {
           try {
-            addEntry(new HistoryEntry(myProject, e));
+            addEntry(HistoryEntry.createHeavy(myProject, e));
           }
           catch (InvalidDataException e1) {
             // OK here
@@ -345,6 +337,32 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
       entry.writeExternal(element, myProject);
     }
     return element;
+  }
+
+  @Override
+  public void projectOpened() {
+  }
+
+  @Override
+  public void projectClosed() {
+  }
+
+  @Override
+  public void initComponent() {
+  }
+
+  @Override
+  public synchronized void disposeComponent() {
+    for (HistoryEntry entry : myEntriesList) {
+      entry.destroy();
+    }
+    myEntriesList.clear();
+  }
+
+  @NotNull
+  @Override
+  public String getComponentName() {
+    return "editorHistoryManager";
   }
 
   /**

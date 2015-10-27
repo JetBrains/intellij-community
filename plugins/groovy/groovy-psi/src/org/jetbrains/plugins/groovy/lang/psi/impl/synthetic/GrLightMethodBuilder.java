@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
@@ -74,6 +75,13 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   private Object myMethodKind;
   private Object myData;
   private String myOriginInfo;
+
+  public GrLightMethodBuilder(GrTypeDefinition constructedClass) {
+    this(constructedClass.getManager(), constructedClass.getName());
+    setConstructor(true);
+    setContainingClass(constructedClass);
+    setNavigationElement(constructedClass);
+  }
 
   public GrLightMethodBuilder(PsiManager manager, String name) {
     super(manager, GroovyLanguage.INSTANCE);

@@ -333,7 +333,7 @@ public class Tool implements SchemeElement {
         commandLine.getParametersList().prependAll("-a", exePath);
       }
       else {
-        exePath = PathEnvironmentVariableUtil.findAbsolutePathOnMac(exePath);
+        exePath = PathEnvironmentVariableUtil.toLocatableExePath(exePath);
         commandLine.setExePath(exePath);
       }
     }

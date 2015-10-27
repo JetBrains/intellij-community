@@ -233,12 +233,19 @@ public class TypeEvaluator {
         }
       }
     }
+    else if (expr instanceof PsiFunctionalExpression) {
+      final PsiType functionalInterfaceType = ((PsiFunctionalExpression)expr).getFunctionalInterfaceType();
+      if (functionalInterfaceType != null) {
+        return functionalInterfaceType;
+      }
+    }
     else if (expr instanceof PsiReferenceExpression) {
       final PsiType type = evaluateReferenceExpressionType(expr);
       if (type != null) {
         return PsiImplUtil.normalizeWildcardTypeByPosition(type, expr);
       }
-    } else if (expr instanceof PsiSuperExpression) {
+    }
+    else if (expr instanceof PsiSuperExpression) {
       final PsiClass psiClass = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
       if (psiClass != null) {
         final PsiClass superClass = psiClass.getSuperClass();

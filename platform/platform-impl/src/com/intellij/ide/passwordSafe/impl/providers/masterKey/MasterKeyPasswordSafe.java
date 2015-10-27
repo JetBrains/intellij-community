@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,8 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
   private static final String TEST_PASSWORD_VALUE = "test password";
 
   private final PasswordDatabase myDatabase;
-  private transient final PasswordSafeTimed<Ref<Object>> myKey = new PasswordSafeTimed<Ref<Object>>() {
+  private final transient PasswordSafeTimed<Ref<Object>> myKey = new PasswordSafeTimed<Ref<Object>>() {
+    @Override
     protected Ref<Object> compute() {
       return Ref.create();
     }
@@ -62,7 +63,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
   };
 
   public MasterKeyPasswordSafe(PasswordDatabase database) {
-    this.myDatabase = database;
+    myDatabase = database;
   }
 
   /**
@@ -118,7 +119,6 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
    *
    * @param oldPassword the old password
    * @param newPassword the new password
-   * @param encrypt
    * @return re-encrypted database
    */
   boolean changeMasterPassword(String oldPassword, String newPassword, boolean encrypt) {
@@ -209,7 +209,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
       return computable.compute();
     }
 
-    final AsyncFutureResult<Object> future = AsyncFutureFactory.getInstance().createAsyncFutureResult();
+    final AsyncFutureResult<T> future = AsyncFutureFactory.getInstance().createAsyncFutureResult();
     final ExpirableRunnable runnable = new ExpirableRunnable() {
       @Override
       public boolean isExpired() {
@@ -244,7 +244,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(runnable);
       }
       try {
-        return (T)future.get();
+        return future.get();
       }
       catch (InterruptedException e) {
         throw new ProcessCanceledException(e);
@@ -307,7 +307,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
     return setMasterPassword("");
   }
 
-  @SuppressWarnings({"MethodMayBeStatic"})
+  @SuppressWarnings("MethodMayBeStatic")
   public boolean isOsProtectedPasswordSupported() {
     // TODO extension point needed?
     return SystemInfo.isWindows;

@@ -26,6 +26,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -110,7 +111,10 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
     return super.toString() + " states=[" + new HashMap<PsiExpression, PsiType>(myStates) + "]";
   }
 
-  public void setExpressionType(PsiExpression expression, PsiType type) {
-    myStates.put(expression, type);
+  public void setExpressionType(PsiExpression expression, @NotNull PsiType type) {
+    PsiType prev = myStates.get(expression);
+    if (prev == null || !type.isAssignableFrom(prev)) {
+      myStates.put(expression, type);
+    }
   }
 }

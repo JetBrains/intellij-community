@@ -231,6 +231,8 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   }
 
   abstract fun getLocationsForBreakpoint(breakpoint: XLineBreakpoint<*>, onlySourceMappedBreakpoints: Boolean): List<Location>
+
+  override fun isLibraryFrameFilterSupported() = true
 }
 
 class LineBreakpointHandler(breakpointTypeClass: Class<out XLineBreakpointType<*>>,

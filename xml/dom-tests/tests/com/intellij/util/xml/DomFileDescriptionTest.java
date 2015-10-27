@@ -66,11 +66,15 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    Disposer.dispose(myDisposable);
-    myFooElementFile = null;
-    myBarElementFile = null;
+    try {
+      Disposer.dispose(myDisposable);
+    }
+    finally {
+      myFooElementFile = null;
+      myBarElementFile = null;
 
-    super.tearDown();
+      super.tearDown();
+    }
   }
 
   public void testNoInitialDomnessInB() throws Throwable {

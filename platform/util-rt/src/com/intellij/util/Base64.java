@@ -20,8 +20,12 @@ public class Base64 {
   }
 
   public static String encode(byte[] bytes) {
+    return encode(bytes, 0, bytes.length);
+  }
+
+  public static String encode(byte[] bytes, int offset, int length) {
     StringBuilder builder = new StringBuilder();
-    for (int i = 0; i < bytes.length; i += 3) {
+    for (int i = offset; i < length; i += 3) {
       builder.append(encodeBlock(bytes, i));
     }
     return builder.toString();

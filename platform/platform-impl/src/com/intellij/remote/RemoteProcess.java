@@ -15,7 +15,9 @@
  */
 package com.intellij.remote;
 
+import com.google.common.net.HostAndPort;
 import com.intellij.execution.process.SelfKiller;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexander Koshevoy
@@ -24,4 +26,14 @@ public abstract class RemoteProcess extends Process implements SelfKiller {
   public abstract boolean killProcessTree();
 
   public abstract boolean isDisconnected();
+
+  /**
+   * Returns host and port which one should connect to get to the process remote port.
+   * Returns {@code null} if connection to the remote port is impossible or there is no information about it.
+   *
+   * @param remotePort remote process port
+   * @return host:port
+   */
+  @Nullable
+  public abstract HostAndPort getLocalTunnel(int remotePort);
 }

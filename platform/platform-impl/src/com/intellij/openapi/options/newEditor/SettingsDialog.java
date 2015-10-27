@@ -70,6 +70,17 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     init(null, project);
   }
 
+  @Override
+  public void show() {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        SettingsDialog.super.show();
+      }
+    });
+  }
+
+
   private void init(Configurable configurable, @Nullable Project project) {
     String name = configurable == null ? null : configurable.getDisplayName();
     String title = CommonBundle.settingsTitle();
@@ -142,15 +153,10 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
 
   @Override
   public void doOKAction() {
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        if (myEditor.apply()) {
-          ApplicationManager.getApplication().saveAll();
-          SettingsDialog.super.doOKAction();
-        }
-      }
-    });
+    if (myEditor.apply()) {
+      ApplicationManager.getApplication().saveAll();
+      SettingsDialog.super.doOKAction();
+    }
   }
 
   @Override

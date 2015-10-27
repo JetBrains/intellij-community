@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.changes.ContentRevision
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.testFramework.UsefulTestCase
 import java.util.*
-import kotlin.test.assertNull
 
 public class ZipChangesTest : UsefulTestCase() {
   public fun testTrivial() {
@@ -289,8 +288,8 @@ public class ZipChangesTest : UsefulTestCase() {
     public fun changes(): List<Change> = data
 
     public operator fun String.not(): ModHelper = ModHelper(this, this, null, null)
-    public operator fun String.minus(): DelHelper = DelHelper(this, null)
-    public operator fun String.plus(): AddHelper = AddHelper(this, null)
+    public operator fun String.unaryMinus(): DelHelper = DelHelper(this, null)
+    public operator fun String.unaryPlus(): AddHelper = AddHelper(this, null)
 
     public operator fun ModHelper.minus(path: String): ModHelper {
       aPath = path

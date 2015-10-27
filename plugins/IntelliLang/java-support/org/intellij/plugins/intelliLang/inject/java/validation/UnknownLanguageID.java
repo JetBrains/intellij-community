@@ -19,11 +19,11 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.lang.Language;
 import com.intellij.psi.*;
-import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.plugins.intelliLang.Configuration;
-import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
+import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.pattern.PatternValidator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +68,8 @@ public class UnknownLanguageID extends LocalInspectionTool {
                 final Object id = JavaPsiFacade.getInstance(expression.getProject()).
                   getConstantEvaluationHelper().computeConstantExpression(expression);
                 if (id instanceof String) {
-                  if (InjectedLanguage.findLanguageById((String)id) == null && ReferenceInjector.findById((String)id) == null) {
+                  Language language = InjectorUtils.getLanguageByString((String)id);
+                  if (language == null) {
                     holder.registerProblem(expression, "Unknown language '" + id + "'", ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
                   }
                 }

@@ -28,6 +28,6 @@ val File.parentSystemIndependentPath: String
 // PathUtilRt.getParentPath returns empty string if no parent path, but in Kotlin "null" is better because elvis operator could be used
 fun getParentPath(path: String) = StringUtil.nullize(PathUtilRt.getParentPath(path))
 
-fun endsWithSlash(path: String) = path.getOrNull(path.length() - 1) == '/'
+fun endsWithSlash(path: String) = path.getOrNull(path.length - 1) == '/'
 
-fun endsWithName(path: String, name: String) = path.endsWith(name) && (path.length() == name.length() || path.getOrNull(path.length() - name.length() - 1) == '/')
+fun endsWithName(path: String, name: String) = path.endsWith(name) && (path.length == name.length || path.getOrNull(path.length - name.length - 1) == '/')
