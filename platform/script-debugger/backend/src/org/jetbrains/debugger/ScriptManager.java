@@ -1,49 +1,41 @@
-package org.jetbrains.debugger;
+package org.jetbrains.debugger
 
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.Processor;
-import com.intellij.util.Url;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.debugger.values.FunctionValue;
+import com.intellij.util.CommonProcessors
+import com.intellij.util.Processor
+import com.intellij.util.Url
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.debugger.values.FunctionValue
 
-public interface ScriptManager {
-  String VM_SCHEME = "vm";
+interface ScriptManager {
 
-  @NotNull
-  Promise<String> getSource(@NotNull Script script);
+  fun getSource(script: Script): Promise<String>
 
-  boolean hasSource(Script script);
+  fun hasSource(script: Script): Boolean
 
-  boolean containsScript(@NotNull Script script);
+  fun containsScript(script: Script): Boolean
 
   /**
    * Demands that script text should be replaced with a new one if possible. VM may get resumed after this command
    */
-  @NotNull
-  Promise<?> setSourceOnRemote(@NotNull Script script, @NotNull CharSequence newSource, boolean preview);
+  fun setSourceOnRemote(script: Script, newSource: CharSequence, preview: Boolean): Promise<*>
 
-  void forEachScript(@NotNull Processor<Script> scriptProcessor);
+  fun forEachScript(scriptProcessor: Processor<Script>)
 
-  @Nullable
-  Script forEachScript(@NotNull CommonProcessors.FindProcessor<Script> scriptProcessor);
+  fun forEachScript(scriptProcessor: CommonProcessors.FindProcessor<Script>): Script?
 
-  @NotNull
-  Promise<Script> getScript(@NotNull FunctionValue function);
+  fun getScript(function: FunctionValue): Promise<Script>
 
-  @Nullable("if call frame script is native (at least in Google Chrome)")
-  Script getScript(@NotNull CallFrame frame);
+  fun getScript(frame: CallFrame): Script?
 
-  @Nullable
-  Script findScriptByUrl(@NotNull String rawUrl);
+  fun findScriptByUrl(rawUrl: String): Script?
 
-  @Nullable
-  Script findScriptByUrl(@NotNull Url url);
+  fun findScriptByUrl(url: Url): Script?
 
-  @Nullable
-  Script findScriptById(@NotNull String id);
+  fun findScriptById(id: String): Script?
 
-  @Nullable
-  Promise<Void> getScriptSourceMapPromise(@NotNull Script script);
+  fun getScriptSourceMapPromise(script: Script): Promise<Void>?
+
+  companion object {
+    val VM_SCHEME = "vm"
+  }
 }
