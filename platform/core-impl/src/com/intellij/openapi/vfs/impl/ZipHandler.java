@@ -31,8 +31,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -43,40 +41,21 @@ public class ZipHandler extends ArchiveHandler {
     super(path);
   }
 
-  private static final AtomicInteger myOpenRequests = new AtomicInteger();
-  private static final AtomicLong myOpenTime = new AtomicLong();
-  private static final AtomicLong myCloseTime = new AtomicLong();
-
   private static final FileAccessorCache<ZipHandler, ZipFile> ourZipFileFileAccessorCache = new FileAccessorCache<ZipHandler, ZipFile>(10, 20) {
     @Override
     protected ZipFile createAccessor(ZipHandler key) throws IOException {
-      @SuppressWarnings("unused") int requests = myOpenRequests.incrementAndGet();
-      long started = System.nanoTime();
-      try {
-        return new ZipFile(key.getCanonicalPathToZip());
-      } finally {
-        myOpenTime.addAndGet(System.nanoTime() - started);
-        //if (requests % 100 == 0) {
-        //  int factor = 1000000;
-        //  System.out.println("ZipHandler:" + requests + ", ot:" + (myOpenTime.get() / factor) + ", ct:"+ (myCloseTime.get() / factor));
-        //}
-      }
+      return new ZipFile(key.getCanonicalPathToZip());
     }
 
     @Override
     protected void disposeAccessor(final ZipFile fileAccessor) {
       // todo: ZipFile isn't disposable for Java6, replace the code below with 'disposeCloseable(fileAccessor);'
-      long started = System.nanoTime();
-      try {
-        disposeCloseable(new Closeable() {
-          @Override
-          public void close() throws IOException {
-            fileAccessor.close();
-          }
-        });
-      } finally {
-        myCloseTime.addAndGet(System.nanoTime() - started);
-      }
+      disposeCloseable(new Closeable() {
+        @Override
+        public void close() throws IOException {
+          fileAccessor.close();
+        }
+      });
     }
 
     @Override
@@ -98,20 +77,22 @@ public class ZipHandler extends ArchiveHandler {
   @Override
   protected Map<String, EntryInfo> createEntriesMap() throws IOException {
     FileAccessorCache.Handle<ZipFile> zipRef = ourZipFileFileAccessorCache.get(this);
-    ZipFile zip = zipRef.get();
-    Map<String, EntryInfo> map = new ZipEntryMap(zip.size());
-    map.put("", createRootEntry());
     try {
+      ZipFile zip = zipRef.get();
+
+      Map<String, EntryInfo> map = new ZipEntryMap(zip.size());
+      map.put("", createRootEntry());
+
       Enumeration<? extends ZipEntry> entries = zip.entries();
       while (entries.hasMoreElements()) {
         getOrCreate(entries.nextElement(), map, zip);
       }
+
+      return map;
     }
     finally {
       zipRef.release();
     }
-
-    return map;
   }
 
   @NotNull
@@ -190,13 +171,15 @@ public class ZipHandler extends ArchiveHandler {
 
     try {
       zipRef = ourZipFileFileAccessorCache.get(this);
-    } catch (RuntimeException ex) {
-      final Throwable cause = ex.getCause();
+    }
+    catch (RuntimeException ex) {
+      Throwable cause = ex.getCause();
       if (cause instanceof IOException) throw (IOException)cause;
       throw ex;
     }
-    ZipFile zip = zipRef.get();
+
     try {
+      ZipFile zip = zipRef.get();
       ZipEntry entry = zip.getEntry(relativePath);
       if (entry != null) {
         InputStream stream = zip.getInputStream(entry);
@@ -220,6 +203,7 @@ public class ZipHandler extends ArchiveHandler {
   }
 
   // used in Kotlin
+  @SuppressWarnings("unused")
   public static void clearFileAccessorCache() {
     ourZipFileFileAccessorCache.clear();
   }
