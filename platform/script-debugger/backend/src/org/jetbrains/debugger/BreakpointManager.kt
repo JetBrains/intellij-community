@@ -65,4 +65,7 @@ interface BreakpointListener : EventListener {
   fun resolved(breakpoint: Breakpoint)
 
   fun errorOccurred(breakpoint: Breakpoint, errorMessage: String?)
+
+  fun nonProvisionalBreakpointRemoved(breakpoint: Breakpoint) {
+  }
 }
