@@ -149,7 +149,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
       }
     }
     Object document = myEditor.getItem();
-    if (document != null) { //sometimes happens on Mac
+    if (document instanceof Document) { // sometimes null on Mac
       return getEditorsProvider().createExpression(getProject(), (Document)document, myExpression.getLanguage(), EvaluationMode.EXPRESSION);
     }
     return myExpression;
