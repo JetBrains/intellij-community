@@ -352,7 +352,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       myAttributesMap.put(name, attr);
       migrateErrorStripeColorFrom14(name, attr);
     }
-    setMissingUndefinedAttributesForVersion142();
   }
 
   private void migrateErrorStripeColorFrom14(@NotNull TextAttributesKey name, @NotNull TextAttributes attr) {
@@ -361,24 +360,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     Couple<Color> m = DEFAULT_STRIPE_COLORS.get(name.getExternalName());
     if (m != null && Comparing.equal(m.first, attr.getErrorStripeColor())) {
       attr.setErrorStripeColor(m.second);
-    }
-  }
-
-  /**
-   * Defines empty attributes with fallback (inheritance) enabled for all the attributes explicitly defined in the parent scheme since
-   * previously undefined attributes were treated as inherited, not taken from the parent scheme.
-   */
-  private void setMissingUndefinedAttributesForVersion142() {
-    if (myOriginalVersion >= 142 || myParentScheme == null) return;
-    if (myParentScheme instanceof AbstractColorsScheme) {
-      for (TextAttributesKey key : ((AbstractColorsScheme)myParentScheme).myAttributesMap.keySet()) {
-        TextAttributes parentAttributes = ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key);
-        if (parentAttributes != null &&
-            !parentAttributes.isFallbackEnabled() &&
-            !myAttributesMap.containsKey(key)) {
-          myAttributesMap.put(key, new TextAttributes());
-        }
-      }
     }
   }
 
