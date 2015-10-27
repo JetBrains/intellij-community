@@ -93,6 +93,9 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
         throw new EvaluateException(DebuggerBundle.message("error.vm.disconnected"));
       }
       catch (RuntimeException e) {
+        if (e.getCause() instanceof InterruptedException) {
+          throw e;
+        }
         LOG.error(e);
         throw new EvaluateException("Internal error, see logs for more details");
       }
