@@ -25,7 +25,10 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.changeSignature.*;
+import com.intellij.refactoring.changeSignature.JavaChangeInfoImpl;
+import com.intellij.refactoring.changeSignature.JavaChangeSignatureUsageProcessor;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.inCallers.JavaCallerChooser;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -37,7 +40,10 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author dsl
@@ -139,10 +145,6 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
       List<ParameterInfoImpl> params = new ArrayList<ParameterInfoImpl>();
       PsiParameter[] parameters = myMember.getParameterList().getParameters();
 
-      for (int i = 0; i < parameters.length; i++) {
-        params.add(new ParameterInfoImpl(i));
-      }
-
       if (mySettings.isMakeClassParameter()) {
         params.add(new ParameterInfoImpl(-1, mySettings.getClassParameterName(),
                                          factory.createType(containingClass, PsiSubstitutor.EMPTY), "this"));
@@ -152,6 +154,10 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
         for (Settings.FieldParameter parameter : mySettings.getParameterOrderList()) {
           params.add(new ParameterInfoImpl(-1, mySettings.getClassParameterName(), parameter.type, parameter.field.getName()));
         }
+      }
+
+      for (int i = 0; i < parameters.length; i++) {
+        params.add(new ParameterInfoImpl(i));
       }
 
       final PsiType returnType = myMember.getReturnType();
