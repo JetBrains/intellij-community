@@ -310,9 +310,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     };
   }
 
-  
   /**
-   * Please consider using this#filesWithLibrariesScope or this#filesWithoutLibrariesScope for optimization
+   * Please consider using {@link this#filesWithLibrariesScope} or {@link this#filesWithoutLibrariesScope} for optimization
    */
   @NotNull
   public static GlobalSearchScope filesScope(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
@@ -337,6 +336,9 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     return new FilesScope(project, files, true);
   }
 
+  /**
+   * Please consider using {@link this#filesWithLibrariesScope} or {@link this#filesWithoutLibrariesScope} for optimization
+   */
   @NotNull
   public static GlobalSearchScope filesScope(@NotNull Project project, @NotNull Collection<VirtualFile> files, @Nullable final String displayName) {
     if (files.isEmpty()) return EMPTY_SCOPE;
@@ -746,6 +748,9 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     private final Collection<VirtualFile> myFiles;
     private Boolean myHasFilesOutOfProjectRoots;
 
+    /**
+     * @deprecated use {@link GlobalSearchScope#filesScope(Project, Collection)}
+     */
     public FilesScope(@Nullable Project project, @NotNull Collection<VirtualFile> files) {
       this(project, files, null);
     }
