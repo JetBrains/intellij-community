@@ -30,8 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class BuiltInServer implements Disposable {
   // Some antiviral software detect viruses by the fact of accessing these ports so we should not touch them to appear innocent.
@@ -77,11 +75,7 @@ public class BuiltInServer implements Disposable {
                                     int portsCount,
                                     boolean tryAnyPort,
                                     @Nullable NotNullProducer<ChannelHandler> handler) throws Exception {
-    return start(new NioEventLoopGroup(workerCount, createExecutor()), true, firstPort, portsCount, tryAnyPort, handler);
-  }
-
-  private static ExecutorService createExecutor() {
-    return Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory("Netty Builtin Server"));
+    return start(new NioEventLoopGroup(workerCount, ConcurrencyUtil.newNamedThreadFactory("Netty Builtin Server")), true, firstPort, portsCount, tryAnyPort, handler);
   }
 
   @NotNull
