@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.makeStatic;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -211,6 +212,10 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
   }
 
   private void makeStatic(PsiMethod member) {
+    final PsiAnnotation overrideAnnotation = AnnotationUtil.findAnnotation(member, CommonClassNames.JAVA_LANG_OVERRIDE);
+    if (overrideAnnotation != null) {
+      overrideAnnotation.delete();
+    }
     setupTypeParameterList(member);
     // Add static modifier
     final PsiModifierList modifierList = member.getModifierList();

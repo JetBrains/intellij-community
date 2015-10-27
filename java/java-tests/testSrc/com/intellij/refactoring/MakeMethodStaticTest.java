@@ -215,6 +215,10 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
     doTest(true, true);
   }
 
+  public void testClearOverrideAnnotation() throws Exception {
+    doTest(true, true);
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }
