@@ -23,8 +23,8 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.testFramework.UsefulTestCase
 
-public class UnifiedFragmentBuilderTest : UsefulTestCase() {
-  public fun testEquals() {
+class UnifiedFragmentBuilderTest : UsefulTestCase() {
+  fun testEquals() {
     val document1 = DocumentImpl("A\nB\nC")
     val document2 = DocumentImpl("A\nB\nC")
 
@@ -39,7 +39,7 @@ public class UnifiedFragmentBuilderTest : UsefulTestCase() {
     assertEmpty(builder.blocks)
   }
 
-  public fun testWrongEndLineTypoBug() {
+  fun testWrongEndLineTypoBug() {
     val document1 = DocumentImpl("A\nB\nC\nD")
     val document2 = DocumentImpl("A\nD")
 

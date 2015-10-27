@@ -25,7 +25,7 @@ import com.intellij.openapi.util.Couple
 import com.intellij.util.containers.ContainerUtil
 import java.util.*
 
-public abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
+abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
   private fun doCharTest(texts: Trio<Document>, expected: List<Change>?, matchings: Trio<BitSet>?) {
     val iterable1 = ByChar.compare(texts.data2.charsSequence, texts.data1.charsSequence, INDICATOR)
     val iterable2 = ByChar.compare(texts.data2.charsSequence, texts.data3.charsSequence, INDICATOR)
@@ -95,7 +95,7 @@ public abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
     CHAR
   }
 
-  public inner class MergeTestBuilder(val type: TestType) {
+  inner class MergeTestBuilder(val type: TestType) {
     private var isExecuted: Boolean = false
 
     private var texts: Trio<Document>? = null
@@ -103,11 +103,11 @@ public abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
     private var changes: List<Change>? = null
     private var matching: Trio<BitSet>? = null
 
-    public fun assertExecuted() {
+    fun assertExecuted() {
       assertTrue(isExecuted)
     }
 
-    public fun test() {
+    fun test() {
       isExecuted = true
 
       assertTrue(changes != null || matching != null)
@@ -118,15 +118,15 @@ public abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
     }
 
 
-    public operator fun String.minus(v: String): Couple<String> {
+    operator fun String.minus(v: String): Couple<String> {
       return Couple(this, v)
     }
 
-    public operator fun Couple<String>.minus(v: String): Helper {
+    operator fun Couple<String>.minus(v: String): Helper {
       return Helper(Trio(this.first, this.second, v))
     }
 
-    public inner class Helper(val texts: Trio<String>) {
+    inner class Helper(val texts: Trio<String>) {
       init {
         val builder = this@MergeTestBuilder
         if (builder.texts == null) {
@@ -134,23 +134,23 @@ public abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
         }
       }
 
-      public fun matching() {
+      fun matching() {
         matching = texts.map { it -> parseMatching(it) }
       }
     }
 
 
-    public fun changes(vararg expected: Change): Unit {
+    fun changes(vararg expected: Change): Unit {
       changes = ContainerUtil.list(*expected)
     }
 
 
-    public fun mod(line1: Int, line2: Int, line3: Int, count1: Int, count2: Int, count3: Int): Change {
+    fun mod(line1: Int, line2: Int, line3: Int, count1: Int, count2: Int, count3: Int): Change {
       return Change(line1, line1 + count1, line2, line2 + count2, line3, line3 + count3)
     }
   }
 
-  public fun chars(f: MergeTestBuilder.() -> Unit) {
+  fun chars(f: MergeTestBuilder.() -> Unit) {
     doTest(TestType.CHAR, f)
   }
 
@@ -161,7 +161,7 @@ public abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
   }
 
 
-  public class Change(start1: Int, end1: Int, start2: Int, end2: Int, start3: Int, end3: Int)
+  class Change(start1: Int, end1: Int, start2: Int, end2: Int, start3: Int, end3: Int)
   : Trio<IntPair>(IntPair(start1, end1), IntPair(start2, end2), IntPair(start3, end3)) {
 
     val start1 = start(ThreeSide.LEFT)
@@ -175,8 +175,8 @@ public abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
     val starts = Trio(start1, start2, start3)
     val ends = Trio(end1, end2, end3)
 
-    public fun start(side: ThreeSide): Int = this(side).val1
-    public fun end(side: ThreeSide): Int = this(side).val2
+    fun start(side: ThreeSide): Int = this(side).val1
+    fun end(side: ThreeSide): Int = this(side).val2
 
     override fun toString(): String {
       return "($start1, $end1) - ($start2, $end2) - ($start3, $end3)"

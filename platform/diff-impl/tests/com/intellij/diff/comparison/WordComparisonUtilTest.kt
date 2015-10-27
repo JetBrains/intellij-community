@@ -15,8 +15,8 @@
  */
 package com.intellij.diff.comparison
 
-public class WordComparisonUtilTest : ComparisonUtilTestBase() {
-  public fun testSimpleCases() {
+class WordComparisonUtilTest : ComparisonUtilTestBase() {
+  fun testSimpleCases() {
     words {
       ("x z" - "y z")
       ("-  " - "-  ").default()
@@ -83,7 +83,7 @@ public class WordComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testPunctuation() {
+  fun testPunctuation() {
     words {
       (" x.z.x " - "x..x")
       ("-  -  -" - "    ").default()
@@ -136,7 +136,7 @@ public class WordComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testOldDiffBug() {
+  fun testOldDiffBug() {
     words {
       ("x'y'>" - "x'>")
       ("  -- " - "   ").default()
@@ -150,7 +150,7 @@ public class WordComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testWhitespaceOnlyChanges() {
+  fun testWhitespaceOnlyChanges() {
     words {
       ("x  =z" - "x=  z")
       (" --  " - "  -- ").default()
@@ -166,7 +166,7 @@ public class WordComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testNewlines() {
+  fun testNewlines() {
     words {
       (" x _ y _ z " - "x z")
       ("- ------  -" - "   ").default()
@@ -184,7 +184,7 @@ public class WordComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testFixedBugs() {
+  fun testFixedBugs() {
     words {
       (".! " - ".  y!")
       ("  -" - " --- ").default()
@@ -210,7 +210,7 @@ public class WordComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testInnerWhitespaces() {
+  fun testInnerWhitespaces() {
     words {
       ("<< x >>" - "<.<>.>")
       ("  ---  " - " -  - ").default()
@@ -248,7 +248,7 @@ public class WordComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testAlgorithmSpecific() {
+  fun testAlgorithmSpecific() {
     // prefer words over punctuation
     words {
       ("...x" - "x...")
@@ -301,7 +301,7 @@ public class WordComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun `test legacy cases from ByWordTest`() {
+  fun `test legacy cases from ByWordTest`() {
     words {
       ("abc def, 123" - "ab def, 12")
       ("---      ---" - "--      --").default()

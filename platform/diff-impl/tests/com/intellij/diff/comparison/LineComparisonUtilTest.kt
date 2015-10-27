@@ -15,8 +15,8 @@
  */
 package com.intellij.diff.comparison
 
-public class LineComparisonUtilTest : ComparisonUtilTestBase() {
-  public fun testEqualStrings() {
+class LineComparisonUtilTest : ComparisonUtilTestBase() {
+  fun testEqualStrings() {
     lines {
       ("" - "")
       default()
@@ -48,7 +48,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testTrivialCases() {
+  fun testTrivialCases() {
     lines {
       ("x_" - "y_")
       default(mod(0, 0, 1, 1))
@@ -98,7 +98,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testSimpleCases() {
+  fun testSimpleCases() {
     lines {
       ("x_z" - "y_z")
       default(mod(0, 0, 1, 1))
@@ -142,7 +142,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testEmptyLastLine() {
+  fun testEmptyLastLine() {
     lines {
       ("x_" - "")
       default(del(0, 0, 1))
@@ -168,7 +168,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testWhitespaceOnlyChanges() {
+  fun testWhitespaceOnlyChanges() {
     lines {
       ("x " - " x")
       default(mod(0, 0, 1, 1))
@@ -213,7 +213,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testAlgorithmSpecific() {
+  fun testAlgorithmSpecific() {
     lines {
       ("x_y_z_AAAAA" - "AAAAA_x_y_z")
       default(del(0, 0, 3), ins(4, 1, 3))
@@ -240,7 +240,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testNonDeterministicCases() {
+  fun testNonDeterministicCases() {
     lines {
       ("" - "__")
       default(ins(1, 1, 2))
@@ -254,7 +254,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun `test regression - shifted similar lines should be matched as a single change, not insertion-deletion`() {
+  fun `test regression - shifted similar lines should be matched as a single change, not insertion-deletion`() {
     lines {
       (" X_  X" - "  X_   X")
       default(mod(0, 0, 2, 2))
@@ -262,7 +262,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun `test prefer chunks bounded by empty line`() {
+  fun `test prefer chunks bounded by empty line`() {
     lines {
       ("A_B_o_o_Y_Z_ _A_B_z_z_Y_Z" - "A_B_o_o_Y_Z_ _A_B_u_u_Y_Z_ _A_B_z_z_Y_Z")
       default(ins(7, 7, 7))
@@ -282,7 +282,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun `test prefer smaller amount of chunks`() {
+  fun `test prefer smaller amount of chunks`() {
     lines() {
       ("X_A_X_Y_" - "X_Y_")
       default(del(0, 0, 2))
@@ -303,7 +303,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun `test regression - can trim chunks after 'compareTwoSteps'`() {
+  fun `test regression - can trim chunks after 'compareTwoSteps'`() {
     lines {
       ("q__7_ 6_ 7" - "_7")
       default(del(0, 0, 1), del(3, 2, 2))

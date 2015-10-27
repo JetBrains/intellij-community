@@ -24,12 +24,12 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.util.text.StringUtil
 
-public class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
-  public fun test() {
+class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
+  fun test() {
     doTest(System.currentTimeMillis(), 30, 30)
   }
 
-  public fun doTest(seed: Long, runs: Int, maxLength: Int) {
+  fun doTest(seed: Long, runs: Int, maxLength: Int) {
     doAutoTest(seed, runs) { debugData ->
       debugData.put("MaxLength", maxLength)
 
@@ -49,7 +49,7 @@ public class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
     }
   }
 
-  public fun doTest(document1: Document, document2: Document, policy: ComparisonPolicy, masterSide: Side) {
+  fun doTest(document1: Document, document2: Document, policy: ComparisonPolicy, masterSide: Side) {
     val sequence1 = document1.charsSequence
     val sequence2 = document2.charsSequence
 

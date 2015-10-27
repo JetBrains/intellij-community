@@ -19,13 +19,13 @@ import com.intellij.diff.DiffTestCase
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.ThreeSide
 
-public class MergeAutoTest : MergeTestBase() {
+class MergeAutoTest : MergeTestBase() {
   companion object {
     private val MODIFICATION_CYCLE_COUNT = 5
     private val MODIFICATION_CYCLE_SIZE = 3
   }
 
-  public fun testUndo() {
+  fun testUndo() {
     doUndoTest(System.currentTimeMillis(), 10, 300)
   }
 

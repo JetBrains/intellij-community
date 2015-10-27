@@ -24,7 +24,7 @@ import com.intellij.openapi.util.Couple
 import com.intellij.util.containers.ContainerUtil
 import java.util.*
 
-public abstract class ComparisonUtilTestBase : DiffTestCase() {
+abstract class ComparisonUtilTestBase : DiffTestCase() {
   private fun doLineTest(before: Document, after: Document, expected: List<Change>?, policy: ComparisonPolicy) {
     val fragments = MANAGER.compareLines(before.charsSequence, after.charsSequence, policy, INDICATOR)
     checkConsistency(fragments, before, after)
@@ -159,7 +159,7 @@ public abstract class ComparisonUtilTestBase : DiffTestCase() {
     LINE, WORD, CHAR, SPLITTER
   }
 
-  public inner class TestBuilder(private val type: TestType) {
+  inner class TestBuilder(private val type: TestType) {
     private var isExecuted: Boolean = false
 
     private var before: Document? = null
@@ -188,7 +188,7 @@ public abstract class ComparisonUtilTestBase : DiffTestCase() {
       ComparisonPolicy.DEFAULT -> defaultMatching
     }
 
-    public fun assertExecuted() {
+    fun assertExecuted() {
       assertTrue(isExecuted)
     }
 
@@ -217,31 +217,31 @@ public abstract class ComparisonUtilTestBase : DiffTestCase() {
     }
 
 
-    public fun testAll() {
+    fun testAll() {
       testDefault()
       testTrim()
       testIgnore()
     }
 
-    public fun testDefault() {
+    fun testDefault() {
       run(ComparisonPolicy.DEFAULT)
     }
 
-    public fun testTrim() {
+    fun testTrim() {
       if (type == TestType.CHAR) return // not supported
       run(ComparisonPolicy.TRIM_WHITESPACES)
     }
 
-    public fun testIgnore() {
+    fun testIgnore() {
       run(ComparisonPolicy.IGNORE_WHITESPACES)
     }
 
 
-    public operator fun String.minus(v: String): Helper {
+    operator fun String.minus(v: String): Helper {
       return Helper(this, v)
     }
 
-    public inner class Helper(val before: String, val after: String) {
+    inner class Helper(val before: String, val after: String) {
       init {
         val builder = this@TestBuilder
         if (builder.before == null && builder.after == null) {
@@ -250,68 +250,68 @@ public abstract class ComparisonUtilTestBase : DiffTestCase() {
         }
       }
 
-      public fun plainSource() {
+      fun plainSource() {
         val builder = this@TestBuilder
         builder.before = DocumentImpl(before)
         builder.after = DocumentImpl(after)
       }
 
-      public fun default() {
+      fun default() {
         defaultMatching = parseMatching(before, after)
       }
 
-      public fun trim() {
+      fun trim() {
         trimMatching = parseMatching(before, after)
       }
 
-      public fun ignore() {
+      fun ignore() {
         ignoreMatching = parseMatching(before, after)
       }
     }
 
 
-    public fun default(vararg expected: Change): Unit {
+    fun default(vararg expected: Change): Unit {
       defaultChanges = ContainerUtil.list(*expected)
     }
 
-    public fun trim(vararg expected: Change): Unit {
+    fun trim(vararg expected: Change): Unit {
       trimChanges = ContainerUtil.list(*expected)
     }
 
-    public fun ignore(vararg expected: Change): Unit {
+    fun ignore(vararg expected: Change): Unit {
       ignoreChanges = ContainerUtil.list(*expected)
     }
 
-    public fun mod(line1: Int, line2: Int, count1: Int, count2: Int): Change {
+    fun mod(line1: Int, line2: Int, count1: Int, count2: Int): Change {
       assert(count1 != 0)
       assert(count2 != 0)
       return Change(line1, line1 + count1, line2, line2 + count2)
     }
 
-    public fun del(line1: Int, line2: Int, count1: Int): Change {
+    fun del(line1: Int, line2: Int, count1: Int): Change {
       assert(count1 != 0)
       return Change(line1, line1 + count1, line2, line2)
     }
 
-    public fun ins(line1: Int, line2: Int, count2: Int): Change {
+    fun ins(line1: Int, line2: Int, count2: Int): Change {
       assert(count2 != 0)
       return Change(line1, line1, line2, line2 + count2)
     }
 
 
-    public fun postprocess(squash: Boolean, trim: Boolean): Unit {
+    fun postprocess(squash: Boolean, trim: Boolean): Unit {
       shouldSquash = squash
       shouldTrim = trim
     }
   }
 
-  public fun lines(f: TestBuilder.() -> Unit): Unit = doTest(TestType.LINE, f)
+  fun lines(f: TestBuilder.() -> Unit): Unit = doTest(TestType.LINE, f)
 
-  public fun words(f: TestBuilder.() -> Unit): Unit = doTest(TestType.WORD, f)
+  fun words(f: TestBuilder.() -> Unit): Unit = doTest(TestType.WORD, f)
 
-  public fun chars(f: TestBuilder.() -> Unit): Unit = doTest(TestType.CHAR, f)
+  fun chars(f: TestBuilder.() -> Unit): Unit = doTest(TestType.CHAR, f)
 
-  public fun splitter(squash: Boolean = false, trim: Boolean = false, f: TestBuilder.() -> Unit): Unit {
+  fun splitter(squash: Boolean = false, trim: Boolean = false, f: TestBuilder.() -> Unit): Unit {
     doTest(TestType.SPLITTER, {
       postprocess(squash, trim)
       f()
@@ -328,7 +328,7 @@ public abstract class ComparisonUtilTestBase : DiffTestCase() {
   // Helpers
   //
 
-  public data class Change(val start1: Int, val end1: Int, val start2: Int, val end2: Int) {
+  data class Change(val start1: Int, val end1: Int, val start2: Int, val end2: Int) {
     override fun toString(): String {
       return "($start1, $end1) - ($start2, $end2)"
     }

@@ -18,10 +18,10 @@ package com.intellij.diff.comparison
 import com.intellij.diff.DiffTestCase
 import com.intellij.openapi.util.text.StringUtil
 
-public class TrimUtilTest : DiffTestCase() {
+class TrimUtilTest : DiffTestCase() {
   private val PUNCTUATION = "(){}[],./?`~!@#$%^&*-=+|\\;:'\"<>";
 
-  public fun testPunctuation() {
+  fun testPunctuation() {
     for (c in Character.MIN_VALUE..Character.MAX_VALUE) {
       doCheckPunctuation(c)
     }

@@ -18,8 +18,8 @@ package com.intellij.diff.comparison
 import com.intellij.diff.DiffTestCase
 import com.intellij.diff.util.IntPair
 
-public class ComparisonUtilTest : DiffTestCase() {
-  public fun testTrimEquals() {
+class ComparisonUtilTest : DiffTestCase() {
+  fun testTrimEquals() {
     doTestTrim(true, "", "")
     doTestTrim(true, "", "   ")
     doTestTrim(true, "   ", "   ")
@@ -60,7 +60,7 @@ public class ComparisonUtilTest : DiffTestCase() {
     doTestTrim(false, "xyx", "xYx")
   }
 
-  public fun testLineFragment() {
+  fun testLineFragment() {
     doTestLineFragment(
         "", "x",
         !0 - 0, !0 - 1,
@@ -156,9 +156,9 @@ public class ComparisonUtilTest : DiffTestCase() {
   // Helpers
   //
 
-  public operator fun Int.not(): LineColHelper = LineColHelper(this)
-  public operator fun LineColHelper.minus(col: Int): IntPair = IntPair(this.line, col)
+  operator fun Int.not(): LineColHelper = LineColHelper(this)
+  operator fun LineColHelper.minus(col: Int): IntPair = IntPair(this.line, col)
 
-  public inner class LineColHelper(val line: Int) {
+  inner class LineColHelper(val line: Int) {
   }
 }

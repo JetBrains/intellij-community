@@ -25,24 +25,24 @@ import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 
-public class ComparisonUtilAutoTest : DiffTestCase() {
-  public fun testChar() {
+class ComparisonUtilAutoTest : DiffTestCase() {
+  fun testChar() {
     doTestChar(System.currentTimeMillis(), 30, 30)
   }
 
-  public fun testWord() {
+  fun testWord() {
     doTestWord(System.currentTimeMillis(), 30, 300)
   }
 
-  public fun testLine() {
+  fun testLine() {
     doTestLine(System.currentTimeMillis(), 30, 300)
   }
 
-  public fun testLineSquashed() {
+  fun testLineSquashed() {
     doTestLineSquashed(System.currentTimeMillis(), 30, 300)
   }
 
-  public fun testLineTrimSquashed() {
+  fun testLineTrimSquashed() {
     doTestLineTrimSquashed(System.currentTimeMillis(), 30, 300)
   }
 
