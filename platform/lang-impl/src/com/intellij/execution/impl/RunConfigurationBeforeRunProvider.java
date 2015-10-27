@@ -311,10 +311,6 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
 
     public void setSettings(RunnerAndConfigurationSettings settings) {
       mySettings = settings;
-      if (mySettings != null) {
-        myConfigurationName = mySettings.getName();
-        myConfigurationType = mySettings.getType().getId();
-      }
       myInitialized = true;
     }
 
