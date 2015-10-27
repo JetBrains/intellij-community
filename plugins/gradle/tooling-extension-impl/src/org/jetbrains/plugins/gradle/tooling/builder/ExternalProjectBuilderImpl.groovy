@@ -187,9 +187,9 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
 //      javaDirectorySet.includes = javaIncludes + sourceSet.java.includes;
 
       if (SourceSet.MAIN_SOURCE_SET_NAME.equals(sourceSet.name)) {
-        javaDirectorySet.srcDirs.addAll(ideaSourceDirs)
+        javaDirectorySet.srcDirs.addAll(ideaSourceDirs - sourceSet.resources.srcDirs)
       } else if(SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.name)){
-        javaDirectorySet.srcDirs.addAll(ideaTestSourceDirs)
+        javaDirectorySet.srcDirs.addAll(ideaTestSourceDirs - sourceSet.resources.srcDirs)
       }
 
       ExternalSourceDirectorySet generatedDirectorySet = null
