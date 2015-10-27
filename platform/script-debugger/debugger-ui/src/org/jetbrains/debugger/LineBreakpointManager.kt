@@ -17,7 +17,6 @@ package org.jetbrains.debugger
 
 import com.intellij.icons.AllIcons
 import com.intellij.util.SmartList
-import com.intellij.util.containers.MultiMap
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import gnu.trove.THashMap
@@ -28,7 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<*>) {
   private val ideToVmBreakpoints = THashMap<XLineBreakpoint<*>, MutableList<Breakpoint>>()
-  protected val vmToIdeBreakpoint: MultiMap<Breakpoint, XLineBreakpoint<*>> = MultiMap.createSmart()
+  protected val vmToIdeBreakpoints = THashMap<Breakpoint, MutableList<XLineBreakpoint<*>>>()
 
   private val runToLocationBreakpoints = THashSet<Breakpoint>()
   private val lock = Object()
@@ -74,7 +73,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
         vmBreakpoints = list
         while (iterator.hasNext()) {
           val vmBreakpoint = iterator.next()
-          if (vmToIdeBreakpoint.get(vmBreakpoint).size > 1) {
+          if ((vmToIdeBreakpoints.get(vmBreakpoint)?.size ?: -1) > 1) {
             // we must not disable vm breakpoint - it is used for another ide breakpoints
             iterator.remove()
           }
@@ -84,8 +83,8 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
         vmBreakpoints = ideToVmBreakpoints.remove(breakpoint) ?: return resolvedPromise()
         if (!vmBreakpoints.isEmpty()) {
           for (vmBreakpoint in vmBreakpoints) {
-            vmToIdeBreakpoint.remove(vmBreakpoint, breakpoint)
-            if (vmToIdeBreakpoint.containsKey(vmBreakpoint)) {
+            vmToIdeBreakpoints.remove(vmBreakpoint, breakpoint)
+            if (vmToIdeBreakpoints.containsKey(vmBreakpoint)) {
               // we must not remove vm breakpoint - it is used for another ide breakpoints
               return resolvedPromise()
             }
@@ -126,7 +125,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
     synchronized (lock) {
       ideToVmBreakpoints.put(breakpoint, vmBreakpoints)
       for (vmBreakpoint in vmBreakpoints) {
-        vmToIdeBreakpoint.putValue(vmBreakpoint, breakpoint)
+        vmToIdeBreakpoints.putValue(vmBreakpoint, breakpoint)
       }
     }
   }
@@ -135,9 +134,10 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
     if (breakpointResolvedListenerAdded.compareAndSet(false, true)) {
       breakpointManager.addBreakpointListener(object : BreakpointListener {
         override fun resolved(breakpoint: Breakpoint) {
-          var breakpoints = synchronized (lock) { vmToIdeBreakpoint.get(breakpoint) }
-          for (ideBreakpoint in breakpoints) {
-            debugProcess.session.updateBreakpointPresentation(ideBreakpoint, AllIcons.Debugger.Db_verified_breakpoint, null)
+          synchronized (lock) { vmToIdeBreakpoints.get(breakpoint) }?.let {
+            for (ideBreakpoint in it) {
+              debugProcess.session.updateBreakpointPresentation(ideBreakpoint, AllIcons.Debugger.Db_verified_breakpoint, null)
+            }
           }
         }
 
@@ -151,10 +151,27 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
             return
           }
 
-          var breakpoints = synchronized (lock) { vmToIdeBreakpoint.get(breakpoint) }
-          for (ideBreakpoint in breakpoints) {
-            debugProcess.session.updateBreakpointPresentation(ideBreakpoint, AllIcons.Debugger.Db_invalid_breakpoint, errorMessage)
+          synchronized (lock) { vmToIdeBreakpoints.get(breakpoint) }?.let {
+            for (ideBreakpoint in it) {
+              debugProcess.session.updateBreakpointPresentation(ideBreakpoint, AllIcons.Debugger.Db_invalid_breakpoint, errorMessage)
+            }
           }
+        }
+
+        override fun nonProvisionalBreakpointRemoved(breakpoint: Breakpoint) {
+          synchronized (lock) {
+            vmToIdeBreakpoints.remove(breakpoint)?.let {
+              for (ideBreakpoint in it) {
+                ideToVmBreakpoints.remove(ideBreakpoint, breakpoint)
+              }
+              it
+            }
+          }
+            ?.let {
+              for (ideBreakpoint in it) {
+                setBreakpoint(ideBreakpoint, debugProcess.getLocationsForBreakpoint(ideBreakpoint, false))
+              }
+            }
         }
       })
     }
@@ -198,7 +215,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
   fun removeAllBreakpoints(): org.jetbrains.concurrency.Promise<*> {
     synchronized (lock) {
       ideToVmBreakpoints.clear()
-      vmToIdeBreakpoint.clear()
+      vmToIdeBreakpoints.clear()
       runToLocationBreakpoints.clear()
     }
     return breakpointManager.removeAll()
@@ -218,5 +235,23 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
     for (breakpoint in breakpoints) {
       breakpointManager.remove(breakpoint)
     }
+  }
+}
+
+internal fun <K, V> MutableMap<K, MutableList<V>>.remove(key: K, value: V) {
+  var list = get(key)
+  if (list != null && list.remove(value) && list.isEmpty()) {
+    remove(key)
+  }
+}
+
+internal fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
+  var list = get(key)
+  if (list == null) {
+    list = SmartList<V>(value)
+    put(key, list)
+  }
+  else {
+    list.add(value)
   }
 }
