@@ -3016,10 +3016,9 @@ public class StringUtil extends StringUtilRt {
     return StringUtilRt.toUpperCase(a);
   }
 
-  @NotNull
-  @Contract(pure = true)
-  public static String toUpperCase(@NotNull String a) {
-    return StringUtilRt.toUpperCase(a).toString();
+  @Contract(value = "null -> null; !null -> !null", pure = true)
+  public static String toUpperCase(String a) {
+    return a == null ? null : StringUtilRt.toUpperCase(a).toString();
   }
 
   @Contract(pure = true)
