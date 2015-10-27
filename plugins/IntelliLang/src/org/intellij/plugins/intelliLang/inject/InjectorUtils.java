@@ -67,13 +67,17 @@ public class InjectorUtils {
 
   @Nullable
   public static Language getLanguage(@NotNull BaseInjection injection) {
-    String languageId = injection.getInjectedLanguageId();
+    return getLanguageByString(injection.getInjectedLanguageId());
+  }
+
+  @Nullable
+  public static Language getLanguageByString(String languageId) {
     Language language = InjectedLanguage.findLanguageById(languageId);
     if (language != null) return language;
     ReferenceInjector injector = ReferenceInjector.findById(languageId);
     if (injector != null) return injector.toLanguage();
     FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(languageId);
-    return fileType instanceof LanguageFileType? ((LanguageFileType)fileType).getLanguage() : null;
+    return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
   }
 
   public static boolean registerInjectionSimple(@NotNull PsiLanguageInjectionHost host,
