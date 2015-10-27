@@ -1597,6 +1597,7 @@ public class FormatProcessor {
 
   private class ExpandChildrenIndent extends State {
     private Iterator<ExpandableIndent> myIterator;
+    private MultiMap<Alignment, LeafBlockWrapper> myBlocksToRealign = new MultiMap<Alignment, LeafBlockWrapper>();
 
     public ExpandChildrenIndent() {
       super(FormattingStateId.EXPANDING_CHILDREN_INDENTS);
@@ -1620,6 +1621,68 @@ public class FormatProcessor {
           reindentNewLineChildren(block);
           indent.setEnforceIndent(false);
         }
+      }
+
+      restoreAlignments(myBlocksToRealign);
+      myBlocksToRealign.clear();
+    }
+
+    private void restoreAlignments(MultiMap<Alignment, LeafBlockWrapper> blocks) {
+      for (Alignment alignment : blocks.keySet()) {
+        Set<LeafBlockWrapper> toRealign = ((AlignmentImpl)alignment).getAllBlocks();
+        arrangeSpaces(toRealign);
+        
+        LeafBlockWrapper rightMostBlock = getRightMostBlock(toRealign);
+        int maxSpacesBeforeBlock = rightMostBlock.getNumberOfSymbolsBeforeBlock().getTotalSpaces();
+        int rightMostBlockLine = myDocument.getLineNumber(rightMostBlock.getStartOffset());
+
+        for (LeafBlockWrapper block : toRealign) {
+          int currentBlockLine = myDocument.getLineNumber(block.getStartOffset());
+          if (currentBlockLine == rightMostBlockLine) continue;
+          
+          int blockIndent = block.getNumberOfSymbolsBeforeBlock().getTotalSpaces();
+          int delta = maxSpacesBeforeBlock - blockIndent;
+          if (delta > 0) {
+            int newSpaces = block.getWhiteSpace().getTotalSpaces() + delta;
+            adjustAlignmentManually(block, newSpaces);
+          }
+        }
+      }
+    }
+
+    private void adjustAlignmentManually(LeafBlockWrapper block, int newSpaces) {
+      WhiteSpace space = block.getWhiteSpace();
+      SpacingImpl property = block.getSpaceProperty();
+      space.arrangeSpaces(new SpacingImpl(newSpaces, newSpaces, 
+                                          property.getMinLineFeeds(), 
+                                          property.isReadOnly(), 
+                                          property.isSafe(), 
+                                          property.shouldKeepLineFeeds(), 
+                                          property.getKeepBlankLines(), 
+                                          property.shouldKeepFirstColumn(), 
+                                          property.getPrefLineFeeds()));
+    }
+
+    private LeafBlockWrapper getRightMostBlock(Collection<LeafBlockWrapper> toRealign) {
+      int maxSpacesBeforeBlock = -1;
+      LeafBlockWrapper rightMostBlock = null;
+      
+      for (LeafBlockWrapper block : toRealign) {
+        int spaces = block.getNumberOfSymbolsBeforeBlock().getTotalSpaces();
+        if (spaces > maxSpacesBeforeBlock) {
+          maxSpacesBeforeBlock = spaces;
+          rightMostBlock = block;
+        }
+      }
+      
+      return rightMostBlock;
+    }
+
+    private void arrangeSpaces(Collection<LeafBlockWrapper> toRealign) {
+      for (LeafBlockWrapper block : toRealign) {
+        WhiteSpace whiteSpace = block.getWhiteSpace();
+        SpacingImpl spacing = block.getSpaceProperty();
+        whiteSpace.arrangeSpaces(spacing);
       }
     }
 
@@ -1690,7 +1753,7 @@ public class FormatProcessor {
         if (space.containsLineFeeds()) {
           myCurrentBlock = (LeafBlockWrapper)block;
           adjustIndent();
-          adjustAlignmentsAfterCurrentBlock();
+          storeAlignmentsAfterCurrentBlock();
         }
       }
       else if (block instanceof CompositeBlockWrapper) {
@@ -1701,15 +1764,11 @@ public class FormatProcessor {
       }
     }
 
-    private void adjustAlignmentsAfterCurrentBlock() {
+    private void storeAlignmentsAfterCurrentBlock() {
       LeafBlockWrapper current = myCurrentBlock.getNextBlock();
       while (current != null && !current.getWhiteSpace().containsLineFeeds()) {
         if (current.getAlignment() != null) {
-          myCurrentBlock = current;
-          WhiteSpace currentWhiteSpace = myCurrentBlock.getWhiteSpace();
-          SpacingImpl currentSpaceProperty = myCurrentBlock.getSpaceProperty();
-          currentWhiteSpace.arrangeSpaces(currentSpaceProperty);
-          adjustIndent();
+          myBlocksToRealign.putValue(current.getAlignment(), current);
         }
         current = current.getNextBlock();
       }
