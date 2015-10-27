@@ -41,6 +41,27 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
   }
 
   @Test
+  public void testResourceCopyingFromSourcesFolder() throws Exception {
+    createProjectSubFile("src/main/resources/dir/file.properties");
+    createProjectSubFile("src/test/resources/dir/file-test.properties");
+    createProjectSubFile("src/main/java/file.txt");
+    importProject(
+      "apply plugin: 'java'\n" +
+      "sourceSets {\n" +
+      "  main {\n" +
+      "    resources.srcDir file('src/main/java')\n" +
+      "  }\n" +
+      "}"
+    );
+    assertModules("project", "project_main", "project_test");
+    compileModules("project_main", "project_test");
+
+    assertCopied("build/resources/main/dir/file.properties");
+    assertCopied("build/resources/test/dir/file-test.properties");
+    assertCopied("build/resources/main/file.txt");
+  }
+
+  @Test
   public void testResourceProcessingWithIdeaGradlePluginCustomization() throws Exception {
     createProjectSubFile("src/main/resources/dir/file.properties");
     createProjectSubFile("src/test/resources/dir/file-test.properties");
