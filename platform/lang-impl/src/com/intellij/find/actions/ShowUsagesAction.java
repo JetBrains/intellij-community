@@ -78,6 +78,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.*;
@@ -910,6 +911,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       ShowUsagesTableCellRenderer renderer = new ShowUsagesTableCellRenderer(usageView, outOfScopeUsages, searchScope);
       for (int i=0;i<table.getColumnModel().getColumnCount();i++) {
         TableColumn column = table.getColumnModel().getColumn(i);
+        column.setPreferredWidth(0);
         column.setCellRenderer(renderer);
       }
     }
@@ -1069,7 +1071,9 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     Dimension footerSize = ((AbstractPopup)popup).getFooterPreferredSize();
 
-    rectangle.height += headerSize.height + footerSize.height + 4/* invisible borders, margins etc*/;
+    int footer = footerSize.height;
+    int footerBorder = footer == 0 ? 0 : 1;
+    rectangle.height += headerSize.height + footer + footerBorder;
     ScreenUtil.fitToScreen(rectangle);
     Dimension newDim = rectangle.getSize();
     window.setBounds(rectangle);
@@ -1182,6 +1186,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   }
 
   private static class MyTable extends JBTableWithHintProvider implements DataProvider {
+    private static final int MARGIN = 2;
 
     public MyTable() {
       ScrollingUtil.installActions(this);
@@ -1201,6 +1206,21 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         }
       }
       return null;
+    }
+
+    @Override
+    public int getRowHeight() {
+      return super.getRowHeight() + 2 * MARGIN;
+    }
+    
+    @NotNull
+    @Override
+    public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
+      Component component = super.prepareRenderer(renderer, row, column);
+      if (component instanceof JComponent) {
+        ((JComponent)component).setBorder(IdeBorderFactory.createEmptyBorder(MARGIN, MARGIN, MARGIN, 0));
+      }
+      return component;
     }
 
     @Override
