@@ -19,7 +19,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -36,11 +38,11 @@ class CanonicalPathMap {
   private final List<String> myFlatWatchRoots;
   private final List<String> myCanonicalRecursiveWatchRoots;
   private final List<String> myCanonicalFlatWatchRoots;
-  private final List<Pair<String, String>> myMapping;
+  private final MultiMap<String, String> myPathMapping;
 
   public CanonicalPathMap() {
     myRecursiveWatchRoots = myCanonicalRecursiveWatchRoots = myFlatWatchRoots = myCanonicalFlatWatchRoots = Collections.emptyList();
-    myMapping = Collections.emptyList();
+    myPathMapping = MultiMap.empty();
   }
 
   public CanonicalPathMap(@NotNull List<String> recursive, @NotNull List<String> flat) {
@@ -50,10 +52,12 @@ class CanonicalPathMap {
     List<Pair<String, String>> mapping = ContainerUtil.newSmartList();
     myCanonicalRecursiveWatchRoots = mapPaths(recursive, mapping);
     myCanonicalFlatWatchRoots = mapPaths(flat, mapping);
-    myMapping = ContainerUtil.createLockFreeCopyOnWriteList(mapping);
+
+    myPathMapping = MultiMap.createConcurrentSet();
+    addMapping(mapping);
   }
 
-  private static List<String> mapPaths(List<String> paths, List<Pair<String, String>> mapping) {
+  private static List<String> mapPaths(List<String> paths, Collection<Pair<String, String>> mapping) {
     List<String> canonicalPaths = ContainerUtil.newArrayList(paths);
     for (int i = 0; i < paths.size(); i++) {
       String path = paths.get(i);
@@ -75,7 +79,21 @@ class CanonicalPathMap {
   }
 
   public void addMapping(@NotNull Collection<Pair<String, String>> mapping) {
-    myMapping.addAll(mapping);
+    for (Pair<String, String> pair : mapping) {
+      // See if we are adding a mapping that itself should be mapped to a different path
+      // Example: /foo/real_path -> /foo/symlink, /foo/remapped_path -> /foo/real_path
+      // In this case, if the file watcher returns /foo/remapped_path/file.txt, we want to report /foo/symlink/file.txt back to IntelliJ.
+      Collection<String> preRemapPathToWatchedPaths = myPathMapping.get(pair.second);
+      for (String realWatchedPath : preRemapPathToWatchedPaths) {
+        Collection<String> remappedPathMappings = myPathMapping.getModifiable(pair.first);
+        remappedPathMappings.add(realWatchedPath);
+      }
+
+      // Since there can be more than one file watcher and REMAPPING is an implementation detail of the native file watcher,
+      // add the mapping as usual even if we added data above.
+      Collection<String> symLinksToCanonicalPath = myPathMapping.getModifiable(pair.first);
+      symLinksToCanonicalPath.add(pair.second);
+    }
   }
 
   /**
@@ -138,15 +156,26 @@ class CanonicalPathMap {
   }
 
   private Collection<String> applyMapping(String reportedPath) {
-    Collection<String> affectedPaths = ContainerUtil.newSmartList(reportedPath);
-    for (Pair<String, String> map : myMapping) {
-      if (FileUtil.startsWith(reportedPath, map.first)) {
-        affectedPaths.add(map.second + reportedPath.substring(map.first.length()));
+    List<String> results = ContainerUtil.newSmartList(reportedPath);
+    List<String> pathComponents = FileUtil.splitPath(reportedPath);
+
+    File runningPath = null;
+    for (int i = 0; i < pathComponents.size(); ++i) {
+      String currentPathComponent = pathComponents.get(i);
+      if (runningPath == null) {
+        runningPath = new File(currentPathComponent);
       }
-      else if (FileUtil.startsWith(reportedPath, map.second)) {
-        affectedPaths.add(map.first + reportedPath.substring(map.second.length()));
+      else {
+        runningPath = new File(runningPath, currentPathComponent);
+      }
+      Collection<String> mappedPaths = myPathMapping.get(runningPath.getPath());
+      for (String mappedPath : mappedPaths) {
+        // Append the specific file suffix to the mapped watch root.
+        String fileSuffix = StringUtil.join(pathComponents.subList(i + 1, pathComponents.size()), File.separator);
+        results.add(new File(mappedPath, fileSuffix).getPath());
       }
     }
-    return affectedPaths;
+
+    return results;
   }
 }
