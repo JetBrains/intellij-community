@@ -148,7 +148,10 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUnclosedBlockComment() { doTest(false, false); }
   public void testUnclosedComment() { doTest(false, false); }
   public void testUnclosedDecl() { doTest(false, false); }
-  public void testSillyAssignment() { doTest(true, false); }
+  public void testSillyAssignment() {
+    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+    doTest(true, false);
+  }
   public void testTernary() { doTest(false, false); }
   public void testDuplicateClass() { doTest(false, false); }
   public void testCatchType() { doTest(false, false); }
