@@ -93,6 +93,9 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
         throw e;
       }
       catch (RuntimeException e) {
+        if (e.getCause() instanceof InterruptedException) {
+          throw e;
+        }
         LOG.error(e);
         throw new EvaluateException("Internal error, see logs for more details");
       }
