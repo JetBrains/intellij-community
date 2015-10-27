@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,13 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ObjectUtils;
-
-import javax.swing.table.TableColumnModel;
-import javax.swing.table.TableModel;
 
 /**
  * @deprecated
- * @see com.intellij.ui.popup.HintUpdateSupply
+ * @see HintUpdateSupply
  */
 public abstract class JBTableWithHintProvider extends JBTable {
 
@@ -42,28 +37,5 @@ public abstract class JBTableWithHintProvider extends JBTable {
   public JBTableWithHintProvider() {
   }
 
-  protected JBTableWithHintProvider(TableModel model) {
-    super(model);
-  }
-
-  public JBTableWithHintProvider(TableModel model, TableColumnModel columnModel) {
-    super(model, columnModel);
-  }
-
-  protected abstract PsiElement getPsiElementForHint(final Object selectedValue);
-
-  @Deprecated
-  public void registerHint(JBPopup hint) {
-    ObjectUtils.assertNotNull(HintUpdateSupply.getSupply(this)).registerHint(hint);
-  }
-
-  @Deprecated
-  public void hideHint() {
-    ObjectUtils.assertNotNull(HintUpdateSupply.getSupply(this)).hideHint();
-  }
-
-  @Deprecated
-  public void updateHint(PsiElement element) {
-    ObjectUtils.assertNotNull(HintUpdateSupply.getSupply(this)).updateHint(element);
-  }
+  protected abstract PsiElement getPsiElementForHint(Object selectedValue);
 }
