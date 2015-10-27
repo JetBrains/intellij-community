@@ -20,7 +20,7 @@ import com.intellij.openapi.vcs.changes.LogicalLock;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 
-import static com.intellij.vcsUtil.UIVcsUtil.spaceAndThinSpace;
+import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 public class ChangesBrowserLogicallyLockedFile extends ChangesBrowserFileNode {
   private final LogicalLock myLogicalLock;
