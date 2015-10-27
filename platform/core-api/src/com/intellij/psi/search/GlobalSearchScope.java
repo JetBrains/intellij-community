@@ -789,7 +789,6 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     
     private boolean hasFilesOutOfProjectRoots() {
       if (myHasFilesOutOfProjectRoots == null) {
-        long i = System.currentTimeMillis();
         myHasFilesOutOfProjectRoots = false;
         Project project = getProject();
         if (project != null && !project.isDefault()) {
