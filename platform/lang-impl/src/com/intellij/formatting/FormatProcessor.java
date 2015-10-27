@@ -42,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.formatting.AbstractBlockAlignmentProcessor.*;
+
 public class FormatProcessor {
 
   private static final Map<Alignment.Anchor, BlockAlignmentProcessor> ALIGNMENT_PROCESSORS =
@@ -160,6 +162,8 @@ public class FormatProcessor {
   @NotNull
   private State myCurrentState;
   private MultiMap<ExpandableIndent, AbstractBlockWrapper> myExpandableIndents;
+  private int myTotalBlocksWithAlignments;
+  private int myBlockRollbacks;
 
   public FormatProcessor(final FormattingDocumentModel docModel,
                          Block rootBlock,
@@ -748,7 +752,15 @@ public class FormatProcessor {
         myBackwardShiftedAlignedBlocks.put(offsetResponsibleBlock, blocksCausedRealignment);
         blocksCausedRealignment.add(myCurrentBlock);
         storeAlignmentMapping(myCurrentBlock, offsetResponsibleBlock);
-        myCurrentBlock = offsetResponsibleBlock.getNextBlock();
+        
+        if (myBlockRollbacks > myTotalBlocksWithAlignments) {
+          reportAlignmentProcessingError(context);
+          return true;
+        }
+        else {
+          myCurrentBlock = offsetResponsibleBlock.getNextBlock();
+          myBlockRollbacks++;
+        }
         onCurrentLineChanged();
         return false;
       case RECURSION_DETECTED:
@@ -1394,6 +1406,7 @@ public class FormatProcessor {
       myLastWhiteSpace = new WhiteSpace(lastBlockOffset, false);
       myLastWhiteSpace.append(Math.max(lastBlockOffset, myWrapper.getEndOffset()), myModel, myDefaultIndentOption);
       myAlignmentsInsideRangesToModify = myWrapper.getAlignmentsInsideRangeToModify();
+      myTotalBlocksWithAlignments = myWrapper.getBlocksToAlign().values().size();
     }
   }
 
