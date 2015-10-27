@@ -1,66 +1,43 @@
-package org.jetbrains.debugger;
+package org.jetbrains.debugger
 
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.Processor;
-import com.intellij.util.Url;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.PromiseManager;
+import com.intellij.util.CommonProcessors
+import com.intellij.util.Processor
+import com.intellij.util.Url
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.PromiseManager
+import org.jetbrains.concurrency.rejectedPromise
 
-public abstract class ScriptManagerBase<SCRIPT extends ScriptBase> implements ScriptManager {
+abstract class ScriptManagerBase<SCRIPT : ScriptBase> : ScriptManager {
+  @Suppress("UNCHECKED_CAST")
   @SuppressWarnings("unchecked")
-  private final PromiseManager<ScriptBase, String> scriptSourceLoader = new PromiseManager<ScriptBase, String>(ScriptBase.class) {
-    @NotNull
-    @Override
-    public Promise<String> load(@NotNull ScriptBase script) {
-      //noinspection unchecked
-      return loadScriptSource((SCRIPT)script);
-    }
-  };
+  private val scriptSourceLoader = object : PromiseManager<ScriptBase, String>(ScriptBase::class.java) {
+    override fun load(script: ScriptBase) = loadScriptSource(script as SCRIPT)
+  }
 
-  @NotNull
-  protected abstract Promise<String> loadScriptSource(@NotNull SCRIPT script);
+  protected abstract fun loadScriptSource(script: SCRIPT): Promise<String>
 
-  @NotNull
-  @Override
-  public Promise<String> getSource(@NotNull Script script) {
+  override fun getSource(script: Script): Promise<String> {
     if (!containsScript(script)) {
-      return Promise.reject("No Script");
+      return rejectedPromise("No Script")
     }
-    //noinspection unchecked
-    return scriptSourceLoader.get((SCRIPT)script);
+    @Suppress("UNCHECKED_CAST")
+    return scriptSourceLoader.get(script as SCRIPT)
   }
 
-  @Override
-  public boolean hasSource(Script script) {
-    //noinspection unchecked
-    return scriptSourceLoader.has((SCRIPT)script);
+  override fun hasSource(script: Script): Boolean {
+    @Suppress("UNCHECKED_CAST")
+    return scriptSourceLoader.has(script as SCRIPT)
   }
 
-  public void setSource(@NotNull SCRIPT script, @Nullable String source) {
-    scriptSourceLoader.set(script, source);
+  fun setSource(script: SCRIPT, source: String?) {
+    scriptSourceLoader.set(script, source)
   }
 
-  @Nullable
-  @Override
-  public Promise<Void> getScriptSourceMapPromise(@NotNull Script script) {
-    return null;
-  }
-
-  @Override
-  public Script forEachScript(@NotNull CommonProcessors.FindProcessor<Script> scriptProcessor) {
-    forEachScript(((Processor<Script>)scriptProcessor));
-    return scriptProcessor.getFoundValue();
-  }
-
-  public static boolean isSpecial(@NotNull Url url) {
-    return !url.isInLocalFileSystem() && (url.getScheme() == null || url.getScheme().equals(ScriptManager.VM_SCHEME) || url.getAuthority() == null);
-  }
-
-  @Nullable
-  @Override
-  public Script findScriptById(@NotNull String id) {
-    return null;
+  override fun forEachScript(scriptProcessor: CommonProcessors.FindProcessor<Script>): Script? {
+    forEachScript((scriptProcessor as Processor<Script>))
+    return scriptProcessor.getFoundValue()
   }
 }
+
+val Url.isSpecial: Boolean
+  get() = !isInLocalFileSystem && (scheme == null || scheme == VM_SCHEME || authority == null)
