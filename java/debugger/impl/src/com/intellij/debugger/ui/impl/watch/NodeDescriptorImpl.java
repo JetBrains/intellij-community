@@ -90,7 +90,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
         throw new EvaluateException(DebuggerBundle.message("error.invalid.stackframe"));
       }
       catch (VMDisconnectedException e) {
-        throw new EvaluateException(DebuggerBundle.message("error.vm.disconnected"));
+        throw e;
       }
       catch (RuntimeException e) {
         if (e.getCause() instanceof InterruptedException) {
