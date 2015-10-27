@@ -285,7 +285,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   private static Iterable<PsiElement> getLineElements(final PsiFile file, int lineNumber) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
-    if (document == null || lineNumber >= document.getLineCount()) {
+    if (document == null || lineNumber < 0 || lineNumber >= document.getLineCount()) {
       return EmptyIterable.getInstance();
     }
     final TextRange lineRange = DocumentUtil.getLineTextRange(document, lineNumber);

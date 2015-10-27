@@ -32,6 +32,7 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import java.awt.*;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -231,12 +232,6 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
   }
 
 
-  /**
-   * Check that the attributes missing in a custom scheme with a version prior to 142 are explicitly added with fallback enabled,
-   * not taken from parent scheme.
-   *
-   * @throws Exception
-   */
   public void testUpgradeFromVer141() throws Exception {
     TextAttributesKey constKey = DefaultLanguageHighlighterColors.CONSTANT;
     TextAttributesKey fallbackKey = constKey.getFallbackAttributeKey();
@@ -245,7 +240,6 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     EditorColorsScheme scheme = loadScheme(
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
       "<scheme name=\"Test\" version=\"141\" parent_scheme=\"Default\">\n" +
-      // Some 'attributes' section is required for the upgrade procedure to work.
       "<attributes>" +
       "   <option name=\"TEXT\">\n" +
       "      <value>\n" +
@@ -258,7 +252,12 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
 
     TextAttributes constAttrs = scheme.getAttributes(constKey);
     TextAttributes fallbackAttrs = scheme.getAttributes(fallbackKey);
-    assertSame(fallbackAttrs, constAttrs);
+    assertNotSame(fallbackAttrs, constAttrs);
+    assertEquals(Font.BOLD | Font.ITALIC, constAttrs.getFontType());
+
+    TextAttributes classAttrs = scheme.getAttributes(DefaultLanguageHighlighterColors.CLASS_NAME);
+    TextAttributes classFallbackAttrs = scheme.getAttributes(DefaultLanguageHighlighterColors.CLASS_NAME.getFallbackAttributeKey());
+    assertSame(classFallbackAttrs, classAttrs);
   }
 
 
