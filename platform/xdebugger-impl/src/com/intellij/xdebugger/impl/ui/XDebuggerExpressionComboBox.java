@@ -150,7 +150,11 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
         return (XExpression)value;
       }
     }
-    return getEditorsProvider().createExpression(getProject(), (Document)myEditor.getItem(), myExpression.getLanguage(), EvaluationMode.EXPRESSION);
+    Object document = myEditor.getItem();
+    if (document != null) { //sometimes happens on Mac
+      return getEditorsProvider().createExpression(getProject(), (Document)document, myExpression.getLanguage(), EvaluationMode.EXPRESSION);
+    }
+    return myExpression;
   }
 
   @Override
