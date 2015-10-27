@@ -160,7 +160,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
       //<tag/>text <tag/></tag>
       if (((AbstractXmlBlock)child2).insertLineBreakBeforeTag()) {
         return Spacing.createSpacing(0, Integer.MAX_VALUE, 
-                                     ((AbstractXmlBlock)child2).getBlankeLinesBeforeTag() + 1,
+                                     ((AbstractXmlBlock)child2).getBlankLinesBeforeTag() + 1,
                                      myXmlFormattingPolicy.getShouldKeepLineBreaks(),
                                      myXmlFormattingPolicy.getKeepBlankLines());
       } else if (((AbstractXmlBlock)child2).removeLineBreakBeforeTag()) {
