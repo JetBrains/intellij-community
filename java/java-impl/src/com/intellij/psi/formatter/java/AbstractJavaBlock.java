@@ -187,6 +187,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (child.getPsi() instanceof PsiClass) {
       return new CodeBlockBlock(child, wrap, alignment, actualIndent, settings, javaSettings);
     }
+    if (child.getElementType() == JavaElementType.METHOD) {
+      return new BlockContainingJavaBlock(child, actualIndent, alignmentStrategy, mySettings, myJavaSettings);
+    }
     if (isBlockType(elementType)) {
       return new BlockContainingJavaBlock(child, wrap, alignment, actualIndent, settings, javaSettings);
     }
@@ -563,6 +566,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       {
         result.add(new SimpleJavaBlock(child, defaultWrap, alignmentStrategy, childIndent, mySettings, myJavaSettings));
       }
+      else if (childType == JavaElementType.METHOD) {
+        Wrap wrap = arrangeChildWrap(child, defaultWrap);
+        Block block = createJavaBlock(child, mySettings, myJavaSettings, childIndent, wrap, alignmentStrategy);
+        result.add(block);
+      }
       else {
         Alignment alignment = alignmentStrategy.getAlignment(childType);
         AlignmentStrategy alignmentStrategyToUse = shouldAlignChild(child)
@@ -759,6 +767,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       if (role == ChildRole.TYPE) return true;
       if (role == ChildRole.NAME) return true;
       if (role == ChildRole.THROWS_LIST && mySettings.ALIGN_THROWS_KEYWORD) return true;
+      if (role == ChildRole.METHOD_BODY) return !getNode().textContains('\n');
       return false;
     }
 
@@ -1235,8 +1244,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   protected ChildAlignmentStrategyProvider getStrategyProvider() {
-    if (mySettings.ALIGN_GROUP_FIELD_DECLARATIONS && myNode.getElementType() == JavaElementType.CLASS) {
-      return new SubsequentFieldAligner(mySettings);
+    if (myNode.getElementType() == JavaElementType.CLASS) {
+      return new SubsequentClassMemberAlignment(mySettings);
     }
 
     ASTNode parent = myNode.getTreeParent();

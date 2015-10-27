@@ -17,47 +17,36 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
+import java.util.List;
 
-public class SubsequentVariablesAligner extends ChildAlignmentStrategyProvider {
-
-  private final static Set<IElementType> TYPES_TO_ALIGN = ContainerUtil.newHashSet(
-    JavaTokenType.IDENTIFIER,
-    JavaTokenType.EQ
-  );
-
+public class SubsequentOneLineMethodsAligner extends ChildAlignmentStrategyProvider {
   private AlignmentStrategy myAlignmentStrategy;
 
-  public SubsequentVariablesAligner() {
-    updateAlignmentStrategy();
-  }
 
-  private void updateAlignmentStrategy() {
-    myAlignmentStrategy = AlignmentStrategy.createAlignmentPerTypeStrategy(TYPES_TO_ALIGN, JavaElementType.LOCAL_VARIABLE, true);
+  public SubsequentOneLineMethodsAligner() {
+    myAlignmentStrategy = newAlignmentStrategy();
   }
 
   @Override
   public AlignmentStrategy getNextChildStrategy(@NotNull ASTNode child) {
     IElementType childType = child.getElementType();
-    if (childType != JavaElementType.DECLARATION_STATEMENT || StringUtil.countNewLines(child.getChars()) > 0) {
-      updateAlignmentStrategy();
+    
+    if (childType != JavaElementType.METHOD || child.textContains('\n')) {
+      myAlignmentStrategy = newAlignmentStrategy();
       return AlignmentStrategy.getNullStrategy();
     }
-
-    if (isWhiteSpaceWithBlankLines(child.getTreePrev())) {
-      updateAlignmentStrategy();
-      return myAlignmentStrategy;
-    }
-
+    
     return myAlignmentStrategy;
+  }
+  
+  private static AlignmentStrategy newAlignmentStrategy() {
+    List<IElementType> types = ContainerUtil.newSmartList(((IElementType)JavaElementType.CODE_BLOCK));
+    return AlignmentStrategy.createAlignmentPerTypeStrategy(types, JavaElementType.METHOD, true);
   }
   
 }

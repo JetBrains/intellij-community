@@ -16,6 +16,7 @@
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
+import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -52,6 +53,11 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
                                   JavaCodeStyleSettings javaSettings) {
     super(node, wrap, alignment, indent, settings, javaSettings);
   }
+
+  public BlockContainingJavaBlock(ASTNode child, Indent indent, AlignmentStrategy strategy, CommonCodeStyleSettings settings, JavaCodeStyleSettings javaSettings) {
+    super(child, null, strategy, indent, settings, javaSettings);
+  }
+
   @Override
   protected List<Block> buildChildren() {
     final ArrayList<Block> result = new ArrayList<Block>();
@@ -98,7 +104,9 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
         }
         else {
           prevChild = child;
-          child = processChild(result, child, childAlignment, childWrap, indent);
+          Alignment simpleMethodBraceAlignment = myAlignmentStrategy.getAlignment(child.getElementType());
+          Alignment toUse = childAlignment != null ? childAlignment : simpleMethodBraceAlignment;
+          child = processChild(result, child, toUse, childWrap, indent);
         }                
         for (int i = myIndentsBefore.size(); i < result.size(); i++) {
           myIndentsBefore.add(Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS));
