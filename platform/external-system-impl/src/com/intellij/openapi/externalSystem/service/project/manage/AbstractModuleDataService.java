@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
+import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,13 +41,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -90,8 +89,9 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
 
         final ModifiableModuleModel modifiableModel = modelsProvider.getModifiableModuleModel();
         modifiableModel.setModuleGroupPath(module, node.getData().getIdeModuleGroup());
-
-        syncPaths(module, modelsProvider, node.getData());
+        ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
+        syncPaths(module, modifiableRootModel, node.getData());
+        setLanguageLevel(modifiableRootModel, node.getData());
       }
     }
   }
@@ -161,8 +161,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     return result;
   }
 
-  private static void syncPaths(@NotNull Module module, @NotNull IdeModifiableModelsProvider modelsProvider, @NotNull ModuleData data) {
-    ModifiableRootModel modifiableModel = modelsProvider.getModifiableRootModel(module);
+  private static void syncPaths(@NotNull Module module, @NotNull ModifiableRootModel modifiableModel, @NotNull ModuleData data) {
     CompilerModuleExtension extension = modifiableModel.getModuleExtension(CompilerModuleExtension.class);
     if (extension == null) {
       //modifiableModel.dispose();
@@ -331,10 +330,12 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
                           @NotNull IdeModifiableModelsProvider modelsProvider) {
     for (DataNode<E> moduleDataNode : toImport) {
       final Module module = moduleDataNode.getUserData(MODULE_KEY);
+      if (module == null) continue;
       final Map<OrderEntry, OrderAware> orderAwareMap = moduleDataNode.getUserData(ORDERED_DATA_MAP_KEY);
-      if (module != null && orderAwareMap != null) {
+      if (orderAwareMap != null) {
         rearrangeOrderEntries(orderAwareMap, modelsProvider.getModifiableRootModel(module));
       }
+      setBytecodeTargetLevel(project, module, moduleDataNode.getData());
     }
   }
 
@@ -416,5 +417,25 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       }
     }
     return idx == -1 ? -1 : idx;
+  }
+
+  private void setLanguageLevel(@NotNull ModifiableRootModel modifiableRootModel, E data) {
+    LanguageLevel level = LanguageLevel.parse(data.getSourceCompatibility());
+    if (level != null) {
+      try {
+        modifiableRootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(level);
+      }
+      catch (IllegalArgumentException e) {
+        LOG.debug(e);
+      }
+    }
+  }
+
+  private void setBytecodeTargetLevel(@NotNull Project project, @NotNull Module module, @NotNull E data) {
+    String targetLevel = data.getTargetCompatibility();
+    if (targetLevel != null) {
+      CompilerConfiguration configuration = CompilerConfiguration.getInstance(project);
+      configuration.setBytecodeTargetLevel(module, targetLevel);
+    }
   }
 }
