@@ -310,4 +310,56 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
       testDefault()
     }
   }
+
+  fun `test bad cases caused by 'compareTwoStep' logic`() {
+    lines {
+      ("x_!" - "!_x_y")
+      default(del(0, 0, 1), ins(2, 1, 2))
+      testAll()
+    }
+
+    lines {
+      ("!_x_y" - "x_!")
+      default(del(0, 0, 1), mod(2, 1, 1, 1))
+      testAll()
+    }
+
+    lines {
+      ("x_! " - "!_x_y")
+      default(mod(0, 0, 2, 3))
+      trim(del(0, 0, 1), ins(2, 1, 2))
+      testAll()
+    }
+
+    lines {
+      ("!_x_y" - "x_! ")
+      default(del(0, 0, 1), mod(2, 1, 1, 1))
+      testAll()
+    }
+  }
+
+  fun `test bad cases caused by 'compareSmart' logic`() {
+    lines {
+      ("A=====_ B=====_ }_}_B=====_" - "A=====_ }_}_B=====_")
+      // TODO: ignore(del(1, 1, 1))
+      default(del(1, 1, 1))
+      ignore(mod(1, 1, 3, 2))
+      testAll()
+    }
+
+    lines {
+      ("A=====_ B=====_ }_}_B=====" - "A=====_ }_}_B=====")
+      // TODO trim(del(1, 1, 1))
+      default(del(1, 1, 1))
+      trim(ins(1, 1, 2), del(2, 4, 3))
+      testAll()
+    }
+
+    lines {
+      ("A=====_ B=====_X_ }_}_Z_B=====_" - "A=====_ }_}_B=====_")
+      // TODO default(del(1, 1, 2), del(5, 3, 1))
+      default(mod(1, 1, 5, 2))
+      testAll()
+    }
+  }
 }
