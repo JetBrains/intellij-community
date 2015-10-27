@@ -602,10 +602,21 @@ public abstract class DialogWrapper {
 
     JPanel wrapper = new JPanel(new GridBagLayout());
     wrapper.add(checkBox);
-
     panel.add(wrapper, BorderLayout.WEST);
     panel.add(southPanel, BorderLayout.EAST);
     checkBox.setBorder(JBUI.Borders.emptyRight(20));
+    if (SystemInfo.isMac) {
+      JButton helpButton = null;
+      for (JButton button : UIUtil.findComponentsOfType(southPanel, JButton.class)) {
+        if ("help".equals(button.getClientProperty("JButton.buttonType"))) {
+          helpButton = button;
+          break;
+        }
+      }
+      if (helpButton != null) {
+        return JBUI.Panels.simplePanel(panel).addToLeft(helpButton);
+      }
+    }
 
     return panel;
   }
