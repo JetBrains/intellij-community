@@ -41,7 +41,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
   private val breakpointResolvedListenerAdded = AtomicBoolean()
 
   fun setBreakpoint(breakpoint: XLineBreakpoint<*>, onlySourceMappedBreakpoints: Boolean) {
-    var target = synchronized (lock) { ideToVmBreakpoints.get(breakpoint) }
+    var target = synchronized (lock) { ideToVmBreakpoints[breakpoint] }
     if (target == null) {
       setBreakpoint(breakpoint, debugProcess.getLocationsForBreakpoint(breakpoint, onlySourceMappedBreakpoints))
     }
@@ -50,7 +50,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
       for (vmBreakpoint in target) {
         if (!vmBreakpoint.enabled) {
           vmBreakpoint.enabled = true
-          breakpointManager.flush(vmBreakpoint).rejected { debugProcess.session.updateBreakpointPresentation(breakpoint, AllIcons.Debugger.Db_invalid_breakpoint, it.getMessage()) }
+          breakpointManager.flush(vmBreakpoint).rejected { debugProcess.session.updateBreakpointPresentation(breakpoint, AllIcons.Debugger.Db_invalid_breakpoint, it.message) }
         }
       }
     }
@@ -69,7 +69,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
     var vmBreakpoints: Collection<Breakpoint> = emptySet()
     synchronized (lock) {
       if (disable) {
-        val list = ideToVmBreakpoints.get(breakpoint) ?: return resolvedPromise()
+        val list = ideToVmBreakpoints[breakpoint] ?: return resolvedPromise()
         val iterator = list.iterator()
         vmBreakpoints = list
         while (iterator.hasNext()) {
@@ -147,7 +147,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
           }
 
           if (synchronized (lock) { runToLocationBreakpoints.remove(breakpoint) }) {
-            debugProcess.session.reportError("Cannot run to cursor: ${errorMessage!!}")
+            debugProcess.session.reportError("Cannot run to cursor: $errorMessage")
             return
           }
 
@@ -188,7 +188,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
   }
 
   fun updateAllBreakpoints() {
-    var array = synchronized (lock) { ideToVmBreakpoints.keySet().toTypedArray() }
+    var array = synchronized (lock) { ideToVmBreakpoints.keys.toTypedArray() }
     for (breakpoint in array) {
       removeBreakpoint(breakpoint, false)
       setBreakpoint(breakpoint, false)
