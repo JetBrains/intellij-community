@@ -248,10 +248,6 @@ public class WordComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testEmptyRangePositions() {
-    // TODO
-  }
-
   public fun testAlgorithmSpecific() {
     // prefer words over punctuation
     words {
@@ -305,7 +301,7 @@ public class WordComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testLegacy() {
+  public fun `test legacy cases from ByWordTest`() {
     words {
       ("abc def, 123" - "ab def, 12")
       ("---      ---" - "--      --").default()

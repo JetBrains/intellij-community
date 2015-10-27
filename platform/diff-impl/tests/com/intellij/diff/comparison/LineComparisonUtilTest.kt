@@ -254,7 +254,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testBigBlockShiftRegression() {
+  public fun `test regression - shifted similar lines should be matched as a single change, not insertion-deletion`() {
     lines {
       (" X_  X" - "  X_   X")
       default(mod(0, 0, 2, 2))
@@ -262,7 +262,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testPreferBoundedBlocks() {
+  public fun `test prefer chunks bounded by empty line`() {
     lines {
       ("A_B_o_o_Y_Z_ _A_B_z_z_Y_Z" - "A_B_o_o_Y_Z_ _A_B_u_u_Y_Z_ _A_B_z_z_Y_Z")
       default(ins(7, 7, 7))
@@ -282,7 +282,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testPreferLessBlocks() {
+  public fun `test prefer smaller amount of chunks`() {
     lines() {
       ("X_A_X_Y_" - "X_Y_")
       default(del(0, 0, 2))
@@ -303,7 +303,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testTwoStepCanTrimRegression() {
+  public fun `test regression - can trim chunks after 'compareTwoSteps'`() {
     lines {
       ("q__7_ 6_ 7" - "_7")
       default(del(0, 0, 1), del(3, 2, 2))
