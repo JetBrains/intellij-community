@@ -34,6 +34,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
+import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +65,7 @@ public class GoToHashOrRefPopup {
                             @NotNull Comparator<VcsRef> comparator) {
     myOnSelectedHash = onSelectedHash;
     myOnSelectedRef = onSelectedRef;
-    myTextField = new TextFieldWithProgress<VcsRef>(project, new VcsRefCompletionProvider(variants, colorManager, comparator)) {
+    myTextField = new TextFieldWithProgress<VcsRef>(project, new VcsRefCompletionProvider(project, variants, colorManager, comparator)) {
       @Override
       public void onOk() {
         if (myFuture == null) {
@@ -147,13 +148,16 @@ public class GoToHashOrRefPopup {
   }
 
   private class VcsRefCompletionProvider extends TextFieldWithAutoCompletionListProvider<VcsRef> {
+    @NotNull private final Project myProject;
     @NotNull private final VcsLogColorManager myColorManager;
     @NotNull private final Comparator<VcsRef> myReferenceComparator;
 
-    public VcsRefCompletionProvider(@NotNull Collection<VcsRef> variants,
+    public VcsRefCompletionProvider(@NotNull Project project,
+                                    @NotNull Collection<VcsRef> variants,
                                     @NotNull VcsLogColorManager colorManager,
                                     @NotNull Comparator<VcsRef> comparator) {
       super(variants);
+      myProject = project;
       myColorManager = colorManager;
       myReferenceComparator = comparator;
     }
@@ -192,7 +196,7 @@ public class GoToHashOrRefPopup {
     @Override
     protected String getTypeText(@NotNull VcsRef item) {
       if (!myColorManager.isMultipleRoots()) return null;
-      return item.getRoot().getName();
+      return VcsImplUtil.getShortVcsRootName(myProject, item.getRoot());
     }
 
     @Override
