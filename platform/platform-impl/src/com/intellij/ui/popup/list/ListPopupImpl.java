@@ -239,7 +239,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
 
     ScrollingUtil.installActions(myList);
 
-    myList.setCellRenderer(getListElementRenderer());
+    setCellRenderer(getListElementRenderer());
 
     myList.getActionMap().get("selectNextColumn").setEnabled(false);
     myList.getActionMap().get("selectPreviousColumn").setEnabled(false);
@@ -271,6 +271,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     myList.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
     return myList;
+  }
+
+  public void setCellRenderer(ListCellRenderer renderer) {
+    myList.setCellRenderer(renderer);
   }
 
   @NotNull
@@ -411,7 +415,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
       }
       final JComponent container = getContent();
       assert container != null : "container == null";
-      
+
       int y = point.y;
       if (parentValue != null && getListModel().isSeparatorAboveOf(parentValue)) {
         SeparatorWithText swt = new SeparatorWithText();
