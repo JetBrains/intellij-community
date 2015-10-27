@@ -59,8 +59,7 @@ class CanonicalPathMap {
 
   @NotNull
   private static PathMapper createMapper() {
-    return new PathMapperMapImpl();
-    //return new PathMapperListImpl();
+    return new PathMapperImpl();
   }
 
   public CanonicalPathMap() {

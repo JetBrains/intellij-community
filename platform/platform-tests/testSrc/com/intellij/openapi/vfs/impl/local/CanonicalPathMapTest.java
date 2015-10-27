@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.junit.Assert;
@@ -35,7 +36,8 @@ public class CanonicalPathMapTest {
     File rootDir = IoTestUtil.createTestDir("root");
     try {
       File realDir = IoTestUtil.createTestDir(rootDir, "real");
-      File symLink = IoTestUtil.createSymLink(realDir.getPath(), rootDir.getPath() + "/linkdir");
+      File fakeDirForTest = IoTestUtil.createTestDir(rootDir, "fake");
+      File symLink = IoTestUtil.createSymLink(realDir.getPath(), FileUtil.join(rootDir.getPath(), "linkdir"));
 
       // Initial symlink map: /???/root/linkdir -> /???/root/real
       CanonicalPathMap canonicalPathMap = new CanonicalPathMap(ContainerUtil.newArrayList(symLink.getPath()),
@@ -43,13 +45,13 @@ public class CanonicalPathMapTest {
 
       // REMAP from native file watcher
       List<Pair<String, String>> mappings = ContainerUtil.newArrayList();
-      mappings.add(Pair.pair("/foo/bar", realDir.getPath()));
+      mappings.add(Pair.pair(fakeDirForTest.getPath(), realDir.getPath()));
       canonicalPathMap.addMapping(mappings);
 
-      Collection<String> mappedPaths = canonicalPathMap.getWatchedPaths("/foo/bar/file.txt", true, false);
+      Collection<String> mappedPaths = canonicalPathMap.getWatchedPaths(new File(fakeDirForTest, "file.txt").getPath(), true, false);
       Assert.assertEquals(mappedPaths.size(), 1);
       String reportedWatchPath = mappedPaths.iterator().next();
-      String expectedWatchPath = symLink.getPath() + "/file.txt";
+      String expectedWatchPath = FileUtil.join(symLink.getPath(), "file.txt");
       Assert.assertEquals(expectedWatchPath, reportedWatchPath);
     } finally {
       IoTestUtil.delete(rootDir);

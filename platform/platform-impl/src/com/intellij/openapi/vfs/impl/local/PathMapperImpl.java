@@ -26,11 +26,11 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
-public class PathMapperMapImpl implements CanonicalPathMap.PathMapper {
+public class PathMapperImpl implements CanonicalPathMap.PathMapper {
 
   @NotNull private final MultiMap<String, String> pathMapping;
 
-  public PathMapperMapImpl() {
+  public PathMapperImpl() {
     pathMapping = MultiMap.createConcurrentSet();
   }
 
