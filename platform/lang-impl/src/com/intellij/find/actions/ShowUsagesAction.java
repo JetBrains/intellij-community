@@ -55,6 +55,8 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.ui.popup.HintUpdateSupply;
+import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewUtil;
@@ -1185,11 +1187,12 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     return newFileEditor instanceof TextEditor ? ((TextEditor)newFileEditor).getEditor() : null;
   }
 
-  private static class MyTable extends JBTableWithHintProvider implements DataProvider {
+  private static class MyTable extends JBTable implements DataProvider {
     private static final int MARGIN = 2;
 
     public MyTable() {
       ScrollingUtil.installActions(this);
+      HintUpdateSupply.installSimpleHintUpdateSupply(this);
     }
 
     @Override
@@ -1223,9 +1226,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       return component;
     }
 
-    @Override
     @Nullable
-    protected PsiElement getPsiElementForHint(Object selectedValue) {
+    private static PsiElement getPsiElementForHint(Object selectedValue) {
       if (selectedValue instanceof UsageNode) {
         final Usage usage = ((UsageNode)selectedValue).getUsage();
         if (usage instanceof UsageInfo2UsageAdapter) {
