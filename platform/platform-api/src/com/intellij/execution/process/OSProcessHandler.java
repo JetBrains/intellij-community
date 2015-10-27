@@ -31,7 +31,7 @@ import java.util.concurrent.Future;
 public class OSProcessHandler extends BaseOSProcessHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.OSProcessHandler");
 
-  private boolean myHasPty = false;
+  private boolean myHasPty;
   private boolean myDestroyRecursively = true;
 
   public OSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
@@ -51,8 +51,9 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     super(process, commandLine, charset);
   }
 
+  @NotNull
   @Override
-  protected Future<?> executeOnPooledThread(Runnable task) {
+  protected Future<?> executeOnPooledThread(@NotNull Runnable task) {
     Application app = ApplicationManager.getApplication();
     return app != null ? app.executeOnPooledThread(task) : super.executeOnPooledThread(task);
   }
