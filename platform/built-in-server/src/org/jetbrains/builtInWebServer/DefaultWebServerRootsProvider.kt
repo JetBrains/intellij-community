@@ -35,7 +35,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PlatformUtils
 
-class DefaultWebServerRootsProvider : WebServerRootsProvider() {
+private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
   override fun resolve(path: String, project: Project): PathInfo? {
     var effectivePath = path
     if (PlatformUtils.isIntelliJ()) {
@@ -46,7 +46,6 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
         if (module != null && !module.isDisposed) {
           effectivePath = effectivePath.substring(index + 1)
           val resolver = WebServerPathToFileManager.getInstance(project).getResolver(effectivePath)
-
           val moduleRootManager = ModuleRootManager.getInstance(module)
           val result = RootProvider.values.computeOrNull { findByRelativePath(effectivePath, it.getRoots(moduleRootManager), resolver, moduleName) }
             ?: findInModuleLibraries(effectivePath, module, resolver)
@@ -115,83 +114,81 @@ class DefaultWebServerRootsProvider : WebServerRootsProvider() {
       return PathInfo(null, file, root!!, getModuleNameQualifier(project, module), isLibrary)
     }
   }
+}
 
-  private enum class RootProvider {
-    SOURCE {
-      override fun getRoots(rootManager: ModuleRootManager) = rootManager.sourceRoots
-    },
-    CONTENT {
-      override fun getRoots(rootManager: ModuleRootManager) = rootManager.contentRoots
-    },
-    EXCLUDED {
-      override fun getRoots(rootManager: ModuleRootManager) = rootManager.excludeRoots
-    };
+private enum class RootProvider {
+  SOURCE {
+    override fun getRoots(rootManager: ModuleRootManager) = rootManager.sourceRoots
+  },
+  CONTENT {
+    override fun getRoots(rootManager: ModuleRootManager) = rootManager.contentRoots
+  },
+  EXCLUDED {
+    override fun getRoots(rootManager: ModuleRootManager) = rootManager.excludeRoots
+  };
 
-    public abstract fun getRoots(rootManager: ModuleRootManager): Array<VirtualFile>
+  abstract fun getRoots(rootManager: ModuleRootManager): Array<VirtualFile>
+}
+
+private val ORDER_ROOT_TYPES by lazy {
+  val javaDocRootType = getJavadocOrderRootType()
+  if (javaDocRootType == null)
+    arrayOf(OrderRootType.DOCUMENTATION, OrderRootType.SOURCES, OrderRootType.CLASSES)
+  else
+    arrayOf(javaDocRootType, OrderRootType.DOCUMENTATION, OrderRootType.SOURCES, OrderRootType.CLASSES)
+}
+
+private fun getJavadocOrderRootType(): OrderRootType? {
+  try {
+    return JavadocOrderRootType.getInstance()
   }
-
-  companion object {
-    private val ORDER_ROOT_TYPES by lazy {
-      val javaDocRootType = getJavadocOrderRootType()
-      if (javaDocRootType == null)
-        arrayOf(OrderRootType.DOCUMENTATION, OrderRootType.SOURCES, OrderRootType.CLASSES)
-      else
-        arrayOf(javaDocRootType, OrderRootType.DOCUMENTATION, OrderRootType.SOURCES, OrderRootType.CLASSES)
-    }
-
-    private fun getJavadocOrderRootType(): OrderRootType? {
-      try {
-        return JavadocOrderRootType.getInstance()
-      }
-      catch (e: Throwable) {
-        return null
-      }
-    }
-
-    private fun findInModuleLibraries(path: String, module: Module, resolver: FileResolver): PathInfo? {
-      val index = path.indexOf('/')
-      if (index <= 0) {
-        return null
-      }
-
-      val libraryFileName = path.substring(0, index)
-      val relativePath = path.substring(index + 1)
-      findInModuleLevelLibraries(module, ORDER_ROOT_TYPES) { root, module ->
-        if (StringUtil.equalsIgnoreCase(root.nameSequence, libraryFileName)) resolver.resolve(relativePath, root, isLibrary = true) else null
-      }
-      return null
-    }
-
-    private fun findInLibraries(project: Project, path: String, resolver: FileResolver): PathInfo? {
-      val index = path.indexOf('/')
-      if (index < 0) {
-        return null
-      }
-
-      val libraryFileName = path.substring(0, index)
-      val relativePath = path.substring(index + 1)
-      return findInLibrariesAndSdk(project, ORDER_ROOT_TYPES) { root, module ->
-        if (StringUtil.equalsIgnoreCase(root.nameSequence, libraryFileName)) resolver.resolve(relativePath, root, isLibrary = true) else null
-      }
-    }
-
-    private fun getInfoForDocJar(file: VirtualFile, project: Project): PathInfo? {
-      val javaDocRootType = getJavadocOrderRootType() ?: return null
-      return findInLibrariesAndSdk(project, arrayOf(javaDocRootType)) { root, module ->
-        if (VfsUtilCore.isAncestor(root, file, false)) PathInfo(null, file, root, getModuleNameQualifier(project, module), true) else null
-      }
-    }
-
-    private fun getModuleNameQualifier(project: Project, module: Module?): String? {
-      if (module != null && PlatformUtils.isIntelliJ() && !(module.name.equals(project.name, ignoreCase = true) || compareNameAndProjectBasePath(module.name, project))) {
-        return module.name
-      }
-      return null
-    }
-
-    private fun findByRelativePath(path: String, roots: Array<VirtualFile>, resolver: FileResolver, moduleName: String?) = roots.computeOrNull { resolver.resolve(path, it, moduleName) }
+  catch (e: Throwable) {
+    return null
   }
 }
+
+private fun findInModuleLibraries(path: String, module: Module, resolver: FileResolver): PathInfo? {
+  val index = path.indexOf('/')
+  if (index <= 0) {
+    return null
+  }
+
+  val libraryFileName = path.substring(0, index)
+  val relativePath = path.substring(index + 1)
+  findInModuleLevelLibraries(module, ORDER_ROOT_TYPES) { root, module ->
+    if (StringUtil.equalsIgnoreCase(root.nameSequence, libraryFileName)) resolver.resolve(relativePath, root, isLibrary = true) else null
+  }
+  return null
+}
+
+private fun findInLibraries(project: Project, path: String, resolver: FileResolver): PathInfo? {
+  val index = path.indexOf('/')
+  if (index < 0) {
+    return null
+  }
+
+  val libraryFileName = path.substring(0, index)
+  val relativePath = path.substring(index + 1)
+  return findInLibrariesAndSdk(project, ORDER_ROOT_TYPES) { root, module ->
+    if (StringUtil.equalsIgnoreCase(root.nameSequence, libraryFileName)) resolver.resolve(relativePath, root, isLibrary = true) else null
+  }
+}
+
+private fun getInfoForDocJar(file: VirtualFile, project: Project): PathInfo? {
+  val javaDocRootType = getJavadocOrderRootType() ?: return null
+  return findInLibrariesAndSdk(project, arrayOf(javaDocRootType)) { root, module ->
+    if (VfsUtilCore.isAncestor(root, file, false)) PathInfo(null, file, root, getModuleNameQualifier(project, module), true) else null
+  }
+}
+
+private fun getModuleNameQualifier(project: Project, module: Module?): String? {
+  if (module != null && PlatformUtils.isIntelliJ() && !(module.name.equals(project.name, ignoreCase = true) || compareNameAndProjectBasePath(module.name, project))) {
+    return module.name
+  }
+  return null
+}
+
+private fun findByRelativePath(path: String, roots: Array<VirtualFile>, resolver: FileResolver, moduleName: String?) = roots.computeOrNull { resolver.resolve(path, it, moduleName) }
 
 private fun findInLibrariesAndSdk(project: Project, rootTypes: Array<OrderRootType>, fileProcessor: (root: VirtualFile, module: Module?) -> PathInfo?): PathInfo? {
   fun find(table: LibraryTable) = table.libraryIterator.computeOrNull { library -> rootTypes.computeOrNull { library.getFiles(it).computeOrNull { fileProcessor(it, null) } } }
