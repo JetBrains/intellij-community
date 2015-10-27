@@ -30,7 +30,7 @@ interface BreakpointManager {
   val regExpBreakpointSupported: Boolean
     get() = false
 
-  fun setBreakpoint(target: BreakpointTarget, line: Int, column: Int, condition: String?, ignoreCount: Int, enabled: Boolean): Breakpoint
+  fun setBreakpoint(target: BreakpointTarget, line: Int, column: Int = Breakpoint.EMPTY_VALUE, condition: String? = null, ignoreCount: Int = Breakpoint.EMPTY_VALUE, enabled: Boolean = true): Breakpoint
 
   fun remove(breakpoint: Breakpoint): Promise<*>
 
