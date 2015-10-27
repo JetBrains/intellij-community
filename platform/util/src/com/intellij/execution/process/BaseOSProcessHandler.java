@@ -245,7 +245,7 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
 
     private static ThreadPoolExecutor createServiceImpl() {
       ThreadFactory factory = ConcurrencyUtil.newNamedThreadFactory("OSProcessHandler pooled thread");
-      return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), factory);
+      return new ThreadPoolExecutor(0, Integer.MAX_VALUE, 5, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), factory);
     }
 
     @NotNull

@@ -18,7 +18,6 @@ package com.intellij.execution.process;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PtyCommandLine;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -54,8 +53,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   @NotNull
   @Override
   protected Future<?> executeOnPooledThread(@NotNull Runnable task) {
-    Application app = ApplicationManager.getApplication();
-    return app != null ? app.executeOnPooledThread(task) : super.executeOnPooledThread(task);
+    return super.executeOnPooledThread(task);  // to maintain binary compatibility?
   }
 
   protected boolean shouldDestroyProcessRecursively() {
