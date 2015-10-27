@@ -27,8 +27,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.openapi.util.Pair.pair;
-
 class CanonicalPathMap {
   private static final Logger LOG = Logger.getInstance(FileWatcher.class);
 
@@ -36,31 +34,57 @@ class CanonicalPathMap {
   private final List<String> myFlatWatchRoots;
   private final List<String> myCanonicalRecursiveWatchRoots;
   private final List<String> myCanonicalFlatWatchRoots;
-  private final List<Pair<String, String>> myMapping;
+
+  /**
+   * Translate from the path reported from the file watcher to the path requested by IntelliJ.
+   *
+   * <p> It is possible to add a mapping that requires a single level of transitive closure. Implementations must ensure that this single
+   * level of transitive closure is performed so all paths returned by {@link #applyMapping(String)} are in the form initially requested
+   * by the caller of {@link #addMapping(Collection)} or {@link #addMappings(Collection)}.</p>
+   */
+  interface PathMapper {
+    /**
+     * Translate from path reported by the file watcher to the path that was requested to be watched.
+     *
+     * If /root/link/bar is being watched and is a symlink to /root/impl/bar and /root/impl/bar/foo.txt is reported from the file watcher,
+     * this method should return /root/link/bar/foo.txt
+     */
+    @NotNull Collection<String> applyMapping(@NotNull String reportedPath);
+
+    void addMappings(@NotNull Collection<Pair<String, String>> mappings);
+    void addMapping(@NotNull String reportedPath, @NotNull String watchedPath);
+  }
+
+  @NotNull private final PathMapper myMapping;
+
+  @NotNull
+  private static PathMapper createMapper() {
+    return new PathMapperImpl();
+  }
 
   public CanonicalPathMap() {
     myRecursiveWatchRoots = myCanonicalRecursiveWatchRoots = myFlatWatchRoots = myCanonicalFlatWatchRoots = Collections.emptyList();
-    myMapping = Collections.emptyList();
+    myMapping = createMapper();
   }
 
   public CanonicalPathMap(@NotNull List<String> recursive, @NotNull List<String> flat) {
     myRecursiveWatchRoots = ContainerUtil.newArrayList(recursive);
     myFlatWatchRoots = ContainerUtil.newArrayList(flat);
 
-    List<Pair<String, String>> mapping = ContainerUtil.newSmartList();
+    PathMapper mapping = createMapper();
     myCanonicalRecursiveWatchRoots = mapPaths(recursive, mapping);
     myCanonicalFlatWatchRoots = mapPaths(flat, mapping);
-    myMapping = ContainerUtil.createLockFreeCopyOnWriteList(mapping);
+    myMapping = mapping;
   }
 
-  private static List<String> mapPaths(List<String> paths, List<Pair<String, String>> mapping) {
+  private static List<String> mapPaths(List<String> paths, @NotNull PathMapper mapping) {
     List<String> canonicalPaths = ContainerUtil.newArrayList(paths);
     for (int i = 0; i < paths.size(); i++) {
       String path = paths.get(i);
       String canonicalPath = FileSystemUtil.resolveSymLink(path);
       if (canonicalPath != null && !path.equals(canonicalPath)) {
         canonicalPaths.set(i, canonicalPath);
-        mapping.add(pair(canonicalPath, path));
+        mapping.addMapping(canonicalPath, path);
       }
     }
     return canonicalPaths;
@@ -75,7 +99,7 @@ class CanonicalPathMap {
   }
 
   public void addMapping(@NotNull Collection<Pair<String, String>> mapping) {
-    myMapping.addAll(mapping);
+    myMapping.addMappings(mapping);
   }
 
   /**
@@ -94,7 +118,7 @@ class CanonicalPathMap {
   public Collection<String> getWatchedPaths(@NotNull String reportedPath, boolean isExact, boolean fastPath) {
     if (myFlatWatchRoots.isEmpty() && myRecursiveWatchRoots.isEmpty()) return Collections.emptyList();
 
-    Collection<String> affectedPaths = applyMapping(reportedPath);
+    Collection<String> affectedPaths = myMapping.applyMapping(reportedPath);
     Collection<String> changedPaths = ContainerUtil.newSmartList();
 
     ext:
@@ -135,18 +159,5 @@ class CanonicalPathMap {
     }
 
     return changedPaths;
-  }
-
-  private Collection<String> applyMapping(String reportedPath) {
-    Collection<String> affectedPaths = ContainerUtil.newSmartList(reportedPath);
-    for (Pair<String, String> map : myMapping) {
-      if (FileUtil.startsWith(reportedPath, map.first)) {
-        affectedPaths.add(map.second + reportedPath.substring(map.first.length()));
-      }
-      else if (FileUtil.startsWith(reportedPath, map.second)) {
-        affectedPaths.add(map.first + reportedPath.substring(map.second.length()));
-      }
-    }
-    return affectedPaths;
   }
 }
