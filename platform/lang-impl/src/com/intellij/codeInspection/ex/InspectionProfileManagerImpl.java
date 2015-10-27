@@ -37,13 +37,13 @@ import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileLoadUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
@@ -183,14 +183,8 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
     if (!LOAD_PROFILES) return;
 
     mySchemeManager.loadSchemes();
-    Collection<Profile> profiles = mySchemeManager.getAllSchemes();
-    if (profiles.isEmpty()) {
+    if (mySchemeManager.getAllSchemes().isEmpty()) {
       createDefaultProfile();
-    }
-    else {
-      for (Profile profile : profiles) {
-        addProfile(profile);
-      }
     }
   }
 
@@ -273,16 +267,8 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   }
 
   @Override
-  public void setRootProfile(String rootProfile) {
-    Profile current = mySchemeManager.getCurrentScheme();
-    if (current == null || !Comparing.strEqual(rootProfile, current.getName())) {
-      Profile scheme = getProfile(rootProfile);
-      if (scheme == null && current == null) {
-        return;
-      }
-      fireProfileChanged(current, scheme, null);
-      mySchemeManager.setCurrent(scheme, false);
-    }
+  public void setRootProfile(@Nullable String profileName) {
+    mySchemeManager.setCurrentSchemeName(profileName);
   }
 
   @Override
@@ -299,11 +285,17 @@ public class InspectionProfileManagerImpl extends InspectionProfileManager imple
   @NotNull
   @Override
   public Profile getRootProfile() {
+    initProfiles();
     Profile current = mySchemeManager.getCurrentScheme();
     if (current != null) return current;
     Collection<Profile> profiles = getProfiles();
     if (profiles.isEmpty()) return createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, null);
     return profiles.iterator().next();
+  }
+
+  @NotNull
+  public String getRootProfileName() {
+    return ObjectUtils.chooseNotNull(mySchemeManager.getCurrentSchemeName(), InspectionProfileImpl.DEFAULT_PROFILE_NAME);
   }
 
   @Override

@@ -62,6 +62,11 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
   private val schemes = ArrayList<T>()
   private val readOnlyExternalizableSchemes = THashMap<String, E>()
 
+  /**
+   * Schemes can be lazy loaded, so, client should be able to set current scheme by name, not only by instance.
+   */
+  private @Volatile var currentPendingSchemeName: String? = null
+
   private var currentScheme: T? = null
 
   private var directory: VirtualFile? = null
@@ -284,7 +289,11 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
       val scheme = schemes[i] as E
       processor.initScheme(scheme)
       list.add(scheme)
+
+      @Suppress("UNCHECKED_CAST")
+      processPendingCurrentSchemeName(scheme as T)
     }
+
     return list
   }
 
@@ -760,6 +769,8 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
         filesToDelete.remove("${info.fileName}")
       }
     }
+
+    processPendingCurrentSchemeName(scheme)
   }
 
   private fun collectExistingNames(schemes: Collection<T>): Collection<String> {
@@ -795,6 +806,8 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
   }
 
   override fun setCurrent(scheme: T?, notify: Boolean) {
+    currentPendingSchemeName = null
+
     val oldCurrent = currentScheme
     currentScheme = scheme
     if (notify && oldCurrent != scheme) {
@@ -802,7 +815,24 @@ public class SchemeManagerImpl<T : Scheme, E : ExternalizableScheme>(private val
     }
   }
 
+  override fun setCurrentSchemeName(schemeName: String?, notify: Boolean) {
+    currentPendingSchemeName = schemeName
+    val scheme = if (schemeName == null) null else findSchemeByName(schemeName)
+    // don't set current scheme if no scheme by name - pending resolution (see currentSchemeName field comment)
+    if (scheme != null || schemeName == null) {
+      setCurrent(scheme, notify)
+    }
+  }
+
   override fun getCurrentScheme() = currentScheme
+
+  override fun getCurrentSchemeName() = currentScheme?.name ?: currentPendingSchemeName
+
+  private fun processPendingCurrentSchemeName(newScheme: T) {
+    if (newScheme.name == currentPendingSchemeName) {
+      setCurrent(newScheme, false)
+    }
+  }
 
   override fun removeScheme(scheme: T) {
     for (i in schemes.size() - 1 downTo 0) {
