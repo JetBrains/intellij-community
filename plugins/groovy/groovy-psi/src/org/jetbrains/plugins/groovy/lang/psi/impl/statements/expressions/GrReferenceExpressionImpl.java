@@ -105,13 +105,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) return false;
 
     final String qname = TypesUtil.getQualifiedName(type);
-    if (qname != null) {
-      if (qname.startsWith("java.")) return true; //so we have jdk map here
-      if (GroovyCommonClassNames.GROOVY_UTIL_CONFIG_OBJECT.equals(qname)) return false;
-      if (qname.startsWith("groovy.")) return true; //we have gdk map here
-    }
-
-    return false;
+    return qname == null || !GroovyCommonClassNames.GROOVY_UTIL_CONFIG_OBJECT.equals(qname);
   }
 
   @NotNull
@@ -713,8 +707,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   private static PsiType getTypeFromMapAccess(@NotNull GrReferenceExpressionImpl ref) {
     //map access
     GrExpression qualifier = ref.getQualifierExpression();
+    if (qualifier instanceof GrReferenceExpression) {
+      if (((GrReferenceExpression)qualifier).resolve() instanceof PsiClass) return null;
+    }
     if (qualifier != null) {
-      PsiType qType = qualifier.getNominalType();
+      PsiType qType = qualifier.getType();
       if (qType instanceof PsiClassType) {
         PsiClassType.ClassResolveResult qResult = ((PsiClassType)qType).resolveGenerics();
         PsiClass clazz = qResult.getElement();
@@ -814,16 +811,18 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   @Nullable
   private static PsiType getInferredTypes(@NotNull GrReferenceExpressionImpl refExpr, @Nullable PsiElement resolved) {
     final GrExpression qualifier = refExpr.getQualifier();
-    if (qualifier == null && !(resolved instanceof PsiClass || resolved instanceof PsiPackage)) {
-      return TypeInferenceHelper.getCurrentContext().getVariableType(refExpr);
-    }
-    else if (qualifier != null) {
-      //map access
-      PsiType qType = qualifier.getType();
-      if (qType instanceof PsiClassType && !(qType instanceof GrMapType)) {
-        final PsiType mapValueType = getTypeFromMapAccess(refExpr);
-        if (mapValueType != null) {
-          return mapValueType;
+    if (!(resolved instanceof PsiClass) && !(resolved instanceof PsiPackage)) {
+      if (qualifier == null) {
+        return TypeInferenceHelper.getCurrentContext().getVariableType(refExpr);
+      }
+      else {
+        //map access
+        PsiType qType = qualifier.getType();
+        if (qType instanceof PsiClassType && !(qType instanceof GrMapType)) {
+          final PsiType mapValueType = getTypeFromMapAccess(refExpr);
+          if (mapValueType != null) {
+            return mapValueType;
+          }
         }
       }
     }
