@@ -92,6 +92,8 @@ public class RegistryUi implements Disposable {
     myTable.setStriped(true);
 
     myDescriptionLabel = new JTextArea(3, 50);
+    myDescriptionLabel.setWrapStyleWord(true);
+    myDescriptionLabel.setLineWrap(true);
     myDescriptionLabel.setEditable(false);
     final JScrollPane label = ScrollPaneFactory.createScrollPane(myDescriptionLabel);
     final JPanel descriptionPanel = new JPanel(new BorderLayout());
