@@ -37,6 +37,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -229,6 +230,7 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
       Class mainClass = null;
       final File[] files = classesDir.listFiles();
       assertNotNull(files);
+      Arrays.sort(files, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
       boolean modified = false;
       MyClassLoader classLoader = new MyClassLoader(getClass().getClassLoader());
       for (File file : files) {
