@@ -72,7 +72,7 @@ gradle.taskGraph.beforeTask { Task task ->
         logTestEvent("afterTest", descriptor, null, result)
       }
 
-      if(ijTestFilteringSupported) {
+      if(ijTestIncludes != ['*'] && ijTestFilteringSupported) {
         task.filter {
           ijTestIncludes.each(){ includeTestsMatching "${it}" }
         }
