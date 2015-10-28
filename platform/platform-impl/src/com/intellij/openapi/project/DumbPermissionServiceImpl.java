@@ -27,6 +27,11 @@ public class DumbPermissionServiceImpl implements DumbPermissionService {
   @Override
   public void allowStartingDumbModeInside(@NotNull DumbModePermission permission, @NotNull Runnable runnable) {
     DumbModePermission prev = myPermission.get();
+    if (prev == DumbModePermission.MAY_START_MODAL && permission == DumbModePermission.MAY_START_BACKGROUND) {
+      runnable.run();
+      return;
+    }
+
     myPermission.set(permission);
     try {
       runnable.run();
