@@ -35,7 +35,7 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class SdkType implements SdkTypeId {
-  public static ExtensionPointName<SdkType> EP_NAME = ExtensionPointName.create("com.intellij.sdkType");
+  public static final ExtensionPointName<SdkType> EP_NAME = ExtensionPointName.create("com.intellij.sdkType");
 
   private final String myName;
 
