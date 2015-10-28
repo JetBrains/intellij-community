@@ -123,6 +123,10 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
   @Override
   public MethodVisitor visitMethod(final int access, final String name, String desc, String signature, String[] exceptions) {
+    if ((access & Opcodes.ACC_BRIDGE) != 0) {
+      return super.visitMethod(access, name, desc, signature, exceptions);
+    }
+
     final Type[] args = Type.getArgumentTypes(desc);
     final Type returnType = Type.getReturnType(desc);
     final MethodVisitor v = cv.visitMethod(access, name, desc, signature, exceptions);
