@@ -153,10 +153,10 @@ public class CodeStyleSettingPresentation {
 
     result = ContainerUtil.newLinkedHashMap();
     result.put(new SettingsGroup(SPACES_BEFORE_PARENTHESES), ContainerUtil.immutableList(
-      new CodeStyleSettingPresentation("SPACE_BEFORE_METHOD_PARENTHESES",
-                                       ApplicationBundle.message("checkbox.spaces.method.declaration.parentheses")),
       new CodeStyleSettingPresentation("SPACE_BEFORE_METHOD_CALL_PARENTHESES",
                                        ApplicationBundle.message("checkbox.spaces.method.call.parentheses")),
+      new CodeStyleSettingPresentation("SPACE_BEFORE_METHOD_PARENTHESES",
+                                       ApplicationBundle.message("checkbox.spaces.method.declaration.parentheses")),
       new CodeStyleSettingPresentation("SPACE_BEFORE_IF_PARENTHESES", ApplicationBundle.message("checkbox.spaces.if.parentheses")),
       new CodeStyleSettingPresentation("SPACE_BEFORE_FOR_PARENTHESES", ApplicationBundle.message("checkbox.spaces.for.parentheses")),
       new CodeStyleSettingPresentation("SPACE_BEFORE_WHILE_PARENTHESES",
@@ -231,12 +231,12 @@ public class CodeStyleSettingPresentation {
       new CodeStyleSettingPresentation("SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES",
                                        ApplicationBundle.message("checkbox.spaces.within.empty.array.initializer.braces")),
       new CodeStyleSettingPresentation("SPACE_WITHIN_PARENTHESES", ApplicationBundle.message("checkbox.spaces.within.parentheses")),
-      new CodeStyleSettingPresentation("SPACE_WITHIN_METHOD_PARENTHESES",
-                                       ApplicationBundle.message("checkbox.spaces.checkbox.spaces.method.declaration.parentheses")),
       new CodeStyleSettingPresentation("SPACE_WITHIN_METHOD_CALL_PARENTHESES",
                                        ApplicationBundle.message("checkbox.spaces.checkbox.spaces.method.call.parentheses")),
       new CodeStyleSettingPresentation("SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES",
                                        ApplicationBundle.message("checkbox.spaces.checkbox.spaces.empty.method.call.parentheses")),
+      new CodeStyleSettingPresentation("SPACE_WITHIN_METHOD_PARENTHESES",
+                                       ApplicationBundle.message("checkbox.spaces.checkbox.spaces.method.declaration.parentheses")),
       new CodeStyleSettingPresentation("SPACE_WITHIN_EMPTY_METHOD_PARENTHESES", ApplicationBundle
         .message("checkbox.spaces.checkbox.spaces.empty.method.declaration.parentheses")),
       new CodeStyleSettingPresentation("SPACE_WITHIN_IF_PARENTHESES", ApplicationBundle.message("checkbox.spaces.if.parentheses")),
