@@ -13,13 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 28.11.2006
- * Time: 14:15:18
- */
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.icons.AllIcons;
@@ -51,6 +44,10 @@ import java.awt.event.ItemListener;
 import java.util.*;
 import java.util.List;
 
+/**
+ * @author yole
+ * @since 28.11.2006
+ */
 public class MultipleChangeListBrowser extends ChangesBrowser {
   private final ChangeListChooser myChangeListChooser;
   private final ChangeListListener myChangeListListener = new MyChangeListListener();
@@ -64,12 +61,16 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   private boolean myInRebuildList;
 
   // todo terrible constructor
-  public MultipleChangeListBrowser(final Project project, final List<? extends ChangeList> changeLists, final List<Change> changes,
+  public MultipleChangeListBrowser(Project project,
+                                   List<? extends ChangeList> changeLists,
+                                   List<Change> changes,
                                    Disposable parentDisposable,
-                                   final ChangeList initialListSelection,
-                                   final boolean capableOfExcludingChanges,
-                                   final boolean highlightProblems, final Runnable rebuildListListener, @Nullable final Runnable inclusionListener,
-                                   final AnAction... additionalActions) {
+                                   ChangeList initialListSelection,
+                                   boolean capableOfExcludingChanges,
+                                   boolean highlightProblems,
+                                   Runnable rebuildListListener,
+                                   @Nullable Runnable inclusionListener,
+                                   AnAction... additionalActions) {
     super(project, changeLists, changes, initialListSelection, capableOfExcludingChanges, highlightProblems, inclusionListener, MyUseCase.LOCAL_CHANGES, null);
     myParentDisposable = parentDisposable;
     myRebuildListListener = rebuildListListener;
@@ -91,11 +92,10 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
         }
       }
     }, myParentDisposable);
-
   }
 
   @Override
-  protected void setInitialSelection(final List<? extends ChangeList> changeLists, final List<Change> changes, final ChangeList initialListSelection) {
+  protected void setInitialSelection(List<? extends ChangeList> changeLists, List<Change> changes, ChangeList initialListSelection) {
     myAllChanges = new ArrayList<Change>();
     mySelectedChangeList = initialListSelection;
 
@@ -141,10 +141,6 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
 
   public void addSelectedListChangeListener(SelectedListChangeListener listener) {
     myDispatcher.addListener(listener);
-  }
-
-  public void removeSelectedListChangeListener(SelectedListChangeListener listener) {
-    myDispatcher.removeListener(listener);
   }
 
   private void setSelectedList(final ChangeList list) {
@@ -246,7 +242,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
       runnable.run();
     }
     else {
-      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.stateForComponent(MultipleChangeListBrowser.this));
+      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.stateForComponent(this));
     }
   }
 
@@ -293,8 +289,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
         }
       }
       if (myAdditionalActions != null && myAdditionalActions.length > 0) {
-        for (int i = 0; i < myAdditionalActions.length; i++) {
-          final AnAction action = myAdditionalActions[i];
+        for (AnAction action : myAdditionalActions) {
           myBrowser.addToolbarAction(action);
         }
       }
@@ -331,6 +326,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     public ChangeListChooser(List<? extends ChangeList> lists) {
       super(new BorderLayout(4, 2));
       myChooser = new JComboBox();
+      //noinspection unchecked
       myChooser.setRenderer(new ColoredListCellRendererWrapper<LocalChangeList>() {
         @Override
         protected void doCustomize(JList list, LocalChangeList value, int index, boolean selected, boolean hasFocus) {
@@ -364,6 +360,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     }
 
     public void updateLists(List<? extends ChangeList> lists) {
+      //noinspection unchecked
       myChooser.setModel(new DefaultComboBoxModel(lists.toArray()));
       myChooser.setEnabled(lists.size() > 1);
       if (lists.contains(mySelectedChangeList)) {
