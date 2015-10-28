@@ -149,6 +149,12 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     init();
   }
 
+  @Override
+  protected void dispose() {
+    super.dispose();
+    myMainPanel.removeAll();
+  }
+
   private void updateSourcePosition() {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
