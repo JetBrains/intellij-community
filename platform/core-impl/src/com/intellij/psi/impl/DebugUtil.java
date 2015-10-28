@@ -34,12 +34,14 @@ import com.intellij.psi.stubs.ObjectStubSerializer;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 @SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor", "UnusedDeclaration", "TestOnlyProblems"})
 public class DebugUtil {
@@ -512,6 +514,7 @@ public class DebugUtil {
 
   private static final ThreadLocal<Object> ourPsiModificationTrace = new ThreadLocal<Object>();
   private static final ThreadLocal<Integer> ourPsiModificationDepth = new ThreadLocal<Integer>();
+  private static final Set<String> ourNonTransactedTraces = ContainerUtil.newConcurrentSet();
 
   /**
    * Marks a start of PSI modification action. Any PSI/AST elements invalidated inside such an action will contain a debug trace
@@ -593,7 +596,9 @@ public class DebugUtil {
     Object trace = ourPsiModificationTrace.get();
     if (trace == null) {
       trace = new Throwable();
-      LOG.info("PSI invalidated outside transaction", (Throwable)trace);
+      if (ourNonTransactedTraces.add(ExceptionUtil.getThrowableText((Throwable)trace))) {
+        LOG.info("PSI invalidated outside transaction", (Throwable)trace);
+      }
     }
     return trace;
   }
