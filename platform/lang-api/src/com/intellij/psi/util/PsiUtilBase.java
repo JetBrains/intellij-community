@@ -53,14 +53,8 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     }
   };
 
-  public static int getRootIndex(PsiElement root) {
-    ASTNode node = root.getNode();
-    while(node != null && node.getTreeParent() != null) {
-      node = node.getTreeParent();
-    }
-    if(node != null) root = node.getPsi();
-    final PsiFile containingFile = root.getContainingFile();
-    FileViewProvider provider = containingFile.getViewProvider();
+  public static int getRootIndex(PsiFile file) {
+    FileViewProvider provider = file.getViewProvider();
     Set<Language> languages = provider.getLanguages();
     if (languages.size() == 1) {
       return 0;
@@ -69,9 +63,9 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     Collections.sort(array, LANGUAGE_COMPARATOR);
     for (int i = 0; i < array.size(); i++) {
       Language language = array.get(i);
-      if (provider.getPsi(language) == containingFile) return i;
+      if (provider.getPsi(language) == file) return i;
     }
-    throw new RuntimeException("Cannot find root for: "+root);
+    throw new RuntimeException("Cannot find root for: "+ file);
   }
 
   public static boolean isUnderPsiRoot(PsiFile root, PsiElement element) {
