@@ -73,7 +73,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
         vmBreakpoints = list
         while (iterator.hasNext()) {
           val vmBreakpoint = iterator.next()
-          if ((vmToIdeBreakpoints.get(vmBreakpoint)?.size ?: -1) > 1) {
+          if ((vmToIdeBreakpoints[vmBreakpoint]?.size ?: -1) > 1) {
             // we must not disable vm breakpoint - it is used for another ide breakpoints
             iterator.remove()
           }
@@ -134,7 +134,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
     if (breakpointResolvedListenerAdded.compareAndSet(false, true)) {
       breakpointManager.addBreakpointListener(object : BreakpointListener {
         override fun resolved(breakpoint: Breakpoint) {
-          synchronized (lock) { vmToIdeBreakpoints.get(breakpoint) }?.let {
+          synchronized (lock) { vmToIdeBreakpoints[breakpoint] }?.let {
             for (ideBreakpoint in it) {
               debugProcess.session.updateBreakpointPresentation(ideBreakpoint, AllIcons.Debugger.Db_verified_breakpoint, null)
             }
@@ -151,7 +151,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
             return
           }
 
-          synchronized (lock) { vmToIdeBreakpoints.get(breakpoint) }?.let {
+          synchronized (lock) { vmToIdeBreakpoints[breakpoint] }?.let {
             for (ideBreakpoint in it) {
               debugProcess.session.updateBreakpointPresentation(ideBreakpoint, AllIcons.Debugger.Db_invalid_breakpoint, errorMessage)
             }
