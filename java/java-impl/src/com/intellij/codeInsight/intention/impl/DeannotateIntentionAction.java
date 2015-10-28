@@ -23,6 +23,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -41,7 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class DeannotateIntentionAction implements IntentionAction {
+public class DeannotateIntentionAction implements IntentionAction, LowPriorityAction {
   private static final Logger LOG = Logger.getInstance("#" + DeannotateIntentionAction.class.getName());
   private String myAnnotationName = null;
 

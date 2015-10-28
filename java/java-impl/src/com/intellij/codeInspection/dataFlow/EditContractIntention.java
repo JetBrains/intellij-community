@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
@@ -37,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public class EditContractIntention extends BaseIntentionAction {
+public class EditContractIntention extends BaseIntentionAction implements LowPriorityAction {
 
   @NotNull
   @Override
