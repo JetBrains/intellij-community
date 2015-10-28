@@ -1,7 +1,6 @@
 package org.jetbrains.builtInWebServer
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.PathUtilRt
 import io.netty.buffer.ByteBufUtf8Writer
@@ -74,7 +73,7 @@ private class StaticFileHandler : WebServerFileHandler() {
     val keepAlive: Boolean
     var releaseBuffer = true
     try {
-      val lastModified = ssiProcessor!!.process(SsiExternalResolver(project, request, path, file.parentFile), FileUtil.loadFile(file), file.lastModified(), ByteBufUtf8Writer(buffer))
+      val lastModified = ssiProcessor!!.process(SsiExternalResolver(project, request, path, file.parentFile), file, ByteBufUtf8Writer(buffer))
       val response = FileResponses.prepareSend(request, channel, lastModified, file.path) ?: return
       keepAlive = Responses.addKeepAliveIfNeed(response, request)
       if (request.method() != HttpMethod.HEAD) {
