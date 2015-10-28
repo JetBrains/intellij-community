@@ -22,7 +22,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
  * Date: Jan 30, 2005
  */
 public abstract class ProductivityFeaturesProvider {
-  public static ExtensionPointName<ProductivityFeaturesProvider> EP_NAME = ExtensionPointName.create("com.intellij.productivityFeaturesProvider"); 
+  public static final ExtensionPointName<ProductivityFeaturesProvider> EP_NAME = ExtensionPointName.create("com.intellij.productivityFeaturesProvider");
   
   public abstract FeatureDescriptor[] getFeatureDescriptors();
 
