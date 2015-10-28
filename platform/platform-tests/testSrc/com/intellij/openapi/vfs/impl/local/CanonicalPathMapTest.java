@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.local;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -25,7 +23,6 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,9 +41,7 @@ public class CanonicalPathMapTest {
     CanonicalPathMap pathMap = new CanonicalPathMap(Collections.singletonList(symLink.getPath()), Collections.emptyList());
 
     // REMAP from native file watcher: /?/root/mapped -> /?/root/real
-    List<Pair<String, String>> mappings = ContainerUtil.newArrayList();
-    mappings.add(pair(mappedDir.getPath(), realDir.getPath()));
-    pathMap.addMapping(mappings);
+    pathMap.addMapping(Collections.singletonList(pair(mappedDir.getPath(), realDir.getCanonicalPath())));
 
     Collection<String> watchedPaths = pathMap.getWatchedPaths(new File(mappedDir, "file.txt").getPath(), true, false);
     assertThat(watchedPaths).containsExactly(new File(symLink, "file.txt").getPath());
