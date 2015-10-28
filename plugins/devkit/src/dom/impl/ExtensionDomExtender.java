@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,10 +60,19 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
       final Project project = extensionPoint.getManager().getProject();
 
       if (interfaceName != null) {
-        registrar.registerGenericAttributeValueChildExtension(new XmlName("implementation"), PsiClass.class)
-          .setConverter(CLASS_CONVERTER)
-          .addCustomAnnotation(new MyExtendClass(interfaceName))
-          .addCustomAnnotation(new MyRequired());
+        final DomExtension implementationAttribute =
+          registrar.registerGenericAttributeValueChildExtension(new XmlName("implementation"), PsiClass.class)
+            .setConverter(CLASS_CONVERTER)
+            .addCustomAnnotation(new MyExtendClass(interfaceName))
+            .addCustomAnnotation(new MyRequired());
+
+        final PsiClass interfaceClass = extensionPoint.getInterface().getValue();
+        if (interfaceClass != null) {
+          implementationAttribute.setDeclaringElement(interfaceClass);
+        } else {
+          implementationAttribute.setDeclaringElement(extensionPoint);
+        }
+
         registerXmlb(registrar, JavaPsiFacade.getInstance(project).findClass(interfaceName, GlobalSearchScope.allScope(project)),
                      Collections.<With>emptyList());
       }
