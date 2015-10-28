@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -57,8 +56,6 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
       assert extensionPoint != null;
 
       final String interfaceName = extensionPoint.getInterface().getStringValue();
-      final Project project = extensionPoint.getManager().getProject();
-
       if (interfaceName != null) {
         final DomExtension implementationAttribute =
           registrar.registerGenericAttributeValueChildExtension(new XmlName("implementation"), PsiClass.class)
@@ -73,15 +70,11 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
           implementationAttribute.setDeclaringElement(extensionPoint);
         }
 
-        registerXmlb(registrar, JavaPsiFacade.getInstance(project).findClass(interfaceName, GlobalSearchScope.allScope(project)),
-                     Collections.<With>emptyList());
+        registerXmlb(registrar, interfaceClass, Collections.<With>emptyList());
       }
       else {
-        final String beanClassName = extensionPoint.getBeanClass().getStringValue();
-        if (beanClassName != null) {
-          registerXmlb(registrar, JavaPsiFacade.getInstance(project).findClass(beanClassName, GlobalSearchScope.allScope(project)),
-                       extensionPoint.getWithElements());
-        }
+        final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
+        registerXmlb(registrar, beanClass, extensionPoint.getWithElements());
       }
     }
   };
