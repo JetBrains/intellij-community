@@ -193,7 +193,9 @@ public class GradleTestsExecutionConsoleManager
 
           final DataNode<TaskData> taskDataNode = GradleProjectResolverUtil.findTask(
             externalProjectInfo.getExternalProjectStructure(), pojo.getLinkedExternalProjectPath(), pojo.getName());
-          return taskDataNode != null && GradleCommonClassNames.GRADLE_API_TASKS_TESTING_TEST.equals(taskDataNode.getData().getType());
+          return taskDataNode != null &&
+                 (("check".equals(taskDataNode.getData().getName()) && "verification".equals(taskDataNode.getData().getGroup())
+                 || GradleCommonClassNames.GRADLE_API_TASKS_TESTING_TEST.equals(taskDataNode.getData().getType())));
         }
       }) != null;
     }
