@@ -239,4 +239,15 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
   public PsiDirectory getTargetDirectory() {
     return myTargetDirectory;
   }
+
+  @Override
+  public void show() {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        MoveFilesOrDirectoriesDialog.super.show();
+      }
+    });
+  }
+
 }
