@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDefaultExecutor;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDifferentiatedDialog;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchExecutor;
@@ -38,6 +39,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 /**
  * @author irengrig
@@ -69,10 +73,11 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
       });
     final ApplyPatchDifferentiatedDialog dialog =
       new ApplyPatchDifferentiatedDialog(project, new ApplyPatchDefaultExecutor(project), Collections.<ApplyPatchExecutor>emptyList(),
-                                         ApplyPatchMode.UNSHELVE, virtualFile, binaryShelvedPatches,
-                                         hasNotAllSelectedChanges(project, changeList, preselectedChanges)
-                                         ? ContainerUtil.newArrayList(preselectedChanges)
-                                         : null);
+                                         ApplyPatchMode.UNSHELVE, virtualFile, null,
+                                         getPredefinedChangeList(changeList.DESCRIPTION, ChangeListManager.getInstance(project)),
+                                         binaryShelvedPatches,
+                                         hasNotAllSelectedChanges(project, changeList, preselectedChanges) ?
+                                         newArrayList(preselectedChanges) : null, changeList.DESCRIPTION);
     dialog.setHelpId("reference.dialogs.vcs.unshelve");
     dialog.show();
   }

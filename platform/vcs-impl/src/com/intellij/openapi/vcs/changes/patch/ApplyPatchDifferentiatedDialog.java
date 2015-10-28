@@ -105,22 +105,12 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private VirtualFileAdapter myListener;
   private final boolean myCanChangePatchFile;
   private String myHelpId = "reference.dialogs.vcs.patch.apply";
-
-
-  public ApplyPatchDifferentiatedDialog(final Project project,
-                                        final ApplyPatchExecutor callback,
-                                        final List<ApplyPatchExecutor> executors,
-                                        @NotNull final ApplyPatchMode applyPatchMode,
-                                        @NotNull final VirtualFile patchFile,
-                                        List<ShelveChangesManager.ShelvedBinaryFilePatch> binaryShelvedPatches,
-                                        @Nullable Collection<Change> preselectedChanges) {
-    this(project, callback, executors, applyPatchMode, patchFile, null, null, binaryShelvedPatches, preselectedChanges);
-  }
-
+  private final LocalChangeList myLocalChangeList;
+  private final String myCommitMessage; //may be provided externally; todo: parse with Additional Info Reader from patch meta information
 
   public ApplyPatchDifferentiatedDialog(final Project project, final ApplyPatchExecutor callback, final List<ApplyPatchExecutor> executors,
                                         @NotNull final ApplyPatchMode applyPatchMode, @NotNull final VirtualFile patchFile) {
-    this(project, callback, executors, applyPatchMode, patchFile, null, null, null, null);
+    this(project, callback, executors, applyPatchMode, patchFile, null, null, null, null, null);
   }
 
   public ApplyPatchDifferentiatedDialog(final Project project,
@@ -129,18 +119,18 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
                                         @NotNull final ApplyPatchMode applyPatchMode,
                                         @NotNull final List<TextFilePatch> patches,
                                         @Nullable final LocalChangeList defaultList) {
-    this(project, callback, executors, applyPatchMode, null, patches, defaultList, null, null);
+    this(project, callback, executors, applyPatchMode, null, patches, defaultList, null, null, null);
   }
 
-  private ApplyPatchDifferentiatedDialog(final Project project,
-                                         final ApplyPatchExecutor callback,
-                                         final List<ApplyPatchExecutor> executors,
-                                         @NotNull final ApplyPatchMode applyPatchMode,
-                                         @Nullable final VirtualFile patchFile,
-                                         @Nullable final List<TextFilePatch> patches,
-                                         @Nullable final LocalChangeList defaultList,
-                                         @Nullable List<ShelveChangesManager.ShelvedBinaryFilePatch> binaryShelvedPatches,
-                                         @Nullable Collection<Change> preselectedChanges) {
+  public ApplyPatchDifferentiatedDialog(final Project project,
+                                        final ApplyPatchExecutor callback,
+                                        final List<ApplyPatchExecutor> executors,
+                                        @NotNull final ApplyPatchMode applyPatchMode,
+                                        @Nullable final VirtualFile patchFile,
+                                        @Nullable final List<TextFilePatch> patches,
+                                        @Nullable final LocalChangeList defaultList,
+                                        @Nullable List<ShelveChangesManager.ShelvedBinaryFilePatch> binaryShelvedPatches,
+                                        @Nullable Collection<Change> preselectedChanges, @Nullable String externalCommitMessage) {
     super(project, true);
     myCallback = callback;
     myExecutors = executors;
@@ -190,6 +180,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       }
     });
 
+    myCommitMessage = externalCommitMessage;
+    myLocalChangeList = defaultList;
     myLoadQueue = new ZipperUpdater(500, Alarm.ThreadToUse.POOLED_THREAD, getDisposable());
     myCanChangePatchFile = applyPatchMode.isCanChangePatchFile();
     myReset = myCanChangePatchFile ? new Runnable() {
@@ -206,7 +198,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     });
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     myChangeListChooser.setChangeLists(changeListManager.getChangeListsCopy());
-    myChangeListChooser.setDefaultSelection(changeListManager.getDefaultChangeList());
+    myChangeListChooser.setDefaultSelection(myLocalChangeList != null ? myLocalChangeList : changeListManager.getDefaultChangeList());
     myChangeListChooser.init();
 
     myInfoCalculator = new ChangesLegendCalculator();
@@ -218,7 +210,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       init(patchFile);
     }
     else if (patches != null) {
-      init(patches, defaultList);
+      init(patches);
     }
 
     myPatchFileLabel.setVisible(myCanChangePatchFile);
@@ -250,15 +242,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myLoadQueue.queue(myUpdater);
   }
 
-  private void init(List<? extends FilePatch> patches, final LocalChangeList localChangeList) {
+  private void init(List<? extends FilePatch> patches) {
     final List<AbstractFilePatchInProgress> matchedPatches = new MatchPatchPaths(myProject).execute(patches);
     //todo add shelved binary patches
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        if (localChangeList != null) {
-          myChangeListChooser.setDefaultSelection(localChangeList);
-        }
-
         myPatches.clear();
         myPatches.addAll(matchedPatches);
         updateTree(true);
@@ -359,7 +347,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          myChangeListChooser.setDefaultName(file.getNameWithoutExtension().replace('_', ' ').trim());
+          myChangeListChooser
+            .setDefaultName(myCommitMessage != null ? myCommitMessage : file.getNameWithoutExtension().replace('_', ' ').trim());
           myPatches.clear();
           myPatches.addAll(matchedPatches);
           myReader = patchReader;
