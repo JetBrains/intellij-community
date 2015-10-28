@@ -50,6 +50,11 @@ public class UseJBColorInspection extends InternalInspection {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
+        final PsiElement parent = expression.getParent();
+        if (parent instanceof PsiMethodCallExpression) {
+          //do not resolve method names
+          return;
+        }
         final PsiElement colorField = expression.resolve();
         if (colorField != null && colorField instanceof PsiField && ((PsiField)colorField).hasModifierProperty(PsiModifier.STATIC)) {
           final PsiClass colorClass = ((PsiField)colorField).getContainingClass();
@@ -79,22 +84,19 @@ public class UseJBColorInspection extends InternalInspection {
   @Nullable
   private static ProblemDescriptor checkNewExpression(PsiNewExpression expression, InspectionManager manager, boolean isOnTheFly) {
     final Project project = manager.getProject();
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    final PsiClass jbColorClass = facade.findClass(JBColor.class.getName(), GlobalSearchScope.allScope(project));
     final PsiType type = expression.getType();
-    if (type != null && jbColorClass != null) {
-      if (!facade.getResolveHelper().isAccessible(jbColorClass, expression, jbColorClass)) return null;
-      final PsiExpressionList arguments = expression.getArgumentList();
-      if (arguments != null) {
-        if ("java.awt.Color".equals(type.getCanonicalText())) {
-          final PsiElement parent = expression.getParent();
-          if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiNewExpression) {
-            final PsiType parentType = ((PsiNewExpression)parent.getParent()).getType();
-            if (parentType == null || JBColor.class.getName().equals(parentType.getCanonicalText())) return null;
-          }
-            return manager.createProblemDescriptor(expression, "Replace with JBColor", new ConvertToJBColorQuickFix(),
-                                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
+    final PsiExpressionList arguments = expression.getArgumentList();
+    if (type != null && arguments != null && type.equalsToText("java.awt.Color")) {
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+      final PsiClass jbColorClass = facade.findClass(JBColor.class.getName(), GlobalSearchScope.allScope(project));
+      if (jbColorClass != null && facade.getResolveHelper().isAccessible(jbColorClass, expression, jbColorClass)) {
+        final PsiElement parent = expression.getParent();
+        if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiNewExpression) {
+          final PsiType parentType = ((PsiNewExpression)parent.getParent()).getType();
+          if (parentType == null || JBColor.class.getName().equals(parentType.getCanonicalText())) return null;
         }
+        return manager.createProblemDescriptor(expression, "Replace with JBColor", new ConvertToJBColorQuickFix(),
+                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
       }
     }
     return null;
