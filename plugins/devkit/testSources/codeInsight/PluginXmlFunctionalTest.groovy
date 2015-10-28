@@ -213,6 +213,10 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     assert !myFixture.lookup.advertisements.find { it.contains('to see inheritors of com.intellij.openapi.actionSystem.AnAction') }
   }
 
+  public void testExtensionsSpecifyDefaultExtensionNs() {
+    myFixture.testHighlighting("extensionsSpecifyDefaultExtensionNs.xml")
+  }
+
   public void testDeprecatedExtensionAttribute() {
     myFixture.enableInspections(DeprecatedClassUsageInspection.class);
     myFixture.testHighlighting("deprecatedExtensionAttribute.xml", "MyExtBean.java");

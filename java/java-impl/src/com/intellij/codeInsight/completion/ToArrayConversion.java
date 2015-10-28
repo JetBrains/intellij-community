@@ -36,9 +36,9 @@ import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionC
  * @author peter
  */
 public class ToArrayConversion {
-  static void addToArrayConversions(final PsiElement element, final Object object, final String prefix, final PsiType itemType,
-                                    final Consumer<LookupElement> result, @Nullable final PsiElement qualifier,
-                                    final PsiType expectedType) {
+  static void addConversions(final PsiElement element, final Object object, final String prefix, final PsiType itemType,
+                             final Consumer<LookupElement> result, @Nullable final PsiElement qualifier,
+                             final PsiType expectedType) {
     final String callSpace = getSpace(CodeStyleSettingsManager.getSettings(element.getProject()).SPACE_WITHIN_METHOD_CALL_PARENTHESES);
     final PsiType componentType = PsiUtil.extractIterableTypeParameter(itemType, true);
     if (componentType == null || !(expectedType instanceof PsiArrayType)) return;

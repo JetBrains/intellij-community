@@ -288,7 +288,9 @@ public class JobLauncherImpl extends JobLauncher {
         catch (CancellationException e) {
           // was canceled in the middle of execution
           // can't do anything but wait. help other tasks in the meantime
-          pool.awaitQuiescence(millis, TimeUnit.MILLISECONDS);
+          if (Thread.currentThread() instanceof ForkJoinWorkerThread) { // if called outside FJP the FJTask.fork() starts up commonPool which is undesirable
+            pool.awaitQuiescence(millis, TimeUnit.MILLISECONDS);
+          }
         }
       }
     }

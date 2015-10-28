@@ -206,7 +206,7 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
 
     @Override public void visitClass(PsiClass aClass) {
       // Don't go into classes (anonymous, locals).
-      if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !(aClass instanceof PsiTypeParameter)) {
         final Module module = ModuleUtilCore.findModuleForPsiElement(aClass);
         final LanguageLevel effectiveLanguageLevel = module != null ? getEffectiveLanguageLevel(module) : null;
         if (effectiveLanguageLevel != null && !effectiveLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {

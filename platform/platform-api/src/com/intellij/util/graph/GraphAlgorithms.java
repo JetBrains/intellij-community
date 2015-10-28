@@ -57,7 +57,7 @@ public abstract class GraphAlgorithms {
 
   /**
    * Adds start node and all its outs to given set recursively.
-   * If start node is in set already, returns immediately.
+   * Nodes which are already in set aren't processed.
    *
    * @param start node to start from
    * @param set set to be populated

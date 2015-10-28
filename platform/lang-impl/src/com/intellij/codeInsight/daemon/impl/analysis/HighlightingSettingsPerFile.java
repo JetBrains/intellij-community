@@ -53,7 +53,7 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
     final PsiFile containingFile = root.getContainingFile();
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     FileHighlightingSetting[] fileHighlightingSettings = myHighlightSettings.get(virtualFile);
-    final int index = PsiUtilBase.getRootIndex(root);
+    final int index = PsiUtilBase.getRootIndex(containingFile);
 
     if(fileHighlightingSettings == null || fileHighlightingSettings.length <= index) {
       return getDefaultHighlightingSetting(root.getProject(), virtualFile);
@@ -91,7 +91,7 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) return;
     FileHighlightingSetting[] defaults = myHighlightSettings.get(virtualFile);
-    int rootIndex = PsiUtilBase.getRootIndex(root);
+    int rootIndex = PsiUtilBase.getRootIndex(containingFile);
     if (defaults != null && rootIndex >= defaults.length) defaults = null;
     if (defaults == null) defaults = getDefaults(containingFile);
     defaults[rootIndex] = setting;

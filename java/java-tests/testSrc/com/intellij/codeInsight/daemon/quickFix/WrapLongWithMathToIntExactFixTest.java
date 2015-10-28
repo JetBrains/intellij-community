@@ -13,13 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.builtInWebServer.ssi;
+package com.intellij.codeInsight.daemon.quickFix;
 
-import io.netty.buffer.ByteBufUtf8Writer;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.testFramework.IdeaTestUtil;
 
-import java.util.List;
+/**
+ * @author Dmitry Batkovich
+ */
+public class WrapLongWithMathToIntExactFixTest extends LightQuickFixParameterizedTestCase {
+  public void test() throws Exception {
+    doAllTests();
+  }
 
-public interface SsiCommand {
-  long process(@NotNull SsiProcessingState state, @NotNull String commandName, @NotNull List<String> paramNames, @NotNull String[] paramValues, @NotNull ByteBufUtf8Writer writer);
+  @Override
+  protected String getBasePath() {
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/wrapLongWithMathToIntExact";
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk18();
+  }
 }

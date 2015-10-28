@@ -101,7 +101,8 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
     final Vendor vendor = ContainerUtil.getFirstItem(ideaPlugin.getVendors());
     if (vendor == null) {
-      holder.createProblem(DomUtil.getFileElement(ideaPlugin), "Plugin developed as a part of IntelliJ IDEA project should specify 'JetBrains' as its vendor",
+      holder.createProblem(DomUtil.getFileElement(ideaPlugin),
+                           "Plugin developed as a part of IntelliJ IDEA project should specify 'JetBrains' as its vendor",
                            new SpecifyJetBrainsAsVendorQuickFix());
     }
     else if (!PluginManagerMain.isDevelopedByJetBrains(vendor.getValue())) {
@@ -111,11 +112,25 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
   private static void annotateExtensions(Extensions extensions, DomElementAnnotationHolder holder) {
     final GenericAttributeValue<IdeaPlugin> xmlnsAttribute = extensions.getXmlns();
-    if (!DomUtil.hasXml(xmlnsAttribute)) return;
+    if (DomUtil.hasXml(xmlnsAttribute)) {
+      holder.createProblem(xmlnsAttribute,
+                           ProblemHighlightType.LIKE_DEPRECATED,
+                           "Use defaultExtensionNs instead", null).highlightWholeElement();
+      return;
+    }
 
-    holder.createProblem(xmlnsAttribute,
-                         ProblemHighlightType.LIKE_DEPRECATED,
-                         "Use defaultExtensionNs instead", null).highlightWholeElement();
+    if (!DomUtil.hasXml(extensions.getDefaultExtensionNs())) {
+      holder.createProblem(extensions, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                           "Specify defaultExtensionNs=\"" + Extensions.DEFAULT_PREFIX + "\" explicitly", null,
+                           new AddDomElementQuickFix<GenericAttributeValue>(extensions.getDefaultExtensionNs()) {
+                             @Override
+                             public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+                               super.applyFix(project, descriptor);
+
+                               myElement.setStringValue(Extensions.DEFAULT_PREFIX);
+                             }
+                           });
+    }
   }
 
   private static void annotateIdeaVersion(IdeaVersion ideaVersion, DomElementAnnotationHolder holder) {
@@ -218,7 +233,8 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       DomFileElement<IdeaPlugin> fileElement = DomManager.getDomManager(project).getFileElement((XmlFile)file, IdeaPlugin.class);
       if (fileElement != null) {
         IdeaPlugin root = fileElement.getRootElement();
-        XmlTag after = getLastSubTag(root, root.getId(), ContainerUtil.getLastItem(root.getDescriptions()), ContainerUtil.getLastItem(root.getVersions()), root.getName());
+        XmlTag after = getLastSubTag(root, root.getId(), ContainerUtil.getLastItem(root.getDescriptions()),
+                                     ContainerUtil.getLastItem(root.getVersions()), root.getName());
         XmlTag rootTag = root.getXmlTag();
         XmlTag vendorTag = rootTag.createChildTag("vendor", rootTag.getNamespace(), PluginManagerMain.JETBRAINS_VENDOR, false);
         if (after == null) {

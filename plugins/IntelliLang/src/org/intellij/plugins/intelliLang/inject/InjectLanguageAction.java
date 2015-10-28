@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
@@ -65,7 +66,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class InjectLanguageAction implements IntentionAction {
+public class InjectLanguageAction implements IntentionAction, LowPriorityAction {
   @NonNls private static final String INJECT_LANGUAGE_FAMILY = "Inject language or reference";
   public static final String LAST_INJECTED_LANGUAGE = "LAST_INJECTED_LANGUAGE";
   public static final Key<Processor<PsiLanguageInjectionHost>> FIX_KEY = Key.create("inject fix key");

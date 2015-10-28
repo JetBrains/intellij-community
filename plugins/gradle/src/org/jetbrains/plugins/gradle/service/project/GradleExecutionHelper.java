@@ -262,8 +262,6 @@ public class GradleExecutionHelper {
     ProjectConnection connection = getConnection(projectPath, settings);
     try {
       try {
-        final File tempFile = FileUtil.createTempFile("wrap", ".gradle");
-        tempFile.deleteOnExit();
         final File wrapperPropertyFileLocation = FileUtil.createTempFile("wrap", "loc");
         wrapperPropertyFileLocation.deleteOnExit();
         final String[] lines = {
@@ -275,7 +273,7 @@ public class GradleExecutionHelper {
           "').write wrapperPropertyFileLocation",
           "}}",
         };
-        FileUtil.writeToFile(tempFile, StringUtil.join(lines, SystemProperties.getLineSeparator()));
+        final File tempFile = writeToFileGradleInitScript(StringUtil.join(lines, SystemProperties.getLineSeparator()));
 
         BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener, ContainerUtil.<String>newArrayList(),
                                                   ContainerUtil.newArrayList(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath()));
@@ -421,16 +419,14 @@ public class GradleExecutionHelper {
         return null;
       }
       final String toolingExtensionsJarPaths = getToolingExtensionsJarPaths(toolingExtensionClasses);
-      String s = FileUtil.loadTextAndClose(stream).replaceFirst(Pattern.quote("${EXTENSIONS_JARS_PATH}"), toolingExtensionsJarPaths);
+      String script = FileUtil.loadTextAndClose(stream).replaceFirst(Pattern.quote("${EXTENSIONS_JARS_PATH}"), toolingExtensionsJarPaths);
       if (isBuildSrcProject) {
         String buildSrcDefaultInitScript = getBuildSrcDefaultInitScript();
         if (buildSrcDefaultInitScript == null) return null;
-        s += buildSrcDefaultInitScript;
+        script += buildSrcDefaultInitScript;
       }
 
-      final File tempFile = FileUtil.createTempFile("ijinit", '.' + GradleConstants.EXTENSION, true);
-      FileUtil.writeToFile(tempFile, s);
-      return tempFile;
+      return writeToFileGradleInitScript(script);
     }
     catch (Exception e) {
       LOG.warn("Can't generate IJ gradle init script", e);
@@ -439,6 +435,21 @@ public class GradleExecutionHelper {
     finally {
       StreamUtil.closeStream(stream);
     }
+  }
+
+  public static File writeToFileGradleInitScript(@NotNull String content) throws IOException {
+    return writeToFileGradleInitScript(content, "ijinit");
+  }
+
+  public static File writeToFileGradleInitScript(@NotNull String content, @NotNull String filePrefix) throws IOException {
+    File tempFile = new File(FileUtil.getTempDirectory(), filePrefix + '.' + GradleConstants.EXTENSION);
+    if (tempFile.exists() && StringUtil.equals(content, FileUtil.loadFile(tempFile))) {
+      return tempFile;
+    }
+    tempFile = FileUtil.findSequentNonexistentFile(tempFile.getParentFile(), filePrefix, GradleConstants.EXTENSION);
+    FileUtil.writeToFile(tempFile, content);
+    tempFile.deleteOnExit();
+    return tempFile;
   }
 
   @Nullable
@@ -521,9 +532,8 @@ public class GradleExecutionHelper {
           LOG.warn("Can't get test filter init script template");
           return;
         }
-        String s = FileUtil.loadTextAndClose(stream).replaceFirst(Pattern.quote("${TEST_NAME_INCLUDES}"), buf.toString());
-        final File tempFile = FileUtil.createTempFile("ijinit", '.' + GradleConstants.EXTENSION, true);
-        FileUtil.writeToFile(tempFile, s);
+        String script = FileUtil.loadTextAndClose(stream).replaceFirst(Pattern.quote("${TEST_NAME_INCLUDES}"), buf.toString());
+        final File tempFile = writeToFileGradleInitScript(script, "ijtestinit");
         ContainerUtil.addAll(args, GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
       }
       catch (Exception e) {

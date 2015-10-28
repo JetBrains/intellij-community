@@ -29,11 +29,15 @@ import org.zmlx.hg4idea.command.mq.HgQGotoCommand;
 import org.zmlx.hg4idea.command.mq.HgQPopCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
 
+import java.util.List;
+
 public class HgQGotoFromLogAction extends HgMqAppliedPatchAction {
   @Override
   protected void actionPerformed(@NotNull final HgRepository repository, @NotNull final VcsFullCommitDetails commit) {
     final Project project = repository.getProject();
-    final Hash parentHash = commit.getParents().get(0);
+    List<Hash> parents = commit.getParents();
+    final Hash parentHash = parents.isEmpty() ? null : parents.get(0);
+
     final HgNameWithHashInfo parentPatchName = ContainerUtil.find(repository.getMQAppliedPatches(), new Condition<HgNameWithHashInfo>() {
       @Override
       public boolean value(HgNameWithHashInfo info) {

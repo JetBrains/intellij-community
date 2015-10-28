@@ -13,16 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 23.11.2006
- * Time: 17:20:10
- */
 package com.intellij.openapi.vcs.changes.shelf;
 
-import com.google.common.primitives.Ints;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,19 +24,16 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
+
+import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
 
 public class UnshelveChangesAction extends DumbAwareAction {
   private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.UnshelveChangesAction");
@@ -61,27 +50,13 @@ public class UnshelveChangesAction extends DumbAwareAction {
     }
     LOG.assertTrue(changeLists != null);
 
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    final List<LocalChangeList> allChangeLists = changeListManager.getChangeListsCopy();
     String defaultName = changeLists[0].DESCRIPTION;
-    LocalChangeList list = null;
-    if (changeLists.length == 1) {
-      final LocalChangeList sameNamedList = changeListManager.findChangeList(defaultName);
-      if (sameNamedList != null) {
-        list = sameNamedList;
-      }
-      else {
-        list = tryToMatchWithExistingChangelist(changeListManager, defaultName);
-      }
-    }
-    if (list == null) {
-      list = changeListManager.getDefaultChangeList();
-    }
-    final ChangeListChooser chooser = new ChangeListChooser(project, allChangeLists, list,
+    final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    LocalChangeList list =
+      changeLists.length == 1 ? getPredefinedChangeList(defaultName, changeListManager) : changeListManager.getDefaultChangeList();
+    final ChangeListChooser chooser = new ChangeListChooser(project, changeListManager.getChangeListsCopy(), list,
                                                             VcsBundle.message("unshelve.changelist.chooser.title"), defaultName);
-    if (!chooser.showAndGet()) {
-      return;
-    }
+    if (!chooser.showAndGet()) return;
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
@@ -94,24 +69,6 @@ public class UnshelveChangesAction extends DumbAwareAction {
           ShelveChangesManager.getInstance(project)
             .unshelveChangeList(changeList, finalChanges, finalBinaryFiles, chooser.getSelectedList(), true);
         }
-      }
-    });
-  }
-
-  @Nullable
-  private static LocalChangeList tryToMatchWithExistingChangelist(@NotNull ChangeListManager changeListManager,
-                                                                  @NotNull final String defaultName) {
-    List<LocalChangeList> matched = ContainerUtil.findAll(changeListManager.getChangeListsCopy(), new Condition<LocalChangeList>() {
-      @Override
-      public boolean value(LocalChangeList list) {
-        return defaultName.contains(list.getName().trim());
-      }
-    });
-
-    return matched.isEmpty() ? null : Collections.max(matched, new Comparator<LocalChangeList>() {
-      @Override
-      public int compare(LocalChangeList o1, LocalChangeList o2) {
-        return Ints.compare(o1.getName().trim().length(), o2.getName().trim().length());
       }
     });
   }

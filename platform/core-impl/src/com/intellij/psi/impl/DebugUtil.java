@@ -514,7 +514,7 @@ public class DebugUtil {
 
   private static final ThreadLocal<Object> ourPsiModificationTrace = new ThreadLocal<Object>();
   private static final ThreadLocal<Integer> ourPsiModificationDepth = new ThreadLocal<Integer>();
-  private static final Set<String> ourNonTransactedTraces = ContainerUtil.newConcurrentSet();
+  private static final Set<Integer> ourNonTransactedTraces = ContainerUtil.newConcurrentSet();
 
   /**
    * Marks a start of PSI modification action. Any PSI/AST elements invalidated inside such an action will contain a debug trace
@@ -596,7 +596,7 @@ public class DebugUtil {
     Object trace = ourPsiModificationTrace.get();
     if (trace == null) {
       trace = new Throwable();
-      if (ourNonTransactedTraces.add(ExceptionUtil.getThrowableText((Throwable)trace))) {
+      if (ourNonTransactedTraces.add(ExceptionUtil.getThrowableText((Throwable)trace).hashCode())) {
         LOG.info("PSI invalidated outside transaction", (Throwable)trace);
       }
     }
