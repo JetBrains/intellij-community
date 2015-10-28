@@ -74,7 +74,7 @@ public class XSourcePositionImpl implements XSourcePosition {
       if (document == null) {
         return null;
       }
-      int line = offset < document.getTextLength() ? document.getLineNumber(offset) : -1;
+      int line = offset <= document.getTextLength() ? document.getLineNumber(offset) : -1;
       return new XSourcePositionImpl(file, line, offset);
     }
     finally {
