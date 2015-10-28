@@ -19,12 +19,13 @@ import com.intellij.JavaTestUtil;
 import com.intellij.compiler.PsiClassWriter;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -170,6 +171,21 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
   public void testNonStaticInnerClass() throws Exception {
     final Class aClass = prepareTest();
     assertNotNull(aClass.newInstance());
+  }
+
+  public void testSkipBridgeMethods() throws Exception {
+    final Class<?> testClass = prepareTest();
+    try {
+      testClass.getMethod("main").invoke(null);
+      fail();
+    }
+    catch (InvocationTargetException e) {
+      //noinspection ThrowableResultOfMethodCallIgnored
+      assertInstanceOf(e.getCause(), IllegalArgumentException.class);
+      String trace = ExceptionUtil.getThrowableText(e.getCause());
+      assertEquals("Exception should happen in real, non-bridge method: " + trace,
+                   2, StringUtil.getOccurrenceCount(trace, "B.getObject(SkipBridgeMethods"));
+    }
   }
 
   private static void verifyCallThrowsException(String expectedError, @Nullable Object instance, Member member, @Nullable Object... args) throws Exception {
