@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.dependencies;
 import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.JavaAnalysisScope;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.BackwardDependenciesBuilder;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.FindDependencyUtil;
@@ -34,6 +35,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.util.containers.JBIterable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -70,25 +72,23 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
       psiUsages[i] = toString(usages[i]);
     }
     checkResult(new String []{
-      "(2: 14) import com.a.A;",
-      "(4: 3) A myA = new A();",
-      "(4: 15) A myA = new A();",
-      "(6: 9) myA.aa();",
+      "2 import com.a.A;",
+      "4 A myA = new A();",
+      "4 A myA = new A();",
+      "6 myA.aa();",
 
-      "(2: 14) import com.a.A;",
-      "(4: 3) A myA = new A();",
-      "(4: 15) A myA = new A();",
-      "(6: 9) myA.aa();"}, psiUsages);
+      "2 import com.a.A;",
+      "4 A myA = new A();",
+      "4 A myA = new A();",
+      "6 myA.aa();"}, psiUsages);
   }
 
   private static String toString(Usage usage) {
-    TextChunk[] textChunks = usage.getPresentation().getText();
-    StringBuffer result = new StringBuffer();
-    for (TextChunk textChunk : textChunks) {
-      result.append(textChunk);
-    }
-
-    return result.toString();
+    JBIterable<TextChunk> it = JBIterable.of(usage.getPresentation().getText());
+    TextChunk first = it.first();
+    assert first != null;
+    JBIterable<TextChunk> rest = it.skip(1);
+    return first.toString() + " " + StringUtil.join(rest, Object::toString, "");
   }
 
    public void testBackwardPackageScope(){
@@ -108,7 +108,13 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
     for (int i = 0; i < usagesInfos.length; i++) {
       psiUsages[i] = toString(usages[i]);
     }
-    checkResult(new String []{"(4: 3) A myA = new A();", "(4: 15) A myA = new A();", "(5: 3) C myC = new C();", "(5: 15) C myC = new C();", "(7: 9) myA.aa();", "(8: 9) myC.cc();"}, psiUsages);
+    checkResult(new String[]{
+      "4 A myA = new A();",
+      "4 A myA = new A();", 
+      "5 C myC = new C();", 
+      "5 C myC = new C();", 
+      "7 myA.aa();", 
+      "8 myC.cc();"}, psiUsages);
   }
 
   public void testForwardSimple(){
@@ -128,7 +134,10 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
     for (int i = 0; i < usagesInfos.length; i++) {
       psiUsages[i] = toString(usages[i]);
     }
-    checkResult(new String []{"(2: 3) B myB = new B();", "(2: 15) B myB = new B();", "(4: 9) myB.bb();"}, psiUsages);
+    checkResult(new String []{
+      "2 B myB = new B();", 
+      "2 B myB = new B();", 
+      "4 myB.bb();"}, psiUsages);
   }
 
   public void testForwardJdkClasses(){
@@ -149,7 +158,7 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
     for (int i = 0; i < usagesInfos.length; i++) {
       psiUsages[i] = toString(usages[i]);
     }
-    checkResult(new String []{"(2: 3) String myName;"}, psiUsages);
+    checkResult(new String []{"2 String myName;"}, psiUsages);
   }
 
   private static void checkResult(final String[] usages, final String [] psiUsages) {
