@@ -181,13 +181,15 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myPanel.setDataProvider(myDataProvider);
 
     ComparisonPolicy comparisonPolicy = getComparisonPolicy();
-    if (comparisonPolicy != DiffManagerImpl.getInstanceEx().getComparisonPolicy()) {
-      setComparisonPolicy(comparisonPolicy);
+    ComparisonPolicy defaultComparisonPolicy = DiffManagerImpl.getInstanceEx().getComparisonPolicy();
+    if (comparisonPolicy != defaultComparisonPolicy) {
+      setComparisonPolicy(defaultComparisonPolicy, false);
     }
 
     HighlightMode highlightMode = getHighlightMode();
-    if (highlightMode != DiffManagerImpl.getInstanceEx().getHighlightMode()) {
-      setHighlightMode(highlightMode);
+    HighlightMode defaultHighlightMode = DiffManagerImpl.getInstanceEx().getHighlightMode();
+    if (highlightMode != defaultHighlightMode) {
+      setHighlightMode(defaultHighlightMode, false);
     }
 
     myVisibleAreaListener = new VisibleAreaListener() {
