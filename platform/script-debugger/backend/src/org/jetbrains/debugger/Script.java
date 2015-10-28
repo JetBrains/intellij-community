@@ -1,40 +1,33 @@
-package org.jetbrains.debugger;
+package org.jetbrains.debugger
 
-import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.util.Url;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.debugger.sourcemap.SourceMap;
+import com.intellij.openapi.util.UserDataHolderEx
+import com.intellij.util.Url
+import org.jetbrains.debugger.sourcemap.SourceMap
 
-public interface Script extends UserDataHolderEx, HasUrl {
-  enum Type {
-    /** A native, internal JavaScript VM script */
+interface Script : UserDataHolderEx {
+  enum class Type {
+    /** A native, internal JavaScript VM script  */
     NATIVE,
 
-    /** A script supplied by an extension */
+    /** A script supplied by an extension  */
     EXTENSION,
 
-    /** A normal user script */
+    /** A normal user script  */
     NORMAL
   }
 
-  Type getType();
+  val type: Type
 
-  @Nullable
-  SourceMap getSourceMap();
+  var sourceMap: SourceMap?
 
-  void setSourceMap(@Nullable SourceMap sourceMap);
+  val url: Url
 
-  @Override
-  @NotNull
-  Url getUrl();
+  val functionName: String?
+    get() = null
 
-  @Nullable
-  String getFunctionName();
+  val line: Int
 
-  int getLine();
+  val column: Int
 
-  int getColumn();
-
-  int getEndLine();
+  val endLine: Int
 }
