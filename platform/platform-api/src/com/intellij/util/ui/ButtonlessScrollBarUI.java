@@ -291,7 +291,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   public void layoutContainer(Container scrollbarContainer) {
     try {
       super.layoutContainer(scrollbarContainer);
-    } catch (NullPointerException ignore) {
+    }
+    catch (NullPointerException ignore) {
       //installUI is not performed yet or uninstallUI has set almost every field to null. Just ignore it //IDEA-89674
     }
   }
@@ -316,9 +317,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       // We want to repaint whole scrollbar even if thumb wasn't moved (on small scroll of a big panel)
       // Even if scrollbar wasn't changed itself, myRepaintCallback could need repaint
 
-        /* Update thumbRect, and repaint the union of x,y,w,h and
-         * the old thumbRect.
-         */
+      // Update thumbRect, and repaint the union of x,y,w,h and the old thumbRect.
       int minX = Math.min(x, trackRect.x);
       int minY = Math.min(y, trackRect.y);
       int maxX = Math.max(x + width, trackRect.x + trackRect.width);
@@ -327,12 +326,10 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       thumbRect.setBounds(x, y, width, height);
       scrollbar.repaint(minX, minY, maxX - minX, maxY - minY);
 
-      // Once there is API to determine the mouse location this will need
-      // to be changed.
+      // Once there is API to determine the mouse location this will need to be changed.
       setThumbRollover(false);
     }
   }
-
 
   @Override
   protected ModelListener createModelListener() {
