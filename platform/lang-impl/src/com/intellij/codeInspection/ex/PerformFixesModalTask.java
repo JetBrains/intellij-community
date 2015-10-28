@@ -19,6 +19,8 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -68,11 +70,16 @@ public abstract class PerformFixesModalTask implements SequentialTask {
       }
       indicator.setText("Processing " + presentableText);
     }
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
       @Override
       public void run() {
-        myDocumentManager.commitAllDocuments();
-        applyFix(myProject, descriptor);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            myDocumentManager.commitAllDocuments();
+            applyFix(myProject, descriptor);
+          }
+        });
       }
     });
     return isDone();
