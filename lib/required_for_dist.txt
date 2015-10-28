@@ -24,6 +24,7 @@ hamcrest-core-1.3.jar
 imgscalr-lib-4.2.jar
 batik-all-1.8.jar
 xmlgraphics-commons-1.5.jar
+xml-apis-ext-1.3.04.jar
 jaxen-1.1.3.jar
 jayatana-1.2.4.jar
 jcip-annotations.jar
