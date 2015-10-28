@@ -51,40 +51,45 @@ public class PyDefaultArgumentQuickFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement defaultValue = descriptor.getPsiElement();
-    PyNamedParameter param = PsiTreeUtil.getParentOfType(defaultValue, PyNamedParameter.class);
-    PyFunction function = PsiTreeUtil.getParentOfType(defaultValue, PyFunction.class);
+    final PsiElement defaultValue = descriptor.getPsiElement();
+    final PyNamedParameter param = PsiTreeUtil.getParentOfType(defaultValue, PyNamedParameter.class);
+    final PyFunction function = PsiTreeUtil.getParentOfType(defaultValue, PyFunction.class);
     assert param != null;
-    String defName = param.getName();
+    final String defName = param.getName();
     if (function != null) {
-      PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      PyStatementList list = function.getStatementList();
-      PyParameterList paramList = function.getParameterList();
+      final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+      final PyStatementList list = function.getStatementList();
+      final PyParameterList paramList = function.getParameterList();
 
       final StringBuilder functionText = new StringBuilder("def " + function.getName() + "(");
-      int size = paramList.getParameters().length;
-      for (int i = 0; i != size; ++i) {
-        PyParameter p = paramList.getParameters()[i];
-        if (p == param)
+      final int size = paramList.getParameters().length;
+      for (int i = 0; i < size; i++) {
+        final PyParameter p = paramList.getParameters()[i];
+        if (p == param) {
           functionText.append(defName).append("=None");
-        else
+        }
+        else {
           functionText.append(p.getText());
-        if (i != size-1)
+        }
+        if (i != size-1) {
           functionText.append(", ");
+        }
       }
+      
       functionText.append("):\n\tif not ").append(defName).append(":\n\t\t").append(defName).append(" = ").append(defaultValue.getText());
       final PyStatement[] statements = list.getStatements();
-      PyStatement firstStatement = statements.length > 0 ? statements[0] : null;
-      PyFunction newFunction = elementGenerator.createFromText(LanguageLevel.forElement(function), PyFunction.class,
-                                                               functionText.toString());
+      final PyStatement firstStatement = statements.length > 0 ? statements[0] : null;
+      final PyFunction newFunction = elementGenerator.createFromText(LanguageLevel.forElement(function), PyFunction.class,
+                                                                     functionText.toString());
       if (firstStatement == null) {
         function.replace(newFunction);
       }
       else {
         final PyStatement ifStatement = newFunction.getStatementList().getStatements()[0];
-        PyStringLiteralExpression docString = function.getDocStringExpression();
-        if (docString != null)
+        final PyStringLiteralExpression docString = function.getDocStringExpression();
+        if (docString != null) {
           list.addAfter(ifStatement, firstStatement);
+        }
         else {
           list.addBefore(ifStatement, firstStatement);
         }
