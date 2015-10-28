@@ -33,9 +33,9 @@ import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionC
  * @author peter
  */
 class ArrayMemberAccess {
-  static void addArrayMemberAccessors(final PsiElement element, final String prefix, final PsiType itemType,
-                                      final PsiElement qualifier, final Consumer<LookupElement> result, PsiModifierListOwner object,
-                                      final PsiType expectedType)
+  static void addMemberAccessors(final PsiElement element, final String prefix, final PsiType itemType,
+                                 final PsiElement qualifier, final Consumer<LookupElement> result, PsiModifierListOwner object,
+                                 final PsiType expectedType)
     throws IncorrectOperationException {
     if (itemType instanceof PsiArrayType && expectedType.isAssignableFrom(((PsiArrayType)itemType).getComponentType())) {
       final PsiExpression conversion = createExpression(getQualifierText(qualifier) + prefix + "[0]", element);
@@ -54,7 +54,7 @@ class ArrayMemberAccess {
   }
 
   @Nullable
-  static ExpressionLookupItem getSingleArrayElementAccess(PsiElement element, LookupElement item) {
+  static ExpressionLookupItem accessFirstElement(PsiElement element, LookupElement item) {
     if (item.getObject() instanceof PsiLocalVariable) {
       final PsiLocalVariable variable = (PsiLocalVariable)item.getObject();
       final PsiType type = variable.getType();

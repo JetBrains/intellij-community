@@ -108,7 +108,7 @@ public class ReferenceExpressionCompletionContributor {
       final Set<LookupElement> base =
         JavaSmartCompletionContributor.completeReference(element, reference, filter, false, true, parameters.getParameters(), PrefixMatcher.ALWAYS_TRUE);
       for (final LookupElement item : new LinkedHashSet<LookupElement>(base)) {
-        ExpressionLookupItem access = ArrayMemberAccess.getSingleArrayElementAccess(element, item);
+        ExpressionLookupItem access = ArrayMemberAccess.accessFirstElement(element, item);
         if (access != null) {
           base.add(access);
           PsiType type = access.getType();
