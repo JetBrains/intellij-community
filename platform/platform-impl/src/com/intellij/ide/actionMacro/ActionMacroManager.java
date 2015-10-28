@@ -23,8 +23,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -36,9 +38,6 @@ import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.IdeFrame;
@@ -61,16 +60,15 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-/**
- * @author max
- */
-public class ActionMacroManager implements ExportableComponent, NamedJDOMExternalizable, Disposable {
+@State(
+  name = "ActionMacroManager",
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/macros.xml")
+)
+public class ActionMacroManager implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actionMacro.ActionMacroManager");
 
   private static final String TYPING_SAMPLE = "WWWWWWWWWWWWWWWWWWWW";
@@ -128,11 +126,9 @@ public class ActionMacroManager implements ExportableComponent, NamedJDOMExterna
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public void loadState(Element state) {
     myMacros = new ArrayList<ActionMacro>();
-    final List macros = element.getChildren(ELEMENT_MACRO);
-    for (final Object o : macros) {
-      Element macroElement = (Element)o;
+    for (Element macroElement : state.getChildren(ELEMENT_MACRO)) {
       ActionMacro macro = new ActionMacro();
       macro.readExternal(macroElement);
       myMacros.add(macro);
@@ -141,30 +137,16 @@ public class ActionMacroManager implements ExportableComponent, NamedJDOMExterna
     registerActions();
   }
 
-  @Override
-  public String getExternalFileName() {
-    return "macros";
-  }
-
-  @Override
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile(this)};
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableName() {
-    return IdeBundle.message("title.macros");
-  }
-
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  @Nullable
+   @Override
+   public Element getState() {
+    Element element = new Element("state");
     for (ActionMacro macro : myMacros) {
       Element macroElement = new Element(ELEMENT_MACRO);
       macro.writeExternal(macroElement);
       element.addContent(macroElement);
     }
+    return element;
   }
 
   public static ActionMacroManager getInstance() {
