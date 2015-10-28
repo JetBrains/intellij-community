@@ -758,6 +758,10 @@ class SomeMapClass extends HashMap<String, Pojo> {
       assert resolved instanceof GrAccessorMethod
       assert resolved.containingClass.name == 'Pojo'
     }
+    configureByText('def <T extends SomeMapClass> void foo(T a) { a.CONS<caret>TANT }').with { ref ->
+      assert !ref.resolve()
+      assert (ref as GrReferenceExpression).type.equalsToText('Pojo')
+    }
   }
 
   public void testResolveInsideWith0() {

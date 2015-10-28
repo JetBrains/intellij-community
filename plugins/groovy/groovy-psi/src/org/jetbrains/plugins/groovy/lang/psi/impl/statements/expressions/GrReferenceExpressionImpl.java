@@ -105,7 +105,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) return false;
 
     final String qname = TypesUtil.getQualifiedName(type);
-    return qname == null || !GroovyCommonClassNames.GROOVY_UTIL_CONFIG_OBJECT.equals(qname);
+    return !GroovyCommonClassNames.GROOVY_UTIL_CONFIG_OBJECT.equals(qname);
   }
 
   @NotNull
