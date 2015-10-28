@@ -18,6 +18,7 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Ref;
@@ -27,6 +28,7 @@ import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.util.containers.ContainerUtil;
 
+import javax.swing.*;
 import javax.swing.tree.TreeNode;
 import java.util.*;
 
@@ -111,8 +113,13 @@ public abstract class MethodNodeBase<M extends PsiElement> extends CheckedTreeNo
 
   public void customizeRenderer(ColoredTreeCellRenderer renderer) {
     if (myMethod == null) return;
-    int flags = Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS;
-    renderer.setIcon(myMethod.getIcon(flags));
+    final int flags = Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS;
+    renderer.setIcon(ApplicationManager.getApplication().runReadAction(new Computable<Icon>() {
+      @Override
+      public Icon compute() {
+        return myMethod.getIcon(flags);
+      }
+    }));
 
     customizeRendererText(renderer);
   }
