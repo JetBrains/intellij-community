@@ -74,4 +74,9 @@ public class JUnitProcessHandler extends KillableColoredProcessHandler {
     ProcessTerminatedListener.attach(processHandler);
     return processHandler;
   }
+
+  @Override
+  protected boolean useNonBlockingRead() {
+    return true;
+  }
 }
