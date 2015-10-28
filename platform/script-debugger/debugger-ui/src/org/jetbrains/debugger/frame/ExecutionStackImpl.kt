@@ -38,25 +38,24 @@ internal class ExecutionStackImpl(private val suspendContext: SuspendContext, pr
   override fun computeStackFrames(firstFrameIndex: Int, container: XExecutionStack.XStackFrameContainer) {
     val suspendContext = viewSupport.vm!!.suspendContextManager.context ?: return
     // WipSuspendContextManager set context to null on resume _before_ vm.getDebugListener().resumed() call() (in any case, XFramesView can queue event to EDT), so, IDE state could be outdated compare to VM (our) state
-
     suspendContext.frames
-      .done(suspendContext) { frames, vm ->
-        val count = frames.size() - firstFrameIndex
+      .done(suspendContext) { frames ->
+        val count = frames.size - firstFrameIndex
         val result: List<XStackFrame>
         if (count < 1) {
           result = emptyList()
         }
         else {
           result = ArrayList<XStackFrame>(count)
-          for (i in firstFrameIndex..frames.size() - 1) {
+          for (i in firstFrameIndex..frames.size - 1) {
             if (i == 0) {
-              result.add(getTopFrame()!!)
+              result.add(topFrame!!)
               continue
             }
 
             val frame = frames[i]
             // if script is null, it is native function (Object.forEach for example), so, skip it
-            val script = vm.scriptManager.getScript(frame)
+            val script = suspendContext.valueManager.vm.scriptManager.getScript(frame)
             if (script != null) {
               val sourceInfo = viewSupport.getSourceInfo(script, frame)
               val isInLibraryContent = sourceInfo != null && viewSupport.isInLibraryContent(sourceInfo, script)
