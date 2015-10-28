@@ -111,7 +111,10 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaBatchLocalInspec
                 if (argumentList == null) {
                   return null;
                 }
-                conflictResolver.checkParametersNumber(info, argumentList.getExpressions().length, false);
+                final boolean atLeastOneMatchFound = conflictResolver.checkParametersNumber(info, argumentList.getExpressions().length, false);
+                if (!atLeastOneMatchFound) {
+                  return null;
+                }
                 conflictResolver.checkSpecifics(info, MethodCandidateInfo.ApplicabilityLevel.VARARGS, level);
                 if (info.size() > 1) {
                   return null;
