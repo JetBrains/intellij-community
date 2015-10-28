@@ -598,10 +598,14 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       if (compared != 0) return compared;
       Presentation myPresentation = myAction.getTemplatePresentation();
       Presentation oPresentation = o.getAction().getTemplatePresentation();
-      int byText = StringUtil.compare(myPresentation.getText(), oPresentation.getText(), true);
+      String myText = myPresentation.getText();
+      String oText = oPresentation.getText();
+      int byTextLength = StringUtil.notNullize(myText).length() - StringUtil.notNullize(oText).length();
+      if (byTextLength != 0) return byTextLength;
+      int byText = StringUtil.compare(myText, oText, true);
       if (byText != 0) return byText;
       int byGroup = Comparing.compare(myGroupName, o.getGroupName());
-      if (byGroup !=0) return byGroup;
+      if (byGroup != 0) return byGroup;
       int byDesc = StringUtil.compare(myPresentation.getDescription(), oPresentation.getDescription(), true);
       if (byDesc != 0) return byDesc;
       return 0;
