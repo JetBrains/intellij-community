@@ -548,12 +548,14 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                                             boolean insertOverrideWherePossible) {
     try {
       int offset = editor.getCaretModel().getOffset();
-      if (aClass.getLBrace() == null) {
+      PsiElement brace = aClass.getLBrace();
+      if (brace == null) {
         PsiClass psiClass = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createClass("X");
-        aClass.addRangeAfter(psiClass.getLBrace(), psiClass.getRBrace(), aClass.getLastChild());
+        brace = aClass.addRangeAfter(psiClass.getLBrace(), psiClass.getRBrace(), aClass.getLastChild());
+        LOG.assertTrue(brace != null, aClass.getLastChild());
       }
 
-      int lbraceOffset = aClass.getLBrace().getTextOffset();
+      int lbraceOffset = brace.getTextOffset();
       List<PsiGenerationInfo<PsiMethod>> resultMembers;
       if (offset <= lbraceOffset || aClass.isEnum()) {
         resultMembers = new ArrayList<PsiGenerationInfo<PsiMethod>>();
