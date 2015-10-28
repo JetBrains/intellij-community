@@ -41,8 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
-import java.util.List;
+import java.util.Comparator;
 
 public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtilBase");
@@ -52,21 +51,6 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
       return o1.getID().compareTo(o2.getID());
     }
   };
-
-  public static int getRootIndex(PsiFile file) {
-    FileViewProvider provider = file.getViewProvider();
-    Set<Language> languages = provider.getLanguages();
-    if (languages.size() == 1) {
-      return 0;
-    }
-    List<Language> array = new ArrayList<Language>(languages);
-    Collections.sort(array, LANGUAGE_COMPARATOR);
-    for (int i = 0; i < array.size(); i++) {
-      Language language = array.get(i);
-      if (provider.getPsi(language) == file) return i;
-    }
-    throw new RuntimeException("Cannot find root for: "+ file);
-  }
 
   public static boolean isUnderPsiRoot(PsiFile root, PsiElement element) {
     PsiFile containingFile = element.getContainingFile();
