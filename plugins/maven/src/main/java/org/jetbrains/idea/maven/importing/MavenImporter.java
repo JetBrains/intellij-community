@@ -41,7 +41,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import java.util.*;
 
 public abstract class MavenImporter {
-  public static ExtensionPointName<MavenImporter> EXTENSION_POINT_NAME = ExtensionPointName.create("org.jetbrains.idea.maven.importer");
+  public static final ExtensionPointName<MavenImporter> EXTENSION_POINT_NAME = ExtensionPointName.create("org.jetbrains.idea.maven.importer");
   protected final String myPluginGroupID;
   protected final String myPluginArtifactID;
 
