@@ -592,6 +592,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public long getLastCommittedStamp(@NotNull Document document) {
+    if (document instanceof DocumentWindow) document = ((DocumentWindow)document).getDelegate();
     return getLastCommittedDocument(document).getModificationStamp();
   }
 
