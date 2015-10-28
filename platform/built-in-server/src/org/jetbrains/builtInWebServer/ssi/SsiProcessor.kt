@@ -16,9 +16,12 @@
 package org.jetbrains.builtInWebServer.ssi
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.SmartList
+import com.intellij.util.text.CharArrayUtil
 import gnu.trove.THashMap
 import io.netty.buffer.ByteBufUtf8Writer
+import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
 import java.util.*
@@ -31,6 +34,8 @@ internal val COMMAND_END = "-->"
 interface SsiCommand {
   fun process(state: SsiProcessingState, commandName: String, paramNames: List<String>, paramValues: Array<String>, writer: ByteBufUtf8Writer): Long
 }
+
+class SsiStopProcessingException : RuntimeException()
 
 class SsiProcessor(allowExec: Boolean) {
   private val commands: MutableMap<String, SsiCommand> = THashMap()
@@ -226,14 +231,16 @@ class SsiProcessor(allowExec: Boolean) {
   /**
    * @return the most current modified date resulting from any SSI commands
    */
-  fun process(ssiExternalResolver: SsiExternalResolver, fileContents: String, lastModifiedDate: Long, writer: ByteBufUtf8Writer): Long {
-    var resultLastModifiedDate = lastModifiedDate
-    val ssiProcessingState = SsiProcessingState(ssiExternalResolver, resultLastModifiedDate)
+  fun process(ssiExternalResolver: SsiExternalResolver, file: File, writer: ByteBufUtf8Writer): Long {
+    val fileContents = FileUtilRt.loadFileText(file)
+    var lastModifiedDate = file.lastModified()
+    val ssiProcessingState = SsiProcessingState(ssiExternalResolver, lastModifiedDate)
     var index = 0
     var inside = false
     val command = StringBuilder()
+    writer.ensureWritable(file.length().toInt())
     try {
-      while (index < fileContents.length) {
+      while (index < fileContents.size) {
         val c = fileContents[index]
         if (inside) {
           if (c == COMMAND_END[0] && charCmp(fileContents, index, COMMAND_END)) {
@@ -250,20 +257,20 @@ class SsiProcessor(allowExec: Boolean) {
             val ssiCommand = commands[commandName.toLowerCase(Locale.ENGLISH)]
             var errorMessage: String? = null
             if (ssiCommand == null) {
-              errorMessage = "Unknown command: " + commandName
+              errorMessage = "Unknown command: $commandName"
             }
             else if (paramValues == null) {
               errorMessage = "Error parsing directive parameters."
             }
             else if (paramNames.size != paramValues.size) {
-              errorMessage = "Parameter names count does not match parameter values count on command: " + commandName
+              errorMessage = "Parameter names count does not match parameter values count on command: $commandName"
             }
             else {
               // don't process the command if we are processing conditional commands only and the command is not conditional
               if (!ssiProcessingState.conditionalState.processConditionalCommandsOnly || ssiCommand is SsiConditional) {
                 val newLastModified = ssiCommand.process(ssiProcessingState, commandName, paramNames, paramValues, writer)
-                if (newLastModified > resultLastModifiedDate) {
-                  resultLastModifiedDate = newLastModified
+                if (newLastModified > lastModifiedDate) {
+                  lastModifiedDate = newLastModified
                 }
               }
             }
@@ -284,7 +291,7 @@ class SsiProcessor(allowExec: Boolean) {
         }
         else {
           if (!ssiProcessingState.conditionalState.processConditionalCommandsOnly) {
-            writer.write(c.toInt())
+            writer.append(c)
           }
           index++
         }
@@ -294,7 +301,7 @@ class SsiProcessor(allowExec: Boolean) {
       //If we are here, then we have already stopped processing, so all is good
     }
 
-    return resultLastModifiedDate
+    return lastModifiedDate
   }
 
   protected fun parseParamNames(command: StringBuilder, start: Int): List<String> {
@@ -423,7 +430,7 @@ class SsiProcessor(allowExec: Boolean) {
     return if (firstLetter == -1) "" else instruction.substring(firstLetter, lastLetter + 1)
   }
 
-  protected fun charCmp(buf: String, index: Int, command: String) = buf.regionMatches(index, command, 0, command.length)
+  protected fun charCmp(buf: CharArray, index: Int, command: String) = CharArrayUtil.regionMatches(buf, index, index + command.length, command)
 
   protected fun isSpace(c: Char) = c == ' ' || c == '\n' || c == '\t' || c == '\r'
 

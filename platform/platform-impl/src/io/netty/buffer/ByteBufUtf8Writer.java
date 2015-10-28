@@ -33,23 +33,13 @@ public final class ByteBufUtf8Writer extends Writer {
     buffer.writeBytes(inputStream, length);
   }
 
+  public void ensureWritable(int minWritableBytes) {
+    buffer.ensureWritable(minWritableBytes);
+  }
+
   @Override
   public void write(int c) {
-    AbstractByteBuf buffer = ByteBufUtilEx.getBuf(this.buffer);
-    int writerIndex = this.buffer.writerIndex();
-    if (c < 0x80) {
-      buffer._setByte(writerIndex++, (byte)c);
-    }
-    else if (c < 0x800) {
-      buffer._setByte(writerIndex++, (byte)(0xc0 | (c >> 6)));
-      buffer._setByte(writerIndex++, (byte)(0x80 | (c & 0x3f)));
-    }
-    else {
-      buffer._setByte(writerIndex++, (byte)(0xe0 | (c >> 12)));
-      buffer._setByte(writerIndex++, (byte)(0x80 | ((c >> 6) & 0x3f)));
-      buffer._setByte(writerIndex++, (byte)(0x80 | (c & 0x3f)));
-    }
-    this.buffer.writerIndex(writerIndex);
+    buffer.writerIndex(ByteBufUtilEx.writeChar(ByteBufUtilEx.getBuf(buffer), buffer.writerIndex(), c));
   }
 
   @Override

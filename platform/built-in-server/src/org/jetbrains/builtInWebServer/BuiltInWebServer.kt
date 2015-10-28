@@ -73,7 +73,7 @@ class BuiltInWebServer : HttpRequestHandler() {
           // WEB-17839 Internal web server reports 404 when serving files from project with slashes in name
           if (decodedPath.regionMatches(1, name, 0, name.length, !SystemInfoRt.isFileSystemCaseSensitive)) {
             var emptyPathCandidate = decodedPath.length == (name.length + 1)
-            if (emptyPathCandidate || decodedPath.charAt(name.length + 1) == '/') {
+            if (emptyPathCandidate || decodedPath[name.length + 1] == '/') {
               projectName = name
               offset = name.length + 1
               emptyPath = emptyPathCandidate
@@ -128,7 +128,7 @@ class BuiltInWebServer : HttpRequestHandler() {
     }
 
     val projectName: String?
-    val isIpv6 = host.charAt(0) == '[' && host.length > 2 && host.charAt(host.length - 1) == ']'
+    val isIpv6 = host[0] == '[' && host.length > 2 && host[host.length - 1] == ']'
     if (isIpv6) {
       host = host.substring(1, host.length - 1)
     }
@@ -148,7 +148,7 @@ class BuiltInWebServer : HttpRequestHandler() {
 
 fun compareNameAndProjectBasePath(projectName: String, project: Project): Boolean {
   val basePath = project.basePath
-  return basePath != null && basePath.length > projectName.length && basePath.endsWith(projectName) && basePath.charAt(basePath.length - projectName.length - 1) == '/'
+  return basePath != null && basePath.length > projectName.length && basePath.endsWith(projectName) && basePath[basePath.length - projectName.length - 1] == '/'
 }
 
 fun findIndexFile(basedir: VirtualFile): VirtualFile? {

@@ -45,14 +45,14 @@ final class ExpressionParseTree {
   /**
    * The SSIMediator to use when evaluating the expressions.
    */
-  private final SsiProcessingState mySsiProcessingState;
+  private final SsiProcessingState ssiProcessingState;
 
   /**
    * Creates a new parse tree for the specified expression.
    */
   public ExpressionParseTree(String expr, SsiProcessingState ssiProcessingState)
     throws ParseException {
-    this.mySsiProcessingState = ssiProcessingState;
+    this.ssiProcessingState = ssiProcessingState;
     parseExpression(expr);
   }
 
@@ -73,7 +73,7 @@ final class ExpressionParseTree {
   private void pushOpp(OppNode node) {
     // If node is null then it's just a group marker
     if (node == null) {
-      oppStack.add(0, node);
+      oppStack.add(0, null);
       return;
     }
     while (true) {
@@ -229,7 +229,7 @@ final class ExpressionParseTree {
      */
     public String getValue() {
       if (resolved == null) {
-        resolved = mySsiProcessingState.substituteVariables(value.toString());
+        resolved = ssiProcessingState.substituteVariables(value.toString());
       }
       return resolved;
     }
@@ -381,7 +381,7 @@ final class ExpressionParseTree {
           }
         }
         catch (PatternSyntaxException e) {
-          SsiProcessor.LOG.warn("Invalid expression: " + expr, e);
+          SsiProcessorKt.getLOG().warn("Invalid expression: " + expr, e);
           return 0;
         }
       }

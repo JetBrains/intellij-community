@@ -242,7 +242,7 @@ class VariableView(name: String, private val variable: Variable, private val con
     }
 
     while (count > 0) {
-      if (Character.isDigit(variables.get(count - 1).name.charAt(0))) {
+      if (Character.isDigit(variables.get(count - 1).name[0])) {
         break
       }
       count--
@@ -457,10 +457,10 @@ internal fun trimFunctionDescription(value: Value): String {
   val presentableValue = value.valueString ?: return ""
 
   var endIndex = 0
-  while (endIndex < presentableValue.length && !StringUtil.isLineBreak(presentableValue.charAt(endIndex))) {
+  while (endIndex < presentableValue.length && !StringUtil.isLineBreak(presentableValue[endIndex])) {
     endIndex++
   }
-  while (endIndex > 0 && Character.isWhitespace(presentableValue.charAt(endIndex - 1))) {
+  while (endIndex > 0 && Character.isWhitespace(presentableValue[endIndex - 1])) {
     endIndex--
   }
   return presentableValue.substring(0, endIndex)

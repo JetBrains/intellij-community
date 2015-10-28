@@ -64,19 +64,7 @@ public class ByteBufUtilEx {
     // We can use the _set methods as these not need to do any index checks and reference checks.
     // This is possible as we called ensureWritable(...) before.
     for (int i = start; i < end; i++) {
-      char c = seq.charAt(i);
-      if (c < 0x80) {
-        buffer._setByte(writerIndex++, (byte)c);
-      }
-      else if (c < 0x800) {
-        buffer._setByte(writerIndex++, (byte)(0xc0 | (c >> 6)));
-        buffer._setByte(writerIndex++, (byte)(0x80 | (c & 0x3f)));
-      }
-      else {
-        buffer._setByte(writerIndex++, (byte)(0xe0 | (c >> 12)));
-        buffer._setByte(writerIndex++, (byte)(0x80 | ((c >> 6) & 0x3f)));
-        buffer._setByte(writerIndex++, (byte)(0x80 | (c & 0x3f)));
-      }
+      writerIndex = writeChar(buffer, writerIndex, seq.charAt(i));
     }
 
     // update the writerIndex without any extra checks for performance reasons
@@ -87,6 +75,22 @@ public class ByteBufUtilEx {
       buf.writerIndex(writerIndex);
     }
     return writerIndex - oldWriterIndex;
+  }
+
+  static int writeChar(AbstractByteBuf buffer, int writerIndex, int c) {
+    if (c < 0x80) {
+      buffer._setByte(writerIndex++, (byte)c);
+    }
+    else if (c < 0x800) {
+      buffer._setByte(writerIndex++, (byte)(0xc0 | (c >> 6)));
+      buffer._setByte(writerIndex++, (byte)(0x80 | (c & 0x3f)));
+    }
+    else {
+      buffer._setByte(writerIndex++, (byte)(0xe0 | (c >> 12)));
+      buffer._setByte(writerIndex++, (byte)(0x80 | ((c >> 6) & 0x3f)));
+      buffer._setByte(writerIndex++, (byte)(0x80 | (c & 0x3f)));
+    }
+    return writerIndex;
   }
 
   @SuppressWarnings("SpellCheckingInspection")
