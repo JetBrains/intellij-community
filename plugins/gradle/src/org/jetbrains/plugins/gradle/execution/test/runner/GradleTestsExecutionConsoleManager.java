@@ -27,7 +27,6 @@ import com.intellij.execution.testframework.sm.runner.ui.SMRootTestProxyFormatte
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.TestTreeRenderer;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
@@ -48,25 +47,20 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.execution.test.runner.events.*;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
-import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
-import org.jetbrains.plugins.gradle.execution.test.runner.events.*;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-
-import java.util.Map;
+import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
 
 /**
  * @author Vladislav.Soroka
  * @since 2/18/14
  */
-public class GradleTestsExecutionConsoleManager implements ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration> {
+public class GradleTestsExecutionConsoleManager
+  implements ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration, GradleTestsExecutionConsole, ProcessHandler> {
   private static final Logger LOG = Logger.getInstance(GradleTestsExecutionConsoleManager.class);
-
-  private Map<String, SMTestProxy> testsMap = ContainerUtil.newHashMap();
-  private StringBuilder myBuffer = new StringBuilder();
-  private SMTRunnerConsoleView myExecutionConsole;
 
   @NotNull
   @Override
@@ -74,30 +68,18 @@ public class GradleTestsExecutionConsoleManager implements ExternalSystemExecuti
     return GradleConstants.SYSTEM_ID;
   }
 
-  public Map<String, SMTestProxy> getTestsMap() {
-    return testsMap;
-  }
-
-  public GradleUrlProvider getUrlProvider() {
-    return GradleUrlProvider.INSTANCE;
-  }
-
-  public SMTRunnerConsoleView getExecutionConsole() {
-    return myExecutionConsole;
-  }
-
   @NotNull
   @Override
-  public ExecutionConsole attachExecutionConsole(@NotNull final ExternalSystemTask task,
-                                                 @NotNull final Project project,
-                                                 @NotNull final ExternalSystemRunConfiguration configuration,
-                                                 @NotNull final Executor executor,
-                                                 @NotNull final ExecutionEnvironment env,
-                                                 @NotNull final ProcessHandler processHandler) throws ExecutionException {
+  public GradleTestsExecutionConsole attachExecutionConsole(@NotNull final ExternalSystemTask task,
+                                                            @NotNull final Project project,
+                                                            @NotNull final ExternalSystemRunConfiguration configuration,
+                                                            @NotNull final Executor executor,
+                                                            @NotNull final ExecutionEnvironment env,
+                                                            @NotNull final ProcessHandler processHandler) throws ExecutionException {
     final GradleConsoleProperties properties = new GradleConsoleProperties(configuration, executor);
-    myExecutionConsole = (SMTRunnerConsoleView)SMTestRunnerConnectionUtil.createAndAttachConsole(
+    final SMTRunnerConsoleView executionConsole = (SMTRunnerConsoleView)SMTestRunnerConnectionUtil.createAndAttachConsole(
       configuration.getSettings().getExternalSystemId().getReadableName(), processHandler, properties);
-    final TestTreeView testTreeView = myExecutionConsole.getResultsViewer().getTreeView();
+    final TestTreeView testTreeView = executionConsole.getResultsViewer().getTreeView();
     if (testTreeView != null) {
       TestTreeRenderer originalRenderer = ObjectUtils.tryCast(testTreeView.getCellRenderer(), TestTreeRenderer.class);
       if (originalRenderer != null) {
@@ -131,25 +113,29 @@ public class GradleTestsExecutionConsoleManager implements ExternalSystemExecuti
       }
     }
 
-    return myExecutionConsole;
+    return new GradleTestsExecutionConsole(executionConsole);
   }
 
   @Override
-  public void onOutput(@NotNull String text, @NotNull Key processOutputType) {
+  public void onOutput(@NotNull GradleTestsExecutionConsole executionConsole,
+                       @NotNull ProcessHandler processHandler,
+                       @NotNull String text,
+                       @NotNull Key processOutputType) {
+    final StringBuilder consoleBuffer = executionConsole.getBuffer();
     if (StringUtil.endsWith(text, "<ijLogEol/>\n")) {
-      myBuffer.append(StringUtil.trimEnd(text, "<ijLogEol/>\n")).append('\n');
+      consoleBuffer.append(StringUtil.trimEnd(text, "<ijLogEol/>\n")).append('\n');
       return;
     }
     else {
-      myBuffer.append(text);
+      consoleBuffer.append(text);
     }
 
-    String trimmedText = myBuffer.toString().trim();
-    myBuffer.setLength(0);
+    String trimmedText = consoleBuffer.toString().trim();
+    consoleBuffer.setLength(0);
 
     if (!StringUtil.startsWith(trimmedText, "<ijLog>") || !StringUtil.endsWith(trimmedText, "</ijLog>")) {
       if (text.trim().isEmpty()) return;
-      myExecutionConsole.print(text, ConsoleViewContentType.getConsoleViewType(processOutputType));
+      executionConsole.print(text, ConsoleViewContentType.getConsoleViewType(processOutputType));
       return;
     }
 
@@ -160,25 +146,25 @@ public class GradleTestsExecutionConsoleManager implements ExternalSystemExecuti
       TestEvent testEvent = null;
       switch (eventType) {
         case CONFIGURATION_ERROR:
-          testEvent = new ConfigurationErrorEvent(this);
+          testEvent = new ConfigurationErrorEvent(executionConsole);
           break;
         case REPORT_LOCATION:
-          testEvent = new ReportLocationEvent(this);
+          testEvent = new ReportLocationEvent(executionConsole);
           break;
         case BEFORE_TEST:
-          testEvent = new BeforeTestEvent(this);
+          testEvent = new BeforeTestEvent(executionConsole);
           break;
         case ON_OUTPUT:
-          testEvent = new OnOutputEvent(this);
+          testEvent = new OnOutputEvent(executionConsole);
           break;
         case AFTER_TEST:
-          testEvent = new AfterTestEvent(this);
+          testEvent = new AfterTestEvent(executionConsole);
           break;
         case BEFORE_SUITE:
-          testEvent = new BeforeSuiteEvent(this);
+          testEvent = new BeforeSuiteEvent(executionConsole);
           break;
         case AFTER_SUITE:
-          testEvent = new AfterSuiteEvent(this);
+          testEvent = new AfterSuiteEvent(executionConsole);
           break;
         case UNKNOWN_EVENT:
           break;
