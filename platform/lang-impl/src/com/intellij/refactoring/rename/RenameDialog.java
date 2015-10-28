@@ -25,8 +25,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
@@ -325,12 +323,7 @@ public class RenameDialog extends RefactoringDialog {
       }
     }
 
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
-      @Override
-      public void run() {
-        invokeRefactoring(processor);
-      }
-    });
+    invokeRefactoring(processor);
   }
 
   protected RenameProcessor createRenameProcessor(String newName) {
