@@ -99,7 +99,7 @@ public class Comparing {
     return equal(arg1 == null ? "" : arg1, arg2 == null ? "" : arg2, caseSensitive);
   }
 
-  public static <T> boolean haveEqualElements(@NotNull Collection<T> a, @NotNull Collection<T> b) {
+  public static <T> boolean haveEqualElements(@NotNull Collection<? extends T> a, @NotNull Collection<? extends T> b) {
     if (a.size() != b.size()) {
       return false;
     }
