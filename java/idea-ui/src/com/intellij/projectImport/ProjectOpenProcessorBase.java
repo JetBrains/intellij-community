@@ -162,26 +162,34 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
       }
 
       boolean shouldOpenExisting = false;
-      if (!ApplicationManager.getApplication().isHeadlessEnvironment() && (projectFile.exists() || dotIdeaFile.exists())) {
-        String existingName;
-        if (dotIdeaFile.exists()) {
-          existingName = "an existing project";
-          pathToOpen = dotIdeaFile.getParent();
+      boolean importToProject = false;
+      if (projectFile.exists() || dotIdeaFile.exists()) {
+        if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+          shouldOpenExisting = true;
+          importToProject = true;
         }
         else {
-          existingName = "'" + projectFile.getName() + "'";
-          pathToOpen = projectFilePath;
+          String existingName;
+          if (dotIdeaFile.exists()) {
+            existingName = "an existing project";
+            pathToOpen = dotIdeaFile.getParent();
+          }
+          else {
+            existingName = "'" + projectFile.getName() + "'";
+            pathToOpen = projectFilePath;
+          }
+          int result = Messages.showYesNoCancelDialog(
+            projectToClose,
+            IdeBundle.message("project.import.open.existing", existingName, projectFile.getParent(), virtualFile.getName()),
+            IdeBundle.message("title.open.project"),
+            IdeBundle.message("project.import.open.existing.openExisting"),
+            IdeBundle.message("project.import.open.existing.reimport"),
+            CommonBundle.message("button.cancel"),
+            Messages.getQuestionIcon());
+          if (result == Messages.CANCEL) return null;
+          shouldOpenExisting = result == Messages.YES;
+          importToProject = !shouldOpenExisting;
         }
-        int result = Messages.showYesNoCancelDialog(
-          projectToClose,
-          IdeBundle.message("project.import.open.existing", existingName, projectFile.getParent(), virtualFile.getName()),
-          IdeBundle.message("title.open.project"),
-          IdeBundle.message("project.import.open.existing.openExisting"),
-          IdeBundle.message("project.import.open.existing.reimport"),
-          CommonBundle.message("button.cancel"),
-          Messages.getQuestionIcon());
-        if (result == Messages.CANCEL) return null;
-        shouldOpenExisting = result == Messages.YES;
       }
 
       final Project projectToOpen;
@@ -195,8 +203,11 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
       }
       else {
         projectToOpen = ProjectManagerEx.getInstanceEx().newProject(wizardContext.getProjectName(), pathToOpen, true, false);
+      }
+      if (projectToOpen == null) return null;
 
-        if (projectToOpen == null || !getBuilder().validate(projectToClose, projectToOpen)) {
+      if (importToProject) {
+        if (!getBuilder().validate(projectToClose, projectToOpen)) {
           return null;
         }
 
