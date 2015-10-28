@@ -25,5 +25,9 @@ public class Test implements Iterator<String> {
     @Override
     public void remove() {}
   }
+
+  public <T extends Iterator<String>> T typedIterator() {
+    return (T) iterator();
+  }
 }
 
