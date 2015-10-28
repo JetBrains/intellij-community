@@ -28,12 +28,12 @@ import java.util.List;
 /**
  * User: cdr
  */
-abstract class ThreadLocalAnnotatorMap<KeyT, T> {
+abstract class ThreadLocalAnnotatorMap<K, V> {
   private volatile int version;
   @NotNull
-  public abstract Collection<T> initialValue(@NotNull KeyT key);
+  public abstract Collection<V> initialValue(@NotNull K key);
 
-  private static class VersionedMap<KeyT, T> extends THashMap<KeyT, List<T>> {
+  private static class VersionedMap<K, V> extends THashMap<K, List<V>> {
     private final int version;
 
     private VersionedMap(int version) {
@@ -41,36 +41,36 @@ abstract class ThreadLocalAnnotatorMap<KeyT, T> {
     }
   }
 
-  private final ThreadLocal<VersionedMap<KeyT, T>> CACHE = new ThreadLocal<VersionedMap<KeyT, T>>(){
+  private final ThreadLocal<VersionedMap<K, V>> CACHE = new ThreadLocal<VersionedMap<K, V>>(){
     @Override
-    protected VersionedMap<KeyT, T> initialValue() {
-      return new VersionedMap<KeyT, T>(version);
+    protected VersionedMap<K, V> initialValue() {
+      return new VersionedMap<K, V>(version);
     }
   };
 
   @SuppressWarnings("unchecked")
   @NotNull
-  private List<T> cloneTemplates(@NotNull Collection<T> templates) {
-    List<T> result = new ArrayList<T>(templates.size());
+  private List<V> cloneTemplates(@NotNull Collection<V> templates) {
+    List<V> result = new ArrayList<V>(templates.size());
     PicoContainer container = ApplicationManager.getApplication().getPicoContainer();
-    for (T template : templates) {
-      Class<? extends T> aClass = (Class<? extends T>)template.getClass();
-      T clone = (T)new ConstructorInjectionComponentAdapter(aClass.getName(), aClass).getComponentInstance(container);
+    for (V template : templates) {
+      Class<? extends V> aClass = (Class<? extends V>)template.getClass();
+      V clone = (V)new ConstructorInjectionComponentAdapter(aClass.getName(), aClass).getComponentInstance(container);
       result.add(clone);
     }
     return result;
   }
 
   @NotNull
-  public List<T> get(@NotNull KeyT key) {
-    VersionedMap<KeyT, T> map = CACHE.get();
+  public List<V> get(@NotNull K key) {
+    VersionedMap<K, V> map = CACHE.get();
     if (version != map.version) {
       CACHE.remove();
       map = CACHE.get();
     }
-    List<T> cached = map.get(key);
+    List<V> cached = map.get(key);
     if (cached == null) {
-      Collection<T> templates = initialValue(key);
+      Collection<V> templates = initialValue(key);
       cached = cloneTemplates(templates);
       map.put(key, cached);
     }

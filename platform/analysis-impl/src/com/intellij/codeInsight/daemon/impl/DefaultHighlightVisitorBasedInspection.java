@@ -49,7 +49,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
   }
 
   public static class AnnotatorBasedInspection extends DefaultHighlightVisitorBasedInspection {
-    public static final String ANNOTATOR_SHORT_NAME = "Annotator";
+    private static final String ANNOTATOR_SHORT_NAME = "Annotator";
 
     public AnnotatorBasedInspection() {
       super(false, true);
@@ -144,13 +144,11 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
   private static class MyPsiElementVisitor extends PsiElementVisitor {
     private final boolean highlightErrorElements;
     private final boolean runAnnotators;
-    private final boolean myOnTheFly;
-    private List<Pair<PsiFile, HighlightInfo>> result = new ArrayList<Pair<PsiFile, HighlightInfo>>();
+    private final List<Pair<PsiFile, HighlightInfo>> result = new ArrayList<Pair<PsiFile, HighlightInfo>>();
 
     public MyPsiElementVisitor(boolean highlightErrorElements, boolean runAnnotators, boolean isOnTheFly) {
       this.highlightErrorElements = highlightErrorElements;
       this.runAnnotators = runAnnotators;
-      myOnTheFly = isOnTheFly;
     }
 
     @Override
