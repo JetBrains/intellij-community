@@ -882,8 +882,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
         }
         else if (node instanceof FileNode) {
           final PsiFile psiFile = (PsiFile)node.getPsiElement();
-          LOG.assertTrue(psiFile != null);
-          return psiFile.getContainingDirectory();
+          return psiFile != null ? psiFile.getContainingDirectory() : null;
         }
       }
       return null;
