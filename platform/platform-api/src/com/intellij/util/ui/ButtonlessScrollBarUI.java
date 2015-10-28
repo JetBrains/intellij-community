@@ -302,6 +302,13 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
    */
   @Override
   protected void setThumbBounds(int x, int y, int width, int height) {
+    if (width > 0 && height > 0 && UIManager.getBoolean("ScrollBar.alwaysShowThumb") && !alwaysShowTrack()) {
+      int w = scrollbar.getWidth(), h = scrollbar.getHeight();
+      if (w > h && w == width || w < h && h == height) {
+        x = y = width = height = 0;
+      }
+    }
+
     if (myRepaintCallback == null) {
       super.setThumbBounds(x, y, width, height);
     }
