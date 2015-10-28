@@ -89,8 +89,16 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
 
   @Nullable
   public static PsiCallExpression canBeMethodReferenceProblem(@Nullable final PsiElement body,
-                                                                 final PsiParameter[] parameters,
-                                                                 PsiType functionalInterfaceType) {
+                                                              final PsiParameter[] parameters,
+                                                              final PsiType functionalInterfaceType) {
+    return canBeMethodReferenceProblem(body, parameters, functionalInterfaceType, null);
+  }
+
+  @Nullable
+  public static PsiCallExpression canBeMethodReferenceProblem(@Nullable final PsiElement body,
+                                                              final PsiParameter[] parameters,
+                                                              PsiType functionalInterfaceType, 
+                                                              @Nullable PsiElement context) {
     final PsiCallExpression callExpression = extractMethodCallFromBlock(body);
     if (callExpression instanceof PsiNewExpression) {
       final PsiNewExpression newExpression = (PsiNewExpression)callExpression;
@@ -104,7 +112,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
       LOG.assertTrue(callExpression != null);
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(callExpression.getProject());
       final PsiMethodReferenceExpression methodReferenceExpression = 
-        (PsiMethodReferenceExpression)elementFactory.createExpressionFromText(methodReferenceText, callExpression);
+        (PsiMethodReferenceExpression)elementFactory.createExpressionFromText(methodReferenceText, context != null ? context : callExpression);
       final Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
       try {
         map.put(methodReferenceExpression, functionalInterfaceType);
@@ -367,7 +375,10 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
         return getClassReferenceName(containingClass);
       }
       else {
-        final PsiClass parentContainingClass = PsiTreeUtil.getParentOfType(methodCall, PsiClass.class);
+        PsiClass parentContainingClass = PsiTreeUtil.getParentOfType(methodCall, PsiClass.class);
+        if (parentContainingClass instanceof PsiAnonymousClass) {
+          parentContainingClass = PsiTreeUtil.getParentOfType(parentContainingClass, PsiClass.class, true);
+        }
         PsiClass treeContainingClass = parentContainingClass;
         while (treeContainingClass != null && !InheritanceUtil.isInheritorOrSelf(treeContainingClass, containingClass, true)) {
           treeContainingClass = PsiTreeUtil.getParentOfType(treeContainingClass, PsiClass.class, true);
