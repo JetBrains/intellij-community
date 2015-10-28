@@ -195,7 +195,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       if (returnType != null && valueType != null) {
         if (!myLabeler.addMigrationRoot(method, valueType, myStatement, TypeConversionUtil.isAssignable(returnType, valueType), true)
             && TypeMigrationLabeler.typeContainsTypeParameters(returnType)) {
-          myLabeler.markFailedConversion(Pair.create(returnType, valueType), value);
+          value.accept(this);
         }
       }
     }
