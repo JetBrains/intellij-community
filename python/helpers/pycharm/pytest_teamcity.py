@@ -9,6 +9,11 @@ from pycharm_run_utils import adjust_sys_path
 
 adjust_sys_path(False)
 
+# Directory where test script exist
+CURRENT_DIR_NAME = ""
+if sys.argv:
+  CURRENT_DIR_NAME = os.path.dirname(sys.argv[-1])
+
 messages = TeamcityServiceMessages(prepend_linebreak=True)
 messages.testMatrixEntered()
 try:
@@ -31,7 +36,7 @@ if PYVERSION > [1, 4, 0]:
   current_file_suite = None
 
   def pytest_runtest_logstart(nodeid, location):
-    path = "file://" + os.path.realpath(location[0])
+    path = "file://" + os.path.realpath(os.path.join(CURRENT_DIR_NAME, location[0]))
     if location[1]:
       path += ":" +str(location[1] + 1)
     global current_suite, current_file, current_file_suite
@@ -45,7 +50,7 @@ if PYVERSION > [1, 4, 0]:
         messages.testSuiteFinished(current_file_suite)
       current_file_suite = file_suite
       if current_file_suite:
-        messages.testSuiteStarted(current_file_suite, location="file://" + os.path.realpath(location[0]))
+        messages.testSuiteStarted(current_file_suite, location=path)
 
     if location[2].find(".") != -1:
       suite = location[2].split(".")[0]
@@ -69,7 +74,7 @@ if PYVERSION > [1, 4, 0]:
         messages.testSuiteFinished(current_suite)
       current_suite = suite
       if current_suite:
-        messages.testSuiteStarted(current_suite, location="file://" + os.path.realpath(location[0]))
+        messages.testSuiteStarted(current_suite, location=path)
     messages.testStarted(name, location=path)
     items[nodeid] = name
 

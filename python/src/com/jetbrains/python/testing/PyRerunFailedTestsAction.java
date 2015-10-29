@@ -110,9 +110,9 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
       List<AbstractTestProxy> failedTests = getFailedTests(myProject);
       for (AbstractTestProxy failedTest : failedTests) {
         if (failedTest.isLeaf()) {
-          final Location location = failedTest.getLocation(myProject, myConsoleProperties.getScope());
+          final Location<?> location = failedTest.getLocation(myProject, myConsoleProperties.getScope());
           if (location != null) {
-            String spec = getConfiguration().getTestSpec(location);
+            final String spec = getConfiguration().getTestSpec(location, failedTest);
             if (spec != null && !specs.contains(spec)) {
               specs.add(spec);
             }
