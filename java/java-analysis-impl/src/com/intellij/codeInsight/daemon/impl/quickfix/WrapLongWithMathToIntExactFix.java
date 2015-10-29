@@ -16,16 +16,12 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
@@ -36,8 +32,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Batkovich
  */
 public class WrapLongWithMathToIntExactFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
-  private final static Logger LOG = Logger.getInstance(WrapLongWithMathToIntExactFix.class);
-
   public final static MyMethodArgumentFixerFactory REGISTAR = new MyMethodArgumentFixerFactory();
 
   private final PsiType myType;
@@ -119,7 +113,7 @@ public class WrapLongWithMathToIntExactFix extends LocalQuickFixAndIntentionActi
     @Nullable
     @Override
     protected PsiExpression getModifiedArgument(final PsiExpression expression, final PsiType toType) throws IncorrectOperationException {
-      return PsiType.INT.equals(toType) ? (PsiExpression)getModifiedExpression(expression) : null;
+      return areSameTypes(toType, PsiType.INT) ? (PsiExpression)getModifiedExpression(expression) : null;
     }
 
     @Override
