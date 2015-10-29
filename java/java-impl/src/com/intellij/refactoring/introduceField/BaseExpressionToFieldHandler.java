@@ -894,13 +894,10 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         return field;
       }
       else {
-        if (forwardReference != null ) {
-          return forwardReference.getParent() == destClass ?
-                 (PsiField)destClass.addAfter(psiField, forwardReference) :
-                 (PsiField)forwardReference.getParent().addAfter(psiField, forwardReference);
-        } else {
-          return (PsiField)destClass.add(psiField);
+        if (forwardReference != null &&forwardReference.getParent() == destClass) {
+          return (PsiField)destClass.addAfter(psiField, forwardReference);
         }
+        return (PsiField)destClass.add(psiField);
       }
     }
 
