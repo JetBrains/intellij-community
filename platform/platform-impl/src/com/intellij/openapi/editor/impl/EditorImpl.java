@@ -570,20 +570,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.setSize(preferredSize);
 
     updateCaretCursor();
-    
-    // This hacks context layout problem where editor appears scrolled to the right just after it is created.
-    if (!ourIsUnitTestMode) {
-      UiNotifyConnector.doWhenFirstShown(myEditorComponent, new Runnable() {
-        @Override
-        public void run() {
-          if (!isDisposed() && !myScrollingModel.isScrollingNow()) {
-            myScrollingModel.disableAnimation();
-            myScrollingModel.scrollHorizontally(0);
-            myScrollingModel.enableAnimation();
-          }
-        }
-      });
-    }
   }
 
   private boolean shouldSoftWrapsBeForced() {

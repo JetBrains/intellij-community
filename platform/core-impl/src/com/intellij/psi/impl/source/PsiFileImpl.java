@@ -724,11 +724,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Nullable
   private StubTree derefStub() {
-    if (myStub == null) return  null;
-
-    synchronized (PsiLock.LOCK) {
-      return SoftReference.dereference(myStub);
-    }
+    return SoftReference.dereference(myStub);
   }
 
   protected PsiFileImpl cloneImpl(FileElement treeElementClone) {

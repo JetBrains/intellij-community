@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -370,6 +371,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
   public void testAutoImportOfGenericReference() throws Throwable {
     @NonNls final String text = "class S {{ new ArrayList<caret><String> }}";
     configureByText(StdFileTypes.JAVA, text);
+    EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 1000); // make sure editor is visible - auto-import works only for visible area
     boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);

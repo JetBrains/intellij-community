@@ -596,6 +596,22 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals("Try to find String array initializer expressions", 0,
                  findMatchesCount(s9, "new '_{0,0}:String [] { '_* }"));
+
+    String s10 = "int time = 99;\n" +
+                 "String str = time < 0 ? \"\" : \"\";" +
+                 "String str2 = time < time ? \"\" : \"\";";
+
+    assertEquals("Find expressions mistaken for declarations by parser in block mode", 1,
+                 findMatchesCount(s10, "time < time"));
+
+    assertEquals("Find expressions mistaken for declarations by parser in block mode 2", 1,
+                 findMatchesCount(s10, "time < 0"));
+
+    assertEquals("Find expressions mistaken for declarations by parser in block mode 3", 1,
+                 findMatchesCount(s10, "time < 0 ? '_a : '_b"));
+
+    assertEquals("Find expressions mistaken for declarations by parser in block mode 4", 2,
+                 findMatchesCount(s10, "'_a < '_b"));
   }
 
   public void testLiteral() {

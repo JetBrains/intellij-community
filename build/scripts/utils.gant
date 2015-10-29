@@ -850,6 +850,18 @@ private List<File> getChildren(File file) {
   return file.listFiles().sort { File f -> f.name.toLowerCase() }
 }
 
+binding.setVariable("signExecutableFiles", { String binDir ->
+  def fileBinDir = new File(binDir)
+  def fileName = ""
+  getChildren(fileBinDir).each {
+    fileName = it.getName()
+    if (fileName.endsWith(".exe")) {
+      projectBuilder.stage("Signing: ${fileName}")
+      executeExternalAnt(["dirName": binDir, "fileName": fileName], "$home/build/signBuild.xml")
+    }
+  }
+})
+
 binding.setVariable("bundledJDKs"){
   requireProperty("jdk16.mac", "true")
   requireProperty("jdk.bundled.win", "1.8")

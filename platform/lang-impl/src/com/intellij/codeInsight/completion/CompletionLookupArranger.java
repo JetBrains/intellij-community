@@ -386,7 +386,7 @@ public class CompletionLookupArranger extends LookupArranger {
       }
     }
 
-    String selectedText = lookup.getEditor().getSelectionModel().getSelectedText();
+    String selectedText = lookup.getTopLevelEditor().getSelectionModel().getSelectedText();
     int exactMatchIndex = -1;
     for (int i = 0; i < items.size(); i++) {
       LookupElement item = items.get(i);

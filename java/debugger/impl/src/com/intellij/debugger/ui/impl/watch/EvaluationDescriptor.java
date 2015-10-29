@@ -15,11 +15,10 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.DebuggerContext;
-import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.EvaluatingComputable;
+import com.intellij.debugger.*;
 import com.intellij.debugger.engine.ContextUtil;
+import com.intellij.debugger.engine.JavaValue;
+import com.intellij.debugger.engine.JavaValueModifier;
 import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -28,6 +27,7 @@ import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.engine.evaluation.expression.UnsupportedExpressionException;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -37,8 +37,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
-import com.sun.jdi.ObjectCollectedException;
-import com.sun.jdi.Value;
+import com.intellij.xdebugger.frame.XValueModifier;
+import com.sun.jdi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -159,5 +160,35 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
 
   public TextWithImports getEvaluationText() {
     return myText;
+  }
+
+  @Override
+  public XValueModifier getModifier(JavaValue value) {
+    return new JavaValueModifier(value) {
+      @Override
+      protected void setValueImpl(@NotNull String expression, @NotNull XModificationCallback callback) {
+        final EvaluationDescriptor evaluationDescriptor = EvaluationDescriptor.this;
+        if (evaluationDescriptor.canSetValue()) {
+          final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(getProject()).getContext();
+          set(expression, callback, debuggerContext, new SetValueRunnable() {
+            public void setValue(EvaluationContextImpl evaluationContext, Value newValue)
+              throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
+              final Modifier modifier = evaluationDescriptor.getModifier();
+              modifier.setValue(preprocessValue(evaluationContext, newValue, modifier.getExpectedType()));
+              update(debuggerContext);
+            }
+
+            public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws InvocationException,
+                                                                                                             ClassNotLoadedException,
+                                                                                                             IncompatibleThreadStateException,
+                                                                                                             InvalidTypeException,
+                                                                                                             EvaluateException {
+              return evaluationContext.getDebugProcess().loadClass(evaluationContext, className,
+                                                                   evaluationContext.getClassLoader());
+            }
+          });
+        }
+      }
+    };
   }
 }

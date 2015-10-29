@@ -259,7 +259,6 @@ public abstract class AbstractCreateVirtualEnvDialog extends IdeaDialog {
               }
             }
           }, ModalityState.any());
-          throw new RuntimeException(e);
         }
       }
 

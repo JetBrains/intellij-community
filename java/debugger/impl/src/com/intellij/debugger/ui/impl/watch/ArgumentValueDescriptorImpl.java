@@ -17,17 +17,23 @@ package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.engine.JavaValue;
+import com.intellij.debugger.engine.JavaValueModifier;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.DecompiledLocalVariable;
+import com.intellij.debugger.jdi.LocalVariablesUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
-import com.sun.jdi.PrimitiveValue;
-import com.sun.jdi.Value;
+import com.intellij.xdebugger.frame.XValueModifier;
+import com.sun.jdi.*;
+import org.jetbrains.annotations.NotNull;
 
 public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
   private final DecompiledLocalVariable myVariable;
@@ -40,7 +46,7 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
 
   @Override
   public boolean canSetValue() {
-    return false;
+    return LocalVariablesUtil.canSetValues();
   }
 
   public boolean isPrimitive() {
@@ -71,5 +77,40 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
     catch (IncorrectOperationException e) {
       throw new EvaluateException(DebuggerBundle.message("error.invalid.local.variable.name", getName()), e);
     }
+  }
+
+  @Override
+  public XValueModifier getModifier(JavaValue value) {
+    return new JavaValueModifier(value) {
+      @Override
+      protected void setValueImpl(@NotNull String expression, @NotNull XModificationCallback callback) {
+        final DecompiledLocalVariable local = ArgumentValueDescriptorImpl.this.getVariable();
+        if (local != null) {
+          final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(getProject()).getContext();
+          set(expression, callback, debuggerContext, new SetValueRunnable() {
+            public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
+                                                                                                 InvalidTypeException,
+                                                                                                 EvaluateException {
+              try {
+                LocalVariablesUtil.setValue(debuggerContext.getFrameProxy().getStackFrame(), local.getSlot(), newValue);
+              }
+              catch (Exception e) {
+                e.printStackTrace();
+              }
+              update(debuggerContext);
+            }
+
+            public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws InvocationException,
+                                                                                                             ClassNotLoadedException,
+                                                                                                             IncompatibleThreadStateException,
+                                                                                                             InvalidTypeException,
+                                                                                                             EvaluateException {
+              return evaluationContext.getDebugProcess().loadClass(evaluationContext, className,
+                                                                   evaluationContext.getClassLoader());
+            }
+          });
+        }
+      }
+    };
   }
 }

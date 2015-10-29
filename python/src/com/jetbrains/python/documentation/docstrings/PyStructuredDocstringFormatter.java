@@ -124,7 +124,7 @@ public class PyStructuredDocstringFormatter {
     final GeneralCommandLine commandLine = formatter.newCommandLine(sdkHome, Lists.<String>newArrayList());
     LOG.debug("Command for launching docstring formatter: " + commandLine.getCommandLineString());
     
-    final ProcessOutput output = PySdkUtil.getProcessOutput(commandLine, new File(sdkHome).getParent(), env, 5000, data, true);
+    final ProcessOutput output = PySdkUtil.getProcessOutput(commandLine, new File(sdkHome).getParent(), env, 5000, data, false);
     if (!output.checkSuccess(LOG)) {
       return null;
     }

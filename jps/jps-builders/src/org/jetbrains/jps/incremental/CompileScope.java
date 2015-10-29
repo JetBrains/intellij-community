@@ -28,7 +28,15 @@ import java.io.File;
 public abstract class CompileScope {
   public abstract boolean isAffected(BuildTarget<?> target, @NotNull File file);
 
+  /**
+   * @return {@code true} if at least one file from {@code target} is included into the scope
+   */
   public abstract boolean isAffected(@NotNull BuildTarget<?> target);
+
+  /**
+   * @return {@code true} if all files from {@code target} are included into the scope
+   */
+  public abstract boolean isWholeTargetAffected(@NotNull BuildTarget<?> target);
 
   public abstract boolean isBuildForced(@NotNull BuildTarget<?> target);
 
