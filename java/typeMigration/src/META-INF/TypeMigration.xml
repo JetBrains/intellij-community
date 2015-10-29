@@ -7,6 +7,7 @@
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.BoxingTypeConversionRule"/>
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.ElementToArrayConversionRule"/>
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.ThreadLocalConversionRule"/>
+    <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.LongAdderConversionRule"/>
 
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.guava.GuavaOptionalConversionRule"/>
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.guava.GuavaFluentIterableConversionRule"/>
@@ -25,6 +26,10 @@
     <intentionAction>
       <className>com.intellij.refactoring.typeMigration.intentions.ChangeClassParametersIntention</className>
       <category>Java/Declaration</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.refactoring.typeMigration.intentions.ConvertAtomicToLongAdderIntention</className>
+      <category>Java/Concurrency</category>
     </intentionAction>
 
     <localInspection groupPath="Java" language="JAVA" shortName="Guava"
