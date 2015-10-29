@@ -743,18 +743,19 @@ public class AbstractTreeUi {
     };
 
     if (bgLoading) {
-      queueToBackground(build, update).doWhenProcessed(new TreeRunnable("AbstractTreeUi.initRootNodeNowIfNeeded: on processed queueToBackground") {
-        @Override
-        public void perform() {
-          invokeLaterIfNeeded(false, new TreeRunnable("AbstractTreeUi.initRootNodeNowIfNeeded: on processed queueToBackground later") {
-            @Override
-            public void perform() {
-              myRootNodeInitialized = true;
-              processNodeActionsIfReady(myRootNode);
-            }
-          });
-        }
-      });
+      queueToBackground(build, update)
+        .done(new TreeConsumer<Void>("AbstractTreeUi.initRootNodeNowIfNeeded: on processed queueToBackground") {
+          @Override
+          public void perform() {
+            invokeLaterIfNeeded(false, new TreeRunnable("AbstractTreeUi.initRootNodeNowIfNeeded: on processed queueToBackground later") {
+              @Override
+              public void perform() {
+                myRootNodeInitialized = true;
+                processNodeActionsIfReady(myRootNode);
+              }
+            });
+          }
+        });
     }
     else {
       build.run();
@@ -2662,7 +2663,7 @@ public class AbstractTreeUi {
 
     final DefaultMutableTreeNode[] nodeToProcessActions = new DefaultMutableTreeNode[1];
 
-    final Runnable finalizeRunnable = new TreeRunnable("AbstractTreeUi.queueBackgroundUpdate: finalize") {
+    final TreeConsumer<Void> finalizeRunnable = new TreeConsumer<Void>("AbstractTreeUi.queueBackgroundUpdate: finalize") {
       @Override
       public void perform() {
         invokeLaterIfNeeded(false, new TreeRunnable("AbstractTreeUi.queueBackgroundUpdate: finalize later") {
@@ -2784,12 +2785,14 @@ public class AbstractTreeUi {
         });
       }
     };
-    queueToBackground(buildRunnable, updateRunnable).doWhenProcessed(finalizeRunnable).doWhenRejected(new TreeRunnable("AbstractTreeUi.queueBackgroundUpdate: on rejected") {
-      @Override
-      public void perform() {
-        updateInfo.getPass().expire();
-      }
-    });
+    queueToBackground(buildRunnable, updateRunnable)
+      .done(finalizeRunnable)
+      .rejected(new TreeConsumer<Throwable>("AbstractTreeUi.queueBackgroundUpdate: on rejected") {
+        @Override
+        public void perform() {
+          updateInfo.getPass().expire();
+        }
+      });
 
     return true;
   }
@@ -3358,18 +3361,18 @@ public class AbstractTreeUi {
 
 
   @NotNull
-  private ActionCallback queueToBackground(@NotNull final Runnable bgBuildAction, @Nullable final Runnable edtPostRunnable) {
-    if (!canInitiateNewActivity()) return ActionCallback.REJECTED;
-    final ActionCallback result = new ActionCallback();
+  private Promise<Void> queueToBackground(@NotNull final Runnable bgBuildAction, @Nullable final Runnable edtPostRunnable) {
+    if (!canInitiateNewActivity()) return Promise.REJECTED;
+    final AsyncPromise<Void> result = new AsyncPromise<Void>();
     final AtomicBoolean fail = new AtomicBoolean();
     final Runnable finalizer = new TreeRunnable("AbstractTreeUi.queueToBackground: finalizer") {
       @Override
       public void perform() {
         if (fail.get()) {
-          result.setRejected();
+          result.setError("rejected");
         }
         else {
-          result.setDone();
+          result.setResult(null);
         }
       }
     };
