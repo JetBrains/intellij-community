@@ -124,6 +124,10 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
           }
           if (!(element instanceof PsiMethod)) {
             LOG.assertTrue(callExpression instanceof PsiNewExpression);
+            if (((PsiNewExpression)callExpression).getQualifier() != null) {
+              return null;
+            }
+
             final PsiExpression[] dims = ((PsiNewExpression)callExpression).getArrayDimensions();
             if (dims.length == 1 && parameters.length == 1){
               if (!resolvesToParameter(dims[0], parameters[0])) {
@@ -170,7 +174,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     }
 
     if (expressions.length == 0 && parameters.length == 0) {
-      return true;
+      return !(callExpression instanceof PsiNewExpression && qualifier != null);
     }
 
     final int offset = parameters.length - calledParametersCount;
