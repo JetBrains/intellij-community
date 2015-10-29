@@ -21,10 +21,13 @@ import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.ui.JBUI;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.JLabel;
@@ -40,6 +43,7 @@ final class ShortcutFilteringPanel extends JPanel {
   final MouseShortcutPanel myMousePanel = new MouseShortcutPanel();
 
   private Shortcut myShortcut;
+  private JBPopup myPopup;
 
   private final ChangeListener myChangeListener = new ChangeListener() {
     @Override
@@ -121,6 +125,25 @@ final class ShortcutFilteringPanel extends JPanel {
     if (old != null || shortcut != null) {
       myShortcut = shortcut;
       firePropertyChange("shortcut", old, shortcut);
+    }
+  }
+
+  void showPopup(Component component) {
+    if (myPopup == null || myPopup.getContent() == null) {
+      myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, myKeyboardPanel.myFirstStroke)
+        .setRequestFocus(true)
+        .setTitle(KeyMapBundle.message("filter.settings.popup.title"))
+        .setCancelKeyEnabled(false)
+        .setMovable(true)
+        .createPopup();
+    }
+    myKeyboardPanel.mySecondStrokeEnable.setSelected(false);
+    myPopup.showUnderneathOf(component);
+  }
+
+  void hidePopup() {
+    if (myPopup != null && myPopup.isVisible()) {
+      myPopup.cancel();
     }
   }
 }

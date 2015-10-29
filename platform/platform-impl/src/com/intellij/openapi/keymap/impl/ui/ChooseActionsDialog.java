@@ -27,8 +27,6 @@ import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.FilterComponent;
@@ -55,7 +53,6 @@ public class ChooseActionsDialog extends DialogWrapper {
   private final ShortcutFilteringPanel myFilteringPanel = new ShortcutFilteringPanel();
   private Keymap myKeymap;
   private QuickList[] myQuicklists;
-  private JBPopup myPopup;
 
   public ChooseActionsDialog(Component parent, Keymap keymap, QuickList[] quicklists) {
     super(parent, true);
@@ -186,17 +183,8 @@ public class ChooseActionsDialog extends DialogWrapper {
                            AllIcons.Actions.ShortcutFilter) {
       public void actionPerformed(AnActionEvent e) {
         myFilterComponent.reset();
-        if (myPopup == null || myPopup.getContent() == null) {
-          myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myFilteringPanel,
-                                                                             myFilteringPanel.myKeyboardPanel.myFirstStroke)
-            .setRequestFocus(true)
-            .setTitle(KeyMapBundle.message("filter.settings.popup.title"))
-            .setCancelKeyEnabled(false)
-            .setMovable(true)
-            .createPopup();
-        }
-        myFilteringPanel.myKeyboardPanel.mySecondStrokeEnable.setSelected(false);
-        myPopup.showUnderneathOf(searchToolbar);
+        myActionsTree.reset(myKeymap, myQuicklists);
+        myFilteringPanel.showPopup(searchToolbar);
       }
     });
     group.add(new AnAction(KeyMapBundle.message("filter.clear.action.text"),
@@ -215,6 +203,7 @@ public class ChooseActionsDialog extends DialogWrapper {
   private void filterTreeByShortcut(Shortcut shortcut) {
     if (shortcut != null) {
       if (!myTreeExpansionMonitor.isFreeze()) myTreeExpansionMonitor.freeze();
+      myActionsTree.reset(myKeymap, myQuicklists);
       myActionsTree.filterTree(shortcut, myQuicklists);
       final JTree tree = myActionsTree.getTree();
       TreeUtil.expandAll(tree);
@@ -223,9 +212,7 @@ public class ChooseActionsDialog extends DialogWrapper {
 
   public void dispose() {
     super.dispose();
-    if (myPopup != null && myPopup.isVisible()) {
-      myPopup.cancel();
-    }
+    myFilteringPanel.hidePopup();
     if (myFilterComponent != null) {
       myFilterComponent.dispose();
     }

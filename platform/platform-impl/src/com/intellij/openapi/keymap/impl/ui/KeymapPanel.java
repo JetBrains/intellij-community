@@ -38,7 +38,6 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
@@ -126,7 +125,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   private ActionsTree myActionsTree;
   private FilterComponent myFilterComponent;
-  private JBPopup myPopup = null;
   private TreeExpansionMonitor myTreeExpansionMonitor;
   private final ShortcutFilteringPanel myFilteringPanel = new ShortcutFilteringPanel();
 
@@ -418,17 +416,9 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myFilterComponent.reset();
-        if (myPopup == null || myPopup.getContent() == null) {
-          myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myFilteringPanel,
-                                                                             myFilteringPanel.myKeyboardPanel.myFirstStroke)
-            .setRequestFocus(true)
-            .setTitle(KeyMapBundle.message("filter.settings.popup.title"))
-            .setCancelKeyEnabled(false)
-            .setMovable(true)
-            .createPopup();
-        }
-        myFilteringPanel.myKeyboardPanel.mySecondStrokeEnable.setSelected(false);
-        myPopup.showUnderneathOf(searchToolbar);
+        //noinspection ConstantConditions
+        myActionsTree.reset(myEditor.getModel().getSelected(), myQuickLists);
+        myFilteringPanel.showPopup(searchToolbar);
       }
     });
     group.add(new DumbAwareAction(KeyMapBundle.message("filter.clear.action.text"),
@@ -781,9 +771,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   @Override
   public void disposeUIResources() {
-    if (myPopup != null && myPopup.isVisible()) {
-      myPopup.cancel();
-    }
+    myFilteringPanel.hidePopup();
     if (myFilterComponent != null) {
       myFilterComponent.dispose();
     }
