@@ -64,6 +64,10 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       if (index >= 0) rootPath = rootPath.substring(0, index);
 
       File rootFile = new File(FileUtil.toSystemDependentName(rootPath));
+      if (!rootFile.isAbsolute()) {
+        throw new FileNotFoundException("Invalid path: " + rootPath);
+      }
+
       if (index > 0 || !(FileUtil.isRootPath(rootFile) || rootFile.isDirectory())) {
         File parentFile = rootFile.getParentFile();
         if (parentFile == null) {
