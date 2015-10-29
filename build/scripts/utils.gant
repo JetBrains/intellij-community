@@ -851,15 +851,16 @@ private List<File> getChildren(File file) {
 }
 
 binding.setVariable("signExecutableFiles", { String binDir ->
+  projectBuilder.stage("Signing binaries")
   def fileBinDir = new File(binDir)
   def fileName = ""
   getChildren(fileBinDir).each {
     fileName = it.getName()
     if (fileName.endsWith(".exe")) {
-      projectBuilder.stage("Signing: ${fileName}")
       executeExternalAnt(["dirName": binDir, "fileName": fileName], "$home/build/signBuild.xml")
     }
   }
+  projectBuilder.stage("Signing done")
 })
 
 binding.setVariable("bundledJDKs"){
