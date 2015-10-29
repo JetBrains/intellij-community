@@ -361,36 +361,22 @@ public class AbstractTreeUi {
     }
   }
 
-  @NotNull
-  ActionCallback invokeLaterIfNeeded(boolean forceEdt, @NotNull final Runnable runnable) {
-    final ActionCallback result = new ActionCallback();
-
+  void invokeLaterIfNeeded(boolean forceEdt, @NotNull final Runnable runnable) {
     Runnable actual = new TreeRunnable("AbstractTreeUi.invokeLaterIfNeeded") {
       @Override
       public void perform() {
-        if (isReleased()) {
-          result.setRejected();
-        }
-        else {
+        if (!isReleased()) {
           runnable.run();
-          result.setDone();
         }
       }
     };
 
-    if (forceEdt) {
-      UIUtil.invokeLaterIfNeeded(actual);
+    if (!forceEdt && (isPassthroughMode() || !isEdt() && !isTreeShowing() && !myWasEverShown)) {
+      actual.run();
     }
     else {
-      if (isPassthroughMode() || !isEdt() && !isTreeShowing() && !myWasEverShown) {
-        actual.run();
-      }
-      else {
-        UIUtil.invokeLaterIfNeeded(actual);
-      }
+      UIUtil.invokeLaterIfNeeded(actual);
     }
-
-    return result;
   }
 
   public void activate(boolean byShowing) {
@@ -4062,19 +4048,18 @@ public class AbstractTreeUi {
     }
 
     myRevalidatedObjects.add(element);
-    AsyncResult<Object> revalidated = getBuilder().revalidateElement(element);
-
-    revalidated.doWhenDone(new Consumer<Object>() {
-      @Override
-      public void consume(final Object o) {
-        invokeLaterIfNeeded(false, new TreeRunnable("AbstractTreeUi.checkPathAndMaybeRevalidate: on done revalidateElement") {
-          @Override
-          public void perform() {
-            _expand(o, onDone, parentsOnly, checkIfInStructure, canSmartExpand);
-          }
-        });
-      }
-    }).doWhenRejected(new TreeRunnable("AbstractTreeUi.checkPathAndMaybeRevalidate: on rejected revalidateElement") {
+    getBuilder().revalidateElement(element)
+      .doWhenDone(new Consumer<Object>() {
+        @Override
+        public void consume(final Object o) {
+          invokeLaterIfNeeded(false, new TreeRunnable("AbstractTreeUi.checkPathAndMaybeRevalidate: on done revalidateElement") {
+            @Override
+            public void perform() {
+              _expand(o, onDone, parentsOnly, checkIfInStructure, canSmartExpand);
+            }
+          });
+        }
+      }).doWhenRejected(new TreeRunnable("AbstractTreeUi.checkPathAndMaybeRevalidate: on rejected revalidateElement") {
       @Override
       public void perform() {
         runDone(onDone);
