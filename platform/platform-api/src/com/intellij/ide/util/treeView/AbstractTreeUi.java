@@ -3052,14 +3052,16 @@ public class AbstractTreeUi {
         final Ref<Object> newElement = new Ref<Object>(getElementFromDescriptor(childDesc.get()));
 
         final Integer index = newElement.get() == null ? null : elementToIndexMap.getValue(getBuilder().getTreeStructureElement(childDesc.get()));
-        final AsyncResult<Boolean> updateIndexDone = new AsyncResult<Boolean>();
+        Promise<Boolean> promise;
         if (index == null) {
-          updateIndexDone.setDone();
+          promise = Promise.resolve(false);
         }
         else {
           final Object elementFromMap = elementToIndexMap.getKey(index);
           if (elementFromMap != newElement.get() && elementFromMap.equals(newElement.get())) {
             if (isInStructure(elementFromMap) && isInStructure(newElement.get())) {
+              final AsyncPromise<Boolean> updateIndexDone = new AsyncPromise<Boolean>();
+              promise = updateIndexDone;
               if (parentNode.getUserObject() instanceof NodeDescriptor) {
                 final NodeDescriptor parentDescriptor = getDescriptorFrom(parentNode);
                 childDesc.set(getTreeStructure().createDescriptor(elementFromMap, parentDescriptor));
@@ -3076,42 +3078,45 @@ public class AbstractTreeUi {
                     @Override
                     public void consume(Boolean isChanged) {
                       changes.set(isChanged);
-                      updateIndexDone.setDone(isChanged);
+                      updateIndexDone.setResult(isChanged);
                     }
                   });
               }
+              // todo why we don't process promise here?
             }
             else {
-              updateIndexDone.setDone(changes.get());
+              promise = Promise.resolve(changes.get());
             }
           }
           else {
-            updateIndexDone.setDone(changes.get());
+            promise = Promise.resolve(changes.get());
           }
 
-          updateIndexDone.doWhenDone(new TreeRunnable("AbstractTreeUi.processExistingNode: on done index updating after update") {
-            @Override
-            public void perform() {
-              if (childDesc.get().getIndex() != index.intValue()) {
-                changes.set(true);
+          promise
+            .done(new TreeConsumer<Boolean>("AbstractTreeUi.processExistingNode: on done index updating after update") {
+              @Override
+              public void perform() {
+                if (childDesc.get().getIndex() != index.intValue()) {
+                  changes.set(true);
+                }
+                childDesc.get().setIndex(index.intValue());
               }
-              childDesc.get().setIndex(index.intValue());
-            }
-          });
+            });
         }
 
-        updateIndexDone.doWhenDone(new TreeRunnable("AbstractTreeUi.processExistingNode: on done index updating") {
-          @Override
-          public void perform() {
-            if (!oldElement.equals(newElement.get()) || forceRemapping.get()) {
-              removeMapping(oldElement, childNode, newElement.get());
-              Object newE = newElement.get();
-              if (newE != null) {
-                createMapping(newE, childNode);
-              }
-              NodeDescriptor parentDescriptor = getDescriptorFrom(parentNode);
-              if (parentDescriptor != null) {
-                parentDescriptor.setChildrenSortingStamp(-1);
+        promise
+          .done(new TreeConsumer<Boolean>("AbstractTreeUi.processExistingNode: on done index updating") {
+            @Override
+            public void perform() {
+              if (!oldElement.equals(newElement.get()) || forceRemapping.get()) {
+                removeMapping(oldElement, childNode, newElement.get());
+                Object newE = newElement.get();
+                if (newE != null) {
+                  createMapping(newE, childNode);
+                }
+                NodeDescriptor parentDescriptor = getDescriptorFrom(parentNode);
+                if (parentDescriptor != null) {
+                  parentDescriptor.setChildrenSortingStamp(-1);
               }
             }
 
