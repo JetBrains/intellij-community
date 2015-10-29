@@ -41,18 +41,17 @@ class PersistentRangeMarker extends RangeMarkerImpl {
 
   PersistentRangeMarker(DocumentEx document, int startOffset, int endOffset, boolean register) {
     super(document, startOffset, endOffset, register);
-    myLinesCols = ObjectUtils.assertNotNull(storeLinesAndCols(this, document));
+    myLinesCols = ObjectUtils.assertNotNull(storeLinesAndCols(document, getStartOffset(), getEndOffset()));
   }
 
   @Nullable
-  static LinesCols storeLinesAndCols(Segment range, Document myDocument) {
+  static LinesCols storeLinesAndCols(Document myDocument, int startOffset, int endOffset) {
     int myStartLine;
     int myStartColumn;
     int myEndLine;
     int myEndColumn;
 
     // document might have been changed already
-    int startOffset = range.getStartOffset();
     if (startOffset <= myDocument.getTextLength()) {
       myStartLine = myDocument.getLineNumber(startOffset);
       myStartColumn = startOffset - myDocument.getLineStartOffset(myStartLine);
@@ -63,7 +62,6 @@ class PersistentRangeMarker extends RangeMarkerImpl {
     else {
       return null;
     }
-    int endOffset = range.getEndOffset();
     if (endOffset <= myDocument.getTextLength()) {
       myEndLine = myDocument.getLineNumber(endOffset);
       myEndColumn = endOffset - myDocument.getLineStartOffset(myEndLine);
@@ -130,7 +128,7 @@ class PersistentRangeMarker extends RangeMarkerImpl {
 
   @Nullable
   private static Pair<TextRange, LinesCols> applyChange(DocumentEvent event, Segment range, int intervalStart, int intervalEnd, boolean greedyLeft, boolean greedyRight, LinesCols linesCols) {
-    final boolean shouldTranslateViaDiff = PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, range);
+    final boolean shouldTranslateViaDiff = PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, range.getStartOffset(), range.getEndOffset());
     Pair<TextRange, LinesCols> translated = null;
     if (shouldTranslateViaDiff) {
       translated = translateViaDiff((DocumentEventImpl)event, linesCols);
@@ -139,7 +137,7 @@ class PersistentRangeMarker extends RangeMarkerImpl {
       TextRange fallback = applyChange(event, intervalStart, intervalEnd, greedyLeft, greedyRight);
       if (fallback == null) return null;
 
-      LinesCols lc = storeLinesAndCols(fallback, event.getDocument());
+      LinesCols lc = storeLinesAndCols(event.getDocument(), fallback.getStartOffset(), fallback.getEndOffset());
       if (lc == null) return null;
 
       translated = Pair.create(fallback, lc);

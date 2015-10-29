@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.event.RetargetRangeMarkers;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,19 +28,21 @@ import org.jetbrains.annotations.Nullable;
  * A range marker that has to be manually updated with {@link #getUpdatedRange(DocumentEvent, FrozenDocument)}.
  * Can hold PSI-based range and be updated when the document is committed.
  */
-public class ManualRangeMarker {
-  private final TextRange myRange;
+public class ManualRangeMarker implements Segment {
+  private final int myStart;
+  private final int myEnd;
   private final boolean myGreedyLeft;
   private final boolean myGreedyRight;
   private final boolean mySurviveOnExternalChange;
   private final PersistentRangeMarker.LinesCols myLinesCols;
 
-  public ManualRangeMarker(@NotNull TextRange range,
+  public ManualRangeMarker(int start, int end,
                             boolean greedyLeft,
                             boolean greedyRight,
                             boolean surviveOnExternalChange,
                             @Nullable PersistentRangeMarker.LinesCols linesCols) {
-    myRange = range;
+    myStart = start;
+    myEnd = end;
     myGreedyLeft = greedyLeft;
     myGreedyRight = greedyRight;
     mySurviveOnExternalChange = surviveOnExternalChange;
@@ -50,34 +53,39 @@ public class ManualRangeMarker {
   public ManualRangeMarker getUpdatedRange(@NotNull DocumentEvent event, @NotNull FrozenDocument documentBefore) {
     if (event instanceof RetargetRangeMarkers) {
       int start = ((RetargetRangeMarkers)event).getStartOffset();
-      if (myRange.getStartOffset() >= start && myRange.getEndOffset() <= ((RetargetRangeMarkers)event).getEndOffset()) {
-        TextRange range = myRange.shiftRight(((RetargetRangeMarkers)event).getMoveDestinationOffset() - start);
-        return new ManualRangeMarker(range, myGreedyLeft, myGreedyRight, mySurviveOnExternalChange, null);
+      if (myStart >= start && myEnd <= ((RetargetRangeMarkers)event).getEndOffset()) {
+        int delta = ((RetargetRangeMarkers)event).getMoveDestinationOffset() - start;
+        return new ManualRangeMarker(myStart + delta, myEnd + delta, myGreedyLeft, myGreedyRight, mySurviveOnExternalChange, null);
       }
     }
 
-    if (mySurviveOnExternalChange && PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, myRange)) {
+    if (mySurviveOnExternalChange && PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, myStart, myEnd)) {
       PersistentRangeMarker.LinesCols linesCols = myLinesCols != null ? myLinesCols
-                                                                      : PersistentRangeMarker.storeLinesAndCols(myRange, documentBefore);
+                                                                      : PersistentRangeMarker.storeLinesAndCols(documentBefore, myStart, myEnd);
       Pair<TextRange, PersistentRangeMarker.LinesCols> pair =
         linesCols == null ? null : PersistentRangeMarker.translateViaDiff((DocumentEventImpl)event, linesCols);
       if (pair != null) {
-        return new ManualRangeMarker(pair.first, myGreedyLeft, myGreedyRight, true, pair.second);
+        return new ManualRangeMarker(pair.first.getStartOffset(), pair.first.getEndOffset(), myGreedyLeft, myGreedyRight, true, pair.second);
       }
     }
 
-    TextRange range = RangeMarkerImpl.applyChange(event, myRange.getStartOffset(), myRange.getEndOffset(), myGreedyLeft, myGreedyRight);
-    return range == null ? null : new ManualRangeMarker(range, myGreedyLeft, myGreedyRight, mySurviveOnExternalChange, null);
+    TextRange range = RangeMarkerImpl.applyChange(event, myStart, myEnd, myGreedyLeft, myGreedyRight);
+    return range == null ? null : new ManualRangeMarker(range.getStartOffset(), range.getEndOffset(), myGreedyLeft, myGreedyRight, mySurviveOnExternalChange, null);
   }
 
-  @NotNull
-  public TextRange getRange() {
-    return myRange;
+  @Override
+  public int getStartOffset() {
+    return myStart;
+  }
+
+  @Override
+  public int getEndOffset() {
+    return myEnd;
   }
 
   @Override
   public String toString() {
-    return "ManualRangeMarker" + myRange;
+    return "ManualRangeMarker" + TextRange.create(this);
   }
 
 }

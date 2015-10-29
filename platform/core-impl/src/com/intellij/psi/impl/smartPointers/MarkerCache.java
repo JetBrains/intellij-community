@@ -21,8 +21,8 @@ import com.intellij.openapi.editor.impl.ManualRangeMarker;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.event.RetargetRangeMarkers;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,11 +94,12 @@ class MarkerCache {
     while (i < markers.length) {
       SelfElementInfo info = infos.get(i);
       boolean forInjected = info.isForInjected();
-      TextRange range = ObjectUtils.assertNotNull(info.getPsiRange());
-      markers[i] = new ManualRangeMarker(range, forInjected, forInjected, !forInjected, null);
+      int start = info.getPsiStartOffset();
+      int end = info.getPsiEndOffset();
+      markers[i] = new ManualRangeMarker(start, end, forInjected, forInjected, !forInjected, null);
 
       i++;
-      while (i < markers.length && rangeEquals(infos.get(i), range, forInjected)) {
+      while (i < markers.length && rangeEquals(infos.get(i), start, end, forInjected)) {
         markers[i] = markers[i - 1];
         i++;
       }
@@ -106,8 +107,8 @@ class MarkerCache {
     return markers;
   }
 
-  private static boolean rangeEquals(SelfElementInfo info, TextRange range, boolean injected) {
-    return range.getStartOffset() == info.getPsiStartOffset() && range.getEndOffset() == info.getPsiEndOffset() && injected == info.isForInjected();
+  private static boolean rangeEquals(SelfElementInfo info, int start, int end, boolean injected) {
+    return start == info.getPsiStartOffset() && end == info.getPsiEndOffset() && injected == info.isForInjected();
   }
 
   private static UpdatedRanges applyEvents(@NotNull List<DocumentEvent> events, final UpdatedRanges struct) {
@@ -150,8 +151,7 @@ class MarkerCache {
     UpdatedRanges updated = getUpdatedMarkers(frozen, events);
 
     for (int i = 0; i < updated.myMarkers.length; i++) {
-      ManualRangeMarker newRangeMarker = updated.myMarkers[i];
-      updated.mySortedInfos.get(i).setRange(newRangeMarker == null ? null : newRangeMarker.getRange());
+      updated.mySortedInfos.get(i).setRange(updated.myMarkers[i]);
     }
 
     myUpdatedRanges = null;
@@ -180,7 +180,7 @@ class MarkerCache {
     UpdatedRanges struct = getUpdatedMarkers(frozen, events);
     int i = Collections.binarySearch(struct.mySortedInfos, info, BY_RANGE_KEY);
     ManualRangeMarker updated = i >= 0 ? struct.myMarkers[i] : null;
-    return updated == null ? null : updated.getRange();
+    return updated == null ? null : new UnfairTextRange(updated.getStartOffset(), updated.getEndOffset());
   }
 
   void rangeChanged() {
