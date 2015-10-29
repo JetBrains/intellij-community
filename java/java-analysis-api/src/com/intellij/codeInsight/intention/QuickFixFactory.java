@@ -267,5 +267,5 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction addMethodQualifierFix(@NotNull PsiMethodCallExpression methodCall);
 
   @NotNull
-  public abstract IntentionAction createWrapLongWithMathToIntExactFix(@NotNull PsiExpression expression);
+  public abstract IntentionAction createWrapLongWithMathToIntExactFix(@Nullable PsiType type, @NotNull PsiExpression expression);
 }

@@ -16,12 +16,16 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
@@ -36,8 +40,11 @@ public class WrapLongWithMathToIntExactFix extends LocalQuickFixAndIntentionActi
 
   public final static MyMethodArgumentFixerFactory REGISTAR = new MyMethodArgumentFixerFactory();
 
-  public WrapLongWithMathToIntExactFix(final @NotNull PsiExpression expression) {
+  private final PsiType myType;
+
+  public WrapLongWithMathToIntExactFix(final PsiType type, final @NotNull PsiExpression expression) {
     super(expression);
+    myType = type;
   }
 
   @NotNull
@@ -60,7 +67,17 @@ public class WrapLongWithMathToIntExactFix extends LocalQuickFixAndIntentionActi
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    return startElement.isValid() && startElement.getManager().isInProject(startElement) && PsiUtil.isLanguageLevel8OrHigher(startElement);
+    return startElement.isValid() &&
+           startElement.getManager().isInProject(startElement) &&
+           PsiUtil.isLanguageLevel8OrHigher(startElement) &&
+           areSameTypes(myType, PsiType.INT) &&
+           areSameTypes(((PsiExpression) startElement).getType(), PsiType.LONG);
+  }
+
+  private static boolean areSameTypes(@Nullable PsiType type, @NotNull PsiPrimitiveType expected) {
+    return !(type == null ||
+             !type.isValid() ||
+             (!type.equals(expected) && !expected.getBoxedTypeName().equals(type.getCanonicalText(false))));
   }
 
   @Nls
@@ -106,8 +123,8 @@ public class WrapLongWithMathToIntExactFix extends LocalQuickFixAndIntentionActi
     }
 
     @Override
-    public boolean areTypesConvertible(final PsiType exprType, final PsiType parameterType, final PsiElement context) {
-      return parameterType.isConvertibleFrom(exprType) || (PsiType.INT.equals(parameterType) && PsiType.LONG.equals(exprType));
+    public boolean areTypesConvertible(final PsiType exprType, final PsiType parameterType, @NotNull final PsiElement context) {
+      return parameterType.isConvertibleFrom(exprType) || (areSameTypes(parameterType, PsiType.INT) && areSameTypes(exprType, PsiType.LONG));
     }
 
     @Override
