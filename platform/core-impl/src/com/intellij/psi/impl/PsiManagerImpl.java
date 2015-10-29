@@ -26,13 +26,13 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
@@ -129,7 +129,7 @@ public class PsiManagerImpl extends PsiManagerEx {
     else if (element instanceof PsiFileSystemItem) {
       virtualFile = ((PsiFileSystemItem)element).getVirtualFile();
     }
-    if (file != null && file.isPhysical() && virtualFile instanceof LightVirtualFile) return true;
+    if (file != null && file.isPhysical() && virtualFile.getFileSystem() instanceof NonPhysicalFileSystem) return true;
 
     if (virtualFile != null) {
       return myFileIndex.isInContent(virtualFile);
