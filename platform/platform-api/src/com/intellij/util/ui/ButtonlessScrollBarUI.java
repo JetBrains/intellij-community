@@ -310,25 +310,13 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       }
     }
 
-    if (myRepaintCallback == null) {
-      super.setThumbBounds(x, y, width, height);
-    }
-    else {
+    if (myRepaintCallback != null) {
       // We want to repaint whole scrollbar even if thumb wasn't moved (on small scroll of a big panel)
       // Even if scrollbar wasn't changed itself, myRepaintCallback could need repaint
-
-      // Update thumbRect, and repaint the union of x,y,w,h and the old thumbRect.
-      int minX = Math.min(x, trackRect.x);
-      int minY = Math.min(y, trackRect.y);
-      int maxX = Math.max(x + width, trackRect.x + trackRect.width);
-      int maxY = Math.max(y + height, trackRect.y + trackRect.height);
-
-      thumbRect.setBounds(x, y, width, height);
-      scrollbar.repaint(minX, minY, maxX - minX, maxY - minY);
-
-      // Once there is API to determine the mouse location this will need to be changed.
-      setThumbRollover(false);
+      scrollbar.repaint(trackRect);
     }
+
+    super.setThumbBounds(x, y, width, height);
   }
 
   @Override
