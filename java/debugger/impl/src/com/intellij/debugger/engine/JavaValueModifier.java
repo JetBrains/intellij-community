@@ -17,7 +17,6 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.*;
@@ -25,11 +24,9 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.jdi.LocalVariableProxyImpl;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.ui.impl.watch.*;
+import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.sun.jdi.*;
@@ -41,7 +38,7 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
  * Class SetValueAction
  * @author Jeka
  */
-public class JavaValueModifier extends XValueModifier {
+public abstract class JavaValueModifier extends XValueModifier {
   private final JavaValue myJavaValue;
 
   public JavaValueModifier(JavaValue javaValue) {
@@ -92,7 +89,7 @@ public class JavaValueModifier extends XValueModifier {
   //  e.getPresentation().setVisible(enable);
   //}
   //
-  private static void update(final DebuggerContextImpl context) {
+  protected static void update(final DebuggerContextImpl context) {
     DebuggerInvocationUtil.swingInvokeLater(context.getProject(), new Runnable() {
       public void run() {
         final DebuggerSession session = context.getDebuggerSession();
@@ -103,6 +100,8 @@ public class JavaValueModifier extends XValueModifier {
     });
     //node.setState(context);
   }
+
+  protected abstract void setValueImpl(@NotNull String expression, @NotNull XModificationCallback callback);
 
   @Override
   public void setValue(@NotNull String expression, @NotNull XModificationCallback callback) {
@@ -116,136 +115,10 @@ public class JavaValueModifier extends XValueModifier {
       return;
     }
 
-    //final DebuggerTree tree = getTree(event.getDataContext());
-    //final DebuggerContextImpl debuggerContext = getDebuggerContext(event.getDataContext());
-    final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(myJavaValue.getProject()).getContext();
-    //tree.saveState(node);
-
-    if (descriptor instanceof FieldDescriptorImpl) {
-      FieldDescriptorImpl fieldDescriptor = (FieldDescriptorImpl)descriptor;
-      final Field field = fieldDescriptor.getField();
-      if (!field.isStatic()) {
-        final ObjectReference object = fieldDescriptor.getObject();
-        if (object != null) {
-          set(expression, callback, debuggerContext, new SetValueRunnable() {
-            public void setValue(EvaluationContextImpl evaluationContext, Value newValue)
-              throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
-              object.setValue(field, preprocessValue(evaluationContext, newValue, field.type()));
-              update(debuggerContext);
-            }
-
-            public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws
-                                                                                                      InvocationException,
-                                                                                                      ClassNotLoadedException,
-                                                                                                      IncompatibleThreadStateException,
-                                                                                                      InvalidTypeException,
-                                                                                                      EvaluateException {
-              return evaluationContext.getDebugProcess().loadClass(evaluationContext, className, field.declaringType().classLoader());
-            }
-          });
-        }
-      }
-      else {
-        // field is static
-        ReferenceType refType = field.declaringType();
-        if (refType instanceof ClassType) {
-          final ClassType classType = (ClassType)refType;
-          set(expression, callback, debuggerContext, new SetValueRunnable() {
-            public void setValue(EvaluationContextImpl evaluationContext, Value newValue)
-              throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
-              classType.setValue(field, preprocessValue(evaluationContext, newValue, field.type()));
-              update(debuggerContext);
-            }
-
-            public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws
-                                                                                                      InvocationException,
-                                                                                                      ClassNotLoadedException,
-                                                                                                      IncompatibleThreadStateException,
-                                                                                                      InvalidTypeException,
-                                                                                                      EvaluateException {
-              return evaluationContext.getDebugProcess().loadClass(evaluationContext, className,
-                                                                   field.declaringType().classLoader());
-            }
-          });
-        }
-      }
-    }
-    else if (descriptor instanceof LocalVariableDescriptorImpl) {
-      LocalVariableDescriptorImpl localDescriptor = (LocalVariableDescriptorImpl)descriptor;
-      final LocalVariableProxyImpl local = localDescriptor.getLocalVariable();
-      if (local != null) {
-        set(expression, callback, debuggerContext, new SetValueRunnable() {
-          public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
-                                                                                               InvalidTypeException,
-                                                                                               EvaluateException {
-            debuggerContext.getFrameProxy().setValue(local, preprocessValue(evaluationContext, newValue, local.getType()));
-            update(debuggerContext);
-          }
-
-          public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws InvocationException,
-                                                                                                           ClassNotLoadedException,
-                                                                                                           IncompatibleThreadStateException,
-                                                                                                           InvalidTypeException,
-                                                                                                           EvaluateException {
-            return evaluationContext.getDebugProcess().loadClass(evaluationContext, className,
-                                                                 evaluationContext.getClassLoader());
-          }
-        });
-      }
-    }
-    else if (descriptor instanceof ArrayElementDescriptorImpl) {
-      final ArrayElementDescriptorImpl elementDescriptor = (ArrayElementDescriptorImpl)descriptor;
-      final ArrayReference array = elementDescriptor.getArray();
-      if (array != null) {
-        if (VirtualMachineProxyImpl.isCollected(array)) {
-          // will only be the case if debugger does not use ObjectReference.disableCollection() because of Patches.IBM_JDK_DISABLE_COLLECTION_BUG
-          Messages.showWarningDialog(myJavaValue.getProject(), DebuggerBundle.message("evaluation.error.array.collected") + "\n"+ DebuggerBundle.message("warning.recalculate"), DebuggerBundle.message("title.set.value"));
-          //node.getParent().calcValue();
-          return;
-        }
-        final ArrayType arrType = (ArrayType)array.referenceType();
-        set(expression, callback, debuggerContext, new SetValueRunnable() {
-          public void setValue(EvaluationContextImpl evaluationContext, Value newValue)
-            throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
-            array.setValue(elementDescriptor.getIndex(), preprocessValue(evaluationContext, newValue, arrType.componentType()));
-            update(debuggerContext);
-          }
-
-          public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws InvocationException,
-                                                                                                           ClassNotLoadedException,
-                                                                                                           IncompatibleThreadStateException,
-                                                                                                           InvalidTypeException,
-                                                                                                           EvaluateException {
-            return evaluationContext.getDebugProcess().loadClass(evaluationContext, className, arrType.classLoader());
-          }
-        });
-      }
-    }
-    else if (descriptor instanceof EvaluationDescriptor) {
-      final EvaluationDescriptor evaluationDescriptor = (EvaluationDescriptor)descriptor;
-      if (evaluationDescriptor.canSetValue()) {
-        set(expression, callback, debuggerContext, new SetValueRunnable() {
-          public void setValue(EvaluationContextImpl evaluationContext, Value newValue)
-            throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
-            final Modifier modifier = evaluationDescriptor.getModifier();
-            modifier.setValue(preprocessValue(evaluationContext, newValue, modifier.getExpectedType()));
-            update(debuggerContext);
-          }
-
-          public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws InvocationException,
-                                                                                                           ClassNotLoadedException,
-                                                                                                           IncompatibleThreadStateException,
-                                                                                                           InvalidTypeException,
-                                                                                                           EvaluateException {
-            return evaluationContext.getDebugProcess().loadClass(evaluationContext, className,
-                                                                 evaluationContext.getClassLoader());
-          }
-        });
-      }
-    }
+    setValueImpl(expression, callback);
   }
 
-  private static Value preprocessValue(EvaluationContextImpl context, Value value, Type varType) throws EvaluateException {
+  protected static Value preprocessValue(EvaluationContextImpl context, Value value, Type varType) throws EvaluateException {
     if (value != null && JAVA_LANG_STRING.equals(varType.name()) && !(value instanceof StringReference)) {
       String v = DebuggerUtils.getValueAsString(context, value);
       if (v != null) {
@@ -273,7 +146,7 @@ public class JavaValueModifier extends XValueModifier {
     return value;
   }
 
-  private interface SetValueRunnable {
+  protected interface SetValueRunnable {
     void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
                                                                                           InvalidTypeException,
                                                                                           EvaluateException,
@@ -331,7 +204,7 @@ public class JavaValueModifier extends XValueModifier {
     }
   }
 
-  private void set(@NotNull final String expression, final XModificationCallback callback, final DebuggerContextImpl debuggerContext, final SetValueRunnable setValueRunnable) {
+  protected void set(@NotNull final String expression, final XModificationCallback callback, final DebuggerContextImpl debuggerContext, final SetValueRunnable setValueRunnable) {
     final ProgressWindowWithNotification progressWindow = new ProgressWindowWithNotification(true, debuggerContext.getProject());
     final EvaluationContextImpl evaluationContext = myJavaValue.getEvaluationContext();
 

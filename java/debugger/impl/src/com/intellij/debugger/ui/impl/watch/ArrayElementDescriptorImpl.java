@@ -15,19 +15,26 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.engine.JavaValue;
+import com.intellij.debugger.engine.JavaValueModifier;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.tree.ArrayElementDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
-import com.sun.jdi.ArrayReference;
-import com.sun.jdi.ObjectCollectedException;
-import com.sun.jdi.Value;
+import com.intellij.xdebugger.frame.XValueModifier;
+import com.sun.jdi.*;
+import org.jetbrains.annotations.NotNull;
 
 public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements ArrayElementDescriptor{
   private final int myIndex;
@@ -73,5 +80,41 @@ public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements A
     catch (IncorrectOperationException e) {
       throw new EvaluateException(e.getMessage(), e);
     }
+  }
+
+  @Override
+  public XValueModifier getModifier(JavaValue value) {
+    return new JavaValueModifier(value) {
+      @Override
+      protected void setValueImpl(@NotNull String expression, @NotNull XModificationCallback callback) {
+        final ArrayElementDescriptorImpl elementDescriptor = ArrayElementDescriptorImpl.this;
+        final ArrayReference array = elementDescriptor.getArray();
+        if (array != null) {
+          if (VirtualMachineProxyImpl.isCollected(array)) {
+            // will only be the case if debugger does not use ObjectReference.disableCollection() because of Patches.IBM_JDK_DISABLE_COLLECTION_BUG
+            Messages.showWarningDialog(getProject(), DebuggerBundle.message("evaluation.error.array.collected") + "\n" + DebuggerBundle.message("warning.recalculate"), DebuggerBundle.message("title.set.value"));
+            //node.getParent().calcValue();
+            return;
+          }
+          final ArrayType arrType = (ArrayType)array.referenceType();
+          final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(getProject()).getContext();
+          set(expression, callback, debuggerContext, new SetValueRunnable() {
+            public void setValue(EvaluationContextImpl evaluationContext, Value newValue)
+              throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
+              array.setValue(elementDescriptor.getIndex(), preprocessValue(evaluationContext, newValue, arrType.componentType()));
+              update(debuggerContext);
+            }
+
+            public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws InvocationException,
+                                                                                                             ClassNotLoadedException,
+                                                                                                             IncompatibleThreadStateException,
+                                                                                                             InvalidTypeException,
+                                                                                                             EvaluateException {
+              return evaluationContext.getDebugProcess().loadClass(evaluationContext, className, arrType.classLoader());
+            }
+          });
+        }
+      }
+    };
   }
 }
