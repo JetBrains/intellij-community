@@ -15,10 +15,13 @@
  */
 package com.jetbrains.python.testing.pytest;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
+import com.intellij.execution.Location;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -27,12 +30,17 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import com.jetbrains.python.testing.VFSTestFrameworkListener;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -73,8 +81,9 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
   }
 
   public String getKeywords() {
-    if (useKeyword)
+    if (useKeyword) {
       return myKeywords;
+    }
     return "";
   }
 
@@ -87,8 +96,9 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
   }
 
   public String getParams() {
-    if (useParam)
+    if (useParam) {
       return myParams;
+    }
     return "";
   }
 
@@ -136,8 +146,9 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
       throw new RuntimeConfigurationError("Please specify target folder or script");
     }
     Sdk sdkPath = PythonSdkType.findSdkByPath(getInterpreterPath());
-    if (sdkPath != null && !VFSTestFrameworkListener.getInstance().isPyTestInstalled(sdkPath))
+    if (sdkPath != null && !VFSTestFrameworkListener.getInstance().isPyTestInstalled(sdkPath)) {
       throw new RuntimeConfigurationWarning(PyBundle.message("runcfg.testing.no.test.framework", "py.test"));
+    }
   }
 
   @Override
@@ -153,5 +164,32 @@ public class PyTestRunConfiguration extends AbstractPythonTestRunConfiguration i
   @Override
   protected String getPluralTitle() {
     return myPluralTitle;
+  }
+
+  @Nullable
+  @Override
+  public final String getTestSpec(@NotNull final Location location, @NotNull final AbstractTestProxy failedTest) {
+    /**
+     *  PyTest supports subtests (with yielding). Such tests are reported as _test_name[index] and location does not point to actual test.
+     *  We need to get rid of braces and calculate name manually, since location is incorrect.
+     *  Test path starts from file.
+     */
+    final int indexOfBrace = failedTest.getName().indexOf('[');
+    if (indexOfBrace == -1) {
+      return super.getTestSpec(location, failedTest);
+    }
+    final List<String> testNameParts = new ArrayList<String>();
+    final VirtualFile file = location.getVirtualFile();
+    if (file == null) {
+      return null;
+    }
+    final String fileName = file.getName();
+
+    testNameParts.add(failedTest.getName().substring(0, indexOfBrace));
+    for (AbstractTestProxy test = failedTest.getParent(); test != null && !test.getName().equals(fileName); test = test.getParent()) {
+      testNameParts.add(test.getName());
+    }
+    testNameParts.add(file.getCanonicalPath());
+    return StringUtil.join(Lists.reverse(testNameParts), TEST_NAME_PARTS_SPLITTER);
   }
 }

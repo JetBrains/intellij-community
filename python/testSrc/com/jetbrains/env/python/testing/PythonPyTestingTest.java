@@ -49,7 +49,7 @@ public class PythonPyTestingTest extends PyEnvTestCase {
       @NotNull
       @Override
       protected PyTestTestProcessRunner createProcessRunner() throws Exception {
-        return new PyTestTestProcessRunner(getTestDataPath() + "/testRunner/env/pytest", "test2.py", 0);
+        return new PyTestTestProcessRunner(getTestDataPath() + "/testRunner/env/pytest", "test2.py", 1);
       }
 
       @Override
@@ -57,6 +57,15 @@ public class PythonPyTestingTest extends PyEnvTestCase {
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
+        if (runner.getCurrentRerunStep() > 0) {
+          /**
+           * We can't rerun one subtest (yield), so we rerun whole "test_even"
+           */
+          assertEquals(7, runner.getAllTestsCount());
+          assertEquals(3, runner.getPassedTestsCount());
+          assertEquals(4, runner.getFailedTestsCount());
+          return;
+        }
         assertEquals(9, runner.getAllTestsCount());
         assertEquals(5, runner.getPassedTestsCount());
         assertEquals(4, runner.getFailedTestsCount());

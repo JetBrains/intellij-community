@@ -22,6 +22,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.configuration.AbstractRunConfiguration;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -59,6 +60,11 @@ import java.util.Map;
  */
 public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfiguration> extends AbstractRunConfiguration
   implements LocatableConfiguration, AbstractPythonRunConfigurationParams, CommandLinePatcher {
+  /**
+   * When passing path to test to runners, you should join parts with this char.
+   * I.e.: file.py::PyClassTest::test_method
+   */
+  public static final String TEST_NAME_PARTS_SPLITTER = "::";
   private String myInterpreterOptions = "";
   private String myWorkingDirectory = "";
   private String mySdkHome = "";
@@ -406,7 +412,14 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     return true;
   }
 
-  public String getTestSpec(Location location) {
+  /**
+   * Create test spec (string to be passed to runner, probably glued with {@link #TEST_NAME_PARTS_SPLITTER})
+   * @param location test location as reported by runner
+   * @param failedTest failed test
+   * @return string spec or null if spec calculation is impossible
+   */
+  @Nullable
+  public String getTestSpec(@NotNull final Location<?> location, @NotNull final AbstractTestProxy failedTest) {
     PsiElement element = location.getPsiElement();
     PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
     PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
@@ -414,10 +427,10 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     if (virtualFile != null) {
       String path = virtualFile.getCanonicalPath();
       if (pyClass != null) {
-        path += "::" + pyClass.getName();
+        path += TEST_NAME_PARTS_SPLITTER + pyClass.getName();
       }
       if (pyFunction != null) {
-        path += "::" + pyFunction.getName();
+        path += TEST_NAME_PARTS_SPLITTER + pyFunction.getName();
       }
       return path;
     }
@@ -440,7 +453,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
   @Override
   public String getModuleName() {
     Module module = getModule();
-    return module != null? module.getName() : null;
+    return module != null ? module.getName() : null;
   }
 
   @Override
