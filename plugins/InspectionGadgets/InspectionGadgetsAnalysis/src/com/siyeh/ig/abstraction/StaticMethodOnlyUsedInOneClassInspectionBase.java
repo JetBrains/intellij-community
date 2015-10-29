@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,14 @@
  */
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
@@ -28,6 +30,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TestUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,8 +38,12 @@ import javax.swing.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class StaticMethodOnlyUsedInOneClassInspectionBase extends BaseInspection {
+
   @SuppressWarnings("PublicField")
   public boolean ignoreTestClasses = false;
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreAnonymousClasses = true;
 
   @Override
   @NotNull
@@ -61,8 +68,22 @@ public class StaticMethodOnlyUsedInOneClassInspectionBase extends BaseInspection
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("static.method.only.used.in.one.class.ignore.test.option"),
-                                          this, "ignoreTestClasses");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(
+      InspectionGadgetsBundle.message("static.method.only.used.in.one.class.ignore.test.option"),
+      "ignoreTestClasses"
+    );
+    panel.addCheckbox(
+      InspectionGadgetsBundle.message("static.method.only.used.in.one.class.ignore.anonymous.option"),
+      "ignoreAnonymousClasses"
+    );
+    return panel;
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    writeBooleanOption(node, "ignoreTestClasses");
+    writeBooleanOption(node, "ignoreAnonymousClasses", Boolean.TRUE);
   }
 
   @Override
@@ -102,6 +123,7 @@ public class StaticMethodOnlyUsedInOneClassInspectionBase extends BaseInspection
       final GlobalSearchScope scope = GlobalSearchScope.allScope(method.getProject());
       if (searchHelper.isCheapEnoughToSearch(name, scope, null, progressManager.getProgressIndicator())
           == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
+        System.out.println("not cheap");
         return null;
       }
       progressManager.runProcess(new Runnable() {
@@ -136,13 +158,20 @@ public class StaticMethodOnlyUsedInOneClassInspectionBase extends BaseInspection
       if (usageClass == null) {
         return;
       }
-      if (usageClass.equals(method.getContainingClass())) {
+      final PsiClass containingClass = method.getContainingClass();
+      if (usageClass.equals(containingClass)) {
         return;
       }
       if (ignoreTestClasses && TestUtils.isInTestCode(usageClass)) {
         return;
       }
       if (usageClass instanceof PsiAnonymousClass) {
+        if (ignoreAnonymousClasses) {
+          return;
+        }
+        if (PsiTreeUtil.isAncestor(containingClass, usageClass, true)) {
+          return;
+        }
         final PsiClass[] interfaces = usageClass.getInterfaces();
         final PsiClass superClass;
         if (interfaces.length == 1) {
