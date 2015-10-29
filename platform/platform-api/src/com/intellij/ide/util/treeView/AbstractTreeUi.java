@@ -34,6 +34,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.WorkerThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -1089,27 +1090,14 @@ public class AbstractTreeUi {
             maybeYeild(new ActiveRunnable() {
               @NotNull
               @Override
-              public ActionCallback run() {
-                final ActionCallback result = new ActionCallback();
-                update(descriptor, false)
+              public Promise<?> run() {
+                return update(descriptor, false)
                   .done(new TreeConsumer<Boolean>("AbstractTreeUi.updateRow: inner") {
                     @Override
                     public void perform() {
-                      try {
-                        updateRow(row + 1, pass);
-                      }
-                      finally {
-                        result.setDone();
-                      }
-                    }
-                  })
-                  .rejected(new Consumer<Throwable>() {
-                    @Override
-                    public void consume(Throwable error) {
-                      result.reject(error.getMessage());
+                      updateRow(row + 1, pass);
                     }
                   });
-                return result;
               }
             }, pass, node);
           }
@@ -1571,9 +1559,9 @@ public class AbstractTreeUi {
                     maybeYeild(new ActiveRunnable() {
                       @NotNull
                       @Override
-                      public ActionCallback run() {
+                      public Promise<?> run() {
                         expand(element, null);
-                        return ActionCallback.DONE;
+                        return Promise.DONE;
                       }
                     }, pass, node);
                   }
@@ -1695,31 +1683,28 @@ public class AbstractTreeUi {
                                              final boolean forceUpdate,
                                              final boolean wasExpaned,
                                              @Nullable final LoadedChildren preloaded) {
-
     final List<TreeNode> childNodes = TreeUtil.childrenToArray(node);
     return maybeYeild(new ActiveRunnable() {
       @NotNull
       @Override
-      public ActionCallback run() {
-        if (pass.isExpired()) return ActionCallback.REJECTED;
-        if (childNodes.isEmpty()) return ActionCallback.DONE;
+      public Promise<?> run() {
+        if (pass.isExpired()) return Promise.REJECTED;
+        if (childNodes.isEmpty()) return Promise.DONE;
 
 
-        final ActionCallback result = new ActionCallback(childNodes.size());
-
+        List<Promise<?>> promises = new SmartList<Promise<?>>();
         for (TreeNode each : childNodes) {
           final DefaultMutableTreeNode eachChild = (DefaultMutableTreeNode)each;
           if (isLoadingNode(eachChild)) {
-            result.setDone();
             continue;
           }
 
           final boolean childForceUpdate = isChildNodeForceUpdate(eachChild, forceUpdate, wasExpaned);
 
-          maybeYeild(new ActiveRunnable() {
+          promises.add(maybeYeild(new ActiveRunnable() {
             @NotNull
             @Override
-            public ActionCallback run() {
+            public Promise<?> run() {
               NodeDescriptor descriptor = preloaded != null ? preloaded.getDescriptor(getElementFor(eachChild)) : null;
               NodeDescriptor descriptorFromNode = getDescriptorFrom(eachChild);
               if (descriptor != null) {
@@ -1727,33 +1712,23 @@ public class AbstractTreeUi {
                 if (descriptorFromNode != null) {
                   descriptor.setChildrenSortingStamp(descriptorFromNode.getChildrenSortingStamp());
                 }
-              } else {
+              }
+              else {
                 descriptor = descriptorFromNode;
               }
 
               return processExistingNode(eachChild, descriptor, node, elementToIndexMap, pass, canSmartExpand,
                                          childForceUpdate, preloaded);
             }
-          }, pass, node)
-            .done(new Consumer<Void>() {
-              @Override
-              public void consume(Void aVoid) {
-                result.setDone();
-              }
-            })
-            .rejected(new Consumer<Throwable>() {
-              @Override
-              public void consume(Throwable error) {
-                result.reject(error.getMessage());
-              }
-            });
+          }, pass, node));
 
-          if (result.isRejected()) {
-            break;
+          for (Promise<?> promise : promises) {
+            if (promise.getState() == Promise.State.REJECTED) {
+              return Promise.REJECTED;
+            }
           }
         }
-
-        return result;
+        return Promise.all(promises);
       }
     }, pass, node);
   }
@@ -1766,11 +1741,16 @@ public class AbstractTreeUi {
     return rerunBecauseTreeIsHidden || getUpdater().isRerunNeededFor(pass);
   }
 
+  private abstract static class ActiveRunnable {
+    @NotNull
+    public abstract Promise<?> run();
+  }
+
   @NotNull
   private Promise<Void> maybeYeild(@NotNull final ActiveRunnable processRunnable, @NotNull final TreeUpdatePass pass, final DefaultMutableTreeNode node) {
     if (isRerunNeeded(pass)) {
       getUpdater().requeue(pass);
-      return Promise.reject("requeue");
+      return Promise.REJECTED;
     }
 
     if (isToYieldUpdateFor(node)) {
@@ -1797,7 +1777,7 @@ public class AbstractTreeUi {
           }
           else {
             try {
-              execute(processRunnable).notify(result);
+              execute(processRunnable, result);
             }
             catch (ProcessCanceledException e) {
               pass.expire();
@@ -1826,30 +1806,12 @@ public class AbstractTreeUi {
     }
   }
 
-  @NotNull
-  private Promise<Void> execute(@NotNull ActiveRunnable runnable) throws ProcessCanceledException {
-    AsyncPromise<Void> promise = new AsyncPromise<Void>();
-    execute(runnable, promise);
-    return promise;
-  }
-
-  private void execute(@NotNull final ActiveRunnable runnable, @NotNull final AsyncPromise<Void> result) throws ProcessCanceledException {
+  private void execute(@NotNull final ActiveRunnable runnable, @NotNull final AsyncPromise<?> result) throws ProcessCanceledException {
     execute(new TreeRunnable("AbstractTreeUi.execute") {
       @Override
       public void perform() {
-        runnable.run().
-          doWhenDone(new Runnable() {
-            @Override
-            public void run() {
-              result.setResult(null);
-            }
-          })
-          .doWhenRejected(new Consumer<String>() {
-            @Override
-            public void consume(String errorMessage) {
-              result.setError(errorMessage == null ? "rejected" : errorMessage);
-            }
-          });
+        //noinspection unchecked
+        runnable.run().notify((AsyncPromise)result);
       }
     });
   }
@@ -2742,7 +2704,7 @@ public class AbstractTreeUi {
             @Override
             public void perform() {
               Promise<Boolean> promise = update(eachChildDescriptor, true);
-              //noinspection unchecked
+              //noinspection unchecked,ConstantConditions
               loaded.putDescriptor(each, eachChildDescriptor, promise instanceof Getter ? ((Getter<Boolean>)promise).get() : null);
             }
           });
@@ -3011,7 +2973,7 @@ public class AbstractTreeUi {
   }
 
   @NotNull
-  private ActionCallback processExistingNode(@NotNull final DefaultMutableTreeNode childNode,
+  private Promise<Void> processExistingNode(@NotNull final DefaultMutableTreeNode childNode,
                                              final NodeDescriptor childDescriptor,
                                              @NotNull final DefaultMutableTreeNode parentNode,
                                              @NotNull final MutualMap<Object, Integer> elementToIndexMap,
@@ -3020,17 +2982,17 @@ public class AbstractTreeUi {
                                              final boolean forceUpdate,
                                              @Nullable LoadedChildren parentPreloadedChildren) {
     if (pass.isExpired()) {
-      return ActionCallback.REJECTED;
+      return Promise.REJECTED;
     }
 
     if (childDescriptor == null) {
       pass.expire();
-      return ActionCallback.REJECTED;
+      return Promise.REJECTED;
     }
     final Object oldElement = getElementFromDescriptor(childDescriptor);
     if (oldElement == null) {
       pass.expire();
-      return ActionCallback.REJECTED;
+      return Promise.REJECTED;
     }
 
     Promise<Boolean> update;
@@ -3041,7 +3003,7 @@ public class AbstractTreeUi {
       update = update(childDescriptor, false);
     }
 
-    final ActionCallback result = new ActionCallback();
+    final AsyncPromise<Void> result = new AsyncPromise<Void>();
     final Ref<NodeDescriptor> childDesc = new Ref<NodeDescriptor>(childDescriptor);
 
     update.done(new Consumer<Boolean>() {
@@ -3141,19 +3103,22 @@ public class AbstractTreeUi {
               disposeNode(childNode);
 
               adjustSelectionOnChildRemove(parentNode, selectedIndex, disposedElement);
-              result.setDone();
+              result.setResult(null);
             }
             else {
               elementToIndexMap.remove(getBuilder().getTreeStructureElement(childDesc.get()));
-              ActionCallback callback = updateNodeChildren(childNode, pass, null, false, canSmartExpand, forceUpdate, true, true);
-              callback.doWhenDone(result.createSetDoneRunnable());
+              updateNodeChildren(childNode, pass, null, false, canSmartExpand, forceUpdate, true, true)
+                .doWhenDone(new Runnable() {
+                  @Override
+                  public void run() {
+                    result.setResult(null);
+                  }
+                });
             }
           }
         });
       }
     });
-
-
     return result;
   }
 
