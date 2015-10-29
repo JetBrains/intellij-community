@@ -20,6 +20,7 @@
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
@@ -48,6 +49,8 @@ import static com.intellij.openapi.util.Couple.of;
 import static com.intellij.ui.ColorUtil.fromHex;
 
 public abstract class AbstractColorsScheme implements EditorColorsScheme {
+  private static final Logger LOG = Logger.getInstance(AbstractColorsScheme.class);
+  
   private static final String OS_VALUE_PREFIX = SystemInfo.isWindows ? "windows" : SystemInfo.isMac ? "mac" : "linux";
   private static final int CURR_VERSION = 141;
 
@@ -286,7 +289,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     setName(node.getAttributeValue(NAME_ATTR));
     int readVersion = Integer.parseInt(node.getAttributeValue(VERSION_ATTR, "0"));
     if (readVersion > CURR_VERSION) {
-      throw new IllegalStateException("Unsupported color scheme version: " + readVersion);
+      LOG.warn("Unsupported color scheme version: " + readVersion);
     }
 
     myVersion = readVersion;
@@ -336,9 +339,15 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
   protected void readAttributes(@NotNull Element childNode) {
     for (Element e : childNode.getChildren(OPTION_ELEMENT)) {
       TextAttributesKey name = TextAttributesKey.find(e.getAttributeValue(NAME_ATTR));
-      TextAttributes attr = new TextAttributes(e.getChild(VALUE_ELEMENT));
-      myAttributesMap.put(name, attr);
-      migrateErrorStripeColorFrom14(name, attr);
+      Element value = e.getChild(VALUE_ELEMENT);
+      if (value != null) {
+        TextAttributes attr = new TextAttributes(value);
+        myAttributesMap.put(name, attr);
+        migrateErrorStripeColorFrom14(name, attr);
+      }
+      else {
+        LOG.debug("Missing value element for " + name + ", ignored.");
+      }
     }
   }
 
