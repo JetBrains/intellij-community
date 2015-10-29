@@ -16,9 +16,9 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.LanguageUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -102,16 +102,17 @@ class AnchorElementInfo extends SelfElementInfo {
   @Override
   public boolean pointsToTheSameElementAs(@NotNull final SmartPointerElementInfo other) {
     if (other instanceof AnchorElementInfo) {
-      AnchorElementInfo otherAnchor = (AnchorElementInfo)other;
-      if ((getStubId() == -1) != (otherAnchor.getStubId() == -1)) {
-        return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            return Comparing.equal(restoreElement(), other.restoreElement());
-          }
-        });
+      if (!getVirtualFile().equals(other.getVirtualFile())) return false;
+
+      long packed1 = myStubElementTypeAndId;
+      long packed2 = ((AnchorElementInfo)other).myStubElementTypeAndId;
+
+      if (packed1 != -1 && packed2 != -1) {
+        return packed1 == packed2;
       }
-      if (myStubElementTypeAndId != otherAnchor.myStubElementTypeAndId) return false;
+      if (packed1 != -1 || packed2 != -1) {
+        return areRestoredElementsEqual(other);
+      }
     }
     return super.pointsToTheSameElementAs(other);
   }
@@ -126,9 +127,7 @@ class AnchorElementInfo extends SelfElementInfo {
 
   private void switchToTree() {
     PsiElement element = restoreElement();
-    Document document = getDocumentToSynchronize();
-    if (element != null && document != null) {
-      // switch to tree
+    if (element != null) {
       PsiElement anchor = AnchorElementInfoFactory.getAnchor(element);
       if (anchor == null) anchor = element;
       myType = AnchorTypeInfo.obtainInfo(anchor, myType.getFileLanguage());
@@ -146,4 +145,12 @@ class AnchorElementInfo extends SelfElementInfo {
     return super.getRange();
   }
 
+  @Nullable
+  @Override
+  public ProperTextRange getPsiRange() {
+    if (getStubId() != -1) {
+      switchToTree();
+    }
+    return super.getPsiRange();
+  }
 }
