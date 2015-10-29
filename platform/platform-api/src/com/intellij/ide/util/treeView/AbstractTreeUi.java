@@ -1087,7 +1087,7 @@ public class AbstractTreeUi {
           final NodeDescriptor descriptor = getDescriptorFrom(path.getLastPathComponent());
           if (descriptor != null) {
             DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-            maybeYeild(new ActiveRunnable() {
+            maybeYeild(new AsyncRunnable() {
               @NotNull
               @Override
               public Promise<?> run() {
@@ -1369,8 +1369,9 @@ public class AbstractTreeUi {
 
     removeFromUnbuilt(node);
 
+    //noinspection unchecked
     processExistingNodes(node, elementToIndexMap, pass, canSmartExpand(node, toSmartExpand), forceUpdate, wasExpanded, preloadedChildren)
-      .done(new TreeConsumer<Void>("AbstractTreeUi.updateNodeChildrenNow: on done processExistingNodes") {
+      .done(new TreeConsumer("AbstractTreeUi.updateNodeChildrenNow: on done processExistingNodes") {
         @Override
         public void perform() {
           if (isDisposed(node)) {
@@ -1556,7 +1557,7 @@ public class AbstractTreeUi {
                     removeLoading(node, false);
                   }
                   else {
-                    maybeYeild(new ActiveRunnable() {
+                    maybeYeild(new AsyncRunnable() {
                       @NotNull
                       @Override
                       public Promise<?> run() {
@@ -1676,7 +1677,7 @@ public class AbstractTreeUi {
   }
 
   @NotNull
-  private Promise<Void> processExistingNodes(@NotNull final DefaultMutableTreeNode node,
+  private Promise<?> processExistingNodes(@NotNull final DefaultMutableTreeNode node,
                                              @NotNull final MutualMap<Object, Integer> elementToIndexMap,
                                              @NotNull final TreeUpdatePass pass,
                                              final boolean canSmartExpand,
@@ -1684,7 +1685,7 @@ public class AbstractTreeUi {
                                              final boolean wasExpaned,
                                              @Nullable final LoadedChildren preloaded) {
     final List<TreeNode> childNodes = TreeUtil.childrenToArray(node);
-    return maybeYeild(new ActiveRunnable() {
+    return maybeYeild(new AsyncRunnable() {
       @NotNull
       @Override
       public Promise<?> run() {
@@ -1701,7 +1702,7 @@ public class AbstractTreeUi {
 
           final boolean childForceUpdate = isChildNodeForceUpdate(eachChild, forceUpdate, wasExpaned);
 
-          promises.add(maybeYeild(new ActiveRunnable() {
+          promises.add(maybeYeild(new AsyncRunnable() {
             @NotNull
             @Override
             public Promise<?> run() {
@@ -1741,20 +1742,20 @@ public class AbstractTreeUi {
     return rerunBecauseTreeIsHidden || getUpdater().isRerunNeededFor(pass);
   }
 
-  private abstract static class ActiveRunnable {
+  private abstract static class AsyncRunnable {
     @NotNull
     public abstract Promise<?> run();
   }
 
   @NotNull
-  private Promise<Void> maybeYeild(@NotNull final ActiveRunnable processRunnable, @NotNull final TreeUpdatePass pass, final DefaultMutableTreeNode node) {
+  private Promise<?> maybeYeild(@NotNull final AsyncRunnable processRunnable, @NotNull final TreeUpdatePass pass, final DefaultMutableTreeNode node) {
     if (isRerunNeeded(pass)) {
       getUpdater().requeue(pass);
       return Promise.REJECTED;
     }
 
     if (isToYieldUpdateFor(node)) {
-      final AsyncPromise<Void> result = new AsyncPromise<Void>();
+      final AsyncPromise<?> result = new AsyncPromise<Void>();
       pass.setCurrentNode(node);
       boolean wasRun = yieldAndRun(new TreeRunnable("AbstractTreeUi.maybeYeild") {
         @Override
@@ -1777,12 +1778,13 @@ public class AbstractTreeUi {
           }
           else {
             try {
-              execute(processRunnable, result);
+              //noinspection unchecked
+              execute(processRunnable).notify((AsyncPromise)result);
             }
             catch (ProcessCanceledException e) {
               pass.expire();
-              result.setError("process cancelled");
               cancelUpdate();
+              result.setError("rejected");
             }
           }
         }
@@ -1793,27 +1795,37 @@ public class AbstractTreeUi {
       return result;
     }
     else {
-      AsyncPromise<Void> result = new AsyncPromise<Void>();
       try {
-        execute(processRunnable, result);
+        return execute(processRunnable);
       }
       catch (ProcessCanceledException e) {
         pass.expire();
-        result.setError("process cancelled");
         cancelUpdate();
+        return Promise.REJECTED;
       }
-      return result;
     }
   }
 
-  private void execute(@NotNull final ActiveRunnable runnable, @NotNull final AsyncPromise<?> result) throws ProcessCanceledException {
-    execute(new TreeRunnable("AbstractTreeUi.execute") {
-      @Override
-      public void perform() {
-        //noinspection unchecked
-        runnable.run().notify((AsyncPromise)result);
+  @NotNull
+  private Promise<?> execute(@NotNull AsyncRunnable runnable) throws ProcessCanceledException {
+    try {
+      if (!canInitiateNewActivity()) {
+        throw new ProcessCanceledException();
       }
-    });
+
+      Promise<?> promise = runnable.run();
+      if (!canInitiateNewActivity()) {
+        throw new ProcessCanceledException();
+      }
+      return promise;
+    }
+    catch (ProcessCanceledException e) {
+      if (!isReleased()) {
+        setCancelRequested(true);
+        resetToReady();
+      }
+      throw e;
+    }
   }
 
   private void execute(@NotNull Runnable runnable) throws ProcessCanceledException {
