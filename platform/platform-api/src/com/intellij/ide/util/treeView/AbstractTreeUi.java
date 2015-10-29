@@ -1879,18 +1879,14 @@ public class AbstractTreeUi {
     return !isCancelProcessed() && !myReleaseRequested && !isReleased();
   }
 
-  @NotNull
-  private ActionCallback resetToReady() {
-    final ActionCallback result = new ActionCallback();
-
+  private void resetToReady() {
     if (isReady()) {
-      result.setDone();
-      return result;
+      return;
     }
 
     if (myResettingToReadyNow.get()) {
-      _getReady().notify(result);
-      return result;
+      _getReady();
+      return;
     }
 
     myResettingToReadyNow.set(true);
@@ -1899,7 +1895,6 @@ public class AbstractTreeUi {
       @Override
       public void perform() {
         if (!myResettingToReadyNow.get()) {
-          result.setDone();
           return;
         }
 
@@ -1909,11 +1904,9 @@ public class AbstractTreeUi {
           myBatchCallbacks.remove(each).setRejected();
         }
 
-        resetToReadyNow().notify(result);
+        resetToReadyNow();
       }
     });
-
-    return result;
   }
 
   @NotNull
