@@ -502,7 +502,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   @Nullable
   @Override
   public XValueModifier getModifier() {
-    return myValueDescriptor.canSetValue() ? new JavaValueModifier(this) : null;
+    return myValueDescriptor.canSetValue() ? myValueDescriptor.getModifier(this) : null;
   }
 
   private volatile XExpression evaluationExpression = null;

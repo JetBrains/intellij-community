@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.EditorTestUtil;
 
 import java.awt.*;
@@ -194,16 +193,10 @@ public class EditorImplTest extends AbstractEditorTest {
   }
   
   public void testEditorSizeCalculationOnOpening() throws Exception {
-    Registry.get("editor.new.rendering").setValue(true);
-    try {
-      initText("a\nbbb\nccccc");
-      myEditor.putUserData(EditorImpl.DO_DOCUMENT_UPDATE_TEST, Boolean.TRUE);
-      myEditor.getSettings().setAdditionalColumnsCount(0);
-      myEditor.getSettings().setAdditionalLinesCount(0);
-      assertEquals(new Dimension(50, 30), myEditor.getContentComponent().getPreferredSize());
-    }
-    finally {
-      Registry.get("editor.new.rendering").setValue(false);
-    }
+    initText("a\nbbb\nccccc");
+    myEditor.putUserData(EditorImpl.DO_DOCUMENT_UPDATE_TEST, Boolean.TRUE);
+    myEditor.getSettings().setAdditionalColumnsCount(0);
+    myEditor.getSettings().setAdditionalLinesCount(0);
+    assertEquals(new Dimension(50, 30), myEditor.getContentComponent().getPreferredSize());
   }
 }

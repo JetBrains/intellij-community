@@ -131,7 +131,7 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
     String maxVersion = descriptor.getMaxVersion();
     for (String version : versions) {
       if ((minVersion == null || VersionComparatorUtil.compare(minVersion, version) <= 0)
-          && (maxVersion == null || VersionComparatorUtil.compare(version, maxVersion) < 0)) {
+          && (maxVersion == null || VersionComparatorUtil.compare(version, maxVersion) <= 0)) {
         suitableVersions.add(version);
       }
     }

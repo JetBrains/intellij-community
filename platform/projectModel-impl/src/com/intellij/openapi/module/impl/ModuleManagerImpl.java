@@ -17,10 +17,8 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -72,7 +70,7 @@ import java.util.*;
  */
 public abstract class ModuleManagerImpl extends ModuleManager implements ProjectComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerImpl");
-  static final Key<String> DISPOSED_MODULE_NAME = Key.create("DisposedNeverAddedModuleName");
+  private static final Key<String> DISPOSED_MODULE_NAME = Key.create("DisposedNeverAddedModuleName");
   private static final String IML_EXTENSION = ".iml";
   protected final Project myProject;
   protected final MessageBus myMessageBus;
@@ -157,7 +155,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     List<ModulePath> prevPaths = myModulePaths;
     readExternal(state);
     if (prevPaths != null) {
-      ModifiableModuleModel model = getModifiableModel();
+      final ModifiableModuleModel model = getModifiableModel();
 
       Module[] existingModules = model.getModules();
 
@@ -180,13 +178,12 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
       loadModules((ModuleModelImpl)model);
 
-      AccessToken token = WriteAction.start();
-      try {
-        model.commit();
-      }
-      finally {
-        token.finish();
-      }
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          model.commit();
+        }
+      });
     }
   }
 

@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl.softwrap.mapping;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
@@ -177,7 +178,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
       "line1\n" +
       "long line<caret>";
     
-    init(48, text, 7);
+    init(69, text, 10);
 
     int softWrapsBefore = getSoftWrapModel().getRegisteredSoftWraps().size();
     assertTrue(softWrapsBefore > 0);
@@ -459,7 +460,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
       "line4\n" +
       "line5";
     
-    init(30, text, 7);
+    init(43, text, 10);
     int start = text.indexOf("line3") - 1;
     addCollapsedFoldRegion(start, text.length(), "...");
     assertEquals(1, getSoftWrapModel().getRegisteredSoftWraps().size());
@@ -577,7 +578,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
       "this is line 4\n" +
       "this is line 5";
     
-    init(50, text, 7);
+    init(71, text, 10);
     VisualPosition changePosition = new VisualPosition(1, 0);
     myEditor.getCaretModel().moveToVisualPosition(changePosition);
     
@@ -585,7 +586,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     int offsetBefore = myEditor.getCaretModel().getOffset();
     
     LogicalPosition logicalPositionBefore = myEditor.visualToLogicalPosition(changePosition);
-    assertEquals(1, logicalPositionBefore.softWrapLinesOnCurrentLogicalLine);
+    assertEquals(1, EditorUtil.getSoftWrapCountAfterLineStart(myEditor, logicalPositionBefore));
     assertTrue(logicalPositionBefore.column > 0);
     
     SoftWrap softWrap = getSoftWrapModel().getSoftWrap(offsetBefore);
@@ -801,10 +802,9 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     init(10, text);
     getEditor().getSettings().setCustomSoftWrapIndent(0);
     getEditor().getSettings().setUseCustomSoftWrapIndent(true);
-    int textLength = getEditor().getDocument().getTextLength();
     //Trigger soft wraps recalculation.
-    assertEquals(new LogicalPosition(0, textLength), myEditor.offsetToLogicalPosition(textLength));
-    
+    ((SoftWrapModelImpl)myEditor.getSoftWrapModel()).prepareToMapping();
+
     // Don't expect soft wraps to be registered as there is no point in wrapping at the first non-white space symbol position
     // in all cases when soft wrap is located at the left screen edge.
     assertEmpty(getSoftWrapModel().getRegisteredSoftWraps());
@@ -875,13 +875,13 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
   public void testNoPreliminarySoftWrapAtLineEnd() throws IOException {
     // We used to make soft wrap when the string was couple of visual columns before the right screen edge even if it could
     // be completely shown.
-    init(37, "a b c", 7);
+    init(52, "a b c", 10);
     assertEmpty(getSoftWrapModel().getRegisteredSoftWraps());
   }
 
   public void testNoPreliminarySoftWrapBeforeFoldingAtLineEnd() throws IOException {
     final String text = "a b c test";
-    init(50, text, 7);
+    init(71, text, 10);
     addCollapsedFoldRegion(text.indexOf("t"), text.length(), ".");
     assertEmpty(getSoftWrapModel().getRegisteredSoftWraps());
   }
@@ -924,7 +924,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
   
   public void testEnsureBeforeSoftWrapSignIsVisible() throws IOException {
     final String text = "a.b.c.d";
-    init(43, text, 7);
+    init(61, text, 10);
     
     checkSoftWraps(text.indexOf('c') + 1);
   }
@@ -1000,14 +1000,14 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
   public void testNoUnnecessaryHorizontalScrollBar() throws IOException {
     // Inspired by IDEA-87184
     final String text = "12345678 abcdefgh";
-    init(15, 7, text);
+    init(15, 10, text);
     myEditor.getCaretModel().moveToOffset(text.length());
     final Ref<Boolean> fail = new Ref<>(true);
     SoftWrapApplianceManager applianceManager = ((SoftWrapModelImpl)myEditor.getSoftWrapModel()).getApplianceManager();
     SoftWrapAwareDocumentParsingListener listener = new SoftWrapAwareDocumentParsingListenerAdapter() {
       @Override
       public void beforeSoftWrapLineFeed(@NotNull EditorPosition position) {
-        if (position.x == text.indexOf("a") * 7) {
+        if (position.x == text.indexOf("a") * 10) {
           fail.set(false);
         }
       }
@@ -1126,7 +1126,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
   }
   
   private void init(final int visibleWidthInColumns, @NotNull String fileText) throws IOException {
-    init(visibleWidthInColumns, 7, fileText);
+    init(visibleWidthInColumns, 10, fileText);
   }
 
   private void init(final int visibleWidthInColumns, final int symbolWidthInPixels, @NotNull String fileText) throws IOException {

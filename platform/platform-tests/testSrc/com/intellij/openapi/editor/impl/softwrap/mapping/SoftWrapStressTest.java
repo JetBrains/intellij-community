@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
+import com.intellij.openapi.util.registry.Registry;
 import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,6 +46,7 @@ public class SoftWrapStressTest extends AbstractEditorTest {
   private long mySeed;
   
   public void testSoftWrapModelInternalCachesStayConsistentAfterDocumentAndFoldingChanges() {
+    Registry.get("editor.new.rendering").setValue(false);
     int i = 0;
     try {
       initText("");
@@ -56,6 +58,9 @@ public class SoftWrapStressTest extends AbstractEditorTest {
     }
     catch (Throwable t) {
       throw new RuntimeException("Failed when run with seed=" + mySeed + " in iteration " + i, t);
+    }
+    finally {
+      Registry.get("editor.new.rendering").setValue(true);
     }
   }
   
