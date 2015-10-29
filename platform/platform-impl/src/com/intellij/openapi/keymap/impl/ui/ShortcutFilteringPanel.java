@@ -1,0 +1,126 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.openapi.keymap.impl.ui;
+
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.MouseShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.keymap.KeyMapBundle;
+import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.ui.components.panels.VerticalLayout;
+import com.intellij.util.ui.JBUI;
+
+import java.awt.BorderLayout;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
+/**
+ * @author Sergey.Malenkov
+ */
+final class ShortcutFilteringPanel extends JPanel {
+  final KeyboardShortcutPanel myKeyboardPanel = new KeyboardShortcutPanel(new VerticalLayout(JBUI.scale(2)));
+  final MouseShortcutPanel myMousePanel = new MouseShortcutPanel();
+
+  private Shortcut myShortcut;
+
+  private final ChangeListener myChangeListener = new ChangeListener() {
+    @Override
+    public void stateChanged(ChangeEvent event) {
+      boolean selected = myKeyboardPanel.mySecondStrokeEnable.isSelected();
+      myKeyboardPanel.mySecondStroke.setVisible(selected);
+      myMousePanel.setVisible(!selected);
+      if (selected && myShortcut instanceof MouseShortcut) {
+        setShortcut(null);
+      }
+    }
+  };
+  private final PropertyChangeListener myPropertyListener = new PropertyChangeListener() {
+    @Override
+    public void propertyChange(PropertyChangeEvent event) {
+      Object value = event.getNewValue();
+      if (ShortcutFilteringPanel.this != event.getSource()) {
+        setShortcut(value instanceof Shortcut ? (Shortcut)value : null);
+      }
+      else {
+        if (value instanceof KeyboardShortcut) {
+          KeyboardShortcut shortcut = (KeyboardShortcut)value;
+          myKeyboardPanel.setShortcut(shortcut);
+          if (null != shortcut.getSecondKeyStroke()) {
+            myKeyboardPanel.mySecondStrokeEnable.setSelected(true);
+          }
+        }
+        else {
+          String text = null;
+          if (value instanceof MouseShortcut) {
+            MouseShortcut shortcut = (MouseShortcut)value;
+            text = KeymapUtil.getMouseShortcutText(
+              shortcut.getButton(),
+              shortcut.getModifiers(),
+              shortcut.getClickCount());
+          }
+          myKeyboardPanel.myFirstStroke.setText(text);
+          myKeyboardPanel.mySecondStroke.setText(null);
+          myKeyboardPanel.mySecondStroke.setEnabled(false);
+        }
+      }
+    }
+  };
+
+  ShortcutFilteringPanel() {
+    super(new VerticalLayout(JBUI.scale(2)));
+
+    myKeyboardPanel.myFirstStroke.setColumns(15);
+    myKeyboardPanel.mySecondStroke.setColumns(15);
+    myKeyboardPanel.mySecondStroke.setVisible(false);
+    myKeyboardPanel.mySecondStrokeEnable.setText(KeyMapBundle.message("filter.enable.second.stroke.checkbox"));
+    myKeyboardPanel.mySecondStrokeEnable.addChangeListener(myChangeListener);
+    myKeyboardPanel.add(VerticalLayout.TOP, myKeyboardPanel.myFirstStroke);
+    myKeyboardPanel.add(VerticalLayout.TOP, myKeyboardPanel.mySecondStrokeEnable);
+    myKeyboardPanel.add(VerticalLayout.TOP, myKeyboardPanel.mySecondStroke);
+    myKeyboardPanel.addPropertyChangeListener("shortcut", myPropertyListener);
+    myKeyboardPanel.setBorder(JBUI.Borders.empty(4));
+
+    JLabel label = new JLabel(KeyMapBundle.message("filter.mouse.pad.label"));
+    label.setOpaque(false);
+    label.setIcon(AllIcons.General.MouseShortcut);
+    label.setForeground(MouseShortcutPanel.FOREGROUND);
+    label.setBorder(JBUI.Borders.empty(14, 4));
+    myMousePanel.add(BorderLayout.CENTER, label);
+    myMousePanel.addPropertyChangeListener("shortcut", myPropertyListener);
+    myMousePanel.setBorder(JBUI.Borders.customLine(MouseShortcutPanel.BORDER, 1, 0, 0, 0));
+
+    add(VerticalLayout.TOP, myKeyboardPanel);
+    add(VerticalLayout.TOP, myMousePanel);
+    addPropertyChangeListener("shortcut", myPropertyListener);
+  }
+
+  Shortcut getShortcut() {
+    return myShortcut;
+  }
+
+  void setShortcut(Shortcut shortcut) {
+    Shortcut old = myShortcut;
+    if (old != null || shortcut != null) {
+      myShortcut = shortcut;
+      firePropertyChange("shortcut", old, shortcut);
+    }
+  }
+}
