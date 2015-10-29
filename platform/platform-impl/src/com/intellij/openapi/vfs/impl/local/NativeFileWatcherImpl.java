@@ -94,9 +94,6 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       LOG.info("Native file watcher is disabled");
     }
     else if (myExecutable == null) {
-      LOG.info("Native file watcher is not supported on this platform");
-    }
-    else if (!myExecutable.exists()) {
       notifyOnFailure(ApplicationBundle.message("watcher.exe.not.found"), null);
     }
     else if (!myExecutable.canExecute()) {
@@ -158,21 +155,32 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     String execPath = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
     if (execPath != null) return new File(execPath);
 
-    String execName = getExecutableName(false);
-    if (execName == null) return null;
+    String[] names = null;
+    String prefix = null;
+    if (SystemInfo.isWindows) {
+      names = SystemInfo.is64Bit ? new String[]{"fsnotifier64.exe", "fsnotifier.exe"} : new String[]{"fsnotifier.exe"};
+      prefix = "win";
+    }
+    else if (SystemInfo.isMac) {
+      names = new String[]{"fsnotifier"};
+      prefix = "mac";
+    }
+    else if (SystemInfo.isLinux) {
+      String arch = "arm".equals(SystemInfo.OS_ARCH) ? "-arm" : "ppc".equals(SystemInfo.OS_ARCH) ? "-ppc" : "";
+      String bits = SystemInfo.is64Bit ? "64" : "";
+      names = new String[]{"fsnotifier" + arch + bits};
+      prefix = "linux";
+    }
+    if (names == null) return null;
 
-    return FileUtil.findFirstThatExist(FileUtil.join(PathManager.getBinPath(), execName),
-                                       FileUtil.join(PathManager.getHomePath(), "community", "bin", getExecutableName(true)),
-                                       FileUtil.join(PathManager.getBinPath(), getExecutableName(true)));
-  }
+    String[] dirs = {PathManager.getBinPath(), PathManager.getHomePath() + "/community/bin/" + prefix, PathManager.getBinPath() + '/' + prefix};
+    for (String dir : dirs) {
+      for (String name : names) {
+        File candidate = new File(dir, name);
+        if (candidate.exists()) return candidate;
+      }
+    }
 
-  @Nullable
-  private static String getExecutableName(final boolean withSubDir) {
-    if (SystemInfo.isWindows) return (withSubDir ? "win" + File.separator : "") + (SystemInfo.isAMD64 ? "fsnotifier64.exe" : "fsnotifier.exe");
-    if (SystemInfo.isMac) return (withSubDir ? "mac" + File.separator : "") + "fsnotifier";
-    if (SystemInfo.isLinux) return (withSubDir ? "linux" + File.separator : "") +
-                                   ("arm".equals(SystemInfo.OS_ARCH) ? (SystemInfo.is32Bit ? "fsnotifier-arm" : null)
-                                                                     : (SystemInfo.isAMD64 ? "fsnotifier64" : "fsnotifier"));
     return null;
   }
 
