@@ -21,6 +21,8 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
@@ -172,7 +174,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   protected void changedUpdateImpl(@NotNull DocumentEvent e) {
     if (!isValid()) return;
 
-    ProperTextRange newRange = applyChange(e, intervalStart(), intervalEnd(), isGreedyToLeft(), isGreedyToRight());
+    TextRange newRange = applyChange(e, intervalStart(), intervalEnd(), isGreedyToLeft(), isGreedyToRight());
     if (newRange == null) {
       invalidate(e);
       return;
@@ -183,9 +185,9 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   @Nullable
-  static ProperTextRange applyChange(@NotNull DocumentEvent e, int intervalStart, int intervalEnd, boolean isGreedyToLeft, boolean isGreedyToRight) {
+  static TextRange applyChange(@NotNull DocumentEvent e, int intervalStart, int intervalEnd, boolean isGreedyToLeft, boolean isGreedyToRight) {
     if (intervalStart == intervalEnd) {
-      return processIfOnePoint(e, intervalStart, intervalEnd, isGreedyToRight);
+      return processIfOnePoint(e, intervalStart, isGreedyToRight);
     }
 
     final int offset = e.getOffset();
@@ -194,26 +196,26 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
     // changes after the end.
     if (intervalEnd < offset) {
-      return new ProperTextRange(intervalStart, intervalEnd);
+      return new UnfairTextRange(intervalStart, intervalEnd);
     }
     if (!isGreedyToRight && intervalEnd == offset) {
       // handle replaceString that was minimized and resulted in insertString at the range end
       if (e instanceof DocumentEventImpl && oldLength == 0 && ((DocumentEventImpl)e).getInitialStartOffset() < offset) {
-        return new ProperTextRange(intervalStart, intervalEnd + newLength);
+        return new UnfairTextRange(intervalStart, intervalEnd + newLength);
       }
-      return new ProperTextRange(intervalStart, intervalEnd);
+      return new UnfairTextRange(intervalStart, intervalEnd);
     }
 
     // changes before start
     if (intervalStart > offset + oldLength) {
-      return new ProperTextRange(intervalStart + newLength - oldLength, intervalEnd + newLength - oldLength);
+      return new UnfairTextRange(intervalStart + newLength - oldLength, intervalEnd + newLength - oldLength);
     }
     if (!isGreedyToLeft && intervalStart == offset + oldLength) {
       // handle replaceString that was minimized and resulted in insertString at the range start
       if (e instanceof DocumentEventImpl && oldLength == 0 && ((DocumentEventImpl)e).getInitialStartOffset() + ((DocumentEventImpl)e).getInitialOldLength() > offset) {
-        return new ProperTextRange(intervalStart - oldLength, intervalEnd + newLength - oldLength);
+        return new UnfairTextRange(intervalStart - oldLength, intervalEnd + newLength - oldLength);
       }
-      return new ProperTextRange(intervalStart + newLength - oldLength, intervalEnd + newLength - oldLength);
+      return new UnfairTextRange(intervalStart + newLength - oldLength, intervalEnd + newLength - oldLength);
     }
 
     // Changes inside marker's area. Expand/collapse.
@@ -229,14 +231,14 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     }
 
     if (intervalEnd >= offset && intervalEnd <= offset + oldLength && intervalStart < offset) {
-      return new ProperTextRange(intervalStart, offset);
+      return new UnfairTextRange(intervalStart, offset);
     }
 
     return null;
   }
 
   @Nullable
-  private static ProperTextRange processIfOnePoint(@NotNull DocumentEvent e, int intervalStart, int intervalEnd, boolean greedyRight) {
+  private static TextRange processIfOnePoint(@NotNull DocumentEvent e, int intervalStart, boolean greedyRight) {
     int offset = e.getOffset();
     int oldLength = e.getOldLength();
     int oldEnd = offset + oldLength;
@@ -245,14 +247,14 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     }
 
     if (offset == intervalStart && oldLength == 0 && greedyRight) {
-      return new ProperTextRange(intervalStart, intervalEnd + e.getNewLength());
+      return new UnfairTextRange(intervalStart, intervalStart + e.getNewLength());
     }
 
     if (intervalStart > oldEnd || intervalStart == oldEnd  && oldLength > 0) {
-      return new ProperTextRange(intervalStart + e.getNewLength() - oldLength, intervalEnd + e.getNewLength() - oldLength);
+      return new UnfairTextRange(intervalStart + e.getNewLength() - oldLength, intervalStart + e.getNewLength() - oldLength);
     }
 
-    return new ProperTextRange(intervalStart, intervalEnd);
+    return new UnfairTextRange(intervalStart, intervalStart);
   }
 
   @NonNls

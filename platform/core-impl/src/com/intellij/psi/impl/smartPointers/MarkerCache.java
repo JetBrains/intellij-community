@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.editor.impl.ManualRangeMarker;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.event.RetargetRangeMarkers;
-import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -94,7 +94,7 @@ class MarkerCache {
     while (i < markers.length) {
       SelfElementInfo info = infos.get(i);
       boolean forInjected = info.isForInjected();
-      ProperTextRange range = ObjectUtils.assertNotNull(info.getPsiRange());
+      TextRange range = ObjectUtils.assertNotNull(info.getPsiRange());
       markers[i] = new ManualRangeMarker(range, forInjected, forInjected, !forInjected, null);
 
       i++;
@@ -106,7 +106,7 @@ class MarkerCache {
     return markers;
   }
 
-  private static boolean rangeEquals(SelfElementInfo info, ProperTextRange range, boolean injected) {
+  private static boolean rangeEquals(SelfElementInfo info, TextRange range, boolean injected) {
     return range.getStartOffset() == info.getPsiStartOffset() && range.getEndOffset() == info.getPsiEndOffset() && injected == info.isForInjected();
   }
 
@@ -176,7 +176,7 @@ class MarkerCache {
   }
 
   @Nullable
-  ProperTextRange getUpdatedRange(@NotNull SelfElementInfo info, @NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
+  TextRange getUpdatedRange(@NotNull SelfElementInfo info, @NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
     UpdatedRanges struct = getUpdatedMarkers(frozen, events);
     int i = Collections.binarySearch(struct.mySortedInfos, info, BY_RANGE_KEY);
     ManualRangeMarker updated = i >= 0 ? struct.myMarkers[i] : null;
