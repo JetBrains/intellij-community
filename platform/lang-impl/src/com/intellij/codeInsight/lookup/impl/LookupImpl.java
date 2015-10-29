@@ -26,6 +26,8 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -133,7 +135,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     AbstractPopup.suppressMacCornerFor(getComponent());
 
     myProject = project;
-    myEditor = editor;
+    myEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
     myArranger = arranger;
     myPresentableArranger = arranger;
 
@@ -152,7 +154,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     myAdComponent = new Advertiser();
 
-    myOffsets = new LookupOffsets(editor);
+    myOffsets = new LookupOffsets(myEditor);
 
     final CollectionListModel<LookupElement> model = getListModel();
     addEmptyItem(model);
@@ -532,7 +534,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private void insertLookupString(LookupElement item, final int prefix) {
     final String lookupString = getCaseCorrectedLookupString(item);
 
-    final Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
+    final Editor hostEditor = getTopLevelEditor();
     hostEditor.getCaretModel().runForEachCaret(new CaretAction() {
       @Override
       public void perform(Caret caret) {
@@ -950,7 +952,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   @Override
   @Nullable
   public PsiFile getPsiFile() {
-    return PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    return PsiDocumentManager.getInstance(myProject).getPsiFile(getEditor().getDocument());
   }
 
   @Override
@@ -964,6 +966,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     if (file == null) return null;
 
     int offset = getLookupStart();
+    Editor editor = getEditor();
+    if (editor instanceof EditorWindow) {
+      offset = editor.logicalPositionToOffset(((EditorWindow)editor).hostToInjected(myEditor.offsetToLogicalPosition(offset)));
+    }
     if (offset > 0) return file.findElementAt(offset - 1);
 
     return file.findElementAt(0);
@@ -972,7 +978,31 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   @Override
   @NotNull 
   public Editor getEditor() {
+    PsiFile hostFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    if (hostFile != null) {
+      int offset = myEditor.getCaretModel().getOffset();
+      // inspired by com.intellij.codeInsight.editorActions.TypedHandler.injectedEditorIfCharTypedIsSignificant()
+      for (DocumentWindow documentWindow : InjectedLanguageUtil.getCachedInjectedDocuments(hostFile)) {
+        if (documentWindow.isValid() && documentWindow.containsRange(offset, offset)) {
+          PsiFile injectedFile = PsiDocumentManager.getInstance(myProject).getPsiFile(documentWindow);
+          return InjectedLanguageUtil.getInjectedEditorForInjectedFile(myEditor, injectedFile);
+        }
+      }
+    }
+
     return myEditor;
+  }
+
+  @Override
+  @NotNull
+  public Editor getTopLevelEditor() {
+    return myEditor;
+  }
+
+  @NotNull
+  @Override
+  public Project getProject() {
+    return myProject;
   }
 
   @Override
