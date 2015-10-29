@@ -218,8 +218,10 @@ public class GradleResourceCompilerConfigurationGenerator {
         ExternalSystemApiUtil.getExternalProjectVersion(module));
 
       for (ExternalSourceSet sourceSet : externalSourceSets.values()) {
-        addResources(resourceConfig.resources, sourceSet.getSources().get(ExternalSystemSourceType.RESOURCE));
-        addResources(resourceConfig.testResources, sourceSet.getSources().get(ExternalSystemSourceType.TEST_RESOURCE));
+        addResources(resourceConfig.resources, sourceSet.getSources().get(ExternalSystemSourceType.RESOURCE),
+                     sourceSet.getSources().get(ExternalSystemSourceType.SOURCE));
+        addResources(resourceConfig.testResources, sourceSet.getSources().get(ExternalSystemSourceType.TEST_RESOURCE),
+                     sourceSet.getSources().get(ExternalSystemSourceType.TEST));
       }
 
       final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
@@ -264,7 +266,8 @@ public class GradleResourceCompilerConfigurationGenerator {
   }
 
   private static void addResources(@NotNull List<ResourceRootConfiguration> container,
-                                   @Nullable final ExternalSourceDirectorySet directorySet) {
+                                   @Nullable final ExternalSourceDirectorySet directorySet,
+                                   @Nullable final ExternalSourceDirectorySet sourcesDirectorySet) {
     if (directorySet == null) return;
 
     for (File file : directorySet.getSrcDirs()) {
@@ -281,6 +284,12 @@ public class GradleResourceCompilerConfigurationGenerator {
       rootConfiguration.excludes.clear();
       for (String exclude : directorySet.getExcludes()) {
         rootConfiguration.excludes.add(exclude.trim());
+      }
+      if(sourcesDirectorySet != null && sourcesDirectorySet.getSrcDirs().contains(file)) {
+        rootConfiguration.excludes.add("**/*.java");
+        rootConfiguration.excludes.add("**/*.scala");
+        rootConfiguration.excludes.add("**/*.groovy");
+        rootConfiguration.excludes.add("**/*.kt");
       }
 
       rootConfiguration.isFiltered = !directorySet.getFilters().isEmpty();

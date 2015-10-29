@@ -21,11 +21,13 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author dyoma
  */
 public interface TestSearchScope {
+  @Nullable
   SourceScope getSourceScope(ModuleBasedConfiguration configuration);
 
   TestSearchScope WHOLE_PROJECT = new TestSearchScope() {

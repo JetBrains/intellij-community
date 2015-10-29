@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,9 @@
  */
 package com.siyeh.ig.fixes.controlflow;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.controlflow.TrivialIfInspection;
-
-import java.util.List;
 
 public class TrivialIfFixTest extends IGQuickFixesTestCase {
 
@@ -29,28 +26,18 @@ public class TrivialIfFixTest extends IGQuickFixesTestCase {
     super.setUp();
     myFixture.enableInspections(new TrivialIfInspection());
     myRelativePath = "controlflow/trivialIf";
+    myDefaultHint = InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
   }
 
   public void testComments() {
-    doTestByName(getTestName(false));
+    doTest();
   }
 
   public void testCommentsInAssignment() {
-    doTestByName(getTestName(false));
+    doTest();
   }
 
-  public void doTestByName(String testName) {
-    myFixture.configureByFile(getRelativePath() + "/" + testName + ".java");
-    final String message = InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
-    final List<IntentionAction> actions =
-      myFixture.filterAvailableIntentions(message);
-    assertFalse("No actions available", actions.isEmpty());
-    for (IntentionAction action : actions) {
-      if (action.getText().equals(message)) {
-        myFixture.launchAction(action);
-        myFixture.checkResultByFile(getRelativePath() + "/" + testName + ".after.java");
-        break;
-      }
-    }
+  public void testNegatedConditional() {
+    doTest();
   }
 }

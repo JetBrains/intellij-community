@@ -20,8 +20,8 @@ import com.intellij.diff.util.Side
 import com.intellij.diff.util.TextDiffType.*
 import com.intellij.openapi.diff.DiffBundle
 
-public class MergeTest : MergeTestBase() {
-  public fun testChangeTypes() {
+class MergeTest : MergeTestBase() {
+  fun testChangeTypes() {
     test ("", "", "", 0) {
     }
 
@@ -112,7 +112,7 @@ public class MergeTest : MergeTestBase() {
     }
   }
 
-  public fun testLastLine() {
+  fun testLastLine() {
     test1 ("x", "x_", "x") {
       0.assertType(DELETED, BOTH)
       0.assertContent("", 1, 2)
@@ -144,7 +144,7 @@ public class MergeTest : MergeTestBase() {
     }
   }
 
-  public fun testModifications() {
+  fun testModifications() {
     test1 ("x", "x", "y") {
       0.apply(Side.RIGHT)
       0.assertResolved(BOTH)
@@ -242,7 +242,7 @@ public class MergeTest : MergeTestBase() {
     }
   }
 
-  public fun testModificationsIgnore() {
+  fun testModificationsIgnore() {
     test1 ("x", "x", "y") {
       0.ignore(Side.RIGHT)
       0.assertResolved(BOTH)
@@ -320,7 +320,7 @@ public class MergeTest : MergeTestBase() {
     }
   }
 
-  public fun testModificationsModifiers() {
+  fun testModificationsModifiers() {
     test1 ("x", "x", "y") {
       0.apply(Side.RIGHT, true)
       0.assertResolved(BOTH)
@@ -354,7 +354,7 @@ public class MergeTest : MergeTestBase() {
     }
   }
 
-  public fun testUndoSimple() {
+  fun testUndoSimple() {
     test1 ("x", "y", "z") {
       checkUndo(1) {
         0.apply(Side.RIGHT)
@@ -435,7 +435,7 @@ public class MergeTest : MergeTestBase() {
     }
   }
 
-  public fun testRangeModification() {
+  fun testRangeModification() {
     test1("X_x_y_z_Y", "X_a_b_c_Y", "X_x_y_z_Y") {
       0.assertContent("a_b_c", 1, 4)
       checkUndo(1) { replaceText(!2 - 0, !2 - 1, "D") }
@@ -499,7 +499,7 @@ public class MergeTest : MergeTestBase() {
     }
   }
 
-  public fun testNonConflictsActions() {
+  fun testNonConflictsActions() {
     val applyAllTitle = DiffBundle.message("merge.dialog.apply.all.non.conflicting.changes.action.name")
     val applyLeftTitle = DiffBundle.message("merge.dialog.apply.left.non.conflicting.changes.action.name")
     val applyRightTitle = DiffBundle.message("merge.dialog.apply.right.non.conflicting.changes.action.name")

@@ -184,6 +184,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private MyEditable myEditable;
 
+  @NotNull
   private EditorColorsScheme myScheme;
   private ArrowPainter myTabPainter;
   private boolean myIsViewer;
@@ -569,20 +570,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.setSize(preferredSize);
 
     updateCaretCursor();
-    
-    // This hacks context layout problem where editor appears scrolled to the right just after it is created.
-    if (!ourIsUnitTestMode) {
-      UiNotifyConnector.doWhenFirstShown(myEditorComponent, new Runnable() {
-        @Override
-        public void run() {
-          if (!isDisposed() && !myScrollingModel.isScrollingNow()) {
-            myScrollingModel.disableAnimation();
-            myScrollingModel.scrollHorizontally(0);
-            myScrollingModel.enableAnimation();
-          }
-        }
-      });
-    }
   }
 
   private boolean shouldSoftWrapsBeForced() {
@@ -877,7 +864,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Disposer.dispose(mySoftWrapModel);
     if (myUseNewRendering) Disposer.dispose(myView);
     clearCaretThread();
-    myScheme = null;
 
     myFocusListeners.clear();
     myMouseListeners.clear();

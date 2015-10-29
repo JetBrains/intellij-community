@@ -37,7 +37,7 @@ inline fun <T> Promise<T>.done(node: Obsolescent, crossinline handler: (T) -> Un
   override fun consume(param: T) = handler(param)
 })
 
-inline fun <T> Promise<T>.rejected(node: Obsolescent, crossinline handler: (Throwable) -> Unit) = rejected(object : ObsolescentConsumer<Throwable>(node) {
+inline fun Promise<*>.rejected(node: Obsolescent, crossinline handler: (Throwable) -> Unit) = rejected(object : ObsolescentConsumer<Throwable>(node) {
   override fun consume(param: Throwable) = handler(param)
 })
 
@@ -45,8 +45,12 @@ abstract class ObsolescentConsumer<T>(private val obsolescent: Obsolescent) : Ob
   override fun isObsolete() = obsolescent.isObsolete
 }
 
-inline fun <T> Promise<T>.done(context: SuspendContext, crossinline handler: (result: T, vm: Vm) -> Unit) = done(object : ContextDependentAsyncResultConsumer<T>(context) {
-  override fun consume(result: T, vm: Vm) = handler(result, vm)
+inline fun <T> Promise<T>.done(context: SuspendContext, crossinline handler: (result: T) -> Unit) = done(object : ContextDependentAsyncResultConsumer<T>(context) {
+  override fun consume(result: T, vm: Vm) = handler(result)
+})
+
+inline fun Promise<*>.rejected(context: SuspendContext, crossinline handler: (error: Throwable) -> Unit) = rejected(object : ContextDependentAsyncResultConsumer<Throwable>(context) {
+  override fun consume(result: Throwable, vm: Vm) = handler(result)
 })
 
 abstract class ContextDependentAsyncResultConsumer<T>(private val context: SuspendContext) : Consumer<T> {

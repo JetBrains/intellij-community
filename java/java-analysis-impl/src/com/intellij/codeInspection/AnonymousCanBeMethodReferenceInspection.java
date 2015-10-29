@@ -19,7 +19,6 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -69,7 +68,7 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
           final PsiMethod method = aClass.getMethods()[0];
           final PsiCodeBlock body = method.getBody();
           final PsiCallExpression callExpression =
-            LambdaCanBeMethodReferenceInspection.canBeMethodReferenceProblem(body, method.getParameterList().getParameters(), aClass.getBaseClassType());
+            LambdaCanBeMethodReferenceInspection.canBeMethodReferenceProblem(body, method.getParameterList().getParameters(), aClass.getBaseClassType(), aClass.getParent());
           if (callExpression != null) {
             final PsiMethod resolveMethod = callExpression.resolveMethod();
             if (resolveMethod != method &&
@@ -118,7 +117,7 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
 
           final PsiParameter[] parameters = methods[0].getParameterList().getParameters();
           final PsiCallExpression callExpression = LambdaCanBeMethodReferenceInspection
-            .canBeMethodReferenceProblem(methods[0].getBody(), parameters, anonymousClass.getBaseClassType());
+            .canBeMethodReferenceProblem(methods[0].getBody(), parameters, anonymousClass.getBaseClassType(), anonymousClass.getParent());
           if (callExpression == null) return;
           final String methodRefText =
             LambdaCanBeMethodReferenceInspection.createMethodReferenceText(callExpression, anonymousClass.getBaseClassType(), parameters);

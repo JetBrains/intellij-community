@@ -53,6 +53,10 @@ public class CopyClassTest extends CodeInsightTestCase {
     doTest("Foo", "Bar");
   }
 
+  public void testRecursiveTypes() throws Exception {
+    doTest("Foo", "Bar");
+  }
+
   public void testLibraryClass() throws Exception {  // IDEADEV-28791
     JavaCodeStyleSettings javaSettings = getCurrentCodeStyleSettings().getCustomSettings(JavaCodeStyleSettings.class);
     javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_ALWAYS;

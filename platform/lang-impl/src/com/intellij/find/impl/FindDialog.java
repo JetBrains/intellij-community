@@ -403,7 +403,7 @@ public class FindDialog extends DialogWrapper {
       setCaretPosition(comboBox, caretPosition);
     }
 
-    if (comboBox == myInputComboBox) scheduleResultsUpdate();
+    if (comboBox != myReplaceComboBox) scheduleResultsUpdate();
     validateFindButton();
   }
 

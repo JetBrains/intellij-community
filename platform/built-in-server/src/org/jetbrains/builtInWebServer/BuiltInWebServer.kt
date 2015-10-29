@@ -52,7 +52,7 @@ class BuiltInWebServer : HttpRequestHandler() {
       }
       else {
         offset = decodedPath.indexOf('/', 1)
-        projectName = decodedPath.substring(1, if (offset == -1) decodedPath.length() else offset)
+        projectName = decodedPath.substring(1, if (offset == -1) decodedPath.length else offset)
         emptyPath = offset == -1
       }
 
@@ -71,11 +71,11 @@ class BuiltInWebServer : HttpRequestHandler() {
         }
         else {
           // WEB-17839 Internal web server reports 404 when serving files from project with slashes in name
-          if (decodedPath.regionMatches(1, name, 0, name.length(), !SystemInfoRt.isFileSystemCaseSensitive)) {
-            var emptyPathCandidate = decodedPath.length() == (name.length() + 1)
-            if (emptyPathCandidate || decodedPath.charAt(name.length() + 1) == '/') {
+          if (decodedPath.regionMatches(1, name, 0, name.length, !SystemInfoRt.isFileSystemCaseSensitive)) {
+            var emptyPathCandidate = decodedPath.length == (name.length + 1)
+            if (emptyPathCandidate || decodedPath[name.length + 1] == '/') {
               projectName = name
-              offset = name.length() + 1
+              offset = name.length + 1
               emptyPath = emptyPathCandidate
               return true
             }
@@ -128,13 +128,13 @@ class BuiltInWebServer : HttpRequestHandler() {
     }
 
     val projectName: String?
-    val isIpv6 = host.charAt(0) == '[' && host.length() > 2 && host.charAt(host.length() - 1) == ']'
+    val isIpv6 = host[0] == '[' && host.length > 2 && host[host.length - 1] == ']'
     if (isIpv6) {
-      host = host.substring(1, host.length() - 1)
+      host = host.substring(1, host.length - 1)
     }
 
     if (isIpv6 || InetAddresses.isInetAddress(host) || isOwnHostName(host) || host.endsWith(".ngrok.io")) {
-      if (urlDecoder.path().length() < 2) {
+      if (urlDecoder.path().length < 2) {
         return false
       }
       projectName = null
@@ -148,7 +148,7 @@ class BuiltInWebServer : HttpRequestHandler() {
 
 fun compareNameAndProjectBasePath(projectName: String, project: Project): Boolean {
   val basePath = project.basePath
-  return basePath != null && basePath.length() > projectName.length() && basePath.endsWith(projectName) && basePath.charAt(basePath.length() - projectName.length() - 1) == '/'
+  return basePath != null && basePath.length > projectName.length && basePath.endsWith(projectName) && basePath[basePath.length - projectName.length - 1] == '/'
 }
 
 fun findIndexFile(basedir: VirtualFile): VirtualFile? {
@@ -193,7 +193,7 @@ fun isOwnHostName(host: String): Boolean {
     val localHostName = InetAddress.getLocalHost().hostName
     // WEB-8889
     // develar.local is own host name: develar. equals to "develar.labs.intellij.net" (canonical host name)
-    return localHostName.equals(host, ignoreCase = true) || (host.endsWith(".local") && localHostName.regionMatches(0, host, 0, host.length() - ".local".length(), true))
+    return localHostName.equals(host, ignoreCase = true) || (host.endsWith(".local") && localHostName.regionMatches(0, host, 0, host.length - ".local".length, true))
   }
   catch (ignored: UnknownHostException) {
     return false

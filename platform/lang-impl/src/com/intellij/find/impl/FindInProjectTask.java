@@ -224,7 +224,12 @@ class FindInProjectTask {
       myProgress.setText(text);
       myProgress.setText2(FindBundle.message("find.searching.for.string.in.file.occurrences.progress", count));
 
-      PsiFile psiFile = findFile(virtualFile);
+      PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+        @Override
+        public PsiFile compute() {
+          return findFile(virtualFile);
+        }
+      });
       if (psiFile == null) continue;
 
       int countInFile = FindInProjectUtil.processUsagesInFile(psiFile, myFindModel, new Processor<UsageInfo>() {
@@ -289,18 +294,8 @@ class FindInProjectTask {
               return;
             }
 
-            PsiFile psiFile = myPsiManager.findFile(virtualFile);
-            VirtualFile sourceVirtualFile = virtualFile;
-            if (psiFile != null && !(psiFile instanceof PsiBinaryFile)) {
-              PsiFile sourceFile = (PsiFile)psiFile.getNavigationElement();
-              if (sourceFile != null) {
-                psiFile = sourceFile;
-                sourceVirtualFile = PsiUtilCore.getVirtualFile(psiFile);
-              }
-            }
-            if (psiFile == null || psiFile.getFileType().isBinary()) {
-              sourceVirtualFile = null;
-            }
+            PsiFile psiFile = findFile(virtualFile);
+            VirtualFile sourceVirtualFile = PsiUtilCore.getVirtualFile(psiFile);
 
             if (sourceVirtualFile != null && !alreadySearched.contains(sourceVirtualFile)) {
               myFiles.add(sourceVirtualFile);
@@ -508,20 +503,14 @@ class FindInProjectTask {
   }
 
   private PsiFile findFile(@NotNull final VirtualFile virtualFile) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-      @Override
-      public PsiFile compute() {
-        PsiFile psiFile = myPsiManager.findFile(virtualFile);
-        if (psiFile != null && !(psiFile instanceof PsiBinaryFile)) {
-          PsiFile sourceFile = (PsiFile)psiFile.getNavigationElement();
-          if (sourceFile != null) psiFile = sourceFile;
-          if (psiFile.getFileType().isBinary()) {
-            psiFile = null;
-          }
-        }
-        return psiFile;
+    PsiFile psiFile = myPsiManager.findFile(virtualFile);
+    if (psiFile != null && !(psiFile instanceof PsiBinaryFile)) {
+      PsiFile sourceFile = (PsiFile)psiFile.getNavigationElement();
+      if (sourceFile != null) psiFile = sourceFile;
+      if (psiFile.getFileType().isBinary()) {
+        psiFile = null;
       }
-    });
+    }
+    return psiFile;
   }
-
 }

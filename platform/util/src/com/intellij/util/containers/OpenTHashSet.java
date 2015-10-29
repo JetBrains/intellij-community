@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.util.containers;
 
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -30,10 +31,9 @@ import java.util.Collection;
 */
 public class OpenTHashSet<T> extends THashSet<T> {
   public OpenTHashSet() {
-    super();
   }
 
-  public OpenTHashSet(final TObjectHashingStrategy<T> strategy) {
+  public OpenTHashSet(@NotNull TObjectHashingStrategy<T> strategy) {
     super(strategy);
   }
 
@@ -41,7 +41,7 @@ public class OpenTHashSet<T> extends THashSet<T> {
     super(initialCapacity);
   }
 
-  public OpenTHashSet(final int initialCapacity, final TObjectHashingStrategy<T> strategy) {
+  public OpenTHashSet(final int initialCapacity, @NotNull TObjectHashingStrategy<T> strategy) {
     super(initialCapacity, strategy);
   }
 
@@ -49,19 +49,19 @@ public class OpenTHashSet<T> extends THashSet<T> {
     super(initialCapacity, loadFactor);
   }
 
-  public OpenTHashSet(final int initialCapacity, final float loadFactor, final TObjectHashingStrategy<T> strategy) {
+  public OpenTHashSet(final int initialCapacity, final float loadFactor, @NotNull TObjectHashingStrategy<T> strategy) {
     super(initialCapacity, loadFactor, strategy);
   }
 
-  public OpenTHashSet(final Collection<? extends T> ts) {
+  public OpenTHashSet(@NotNull Collection<? extends T> ts) {
     super(ts);
   }
 
-  public OpenTHashSet(final Collection<? extends T> ts, final TObjectHashingStrategy<T> strategy) {
+  public OpenTHashSet(@NotNull Collection<? extends T> ts, @NotNull TObjectHashingStrategy<T> strategy) {
     super(ts, strategy);
   }
 
-  public OpenTHashSet(final TObjectHashingStrategy<T> strategy, final T... ts) {
+  public OpenTHashSet(@NotNull TObjectHashingStrategy<T> strategy, @NotNull T... ts) {
     super(Arrays.asList(ts), strategy);
   }
 

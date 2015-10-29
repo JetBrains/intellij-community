@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -63,7 +64,7 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
     final Runnable findRedundantImports = new Runnable() {
       @Override
       public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
+        DumbService.getInstance(project).runReadActionInSmartMode(new Runnable() {
           @Override
           public void run() {
             final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);

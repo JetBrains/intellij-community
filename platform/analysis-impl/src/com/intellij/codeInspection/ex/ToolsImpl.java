@@ -33,10 +33,8 @@ import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.search.scope.packageSet.*;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -414,9 +412,21 @@ public class ToolsImpl implements Tools {
         final NamedScope scope = state.getScope(project);
         if (scope != null) {
           final PackageSet packageSet = scope.getValue();
-          if (packageSet != null && packageSet.contains(element.getContainingFile(), validationManager)) {
-            state.setEnabled(false);
-            return;
+          if (packageSet != null) {
+            final PsiFile file = element.getContainingFile();
+            if (file != null) {
+              if (packageSet.contains(file, validationManager)) {
+                state.setEnabled(false);
+                return;
+              }
+            }
+            else {
+              if (packageSet instanceof PackageSetBase &&
+                  ((PackageSetBase)packageSet).contains(PsiUtilCore.getVirtualFile(element), project, validationManager)) {
+                state.setEnabled(false);
+                return;
+              }
+            }
           }
         }
       }

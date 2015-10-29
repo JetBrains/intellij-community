@@ -407,6 +407,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         fromVFile = myTempDirFixture.getFile(sourceFilePath);
       }
       Assert.assertNotNull("can't find test data file " + sourceFilePath + " (" + testDataPath + ")", fromVFile);
+      VfsTestUtil.assertFilePathEndsWithCaseSensitivePath(fromVFile, sourceFilePath);
       result = myTempDirFixture.copyFile(fromVFile, targetPath);
     }
     else {
@@ -1604,6 +1605,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     final VirtualFile copy = LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath.replace(File.separatorChar, '/'));
     Assert.assertNotNull("file " + fullPath + " not found", copy);
+    VfsTestUtil.assertFilePathEndsWithCaseSensitivePath(copy, filePath);
     return copy;
   }
 

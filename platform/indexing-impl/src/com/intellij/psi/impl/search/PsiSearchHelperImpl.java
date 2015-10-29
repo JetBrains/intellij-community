@@ -20,6 +20,7 @@ import com.intellij.concurrency.AsyncFuture;
 import com.intellij.concurrency.AsyncUtil;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -165,7 +166,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (text.isEmpty()) {
       throw new IllegalArgumentException("Cannot search for elements with empty text");
     }
-    ProgressIndicator progress = getOrCreateIndicator();
+    final ProgressIndicator progress = getOrCreateIndicator();
+    final boolean processInjectedPsi = options.contains(Options.PROCESS_INJECTED_PSI);
     if (searchScope instanceof GlobalSearchScope) {
       StringSearcher searcher = new StringSearcher(text, options.contains(Options.CASE_SENSITIVE_SEARCH), true,
                                                    searchContext == UsageSearchContext.IN_STRINGS,
@@ -175,14 +177,33 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                   (GlobalSearchScope)searchScope,
                                                   searcher,
                                                   searchContext, options.contains(Options.CASE_SENSITIVE_SEARCH), containerName, progress,
-                                                  options.contains(Options.PROCESS_INJECTED_PSI));
+                                                  processInjectedPsi);
     }
     LocalSearchScope scope = (LocalSearchScope)searchScope;
     PsiElement[] scopeElements = scope.getScope();
     final StringSearcher searcher = new StringSearcher(text, options.contains(Options.CASE_SENSITIVE_SEARCH), true,
                                                        searchContext == UsageSearchContext.IN_STRINGS,
                                                        options.contains(Options.PROCESS_ONLY_JAVA_IDENTIFIERS_IF_POSSIBLE));
-    Processor<PsiElement> localProcessor = localProcessor(processor, progress, options.contains(Options.PROCESS_INJECTED_PSI), searcher);
+    ReadActionProcessor<PsiElement> localProcessor = new ReadActionProcessor<PsiElement>() {
+      @Override
+      public boolean processInReadAction(PsiElement scopeElement) {
+        if (!scopeElement.isValid()) return true;
+        if (!scopeElement.isPhysical()) {
+          scopeElement = scopeElement.getNavigationElement();
+        }
+        if (scopeElement.getTextRange() == null) {
+          // clients can put whatever they want to the LocalSearchScope. Skip what we can't process.
+          LOG.debug("Element " + scopeElement + " of class " + scopeElement.getClass() + " has null range");
+          return true;
+        }
+        return LowLevelSearchUtil.processElementsContainingWordInElement(processor, scopeElement, searcher, processInjectedPsi, progress);
+      }
+
+      @Override
+      public String toString() {
+        return processor.toString();
+      }
+    };
     return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(scopeElements), progress, true, true, localProcessor);
   }
 
@@ -202,16 +223,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                       @NotNull final ProgressIndicator progress,
                                                       final boolean processInjectedPsi,
                                                       @NotNull final StringSearcher searcher) {
-    return new Processor<PsiElement>() {
-        @Override
-        public boolean process(final PsiElement scopeElement) {
-          return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-            @Override
-            public Boolean compute() {
-              return LowLevelSearchUtil.processElementsContainingWordInElement(processor, scopeElement, searcher, processInjectedPsi, progress);
-            }
-          }).booleanValue();
-        }
+    return new ReadActionProcessor<PsiElement>() {
+      @Override
+      public boolean processInReadAction(PsiElement scopeElement) {
+        return scopeElement.isValid() &&
+               LowLevelSearchUtil.processElementsContainingWordInElement(processor, scopeElement, searcher, processInjectedPsi, progress);
+      }
 
       @Override
       public String toString() {

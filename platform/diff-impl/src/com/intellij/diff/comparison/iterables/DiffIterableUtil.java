@@ -336,11 +336,11 @@ public class DiffIterableUtil {
     }
   }
 
-  public static class TrimChangeBuilder extends ChangeBuilder {
+  public static class ExpandChangeBuilder extends ChangeBuilder {
     @NotNull private final List<?> myObjects1;
     @NotNull private final List<?> myObjects2;
 
-    public TrimChangeBuilder(@NotNull List<?> objects1, @NotNull List<?> objects2) {
+    public ExpandChangeBuilder(@NotNull List<?> objects1, @NotNull List<?> objects2) {
       super(objects1.size(), objects2.size());
       myObjects1 = objects1;
       myObjects2 = objects2;

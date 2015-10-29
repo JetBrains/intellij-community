@@ -24,7 +24,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
@@ -356,14 +355,8 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
 
 
     private void processInjectionWithContext(BaseInjection injection, boolean settingsAvailable) {
-      Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
-      if (language == null) {
-        ReferenceInjector injector = ReferenceInjector.findById(injection.getInjectedLanguageId());
-        if (injector != null) {
-          language = injector.toLanguage();
-        }
-        else return;
-      }
+      Language language = InjectorUtils.getLanguage(injection);
+      if (language == null) return;
 
       String languageID = language.getID();
       List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list = ContainerUtil.newArrayList();

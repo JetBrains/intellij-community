@@ -135,7 +135,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
                                                                      @Nullable PsiType to,
                                                                      @Nullable PsiExpression context) {
     TypeConversionDescriptor descriptorBase = null;
-    PsiType conversionType = to;
+    PsiType conversionType = null;
     boolean needSpecifyType = true;
     if (methodName.equals("from")) {
       descriptorBase = new TypeConversionDescriptor("FluentIterable.from($it$)", null) {
@@ -212,19 +212,34 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
         final TypeConversionDescriptor descriptor = base.create();
         needSpecifyType = base.isChainedMethod();
         if (needSpecifyType && !base.isFluentIterableReturnType()) {
-          conversionType =
-            JavaPsiFacade.getElementFactory(method.getProject()).createTypeByFQClassName(GuavaOptionalConversionRule.JAVA_OPTIONAL);
+          conversionType = getTypeParametersAsText(GuavaOptionalConversionRule.JAVA_OPTIONAL, context.getType(), context);
         }
         descriptorBase = descriptor;
       }
     }
     if (descriptorBase != null) {
-      if (needSpecifyType && conversionType != null) {
+      if (needSpecifyType) {
+        if (conversionType == null) {
+          conversionType = getTypeParametersAsText(StreamApiConstants.JAVA_UTIL_STREAM_STREAM, context.getType(), context);
+        }
         descriptorBase.withConversionType(conversionType);
       }
       return descriptorBase;
     }
     return null;
+  }
+
+  @NotNull
+  private static PsiType getTypeParametersAsText(String baseClassQualifiedName, PsiType type, PsiElement context) {
+    String parameterText = "";
+    if (type != null) {
+      final String canonicalText = type.getCanonicalText(false);
+      if (canonicalText.contains("<")) {
+        parameterText = canonicalText.substring(canonicalText.indexOf('<'));
+      }
+    }
+
+    return JavaPsiFacade.getElementFactory(context.getProject()).createTypeFromText(baseClassQualifiedName + parameterText, context);
   }
 
   @Nullable

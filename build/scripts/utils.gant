@@ -17,6 +17,7 @@
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.jps.gant.JpsGantTool
 import org.jetbrains.jps.gant.TeamCityBuildInfoPrinter
 import org.jetbrains.jps.model.java.*
@@ -914,6 +915,7 @@ binding.setVariable("buildWinZip", { String zipPath, List paths, String zipPrefi
 binding.setVariable("buildCrossPlatformZip", { String zipPath, String sandbox, List commonPaths, String distWin, String distUnix, String distMac ->
   projectBuilder.stage("Building cross-platform zip")
 
+  def executableName = StringUtil.trimEnd(new File(distMac, "bin").list().find { it.endsWith(".vmoptions") }, ".vmoptions")
   def zipDir = "$sandbox/cross-platform-zip"
   def ideaPropertiesFile = commonPaths.collect { new File(it, "bin/idea.properties") }.find { it.exists() }
   ["win", "linux"].each {
@@ -923,16 +925,16 @@ binding.setVariable("buildCrossPlatformZip", { String zipPath, String sandbox, L
   ant.fixcrlf(file: "$zipDir/bin/win/idea.properties", eol: "dos")
   ant.copy(todir: "$zipDir/bin/linux") {
     fileset(dir: "$distUnix/bin") {
-      include(name: "idea*.vmoptions")
+      include(name: "*.vmoptions")
     }
   }
   ant.copy(todir: "$zipDir/bin/mac") {
     fileset(dir: "$distMac/bin") {
-      include(name: "idea.vmoptions")
+      include(name: "${executableName}.vmoptions")
       include(name: "idea.properties")
     }
   }
-  ant.copy(file: "$distMac/bin/idea.vmoptions", tofile: "$zipDir/bin/mac/idea64.vmoptions")
+  ant.copy(file: "$distMac/bin/${executableName}.vmoptions", tofile: "$zipDir/bin/mac/${executableName}64.vmoptions")
   ant.copy(todir: "$zipDir/bin") {
     fileset(dir: "$distMac/bin") {
       include(name: "*.jnilib")
@@ -950,17 +952,17 @@ binding.setVariable("buildCrossPlatformZip", { String zipPath, String sandbox, L
 
     fileset(dir: distWin) {
       exclude(name: "bin/fsnotifier*.exe")
-      exclude(name: "bin/idea*.exe.vmoptions")
-      exclude(name: "bin/idea*.exe")
+      exclude(name: "bin/*.exe.vmoptions")
+      exclude(name: "bin/${executableName}*.exe")
     }
     zipfileset(dir: "$distWin/bin", prefix: "bin/win") {
       include(name: "fsnotifier*.exe")
-      include(name: "idea*.exe.vmoptions")
+      include(name: "*.exe.vmoptions")
     }
 
     fileset(dir: distUnix) {
       exclude(name: "bin/fsnotifier*")
-      exclude(name: "bin/idea*.vmoptions")
+      exclude(name: "bin/*.vmoptions")
       exclude(name: "bin/*.sh")
       exclude(name: "help/**")
     }
@@ -978,7 +980,7 @@ binding.setVariable("buildCrossPlatformZip", { String zipPath, String sandbox, L
       exclude(name: "bin/*.py")
       exclude(name: "bin/*.jnilib")
       exclude(name: "bin/idea.properties")
-      exclude(name: "bin/idea*.vmoptions")
+      exclude(name: "bin/*.vmoptions")
     }
     zipfileset(dir: "$distMac/bin", filemode: "775", prefix: "bin") {
       include(name: "restarter*")

@@ -31,7 +31,7 @@ import junit.framework.ComparisonFailure
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 
-public abstract class DiffTestCase : UsefulTestCase() {
+abstract class DiffTestCase : UsefulTestCase() {
   companion object {
     private val DEFAULT_CHAR_COUNT = 12
     private val DEFAULT_CHAR_TABLE: Map<Int, Char> = {
@@ -41,11 +41,11 @@ public abstract class DiffTestCase : UsefulTestCase() {
     }()
   }
 
-  public val RNG: Random = Random()
+  val RNG: Random = Random()
   private var gotSeedException = false
 
-  public val INDICATOR: ProgressIndicator = DumbProgressIndicator.INSTANCE
-  public val MANAGER: ComparisonManagerImpl = ComparisonManagerImpl()
+  val INDICATOR: ProgressIndicator = DumbProgressIndicator.INSTANCE
+  val MANAGER: ComparisonManagerImpl = ComparisonManagerImpl()
 
 
   override fun setUp() {
@@ -62,19 +62,19 @@ public abstract class DiffTestCase : UsefulTestCase() {
   // Assertions
   //
 
-  public fun assertTrue(actual: Boolean, message: String = "") {
+  fun assertTrue(actual: Boolean, message: String = "") {
     assertTrue(message, actual)
   }
 
-  public fun assertEquals(expected: Any?, actual: Any?, message: String = "") {
+  fun assertEquals(expected: Any?, actual: Any?, message: String = "") {
     assertEquals(message, expected, actual)
   }
 
-  public fun assertEquals(expected: CharSequence?, actual: CharSequence?, message: String = "") {
+  fun assertEquals(expected: CharSequence?, actual: CharSequence?, message: String = "") {
     if (!StringUtil.equals(expected, actual)) throw ComparisonFailure(message, expected?.toString(), actual?.toString())
   }
 
-  public fun assertEqualsCharSequences(chunk1: CharSequence, chunk2: CharSequence, ignoreSpaces: Boolean, skipLastNewline: Boolean) {
+  fun assertEqualsCharSequences(chunk1: CharSequence, chunk2: CharSequence, ignoreSpaces: Boolean, skipLastNewline: Boolean) {
     if (ignoreSpaces) {
       assertTrue(StringUtil.equalsIgnoreWhitespaces(chunk1, chunk2))
     } else {
@@ -93,18 +93,18 @@ public abstract class DiffTestCase : UsefulTestCase() {
   // Parsing
   //
 
-  public fun textToReadableFormat(text: CharSequence?): String {
+  fun textToReadableFormat(text: CharSequence?): String {
     if (text == null) return "null"
     return "'" + text.toString().replace('\n', '*').replace('\t', '+') + "'"
   }
 
-  public fun parseSource(string: CharSequence): String = string.toString().replace('_', '\n')
+  fun parseSource(string: CharSequence): String = string.toString().replace('_', '\n')
 
-  public fun parseMatching(before: String, after: String): Couple<BitSet> {
+  fun parseMatching(before: String, after: String): Couple<BitSet> {
     return Couple.of(parseMatching(before), parseMatching(after))
   }
 
-  public fun parseMatching(matching: String): BitSet {
+  fun parseMatching(matching: String): BitSet {
     val set = BitSet()
     matching.filterNot { it == '.' }.forEachIndexed { i, c -> if (c != ' ') set.set(i) }
     return set
@@ -114,17 +114,17 @@ public abstract class DiffTestCase : UsefulTestCase() {
   // Misc
   //
 
-  public fun getLineCount(document: Document): Int {
-    return Math.max(1, document.getLineCount())
+  fun getLineCount(document: Document): Int {
+    return Math.max(1, document.lineCount)
   }
 
-  public infix fun Int.until(a: Int): IntRange = this..a - 1
+  infix fun Int.until(a: Int): IntRange = this..a - 1
 
   //
   // AutoTests
   //
 
-  public fun doAutoTest(seed: Long, runs: Int, test: (DebugData) -> Unit) {
+  fun doAutoTest(seed: Long, runs: Int, test: (DebugData) -> Unit) {
     RNG.setSeed(seed)
 
     var lastSeed: Long = -1
@@ -149,7 +149,7 @@ public abstract class DiffTestCase : UsefulTestCase() {
     }
   }
 
-  public fun generateText(maxLength: Int, charCount: Int, predefinedChars: Map<Int, Char>): String {
+  fun generateText(maxLength: Int, charCount: Int, predefinedChars: Map<Int, Char>): String {
     val length = RNG.nextInt(maxLength + 1)
     val builder = StringBuilder(length)
 
@@ -161,11 +161,11 @@ public abstract class DiffTestCase : UsefulTestCase() {
     return builder.toString()
   }
 
-  public fun generateText(maxLength: Int): String {
+  fun generateText(maxLength: Int): String {
     return generateText(maxLength, DEFAULT_CHAR_COUNT, DEFAULT_CHAR_TABLE)
   }
 
-  public fun getCurrentSeed(): Long {
+  fun getCurrentSeed(): Long {
     if (gotSeedException) return -1
     try {
       val seedField = RNG.javaClass.getDeclaredField("seed")
@@ -186,18 +186,18 @@ public abstract class DiffTestCase : UsefulTestCase() {
     }
   }
 
-  public class DebugData() {
+  class DebugData() {
     private val data: MutableList<Pair<String, Any>> = ArrayList()
 
-    public fun put(key: String, value: Any) {
+    fun put(key: String, value: Any) {
       data.add(Pair(key, value))
     }
 
-    public fun reset() {
+    fun reset() {
       data.clear()
     }
 
-    public fun dump() {
+    fun dump() {
       data.forEach { println(it.first + ": " + it.second) }
     }
   }
@@ -206,22 +206,22 @@ public abstract class DiffTestCase : UsefulTestCase() {
   // Helpers
   //
 
-  public open class Trio<T: Any>(val data1: T, val data2: T, val data3: T) {
+  open class Trio<T : Any>(val data1: T, val data2: T, val data3: T) {
     companion object {
-      public fun <V: Any> from(f: (ThreeSide) -> V): Trio<V> = Trio(f(ThreeSide.LEFT), f(ThreeSide.BASE), f(ThreeSide.RIGHT))
+      fun <V : Any> from(f: (ThreeSide) -> V): Trio<V> = Trio(f(ThreeSide.LEFT), f(ThreeSide.BASE), f(ThreeSide.RIGHT))
     }
 
-    public fun <V: Any> map(f: (T) -> V): Trio<V> = Trio(f(data1), f(data2), f(data3))
+    fun <V : Any> map(f: (T) -> V): Trio<V> = Trio(f(data1), f(data2), f(data3))
 
-    public fun <V: Any> map(f: (T, ThreeSide) -> V): Trio<V> = Trio(f(data1, ThreeSide.LEFT), f(data2, ThreeSide.BASE), f(data3, ThreeSide.RIGHT))
+    fun <V : Any> map(f: (T, ThreeSide) -> V): Trio<V> = Trio(f(data1, ThreeSide.LEFT), f(data2, ThreeSide.BASE), f(data3, ThreeSide.RIGHT))
 
-    public fun forEach(f: (T, ThreeSide) -> Unit): Unit {
+    fun forEach(f: (T, ThreeSide) -> Unit): Unit {
       f(data1, ThreeSide.LEFT)
       f(data2, ThreeSide.BASE)
       f(data3, ThreeSide.RIGHT)
     }
 
-    public operator fun invoke(side: ThreeSide): T = side.select(data1, data2, data3) as T
+    operator fun invoke(side: ThreeSide): T = side.select(data1, data2, data3) as T
 
     override fun toString(): String {
       return "($data1, $data2, $data3)"

@@ -28,7 +28,7 @@ import java.util.ResourceBundle;
  * @author yole
  */
 public class TypeNameEP extends AbstractExtensionPointBean {
-  public static ExtensionPointName<TypeNameEP> EP_NAME = ExtensionPointName.create("com.intellij.typeName");
+  public static final ExtensionPointName<TypeNameEP> EP_NAME = ExtensionPointName.create("com.intellij.typeName");
 
   @Attribute("className")
   public String className;

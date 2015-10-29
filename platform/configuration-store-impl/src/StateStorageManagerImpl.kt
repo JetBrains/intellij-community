@@ -136,13 +136,13 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   protected open fun normalizeFileSpec(fileSpec: String): String {
     val path = FileUtilRt.toSystemIndependentName(fileSpec)
     // fileSpec for directory based storage could be erroneously specified as "name/"
-    return if (path.endsWith('/')) path.substring(0, path.length() - 1) else path
+    return if (path.endsWith('/')) path.substring(0, path.length - 1) else path
   }
 
   fun getOrCreateStorage(collapsedPath: String,
                          roamingType: RoamingType = RoamingType.DEFAULT,
                          storageClass: Class<out StateStorage> = StateStorage::class.java,
-                         @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE") @SuppressWarnings("deprecation") stateSplitter: Class<out StateSplitter> = StateSplitterEx::class.java): StateStorage {
+                         @Suppress("DEPRECATION") @SuppressWarnings("deprecation") stateSplitter: Class<out StateSplitter> = StateSplitterEx::class.java): StateStorage {
     val normalizedCollapsedPath = normalizeFileSpec(collapsedPath)
     val key = if (storageClass == StateStorage::class.java) normalizedCollapsedPath else storageClass.name
     storageLock.withLock {
@@ -181,7 +181,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   protected open fun createStateStorage(storageClass: Class<out StateStorage>,
                                         collapsedPath: String,
                                         roamingType: RoamingType,
-                                        @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE") stateSplitter: Class<out StateSplitter>): StateStorage {
+                                        @Suppress("DEPRECATION") stateSplitter: Class<out StateSplitter>): StateStorage {
     if (storageClass != StateStorage::class.java) {
       val constructor = storageClass.constructors[0]!!
       constructor.isAccessible = true
@@ -193,7 +193,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     }
 
     val filePath = expandMacros(collapsedPath)
-    @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
+    @Suppress("DEPRECATION")
     if (stateSplitter != StateSplitter::class.java && stateSplitter != StateSplitterEx::class.java) {
       val storage = MyDirectoryStorage(this, File(filePath), ReflectionUtil.newInstance(stateSplitter))
       virtualFileTracker?.put(filePath, storage)
@@ -212,7 +212,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     return storage
   }
 
-  private class MyDirectoryStorage(override val storageManager: StateStorageManagerImpl, file: File, @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE") splitter: StateSplitter) :
+  private class MyDirectoryStorage(override val storageManager: StateStorageManagerImpl, file: File, @Suppress("DEPRECATION") splitter: StateSplitter) :
     DirectoryBasedStorage(file, splitter, storageManager.pathMacroSubstitutor), StorageVirtualFileTracker.TrackedStorage
 
   private class MyFileStorage(override val storageManager: StateStorageManagerImpl,
@@ -370,12 +370,12 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       }
 
       var saveSessions: MutableList<SaveSession>? = null
-      val externalizationSessions = sessions.values()
+      val externalizationSessions = sessions.values
       for (session in externalizationSessions) {
         val saveSession = session.createSaveSession()
         if (saveSession != null) {
           if (saveSessions == null) {
-            if (externalizationSessions.size() == 1) {
+            if (externalizationSessions.size == 1) {
               return listOf(saveSession)
             }
             saveSessions = SmartList<SaveSession>()
@@ -389,7 +389,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
   override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): StateStorage? {
     val oldStorageSpec = getOldStorageSpec(component, componentName, operation) ?: return null
-    @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
+    @Suppress("DEPRECATION")
     return getOrCreateStorage(oldStorageSpec, if (component is com.intellij.openapi.util.RoamingTypeDisabled) RoamingType.DISABLED else RoamingType.DEFAULT)
   }
 
@@ -397,6 +397,6 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 }
 
 fun String.startsWithMacro(macro: String): Boolean {
-  val i = macro.length()
-  return length() > i && charAt(i) == '/' && startsWith(macro)
+  val i = macro.length
+  return length > i && this[i] == '/' && startsWith(macro)
 }

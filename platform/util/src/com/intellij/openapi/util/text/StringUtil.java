@@ -795,11 +795,21 @@ public class StringUtil extends StringUtilRt {
       return suggestion;
     }
 
+    int len = suggestion.length();
+    if (endsWithIgnoreCase(suggestion, "ex") || endsWithIgnoreCase(suggestion, "ix")) {
+      return suggestion.substring(0, len - 2) + "ices";
+    }
+    if (endsWithIgnoreCase(suggestion, "um")) {
+      return suggestion.substring(0, len - 2) + "a";
+    }
+    if (endsWithIgnoreCase(suggestion, "an")) {
+      return suggestion.substring(0, len - 2) + "en";
+    }
+
     if (endsWithIgnoreCase(suggestion, "s") || endsWithIgnoreCase(suggestion, "x") || endsWithIgnoreCase(suggestion, "ch")) {
       return suggestion + "es";
     }
 
-    int len = suggestion.length();
     if (endsWithIgnoreCase(suggestion, "y") && len > 1 && !isVowel(toLowerCase(suggestion.charAt(len - 2)))) {
       return suggestion.substring(0, len - 1) + "ies";
     }
@@ -3016,10 +3026,9 @@ public class StringUtil extends StringUtilRt {
     return StringUtilRt.toUpperCase(a);
   }
 
-  @NotNull
-  @Contract(pure = true)
-  public static String toUpperCase(@NotNull String a) {
-    return StringUtilRt.toUpperCase(a).toString();
+  @Contract(value = "null -> null; !null -> !null", pure = true)
+  public static String toUpperCase(String a) {
+    return a == null ? null : StringUtilRt.toUpperCase(a).toString();
   }
 
   @Contract(pure = true)

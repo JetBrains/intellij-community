@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class MvcCliCommandExecutor extends MvcCommandExecutor {
                                            boolean showConsole,
                                            boolean closeOnDone,
                                            String... input) {
-    final GeneralCommandLine commandLine = framework.createCommandAndShowErrors(null, module, mvcCommand);
+    final GeneralCommandLine commandLine = framework.createCommandAndShowErrors(module, mvcCommand);
     if (commandLine == null) return null;
     return MvcConsole.executeProcess(module, commandLine, onDone, closeOnDone, input);
   }

@@ -37,7 +37,6 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,7 +86,7 @@ public class LookupCellRenderer implements ListCellRenderer {
   private int myMaxWidth = -1;
 
   public LookupCellRenderer(LookupImpl lookup) {
-    EditorColorsScheme scheme = lookup.getEditor().getColorsScheme();
+    EditorColorsScheme scheme = lookup.getTopLevelEditor().getColorsScheme();
     myNormalFont = scheme.getFont(EditorFontType.PLAIN);
     myBoldFont = scheme.getFont(EditorFontType.BOLD);
 
@@ -110,8 +109,8 @@ public class LookupCellRenderer implements ListCellRenderer {
     myPanel.add(myTypeLabel, BorderLayout.EAST);
     myTypeLabel.setBorder(new EmptyBorder(0, 0, 0, AFTER_TYPE));
 
-    myNormalMetrics = myLookup.getEditor().getComponent().getFontMetrics(myNormalFont);
-    myBoldMetrics = myLookup.getEditor().getComponent().getFontMetrics(myBoldFont);
+    myNormalMetrics = myLookup.getTopLevelEditor().getComponent().getFontMetrics(myNormalFont);
+    myBoldMetrics = myLookup.getTopLevelEditor().getComponent().getFontMetrics(myBoldFont);
   }
 
   private boolean myIsSelected = false;
@@ -328,7 +327,7 @@ public class LookupCellRenderer implements ListCellRenderer {
   private FontMetrics getRealFontMetrics(LookupElement item, boolean bold) {
     Font customFont = myLookup.getCustomFont(item, bold);
     if (customFont != null) {
-      return myLookup.getEditor().getComponent().getFontMetrics(customFont);
+      return myLookup.getTopLevelEditor().getComponent().getFontMetrics(customFont);
     }
 
     return bold ? myBoldMetrics : myNormalMetrics;
@@ -431,7 +430,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     // assume a single font can display all lookup item chars
     Set<Font> fonts = ContainerUtil.newHashSet();
     for (int i = 0; i < sampleString.length(); i++) {
-      fonts.add(EditorUtil.fontForChar(sampleString.charAt(i), Font.PLAIN, myLookup.getEditor()).getFont());
+      fonts.add(EditorUtil.fontForChar(sampleString.charAt(i), Font.PLAIN, myLookup.getTopLevelEditor()).getFont());
     }
 
     eachFont: for (Font font : fonts) {

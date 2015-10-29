@@ -145,7 +145,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       myPublisher.enteredDumbMode();
     }
     else {
-      updateFinished();
+      updateFinished(true);
     }
   }
 
@@ -188,7 +188,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       return;
     }
 
-    invokeLaterIfNeeded(application, new DumbAwareRunnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         if (myProject.isDisposed()) {
@@ -242,23 +242,14 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
                 startBackgroundProcess(modal);
               }
               catch (Throwable e) {
-                updateFinished();
+                updateFinished(modal);
                 LOG.error("Failed to start background index update task", e);
               }
             }
-          }, myProject.getDisposed());
+          }, ModalityState.any(), myProject.getDisposed());
         }
       }
     });
-  }
-
-  private static void invokeLaterIfNeeded(Application application, DumbAwareRunnable runnable) {
-    if (application.isDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      application.invokeLater(runnable, ModalityState.any());
-    }
   }
 
   @Nullable
@@ -294,7 +285,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     };
   }
 
-  private void updateFinished() {
+  private void updateFinished(boolean modal) {
     myDumb = false;
     myDumbStart = null;
     myModificationCount++;
@@ -302,6 +293,16 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     if (ApplicationManager.getApplication().isInternal()) LOG.info("updateFinished");
 
+    // some listeners might start yet another dumb mode
+    // allow that whatever the current modality is, because it won't harm anyone
+    allowStartingDumbModeInside(modal ? DumbModePermission.MAY_START_MODAL : DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      public void run() {
+        notifyUpdateFinished();
+      }
+    });
+  }
+
+  private void notifyUpdateFinished() {
     try {
       myPublisher.exitDumbMode();
       FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
@@ -430,7 +431,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
           DumbModeTask task = null;
           while (true) {
-            Pair<DumbModeTask, ProgressIndicatorEx> pair = getNextTask(task);
+            Pair<DumbModeTask, ProgressIndicatorEx> pair = getNextTask(task, modal);
             if (pair == null) break;
             
             task = pair.first;
@@ -491,7 +492,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }, taskIndicator);
   }
 
-  @Nullable private Pair<DumbModeTask, ProgressIndicatorEx> getNextTask(@Nullable final DumbModeTask prevTask) {
+  @Nullable private Pair<DumbModeTask, ProgressIndicatorEx> getNextTask(@Nullable final DumbModeTask prevTask, final boolean modal) {
     final Ref<Pair<DumbModeTask, ProgressIndicatorEx>> result = Ref.create();
     invokeAndWaitIfNeeded(new Runnable() {
       @Override
@@ -503,7 +504,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
         while (true) {
           if (myUpdatesQueue.isEmpty()) {
-            updateFinished();
+            updateFinished(modal);
             return;
           }
 
@@ -528,10 +529,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
     else {
       try {
-        ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.defaultModalityState());
+        SwingUtilities.invokeAndWait(runnable);
       }
-      catch (ProcessCanceledException ignore) {
-        // thrown instead of InterruptedException by semaphore in invokeAndWait
+      catch (InterruptedException ignore) {
       }
       catch (Exception e) {
         LOG.error(e);

@@ -42,7 +42,7 @@ public abstract class LookupManager {
     final LookupEx lookup = getInstance(project).getActiveLookup();
     if (lookup == null) return null;
 
-    return InjectedLanguageUtil.getTopLevelEditor(lookup.getEditor()) == InjectedLanguageUtil.getTopLevelEditor(editor) ? lookup : null;
+    return lookup.getTopLevelEditor() == InjectedLanguageUtil.getTopLevelEditor(editor) ? lookup : null;
   }
 
   @Nullable

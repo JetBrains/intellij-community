@@ -32,6 +32,7 @@ import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -202,10 +203,18 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
       if (children.length > extraChildCount) {
         PsiElement[] result = new PsiElement[children.length - extraChildCount];
-        final int extraChildStart = 2;
-        System.arraycopy(children, extraChildStart, result, 0, children.length - extraChildCount);
+        System.arraycopy(children, 2, result, 0, children.length - extraChildCount);
 
-        if (shouldTryClassPattern(result)) {
+        if (shouldTryExpressionPattern(result)) {
+          try {
+            final PsiElement[] expressionPattern =
+              createPatternTree(text, PatternTreeContext.Expression, fileType, language, contextName, extension, project, false);
+            if (expressionPattern.length == 1) {
+              result = expressionPattern;
+            }
+          } catch (IncorrectOperationException ignore) {}
+        }
+        else if (shouldTryClassPattern(result)) {
           final PsiElement[] classPattern =
             createPatternTree(text, PatternTreeContext.Class, fileType, language, contextName, extension, project, false);
           if (classPattern.length == 1) {
@@ -237,9 +246,34 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
       return PsiUtilCore.toPsiElementArray(result);
     }
+    else if (context == PatternTreeContext.Expression) {
+      final PsiExpression expression = elementFactory.createExpressionFromText(text, null);
+      final PsiBlockStatement statement = (PsiBlockStatement)elementFactory.createStatementFromText("{\na\n}", null);
+      final PsiElement[] children = statement.getCodeBlock().getChildren();
+      if (children.length != 5) return PsiElement.EMPTY_ARRAY;
+      final PsiExpressionStatement childStatement = (PsiExpressionStatement)children[2];
+      childStatement.getExpression().replace(expression);
+      return new PsiElement[] { childStatement };
+    }
     else {
       return PsiFileFactory.getInstance(project).createFileFromText("__dummy.java", text).getChildren();
     }
+  }
+
+  private static boolean shouldTryExpressionPattern(PsiElement[] elements) {
+    if (elements.length >= 1 && elements.length <= 3) {
+      final PsiElement firstElement = elements[0];
+      if (firstElement instanceof PsiDeclarationStatement) {
+        final PsiElement lastChild = firstElement.getLastChild();
+        if (lastChild instanceof PsiErrorElement && PsiTreeUtil.prevLeaf(lastChild) instanceof PsiErrorElement) {
+          // Because an identifier followed by < (less than) is parsed as the start of a declaration
+          // in com.intellij.lang.java.parser.StatementParser.parseStatement() line 236
+          // but it could just be a comparison
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private static boolean shouldTryClassPattern(PsiElement[] result) {

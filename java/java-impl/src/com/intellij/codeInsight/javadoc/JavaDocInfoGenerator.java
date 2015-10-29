@@ -931,12 +931,13 @@ public class JavaDocInfoGenerator {
       if (nameReferenceElement == null) continue;
       final PsiElement resolved = nameReferenceElement.resolve();
       boolean inferred = AnnotationUtil.isInferredAnnotation(annotation);
-
-      if (!(shownAnnotations.add(annotation.getQualifiedName()) || isRepeatableAnnotationType(resolved))) {
+      String qualifiedName = annotation.getQualifiedName();
+      if (!(shownAnnotations.add(qualifiedName) || isRepeatableAnnotationType(resolved))) {
         continue;
       }
 
-      if (resolved instanceof PsiClass) {
+      if (resolved instanceof PsiClass && 
+          qualifiedName != null && JavaDocUtil.findReferenceTarget(owner.getManager(), qualifiedName, owner) != null) {
         final PsiClass annotationType = (PsiClass)resolved;
         if (isDocumentedAnnotationType(annotationType)) {
           if (inferred) buffer.append("<i>");

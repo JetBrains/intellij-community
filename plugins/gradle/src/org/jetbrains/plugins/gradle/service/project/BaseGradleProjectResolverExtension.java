@@ -215,6 +215,9 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         sourceSetData.setVersion(externalProject.getVersion());
         sourceSetData.setIdeModuleGroup(moduleGroup);
 
+        sourceSetData.setSourceCompatibility(sourceSet.getSourceCompatibility());
+        sourceSetData.setTargetCompatibility(sourceSet.getTargetCompatibility());
+
         if ("main".equals(sourceSet.getName())) {
           final List<File> artifacts = ContainerUtil.newArrayList();
           final Set<File> defaultArtifacts = externalProject.getArtifactsByConfiguration().get("default");
@@ -514,6 +517,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         }
         TaskData taskData = new TaskData(GradleConstants.SYSTEM_ID, taskName, moduleConfigPath, task.getDescription());
         taskData.setGroup(taskGroup);
+        taskData.setType(task.getType());
         ideModule.createChild(ProjectKeys.TASK, taskData);
         taskData.setInherited(StringUtil.equals(task.getName(), task.getQName()));
         tasks.add(taskData);

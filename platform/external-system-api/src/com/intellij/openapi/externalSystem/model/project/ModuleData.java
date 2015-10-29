@@ -26,11 +26,13 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   @NotNull private final String myModuleTypeId;
   @NotNull private final String myExternalConfigPath;
   @NotNull private String myModuleFileDirectoryPath;
-  @Nullable private String group;
-  @Nullable private String version;
-  @Nullable private String description;
+  @Nullable private String myGroup;
+  @Nullable private String myVersion;
+  @Nullable private String myDescription;
   @NotNull private List<File> myArtifacts;
-  @Nullable private String[] ideModuleGroup;
+  @Nullable private String[] myIdeModuleGroup;
+  @Nullable  private String mySourceCompatibility;
+  @Nullable private String myTargetCompatibility;
 
   private boolean myInheritProjectCompileOutputPath = true;
 
@@ -121,29 +123,29 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
 
   @Nullable
   public String getGroup() {
-    return group;
+    return myGroup;
   }
 
   public void setGroup(@Nullable String group) {
-    this.group = group;
+    this.myGroup = group;
   }
 
   @Nullable
   public String getVersion() {
-    return version;
+    return myVersion;
   }
 
   public void setVersion(@Nullable String version) {
-    this.version = version;
+    this.myVersion = version;
   }
 
   @Nullable
   public String getDescription() {
-    return description;
+    return myDescription;
   }
 
   public void setDescription(@Nullable String description) {
-    this.description = description;
+    this.myDescription = description;
   }
 
   @NotNull
@@ -157,11 +159,29 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
 
   @Nullable
   public String[] getIdeModuleGroup() {
-    return ideModuleGroup;
+    return myIdeModuleGroup;
   }
 
   public void setIdeModuleGroup(@Nullable String[] ideModuleGroup) {
-    this.ideModuleGroup = ideModuleGroup;
+    this.myIdeModuleGroup = ideModuleGroup;
+  }
+
+  @Nullable
+  public String getSourceCompatibility() {
+    return mySourceCompatibility;
+  }
+
+  public void setSourceCompatibility(@Nullable String sourceCompatibility) {
+    mySourceCompatibility = sourceCompatibility;
+  }
+
+  @Nullable
+  public String getTargetCompatibility() {
+    return myTargetCompatibility;
+  }
+
+  public void setTargetCompatibility(@Nullable String targetCompatibility) {
+    myTargetCompatibility = targetCompatibility;
   }
 
   @Override
@@ -171,10 +191,10 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
 
     ModuleData that = (ModuleData)o;
 
-    if (group != null ? !group.equals(that.group) : that.group != null) return false;
+    if (myGroup != null ? !myGroup.equals(that.myGroup) : that.myGroup != null) return false;
     if (!myModuleTypeId.equals(that.myModuleTypeId)) return false;
-    if (version != null ? !version.equals(that.version) : that.version != null) return false;
-    if (description != null ? !description.equals(that.description) : that.description != null) return false;
+    if (myVersion != null ? !myVersion.equals(that.myVersion) : that.myVersion != null) return false;
+    if (myDescription != null ? !myDescription.equals(that.myDescription) : that.myDescription != null) return false;
 
     return true;
   }
@@ -183,17 +203,17 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + myModuleTypeId.hashCode();
-    result = 31 * result + (group != null ? group.hashCode() : 0);
-    result = 31 * result + (version != null ? version.hashCode() : 0);
-    result = 31 * result + (description != null ? description.hashCode() : 0);
+    result = 31 * result + (myGroup != null ? myGroup.hashCode() : 0);
+    result = 31 * result + (myVersion != null ? myVersion.hashCode() : 0);
+    result = 31 * result + (myDescription != null ? myDescription.hashCode() : 0);
     return result;
   }
 
   @Override
   public String toString() {
     return String.format("module '%s:%s:%s'",
-                         group == null ? "" : group,
+                         myGroup == null ? "" : myGroup,
                          getExternalName(),
-                         version == null ? "" : version);
+                         myVersion == null ? "" : myVersion);
   }
 }

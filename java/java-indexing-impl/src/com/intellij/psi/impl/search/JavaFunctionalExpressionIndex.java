@@ -51,13 +51,16 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Strin
       @NotNull
       @Override
       public Map<String, Collection<IndexHolder>> map(@NotNull FileContent inputData) {
+        if (!JavaStubElementTypes.JAVA_FILE.shouldBuildStubFor(inputData.getFile())) {
+          return Collections.emptyMap();
+        }
         final CharSequence contentAsText = inputData.getContentAsText();
         if (!StringUtil.contains(contentAsText, "::") && !StringUtil.contains(contentAsText, "->")) {
           return Collections.emptyMap();
         }
 
         final PsiFile file = ((FileContentImpl)inputData).getPsiFileForPsiDependentIndex();
-        if (!(file instanceof PsiJavaFile) || !JavaStubElementTypes.JAVA_FILE.shouldBuildStubFor(inputData.getFile())) {
+        if (!(file instanceof PsiJavaFile)) {
           return Collections.emptyMap();
         }
 

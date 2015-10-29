@@ -306,7 +306,6 @@ public abstract class DialogWrapper {
   private boolean myDisposed = false;
   private boolean myValidationStarted = false;
   private final ErrorPainter myErrorPainter = new ErrorPainter();
-  private JComponent myErrorPane;
   private boolean myErrorPainterInstalled = false;
 
   /**
@@ -356,7 +355,7 @@ public abstract class DialogWrapper {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        IdeGlassPaneUtil.installPainter(myErrorPane, myErrorPainter, myDisposable);
+        IdeGlassPaneUtil.installPainter(getContentPanel(), myErrorPainter, myDisposable);
       }
     });
   }
@@ -603,10 +602,21 @@ public abstract class DialogWrapper {
 
     JPanel wrapper = new JPanel(new GridBagLayout());
     wrapper.add(checkBox);
-
     panel.add(wrapper, BorderLayout.WEST);
     panel.add(southPanel, BorderLayout.EAST);
     checkBox.setBorder(JBUI.Borders.emptyRight(20));
+    if (SystemInfo.isMac) {
+      JButton helpButton = null;
+      for (JButton button : UIUtil.findComponentsOfType(southPanel, JButton.class)) {
+        if ("help".equals(button.getClientProperty("JButton.buttonType"))) {
+          helpButton = button;
+          break;
+        }
+      }
+      if (helpButton != null) {
+        return JBUI.Panels.simplePanel(panel).addToLeft(helpButton);
+      }
+    }
 
     return panel;
   }
@@ -1257,10 +1267,6 @@ public abstract class DialogWrapper {
     final JComponent c = createCenterPanel();
     if (c != null) {
       centerSection.add(c, BorderLayout.CENTER);
-      myErrorPane = c;
-    }
-    if (myErrorPane == null) {
-      myErrorPane = root;
     }
 
     final JPanel southSection = new JPanel(new BorderLayout());
@@ -1354,7 +1360,10 @@ public abstract class DialogWrapper {
     if (getValidationThreadToUse() == Alarm.ThreadToUse.SWING_THREAD) {
       // null if headless
       JRootPane rootPane = getRootPane();
-      myValidationAlarm.addRequest(validateRequest, myValidationDelay, rootPane == null ? ModalityState.current() : ModalityState.stateForComponent(rootPane));
+      myValidationAlarm.addRequest(validateRequest, myValidationDelay,
+                                   ApplicationManager.getApplication() == null
+                                   ? null
+                                   : rootPane == null ? ModalityState.current() : ModalityState.stateForComponent(rootPane));
     }
     else {
       myValidationAlarm.addRequest(validateRequest, myValidationDelay);

@@ -33,6 +33,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -81,9 +82,12 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.vcsUtil.UIVcsUtil.spaceAndThinSpace;
+import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 public class ShelvedChangesViewManager implements ProjectComponent {
+
+  private static final Logger LOG = Logger.getInstance(ShelvedChangesViewManager.class);
+
   private final ChangesViewContentManager myContentManager;
   private final ShelveChangesManager myShelveChangesManager;
   private final Project myProject;
@@ -167,6 +171,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   public void projectOpened() {
     StartupManager startupManager = StartupManager.getInstance(myProject);
     if (startupManager == null) {
+      LOG.error("Couldn't start loading shelved changes");
       return;
     }
     startupManager.registerPostStartupActivity(new Runnable() {

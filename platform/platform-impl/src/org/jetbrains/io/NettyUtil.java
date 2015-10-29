@@ -34,6 +34,7 @@ import io.netty.handler.codec.http.HttpResponseEncoder;
 import io.netty.handler.codec.http.cors.CorsConfig;
 import io.netty.handler.codec.http.cors.CorsHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import io.netty.util.ThreadDeathWatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -46,6 +47,7 @@ import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 
 public final class NettyUtil {
   public static final int MAX_CONTENT_LENGTH = 100 * 1024 * 1024;
@@ -178,7 +180,37 @@ public final class NettyUtil {
   public static ServerBootstrap nioServerBootstrap(@NotNull EventLoopGroup eventLoopGroup) {
     ServerBootstrap bootstrap = new ServerBootstrap().group(eventLoopGroup).channel(eventLoopGroup instanceof NioEventLoopGroup ? NioServerSocketChannel.class : EpollServerSocketChannel.class);
     bootstrap.childOption(ChannelOption.TCP_NODELAY, true).childOption(ChannelOption.SO_KEEPALIVE, true);
+    changeThreadDeathWatcherNameTo("Netty thread death watcher"); // "threadDeathWatcher-2-1"? Is this really all that you got, Netty?
     return bootstrap;
+  }
+
+  private static void changeThreadDeathWatcherNameTo(@NotNull final String name) {
+    final CountDownLatch latch = new CountDownLatch(1);
+    Thread thread = new Thread("temp") {
+      @Override
+      public void run() {
+        try {
+          latch.await();
+        }
+        catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    };
+    thread.start();
+    ThreadDeathWatcher.watch(thread, new Runnable() {
+      @Override
+      public void run() {
+        Thread.currentThread().setName(name);
+      }
+    });
+    latch.countDown();
+    try {
+      thread.join();
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @SuppressWarnings("unused")

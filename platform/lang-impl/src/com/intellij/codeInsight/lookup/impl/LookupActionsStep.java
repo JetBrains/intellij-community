@@ -64,7 +64,7 @@ public class LookupActionsStep extends BaseListPopupStep<LookupElementAction> im
       myLookup.refreshUi(false, true);
     } else if (result instanceof LookupElementAction.Result.ChooseItem) {
       myLookup.setCurrentItem(((LookupElementAction.Result.ChooseItem)result).item);
-      CommandProcessor.getInstance().executeCommand(myLookup.getEditor().getProject(), new Runnable() {
+      CommandProcessor.getInstance().executeCommand(myLookup.getProject(), new Runnable() {
         @Override
         public void run() {
           myLookup.finishLookup(Lookup.AUTO_INSERT_SELECT_CHAR);

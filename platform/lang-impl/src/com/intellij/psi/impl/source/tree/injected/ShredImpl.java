@@ -42,7 +42,16 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
     this.suffix = suffix;
     this.range = range;
     this.usePsiRange = usePsiRange;
-    assert isValid();
+
+    assertValid();
+  }
+
+  private void assertValid() {
+    Segment hostRange = getHostRangeMarker();
+    assert hostRange != null : "invalid host range: " + relevantRangeInHost;
+
+    PsiLanguageInjectionHost host = hostElementPointer.getElement();
+    assert host != null && host.isValid() : "no host: " + hostElementPointer;
   }
 
   ShredImpl withPsiRange() {

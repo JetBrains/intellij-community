@@ -30,6 +30,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.mergeTool.MergeVersion;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -408,6 +410,16 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   @NotNull
   public List<VirtualFile> getProcessedFiles() {
     return myProcessedFiles;
+  }
+
+  @Override
+  public void show() {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        MultipleFileMergeDialog.super.show();
+      }
+    });
   }
 
   private static class VirtualFileRenderer extends ColoredTableCellRenderer {

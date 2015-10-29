@@ -323,6 +323,13 @@ public class ClassDataIndexer implements DataIndexer<Bytes, HEquations, FileCont
           result.add(new Equation<Key, Value>(new Key(method, NullableOut, stable), NullableMethodAnalysis.analyze(methodNode, origins, jsr)));
         }
 
+        boolean withCycle = !richControlFlow.dfsTree.back.isEmpty();
+        if (argumentTypes.length > 50 && withCycle) {
+          // IDEA-137443 - do not analyze very complex methods
+          return;
+        }
+
+        // arguments and contract clauses
         for (int i = 0; i < argumentTypes.length; i++) {
           boolean notNullParam = false;
 

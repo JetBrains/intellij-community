@@ -38,9 +38,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.SoftReference;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * This class makes program structure tree matching:
@@ -193,10 +191,11 @@ public class MatcherImpl {
     options.setScope(scope);
   }
 
-  public CompiledOptions precompileOptions(List<Configuration> configurations) {
-    final List<Pair<MatchContext, Configuration>> contexts = new ArrayList<Pair<MatchContext, Configuration>>();
-
+  public void precompileOptions(List<Configuration> configurations, final Map<Configuration, MatchContext> out) {
     for (final Configuration configuration : configurations) {
+      if (out.containsKey(configuration)) {
+        continue;
+      }
       final MatchContext matchContext = new MatchContext();
       matchContext.setMatcher(visitor);
       final MatchOptions matchOptions = configuration.getMatchOptions();
@@ -206,16 +205,15 @@ public class MatcherImpl {
         @Override
         public void run() {
           try {
-            CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions);
+            final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions);
             matchContext.setPattern(compiledPattern);
-            contexts.add(Pair.create(matchContext, configuration));
+            out.put(configuration, matchContext);
           }
           catch (UnsupportedPatternException ignored) {}
           catch (MalformedPatternException ignored) {}
         }
       });
     }
-    return new CompiledOptions(contexts);
   }
 
   Project getProject() {

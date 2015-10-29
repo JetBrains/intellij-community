@@ -448,7 +448,9 @@ public class CodeStyleSettingPresentation {
       new CodeStyleSettingPresentation("ALIGN_GROUP_FIELD_DECLARATIONS",
                                        ApplicationBundle.message("wrapping.align.fields.in.columns")),
       new CodeStyleSettingPresentation("ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS",
-                                       ApplicationBundle.message("wrapping.align.variables.in.columns"))
+                                       ApplicationBundle.message("wrapping.align.variables.in.columns")),
+      new CodeStyleSettingPresentation("ALIGN_SUBSEQUENT_SIMPLE_METHODS",
+                                       ApplicationBundle.message("wrapping.align.simple.methods.in.columns"))
     ));
 
     putGroupTop(result, "TERNARY_OPERATION_WRAP", WRAPPING_TERNARY_OPERATION, WRAP_VALUES, WRAP_OPTIONS);

@@ -20,7 +20,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
-import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager;
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
 
 import java.util.regex.Matcher;
@@ -31,8 +31,8 @@ import java.util.regex.Pattern;
  * @since 2/28/14
  */
 public class AfterTestEvent extends AbstractTestEvent {
-  public AfterTestEvent(GradleTestsExecutionConsoleManager consoleManager) {
-    super(consoleManager);
+  public AfterTestEvent(GradleTestsExecutionConsole executionConsole) {
+    super(executionConsole);
   }
 
   @Override

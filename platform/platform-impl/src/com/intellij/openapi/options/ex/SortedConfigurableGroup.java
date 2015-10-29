@@ -37,7 +37,7 @@ public final class SortedConfigurableGroup
   private final String myId;
   private final String myDisplayName;
   private final String myHelpTopic;
-  private final int myWeight;
+  int myWeight; // see ConfigurableExtensionPointUtil.getConfigurableToReplace
 
   List<Configurable> myList = ContainerUtil.newArrayList();
 

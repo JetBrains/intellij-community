@@ -75,10 +75,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.IntArrayList;
@@ -1319,7 +1316,7 @@ public class BuildManager implements Disposable {
   }
 
   private int startListening() throws Exception {
-    final ServerBootstrap bootstrap = NettyUtil.nioServerBootstrap(new NioEventLoopGroup(1, PooledThreadExecutor.INSTANCE));
+    final ServerBootstrap bootstrap = NettyUtil.nioServerBootstrap(new NioEventLoopGroup(1, ConcurrencyUtil.newNamedThreadFactory("External compiler")));
     bootstrap.childHandler(new ChannelInitializer() {
       @Override
       protected void initChannel(Channel channel) throws Exception {

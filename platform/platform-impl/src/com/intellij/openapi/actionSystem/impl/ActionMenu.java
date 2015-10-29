@@ -89,6 +89,9 @@ public final class ActionMenu extends JMenu {
       public void dispose() {
       }
     };
+
+    // Triggering initialization of private field "popupMenu" from JMenu with our own JBPopupMenu
+    getPopupMenu();
   }
 
   public void updateContext(DataContext context) {

@@ -626,8 +626,9 @@ public class RemoteDebugger implements ProcessDebugger {
       return ProtocolParser.parseThread(frame.getPayload(), myDebugProcess.getPositionConverter());
     }
 
+    @NotNull
     @Override
-    protected Future<?> executeOnPooledThread(Runnable runnable) {
+    protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
       return ApplicationManager.getApplication().executeOnPooledThread(runnable);
     }
 

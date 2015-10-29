@@ -18,6 +18,9 @@ package org.jetbrains.plugins.gradle.model;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 /**
  * @author Vladislav.Soroka
  * @since 7/14/2014
@@ -33,6 +36,8 @@ public class DefaultExternalTask implements ExternalTask {
   private String myDescription;
   @Nullable
   private String myGroup;
+  @Nullable
+  private String myType;
 
   public DefaultExternalTask() {
   }
@@ -42,6 +47,7 @@ public class DefaultExternalTask implements ExternalTask {
     myQName = externalTask.getQName();
     myDescription = externalTask.getDescription();
     myGroup = externalTask.getGroup();
+    myType = externalTask.getType();
   }
 
   @NotNull
@@ -82,5 +88,15 @@ public class DefaultExternalTask implements ExternalTask {
 
   public void setGroup(@Nullable String group) {
     myGroup = group;
+  }
+
+  @Nullable
+  @Override
+  public String getType() {
+    return myType;
+  }
+
+  public void setType(@Nullable String type) {
+    myType = type;
   }
 }

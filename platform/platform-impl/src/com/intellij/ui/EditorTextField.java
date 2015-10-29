@@ -314,7 +314,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   }
 
   void releaseEditor(@NotNull final Editor editor) {
-    if (myProject != null && !myProject.isDisposed() && myIsViewer) {
+    if (myProject != null && myIsViewer) {
       final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
       if (psiFile != null) {
         DaemonCodeAnalyzer.getInstance(myProject).setHighlightingEnabled(psiFile, true);

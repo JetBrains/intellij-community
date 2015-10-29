@@ -28,7 +28,10 @@ import com.intellij.openapi.externalSystem.service.project.ExternalSystemProject
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.KeyValue;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -619,12 +622,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     final DataNode<ModuleData> buildSrcModuleDataNode =
-      ExternalSystemApiUtil.find(resultProjectDataNode, ProjectKeys.MODULE, new BooleanFunction<DataNode<ModuleData>>() {
-        @Override
-        public boolean fun(DataNode<ModuleData> node) {
-          return projectConnectionDataNodeFunction.myProjectPath.equals(node.getData().getLinkedExternalProjectPath());
-        }
-      });
+      GradleProjectResolverUtil.findModule(resultProjectDataNode, projectConnectionDataNodeFunction.myProjectPath);
 
     // check if buildSrc project was already exposed in settings.gradle file
     if (buildSrcModuleDataNode != null) return;

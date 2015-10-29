@@ -94,7 +94,7 @@ private fun StringBuilder.addList(name: String, list: Collection<String>, compac
   }
 
   if (compact) {
-    if (length() != 0 && charAt(length() - 1) != ' ') {
+    if (length != 0 && this[length - 1] != ' ') {
       append('\t')
     }
     append(name)

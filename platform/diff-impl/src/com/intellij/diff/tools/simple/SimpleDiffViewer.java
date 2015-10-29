@@ -239,7 +239,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
         if (data.getFragments() != null) {
           for (LineFragment fragment : data.getFragments()) {
-            myDiffChanges.add(new SimpleDiffChange(SimpleDiffViewer.this, fragment, getHighlightPolicy().isFineFragments()));
+            myDiffChanges.add(new SimpleDiffChange(SimpleDiffViewer.this, fragment));
           }
         }
 

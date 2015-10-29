@@ -1,5 +1,3 @@
-import java.util.Arrays;
-
 class Test {
   int[] mIndex = null;
   int mSize = 0;
@@ -12,5 +10,12 @@ class Test {
     }
 
     mIndex[0] = -1;
+  }
+
+  void bar() {
+    int time = 99;
+    String str = <warning descr="Condition 'time < 0' is always 'false'">time < 0</warning> ? "" : "";
+    String str1 = <warning descr="Condition 'time <= 0' is always 'false'">time <= 0</warning> ? "" : "";
+    String str2 = <warning descr="Condition 'time >= 100' is always 'false'">time >= 100</warning> ? "" : "";
   }
 }

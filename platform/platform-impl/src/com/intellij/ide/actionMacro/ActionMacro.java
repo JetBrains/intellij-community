@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,6 @@ import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.ui.playback.commands.KeyCodeTypeCommand;
 import com.intellij.openapi.ui.playback.commands.TypeCommand;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
@@ -38,7 +35,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class ActionMacro implements JDOMExternalizable {
+public class ActionMacro {
   private String myName;
 
   private final ArrayList<ActionDescriptor> myActions = new ArrayList<ActionDescriptor>();
@@ -80,7 +77,7 @@ public class ActionMacro implements JDOMExternalizable {
     return myActions.toArray(new ActionDescriptor[myActions.size()]);
   }
 
-  public void readExternal(Element macro) throws InvalidDataException {
+  public void readExternal(Element macro) {
     setName(macro.getAttributeValue(ATTRIBUTE_NAME));
     List actions = macro.getChildren();
     for (final Object o : actions) {
@@ -115,7 +112,7 @@ public class ActionMacro implements JDOMExternalizable {
     return KeyCodeTypeCommand.unparseKeyCodes(keyCodes);
   }
 
-  public void writeExternal(Element macro) throws WriteExternalException {
+  public void writeExternal(Element macro)  {
     macro.setAttribute(ATTRIBUTE_NAME, myName);
     final ActionDescriptor[] actions = getActions();
     for (ActionDescriptor action : actions) {

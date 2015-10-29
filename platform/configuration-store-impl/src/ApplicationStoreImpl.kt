@@ -106,7 +106,7 @@ class ApplicationStorageManager(private val application: Application, pathMacroM
   override fun normalizeFileSpec(fileSpec: String): String {
     var path = super.normalizeFileSpec(fileSpec)
     if (path.startsWithMacro(StoragePathMacros.APP_CONFIG)) {
-      return path.substring(StoragePathMacros.APP_CONFIG.length() + 1)
+      return path.substring(StoragePathMacros.APP_CONFIG.length + 1)
     }
     return path
   }

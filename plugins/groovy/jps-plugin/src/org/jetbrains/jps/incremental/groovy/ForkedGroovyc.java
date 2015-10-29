@@ -25,6 +25,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
@@ -96,8 +97,9 @@ class ForkedGroovyc implements GroovycFlavor {
     );
     final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(cmd));
     ProcessHandler handler = new BaseOSProcessHandler(process, null, null) {
+      @NotNull
       @Override
-      protected Future<?> executeOnPooledThread(Runnable task) {
+      protected Future<?> executeOnPooledThread(@NotNull Runnable task) {
         return SharedThreadPool.getInstance().executeOnPooledThread(task);
       }
 

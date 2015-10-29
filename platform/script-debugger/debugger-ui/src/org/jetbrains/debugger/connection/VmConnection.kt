@@ -19,6 +19,7 @@ import com.intellij.ide.browsers.WebBrowser
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.socketConnection.ConnectionState
 import com.intellij.util.io.socketConnection.ConnectionStatus
 import com.intellij.util.io.socketConnection.SocketConnectionListener
@@ -39,7 +40,7 @@ abstract class VmConnection<T : Vm> : Disposable {
   private val stateRef = AtomicReference(ConnectionState(ConnectionStatus.NOT_CONNECTED))
 
   private val dispatcher = EventDispatcher.create(DebugEventListener::class.java)
-  private val connectionDispatcher = EventDispatcher.create(SocketConnectionListener::class.java)
+  private val connectionDispatcher = ContainerUtil.createLockFreeCopyOnWriteList<(ConnectionState) -> Unit>()
 
   @Volatile var vm: T? = null
     protected set
@@ -68,12 +69,19 @@ abstract class VmConnection<T : Vm> : Disposable {
       if (status == ConnectionStatus.CONNECTION_FAILED) {
         opened.setError(newState.message)
       }
-      connectionDispatcher.multicaster.statusChanged(status)
+      for (listener in connectionDispatcher) {
+        listener(newState)
+      }
     }
   }
 
+  fun stateChanged(listener: (ConnectionState) -> Unit) {
+    connectionDispatcher.add(listener)
+  }
+
+  // backward compatibility, go debugger
   fun addListener(listener: SocketConnectionListener) {
-    connectionDispatcher.addListener(listener)
+    stateChanged { listener.statusChanged(it.status) }
   }
 
   protected val debugEventListener: DebugEventListener

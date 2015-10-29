@@ -403,7 +403,11 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       }
     }
     for (PsiElement expression : rebindExpressions) {
-      codeStyleManager.shortenClassReferences(expression);
+      //filter out invalid elements which are produced by nested elements:
+      //new expressions/type elements, like: List<List<String>>; new Foo(new Foo()), etc
+      if (expression.isValid()){
+        codeStyleManager.shortenClassReferences(expression);
+      }
     }
     new OptimizeImportsProcessor(project, createdFiles.toArray(new PsiFile[createdFiles.size()]), null).run();
     return createdFiles;
@@ -496,20 +500,20 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
 
       @Override
       public void visitNewExpression(PsiNewExpression expression) {
+        super.visitNewExpression(expression);
         final PsiJavaCodeReferenceElement referenceElement = expression.getClassReference();
         if (referenceElement != null) {
           decodeRef(referenceElement, oldToNewMap, rebindMap);
         }
-        super.visitNewExpression(expression);
       }
 
       @Override
       public void visitTypeElement(PsiTypeElement type) {
+        super.visitTypeElement(type);
         final PsiJavaCodeReferenceElement referenceElement = type.getInnermostComponentReferenceElement();
         if (referenceElement != null) {
           decodeRef(referenceElement, oldToNewMap, rebindMap);
         }
-        super.visitTypeElement(type);
       }
     });
     for (Map.Entry<PsiJavaCodeReferenceElement, PsiElement> entry : rebindMap.entrySet()) {

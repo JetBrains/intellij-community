@@ -33,6 +33,9 @@ public abstract class SchemeProcessor<T extends ExternalizableScheme> {
   public void onSchemeDeleted(@NotNull T scheme) {
   }
 
+  /**
+   * Scheme switched.
+   */
   public void onCurrentSchemeChanged(@Nullable Scheme oldScheme) {
   }
 

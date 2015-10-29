@@ -161,8 +161,6 @@ if [ "$IS_EAP" = "true" ]; then
   fi
 fi
 
-IDE_JVM_ARGS="@@ide_jvm_args@@"
-
 @@class_path@@
 if [ -n "$@@product_uc@@_CLASSPATH" ]; then
   CLASSPATH="$CLASSPATH:$@@product_uc@@_CLASSPATH"
@@ -176,17 +174,17 @@ fi
 # ---------------------------------------------------------------------
 # Run the IDE.
 # ---------------------------------------------------------------------
-IFS="$(printf '\t')"
+IFS="$(printf '\n\t')"
 LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JAVA_BIN" \
   $AGENT \
   "-Xbootclasspath/a:$IDE_HOME/lib/boot.jar" \
   -classpath "$CLASSPATH" \
-  `echo "$VM_OPTIONS" | "$TR" '\n' '\t'` \
+  $VM_OPTIONS \
   "-Djb.vmOptionsFile=$VM_OPTIONS_FILE" \
   "-XX:ErrorFile=$HOME/java_error_in_@@product_uc@@_%p.log" \
   -Djb.restart.code=88 -Didea.paths.selector=@@system_selector@@ \
   $IDE_PROPERTIES_PROPERTY \
-  `echo "$IDE_JVM_ARGS" | "$TR" ' ' '\t'` \
+  @@ide_jvm_args@@ \
   com.intellij.idea.Main \
   "$@"
 EC=$?

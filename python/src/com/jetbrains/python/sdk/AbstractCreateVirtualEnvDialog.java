@@ -41,6 +41,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.webcore.packaging.PackageManagementService;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.PyPackageService;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
@@ -104,7 +105,7 @@ public abstract class AbstractCreateVirtualEnvDialog extends IdeaDialog {
     myMainPanel = new JPanel(layout);
     myName = new JTextField();
     myDestination = new TextFieldWithBrowseButton();
-    myMakeAvailableToAllProjectsCheckbox = new JBCheckBox("Make available to all projects");
+    myMakeAvailableToAllProjectsCheckbox = new JBCheckBox(PyBundle.message("sdk.create.venv.dialog.make.available.to.all.projects"));
     if (project == null || project.isDefault() || !PlatformUtils.isPyCharm()) {
       myMakeAvailableToAllProjectsCheckbox.setSelected(true);
       myMakeAvailableToAllProjectsCheckbox.setVisible(false);
@@ -125,7 +126,7 @@ public abstract class AbstractCreateVirtualEnvDialog extends IdeaDialog {
     checkValid();
     setInitialDestination();
     addUpdater(myName);
-    new LocationNameFieldsBinding(project, myDestination, myName, myInitialPath, "Select Location for Virtual Environment");
+    new LocationNameFieldsBinding(project, myDestination, myName, myInitialPath, PyBundle.message("sdk.create.venv.dialog.select.venv.location"));
   }
 
   protected void setInitialDestination() {
@@ -182,24 +183,28 @@ public abstract class AbstractCreateVirtualEnvDialog extends IdeaDialog {
 
   protected void checkValid() {
     final String projectName = myName.getText();
-    if (new File(getDestination()).exists()) {
-      setOKActionEnabled(false);
-      setErrorText("Directory already exists");
-      return;
+    final File destFile = new File(getDestination());
+    if (destFile.exists()) {
+      final String[] content = destFile.list();
+      if (content != null && content.length != 0) {
+        setOKActionEnabled(false);
+        setErrorText(PyBundle.message("sdk.create.venv.dialog.error.not.empty.directory"));
+        return;
+      }
     }
     if (StringUtil.isEmptyOrSpaces(projectName)) {
       setOKActionEnabled(false);
-      setErrorText("VirtualEnv name can't be empty");
+      setErrorText(PyBundle.message("sdk.create.venv.dialog.error.empty.venv.name"));
       return;
     }
     if (!PathUtil.isValidFileName(projectName)) {
       setOKActionEnabled(false);
-      setErrorText("Invalid directory name");
+      setErrorText(PyBundle.message("sdk.create.venv.dialog.error.invalid.directory.name"));
       return;
     }
     if (StringUtil.isEmptyOrSpaces(myDestination.getText())) {
       setOKActionEnabled(false);
-      setErrorText("Destination directory can't be empty");
+      setErrorText(PyBundle.message("sdk.create.venv.dialog.error.empty.venv.location"));
       return;
     }
 
@@ -234,13 +239,13 @@ public abstract class AbstractCreateVirtualEnvDialog extends IdeaDialog {
   public void createVirtualEnv(final VirtualEnvCallback callback) {
     final ProgressManager progman = ProgressManager.getInstance();
     final Sdk basicSdk = getSdk();
-    final Task.Modal createTask = new Task.Modal(myProject, "Creating virtual environment", false) {
+    final Task.Modal createTask = new Task.Modal(myProject, PyBundle.message("sdk.create.venv.dialog.creating.venv"), false) {
       String myPath;
 
       public void run(@NotNull final ProgressIndicator indicator) {
 
         try {
-          indicator.setText("Creating virtual environment");
+          indicator.setText(PyBundle.message("sdk.create.venv.dialog.creating.venv"));
           myPath = createEnvironment(basicSdk);
         }
         catch (final ExecutionException e) {
@@ -250,7 +255,7 @@ public abstract class AbstractCreateVirtualEnvDialog extends IdeaDialog {
               final PackageManagementService.ErrorDescription description =
                 PyPackageManagementService.toErrorDescription(Collections.singletonList(e), basicSdk);
               if (description != null) {
-                PackagesNotificationPanel.showError("Failed to Create Virtual Environment", description);
+                PackagesNotificationPanel.showError(PyBundle.message("sdk.create.venv.dialog.error.failed.to.create.venv"), description);
               }
             }
           }, ModalityState.any());

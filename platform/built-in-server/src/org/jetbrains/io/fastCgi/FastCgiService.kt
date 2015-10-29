@@ -192,7 +192,7 @@ private fun parseHeaders(response: HttpResponse, buffer: ByteBuf) {
       }
     }
 
-    if (builder.length() == 0) {
+    if (builder.length == 0) {
       // end of headers
       return
     }

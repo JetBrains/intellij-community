@@ -69,7 +69,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
           val url = StringUtil.nullize(urlField.text)
           val enabled: Boolean
           try {
-            enabled = url != null && url.length() > 1 && icsManager.repositoryService.checkUrl(url, null)
+            enabled = url != null && url.length > 1 && icsManager.repositoryService.checkUrl(url, null)
           }
           catch (e: Exception) {
             enabled = false
@@ -99,7 +99,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
 
     override fun apply(settings: IcsSettings) {
       val oldList = settings.readOnlySources
-      val toDelete = THashSet<String>(oldList.size())
+      val toDelete = THashSet<String>(oldList.size)
       for (oldSource in oldList) {
         ContainerUtil.addIfNotNull(toDelete, oldSource.path)
       }

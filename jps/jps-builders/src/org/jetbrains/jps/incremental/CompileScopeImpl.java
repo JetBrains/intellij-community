@@ -62,13 +62,17 @@ public class CompileScopeImpl extends CompileScope {
 
   @Override
   public boolean isAffected(@NotNull BuildTarget<?> target) {
-    return myTypes.contains(target.getTargetType()) || myTargets.contains(target) || myFiles.containsKey(target) || isAffectedByAssociatedModule(target);
+    return isWholeTargetAffected(target) || myFiles.containsKey(target);
+  }
+
+  @Override
+  public boolean isWholeTargetAffected(@NotNull BuildTarget<?> target) {
+    return myTypes.contains(target.getTargetType()) || myTargets.contains(target) || isAffectedByAssociatedModule(target);
   }
 
   @Override
   public boolean isBuildForced(@NotNull BuildTarget<?> target) {
-    BuildTargetType<?> type = target.getTargetType();
-    return myTypesToForceBuild.contains(type) && myFiles.isEmpty() && (myTypes.contains(type) || myTargets.contains(target) || isAffectedByAssociatedModule(target));
+    return myTypesToForceBuild.contains(target.getTargetType()) && myFiles.isEmpty() && isWholeTargetAffected(target);
   }
 
   @Override

@@ -23,7 +23,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
@@ -138,8 +137,10 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
 
         for (PsiType expectedNonProperThrownType : expectedNonProperThrownTypes) {
           final InferenceVariable variable = session.getInferenceVariable(expectedNonProperThrownType);
-          LOG.assertTrue(variable != null);
-          variable.setThrownBound();
+          //could be null for invalid code
+          if (variable != null) {
+            variable.setThrownBound();
+          }
         }
       }
     }

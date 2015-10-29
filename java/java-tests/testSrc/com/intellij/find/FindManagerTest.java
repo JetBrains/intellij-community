@@ -306,7 +306,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setGlobal(true);
     findModel.setMultipleFiles(true);
     findModel.setCustomScope(true);
-    findModel.setCustomScope(new GlobalSearchScope.FilesScope(myProject, ContainerUtil.list(nonProjectFile)));
+    findModel.setCustomScope(GlobalSearchScope.filesScope(myProject, ContainerUtil.list(nonProjectFile)));
 
     assertSize(1, findUsages(findModel));
   }

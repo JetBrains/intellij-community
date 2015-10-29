@@ -35,7 +35,6 @@ import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.CalledInAwt;
@@ -145,8 +144,7 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
           int endLine = getLineCount(document);
 
           if (startLine != endLine) {
-            myHighlighters.addAll(DiffDrawUtil.createLineMarker(getEditor(), startLine, type, SeparatorPlacement.TOP));
-            myHighlighters.addAll(DiffDrawUtil.createLineMarker(getEditor(), endLine - 1, type, SeparatorPlacement.BOTTOM));
+            myHighlighters.addAll(DiffDrawUtil.createLineMarker(getEditor(), startLine, endLine, type, false));
           }
         }
 

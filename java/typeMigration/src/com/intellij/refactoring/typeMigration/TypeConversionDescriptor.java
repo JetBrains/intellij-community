@@ -10,7 +10,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,9 +83,8 @@ public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
     if (getExpression() != null) expression = getExpression();
     final Project project = expression.getProject();
     final ReplaceOptions options = new ReplaceOptions();
-    final MatchOptions matchOptions = new MatchOptions();
+    final MatchOptions matchOptions = options.getMatchOptions();
     matchOptions.setFileType(StdFileTypes.JAVA);
-    options.setMatchOptions(matchOptions);
     final Replacer replacer = new Replacer(project, null);
     final String replacement = replacer.testReplace(expression.getText(), getStringToReplace(), getReplaceByString(), options);
     return (PsiExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(expression.replace(
@@ -95,7 +93,7 @@ public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
 
   @Override
   public String toString() {
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     if (myReplaceByString != null) {
       buf.append(myReplaceByString);
     }

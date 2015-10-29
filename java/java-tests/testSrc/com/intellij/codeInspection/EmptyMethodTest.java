@@ -49,4 +49,8 @@ public class EmptyMethodTest extends InspectionTestCase {
   public void testSuperWithoutSync() throws Exception {
     doTest();
   }
+
+  public void testEmptyMethodsHierarchy() throws Exception {
+    doTest();
+  }
 }

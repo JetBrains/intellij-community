@@ -353,9 +353,9 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
    * Default implementation does nothing.
    *
    * @param commandLine
-   * @param sdk_home
+   * @param sdkHome
    */
-  protected void patchCommandLineFirst(GeneralCommandLine commandLine, String sdk_home) {
+  protected void patchCommandLineFirst(GeneralCommandLine commandLine, String sdkHome) {
     // override
   }
 
@@ -364,9 +364,9 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
    * Default implementation does nothing.
    *
    * @param commandLine
-   * @param sdk_home
+   * @param sdkHome
    */
-  protected void patchCommandLineLast(GeneralCommandLine commandLine, String sdk_home) {
+  protected void patchCommandLineLast(GeneralCommandLine commandLine, String sdkHome) {
     // override
   }
 

@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Url
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.socketConnection.ConnectionStatus
-import com.intellij.util.io.socketConnection.SocketConnectionListener
 import com.intellij.xdebugger.DefaultDebugProcessHandler
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
@@ -55,28 +54,26 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   private val _breakpointHandlers: Array<XBreakpointHandler<*>> by lazy(LazyThreadSafetyMode.NONE) { createBreakpointHandlers() }
 
   init {
-    connection.addListener(object : SocketConnectionListener {
-      override fun statusChanged(status: ConnectionStatus) {
-        when (status) {
-          ConnectionStatus.DISCONNECTED, ConnectionStatus.DETACHED -> {
-            if (status == ConnectionStatus.DETACHED) {
-              if (realProcessHandler != null) {
-                // here must we must use effective process handler
-                processHandler.detachProcess()
-              }
+    connection.stateChanged {
+      when (it.status) {
+        ConnectionStatus.DISCONNECTED, ConnectionStatus.DETACHED -> {
+          if (it.status == ConnectionStatus.DETACHED) {
+            if (realProcessHandler != null) {
+              // here must we must use effective process handler
+              processHandler.detachProcess()
             }
-            getSession().stop()
           }
-          ConnectionStatus.CONNECTION_FAILED -> {
-            getSession().reportError(status.statusText)
-            getSession().stop()
-          }
-          else -> {
-            getSession().rebuildViews()
-          }
+          getSession().stop()
+        }
+        ConnectionStatus.CONNECTION_FAILED -> {
+          getSession().reportError(it.message)
+          getSession().stop()
+        }
+        else -> {
+          getSession().rebuildViews()
         }
       }
-    })
+    }
   }
 
   protected final val realProcessHandler: ProcessHandler?
@@ -169,21 +166,15 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
     }
     else {
       xSuspendContext.evaluateExpression(condition)
-        .done(object : ContextDependentAsyncResultConsumer<String>(suspendContext) {
-          override fun consume(evaluationResult: String, vm: Vm) {
-            if ("false" == evaluationResult) {
-              resume()
-            }
-            else {
-              processBreakpointLogExpressionAndSuspend(breakpoint, xSuspendContext, suspendContext)
-            }
+        .done(suspendContext) {
+          if ("false" == it) {
+            resume()
           }
-        })
-        .rejected(object : ContextDependentAsyncResultConsumer<Throwable>(suspendContext) {
-          override fun consume(failure: Throwable, vm: Vm) {
+          else {
             processBreakpointLogExpressionAndSuspend(breakpoint, xSuspendContext, suspendContext)
           }
-        })
+        }
+        .rejected(suspendContext) { processBreakpointLogExpressionAndSuspend(breakpoint, xSuspendContext, suspendContext) }
     }
   }
 
@@ -194,16 +185,8 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
     }
     else {
       xSuspendContext.evaluateExpression(logExpression)
-        .done(object : ContextDependentAsyncResultConsumer<String>(suspendContext) {
-          override fun consume(logResult: String, vm: Vm) {
-            breakpointReached(breakpoint, logResult, xSuspendContext)
-          }
-        })
-        .rejected(object : ContextDependentAsyncResultConsumer<Throwable>(suspendContext) {
-          override fun consume(logResult: Throwable, vm: Vm) {
-            breakpointReached(breakpoint, "Failed to evaluate expression: " + logExpression, xSuspendContext)
-          }
-        })
+        .done(suspendContext) { breakpointReached(breakpoint, it, xSuspendContext) }
+        .rejected(suspendContext) { breakpointReached(breakpoint, "Failed to evaluate expression: $logExpression", xSuspendContext) }
     }
   }
 

@@ -49,7 +49,9 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor implement
 
   @Override
   public void show() {
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+    // run configurations don't support dumb mode yet, but some code inside them may trigger root change and start it
+    // so let it be modal to prevent IndexNotReadyException from the configuration editors
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
       @Override
       public void run() {
         EditConfigurationsDialog.super.show();
