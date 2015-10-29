@@ -103,7 +103,7 @@
                       </grid>
                     </constraints>
                     <properties>
-                      <toolTipText value="One or more patterns the file names should match for the files to be considered tests. Use comma as the delimiter. The patterns should be Python regular expressions."/>
+                      <toolTipText value="One or more patterns the file names should match for the files to be considered tests. Use comma as the delimiter. The patterns should be glob patterns. For example &quot;spa*py,eg*py&quot;" noi18n="true"/>
                     </properties>
                   </component>
                   <component id="d7ed1" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myTestScriptTextField">
