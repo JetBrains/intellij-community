@@ -17,7 +17,6 @@ package com.siyeh.ig.security;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -33,5 +32,19 @@ public class LoadLibraryWithNonConstantStringInspectionTest extends LightInspect
   @Override
   protected InspectionProfileEntry getInspection() {
     return new LoadLibraryWithNonConstantStringInspection();
+  }
+
+  @Override
+  protected String[] getEnvironmentClasses() {
+    return new String[] {
+      "package java.lang;" +
+      "public class Runtime {" +
+      "  public static Runtime getRuntime() {" +
+      "    return null;" +
+      "  }" +
+      "  public void load(String filename) {}" +
+      "  public void loadLibrary(String libname) {}" +
+      "}"
+    };
   }
 }

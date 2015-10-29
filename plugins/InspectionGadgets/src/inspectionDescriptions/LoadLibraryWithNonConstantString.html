@@ -1,6 +1,7 @@
 <html>
 <body>
-Reports calls to <b>java.lang.System.loadLibrary()</b>
+Reports calls to <b>java.lang.System.loadLibrary()</b>, <b>java.lang.System.load()</b>, <b>java.lang.Runtime.loadLibrary()</b>
+and <b>java.lang.Runtime.load()</b>
 which take a dynamically-constructed string as the name of the library.
 Constructed library name strings are a common source of security breaches.
 By default this inspection ignores compile-time constants.
