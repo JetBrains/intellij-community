@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.theoryinpractice.testng.configuration.AbstractTestNGPatternConfigurationProducer;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.configuration.TestNGConfigurationType;
+import com.theoryinpractice.testng.configuration.TestNGPatternConfigurationProducer;
 import com.theoryinpractice.testng.model.TestType;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +33,7 @@ public class TestNGAddToTestsPatternAction extends AbstractAddToTestsPatternActi
   @Override
   @NotNull
   protected AbstractTestNGPatternConfigurationProducer getPatternBasedProducer() {
-    return RunConfigurationProducer.getInstance(AbstractTestNGPatternConfigurationProducer.class);
+    return RunConfigurationProducer.getInstance(TestNGPatternConfigurationProducer.class);
   }
 
   @Override
