@@ -890,7 +890,7 @@ public class IdeEventQueue extends EventQueue {
         }
       }
     }
-    else if (SystemInfo.isWindowsXP && e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT) {
+    else if (SystemInfo.isWinXpOrNewer && !SystemInfo.isWinVistaOrNewer && e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT) {
       ((KeyEvent)e).consume();  // IDEA-17359
     }
   }

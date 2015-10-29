@@ -57,9 +57,10 @@ public class SystemInfo extends SystemInfoRt {
 
   // version numbers from http://msdn.microsoft.com/en-us/library/windows/desktop/ms724832.aspx
   public static final boolean isWin2kOrNewer = isWindows && isOsVersionAtLeast("5.0");
+  public static final boolean isWinXpOrNewer = isWindows && isOsVersionAtLeast("5.1");
   public static final boolean isWinVistaOrNewer = isWindows && isOsVersionAtLeast("6.0");
   public static final boolean isWin7OrNewer = isWindows && isOsVersionAtLeast("6.1");
-  public static final boolean isWindowsXP = isWindows && (OS_VERSION.equals("5.1") || OS_VERSION.equals("5.2"));
+  public static final boolean isWin8OrNewer = isWindows && isOsVersionAtLeast("6.2");
 
   public static final boolean isXWindow = isUnix && !isMac;
 
@@ -106,7 +107,6 @@ public class SystemInfo extends SystemInfoRt {
 
   public static final boolean is32Bit = ARCH_DATA_MODEL == null || ARCH_DATA_MODEL.equals("32");
   public static final boolean is64Bit = !is32Bit;
-  public static final boolean isAMD64 = "amd64".equals(OS_ARCH);
   public static final boolean isMacIntel64 = isMac && "x86_64".equals(OS_ARCH);
 
   private static final NotNullLazyValue<Boolean> ourHasXdgOpen = new AtomicNotNullLazyValue<Boolean>() {
@@ -227,4 +227,12 @@ public class SystemInfo extends SystemInfoRt {
     final String vendor = SystemProperties.getJavaVendor();
     return vendor != null && StringUtil.containsIgnoreCase(vendor, "jetbrains");
   }
+
+  /** @deprecated use {@link #isWinXpOrNewer} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
+  public static final boolean isWindowsXP = isWindows && (OS_VERSION.equals("5.1") || OS_VERSION.equals("5.2"));
+
+  /** @deprecated use {@link #is32Bit} or {@link #is64Bit} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
+  public static final boolean isAMD64 = "amd64".equals(OS_ARCH);
 }
