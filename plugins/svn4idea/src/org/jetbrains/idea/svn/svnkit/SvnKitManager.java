@@ -39,9 +39,12 @@ import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
 import org.tmatesoft.svn.core.internal.util.jna.SVNJNAUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminArea14;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaFactory;
+import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
+import org.tmatesoft.svn.core.wc2.SvnUpgrade;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
@@ -193,6 +196,11 @@ public class SvnKitManager {
   }
 
   @NotNull
+  public SVNWCClient createUpgradeClient() {
+    return new SVNWCClient(createOperationFactory());
+  }
+
+  @NotNull
   public SVNWCClient createWCClient(@NotNull ISVNAuthenticationManager manager) {
     return setupClient(new SVNWCClient(getPool(manager), getSvnOptions()), manager);
   }
@@ -233,6 +241,17 @@ public class SvnKitManager {
   }
 
   @NotNull
+  public SvnOperationFactory createOperationFactory() {
+    SvnOperationFactory result = new OperationFactory();
+
+    result.setOptions(getSvnOptions());
+    result.setRepositoryPool(getPool());
+    result.setAuthenticationManager(getAuthenticationManager());
+
+    return result;
+  }
+
+  @NotNull
   private SvnAuthenticationManager getAuthenticationManager() {
     return myConfiguration.getAuthenticationManager(myVcs);
   }
@@ -247,5 +266,23 @@ public class SvnKitManager {
     client.getOperationsFactory().setAuthenticationManager(manager);
 
     return client;
+  }
+
+  private static class OperationFactory extends SvnOperationFactory {
+    /**
+     * We could not utilize {@link SvnUpgrade} explicitly to perform working copy upgrade from 1.6 to 1.7 as working copy externals would
+     * still be upgraded to 1.8 by internal SVNKit logic - {@link SvnUpgrade} instances will be obtained from {@link SvnOperationFactory},
+     * but default "targetWorkingCopyFormat" will be used.
+     * <p/>
+     * So we just override default "targetWorkingCopyFormat" for {@link SvnUpgrade} instances.
+     */
+    @Override
+    @NotNull
+    public SvnUpgrade createUpgrade() {
+      SvnUpgrade result = super.createUpgrade();
+      result.setTargetWorkingCopyFormat(ISVNWCDb.WC_FORMAT_17);
+
+      return result;
+    }
   }
 }
