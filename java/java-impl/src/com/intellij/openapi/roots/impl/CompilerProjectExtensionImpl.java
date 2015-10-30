@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ProjectExtension;
 import com.intellij.openapi.roots.WatchedRootsProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -95,7 +96,8 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
   public void setCompilerOutputUrl(String compilerOutputUrl) {
     VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(compilerOutputUrl, myProject, null);
     setCompilerOutputPointer(pointer);
-    myCompilerOutputWatchRequest = LocalFileSystem.getInstance().replaceWatchedRoot(myCompilerOutputWatchRequest, compilerOutputUrl, true);
+    String path = VfsUtilCore.urlToPath(compilerOutputUrl);
+    myCompilerOutputWatchRequest = LocalFileSystem.getInstance().replaceWatchedRoot(myCompilerOutputWatchRequest, path, true);
   }
 
   @NotNull

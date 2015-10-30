@@ -15,63 +15,35 @@
  */
 package com.intellij.openapi.editor.ex.util;
 
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.psi.tree.IElementType;
 
 /**
  * @author max
  */
-public class LimitedRangeHighlighterIterator implements HighlighterIterator {
-  private final HighlighterIterator myOriginal;
+public class LimitedRangeHighlighterIterator extends HighlighterIteratorWrapper {
   private final int myStartOffset;
   private final int myEndOffset;
 
 
   public LimitedRangeHighlighterIterator(final HighlighterIterator original, final int startOffset, final int endOffset) {
-    myOriginal = original;
+    super(original);
     myStartOffset = startOffset;
     myEndOffset = endOffset;
   }
 
   @Override
-  public TextAttributes getTextAttributes() {
-    return myOriginal.getTextAttributes();
-  }
-
-  @Override
   public int getStart() {
-    return Math.max(myOriginal.getStart(), myStartOffset);
+    return Math.max(super.getStart(), myStartOffset);
   }
 
   @Override
   public int getEnd() {
-    return Math.min(myOriginal.getEnd(), myEndOffset);
-  }
-
-  @Override
-  public IElementType getTokenType() {
-    return myOriginal.getTokenType();
-  }
-
-  @Override
-  public void advance() {
-    myOriginal.advance();
-  }
-
-  @Override
-  public void retreat() {
-    myOriginal.retreat();
+    return Math.min(super.getEnd(), myEndOffset);
   }
 
   @Override
   public boolean atEnd() {
-    return myOriginal.atEnd() || myOriginal.getStart() >= myEndOffset || myOriginal.getEnd() <= myStartOffset;
+    return super.atEnd() || super.getStart() >= myEndOffset || super.getEnd() <= myStartOffset;
   }
 
-  @Override
-  public Document getDocument() {
-    return myOriginal.getDocument();
-  }
 }

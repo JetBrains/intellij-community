@@ -15,10 +15,7 @@
  */
 package com.intellij.psi.formatter.xml;
 
-import com.intellij.formatting.Block;
-import com.intellij.formatting.FormattingDocumentModel;
-import com.intellij.formatting.FormattingModelBuilder;
-import com.intellij.formatting.WrapType;
+import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
@@ -137,6 +134,8 @@ public abstract class XmlFormattingPolicy {
 
   public abstract int getWhiteSpaceAroundCDATAOption();
 
+  public Indent getTagEndIndent() { return Indent.getNoneIndent(); }
+
   public abstract CodeStyleSettings getSettings();
 
   public boolean processJsp() {
@@ -158,7 +157,6 @@ public abstract class XmlFormattingPolicy {
   public boolean processJavaTree() {
     return myProcessJavaTree;
   }
-
 
   public void dontProcessJavaTree() {
     myProcessJavaTree = false;

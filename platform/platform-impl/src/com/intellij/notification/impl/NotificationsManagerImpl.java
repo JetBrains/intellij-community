@@ -309,9 +309,11 @@ public class NotificationsManagerImpl extends NotificationsManager {
     if (notification instanceof NotificationActionProvider) {
       NotificationActionProvider provider = (NotificationActionProvider)notification;
       buttons = new JPanel(new HorizontalLayout(5));
+      buttons.setOpaque(false);
       content.add(BorderLayout.SOUTH, buttons);
       for (Action action : provider.getActions(listener)) {
         JButton button = new JButton(action);
+        button.setOpaque(false);
         buttons.add(HorizontalLayout.RIGHT, button);
       }
     }
