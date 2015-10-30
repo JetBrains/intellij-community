@@ -16,6 +16,7 @@
 
 package com.intellij.formatting;
 
+import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
@@ -736,8 +737,7 @@ public class FormatProcessor {
 
     BlockAlignmentProcessor.Context context = new BlockAlignmentProcessor.Context(
       myDocument, alignment, myCurrentBlock, myAlignmentMappings, myBackwardShiftedAlignedBlocks,
-      getIndentOptionsToUse(myCurrentBlock, myDefaultIndentOption), CodeStyleSettings.MAX_RIGHT_MARGIN
-    );
+      getIndentOptionsToUse(myCurrentBlock, myDefaultIndentOption));
     BlockAlignmentProcessor.Result result = alignmentProcessor.applyAlignment(context);
     final LeafBlockWrapper offsetResponsibleBlock = alignment.getOffsetRespBlockBefore(myCurrentBlock);
     switch (result) {
@@ -770,6 +770,14 @@ public class FormatProcessor {
         return false;
       default: return true;
     }
+  }
+
+  private static void reportAlignmentProcessingError(Context context) {
+    ASTNode node = context.targetBlock.getNode();
+    Language language = node != null ? node.getPsi().getLanguage() : null;
+    LogMessageEx.error(LOG,
+                       (language != null ? language.getDisplayName() + ": " : "") +
+                       "Can't align block " + context.targetBlock, context.document.getText());
   }
 
   /**
