@@ -64,7 +64,8 @@ public class PyDefaultArgumentQuickFix implements LocalQuickFix {
       final PyNamedParameter newParam = generator.createParameter(defName, PyNames.NONE, null, languageLevel);
       param.replace(newParam);
 
-      final String conditionalText = "if not " + defName + ":\n\t" + defName + " = " + defaultValue.getText() + "\n";
+      final String conditionalText = "if " + defName + " is None:" +
+                                     "\n\t" + defName + " = " + defaultValue.getText();
       final PyIfStatement conditionalAssignment = generator.createFromText(languageLevel, PyIfStatement.class, conditionalText);
       PyUtil.addElementToStatementList(conditionalAssignment, function.getStatementList(), true);
     }
