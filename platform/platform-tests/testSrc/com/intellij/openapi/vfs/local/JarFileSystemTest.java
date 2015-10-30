@@ -24,10 +24,8 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -72,6 +70,10 @@ public class JarFileSystemTest extends PlatformTestCase {
     assertNotNull(bytes);
     assertTrue(bytes.length > 10);
     assertEquals(0xCAFEBABE, ByteBuffer.wrap(bytes).getInt());
+
+    VirtualFile local = ((ArchiveFileSystem)StandardFileSystems.jar()).getLocalByEntry(file4);
+    assertNotNull(local);
+    assertEquals(local.getTimeStamp(), file4.getTimeStamp());
   }
 
   public void testMetaInf() {
