@@ -13,23 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.builtInWebServer;
+package org.jetbrains.builtInWebServer
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
-import io.netty.channel.Channel;
-import io.netty.handler.codec.http.FullHttpRequest;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
+import io.netty.channel.Channel
+import io.netty.handler.codec.http.FullHttpRequest
 
-import java.io.IOException;
+abstract class WebServerFileHandler {
+  companion object {
+    internal val EP_NAME = ExtensionPointName.create<WebServerFileHandler>("org.jetbrains.webServerFileHandler")
+  }
 
-public abstract class WebServerFileHandler {
-  static final ExtensionPointName<WebServerFileHandler> EP_NAME = ExtensionPointName.create("org.jetbrains.webServerFileHandler");
-
-  public abstract boolean process(@NotNull PathInfo pathInfo,
-                                  @NotNull CharSequence canonicalRequestPath,
-                                  @NotNull Project project,
-                                  @NotNull FullHttpRequest request,
-                                  @NotNull Channel channel,
-                                  boolean isCustomHost) throws IOException;
+  /**
+   * canonicalRequestPath contains index file name (if not specified in the request)
+   */
+  abstract fun process(pathInfo: PathInfo,
+                       canonicalPath: CharSequence,
+                       project: Project,
+                       request: FullHttpRequest,
+                       channel: Channel,
+                       projectNameIfNotCustomHost: String?): Boolean
 }
+
+fun getRequestPath(canonicalPath: CharSequence, projectNameIfNotCustomHost: String?) = if (projectNameIfNotCustomHost == null) "/$canonicalPath" else "/$projectNameIfNotCustomHost/$canonicalPath"
