@@ -17,7 +17,6 @@ package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -30,7 +29,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TestUtils;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,12 +79,6 @@ public class StaticMethodOnlyUsedInOneClassInspectionBase extends BaseInspection
   }
 
   @Override
-  public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    writeBooleanOption(node, "ignoreTestClasses");
-    writeBooleanOption(node, "ignoreAnonymousClasses", Boolean.TRUE);
-  }
-
-  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new StaticMethodOnlyUsedInOneClassVisitor();
   }
@@ -123,7 +115,6 @@ public class StaticMethodOnlyUsedInOneClassInspectionBase extends BaseInspection
       final GlobalSearchScope scope = GlobalSearchScope.allScope(method.getProject());
       if (searchHelper.isCheapEnoughToSearch(name, scope, null, progressManager.getProgressIndicator())
           == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
-        System.out.println("not cheap");
         return null;
       }
       progressManager.runProcess(new Runnable() {
