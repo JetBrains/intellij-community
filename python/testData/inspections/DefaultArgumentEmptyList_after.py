@@ -1,3 +1,3 @@
 def bar(args=None):
-    if not args:
+    if args is None:
         args = []

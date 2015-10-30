@@ -1,6 +1,6 @@
 def func(x,  # comment
          mutable=None):
     """Docstring."""
-    if not mutable:
+    if mutable is None:
         mutable = []
     print(mutable)
