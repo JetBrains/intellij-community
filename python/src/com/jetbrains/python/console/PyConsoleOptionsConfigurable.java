@@ -89,7 +89,7 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
 
       @Override
       public Runnable enableSearch(String option) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return null;
       }
 
       @Nls
