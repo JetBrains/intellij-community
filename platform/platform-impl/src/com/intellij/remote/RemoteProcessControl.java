@@ -25,7 +25,7 @@ public interface RemoteProcessControl {
   Pair<String, Integer> getRemoteSocket(int localPort) throws RemoteSdkException;
 
   @Nullable
-  HostAndPort getLocalTunnel(int serverPort);
+  HostAndPort getLocalTunnel(int remotePort);
 
   List<PathMappingSettings.PathMapping> getFileMappings();
 }

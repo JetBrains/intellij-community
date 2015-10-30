@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 
 public abstract class JavaExpressionSurrounder implements Surrounder {
-  public static ExtensionPointName<JavaExpressionSurrounder> EP_NAME = ExtensionPointName.create("com.intellij.javaExpressionSurrounder");
+  public static final ExtensionPointName<JavaExpressionSurrounder> EP_NAME = ExtensionPointName.create("com.intellij.javaExpressionSurrounder");
 
   @Override
   public boolean isApplicable(@NotNull PsiElement[] elements) {

@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Nikolay.Tropin
  */
 public abstract class NodeDescriptorNameAdjuster {
-  public static ExtensionPointName<NodeDescriptorNameAdjuster> EP_NAME = ExtensionPointName.create("com.intellij.debugger.nodeNameAdjuster");
+  public static final ExtensionPointName<NodeDescriptorNameAdjuster> EP_NAME = ExtensionPointName.create("com.intellij.debugger.nodeNameAdjuster");
 
   public abstract boolean isApplicable(@NotNull NodeDescriptor descriptor);
 

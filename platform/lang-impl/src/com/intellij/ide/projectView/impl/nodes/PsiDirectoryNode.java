@@ -50,10 +50,7 @@ import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.IconUtil;
-import com.intellij.util.PathUtil;
-import com.intellij.util.PlatformIcons;
-import com.intellij.util.PlatformUtils;
+import com.intellij.util.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -88,7 +85,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
 
       data.setPresentableText(directoryFile.getName());
       if (module != null) {
-        if (!(parentValue instanceof Module )) {
+        if (!(parentValue instanceof Module)) {
           if (!shouldShowModuleName()) {
             data.addText(directoryFile.getName() + " ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
           }
@@ -106,7 +103,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
 
         if (parentValue instanceof Module || parentValue instanceof Project) {
           final String location = FileUtil.getLocationRelativeToUserHome(directoryFile.getPresentableUrl());
-          data.addText(" (" + location + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          data.addText(FontUtil.spaceAndThinSpace() + location, SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         else if (shouldShowSourcesRoot()) {
           SourceFolder sourceRoot = ProjectRootsUtil.getModuleSourceRoot(directoryFile, project);
@@ -114,7 +111,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
             ModuleSourceRootEditHandler<?> handler = ModuleSourceRootEditHandler.getEditHandler(sourceRoot.getRootType());
             if (handler != null) {
               String rootTypeName = handler.getRootTypeName();
-              data.addText(" (" + rootTypeName.toLowerCase(Locale.getDefault()) + " root)",  SimpleTextAttributes.GRAY_ATTRIBUTES);
+              data.addText(FontUtil.spaceAndThinSpace() + rootTypeName.toLowerCase(Locale.getDefault()) + " root",  SimpleTextAttributes.GRAYED_ATTRIBUTES);
             }
           }
         }

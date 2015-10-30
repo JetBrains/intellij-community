@@ -31,7 +31,7 @@ import java.util.List;
 public class SsiConditional implements SsiCommand {
   @SuppressWarnings("SpellCheckingInspection")
   @Override
-  public long process(@NotNull SsiProcessingState ssiProcessingState, @NotNull String commandName, @NotNull List<String> paramNames, @NotNull String[] paramValues, @NotNull ByteBufUtf8Writer writer) {
+  public long process(@NotNull SsiProcessingState ssiProcessingState, @NotNull String commandName, @NotNull List<? extends String> paramNames, @NotNull String[] paramValues, @NotNull ByteBufUtf8Writer writer) {
     // Assume anything using conditionals was modified by it
     long lastModified = System.currentTimeMillis();
     // Retrieve the current state information
@@ -111,7 +111,7 @@ public class SsiConditional implements SsiCommand {
   /**
    * Retrieves the expression from the specified arguments and performs the necessary evaluation steps.
    */
-  private static boolean evaluateArguments(@NotNull List<String> names, @NotNull String[] values, @NotNull SsiProcessingState ssiProcessingState) {
+  private static boolean evaluateArguments(@NotNull List<? extends String> names, @NotNull String[] values, @NotNull SsiProcessingState ssiProcessingState) {
     String expression = "expr".equalsIgnoreCase(names.get(0)) ? values[0] : null;
     if (expression == null) {
       throw new SsiStopProcessingException();

@@ -108,16 +108,16 @@ class SlowerTypeConversions implements Runnable {
       final PsiElement qualifier =
         element1 instanceof PsiJavaCodeReferenceElement ? ((PsiJavaCodeReferenceElement)element1).getQualifier() : null;
       final PsiType expectedType = parameters.getExpectedType();
-      ChainedCallCompletion.addChainedCallVariants(element, baseItem, result, itemType, expectedType, parameters);
+      ChainedCallCompletion.addChains(element, baseItem, result, itemType, expectedType, parameters);
 
       final String prefix = getItemText(object);
       if (prefix == null) return;
 
-      FromArrayConversion.addConversionsFromArray(element, prefix, itemType, result, qualifier, expectedType);
+      FromArrayConversion.addConversions(element, prefix, itemType, result, qualifier, expectedType);
 
-      ToArrayConversion.addToArrayConversions(element, object, prefix, itemType, result, qualifier, expectedType);
+      ToArrayConversion.addConversions(element, object, prefix, itemType, result, qualifier, expectedType);
 
-      ArrayMemberAccess.addArrayMemberAccessors(element, prefix, itemType, qualifier, result, (PsiModifierListOwner)object, expectedType);
+      ArrayMemberAccess.addMemberAccessors(element, prefix, itemType, qualifier, result, (PsiModifierListOwner)object, expectedType);
     }
     catch (IncorrectOperationException ignored) {
     }

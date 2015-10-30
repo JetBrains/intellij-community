@@ -38,10 +38,10 @@ class ChainedCallCompletion {
     StandardPatterns.string().oneOf("hashCode", "equals", "finalize", "wait", "notify", "notifyAll", "getClass", "clone", "toString")).
     definedInClass(CommonClassNames.JAVA_LANG_OBJECT);
 
-  static void addChainedCallVariants(final PsiElement place, LookupElement qualifierItem,
-                                     final Consumer<LookupElement> result,
-                                     PsiType qualifierType,
-                                     final PsiType expectedType, JavaSmartCompletionParameters parameters) throws
+  static void addChains(final PsiElement place, LookupElement qualifierItem,
+                        final Consumer<LookupElement> result,
+                        PsiType qualifierType,
+                        final PsiType expectedType, JavaSmartCompletionParameters parameters) throws
                                                                                                            IncorrectOperationException {
     final Object object = qualifierItem.getObject();
     if (OBJECT_METHOD_PATTERN.accepts(object) && !allowGetClass(object, parameters)) {

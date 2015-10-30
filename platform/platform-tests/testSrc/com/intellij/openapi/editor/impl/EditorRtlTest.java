@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.TestFileType;
 
 import java.awt.*;
@@ -31,22 +30,6 @@ import java.io.IOException;
 public class EditorRtlTest extends AbstractEditorTest {
   private static final char RTL_CHAR_REPRESENTATION = 'R';
   private static final char RTL_CHAR = '\u05d0'; // Hebrew 'aleph' letter
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    Registry.get("editor.new.rendering").setValue(true);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      Registry.get("editor.new.rendering").setValue(false);
-    }
-    finally {
-      super.tearDown();      
-    }
-  }
 
   public void testPositionCalculations() throws IOException {
     prepareText("LLRR");

@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.PersistentOrderRootType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.vfs.*;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
@@ -60,7 +61,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
   @Override
   @NotNull
   public VirtualFile[] getRootFiles(@NotNull OrderRootType type) {
-    return myFiles.get(type);
+    return ObjectUtils.chooseNotNull(myFiles.get(type), VirtualFile.EMPTY_ARRAY);
   }
 
   @Override

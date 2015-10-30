@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
         append(text, simpleTextAttributes);
         String location = presentation.getLocationString();
         if (!StringUtil.isEmpty(location)) {
-          SimpleTextAttributes attributes = SimpleTextAttributes.merge(simpleTextAttributes, SimpleTextAttributes.GRAY_ATTRIBUTES);
+          SimpleTextAttributes attributes = SimpleTextAttributes.merge(simpleTextAttributes, SimpleTextAttributes.GRAYED_ATTRIBUTES);
           append(presentation.getLocationPrefix() + location + presentation.getLocationSuffix(), attributes, false);
         }
       }

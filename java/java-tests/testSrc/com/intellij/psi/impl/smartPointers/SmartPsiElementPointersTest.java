@@ -877,4 +877,23 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
   private <T extends PsiElement> SmartPointerEx<T> createPointer(T element) {
     return (SmartPointerEx<T>)getPointerManager().createSmartPsiElementPointer(element);
   }
+
+  public void testAnchorInfoHasRange() throws Exception {
+    PsiJavaFile file = (PsiJavaFile)createFile("a.java", "class C1{}");
+    assertNotNull(((PsiFileImpl) file).getStubTree());
+    PsiClass psiClass = file.getClasses()[0];
+
+    Segment range = createPointer(psiClass).getRange();
+    assertNotNull(range);
+    assertEquals(psiClass.getNameIdentifier().getTextRange(), TextRange.create(range));
+
+    file = (PsiJavaFile)createFile("b.java", "class C2{}");
+    assertNotNull(((PsiFileImpl) file).getStubTree());
+    psiClass = file.getClasses()[0];
+
+    range = createPointer(psiClass).getPsiRange();
+    assertNotNull(range);
+    assertEquals(psiClass.getNameIdentifier().getTextRange(), TextRange.create(range));
+  }
+
 }

@@ -479,7 +479,8 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
       myTaskManager = null;
       myVcs = null;
       myChangeListManager = null;
+
+      super.tearDown();
     }
-    super.tearDown();
   }
 }

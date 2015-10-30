@@ -32,7 +32,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
-import static com.intellij.vcsUtil.UIVcsUtil.spaceAndThinSpace;
+import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 /**
  * @author yole

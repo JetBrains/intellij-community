@@ -945,13 +945,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         }
 
         if (newEditor) {
-          if (window.isShowing()) {
-            window.setPaintBlocked(true);
-          }
           notifyPublisher(new Runnable() {
             @Override
             public void run() {
-              window.setPaintBlocked(false);
               if (isFileOpen(file)) {
                 getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
                   .fileOpened(FileEditorManagerImpl.this, file);

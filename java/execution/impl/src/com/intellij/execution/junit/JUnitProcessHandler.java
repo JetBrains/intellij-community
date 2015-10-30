@@ -48,11 +48,13 @@ public class JUnitProcessHandler extends KillableColoredProcessHandler {
     });
   }
 
+  @NotNull
   @Override
   protected Reader createProcessOutReader() {
     return myOut.createReader();
   }
 
+  @NotNull
   @Override
   protected Reader createProcessErrReader() {
     return myErr.createReader();
@@ -73,5 +75,10 @@ public class JUnitProcessHandler extends KillableColoredProcessHandler {
     final JUnitProcessHandler processHandler = new JUnitProcessHandler(commandLine);
     ProcessTerminatedListener.attach(processHandler);
     return processHandler;
+  }
+
+  @Override
+  protected boolean useNonBlockingRead() {
+    return true;
   }
 }

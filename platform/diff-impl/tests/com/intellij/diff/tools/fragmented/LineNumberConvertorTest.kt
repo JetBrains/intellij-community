@@ -17,8 +17,8 @@ package com.intellij.diff.tools.fragmented
 
 import com.intellij.testFramework.UsefulTestCase
 
-public class LineNumberConvertorTest : UsefulTestCase() {
-  public fun testEmpty() {
+class LineNumberConvertorTest : UsefulTestCase() {
+  fun testEmpty() {
     doTest(
         {
         },
@@ -29,7 +29,7 @@ public class LineNumberConvertorTest : UsefulTestCase() {
     )
   }
 
-  public fun testSingleRange() {
+  fun testSingleRange() {
     doTest(
         {
           put(2, 3, 2)
@@ -46,7 +46,7 @@ public class LineNumberConvertorTest : UsefulTestCase() {
     )
   }
 
-  public fun testTwoRanges() {
+  fun testTwoRanges() {
     doTest(
         {
           put(2, 3, 2)
@@ -67,7 +67,7 @@ public class LineNumberConvertorTest : UsefulTestCase() {
     )
   }
 
-  public fun testAdjustmentRanges() {
+  fun testAdjustmentRanges() {
     doTest(
         {
           put(2, 3, 2)
@@ -85,7 +85,7 @@ public class LineNumberConvertorTest : UsefulTestCase() {
     )
   }
 
-  public fun testPartiallyAdjustmentRanges() {
+  fun testPartiallyAdjustmentRanges() {
     doTest(
         {
           put(2, 3, 2)
@@ -105,7 +105,7 @@ public class LineNumberConvertorTest : UsefulTestCase() {
     )
   }
 
-  public fun testTwoRangesApproximate() {
+  fun testTwoRangesApproximate() {
     doTest(
         {
           put(1, 2, 1)
@@ -140,28 +140,28 @@ public class LineNumberConvertorTest : UsefulTestCase() {
   private class TestBuilder {
     private val builder = LineNumberConvertor.Builder()
 
-    public fun put(left: Int, right: Int, length: Int) {
+    fun put(left: Int, right: Int, length: Int) {
       builder.put1(left, right, length)
     }
 
-    public fun finish(): Test = Test(builder.build())
+    fun finish(): Test = Test(builder.build())
   }
 
   private class Test(val convertor: LineNumberConvertor) {
-    public fun checkMatch(left: Int, right: Int, length: Int) {
+    fun checkMatch(left: Int, right: Int, length: Int) {
       for (i in 0..length - 1) {
         assertEquals(right + i, convertor.convert1(left + i))
         assertEquals(left + i, convertor.convertInv1(right + i))
       }
     }
 
-    public fun checkEmpty(start: Int, end: Int) {
+    fun checkEmpty(start: Int, end: Int) {
       for (i in start..end) {
         assertEquals(-1, convertor.convert1(i))
       }
     }
 
-    public fun checkEmptyInv(start: Int, end: Int) {
+    fun checkEmptyInv(start: Int, end: Int) {
       for (i in start..end) {
         assertEquals(-1, convertor.convertInv1(i))
       }

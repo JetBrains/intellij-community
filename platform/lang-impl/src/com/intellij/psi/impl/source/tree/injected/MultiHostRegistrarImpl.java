@@ -56,6 +56,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.Function;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -77,6 +78,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
   private StringBuilder outChars;
   private boolean isOneLineEditor;
   private boolean cleared;
+  private String fileExtension;
   private final Project myProject;
   private final PsiManager myPsiManager;
   private final DocumentEx myHostDocument;
@@ -128,7 +130,9 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
       myReferenceInjector = injector;
     }
     myLanguage = language;
-
+    // todo uncomment
+    //LanguageFileType fileType = myLanguage.getAssociatedFileType();
+    //fileExtension = fileType == null ? null : fileType.getDefaultExtension();
     return this;
   }
 
@@ -137,9 +141,14 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     shreds.clear();
     outChars.setLength(0);
     isOneLineEditor = false;
+    fileExtension = null;
     myLanguage = null;
 
     cleared = true;
+  }
+
+  public void setFileExtension(@Nullable  String fileExtension) {
+    this.fileExtension = fileExtension;
   }
 
   @Override
@@ -209,7 +218,8 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
 
       Place place = new Place(shreds);
       DocumentWindowImpl documentWindow = new DocumentWindowImpl(myHostDocument, isOneLineEditor, place);
-      VirtualFileWindowImpl virtualFile = new VirtualFileWindowImpl(myHostVirtualFile, documentWindow, myLanguage, outChars);
+      String fileName = PathUtil.makeFileName(myHostVirtualFile.getName(), fileExtension);
+      VirtualFileWindowImpl virtualFile = new VirtualFileWindowImpl(fileName, myHostVirtualFile, documentWindow, myLanguage, outChars);
       Language forcedLanguage = myContextElement.getUserData(InjectedFileViewProvider.LANGUAGE_FOR_INJECTED_COPY_KEY);
       myLanguage = forcedLanguage == null ? LanguageSubstitutors.INSTANCE.substituteLanguage(myLanguage, virtualFile, myProject) : forcedLanguage;
 

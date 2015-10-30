@@ -17,16 +17,16 @@ package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleSMTestProxy;
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
-import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager;
 
 /**
  * @author Vladislav.Soroka
  * @since 2/28/14
  */
 public class BeforeSuiteEvent extends AbstractTestEvent {
-  public BeforeSuiteEvent(GradleTestsExecutionConsoleManager consoleManager) {
-    super(consoleManager);
+  public BeforeSuiteEvent(GradleTestsExecutionConsole executionConsole) {
+    super(executionConsole);
   }
 
   @Override
@@ -42,7 +42,7 @@ public class BeforeSuiteEvent extends AbstractTestEvent {
     else {
       String locationUrl = findLocationUrl(null, fqClassName);
       final GradleSMTestProxy testProxy = new GradleSMTestProxy(name, true, locationUrl, null);
-      testProxy.setLocator(getConsoleManager().getUrlProvider());
+      testProxy.setLocator(getExecutionConsole().getUrlProvider());
       testProxy.setParentId(parentTestId);
       testProxy.setStarted();
       registerTestProxy(testId, testProxy);

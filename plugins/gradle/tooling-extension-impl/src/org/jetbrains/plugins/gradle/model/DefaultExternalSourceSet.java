@@ -18,6 +18,7 @@ package org.jetbrains.plugins.gradle.model;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.model.project.IExternalSystemSourceType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -31,6 +32,8 @@ public class DefaultExternalSourceSet implements ExternalSourceSet {
   private String myName;
   private Map<IExternalSystemSourceType, ExternalSourceDirectorySet> mySources;
   private Collection<ExternalDependency> myDependencies;
+  private String mySourceCompatibility;
+  private String myTargetCompatibility;
 
   public DefaultExternalSourceSet() {
     mySources = new HashMap<IExternalSystemSourceType, ExternalSourceDirectorySet>();
@@ -40,6 +43,8 @@ public class DefaultExternalSourceSet implements ExternalSourceSet {
   public DefaultExternalSourceSet(ExternalSourceSet sourceSet) {
     this();
     myName = sourceSet.getName();
+    mySourceCompatibility = sourceSet.getSourceCompatibility();
+    myTargetCompatibility = sourceSet.getTargetCompatibility();
     for (Map.Entry<IExternalSystemSourceType, ExternalSourceDirectorySet> entry : sourceSet.getSources().entrySet()) {
       mySources.put(ExternalSystemSourceType.from(entry.getKey()), new DefaultExternalSourceDirectorySet(entry.getValue()));
     }
@@ -53,6 +58,26 @@ public class DefaultExternalSourceSet implements ExternalSourceSet {
   @Override
   public String getName() {
     return myName;
+  }
+
+  @Nullable
+  @Override
+  public String getSourceCompatibility() {
+    return mySourceCompatibility;
+  }
+
+  public void setSourceCompatibility(@Nullable String sourceCompatibility) {
+    mySourceCompatibility = sourceCompatibility;
+  }
+
+  @Nullable
+  @Override
+  public String getTargetCompatibility() {
+    return myTargetCompatibility;
+  }
+
+  public void setTargetCompatibility(@Nullable String targetCompatibility) {
+    myTargetCompatibility = targetCompatibility;
   }
 
   @Override

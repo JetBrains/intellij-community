@@ -15,8 +15,8 @@
  */
 package com.intellij.diff.comparison
 
-public class LineComparisonUtilTest : ComparisonUtilTestBase() {
-  public fun testEqualStrings() {
+class LineComparisonUtilTest : ComparisonUtilTestBase() {
+  fun testEqualStrings() {
     lines {
       ("" - "")
       default()
@@ -48,7 +48,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testTrivialCases() {
+  fun testTrivialCases() {
     lines {
       ("x_" - "y_")
       default(mod(0, 0, 1, 1))
@@ -98,7 +98,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testSimpleCases() {
+  fun testSimpleCases() {
     lines {
       ("x_z" - "y_z")
       default(mod(0, 0, 1, 1))
@@ -142,7 +142,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testEmptyLastLine() {
+  fun testEmptyLastLine() {
     lines {
       ("x_" - "")
       default(del(0, 0, 1))
@@ -168,7 +168,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testWhitespaceOnlyChanges() {
+  fun testWhitespaceOnlyChanges() {
     lines {
       ("x " - " x")
       default(mod(0, 0, 1, 1))
@@ -213,7 +213,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testAlgorithmSpecific() {
+  fun testAlgorithmSpecific() {
     lines {
       ("x_y_z_AAAAA" - "AAAAA_x_y_z")
       default(del(0, 0, 3), ins(4, 1, 3))
@@ -240,7 +240,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testNonDeterministicCases() {
+  fun testNonDeterministicCases() {
     lines {
       ("" - "__")
       default(ins(1, 1, 2))
@@ -254,7 +254,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testBigBlockShiftRegression() {
+  fun `test regression - shifted similar lines should be matched as a single change, not insertion-deletion`() {
     lines {
       (" X_  X" - "  X_   X")
       default(mod(0, 0, 2, 2))
@@ -262,7 +262,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testPreferBoundedBlocks() {
+  fun `test prefer chunks bounded by empty line`() {
     lines {
       ("A_B_o_o_Y_Z_ _A_B_z_z_Y_Z" - "A_B_o_o_Y_Z_ _A_B_u_u_Y_Z_ _A_B_z_z_Y_Z")
       default(ins(7, 7, 7))
@@ -282,7 +282,7 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testPreferLessBlocks() {
+  fun `test prefer smaller amount of chunks`() {
     lines() {
       ("X_A_X_Y_" - "X_Y_")
       default(del(0, 0, 2))
@@ -303,11 +303,63 @@ public class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
-  public fun testTwoStepCanTrimRegression() {
+  fun `test regression - can trim chunks after 'compareTwoSteps'`() {
     lines {
       ("q__7_ 6_ 7" - "_7")
       default(del(0, 0, 1), del(3, 2, 2))
       testDefault()
+    }
+  }
+
+  fun `test regression - can trim chunks after 'optimizeLineChunks'`() {
+    lines {
+      ("A=====_ B=====_ }_}_B=====_" - "A=====_ }_}_B=====_")
+      default(del(1, 1, 1))
+      testAll()
+    }
+  }
+
+  fun `test bad cases caused by 'compareTwoStep' logic`() {
+    lines {
+      ("x_!" - "!_x_y")
+      default(del(0, 0, 1), ins(2, 1, 2))
+      testAll()
+    }
+
+    lines {
+      ("!_x_y" - "x_!")
+      default(del(0, 0, 1), mod(2, 1, 1, 1))
+      testAll()
+    }
+
+    lines {
+      ("x_! " - "!_x_y")
+      default(mod(0, 0, 2, 3))
+      trim(del(0, 0, 1), ins(2, 1, 2))
+      testAll()
+    }
+
+    lines {
+      ("!_x_y" - "x_! ")
+      default(del(0, 0, 1), mod(2, 1, 1, 1))
+      testAll()
+    }
+  }
+
+  fun `test bad cases caused by 'compareSmart' logic`() {
+    lines {
+      ("A=====_ B=====_ }_}_B=====" - "A=====_ }_}_B=====")
+      // TODO trim(del(1, 1, 1))
+      default(del(1, 1, 1))
+      trim(ins(1, 1, 2), del(2, 4, 3))
+      testAll()
+    }
+
+    lines {
+      ("A=====_ B=====_X_ }_}_Z_B=====_" - "A=====_ }_}_B=====_")
+      // TODO default(del(1, 1, 2), del(5, 3, 1))
+      default(mod(1, 1, 5, 2))
+      testAll()
     }
   }
 }

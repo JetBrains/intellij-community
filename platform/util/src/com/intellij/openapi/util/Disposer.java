@@ -43,6 +43,7 @@ public class Disposer {
   private static final ObjectTreeAction<Disposable> ourDisposeAction = new ObjectTreeAction<Disposable>() {
     @Override
     public void execute(@NotNull final Disposable each) {
+      //noinspection SSBasedInspection
       each.dispose();
     }
 
@@ -129,8 +130,8 @@ public class Disposer {
     return ourDebugMode && ourTree.isEmpty();
   }
 
-  public static void setDebugMode(final boolean b) {
-    ourDebugMode = b;
+  public static void setDebugMode(final boolean debugMode) {
+    ourDebugMode = debugMode;
   }
 
   public static boolean isDebugMode() {

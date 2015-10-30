@@ -215,6 +215,9 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         sourceSetData.setVersion(externalProject.getVersion());
         sourceSetData.setIdeModuleGroup(moduleGroup);
 
+        sourceSetData.setSourceCompatibility(sourceSet.getSourceCompatibility());
+        sourceSetData.setTargetCompatibility(sourceSet.getTargetCompatibility());
+
         if ("main".equals(sourceSet.getName())) {
           final List<File> artifacts = ContainerUtil.newArrayList();
           final Set<File> defaultArtifacts = externalProject.getArtifactsByConfiguration().get("default");

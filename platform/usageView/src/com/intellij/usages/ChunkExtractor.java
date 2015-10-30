@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,9 +145,8 @@ public class ChunkExtractor {
 
     int lineNumber = myDocument.getLineNumber(absoluteStartOffset);
     int visibleLineNumber = visibleDocument.getLineNumber(visibleStartOffset);
-    int visibleColumnNumber = visibleStartOffset - visibleDocument.getLineStartOffset(visibleLineNumber);
-    final List<TextChunk> result = new ArrayList<TextChunk>();
-    appendPrefix(result, visibleLineNumber, visibleColumnNumber);
+    List<TextChunk> result = new ArrayList<TextChunk>();
+    appendPrefix(result, visibleLineNumber);
 
     int fragmentToShowStart = myDocument.getLineStartOffset(lineNumber);
     int fragmentToShowEnd = fragmentToShowStart < myDocument.getTextLength() ? myDocument.getLineEndOffset(lineNumber) : 0;
@@ -341,9 +340,7 @@ public class ChunkExtractor {
     return attrs;
   }
 
-  private void appendPrefix(@NotNull List<TextChunk> result, int lineNumber, int columnNumber) {
-    String prefix = "(" + (lineNumber + 1) + ": " + (columnNumber + 1) + ") ";
-    TextChunk prefixChunk = new TextChunk(myColorsScheme.getAttributes(UsageTreeColors.USAGE_LOCATION), prefix);
-    result.add(prefixChunk);
+  private void appendPrefix(@NotNull List<TextChunk> result, int lineNumber) {
+    result.add(new TextChunk(myColorsScheme.getAttributes(UsageTreeColors.USAGE_LOCATION), String.valueOf(lineNumber + 1)));
   }
 }

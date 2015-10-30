@@ -126,7 +126,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   private FileElement derefTreeElement() {
     Getter<FileElement> pointer = myTreeElementPointer;
-    FileElement treeElement = SoftReference.deref(pointer);
+    if (pointer == null) return null;
+
+    FileElement treeElement = pointer.get();
     if (treeElement != null) return treeElement;
 
     synchronized (PsiLock.LOCK) {
@@ -722,11 +724,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Nullable
   private StubTree derefStub() {
-    if (myStub == null) return  null;
-
-    synchronized (PsiLock.LOCK) {
-      return SoftReference.dereference(myStub);
-    }
+    return SoftReference.dereference(myStub);
   }
 
   protected PsiFileImpl cloneImpl(FileElement treeElementClone) {

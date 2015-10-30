@@ -20,9 +20,12 @@ import com.intellij.idea.Main;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBCardLayout;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,9 +47,9 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   private final JBCardLayout myCardLayout = new JBCardLayout();
   protected final List<AbstractCustomizeWizardStep> mySteps = new ArrayList<AbstractCustomizeWizardStep>();
   private int myIndex = 0;
-  private final JLabel myNavigationLabel = new JLabel();
-  private final JLabel myHeaderLabel = new JLabel();
-  private final JLabel myFooterLabel = new JLabel();
+  private final JBLabel myNavigationLabel = new JBLabel();
+  private final JBLabel myHeaderLabel = new JBLabel();
+  private final JBLabel myFooterLabel = new JBLabel();
   private final CardLayout myButtonWrapperLayout = new CardLayout();
   private final JPanel myButtonWrapper = new JPanel(myButtonWrapperLayout);
   private JPanel myContentPanel;
@@ -59,8 +62,9 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     mySkipButton.addActionListener(this);
     myBackButton.addActionListener(this);
     myNextButton.addActionListener(this);
-    myNavigationLabel.setEnabled(false);
-    myFooterLabel.setEnabled(false);
+    AbstractCustomizeWizardStep.applyHeaderFooterStyle(myNavigationLabel);
+    AbstractCustomizeWizardStep.applyHeaderFooterStyle(myHeaderLabel);
+    AbstractCustomizeWizardStep.applyHeaderFooterStyle(myFooterLabel);
     init();
     initCurrentStep(true);
     setSize(400, 300);
@@ -224,8 +228,8 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     myNextButton.setText(myIndex < mySteps.size() - 1
                          ? "Next: " + mySteps.get(myIndex + 1).getTitle()
                          : "Start using " + ApplicationNamesInfo.getInstance().getFullProductName());
-    myHeaderLabel.setText(myCurrentStep.getHTMLHeader());
-    myFooterLabel.setText(myCurrentStep.getHTMLFooter());
+    myHeaderLabel.setText(ensureHTML(myCurrentStep.getHTMLHeader()));
+    myFooterLabel.setText(ensureHTML(myCurrentStep.getHTMLFooter()));
     StringBuilder navHTML = new StringBuilder("<html><body>");
     for (int i = 0; i < mySteps.size(); i++) {
       if (i > 0) navHTML.append("&nbsp;&#8594;&nbsp;");
@@ -234,5 +238,10 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
       if (i == myIndex) navHTML.append("</b>");
     }
     myNavigationLabel.setText(navHTML.toString());
+  }
+
+  @Contract("!null->!null")
+  private static String ensureHTML(@Nullable String s) {
+    return s == null ? null : s.startsWith("<html>") ? s : "<html>" + StringUtil.escapeXml(s) + "</html>";
   }
 }

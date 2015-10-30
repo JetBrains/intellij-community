@@ -36,12 +36,12 @@ import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionC
  * @author peter
  */
 class FromArrayConversion {
-  static void addConversionsFromArray(final PsiElement element,
-                                      final String prefix,
-                                      final PsiType itemType,
-                                      final Consumer<LookupElement> result,
-                                      @Nullable PsiElement qualifier,
-                                      final PsiType expectedType) throws IncorrectOperationException {
+  static void addConversions(final PsiElement element,
+                             final String prefix,
+                             final PsiType itemType,
+                             final Consumer<LookupElement> result,
+                             @Nullable PsiElement qualifier,
+                             final PsiType expectedType) throws IncorrectOperationException {
     final String methodName = getArraysConversionMethod(itemType, expectedType);
     if (methodName == null) return;
 

@@ -89,7 +89,7 @@ public class MatchPatchPaths {
           for (VirtualFile file : files) {
             Pair<VirtualFile, Integer> pair = compareNamesImpl(strings, file, i);
             if (pair != null && pair.getSecond() < i) {
-              if (best == null || pair.getSecond() < best.getSecond()) {
+              if (best == null || pair.getSecond() < best.getSecond() || isGoodAndProjectBased(best, pair)) {
                 best = pair;
               }
             }
@@ -108,6 +108,10 @@ public class MatchPatchPaths {
         result.putValue(myBaseDir, patchInProgress);
       }
     }
+  }
+
+  private boolean isGoodAndProjectBased(@NotNull Pair<VirtualFile, Integer> best, @NotNull Pair<VirtualFile, Integer> pair) {
+    return pair.getSecond().equals(best.getSecond()) && myBaseDir.equals(pair.getFirst());
   }
 
   private static void selectByContextOrByStrip(@NotNull List<PatchAndVariants> candidates,

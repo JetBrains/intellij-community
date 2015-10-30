@@ -24,20 +24,20 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.util.text.StringUtil
 
-public class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
-  public fun test() {
+class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
+  fun test() {
     doTest(System.currentTimeMillis(), 30, 30)
   }
 
-  public fun doTest(seed: Long, runs: Int, maxLength: Int) {
+  fun doTest(seed: Long, runs: Int, maxLength: Int) {
     doAutoTest(seed, runs) { debugData ->
       debugData.put("MaxLength", maxLength)
 
       var text1 = DocumentImpl(generateText(maxLength))
       var text2 = DocumentImpl(generateText(maxLength))
 
-      debugData.put("Text1", textToReadableFormat(text1.getCharsSequence()))
-      debugData.put("Text2", textToReadableFormat(text2.getCharsSequence()))
+      debugData.put("Text1", textToReadableFormat(text1.charsSequence))
+      debugData.put("Text2", textToReadableFormat(text2.charsSequence))
 
       for (side in Side.values) {
         for (comparisonPolicy in ComparisonPolicy.values) {
@@ -49,9 +49,9 @@ public class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
     }
   }
 
-  public fun doTest(document1: Document, document2: Document, policy: ComparisonPolicy, masterSide: Side) {
-    val sequence1 = document1.getCharsSequence()
-    val sequence2 = document2.getCharsSequence()
+  fun doTest(document1: Document, document2: Document, policy: ComparisonPolicy, masterSide: Side) {
+    val sequence1 = document1.charsSequence
+    val sequence2 = document2.charsSequence
 
     val fragments = MANAGER.compareLinesInner(sequence1, sequence2, policy, DumbProgressIndicator.INSTANCE)
 
@@ -59,11 +59,11 @@ public class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
     builder.exec()
 
     val ignoreWhitespaces = policy !== ComparisonPolicy.DEFAULT
-    val text = builder.getText()
-    val blocks = builder.getBlocks()
-    val convertor = builder.getConvertor()
-    val changedLines = builder.getChangedLines()
-    val ranges = builder.getRanges()
+    val text = builder.text
+    val blocks = builder.blocks
+    val convertor = builder.convertor
+    val changedLines = builder.changedLines
+    val ranges = builder.ranges
 
     // both documents - before and after - should be subsequence of result text.
     assertTrue(isSubsequence(text, sequence1, ignoreWhitespaces))
@@ -71,10 +71,10 @@ public class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
 
     // all changes should be inside ChangedLines
     for (fragment in fragments) {
-      val startLine1 = fragment.getStartLine1()
-      val endLine1 = fragment.getEndLine1()
-      val startLine2 = fragment.getStartLine2()
-      val endLine2 = fragment.getEndLine2()
+      val startLine1 = fragment.startLine1
+      val endLine1 = fragment.endLine1
+      val startLine2 = fragment.startLine2
+      val endLine2 = fragment.endLine2
 
       for (i in startLine1 until endLine1) {
         val targetLine = convertor.convertInv1(i)
@@ -94,11 +94,11 @@ public class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
       val fragment = fragments[i]
       val block = blocks[i]
 
-      val fragment1 = sequence1.subSequence(fragment.getStartOffset1(), fragment.getEndOffset1())
-      val fragment2 = sequence2.subSequence(fragment.getStartOffset2(), fragment.getEndOffset2())
+      val fragment1 = sequence1.subSequence(fragment.startOffset1, fragment.endOffset1)
+      val fragment2 = sequence2.subSequence(fragment.startOffset2, fragment.endOffset2)
 
-      val block1 = text.subSequence(block.getStartOffset1(), block.getEndOffset1())
-      val block2 = text.subSequence(block.getStartOffset2(), block.getEndOffset2())
+      val block1 = text.subSequence(block.startOffset1, block.endOffset1)
+      val block2 = text.subSequence(block.startOffset2, block.endOffset2)
 
       assertEqualsCharSequences(fragment1, block1, ignoreWhitespaces, true)
       assertEqualsCharSequences(fragment2, block2, ignoreWhitespaces, true)
@@ -106,9 +106,9 @@ public class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
 
     // ranges should have exact same content
     for (range in ranges) {
-      val sideSequence = range.getSide().select(sequence1, sequence2)!!
-      val baseRange = text.subSequence(range.getBase().getStartOffset(), range.getBase().getEndOffset())
-      val sideRange = sideSequence.subSequence(range.getChanged().getStartOffset(), range.getChanged().getEndOffset())
+      val sideSequence = range.side.select(sequence1, sequence2)!!
+      val baseRange = text.subSequence(range.base.startOffset, range.base.endOffset)
+      val sideRange = sideSequence.subSequence(range.changed.startOffset, range.changed.endOffset)
       assertTrue(StringUtil.equals(baseRange, sideRange))
     }
   }

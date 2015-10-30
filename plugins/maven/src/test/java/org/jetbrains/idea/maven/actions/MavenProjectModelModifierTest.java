@@ -48,12 +48,26 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
                          "<version>1</version>");
 
     Promise<Void> result =
-      getExtension().addExternalLibraryDependency(Collections.singletonList(getModule("project")), new CommonsIoLibraryDescriptor(),
+      getExtension().addExternalLibraryDependency(Collections.singletonList(getModule("project")), new JunitLibraryDescriptor(),
                                                   DependencyScope.COMPILE);
     assertNotNull(result);
     String version = assertHasDependency(myProjectPom, "junit", "junit");
     waitUntilImported(result);
     assertModuleLibDep("project", "Maven: junit:junit:" + version);
+  }
+
+  public void testAddExternalLibraryDependencyWithEqualMinAndMaxVersions() throws IOException {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    Promise<Void> result =
+      getExtension().addExternalLibraryDependency(Collections.singletonList(getModule("project")), new CommonsIoLibraryDescriptor_2_4(),
+                                                  DependencyScope.COMPILE);
+    assertNotNull(result);
+    assertHasDependency(myProjectPom, "commons-io", "commons-io");
+    waitUntilImported(result);
+    assertModuleLibDep("project", "Maven: commons-io:commons-io:2.4");
   }
 
   public void testAddModuleDependency() throws IOException {
@@ -157,8 +171,20 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     return ContainerUtil.findInstance(JavaProjectModelModifier.EP_NAME.getExtensions(myProject), MavenProjectModelModifier.class);
   }
 
-  private static class CommonsIoLibraryDescriptor extends ExternalLibraryDescriptor {
-    public CommonsIoLibraryDescriptor() {
+  private static class CommonsIoLibraryDescriptor_2_4 extends ExternalLibraryDescriptor {
+    public CommonsIoLibraryDescriptor_2_4() {
+      super("commons-io", "commons-io", "2.4", "2.4");
+    }
+
+    @NotNull
+    @Override
+    public List<String> getLibraryClassesRoots() {
+      return Collections.emptyList();
+    }
+  }
+
+  private static class JunitLibraryDescriptor extends ExternalLibraryDescriptor {
+    public JunitLibraryDescriptor() {
       super("junit", "junit");
     }
 

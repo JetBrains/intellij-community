@@ -54,21 +54,23 @@ public abstract class DirectBufferWrapper extends ByteBufferWrapper {
   @Override
   public void unmap() {
     if (isDirty()) flush();
-    if (myBuffer != null) disposeDirectBuffer((DirectBuffer)myBuffer);
+    if (myBuffer != null) disposeDirectBuffer(myBuffer);
     myBuffer = null;
   }
 
- static boolean disposeDirectBuffer(final DirectBuffer buffer) {
+ static boolean disposeDirectBuffer(final ByteBuffer buffer) {
     return AccessController.doPrivileged(new PrivilegedAction<Object>() {
       @Override
       @Nullable
       public Object run() {
         try {
-          Cleaner cleaner = buffer.cleaner();
-          if (cleaner != null) cleaner.clean(); // Already cleaned otherwise
+          if (buffer instanceof DirectBuffer) {
+            Cleaner cleaner = ((DirectBuffer)buffer).cleaner();
+            if (cleaner != null) cleaner.clean(); // Already cleaned otherwise
+          }
           return null;
         }
-        catch (Exception e) {
+        catch (Throwable e) {
           return buffer;
         }
       }

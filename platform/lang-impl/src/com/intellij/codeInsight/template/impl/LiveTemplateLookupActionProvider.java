@@ -40,8 +40,7 @@ public class LiveTemplateLookupActionProvider implements LookupActionProvider {
         consumer.consume(new LookupElementAction(PlatformIcons.EDIT, "Edit live template settings") {
           @Override
           public Result performLookupAction() {
-            final Project project = lookup.getEditor().getProject();
-            assert project != null;
+            final Project project = lookup.getProject();
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {

@@ -29,7 +29,6 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.MockFontLayoutService;
@@ -87,13 +86,11 @@ public class EditorPaintingTest extends AbstractEditorTest {
   protected void setUp() throws Exception {
     super.setUp();
     FontLayoutService.setInstance(new MockFontLayoutService(BitmapFont.CHAR_WIDTH, BitmapFont.CHAR_HEIGHT, BitmapFont.CHAR_DESCENT));
-    Registry.get("editor.new.rendering").setValue(true);
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      Registry.get("editor.new.rendering").setValue(false);
       FontLayoutService.setInstance(null);
     }
     finally {

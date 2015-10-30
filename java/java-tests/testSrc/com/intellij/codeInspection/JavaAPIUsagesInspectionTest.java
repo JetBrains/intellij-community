@@ -40,12 +40,7 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
   }
 
   public void testConstructor() throws Exception {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_4, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_4, this::doTest);
   }
 
   public void testIgnored() throws Exception {
@@ -53,39 +48,19 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
   }
 
   public void testAnnotation() throws Exception {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, this::doTest);
   }
 
   public void testDefaultMethods() throws Exception {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, this::doTest);
   }
 
   public void testOverrideAnnotation() throws Exception {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, this::doTest);
   }
 
   public void testRawInheritFromNewlyGenerified() throws Exception {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, JavaAPIUsagesInspectionTest.this::doTest);
   }
 
   @Override

@@ -107,9 +107,7 @@ public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleE
 
         if (!initScripts.isEmpty()) {
           try {
-            final File tempFile = FileUtil.createTempFile("init", ".gradle");
-            tempFile.deleteOnExit();
-            FileUtil.writeToFile(tempFile, StringUtil.join(initScripts, SystemProperties.getLineSeparator()));
+            File tempFile = GradleExecutionHelper.writeToFileGradleInitScript(StringUtil.join(initScripts, SystemProperties.getLineSeparator()));
             ContainerUtil.addAll(scriptParameters, GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
           }
           catch (IOException e) {

@@ -54,4 +54,13 @@ public abstract class GraphAlgorithms {
 
   @NotNull
   public abstract <Node> Graph<Chunk<Node>> computeSCCGraph(@NotNull Graph<Node> graph);
+
+  /**
+   * Adds start node and all its outs to given set recursively.
+   * Nodes which are already in set aren't processed.
+   *
+   * @param start node to start from
+   * @param set set to be populated
+   */
+  public abstract <Node> void collectOutsRecursively(@NotNull Graph<Node> graph, Node start, Set<Node> set);
 }

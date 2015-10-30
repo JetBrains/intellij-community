@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,9 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationWithSeparator;
 import com.intellij.navigation.LocationPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.FontUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.ComparableObjectCheck;
@@ -33,7 +35,7 @@ import java.awt.*;
 import java.util.List;
 
 /**
- * Default implementation of the {@link com.intellij.navigation.ItemPresentation} interface.
+ * Default implementation of the {@link ItemPresentation} interface.
  */
 
 public class PresentationData implements ColoredItemPresentation, ComparableObject, LocationPresentation {
@@ -141,7 +143,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
 
   /**
    * @param closedIcon the closed icon for the node.
-   * @see #setIcons(javax.swing.Icon)
+   * @see #setIcons(Icon)
    * @deprecated Different icons for open/closed no longer supported. Use setIcon instead
    *             Sets the icon shown for the node when it is collapsed in a tree, or when it is displayed
    *             in a non-tree view.
@@ -153,7 +155,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
 
   /**
    * @param openIcon the open icon for the node.
-   * @see #setIcons(javax.swing.Icon)
+   * @see #setIcons(Icon)
    * @deprecated Different icons for open/closed no longer supported. This function is no op.
    *             Sets the icon shown for the node when it is expanded in the tree.
    */
@@ -163,8 +165,8 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
 
   /**
    * @param icon the icon for the node.
-   * @see #setOpenIcon(javax.swing.Icon)
-   * @see #setClosedIcon(javax.swing.Icon)
+   * @see #setOpenIcon(Icon)
+   * @see #setClosedIcon(Icon)
    * @deprecated Different icons for open/closed no longer supported. Use setIcon instead.
    *             Sets both the open and closed icons of the node to the specified icon.
    */
@@ -328,11 +330,11 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
 
   @Override
   public String getLocationPrefix() {
-    return myLocationPrefix == null ? DEFAULT_LOCATION_PREFIX : myLocationPrefix;
+    return myLocationPrefix == null ? FontUtil.spaceAndThinSpace() : myLocationPrefix;
   }
 
   @Override
   public String getLocationSuffix() {
-    return myLocationSuffix == null ? DEFAULT_LOCATION_SUFFIX : myLocationSuffix;
+    return StringUtil.notNullize(myLocationSuffix, "");
   }
 }

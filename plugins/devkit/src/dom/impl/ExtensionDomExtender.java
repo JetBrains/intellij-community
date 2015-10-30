@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -57,22 +56,25 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
       assert extensionPoint != null;
 
       final String interfaceName = extensionPoint.getInterface().getStringValue();
-      final Project project = extensionPoint.getManager().getProject();
-
       if (interfaceName != null) {
-        registrar.registerGenericAttributeValueChildExtension(new XmlName("implementation"), PsiClass.class)
-          .setConverter(CLASS_CONVERTER)
-          .addCustomAnnotation(new MyExtendClass(interfaceName))
-          .addCustomAnnotation(new MyRequired());
-        registerXmlb(registrar, JavaPsiFacade.getInstance(project).findClass(interfaceName, GlobalSearchScope.allScope(project)),
-                     Collections.<With>emptyList());
+        final DomExtension implementationAttribute =
+          registrar.registerGenericAttributeValueChildExtension(new XmlName("implementation"), PsiClass.class)
+            .setConverter(CLASS_CONVERTER)
+            .addCustomAnnotation(new MyExtendClass(interfaceName))
+            .addCustomAnnotation(new MyRequired());
+
+        final PsiClass interfaceClass = extensionPoint.getInterface().getValue();
+        if (interfaceClass != null) {
+          implementationAttribute.setDeclaringElement(interfaceClass);
+        } else {
+          implementationAttribute.setDeclaringElement(extensionPoint);
+        }
+
+        registerXmlb(registrar, interfaceClass, Collections.<With>emptyList());
       }
       else {
-        final String beanClassName = extensionPoint.getBeanClass().getStringValue();
-        if (beanClassName != null) {
-          registerXmlb(registrar, JavaPsiFacade.getInstance(project).findClass(beanClassName, GlobalSearchScope.allScope(project)),
-                       extensionPoint.getWithElements());
-        }
+        final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
+        registerXmlb(registrar, beanClass, extensionPoint.getWithElements());
       }
     }
   };
