@@ -89,7 +89,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   }
 
   @Override
-  public void paintIcon(@NotNull final Component c, @NotNull final Graphics g, final int x, final int y) {
+  public void paintIcon(final Component c, @NotNull final Graphics g, final int x, final int y) {
     if (!(myDelegateIcon instanceof DeferredIconImpl && ((DeferredIconImpl)myDelegateIcon).myDelegateIcon instanceof DeferredIconImpl)) {
       myDelegateIcon.paintIcon(c, g, x, y); //SOE protection
     }
