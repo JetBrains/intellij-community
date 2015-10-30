@@ -366,6 +366,11 @@ public class TestNGTreeHierarchyTest {
     }
 
     @Override
+    public String getDisplayMethodName() {
+      return myMethodName;
+    }
+
+    @Override
     public String getClassName() {
       return myClassName;
     }
