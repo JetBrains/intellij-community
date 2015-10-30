@@ -81,4 +81,10 @@ public class ShortcutTextField extends JTextField {
   public void enableInputMethods(boolean enable) {
     super.enableInputMethods(enable && Registry.is("ide.settings.keymap.input.method.enabled"));
   }
+
+  @Override
+  public void setText(String text) {
+    super.setText(text);
+    setCaretPosition(0);
+  }
 }
