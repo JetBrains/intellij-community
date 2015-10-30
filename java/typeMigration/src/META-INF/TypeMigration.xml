@@ -36,6 +36,6 @@
                      groupBundle="messages.InspectionsBundle"
                      groupName="Java language level migration aids" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.refactoring.typeMigration.inspections.GuavaInspection"
-                     displayName="Guava's functional primitives can be replaced by JAVA"/>
+                     displayName="Guava's functional primitives can be replaced by Java"/>
   </extensions>
 </idea-plugin>
