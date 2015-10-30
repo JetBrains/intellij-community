@@ -152,7 +152,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       @Override
       public PsiSubstitutor compute() {
         final JavaResolveResult staticFactoryCandidateInfo = context == newExpression ? 
-                                                               CachedValuesManager.getCachedValue(context,
+                                                               CachedValuesManager.getCachedValue(newExpression,
                                                                                                   new CachedValueProvider<JavaResolveResult>() {
                                                                                                     @Nullable
                                                                                                     @Override
