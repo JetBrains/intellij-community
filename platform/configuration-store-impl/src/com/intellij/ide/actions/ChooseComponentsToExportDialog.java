@@ -25,7 +25,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -38,6 +37,8 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
@@ -90,7 +91,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
         chooseSettingsFile(myPathPanel.getText(), getWindow(), IdeBundle.message("title.export.file.location"), IdeBundle.message("prompt.choose.export.settings.file.path"))
-          .doWhenDone(new Consumer<String>() {
+          .done(new Consumer<String>() {
             @Override
             public void consume(String path) {
               myPathPanel.setText(FileUtil.toSystemDependentName(path));
@@ -176,7 +177,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
   }
 
   @NotNull
-  public static AsyncResult<String> chooseSettingsFile(String oldPath, Component parent, final String title, final String description) {
+  public static Promise<String> chooseSettingsFile(String oldPath, Component parent, final String title, final String description) {
     FileChooserDescriptor chooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
     chooserDescriptor.setDescription(description);
     chooserDescriptor.setHideIgnored(false);
@@ -193,22 +194,22 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     else {
       initialDir = null;
     }
-    final AsyncResult<String> result = new AsyncResult<String>();
+    final AsyncPromise<String> result = new AsyncPromise<String>();
     FileChooser.chooseFiles(chooserDescriptor, null, parent, initialDir, new FileChooser.FileChooserConsumer() {
       @Override
       public void consume(List<VirtualFile> files) {
         VirtualFile file = files.get(0);
         if (file.isDirectory()) {
-          result.setDone(file.getPath() + '/' + new File(DEFAULT_PATH).getName());
+          result.setResult(file.getPath() + '/' + new File(DEFAULT_PATH).getName());
         }
         else {
-          result.setDone(file.getPath());
+          result.setResult(file.getPath());
         }
       }
 
       @Override
       public void cancelled() {
-        result.setRejected();
+        result.setError("");
       }
     });
     return result;
