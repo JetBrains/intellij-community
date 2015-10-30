@@ -37,6 +37,13 @@ public interface WhitespacesAndCommentsBinder {
   }
 
   /**
+   * Recursive binder is allowed to adjust nested elements positions.
+   */
+  interface RecursiveBinder extends WhitespacesAndCommentsBinder {
+
+  }
+
+  /**
    * <p>Analyzes whitespace and comment tokens at element's edge and returns element's edge position relative to these tokens.
    * Value returned by left edge processor will be used as a pointer to a first token of element.
    * Value returned by right edge processor will be used as a pointer to a token next of element's last token.

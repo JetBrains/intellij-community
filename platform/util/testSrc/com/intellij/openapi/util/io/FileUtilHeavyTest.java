@@ -246,7 +246,7 @@ public class FileUtilHeavyTest {
 
   @Test
   public void testSymlinkDeletion() throws Exception {
-    assumeTrue(SystemInfo.isWin7OrNewer || SystemInfo.isUnix);
+    assumeTrue(SystemInfo.areSymLinksSupported);
 
     File targetDir = IoTestUtil.createTestDir(myTempDirectory, "link_del_test_1");
     IoTestUtil.createTestFile(targetDir, "file");

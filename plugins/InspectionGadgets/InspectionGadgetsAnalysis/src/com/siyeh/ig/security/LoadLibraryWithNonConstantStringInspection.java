@@ -40,7 +40,8 @@ public class LoadLibraryWithNonConstantStringInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("load.library.with.non.constant.string.problem.descriptor");
+    final String qualifier = (String)infos[0];
+    return InspectionGadgetsBundle.message("load.library.with.non.constant.string.problem.descriptor", qualifier);
   }
 
   @Nullable
@@ -60,10 +61,14 @@ public class LoadLibraryWithNonConstantStringInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (!MethodCallUtils.callWithNonConstantString(expression, considerStaticFinalConstant, "java.lang.System", "loadLibrary")) {
-        return;
+      if (MethodCallUtils.callWithNonConstantString(expression, considerStaticFinalConstant,
+                                                    "java.lang.System", "load", "loadLibrary")) {
+        registerMethodCallError(expression, "System");
       }
-      registerMethodCallError(expression);
+      else if (MethodCallUtils.callWithNonConstantString(expression, considerStaticFinalConstant,
+                                                         "java.lang.Runtime", "load", "loadLibrary")) {
+        registerMethodCallError(expression, "Runtime");
+      }
     }
   }
 }

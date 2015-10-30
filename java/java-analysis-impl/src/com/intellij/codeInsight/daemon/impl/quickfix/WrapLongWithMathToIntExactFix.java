@@ -32,12 +32,13 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Batkovich
  */
 public class WrapLongWithMathToIntExactFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
-  private final static Logger LOG = Logger.getInstance(WrapLongWithMathToIntExactFix.class);
-
   public final static MyMethodArgumentFixerFactory REGISTAR = new MyMethodArgumentFixerFactory();
 
-  public WrapLongWithMathToIntExactFix(final @NotNull PsiExpression expression) {
+  private final PsiType myType;
+
+  public WrapLongWithMathToIntExactFix(final PsiType type, final @NotNull PsiExpression expression) {
     super(expression);
+    myType = type;
   }
 
   @NotNull
@@ -60,7 +61,17 @@ public class WrapLongWithMathToIntExactFix extends LocalQuickFixAndIntentionActi
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    return startElement.isValid() && startElement.getManager().isInProject(startElement) && PsiUtil.isLanguageLevel8OrHigher(startElement);
+    return startElement.isValid() &&
+           startElement.getManager().isInProject(startElement) &&
+           PsiUtil.isLanguageLevel8OrHigher(startElement) &&
+           areSameTypes(myType, PsiType.INT) &&
+           areSameTypes(((PsiExpression) startElement).getType(), PsiType.LONG);
+  }
+
+  private static boolean areSameTypes(@Nullable PsiType type, @NotNull PsiPrimitiveType expected) {
+    return !(type == null ||
+             !type.isValid() ||
+             (!type.equals(expected) && !expected.getBoxedTypeName().equals(type.getCanonicalText(false))));
   }
 
   @Nls
@@ -102,12 +113,12 @@ public class WrapLongWithMathToIntExactFix extends LocalQuickFixAndIntentionActi
     @Nullable
     @Override
     protected PsiExpression getModifiedArgument(final PsiExpression expression, final PsiType toType) throws IncorrectOperationException {
-      return PsiType.INT.equals(toType) ? (PsiExpression)getModifiedExpression(expression) : null;
+      return areSameTypes(toType, PsiType.INT) ? (PsiExpression)getModifiedExpression(expression) : null;
     }
 
     @Override
-    public boolean areTypesConvertible(final PsiType exprType, final PsiType parameterType, final PsiElement context) {
-      return parameterType.isConvertibleFrom(exprType) || (PsiType.INT.equals(parameterType) && PsiType.LONG.equals(exprType));
+    public boolean areTypesConvertible(final PsiType exprType, final PsiType parameterType, @NotNull final PsiElement context) {
+      return parameterType.isConvertibleFrom(exprType) || (areSameTypes(parameterType, PsiType.INT) && areSameTypes(exprType, PsiType.LONG));
     }
 
     @Override

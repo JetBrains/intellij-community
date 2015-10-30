@@ -91,12 +91,7 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
             public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
                                                                                                  InvalidTypeException,
                                                                                                  EvaluateException {
-              try {
-                LocalVariablesUtil.setValue(debuggerContext.getFrameProxy().getStackFrame(), local.getSlot(), newValue);
-              }
-              catch (Exception e) {
-                e.printStackTrace();
-              }
+              LocalVariablesUtil.setValue(debuggerContext.getFrameProxy().getStackFrame(), local.getSlot(), newValue);
               update(debuggerContext);
             }
 

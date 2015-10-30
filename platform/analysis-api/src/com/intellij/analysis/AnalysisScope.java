@@ -70,7 +70,6 @@ public class AnalysisScope {
   public static final int CUSTOM = 8;
   public static final int VIRTUAL_FILES = 9;
   public static final int UNCOMMITTED_FILES = 10;
-
   @MagicConstant(intValues = {PROJECT, DIRECTORY, FILE, MODULE, INVALID, MODULES, CUSTOM, VIRTUAL_FILES, UNCOMMITTED_FILES})
   public @interface Type { }
 
@@ -81,6 +80,7 @@ public class AnalysisScope {
   protected PsiElement myElement;
   private SearchScope myScope;
   private boolean mySearchInLibraries;
+  private GlobalSearchScope myFilter;
   @Type protected int myType;
 
   private final Set<VirtualFile> myVFiles;  // initial files and directories the scope is configured on
@@ -185,16 +185,21 @@ public class AnalysisScope {
         if (mySearchInLibraries || !(file instanceof PsiCompiledElement)) {
           final VirtualFile virtualFile = file.getVirtualFile();
           if (virtualFile == null) return;
-          if (!myIncludeTestSource) {
-            if (fileIndex.isInTestSourceContent(virtualFile)) {
-              return;
-            }
+          if (isFiltered(virtualFile, fileIndex)) {
+            return;
           }
           if (!shouldHighlightFile(file)) return;
           myFilesSet.add(virtualFile);
         }
       }
     };
+  }
+
+  private boolean isFiltered(VirtualFile virtualFile, FileIndex fileIndex) {
+    if (myFilter != null && !myFilter.contains(virtualFile)) {
+      return true;
+    }
+    return !myIncludeTestSource && fileIndex.isInTestSourceContent(virtualFile);
   }
 
   @NotNull
@@ -227,7 +232,7 @@ public class AnalysisScope {
       }
       if (myType == PROJECT) {  //optimization
         final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
-        return index.isInContent(file) && (myIncludeTestSource || !index.isInTestSourceContent(file));
+        return index.isInContent(file) && !isFiltered(file, index);
       }
       initFilesSet();
     }
@@ -282,7 +287,7 @@ public class AnalysisScope {
       public boolean process(VirtualFile file) {
         if (file.isDirectory()) return true;
         if (ProjectCoreUtil.isProjectOrWorkspaceFile(file)) return true;
-        if (fileIndex.isInContent(file) && (myIncludeTestSource || !fileIndex.isInTestSourceContent(file))
+        if (fileIndex.isInContent(file) && !isFiltered(file, fileIndex)
             && !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
           return processFile(file, visitor, psiManager, needReadAction, clearResolveCache);
         }
@@ -296,7 +301,7 @@ public class AnalysisScope {
       if (myFilesSet == null) initFilesSet();
       final FileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
       for (final VirtualFile file : myFilesSet) {
-        if (!myIncludeTestSource && index.isInTestSourceContent(file)) continue;
+        if (isFiltered(file, index)) continue;
         if (!processor.process(file)) return false;
       }
       return true;
@@ -309,7 +314,7 @@ public class AnalysisScope {
           final boolean isInScope = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
             @Override
             public Boolean compute() {
-              if (!myIncludeTestSource && projectFileIndex.isInTestSourceContent(fileOrDir)) return false;
+              if (isFiltered(fileOrDir, projectFileIndex)) return false;
               if (GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(fileOrDir, myProject)) return false;
               return ((GlobalSearchScope)myScope).contains(fileOrDir);
             }
@@ -456,7 +461,7 @@ public class AnalysisScope {
       @Override
       @SuppressWarnings({"SimplifiableIfStatement"})
       public boolean processFile(@NotNull final VirtualFile fileOrDir) {
-        if (!myIncludeTestSource && index.isInTestSourceContent(fileOrDir)) return true;
+        if (isFiltered(fileOrDir, index)) return true;
         if (!processGeneratedFiles && GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(fileOrDir, project)) return true;
         if (!fileOrDir.isDirectory()) {
           return processor.process(fileOrDir);
@@ -731,7 +736,6 @@ public class AnalysisScope {
         return new GlobalSearchScope() {
           @Override
           public boolean contains(@NotNull VirtualFile file) {
-            if (myFilesSet == null) initFilesSet();
             return myFilesSet.contains(file);
           }
 
@@ -782,5 +786,9 @@ public class AnalysisScope {
 
   public boolean isIncludeTestSource() {
     return myIncludeTestSource;
+  }
+
+  public void setFilter(GlobalSearchScope filter) {
+    myFilter = filter;
   }
 }

@@ -770,8 +770,8 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createWrapLongWithMathToIntExactFix(@NotNull PsiExpression expression) {
-    return new WrapLongWithMathToIntExactFix(expression);
+  public IntentionAction createWrapLongWithMathToIntExactFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
+    return new WrapLongWithMathToIntExactFix(type, expression);
   }
 
   private static boolean timeToOptimizeImports(@NotNull PsiFile file) {
