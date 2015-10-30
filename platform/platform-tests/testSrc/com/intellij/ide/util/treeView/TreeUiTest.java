@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2117,10 +2117,10 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       @Override
       public AsyncResult<Object> revalidate(NodeElement element) {
         if (element == actionSystem) {
-          return new AsyncResult.Done<Object>(newActionSystem);
+          return AsyncResult.done(newActionSystem);
         }
         else if (element == fabrique) {
-          return new AsyncResult.Done<Object>(newFabrique);
+          return AsyncResult.done(newFabrique);
         }
         return null;
       }

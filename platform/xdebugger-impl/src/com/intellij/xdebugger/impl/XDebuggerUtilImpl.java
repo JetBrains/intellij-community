@@ -37,7 +37,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -73,6 +72,9 @@ import com.intellij.xdebugger.ui.DebuggerColors;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.PromiseKt;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -137,14 +139,14 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   @NotNull
-  public static <P extends XBreakpointProperties> AsyncResult<XLineBreakpoint> toggleAndReturnLineBreakpoint(@NotNull final Project project,
-                                                                                                             @NotNull final XLineBreakpointType<P> type,
-                                                                                                             @NotNull final XSourcePosition position,
-                                                                                                             final boolean temporary,
-                                                                                                             @Nullable final Editor editor) {
-    return new WriteAction<AsyncResult<XLineBreakpoint>>() {
+  public static <P extends XBreakpointProperties> Promise<XLineBreakpoint> toggleAndReturnLineBreakpoint(@NotNull final Project project,
+                                                                                                         @NotNull final XLineBreakpointType<P> type,
+                                                                                                         @NotNull final XSourcePosition position,
+                                                                                                         final boolean temporary,
+                                                                                                         @Nullable final Editor editor) {
+    return new WriteAction<Promise<XLineBreakpoint>>() {
       @Override
-      protected void run(@NotNull Result<AsyncResult<XLineBreakpoint>> result) throws Throwable {
+      protected void run(@NotNull Result<Promise<XLineBreakpoint>> result) throws Throwable {
         final VirtualFile file = position.getFile();
         final int line = position.getLine();
         final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
@@ -157,7 +159,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
           if (!variants.isEmpty() && editor != null) {
             RelativePoint relativePoint = DebuggerUIUtil.getPositionForPopup(editor, line);
             if (variants.size() > 1 && relativePoint != null) {
-              final AsyncResult<XLineBreakpoint> res = new AsyncResult<XLineBreakpoint>();
+              final AsyncPromise<XLineBreakpoint> res = new AsyncPromise<XLineBreakpoint>();
               class MySelectionListener implements ListSelectionListener {
                 RangeHighlighter myHighlighter = null;
 
@@ -233,7 +235,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                       @Override
                       public void run() {
                         P properties = (P)selectedValue.createProperties();
-                        res.setDone(breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary));
+                        res.setResult(breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary));
                       }
                     });
                     return FINAL_CHOICE;
@@ -252,17 +254,17 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
             }
             else {
               P properties = variants.get(0).createProperties();
-              result.setResult(AsyncResult.done(
-                (XLineBreakpoint)breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary)));
+              result.setResult(
+                Promise.resolve((XLineBreakpoint)breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary)));
               return;
             }
           }
           P properties = type.createBreakpointProperties(file, line);
-          result.setResult(AsyncResult
-                             .done((XLineBreakpoint)breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary)));
+          result.setResult(
+            Promise.resolve((XLineBreakpoint)breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary)));
           return;
         }
-        result.setResult(AsyncResult.<XLineBreakpoint>rejected());
+        result.setResult(PromiseKt.<XLineBreakpoint>rejectedPromise());
       }
     }.execute().getResultObject();
   }

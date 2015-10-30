@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,6 +37,8 @@ import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.PromiseKt;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -135,11 +136,11 @@ public class XBreakpointUtil {
    * - if folded, checks if line breakpoints could be toggled inside folded text
    */
   @NotNull
-  public static AsyncResult<XLineBreakpoint> toggleLineBreakpoint(@NotNull Project project,
-                                                                  @NotNull XSourcePosition position,
-                                                                  @Nullable Editor editor,
-                                                                  boolean temporary,
-                                                                  boolean moveCarret) {
+  public static Promise<XLineBreakpoint> toggleLineBreakpoint(@NotNull Project project,
+                                                              @NotNull XSourcePosition position,
+                                                              @Nullable Editor editor,
+                                                              boolean temporary,
+                                                              boolean moveCarret) {
     int lineStart = position.getLine();
     VirtualFile file = position.getFile();
     // for folded text check each line and find out type with the biggest priority
@@ -153,7 +154,7 @@ public class XBreakpointUtil {
 
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     XLineBreakpointType<?>[] lineTypes = XDebuggerUtil.getInstance().getLineBreakpointTypes();
-    XLineBreakpointType typeWinner = null;
+    XLineBreakpointType<?> typeWinner = null;
     int lineWinner = -1;
     for (int line = lineStart; line <= linesEnd; line++) {
       int maxPriority = 0;
@@ -179,8 +180,7 @@ public class XBreakpointUtil {
     if (typeWinner != null) {
       XSourcePosition winPosition = (lineStart == lineWinner) ? position : XSourcePositionImpl.create(file, lineWinner);
       if (winPosition != null) {
-        AsyncResult<XLineBreakpoint> res =
-          XDebuggerUtilImpl.toggleAndReturnLineBreakpoint(project, typeWinner, winPosition, temporary, editor);
+        Promise<XLineBreakpoint> res = XDebuggerUtilImpl.toggleAndReturnLineBreakpoint(project, typeWinner, winPosition, temporary, editor);
 
         if (editor != null && lineStart != lineWinner) {
           int offset = editor.getDocument().getLineStartOffset(lineWinner);
@@ -193,6 +193,6 @@ public class XBreakpointUtil {
       }
     }
 
-    return AsyncResult.rejected();
+    return PromiseKt.rejectedPromise();
   }
 }

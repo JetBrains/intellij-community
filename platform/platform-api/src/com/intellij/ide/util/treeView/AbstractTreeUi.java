@@ -2988,7 +2988,7 @@ public class AbstractTreeUi {
   }
 
   @NotNull
-  private Promise<Void> processExistingNode(@NotNull final DefaultMutableTreeNode childNode,
+  private Promise<?> processExistingNode(@NotNull final DefaultMutableTreeNode childNode,
                                              final NodeDescriptor childDescriptor,
                                              @NotNull final DefaultMutableTreeNode parentNode,
                                              @NotNull final MutualMap<Object, Integer> elementToIndexMap,
