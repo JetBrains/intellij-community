@@ -33,13 +33,13 @@ import static com.intellij.openapi.externalSystem.model.project.ExternalSystemSo
  */
 public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
 
-  public static Test suite() throws ClassNotFoundException {
-    return new TestSuite(
-      Class.forName("_FirstInSuiteTest"),
-      ExternalProjectServiceTest.class,
-      Class.forName("_LastInSuiteTest")
-    );
-  }
+//  public static Test suite() throws ClassNotFoundException {
+//    return new TestSuite(
+//      Class.forName("_FirstInSuiteTest"),
+//      ExternalProjectServiceTest.class,
+//      Class.forName("_LastInSuiteTest")
+//    );
+//  }
 
   void 'test no duplicate library dependency is added on subsequent refresh when there is an unresolved library'() {
     DataNode<ProjectData> projectNode = buildExternalProjectInfo {
