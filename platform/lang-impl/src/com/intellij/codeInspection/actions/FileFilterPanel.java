@@ -20,7 +20,6 @@ import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +40,7 @@ class FileFilterPanel {
   }
 
   @Nullable
-  SearchScope getSearchScope() {
+  GlobalSearchScope getSearchScope() {
     if (!myUseFileMask.isSelected()) return null;
     String text = (String)myFileMask.getSelectedItem();
     if (text == null) return null;

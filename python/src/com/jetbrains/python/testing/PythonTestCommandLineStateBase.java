@@ -54,7 +54,7 @@ import java.util.Map;
 public abstract class PythonTestCommandLineStateBase extends PythonCommandLineState {
   protected final AbstractPythonRunConfiguration myConfiguration;
 
-  public AbstractPythonRunConfiguration getConfiguration() {
+  public AbstractPythonRunConfiguration<?> getConfiguration() {
     return myConfiguration;
   }
 

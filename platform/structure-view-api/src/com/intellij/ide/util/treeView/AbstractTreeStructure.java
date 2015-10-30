@@ -73,6 +73,6 @@ public abstract class AbstractTreeStructure {
   }
 
   public AsyncResult<Object> revalidateElement(Object element) {
-    return new AsyncResult.Done<Object>(element);
+    return AsyncResult.done(element);
   }
 }

@@ -240,12 +240,13 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
       }
       final XmlFile descriptorFile = nsDescriptor.getDescriptorFile();
       if (descriptorFile != null) {
-        final XmlNSDescriptor finalNsDescriptor = nsDescriptor;
         return CachedValuesManager.getCachedValue(descriptorFile, new CachedValueProvider<XmlNSDescriptor>() {
           @Nullable
           @Override
           public Result<XmlNSDescriptor> compute() {
-            return Result.<XmlNSDescriptor>create(new HtmlNSDescriptorImpl(finalNsDescriptor), descriptorFile);
+            final XmlDocument document = descriptorFile.getDocument();
+            if (document == null) return Result.create(null, descriptorFile);
+            return Result.<XmlNSDescriptor>create(new HtmlNSDescriptorImpl((XmlNSDescriptor)document.getMetaData()), descriptorFile);
           }
         });
       }

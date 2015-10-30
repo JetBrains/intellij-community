@@ -17,6 +17,8 @@ package org.jetbrains.concurrency
 
 import com.intellij.util.Function
 
+private val rejectedPromise = Promise.reject<Any?>("rejected")
+
 inline fun <T, SUB_RESULT> Promise<T>.then(crossinline handler: (T) -> SUB_RESULT) = then(object : Function<T, SUB_RESULT> {
   override fun `fun`(param: T) = handler(param)
 })
@@ -37,6 +39,9 @@ fun resolvedPromise(): Promise<*> = Promise.DONE
 fun <T> resolvedPromise(result: T) = Promise.resolve(result)
 
 fun <T> rejectedPromise(error: String): Promise<T> = Promise.reject(error)
+
+@Suppress("CAST_NEVER_SUCCEEDS")
+fun <T> rejectedPromise(): Promise<T> = rejectedPromise as Promise<T>
 
 val Promise<*>.isRejected: Boolean
   get() = state == Promise.State.REJECTED

@@ -20,7 +20,6 @@ package org.jetbrains.idea.svn;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.idea.RareLogger;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -61,7 +60,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
-import org.jetbrains.idea.svn.actions.ShowPropertiesDiffWithLocalAction;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.api.*;
@@ -810,11 +808,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       myMergeProvider = new SvnMergeProvider(myProject);
     }
     return myMergeProvider;
-  }
-
-  @Override
-  public List<AnAction> getAdditionalActionsForLocalChange() {
-    return Arrays.<AnAction>asList(new ShowPropertiesDiffWithLocalAction());
   }
 
   private static String keyForVf(final VirtualFile vf) {

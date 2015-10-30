@@ -38,7 +38,6 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
@@ -50,16 +49,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.FilterComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
-import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.ComboBoxModelEditor;
-import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.ListItemEditor;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
@@ -67,8 +62,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
@@ -132,8 +125,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   private ActionsTree myActionsTree;
   private FilterComponent myFilterComponent;
-  private JBPopup myPopup = null;
   private TreeExpansionMonitor myTreeExpansionMonitor;
+  private final ShortcutFilteringPanel myFilteringPanel = new ShortcutFilteringPanel();
 
   private boolean myQuickListsModified = false;
   private QuickList[] myQuickLists = QuickListsManager.getInstance().getAllQuickLists();
@@ -153,7 +146,12 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         }
       }
     });
-
+    myFilteringPanel.addPropertyChangeListener("shortcut", new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent event) {
+        filterTreeByShortcut(myFilteringPanel.getShortcut());
+      }
+    });
     //ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(CHANGE_TOPIC, this);
   }
 
@@ -418,15 +416,9 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myFilterComponent.reset();
-        if (myPopup == null || myPopup.getContent() == null) {
-          myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(createFilteringPanel(), null)
-            .setRequestFocus(true)
-            .setTitle(KeyMapBundle.message("filter.settings.popup.title"))
-            .setCancelKeyEnabled(false)
-            .setMovable(true)
-            .createPopup();
-        }
-        myPopup.showUnderneathOf(searchToolbar);
+        //noinspection ConstantConditions
+        myActionsTree.reset(myEditor.getModel().getSelected(), myQuickLists);
+        myFilteringPanel.showPopup(searchToolbar);
       }
     });
     group.add(new DumbAwareAction(KeyMapBundle.message("filter.clear.action.text"),
@@ -452,71 +444,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     return panel;
   }
 
-  private JPanel createFilteringPanel() {
-    //noinspection ConstantConditions
-    myActionsTree.reset(myEditor.getModel().getSelected(), myQuickLists);
-
-    final JLabel firstLabel = new JLabel(KeyMapBundle.message("filter.first.stroke.input"));
-    final JCheckBox enable2Shortcut = new JCheckBox(KeyMapBundle.message("filter.second.stroke.input"));
-    final ShortcutTextField firstShortcut = new ShortcutTextField();
-    final ShortcutTextField secondShortcut = new ShortcutTextField();
-
-    enable2Shortcut.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        secondShortcut.setEnabled(enable2Shortcut.isSelected());
-        if (enable2Shortcut.isSelected()) {
-          secondShortcut.requestFocusInWindow();
-        }
-      }
-    });
-
-    firstShortcut.getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(DocumentEvent e) {
-        filterTreeByShortcut(firstShortcut, enable2Shortcut, secondShortcut);
-      }
-    });
-
-    secondShortcut.getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(DocumentEvent e) {
-        filterTreeByShortcut(firstShortcut, enable2Shortcut, secondShortcut);
-      }
-    });
-
-    IJSwingUtilities.adjustComponentsOnMac(firstLabel, firstShortcut);
-    JPanel filterComponent = FormBuilder.createFormBuilder()
-      .addLabeledComponent(firstLabel, firstShortcut, true)
-      .addComponent(enable2Shortcut)
-      .setVerticalGap(0)
-      .setHorizontalGap(5)
-      .addComponent(secondShortcut)
-      .getPanel();
-
-    filterComponent.setBorder(new EmptyBorder(UIUtil.PANEL_SMALL_INSETS));
-
-    enable2Shortcut.setSelected(false);
-    secondShortcut.setEnabled(false);
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        firstShortcut.requestFocus();
-      }
-    });
-    return filterComponent;
-  }
-
-  private void filterTreeByShortcut(final ShortcutTextField firstShortcut,
-                                    final JCheckBox enable2Shortcut,
-                                    final ShortcutTextField secondShortcut) {
-    final KeyStroke keyStroke = firstShortcut.getKeyStroke();
-    if (keyStroke != null) {
-      filterTreeByShortcut(new KeyboardShortcut(keyStroke, enable2Shortcut.isSelected() ? secondShortcut.getKeyStroke() : null));
-    }
-  }
-
   private void filterTreeByShortcut(Shortcut shortcut) {
     if (shortcut != null) {
       myTreeExpansionMonitor.freeze();
@@ -528,7 +455,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   }
 
   public void showOption(String option) {
-    createFilteringPanel();
+    //noinspection ConstantConditions
+    myActionsTree.reset(myEditor.getModel().getSelected(), myQuickLists);
     myFilterComponent.setFilter(option);
     myActionsTree.filter(option, myQuickLists);
   }
@@ -843,9 +771,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   @Override
   public void disposeUIResources() {
-    if (myPopup != null && myPopup.isVisible()) {
-      myPopup.cancel();
-    }
+    myFilteringPanel.hidePopup();
     if (myFilterComponent != null) {
       myFilterComponent.dispose();
     }

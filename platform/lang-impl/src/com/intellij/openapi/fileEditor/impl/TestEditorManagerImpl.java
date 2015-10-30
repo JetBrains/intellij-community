@@ -255,7 +255,7 @@ public class TestEditorManagerImpl extends FileEditorManagerEx implements Projec
   @NotNull
   @Override
   public AsyncResult<EditorWindow> getActiveWindow() {
-    return new AsyncResult.Done<EditorWindow>(null);
+    return AsyncResult.done(null);
   }
 
   @Override

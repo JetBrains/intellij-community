@@ -71,15 +71,13 @@ public interface BlockAlignmentProcessor {
     @NotNull public final Map<AbstractBlockWrapper, Set<AbstractBlockWrapper>> alignmentMappings;
     @NotNull public final Map<LeafBlockWrapper, Set<LeafBlockWrapper>>         backwardShiftedAlignedBlocks;
     @NotNull public final CommonCodeStyleSettings.IndentOptions                indentOptions;
-    public final int                                                           maxAlignmentSpaces;
 
     public Context(@NotNull Document document,
                    @NotNull AlignmentImpl alignment,
                    @NotNull LeafBlockWrapper targetBlock,
                    @NotNull Map<AbstractBlockWrapper, Set<AbstractBlockWrapper>> alignmentMappings,
                    @NotNull Map<LeafBlockWrapper, Set<LeafBlockWrapper>> backwardShiftedAlignedBlocks,
-                   @NotNull CommonCodeStyleSettings.IndentOptions indentOptions,
-                   int maxAlignmentSpaces)
+                   @NotNull CommonCodeStyleSettings.IndentOptions indentOptions)
     {
       this.document = document;
       this.alignment = alignment;
@@ -87,7 +85,6 @@ public interface BlockAlignmentProcessor {
       this.alignmentMappings = alignmentMappings;
       this.backwardShiftedAlignedBlocks = backwardShiftedAlignedBlocks;
       this.indentOptions = indentOptions;
-      this.maxAlignmentSpaces = maxAlignmentSpaces;
     }
   }
 }

@@ -54,9 +54,13 @@ public class ShortcutTextField extends JTextField {
   }
 
   public void setKeyStroke(KeyStroke keyStroke) {
-    myKeyStroke = keyStroke;
-    setText(KeyboardShortcutDialog.getTextByKeyStroke(keyStroke));
-    updateCurrentKeyStrokeInfo();
+    KeyStroke old = myKeyStroke;
+    if (old != null || keyStroke != null) {
+      myKeyStroke = keyStroke;
+      setText(KeyboardShortcutDialog.getTextByKeyStroke(keyStroke));
+      updateCurrentKeyStrokeInfo();
+      firePropertyChange("keyStroke", old, keyStroke);
+    }
   }
 
   protected void updateCurrentKeyStrokeInfo() {

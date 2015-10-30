@@ -33,7 +33,7 @@ interface ScriptManager {
   /**
    * Demands that script text should be replaced with a new one if possible. VM may get resumed after this command
    */
-  fun setSourceOnRemote(script: Script, newSource: CharSequence, preview: Boolean): Promise<*>
+  fun setSourceOnRemote(script: Script, newSource: CharSequence, preview: Boolean): Promise<*> = Promise.reject<Any?>("unsupported")
 
   fun forEachScript(scriptProcessor: Processor<Script>)
 

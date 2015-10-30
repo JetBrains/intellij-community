@@ -102,13 +102,13 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   @Nullable
   @Override
-  public ProperTextRange getPsiRange() {
+  public TextRange getPsiRange() {
     return calcPsiRange();
   }
 
   @Nullable
-  private ProperTextRange calcPsiRange() {
-    return hasRange() ? ProperTextRange.create(myStartOffset, myEndOffset) : null;
+  private TextRange calcPsiRange() {
+    return hasRange() ? new UnfairTextRange(myStartOffset, myEndOffset) : null;
   }
 
   @Override

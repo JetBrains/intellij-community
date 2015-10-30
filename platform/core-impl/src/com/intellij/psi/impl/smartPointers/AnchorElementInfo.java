@@ -147,7 +147,7 @@ class AnchorElementInfo extends SelfElementInfo {
 
   @Nullable
   @Override
-  public ProperTextRange getPsiRange() {
+  public TextRange getPsiRange() {
     if (getStubId() != -1) {
       switchToTree();
     }

@@ -31,7 +31,6 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.getParentPath
-import com.intellij.util.Consumer
 import gnu.trove.THashSet
 import java.io.File
 import java.io.IOException
@@ -43,23 +42,22 @@ private class ImportSettingsAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     val dataContext = e.dataContext
     val component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext)
-    ChooseComponentsToExportDialog.chooseSettingsFile(PathManager.getConfigPath(), component, IdeBundle.message("title.import.file.location"), IdeBundle.message("prompt.choose.import.file.path")).doWhenDone(object : Consumer<String> {
-      override fun consume(path: String) {
-        val saveFile = File(path)
+    ChooseComponentsToExportDialog.chooseSettingsFile(PathManager.getConfigPath(), component, IdeBundle.message("title.import.file.location"), IdeBundle.message("prompt.choose.import.file.path"))
+      .done {
+        val saveFile = File(it)
         try {
           doImport(saveFile)
         }
         catch (e1: ZipException) {
           Messages.showErrorDialog(
-            IdeBundle.message("error.reading.settings.file", presentableFileName(saveFile), e1.getMessage(), promptLocationMessage()),
+            IdeBundle.message("error.reading.settings.file", presentableFileName(saveFile), e1.message, promptLocationMessage()),
             IdeBundle.message("title.invalid.file"))
         }
         catch (e1: IOException) {
-          Messages.showErrorDialog(IdeBundle.message("error.reading.settings.file.2", presentableFileName(saveFile), e1.getMessage()),
+          Messages.showErrorDialog(IdeBundle.message("error.reading.settings.file.2", presentableFileName(saveFile), e1.message),
             IdeBundle.message("title.error.reading.file"))
         }
       }
-    })
   }
 
   private fun doImport(saveFile: File) {
