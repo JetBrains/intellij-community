@@ -891,6 +891,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }.execute().throwException();
   }
 
+  protected static void delete(@NotNull final VirtualFile vFile1) {
+    VfsTestUtil.deleteFile(vFile1);
+  }
+
   protected static void move(@NotNull final VirtualFile vFile1, @NotNull final VirtualFile newFile) {
     new WriteCommandAction.Simple(null) {
       @Override
