@@ -60,30 +60,30 @@ final class ShortcutFilteringPanel extends JPanel {
     @Override
     public void propertyChange(PropertyChangeEvent event) {
       Object value = event.getNewValue();
-      if (ShortcutFilteringPanel.this != event.getSource()) {
-        setShortcut(value instanceof Shortcut ? (Shortcut)value : null);
-      }
-      else {
+      if (ShortcutFilteringPanel.this == event.getSource()) {
         if (value instanceof KeyboardShortcut) {
           KeyboardShortcut shortcut = (KeyboardShortcut)value;
+          myMousePanel.setShortcut(null);
           myKeyboardPanel.setShortcut(shortcut);
           if (null != shortcut.getSecondKeyStroke()) {
             myKeyboardPanel.mySecondStrokeEnable.setSelected(true);
           }
         }
         else {
-          String text = null;
-          if (value instanceof MouseShortcut) {
-            MouseShortcut shortcut = (MouseShortcut)value;
-            text = KeymapUtil.getMouseShortcutText(
-              shortcut.getButton(),
-              shortcut.getModifiers(),
-              shortcut.getClickCount());
-          }
+          MouseShortcut shortcut = value instanceof MouseShortcut ? (MouseShortcut)value : null;
+          String text = shortcut == null ? null : KeymapUtil.getMouseShortcutText(
+            shortcut.getButton(),
+            shortcut.getModifiers(),
+            shortcut.getClickCount());
+          myMousePanel.setShortcut(shortcut);
+          myKeyboardPanel.setShortcut(null);
           myKeyboardPanel.myFirstStroke.setText(text);
           myKeyboardPanel.mySecondStroke.setText(null);
           myKeyboardPanel.mySecondStroke.setEnabled(false);
         }
+      }
+      else if (value instanceof Shortcut) {
+        setShortcut((Shortcut)value);
       }
     }
   };
@@ -91,8 +91,8 @@ final class ShortcutFilteringPanel extends JPanel {
   ShortcutFilteringPanel() {
     super(new VerticalLayout(JBUI.scale(2)));
 
-    myKeyboardPanel.myFirstStroke.setColumns(15);
-    myKeyboardPanel.mySecondStroke.setColumns(15);
+    myKeyboardPanel.myFirstStroke.setColumns(13);
+    myKeyboardPanel.mySecondStroke.setColumns(13);
     myKeyboardPanel.mySecondStroke.setVisible(false);
     myKeyboardPanel.mySecondStrokeEnable.setText(KeyMapBundle.message("filter.enable.second.stroke.checkbox"));
     myKeyboardPanel.mySecondStrokeEnable.addChangeListener(myChangeListener);
