@@ -828,6 +828,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
         @Override
         public void onCanceled(@NotNull ProgressIndicator indicator) {
+          LOG.debug("Highlighting was cancelled");
         }
       });
     }
@@ -845,6 +846,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         return;
       }
 
+      LOG.debug("Obtained info about element under cursor");
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
