@@ -21,6 +21,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -770,5 +773,49 @@ public class VirtualFilePointerTest extends PlatformTestCase {
         }
       }
     }).assertTiming();
+  }
+
+  public void testCidrConfusions() throws IOException {
+    File tempDirectory = createTempDirectory();
+    final VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory);
+
+    VirtualFile dir1 = createChildDirectory(root, "dir1");
+    VirtualFile dir2 = createChildDirectory(root, "dir2");
+
+    PsiTestUtil.addSourceRoot(getModule(), dir1);
+    PsiTestUtil.addLibrary(getModule(), "mylib", "", new String[]{dir2.getPath()}, new String[0]);
+
+    assertSourceIs(dir1);
+    assertLibIs(dir2);
+
+    delete(dir1);
+    assertSourceIs(null); // srcDir deleted, no more sources
+    assertLibIs(dir2);    // libDir stays the same
+
+    rename(dir2, "dir1");
+    assertSourceIs(dir2); // srcDir re-appeared, sources are "dir1"
+    assertLibIs(dir2);    // libDir renamed, libs are "dir1" now
+
+    rename(dir2, "dir2");
+    assertSourceIs(dir2); // srcDir renamed, sources are "dir2" now
+    assertLibIs(dir2);    // libDir renamed, libs are "dir2" now
+
+    dir1 = createChildDirectory(root, "dir1");
+    assertSourceIs(dir2); // srcDir stays the same
+    assertLibIs(dir2);    // libDir stays the same
+
+    PsiTestUtil.removeAllRoots(getModule(), getTestProjectJdk());
+  }
+
+  private void assertLibIs(VirtualFile dir2) {
+    VirtualFile libRoot = assertOneElement(
+      OrderEntryUtil.getModuleLibraries(ModuleRootManager.getInstance(getModule())).get(0).getFiles(OrderRootType.CLASSES));
+    assertEquals(dir2, libRoot);
+  }
+
+  private void assertSourceIs(VirtualFile dir1) {
+    VirtualFile[] roots = ModuleRootManager.getInstance(getModule()).getSourceRoots();
+    VirtualFile[] expected = dir1 == null ? VirtualFile.EMPTY_ARRAY : new VirtualFile[]{dir1};
+    assertOrderedEquals(roots, expected);
   }
 }
