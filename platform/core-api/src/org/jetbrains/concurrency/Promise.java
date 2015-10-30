@@ -83,9 +83,7 @@ public abstract class Promise<T> {
     Consumer<Throwable> rejected = new Consumer<Throwable>() {
       @Override
       public void consume(Throwable error) {
-        if (totalPromise.state == AsyncPromise.State.PENDING) {
-          totalPromise.setError(error);
-        }
+        totalPromise.setError(error);
       }
     };
 
