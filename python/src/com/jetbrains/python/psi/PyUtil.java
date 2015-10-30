@@ -1469,7 +1469,23 @@ public class PyUtil {
   public static PsiElement addElementToStatementList(@NotNull PsiElement element,
                                                      @NotNull PyStatementList statementList,
                                                      boolean toTheBeginning) {
-    final boolean statementListWasEmpty = statementList.getStatements().length == 0;
+    final PsiElement prevElem = PyPsiUtils.getPrevNonWhitespaceSibling(statementList);
+    // If statement list is on the same line as previous element (supposedly colon), move its only statement on the next line
+    if (prevElem != null && onSameLine(statementList, prevElem)) {
+      final PsiDocumentManager manager = PsiDocumentManager.getInstance(statementList.getProject());
+      final Document document = manager.getDocument(statementList.getContainingFile());
+      if (document != null) {
+        final PsiElement container = statementList.getParent();
+        manager.doPostponedOperationsAndUnblockDocument(document);
+        final String indentation = "\n" + PyIndentUtil.getElementIndent(statementList);
+        // If statement list was empty initially, we need to add some anchor statement ("pass"), so that preceding new line was not
+        // parsed as following entire StatementListContainer (e.g. function). It's going to be replaced anyway.
+        final String text = statementList.getStatements().length == 0 ? indentation + PyNames.PASS : indentation;
+        document.insertString(statementList.getTextRange().getStartOffset(), text);
+        manager.commitDocument(document);
+        statementList = ((PyStatementListContainer)container).getStatementList();
+      }
+    }
     final PsiElement firstChild = statementList.getFirstChild();
     if (firstChild == statementList.getLastChild() && firstChild instanceof PyPassStatement) {
       element = firstChild.replace(element);
@@ -1506,15 +1522,6 @@ public class PyUtil {
       }
       else {
         element = statementList.add(element);
-      }
-    }
-    if (statementListWasEmpty) {
-      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(statementList.getProject());
-      final Document document = documentManager.getDocument(statementList.getContainingFile());
-      if (document != null) {
-        documentManager.doPostponedOperationsAndUnblockDocument(document);
-        document.insertString(statementList.getTextOffset(), "\n" + PyIndentUtil.getElementIndent(statementList));
-        documentManager.commitDocument(document);
       }
     }
     return element;

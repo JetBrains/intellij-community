@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,46 +57,16 @@ public class PyDefaultArgumentQuickFix implements LocalQuickFix {
     final PyFunction function = PsiTreeUtil.getParentOfType(defaultValue, PyFunction.class);
     assert param != null;
     final String defName = param.getName();
-    if (function != null) {
-      final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      final PyStatementList list = function.getStatementList();
-      final PyParameterList paramList = function.getParameterList();
-
-      final StringBuilder functionText = new StringBuilder("def " + function.getName() + "(");
-      final int size = paramList.getParameters().length;
-      for (int i = 0; i < size; i++) {
-        final PyParameter p = paramList.getParameters()[i];
-        if (p == param) {
-          functionText.append(defName).append("=None");
-        }
-        else {
-          functionText.append(p.getText());
-        }
-        if (i != size-1) {
-          functionText.append(", ");
-        }
-      }
+    if (function != null && defName != null) {
+      final PyElementGenerator generator = PyElementGenerator.getInstance(project);
+      final LanguageLevel languageLevel = LanguageLevel.forElement(function);
       
-      functionText.append("):\n\tif not ").append(defName).append(":\n\t\t").append(defName).append(" = ").append(defaultValue.getText());
-      final PyStatement[] statements = list.getStatements();
-      final PyStatement firstStatement = statements.length > 0 ? statements[0] : null;
-      final PyFunction newFunction = elementGenerator.createFromText(LanguageLevel.forElement(function), PyFunction.class,
-                                                                     functionText.toString());
-      if (firstStatement == null) {
-        function.replace(newFunction);
-      }
-      else {
-        final PyStatement ifStatement = newFunction.getStatementList().getStatements()[0];
-        final PyStringLiteralExpression docString = function.getDocStringExpression();
-        if (docString != null) {
-          list.addAfter(ifStatement, firstStatement);
-        }
-        else {
-          list.addBefore(ifStatement, firstStatement);
-        }
-        paramList.replace(elementGenerator.createFromText(LanguageLevel.forElement(defaultValue),
-                                                          PyFunction.class, functionText.toString()).getParameterList());
-      }
+      final PyNamedParameter newParam = generator.createParameter(defName, PyNames.NONE, null, languageLevel);
+      param.replace(newParam);
+
+      final String conditionalText = "if not " + defName + ":\n\t" + defName + " = " + defaultValue.getText() + "\n";
+      final PyIfStatement conditionalAssignment = generator.createFromText(languageLevel, PyIfStatement.class, conditionalText);
+      PyUtil.addElementToStatementList(conditionalAssignment, function.getStatementList(), true);
     }
   }
 }
