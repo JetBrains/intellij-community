@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -28,6 +29,7 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrUnaryExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils;
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -155,11 +157,18 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
   @NonNls
   private static String calculateSimplifiedPrefixExpression(GrUnaryExpression expression) {
     final GrExpression operand = expression.getOperand();
-    if (isTrue(operand)) {
-      return "false";
+    IElementType operationToken = ((LeafPsiElement)operand.getFirstChild()).getElementType();
+    if(operationToken.equals(GroovyTokenTypes.mLNOT)) {
+      return ((GrUnaryExpressionImpl)operand).getOperand().getText();
     } else {
-      return "true";
+      return getNegatedBooleanText(operand);
     }
+  }
+
+  @NotNull
+  private static String getNegatedBooleanText(GrExpression operand) {
+    return isTrue(operand) ? "false"
+                           : "true";
   }
 
   @Override
@@ -196,11 +205,9 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
     }
   }
 
-  private static class PointlessBooleanExpressionVisitor
-      extends BaseInspectionVisitor {
+  private static class PointlessBooleanExpressionVisitor extends BaseInspectionVisitor {
 
-    private final Set<IElementType> booleanTokens =
-        new HashSet<IElementType>(5);
+    private final Set<IElementType> booleanTokens = new HashSet<IElementType>(5);
 
     {
       booleanTokens.add(GroovyTokenTypes.mLAND);
@@ -252,11 +259,19 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
       if (sign == null) {
         return;
       }
-      final GrExpression operand = expression.getOperand();
-      if (sign.equals(GroovyTokenTypes.mLNOT) &&
-          notExpressionIsPointless(operand)) {
-        registerError(expression);
+
+      if(sign.equals(GroovyTokenTypes.mLNOT) && notExpressionIsPointless(expression.getOperand())) {
+        if (getPrefixType(expression).equals(GroovyTokenTypes.mLNOT)) {
+          registerError(expression.getParent());
+        } else {
+          registerError(expression);
+        }
       }
+    }
+
+    @NotNull
+    private IElementType getPrefixType(@NotNull GrUnaryExpression expression) {
+      return expression.getPrevSibling().getNode().getElementType();
     }
   }
 
