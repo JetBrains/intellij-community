@@ -431,7 +431,7 @@ public class InferenceSession {
     final Computable<JavaResolveResult> computableResolve = new Computable<JavaResolveResult>() {
       @Override
       public JavaResolveResult compute() {
-        return getResolveResult(callExpression, argumentList);
+        return getResolveResult(callExpression);
       }
     };
     MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
@@ -441,29 +441,30 @@ public class InferenceSession {
            : PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, false, computableResolve);
   }
 
-  public static JavaResolveResult getResolveResult(final PsiCall callExpression, final PsiExpressionList argumentList) {
+  public static JavaResolveResult getResolveResult(final PsiCall callExpression) {
     if (callExpression instanceof PsiNewExpression) {
-      final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)callExpression).getClassOrAnonymousClassReference();
-      if (classReference != null) {
-        PsiUtilCore.ensureValid(argumentList);
-        return CachedValuesManager.getCachedValue(classReference, new CachedValueProvider<JavaResolveResult>() {
-          @Nullable
-          @Override
-          public Result<JavaResolveResult> compute() {
-            final JavaResolveResult resolveResult = classReference.advancedResolve(false);
+      PsiUtilCore.ensureValid(callExpression);
+      return CachedValuesManager.getCachedValue(callExpression, new CachedValueProvider<JavaResolveResult>() {
+        @Nullable
+        @Override
+        public Result<JavaResolveResult> compute() {
+          final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)callExpression).getClassOrAnonymousClassReference();
+          JavaResolveResult constructor = JavaResolveResult.EMPTY;
+          JavaResolveResult resolveResult = null;
+          if (classReference != null) {
+            resolveResult = classReference.advancedResolve(false);
             final PsiElement psiClass = resolveResult.getElement();
-            JavaResolveResult constructor = JavaResolveResult.EMPTY;
             if (psiClass != null) {
               final JavaPsiFacade facade = JavaPsiFacade.getInstance(callExpression.getProject());
-              constructor = facade.getResolveHelper().resolveConstructor(facade.getElementFactory().createType((PsiClass)psiClass).rawType(), argumentList, callExpression);
+              constructor = facade.getResolveHelper().resolveConstructor(facade.getElementFactory().createType((PsiClass)psiClass).rawType(),
+                                                                         callExpression.getArgumentList(), 
+                                                                         callExpression);
             }
-            return new Result<JavaResolveResult>(constructor.getElement() == null ? resolveResult : constructor, PsiModificationTracker.MODIFICATION_COUNT);
           }
-        });
-      }
-      else {
-        return JavaResolveResult.EMPTY;
-      }
+          return new Result<JavaResolveResult>(constructor.getElement() == null && resolveResult != null ? resolveResult : constructor,
+                                               PsiModificationTracker.MODIFICATION_COUNT);
+        }
+      });
     }
     return callExpression.resolveMethodGenerics();
   }
