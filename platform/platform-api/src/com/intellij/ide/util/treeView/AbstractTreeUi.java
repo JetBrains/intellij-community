@@ -3364,15 +3364,16 @@ public class AbstractTreeUi {
   private Promise<Void> queueToBackground(@NotNull final Runnable bgBuildAction, @Nullable final Runnable edtPostRunnable) {
     if (!canInitiateNewActivity()) return Promise.REJECTED;
     final AsyncPromise<Void> result = new AsyncPromise<Void>();
-    final AtomicBoolean fail = new AtomicBoolean();
+    final AtomicReference<ProcessCanceledException> fail = new AtomicReference<ProcessCanceledException>();
     final Runnable finalizer = new TreeRunnable("AbstractTreeUi.queueToBackground: finalizer") {
       @Override
       public void perform() {
-        if (fail.get()) {
-          result.setError("rejected");
+        ProcessCanceledException exception = fail.get();
+        if (exception == null) {
+          result.setResult(null);
         }
         else {
-          result.setResult(null);
+          result.setError(exception);
         }
       }
     };
@@ -3414,7 +3415,7 @@ public class AbstractTreeUi {
 
                       }
                       catch (ProcessCanceledException e) {
-                        fail.set(true);
+                        fail.set(e);
                         cancelUpdate();
                       }
                       finally {
@@ -3428,7 +3429,7 @@ public class AbstractTreeUi {
                 }
               }
               catch (ProcessCanceledException e) {
-                fail.set(true);
+                fail.set(e);
                 unregisterWorkerTask(bgBuildAction, finalizer);
                 cancelUpdate();
               }
@@ -3458,7 +3459,7 @@ public class AbstractTreeUi {
           }
         }
         catch (ProcessCanceledException e) {
-          fail.set(true);
+          fail.set(e);
           unregisterWorkerTask(bgBuildAction, finalizer);
           cancelUpdate();
         }
