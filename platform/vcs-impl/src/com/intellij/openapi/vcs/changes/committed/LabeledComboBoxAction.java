@@ -19,6 +19,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.ui.ComboBox;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,19 +32,20 @@ import java.awt.event.ActionListener;
  * @author yole
  */
 public abstract class LabeledComboBoxAction extends AnAction implements CustomComponentAction {
-  private final JLabel myLabel;
-  private JPanel myPanel;
-  private final JComboBox myComboBox;
 
-  protected LabeledComboBoxAction(String label) {
-    final String labelString = label;
-    myComboBox = new JComboBox();
-    myLabel = new JLabel(labelString);
+  @NotNull private final JLabel myLabel;
+  @Nullable private JPanel myPanel;
+  @NotNull private final ComboBox myComboBox;
+
+  protected LabeledComboBoxAction(@NotNull String label) {
+    myComboBox = new ComboBox();
+    myLabel = new JLabel(label);
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
   }
 
+  @NotNull
   public JComponent createCustomComponent(Presentation presentation) {
     if (myPanel == null) {
       myPanel = new JPanel(new BorderLayout());
@@ -58,42 +62,12 @@ public abstract class LabeledComboBoxAction extends AnAction implements CustomCo
     return myPanel;
   }
 
-  protected void setModel(final ComboBoxModel model) {
-    myComboBox.setModel(model);
-  }
-
-  protected void enableSelf(final boolean enable) {
-    myComboBox.setEnabled(enable);
-    myLabel.setEnabled(enable);
-  }
-
-  protected boolean isEnabled() {
-    return myComboBox.isEnabled();
-  }
-
-  protected Object getSelected() {
-    return myComboBox.getSelectedItem();
-  }
-
-  protected ComboBoxModel getModel() {
-    return myComboBox.getModel();
-  }
-
-  protected void setRenderer(final ListCellRenderer renderer) {
-    myComboBox.setRenderer(renderer);
-  }
-
   protected abstract void selectionChanged(Object selection);
 
+  @NotNull
   protected abstract ComboBoxModel createModel();
-  
-  public void setSelected(final int idx) {
-    final ComboBoxModel boxModel = getModel();
-    if (boxModel.getSize() > 0) {
-      boxModel.setSelectedItem(boxModel.getElementAt(idx));
-    }
-  }
 
+  @NotNull
   protected JComboBox getComboBox() {
     return myComboBox;
   }

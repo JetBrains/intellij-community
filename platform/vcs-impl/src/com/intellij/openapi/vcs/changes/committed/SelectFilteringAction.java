@@ -17,51 +17,64 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
+import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * @author yole
  */
 public class SelectFilteringAction extends LabeledComboBoxAction {
-  private final Project myProject;
-  private final CommittedChangesTreeBrowser myBrowser;
-  private CommittedChangesFilterKey myPreviousSelection;
 
-  public SelectFilteringAction(final Project project, final CommittedChangesTreeBrowser browser) {
+  @NotNull private final Project myProject;
+  @NotNull private final CommittedChangesTreeBrowser myBrowser;
+  @Nullable private CommittedChangesFilterKey myPreviousSelection;
+
+  public SelectFilteringAction(@NotNull Project project, @NotNull CommittedChangesTreeBrowser browser) {
     super(VcsBundle.message("committed.changes.filter.title"));
     myProject = project;
     myBrowser = browser;
     myPreviousSelection = null;
   }
 
+  @NotNull
   protected ComboBoxModel createModel() {
-    final DefaultComboBoxModel model = new DefaultComboBoxModel(new Object[]{
-      ChangeListFilteringStrategy.NONE,
-      /*new ColumnFilteringStrategy(ChangeListColumn.NAME, provider.getClass()),*/
-      new StructureFilteringStrategy(myProject)
-    });
-    final AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss();
+    return new CollectionComboBoxModel<ChangeListFilteringStrategy>(collectStrategies());
+  }
+
+  @NotNull
+  private List<ChangeListFilteringStrategy> collectStrategies() {
+    List<ChangeListFilteringStrategy> result = ContainerUtil.newArrayList();
+
+    result.add(ChangeListFilteringStrategy.NONE);
+    result.add(new StructureFilteringStrategy(myProject));
+
     boolean addNameFilter = false;
-    for(AbstractVcs vcs: vcss) {
-      final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
+    for (AbstractVcs vcs : ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss()) {
+      CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
+
       if (provider != null) {
         addNameFilter = true;
-        for(ChangeListColumn column: provider.getColumns()) {
+
+        for (ChangeListColumn column : provider.getColumns()) {
           if (ChangeListColumn.isCustom(column)) {
-            model.addElement(new ColumnFilteringStrategy(column, provider.getClass()));
+            result.add(new ColumnFilteringStrategy(column, provider.getClass()));
           }
         }
       }
     }
     if (addNameFilter) {
-      model.addElement(new ColumnFilteringStrategy(ChangeListColumn.NAME, CommittedChangesProvider.class));
+      result.add(new ColumnFilteringStrategy(ChangeListColumn.NAME, CommittedChangesProvider.class));
     }
-    return model;
+
+    return result;
   }
 
-  protected void selectionChanged(final Object selection) {
-    if (selection == null) return;
+  protected void selectionChanged(@NotNull Object selection) {
     if (myPreviousSelection != null) {
         myBrowser.removeFilteringStrategy(myPreviousSelection);
     }

@@ -249,7 +249,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myChangesTree.setSelectionPaths(paths);
   }
 
-  public void setGroupingStrategy(ChangeListGroupingStrategy strategy) {
+  public void setGroupingStrategy(@NotNull ChangeListGroupingStrategy strategy) {
     myGroupingStrategy = strategy;
     updateModel();
   }
