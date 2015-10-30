@@ -118,20 +118,31 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
       if (!(value instanceof String)) {
         continue;
       }
-      InspectionToolWrapper toolWrapperById = ((InspectionProfileImpl)inspectionProfile).getToolById((String)value, target);
-      if (!(toolWrapperById instanceof LocalInspectionToolWrapper)) {
+      List<InspectionToolWrapper> tools = ((InspectionProfileImpl)inspectionProfile).findToolsById((String)value, target);
+      if (tools == null) {
         continue;
       }
-      final LocalInspectionToolWrapper toolWrapper = ((LocalInspectionToolWrapper)toolWrapperById).createCopy();
+
+      final List<LocalInspectionToolWrapper> toolsCopy = new ArrayList<LocalInspectionToolWrapper>(tools.size());
+      for (InspectionToolWrapper tool : tools) {
+        if (tool instanceof LocalInspectionToolWrapper) {
+          toolsCopy.add((LocalInspectionToolWrapper)tool.createCopy());
+        }
+      }
+      if (toolsCopy.isEmpty()) {
+        continue;
+      }
       final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
       final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
-      toolWrapper.initialize(context);
+      for (InspectionToolWrapper toolWrapper : toolsCopy) {
+        toolWrapper.initialize(context);
+      }
       ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       Runnable inspect = new Runnable() {
         @Override
         public void run() {
-          pass.doInspectInBatch(context, managerEx, Collections.<LocalInspectionToolWrapper>singletonList(toolWrapper));
+          pass.doInspectInBatch(context, managerEx, toolsCopy);
         }
       };
       if (indicator == null) {
