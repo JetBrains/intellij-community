@@ -437,6 +437,22 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     return null;
   }
 
+  @Nullable
+  public List<InspectionToolWrapper> findToolsById(@NotNull String id, @NotNull PsiElement element) {
+    List<InspectionToolWrapper> result = null;
+    initInspectionTools(element.getProject());
+    for (Tools toolList : myTools.values()) {
+      final InspectionToolWrapper tool = toolList.getInspectionTool(element);
+      if (id.equals(tool.getID())) {
+        if (result == null) {
+          result = new ArrayList<InspectionToolWrapper>();
+        }
+        result.add(tool);
+      }
+    }
+    return result;
+  }
+
   @Override
   public void save() throws IOException {
     InspectionProfileManager.getInstance().fireProfileChanged(this);
