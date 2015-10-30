@@ -38,18 +38,17 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomJavaUtil;
 import com.intellij.util.xml.GenericAttributeValue;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 class LanguageResolvingUtil {
-
   private static final String ANY_LANGUAGE_DEFAULT_ID = Language.ANY.getID();
 
   static Collection<LanguageDefinition> getAllLanguageDefinitions(ConvertContext context) {
@@ -72,10 +71,10 @@ class LanguageResolvingUtil {
         @Override
         public Result<Collection<PsiClass>> compute() {
           GlobalSearchScope allScope = projectProductionScope.union(ProjectScope.getLibrariesScope(project));
-          return Result.create(ClassInheritorsSearch.search(languageClass, allScope, true).findAll(), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+          return Result.create(ClassInheritorsSearch.search(languageClass, allScope, true).findAll(),
+                               PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
         }
       });
-    ;
     final List<LanguageDefinition> libraryDefinitions = collectLibraryLanguages(context, allLanguages);
 
     final Collection<PsiClass> projectLanguages = ContainerUtil.filter(allLanguages, new Condition<PsiClass>() {
@@ -86,7 +85,7 @@ class LanguageResolvingUtil {
     });
     final List<LanguageDefinition> projectDefinitions = collectProjectLanguages(projectLanguages, libraryDefinitions);
 
-    final List<LanguageDefinition> all = new ArrayList<LanguageDefinition>(libraryDefinitions);
+    final List<LanguageDefinition> all = ContainerUtil.newArrayList(libraryDefinitions);
     all.addAll(projectDefinitions);
     return all;
   }
@@ -96,24 +95,16 @@ class LanguageResolvingUtil {
     return ContainerUtil.mapNotNull(Language.getRegisteredLanguages(), new NullableFunction<Language, LanguageDefinition>() {
       @Override
       public LanguageDefinition fun(Language language) {
-        if (language.getID().isEmpty() ||
-            language instanceof DependentLanguage) {
+        if (language.getID().isEmpty() || language instanceof DependentLanguage) {
           return null;
         }
-        final PsiClass psiClass = DomJavaUtil.findClass(language.getClass().getName(), context.getInvocationElement());
-        if (psiClass == null) {
+        final PsiClass psiClass = DomJavaUtil.findClass(language.getClass().getName(), context.getInvocationElement(), true);
+        if (psiClass == null || !allLanguages.contains(psiClass)) {
           return null;
         }
-
-        if (!allLanguages.contains(psiClass)) {
-          return null;
-        }
-
         final LanguageFileType type = language.getAssociatedFileType();
         final Icon icon = type != null ? type.getIcon() : null;
-        return new LanguageDefinition(language.getID(),
-                                      psiClass,
-                                      icon, language.getDisplayName());
+        return new LanguageDefinition(language.getID(), psiClass, icon, language.getDisplayName());
       }
     });
   }
@@ -148,10 +139,7 @@ class LanguageResolvingUtil {
           return null;
         }
 
-        return new LanguageDefinition(id,
-                                      language,
-                                      null,
-                                      computeConstantReturnValue(language, "getDisplayName"));
+        return new LanguageDefinition(id, language, null, computeConstantReturnValue(language, "getDisplayName"));
       }
     });
   }
@@ -168,6 +156,10 @@ class LanguageResolvingUtil {
   }
 
   private static String computeConstantSuperCtorCallParameter(PsiClass languagePsiClass, int index) {
+    if (languagePsiClass instanceof PsiAnonymousClass) {
+      return getStringConstantExpression(((PsiAnonymousClass)languagePsiClass).getArgumentList(), index);
+    }
+
     PsiMethod defaultConstructor = null;
     for (PsiMethod constructor : languagePsiClass.getConstructors()) {
       if (constructor.getParameterList().getParametersCount() == 0) {
@@ -198,7 +190,13 @@ class LanguageResolvingUtil {
       return null;
     }
     PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-    final PsiExpression[] argumentExpressions = methodCallExpression.getArgumentList().getExpressions();
+    PsiExpressionList expressionList = methodCallExpression.getArgumentList();
+    return getStringConstantExpression(expressionList, index);
+  }
+
+  @Nullable
+  private static String getStringConstantExpression(PsiExpressionList expressionList, int index) {
+    final PsiExpression[] argumentExpressions = expressionList.getExpressions();
     if (argumentExpressions.length < index + 1) {
       return null;
     }
@@ -240,17 +238,28 @@ class LanguageResolvingUtil {
   }
 
   static class LanguageDefinition {
-
     final String id;
     final PsiClass clazz;
     final Icon icon;
     final String displayName;
 
-    LanguageDefinition(String id, PsiClass clazz, Icon icon, String displayName) {
+    LanguageDefinition(@NotNull String id, @NotNull PsiClass clazz, @Nullable Icon icon, @Nullable String displayName) {
       this.id = id;
       this.clazz = clazz;
       this.icon = icon;
       this.displayName = displayName;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof LanguageDefinition)) return false;
+      return clazz.equals(((LanguageDefinition)o).clazz);
+    }
+
+    @Override
+    public int hashCode() {
+      return clazz.hashCode();
     }
   }
 }
