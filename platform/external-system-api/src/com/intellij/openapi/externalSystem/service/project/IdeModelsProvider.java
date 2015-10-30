@@ -25,6 +25,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author Vladislav.Soroka
  * @since 9/11/2015
@@ -52,10 +54,16 @@ public interface IdeModelsProvider {
   ModuleOrderEntry findIdeModuleDependency(@NotNull ModuleDependencyData dependency, @NotNull Module module);
 
   @Nullable
-  OrderEntry findIdeModuleOrderEntry(LibraryDependencyData data);
+  OrderEntry findIdeModuleOrderEntry(@NotNull DependencyData data);
 
   @NotNull
   VirtualFile[] getContentRoots(Module module);
+
+  @NotNull
+  VirtualFile[] getSourceRoots(Module module);
+
+  @NotNull
+  VirtualFile[] getSourceRoots(Module module, boolean includingTests);
 
   @NotNull
   Library[] getAllLibraries();
@@ -65,4 +73,7 @@ public interface IdeModelsProvider {
 
   @NotNull
   String[] getLibraryUrls(@NotNull Library library, @NotNull OrderRootType type);
+
+  @NotNull
+  List<Module> getAllDependentModules(@NotNull Module module);
 }

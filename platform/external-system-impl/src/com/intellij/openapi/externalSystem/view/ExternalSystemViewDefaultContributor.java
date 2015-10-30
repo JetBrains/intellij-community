@@ -23,7 +23,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
+import com.intellij.openapi.externalSystem.service.project.IdeModelsProviderImpl;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -243,7 +243,7 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
       if (data == null) return null;
       final Project project = getProject();
       if (project == null) return null;
-      return new IdeModifiableModelsProviderImpl(project).findIdeModuleOrderEntry(data);
+      return new IdeModelsProviderImpl(project).findIdeModuleOrderEntry(data);
     }
   }
 }
