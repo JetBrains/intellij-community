@@ -58,7 +58,7 @@ public class InferenceSession {
     }
   };
 
-  private static final Key<Map<PsiTypeParameter, String>> INFERENCE_FAILURE_MESSAGE = Key.create("FAILURE_MESSAGE");
+  private static final Key<List<String>> INFERENCE_FAILURE_MESSAGE = Key.create("FAILURE_MESSAGE");
   private static final String EQUALITY_CONSTRAINTS_PRESENTATION = "equality constraints";
   private static final String UPPER_BOUNDS_PRESENTATION = "upper bounds";
   private static final String LOWER_BOUNDS_PRESENTATION = "lower bounds";
@@ -971,8 +971,8 @@ public class InferenceSession {
     if (eqBound != PsiType.NULL && (myErased || eqBound != null)) {
       if (lowerBound != PsiType.NULL && !TypeConversionUtil.isAssignable(eqBound, lowerBound)) {
         registerIncompatibleErrorMessage(
-          incompatibleBoundsMessage(var, substitutor, InferenceBound.EQ, EQUALITY_CONSTRAINTS_PRESENTATION, InferenceBound.LOWER, LOWER_BOUNDS_PRESENTATION),
-          var.getParameter());
+          incompatibleBoundsMessage(var, substitutor, InferenceBound.EQ, EQUALITY_CONSTRAINTS_PRESENTATION, InferenceBound.LOWER, LOWER_BOUNDS_PRESENTATION)
+        );
         return PsiType.NULL;
       } else {
         type = eqBound;
@@ -1001,7 +1001,7 @@ public class InferenceSession {
             incompatibleBoundsMessage = incompatibleBoundsMessage(var, substitutor, InferenceBound.LOWER, LOWER_BOUNDS_PRESENTATION, InferenceBound.UPPER, UPPER_BOUNDS_PRESENTATION);
           }
           if (incompatibleBoundsMessage != null) {
-            registerIncompatibleErrorMessage(incompatibleBoundsMessage, var.getParameter());
+            registerIncompatibleErrorMessage(incompatibleBoundsMessage);
             return PsiType.NULL;
           }
         }
@@ -1010,22 +1010,24 @@ public class InferenceSession {
     return type;
   }
 
-  private void registerIncompatibleErrorMessage(String value, PsiTypeParameter parameter) {
+  private void registerIncompatibleErrorMessage(String value) {
     if (myContext != null) {
-      Map<PsiTypeParameter, String> errorMessage = myContext.getUserData(INFERENCE_FAILURE_MESSAGE);
+      List<String> errorMessage = myContext.getUserData(INFERENCE_FAILURE_MESSAGE);
       if (errorMessage == null) {
-        errorMessage = new LinkedHashMap<PsiTypeParameter, String>();
+        errorMessage = Collections.synchronizedList(new ArrayList<String>());
         myContext.putUserData(INFERENCE_FAILURE_MESSAGE, errorMessage);
       }
-      errorMessage.put(parameter, value);
+      if (!errorMessage.contains(value)) {
+        errorMessage.add(value);
+      }
     }
   }
 
   @Nullable
   public static String getInferenceErrorMessage(PsiElement context) {
-    final Map<PsiTypeParameter, String> errorsMap = context.getUserData(INFERENCE_FAILURE_MESSAGE);
-    if (errorsMap != null) {
-      return StringUtil.join(errorsMap.values(), "\n");
+    final List<String> errors = context.getUserData(INFERENCE_FAILURE_MESSAGE);
+    if (errors != null) {
+      return StringUtil.join(errors, "\n");
     }
     return null;
   }
