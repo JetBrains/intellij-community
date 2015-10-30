@@ -16,6 +16,8 @@
 package org.jetbrains.concurrency
 
 import com.intellij.util.Function
+import com.intellij.util.SmartList
+import java.util.*
 
 private val rejectedPromise = Promise.reject<Any?>("rejected")
 
@@ -56,4 +58,16 @@ inline fun AsyncPromise<out Any?>.catchError(task: () -> Unit) {
   catch (e: Throwable) {
     setError(e)
   }
+}
+
+fun <T> collectResults(promises: List<Promise<T>>): Promise<List<T>> {
+  if (promises.isEmpty()) {
+    return resolvedPromise(emptyList())
+  }
+
+  val results: MutableList<T> = if (promises.size == 1) SmartList<T>() else ArrayList<T>(promises.size)
+  for (promise in promises) {
+    promise.done { results.add(it) }
+  }
+  return Promise.all(promises, results)
 }
