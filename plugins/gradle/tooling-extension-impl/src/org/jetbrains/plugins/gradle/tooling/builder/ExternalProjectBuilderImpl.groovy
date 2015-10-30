@@ -222,7 +222,12 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
               def filter = [filterType: filterType] as DefaultExternalFilter
               def props = action?.val$properties
               if (props) {
-                filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(props);
+                if ('org.apache.tools.ant.filters.ExpandProperties'.equals(filterType) && props['project']) {
+                  if (props['project']) filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(props['project'].properties);
+                }
+                else {
+                  filter.propertiesAsJsonMap = new GsonBuilder().create().toJson(props);
+                }
               }
               filterReaders << filter
             }
