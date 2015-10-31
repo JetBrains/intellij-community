@@ -184,23 +184,11 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
 
   static CharFilter.Result getLookupAction(final char charTyped, final LookupImpl lookup) {
     final CharFilter.Result filtersDecision = getFiltersDecision(charTyped, lookup);
-
-    final LookupElement currentItem = lookup.getCurrentItem();
-    if (currentItem != null && charTyped != ' ') {
-      String postfix = lookup.getAdditionalPrefix() + charTyped;
-      final PrefixMatcher matcher = lookup.itemMatcher(currentItem);
-      for (String lookupString : currentItem.getAllLookupStrings()) {
-        if (lookupString.startsWith(matcher.getPrefix() + postfix)) {
-          return CharFilter.Result.ADD_TO_PREFIX;
-        }
-      }
-    }
-
     if (filtersDecision != null) {
       return filtersDecision;
     }
     throw new AssertionError("Typed char not handler by char filter: c=" + charTyped +
-                             "; prefix=" + currentItem +
+                             "; prefix=" + lookup.getCurrentItem() +
                              "; filters=" + Arrays.toString(getFilters()));
   }
 
