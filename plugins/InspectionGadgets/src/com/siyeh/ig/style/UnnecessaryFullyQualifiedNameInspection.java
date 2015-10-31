@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,45 +123,45 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       statusBar.setInfo(InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.status.bar.escape.highlighting.message",
                                                         elementCount));
     }
+  }
 
-    private static class QualificationRemover extends JavaRecursiveElementWalkingVisitor {
-      private final String fullyQualifiedText;
-      private final List<PsiElement> shortenedElements = new ArrayList<PsiElement>();
+  public static class QualificationRemover extends JavaRecursiveElementWalkingVisitor {
+    private final String fullyQualifiedText;
+    private final List<PsiElement> shortenedElements = new ArrayList<PsiElement>();
 
-      private QualificationRemover(String fullyQualifiedText) {
-        this.fullyQualifiedText = fullyQualifiedText;
+    public QualificationRemover(String fullyQualifiedText) {
+      this.fullyQualifiedText = fullyQualifiedText;
+    }
+
+    public Collection<PsiElement> getShortenedElements() {
+      return Collections.unmodifiableCollection(shortenedElements);
+    }
+
+    @Override
+    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      super.visitReferenceElement(reference);
+      final PsiElement parent = PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class);
+      if (parent != null) {
+        return;
       }
-
-      private Collection<PsiElement> getShortenedElements() {
-        return Collections.unmodifiableCollection(shortenedElements);
+      final String text = reference.getText();
+      if (!text.equals(fullyQualifiedText)) {
+        return;
       }
-
-      @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-        super.visitReferenceElement(reference);
-        final PsiElement parent = PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class);
-        if (parent != null) {
-          return;
-        }
-        final String text = reference.getText();
-        if (!text.equals(fullyQualifiedText)) {
-          return;
-        }
-        final PsiElement qualifier = reference.getQualifier();
-        if (qualifier == null) {
-          return;
-        }
-        try {
-          qualifier.delete();
-        }
-        catch (IncorrectOperationException e) {
-          final Class<? extends QualificationRemover> aClass = getClass();
-          final String className = aClass.getName();
-          final Logger logger = Logger.getInstance(className);
-          logger.error(e);
-        }
-        shortenedElements.add(reference);
+      final PsiElement qualifier = reference.getQualifier();
+      if (qualifier == null) {
+        return;
       }
+      try {
+        qualifier.delete();
+      }
+      catch (IncorrectOperationException e) {
+        final Class<? extends QualificationRemover> aClass = getClass();
+        final String className = aClass.getName();
+        final Logger logger = Logger.getInstance(className);
+        logger.error(e);
+      }
+      shortenedElements.add(reference);
     }
   }
 
