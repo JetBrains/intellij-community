@@ -285,6 +285,10 @@
             text="Copy Revision Number" description="Copy short revision numbers of selected commits to the clipboard"
             icon="AllIcons.Actions.Copy" />
 
+    <action id="Vcs.CopySubjectAction" class="com.intellij.openapi.vcs.history.CopySubjectAction"
+            text="Copy Subject" description="Copy the subject of selected commits to the clipboard"
+            icon="AllIcons.Actions.Copy" />
+
     <group id="Shelve.KeymapGroup" text="Shelve">
       <reference ref="ChangesView.Shelve"/>
       <reference ref="ShelvedChanges.Unshelve"/>
@@ -363,6 +367,7 @@
       <reference ref="Vcs.RollbackChangedLines"/>
       <reference ref="WelcomeScreen.GetFromVcs"/>
       <reference ref="Vcs.CopyRevisionNumberAction"/>
+      <reference ref="Vcs.CopySubjectAction"/>
       <separator/>
 
       <add-to-group group-id="VcsGeneral.KeymapGroup"/>

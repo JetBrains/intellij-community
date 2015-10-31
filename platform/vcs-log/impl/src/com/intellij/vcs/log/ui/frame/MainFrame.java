@@ -316,6 +316,15 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
         }
       }), VcsRevisionNumber.class));
     }
+    else if (VcsDataKeys.VCS_REVISION_SUBJECTS == key) {
+      List<VcsFullCommitDetails> selectedChanges = myUI.getVcsLog().getSelectedDetails();
+      sink.put(key, ArrayUtil.toObjectArray(ContainerUtil.map(selectedChanges, new Function<VcsFullCommitDetails, String>() {
+        @Override
+        public String fun(VcsFullCommitDetails details) {
+          return details.getSubject();
+        }
+      }), String.class));
+    }
   }
 
   @NotNull
