@@ -505,6 +505,11 @@ public class ContainerUtil extends ContainerUtilRt {
     return result;
   }
 
+  @Contract(pure = true)
+  public static <T> T getOrElse(@NotNull List<T> elements, int i, T defaultValue) {
+    return elements.size() > i ? elements.get(i) : defaultValue;
+  }
+
   public static class ImmutableMapBuilder<K, V> {
     private final Map<K, V> myMap = new THashMap<K, V>();
 
