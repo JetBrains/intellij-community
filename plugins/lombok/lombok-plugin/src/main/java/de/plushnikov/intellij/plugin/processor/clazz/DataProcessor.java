@@ -39,21 +39,20 @@ public class DataProcessor extends AbstractClassProcessor {
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     validateCallSuperParam(psiAnnotation, psiClass, builder, "equals/hashCode");
 
-    return validateAnnotationOnRigthType(psiClass, builder);
+    return validateAnnotationOnRightType(psiClass, builder);
   }
 
   protected void validateCallSuperParam(PsiAnnotation psiAnnotation, PsiClass psiClass, ProblemBuilder builder, String generatedMethodName) {
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, EqualsAndHashCode.class)) {
       if (PsiClassUtil.hasSuperClass(psiClass)) {
-        builder.addWarning("Generating " + generatedMethodName + " implementation but without a call to superclass, " +
-            "even though this class does not extend java.lang.Object." +
-            "If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.",
-            PsiQuickFixFactory.createAddAnnotationQuickFix(psiClass, "lombok.EqualsAndHashCode", "callSuper=false"));
+        builder.addWarning("Generating " + generatedMethodName + " implementation but without a call to superclass" +
+                "If this is not intentional, add '@EqualsAndHashCode(callSuper=true)' to your type.",
+            PsiQuickFixFactory.createAddAnnotationQuickFix(psiClass, "lombok.EqualsAndHashCode", "callSuper=true"));
       }
     }
   }
 
-  protected boolean validateAnnotationOnRigthType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  protected boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
       builder.addError("'@Data' is only supported on a class type");

@@ -7,18 +7,18 @@ import com.intellij.codeInspection.ProblemHighlightType;
  * @author Plushnikov Michail
  */
 public class LombokProblem {
-  public static final LocalQuickFix[] EMPTY_QUICK_FIXS = new LocalQuickFix[0];
+  public static final LocalQuickFix[] EMPTY_QUICK_FIX = new LocalQuickFix[0];
 
   private final ProblemHighlightType highlightType;
   private final LocalQuickFix[] quickFixes;
   private final String message;
 
   public LombokProblem(String message) {
-    this(message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, EMPTY_QUICK_FIXS);
+    this(message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, EMPTY_QUICK_FIX);
   }
 
   public LombokProblem(String message, ProblemHighlightType highlightType) {
-    this(message, highlightType, EMPTY_QUICK_FIXS);
+    this(message, highlightType, EMPTY_QUICK_FIX);
   }
 
   public LombokProblem(String message, LocalQuickFix... quickFixes) {

@@ -202,6 +202,7 @@
 		<ul>
 		<li>0.9.7
 				<ol>
+				    <li>Fixed #132: Make @EqualsAndHashCode(callSuper = true) default</li>
 				    <li>Fixed #135: Added support for @NoArgsConstructor(force = true)</li>
 				    <li>Fixed #149: Idea cannot generate another constructor when @NoArgsConstructor is used</li>
 				</ol>
