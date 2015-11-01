@@ -15,6 +15,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKeys;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightParameter;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
@@ -301,5 +302,14 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     }
   }
 
-
+    @Override
+  public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
+    final PsiClass containingClass = psiField.getContainingClass();
+    if (null != containingClass) {
+      if (PsiClassUtil.getNames(filterFields(containingClass, psiAnnotation, true)).contains(psiField.getName())) {
+        return LombokPsiElementUsage.READ;
+      }
+    }
+    return LombokPsiElementUsage.NONE;
+  }
 }

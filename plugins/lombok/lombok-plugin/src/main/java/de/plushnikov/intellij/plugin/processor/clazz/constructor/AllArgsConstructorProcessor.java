@@ -7,7 +7,9 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
+import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import lombok.AllArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,5 +67,16 @@ public class AllArgsConstructorProcessor extends AbstractConstructorClassProcess
   @NotNull
   public Collection<PsiMethod> createAllArgsConstructor(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String methodModifier, @NotNull PsiAnnotation psiAnnotation, String staticName, Collection<PsiField> allNotInitializedNotStaticFields) {
     return createConstructorMethod(psiClass, methodModifier, psiAnnotation, false, allNotInitializedNotStaticFields, staticName);
+  }
+
+  @Override
+  public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
+    final PsiClass containingClass = psiField.getContainingClass();
+    if (null != containingClass) {
+      if (PsiClassUtil.getNames(getAllNotInitializedAndNotStaticFields(containingClass)).contains(psiField.getName())) {
+        return LombokPsiElementUsage.WRITE;
+      }
+    }
+    return LombokPsiElementUsage.NONE;
   }
 }

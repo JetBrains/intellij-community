@@ -8,6 +8,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
+import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
@@ -49,8 +50,8 @@ public class ValueProcessor extends AbstractClassProcessor {
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, EqualsAndHashCode.class)) {
       if (PsiClassUtil.hasSuperClass(psiClass)) {
         builder.addWarning("Generating " + generatedMethodName + " implementation but without a call to superclass, " +
-            "even though this class does not extend java.lang.Object." +
-            "If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.",
+                "even though this class does not extend java.lang.Object." +
+                "If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.",
             PsiQuickFixFactory.createAddAnnotationQuickFix(psiClass, "lombok.EqualsAndHashCode", "callSuper=false"));
       }
     }
@@ -100,5 +101,10 @@ public class ValueProcessor extends AbstractClassProcessor {
         }
       }
     }
+  }
+
+  @Override
+  public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
+    return LombokPsiElementUsage.READ_WRITE;
   }
 }

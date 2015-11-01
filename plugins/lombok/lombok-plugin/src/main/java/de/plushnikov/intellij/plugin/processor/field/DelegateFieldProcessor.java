@@ -6,6 +6,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.handler.DelegateHandler;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,5 +40,10 @@ public class DelegateFieldProcessor extends AbstractFieldProcessor {
 
   protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     handler.generateElements(psiField, psiField.getType(), psiAnnotation, target);
+  }
+
+  @Override
+  public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
+    return LombokPsiElementUsage.READ;
   }
 }

@@ -14,6 +14,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKeys;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
@@ -161,4 +162,14 @@ public class ToStringProcessor extends AbstractClassProcessor {
     }
   }
 
+  @Override
+  public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
+    final PsiClass containingClass = psiField.getContainingClass();
+    if (null != containingClass) {
+      if (PsiClassUtil.getNames(filterFields(containingClass, psiAnnotation, false)).contains(psiField.getName())) {
+        return LombokPsiElementUsage.READ;
+      }
+    }
+    return LombokPsiElementUsage.NONE;
+  }
 }

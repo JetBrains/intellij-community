@@ -9,6 +9,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
@@ -72,6 +73,17 @@ public class GetterProcessor extends AbstractClassProcessor {
   @NotNull
   public Collection<PsiMethod> createFieldGetters(@NotNull PsiClass psiClass, @NotNull String methodModifier) {
     Collection<PsiMethod> result = new ArrayList<PsiMethod>();
+    final Collection<PsiField> getterFields = filterGetterFields(psiClass);
+    for (PsiField getterField : getterFields) {
+      result.add(fieldProcessor.createGetterMethod(getterField, psiClass, methodModifier));
+    }
+    return result;
+  }
+
+  @NotNull
+  protected Collection<PsiField> filterGetterFields(@NotNull PsiClass psiClass) {
+    final Collection<PsiField> getterFields = new ArrayList<PsiField>();
+
     final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
 
     for (PsiField psiField : psiClass.getFields()) {
@@ -93,10 +105,10 @@ public class GetterProcessor extends AbstractClassProcessor {
       }
 
       if (createGetter) {
-        result.add(fieldProcessor.createGetterMethod(psiField, psiClass, methodModifier));
+        getterFields.add(psiField);
       }
     }
-    return result;
+    return getterFields;
   }
 
   private boolean hasFieldProcessorAnnotation(PsiModifierList modifierList) {
@@ -107,4 +119,14 @@ public class GetterProcessor extends AbstractClassProcessor {
     return hasSetterAnnotation;
   }
 
+  @Override
+  public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
+    final PsiClass containingClass = psiField.getContainingClass();
+    if (null != containingClass) {
+      if (PsiClassUtil.getNames(filterGetterFields(containingClass)).contains(psiField.getName())) {
+        return LombokPsiElementUsage.READ;
+      }
+    }
+    return LombokPsiElementUsage.NONE;
+  }
 }

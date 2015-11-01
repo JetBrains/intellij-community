@@ -11,6 +11,7 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiType;
 import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightParameter;
@@ -223,5 +224,10 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
     } finally {
       StringBuilderSpinAllocator.dispose(paramString);
     }
+  }
+
+  @Override
+  public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
+    return LombokPsiElementUsage.READ_WRITE;
   }
 }

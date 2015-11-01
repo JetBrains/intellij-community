@@ -8,11 +8,13 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
+import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import lombok.experimental.Wither;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,6 +60,21 @@ public class WitherProcessor extends AbstractClassProcessor {
   public Collection<PsiMethod> createFieldWithers(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull String methodModifier, @NotNull AccessorsInfo accessors) {
     Collection<PsiMethod> result = new ArrayList<PsiMethod>();
 
+    final Collection<PsiField> witherFields = getWitherFields(psiClass);
+
+    for (PsiField witherField : witherFields) {
+      PsiMethod method = fieldProcessor.createWitherMethod(witherField, methodModifier, accessors);
+      if (method != null) {
+        result.add(method);
+      }
+    }
+
+    return result;
+  }
+
+  @NotNull
+  protected Collection<PsiField> getWitherFields(@NotNull PsiClass psiClass) {
+    Collection<PsiField> witherFields = new ArrayList<PsiField>();
     for (PsiField psiField : psiClass.getFields()) {
       boolean createWither = true;
       PsiModifierList modifierList = psiField.getModifierList();
@@ -72,12 +89,20 @@ public class WitherProcessor extends AbstractClassProcessor {
         createWither &= !PsiAnnotationUtil.isAnnotatedWith(psiField, Wither.class);
       }
       if (createWither) {
-        PsiMethod method = fieldProcessor.createWitherMethod(psiField, methodModifier, accessors);
-        if (method != null) {
-          result.add(method);
-        }
+        witherFields.add(psiField);
       }
     }
-    return result;
+    return witherFields;
+  }
+
+  @Override
+  public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
+    final PsiClass containingClass = psiField.getContainingClass();
+    if (null != containingClass) {
+      if (PsiClassUtil.getNames(getWitherFields(containingClass)).contains(psiField.getName())) {
+        return LombokPsiElementUsage.READ_WRITE;
+      }
+    }
+    return LombokPsiElementUsage.NONE;
   }
 }

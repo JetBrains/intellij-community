@@ -6,6 +6,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiType;
@@ -139,5 +140,13 @@ public abstract class AbstractProcessor implements Processor {
     for (String annotation : annotationsToAdd) {
       modifierList.addAnnotation(annotation);
     }
+  }
+
+  public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
+    return LombokPsiElementUsage.NONE;
+  }
+
+  public LombokPsiElementUsage checkMethodUsage(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation) {
+    return LombokPsiElementUsage.NONE;
   }
 }

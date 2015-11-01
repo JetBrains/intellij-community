@@ -9,6 +9,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
@@ -72,8 +73,20 @@ public class SetterProcessor extends AbstractClassProcessor {
 
   public Collection<PsiMethod> createFieldSetters(@NotNull PsiClass psiClass, @NotNull String methodModifier) {
     Collection<PsiMethod> result = new ArrayList<PsiMethod>();
+
+    final Collection<PsiField> setterFields = filterSetterFields(psiClass);
+
+    for (PsiField setterField : setterFields) {
+      result.add(fieldProcessor.createSetterMethod(setterField, psiClass, methodModifier));
+    }
+    return result;
+  }
+
+  @NotNull
+  protected Collection<PsiField> filterSetterFields(@NotNull PsiClass psiClass) {
     final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
 
+    final Collection<PsiField> setterFields = new ArrayList<PsiField>();
     for (PsiField psiField : psiClass.getFields()) {
       boolean createSetter = true;
       PsiModifierList modifierList = psiField.getModifierList();
@@ -93,10 +106,10 @@ public class SetterProcessor extends AbstractClassProcessor {
         }
       }
       if (createSetter) {
-        result.add(fieldProcessor.createSetterMethod(psiField, psiClass, methodModifier));
+        setterFields.add(psiField);
       }
     }
-    return result;
+    return setterFields;
   }
 
   private boolean hasFieldProcessorAnnotation(PsiModifierList modifierList) {
@@ -107,4 +120,14 @@ public class SetterProcessor extends AbstractClassProcessor {
     return hasSetterAnnotation;
   }
 
+  @Override
+  public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
+    final PsiClass containingClass = psiField.getContainingClass();
+    if (null != containingClass) {
+      if (PsiClassUtil.getNames(filterSetterFields(containingClass)).contains(psiField.getName())) {
+        return LombokPsiElementUsage.WRITE;
+      }
+    }
+    return LombokPsiElementUsage.NONE;
+  }
 }

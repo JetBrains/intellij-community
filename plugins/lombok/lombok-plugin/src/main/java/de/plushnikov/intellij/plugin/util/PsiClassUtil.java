@@ -11,6 +11,7 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 /**
@@ -184,5 +186,13 @@ public class PsiClassUtil {
       }
     }
     return null;
+  }
+
+  public static Collection<String> getNames(Collection<? extends PsiMember> psiMembers) {
+    Collection<String> result = new HashSet<String>();
+    for (PsiMember psiMember : psiMembers) {
+      result.add(psiMember.getName());
+    }
+    return result;
   }
 }

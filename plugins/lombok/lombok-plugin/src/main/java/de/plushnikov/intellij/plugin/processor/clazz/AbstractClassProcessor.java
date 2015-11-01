@@ -87,8 +87,8 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     Boolean callSuperProperty = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(psiAnnotation, "callSuper");
     if (null == callSuperProperty && PsiClassUtil.hasSuperClass(psiClass)) {
       builder.addWarning("Generating " + generatedMethodName + " implementation but without a call to superclass, " +
-          "even though this class does not extend java.lang.Object." +
-          "If this is intentional, add '(callSuper=false)' to your type.",
+              "even though this class does not extend java.lang.Object." +
+              "If this is intentional, add '(callSuper=false)' to your type.",
           PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "true"),
           PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "false"));
     }

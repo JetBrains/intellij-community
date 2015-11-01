@@ -4,6 +4,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,4 +38,7 @@ public interface Processor {
   @NotNull
   List<? super PsiElement> process(@NotNull PsiClass psiClass);
 
+  LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation);
+
+  LombokPsiElementUsage checkMethodUsage(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation);
 }
