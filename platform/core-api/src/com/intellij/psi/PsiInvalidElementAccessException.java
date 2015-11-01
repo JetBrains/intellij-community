@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,15 +45,15 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
   private final Attachment[] myDiagnostic;
   private final String myMessage;
 
-  public PsiInvalidElementAccessException(PsiElement element) {
+  public PsiInvalidElementAccessException(@Nullable PsiElement element) {
     this(element, null, null);
   }
 
-  public PsiInvalidElementAccessException(PsiElement element, @Nullable String message) {
+  public PsiInvalidElementAccessException(@Nullable PsiElement element, @Nullable String message) {
     this(element, message, null);
   }
 
-  public PsiInvalidElementAccessException(PsiElement element, @Nullable Throwable cause) {
+  public PsiInvalidElementAccessException(@Nullable PsiElement element, @Nullable Throwable cause) {
     this(element, null, cause);
   }
 
