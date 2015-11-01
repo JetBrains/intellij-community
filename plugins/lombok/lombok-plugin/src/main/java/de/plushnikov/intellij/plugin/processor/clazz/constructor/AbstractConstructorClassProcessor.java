@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.processor.clazz.constructor;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -57,6 +58,10 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     if (!validateVisibility(psiAnnotation)) {
       result = false;
     }
+
+    if (!validateBaseClassConstructor(psiClass, builder)) {
+      result = false;
+    }
     return result;
   }
 
@@ -72,6 +77,29 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       result = false;
     }
     return result;
+  }
+
+  protected boolean validateBaseClassConstructor(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+    if (psiClass instanceof PsiAnonymousClass) {
+      return true;
+    }
+    PsiClass baseClass = psiClass.getSuperClass();
+    if (baseClass == null) {
+      return true;
+    }
+    PsiMethod[] constructors = baseClass.getConstructors();
+    if (constructors.length == 0) {
+      return true;
+    }
+
+    for (PsiMethod constructor : constructors) {
+      final int parametersCount = constructor.getParameterList().getParametersCount();
+      if (parametersCount == 0 || parametersCount == 1 && constructor.isVarArgs()) {
+        return true;
+      }
+    }
+    builder.addError("Lombok needs a default constructor in the base class");
+    return false;
   }
 
   public boolean validateIsConstructorDefined(@NotNull PsiClass psiClass, @Nullable String staticConstructorName, @NotNull Collection<PsiField> params, @NotNull ProblemBuilder builder) {
