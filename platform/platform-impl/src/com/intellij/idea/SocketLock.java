@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullProducer;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.net.NetUtils;
 import io.netty.buffer.ByteBuf;
@@ -128,7 +129,8 @@ public final class SocketLock {
         }
 
         final String[] lockedPaths = {myConfigPath, mySystemPath};
-        myServer = BuiltInServer.start(1, 6942, 50, false, new NotNullProducer<ChannelHandler>() {
+        int workerCount = PlatformUtils.isIdeaCommunity() || PlatformUtils.isDatabaseIDE() || PlatformUtils.isCidr() ? 1 : 2;
+        myServer = BuiltInServer.start(workerCount, 6942, 50, false, new NotNullProducer<ChannelHandler>() {
           @NotNull
           @Override
           public ChannelHandler produce() {
