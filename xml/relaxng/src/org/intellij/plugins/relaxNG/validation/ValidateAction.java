@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
@@ -195,14 +196,14 @@ public class ValidateAction extends AnAction {
     RngProperty.CHECK_ID_IDREF.add(properties);
 
     try {
-      final String schemaPath = RngParser.reallyFixIDEAUrl(schemaFile.getUrl());
+      final String schemaPath = VfsUtilCore.fixIDEAUrl(schemaFile.getUrl());
       try {
         final ValidationDriver driver = new ValidationDriver(properties.toPropertyMap(), sr);
         final InputSource in = ValidationDriver.uriOrFileInputSource(schemaPath);
         in.setEncoding(schemaFile.getCharset().name());
 
         if (driver.loadSchema(in)) {
-          final String path = RngParser.reallyFixIDEAUrl(instanceFile.getUrl());
+          final String path = VfsUtilCore.fixIDEAUrl(instanceFile.getUrl());
           try {
             driver.validate(ValidationDriver.uriOrFileInputSource(path));
           } catch (IOException e1) {
