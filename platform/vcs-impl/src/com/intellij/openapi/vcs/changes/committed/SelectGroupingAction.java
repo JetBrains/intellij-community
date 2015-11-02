@@ -15,10 +15,15 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,16 +43,35 @@ public class SelectGroupingAction extends LabeledComboBoxAction {
     super(VcsBundle.message("committed.changes.group.title"));
     myProject = project;
     myBrowser = browser;
-    getComboBox().setPrototypeDisplayValue("Date+");
   }
 
-  protected void selectionChanged(@NotNull Object selection) {
-    myBrowser.setGroupingStrategy((ChangeListGroupingStrategy)selection);
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setText(myBrowser.getGroupingStrategy().toString());
   }
 
   @NotNull
-  protected ComboBoxModel createModel() {
-    return new CollectionComboBoxModel<ChangeListGroupingStrategy>(collectStrategies());
+  @Override
+  protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+    return new DefaultActionGroup(
+      ContainerUtil.map(collectStrategies(), new NotNullFunction<ChangeListGroupingStrategy, DumbAwareAction>() {
+        @NotNull
+        @Override
+        public DumbAwareAction fun(@NotNull ChangeListGroupingStrategy strategy) {
+          return new SetGroupingAction(strategy);
+        }
+      }));
+  }
+
+  @NotNull
+  @Override
+  protected Condition<AnAction> getPreselectCondition() {
+    return new Condition<AnAction>() {
+      @Override
+      public boolean value(AnAction action) {
+        return ((SetGroupingAction)action).myStrategy.equals(myBrowser.getGroupingStrategy());
+      }
+    };
   }
 
   @NotNull
@@ -70,6 +94,21 @@ public class SelectGroupingAction extends LabeledComboBoxAction {
     }
 
     return result;
+  }
+
+  private class SetGroupingAction extends DumbAwareAction {
+
+    @NotNull private final ChangeListGroupingStrategy myStrategy;
+
+    private SetGroupingAction(@NotNull ChangeListGroupingStrategy strategy) {
+      super(strategy.toString());
+      myStrategy = strategy;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myBrowser.setGroupingStrategy(myStrategy);
+    }
   }
 
   private static class CustomChangeListColumnGroupingStrategy implements ChangeListGroupingStrategy {

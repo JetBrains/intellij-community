@@ -15,12 +15,16 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.*;
-import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -32,18 +36,41 @@ public class SelectFilteringAction extends LabeledComboBoxAction {
 
   @NotNull private final Project myProject;
   @NotNull private final CommittedChangesTreeBrowser myBrowser;
-  @Nullable private CommittedChangesFilterKey myPreviousSelection;
+  @NotNull private ChangeListFilteringStrategy myPreviousSelection;
 
   public SelectFilteringAction(@NotNull Project project, @NotNull CommittedChangesTreeBrowser browser) {
     super(VcsBundle.message("committed.changes.filter.title"));
     myProject = project;
     myBrowser = browser;
-    myPreviousSelection = null;
+    myPreviousSelection = ChangeListFilteringStrategy.NONE;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setText(myPreviousSelection.toString());
   }
 
   @NotNull
-  protected ComboBoxModel createModel() {
-    return new CollectionComboBoxModel<ChangeListFilteringStrategy>(collectStrategies());
+  @Override
+  protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+    return new DefaultActionGroup(ContainerUtil.map(collectStrategies(), new NotNullFunction<ChangeListFilteringStrategy, AnAction>() {
+      @NotNull
+      @Override
+      public AnAction fun(@NotNull ChangeListFilteringStrategy strategy) {
+        return new SetFilteringAction(strategy);
+      }
+    }));
+  }
+
+  @NotNull
+  @Override
+  protected Condition<AnAction> getPreselectCondition() {
+    return new Condition<AnAction>() {
+      @Override
+      public boolean value(@NotNull AnAction action) {
+        return ((SetFilteringAction)action).myStrategy.getKey().equals(myPreviousSelection.getKey());
+      }
+    };
   }
 
   @NotNull
@@ -74,14 +101,24 @@ public class SelectFilteringAction extends LabeledComboBoxAction {
     return result;
   }
 
-  protected void selectionChanged(@NotNull Object selection) {
-    if (myPreviousSelection != null) {
-        myBrowser.removeFilteringStrategy(myPreviousSelection);
+  private class SetFilteringAction extends DumbAwareAction {
+
+    @NotNull private final ChangeListFilteringStrategy myStrategy;
+
+    private SetFilteringAction(@NotNull ChangeListFilteringStrategy strategy) {
+      super(strategy.toString());
+      myStrategy = strategy;
     }
-    final ChangeListFilteringStrategy strategy = (ChangeListFilteringStrategy)selection;
-    if (!ChangeListFilteringStrategy.NONE.equals(selection)) {
-      myBrowser.setFilteringStrategy(strategy);
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      if (!ChangeListFilteringStrategy.NONE.equals(myPreviousSelection)) {
+        myBrowser.removeFilteringStrategy(myPreviousSelection.getKey());
+      }
+      if (!ChangeListFilteringStrategy.NONE.equals(myStrategy)) {
+        myBrowser.setFilteringStrategy(myStrategy);
+      }
+      myPreviousSelection = myStrategy;
     }
-    myPreviousSelection = strategy.getKey();
   }
 }
