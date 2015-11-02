@@ -35,12 +35,7 @@ public abstract class VariablesHost<VALUE_MANAGER extends ValueManager> {
       @NotNull
       @Override
       public Promise<List<Variable>> load(@NotNull VariablesHost host) {
-        if (host.valueManager.isObsolete()) {
-          return ValueManager.reject();
-        }
-        else {
-          return host.load();
-        }
+        return host.valueManager.isObsolete() ? ValueManager.reject() : host.load();
       }
     };
 
