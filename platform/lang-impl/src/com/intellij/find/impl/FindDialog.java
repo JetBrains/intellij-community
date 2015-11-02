@@ -58,7 +58,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectAttachProcessor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBundle;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
@@ -517,9 +520,10 @@ public class FindDialog extends DialogWrapper {
   }
 
   private void scheduleResultsUpdate() {
-    if (mySearchRescheduleOnCancellationsAlarm == null) return;
-    mySearchRescheduleOnCancellationsAlarm.cancelAllRequests();
-    mySearchRescheduleOnCancellationsAlarm.addRequest(new Runnable() {
+    final Alarm alarm = mySearchRescheduleOnCancellationsAlarm;
+    if (alarm == null || alarm.isDisposed()) return;
+    alarm.cancelAllRequests();
+    alarm.addRequest(new Runnable() {
       @Override
       public void run() {
         findSettingsChanged();
