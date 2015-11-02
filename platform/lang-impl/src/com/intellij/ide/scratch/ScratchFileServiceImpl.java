@@ -194,7 +194,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     @Override
     public Language getMapping(@Nullable VirtualFile file) {
       Language fromMapping = super.getMapping(file);
-      return fromMapping != null ? fromMapping : ScratchFileType.getOriginalLanguageFromScratchName(file);
+      return fromMapping != null ? fromMapping : ScratchFileType.getScratchLanguageFromFileName(file);
     }
   }
 
@@ -227,11 +227,11 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     public SyntaxHighlighter create(@NotNull FileType fileType, @Nullable Project project, @Nullable VirtualFile file) {
       if (project == null || file == null || !(fileType instanceof ScratchFileType)) return null;
 
-      Language language = ScratchFileType.getOriginalLanguage(project, file);
+      Language language = ScratchFileType.getScratchLanguage(project, file);
       SyntaxHighlighter highlighter = language == null ? null : SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file);
       if (highlighter != null) return highlighter;
 
-      FileType originalFileType = ScratchFileType.getOriginalFileType(project, file);
+      FileType originalFileType = ScratchFileType.getFileTypeOfScratch(project, file);
       highlighter = originalFileType == null ? null : SyntaxHighlighterFactory.getSyntaxHighlighter(originalFileType, project, file);
       return highlighter;
     }

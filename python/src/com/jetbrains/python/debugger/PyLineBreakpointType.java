@@ -30,6 +30,7 @@ import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointTypeBase;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -69,7 +70,7 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
   }
 
   private static boolean isPythonScratch(@NotNull Project project, @NotNull VirtualFile file) {
-    return ScratchFileType.getOriginalFileType(project, file) == PythonFileType.INSTANCE;
+    return ScratchFileType.getScratchLanguage(project, file) == PythonLanguage.getInstance();
   }
 
   private static boolean notStoppableElementType(IElementType elementType) {

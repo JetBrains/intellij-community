@@ -82,7 +82,7 @@ public abstract class RootType {
 
   @Nullable
   public Language substituteLanguage(@NotNull Project project, @NotNull VirtualFile file) {
-    return substituteLanguageImpl(ScratchFileType.getOriginalLanguageFromScratchName(file), file, project);
+    return substituteLanguageImpl(ScratchFileType.getScratchLanguageFromFileName(file), file, project);
   }
 
   @Nullable
