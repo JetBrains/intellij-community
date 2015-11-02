@@ -742,6 +742,8 @@
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CompareClipboardWithSelection"/>
 
       <keyboard-shortcut keymap="$default" first-keystroke="alt shift E"/>
+      <keyboard-shortcut keymap="Mac OS X" first-keystroke="control shift E" />
+      <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="control shift E" />
       <keyboard-shortcut keymap="Eclipse" first-keystroke="ctrl alt E" replace-all="true"/>
       <keyboard-shortcut keymap="NetBeans 6.5" first-keystroke="ctrl alt E" replace-all="true"/>
     </action>
