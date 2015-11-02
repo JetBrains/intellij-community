@@ -858,6 +858,7 @@ public class EditorActionUtil {
   }
 
   public static boolean isHumpBound(@NotNull CharSequence editorText, int offset, boolean start) {
+    if (offset <= 0 || offset >= editorText.length()) return false;
     final char prevChar = editorText.charAt(offset - 1);
     final char curChar = editorText.charAt(offset);
     final char nextChar = offset + 1 < editorText.length() ? editorText.charAt(offset + 1) : 0; // 0x00 is not lowercase.
