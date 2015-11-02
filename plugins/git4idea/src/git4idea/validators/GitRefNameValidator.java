@@ -17,6 +17,7 @@ package git4idea.validators;
 
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
 
@@ -24,7 +25,6 @@ import java.util.regex.Pattern;
  * Checks that the specified String is a valid Git reference name.
  * See <a href="http://www.kernel.org/pub/software/scm/git/docs/git-check-ref-format.html">
  * http://www.kernel.org/pub/software/scm/git/docs/git-check-ref-format.html</a>
- *
  */
 public final class GitRefNameValidator implements InputValidator {
 
@@ -65,5 +65,10 @@ public final class GitRefNameValidator implements InputValidator {
   @Override
   public boolean canClose(String inputString) {
     return checkInput(inputString);
+  }
+
+  @NotNull
+  public String cleanUpBranchName(@NotNull String branchName) {
+    return branchName.replaceAll(ILLEGAL.pattern(), "_");
   }
 }

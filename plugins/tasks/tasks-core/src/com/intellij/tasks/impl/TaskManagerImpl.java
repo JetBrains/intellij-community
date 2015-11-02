@@ -997,22 +997,18 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return StringUtil.shortenTextWithEllipsis(name, 100, 0);
   }
 
-  @TestOnly
+  @NotNull
   public String suggestBranchName(@NotNull Task task) {
-    return suggestBranchName(task, VcsTaskHandler.DEFAULT_PROHIBITED_SYMBOLS);
+    String name = constructDefaultBranchName(task);
+    if (task.isIssue()) return name.replace(' ', '-');
+    List<String> words = StringUtil.getWordsIn(name);
+    String[] strings = ArrayUtil.toStringArray(words);
+    return StringUtil.join(strings, 0, Math.min(2, strings.length), "-");
   }
 
-  public String suggestBranchName(@NotNull Task task, @Nullable String prohibitedRegExp) {
-    if (task.isIssue()) {
-      String formatTask = TaskUtil.formatTask(task, myConfig.branchNameFormat);
-      return prohibitedRegExp != null ? formatTask.replaceAll(prohibitedRegExp, "-") : formatTask;
-    }
-    else {
-      String summary = task.getSummary();
-      List<String> words = StringUtil.getWordsIn(summary);
-      String[] strings = ArrayUtil.toStringArray(words);
-      return StringUtil.join(strings, 0, Math.min(2, strings.length), "-");
-    }
+  @NotNull
+  public String constructDefaultBranchName(@NotNull Task task) {
+    return task.isIssue() ? TaskUtil.formatTask(task, myConfig.branchNameFormat) : task.getSummary();
   }
 
   @TestOnly

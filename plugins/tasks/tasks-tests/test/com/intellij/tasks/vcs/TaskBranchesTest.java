@@ -206,6 +206,17 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
     assertEquals(2, getNumberOfBranches(repository));
   }
 
+  public void testSuggestBranchName() {
+    initRepositories("community", "idea");
+    VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(getProject());
+    assertEquals(1, handlers.length);
+    VcsTaskHandler handler = handlers[0];
+    String startName = "-Hello, this is long name with : and $";
+    assertFalse(handler.isBranchNameValid(startName));
+    String cleanUpBranchName = handler.cleanUpBranchName(startName);
+    assertTrue(handler.isBranchNameValid(cleanUpBranchName));
+  }
+
   public void _testCurrentTasks() throws Exception {
     initRepositories("foo", "bar");
     VcsTaskHandler handler = VcsTaskHandler.getAllHandlers(getProject())[0];

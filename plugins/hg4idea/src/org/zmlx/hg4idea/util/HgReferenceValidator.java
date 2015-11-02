@@ -17,6 +17,7 @@ package org.zmlx.hg4idea.util;
 
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Pattern;
@@ -82,5 +83,11 @@ public class HgReferenceValidator implements InputValidatorEx {
   @Override
   public String getErrorText(@Nullable String inputString) {
     return myErrorText;
+  }
+
+  @NotNull
+  public String cleanUpBranchName(@NotNull String branchName) {
+    if (onlyDigits(branchName)) return branchName + "_";
+    return branchName.replaceAll(ILLEGAL.pattern(), "_");
   }
 }

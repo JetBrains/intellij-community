@@ -20,18 +20,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Pattern;
 
-/**
- * @author Dmitry Avdeev
- *         Date: 16.07.13
- */
 public abstract class VcsTaskHandler {
 
-  public static final String DEFAULT_PROHIBITED_SYMBOLS = " ";
+  private static final String DEFAULT_PROHIBITED_SYMBOLS = " ";
 
   public static VcsTaskHandler[] getAllHandlers(final Project project) {
     VcsTaskHandler[] extensions = EXTENSION_POINT_NAME.getExtensions(project);
@@ -91,10 +87,23 @@ public abstract class VcsTaskHandler {
   public abstract TaskInfo[] getAllExistingTasks();
 
   /**
-   * @return REGEXP with prohibited symbols for replaceAll(REGEXP, other) future call, null if every symbol is possible
+   * Should check prohibited symbols and constructions; name ref conflicts depended on Repository will be checked separately if needed
+   *
+   * @param branchName to check
+   * @return true if valid
    */
-  @Nullable
-  public String getProhibitedSymbolsInBranchNames() {
-    return DEFAULT_PROHIBITED_SYMBOLS;
+  public boolean isBranchNameValid(@NotNull String branchName) {
+    return !Pattern.compile(DEFAULT_PROHIBITED_SYMBOLS).matcher(branchName).find();
+  }
+
+  /**
+   * Update branchName to valid
+   *
+   * @param suggestedName suggested name
+   * @return new valid branchName
+   */
+  @NotNull
+  public String cleanUpBranchName(@NotNull String suggestedName) {
+    return suggestedName.replaceAll(DEFAULT_PROHIBITED_SYMBOLS, "-");
   }
 }

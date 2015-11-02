@@ -34,15 +34,19 @@ import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgErrorUtil;
+import org.zmlx.hg4idea.util.HgReferenceValidator;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.List;
 
 public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
 
+  private HgReferenceValidator myNameValidator;
+
   public HgTaskHandler(@NotNull HgRepositoryManager repositoryManager,
                        @NotNull Project project) {
     super(repositoryManager, project, "bookmark");
+    myNameValidator = HgReferenceValidator.getInstance();
   }
 
   @Override
@@ -104,8 +108,13 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
   }
 
   @Override
-  @Nullable
-  public String getProhibitedSymbolsInBranchNames() {
-    return null;
+  public boolean isBranchNameValid(@NotNull String branchName) {
+    return myNameValidator.checkInput(branchName);
+  }
+
+  @NotNull
+  @Override
+  public String cleanUpBranchName(@NotNull String suggestedName) {
+    return myNameValidator.cleanUpBranchName(suggestedName);
   }
 }

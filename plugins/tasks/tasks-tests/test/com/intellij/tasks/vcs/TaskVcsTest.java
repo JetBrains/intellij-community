@@ -387,7 +387,6 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     LocalTaskImpl withIllegalSymbolsInIssue = new LocalTaskImpl("1", "contains Illegal$Symbols");
     withIllegalSymbolsInIssue.setIssue(true);
-    assertEquals("1-contains-Illegal-Symbols", myTaskManager.suggestBranchName(withIllegalSymbolsInIssue, " |\\$"));
     assertEquals("1-contains-Illegal$Symbols", myTaskManager.suggestBranchName(withIllegalSymbolsInIssue));
   }
 

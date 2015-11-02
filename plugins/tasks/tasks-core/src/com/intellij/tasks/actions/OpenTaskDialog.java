@@ -44,7 +44,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
-import java.util.regex.Pattern;
 
 /**
  * @author Dmitry Avdeev
@@ -174,11 +173,9 @@ public class OpenTaskDialog extends DialogWrapper {
           }
         });
       }
-
-      myBranchName.setText(
-        taskManager.suggestBranchName(task, myVcsTaskHandler != null
-                                            ? myVcsTaskHandler.getProhibitedSymbolsInBranchNames()
-                                            : VcsTaskHandler.DEFAULT_PROHIBITED_SYMBOLS));
+      myBranchName.setText(myVcsTaskHandler != null
+                           ? myVcsTaskHandler.cleanUpBranchName(taskManager.constructDefaultBranchName(task))
+                           : taskManager.suggestBranchName(task));
       myChangelistName.setText(taskManager.getChangelistName(task));
     }
     updateFields(true);
@@ -262,11 +259,8 @@ public class OpenTaskDialog extends DialogWrapper {
       if (branchName.isEmpty()) {
         return new ValidationInfo("Branch name should not be empty", myBranchName);
       }
-      else if (myVcsTaskHandler != null) {
-        String regExp = myVcsTaskHandler.getProhibitedSymbolsInBranchNames();
-        if (regExp != null && (Pattern.compile(regExp).matcher(branchName)).find()) {
-          return new ValidationInfo("Branch name contains prohibited symbols or regexp: \'" + regExp + "\'");
-        }
+      else if (myVcsTaskHandler != null && !myVcsTaskHandler.isBranchNameValid(branchName)){
+        return new ValidationInfo("Branch name is not valid; check your vcs branch name restrictions.");
       }
       else if (branchName.contains(" ")) {
         return new ValidationInfo("Branch name should not contain spaces");
