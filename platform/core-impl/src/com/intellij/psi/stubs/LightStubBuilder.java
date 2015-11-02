@@ -53,7 +53,7 @@ public class LightStubBuilder implements StubBuilder {
       }
 
       final FileASTNode node = file.getNode();
-      if (contentType instanceof ILightStubFileElementType) {
+      if (node.getElementType() instanceof ILightStubFileElementType) {
         tree = node.getLighterAST();
       }
       else {

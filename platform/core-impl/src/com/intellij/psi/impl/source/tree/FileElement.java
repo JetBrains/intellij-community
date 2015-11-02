@@ -54,7 +54,7 @@ public class FileElement extends LazyParseableElement implements FileASTNode, Ge
   @Override
   public LighterAST getLighterAST() {
     final IFileElementType contentType = (IFileElementType)getElementType();
-    assert contentType instanceof ILightStubFileElementType:contentType;
+    assert contentType instanceof ILightStubFileElementType:contentType; // method should not be called for such element types
 
     if (!isParsed()) {
       return new FCTSBackedLighterAST(getCharTable(), ((ILightStubFileElementType<?>)contentType).parseContentsLight(this));
