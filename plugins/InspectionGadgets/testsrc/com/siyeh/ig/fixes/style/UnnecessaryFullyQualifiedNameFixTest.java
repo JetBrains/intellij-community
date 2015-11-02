@@ -110,6 +110,30 @@ public class UnnecessaryFullyQualifiedNameFixTest extends IGQuickFixesTestCase {
       JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT, "package-info.java");
   }
 
+  public void testAlreadyImported() {
+    doTest(InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.remove.quickfix"),
+           "import java.util.List;" +
+           "class X {" +
+           "  /**/java.util.List l;" +
+           "}",
+
+           "import java.util.List;" +
+           "class X {" +
+           "  List l;" +
+           "}");
+  }
+
+  public void testJavaLang() {
+    doTest(InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.remove.quickfix"),
+           "class X {" +
+           "  /**/java.lang.String s;" +
+           "}",
+
+           "class X {" +
+           "  String s;" +
+           "}");
+  }
+
   private void doTest(@Language("JAVA") @NotNull @NonNls String before, @Language("JAVA") @NotNull @NonNls String after,
                       @MagicConstant(intValues = {
                         JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_ALWAYS,

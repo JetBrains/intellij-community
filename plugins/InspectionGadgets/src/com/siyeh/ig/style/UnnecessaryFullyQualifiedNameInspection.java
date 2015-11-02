@@ -220,7 +220,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         return;
       }
       final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(reference.getProject());
-      PsiDocComment containingComment = PsiTreeUtil.getParentOfType(reference, PsiDocComment.class);
+      final PsiDocComment containingComment = PsiTreeUtil.getParentOfType(reference, PsiDocComment.class);
       if (containingComment != null && acceptFqnInJavadoc((PsiJavaFile)containingFile, reference.getQualifiedName(), styleSettings)) {
         return;
       }
@@ -229,7 +229,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       if (!(qualifierTarget instanceof PsiPackage)) {
         return;
       }
-      List<PsiJavaCodeReferenceElement> references = new ArrayList<PsiJavaCodeReferenceElement>(2);
+      final List<PsiJavaCodeReferenceElement> references = new ArrayList<PsiJavaCodeReferenceElement>(2);
       references.add(reference);
       if (styleSettings.INSERT_INNER_CLASS_IMPORTS) {
         collectInnerClassNames(reference, references);
@@ -248,8 +248,12 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         if (!ImportUtils.nameCanBeImported(qualifiedName, reference)) {
           continue;
         }
-        final boolean inSameFile = aClass.getContainingFile() == containingFile;
-        registerError(aReference.getQualifier(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, inSameFile);
+        final PsiElement qualifier1 = aReference.getQualifier();
+        if (qualifier1 != null) {
+          final boolean inSameFile = aClass.getContainingFile() == containingFile ||
+                                     ImportHelper.isAlreadyImported((PsiJavaFile)containingFile, qualifiedName);
+          registerError(qualifier1, ProblemHighlightType.LIKE_UNUSED_SYMBOL, inSameFile);
+        }
         break;
       }
     }
@@ -271,7 +275,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
     if ("package-info.java".equals(javaFile.getName())) {
       return true;
     }
-    JavaCodeStyleSettings javaSettings = styleSettings.getCustomSettings(JavaCodeStyleSettings.class);
+    final JavaCodeStyleSettings javaSettings = styleSettings.getCustomSettings(JavaCodeStyleSettings.class);
     if (javaSettings.CLASS_NAMES_IN_JAVADOC == JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED) {
       return !ImportHelper.isAlreadyImported(javaFile, fullyQualifiedName);
     }
