@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -88,6 +89,18 @@ public class KillToWordStartActionTest extends LightPlatformCodeInsightTestCase 
     configureFromFileText(getTestName(false) + ".java", "class Foo { String s = \"a\\nb<caret>\"; }");
     killToWordStart();
     checkResultByText("class Foo { String s = \"a\\n<caret>\"; }");
+  }
+  
+  public void testNearDocumentStartInCamelHumpsMode() throws IOException {
+    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
+    boolean savedValue = editorSettings.isCamelWords();
+    editorSettings.setCamelWords(true);
+    try {
+      doTest("abc<caret>", "<caret>");
+    }
+    finally {
+      editorSettings.setCamelWords(savedValue);
+    }
   }
 
   private void doTest(@NotNull String before, @NotNull String after) throws IOException {
