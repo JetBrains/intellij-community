@@ -70,25 +70,19 @@ public class ArrayUtilTest extends TestCase {
     }
   }
 
-  private static void assertArrayEquals(char[] expected, char[] actual) {
+  private static void assertArrayEquals(int[] expected, int[] actual) {
     assertTrue(Arrays.equals(expected, actual));
   }
 
   public void testReverse() throws Exception {
-    char[] a = new char[]{};
-    ArrayUtil.reverse(a);
-    assertArrayEquals(new char[]{}, a);
+    checkArrayReverse(new int[]{}, new int[]{});
+    checkArrayReverse(new int[]{1}, new int[]{1});
+    checkArrayReverse(new int[]{1, 2, 3, 4}, new int[]{4, 3, 2, 1});
+    checkArrayReverse(new int[]{1, 2, 3, 4, 5}, new int[]{5, 4, 3, 2, 1});
+  }
 
-    a = new char[]{'1'};
-    ArrayUtil.reverse(a);
-    assertArrayEquals(new char[]{'1'}, a);
-
-    a = new char[]{'1', '2', '3', '4'};
-    ArrayUtil.reverse(a);
-    assertArrayEquals(new char[]{'4', '3', '2', '1'}, a);
-
-    a = new char[]{'1', '2', '3', '4', '5'};
-    ArrayUtil.reverse(a);
-    assertArrayEquals(new char[]{'5', '4', '3', '2', '1'}, a);
+  private static void checkArrayReverse(int[] array, int[] expectedReversedArray) {
+    int[] reversed = ArrayUtil.reverseArray(array);
+    assertArrayEquals(expectedReversedArray, reversed);
   }
 }
