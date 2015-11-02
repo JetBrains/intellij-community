@@ -25,7 +25,6 @@ import java.util.regex.Pattern;
  * See <a href="http://www.kernel.org/pub/software/scm/git/docs/git-check-ref-format.html">
  * http://www.kernel.org/pub/software/scm/git/docs/git-check-ref-format.html</a>
  *
- * @author Kirill Likhodedov
  */
 public final class GitRefNameValidator implements InputValidator {
 
@@ -45,6 +44,7 @@ public final class GitRefNameValidator implements InputValidator {
   }
   private static final Pattern ILLEGAL = Pattern.compile(
     "(^\\.)|" +                             // begins with a dot
+    "(^-)|" +                                 // begins with '-'
     "[ ~:\\^\\?\\*\\[\\\\]+|(@\\{)+|" +     // contains invalid character: space, one of ~:^?*[\ or @{ sequence
     "(\\.\\.)+|" +                          // two dots in a row
     "(([\\./]|\\.lock)$)|" +                // ends with dot, slash or ".lock"
@@ -59,9 +59,7 @@ public final class GitRefNameValidator implements InputValidator {
 
   @Override
   public boolean checkInput(String inputString) {
-    return !StringUtil.isEmptyOrSpaces(inputString) &&
-           !ILLEGAL.matcher(inputString).find() &&
-           !inputString.startsWith("-");
+    return !StringUtil.isEmptyOrSpaces(inputString) && !ILLEGAL.matcher(inputString).find();
   }
 
   @Override
