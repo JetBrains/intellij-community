@@ -77,9 +77,10 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    *
    * @see #getSuperClassTypes(TypeEvalContext) for the full list of super classes.
    * @see #getAncestorTypes(TypeEvalContext) for the full list of ancestors.
+   * @param context
    */
   @NotNull
-  PyClass[] getSuperClasses();
+  PyClass[] getSuperClasses(@Nullable  TypeEvalContext context);
 
   /**
    * Returns a PSI element for the super classes list.
@@ -239,9 +240,9 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    * @param parent
    * @return True iff this and parent are the same or parent is one of our superclasses.
    */
-  boolean isSubclass(PyClass parent);
+  boolean isSubclass(PyClass parent, @Nullable  TypeEvalContext context);
 
-  boolean isSubclass(@NotNull String superClassQName);
+  boolean isSubclass(@NotNull String superClassQName, @Nullable TypeEvalContext context);
 
   /**
    * Returns the aggregated list of names defined in __slots__ attributes of the class and its ancestors.

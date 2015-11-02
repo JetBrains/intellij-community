@@ -58,7 +58,7 @@ class PyPullUpInfoModel extends AbstractUsesDependencyMemberInfoModel<PyElement,
     if (member.getMember() instanceof PyClass) {
       //TODO: Delegate to Memebers Managers
       final PyClass memberClass = (PyClass)member.getMember();
-      if (memberClass.isSubclass(currentSuperClass) || currentSuperClass.isSubclass(memberClass)) {
+      if (memberClass.isSubclass(currentSuperClass, null) || currentSuperClass.isSubclass(memberClass, null)) {
         return false; //Class is already parent of superclass
       }
     }

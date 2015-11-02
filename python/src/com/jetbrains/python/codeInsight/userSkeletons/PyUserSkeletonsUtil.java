@@ -99,11 +99,15 @@ public class PyUserSkeletonsUtil {
 
   @Nullable
   public static <T extends PyElement> T getUserSkeleton(@NotNull T element) {
+    return getUserSkeletonWithContext(element, null);
+  }
+  @Nullable
+  public static <T extends PyElement> T getUserSkeletonWithContext(@NotNull T element, @Nullable final TypeEvalContext context) {
     final PsiFile file = element.getContainingFile();
     if (file instanceof PyFile) {
       final PyFile skeletonFile = getUserSkeletonForFile((PyFile)file);
       if (skeletonFile != null && skeletonFile != file) {
-        final PsiElement skeletonElement = getUserSkeleton(element, skeletonFile);
+        final PsiElement skeletonElement = getUserSkeleton(element, skeletonFile, context);
         if (element.getClass().isInstance(skeletonElement) && skeletonElement != element) {
           //noinspection unchecked
           return (T)skeletonElement;
@@ -152,7 +156,7 @@ public class PyUserSkeletonsUtil {
   }
 
   @Nullable
-  private static PsiElement getUserSkeleton(@NotNull PyElement element, @NotNull PyFile skeletonFile) {
+  private static PsiElement getUserSkeleton(@NotNull PyElement element, @NotNull PyFile skeletonFile, @Nullable TypeEvalContext context) {
     if (element instanceof PyFile) {
       return skeletonFile;
     }
@@ -160,15 +164,19 @@ public class PyUserSkeletonsUtil {
     final String name = element.getName();
     if (owner != null && name != null) {
       assert owner != element;
-      final PsiElement originalOwner = getUserSkeleton(owner, skeletonFile);
+      final PsiElement originalOwner = getUserSkeleton(owner, skeletonFile, context);
       if (originalOwner instanceof PyClass) {
         final PyClass classOwner = (PyClass)originalOwner;
         final PyType type = TypeEvalContext.codeInsightFallback(classOwner.getProject()).getType(classOwner);
         if (type instanceof PyClassLikeType) {
           final PyClassLikeType classType = (PyClassLikeType)type;
           final PyClassLikeType instanceType = classType.toInstance();
+          PyResolveContext resolveContext = PyResolveContext.noImplicits();
+          if (context != null) {
+            resolveContext = resolveContext.withTypeEvalContext(context);
+          }
           final List<? extends RatedResolveResult> resolveResults = instanceType.resolveMember(name, null, AccessDirection.READ,
-                                                                                               PyResolveContext.noImplicits(), false);
+                                                                                               resolveContext, false);
           if (resolveResults != null && !resolveResults.isEmpty()) {
             return resolveResults.get(0).getElement();
           }

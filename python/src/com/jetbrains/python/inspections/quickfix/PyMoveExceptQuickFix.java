@@ -55,7 +55,7 @@ public class PyMoveExceptQuickFix implements LocalQuickFix {
       if (statement == null) return;
 
       PyExceptPart prevExceptPart = PsiTreeUtil.getPrevSiblingOfType(part, PyExceptPart.class);
-      final ArrayList<PyClass> superClasses = Lists.newArrayList(((PyClass)exceptClass).getSuperClasses());
+      final ArrayList<PyClass> superClasses = Lists.newArrayList(((PyClass)exceptClass).getSuperClasses(null));
       while (prevExceptPart != null) {
         final PyExpression classExpression = prevExceptPart.getExceptClass();
         if (classExpression == null) return;

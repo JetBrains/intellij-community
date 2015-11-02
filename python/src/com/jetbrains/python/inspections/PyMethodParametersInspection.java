@@ -92,7 +92,7 @@ public class PyMethodParametersInspection extends PyInspection {
       PsiElement zope_interface = findZopeInterface(node);
       final PyClass cls = node.getContainingClass();
       if (zope_interface instanceof PyClass) {
-        if (cls != null && cls.isSubclass((PyClass) zope_interface)) return; // it can have any params
+        if (cls != null && cls.isSubclass((PyClass) zope_interface, null)) return; // it can have any params
       }
       // analyze function itself
       PyUtil.MethodFlags flags = PyUtil.MethodFlags.of(node);
