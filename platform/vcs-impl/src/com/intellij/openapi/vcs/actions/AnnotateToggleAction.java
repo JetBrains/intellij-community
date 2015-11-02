@@ -21,22 +21,17 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.annotate.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider;
+import com.intellij.openapi.vcs.annotate.AnnotationSourceSwitcher;
+import com.intellij.openapi.vcs.annotate.FileAnnotation;
+import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
@@ -48,8 +43,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
@@ -61,158 +58,35 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    final boolean enabled = isEnabled(VcsContextFactory.SERVICE.getInstance().createContextOn(e)) ||
-                            AnnotateDiffViewerAction.isEnabled(e);
+    boolean enabled = false;
+    if (AnnotateLocalFileAction.isEnabled(e)) {
+      enabled = !AnnotateLocalFileAction.isSuspended(e);
+    }
+    else if (AnnotateDiffViewerAction.isEnabled(e)) {
+      enabled = !AnnotateDiffViewerAction.isSuspended(e);
+    }
     e.getPresentation().setEnabled(enabled);
-  }
-
-  private static boolean isEnabled(final VcsContext context) {
-    VirtualFile[] selectedFiles = context.getSelectedFiles();
-    if (selectedFiles.length != 1) {
-      return false;
-    }
-    VirtualFile file = selectedFiles[0];
-    if (file.isDirectory()) return false;
-    Project project = context.getProject();
-    if (project == null || project.isDisposed()) return false;
-
-    if (getBackgroundableLock(project, file).isLocked()) return false;
-
-    final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
-    if (vcs == null) return false;
-    final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
-    if (annotationProvider == null) return false;
-    final FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(file);
-    if (fileStatus == FileStatus.UNKNOWN || fileStatus == FileStatus.ADDED || fileStatus == FileStatus.IGNORED) {
-      return false;
-    }
-    return hasTextEditor(file);
-  }
-
-  private static boolean hasTextEditor(@NotNull VirtualFile selectedFile) {
-    return !selectedFile.getFileType().isBinary();
   }
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    VcsContext context = VcsContextFactory.SERVICE.getInstance().createContextOn(e);
-    Editor editor = context.getEditor();
-    if (editor != null) {
-      return isAnnotated(editor);
+    if (AnnotateLocalFileAction.isEnabled(e)) {
+      return AnnotateLocalFileAction.isAnnotated(e);
     }
-    VirtualFile selectedFile = context.getSelectedFile();
-    if (selectedFile == null) {
-      return false;
-    }
-
-    Project project = context.getProject();
-    if (project == null) return false;
-
-    for (FileEditor fileEditor : FileEditorManager.getInstance(project).getEditors(selectedFile)) {
-      if (fileEditor instanceof TextEditor) {
-        if (isAnnotated(((TextEditor)fileEditor).getEditor())) {
-          return true;
-        }
-      }
+    else if (AnnotateDiffViewerAction.isEnabled(e)) {
+      return AnnotateDiffViewerAction.isAnnotated(e);
     }
     return false;
   }
 
-  private static boolean isAnnotated(@NotNull Editor editor) {
-    return editor.getGutter().isAnnotationsShown();
-  }
-
   @Override
   public void setSelected(AnActionEvent e, boolean selected) {
-    if (AnnotateDiffViewerAction.isEnabled(e)) {
-      AnnotateDiffViewerAction.perform(e);
-      return;
+    if (AnnotateLocalFileAction.isEnabled(e)) {
+      AnnotateLocalFileAction.perform(e, selected);
     }
-
-    final VcsContext context = VcsContextFactory.SERVICE.getInstance().createContextOn(e);
-    Editor editor = context.getEditor();
-    VirtualFile selectedFile = context.getSelectedFile();
-    if (selectedFile == null) return;
-
-    Project project = context.getProject();
-    if (project == null) return;
-    if (!selected) {
-      for (FileEditor fileEditor : FileEditorManager.getInstance(project).getEditors(selectedFile)) {
-        if (fileEditor instanceof TextEditor) {
-          ((TextEditor)fileEditor).getEditor().getGutter().closeAllAnnotations();
-        }
-      }
+    else if (AnnotateDiffViewerAction.isEnabled(e)) {
+      AnnotateDiffViewerAction.perform(e, selected);
     }
-    else {
-      if (editor == null) {
-        FileEditor[] fileEditors = FileEditorManager.getInstance(project).openFile(selectedFile, false);
-        for (FileEditor fileEditor : fileEditors) {
-          if (fileEditor instanceof TextEditor) {
-            editor = ((TextEditor)fileEditor).getEditor();
-          }
-        }
-      }
-      LOG.assertTrue(editor != null);
-      doAnnotate(editor, project);
-    }
-  }
-
-  private static void doAnnotate(final Editor editor, final Project project) {
-    final VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
-    if (project == null || file == null) {
-      return;
-    }
-    final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
-
-    if (vcs == null) return;
-
-    final AnnotationProvider annotationProvider = vcs.getCachingAnnotationProvider();
-    assert annotationProvider != null;
-
-    final Ref<FileAnnotation> fileAnnotationRef = new Ref<FileAnnotation>();
-    final Ref<VcsException> exceptionRef = new Ref<VcsException>();
-
-    getBackgroundableLock(project, file).lock();
-
-    final Task.Backgroundable annotateTask = new Task.Backgroundable(project,
-                                                                     VcsBundle.message("retrieving.annotations"),
-                                                                     true) {
-      @Override
-      public void run(final @NotNull ProgressIndicator indicator) {
-        try {
-          fileAnnotationRef.set(annotationProvider.annotate(file));
-        }
-        catch (VcsException e) {
-          exceptionRef.set(e);
-        }
-        catch (ProcessCanceledException pce) {
-          throw pce;
-        }
-        catch (Throwable t) {
-          exceptionRef.set(new VcsException(t));
-        }
-      }
-
-      @Override
-      public void onCancel() {
-        onSuccess();
-      }
-
-      @Override
-      public void onSuccess() {
-        getBackgroundableLock(project, file).unlock();
-
-        if (!exceptionRef.isNull()) {
-          LOG.warn(exceptionRef.get());
-          AbstractVcsHelper.getInstance(project).showErrors(Collections.singletonList(exceptionRef.get()), VcsBundle.message("message.title.annotate"));
-        }
-
-        if (!fileAnnotationRef.isNull()) {
-          doAnnotate(editor, project, file, fileAnnotationRef.get(), vcs);
-        }
-      }
-    };
-    ProgressManager.getInstance().run(annotateTask);
   }
 
   public static void doAnnotate(@NotNull final Editor editor,

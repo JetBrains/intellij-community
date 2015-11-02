@@ -94,7 +94,9 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabledAndVisible(isEnabled(e));
+    boolean enabled = isEnabled(e);
+    e.getPresentation().setVisible(enabled);
+    e.getPresentation().setEnabled(enabled && !isSuspended(e));
   }
 
   @Nullable
@@ -131,11 +133,22 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
 
     //noinspection unchecked
     if (data.annotator.isAnnotationShown(data.viewer, data.side)) return true;
-    if (getBackgroundableLock(data.viewer, data.side).isLocked()) return false;
     return createAnnotationsLoader(data.viewer.getProject(), data.viewer.getRequest(), data.side) != null;
   }
 
-  public static void perform(AnActionEvent e) {
+  public static boolean isSuspended(AnActionEvent e) {
+    EventData data = collectEventData(e);
+    return data != null && getBackgroundableLock(data.viewer, data.side).isLocked();
+  }
+
+  public static boolean isAnnotated(AnActionEvent e) {
+    EventData data = collectEventData(e);
+    assert data != null;
+    //noinspection unchecked
+    return data.annotator.isAnnotationShown(data.viewer, data.side);
+  }
+
+  public static void perform(AnActionEvent e, boolean selected) {
     EventData data = collectEventData(e);
     assert data != null;
 
@@ -159,7 +172,7 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    perform(e);
+    perform(e, state);
   }
 
   public static <T extends DiffViewerBase> void doAnnotate(@NotNull final ViewerAnnotator<T> annotator,
