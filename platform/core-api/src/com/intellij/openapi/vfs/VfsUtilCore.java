@@ -521,7 +521,8 @@ public class VfsUtilCore {
 
   @NotNull
   public static String fixIDEAUrl(@NotNull String ideaUrl ) {
-    int idx = ideaUrl.indexOf("://");
+    final String ideaProtocolMarker = "://";
+    int idx = ideaUrl.indexOf(ideaProtocolMarker);
     if( idx >= 0 ) {
       String s = ideaUrl.substring(0, idx);
 
@@ -529,9 +530,10 @@ public class VfsUtilCore {
         //noinspection HardCodedStringLiteral
         s = "jar:file";
       }
-      ideaUrl = s+":/"+ideaUrl.substring(idx+3);
+      final String urlWithoutProtocol = ideaUrl.substring(idx + ideaProtocolMarker.length());
+      ideaUrl = s + ":" + (urlWithoutProtocol.startsWith("/") ? "" : "/") + urlWithoutProtocol;
     }
-    ideaUrl = ideaUrl.replaceFirst("file:/+", "file:/");
+
     return ideaUrl;
   }
 
