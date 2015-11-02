@@ -64,7 +64,7 @@
             description="Run your code with tests"/>
     <action id="StudyShowAnswersAction" class="com.jetbrains.edu.learning.actions.StudyFillPlaceholdersAction"
             text="Fill Answer Placeholders">
-      <add-to-group group-id="HelpMenu" anchor="first"/>
+      <add-to-group group-id="HelpMenu" anchor="before" relative-to-action="HelpTopics"/>
     </action>
 
   </actions>

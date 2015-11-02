@@ -37,7 +37,7 @@
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </action>
     <action id="StudyWatchTutorial" class="com.jetbrains.edu.learning.actions.PyStudyWatchTutorialAction">
-      <add-to-group group-id="HelpMenu" anchor="first"/>
+      <add-to-group group-id="HelpMenu" anchor="before" relative-to-action="HelpTopics"/>
     </action>
   </actions>
 
