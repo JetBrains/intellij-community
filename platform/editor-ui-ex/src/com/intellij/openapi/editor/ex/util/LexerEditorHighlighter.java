@@ -113,6 +113,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
           ((DocumentEx)document).setInBulkUpdate(false); // bulk mode failed
         }
         doSetText(document.getCharsSequence());
+        assert isInSyncWithDocument() : "Lexer produced no tokens for non-empty document: " + myLexer;
       }
 
       final int latestValidOffset = mySegments.getLastValidOffset();

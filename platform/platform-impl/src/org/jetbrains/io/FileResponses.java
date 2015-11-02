@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Date;
 
-import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
 import static org.jetbrains.io.Responses.*;
 
 public class FileResponses {
@@ -58,7 +57,7 @@ public class FileResponses {
     }
 
     HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-    response.headers().add(CONTENT_TYPE, getContentType(path));
+    response.headers().set(HttpHeaderNames.CONTENT_TYPE, getContentType(path));
     addCommonHeaders(response);
     response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate");
     response.headers().set(HttpHeaderNames.LAST_MODIFIED, new Date(lastModified));

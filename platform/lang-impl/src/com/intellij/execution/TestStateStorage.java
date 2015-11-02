@@ -36,7 +36,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
@@ -91,7 +90,7 @@ public class TestStateStorage implements Disposable {
     Disposer.register(project, this);
   }
 
-  protected PersistentHashMap<String, Record> initializeMap() throws IOException {
+  private PersistentHashMap<String, Record> initializeMap() throws IOException {
     return IOUtil.openCleanOrResetBroken(getComputable(myFile), myFile);
   }
 
@@ -133,7 +132,7 @@ public class TestStateStorage implements Disposable {
   }
 
   @Nullable
-  public Map<String, Record> getRecentTests(int limit, Date since) {
+  public synchronized Map<String, Record> getRecentTests(int limit, Date since) {
     if (myMap == null) return null;
 
     Map<String, Record> result = ContainerUtil.newHashMap();

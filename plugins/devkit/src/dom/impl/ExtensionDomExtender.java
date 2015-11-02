@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -134,7 +135,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   @Nullable
   public static With findWithElement(List<With> elements, PsiField field) {
     for (With element : elements) {
-      if (field.getName().equals(element.getAttribute().getStringValue())) {
+      if (Comparing.equal(field.getName(), element.getAttribute().getStringValue())) {
         return element;
       }
     }
@@ -390,6 +391,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     String getTagValue();
   }
 
+  @SuppressWarnings("ClassExplicitlyAnnotation")
   private static class MyRequired implements Required {
     @Override
     public boolean value() {

@@ -19,7 +19,6 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PluginPathManager
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.PsiTestUtil
@@ -239,10 +238,24 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                        "public class Language { " +
                        "  protected Language(String id) {}" +
                        "}")
-    VirtualFile myLanguageVirtualFile = myFixture.copyFileToProject("MyLanguage.java");
-    myFixture.allowTreeAccessForFile(myLanguageVirtualFile)
-
-    myFixture.testHighlighting("languageAttribute.xml",
+    myFixture.addClass("package org.jetbrains.annotations;\n" +
+                       "import java.lang.annotation.Documented;\n" +
+                       "import java.lang.annotation.ElementType;\n" +
+                       "import java.lang.annotation.Retention;\n" +
+                       "import java.lang.annotation.RetentionPolicy;\n" +
+                       "import java.lang.annotation.Target;\n" +
+                       "\n" +
+                       "@Documented\n" +
+                       "@Retention(RetentionPolicy.CLASS)\n" +
+                       "@Target({ElementType.PARAMETER, ElementType.LOCAL_VARIABLE, ElementType.FIELD})\n" +
+                       "public @interface PropertyKey {\n" +
+                       "    String resourceBundle();\n" +
+                       "}")
+    myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyLanguage.java"))
+    myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyBundle.java"))
+    myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyBundle.properties"));
+    
+    myFixture.testHighlighting("languageAttribute.xml", 
                                "MyLanguageAttributeEPBean.java")
   }
 

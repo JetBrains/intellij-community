@@ -27,6 +27,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomService;
 import com.intellij.util.xml.DomUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
@@ -70,19 +71,37 @@ public class ExtensionPointLocator {
 
   private static void findExtensionPointCandidates(PsiClass psiClass, final List<ExtensionPointCandidate> list) {
     String name = psiClass.getQualifiedName();
-    if (name == null) {
-      return;
-    }
+    if (name == null) return;
 
-    final Project project = psiClass.getProject();
-    final Collection<VirtualFile> candidates = DomService.getInstance().getDomFileCandidates(IdeaPlugin.class, project, GlobalSearchScope.allScope(project));
-    GlobalSearchScope scope = GlobalSearchScope.filesScope(project, candidates);
+    Project project = psiClass.getProject();
+    GlobalSearchScope scope = getCandidatesScope(project);
     PsiSearchHelper.SERVICE.getInstance(project).processUsagesInNonJavaFiles(name, new PsiNonJavaFileReferenceProcessor() {
       @Override
       public boolean process(PsiFile file, int startOffset, int endOffset) {
         PsiElement element = file.findElementAt(startOffset);
         processExtensionPointCandidate(element, list);
         return true;
+      }
+    }, scope);
+  }
+
+  @NotNull
+  private static GlobalSearchScope getCandidatesScope(@NotNull Project project) {
+    Collection<VirtualFile> candidates = DomService.getInstance().getDomFileCandidates(IdeaPlugin.class, project, GlobalSearchScope.allScope(project));
+    return GlobalSearchScope.filesScope(project, candidates);
+  }
+
+  public static boolean isImplementedEp(@NotNull PsiClass psiClass, @NotNull final ExtensionPointCandidate candidate) {
+    String name = psiClass.getQualifiedName();
+    if (name == null) return false;
+
+    Project project = psiClass.getProject();
+    GlobalSearchScope scope = getCandidatesScope(project);
+    return !PsiSearchHelper.SERVICE.getInstance(project).processUsagesInNonJavaFiles(name, new PsiNonJavaFileReferenceProcessor() {
+      @Override
+      public boolean process(PsiFile file, int startOffset, int endOffset) {
+        XmlTag tag = PsiTreeUtil.getParentOfType(file.findElementAt(startOffset), XmlTag.class);
+        return tag == null || !candidate.epName.endsWith(tag.getName());
       }
     }, scope);
   }

@@ -17,6 +17,9 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
+import com.intellij.idea.Bombed;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -25,6 +28,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,7 +37,9 @@ public class PsiAugmentProviderTest extends LightCodeInsightFixtureTestCase {
   private static final String LOMBOK_VAL_FQN = "lombok.val";
   private static final String LOMBOK_VAL_SHORT_NAME = "val";
 
-  public void testLombokVal() {
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
     PlatformTestUtil.registerExtension(PsiAugmentProvider.EP_NAME, new PsiAugmentProvider() {
       @NotNull
       @Override
@@ -45,7 +51,7 @@ public class PsiAugmentProviderTest extends LightCodeInsightFixtureTestCase {
       @Override
       protected PsiType inferType(PsiTypeElement typeElement) {
         final PsiElement parent = typeElement.getParent();
-        if (parent instanceof PsiLocalVariable && ((PsiLocalVariable)parent).getInitializer() != null || 
+        if (parent instanceof PsiLocalVariable && ((PsiLocalVariable)parent).getInitializer() != null ||
             parent instanceof PsiParameter && ((PsiParameter)parent).getDeclarationScope() instanceof PsiForeachStatement) {
           final String text = typeElement.getText();
           if (LOMBOK_VAL_SHORT_NAME.equals(text) || LOMBOK_VAL_FQN.equals(text)) {
@@ -85,7 +91,32 @@ public class PsiAugmentProviderTest extends LightCodeInsightFixtureTestCase {
       }
     }, myTestRootDisposable);
     myFixture.addClass("package lombok; public @interface val{}");
+  }
+
+  public void testLombokVal() {
     myFixture.testHighlighting(false, false, false, getTestName(false) + ".java");
+  }
+
+  @Bombed(day = 10, month = Calendar.NOVEMBER, year = 2015, user = "Roman Shevchenko")
+  public void testLombokEditing() throws Exception {
+    final PsiFile file = myFixture.configureByText("a.java", "import lombok.val; class Foo {{val o = ;}}");
+    final PsiElement elementAt = file.findElementAt(35);
+    assertNotNull(elementAt);
+    final PsiElement parent = elementAt.getParent();
+    assertInstanceOf(parent, PsiLocalVariable.class);
+    final PsiLocalVariable var = (PsiLocalVariable)parent;
+    var.getType(); //cache
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
+    final Document document = documentManager.getDocument(file);
+    assertNotNull(document);
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      document.insertString(39, "1");
+      documentManager.commitAllDocuments();
+    });
+    assertTrue(var.isValid());
+    final PsiType type = var.getType();
+    assertNotNull(type);
+    assertTrue(type.equalsToText(CommonClassNames.JAVA_LANG_STRING));
   }
 
   @Override
