@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Function;
+import com.intellij.util.NotNullFunction;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,8 +44,7 @@ public class InspectionProfileWrapper {
    * I.e. given strategy (if any) receives {@link InspectionProfileWrapper} object that is going to be used so far and returns
    * {@link InspectionProfileWrapper} object that should be used later.
    */
-  public static final Key<Function<InspectionProfileWrapper, InspectionProfileWrapper>> CUSTOMIZATION_KEY
-    = Key.create("Inspection Profile Wrapper Customization");
+  public static final Key<NotNullFunction<InspectionProfileWrapper, InspectionProfileWrapper>> CUSTOMIZATION_KEY = Key.create("Inspection Profile Wrapper Customization");
   protected final InspectionProfile myProfile;
 
   public InspectionProfileWrapper(@NotNull InspectionProfile profile) {
