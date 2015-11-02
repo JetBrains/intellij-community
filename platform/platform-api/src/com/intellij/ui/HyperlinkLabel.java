@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,16 +67,11 @@ public class HyperlinkLabel extends HighlightableComponent {
   }
 
   public HyperlinkLabel(String text) {
-    this(text,
-         PlatformColors.BLUE,
-         new JBColor(new NotNullProducer<Color>() {
-           @NotNull
-           @Override
-           public Color produce() {
-             return UIUtil.getLabelBackground();
-           }
-         }),
-         PlatformColors.BLUE);
+    this(text, UIUtil.getLabelBackground());
+  }
+  
+  public HyperlinkLabel(String text, Color background) {
+    this(text, PlatformColors.BLUE, background, PlatformColors.BLUE);
   }
 
   public HyperlinkLabel(String text, final Color textForegroundColor, final Color textBackgroundColor, final Color textEffectColor) {
