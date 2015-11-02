@@ -531,6 +531,7 @@ public class VfsUtilCore {
       }
       ideaUrl = s+":/"+ideaUrl.substring(idx+3);
     }
+    ideaUrl = ideaUrl.replaceFirst("file:/+", "file:/");
     return ideaUrl;
   }
 
