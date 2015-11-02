@@ -221,7 +221,7 @@ public class DomReferencesTest extends DomHardCoreTestCase {
 
     @Override
     @NotNull
-    public Collection<? extends String> getVariants(final ConvertContext context) {
+    public Collection<String> getVariants(final ConvertContext context) {
       return Collections.emptyList();
     }
 
@@ -256,7 +256,7 @@ public class DomReferencesTest extends DomHardCoreTestCase {
 
     @NotNull
     @Override
-    public Set<String> getAdditionalVariants() {
+    public Set<String> getAdditionalVariants(@NotNull ConvertContext context) {
       return Collections.singleton("zzz");
     }
   }
