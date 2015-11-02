@@ -26,10 +26,11 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class BuiltInServer implements Disposable {
   // Some antiviral software detect viruses by the fact of accessing these ports so we should not touch them to appear innocent.
@@ -75,7 +76,13 @@ public class BuiltInServer implements Disposable {
                                     int portsCount,
                                     boolean tryAnyPort,
                                     @Nullable NotNullProducer<ChannelHandler> handler) throws Exception {
-    return start(new NioEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE), true, firstPort, portsCount, tryAnyPort, handler);
+    return start(new NioEventLoopGroup(workerCount, new ThreadFactory() {
+      private final AtomicInteger counter = new AtomicInteger();
+      @Override
+      public Thread newThread(Runnable r) {
+        return new Thread(r, "Netty Builtin Server " + counter.incrementAndGet());
+      }
+    }), true, firstPort, portsCount, tryAnyPort, handler);
   }
 
   @NotNull
@@ -94,11 +101,11 @@ public class BuiltInServer implements Disposable {
 
   static void configureChildHandler(@NotNull ServerBootstrap bootstrap,
                                     @NotNull final ChannelRegistrar channelRegistrar,
-                                    final @Nullable NotNullProducer<ChannelHandler> channelHandler) {
+                                    @Nullable final NotNullProducer<ChannelHandler> channelHandler) {
     final PortUnificationServerHandler portUnificationServerHandler = channelHandler == null ? new PortUnificationServerHandler() : null;
     bootstrap.childHandler(new ChannelInitializer() {
       @Override
-      protected void initChannel(Channel channel) throws Exception {
+      protected void initChannel(@NotNull Channel channel) throws Exception {
         channel.pipeline().addLast(channelRegistrar, channelHandler == null ? portUnificationServerHandler : channelHandler.produce());
       }
     });
@@ -123,7 +130,7 @@ public class BuiltInServer implements Disposable {
         channelRegistrar.add(future.channel());
         return port;
       }
-      else if (!tryAnyPort && i == (portsCount - 1)) {
+      else if (!tryAnyPort && i == portsCount - 1) {
         ExceptionUtil.rethrowAll(future.cause());
       }
     }
@@ -134,9 +141,7 @@ public class BuiltInServer implements Disposable {
       channelRegistrar.add(future.channel());
       return ((InetSocketAddress)future.channel().localAddress()).getPort();
     }
-    else {
-      ExceptionUtil.rethrowAll(future.cause());
-    }
+    ExceptionUtil.rethrowAll(future.cause());
 
     return -1;  // unreachable
   }
