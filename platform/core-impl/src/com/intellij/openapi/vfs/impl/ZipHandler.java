@@ -37,8 +37,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class ZipHandler extends ArchiveHandler {
-  private volatile String myCanonicalPathToZip;
-  private volatile long myFileStamp;
+  private volatile String myCanonicalPathToZip = null;
+  private volatile long myFileStamp = DEFAULT_TIMESTAMP;
 
   public ZipHandler(@NotNull String path) {
     super(path);
@@ -78,7 +78,7 @@ public class ZipHandler extends ArchiveHandler {
 
   private long getFileStamp() {
     long stamp = myFileStamp;
-    if (stamp == 0) {
+    if (stamp == DEFAULT_TIMESTAMP) {
       FileAttributes attributes = FileSystemUtil.getAttributes(getFileToUse());
       myFileStamp = stamp = attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
     }
