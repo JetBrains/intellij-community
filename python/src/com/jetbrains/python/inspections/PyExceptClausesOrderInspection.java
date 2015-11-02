@@ -65,7 +65,7 @@ public class PyExceptClausesOrderInspection extends PyInspection {
               if (exceptClasses.contains(pyClass)) {
                 registerProblem(exceptClass, PyBundle.message("INSP.class.$0.already.caught", pyClass.getName()));
               } else {
-                for (PyClass superClass: pyClass.getSuperClasses()) {
+                for (PyClass superClass: pyClass.getSuperClasses(null)) {
                   if (exceptClasses.contains(superClass)) {
                     registerProblem(exceptClass, PyBundle.message("INSP.class.$0.superclass.$1.already.caught", superClass.getName(), pyClass.getName()),
                                     new PyMoveExceptQuickFix());

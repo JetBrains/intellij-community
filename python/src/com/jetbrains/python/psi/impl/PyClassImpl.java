@@ -267,22 +267,29 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return results;
   }
 
-  public boolean isSubclass(PyClass parent) {
+  public boolean isSubclass(PyClass parent, @Nullable TypeEvalContext context) {
     if (this == parent) {
       return true;
     }
-    for (PyClass superclass : getAncestorClasses(null)) {
+    for (PyClass superclass : getAncestorClasses(context)) {
       if (parent == superclass) return true;
     }
     return false;
   }
 
+  public boolean isSubclass(PyClass parent) {
+    return isSubclass(parent, null);
+  }
+
   @Override
-  public boolean isSubclass(@NotNull String superClassQName) {
+  public boolean isSubclass(@NotNull String superClassQName, @Nullable TypeEvalContext context) {
+    if (context == null) {
+      context = TypeEvalContext.codeInsightFallback(getProject());
+    }
     if (superClassQName.equals(getQualifiedName())) {
       return true;
     }
-    for (PyClassLikeType type : getAncestorTypes(TypeEvalContext.codeInsightFallback(getProject()))) {
+    for (PyClassLikeType type : getAncestorTypes(context)) {
       if (type != null && superClassQName.equals(type.getClassQName())) {
         return true;
       }
@@ -327,10 +334,12 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     }
     return PyFileImpl.getStringListFromTargetExpression(PyNames.SLOTS, getClassAttributes());
   }
-
   @NotNull
-  public PyClass[] getSuperClasses() {
-    final List<PyClassLikeType> superTypes = getSuperClassTypes(TypeEvalContext.codeInsightFallback(getProject()));
+  public PyClass[] getSuperClasses(@Nullable TypeEvalContext context) {
+    if (context == null) {
+      context = TypeEvalContext.codeInsightFallback(getProject());
+    }
+    final List<PyClassLikeType> superTypes = getSuperClassTypes(context);
     if (superTypes.isEmpty()) {
       return EMPTY_ARRAY;
     }
@@ -540,7 +549,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Nullable
   public PyFunction findInitOrNew(boolean inherited, final @Nullable TypeEvalContext context) {
     NameFinder<PyFunction> proc;
-    if (isNewStyleClass(null)) {
+    if (isNewStyleClass(context)) {
       proc = new NameFinder<PyFunction>(PyNames.INIT, PyNames.NEW);
     }
     else {
@@ -1508,13 +1517,15 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   private static final class MyAttributesCollector implements Processor<PyTargetExpression> {
     private final List<PyTargetExpression> myAttributes = new ArrayList<PyTargetExpression>();
+
     @Override
     public boolean process(final PyTargetExpression expression) {
       myAttributes.add(expression);
       return true;
     }
+
     @NotNull
-     List<PyTargetExpression> getAttributes() {
+    List<PyTargetExpression> getAttributes() {
       return Collections.unmodifiableList(myAttributes);
     }
   }

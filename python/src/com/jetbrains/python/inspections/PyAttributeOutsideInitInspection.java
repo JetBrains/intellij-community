@@ -112,6 +112,6 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
   }
 
   private static boolean isApplicable(@NotNull final PyClass containingClass) {
-    return !PythonUnitTestUtil.isUnitTestCaseClass(containingClass) && !containingClass.isSubclass("django.db.models.base.Model");
+    return !PythonUnitTestUtil.isUnitTestCaseClass(containingClass) && !containingClass.isSubclass("django.db.models.base.Model", null);
   }
 }

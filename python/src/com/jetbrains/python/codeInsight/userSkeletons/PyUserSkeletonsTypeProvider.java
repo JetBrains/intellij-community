@@ -35,7 +35,7 @@ public class PyUserSkeletonsTypeProvider extends PyTypeProviderBase {
   public Ref<PyType> getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
     final String name = param.getName();
     if (name != null) {
-      final PyFunction functionSkeleton = PyUserSkeletonsUtil.getUserSkeleton(func);
+      final PyFunction functionSkeleton = PyUserSkeletonsUtil.getUserSkeletonWithContext(func, context);
       if (functionSkeleton != null) {
         final PyNamedParameter paramSkeleton = functionSkeleton.getParameterList().findParameterByName(name);
         if (paramSkeleton != null) {
@@ -52,7 +52,7 @@ public class PyUserSkeletonsTypeProvider extends PyTypeProviderBase {
   @Nullable
   @Override
   public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
-    final PyCallable callableSkeleton = PyUserSkeletonsUtil.getUserSkeleton(callable);
+    final PyCallable callableSkeleton = PyUserSkeletonsUtil.getUserSkeletonWithContext(callable, context);
     if (callableSkeleton != null) {
       final PyType type = context.getReturnType(callableSkeleton);
       if (type != null) {
@@ -65,7 +65,7 @@ public class PyUserSkeletonsTypeProvider extends PyTypeProviderBase {
   @Override
   public PyType getReferenceType(@NotNull PsiElement target, TypeEvalContext context, @Nullable PsiElement anchor) {
     if (target instanceof PyTargetExpression) {
-      final PyTargetExpression targetSkeleton = PyUserSkeletonsUtil.getUserSkeleton((PyTargetExpression)target);
+      final PyTargetExpression targetSkeleton = PyUserSkeletonsUtil.getUserSkeletonWithContext((PyTargetExpression)target, context);
       if (targetSkeleton != null) {
         return context.getType(targetSkeleton);
       }
@@ -76,7 +76,7 @@ public class PyUserSkeletonsTypeProvider extends PyTypeProviderBase {
   @Nullable
   @Override
   public PyType getCallableType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
-    final PyCallable callableSkeleton = PyUserSkeletonsUtil.getUserSkeleton(callable);
+    final PyCallable callableSkeleton = PyUserSkeletonsUtil.getUserSkeletonWithContext(callable, context);
     if (callableSkeleton != null) {
       return context.getType(callableSkeleton);
     }

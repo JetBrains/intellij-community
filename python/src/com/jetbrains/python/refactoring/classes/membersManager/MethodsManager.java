@@ -222,7 +222,7 @@ class MethodsManager extends MembersManager<PyFunction> {
   private static Boolean isOverrides(final PyFunction pyFunction) {
     final PyClass clazz = PyUtil.getContainingClassOrSelf(pyFunction);
     assert clazz != null : "Refactoring called on function, not method: " + pyFunction;
-    for (final PyClass parentClass : clazz.getSuperClasses()) {
+    for (final PyClass parentClass : clazz.getSuperClasses(null)) {
       final PyFunction parentMethod = parentClass.findMethodByName(pyFunction.getName(), true);
       if (parentMethod != null) {
         return true;

@@ -39,7 +39,7 @@ import java.util.List;
 public class PyUserSkeletonsClassMembersProvider extends PyClassMembersProviderBase implements PyOverridingAncestorsClassMembersProvider {
   @NotNull
   @Override
-  public Collection<PyCustomMember> getMembers(@NotNull PyClassType classType, PsiElement location) {
+  public Collection<PyCustomMember> getMembers(@NotNull PyClassType classType, PsiElement location, TypeEvalContext typeEvalContext) {
     final PyClass cls = classType.getPyClass();
     final PyClass skeleton = PyUserSkeletonsUtil.getUserSkeleton(cls);
     if (skeleton != null) {
@@ -52,7 +52,7 @@ public class PyUserSkeletonsClassMembersProvider extends PyClassMembersProviderB
   @Override
   public PsiElement resolveMember(@NotNull PyClassType classType, @NotNull String name, PsiElement location, TypeEvalContext context) {
     final PyClass cls = classType.getPyClass();
-    final PyClass skeleton = PyUserSkeletonsUtil.getUserSkeleton(cls);
+    final PyClass skeleton = PyUserSkeletonsUtil.getUserSkeletonWithContext(cls, context);
     if (skeleton != null) {
       return findClassMember(skeleton, name, classType.isDefinition());
     }

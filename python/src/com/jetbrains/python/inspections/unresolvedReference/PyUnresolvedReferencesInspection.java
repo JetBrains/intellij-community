@@ -779,7 +779,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (isDecoratedAsDynamic(cls, true)) {
           return true;
         }
-        if (hasUnresolvedDynamicMember((PyClassType)type, reference, name)) return true;
+        if (hasUnresolvedDynamicMember((PyClassType)type, reference, name, myTypeEvalContext)) return true;
       }
       if (type instanceof PyFunctionTypeImpl) {
         final PyCallable callable = ((PyFunctionTypeImpl)type).getCallable();
@@ -797,9 +797,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
     private static boolean hasUnresolvedDynamicMember(@NotNull final PyClassType type,
                                                       PsiReference reference,
-                                                      @NotNull final String name) {
+                                                      @NotNull final String name, TypeEvalContext typeEvalContext) {
       for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
-        final Collection<PyCustomMember> resolveResult = provider.getMembers(type, reference.getElement());
+        final Collection<PyCustomMember> resolveResult = provider.getMembers(type, reference.getElement(), typeEvalContext);
         for (PyCustomMember member : resolveResult) {
           if (member.getName().equals(name)) return true;
         }

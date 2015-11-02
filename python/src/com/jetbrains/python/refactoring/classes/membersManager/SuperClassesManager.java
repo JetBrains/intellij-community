@@ -62,7 +62,7 @@ class SuperClassesManager extends MembersManager<PyClass> {
   @NotNull
   @Override
   protected List<PyElement> getMembersCouldBeMoved(@NotNull final PyClass pyClass) {
-    return Lists.<PyElement>newArrayList(Collections2.filter(Arrays.asList(pyClass.getSuperClasses()), NO_FAKE_SUPER_CLASSES));
+    return Lists.<PyElement>newArrayList(Collections2.filter(Arrays.asList(pyClass.getSuperClasses(null)), NO_FAKE_SUPER_CLASSES));
   }
 
   @Override

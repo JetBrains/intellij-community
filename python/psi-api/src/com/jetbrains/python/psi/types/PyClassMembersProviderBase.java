@@ -30,13 +30,13 @@ import java.util.Collections;
 public class PyClassMembersProviderBase implements PyClassMembersProvider {
   @NotNull
   @Override
-  public Collection<PyCustomMember> getMembers(PyClassType clazz, PsiElement location) {
+  public Collection<PyCustomMember> getMembers(PyClassType clazz, PsiElement location, TypeEvalContext typeEvalContext) {
     return Collections.emptyList();
   }
 
   @Override
   public PsiElement resolveMember(PyClassType clazz, String name, PsiElement location, TypeEvalContext context) {
-    final Collection<PyCustomMember> members = getMembers(clazz, location);
+    final Collection<PyCustomMember> members = getMembers(clazz, location, context);
     return resolveMemberByName(members, clazz, name);
   }
 
