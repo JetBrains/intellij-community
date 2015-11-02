@@ -34,7 +34,7 @@ public class PyOverridingMethodsSearchExecutor implements QueryExecutor<PyFuncti
         final AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
         PyFunction overridingMethod;
         try {
-          overridingMethod = pyClass.findMethodByName(baseMethod.getName(), false);
+          overridingMethod = pyClass.findMethodByName(baseMethod.getName(), false, null);
           if (overridingMethod != null) {
             final Property baseProperty = baseMethod.getProperty();
             final Property overridingProperty = overridingMethod.getProperty();

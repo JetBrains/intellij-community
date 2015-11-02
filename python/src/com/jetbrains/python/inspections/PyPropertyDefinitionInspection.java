@@ -92,9 +92,9 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       // reference signatures
       PyClass objectClass = builtins.getClass("object");
       if (objectClass != null) {
-        final PyFunction methodRepr = objectClass.findMethodByName("__repr__", false);
+        final PyFunction methodRepr = objectClass.findMethodByName("__repr__", false, null);
         if (methodRepr != null) myOneParamFunction = methodRepr;
-        final PyFunction methodDelattr = objectClass.findMethodByName("__delattr__", false);
+        final PyFunction methodDelattr = objectClass.findMethodByName("__delattr__", false, null);
         if (methodDelattr != null) myTwoParamFunction = methodDelattr;
       }
     }

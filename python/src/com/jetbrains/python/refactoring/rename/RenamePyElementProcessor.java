@@ -50,11 +50,11 @@ public abstract class RenamePyElementProcessor extends RenamePsiElementProcessor
       if (conflictingClass != null) {
         conflicts.putValue(conflictingClass, "A class named '" + newName + "' is already defined in class '" + pyClass.getName() + "'");
       }
-      PyFunction conflictingFunction = pyClass.findMethodByName(newName, true);
+      PyFunction conflictingFunction = pyClass.findMethodByName(newName, true, null);
       if (conflictingFunction != null) {
         conflicts.putValue(conflictingFunction, "A function named '" + newName + "' is already defined in class '" + pyClass.getName() + "'");
       }
-      PyTargetExpression conflictingAttribute = pyClass.findClassAttribute(newName, true);
+      PyTargetExpression conflictingAttribute = pyClass.findClassAttribute(newName, true, null);
       if (conflictingAttribute != null) {
         conflicts.putValue(conflictingAttribute, "An attribute named '" + newName + "' is already defined in class '" + pyClass.getName() + "'");
       }

@@ -111,7 +111,7 @@ public class PyOverrideTest extends PyTestCase {
     myFixture.configureByFile("override/" + getTestName(true) + ".py");
     PyClass dateClass = PyClassNameIndex.findClass("datetime.date", myFixture.getProject());
     assertNotNull(dateClass);
-    PyFunction initMethod = dateClass.findMethodByName(PyNames.INIT, false);
+    PyFunction initMethod = dateClass.findMethodByName(PyNames.INIT, false, null);
     assertNotNull(initMethod);
     PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), getTopLevelClass(0),
                                             Collections.singletonList(new PyMethodMember(initMethod)), false);
@@ -183,7 +183,7 @@ public class PyOverrideTest extends PyTestCase {
   public void testInstanceCheck() {
     myFixture.configureByFile("override/" + getTestName(true) + ".py");
     final PyClass cls = getTopLevelClass(0);
-    final PyFunction method = cls.findMethodByName("__instancecheck__", true);
+    final PyFunction method = cls.findMethodByName("__instancecheck__", true, null);
     PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), cls, Collections.singletonList(new PyMethodMember(method)), false);
     myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
   }

@@ -173,7 +173,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     PyClass clazz = PyUtil.getContainingClassOrSelf(expr);
     PsiElement current = PyUtil.getConcealingParent(expression);
     if (clazz != null && current != null && current instanceof PyFunction) {
-      PyFunction init = clazz.findMethodByName(PyNames.INIT, false);
+      PyFunction init = clazz.findMethodByName(PyNames.INIT, false, null);
       if (current == init) {
         return true;
       }
@@ -183,7 +183,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
 
   @Nullable
   private static PsiElement addFieldToSetUp(PyClass clazz, final Function<String, PyStatement> callback) {
-    final PyFunction init = clazz.findMethodByName(PythonUnitTestUtil.TESTCASE_SETUP_NAME, false);
+    final PyFunction init = clazz.findMethodByName(PythonUnitTestUtil.TESTCASE_SETUP_NAME, false, null);
     if (init != null) {
       return AddFieldQuickFix.appendToMethod(init, callback);
     }

@@ -70,7 +70,7 @@ class ClassFieldsManager extends FieldsManager {
 
   @Override
   protected boolean classHasField(@NotNull final PyClass pyClass, @NotNull final String fieldName) {
-    return pyClass.findClassAttribute(fieldName, true) != null;
+    return pyClass.findClassAttribute(fieldName, true, null) != null;
   }
 
   @NotNull

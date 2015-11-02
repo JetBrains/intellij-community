@@ -399,7 +399,7 @@ public class PyStubsTest extends PyTestCase {
     final PyFile file = getTestFile();
     final PyClass c = file.findTopLevelClass("C");
     assertNotNull(c);
-    final PyTargetExpression foo = c.findClassAttribute("foo", false);
+    final PyTargetExpression foo = c.findClassAttribute("foo", false, null);
     final String docString = foo.getDocStringValue();
     assertEquals("Foo docstring.", docString);
   }

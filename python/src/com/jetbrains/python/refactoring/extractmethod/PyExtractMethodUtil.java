@@ -687,7 +687,7 @@ public class PyExtractMethodUtil {
           ScopeOwner owner = parent;
           while (owner != null) {
             if (owner instanceof PyClass) {
-              if (((PyClass)owner).findMethodByName(s, true) != null) {
+              if (((PyClass)owner).findMethodByName(s, true, null) != null) {
                 return false;
               }
             }

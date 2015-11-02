@@ -942,7 +942,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       // if we're in a class context and the class defines a variable with the same name, offer auto-import only as quickfix,
       // not as popup
       PyClass containingClass = PsiTreeUtil.getParentOfType(node, PyClass.class);
-      if (containingClass != null && (containingClass.findMethodByName(importFix.getNameToImport(), true) != null ||
+      if (containingClass != null && (containingClass.findMethodByName(importFix.getNameToImport(), true, null) != null ||
                                       containingClass.findInstanceAttribute(importFix.getNameToImport(), true) != null)) {
         return true;
       }

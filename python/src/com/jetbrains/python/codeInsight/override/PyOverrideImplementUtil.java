@@ -115,7 +115,7 @@ public class PyOverrideImplementUtil {
       if (name == null || PyUtil.isClassPrivateName(name)) {
         continue;
       }
-      if (pyClass.findMethodByName(name, false) == null) {
+      if (pyClass.findMethodByName(name, false, null) == null) {
         final PyMethodMember member = new PyMethodMember(function);
         elements.add(member);
       }
@@ -245,7 +245,7 @@ public class PyOverrideImplementUtil {
       if (!PyNames.INIT.equals(baseFunction.getName()) && context.getReturnType(baseFunction) != PyNoneType.INSTANCE || overridingNew) {
         statementBody.append("return ");
       }
-      if (baseClass.isNewStyleClass(null)) {
+      if (baseClass.isNewStyleClass(context)) {
         statementBody.append(PyNames.SUPER);
         statementBody.append("(");
         final LanguageLevel langLevel = ((PyFile)pyClass.getContainingFile()).getLanguageLevel();

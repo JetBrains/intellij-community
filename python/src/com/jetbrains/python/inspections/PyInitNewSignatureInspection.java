@@ -63,7 +63,7 @@ public class PyInitNewSignatureInspection extends PyInspection {
       if (cls == null) return;
       if (!cls.isNewStyleClass(null)) return;
       final String complementaryName = PyNames.NEW.equals(functionName) ? PyNames.INIT : PyNames.NEW;
-      final PyFunction complementaryMethod = cls.findMethodByName(complementaryName, true);
+      final PyFunction complementaryMethod = cls.findMethodByName(complementaryName, true, null);
       if (complementaryMethod == null || PyUtil.isObjectClass(assertNotNull(complementaryMethod.getContainingClass()))) return;
       if (!PyUtil.isSignatureCompatibleTo(complementaryMethod, node, myTypeEvalContext) &&
           !PyUtil.isSignatureCompatibleTo(node, complementaryMethod, myTypeEvalContext) &&

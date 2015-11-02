@@ -87,7 +87,7 @@ public abstract class PyClassRefactoringTest extends PyTestCase {
 
   private PyElement findField(final String className, final String memberName) {
     final PyClass aClass = findClass(className);
-    final PyTargetExpression attribute = aClass.findClassAttribute(memberName, false);
+    final PyTargetExpression attribute = aClass.findClassAttribute(memberName, false, null);
     if (attribute != null) {
       return attribute;
     }
@@ -96,7 +96,7 @@ public abstract class PyClassRefactoringTest extends PyTestCase {
 
   private PyFunction findMethod(final String className, final String name) {
     final PyClass clazz = findClass(className);
-    return clazz.findMethodByName(name, false);
+    return clazz.findMethodByName(name, false, null);
   }
 
   protected PyClass findClass(final String name) {

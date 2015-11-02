@@ -121,10 +121,11 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    *
    * @param name      what to look for
    * @param inherited true: search in superclasses; false: only look for methods defined in this class.
+   * @param context
    * @return
    */
   @Nullable
-  PyFunction findMethodByName(@Nullable @NonNls final String name, boolean inherited);
+  PyFunction findMethodByName(@Nullable @NonNls final String name, boolean inherited, TypeEvalContext context);
 
   /**
    * Finds either __init__ or __new__, whichever is defined for given class.
@@ -193,7 +194,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   List<PyTargetExpression> getClassAttributesInherited(@NotNull TypeEvalContext context);
 
   @Nullable
-  PyTargetExpression findClassAttribute(@NotNull String name, boolean inherited);
+  PyTargetExpression findClassAttribute(@NotNull String name, boolean inherited, TypeEvalContext context);
 
   /**
    * Effectively collects assignments to attributes of {@code self} in {@code __init__}, {@code __new__} and

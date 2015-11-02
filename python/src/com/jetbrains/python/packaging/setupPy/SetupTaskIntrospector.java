@@ -116,7 +116,7 @@ public class SetupTaskIntrospector {
                               ? PyClassNameIndex.findClass("distutils.command.build_ext.build_ext", file.getProject())
                               : file.findTopLevelClass(name);
     if (taskClass != null) {
-      final PyTargetExpression description = taskClass.findClassAttribute("description", true);
+      final PyTargetExpression description = taskClass.findClassAttribute("description", true, null);
       if (description != null) {
         final String descriptionText = PyPsiUtils.strValue(PyPsiUtils.flattenParens(description.findAssignedValue()));
         if (descriptionText != null) {
@@ -133,7 +133,7 @@ public class SetupTaskIntrospector {
         }
       }
 
-      final PyTargetExpression negativeOpt = taskClass.findClassAttribute("negative_opt", true);
+      final PyTargetExpression negativeOpt = taskClass.findClassAttribute("negative_opt", true, null);
       final Map<String, String> negativeOptMap = negativeOpt == null
                                                  ? Collections.<String, String>emptyMap()
                                                  : parseNegativeOpt(negativeOpt.findAssignedValue());
@@ -152,7 +152,7 @@ public class SetupTaskIntrospector {
 
   private static List<PyExpression> resolveSequenceValue(PyClass aClass, String name) {
     List<PyExpression> result = new ArrayList<PyExpression>();
-    collectSequenceElements(aClass.findClassAttribute(name, true), result);
+    collectSequenceElements(aClass.findClassAttribute(name, true, null), result);
     return result;
   }
 
