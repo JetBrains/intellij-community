@@ -15,6 +15,8 @@
  */
 package com.intellij.errorreport.itn;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import com.intellij.diagnostic.DiagnosticBundle;
 import com.intellij.errorreport.bean.ErrorBean;
 import com.intellij.errorreport.error.InternalEAPException;
@@ -105,7 +107,7 @@ public class ITNProxy {
       ourSslContext = initContext();
     }
 
-    Map<String, String> params = createParameters(login, password, error);
+    Multimap<String, String> params = createParameters(login, password, error);
     HttpURLConnection connection = post(new URL(NEW_THREAD_POST_URL), join(params));
     int responseCode = connection.getResponseCode();
     if (responseCode != HttpURLConnection.HTTP_OK) {
@@ -140,8 +142,8 @@ public class ITNProxy {
     }
   }
 
-  private static Map<String, String> createParameters(String login, String password, ErrorBean error) {
-    Map<String, String> params = ContainerUtil.newLinkedHashMap(40);
+  private static Multimap<String, String> createParameters(String login, String password, ErrorBean error) {
+    Multimap<String, String> params = ArrayListMultimap.create(40, 1);
 
     params.put("protocol.version", "1");
 
@@ -203,9 +205,9 @@ public class ITNProxy {
     return calendar == null ?  null : Long.toString(calendar.getTime().getTime());
   }
 
-  private static byte[] join(Map<String, String> params) throws UnsupportedEncodingException {
+  private static byte[] join(Multimap<String, String> params) throws UnsupportedEncodingException {
     StringBuilder builder = new StringBuilder();
-    for (Map.Entry<String, String> param : params.entrySet()) {
+    for (Map.Entry<String, String> param : params.entries()) {
       if (StringUtil.isEmpty(param.getKey())) {
         throw new IllegalArgumentException(param.toString());
       }
