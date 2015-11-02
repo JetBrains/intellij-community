@@ -138,7 +138,7 @@ public abstract class CachedValuesManager {
         if (result != null && !psi.isPhysical()) {
           PsiFile file = psi.getContainingFile();
           if (file != null) {
-            return Result.create(result.getValue(), ArrayUtil.append(result.getDependencyItems(), file));
+            return Result.create(result.getValue(), ArrayUtil.append(result.getDependencyItems(), file, ArrayUtil.OBJECT_ARRAY_FACTORY));
           }
         }
         return result;
