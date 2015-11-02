@@ -37,6 +37,7 @@ import org.jetbrains.io.BuiltInServer;
 import org.jetbrains.io.MessageDecoder;
 
 import java.io.*;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.util.Collection;
 import java.util.List;
@@ -181,7 +182,16 @@ public final class SocketLock {
   private static ActivateStatus tryActivate(int portNumber, @NotNull Collection<String> paths, @NotNull String[] args) {
     log("trying: port=%s", portNumber);
     try {
-      Socket socket = new Socket(NetUtils.getLoopbackAddress(), portNumber);
+      Socket socket;
+
+      try {
+        socket = new Socket(NetUtils.getLoopbackAddress(), portNumber);
+      }
+      catch (ConnectException e) {
+        log("%s (stale port file?)", e.getMessage());
+        return ActivateStatus.NO_INSTANCE;
+      }
+
       try {
         socket.setSoTimeout(1000);
 
