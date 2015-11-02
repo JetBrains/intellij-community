@@ -134,7 +134,7 @@ public abstract class LombokParsingTestCase extends LombokLightCodeInsightTestCa
     if (shouldCompareInitializers()) {
       String beforeInitializerText = null == beforeInitializer ? "" : beforeInitializer.getText();
       String afterInitializerText = null == afterInitializer ? "" : afterInitializer.getText();
-      assertEquals(String.format("Initializers are not equals "), afterInitializerText, beforeInitializerText);
+      assertEquals("Initializers are not equals ", afterInitializerText, beforeInitializerText);
     }
   }
 

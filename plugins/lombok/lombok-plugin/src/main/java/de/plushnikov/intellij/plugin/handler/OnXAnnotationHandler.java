@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.handler;
 
-import com.google.common.collect.ImmutableList;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
@@ -9,16 +8,18 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNameValuePair;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.regex.Pattern;
 
 public class OnXAnnotationHandler {
   private static final Pattern UNDERSCORES = Pattern.compile("__*");
   private static final Pattern CANNOT_RESOLVE_UNDERSCORES_MESSAGE = Pattern.compile("Cannot resolve symbol '__*'");
-  
+
   private static final String ANNOTATION_TYPE_EXPECTED = "Annotation type expected";
   private static final String CANNOT_FIND_METHOD_VALUE_MESSAGE = "Cannot find method 'value'";
-  
-  private static final ImmutableList<String> ONXABLE_ANNOTATIONS = ImmutableList.of(
+
+  private static final Collection<String> ONXABLE_ANNOTATIONS = Arrays.asList(
       "lombok.Getter",
       "lombok.Setter",
       "lombok.experimental.Wither",
@@ -27,7 +28,7 @@ public class OnXAnnotationHandler {
       "lombok.AllArgsConstructor",
       "lombok.EqualsAndHashCode"
   );
-  private static final ImmutableList<String> ONX_PARAMETERS = ImmutableList.of(
+  private static final Collection<String> ONX_PARAMETERS = Arrays.asList(
       "onConstructor",
       "onMethod",
       "onParam"
@@ -38,9 +39,9 @@ public class OnXAnnotationHandler {
         || CANNOT_RESOLVE_UNDERSCORES_MESSAGE.matcher(StringUtil.notNullize(highlightInfo.getDescription())).matches())) {
       return false;
     }
-    
+
     PsiElement highlightedElement = file.findElementAt(highlightInfo.getStartOffset());
-    
+
     PsiNameValuePair nameValuePair = findContainingNameValuePair(highlightedElement);
     if (nameValuePair == null || !(nameValuePair.getContext() instanceof PsiAnnotationParameterList)) {
       return false;
@@ -50,11 +51,11 @@ public class OnXAnnotationHandler {
     if (!ONX_PARAMETERS.contains(parameterName)) {
       return false;
     }
-    
+
     PsiElement containingAnnotation = nameValuePair.getContext().getContext();
     return containingAnnotation instanceof PsiAnnotation && ONXABLE_ANNOTATIONS.contains(((PsiAnnotation) containingAnnotation).getQualifiedName());
   }
-  
+
   public static boolean isOnXParameterValue(HighlightInfo highlightInfo, PsiFile file) {
     if (!CANNOT_FIND_METHOD_VALUE_MESSAGE.equals(highlightInfo.getDescription())) {
       return false;
@@ -75,7 +76,7 @@ public class OnXAnnotationHandler {
     while (!(nameValuePair == null || nameValuePair instanceof PsiNameValuePair)) {
       nameValuePair = nameValuePair.getContext();
     }
-    
+
     return (PsiNameValuePair) nameValuePair;
   }
 }
