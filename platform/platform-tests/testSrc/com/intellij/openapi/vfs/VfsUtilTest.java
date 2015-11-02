@@ -71,6 +71,12 @@ public class VfsUtilTest extends PlatformTestCase {
     });
   }
 
+  public void testFixIdeaUrl() {
+    assertEquals("file:/C:/Temp/README.txt", VfsUtilCore.fixIDEAUrl("file://C:/Temp/README.txt"));
+    assertEquals("file:/C:/Temp/README.txt", VfsUtilCore.fixIDEAUrl("file:///C:/Temp/README.txt"));
+    assertEquals("file:/tmp/foo.bar", VfsUtilCore.fixIDEAUrl("file:///tmp/foo.bar"));
+  }
+
   public void testFindFileByUrl() throws Exception {
     File file1 = new File(PathManagerEx.getTestDataPath());
     file1 = new File(file1, "vfs");
