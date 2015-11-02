@@ -52,7 +52,7 @@ public class PySuperMethodsSearchExecutor implements QueryExecutor<PsiElement, P
             continue;
           }
         }
-        PyFunction superMethod = superClass.findMethodByName(name, false);
+        PyFunction superMethod = superClass.findMethodByName(name, false, null);
         if (superMethod != null) {
           final Property property = func.getProperty();
           final Property superProperty = superMethod.getProperty();

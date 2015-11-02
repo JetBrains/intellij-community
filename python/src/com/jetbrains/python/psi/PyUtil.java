@@ -689,7 +689,7 @@ public class PyUtil {
    */
   @Nullable
   public static PyFunction getInitMethod(@NotNull final PyClass pyClass) {
-    return pyClass.findMethodByName(PyNames.INIT, false);
+    return pyClass.findMethodByName(PyNames.INIT, false,  null);
   }
 
   /**

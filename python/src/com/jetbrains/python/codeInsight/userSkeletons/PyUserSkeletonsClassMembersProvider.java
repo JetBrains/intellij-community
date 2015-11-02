@@ -60,7 +60,7 @@ public class PyUserSkeletonsClassMembersProvider extends PyClassMembersProviderB
   }
 
   public static PsiElement findClassMember(@NotNull PyClass cls, @NotNull String name, boolean isDefinition) {
-    final PyFunction function = cls.findMethodByName(name, false);
+    final PyFunction function = cls.findMethodByName(name, false, null);
     if (function != null) {
       final PyUtil.MethodFlags methodFlags = PyUtil.MethodFlags.of(function);
       final boolean instanceMethod = methodFlags == null || methodFlags.isInstanceMethod();
@@ -74,7 +74,7 @@ public class PyUserSkeletonsClassMembersProvider extends PyClassMembersProviderB
         return instanceAttribute;
       }
     }
-    final PyTargetExpression classAttribute = cls.findClassAttribute(name, false);
+    final PyTargetExpression classAttribute = cls.findClassAttribute(name, false, null);
     if (classAttribute != null) {
       return classAttribute;
     }

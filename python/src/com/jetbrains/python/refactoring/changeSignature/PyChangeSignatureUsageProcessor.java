@@ -77,7 +77,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     if (info instanceof PyChangeInfo && info.isNameChanged()) {
       final PyFunction function = ((PyChangeInfo)info).getMethod();
       final PyClass clazz = function.getContainingClass();
-      if (clazz != null && clazz.findMethodByName(info.getNewName(), true) != null) {
+      if (clazz != null && clazz.findMethodByName(info.getNewName(), true, null) != null) {
         conflicts.putValue(function, RefactoringBundle.message("method.0.is.already.defined.in.the.1",
                                                                info.getNewName(),
                                                                "class " + clazz.getQualifiedName()));

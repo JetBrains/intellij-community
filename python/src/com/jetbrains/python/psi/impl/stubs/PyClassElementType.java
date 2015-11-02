@@ -53,7 +53,19 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
   }
 
   public PyClassStub createStub(@NotNull final PyClass psi, final StubElement parentStub) {
-    final PyExpression[] exprs = psi.getSuperClassExpressions();
+    final List<QualifiedName> superClasses = getSuperClassQNames(psi);
+    final PyStringLiteralExpression docStringExpression = psi.getDocStringExpression();
+    return new PyClassStubImpl(psi.getName(), parentStub,
+                               superClasses.toArray(new QualifiedName[superClasses.size()]),
+                               PyPsiUtils.asQualifiedName(psi.getMetaClassExpression()),
+                               psi.getOwnSlots(),
+                               PyPsiUtils.strValue(docStringExpression),
+                               getStubElementType());
+  }
+
+  @NotNull
+  public static List<QualifiedName> getSuperClassQNames(@NotNull final PyClass pyClass) {
+    final PyExpression[] exprs = pyClass.getSuperClassExpressions();
     List<QualifiedName> superClasses = new ArrayList<QualifiedName>();
     for (PyExpression expression : exprs) {
       if (expression instanceof PyKeywordArgument) {
@@ -62,13 +74,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
       expression = PyClassImpl.unfoldClass(expression);
       superClasses.add(PyPsiUtils.asQualifiedName(expression));
     }
-    final PyStringLiteralExpression docStringExpression = psi.getDocStringExpression();
-    return new PyClassStubImpl(psi.getName(), parentStub,
-                               superClasses.toArray(new QualifiedName[superClasses.size()]),
-                               PyPsiUtils.asQualifiedName(psi.getMetaClassExpression()),
-                               psi.getOwnSlots(),
-                               PyPsiUtils.strValue(docStringExpression),
-                               getStubElementType());
+    return superClasses;
   }
 
   public void serialize(@NotNull final PyClassStub pyClassStub, @NotNull final StubOutputStream dataStream) throws IOException {
@@ -106,7 +112,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
       sink.occurrence(PyClassNameIndexInsensitive.KEY, name.toLowerCase());
     }
     final PyClass pyClass = createPsi(stub);
-    for (String attribute: PyClassAttributesIndex.getAllDeclaredAttributeNames(pyClass)) {
+    for (String attribute : PyClassAttributesIndex.getAllDeclaredAttributeNames(pyClass)) {
       sink.occurrence(PyClassAttributesIndex.KEY, attribute);
     }
     for (QualifiedName s : stub.getSuperClasses()) {

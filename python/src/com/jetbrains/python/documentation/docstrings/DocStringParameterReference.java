@@ -58,7 +58,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
       return resolveParameter((PyFunction)owner);
     }
     if (owner instanceof PyClass) {
-      final PyFunction init = ((PyClass)owner).findMethodByName(PyNames.INIT, false);
+      final PyFunction init = ((PyClass)owner).findMethodByName(PyNames.INIT, false, null);
       if (init != null) {
         PsiElement element = resolveParameter(init);
         if (element == null && (myType.equals(ReferenceType.CLASS_VARIABLE) ||

@@ -312,7 +312,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       return true;
     }
     final PyClass cls = getPyClass();
-    if (PyABCUtil.isSubclass(cls, PyNames.CALLABLE)) {
+    if (PyABCUtil.isSubclass(cls, PyNames.CALLABLE, null)) {
       return true;
     }
     return false;

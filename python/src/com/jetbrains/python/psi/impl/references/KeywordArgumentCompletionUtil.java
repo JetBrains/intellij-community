@@ -52,7 +52,7 @@ public class KeywordArgumentCompletionUtil {
           addKeywordArgumentVariants((PyCallable)def, callExpr, ret);
         }
         else if (def instanceof PyClass) {
-          PyFunction init = ((PyClass)def).findMethodByName(PyNames.INIT, true);  // search in superclasses
+          PyFunction init = ((PyClass)def).findMethodByName(PyNames.INIT, true, null);  // search in superclasses
           if (init != null) {
             addKeywordArgumentVariants(init, callExpr, ret);
           }

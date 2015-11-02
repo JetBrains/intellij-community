@@ -204,7 +204,7 @@ public class PythonUnitTestUtil {
           locations.add(new PsiLocation<PyClass>(project, cls));
         }
         else {
-          final PyFunction method = cls.findMethodByName(methodName, true);
+          final PyFunction method = cls.findMethodByName(methodName, true, null);
           if (method == null) {
             continue;
           }
