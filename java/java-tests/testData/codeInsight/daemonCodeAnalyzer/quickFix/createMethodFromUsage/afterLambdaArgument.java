@@ -4,7 +4,7 @@ class A {
          f(() -> {});
     }
 
-    private void f(Object p0) {
+    private void f(Object o) {
         <caret><selection></selection>
     }
 }
