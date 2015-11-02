@@ -77,32 +77,32 @@ public class ScratchFileType extends LanguageFileType implements FileTypeIdentif
   }
 
   @Nullable
-  public static FileType getOriginalFileType(@NotNull Project project, @Nullable VirtualFile file) {
+  public static FileType getFileTypeOfScratch(@NotNull Project project, @Nullable VirtualFile file) {
     if (!isScratch(file)) return null;
 
     Language language = ScratchFileServiceImpl.Substitutor.substituteLanguage(project, file);
     LanguageFileType fileType = language != null ? language.getAssociatedFileType() : null;
     if (fileType != null) return fileType;
 
-    return getOriginalFileTypeFromScratchName(file);
+    return getFileTypeOfScratchFromFileName(file);
   }
 
   @Nullable
-  public static Language getOriginalLanguage(@NotNull Project project, @Nullable VirtualFile file) {
+  public static Language getScratchLanguage(@NotNull Project project, @Nullable VirtualFile file) {
     if (!isScratch(file)) return null;
 
     Language language = ScratchFileServiceImpl.Substitutor.substituteLanguage(project, file);
-    return language != null ? language : getOriginalLanguageFromScratchName(file);
+    return language != null ? language : getScratchLanguageFromFileName(file);
   }
 
   @Nullable
-  static Language getOriginalLanguageFromScratchName(@Nullable VirtualFile file) {
-    FileType fileType = getOriginalFileTypeFromScratchName(file);
+  static Language getScratchLanguageFromFileName(@Nullable VirtualFile file) {
+    FileType fileType = getFileTypeOfScratchFromFileName(file);
     return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
   }
 
   @Nullable
-  private static FileType getOriginalFileTypeFromScratchName(@Nullable VirtualFile file) {
+  private static FileType getFileTypeOfScratchFromFileName(@Nullable VirtualFile file) {
     return isScratch(file) ? FileTypeManager.getInstance().getFileTypeByFileName(file.getName()) : null;
   }
 
