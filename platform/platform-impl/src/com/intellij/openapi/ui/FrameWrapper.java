@@ -18,14 +18,16 @@ package com.intellij.openapi.ui;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -49,9 +51,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.File;
 import java.util.Map;
 
@@ -227,14 +227,10 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   private void addCloseOnEsc(final RootPaneContainer frame) {
-    new DumbAwareAction() {
+    frame.getRootPane().registerKeyboardAction(new ActionListener() {
       @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
-        MenuElement[] selectedPath = menuSelectionManager.getSelectedPath();
-        if (selectedPath.length > 0) { // hide popup menu if any
-          menuSelectionManager.clearSelectedPath();
-        } else {
+      public void actionPerformed(ActionEvent e) {
+        if (!PopupUtil.handleEscKeyEvent()) {
           // if you remove this line problems will start happen on Mac OS X
           // 2 projects opened, call Cmd+D on the second opened project and then Esc.
           // Weird situation: 2nd IdeFrame will be active, but focus will be somewhere inside the 1st IdeFrame
@@ -243,7 +239,7 @@ public class FrameWrapper implements Disposable, DataProvider {
           close();
         }
       }
-    }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, myComponent, this);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
   }
 
   public Window getFrame() {
