@@ -22,6 +22,7 @@ import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -135,7 +136,10 @@ public abstract class CachedValuesManager {
       public Result<T> compute() {
         Result<T> result = provider.compute();
         if (result != null && !psi.isPhysical()) {
-          return Result.create(result.getValue(), ArrayUtil.append(result.getDependencyItems(), psi));
+          PsiFile file = psi.getContainingFile();
+          if (file != null) {
+            return Result.create(result.getValue(), ArrayUtil.append(result.getDependencyItems(), file));
+          }
         }
         return result;
       }
