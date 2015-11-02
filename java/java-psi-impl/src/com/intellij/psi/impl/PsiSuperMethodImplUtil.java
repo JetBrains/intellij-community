@@ -391,7 +391,7 @@ public class PsiSuperMethodImplUtil {
           result = new HierarchicalMethodSignatureImpl((MethodSignatureBackedByPsiMethod)method.getSignature(PsiSubstitutor.EMPTY));
         }
 
-        if (!method.isPhysical()) {
+        if (!method.isPhysical() && !(method instanceof SyntheticElement)) {
           return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, method);
         }
         return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);

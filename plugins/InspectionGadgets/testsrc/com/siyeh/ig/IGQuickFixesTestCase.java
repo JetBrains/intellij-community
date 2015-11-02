@@ -19,7 +19,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
@@ -45,7 +44,7 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
   protected void setUp() throws Exception {
     super.setUp();
 
-    for (String environmentClass : getEnvironmentClasses()) {
+    for (@Language("JAVA") String environmentClass : getEnvironmentClasses()) {
       myFixture.addClass(environmentClass);
     }
     myFixture.enableInspections(getInspections());
@@ -117,46 +116,42 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
   }
 
   public IntentionAction findIntention(@NotNull final String hint) {
-    final List<IntentionAction> availableIntentions =
-      ContainerUtil.findAll(myFixture.getAvailableIntentions(), new Condition<IntentionAction>() {
-        @Override
-        public boolean value(final IntentionAction intentionAction) {
-          return intentionAction instanceof QuickFixWrapper;
-        }
-      });
-    final List<IntentionAction> list = ContainerUtil.findAll(availableIntentions, new Condition<IntentionAction>() {
-      @Override
-      public boolean value(IntentionAction intentionAction) {
-        return intentionAction.getText().equals(hint);
-      }
-    });
-    if (list.isEmpty()) {
-      Assert.fail("\"" + hint + "\" not in " + list);
-    }
-    else if (list.size() > 1) {
-      Assert.fail("Too many quickfixes found for \"" + hint + "\": " + list + "]");
-    }
-    return list.get(0);
+    final List<IntentionAction> intentions =
+      ContainerUtil.findAll(myFixture.getAvailableIntentions(),
+                            intentionAction -> intentionAction instanceof QuickFixWrapper &&
+                                               intentionAction.getText().equals(hint));
+    Assert.assertFalse("\"" + hint + "\" not in " + intentions, intentions.isEmpty());
+    Assert.assertFalse("Too many quickfixes found for \"" + hint + "\": " + intentions + "]", intentions.size() > 1);
+    return intentions.get(0);
   }
 
 
   protected void doExpressionTest(
-    String hint,
+    @NotNull String hint,
     @Language(value = "JAVA", prefix = "class $X$ {{System.out.print(", suffix = ");}}") @NotNull @NonNls String before,
     @Language(value = "JAVA", prefix = "class $X$ {{System.out.print(", suffix = ");}}") @NotNull @NonNls String after) {
     doTest(hint, "class $X$ {{System.out.print(" + before + ");}}", "class $X$ {{System.out.print(" + after + ");}}");
   }
 
   protected void doMemberTest(
-    String hint,
+    @NotNull String hint,
     @Language(value = "JAVA", prefix = "class $X$ {", suffix = "}") @NotNull @NonNls String before,
     @Language(value = "JAVA", prefix = "class $X$ {", suffix = "}") @NotNull @NonNls String after) {
     doTest(hint, "class $X$ {" + before + "}", "class $X$ {" + after + "}");
   }
 
-  protected void doTest(String hint, @Language("JAVA") @NotNull @NonNls String before, @Language("JAVA") @NotNull @NonNls String after) {
+  protected void doTest(@NotNull String hint,
+                        @Language("JAVA") @NotNull @NonNls String before,
+                        @Language("JAVA") @NotNull @NonNls String after) {
+    doTest(hint, before, after, "aaa.java");
+  }
+
+  protected void doTest(@NotNull String hint,
+                        @Language("JAVA") @NotNull @NonNls String before,
+                        @Language("JAVA") @NotNull @NonNls String after,
+                        @NotNull String fileName) {
     before = before.replace("/**/", "<caret>");
-    myFixture.configureByText(JavaFileType.INSTANCE, before);
+    myFixture.configureByText(fileName, before);
     final IntentionAction intention = findIntention(hint);
     assertNotNull(intention);
     myFixture.launchAction(intention);

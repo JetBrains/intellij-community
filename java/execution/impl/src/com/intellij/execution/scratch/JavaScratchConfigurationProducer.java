@@ -19,7 +19,7 @@ import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
-import com.intellij.execution.application.ApplicationConfigurationProducer;
+import com.intellij.execution.application.AbstractApplicationConfigurationProducer;
 import com.intellij.execution.application.ApplicationConfigurationType;
 import com.intellij.ide.scratch.ScratchFileType;
 import com.intellij.lang.java.JavaLanguage;
@@ -35,7 +35,7 @@ import com.intellij.psi.PsiFile;
  * @author Eugene Zhuravlev
  *         Date: 29-Sep-15
  */
-public class JavaScratchConfigurationProducer extends ApplicationConfigurationProducer<JavaScratchConfiguration> {
+public class JavaScratchConfigurationProducer extends AbstractApplicationConfigurationProducer<JavaScratchConfiguration> {
 
   public JavaScratchConfigurationProducer() {
     super(JavaScratchConfigurationType.getInstance());
@@ -59,7 +59,7 @@ public class JavaScratchConfigurationProducer extends ApplicationConfigurationPr
 
   @Override
   public boolean shouldReplace(ConfigurationFromContext self, ConfigurationFromContext other) {
-    return other.isProducedBy(ApplicationConfigurationProducer.class) && !other.isProducedBy(JavaScratchConfigurationProducer.class);
+    return other.isProducedBy(AbstractApplicationConfigurationProducer.class) && !other.isProducedBy(JavaScratchConfigurationProducer.class);
   }
 
   @Override

@@ -19,13 +19,13 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 
 import java.awt.LayoutManager;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 /**
  * @author Sergey.Malenkov
@@ -37,9 +37,9 @@ final class KeyboardShortcutPanel extends JPanel {
 
   private KeyboardShortcut myShortcut;
 
-  private final ChangeListener myChangeListener = new ChangeListener() {
+  private final ItemListener myItemListener = new ItemListener() {
     @Override
-    public void stateChanged(ChangeEvent event) {
+    public void itemStateChanged(ItemEvent event) {
       boolean enabled = mySecondStrokeEnable.isSelected();
       mySecondStroke.setEnabled(enabled);
       ShortcutTextField component = !enabled || null == myFirstStroke.getKeyStroke() ? myFirstStroke : mySecondStroke;
@@ -51,6 +51,12 @@ final class KeyboardShortcutPanel extends JPanel {
     @Override
     public void propertyChange(PropertyChangeEvent event) {
       setShortcut(newShortcut());
+      if (null == myFirstStroke.getKeyStroke()) {
+        myFirstStroke.requestFocus();
+      }
+      else if (null == mySecondStroke.getKeyStroke() && mySecondStrokeEnable.isSelected()) {
+        mySecondStroke.requestFocus();
+      }
     }
   };
 
@@ -58,7 +64,7 @@ final class KeyboardShortcutPanel extends JPanel {
     super(layout);
     myFirstStroke.addPropertyChangeListener("keyStroke", myPropertyListener);
     mySecondStroke.addPropertyChangeListener("keyStroke", myPropertyListener);
-    mySecondStrokeEnable.addChangeListener(myChangeListener);
+    mySecondStrokeEnable.addItemListener(myItemListener);
   }
 
   KeyboardShortcut getShortcut() {
@@ -69,6 +75,8 @@ final class KeyboardShortcutPanel extends JPanel {
     Shortcut old = myShortcut;
     if (old != null || shortcut != null) {
       myShortcut = shortcut;
+      myFirstStroke.setKeyStroke(shortcut == null ? null : shortcut.getFirstKeyStroke());
+      mySecondStroke.setKeyStroke(shortcut == null ? null : shortcut.getSecondKeyStroke());
       firePropertyChange("shortcut", old, shortcut);
     }
   }

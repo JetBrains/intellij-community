@@ -584,14 +584,13 @@ class EditorPainter implements TextDrawingCallback {
       }
     }
     else {
-      int maxWidth = myView.getMaxWidthInLineRange(startPosition.line, endPosition.line, null) - 1;
-      TFloatArrayList leadingRanges = adjustedLogicalRangeToVisualRanges(startOffset, 
-                                                                         myView.visualPositionToOffset(new VisualPosition(
-                                                                           startPosition.line, Integer.MAX_VALUE, true)));
-      TFloatArrayList trailingRanges = adjustedLogicalRangeToVisualRanges(myView.visualPositionToOffset(new VisualPosition(endPosition.line,
-                                                                                                                           0)),
-                                                                          endOffset);
+      TFloatArrayList leadingRanges = adjustedLogicalRangeToVisualRanges(
+        startOffset, myView.visualPositionToOffset(new VisualPosition(startPosition.line, Integer.MAX_VALUE, true)));
+      TFloatArrayList trailingRanges = adjustedLogicalRangeToVisualRanges(
+        myView.visualPositionToOffset(new VisualPosition(endPosition.line, 0)), endOffset);
       if (!leadingRanges.isEmpty() && !trailingRanges.isEmpty()) {
+        int maxWidth = Math.max(myView.getMaxWidthInLineRange(startPosition.line, endPosition.line - 1, null) - 1,
+                                (int)trailingRanges.get(trailingRanges.size() - 1));
         boolean containsInnerLines = endPosition.line > startPosition.line + 1;
         int leadingTopY = myView.visualLineToY(startPosition.line);
         int leadingBottomY = leadingTopY + lineHeight;

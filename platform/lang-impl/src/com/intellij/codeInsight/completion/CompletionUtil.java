@@ -178,14 +178,14 @@ public class CompletionUtil {
   @Nullable
   public static PsiElement getTargetElement(LookupElement lookupElement) {
     PsiElement psiElement = lookupElement.getPsiElement();
-    if (psiElement != null) {
+    if (psiElement != null && psiElement.isValid()) {
       return getOriginalElement(psiElement);
     }
 
     Object object = lookupElement.getObject();
     if (object instanceof LookupValueWithPsiElement) {
       final PsiElement element = ((LookupValueWithPsiElement)object).getElement();
-      if (element != null) return getOriginalElement(element);
+      if (element != null && element.isValid()) return getOriginalElement(element);
     }
 
     return null;

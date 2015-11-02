@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,14 @@
  */
 package com.intellij.util.containers;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.junit.Test;
 
-/**
- * @author Sergey Simonchik
- */
-public class CharArrayQueueTest {
+public class CircularCharBufferTest {
 
-  @org.junit.Test
+  @Test
   public void testSingleAdd() throws Exception {
-    CharArrayQueue queue = new CharArrayQueue(0);
+    CircularCharBuffer queue = new CircularCharBuffer(0);
     char value = '1';
     queue.add(value);
     Assert.assertEquals(1, queue.size());
@@ -33,11 +30,11 @@ public class CharArrayQueueTest {
     Assert.assertEquals(-1, queue.poll());
   }
 
-  @org.junit.Test
+  @Test
   public void testResize1() throws Exception {
-    CharArrayQueue queue = new CharArrayQueue(4);
+    CircularCharBuffer queue = new CircularCharBuffer(4);
     char[] buf = new char[] {'1', '2', '3', '4', '5'};
-    queue.addAll(buf);
+    queue.add(buf);
     Assert.assertEquals(queue.size(), buf.length);
     for (char c : buf) {
       Assert.assertEquals(c, queue.poll());
@@ -45,11 +42,11 @@ public class CharArrayQueueTest {
     Assert.assertEquals(-1, queue.poll());
   }
 
-  @org.junit.Test
+  @Test
   public void testResize2() throws Exception {
-    CharArrayQueue queue = new CharArrayQueue(4);
+    CircularCharBuffer queue = new CircularCharBuffer(4, 16);
     char[] buf = new char[] {'1', '2', '3', '4', '5', '6', '7', '8'};
-    queue.addAll(buf);
+    queue.add(buf);
     Assert.assertEquals(queue.size(), buf.length);
     Assert.assertEquals(buf[0], queue.poll());
     Assert.assertEquals(buf[1], queue.poll());
@@ -57,7 +54,7 @@ public class CharArrayQueueTest {
     queue.add(v);
     queue.add(v);
 
-    queue.addAll(buf); // array resize with myHead > myTail
+    queue.add(buf); // array resize with myHead > myTail
     Assert.assertEquals(queue.size(), buf.length * 2);
     for (int i = 2; i < buf.length; i++) {
       Assert.assertEquals(buf[i], queue.poll());
@@ -72,7 +69,7 @@ public class CharArrayQueueTest {
 
   @Test
   public void testAddString() throws Exception {
-    CharArrayQueue queue = new CharArrayQueue(2);
+    CircularCharBuffer queue = new CircularCharBuffer(2, 16);
     queue.add("");
     Assert.assertEquals(0, queue.size());
     queue.add("abc");
@@ -80,5 +77,44 @@ public class CharArrayQueueTest {
     Assert.assertEquals('b', queue.poll());
     Assert.assertEquals('c', queue.poll());
     Assert.assertEquals(-1, queue.poll());
+  }
+
+  @Test
+  public void testOverflow() throws Exception {
+    CircularCharBuffer queue = new CircularCharBuffer(1, 4);
+    queue.add("1");
+    Assert.assertEquals("1", queue.getText());
+    queue.add("2");
+    Assert.assertEquals("12", queue.getText());
+    queue.add("3");
+    Assert.assertEquals("123", queue.getText());
+    queue.add("4");
+    Assert.assertEquals("1234", queue.getText());
+    queue.add("5");
+    Assert.assertEquals("2345", queue.getText());
+    queue.add("6");
+    Assert.assertEquals("3456", queue.getText());
+    queue.add("7");
+    Assert.assertEquals("4567", queue.getText());
+    queue.add("8");
+    Assert.assertEquals("5678", queue.getText());
+    queue.add("9");
+    Assert.assertEquals("6789", queue.getText());
+  }
+
+  @Test
+  public void testOverflowComplex() throws Exception {
+    CircularCharBuffer queue = new CircularCharBuffer(1, 10);
+    String alphabet = "abcdefghijklmnopqrstuvwxyz";
+    queue.add(alphabet);
+    Assert.assertEquals(alphabet.substring(alphabet.length() - 10), queue.getText());
+    queue.add(alphabet);
+    Assert.assertEquals(alphabet.substring(alphabet.length() - 10), queue.getText());
+    queue.add(alphabet.substring(0, 4));
+    Assert.assertEquals("uvwxyzabcd", queue.getText());
+    queue.poll();
+    Assert.assertEquals("vwxyzabcd", queue.getText());
+    queue.add("12");
+    Assert.assertEquals("wxyzabcd12", queue.getText());
   }
 }

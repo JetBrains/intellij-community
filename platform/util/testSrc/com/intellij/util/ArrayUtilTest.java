@@ -17,6 +17,8 @@ package com.intellij.util;
 
 import junit.framework.TestCase;
 
+import java.util.Arrays;
+
 /**
  * @author Sergey.Malenkov
  */
@@ -66,5 +68,27 @@ public class ArrayUtilTest extends TestCase {
     for (int i = 0; i < actual.length; i++) {
       assertEquals(expected[i], actual[i]);
     }
+  }
+
+  private static void assertArrayEquals(char[] expected, char[] actual) {
+    assertTrue(Arrays.equals(expected, actual));
+  }
+
+  public void testReverse() throws Exception {
+    char[] a = new char[]{};
+    ArrayUtil.reverse(a);
+    assertArrayEquals(new char[]{}, a);
+
+    a = new char[]{'1'};
+    ArrayUtil.reverse(a);
+    assertArrayEquals(new char[]{'1'}, a);
+
+    a = new char[]{'1', '2', '3', '4'};
+    ArrayUtil.reverse(a);
+    assertArrayEquals(new char[]{'4', '3', '2', '1'}, a);
+
+    a = new char[]{'1', '2', '3', '4', '5'};
+    ArrayUtil.reverse(a);
+    assertArrayEquals(new char[]{'5', '4', '3', '2', '1'}, a);
   }
 }

@@ -1,9 +1,18 @@
 package com.intellij.diagnostic.errordialog;
 
 import com.intellij.diagnostic.DiagnosticBundle;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -18,12 +27,12 @@ public class DisablePluginWarningDialog extends DialogWrapper {
   private JLabel myRestartLabel;
   private JPanel myContentPane;
 
-  public static final int DISABLE_EXIT_CODE = OK_EXIT_CODE;
-  public static final int DISABLE_AND_RESTART_EXIT_CODE = NEXT_USER_EXIT_CODE;
+  private static final int DISABLE_EXIT_CODE = OK_EXIT_CODE;
+  private static final int DISABLE_AND_RESTART_EXIT_CODE = NEXT_USER_EXIT_CODE;
   private final boolean myRestartCapable;
 
-  public DisablePluginWarningDialog(Component c, String pluginName, boolean hasDependants, boolean restartCapable) {
-    super(c, false);
+  private DisablePluginWarningDialog(@NotNull Component parent, String pluginName, boolean hasDependants, boolean restartCapable) {
+    super(parent, false);
     myRestartCapable = restartCapable;
     myPromptLabel.setText(
       DiagnosticBundle.message(hasDependants ? "error.dialog.disable.plugin.prompt.dependants" : "error.dialog.disable.plugin.prompt",
@@ -34,6 +43,42 @@ public class DisablePluginWarningDialog extends DialogWrapper {
 
     setTitle(DiagnosticBundle.message("error.dialog.disable.plugin.title"));
     init();
+  }
+
+  public static void disablePlugin(@NotNull PluginId pluginId, @NotNull JComponent parentComponent) {
+    IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+    final Ref<Boolean> hasDependants = new Ref<Boolean>(false);
+    PluginManagerCore.checkDependants(plugin, new Function<PluginId, IdeaPluginDescriptor>() {
+                                        @Override
+                                        public IdeaPluginDescriptor fun(PluginId pluginId) {
+                                          return PluginManager.getPlugin(pluginId);
+                                        }
+                                      }, new Condition<PluginId>() {
+                                        @Override
+                                        public boolean value(PluginId pluginId) {
+                                          if (PluginManagerCore.CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
+                                            return true;
+                                          }
+                                          hasDependants.set(true);
+                                          return false;
+                                        }
+                                      }
+    );
+
+    Application app = ApplicationManager.getApplication();
+    DisablePluginWarningDialog d = new DisablePluginWarningDialog(parentComponent, plugin.getName(), hasDependants.get(), app.isRestartCapable());
+    d.show();
+    switch (d.getExitCode()) {
+      case CANCEL_EXIT_CODE:
+        return;
+      case DISABLE_EXIT_CODE:
+        PluginManagerCore.disablePlugin(pluginId.getIdString());
+        break;
+      case DISABLE_AND_RESTART_EXIT_CODE:
+        PluginManagerCore.disablePlugin(pluginId.getIdString());
+        app.restart();
+        break;
+    }
   }
 
   @Override

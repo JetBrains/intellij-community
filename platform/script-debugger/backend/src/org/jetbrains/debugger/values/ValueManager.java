@@ -18,6 +18,7 @@ package org.jetbrains.debugger.values;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Obsolescent;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.debugger.Vm;
 
@@ -30,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * Currently WIP implementation doesn't keep such map due to protocol issue. But V8 does.
  */
-public abstract class ValueManager<VM extends Vm> {
+public abstract class ValueManager<VM extends Vm> implements Obsolescent {
   public static final Promise<?> OBSOLETE_CONTEXT_PROMISE = Promise.reject(AsyncPromise.OBSOLETE_ERROR);
 
   private final AtomicInteger cacheStamp = new AtomicInteger();
@@ -61,6 +62,7 @@ public abstract class ValueManager<VM extends Vm> {
     return cacheStamp.get();
   }
 
+  @Override
   public final boolean isObsolete() {
     return obsolete;
   }

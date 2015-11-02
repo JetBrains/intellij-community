@@ -18,6 +18,7 @@ package com.intellij.testFramework;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -90,7 +91,8 @@ public class EditorTestUtil {
   }
 
   public static void executeAction(@NotNull Editor editor, @NotNull String actionId, boolean assertActionIsEnabled) {
-    AnAction action = ActionManager.getInstance().getAction(actionId);
+    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+    AnAction action = actionManager.getAction(actionId);
     assertNotNull(action);
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", createEditorContext(editor));
     action.beforeActionPerformedUpdate(event);
@@ -98,15 +100,16 @@ public class EditorTestUtil {
       assertFalse("Action " + actionId + " is disabled", assertActionIsEnabled);
       return;
     }
+    actionManager.fireBeforeActionPerformed(action, event.getDataContext(), event);
     action.actionPerformed(event);
+    actionManager.fireAfterActionPerformed(action, event.getDataContext(), event);
   }
 
   @NotNull
   private static DataContext createEditorContext(@NotNull Editor editor) {
-    Object e = editor;
     Object hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
     Map<String, Object> map = ContainerUtil.newHashMap(Pair.create(CommonDataKeys.HOST_EDITOR.getName(), hostEditor),
-                                                       Pair.createNonNull(CommonDataKeys.EDITOR.getName(), e));
+                                                       Pair.createNonNull(CommonDataKeys.EDITOR.getName(), editor));
     DataContext parent = DataManager.getInstance().getDataContext(editor.getContentComponent());
     return SimpleDataContext.getSimpleContext(map, parent);
   }

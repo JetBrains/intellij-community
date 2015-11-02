@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -33,6 +34,8 @@ public class InferenceFromSourceUtil {
       @Nullable
       @Override
       public Result<Boolean> compute() {
+        if (method instanceof SyntheticElement) return Result.create(false, ModificationTracker.NEVER_CHANGED);
+
         return Result.create(calcShouldInferFromSource(method), method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       }
     });

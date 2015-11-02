@@ -17,9 +17,10 @@
 package com.intellij.openapi.util;
 
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 
 /**
@@ -110,23 +111,15 @@ public class Conditions {
     };
   }
 
-  public static <T> Condition<T> oneOf(final T... options) {
-    return new Condition<T>() {
-      @Override
-      public boolean value(T t) {
-        return ArrayUtilRt.find(options, t) >= 0;
-      }
-    };
+  public static <T> Condition<T> oneOf(T... options) {
+    return oneOf(Arrays.asList(options));
   }
 
-  public static <T> Condition<T> oneOf(final Iterable<? extends T> options) {
+  public static <T> Condition<T> oneOf(final Collection<? extends T> options) {
     return new Condition<T>() {
       @Override
       public boolean value(T t) {
-        for (T option : options) {
-          if (Comparing.equal(option, t)) return true;
-        }
-        return false;
+        return options.contains(t);
       }
     };
   }

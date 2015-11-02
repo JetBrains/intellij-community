@@ -23,9 +23,9 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.testframework.sm.runner.history.ImportedTestRunnableState;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
+import com.intellij.execution.testframework.sm.runner.history.ImportedTestRunnableState;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -132,7 +132,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
         public int compare(File o1, File o2) {
           final long l1 = o1.lastModified();
           final long l2 = o2.lastModified();
-          if (l1 == l2) return 0;
+          if (l1 == l2) return FileUtil.compareFiles(o1, o2);
           return l1 < l2 ? -1 : 1;
         }
       });

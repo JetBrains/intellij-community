@@ -642,7 +642,7 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   public static void reverse(@NotNull char[] array) {
-    for (int i = 0; i < array.length; i++) {
+    for (int i = 0; i < array.length / 2; i++) {
       swap(array, array.length - i - 1, i);
     }
   }

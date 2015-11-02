@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,6 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
-import com.intellij.xml.util.documentation.HtmlDescriptorsTable;
 import com.intellij.xml.util.documentation.MimeTypeDictionary;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -232,10 +231,6 @@ public class HtmlUtil {
     return HtmlPsiUtil.getRealXmlDocument(doc);
   }
 
-  public static String[] getHtmlTagNames() {
-    return HtmlDescriptorsTable.getHtmlTagNames();
-  }
-  
   public static boolean isShortNotationOfBooleanAttributePreferred() {
     return Registry.is("html.prefer.short.notation.of.boolean.attributes", true);
   }

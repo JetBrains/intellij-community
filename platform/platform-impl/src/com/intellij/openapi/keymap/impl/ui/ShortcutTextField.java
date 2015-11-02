@@ -26,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.KeyStrokeAdapter;
 
 import javax.swing.*;
+import javax.swing.text.DefaultCaret;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
@@ -35,6 +36,13 @@ public class ShortcutTextField extends JTextField {
   public ShortcutTextField() {
     enableEvents(AWTEvent.KEY_EVENT_MASK);
     setFocusTraversalKeysEnabled(false);
+    putClientProperty("JTextField.variant", "search");
+    setCaret(new DefaultCaret() {
+      @Override
+      public boolean isVisible() {
+        return false;
+      }
+    });
   }
 
   protected void processKeyEvent(KeyEvent e) {
@@ -73,5 +81,11 @@ public class ShortcutTextField extends JTextField {
   @Override
   public void enableInputMethods(boolean enable) {
     super.enableInputMethods(enable && Registry.is("ide.settings.keymap.input.method.enabled"));
+  }
+
+  @Override
+  public void setText(String text) {
+    super.setText(text);
+    setCaretPosition(0);
   }
 }

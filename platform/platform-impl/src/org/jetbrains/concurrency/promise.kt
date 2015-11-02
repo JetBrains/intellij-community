@@ -15,16 +15,52 @@
  */
 package org.jetbrains.concurrency
 
+import com.intellij.util.Consumer
 import com.intellij.util.Function
+import com.intellij.util.SmartList
+import java.util.*
 
 private val rejectedPromise = Promise.reject<Any?>("rejected")
+
+// only internal usage
+interface ObsolescentFunction<Param, Result> : Function<Param, Result>, Obsolescent
+
+abstract class ValueNodeAsyncFunction<PARAM, RESULT>(private val node: Obsolescent) : AsyncFunction<PARAM, RESULT>, Obsolescent {
+  override fun isObsolete() = node.isObsolete
+}
+
+abstract class ObsolescentConsumer<T>(private val obsolescent: Obsolescent) : Obsolescent, Consumer<T> {
+  override fun isObsolete() = obsolescent.isObsolete
+}
+
 
 inline fun <T, SUB_RESULT> Promise<T>.then(crossinline handler: (T) -> SUB_RESULT) = then(object : Function<T, SUB_RESULT> {
   override fun `fun`(param: T) = handler(param)
 })
 
+inline fun <T, SUB_RESULT> Promise<T>.then(obsolescent: Obsolescent, crossinline handler: (T) -> SUB_RESULT) = then(object : ObsolescentFunction<T, SUB_RESULT> {
+  override fun `fun`(param: T) = handler(param)
+
+  override fun isObsolete() = obsolescent.isObsolete
+})
+
+
+inline fun <T> Promise<T>.done(node: Obsolescent, crossinline handler: (T) -> Unit) = done(object : ObsolescentConsumer<T>(node) {
+  override fun consume(param: T) = handler(param)
+})
+
+
 inline fun <T, SUB_RESULT> Promise<T>.thenAsync(crossinline handler: (T) -> Promise<SUB_RESULT>) = then(object : AsyncFunction<T, SUB_RESULT> {
   override fun `fun`(param: T) = handler(param)
+})
+
+inline fun <T, SUB_RESULT> Promise<T>.thenAsync(node: Obsolescent, crossinline handler: (T) -> Promise<SUB_RESULT>) = then(object : ValueNodeAsyncFunction<T, SUB_RESULT>(node) {
+  override fun `fun`(param: T) = handler(param)
+})
+
+@Suppress("UNCHECKED_CAST")
+inline fun <T> Promise<T>.thenAsyncVoid(node: Obsolescent, crossinline handler: (T) -> Promise<*>) = then(object : ValueNodeAsyncFunction<T, Any?>(node) {
+  override fun `fun`(param: T) = handler(param) as Promise<Any?>
 })
 
 inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>) = then(object : AsyncFunction<T, Any?> {
@@ -33,6 +69,12 @@ inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>
     return handler(param) as Promise<Any?>
   }
 })
+
+
+inline fun Promise<*>.rejected(node: Obsolescent, crossinline handler: (Throwable) -> Unit) = rejected(object : ObsolescentConsumer<Throwable>(node) {
+  override fun consume(param: Throwable) = handler(param)
+})
+
 
 fun resolvedPromise(): Promise<*> = Promise.DONE
 
@@ -56,4 +98,16 @@ inline fun AsyncPromise<out Any?>.catchError(task: () -> Unit) {
   catch (e: Throwable) {
     setError(e)
   }
+}
+
+fun <T> collectResults(promises: List<Promise<T>>): Promise<List<T>> {
+  if (promises.isEmpty()) {
+    return resolvedPromise(emptyList())
+  }
+
+  val results: MutableList<T> = if (promises.size == 1) SmartList<T>() else ArrayList<T>(promises.size)
+  for (promise in promises) {
+    promise.done { results.add(it) }
+  }
+  return Promise.all(promises, results)
 }

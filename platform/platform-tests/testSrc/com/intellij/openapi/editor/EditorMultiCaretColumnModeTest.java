@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 
@@ -26,32 +27,32 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
          "li<caret>ne2\n" +
          "line3");
 
-    executeAction("EditorDownWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
     checkResultByText("line1\n" +
                       "li<caret>ne2\n" +
                       "li<caret>ne3");
 
-    executeAction("EditorDownWithSelection"); // hitting document bottom
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION); // hitting document bottom
     checkResultByText("line1\n" +
                       "li<caret>ne2\n" +
                       "li<caret>ne3");
 
-    executeAction("EditorUpWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
     checkResultByText("line1\n" +
                       "li<caret>ne2\n" +
                       "line3");
 
-    executeAction("EditorUpWithSelection"); // hitting document top
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION); // hitting document top
     checkResultByText("li<caret>ne1\n" +
                       "li<caret>ne2\n" +
                       "line3");
 
-    executeAction("EditorUpWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
     checkResultByText("li<caret>ne1\n" +
                       "li<caret>ne2\n" +
                       "line3");
 
-    executeAction("EditorDownWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
     checkResultByText("line1\n" +
                       "li<caret>ne2\n" +
                       "line3");
@@ -76,7 +77,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                       "line6\n" +
                       "line7");
 
-    executeAction("EditorUpWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
     checkResultByText("line<caret>1\n" +
                       "line<caret>2\n" +
                       "line<caret>3\n" +
@@ -118,52 +119,52 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
          "li<caret>ne2\n" +
          "line3");
 
-    executeAction("EditorRightWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION);
     checkResultByText("line1\n" +
                       "li<selection>n<caret></selection>e2\n" +
                       "line3");
 
-    executeAction("EditorDownWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
     checkResultByText("line1\n" +
                       "li<selection>n<caret></selection>e2\n" +
                       "li<selection>n<caret></selection>e3");
 
-    executeAction("EditorLeftWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION);
     checkResultByText("line1\n" +
                       "li<caret>ne2\n" +
                       "li<caret>ne3");
 
-    executeAction("EditorLeftWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION);
     checkResultByText("line1\n" +
                       "l<selection><caret>i</selection>ne2\n" +
                       "l<selection><caret>i</selection>ne3");
 
-    executeAction("EditorUpWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
     checkResultByText("line1\n" +
                       "l<selection><caret>i</selection>ne2\n" +
                       "line3");
 
-    executeAction("EditorUpWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
     checkResultByText("l<selection><caret>i</selection>ne1\n" +
                       "l<selection><caret>i</selection>ne2\n" +
                       "line3");
 
-    executeAction("EditorRightWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION);
     checkResultByText("li<caret>ne1\n" +
                       "li<caret>ne2\n" +
                       "line3");
 
-    executeAction("EditorRightWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION);
     checkResultByText("li<selection>n<caret></selection>e1\n" +
                       "li<selection>n<caret></selection>e2\n" +
                       "line3");
 
-    executeAction("EditorDownWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
     checkResultByText("line1\n" +
                       "li<selection>n<caret></selection>e2\n" +
                       "line3");
 
-    executeAction("EditorLeftWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION);
     checkResultByText("line1\n" +
                       "li<caret>ne2\n" +
                       "line3");
@@ -172,7 +173,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
   public void testSelectNextPrevWord() throws Exception {
     init("aaa aaa<caret>\n" +
          "bbbb bbbb");
-    executeAction("EditorDownWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
     executeAction("EditorPreviousWordWithSelection");
     checkResultByText("aaa <selection><caret>aaa</selection>\n" +
                       "bbbb <selection><caret>bb</selection>bb");
@@ -204,7 +205,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
     mouse().clickAt(0, 4).dragTo(0, 3).release();
     verifyCaretsAndSelections(0, 3, 3, 4);
 
-    executeAction("EditorRightWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION);
     verifyCaretsAndSelections(0, 4, 4, 4);
   }
 
@@ -213,40 +214,40 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
     mouse().clickAt(1, 1);
     verifyCaretsAndSelections(1, 1, 1, 1);
 
-    executeAction("EditorRightWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION);
     verifyCaretsAndSelections(1, 2, 1, 2);
 
-    executeAction("EditorDownWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
     verifyCaretsAndSelections(1, 2, 1, 2,
                               2, 2, 1, 2);
 
-    executeAction("EditorLeftWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION);
     verifyCaretsAndSelections(1, 1, 1, 1,
                               2, 1, 1, 1);
 
-    executeAction("EditorLeftWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION);
     verifyCaretsAndSelections(1, 0, 0, 1,
                               2, 0, 0, 1);
 
-    executeAction("EditorUpWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
     verifyCaretsAndSelections(1, 0, 0, 1);
 
-    executeAction("EditorUpWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
     verifyCaretsAndSelections(0, 0, 0, 1,
                               1, 0, 0, 1);
 
-    executeAction("EditorRightWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION);
     verifyCaretsAndSelections(0, 1, 1, 1,
                               1, 1, 1, 1);
 
-    executeAction("EditorRightWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION);
     verifyCaretsAndSelections(0, 2, 1, 2,
                               1, 2, 1, 2);
 
-    executeAction("EditorDownWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
     verifyCaretsAndSelections(1, 2, 1, 2);
 
-    executeAction("EditorLeftWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION);
     verifyCaretsAndSelections(1, 1, 1, 1);
   }
 
@@ -347,6 +348,80 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                       "ccCCc");
     verifyCaretsAndSelections(1, 4, 2, 4,
                               2, 4, 2, 4);
+  }
+  
+  public void testSeparatedCarets() throws Exception {
+    init("\n" +
+         "\n" +
+         "<caret>\n" +
+         "\n" +
+         "<caret>\n" +
+         "\n" +
+         "");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
+    checkResultByText("\n" +
+                      "\n" +
+                      "<caret>\n" +
+                      "<caret>\n" +
+                      "<caret>\n" +
+                      "<caret>\n" +
+                      "");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
+    checkResultByText("\n" +
+                      "\n" +
+                      "<caret>\n" +
+                      "<caret>\n" +
+                      "<caret>\n" +
+                      "<caret>\n" +
+                      "<caret>");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
+    checkResultByText("\n" +
+                      "\n" +
+                      "<caret>\n" +
+                      "<caret>\n" +
+                      "<caret>\n" +
+                      "<caret>\n" +
+                      "");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
+    checkResultByText("\n" +
+                      "\n" +
+                      "<caret>\n" +
+                      "\n" +
+                      "<caret>\n" +
+                      "\n" +
+                      "");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
+    checkResultByText("\n" +
+                      "<caret>\n" +
+                      "<caret>\n" +
+                      "<caret>\n" +
+                      "<caret>\n" +
+                      "\n" +
+                      "");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
+    checkResultByText("<caret>\n" +
+                      "<caret>\n" +
+                      "<caret>\n" +
+                      "<caret>\n" +
+                      "<caret>\n" +
+                      "\n" +
+                      "");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
+    checkResultByText("\n" +
+                      "<caret>\n" +
+                      "<caret>\n" +
+                      "<caret>\n" +
+                      "<caret>\n" +
+                      "\n" +
+                      "");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
+    checkResultByText("\n" +
+                      "\n" +
+                      "<caret>\n" +
+                      "\n" +
+                      "<caret>\n" +
+                      "\n" +
+                      "");
   }
 
   private void init(String text) throws IOException {

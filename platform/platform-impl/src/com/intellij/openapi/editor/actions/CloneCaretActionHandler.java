@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -41,6 +42,8 @@ public class CloneCaretActionHandler extends EditorActionHandler {
     IdeActions.ACTION_EDITOR_CLONE_CARET_BELOW,
     IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION,
     IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION,
+    IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION,
+    IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION,
     IdeActions.ACTION_EDITOR_MOVE_LINE_START_WITH_SELECTION,
     IdeActions.ACTION_EDITOR_MOVE_LINE_END_WITH_SELECTION
   ));
@@ -52,7 +55,7 @@ public class CloneCaretActionHandler extends EditorActionHandler {
   }
 
   @Override
-  public boolean isEnabled(Editor editor, DataContext dataContext) {
+  public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     return editor.getCaretModel().supportsMultipleCarets();
   }
 

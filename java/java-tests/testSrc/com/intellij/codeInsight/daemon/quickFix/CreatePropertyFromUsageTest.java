@@ -27,6 +27,6 @@ public class CreatePropertyFromUsageTest extends LightQuickFixParameterizedTestC
 
   @Override
   protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_1_5;
+    return LanguageLevel.JDK_1_8;
   }
 }

@@ -230,12 +230,14 @@ public class XValueHint extends AbstractValueHint {
 
       @Override
       public void errorOccurred(@NotNull final String errorMessage) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            showHint(HintUtil.createErrorLabel(errorMessage));
-          }
-        });
+        if (getType() == ValueHintType.MOUSE_CLICK_HINT) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              showHint(HintUtil.createErrorLabel(errorMessage));
+            }
+          });
+        }
         LOG.debug("Cannot evaluate '" + myExpression + "':" + errorMessage);
       }
     }, myExpressionPosition);

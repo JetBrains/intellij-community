@@ -156,6 +156,14 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   }
 
   @Override
+  public void updateUI() {
+    super.updateUI();
+    if (myFilteringPanel != null) {
+      SwingUtilities.updateComponentTreeUI(myFilteringPanel);
+    }
+  }
+
+  @Override
   public void quickListRenamed(final QuickList oldQuickList, final QuickList newQuickList) {
     for (Keymap keymap : myEditor.getModel().getItems()) {
       String actionId = oldQuickList.getActionId();

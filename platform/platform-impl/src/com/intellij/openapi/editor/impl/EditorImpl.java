@@ -322,7 +322,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     ourCaretBlinkingCommand.start();
   }
 
-  private int myExpectedCaretOffset = -1;
+  private volatile int myExpectedCaretOffset = -1;
 
   EditorImpl(@NotNull Document document, boolean viewer, @Nullable Project project) {
     assertIsDispatchThread();
@@ -658,7 +658,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int getExpectedCaretOffset() {
-    return myExpectedCaretOffset == -1 ? getCaretModel().getOffset() : myExpectedCaretOffset;
+    int expectedCaretOffset = myExpectedCaretOffset;
+    return expectedCaretOffset == -1 ? getCaretModel().getOffset() : expectedCaretOffset;
   }
 
   @Override

@@ -21,6 +21,9 @@ import io.netty.bootstrap.Bootstrap
 import io.netty.channel.*
 import io.netty.channel.oio.OioEventLoopGroup
 import io.netty.channel.socket.oio.OioSocketChannel
+import io.netty.handler.codec.http.HttpHeaderNames
+import io.netty.handler.codec.http.HttpRequest
+import io.netty.handler.ssl.SslHandler
 import io.netty.util.concurrent.GenericFutureListener
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.ide.PooledThreadExecutor
@@ -79,3 +82,9 @@ fun Bootstrap.connect(remoteAddress: InetSocketAddress, promise: AsyncPromise<*>
     return null
   }
 }
+
+val Channel.uriScheme: String
+  get() = if (pipeline().get(SslHandler::class.java) == null) "http" else "https"
+
+val HttpRequest.host: String
+  get() = headers().getAsString(HttpHeaderNames.HOST)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -165,7 +165,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
   }
 
   @Nullable
-  private static IProperty getI18nProperty(PsiLiteralExpression literal) {
+  public static IProperty getI18nProperty(PsiLiteralExpression literal) {
     final Property property = (Property)literal.getUserData(CACHE);
     if (property == NULL) return null;
     if (property != null && isValid(property, literal)) return property;
@@ -209,7 +209,6 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
     return isFoldingsOn();
   }
-
 
   public static boolean isI18nProperty(@NotNull PsiLiteralExpression expr) {
     if (! isStringLiteral(expr)) return false;

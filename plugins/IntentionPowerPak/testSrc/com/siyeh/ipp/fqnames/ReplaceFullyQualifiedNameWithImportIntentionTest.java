@@ -13,9 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.concurrency;
+package com.siyeh.ipp.fqnames;
 
-import com.intellij.util.Function;
+import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ipp.IPPTestCase;
 
-public interface ObsolescentFunction<Param, Result> extends Function<Param, Result>, Obsolescent {
+/**
+ * @author Bas Leijdekkers
+ */
+public class ReplaceFullyQualifiedNameWithImportIntentionTest extends IPPTestCase {
+
+  public void testStaticImport() { doTest(); }
+
+  @Override
+  protected String getIntentionName() {
+    return IntentionPowerPackBundle.message("replace.fully.qualified.name.with.import.intention.name");
+  }
+
+  @Override
+  protected String getRelativePath() {
+    return "fqnames";
+  }
 }
