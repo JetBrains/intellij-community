@@ -64,13 +64,14 @@ public abstract class JavaScriptDebugAware {
   }
 
   public static boolean isBreakpointAware(@NotNull FileType fileType) {
-    return getBreakpointAware(fileType) != null;
+    JavaScriptDebugAware aware = getBreakpointAware(fileType);
+    return aware != null && aware.getBreakpointTypeClass() == null;
   }
 
   @Nullable
   public static JavaScriptDebugAware getBreakpointAware(@NotNull FileType fileType) {
     for (JavaScriptDebugAware debugAware : EP_NAME.getExtensions()) {
-      if (debugAware.getBreakpointTypeClass() == null && fileType.equals(debugAware.getFileType())) {
+      if (fileType.equals(debugAware.getFileType())) {
         return debugAware;
       }
     }

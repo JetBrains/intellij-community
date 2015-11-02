@@ -25,6 +25,8 @@ import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.jetbrains.io.Responses
+import org.jetbrains.io.host
+import org.jetbrains.io.uriScheme
 
 /**
  * By default [WebServerPathToFileManager] will be used to map request to file.
@@ -41,14 +43,14 @@ abstract class WebServerPathHandler {
                        project: Project,
                        request: FullHttpRequest,
                        context: ChannelHandlerContext,
-                       projectName: String?,
+                       projectName: String,
                        decodedRawPath: String,
                        isCustomHost: Boolean): Boolean
 }
 
 fun redirectToDirectory(request: HttpRequest, channel: Channel, path: String) {
   val response = Responses.response(HttpResponseStatus.MOVED_PERMANENTLY)
-  val url = VfsUtil.toUri("http://${request.headers().getAsString(HttpHeaderNames.HOST)}/$path/")!!
+  val url = VfsUtil.toUri("${channel.uriScheme}://${request.host}/$path/")!!
   response.headers().add(HttpHeaderNames.LOCATION, url.toASCIIString())
   Responses.send(response, channel, request)
 }

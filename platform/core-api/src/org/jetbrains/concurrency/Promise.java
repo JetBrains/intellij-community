@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 public abstract class Promise<T> {
   public static final Promise<Void> DONE = new DonePromise<Void>(null);
@@ -69,7 +70,12 @@ public abstract class Promise<T> {
 
   @NotNull
   public static Promise<?> all(@NotNull Collection<Promise<?>> promises) {
-    return all(promises, null);
+    if (promises.size() == 1) {
+      return promises instanceof List ? ((List<Promise<?>>)promises).get(0) : promises.iterator().next();
+    }
+    else {
+      return all(promises, null);
+    }
   }
 
   @NotNull
