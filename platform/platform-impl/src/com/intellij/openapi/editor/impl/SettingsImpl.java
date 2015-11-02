@@ -319,7 +319,7 @@ public class SettingsImpl implements EditorSettings {
   }
 
   private void reinitDocumentIndentOptions() {
-    if (myEditor == null) return;
+    if (myEditor == null || myEditor.isViewer()) return;
     final Project project = myEditor.getProject();
     final DocumentEx document = myEditor.getDocument();
 
