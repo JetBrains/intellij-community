@@ -21,6 +21,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyCallExpressionNavigator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,6 +111,10 @@ public class PyInjectionUtil {
     else if (element instanceof PyCallExpression) {
       final PyExpression qualifier = getFormatCallQualifier((PyCallExpression)element);
       return qualifier != null && isStringLiteralPart(qualifier, context);
+    }
+    else if (element instanceof PyReferenceExpression) {
+      final PyCallExpression callExpr = PyCallExpressionNavigator.getPyCallExpressionByCallee(element);
+      return callExpr != null && isStringLiteralPart(callExpr, context);
     }
     return false;
   }
