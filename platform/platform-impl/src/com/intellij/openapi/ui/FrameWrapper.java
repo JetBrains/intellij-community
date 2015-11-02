@@ -19,8 +19,10 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.Project;
@@ -227,7 +229,8 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   private void addCloseOnEsc(final RootPaneContainer frame) {
-    frame.getRootPane().registerKeyboardAction(new ActionListener() {
+    JRootPane rootPane = frame.getRootPane();
+    ActionListener closeAction = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         if (!PopupUtil.handleEscKeyEvent()) {
@@ -239,7 +242,9 @@ public class FrameWrapper implements Disposable, DataProvider {
           close();
         }
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    };
+    rootPane.registerKeyboardAction(closeAction, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    ActionUtil.registerForEveryKeyboardShortcut(rootPane, closeAction, CommonShortcuts.getCloseActiveWindow());
   }
 
   public Window getFrame() {

@@ -23,6 +23,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -30,7 +31,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -1673,7 +1673,7 @@ public abstract class DialogWrapper {
     if (cancelKeyboardAction != null) {
       rootPane
         .registerKeyboardAction(cancelKeyboardAction, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-      registerForEveryKeyboardShortcut(cancelKeyboardAction, CommonShortcuts.getCloseActiveWindow());
+      ActionUtil.registerForEveryKeyboardShortcut(getRootPane(), cancelKeyboardAction, CommonShortcuts.getCloseActiveWindow());
     }
 
     if (ApplicationInfo.contextHelpAvailable()) {
@@ -1684,7 +1684,7 @@ public abstract class DialogWrapper {
         }
       };
 
-      registerForEveryKeyboardShortcut(helpAction, CommonShortcuts.getContextHelp());
+      ActionUtil.registerForEveryKeyboardShortcut(getRootPane(), helpAction, CommonShortcuts.getContextHelp());
       rootPane.registerKeyboardAction(helpAction, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
     }
 
@@ -1726,19 +1726,6 @@ public abstract class DialogWrapper {
           }
         }
       };
-  }
-
-  private void registerForEveryKeyboardShortcut(ActionListener action, @NotNull ShortcutSet shortcuts) {
-    for (Shortcut shortcut : shortcuts.getShortcuts()) {
-      if (shortcut instanceof KeyboardShortcut) {
-        KeyboardShortcut ks = (KeyboardShortcut)shortcut;
-        KeyStroke first = ks.getFirstKeyStroke();
-        KeyStroke second = ks.getSecondKeyStroke();
-        if (second == null) {
-          getRootPane().registerKeyboardAction(action, first, JComponent.WHEN_IN_FOCUSED_WINDOW);
-        }
-      }
-    }
   }
 
   private void focusPreviousButton() {
