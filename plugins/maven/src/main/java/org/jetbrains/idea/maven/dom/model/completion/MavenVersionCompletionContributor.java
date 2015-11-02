@@ -37,6 +37,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomArtifactCoordinates;
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
+import org.jetbrains.idea.maven.utils.library.RepositoryUtils;
 
 import java.util.Set;
 
@@ -105,6 +106,8 @@ public class MavenVersionCompletionContributor extends CompletionContributor {
       for (String version : versions) {
         newResultSet.addElement(LookupElementBuilder.create(version));
       }
+      newResultSet.addElement(LookupElementBuilder.create(RepositoryUtils.ReleaseVersionId));
+      newResultSet.addElement(LookupElementBuilder.create(RepositoryUtils.LatestVersionId));
     }
   }
 

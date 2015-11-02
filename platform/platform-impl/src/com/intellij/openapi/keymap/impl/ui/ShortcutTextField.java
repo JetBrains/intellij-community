@@ -36,6 +36,7 @@ public class ShortcutTextField extends JTextField {
   public ShortcutTextField() {
     enableEvents(AWTEvent.KEY_EVENT_MASK);
     setFocusTraversalKeysEnabled(false);
+    putClientProperty("JTextField.variant", "search");
     setCaret(new DefaultCaret() {
       @Override
       public boolean isVisible() {

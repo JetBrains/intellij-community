@@ -70,6 +70,44 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertModuleLibDep("project", "Maven: commons-io:commons-io:2.4");
   }
 
+  public void testAddManagedLibraryDependency() throws IOException {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<dependencyManagement>\n" +
+                  "    <dependencies>\n" +
+                  "        <dependency>\n" +
+                  "            <groupId>commons-io</groupId>\n" +
+                  "            <artifactId>commons-io</artifactId>\n" +
+                  "            <version>2.4</version>\n" +
+                  "        </dependency>\n" +
+                  "    </dependencies>\n" +
+                  "</dependencyManagement>");
+
+    Promise<Void> result =
+      getExtension().addExternalLibraryDependency(Collections.singletonList(getModule("project")), new CommonsIoLibraryDescriptor_2_4(),
+                                                  DependencyScope.COMPILE);
+    assertNotNull(result);
+    assertHasManagedDependency(myProjectPom, "commons-io", "commons-io");
+    waitUntilImported(result);
+    assertModuleLibDep("project", "Maven: commons-io:commons-io:2.4");
+  }
+
+  public void testAddLibraryDependencyReleaseVersion() throws IOException {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    Promise<Void> result =
+      getExtension().addExternalLibraryDependency(Collections.singletonList(getModule("project")), new CommonsIoLibraryDescriptorUnknownVersion(),
+                                                  DependencyScope.COMPILE);
+    assertNotNull(result);
+    final String version = assertHasDependency(myProjectPom, "commons-io", "commons-io");
+    assertEquals("RELEASE", version);
+    waitUntilImported(result);
+    assertModuleLibDep("project", "Maven: commons-io:commons-io:2.4");
+  }
+
   public void testAddModuleDependency() throws IOException {
     createTwoModulesPom("m1", "m2");
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
@@ -158,6 +196,15 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     return matcher.group(1);
   }
 
+  private void assertHasManagedDependency(VirtualFile pom, final String groupId, final String artifactId) {
+    String pomText = PsiManager.getInstance(myProject).findFile(pom).getText();
+    Pattern
+      pattern = Pattern.compile("(?s).*<dependency>\\s*<groupId>" + groupId + "</groupId>\\s*<artifactId>" +
+                                artifactId + "</artifactId>\\s*</dependency>.*");
+    Matcher matcher = pattern.matcher(pomText);
+    assertTrue(matcher.matches());
+  }
+
   private void waitUntilImported(Promise<Void> result) {
     waitForReadingCompletion();
     myProjectsManager.waitForResolvingCompletion();
@@ -174,6 +221,18 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
   private static class CommonsIoLibraryDescriptor_2_4 extends ExternalLibraryDescriptor {
     public CommonsIoLibraryDescriptor_2_4() {
       super("commons-io", "commons-io", "2.4", "2.4");
+    }
+
+    @NotNull
+    @Override
+    public List<String> getLibraryClassesRoots() {
+      return Collections.emptyList();
+    }
+  }
+
+  private static class CommonsIoLibraryDescriptorUnknownVersion extends ExternalLibraryDescriptor {
+    public CommonsIoLibraryDescriptorUnknownVersion() {
+      super("commons-io", "commons-io", "999.999", "999.999");
     }
 
     @NotNull

@@ -295,13 +295,13 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   }
 
   public void restoreWindow() {
-    JSplitPane pane = (JSplitPane)getComponent(0);
+    JBSplitter pane = (JBSplitter)getComponent(0);
     removeAll();
     if (mySplitView != null) {
       Disposer.dispose(mySplitView);
       mySplitView = null;
     }
-    add(pane.getLeftComponent(), BorderLayout.CENTER);
+    add(pane.getFirstComponent(), BorderLayout.CENTER);
     validate();
     repaint();
   }

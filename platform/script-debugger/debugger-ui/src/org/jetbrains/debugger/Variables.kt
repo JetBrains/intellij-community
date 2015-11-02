@@ -20,8 +20,9 @@ import com.intellij.util.SmartList
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XValueChildrenList
 import org.jetbrains.concurrency.Obsolescent
-import org.jetbrains.concurrency.ObsolescentFunction
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.then
+import org.jetbrains.concurrency.thenAsync
 import org.jetbrains.debugger.values.ValueType
 import java.util.*
 import java.util.regex.Pattern
@@ -37,18 +38,9 @@ fun processVariables(context: VariableContext,
                      variables: Promise<List<Variable>>,
                      obsolescent: Obsolescent,
                      consumer: (memberFilter: MemberFilter, variables: List<Variable>) -> Unit) = context.memberFilter
-  .then(object : ValueNodeAsyncFunction<MemberFilter, Any?>(obsolescent) {
-    override fun `fun`(memberFilter: MemberFilter): Promise<Any?> {
-      return variables.then(object : ObsolescentFunction<List<Variable>, Any?> {
-        override fun isObsolete() = obsolescent.isObsolete
-
-        override fun `fun`(variables: List<Variable>): Void? {
-          consumer(memberFilter, variables)
-          return null
-        }
-      })
-    }
-  })
+  .thenAsync(obsolescent) { memberFilter ->
+    variables.then(obsolescent) { consumer(memberFilter, it) }
+  }
 
 fun processScopeVariables(scope: Scope,
                           node: XCompositeNode,

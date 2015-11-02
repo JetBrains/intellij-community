@@ -416,6 +416,12 @@ public class RefactoringUtil {
       }
     }
 
+    if (type instanceof PsiLambdaParameterType ||
+        type instanceof PsiLambdaExpressionType ||
+        type instanceof PsiMethodReferenceType) {
+      type = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, expr.getResolveScope());
+    }
+
     return type;
   }
 

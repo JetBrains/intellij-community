@@ -160,7 +160,7 @@
 
     <!-- Help -->
     <action id="WhatsNewAction" class="com.intellij.ide.actions.WhatsNewAction">
-      <add-to-group group-id="HelpMenu" anchor="after" relative-to-action="OnlineDocAction"/>
+      <add-to-group group-id="HelpMenu" anchor="after" relative-to-action="ShowTips"/>
     </action>
 
     <!-- Toolbar -->

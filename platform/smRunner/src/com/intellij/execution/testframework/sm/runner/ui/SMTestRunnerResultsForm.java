@@ -833,15 +833,22 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
 
     private void writeState() {
-      TestStateStorage storage = TestStateStorage.getInstance(getProject());
-      List<SMTestProxy> tests = myRoot.getAllTests();
-      for (SMTestProxy proxy : tests) {
-        String url = proxy instanceof SMTestProxy.SMRootTestProxy ? ((SMTestProxy.SMRootTestProxy)proxy).getRootLocation() : proxy.getLocationUrl();
-        if (url != null) {
-          storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date()));
+      // read action to prevent project (and storage) from being disposed
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          Project project = getProject();
+          if (project.isDisposed()) return;
+          TestStateStorage storage = TestStateStorage.getInstance(project);
+          List<SMTestProxy> tests = myRoot.getAllTests();
+          for (SMTestProxy proxy : tests) {
+            String url = proxy instanceof SMTestProxy.SMRootTestProxy ? ((SMTestProxy.SMRootTestProxy)proxy).getRootLocation() : proxy.getLocationUrl();
+            if (url != null) {
+              storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date()));
+            }
+          }
         }
-      }
-
+      });
     }
     @Override
     public void onSuccess() {
