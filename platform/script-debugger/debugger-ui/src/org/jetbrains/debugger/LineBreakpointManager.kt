@@ -39,10 +39,10 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
 
   private val breakpointResolvedListenerAdded = AtomicBoolean()
 
-  fun setBreakpoint(breakpoint: XLineBreakpoint<*>, onlySourceMappedBreakpoints: Boolean) {
+  fun setBreakpoint(breakpoint: XLineBreakpoint<*>) {
     var target = synchronized (lock) { ideToVmBreakpoints[breakpoint] }
     if (target == null) {
-      setBreakpoint(breakpoint, debugProcess.getLocationsForBreakpoint(breakpoint, onlySourceMappedBreakpoints))
+      setBreakpoint(breakpoint, debugProcess.getLocationsForBreakpoint(breakpoint))
     }
     else {
       val breakpointManager = breakpointManager
@@ -64,7 +64,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
   protected open fun beforeBreakpointRemoved(breakpoint: XLineBreakpoint<*>, disable: Boolean) {
   }
 
-  fun doRemoveBreakpoint(breakpoint: XLineBreakpoint<*>, disable: Boolean): Promise<*> {
+  fun doRemoveBreakpoint(breakpoint: XLineBreakpoint<*>, disable: Boolean = false): Promise<*> {
     var vmBreakpoints: Collection<Breakpoint> = emptySet()
     synchronized (lock) {
       if (disable) {
@@ -169,7 +169,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
           }
             ?.let {
               for (ideBreakpoint in it) {
-                setBreakpoint(ideBreakpoint, debugProcess.getLocationsForBreakpoint(ideBreakpoint, false))
+                setBreakpoint(ideBreakpoint, debugProcess.getLocationsForBreakpoint(ideBreakpoint))
               }
             }
         }
@@ -208,7 +208,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
     var array = synchronized (lock) { ideToVmBreakpoints.keys.toTypedArray() }
     for (breakpoint in array) {
       removeBreakpoint(breakpoint, false)
-      setBreakpoint(breakpoint, false)
+      setBreakpoint(breakpoint)
     }
   }
 

@@ -34,6 +34,7 @@ abstract class WebServerFileHandler {
                        request: FullHttpRequest,
                        channel: Channel,
                        projectNameIfNotCustomHost: String?): Boolean
+
 }
 
 fun getRequestPath(canonicalPath: CharSequence, projectNameIfNotCustomHost: String?) = if (projectNameIfNotCustomHost == null) "/$canonicalPath" else "/$projectNameIfNotCustomHost/$canonicalPath"
