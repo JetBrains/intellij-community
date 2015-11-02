@@ -206,8 +206,9 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         return;
       }
       final PsiElement element =
-        PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class, PsiPackageStatement.class, JavaCodeFragment.class);
-      if (element != null) {
+        PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class, PsiPackageStatement.class,
+                                    JavaCodeFragment.class, PsiAnnotation.class);
+      if (element != null && !(element instanceof PsiAnnotation)) {
         return;
       }
       final PsiFile containingFile = reference.getContainingFile();

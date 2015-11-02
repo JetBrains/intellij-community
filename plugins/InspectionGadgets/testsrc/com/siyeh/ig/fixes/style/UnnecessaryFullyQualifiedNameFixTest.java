@@ -40,6 +40,7 @@ public class UnnecessaryFullyQualifiedNameFixTest extends IGQuickFixesTestCase {
       "class X {"                +
       "  /**/java.util.List l;"  +
       "}",
+
       "import java.util.List;\n\n" +
       "/**\n"                      +
       " * @see java.util.List\n"   +
@@ -59,6 +60,7 @@ public class UnnecessaryFullyQualifiedNameFixTest extends IGQuickFixesTestCase {
       "class X {"                +
       "  /**/java.util.List l;"  +
       "}",
+
       "import java.util.List;\n\n" +
       "/**\n"                      +
       " * @see List\n"             +
@@ -78,6 +80,7 @@ public class UnnecessaryFullyQualifiedNameFixTest extends IGQuickFixesTestCase {
       "class X {"                +
       "  /**/java.util.List l;"  +
       "}",
+
       "import java.util.List;\n\n" +
       "/**\n"                      +
       " * @see List\n"             +
@@ -89,19 +92,48 @@ public class UnnecessaryFullyQualifiedNameFixTest extends IGQuickFixesTestCase {
     );
   }
 
+  public void testPackageInfo() {
+    doTest(
+      "/**\n" +
+      " * @see javax.annotation.Generated\n" +
+      " */\n" +
+      "@/**/javax.annotation.Generated\n" +
+      "package p;\n",
+
+      "/**\n"                                +
+      " * @see javax.annotation.Generated\n" +
+      " */\n"                                +
+      "@Generated\n"                         +
+      "package p;\n"                         +
+      "\n"                                   +
+      "import javax.annotation.Generated;",
+      JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT, "package-info.java");
+  }
+
   private void doTest(@Language("JAVA") @NotNull @NonNls String before, @Language("JAVA") @NotNull @NonNls String after,
                       @MagicConstant(intValues = {
                         JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_ALWAYS,
                         JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED,
                         JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT
                       }) int classNamesInJavadoc) {
+    doTest(before, after, classNamesInJavadoc, "aaa.java");
+  }
+
+  private void doTest(@Language("JAVA") @NotNull @NonNls String before,
+                      @Language("JAVA") @NotNull @NonNls String after,
+                      @MagicConstant(intValues = {
+                        JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_ALWAYS,
+                        JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED,
+                        JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT
+                      }) int classNamesInJavadoc,
+                      String fileName) {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     final JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
 
     final int oldClassNamesInJavadoc = javaSettings.CLASS_NAMES_IN_JAVADOC;
     try {
       javaSettings.CLASS_NAMES_IN_JAVADOC = classNamesInJavadoc;
-      doTest(InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.replace.quickfix"), before, after);
+      doTest(InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.replace.quickfix"), before, after, fileName);
     }
     finally {
       javaSettings.CLASS_NAMES_IN_JAVADOC = oldClassNamesInJavadoc;
@@ -111,5 +143,24 @@ public class UnnecessaryFullyQualifiedNameFixTest extends IGQuickFixesTestCase {
   @Override
   protected BaseInspection getInspection() {
     return new UnnecessaryFullyQualifiedNameInspection();
+  }
+
+  @Override
+  protected String[] getEnvironmentClasses() {
+    return new String[] {
+      "package javax.annotation;\n" +
+      "import java.lang.annotation.*;\n" +
+      "import static java.lang.annotation.ElementType.*;\n" +
+      "import static java.lang.annotation.RetentionPolicy.*;\n" +
+      "@Documented\n" +
+      "@Retention(SOURCE)\n" +
+      "@Target({PACKAGE, TYPE, ANNOTATION_TYPE, METHOD, CONSTRUCTOR, FIELD,\n" +
+      "        LOCAL_VARIABLE, PARAMETER})\n" +
+      "public @interface Generated {\n" +
+      "   String[] value();\n" +
+      "   String date() default \"\";\n" +
+      "   String comments() default \"\";\n" +
+      "}"
+    };
   }
 }
