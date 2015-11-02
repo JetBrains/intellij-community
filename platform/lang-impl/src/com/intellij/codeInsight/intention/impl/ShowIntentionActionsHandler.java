@@ -104,16 +104,12 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
   // returns editor,file where the action is available or null if there are none
-  public static boolean availableFor(@NotNull PsiFile file, @NotNull Editor editor, @NotNull IntentionAction action) {
-    if (!file.isValid()) return false;
+  public static boolean availableFor(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull IntentionAction action) {
+    if (!psiFile.isValid()) return false;
 
     int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(offset);
-    boolean inProject = file.getManager().isInProject(file);
-    return isAvailableHere(editor, file, element, inProject, action);
-  }
-
-  private static boolean isAvailableHere(Editor editor, PsiFile psiFile, PsiElement psiElement, boolean inProject, IntentionAction action) {
+    PsiElement psiElement = psiFile.findElementAt(offset);
+    boolean inProject = psiFile.getManager().isInProject(psiFile);
     try {
       Project project = psiFile.getProject();
       if (action instanceof SuppressIntentionActionFromFix) {
@@ -170,11 +166,11 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     return chooseActionAndInvoke(hostFile, hostEditor, action, text, project);
   }
 
-  public static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
-                                              @Nullable final Editor hostEditor,
-                                              @NotNull final IntentionAction action,
-                                              @NotNull String text,
-                                              @NotNull final Project project) {
+  static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
+                                       @Nullable final Editor hostEditor,
+                                       @NotNull final IntentionAction action,
+                                       @NotNull String text,
+                                       @NotNull final Project project) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickFix");
     ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats().registerInvocation();
 
