@@ -46,7 +46,7 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
     final Ref<Boolean> stoppable = Ref.create(false);
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {
-      if (file.getFileType() == PythonFileType.INSTANCE || isPythonScratch(file)) {
+      if (file.getFileType() == PythonFileType.INSTANCE || isPythonScratch(project, file)) {
         XDebuggerUtil.getInstance().iterateLine(project, document, line, new Processor<PsiElement>() {
           @Override
           public boolean process(PsiElement psiElement) {
@@ -68,8 +68,8 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
     return stoppable.get();
   }
 
-  private static boolean isPythonScratch(VirtualFile file) {
-    return ScratchFileType.getOriginalFileType(file) == PythonFileType.INSTANCE;
+  private static boolean isPythonScratch(@NotNull Project project, @NotNull VirtualFile file) {
+    return ScratchFileType.getOriginalFileType(project, file) == PythonFileType.INSTANCE;
   }
 
   private static boolean notStoppableElementType(IElementType elementType) {

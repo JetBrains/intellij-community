@@ -194,7 +194,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     @Override
     public Language getMapping(@Nullable VirtualFile file) {
       Language fromMapping = super.getMapping(file);
-      return fromMapping != null ? fromMapping : ScratchFileType.getOriginalLanguage(file);
+      return fromMapping != null ? fromMapping : ScratchFileType.getOriginalLanguageFromScratchName(file);
     }
   }
 
@@ -210,6 +210,11 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     @Nullable
     @Override
     public Language getLanguage(@NotNull VirtualFile file, @NotNull Project project) {
+      return substituteLanguage(project, file);
+    }
+
+    @Nullable
+    public static Language substituteLanguage(@NotNull Project project, @NotNull VirtualFile file) {
       RootType rootType = ScratchFileService.getInstance().getRootType(file);
       if (rootType == null) return null;
       return rootType.substituteLanguage(project, file);
@@ -221,12 +226,12 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     @Nullable
     public SyntaxHighlighter create(@NotNull FileType fileType, @Nullable Project project, @Nullable VirtualFile file) {
       if (project == null || file == null || !(fileType instanceof ScratchFileType)) return null;
-      RootType rootType = ScratchFileService.getInstance().getRootType(file);
-      if (rootType == null) return null;
-      Language language = rootType.substituteLanguage(project, file);
+
+      Language language = ScratchFileType.getOriginalLanguage(project, file);
       SyntaxHighlighter highlighter = language == null ? null : SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file);
       if (highlighter != null) return highlighter;
-      FileType originalFileType = ScratchFileType.getOriginalFileType(file);
+
+      FileType originalFileType = ScratchFileType.getOriginalFileType(project, file);
       highlighter = originalFileType == null ? null : SyntaxHighlighterFactory.getSyntaxHighlighter(originalFileType, project, file);
       return highlighter;
     }

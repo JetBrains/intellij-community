@@ -18,6 +18,7 @@ package com.intellij.ide.scratch;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,15 +77,36 @@ public class ScratchFileType extends LanguageFileType implements FileTypeIdentif
   }
 
   @Nullable
-  public static FileType getOriginalFileType(@Nullable VirtualFile file) {
-    if (file == null || file.getFileType() != INSTANCE) return null;
-    String extension = file.getExtension();
-    return extension != null ? FileTypeManager.getInstance().getFileTypeByExtension(extension) : null;
+  public static FileType getOriginalFileType(@NotNull Project project, @Nullable VirtualFile file) {
+    if (!isScratch(file)) return null;
+
+    Language language = ScratchFileServiceImpl.Substitutor.substituteLanguage(project, file);
+    LanguageFileType fileType = language != null ? language.getAssociatedFileType() : null;
+    if (fileType != null) return fileType;
+
+    return getOriginalFileTypeFromScratchName(file);
   }
 
   @Nullable
-  public static Language getOriginalLanguage(@Nullable VirtualFile file) {
-    FileType fileType = getOriginalFileType(file);
+  public static Language getOriginalLanguage(@NotNull Project project, @Nullable VirtualFile file) {
+    if (!isScratch(file)) return null;
+
+    Language language = ScratchFileServiceImpl.Substitutor.substituteLanguage(project, file);
+    return language != null ? language : getOriginalLanguageFromScratchName(file);
+  }
+
+  @Nullable
+  static Language getOriginalLanguageFromScratchName(@Nullable VirtualFile file) {
+    FileType fileType = getOriginalFileTypeFromScratchName(file);
     return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
+  }
+
+  @Nullable
+  private static FileType getOriginalFileTypeFromScratchName(@Nullable VirtualFile file) {
+    return isScratch(file) ? FileTypeManager.getInstance().getFileTypeByFileName(file.getName()) : null;
+  }
+
+  private static boolean isScratch(@Nullable VirtualFile file) {
+    return file != null && file.getFileType() == INSTANCE;
   }
 }
