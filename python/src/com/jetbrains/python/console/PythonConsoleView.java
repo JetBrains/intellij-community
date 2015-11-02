@@ -172,6 +172,10 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     myExecuteActionHandler.processLine(statement, true);
   }
 
+  public void printText(String text, final ConsoleViewContentType outputType) {
+    super.print(text, outputType);
+  }
+
   public void print(String text, @NotNull final Key attributes) {
     print(text, outputTypeForAttributes(attributes));
   }
