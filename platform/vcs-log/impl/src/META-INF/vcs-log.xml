@@ -35,6 +35,7 @@
     </group>
     <group id="Vcs.Log.ContextMenu">
       <reference id="Vcs.CopyRevisionNumberAction"/>
+      <reference id="Vcs.CopySubjectAction"/>
       <reference id="Vcs.Log.CreatePatch"/>
     </group>
 
