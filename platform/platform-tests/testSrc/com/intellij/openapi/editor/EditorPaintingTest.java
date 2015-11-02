@@ -58,7 +58,7 @@ public class EditorPaintingTest extends AbstractEditorTest {
 
   public void testBoxedHighlightingLastLinePartially() throws Exception {
     initText("foo\nbar bar");
-    addRangeHighlighter(2, 7, HighlighterLayer.WARNING, new TextAttributes(null, null, Color.red, EffectType.BOXED, Font.PLAIN));
+    addBorderHighlighter(2, 7, HighlighterLayer.WARNING, Color.red);
     checkResult();
   }
 
@@ -73,6 +73,12 @@ public class EditorPaintingTest extends AbstractEditorTest {
     initText("foo");
     ((EditorEx)myEditor).setHighlighter(new UniformHighlighter(new TextAttributes(null, Color.red, null, null, Font.PLAIN)));
     addRangeHighlighter(0, 3, 0, null, Color.blue);
+    checkResult();
+  }
+  
+  public void testEmptyBorderInEmptyDocument() throws Exception {
+    initText("");
+    addBorderHighlighter(0, 0, HighlighterLayer.WARNING, Color.red);
     checkResult();
   }
 
@@ -90,6 +96,10 @@ public class EditorPaintingTest extends AbstractEditorTest {
 
   private static void addLineHighlighter(int startOffset, int endOffset, int layer, TextAttributes textAttributes) {
     myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, textAttributes, HighlighterTargetArea.LINES_IN_RANGE);
+  }
+
+  private static void addBorderHighlighter(int startOffset, int endOffset, int layer, Color borderColor) {
+    addRangeHighlighter(startOffset, endOffset, layer, new TextAttributes(null, null, borderColor, EffectType.BOXED, Font.PLAIN));
   }
 
   @Override
