@@ -267,6 +267,8 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
 
   @Override
   public char charAt(int index) {
+    if (index < 0 || index >= length()) throw new IndexOutOfBoundsException("Index out of range: " + index);
+    
     if (myNode instanceof LeafNode) {
       return myNode.charAt(index);
     }
