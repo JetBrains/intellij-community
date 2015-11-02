@@ -386,7 +386,8 @@ public class RefactoringUtil {
   }
 
   public static PsiType getTypeByExpressionWithExpectedType(PsiExpression expr) {
-    PsiType type = getTypeByExpression(expr);
+    PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
+    PsiType type = getTypeByExpression(expr, factory);
     final boolean isFunctionalType = type instanceof PsiLambdaExpressionType || type instanceof PsiMethodReferenceType || type instanceof PsiLambdaParameterType;
     if (type != null && !isFunctionalType) {
       return type;
@@ -401,7 +402,13 @@ public class RefactoringUtil {
 
   public static PsiType getTypeByExpression(PsiExpression expr) {
     PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
-    return getTypeByExpression(expr, factory);
+    PsiType type = getTypeByExpression(expr, factory);
+    if (type instanceof PsiLambdaParameterType ||
+        type instanceof PsiLambdaExpressionType ||
+        type instanceof PsiMethodReferenceType) {
+      type = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, expr.getResolveScope());
+    }
+    return type;
   }
 
   private static PsiType getTypeByExpression(PsiExpression expr, final PsiElementFactory factory) {
@@ -414,12 +421,6 @@ public class RefactoringUtil {
       else {
         type = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, expr.getResolveScope());
       }
-    }
-
-    if (type instanceof PsiLambdaParameterType ||
-        type instanceof PsiLambdaExpressionType ||
-        type instanceof PsiMethodReferenceType) {
-      type = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, expr.getResolveScope());
     }
 
     return type;
