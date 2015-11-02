@@ -1024,7 +1024,7 @@ public class InferenceSession {
   }
 
   @Nullable
-  public static String getInferenceErrorMessage(PsiElement context) {
+  public static String getInferenceErrorMessage(@NotNull PsiElement context) {
     final List<String> errors = context.getUserData(INFERENCE_FAILURE_MESSAGE);
     if (errors != null) {
       return StringUtil.join(errors, "\n");

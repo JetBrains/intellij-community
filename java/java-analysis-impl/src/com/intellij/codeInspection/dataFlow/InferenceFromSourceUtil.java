@@ -16,9 +16,9 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.*;
@@ -30,12 +30,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public class InferenceFromSourceUtil {
   static boolean shouldInferFromSource(@NotNull final PsiMethod method) {
+    if (method instanceof SyntheticElement || method instanceof LightElement) return false;
+
     return CachedValuesManager.getCachedValue(method, new CachedValueProvider<Boolean>() {
       @Nullable
       @Override
       public Result<Boolean> compute() {
-        if (method instanceof SyntheticElement) return Result.create(false, ModificationTracker.NEVER_CHANGED);
-
         return Result.create(calcShouldInferFromSource(method), method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       }
     });
