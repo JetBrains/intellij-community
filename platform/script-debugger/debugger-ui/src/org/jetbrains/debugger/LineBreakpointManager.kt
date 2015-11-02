@@ -16,6 +16,7 @@
 package org.jetbrains.debugger
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.util.Ref
 import com.intellij.util.SmartList
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
@@ -113,14 +114,14 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
     return Promise.all(promises)
   }
 
-  fun setBreakpoint(breakpoint: XLineBreakpoint<*>, locations: List<Location>) {
+  fun setBreakpoint(breakpoint: XLineBreakpoint<*>, locations: List<Location>, promiseRef: Ref<Promise<out Breakpoint>>? = null) {
     if (locations.isEmpty()) {
       return
     }
 
     val vmBreakpoints = SmartList<Breakpoint>()
     for (location in locations) {
-      vmBreakpoints.add(doSetBreakpoint(breakpoint, location, false))
+      vmBreakpoints.add(doSetBreakpoint(breakpoint, location, false, promiseRef))
     }
     synchronized (lock) {
       ideToVmBreakpoints.put(breakpoint, vmBreakpoints)
@@ -130,7 +131,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
     }
   }
 
-  protected fun doSetBreakpoint(breakpoint: XLineBreakpoint<*>?, location: Location, isTemporary: Boolean): Breakpoint {
+  protected fun doSetBreakpoint(breakpoint: XLineBreakpoint<*>?, location: Location, isTemporary: Boolean, promiseRef: Ref<Promise<out Breakpoint>>? = null): Breakpoint {
     if (breakpointResolvedListenerAdded.compareAndSet(false, true)) {
       breakpointManager.addBreakpointListener(object : BreakpointListener {
         override fun resolved(breakpoint: Breakpoint) {
@@ -151,11 +152,12 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
             return
           }
 
-          synchronized (lock) { vmToIdeBreakpoints[breakpoint] }?.let {
-            for (ideBreakpoint in it) {
-              debugProcess.session.updateBreakpointPresentation(ideBreakpoint, AllIcons.Debugger.Db_invalid_breakpoint, errorMessage)
+          synchronized (lock) { vmToIdeBreakpoints[breakpoint] }
+            ?.let {
+              for (ideBreakpoint in it) {
+                debugProcess.session.updateBreakpointPresentation(ideBreakpoint, AllIcons.Debugger.Db_invalid_breakpoint, errorMessage)
+              }
             }
-          }
         }
 
         override fun nonProvisionalBreakpointRemoved(breakpoint: Breakpoint) {
@@ -179,7 +181,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
     val breakpointManager = breakpointManager
     val target = createTarget(breakpoint, breakpointManager, location, isTemporary)
     val condition = breakpoint?.conditionExpression
-    return breakpointManager.setBreakpoint(target, location.line, location.column, condition?.expression, Breakpoint.EMPTY_VALUE, true)
+    return breakpointManager.setBreakpoint(target, location.line, location.column, condition?.expression, promiseRef = promiseRef)
   }
 
   protected abstract fun createTarget(breakpoint: XLineBreakpoint<*>?, breakpointManager: BreakpointManager, location: Location, isTemporary: Boolean): BreakpointTarget

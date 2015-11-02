@@ -28,12 +28,7 @@ private class StaticFileHandler : WebServerFileHandler() {
         return true
       }
 
-      if (hasAccess(ioFile)) {
-        FileResponses.sendFile(request, channel, ioFile)
-      }
-      else {
-        Responses.sendStatus(HttpResponseStatus.FORBIDDEN, channel, request)
-      }
+      sendIoFile(channel, ioFile, request)
     }
     else {
       val file = pathInfo.file!!
@@ -55,6 +50,7 @@ private class StaticFileHandler : WebServerFileHandler() {
         future.addListener(ChannelFutureListener.CLOSE)
       }
     }
+
     return true
   }
 
@@ -92,7 +88,16 @@ private class StaticFileHandler : WebServerFileHandler() {
       future.addListener(ChannelFutureListener.CLOSE)
     }
   }
-
-  // deny access to .htaccess files
-  private fun hasAccess(result: File) = !result.isDirectory && result.canRead() && !(result.isHidden || result.name.startsWith(".ht"))
 }
+
+fun sendIoFile(channel: Channel, ioFile: File, request: HttpRequest) {
+  if (hasAccess(ioFile)) {
+    FileResponses.sendFile(request, channel, ioFile)
+  }
+  else {
+    Responses.sendStatus(HttpResponseStatus.FORBIDDEN, channel, request)
+  }
+}
+
+// deny access to .htaccess files
+private fun hasAccess(result: File) = !result.isDirectory && result.canRead() && !(result.isHidden || result.name.startsWith(".ht"))
