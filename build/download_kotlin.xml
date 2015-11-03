@@ -8,6 +8,8 @@
   <property name="kotlin.teamcity.host" value="${kotlin.public.teamcity.host}"/>
 
   <target name="get_latest">
+    <echo message="This script is deprecated, use download_kotlin.gant instead"/>
+
     <loadresource property="kotlin.build.number" failonerror="false">
       <url url="${kotlin.teamcity.host}/guestAuth/app/rest/buildTypes/id:${kotlin.build.type.id}/builds/${kotlin.build.selector},count:1/number"/>
     </loadresource>
