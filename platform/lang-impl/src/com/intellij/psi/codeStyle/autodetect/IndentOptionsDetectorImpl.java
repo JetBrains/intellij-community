@@ -74,15 +74,12 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
   }
 
   private void adjustIndentOptions(@NotNull IndentOptions indentOptions, @NotNull IndentUsageStatistics stats) {
-    int linesWithTabs = stats.getTotalLinesWithLeadingTabs();
-    int linesWithWhiteSpaceIndent = stats.getTotalLinesWithLeadingSpaces();
-
-    if (linesWithTabs > linesWithWhiteSpaceIndent) {
+    if (isTabsUsed(stats)) {
       setUseTabs(indentOptions, true);
       indentOptions.INDENT_SIZE = indentOptions.TAB_SIZE;
       indentOptions.CONTINUATION_INDENT_SIZE = indentOptions.TAB_SIZE * 2;
     }
-    else if (linesWithWhiteSpaceIndent > linesWithTabs) {
+    else if (isSpacesUsed(stats)) {
       setUseTabs(indentOptions, false);
 
       int newIndentSize = getPositiveIndentSize(stats);
@@ -93,6 +90,16 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
         }
       }
     }
+  }
+
+  private static boolean isSpacesUsed(IndentUsageStatistics stats) {
+    int spaces = stats.getTotalLinesWithLeadingSpaces();
+    int total = stats.getTotalLinesWithLeadingSpaces() + stats.getTotalLinesWithLeadingTabs();
+    return (double)spaces / total > RATE_THRESHOLD;
+  }
+
+  private static boolean isTabsUsed(IndentUsageStatistics stats) {
+    return stats.getTotalLinesWithLeadingTabs() > stats.getTotalLinesWithLeadingSpaces();
   }
 
   private void setUseTabs(@NotNull IndentOptions indentOptions, boolean useTabs) {
