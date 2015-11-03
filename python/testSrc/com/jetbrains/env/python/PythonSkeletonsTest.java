@@ -175,6 +175,24 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
     });
   }
 
+  // PY-17282
+  public void testBinaryStandardModule() {
+    runTest(new SkeletonsTask() {
+      @Override
+      protected void runTestOn(@NotNull Sdk sdk) {
+        myFixture.configureByFile(getTestName(false) + ".py");
+        myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+
+        edt(new Runnable() {
+          @Override
+          public void run() {
+            myFixture.checkHighlighting(true, false, false);
+          }
+        });
+      }
+    });
+  }
+
 
   private void runTest(@NotNull PyTestTask task) {
     runPythonTest(task);
