@@ -353,7 +353,7 @@ public final class UpdateChecker {
       }
 
       if (descriptor != null &&
-          !PluginManagerCore.isIncompatible(descriptor, downloader.getBuildNumber()) &&
+          PluginManagerCore.isCompatible(descriptor, downloader.getBuildNumber()) &&
           !state.wasUpdated(descriptor.getPluginId())) {
         toUpdate.put(PluginId.getId(pluginId), downloader);
       }
