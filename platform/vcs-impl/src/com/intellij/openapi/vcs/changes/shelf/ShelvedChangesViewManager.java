@@ -42,6 +42,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
@@ -461,6 +462,8 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private static class ShelfTreeCellRenderer extends ColoredTreeCellRenderer {
     private final IssueLinkRenderer myIssueLinkRenderer;
     private final Map<Couple<String>, String> myMoveRenameInfo;
+    private static final Icon PatchIcon = StdFileTypes.PATCH.getIcon();
+    private static final Icon DisabledPatchIcon = IconLoader.getDisabledIcon(PatchIcon);
 
     public ShelfTreeCellRenderer(Project project, final Map<Couple<String>, String> moveRenameInfo) {
       myMoveRenameInfo = moveRenameInfo;
@@ -474,8 +477,11 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         ShelvedChangeList changeListData = (ShelvedChangeList) nodeValue;
         if (changeListData.isRecycled()) {
           myIssueLinkRenderer.appendTextWithLinks(changeListData.DESCRIPTION, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
-        } else {
+          setIcon(DisabledPatchIcon);
+        }
+        else {
           myIssueLinkRenderer.appendTextWithLinks(changeListData.DESCRIPTION);
+          setIcon(PatchIcon);
         }
         int count = node.getChildCount();
         String numFilesText = spaceAndThinSpace() + count + " " + StringUtil.pluralize("file", count) + ",";
@@ -483,7 +489,6 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         
         String date = DateFormatUtil.formatPrettyDateTime(changeListData.DATE);
         append(" " + date, SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        setIcon(StdFileTypes.PATCH.getIcon());
       }
       else if (nodeValue instanceof ShelvedChange) {
         ShelvedChange change = (ShelvedChange) nodeValue;
