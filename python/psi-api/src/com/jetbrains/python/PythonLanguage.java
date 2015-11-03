@@ -21,16 +21,19 @@ import com.intellij.lang.Language;
  * @author yole
  */
 public class PythonLanguage extends Language {
+
+  public static final PythonLanguage INSTANCE = new PythonLanguage();
+
   public static PythonLanguage getInstance() {
-    return (PythonLanguage)PythonFileType.INSTANCE.getLanguage();
+    return INSTANCE;
+  }
+
+  protected PythonLanguage() {
+    super("Python");
   }
 
   @Override
   public boolean isCaseSensitive() {
     return true; // http://jetbrains-feed.appspot.com/message/372001
-  }
-
-  protected PythonLanguage() {
-    super("Python");
   }
 }
