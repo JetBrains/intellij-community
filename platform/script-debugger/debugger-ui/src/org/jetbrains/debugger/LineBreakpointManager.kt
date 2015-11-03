@@ -18,6 +18,8 @@ package org.jetbrains.debugger
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.Ref
 import com.intellij.util.SmartList
+import com.intellij.util.containers.putValue
+import com.intellij.util.containers.remove
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import gnu.trove.THashMap
@@ -237,23 +239,5 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
     for (breakpoint in breakpoints) {
       breakpointManager.remove(breakpoint)
     }
-  }
-}
-
-internal fun <K, V> MutableMap<K, MutableList<V>>.remove(key: K, value: V) {
-  var list = get(key)
-  if (list != null && list.remove(value) && list.isEmpty()) {
-    remove(key)
-  }
-}
-
-internal fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
-  var list = get(key)
-  if (list == null) {
-    list = SmartList<V>(value)
-    put(key, list)
-  }
-  else {
-    list.add(value)
   }
 }
