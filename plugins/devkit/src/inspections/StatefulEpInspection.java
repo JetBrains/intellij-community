@@ -40,23 +40,15 @@ public class StatefulEpInspection extends DevKitInspectionBase {
     if (isQuickFix || shouldCheck(psiClass)) {
       List<ProblemDescriptor> result = ContainerUtil.newArrayList();
       for (final PsiField field : fields) {
-        Checker projectChecker = new Checker(Project.class) {
-          @Override
-          boolean predicate() {
-            return !field.hasModifierProperty(PsiModifier.FINAL);
+        for (Class c : new Class[]{PsiElement.class, PsiReference.class, Project.class}) {
+          if (c == Project.class && field.hasModifierProperty(PsiModifier.FINAL)) continue;
+          String message = c == PsiElement.class
+                           ? "Potential memory leak: don't hold PsiElement, use SmartPsiElementPointer instead" +
+                             (isQuickFix ? "; also see LocalQuickFixOnPsiElement" : "")
+                           : "Don't use " + c.getSimpleName() + " as a field in extension";
+          if (InheritanceUtil.isInheritor(field.getType(), c.getCanonicalName())) {
+            result.add(manager.createProblemDescriptor(field, message, true, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly));
           }
-        };
-        Checker psiChecker = new Checker(PsiElement.class) {
-          @NotNull
-          @Override
-          String getMessage() {
-            return "Potential memory leak: don't hold PsiElement, use SmartPsiElementPointer instead of" +
-                   (isQuickFix ? "; also see LocalQuickFixOnPsiElement" : "");
-          }
-        };
-        Checker refChecker = new Checker(PsiReference.class);
-        for (Checker checker : new Checker[]{projectChecker, psiChecker, refChecker}) {
-          checker.check(field, manager, isOnTheFly, result);
         }
       }
       return result.toArray(new ProblemDescriptor[result.size()]);
@@ -69,30 +61,5 @@ public class StatefulEpInspection extends DevKitInspectionBase {
       if (ExtensionPointLocator.isImplementedEp(psiClass, candidate)) return true;
     }
     return false;
-  }
-
-  private static class Checker {
-    @NotNull Class myClass;
-
-    private Checker(@NotNull Class psiClass) {
-      myClass = psiClass;
-    }
-
-    private void check(@NotNull PsiField field, @NotNull InspectionManager manager, boolean isOnTheFly, @NotNull List<ProblemDescriptor> result) {
-      if (predicate() && InheritanceUtil.isInheritor(field.getType(), myClass.getCanonicalName())) {
-        String message = getMessage();
-        String actual = message.isEmpty() ? "Don't use " + myClass.getSimpleName() + " as a field in extension points" : message;
-        result.add(manager.createProblemDescriptor(field, actual, true, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly));
-      }
-    }
-
-    @NotNull
-    String getMessage() {
-      return "";
-    }
-
-    boolean predicate() {
-      return true;
-    }
   }
 }

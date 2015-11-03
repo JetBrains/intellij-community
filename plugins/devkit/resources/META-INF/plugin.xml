@@ -129,7 +129,7 @@
     <localInspection language="JAVA" shortName="UnsafeReturnStatementVisitor" displayName="Unsafe return statements visitor"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UnsafeReturnStatementVisitorInspection" />
-    <localInspection language="JAVA" shortName="StatefulEp" displayName="Stateful EP"
+    <localInspection language="JAVA" shortName="StatefulEp" displayName="Stateful Extension"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.StatefulEpInspection"/>
