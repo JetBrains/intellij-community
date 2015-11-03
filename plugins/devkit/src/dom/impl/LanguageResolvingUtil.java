@@ -268,10 +268,14 @@ class LanguageResolvingUtil {
     final PsiClass clazz;
     final Icon icon;
     final String displayName;
+    final String type;
 
     LanguageDefinition(@NotNull String id, @NotNull PsiClass clazz, @Nullable Icon icon, @Nullable String displayName) {
       this.id = id;
       this.clazz = clazz;
+      this.type = clazz instanceof PsiAnonymousClass
+                  ? ((PsiAnonymousClass)clazz).getBaseClassReference().getQualifiedName()
+                  : clazz.getQualifiedName();
       this.icon = icon;
       this.displayName = displayName;
     }

@@ -16,6 +16,8 @@
 package org.jetbrains.idea.devkit.codeInsight
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PluginPathManager
@@ -35,9 +37,7 @@ import com.intellij.util.xmlb.annotations.AbstractCollection
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection
 import org.jetbrains.idea.devkit.util.PsiUtil
-/**
- * @author peter
- */
+
 @TestDataPath("\$CONTENT_ROOT/testData/codeInsight")
 public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
@@ -233,7 +233,31 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.testHighlighting("extensionWithInnerTags.xml", "ExtBeanWithInnerTags.java");
   }
 
-  public void testLanguageAttribute() {
+  public void testLanguageAttributeHighlighting() {
+    configureLanguageAttributeTest()
+    myFixture.testHighlighting("languageAttribute.xml", "MyLanguageAttributeEPBean.java")
+  }
+  
+  public void testLanguageAttributeCompletion() {
+    configureLanguageAttributeTest()
+    myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyLanguageAttributeEPBean.java"));
+    myFixture.configureByFile("languageAttribute.xml")
+
+
+    def lookupElements = myFixture.complete(CompletionType.BASIC).sort { it.lookupString }
+    assertLookupElement(lookupElements[0], "MyAnonymousLanguageID", "MyLanguage.MySubLanguage")
+    assertLookupElement(lookupElements[1], "MyAnonymousLanguageWithNameFromBundleID", "MyLanguage")
+    assertLookupElement(lookupElements[2], "MyLanguageID", "MyLanguage")
+  }
+  
+  private static void assertLookupElement(LookupElement element, String lookupString, String typeText) {
+    def presentation = new LookupElementPresentation()
+    element.renderElement(presentation)
+    assert presentation.itemText == lookupString
+    assert presentation.typeText == typeText
+  }
+
+  private void configureLanguageAttributeTest() {
     myFixture.addClass("package com.intellij.lang; " +
                        "public class Language { " +
                        "  protected Language(String id) {}" +
@@ -253,10 +277,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                        "}")
     myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyLanguage.java"))
     myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyBundle.java"))
-    myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyBundle.properties"));
-    
-    myFixture.testHighlighting("languageAttribute.xml", 
-                               "MyLanguageAttributeEPBean.java")
+    myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyBundle.properties"))
   }
 
   public void testIconAttribute() {

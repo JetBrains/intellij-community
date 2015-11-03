@@ -42,7 +42,7 @@ class LanguageResolvingConverter extends ResolvingConverter<LanguageResolvingUti
     return LookupElementBuilder.create(o.clazz, o.id)
       .withIcon(o.icon)
       .withTailText(o.displayName == null ? null : " (" + o.displayName + ")")
-      .withTypeText(o.clazz.getQualifiedName(), true);
+      .withTypeText(o.type, true);
   }
 
   @Nullable

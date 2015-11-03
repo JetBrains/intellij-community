@@ -9,7 +9,7 @@
 
   <extensions defaultExtensionNs="com.intellij.myPlugin">
 
-    <myLanguageEP language="MyLanguageID"/>
+    <myLanguageEP language="My<caret>LanguageID"/>
     <myLanguageEP language="MyAnonymousLanguageID"/>
     <myLanguageEP language="MyAnonymousLanguageWithNameFromBundleID"/>
 
