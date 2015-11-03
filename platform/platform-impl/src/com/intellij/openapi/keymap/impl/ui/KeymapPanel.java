@@ -453,13 +453,11 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   }
 
   private void filterTreeByShortcut(Shortcut shortcut) {
-    if (shortcut != null) {
-      myTreeExpansionMonitor.freeze();
-      myActionsTree.filterTree(shortcut, myQuickLists);
-      final JTree tree = myActionsTree.getTree();
-      TreeUtil.expandAll(tree);
-      myTreeExpansionMonitor.restore();
-    }
+    myTreeExpansionMonitor.freeze();
+    myActionsTree.filterTree(shortcut, myQuickLists);
+    final JTree tree = myActionsTree.getTree();
+    TreeUtil.expandAll(tree);
+    myTreeExpansionMonitor.restore();
   }
 
   public void showOption(String option) {

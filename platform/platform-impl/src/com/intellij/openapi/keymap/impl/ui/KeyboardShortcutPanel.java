@@ -73,7 +73,7 @@ final class KeyboardShortcutPanel extends JPanel {
 
   void setShortcut(KeyboardShortcut shortcut) {
     Shortcut old = myShortcut;
-    if (old != null || shortcut != null) {
+    if (old == null || !old.equals(shortcut)) {
       myShortcut = shortcut;
       myFirstStroke.setKeyStroke(shortcut == null ? null : shortcut.getFirstKeyStroke());
       mySecondStroke.setKeyStroke(shortcut == null ? null : shortcut.getSecondKeyStroke());

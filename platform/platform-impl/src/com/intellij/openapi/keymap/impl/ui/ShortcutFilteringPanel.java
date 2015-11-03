@@ -57,8 +57,12 @@ final class ShortcutFilteringPanel extends JPanel {
     }
   };
   private final PropertyChangeListener myPropertyListener = new PropertyChangeListener() {
+    private volatile boolean myInternal;
+
     @Override
     public void propertyChange(PropertyChangeEvent event) {
+      boolean internal = myInternal;
+      myInternal = true;
       Object value = event.getNewValue();
       if (ShortcutFilteringPanel.this == event.getSource()) {
         if (value instanceof KeyboardShortcut) {
@@ -85,6 +89,10 @@ final class ShortcutFilteringPanel extends JPanel {
       else if (value instanceof Shortcut) {
         setShortcut((Shortcut)value);
       }
+      else if (!internal) {
+        setShortcut(null);
+      }
+      myInternal = internal;
     }
   };
 
@@ -137,7 +145,6 @@ final class ShortcutFilteringPanel extends JPanel {
         .setMovable(true)
         .createPopup();
     }
-    myKeyboardPanel.mySecondStrokeEnable.setSelected(false);
     myPopup.showUnderneathOf(component);
   }
 

@@ -22,6 +22,7 @@
  */
 package com.intellij.openapi.keymap.impl.ui;
 
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.KeyStrokeAdapter;
 
@@ -65,7 +66,8 @@ public class ShortcutTextField extends JTextField {
     KeyStroke old = myKeyStroke;
     if (old != null || keyStroke != null) {
       myKeyStroke = keyStroke;
-      setText(KeyboardShortcutDialog.getTextByKeyStroke(keyStroke));
+      super.setText(KeymapUtil.getKeystrokeText(keyStroke));
+      setCaretPosition(0);
       updateCurrentKeyStrokeInfo();
       firePropertyChange("keyStroke", old, keyStroke);
     }
@@ -87,5 +89,9 @@ public class ShortcutTextField extends JTextField {
   public void setText(String text) {
     super.setText(text);
     setCaretPosition(0);
+    if (text == null || text.isEmpty()) {
+      myKeyStroke = null;
+      firePropertyChange("keyStroke", null, null);
+    }
   }
 }
