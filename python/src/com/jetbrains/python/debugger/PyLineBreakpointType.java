@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.debugger;
 
-import com.intellij.ide.scratch.ScratchFileType;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -70,7 +70,7 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
   }
 
   private static boolean isPythonScratch(@NotNull Project project, @NotNull VirtualFile file) {
-    return ScratchFileType.getScratchLanguage(project, file) == PythonLanguage.getInstance();
+    return ScratchUtil.isScratch(file) && ScratchUtil.getLanguage(project, file) == PythonLanguage.getInstance();
   }
 
   private static boolean notStoppableElementType(IElementType elementType) {

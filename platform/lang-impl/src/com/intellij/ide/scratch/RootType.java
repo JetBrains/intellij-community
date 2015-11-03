@@ -24,7 +24,6 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.LanguageSubstitutors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,7 +81,7 @@ public abstract class RootType {
 
   @Nullable
   public Language substituteLanguage(@NotNull Project project, @NotNull VirtualFile file) {
-    return substituteLanguageImpl(ScratchFileType.getScratchLanguageFromFileName(file), file, project);
+    return null;
   }
 
   @Nullable
@@ -105,12 +104,6 @@ public abstract class RootType {
   }
 
   public void fileClosed(@NotNull VirtualFile file, @NotNull FileEditorManager source) {
-  }
-
-  @Nullable
-  protected static Language substituteLanguageImpl(Language language, VirtualFile file, Project project) {
-    return language != null && language != ScratchFileType.INSTANCE.getLanguage() ?
-           LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, project) : language;
   }
 
   public boolean isIgnored(@NotNull Project project, @NotNull VirtualFile element) {
