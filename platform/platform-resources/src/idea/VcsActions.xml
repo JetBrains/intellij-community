@@ -150,13 +150,14 @@
               use-shortcut-of="RenameElement"/>
       <reference ref="$Delete"/>
       <separator/>
-      <action id="ShelvedChanges.ShowHideDeleted" class="com.intellij.openapi.vcs.changes.shelf.ShowHideRecycledAction" />
       <action id="ShelvedChanges.DeleteDeleted" class="com.intellij.openapi.vcs.changes.shelf.DeleteAlreadyUnshelvedAction"/>
     </group>
 
     <group id="ShelvedChangesToolbar">
       <reference ref="ShelvedChanges.Diff"/>
       <reference ref="ChangesView.CreatePatchFromChanges"/>
+      <action id="ShelvedChanges.ShowHideDeleted" class="com.intellij.openapi.vcs.changes.shelf.ShowHideRecycledAction"
+              icon="AllIcons.Nodes.Pointcut" description="Show/Hide Already Unshelved"/>
     </group>
 
     <group id="ShelvedChangesToolbarGear" popup="true" icon="AllIcons.General.SecondaryGroup">
@@ -168,7 +169,6 @@
       <reference ref="ShelvedChanges.Rename" />
       <reference ref="$Delete" />
       <separator/>
-      <reference ref="ShelvedChanges.ShowHideDeleted" />
       <reference ref="ShelvedChanges.DeleteDeleted" />
     </group>
 
