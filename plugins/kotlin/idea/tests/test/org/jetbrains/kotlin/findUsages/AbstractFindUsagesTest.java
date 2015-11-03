@@ -61,7 +61,7 @@ import org.jetbrains.kotlin.idea.test.PluginTestCaseBase;
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil;
 import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.test.InTextDirectivesUtils;
-import org.jetbrains.kotlin.test.JetTestUtils;
+import org.jetbrains.kotlin.test.KotlinTestUtils;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -70,7 +70,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public abstract class AbstractJetFindUsagesTest extends JetLightCodeInsightFixtureTestCase {
+public abstract class AbstractFindUsagesTest extends JetLightCodeInsightFixtureTestCase {
 
     public static final UsageViewPresentation USAGE_VIEW_PRESENTATION = new UsageViewPresentation();
 
@@ -430,7 +430,7 @@ public abstract class AbstractJetFindUsagesTest extends JetLightCodeInsightFixtu
         };
 
         Collection<String> finalUsages = Ordering.natural().sortedCopy(Collections2.transform(filteredUsages, convertToString));
-        JetTestUtils.assertEqualsToFile(new File(rootPath, prefix + "results.txt"), StringUtil.join(finalUsages, "\n"));
+        KotlinTestUtils.assertEqualsToFile(new File(rootPath, prefix + "results.txt"), StringUtil.join(finalUsages, "\n"));
     }
 
     protected Collection<UsageInfo> findUsages(

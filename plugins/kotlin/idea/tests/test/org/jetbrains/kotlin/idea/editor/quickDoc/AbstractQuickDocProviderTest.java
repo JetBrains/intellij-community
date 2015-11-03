@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.test.util.JetTestUtilsKt;
 import java.io.File;
 import java.util.List;
 
-public abstract class AbstractJetQuickDocProviderTest extends JetLightCodeInsightFixtureTestCase {
+public abstract class AbstractQuickDocProviderTest extends JetLightCodeInsightFixtureTestCase {
     public void doTest(@NotNull String path) throws Exception {
         JetTestUtilsKt.configureWithExtraFile(myFixture, path, "_Data");
 

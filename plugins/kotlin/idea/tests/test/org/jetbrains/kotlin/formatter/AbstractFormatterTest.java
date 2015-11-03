@@ -35,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.KotlinLanguage;
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase;
 import org.jetbrains.kotlin.test.InTextDirectivesUtils;
-import org.jetbrains.kotlin.test.JetTestUtils;
+import org.jetbrains.kotlin.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.SettingsConfigurator;
 
 import java.io.File;
@@ -44,7 +44,7 @@ import java.util.Map;
 
 // Based on from com.intellij.psi.formatter.java.AbstractJavaFormatterTest
 @SuppressWarnings("UnusedDeclaration")
-public abstract class AbstractJetFormatterTest extends LightIdeaTestCase {
+public abstract class AbstractFormatterTest extends LightIdeaTestCase {
 
     protected enum Action {REFORMAT, INDENT}
 
@@ -124,9 +124,9 @@ public abstract class AbstractJetFormatterTest extends LightIdeaTestCase {
             fail("Don't expect the document to be null");
             return;
         }
-        JetTestUtils.assertEqualsToFile(fileAfter, document.getText());
+        KotlinTestUtils.assertEqualsToFile(fileAfter, document.getText());
         manager.commitDocument(document);
-        JetTestUtils.assertEqualsToFile(fileAfter, file.getText());
+        KotlinTestUtils.assertEqualsToFile(fileAfter, file.getText());
     }
 
     public void doTest(@NotNull String expectedFileNameWithExtension) throws Exception {

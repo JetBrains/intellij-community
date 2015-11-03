@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.idea.test.JetLightCodeInsightFixtureTestCase;
 
 import java.io.File;
 
-public abstract class AbstractJetPsiCheckerTest extends JetLightCodeInsightFixtureTestCase {
+public abstract class AbstractPsiCheckerTest extends JetLightCodeInsightFixtureTestCase {
     public void doTest(@NotNull String filePath) throws Exception {
         myFixture.configureByFile(filePath);
         checkHighlighting(true, false, false);

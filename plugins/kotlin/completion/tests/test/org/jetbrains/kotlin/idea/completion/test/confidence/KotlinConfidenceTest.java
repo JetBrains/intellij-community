@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.test.InTextDirectivesUtils;
 
 import java.io.File;
 
-public class JetConfidenceTest extends LightCompletionTestCase {
+public class KotlinConfidenceTest extends LightCompletionTestCase {
     private static final String TYPE_DIRECTIVE_PREFIX = "// TYPE:";
 
     public void testCompleteOnDotOutOfRanges() {

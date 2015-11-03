@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class AbstractJetSafeDeleteTest extends JetLightCodeInsightFixtureTestCase {
+public abstract class AbstractSafeDeleteTest extends JetLightCodeInsightFixtureTestCase {
     @NotNull
     @Override
     protected LightProjectDescriptor getProjectDescriptor() {

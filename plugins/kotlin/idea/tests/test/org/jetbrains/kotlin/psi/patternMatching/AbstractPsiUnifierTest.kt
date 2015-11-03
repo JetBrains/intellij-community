@@ -25,14 +25,14 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiUnifier
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.toRange
 import java.io.File
-import org.jetbrains.kotlin.test.JetTestUtils
+import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.KtWhenCondition
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
-public abstract class AbstractJetPsiUnifierTest: JetLightCodeInsightFixtureTestCase() {
+public abstract class AbstractPsiUnifierTest : JetLightCodeInsightFixtureTestCase() {
     public fun doTest(filePath: String) {
         fun findPattern(file: KtFile): KtElement {
             val selectionModel = myFixture.getEditor().getSelectionModel()
@@ -56,7 +56,7 @@ public abstract class AbstractJetPsiUnifierTest: JetLightCodeInsightFixtureTestC
                         .match(file, KotlinPsiUnifier.DEFAULT)
                         .map { it.range.getTextRange().substring(file.getText()!!) }
                         .joinToString("\n\n")
-        JetTestUtils.assertEqualsToFile(File("$filePath.match"), actualText)
+        KotlinTestUtils.assertEqualsToFile(File("$filePath.match"), actualText)
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor = getProjectDescriptorFromTestName()

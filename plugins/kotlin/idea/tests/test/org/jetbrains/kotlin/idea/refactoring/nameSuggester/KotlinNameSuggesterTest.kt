@@ -25,10 +25,9 @@ import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.test.JetTestUtils
-import kotlin.test.assertEquals
+import org.jetbrains.kotlin.test.KotlinTestUtils
 
-public class JetNameSuggesterTest : LightCodeInsightFixtureTestCase() {
+public class KotlinNameSuggesterTest : LightCodeInsightFixtureTestCase() {
     public fun testArrayList() { doTest() }
 
     public fun testGetterSure() { doTest() }
@@ -65,7 +64,7 @@ public class JetNameSuggesterTest : LightCodeInsightFixtureTestCase() {
     private fun doTest() {
         myFixture.configureByFile(getTestName(false) + ".kt")
         val file = myFixture.getFile() as KtFile
-        val expectedResultText = JetTestUtils.getLastCommentInFile(file)
+        val expectedResultText = KotlinTestUtils.getLastCommentInFile(file)
         try {
             JetRefactoringUtil.selectExpression(myFixture.getEditor(), file, object : JetRefactoringUtil.SelectExpressionCallback {
                 override fun run(expression: KtExpression?) {

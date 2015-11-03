@@ -35,12 +35,12 @@ import org.jetbrains.kotlin.idea.test.JetLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.JetTestUtils
+import org.jetbrains.kotlin.test.KotlinTestUtils
 import java.io.File
 import kotlin.test.assertFalse
 import java.util.*
 
-public abstract class AbstractJetInspectionTest: JetLightCodeInsightFixtureTestCase() {
+public abstract class AbstractInspectionTest : JetLightCodeInsightFixtureTestCase() {
     companion object {
         val ENTRY_POINT_ANNOTATION = "test.anno.EntryPoint"
     }
@@ -68,7 +68,7 @@ public abstract class AbstractJetInspectionTest: JetLightCodeInsightFixtureTestC
         val srcDir = inspectionsTestDir.getParentFile()!!
 
         with(myFixture) {
-            setTestDataPath("${JetTestUtils.getHomeDirectory()}/$srcDir")
+            setTestDataPath("${KotlinTestUtils.getHomeDirectory()}/$srcDir")
 
             val afterFiles = srcDir.listFiles { it.name == "inspectionData" }?.single()?.listFiles { it.extension == "after" } ?: emptyArray()
             val psiFiles = srcDir.walkTopDown().filter { it.name != "inspectionData" }.map {
@@ -133,7 +133,7 @@ public abstract class AbstractJetInspectionTest: JetLightCodeInsightFixtureTestC
 
                     for (filePath in afterFiles) {
                         val kotlinFile = psiFiles.first { filePath.name == it.name + ".after" }
-                        JetTestUtils.assertEqualsToFile(filePath, kotlinFile.text)
+                        KotlinTestUtils.assertEqualsToFile(filePath, kotlinFile.text)
                     }
                 }
 

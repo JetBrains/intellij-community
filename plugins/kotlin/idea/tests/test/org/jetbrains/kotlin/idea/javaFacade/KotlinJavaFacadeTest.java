@@ -24,13 +24,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.asJava.KtLightClass;
 import org.jetbrains.kotlin.asJava.KtLightMethod;
 import org.jetbrains.kotlin.asJava.LightClassUtil;
-import org.jetbrains.kotlin.idea.test.JetLightCodeInsightFixtureTestCase;
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.idea.test.JetLightProjectDescriptor;
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase;
 import org.jetbrains.kotlin.name.SpecialNames;
 import org.jetbrains.kotlin.psi.*;
 
-public class JetJavaFacadeTest extends JetLightCodeInsightFixtureTestCase {
+public class KotlinJavaFacadeTest extends KotlinLightCodeInsightFixtureTestCase {
     @NotNull
     @Override
     protected LightProjectDescriptor getProjectDescriptor() {

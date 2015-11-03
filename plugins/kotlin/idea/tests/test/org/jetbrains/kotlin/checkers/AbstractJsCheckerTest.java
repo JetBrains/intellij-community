@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.test.JetLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.idea.test.KotlinStdJSProjectDescriptor;
 
-public abstract class AbstractJetJsCheckerTest extends JetLightCodeInsightFixtureTestCase {
+public abstract class AbstractJsCheckerTest extends JetLightCodeInsightFixtureTestCase {
     @NotNull
     @Override
     protected LightProjectDescriptor getProjectDescriptor() {

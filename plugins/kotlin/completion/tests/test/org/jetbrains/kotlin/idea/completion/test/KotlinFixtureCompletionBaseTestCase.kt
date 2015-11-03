@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.idea.test.JetLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.resolve.TargetPlatform
 import java.io.File
 
-public abstract class JetFixtureCompletionBaseTestCase : JetLightCodeInsightFixtureTestCase() {
+public abstract class KotlinFixtureCompletionBaseTestCase : JetLightCodeInsightFixtureTestCase() {
     public abstract fun getPlatform(): TargetPlatform
 
     protected open fun complete(completionType: CompletionType, invocationCount: Int): Array<LookupElement>?

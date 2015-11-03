@@ -23,12 +23,12 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.test.JetTestUtils;
+import org.jetbrains.kotlin.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.SettingsConfigurator;
 
 import java.io.File;
 
-public abstract class AbstractJetTypingIndentationTestBase extends LightCodeInsightTestCase {
+public abstract class AbstractTypingIndentationTestBase extends LightCodeInsightTestCase {
     public void doNewlineTest(String afterFilePath) throws Exception {
         doNewlineTest(afterFilePath, false);
     }
@@ -68,7 +68,7 @@ public abstract class AbstractJetTypingIndentationTestBase extends LightCodeInsi
         int offset = caretModel.getOffset();
         String actualTextWithCaret = new StringBuilder(getFile().getText()).insert(offset, EditorTestUtil.CARET_TAG).toString();
 
-        JetTestUtils.assertEqualsToFile(new File(afterFilePath), actualTextWithCaret);
+        KotlinTestUtils.assertEqualsToFile(new File(afterFilePath), actualTextWithCaret);
     }
 
     public static CodeStyleSettings getSettings() {

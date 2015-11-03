@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.idea.test.KotlinMultiFileTestCase
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import java.io.File
 
-public abstract class AbstractJetMultiFileInspectionTest: KotlinMultiFileTestCase() {
+public abstract class AbstractMultiFileInspectionTest : KotlinMultiFileTestCase() {
     init {
         myDoCompare = false
     }

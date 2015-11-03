@@ -14,14 +14,19 @@
  * limitations under the License.
  */
 
-package org.jetbrains.kotlin.idea.test;
+package org.jetbrains.kotlin.checkers
 
-import org.jetbrains.kotlin.codegen.forTestCompile.ForTestCompileRuntime;
+import com.intellij.codeInspection.ex.EntryPointsManagerBase
 
-public class JetWithJdkAndRuntimeLightProjectDescriptor extends JetJdkAndLibraryProjectDescriptor {
-    protected JetWithJdkAndRuntimeLightProjectDescriptor() {
-        super(ForTestCompileRuntime.runtimeJarForTests());
+public class PsiCheckerCustomTest : AbstractPsiCheckerTest() {
+    public fun testNoUnusedParameterWhenCustom() {
+        val testAnnotation = "MyTestAnnotation"
+        EntryPointsManagerBase.getInstance(getProject()).ADDITIONAL_ANNOTATIONS.add(testAnnotation)
+        try {
+            doTest("idea/testData/checker/custom/noUnusedParameterWhenCustom.kt")
+        }
+        finally {
+            EntryPointsManagerBase.getInstance(getProject()).ADDITIONAL_ANNOTATIONS.remove(testAnnotation)
+        }
     }
-
-    public static final JetWithJdkAndRuntimeLightProjectDescriptor INSTANCE = new JetWithJdkAndRuntimeLightProjectDescriptor();
 }

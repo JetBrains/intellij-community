@@ -22,25 +22,15 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-
-public class JetJdkAndLibraryProjectDescriptor extends JetLightProjectDescriptor {
-    public static final String LIBRARY_NAME = "myLibrary";
-
-    private final File libraryFile;
-
-    public JetJdkAndLibraryProjectDescriptor(File libraryFile) {
-        assert libraryFile.exists() : "Library file doesn't exist: " + libraryFile.getAbsolutePath();
-        this.libraryFile = libraryFile;
+public class KotlinLightProjectDescriptor extends LightProjectDescriptor {
+    protected KotlinLightProjectDescriptor() {
     }
-
+    
+    public static final KotlinLightProjectDescriptor INSTANCE = new KotlinLightProjectDescriptor();
+    
     @Override
     public ModuleType getModuleType() {
         return StdModuleTypes.JAVA;
@@ -52,11 +42,10 @@ public class JetJdkAndLibraryProjectDescriptor extends JetLightProjectDescriptor
     }
 
     @Override
-    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model) {
-        NewLibraryEditor editor = new NewLibraryEditor();
-        editor.setName(LIBRARY_NAME);
-        editor.addRoot(VfsUtil.getUrlForLibraryRoot(libraryFile), OrderRootType.CLASSES);
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+        configureModule(module, model);
+    }
 
-        ConfigLibraryUtil.addLibrary(editor, model);
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model) {
     }
 }

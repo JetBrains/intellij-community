@@ -54,10 +54,10 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
-import org.jetbrains.kotlin.test.JetTestUtils
+import org.jetbrains.kotlin.test.KotlinTestUtils
 import java.io.File
 
-public abstract class AbstractJetMoveTest : KotlinMultiFileTestCase() {
+public abstract class AbstractMoveTest : KotlinMultiFileTestCase() {
     protected fun doTest(path: String) {
         val config = JsonParser().parse(FileUtil.loadFile(File(path), true)) as JsonObject
 
@@ -95,7 +95,7 @@ public abstract class AbstractJetMoveTest : KotlinMultiFileTestCase() {
                 assert(!conflictFile.exists())
             }
             catch(e: ConflictsInTestsException) {
-                JetTestUtils.assertEqualsToFile(conflictFile, e.getMessages().sorted().joinToString("\n"))
+                KotlinTestUtils.assertEqualsToFile(conflictFile, e.getMessages().sorted().joinToString("\n"))
             }
             finally {
                 PsiDocumentManager.getInstance(getProject()!!).commitAllDocuments()

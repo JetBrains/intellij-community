@@ -20,17 +20,24 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
+import com.intellij.openapi.vfs.VfsUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class JetLightProjectDescriptor extends LightProjectDescriptor {
-    protected JetLightProjectDescriptor() {
+import java.io.File;
+
+public class KotlinJdkAndLibraryProjectDescriptor extends KotlinLightProjectDescriptor {
+    public static final String LIBRARY_NAME = "myLibrary";
+
+    private final File libraryFile;
+
+    public KotlinJdkAndLibraryProjectDescriptor(File libraryFile) {
+        assert libraryFile.exists() : "Library file doesn't exist: " + libraryFile.getAbsolutePath();
+        this.libraryFile = libraryFile;
     }
-    
-    public static final JetLightProjectDescriptor INSTANCE = new JetLightProjectDescriptor();
-    
+
     @Override
     public ModuleType getModuleType() {
         return StdModuleTypes.JAVA;
@@ -42,10 +49,11 @@ public class JetLightProjectDescriptor extends LightProjectDescriptor {
     }
 
     @Override
-    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-        configureModule(module, model);
-    }
-
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model) {
+        NewLibraryEditor editor = new NewLibraryEditor();
+        editor.setName(LIBRARY_NAME);
+        editor.addRoot(VfsUtil.getUrlForLibraryRoot(libraryFile), OrderRootType.CLASSES);
+
+        ConfigLibraryUtil.addLibrary(editor, model);
     }
 }

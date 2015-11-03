@@ -51,14 +51,14 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.JetTestUtils
+import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.util.findElementByCommentPrefix
 import org.jetbrains.kotlin.utils.emptyOrSingletonList
 import java.io.File
 import java.util.*
 import kotlin.test.assertEquals
 
-public abstract class AbstractJetExtractionTest() : JetLightCodeInsightFixtureTestCase() {
+public abstract class AbstractExtractionTest() : JetLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor() = LightCodeInsightFixtureTestCase.JAVA_LATEST
 
     val fixture: JavaCodeInsightTestFixture get() = myFixture
@@ -311,7 +311,7 @@ public abstract class AbstractJetExtractionTest() : JetLightCodeInsightFixtureTe
         val afterFile = File("$path.after")
         val conflictFile = File("$path.conflicts")
 
-        fixture.setTestDataPath("${JetTestUtils.getHomeDirectory()}/${mainFile.getParent()}")
+        fixture.setTestDataPath("${KotlinTestUtils.getHomeDirectory()}/${mainFile.getParent()}")
 
         val mainFileName = mainFile.getName()
         val mainFileBaseName = FileUtil.getNameWithoutExtension(mainFileName)
@@ -330,21 +330,21 @@ public abstract class AbstractJetExtractionTest() : JetLightCodeInsightFixtureTe
             action(file)
 
             assert(!conflictFile.exists()) { "Conflict file $conflictFile should not exist" }
-            JetTestUtils.assertEqualsToFile(afterFile, file.getText()!!)
+            KotlinTestUtils.assertEqualsToFile(afterFile, file.getText()!!)
 
             if (checkAdditionalAfterdata) {
                 for ((extraPsiFile, extraFile) in extraFilesToPsi) {
-                    JetTestUtils.assertEqualsToFile(File("${extraFile.getPath()}.after"), extraPsiFile.getText())
+                    KotlinTestUtils.assertEqualsToFile(File("${extraFile.getPath()}.after"), extraPsiFile.getText())
                 }
             }
         }
         catch(e: ConflictsInTestsException) {
             val message = e.messages.sorted().joinToString(" ").replace("\n", " ")
-            JetTestUtils.assertEqualsToFile(conflictFile, message)
+            KotlinTestUtils.assertEqualsToFile(conflictFile, message)
         }
         catch(e: RuntimeException) { // RuntimeException is thrown by IDEA code in CodeInsightUtils.java
             if (e.javaClass != RuntimeException::class.java) throw e
-            JetTestUtils.assertEqualsToFile(conflictFile, e.message!!)
+            KotlinTestUtils.assertEqualsToFile(conflictFile, e.message!!)
         }
         finally {
             if (addKotlinRuntime) {

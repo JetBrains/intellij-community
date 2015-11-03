@@ -33,14 +33,14 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.apache.log4j.Logger
 import org.jetbrains.kotlin.idea.actions.internal.KotlinInternalMode
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.JetTestUtils
+import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.rethrow
 import java.io.File
 import java.io.IOException
 import java.util.*
 
-public abstract class JetLightCodeInsightFixtureTestCase : LightCodeInsightFixtureTestCase() {
+public abstract class KotlinLightCodeInsightFixtureTestCase : LightCodeInsightFixtureTestCase() {
     private var kotlinInternalModeOriginalValue = false
 
     private val exceptions = ArrayList<Throwable>()
@@ -48,7 +48,7 @@ public abstract class JetLightCodeInsightFixtureTestCase : LightCodeInsightFixtu
     override fun setUp() {
         super.setUp()
         (StartupManager.getInstance(getProject()) as StartupManagerImpl).runPostStartupActivities()
-        VfsRootAccess.allowRootAccess(JetTestUtils.getHomeDirectory())
+        VfsRootAccess.allowRootAccess(KotlinTestUtils.getHomeDirectory())
 
         kotlinInternalModeOriginalValue = KotlinInternalMode.enabled
         KotlinInternalMode.enabled = true
@@ -69,7 +69,7 @@ public abstract class JetLightCodeInsightFixtureTestCase : LightCodeInsightFixtu
         LoggedErrorProcessor.restoreDefaultProcessor()
 
         KotlinInternalMode.enabled = kotlinInternalModeOriginalValue
-        VfsRootAccess.disallowRootAccess(JetTestUtils.getHomeDirectory())
+        VfsRootAccess.disallowRootAccess(KotlinTestUtils.getHomeDirectory())
 
         unInvalidateBuiltinsAndStdLib(getProject()) {
             super.tearDown()

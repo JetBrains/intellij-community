@@ -19,13 +19,13 @@ package org.jetbrains.kotlin.idea.navigation;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.test.JetLightCodeInsightFixtureTestCase;
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.idea.test.JetLightProjectDescriptor;
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase;
 
 import java.io.File;
 
-public class JetGotoImplementationMultifileTest extends JetLightCodeInsightFixtureTestCase {
+public class KotlinGotoImplementationMultifileTest extends KotlinLightCodeInsightFixtureTestCase {
     public void testImplementFunInJava() throws Exception {
         doKotlinJavaTest();
     }
