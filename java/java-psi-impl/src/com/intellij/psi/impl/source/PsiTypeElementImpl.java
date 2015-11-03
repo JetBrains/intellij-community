@@ -25,8 +25,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
@@ -38,8 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeElement {
-  private volatile PsiType myCachedType = null;
-
   @SuppressWarnings({"UnusedDeclaration"})
   public PsiTypeElementImpl() {
     this(JavaElementType.TYPE);
@@ -47,12 +44,6 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
   protected PsiTypeElementImpl(IElementType type) {
     super(type);
-  }
-
-  @Override
-  public void clearCaches() {
-    super.clearCaches();
-    myCachedType = null;
   }
 
   @Override
@@ -68,11 +59,13 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   @Override
   @NotNull
   public PsiType getType() {
-    PsiType cachedType = myCachedType;
-    if (cachedType != null) return cachedType;
-    cachedType = calculateType();
-    myCachedType = cachedType;
-    return cachedType;
+    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiType>() {
+      @Nullable
+      @Override
+      public Result<PsiType> compute() {
+        return Result.create(calculateType(), PsiModificationTracker.MODIFICATION_COUNT);
+      }
+    });
   }
 
   private PsiType calculateType() {
