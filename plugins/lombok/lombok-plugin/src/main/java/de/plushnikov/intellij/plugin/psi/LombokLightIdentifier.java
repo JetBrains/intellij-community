@@ -35,4 +35,24 @@ public class LombokLightIdentifier extends LightIdentifier {
     TextRange r = super.getTextRange();
     return r == null ? TextRange.EMPTY_RANGE : r;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    LombokLightIdentifier that = (LombokLightIdentifier) o;
+
+    return !(myText != null ? !myText.equals(that.myText) : that.myText != null);
+
+  }
+
+  @Override
+  public int hashCode() {
+    return myText != null ? myText.hashCode() : 0;
+  }
 }

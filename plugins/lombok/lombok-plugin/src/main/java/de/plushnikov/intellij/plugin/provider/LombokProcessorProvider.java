@@ -28,26 +28,54 @@ public class LombokProcessorProvider {
     return ourInstance;
   }
 
-  private final Map<String, Processor> lombokProcessors;
+  private final Map<Class, Collection<Processor>> lombokTypeProcessors;
+  private final Map<String, Collection<Processor>> lombokProcessors;
   private final Collection<String> registeredAnnotationNames;
 
   private LombokProcessorProvider() {
-    lombokProcessors = new HashMap<String, Processor>();
+    lombokProcessors = new HashMap<String, Collection<Processor>>();
+
+    lombokTypeProcessors = new HashMap<Class, Collection<Processor>>();
+
     registeredAnnotationNames = new HashSet<String>();
 
     for (Processor processor : getLombokProcessors()) {
       Class<? extends Annotation> annotationClass = processor.getSupportedAnnotationClass();
 
-      lombokProcessors.put(annotationClass.getName(), processor);
-      lombokProcessors.put(annotationClass.getSimpleName(), processor);
+      putProcessor(lombokProcessors, annotationClass.getName(), processor);
+      putProcessor(lombokProcessors, annotationClass.getSimpleName(), processor);
+
+      putProcessor(lombokTypeProcessors, processor.getSupportedClass(), processor);
     }
 
     registeredAnnotationNames.addAll(lombokProcessors.keySet());
   }
 
+  private <K, V> void putProcessor(final Map<K, Collection<V>> map, final K key, final V value) {
+    Collection<V> valueList = map.get(key);
+    if (null == valueList) {
+      valueList = new ArrayList<V>();
+      map.put(key, valueList);
+    }
+    valueList.add(value);
+  }
+
   @NotNull
   public Processor[] getLombokProcessors() {
     return LombokProcessorExtensionPoint.EP_NAME.getExtensions();
+  }
+
+  @NotNull
+  public Collection<Processor> getLombokProcessors(Class supportedClass) {
+    final Collection<Processor> result = lombokTypeProcessors.get(supportedClass);
+    return result == null ? Collections.<Processor>emptySet() : result;
+  }
+
+  @NotNull
+  public Collection<Processor> getProcessors(@NotNull PsiAnnotation psiAnnotation) {
+    final String qualifiedName = psiAnnotation.getQualifiedName();
+    final Collection<Processor> result = qualifiedName == null ? null : lombokProcessors.get(qualifiedName);
+    return result == null ? Collections.<Processor>emptySet() : result;
   }
 
   public boolean verifyLombokAnnotationPresent(@NotNull PsiClass psiClass) {
@@ -101,8 +129,7 @@ public class LombokProcessorProvider {
     final PsiModifierList psiModifierList = psiMember.getModifierList();
     assert psiModifierList != null;
     for (PsiAnnotation psiAnnotation : psiModifierList.getAnnotations()) {
-      final Processor processor = lombokProcessors.get(psiAnnotation.getQualifiedName());
-      if (null != processor) {
+      for (Processor processor : getProcessors(psiAnnotation)) {
         target.add(new LombokProcessorData(processor, psiAnnotation));
       }
     }
