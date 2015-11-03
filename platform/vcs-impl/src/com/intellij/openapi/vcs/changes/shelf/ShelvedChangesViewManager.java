@@ -248,10 +248,9 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     final List<ShelvedChangeList> changeLists = new ArrayList<ShelvedChangeList>(myShelveChangesManager.getShelvedChangeLists());
     Collections.sort(changeLists, ChangelistComparator.getInstance());
     if (myShelveChangesManager.isShowRecycled()) {
-      ArrayList<ShelvedChangeList> recycled =
-              new ArrayList<ShelvedChangeList>(myShelveChangesManager.getRecycledShelvedChangeLists());
-      Collections.sort(recycled, ChangelistComparator.getInstance());
+      ArrayList<ShelvedChangeList> recycled = new ArrayList<ShelvedChangeList>(myShelveChangesManager.getRecycledShelvedChangeLists());
       changeLists.addAll(recycled);
+      Collections.sort(changeLists, ChangelistComparator.getInstance());
     }
     myMoveRenameInfo.clear();
 
