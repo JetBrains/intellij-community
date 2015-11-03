@@ -2412,12 +2412,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public int getMaxWidthInRange(int startOffset, int endOffset) {
     if (myUseNewRendering) return myView.getMaxWidthInRange(startOffset, endOffset);
-    int width = 0;
     int start = offsetToVisualLine(startOffset);
     int end = offsetToVisualLine(endOffset);
 
-    for (int i = start; i <= end; i++) {
-      int lastColumn = EditorUtil.getLastVisualLineColumnNumber(this, i) + 1;
+    return getMaxWidthInVisualLineRange(start, end, true);
+  }
+
+  int getMaxWidthInVisualLineRange(int startVisualLine, int endVisualLine, boolean addOneColumn) {
+    int width = 0;
+
+    for (int i = startVisualLine; i <= endVisualLine; i++) {
+      int lastColumn = EditorUtil.getLastVisualLineColumnNumber(this, i) + (addOneColumn ? 1 : 0);
       int lineWidth = visualPositionToXY(new VisualPosition(i, lastColumn)).x;
 
       if (lineWidth > width) {
