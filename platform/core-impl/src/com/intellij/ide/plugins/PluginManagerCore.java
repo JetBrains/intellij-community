@@ -1104,7 +1104,7 @@ public class PluginManagerCore {
     return shouldLoad;
   }
 
-  static boolean isIncompatible(@NotNull IdeaPluginDescriptor descriptor) {
+  public static boolean isIncompatible(@NotNull IdeaPluginDescriptor descriptor) {
     return isIncompatible(descriptor, getBuildNumber());
   }
 

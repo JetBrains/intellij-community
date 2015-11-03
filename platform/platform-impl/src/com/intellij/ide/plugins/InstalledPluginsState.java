@@ -82,8 +82,7 @@ public class InstalledPluginsState {
     }
 
     boolean supersedes = !PluginManagerCore.isIncompatible(descriptor) &&
-                         (PluginDownloader.compareVersionsSkipBroken(existing, descriptor.getVersion()) > 0 ||
-                          PluginManagerCore.isIncompatible(existing));
+                         (PluginDownloader.compareVersionsSkipBrokenAndIncompatible(existing, descriptor.getVersion()) > 0);
 
     String idString = id.getIdString();
 
