@@ -19,6 +19,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,10 @@ public class DescriptiveNameUtil {
       if (metaData != null) return getMetaDataName(metaData);
     }
 
+    if (psiElement instanceof PsiFile) {
+      return ((PsiFile)psiElement).getName();
+    }
+    
     final Language lang = psiElement.getLanguage();
     final FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(lang);
     assert provider != null : lang;
