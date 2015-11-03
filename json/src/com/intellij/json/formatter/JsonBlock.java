@@ -13,9 +13,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.webcore.template.formatter.TemplateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -141,6 +143,10 @@ public class JsonBlock implements ASTBlock {
           alignment = myParent.myPropertyValueAlignment;
         }
       }
+    }
+    if (childNode.getPsi() instanceof OuterLanguageElement) {
+      Block templateBlock = TemplateFormatUtil.buildTemplateLanguageBlock((OuterLanguageElement)childNode.getPsi(), mySettings, indent);
+      if (templateBlock != null) return templateBlock;
     }
     return new JsonBlock(this, childNode, mySettings, alignment, indent, wrap);
   }
