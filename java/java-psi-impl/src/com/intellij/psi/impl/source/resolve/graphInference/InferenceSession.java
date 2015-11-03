@@ -1330,8 +1330,6 @@ public class InferenceSession {
       }
     }
     else if (PsiMethodReferenceUtil.isResolvedBySecondSearch(reference, signature, varargs, isStatic, parameters.length)) { //instance methods
-      initBounds(containingClass.getTypeParameters());
-
       final PsiType pType = signature.getParameterTypes()[0];
 
       // 15.13.1 If the ReferenceType is a raw type, and there exists a parameterization of this type, T, that is a supertype of P1,
@@ -1347,6 +1345,7 @@ public class InferenceSession {
               return receiverSubstitutor;
             }
           }
+          mySiteSubstitutor = mySiteSubstitutor.putAll(receiverSubstitutor);
           psiSubstitutor = receiverSubstitutor;
         }
       }
