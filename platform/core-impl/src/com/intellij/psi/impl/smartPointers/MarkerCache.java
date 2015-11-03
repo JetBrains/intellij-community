@@ -160,11 +160,11 @@ class MarkerCache {
   @NotNull
   private List<SelfElementInfo> getSortedInfos() {
     List<SelfElementInfo> infos = ContainerUtil.newArrayListWithCapacity(myPointers.getSize());
-    for (Reference<SmartPointerEx> reference : myPointers.getReferences()) {
+    for (Reference<SmartPsiElementPointerImpl> reference : myPointers.getReferences()) {
       if (reference != null) {
-        SmartPointerEx pointer = reference.get();
+        SmartPsiElementPointerImpl pointer = reference.get();
         if (pointer != null) {
-          SmartPointerElementInfo info = ((SmartPsiElementPointerImpl)pointer).getElementInfo();
+          SmartPointerElementInfo info = pointer.getElementInfo();
           if (info instanceof SelfElementInfo && ((SelfElementInfo)info).hasRange()) {
             infos.add((SelfElementInfo)info);
           }
