@@ -182,16 +182,7 @@ public final class SocketLock {
   private static ActivateStatus tryActivate(int portNumber, @NotNull Collection<String> paths, @NotNull String[] args) {
     log("trying: port=%s", portNumber);
     try {
-      Socket socket;
-
-      try {
-        socket = new Socket(NetUtils.getLoopbackAddress(), portNumber);
-      }
-      catch (ConnectException e) {
-        log("%s (stale port file?)", e.getMessage());
-        return ActivateStatus.NO_INSTANCE;
-      }
-
+      Socket socket = new Socket(NetUtils.getLoopbackAddress(), portNumber);
       try {
         socket.setSoTimeout(1000);
 
@@ -235,6 +226,9 @@ public final class SocketLock {
       finally {
         socket.close();
       }
+    }
+    catch (ConnectException e) {
+      log("%s (stale port file?)", e.getMessage());
     }
     catch (IOException e) {
       log(e);
