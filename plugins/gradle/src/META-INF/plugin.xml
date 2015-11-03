@@ -85,11 +85,11 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <testActionProvider implementation="org.jetbrains.plugins.gradle.execution.test.runner.OpenGradleTestResultActionProvider"/>
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.AllInPackageGradleConfigurationProducer"
-                              order="first"/>
+                              order="last"/>
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer"
-                              order="first"/>
+                              order="last"/>
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer"
-                              order="first"/>
+                              order="last"/>
     <externalSystemExecutionConsoleManager implementation="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager"/>
     <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportProvider"/>
     <projectImportBuilder implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportBuilder"/>
@@ -98,7 +98,11 @@
     <internalFileTemplate name="Gradle Build Script with wrapper"/>
     <projectConfigurable groupId="build.tools" groupWeight="110" id="reference.settingsdialog.project.gradle"
                          instance="org.jetbrains.plugins.gradle.service.settings.GradleConfigurable"
-                         key="gradle.name" bundle="i18n.GradleBundle"/>
+                         key="gradle.name" bundle="i18n.GradleBundle">
+      <configurable instance="org.jetbrains.plugins.gradle.settings.GradleRunnerConfigurable"
+                    id="reference.settings.project.gradle.running" key="gradle.runner" bundle="i18n.GradleBundle"
+                    nonDefaultProject="true"/>
+    </projectConfigurable>
     <library.presentationProvider implementation="org.jetbrains.plugins.gradle.config.GradleLibraryPresentationProvider" order="last"/>
     <java.elementFinder implementation="org.jetbrains.plugins.gradle.config.GradleClassFinder"/>
     <editorTabTitleProvider implementation="org.jetbrains.plugins.gradle.util.GradleEditorTabTitleProvider"/>
@@ -115,6 +119,7 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSystemSettings"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleLocalSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.project.GradleNotification"/>

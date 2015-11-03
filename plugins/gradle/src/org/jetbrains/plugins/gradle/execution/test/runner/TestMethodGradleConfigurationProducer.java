@@ -30,7 +30,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -45,16 +44,14 @@ import static org.jetbrains.plugins.gradle.execution.test.runner.TestRunnerUtils
  */
 public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
 
-  private static final List<String> TASKS_TO_RUN = ContainerUtil.newArrayList("cleanTest", "test");
-
   public TestMethodGradleConfigurationProducer() {
     super(GradleExternalTaskConfigurationType.getInstance());
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(ExternalSystemRunConfiguration configuration,
-                                                  ConfigurationContext context,
-                                                  Ref<PsiElement> sourceElement) {
+  protected boolean doSetupConfigurationFromContext(ExternalSystemRunConfiguration configuration,
+                                                    ConfigurationContext context,
+                                                    Ref<PsiElement> sourceElement) {
     if (RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
       return false;
     }
@@ -78,10 +75,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
   }
 
   @Override
-  public boolean isConfigurationFromContext(ExternalSystemRunConfiguration configuration, ConfigurationContext context) {
-    if (configuration == null) return false;
-    if (!GradleConstants.SYSTEM_ID.equals(configuration.getSettings().getExternalSystemId())) return false;
-
+  protected boolean doIsConfigurationFromContext(ExternalSystemRunConfiguration configuration, ConfigurationContext context) {
     if (RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
       return false;
     }
@@ -104,7 +98,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
       configuration.getSettings().getExternalProjectPath())) {
       return false;
     }
-    if (!configuration.getSettings().getTaskNames().containsAll(TASKS_TO_RUN)) return false;
+    if (!configuration.getSettings().getTaskNames().containsAll(TEST_SOURCE_SET_TASKS)) return false;
 
     final String scriptParameters = configuration.getSettings().getScriptParameters() + ' ';
     final String testFilter = creatTestFilter(containingClass, psiMethod);
@@ -160,7 +154,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     }
 
     configuration.getSettings().setExternalProjectPath(context.getModule().getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY));
-    configuration.getSettings().setTaskNames(TASKS_TO_RUN);
+    configuration.getSettings().setTaskNames(TEST_SOURCE_SET_TASKS);
 
     StringBuilder buf = new StringBuilder();
     for (PsiClass aClass : containingClasses) {
@@ -168,7 +162,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     }
 
     configuration.getSettings().setScriptParameters(buf.toString().trim());
-    configuration.setName(psiMethod.getName());
+    configuration.setName((containingClasses.length == 1 ? containingClasses[0].getName() + "." : "") + psiMethod.getName());
     return true;
   }
 
