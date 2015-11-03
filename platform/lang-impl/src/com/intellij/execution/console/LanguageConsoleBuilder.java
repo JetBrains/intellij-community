@@ -124,7 +124,7 @@ public final class LanguageConsoleBuilder {
   private void doInitAction(@NotNull LanguageConsoleView console, @NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType) {
     ConsoleExecuteAction action = new ConsoleExecuteAction(console, executeActionHandler, executionEnabled);
     action.registerCustomShortcutSet(action.getShortcutSet(), console.getConsoleEditor().getComponent());
-    new ConsoleHistoryController(historyType, null, console).install();
+    new ConsoleHistoryController(new MyConsoleRootType(historyType), null, console).install();
   }
 
   /**
@@ -144,7 +144,7 @@ public final class LanguageConsoleBuilder {
 
     ConsoleExecuteAction action = new ConsoleExecuteAction(console, handler, enabledCondition);
     action.registerCustomShortcutSet(action.getShortcutSet(), console.getConsoleEditor().getComponent());
-    new ConsoleHistoryController(historyType, historyPersistenceId, console).install();
+    new ConsoleHistoryController(new MyConsoleRootType(historyType), historyPersistenceId, console).install();
     return action;
   }
 
@@ -452,6 +452,12 @@ public final class LanguageConsoleBuilder {
           gutterSizeUpdater = null;
         }
       }
+    }
+  }
+
+  private static class MyConsoleRootType extends ConsoleRootType {
+    public MyConsoleRootType(String historyType) {
+      super(historyType, null);
     }
   }
 }
