@@ -104,7 +104,11 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
 
       val mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY)!!
       assertEquals(11, mapping.bytecodeToSource(3))
+      assertEquals(3, mapping.sourceToBytecode(11))
       assertEquals(23, mapping.bytecodeToSource(13))
+      assertEquals(13, mapping.sourceToBytecode(23))
+      assertEquals(-1, mapping.bytecodeToSource(1000))
+      assertEquals(-1, mapping.sourceToBytecode(1000))
     }
   }
 

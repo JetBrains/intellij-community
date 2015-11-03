@@ -230,7 +230,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
   private class ExactMatchLineNumbersMapping(private val mapping: IntArray) : LineNumbersMapping {
     override fun bytecodeToSource(line: Int): Int {
-      for (i in 0..mapping.size step 2) {
+      for (i in mapping.indices step 2) {
         if (mapping[i] == line) {
           return mapping[i + 1]
         }
@@ -239,7 +239,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
     }
 
     override fun sourceToBytecode(line: Int): Int {
-      for (i in 0..mapping.size step 2) {
+      for (i in mapping.indices step 2) {
         if (mapping[i + 1] == line) {
           return mapping[i]
         }
