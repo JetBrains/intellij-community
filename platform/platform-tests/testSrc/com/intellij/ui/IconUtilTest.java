@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -41,6 +42,14 @@ import java.util.Collections;
 import java.util.List;
 
 public class IconUtilTest extends PlatformTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    while (DumbService.isDumb(getProject())) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+  }
+
   public void testIconDeferrerDoesNotDeferIconsAdInfinitum() throws IOException {
     VirtualFile file = createTempFile("txt", null, "hkjh", CharsetToolkit.UTF8_CHARSET);
 
