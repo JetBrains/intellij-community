@@ -1,10 +1,22 @@
 /*
- * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
- * Use is subject to license terms.
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.intellij.util.ui.update;
 
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.WaitFor;
 import com.intellij.util.containers.ContainerUtil;
@@ -328,7 +340,7 @@ public class MergingUpdateQueueTest extends UsefulTestCase {
     queue.showNotify();
 
     final AtomicInteger count = new AtomicInteger();
-    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(100);
+    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(100, ConcurrencyUtil.newNamedThreadFactory("testMultiThreadedQueueing()"));
     List<Future> futures = ContainerUtil.newArrayList();
     for (int i = 0; i < 10; i++) {
       ScheduledFuture<?> future = executor.schedule(new Runnable() {
@@ -355,6 +367,8 @@ public class MergingUpdateQueueTest extends UsefulTestCase {
     waitForExecution(queue);
 
     assertEquals(1000, count.get());
+    executor.shutdown();
+    assertTrue(executor.awaitTermination(100, TimeUnit.SECONDS));
   }
 
   public void testSamePriorityQueriesAreExecutedInAdditionOrder() {
