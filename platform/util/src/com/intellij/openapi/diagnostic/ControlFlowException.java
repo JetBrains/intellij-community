@@ -13,20 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger;
+package com.intellij.openapi.diagnostic;
 
-import com.intellij.openapi.diagnostic.ControlFlowException;
-
-public class NoDataException extends Exception implements ControlFlowException {
-  @SuppressWarnings({"deprecation", "ThrowableInstanceNeverThrown"})
-  public static final NoDataException INSTANCE = new NoDataException();
-
-  /** @deprecated Use shared {@link NoDataException#INSTANCE} instead */
-  @Deprecated
-  public NoDataException() { }
-
-  @Override
-  public synchronized Throwable fillInStackTrace() {
-    return this;
-  }
-}
+/**
+ * A marker interface for exceptions that should never be logged.
+ */
+@SuppressWarnings("NonExceptionNameEndsWithException")
+public interface ControlFlowException { }

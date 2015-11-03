@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ public class DefaultLogger extends Logger {
   @Override
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public void warn(@NonNls String message, @Nullable Throwable t) {
+    t = checkException(t);
     System.err.println("WARN: " + message);
     if (t != null) t.printStackTrace(System.err);
   }
@@ -54,6 +55,7 @@ public class DefaultLogger extends Logger {
   @Override
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public void error(String message, @Nullable Throwable t, @NotNull String... details) {
+    t = checkException(t);
     System.err.println("ERROR: " + message);
     if (t != null) t.printStackTrace(System.err);
     if (details.length > 0) {
