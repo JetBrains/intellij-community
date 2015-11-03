@@ -30,6 +30,11 @@ public class ScratchUtil {
   private ScratchUtil() {
   }
 
+  /**
+   * Returns true if a file is in one of scratch roots: scratch, console, etc.
+   * @see RootType
+   * @see ScratchFileService
+   */
   public static boolean isScratch(@Nullable VirtualFile file) {
     return file != null && file.getFileType() == ScratchFileType.INSTANCE;
   }

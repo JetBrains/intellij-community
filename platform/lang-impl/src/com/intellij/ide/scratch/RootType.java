@@ -79,6 +79,12 @@ public abstract class RootType {
     return StringUtil.isEmpty(myDisplayName);
   }
 
+  public boolean containsFile(@Nullable VirtualFile file) {
+    if (file == null) return false;
+    ScratchFileService service = ScratchFileService.getInstance();
+    return service != null && service.getRootType(file) == this;
+  }
+
   @Nullable
   public Language substituteLanguage(@NotNull Project project, @NotNull VirtualFile file) {
     return null;
