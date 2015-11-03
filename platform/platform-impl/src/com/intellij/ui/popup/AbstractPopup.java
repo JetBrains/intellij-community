@@ -395,6 +395,11 @@ public class AbstractPopup implements JBPopup {
     setAdText(s, SwingConstants.LEFT);
   }
 
+  @NotNull
+  public PopupBorder getPopupBorder() {
+    return myPopupBorder;
+  }
+
   @Override
   public void setAdText(@NotNull final String s, int alignment) {
     if (myAdComponent == null) {

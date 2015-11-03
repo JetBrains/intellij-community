@@ -1075,7 +1075,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     int footer = footerSize.height;
     int footerBorder = footer == 0 ? 0 : 1;
-    rectangle.height += headerSize.height + footer + footerBorder;
+    Insets insets = ((AbstractPopup)popup).getPopupBorder().getBorderInsets(content);
+    rectangle.height += headerSize.height + footer + footerBorder + insets.top + insets.bottom;
     ScreenUtil.fitToScreen(rectangle);
     Dimension newDim = rectangle.getSize();
     window.setBounds(rectangle);
