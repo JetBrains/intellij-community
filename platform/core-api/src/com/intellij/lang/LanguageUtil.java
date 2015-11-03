@@ -17,9 +17,11 @@
 package com.intellij.lang;
 
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -43,6 +45,22 @@ public final class LanguageUtil {
       return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
     }
   };
+
+
+  @Nullable
+  public static Language getFileLanguage(@Nullable VirtualFile file) {
+    return file == null ? null : getFileTypeLanguage(file.getFileType());
+  }
+
+  @Nullable
+  public static Language getFileTypeLanguage(@Nullable FileType fileType) {
+    return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
+  }
+
+  @Nullable
+  public static FileType getLanguageFileType(@Nullable Language language) {
+    return language == null ? null : language.getAssociatedFileType();
+  }
 
   public static ParserDefinition.SpaceRequirements canStickTokensTogetherByLexer(ASTNode left, ASTNode right, Lexer lexer) {
     String textStr = left.getText() + right.getText();

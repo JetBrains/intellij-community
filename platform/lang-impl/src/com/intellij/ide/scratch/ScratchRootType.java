@@ -54,8 +54,7 @@ public final class ScratchRootType extends RootType {
 
   @Override
   public Language substituteLanguage(@NotNull Project project, @NotNull VirtualFile file) {
-    Language language = ScratchFileService.getInstance().getScratchesMapping().getMapping(file);
-    return substituteLanguageImpl(language, file, project);
+    return ScratchFileService.getInstance().getScratchesMapping().getMapping(file);
   }
 
   @Nullable
