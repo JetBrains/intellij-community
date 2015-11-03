@@ -76,8 +76,11 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
   private void adjustIndentOptions(@NotNull IndentOptions indentOptions, @NotNull IndentUsageStatistics stats) {
     if (isTabsUsed(stats)) {
       setUseTabs(indentOptions, true);
+      int continuationRatio = indentOptions.INDENT_SIZE == 0 ? 1 
+                              : indentOptions.CONTINUATION_INDENT_SIZE / indentOptions.INDENT_SIZE;
+      
       indentOptions.INDENT_SIZE = indentOptions.TAB_SIZE;
-      indentOptions.CONTINUATION_INDENT_SIZE = indentOptions.TAB_SIZE * 2;
+      indentOptions.CONTINUATION_INDENT_SIZE = indentOptions.TAB_SIZE * continuationRatio;
     }
     else if (isSpacesUsed(stats)) {
       setUseTabs(indentOptions, false);
