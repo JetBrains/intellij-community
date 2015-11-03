@@ -456,9 +456,12 @@ public class InferenceSession {
             final PsiElement psiClass = resolveResult.getElement();
             if (psiClass != null) {
               final JavaPsiFacade facade = JavaPsiFacade.getInstance(callExpression.getProject());
-              constructor = facade.getResolveHelper().resolveConstructor(facade.getElementFactory().createType((PsiClass)psiClass).rawType(),
-                                                                         callExpression.getArgumentList(), 
-                                                                         callExpression);
+              final PsiExpressionList argumentList = callExpression.getArgumentList();
+              if (argumentList != null) {
+                constructor = facade.getResolveHelper().resolveConstructor(facade.getElementFactory().createType((PsiClass)psiClass).rawType(),
+                                                                           argumentList,
+                                                                           callExpression);
+              }
             }
           }
           return new Result<JavaResolveResult>(constructor.getElement() == null && resolveResult != null ? resolveResult : constructor,
