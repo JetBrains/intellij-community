@@ -50,7 +50,7 @@ public class PythonFileType extends LanguageFileType {
   public static PythonFileType INSTANCE = new PythonFileType();
 
   public PythonFileType() {
-    this(new PythonLanguage());
+    this(PythonLanguage.INSTANCE);
   }
 
   public PythonFileType(Language language) {

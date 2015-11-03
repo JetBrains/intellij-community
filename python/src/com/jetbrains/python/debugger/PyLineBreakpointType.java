@@ -70,7 +70,7 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
   }
 
   private static boolean isPythonScratch(@NotNull Project project, @NotNull VirtualFile file) {
-    return ScratchUtil.isScratch(file) && ScratchUtil.getLanguage(project, file) == PythonLanguage.getInstance();
+    return ScratchUtil.isScratch(file) && ScratchUtil.getLanguage(project, file) == PythonLanguage.INSTANCE;
   }
 
   private static boolean notStoppableElementType(IElementType elementType) {
