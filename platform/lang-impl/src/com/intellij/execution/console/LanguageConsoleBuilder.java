@@ -178,7 +178,7 @@ public final class LanguageConsoleBuilder {
 
   @NotNull
   public LanguageConsoleView build(@NotNull Project project, @NotNull Language language) {
-    GutteredLanguageConsole consoleView = new GutteredLanguageConsole(language.getDisplayName() + " Console", project, language, gutterContentProvider, psiFileFactory);
+    GutteredLanguageConsole consoleView = new GutteredLanguageConsole(new MyHelper(project, language.getDisplayName() + " Console", language, psiFileFactory), gutterContentProvider);
     if (oneLineInput) {
       consoleView.getConsoleEditor().setOneLineMode(true);
     }
@@ -199,22 +199,26 @@ public final class LanguageConsoleBuilder {
     return consoleView;
   }
 
+  private static class MyHelper extends LanguageConsoleImpl.Helper {
+    private final PairFunction<VirtualFile, Project, PsiFile> psiFileFactory;
+
+    public MyHelper(@NotNull  Project project, @NotNull String title, @NotNull Language language, @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
+      super(project, new LightVirtualFile(title, language, ""));
+      this.psiFileFactory = psiFileFactory;
+    }
+
+    @NotNull
+    @Override
+    public PsiFile getFile() {
+      return psiFileFactory == null ? super.getFile() : psiFileFactory.fun(virtualFile, project);
+    }
+  }
+
   private final static class GutteredLanguageConsole extends LanguageConsoleImpl {
     private final GutterContentProvider gutterContentProvider;
 
-    public GutteredLanguageConsole(@NotNull String title,
-                                   @NotNull Project project,
-                                   @NotNull Language language,
-                                   @Nullable GutterContentProvider gutterContentProvider,
-                                   @Nullable final PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
-      super(new Helper(project, new LightVirtualFile(title, language, "")) {
-        @NotNull
-        @Override
-        public PsiFile getFile() {
-          return psiFileFactory == null ? super.getFile() : psiFileFactory.fun(virtualFile, project);
-        }
-
-      });
+    public GutteredLanguageConsole(@NotNull Helper helper, @Nullable GutterContentProvider gutterContentProvider) {
+      super(helper);
 
       this.gutterContentProvider = gutterContentProvider == null ? new BasicGutterContentProvider() : gutterContentProvider;
     }
