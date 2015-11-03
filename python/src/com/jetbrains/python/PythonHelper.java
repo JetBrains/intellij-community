@@ -33,9 +33,11 @@ import static com.jetbrains.python.PythonHelpersLocator.getHelpersRoot;
  * @author traff
  */
 public enum PythonHelper implements HelperPackage {
-  COVERAGEPY("coveragepy", ""), COVERAGE("coverage_runner", "run_coverage"),
+  COVERAGEPY("coveragepy", ""),
+  COVERAGE("coverage_runner", "run_coverage"),
   DEBUGGER("pydev", "pydevd"),
-  ATTACH_DEBUGGER("pydev", "pydevd_attach_to_process.attach_pydevd"),
+  
+  ATTACH_DEBUGGER("pydev/pydevd_attach_to_process/attach_pydevd.py"),
 
   CONSOLE("pydev", "pydevconsole"),
   RUN_IN_CONSOLE("pydev", "pydev_run_in_console"),
