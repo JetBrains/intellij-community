@@ -147,6 +147,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
    */
   public final void removeNotify(){
     myUISettings.removeUISettingsListener(this);
+    removeToolbar();
     super.removeNotify();
   }
 
@@ -187,13 +188,18 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   void updateToolbar() {
-    if (myToolbar != null) {
-      myNorthPanel.remove(myToolbar);
-    }
+    removeToolbar();
     myToolbar = createToolbar();
     myNorthPanel.add(myToolbar, 0);
     updateToolbarVisibility();
     myContentPane.revalidate();
+  }
+
+  private void removeToolbar() {
+    if (myToolbar != null) {
+      myNorthPanel.remove(myToolbar);
+      myToolbar = null;
+    }
   }
 
   void updateNorthComponents() {
