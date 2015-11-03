@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,17 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +49,19 @@ public interface InferenceContext {
       return TypeInferenceHelper.getInferredType(ref);
     }
 
-    @NotNull
+    @Override
+    public <T> T getCachedValue(@NotNull GroovyPsiElement element, @NotNull final Computable<T> computable) {
+      CachedValuesManager manager = CachedValuesManager.getManager(element.getProject());
+      Key<CachedValue<T>> key = manager.getKeyForClass(computable.getClass());
+      return manager.getCachedValue(element, key, new CachedValueProvider<T>() {
+        @Nullable
+        @Override
+        public Result<T> compute() {
+          return Result.create(computable.compute(), PsiModificationTracker.MODIFICATION_COUNT);
+        }
+      }, false);
+    }
+
     @Override
     public <T extends PsiPolyVariantReference> GroovyResolveResult[] multiResolve(@NotNull T ref,
                                                                                   boolean incomplete,
@@ -63,7 +80,8 @@ public interface InferenceContext {
   @Nullable
   PsiType getVariableType(@NotNull GrReferenceExpression ref);
 
-  @NotNull
+  <T> T getCachedValue(@NotNull GroovyPsiElement element, @NotNull Computable<T> computable);
+
   <T extends PsiPolyVariantReference> GroovyResolveResult[] multiResolve(@NotNull T ref, boolean incomplete, ResolveCache.PolyVariantResolver<T> resolver);
 
   @Nullable
@@ -81,6 +99,11 @@ public interface InferenceContext {
     @Override
     public PsiType getVariableType(@NotNull GrReferenceExpression ref) {
       return myTypes.get(ref.getReferenceName());
+    }
+
+    @Override
+    public <T> T getCachedValue(@NotNull GroovyPsiElement element, @NotNull Computable<T> computable) {
+      return _getCachedValue(element, computable, computable.getClass());
     }
 
     private <T> T _getCachedValue(@Nullable PsiElement element, @NotNull Computable<T> computable, @NotNull Object key) {

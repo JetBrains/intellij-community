@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.expectedTypes;
 
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -54,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -71,17 +70,9 @@ import java.util.List;
 public class GroovyExpectedTypesProvider {
 
   public static TypeConstraint[] calculateTypeConstraints(@NotNull final GrExpression expression) {
-    return CachedValuesManager.getCachedValue(
-      expression,
-      new CachedValueProvider<TypeConstraint[]>() {
-
-        @Nullable
-        @Override
-        public Result<TypeConstraint[]> compute() {
-          return Result.create(doCompute(), PsiModificationTracker.MODIFICATION_COUNT);
-        }
-
-        public TypeConstraint[] doCompute() {
+    return TypeInferenceHelper.getCurrentContext().getCachedValue(expression, new Computable<TypeConstraint[]>() {
+      @Override
+      public TypeConstraint[] compute() {
           MyCalculator calculator = new MyCalculator(expression);
           final PsiElement parent = expression.getParent();
           if (parent instanceof GroovyPsiElement) {

@@ -378,17 +378,19 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @NotNull
-  private Pair<Boolean, GroovyResolveResult[]> resolveByShape(final boolean allVariants, @Nullable final GrExpression upToArgument) {
-    LOG.assertTrue(allVariants || upToArgument == null);
-    final Trinity key = Trinity.create(TypeInferenceHelper.getCurrentContext(), this, Pair.create(allVariants, upToArgument));
-    final Pair<Boolean, GroovyResolveResult[]> result =
-      RecursionManager.doPreventingRecursion(key, true, new Computable<Pair<Boolean, GroovyResolveResult[]>>() {
-        @Override
-        public Pair<Boolean, GroovyResolveResult[]> compute() {
-          return doResolveByShape(allVariants, upToArgument);
-        }
-      });
-    return result == null ? Pair.create(false, GroovyResolveResult.EMPTY_ARRAY) : result;
+  private Pair<Boolean, GroovyResolveResult[]> resolveByShape(boolean allVariants, @Nullable GrExpression upToArgument) {
+    if (allVariants) {
+      return doResolveByShape(true, upToArgument);
+    }
+
+    LOG.assertTrue(upToArgument == null);
+
+    return TypeInferenceHelper.getCurrentContext().getCachedValue(this, new NullableComputable<Pair<Boolean, GroovyResolveResult[]>>() {
+      @Override
+      public Pair<Boolean, GroovyResolveResult[]> compute() {
+        return doResolveByShape(false, null);
+      }
+    });
   }
 
   @NotNull
@@ -556,14 +558,33 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @Override
   public GroovyResolveResult[] resolveByShape() {
-    return doPolyResolveWithCaching(false, false);
+    final InferenceContext context = TypeInferenceHelper.getCurrentContext();
+    return context.getCachedValue(this, new Computable<GroovyResolveResult[]>() {
+      @Override
+      public GroovyResolveResult[] compute() {
+        Pair<GrReferenceExpressionImpl, InferenceContext> key = Pair.create(GrReferenceExpressionImpl.this, context);
+        GroovyResolveResult[] value = RecursionManager.doPreventingRecursion(key, true, new Computable<GroovyResolveResult[]>() {
+          @Override
+          public GroovyResolveResult[] compute() {
+            return doPolyResolve(false, false);
+          }
+        });
+        return value == null ? GroovyResolveResult.EMPTY_ARRAY : value;
+      }
+    });
   }
 
   private static final ResolveCache.PolyVariantResolver<GrReferenceExpressionImpl> POLY_RESOLVER = new ResolveCache.PolyVariantResolver<GrReferenceExpressionImpl>() {
     @Override
     @NotNull
     public GroovyResolveResult[] resolve(@NotNull final GrReferenceExpressionImpl refExpr, final boolean incompleteCode) {
-      return refExpr.doPolyResolveWithCaching(incompleteCode, true);
+      final GroovyResolveResult[] result = RecursionManager.doPreventingRecursion(refExpr, true, new Computable<GroovyResolveResult[]>() {
+        @Override
+        public GroovyResolveResult[] compute() {
+          return refExpr.doPolyResolve(incompleteCode, true);
+        }
+      });
+      return result == null ? GroovyResolveResult.EMPTY_ARRAY : result;
     }
   };
   private static final OurTypesCalculator TYPES_CALCULATOR = new OurTypesCalculator();
@@ -683,7 +704,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @Nullable
-  private static PsiType getTypeFromMapAccess(@NotNull GrReferenceExpression ref) {
+  private static PsiType getTypeFromMapAccess(@NotNull GrReferenceExpressionImpl ref) {
     //map access
     GrExpression qualifier = ref.getQualifierExpression();
     if (qualifier instanceof GrReferenceExpression) {
@@ -731,17 +752,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   private static final class OurTypesCalculator implements Function<GrReferenceExpressionImpl, PsiType> {
     @Override
     @Nullable
-    public PsiType fun(final GrReferenceExpressionImpl refExpr) {
-      final Pair key = Pair.create(TypeInferenceHelper.getCurrentContext(), refExpr);
-      return RecursionManager.doPreventingRecursion(key, true, new Computable<PsiType>() {
-        @Override
-        public PsiType compute() {
-          return doFun(refExpr);
-        }
-      });
-    }
-
-    private static PsiType doFun(GrReferenceExpression refExpr) {
+    public PsiType fun(GrReferenceExpressionImpl refExpr) {
       if (ResolveUtil.isClassReference(refExpr)) {
         GrExpression qualifier = refExpr.getQualifier();
         LOG.assertTrue(qualifier != null);
@@ -798,7 +809,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @Nullable
-  private static PsiType getInferredTypes(@NotNull GrReferenceExpression refExpr, @Nullable PsiElement resolved) {
+  private static PsiType getInferredTypes(@NotNull GrReferenceExpressionImpl refExpr, @Nullable PsiElement resolved) {
     final GrExpression qualifier = refExpr.getQualifier();
     if (!(resolved instanceof PsiClass) && !(resolved instanceof PsiPackage)) {
       if (qualifier == null) {
@@ -826,19 +837,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   @Override
   public GrExpression replaceWithExpression(@NotNull GrExpression newExpr, boolean removeUnnecessaryParentheses) {
     return PsiImplUtil.replaceExpression(this, newExpr, removeUnnecessaryParentheses);
-  }
-
-  @NotNull
-  private GroovyResolveResult[] doPolyResolveWithCaching(final boolean incompleteCode, final boolean genericsMatter) {
-    final InferenceContext context = TypeInferenceHelper.getCurrentContext();
-    final Trinity<?,?,?> key = Trinity.create(this, context, Pair.create(incompleteCode, genericsMatter));
-    final GroovyResolveResult[] value = RecursionManager.doPreventingRecursion(key, true, new Computable<GroovyResolveResult[]>() {
-      @Override
-      public GroovyResolveResult[] compute() {
-        return doPolyResolve(incompleteCode, genericsMatter);
-      }
-    });
-    return value == null ? GroovyResolveResult.EMPTY_ARRAY : value;
   }
 
   @NotNull
