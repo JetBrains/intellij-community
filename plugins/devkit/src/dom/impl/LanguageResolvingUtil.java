@@ -27,6 +27,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -139,7 +140,7 @@ class LanguageResolvingUtil {
         if (id == null) {
           id = computeConstantReturnValue(language, "getID");
         }
-        if (id == null) {
+        if (StringUtil.isEmpty(id)) {
           return null;
         }
 
