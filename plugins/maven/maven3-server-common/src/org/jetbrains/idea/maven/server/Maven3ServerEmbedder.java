@@ -15,9 +15,8 @@
  */
 package org.jetbrains.idea.maven.server;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -99,12 +98,12 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
           artifact,
           getLocalRepository(),
           convertRepositories(remoteRepositories));
-      return Lists.newArrayList(Iterables.transform(versions, new Function<ArtifactVersion, String>() {
+      return ContainerUtil.map(versions, new Function<ArtifactVersion, String>() {
         @Override
-        public String apply(ArtifactVersion version) {
+        public String fun(ArtifactVersion version) {
           return version.toString();
         }
-      }));
+      });
     }
     catch (Exception e) {
       Maven3ServerGlobals.getLogger().info(e);
