@@ -26,12 +26,11 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
-import com.intellij.vcs.log.ui.filter.BranchFilterPopupComponent;
+import com.intellij.vcs.log.ui.filter.BranchPopupBuilder;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -85,19 +84,20 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
                                                    @NotNull AnActionEvent event,
                                                    @NotNull final Consumer<String> consumer,
                                                    @NotNull Collection<VirtualFile> visibleRoots) {
-    ActionGroup actionGroup = BranchFilterPopupComponent.constructActionGroup(dataPack, null, new Function<String, AnAction>() {
+    ActionGroup actionGroup = new BranchPopupBuilder(dataPack, visibleRoots, null) {
+      @NotNull
       @Override
-      public AnAction fun(final String s) {
-        return new DumbAwareAction(s) {
+      protected AnAction createAction(@NotNull final String name) {
+        return new DumbAwareAction(name) {
           @Override
           public void actionPerformed(AnActionEvent e) {
-            consumer.consume(s);
+            consumer.consume(name);
           }
         };
       }
-    }, visibleRoots);
-    ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup("Select branch to compare", actionGroup, event.getDataContext(),
-                                                                          false, false, false, null, -1, null);
+    }.build();
+    ListPopup popup = JBPopupFactory.getInstance()
+      .createActionGroupPopup("Select branch to compare", actionGroup, event.getDataContext(), false, false, false, null, -1, null);
     InputEvent inputEvent = event.getInputEvent();
     if (inputEvent instanceof MouseEvent) {
       popup.show(new RelativePoint((MouseEvent)inputEvent));
@@ -128,8 +128,7 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
 
   @NotNull
   private static Set<VirtualFile> getAllVisibleRoots(@NotNull VcsLogUi ui) {
-    return VcsLogUtil.getAllVisibleRoots(ui.getDataPack().getLogProviders().keySet(),
-                                         ui.getFilterUi().getFilters().getRootFilter(),
+    return VcsLogUtil.getAllVisibleRoots(ui.getDataPack().getLogProviders().keySet(), ui.getFilterUi().getFilters().getRootFilter(),
                                          ui.getFilterUi().getFilters().getStructureFilter());
   }
 }
