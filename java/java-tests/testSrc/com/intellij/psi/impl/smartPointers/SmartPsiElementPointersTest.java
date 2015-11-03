@@ -467,12 +467,10 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
 
     assertNotNull(pointer1.getRange());
 
-    boolean removed2 = smartPointerManager.removePointer(pointer2);
-    assertFalse(removed2);
+    smartPointerManager.removePointer(pointer2);
     assertNotNull(pointer1.getRange());
 
-    boolean removed1 = smartPointerManager.removePointer(pointer1);
-    assertTrue(removed1);
+    smartPointerManager.removePointer(pointer1);
     assertNull(pointer1.getRange());
   }
 
@@ -494,8 +492,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertEquals(Byte.MAX_VALUE, pointer1.incrementAndGetReferenceCount(0));
 
     for (int i=0; i<1100; i++) {
-      boolean removed1 = smartPointerManager.removePointer(pointer1);
-      assertFalse(removed1);
+      smartPointerManager.removePointer(pointer1);
       Assert.assertNotNull(pointer1.getRange());
     }
   }

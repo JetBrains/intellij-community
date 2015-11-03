@@ -180,9 +180,9 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   }
 
   @Override
-  public boolean removePointer(@NotNull SmartPsiElementPointer pointer) {
+  public void removePointer(@NotNull SmartPsiElementPointer pointer) {
     if (!(pointer instanceof SmartPsiElementPointerImpl)) {
-      return false;
+      return;
     }
     PsiFile containingFile = pointer.getContainingFile();
     synchronized (lock) {
@@ -196,18 +196,16 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
         SmartPointerElementInfo info = ((SmartPsiElementPointerImpl)pointer).getElementInfo();
         info.cleanup();
 
-        if (containingFile == null) return false;
+        if (containingFile == null) return;
         VirtualFile vFile = containingFile.getViewProvider().getVirtualFile();
         FilePointersList pointers = getPointers(vFile);
-        if (pointers == null) return false;
-        boolean result = pointers.remove(pointer);
+        if (pointers == null) return;
+        pointers.remove(pointer);
         if (pointers.isEmpty()) {
           vFile.putUserData(POINTERS_KEY, null);
         }
-        return result;
       }
     }
-    return false;
   }
 
   @Nullable
