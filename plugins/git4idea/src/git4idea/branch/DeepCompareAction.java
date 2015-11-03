@@ -38,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
 
 public class DeepCompareAction extends ToggleAction implements DumbAware {
@@ -64,7 +63,7 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
     final DeepComparator dc = DeepComparator.getInstance(project, ui);
     if (selected) {
       VcsLogBranchFilter branchFilter = ui.getFilterUi().getFilters().getBranchFilter();
-      String singleBranchName = branchFilter != null ? VcsLogUtil.getSingleFilteredBranch(branchFilter, ui.getDataPack().getRefs(), ui.getDataPack().getLogProviders().keySet()) : null;
+      String singleBranchName = branchFilter != null ? VcsLogUtil.getSingleFilteredBranch(branchFilter, ui.getDataPack().getRefs()) : null;
       if (singleBranchName == null) {
         selectBranchAndPerformAction(ui.getDataPack(), e, new Consumer<String>() {
           @Override

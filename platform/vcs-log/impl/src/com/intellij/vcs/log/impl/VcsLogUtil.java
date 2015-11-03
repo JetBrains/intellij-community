@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.*;
@@ -160,9 +159,7 @@ public class VcsLogUtil {
   }
 
   @Nullable
-  public static String getSingleFilteredBranch(@NotNull VcsLogBranchFilter filter,
-                                               @NotNull VcsLogRefs refs,
-                                               @NotNull Set<VirtualFile> vcsRoots) {
+  public static String getSingleFilteredBranch(@NotNull VcsLogBranchFilter filter, @NotNull VcsLogRefs refs) {
     String branchName = null;
     Set<VirtualFile> checkedRoots = ContainerUtil.newHashSet();
     for (VcsRef branch : refs.getBranches()) {
@@ -178,8 +175,6 @@ public class VcsLogUtil {
       if (checkedRoots.contains(branch.getRoot())) return null;
       checkedRoots.add(branch.getRoot());
     }
-
-    if (!checkedRoots.equals(vcsRoots)) return null;
 
     return branchName;
   }

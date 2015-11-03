@@ -51,7 +51,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
         mySingleFilteredBranch = branchFilter == null
                                  ? null
                                  : VcsLogUtil
-                                   .getSingleFilteredBranch(branchFilter, dataPack.getRefs(), dataPack.getLogProviders().keySet());
+                                   .getSingleFilteredBranch(branchFilter, dataPack.getRefs());
       }
     });
   }

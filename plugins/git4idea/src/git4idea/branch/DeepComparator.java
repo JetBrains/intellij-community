@@ -90,7 +90,7 @@ public class DeepComparator implements Disposable {
         }
         else {
           VcsLogBranchFilter branchFilter = myUi.getFilterUi().getFilters().getBranchFilter();
-          if (branchFilter == null || !myTask.myComparedBranch.equals(VcsLogUtil.getSingleFilteredBranch(branchFilter, myUi.getDataPack().getRefs(), myUi.getDataPack().getLogProviders().keySet()))) {
+          if (branchFilter == null || !myTask.myComparedBranch.equals(VcsLogUtil.getSingleFilteredBranch(branchFilter, myUi.getDataPack().getRefs()))) {
             stopAndUnhighlight();
           }
         }
