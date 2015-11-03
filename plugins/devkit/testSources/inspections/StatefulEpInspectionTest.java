@@ -32,6 +32,7 @@ public class StatefulEpInspectionTest extends PluginModuleTestCase {
     myFixture.addClass("package com.intellij.psi; public class PsiElement {}");
     myFixture.addClass("package com.intellij.psi; public class PsiReference {}");
     myFixture.addClass("package com.intellij.codeInspection; public class LocalQuickFix {}");
+    myFixture.addClass("package com.intellij.openapi.components; public interface ProjectComponent {}");
     myFixture.enableInspections(new StatefulEpInspection());
   }
 
@@ -46,5 +47,10 @@ public class StatefulEpInspectionTest extends PluginModuleTestCase {
   public void testExt() {
     setPluginXml("plugin.xml");
     myFixture.testHighlighting("Ext.java");
+  }
+  
+  public void testProjectComp() {
+    setPluginXml("plugin.xml");
+    myFixture.testHighlighting("ProjectComp.java");
   }
 }

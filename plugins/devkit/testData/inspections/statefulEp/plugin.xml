@@ -4,5 +4,6 @@
   </extensionPoints>
   <extensions>
     <ep implementation="Ext"/>
+    <ep implementation="ProjectComp"/>
   </extensions>
 </idea-plugin>
