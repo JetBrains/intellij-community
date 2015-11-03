@@ -325,7 +325,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   }
 
   @Override
-  protected void notifyInspectionsFinished() {
+  protected void notifyInspectionsFinished(final AnalysisScope scope) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
@@ -334,7 +334,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
         if (myView != null) {
           if (!myView.update() && !getUIOptions().SHOW_ONLY_DIFF) {
-            NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message"), MessageType.INFO).notify(getProject());
+            NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message", scope.getFileCount(), scope.getDisplayName()), MessageType.INFO).notify(getProject());
             close(true);
           }
           else {
@@ -832,7 +832,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     ProgressManager.getInstance().run(task);
   }
 
-  private void cleanup(@NotNull AnalysisScope scope,
+  private void cleanup(@NotNull final AnalysisScope scope,
                        @NotNull InspectionProfile profile,
                        @NotNull final Project project,
                        @Nullable final Runnable postRunnable,
@@ -913,7 +913,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         @Override
         public void run() {
           if (commandName != null) {
-            NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message"), MessageType.INFO).notify(getProject());
+            NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message", scope.getFileCount(), scope.getDisplayName()), MessageType.INFO).notify(getProject());
           }
           if (postRunnable != null) {
             postRunnable.run();
