@@ -208,10 +208,13 @@ public class MethodCallUtils {
     return variable.equals(element);
   }
 
+  @Nullable
   public static PsiMethod findMethodWithReplacedArgument(@NotNull PsiCall call, @NotNull PsiExpression target,
                                                          @NotNull PsiExpression replacement) {
     final PsiExpressionList argumentList = call.getArgumentList();
-    assert argumentList != null;
+    if (argumentList == null) {
+      return null;
+    }
     final PsiExpression[] expressions = argumentList.getExpressions();
     int index = -1;
     for (int i = 0; i < expressions.length; i++) {
@@ -220,7 +223,9 @@ public class MethodCallUtils {
         index = i;
       }
     }
-    assert index >= 0;
+    if (index < 0) {
+      return null;
+    }
     final PsiCall copy = (PsiCall)call.copy();
     final PsiExpressionList copyArgumentList = copy.getArgumentList();
     assert copyArgumentList != null;
