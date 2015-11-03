@@ -80,6 +80,10 @@ public class JavaAutoDetectIndentTest extends AbstractIndentAutoDetectionTest {
   public void testSimpleIndent() {
     doTestMaxUsedIndent(2, 6);
   }
+  
+  public void testTabsAndIndents() {
+    doTestIndentSize(4);
+  }
 
   public void testManyComments() {
     doTestMaxUsedIndent(2, 6);
