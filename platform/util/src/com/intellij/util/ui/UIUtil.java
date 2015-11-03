@@ -2445,6 +2445,11 @@ public class UIUtil {
           Font winFont = (Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
           if (winFont != null) font = winFont;
         }
+        else if (SystemInfo.isLinux && JBUI.isHiDPI()) {
+          // We don't expect the default GUI font to be scaled on Linux and do it ourselves.
+          // TODO: this is valid until HIDPI support comes to J2D/Swing on Linux.
+          font = JBFont.create(font);
+        }
         ourSystemFontData = Pair.create(font.getName(), font.getSize());
       }
     }
