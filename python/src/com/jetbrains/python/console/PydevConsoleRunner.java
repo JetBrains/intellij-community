@@ -376,7 +376,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
             try {
               initAndRun(myStatementsToExecute);
             }
-            catch (ExecutionException e) {
+            catch (Exception e) {
               LOG.warn("Error running console", e);
               assert myProject != null;
               ExecutionHelper.showErrors(myProject, Arrays.<Exception>asList(e), getTitle(), null);
