@@ -1701,4 +1701,8 @@ public class InferenceSession {
     }
     return null;
   }
+
+  public void registerSiteSubstitutor(PsiSubstitutor substitutor) {
+    mySiteSubstitutor = mySiteSubstitutor.putAll(substitutor);
+  }
 }
