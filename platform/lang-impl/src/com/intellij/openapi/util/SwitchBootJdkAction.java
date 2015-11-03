@@ -38,6 +38,7 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,9 +46,8 @@ import java.util.regex.Pattern;
  * @author denis
  */
 public class SwitchBootJdkAction extends AnAction implements DumbAware {
-
   @NonNls private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.SwitchBootJdkAction");
-  @NonNls private static final String productJdkConfigFileName = ApplicationNamesInfo.getInstance().getScriptName() + ".jdk";
+  @NonNls private static final String productJdkConfigFileName = getExecutable() + ".jdk";
   @NonNls private static final File productJdkConfigFile = new File(PathManager.getConfigPath(), productJdkConfigFileName);
   @NonNls private static final File customJdkFile = new File(PathManager.getHomePath() + File.separator + "jre" + File.separator + "jdk");
 
@@ -321,4 +321,9 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
     }
   }
 
+  @NotNull
+  private static String getExecutable() {
+    final String executable = System.getProperty("idea.executable");
+    return executable != null ? executable : ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
+  }
 }
