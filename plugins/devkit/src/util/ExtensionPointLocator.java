@@ -29,6 +29,7 @@ import com.intellij.util.xml.DomService;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
@@ -91,7 +92,7 @@ public class ExtensionPointLocator {
     return GlobalSearchScope.filesScope(project, candidates);
   }
 
-  public static boolean isImplementedEp(@NotNull PsiClass psiClass, @NotNull final ExtensionPointCandidate candidate) {
+  public static boolean isImplementedEp(@NotNull PsiClass psiClass) {
     String name = psiClass.getQualifiedName();
     if (name == null) return false;
 
@@ -101,7 +102,9 @@ public class ExtensionPointLocator {
       @Override
       public boolean process(PsiFile file, int startOffset, int endOffset) {
         XmlTag tag = PsiTreeUtil.getParentOfType(file.findElementAt(startOffset), XmlTag.class);
-        return tag == null || !candidate.epName.endsWith(tag.getName());
+        if (tag == null) return true;
+        DomElement dom = DomUtil.getDomElement(tag);
+        return !(dom instanceof Extension && ((Extension)dom).getExtensionPoint() != null);
       }
     }, scope);
   }

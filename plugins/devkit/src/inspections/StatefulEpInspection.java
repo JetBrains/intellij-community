@@ -25,7 +25,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.util.ExtensionPointCandidate;
 import org.jetbrains.idea.devkit.util.ExtensionPointLocator;
 
 import java.util.List;
@@ -37,7 +36,7 @@ public class StatefulEpInspection extends DevKitInspectionBase {
     PsiField[] fields = psiClass.getFields();
     if (fields.length == 0) return super.checkClass(psiClass, manager, isOnTheFly);
     final boolean isQuickFix = InheritanceUtil.isInheritor(psiClass, LocalQuickFix.class.getCanonicalName());
-    if (isQuickFix || shouldCheck(psiClass)) {
+    if (isQuickFix || ExtensionPointLocator.isImplementedEp(psiClass)) {
       List<ProblemDescriptor> result = ContainerUtil.newArrayList();
       for (final PsiField field : fields) {
         for (Class c : new Class[]{PsiElement.class, PsiReference.class, Project.class}) {
@@ -54,12 +53,5 @@ public class StatefulEpInspection extends DevKitInspectionBase {
       return result.toArray(new ProblemDescriptor[result.size()]);
     }
     return super.checkClass(psiClass, manager, isOnTheFly);
-  }
-
-  boolean shouldCheck(@NotNull PsiClass psiClass) {
-    for (ExtensionPointCandidate candidate : new ExtensionPointLocator(psiClass).findSuperCandidates()) {
-      if (ExtensionPointLocator.isImplementedEp(psiClass, candidate)) return true;
-    }
-    return false;
   }
 }
