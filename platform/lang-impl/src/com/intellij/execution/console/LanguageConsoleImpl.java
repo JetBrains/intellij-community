@@ -228,10 +228,6 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     return myPanel.getComponentCount() > 1;
   }
 
-  protected void setupEditorDefault(@NotNull EditorEx editor) {
-    myHelper.setupEditor(editor);
-  }
-
   @Nullable
   public String getPrompt() {
     return myPrompt;

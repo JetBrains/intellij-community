@@ -202,6 +202,8 @@ public final class LanguageConsoleBuilder {
   private static class MyHelper extends LanguageConsoleImpl.Helper {
     private final PairFunction<VirtualFile, Project, PsiFile> psiFileFactory;
 
+    GutteredLanguageConsole console;
+
     public MyHelper(@NotNull  Project project, @NotNull String title, @NotNull Language language, @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
       super(project, new LightVirtualFile(title, language, ""));
       this.psiFileFactory = psiFileFactory;
@@ -212,14 +214,22 @@ public final class LanguageConsoleBuilder {
     public PsiFile getFile() {
       return psiFileFactory == null ? super.getFile() : psiFileFactory.fun(virtualFile, project);
     }
+
+    @Override
+    public void setupEditor(@NotNull EditorEx editor) {
+      super.setupEditor(editor);
+
+      console.setupEditor(editor);
+    }
   }
 
   private final static class GutteredLanguageConsole extends LanguageConsoleImpl {
     private final GutterContentProvider gutterContentProvider;
 
-    public GutteredLanguageConsole(@NotNull Helper helper, @Nullable GutterContentProvider gutterContentProvider) {
+    public GutteredLanguageConsole(@NotNull MyHelper helper, @Nullable GutterContentProvider gutterContentProvider) {
       super(helper);
 
+      helper.console = this;
       this.gutterContentProvider = gutterContentProvider == null ? new BasicGutterContentProvider() : gutterContentProvider;
     }
 
@@ -233,10 +243,7 @@ public final class LanguageConsoleBuilder {
       return 1;
     }
 
-    @Override
-    protected void setupEditorDefault(@NotNull EditorEx editor) {
-      super.setupEditorDefault(editor);
-
+    void setupEditor(@NotNull EditorEx editor) {
       if (editor == getConsoleEditor()) {
         return;
       }
