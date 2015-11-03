@@ -18,18 +18,18 @@ package com.intellij.util.containers;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
+import java.lang.ref.SoftReference;
 import java.util.Map;
 
-public final class WeakKeyWeakValueHashMap<K,V> extends RefKeyRefValueHashMap<K,V> implements Map<K,V>{
-  public WeakKeyWeakValueHashMap() {
+final class WeakKeySoftValueHashMap<K,V> extends RefKeyRefValueHashMap<K,V> implements Map<K,V>{
+  public WeakKeySoftValueHashMap() {
     super(new WeakHashMap<K, ValueReference<K, V>>());
   }
 
-  private static class WeakValueReference<K,V> extends WeakReference<V> implements ValueReference<K,V> {
-    @NotNull private final WeakHashMap.Key<K> key;
+  private static class SoftValueReference<K,V> extends SoftReference<V> implements ValueReference<K,V> {
+    @NotNull private final RefHashMap.Key<K> key;
 
-    private WeakValueReference(@NotNull WeakHashMap.Key<K> key, V referent, ReferenceQueue<? super V> q) {
+    private SoftValueReference(@NotNull WeakHashMap.Key<K> key, V referent, ReferenceQueue<? super V> q) {
       super(referent, q);
       this.key = key;
     }
@@ -45,6 +45,6 @@ public final class WeakKeyWeakValueHashMap<K,V> extends RefKeyRefValueHashMap<K,
   protected ValueReference<K, V> createValueReference(@NotNull RefHashMap.Key<K> key,
                                                       V referent,
                                                       ReferenceQueue<? super V> q) {
-    return new WeakValueReference<K, V>(key, referent, q);
+    return new SoftValueReference<K, V>(key, referent, q);
   }
 }

@@ -2821,5 +2821,10 @@ public class ContainerUtil extends ContainerUtilRt {
       return new TreeMap<K, Collection<V>>();
     }
   }
+
+  @NotNull
+  public static <K,V> Map<K,V> createWeakKeySoftValueMap() {
+    return new WeakKeySoftValueHashMap<K, V>();
+  }
 }
 
