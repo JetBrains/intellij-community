@@ -129,6 +129,8 @@
     <unresolvedHighlightFilter implementation="org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedReferenceFilterByFile"/>
 
     <callExpressionTypeCalculator
+        implementation="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrWithTraitTypeCalculator"/>
+    <callExpressionTypeCalculator
         implementation="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.DefaultCallExpressionTypeCalculator"
         order="last"/>
     <callExpressionTypeCalculator
