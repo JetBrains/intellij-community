@@ -183,7 +183,7 @@ public class ScratchFileActions {
       return new Condition<VirtualFile>() {
         @Override
         public boolean value(@NotNull VirtualFile file) {
-          return ScratchRootType.getInstance().isScratchFile(file);
+          return ScratchRootType.getInstance().containsFile(file);
         }
       };
     }
