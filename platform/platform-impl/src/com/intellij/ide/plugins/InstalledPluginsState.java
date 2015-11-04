@@ -20,6 +20,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +45,7 @@ public class InstalledPluginsState {
   private final Object myLock = new Object();
   private final Map<PluginId, IdeaPluginDescriptor> myInstalledPlugins = ContainerUtil.newIdentityHashMap();
   private final Map<PluginId, IdeaPluginDescriptor> myUpdatedPlugins = ContainerUtil.newIdentityHashMap();
-  private final Set<String> myOutdatedPlugins = ContainerUtil.newHashSet();
+  private final Set<String> myOutdatedPlugins = new SmartHashSet<String>();
 
   @NotNull
   public Collection<IdeaPluginDescriptor> getInstalledPlugins() {
