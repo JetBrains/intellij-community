@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.openapi.editor.Editor;
@@ -112,10 +113,12 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       if (shouldHaveAnnotationParameters(psiClass)) {
         JavaCompletionUtil.insertParentheses(context, item, false, true);
       }
-      CharSequence text = context.getDocument().getCharsSequence();
-      int tail = context.getTailOffset();
-      if (text.length() > tail && Character.isLetter(text.charAt(tail))) {
-        context.getDocument().insertString(tail, " ");
+      if (context.getCompletionChar() == Lookup.NORMAL_SELECT_CHAR || context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
+        CharSequence text = context.getDocument().getCharsSequence();
+        int tail = context.getTailOffset();
+        if (text.length() > tail && Character.isLetter(text.charAt(tail))) {
+          context.getDocument().insertString(tail, " ");
+        }
       }
     }
 
