@@ -22,12 +22,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
+import com.intellij.testFramework.rules.TempDirectory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.util.Set;
@@ -40,7 +40,7 @@ import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
 public class SymlinkHandlingTest extends BareTestFixtureTestCase {
-  @Rule public TemporaryFolder myTempDir = new TemporaryFolder();
+  @Rule public TempDirectory myTempDir = new TempDirectory();
 
   @Before
   public void setUp() {

@@ -16,9 +16,9 @@
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.testFramework.rules.TempDirectory;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.util.Collection;
@@ -28,7 +28,7 @@ import static com.intellij.openapi.util.Pair.pair;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CanonicalPathMapTest {
-  @Rule public TemporaryFolder myTempDir = new TemporaryFolder();
+  @Rule public TempDirectory myTempDir = new TempDirectory();
 
   @Test
   public void testRemappedSymLinkReportsOriginalWatchedPath() throws Exception {
@@ -41,7 +41,7 @@ public class CanonicalPathMapTest {
     CanonicalPathMap pathMap = new CanonicalPathMap(Collections.singletonList(symLink.getPath()), Collections.emptyList());
 
     // REMAP from native file watcher: /?/root/mapped -> /?/root/real
-    pathMap.addMapping(Collections.singletonList(pair(mappedDir.getPath(), realDir.getCanonicalPath())));
+    pathMap.addMapping(Collections.singletonList(pair(mappedDir.getPath(), realDir.getPath())));
 
     Collection<String> watchedPaths = pathMap.getWatchedPaths(new File(mappedDir, "file.txt").getPath(), true, false);
     assertThat(watchedPaths).containsExactly(new File(symLink, "file.txt").getPath());
