@@ -119,7 +119,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   private VirtualFileListener myVfsListener;
   private Editor              mySelectedEditor;
   private String              myPropertyToSelectWhenVisible;
-  private boolean myKeepEmptyProperties;
 
   public ResourceBundleEditor(@NotNull ResourceBundle resourceBundle) {
     myProject = resourceBundle.getProject();
@@ -138,7 +137,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
     myResourceBundle = resourceBundle;
     myPropertiesInsertDeleteManager = new ResourceBundlePropertiesUpdateManager(resourceBundle);
-    myKeepEmptyProperties = ResourceBundleEditorKeepEmptyValueToggleAction.keepEmptyProperties();
 
     myPropertiesAnchorizer = new PropertiesAnchorizer(myResourceBundle.getProject());
     myStructureViewComponent = new ResourceBundleStructureViewComponent(myResourceBundle, this, myPropertiesAnchorizer);
@@ -376,7 +374,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
           public void run() {
             try {
               if (currentValue.isEmpty() &&
-                  myKeepEmptyProperties &&
+                  ResourceBundleEditorKeepEmptyValueToggleAction.keepEmptyProperties() &&
                   !PsiManager.getInstance(myProject).areElementsEquivalent(propertiesFile.getContainingFile(),
                                                                            myResourceBundle.getDefaultPropertiesFile().getContainingFile())) {
                 myPropertiesInsertDeleteManager.deletePropertyIfExist(currentSelectedProperty, propertiesFile);
@@ -881,10 +879,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       }
     }
     myEditors.clear();
-  }
-
-  public void setKeepEmptyProperties(boolean keepEmptyProperties) {
-    myKeepEmptyProperties = keepEmptyProperties;
   }
 
   @Override

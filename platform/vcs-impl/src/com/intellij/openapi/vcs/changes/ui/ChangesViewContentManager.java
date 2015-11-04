@@ -29,10 +29,8 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -53,7 +51,7 @@ import java.util.concurrent.CountDownLatch;
  * @author yole
  */
 public class ChangesViewContentManager extends AbstractProjectComponent implements ChangesViewContentI {
-  public static final String TOOLWINDOW_ID = Registry.is("vcs.merge.toolwindows") ? ToolWindowId.VCS : VcsBundle.message("changes.toolwindow.name");
+  public static final String TOOLWINDOW_ID = ToolWindowId.VCS;
   private static final Key<ChangesViewContentEP> myEPKey = Key.create("ChangesViewContentEP");
   private static final Logger LOG = Logger.getInstance(ChangesViewContentManager.class);
 
@@ -283,7 +281,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
     }
   }
 
-  public static final String LOCAL_CHANGES = Registry.is("vcs.merge.toolwindows") ? "Local Changes" : "Local";
+  public static final String LOCAL_CHANGES = "Local Changes";
   public static final String REPOSITORY = "Repository";
   public static final String INCOMING = "Incoming";
   public static final String SHELF = "Shelf";

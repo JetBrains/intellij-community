@@ -491,7 +491,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
   }
 
   @NonNls private static final Set<String> unknownActionIds = new THashSet<String>(Arrays.asList(
-    "ActivateChangesToolWindow", "ActivateFavoritesToolWindow", "ActivateCommanderToolWindow", "ActivateDebugToolWindow", "ActivateFindToolWindow",
+    "ActivateVersionControlToolWindow", "ActivateFavoritesToolWindow", "ActivateCommanderToolWindow", "ActivateDebugToolWindow", "ActivateFindToolWindow",
     "ActivateHierarchyToolWindow", "ActivateMessagesToolWindow", "ActivateProjectToolWindow", "ActivateRunToolWindow",
     "ActivateStructureToolWindow", "ActivateTODOToolWindow", "ActivateWebToolWindow","ActivatePaletteToolWindow",
     "ActivateTerminalToolWindow",
