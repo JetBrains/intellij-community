@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PlatformUtils
+import com.intellij.util.containers.computeOrNull
 
 private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
   override fun resolve(path: String, project: Project): PathInfo? {
@@ -213,24 +214,4 @@ private fun findInModuleLevelLibraries(module: Module, rootType: OrderRootType, 
   return ModuleRootManager.getInstance(module).orderEntries.computeOrNull {
     if (it is LibraryOrderEntry && it.isModuleLevel) it.getFiles(rootType).computeOrNull { fileProcessor(it, module) } else null
   }
-}
-
-private inline fun <T, R> Iterator<T>.computeOrNull(processor: (T) -> R): R? {
-  for (file in this) {
-    val result = processor(file)
-    if (result != null) {
-      return result
-    }
-  }
-  return null
-}
-
-private inline fun <T, R> Array<T>.computeOrNull(processor: (T) -> R): R? {
-  for (file in this) {
-    val result = processor(file)
-    if (result != null) {
-      return result
-    }
-  }
-  return null
 }

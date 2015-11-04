@@ -35,3 +35,23 @@ fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
 }
 
 fun List<*>?.isNulOrEmpty() = this == null || isEmpty()
+
+inline fun <T, R> Iterator<T>.computeOrNull(processor: (T) -> R): R? {
+  for (file in this) {
+    val result = processor(file)
+    if (result != null) {
+      return result
+    }
+  }
+  return null
+}
+
+inline fun <T, R> Array<T>.computeOrNull(processor: (T) -> R): R? {
+  for (file in this) {
+    val result = processor(file)
+    if (result != null) {
+      return result
+    }
+  }
+  return null
+}
