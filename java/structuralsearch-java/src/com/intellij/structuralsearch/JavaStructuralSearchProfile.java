@@ -151,6 +151,18 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return file;
   }
 
+  @NotNull
+  @Override
+  public PsiElement getPresentableElement(PsiElement element) {
+    if (element instanceof PsiJavaCodeReferenceElement) {
+      final PsiElement parent = element.getParent();
+      if (parent instanceof PsiTypeElement) {
+        return parent;
+      }
+    }
+    return element;
+  }
+
   public void compile(PsiElement[] elements, @NotNull GlobalCompilingVisitor globalVisitor) {
     elements[0].getParent().accept(new JavaCompilingVisitor(globalVisitor));
   }
@@ -425,7 +437,15 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     if (searchIsExpression && statements[0].getFirstChild() instanceof PsiModifierList && statements2.length == 0) {
       return;
     }
-    if (searchIsExpression != replaceIsExpression) {
+    boolean targetFound = false;
+    for (final String name : matchOptions.getVariableConstraintNames()) {
+      final MatchVariableConstraint constraint = matchOptions.getVariableConstraint(name);
+      if (constraint.isPartOfSearchResults()) {
+        targetFound = true;
+        break;
+      }
+    }
+    if (!targetFound && searchIsExpression != replaceIsExpression) {
       throw new UnsupportedPatternException(
         searchIsExpression ? SSRBundle.message("replacement.template.is.not.expression.error.message") :
         SSRBundle.message("search.template.is.not.expression.error.message")

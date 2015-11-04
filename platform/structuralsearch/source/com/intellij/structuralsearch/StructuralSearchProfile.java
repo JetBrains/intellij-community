@@ -278,4 +278,9 @@ public abstract class StructuralSearchProfile {
   public boolean isDocCommentOwner(PsiElement match) {
     return false;
   }
+
+  @NotNull
+  public PsiElement getPresentableElement(PsiElement element) {
+    return element;
+  }
 }

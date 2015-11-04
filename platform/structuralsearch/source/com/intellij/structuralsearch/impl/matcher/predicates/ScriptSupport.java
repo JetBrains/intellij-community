@@ -48,7 +48,7 @@ public class ScriptSupport {
     final String name = result.getName();
     if (name != null && !result.isMultipleMatch() && !result.isScopeMatch()) {
       final Object value = out.get(name);
-      final PsiElement match = StructuralSearchUtil.getParentIfIdentifier(result.getMatch());
+      final PsiElement match = StructuralSearchUtil.getPresentableElement(result.getMatch());
       if (value == null) {
         out.put(name, match);
       }
@@ -86,7 +86,7 @@ public class ScriptSupport {
       }
       final Binding binding = new Binding(variableMap);
 
-      context = StructuralSearchUtil.getParentIfIdentifier(context);
+      context = StructuralSearchUtil.getPresentableElement(context);
       binding.setVariable("__context__", context);
       script.setBinding(binding);
 

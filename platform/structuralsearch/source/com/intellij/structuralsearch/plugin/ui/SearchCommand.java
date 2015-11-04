@@ -165,7 +165,7 @@ public class SearchCommand {
           info = new UsageInfo(parent, startOffset, end - parentStart);
         }
         else {
-          info = new UsageInfo(result.getMatch());
+          info = new UsageInfo(StructuralSearchUtil.getPresentableElement(result.getMatch()));
         }
 
         Usage usage = new UsageInfo2UsageAdapter(info);
