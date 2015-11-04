@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,7 +141,9 @@ public class TypeMigrationReplacementUtil {
         final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
         final PsiType componentType = changeType.getDeepComponentType();
         if (classReference != null) {
-          final PsiElement psiElement = replaceTypeWithClassReferenceOrKeyword(project, componentType, classReference);
+          final PsiElement psiElement = changeType.equals(expression.getType())
+                                        ? classReference
+                                        : replaceTypeWithClassReferenceOrKeyword(project, componentType, classReference);
           final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(psiElement, PsiNewExpression.class);
           if (newExpression != null && PsiDiamondTypeUtil.canCollapseToDiamond(newExpression, newExpression, changeType)) {
             final PsiJavaCodeReferenceElement anonymousClassReference = newExpression.getClassOrAnonymousClassReference();
