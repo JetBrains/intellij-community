@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -50,18 +49,7 @@ public class SplitFilterAction extends PsiElementBaseIntentionAction {
     final PsiElement gParent = parent.getParent();
     if (!(gParent instanceof PsiMethodCallExpression)) return false;
 
-    final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)gParent).getMethodExpression();
-    if (!"filter".equals(methodExpression.getReferenceName())) return false;
-    final PsiExpressionList argumentList = ((PsiMethodCallExpression)gParent).getArgumentList();
-    if (argumentList.getExpressions().length != 1) return false;
-
-    final PsiMethod method = ((PsiMethodCallExpression)gParent).resolveMethod();
-    if (method == null) return false;
-    final PsiClass containingClass = method.getContainingClass();
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length == 1 && 
-        InheritanceUtil.isInheritor(containingClass, false, CommonClassNames.JAVA_UTIL_STREAM_STREAM) &&
-        InheritanceUtil.isInheritor(parameters[0].getType(), CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE)) {
+    if (MergeFilterChainAction.isFilterCall((PsiMethodCallExpression)gParent)) {
       return true;
     }
 

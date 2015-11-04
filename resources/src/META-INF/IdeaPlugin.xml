@@ -770,6 +770,10 @@
       <category>Java/Streams</category>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.MergeFilterChainAction</className>
+      <category>Java/Streams</category>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.InvertIfConditionAction</className>
       <category>Java/Control Flow</category>
     </intentionAction>
