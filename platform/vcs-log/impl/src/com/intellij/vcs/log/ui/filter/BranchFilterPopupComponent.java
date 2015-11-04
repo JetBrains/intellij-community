@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogBranchFilter;
@@ -90,9 +89,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
   @NotNull
   @Override
   protected ListPopup createPopupMenu() {
-    return new PopupFactoryImpl.ActionGroupPopup(null, createActionGroup(), DataManager.getInstance().getDataContext(this),
-                                                 false, false, false, false,
-                                                 null, -1, null, null);
+    return new FlatSpeedSearchPopup(createActionGroup(), DataManager.getInstance().getDataContext(this));
   }
 
   @Override
