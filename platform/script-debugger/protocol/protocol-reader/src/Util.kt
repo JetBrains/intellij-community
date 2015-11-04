@@ -4,27 +4,28 @@ import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.lang.reflect.WildcardType
 
-public val TYPE_FACTORY_NAME_PREFIX: Char = 'F'
+val TYPE_FACTORY_NAME_PREFIX = 'F'
 
-public val READER_NAME: String = "reader"
-public val PENDING_INPUT_READER_NAME: String = "inputReader"
+val READER_NAME = "reader"
+val PENDING_INPUT_READER_NAME = "inputReader"
 
-public val BASE_VALUE_PREFIX: String = "baseMessage"
+val BASE_VALUE_PREFIX = "baseMessage"
 
-public val JSON_READER_CLASS_NAME: String = "org.jetbrains.io.JsonReaderEx"
-public val JSON_READER_PARAMETER_DEF: String = JSON_READER_CLASS_NAME + ' ' + READER_NAME
+val JSON_READER_CLASS_NAME = "JsonReaderEx"
+internal val JSON_READER_PARAMETER_DEF = "$READER_NAME: $JSON_READER_CLASS_NAME"
 
 /**
  * Generate Java type name of the passed type. Type may be parameterized.
  */
-fun writeJavaTypeName(arg: Type, out: TextOutput) {
+internal fun writeJavaTypeName(arg: Type, out: TextOutput) {
   if (arg is Class<*>) {
-    out.append(arg.getCanonicalName())
+    val name = arg.canonicalName
+    out.append(if (name == "java.util.List") "List" else name)
   }
   else if (arg is ParameterizedType) {
-    writeJavaTypeName(arg.getRawType(), out)
+    writeJavaTypeName(arg.rawType, out)
     out.append('<')
-    val params = arg.getActualTypeArguments()
+    val params = arg.actualTypeArguments
     for (i in params.indices) {
       if (i != 0) {
         out.comma()
@@ -34,15 +35,12 @@ fun writeJavaTypeName(arg: Type, out: TextOutput) {
     out.append('>')
   }
   else if (arg is WildcardType) {
-    val upperBounds = arg.getUpperBounds()
-    if (upperBounds == null) {
-      throw RuntimeException()
-    }
-    if (upperBounds.size() != 1) {
+    val upperBounds = arg.upperBounds!!
+    if (upperBounds.size != 1) {
       throw RuntimeException()
     }
     out.append("? extends ")
-    writeJavaTypeName(upperBounds[0], out)
+    writeJavaTypeName(upperBounds.first(), out)
   }
   else {
     out.append(arg.toString())

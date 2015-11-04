@@ -1,6 +1,6 @@
 package org.jetbrains.protocolReader
 
-class ExistingSubtypeAspect(private val jsonSuperClass: TypeRef<*>) {
+internal class ExistingSubtypeAspect(private val jsonSuperClass: TypeRef<*>) {
   private var subtypeCaster: SubtypeCaster? = null
 
   public fun setSubtypeCaster(subtypeCaster: SubtypeCaster) {
@@ -8,16 +8,16 @@ class ExistingSubtypeAspect(private val jsonSuperClass: TypeRef<*>) {
   }
 
   fun writeGetSuperMethodJava(out: TextOutput) {
-    out.newLine().append("@Override").newLine().append("public ").append(jsonSuperClass.type!!.typeClass.getCanonicalName()).append(" getSuper()").openBlock()
+    out.newLine().append("override ").append(jsonSuperClass.type!!.typeClass.canonicalName).append(" getSuper()").openBlock()
     out.append("return ").append(BASE_VALUE_PREFIX).semi().closeBlock()
   }
 
   fun writeSuperFieldJava(out: TextOutput) {
-    out.newLine().append("private final ").append(jsonSuperClass.type!!.typeClass.getCanonicalName()).append(' ').append(BASE_VALUE_PREFIX).semi().newLine()
+    out.newLine().append("private val ").append(jsonSuperClass.type!!.typeClass.canonicalName).append(' ').append(BASE_VALUE_PREFIX).semi().newLine()
   }
 
   fun writeSuperConstructorParamJava(out: TextOutput) {
-    out.comma().append(jsonSuperClass.type!!.typeClass.getCanonicalName()).append(' ').append(BASE_VALUE_PREFIX)
+    out.comma().append(jsonSuperClass.type!!.typeClass.canonicalName).append(' ').append(BASE_VALUE_PREFIX)
   }
 
   fun writeSuperConstructorInitialization(out: TextOutput) {
@@ -25,7 +25,7 @@ class ExistingSubtypeAspect(private val jsonSuperClass: TypeRef<*>) {
   }
 
   fun writeParseMethod(className: String, scope: ClassScope, out: TextOutput) {
-    out.newLine().append("public static ").append(className).space().append("parse").append('(').append(JSON_READER_PARAMETER_DEF).append(", String name").append(')').openBlock()
+    out.newLine().append("static ").append(className).space().append("parse").append('(').append(JSON_READER_PARAMETER_DEF).append(", name: String").append(')').openBlock()
     out.append("return ")
     jsonSuperClass.type!!.writeInstantiateCode(scope, out)
     out.append('(').append(READER_NAME).append(", name)").append('.')

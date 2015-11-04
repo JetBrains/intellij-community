@@ -7,7 +7,7 @@ import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.util.*
 
-class ReaderRoot<R>(val type: Class<R>, private val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>?>) {
+internal class ReaderRoot<R>(val type: Class<R>, private val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>?>) {
   private val visitedInterfaces = THashSet<Class<*>>(1)
   val methodMap = LinkedHashMap<Method, ReadDelegate>();
 
@@ -31,7 +31,7 @@ class ReaderRoot<R>(val type: Class<R>, private val typeToTypeHandler: LinkedHas
       m.getAnnotation<JsonParseMethod>(JsonParseMethod::class.java) ?: continue
 
       val exceptionTypes = m.exceptionTypes
-      if (exceptionTypes.size() > 1) {
+      if (exceptionTypes.size > 1) {
         throw JsonProtocolModelParseException("Too many exception declared in " + m)
       }
 
@@ -46,18 +46,18 @@ class ReaderRoot<R>(val type: Class<R>, private val typeToTypeHandler: LinkedHas
       }
 
       //noinspection SuspiciousMethodCalls
-      var typeWriter: TypeWriter<*>? = typeToTypeHandler.get(returnType)
+      var typeWriter: TypeWriter<*>? = typeToTypeHandler.getRaw(returnType)
       if (typeWriter == null) {
         typeWriter = createHandler(typeToTypeHandler, m.returnType)
       }
 
       val arguments = m.genericParameterTypes
-      if (arguments.size() > 2) {
+      if (arguments.size > 2) {
         throw JsonProtocolModelParseException("Exactly one argument is expected in " + m)
       }
       val argument = arguments[0]
       if (argument == JsonReaderEx::class.java || argument == Any::class.java) {
-        methodMap.put(m, ReadDelegate(typeWriter, isList, arguments.size() != 1))
+        methodMap.put(m, ReadDelegate(typeWriter, isList, arguments.size != 1))
       }
       else {
         throw JsonProtocolModelParseException("Unrecognized argument type in " + m)
@@ -74,9 +74,9 @@ class ReaderRoot<R>(val type: Class<R>, private val typeToTypeHandler: LinkedHas
 
   public fun writeStaticMethodJava(scope: ClassScope) {
     val out = scope.output
-    for (entry in methodMap.entrySet()) {
+    for (entry in methodMap.entries) {
       out.newLine()
-      entry.getValue().write(scope, entry.getKey(), out)
+      entry.value.write(scope, entry.key, out)
       out.newLine()
     }
   }

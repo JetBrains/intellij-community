@@ -1,6 +1,6 @@
 package org.jetbrains.protocolReader
 
-class MapReader(private val componentParser: ValueReader) : ValueReader() {
+internal class MapReader(private val componentParser: ValueReader) : ValueReader() {
   override fun appendFinishedValueTypeName(out: TextOutput) {
     out.append("Map")
     out.append('<')

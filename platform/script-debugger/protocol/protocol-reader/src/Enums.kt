@@ -8,7 +8,7 @@ fun appendEnums(enumConstants: List<String>, enumName: String, input: Boolean, o
     out.append(JsonReaders.convertRawEnumName(constant))
     if (!input) {
       out.append("(\"").append(constant).append("\")")
-      if (enumConstants.get(enumConstants.size() - 1) != constant) {
+      if (enumConstants.get(enumConstants.size - 1) != constant) {
         out.comma()
       }
     }
