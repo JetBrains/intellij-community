@@ -16,11 +16,14 @@ import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 import org.codehaus.groovy.control.messages.Message;
 import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
 import org.codehaus.groovy.syntax.SyntaxException;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Maxim.Mossienko
@@ -41,33 +44,53 @@ public class ScriptSupport {
     }
   }
 
+  private static Map<String, Object> buildVariableMap(@NotNull MatchResult result, @NotNull Map<String, Object> out) {
+    final String name = result.getName();
+    if (name != null && !result.isMultipleMatch() && !result.isScopeMatch()) {
+      final Object value = out.get(name);
+      final PsiElement match = StructuralSearchUtil.getParentIfIdentifier(result.getMatch());
+      if (value == null) {
+        out.put(name, match);
+      }
+      else if (value instanceof List) {
+        @SuppressWarnings("unchecked")
+        final List<PsiElement> list = (List<PsiElement>)value;
+        list.add(match);
+      }
+      else if (value instanceof PsiElement){
+        final List<PsiElement> list = new ArrayList<PsiElement>();
+        list.add((PsiElement)value);
+        list.add(match);
+        out.put(name, list);
+      }
+      else {
+        throw new AssertionError();
+      }
+    }
+    if (result.hasSons()) {
+      for (MatchResult son : result.getAllSons()) {
+        buildVariableMap(son, out);
+      }
+    }
+    return out;
+  }
+
   public String evaluate(MatchResult result, PsiElement context) {
     try {
-      final Binding binding = new Binding();
-
+      final HashMap<String, Object> variableMap = new HashMap<String, Object>();
       if (result != null) {
-        for(MatchResult r:result.getAllSons()) {
-          if (r.isMultipleMatch()) {
-            final ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
-            for (MatchResult r2 : r.getAllSons()) {
-              elements.add(StructuralSearchUtil.getParentIfIdentifier(r2.getMatch()));
-            }
-            binding.setVariable(r.getName(), elements);
-          }
-          else {
-            binding.setVariable(r.getName(), StructuralSearchUtil.getParentIfIdentifier(r.getMatch()));
-          }
+        buildVariableMap(result, variableMap);
+        if (context == null) {
+          context = result.getMatch();
         }
       }
+      final Binding binding = new Binding(variableMap);
 
-      if (context == null) {
-        context = result.getMatch();
-      }
       context = StructuralSearchUtil.getParentIfIdentifier(context);
       binding.setVariable("__context__", context);
       script.setBinding(binding);
 
-      Object o = script.run();
+      final Object o = script.run();
       return String.valueOf(o);
     } catch (GroovyRuntimeException ex) {
       throw new StructuralSearchException(SSRBundle.message("groovy.script.error", ex.getMessage()));
