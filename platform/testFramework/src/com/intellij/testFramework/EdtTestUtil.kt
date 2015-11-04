@@ -16,23 +16,24 @@
 package com.intellij.testFramework
 
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.InvocationTargetException
 import javax.swing.SwingUtilities
 
 class EdtTestUtil {
   companion object {
-    @JvmStatic fun runInEdtAndWait(runnable: ThrowableRunnable<Throwable>) {
+    @TestOnly @JvmStatic fun runInEdtAndWait(runnable: ThrowableRunnable<Throwable>) {
       runInEdtAndWait({ runnable.run() })
     }
 
-    @JvmStatic fun runInEdtAndWait(runnable: Runnable) {
+    @TestOnly @JvmStatic fun runInEdtAndWait(runnable: Runnable) {
       runInEdtAndWait({ runnable.run() })
     }
 
     // Test only because in production you must use Application.invokeAndWait(Runnable, ModalityState).
     // The problem is - Application logs errors, but not throws. But in tests must be thrown.
     // In any case name "runInEdtAndWait" is better than "invokeAndWait".
-    @JvmStatic fun runInEdtAndWait(runnable: () -> Unit) {
+    @TestOnly @JvmStatic fun runInEdtAndWait(runnable: () -> Unit) {
       if (SwingUtilities.isEventDispatchThread()) {
         runnable()
       }
@@ -41,7 +42,7 @@ class EdtTestUtil {
           SwingUtilities.invokeAndWait(runnable)
         }
         catch (e: InvocationTargetException) {
-          throw e.getCause() ?: e
+          throw e.cause ?: e
         }
       }
     }
