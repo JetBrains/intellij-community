@@ -879,7 +879,7 @@ public class InferenceSession {
       final List<InferenceVariable> vars = InferenceVariablesOrder.resolveOrder(allVars, this);
       if (!myIncorporationPhase.hasCaptureConstraints(vars)) {
         PsiSubstitutor firstSubstitutor = resolveSubset(vars, substitutor);
-        if (firstSubstitutor != null && hasBoundProblems(vars, firstSubstitutor)) {
+        if (hasBoundProblems(vars, firstSubstitutor)) {
           firstSubstitutor = null;
         }
         if (firstSubstitutor != null) {
@@ -953,6 +953,19 @@ public class InferenceSession {
     return var.getName();
   }
 
+  private PsiSubstitutor resolveSubsetOrdered(Set<InferenceVariable> varsToResolve, PsiSubstitutor siteSubstitutor) {
+    PsiSubstitutor substitutor = siteSubstitutor;
+    final HashSet<InferenceVariable> copy = new HashSet<InferenceVariable>(varsToResolve);
+    while (!copy.isEmpty()) {
+      final List<InferenceVariable> vars = InferenceVariablesOrder.resolveOrder(copy, this);
+      final PsiSubstitutor resolveSubset = resolveSubset(vars, substitutor);
+      copy.removeAll(vars);
+      substitutor = substitutor.putAll(resolveSubset);
+    }
+    return substitutor;
+  }
+
+  @NotNull
   private PsiSubstitutor resolveSubset(Collection<InferenceVariable> vars, PsiSubstitutor substitutor) {
     for (InferenceVariable var : vars) {
       LOG.assertTrue(var.getInstantiation() == PsiType.NULL);
@@ -1179,10 +1192,7 @@ public class InferenceSession {
     }
 
     //resolve input variables
-    PsiSubstitutor substitutor = resolveSubset(varsToResolve, siteSubstitutor);
-    if (substitutor == null) {
-      return false;
-    }
+    PsiSubstitutor substitutor = resolveSubsetOrdered(varsToResolve, siteSubstitutor);
 
     if (myContext instanceof PsiCall) {
       PsiExpressionList argumentList = ((PsiCall)myContext).getArgumentList();
