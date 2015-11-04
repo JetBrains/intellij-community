@@ -40,6 +40,22 @@ public class ConvertJUnitInspectionTest extends BaseTestNGInspectionsTest {
     doTest();
   }
 
+  public void testUnaryAssertions() {
+    doTest();
+  }
+
+  public void testBinaryAssertions() {
+    doTest();
+  }
+
+  public void testIncompatible() {
+    doTest();
+  }
+
+  public void testDelta() {
+    doTest();
+  }
+
   @Override
   protected String getBasePath() {
     return PluginPathManager.getPluginHomePathRelative("testng") + "/testData/junit";
