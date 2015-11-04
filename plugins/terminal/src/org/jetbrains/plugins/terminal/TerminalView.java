@@ -1,12 +1,14 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
@@ -19,6 +21,7 @@ import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.util.ui.UIUtil;
+import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.ui.JediTermWidget;
 import com.jediterm.terminal.ui.TabbedTerminalWidget;
 import com.jediterm.terminal.ui.TerminalWidget;
@@ -35,6 +38,7 @@ import java.awt.event.FocusListener;
  * @author traff
  */
 public class TerminalView {
+  private final static String TERMINAL_FEATURE = "terminal";
 
   private JBTabbedTerminalWidget myTerminalWidget;
 
@@ -56,38 +60,36 @@ public class TerminalView {
 
     toolWindow.setToHideOnEmptyContent(true);
 
-    if (terminalRunner != null) {
-      Content content = createTerminalInContentPanel(terminalRunner, toolWindow);
+    Content content = createTerminalInContentPanel(terminalRunner, toolWindow);
 
-      toolWindow.getContentManager().addContent(content);
+    toolWindow.getContentManager().addContent(content);
 
-      ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).addToolWindowManagerListener(new ToolWindowManagerListener() {
-        @Override
-        public void toolWindowRegistered(@NotNull String id) {
-        }
+    ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).addToolWindowManagerListener(new ToolWindowManagerListener() {
+      @Override
+      public void toolWindowRegistered(@NotNull String id) {
+      }
 
-        @Override
-        public void stateChanged() {
-          ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
-          if (window != null) {
-            boolean visible = window.isVisible();
-            if (visible && toolWindow.getContentManager().getContentCount() == 0) {
-              initTerminal(window);
-            }
+      @Override
+      public void stateChanged() {
+        ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
+        if (window != null) {
+          boolean visible = window.isVisible();
+          if (visible && toolWindow.getContentManager().getContentCount() == 0) {
+            initTerminal(window);
           }
         }
-      });
+      }
+    });
 
-      Disposer.register(myProject, new Disposable() {
-        @Override
-        public void dispose() {
-          if (myTerminalWidget != null) {
-            myTerminalWidget.dispose();
-            myTerminalWidget = null;
-          }
+    Disposer.register(myProject, new Disposable() {
+      @Override
+      public void dispose() {
+        if (myTerminalWidget != null) {
+          myTerminalWidget.dispose();
+          myTerminalWidget = null;
         }
-      });
-    }
+      }
+    });
 
     if (myDockContainer == null) {
       myDockContainer = new TerminalDockContainer(toolWindow);
@@ -177,8 +179,14 @@ public class TerminalView {
     }, true);
   }
 
-  private ActionToolbar createToolbar(@Nullable final AbstractTerminalRunner terminalRunner,
-                                      @NotNull final JBTabbedTerminalWidget terminal, @NotNull ToolWindow toolWindow) {
+  public static void recordUsage(@NotNull TtyConnector ttyConnector) {
+    UsageTrigger.trigger(TERMINAL_FEATURE + "." +
+                         (ttyConnector.toString().contains("Jsch") ? "ssh" :
+                          SystemInfo.isWindows ? "win" : SystemInfo.isMac ? "mac" : "linux"));
+  }
+
+  private static ActionToolbar createToolbar(@Nullable final AbstractTerminalRunner terminalRunner,
+                                             @NotNull final JBTabbedTerminalWidget terminal, @NotNull ToolWindow toolWindow) {
     DefaultActionGroup group = new DefaultActionGroup();
 
     if (terminalRunner != null) {
@@ -223,7 +231,7 @@ public class TerminalView {
     }
   }
 
-  private class CloseSession extends DumbAwareAction {
+  private static class CloseSession extends DumbAwareAction {
     private final JBTabbedTerminalWidget myTerminal;
     private ToolWindow myToolWindow;
 

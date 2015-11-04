@@ -144,6 +144,9 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
   public static void createAndStartSession(@NotNull TerminalWidget terminal, @NotNull TtyConnector ttyConnector) {
     TerminalSession session = terminal.createTerminalSession(ttyConnector);
+    
+    TerminalView.recordUsage(ttyConnector);
+    
     session.start();
   }
 
