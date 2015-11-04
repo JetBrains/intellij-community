@@ -50,7 +50,7 @@ public class X11UiUtil {
   private static final int CLIENT_MESSAGE = 33;
   private static final int FORMAT_BYTE = 8;
   private static final int FORMAT_LONG = 32;
-  private static final long EVENT_MASK = (3l << 19);
+  private static final long EVENT_MASK = (3L << 19);
   private static final long NET_WM_STATE_TOGGLE = 2;
 
   @SuppressWarnings("SpellCheckingInspection")
@@ -165,7 +165,7 @@ public class X11UiUtil {
         unsafe.setMemory(data, 64, (byte)0);
 
         int result = (Integer)XGetWindowProperty.invoke(
-          null, display, window, name, 0l, 65535l, (long)False, type, data, data + 8, data + 16, data + 24, data + 32);
+          null, display, window, name, 0L, 65535L, (long)False, type, data, data + 8, data + 16, data + 24, data + 32);
         if (result == 0) {
           int format = unsafe.getInt(data + 8);
           long pointer = SystemInfo.is64Bit ? unsafe.getLong(data + 32) : unsafe.getInt(data + 32);
