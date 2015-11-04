@@ -33,3 +33,5 @@ fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
     list.add(value)
   }
 }
+
+fun List<*>?.isNulOrEmpty() = this == null || isEmpty()
