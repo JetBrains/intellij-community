@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -53,7 +52,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
@@ -227,18 +225,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     manager.registerPostStartupActivity(new DumbAwareRunnable() {
       @Override
       public void run() {
-        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-        if (toolWindowManager != null) { // Can be null in tests
-          if (!Registry.is("vcs.merge.toolwindows")) {
-            ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.VCS, true, ToolWindowAnchor.BOTTOM, myProject, true);
-            myContentManager = toolWindow.getContentManager();
-            toolWindow.setIcon(AllIcons.Toolwindows.VcsSmallTab);
-            toolWindow.installWatcher(myContentManager);
-          }
-        }
-        else {
-          myContentManager = ContentFactory.SERVICE.getInstance().createContentManager(true, myProject);
-        }
+        myContentManager = ContentFactory.SERVICE.getInstance().createContentManager(true, myProject);
       }
     });
 
@@ -368,8 +355,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public ContentManager getContentManager() {
-    if (myContentManager == null && Registry.is("vcs.merge.toolwindows")) {
-      final ToolWindow changes = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
+    if (myContentManager == null) {
+      ToolWindow changes = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
       myContentManager = changes == null ? null : changes.getContentManager();
     }
     return myContentManager;
