@@ -927,6 +927,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   private void reinitSettings(final EditorEx editor) {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     editor.setColorsScheme(scheme);
+    editor.setBorder(BorderFactory.createLineBorder(JBColor.border(), 1));
     EditorSettings settings = editor.getSettings();
     settings.setLineNumbersShown(false);
     settings.setWhitespacesShown(false);
