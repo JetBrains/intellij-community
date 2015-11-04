@@ -29,7 +29,7 @@ class TextOutput(public val out: StringBuilder) {
     return this
   }
 
-  public fun newLine(): TextOutput {
+  fun newLine(): TextOutput {
     out.append('\n')
     justNewLined = true
     return this
@@ -78,6 +78,13 @@ class TextOutput(public val out: StringBuilder) {
 
   public fun openBlock(): TextOutput {
     openBlock(true)
+    return this
+  }
+
+  inline fun block(writer: () -> Unit): TextOutput {
+    openBlock()
+    writer()
+    closeBlock()
     return this
   }
 

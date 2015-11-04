@@ -8,12 +8,12 @@ import java.util.*
 class GenerateConfiguration<ROOT>(val packageName: String, val className: String, readerRootClass: Class<ROOT>, protocolInterfaces: List<Class<*>>, basePackagesMap: Map<Class<*>, String>? = null) {
   val basePackagesMap = if (basePackagesMap == null) listOf<Map<Class<*>, String>>() else listOf(basePackagesMap)
 
-  val typeToTypeHandler = InterfaceReader(protocolInterfaces).go()
-  val root = ReaderRoot(readerRootClass, typeToTypeHandler)
+  internal val typeToTypeHandler = InterfaceReader(protocolInterfaces).go()
+  internal val root = ReaderRoot(readerRootClass, typeToTypeHandler)
 }
 
 fun generate(args: Array<String>, configuration: GenerateConfiguration<*>) {
-  val fileUpdater = FileUpdater(FileSystems.getDefault().getPath(parseArgs(args), configuration.packageName.replace('.', File.separatorChar), configuration.className + ".java"))
+  val fileUpdater = FileUpdater(FileSystems.getDefault().getPath(parseArgs(args), configuration.packageName.replace('.', File.separatorChar), "${configuration.className}.kt"))
   generate(configuration, fileUpdater.builder)
   fileUpdater.update()
 }
@@ -48,9 +48,9 @@ private fun parseArgs(args: Array<String>): String {
     }
 
   }
-  for (en in paramMap.entrySet()) {
-    if (en.getValue().value == null) {
-      en.getValue().value = "generated"
+  for (en in paramMap.entries) {
+    if (en.value.value == null) {
+      en.value.value = "generated"
     }
   }
 
@@ -65,34 +65,31 @@ fun buildParserMap(configuration: GenerateConfiguration<*>): Map<Class<*>, Strin
   val fileScope = generate(configuration, StringBuilder())
 
   val typeToImplClassName = THashMap<Class<*>, String>()
-  for (typeWriter in configuration.typeToTypeHandler.values()) {
-    typeToImplClassName.put(typeWriter!!.typeClass, configuration.packageName + "." + configuration.className + "." + fileScope.getTypeImplShortName(typeWriter))
+  for (typeWriter in configuration.typeToTypeHandler.values) {
+    typeToImplClassName.put(typeWriter!!.typeClass, "${configuration.packageName}.${configuration.className}.${fileScope.getTypeImplShortName(typeWriter)}")
   }
   return typeToImplClassName
 }
 
 private fun generate(configuration: GenerateConfiguration<*>, stringBuilder: StringBuilder): FileScope {
-  val globalScope = GlobalScope(configuration.typeToTypeHandler.values(), configuration.basePackagesMap)
+  val globalScope = GlobalScope(configuration.typeToTypeHandler.values, configuration.basePackagesMap)
   val fileScope = globalScope.newFileScope(stringBuilder)
   val out = fileScope.output
   out.append("// Generated source")
-  out.newLine().append("package ").append(configuration.packageName).append(';')
-  out.newLine().newLine().append("import org.jetbrains.jsonProtocol.*;")
-  out.newLine().newLine().append("import org.jetbrains.annotations.NotNull;")
+  out.newLine().append("package ").append(configuration.packageName)
+  out.newLine().newLine().append("import org.jetbrains.jsonProtocol.*")
 
   out.newLine()
-  out.newLine().append("import java.util.List;")
-  out.newLine().append("import java.util.Map;")
-  out.newLine().append("import java.lang.String;")
+  out.newLine().append("import org.jetbrains.io.JsonReaderEx")
 
-  out.newLine().newLine().append("import static org.jetbrains.jsonProtocol.JsonReaders.*;")
-  out.newLine().newLine().append("public final class ").append(configuration.className).space()
-  out.append(if (configuration.root.type.isInterface) "implements" else "extends").space().append(configuration.root.type.canonicalName).openBlock(false)
+  out.newLine().newLine().append("import org.jetbrains.jsonProtocol.JsonReaders.*")
+  out.newLine().newLine().append("class ").append(configuration.className).space()
+  out.append(':').space().append(configuration.root.type.canonicalName).append(if (configuration.root.type.isInterface) "" else "()").openBlock(false)
 
   val rootClassScope = fileScope.newClassScope()
   configuration.root.writeStaticMethodJava(rootClassScope)
 
-  for (typeWriter in configuration.typeToTypeHandler.values()) {
+  for (typeWriter in configuration.typeToTypeHandler.values) {
     out.newLine()
     typeWriter!!.write(rootClassScope)
     out.newLine()
@@ -108,13 +105,11 @@ private fun generate(configuration: GenerateConfiguration<*>, stringBuilder: Str
     }
 
     val originName = typeWriter.typeClass.canonicalName
-    out.newLine().append("private static final class ").append(TYPE_FACTORY_NAME_PREFIX).append(globalScope.getTypeImplShortName(typeWriter)).append(" extends ObjectFactory<")
-    out.append(originName).append('>').openBlock()
-    out.append("@Override").newLine().append("public ").append(originName).append(" read(").append(JSON_READER_PARAMETER_DEF)
-    out.append(')').openBlock()
-    out.append("return ")
+    out.newLine().append("private class ").append(TYPE_FACTORY_NAME_PREFIX).append(globalScope.getTypeImplShortName(typeWriter)).append(" : ObjectFactory<")
+    out.append(originName).append(">()").openBlock()
+    out.append("override fun read(").append(JSON_READER_PARAMETER_DEF).append(") = ")
     typeWriter.writeInstantiateCode(rootClassScope, out)
-    out.append('(').append(READER_NAME).append(", null);").closeBlock()
+    out.append('(').append(READER_NAME).append(", null)")
     out.closeBlock()
   }
 

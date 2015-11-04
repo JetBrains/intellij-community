@@ -1,6 +1,5 @@
 package org.jetbrains.protocolReader
 
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -21,7 +20,7 @@ class FileUpdater(private val file: Path) {
       return
     }
 
-    val newContent = builder.toString().toByteArray(StandardCharsets.UTF_8)
+    val newContent = builder.toString().toByteArray()
     if (Files.exists(file)) {
       if (Arrays.equals(Files.readAllBytes(file), newContent)) {
         return
