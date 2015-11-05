@@ -352,7 +352,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     }
   }
 
-  interface IconListener<T> {
+  public interface IconListener<T> {
     void evalDone(DeferredIconImpl<T> source, T key, @NotNull Icon result);
   }
 
