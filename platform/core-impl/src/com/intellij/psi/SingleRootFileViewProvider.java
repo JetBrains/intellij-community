@@ -136,7 +136,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
     Language language = LanguageUtil.getLanguageForPsi(project, file);
 
-    return language == null ? null : PlainTextLanguage.INSTANCE;
+    return language != null ? language : PlainTextLanguage.INSTANCE;
   }
 
   @Override
