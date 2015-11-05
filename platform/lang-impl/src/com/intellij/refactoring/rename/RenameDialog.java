@@ -51,7 +51,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 
-public class RenameDialog extends RefactoringDialog {
+public class RenameDialog extends RefactoringDialog implements RenameDialogViewModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameDialog");
   private SuggestedNameInfo mySuggestedNameInfo;
 
@@ -99,7 +99,7 @@ public class RenameDialog extends RefactoringDialog {
   public static void showRenameDialog(DataContext dataContext, RenameDialog dialog) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       final String name = PsiElementRenameHandler.DEFAULT_NAME.getData(dataContext);
-      //noinspection TestOnlyProblems
+      assert name != null;
       dialog.performRename(name);
       dialog.close(OK_EXIT_CODE);
     }
@@ -304,7 +304,8 @@ public class RenameDialog extends RefactoringDialog {
     performRename(newName);
   }
 
-  public void performRename(final String newName) {
+  @Override
+  public void performRename(@NotNull final String newName) {
     final RenamePsiElementProcessor elementProcessor = RenamePsiElementProcessor.forElement(myPsiElement);
     elementProcessor.setToSearchInComments(myPsiElement, isSearchInComments());
     if (myCbSearchTextOccurences.isEnabled()) {
