@@ -36,6 +36,7 @@ import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
@@ -45,6 +46,7 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.diff.impl.GenericDataProvider;
 import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -1071,6 +1073,15 @@ public class DiffUtil {
       if (data != null) return data;
     }
     return null;
+  }
+
+  public static <T> void putDataKey(@NotNull UserDataHolder holder, @NotNull DataKey<T> key, @Nullable T value) {
+    DataProvider dataProvider = holder.getUserData(DiffUserDataKeys.DATA_PROVIDER);
+    if (!(dataProvider instanceof GenericDataProvider)) {
+      dataProvider = new GenericDataProvider(dataProvider);
+      holder.putUserData(DiffUserDataKeys.DATA_PROVIDER, dataProvider);
+    }
+    ((GenericDataProvider)dataProvider).putData(key, value);
   }
 
   //
