@@ -56,7 +56,9 @@ public class EditorStressTest extends AbstractEditorTest {
       }
     }
     catch (Throwable t) {
-      throw new RuntimeException("Failed when run with seed=" + mySeed + " in iteration " + i, t);
+      String message = "Failed when run with seed=" + mySeed + " in iteration " + i;
+      System.out.println(message);
+      throw new RuntimeException(message, t);
     }
   }
 
