@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.diagnostic;
 
+import com.intellij.diagnostic.VMOptions.MemoryKind;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -27,11 +28,10 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 
 public class OutOfMemoryDialog extends DialogWrapper {
-  public enum MemoryKind {
-    HEAP, PERM_GEN, CODE_CACHE
-  }
-
   private final MemoryKind myMemoryKind;
+  private final int myHeapSize;
+  private final int myPermGenSize;
+  private final int myCodeCacheSize;
 
   private JPanel myContentPane;
   private JLabel myMessageLabel;
@@ -51,16 +51,13 @@ public class OutOfMemoryDialog extends DialogWrapper {
   private final Action myIgnoreAction;
   private final Action myShutdownAction;
 
-  public OutOfMemoryDialog(MemoryKind memoryKind) {
+  public OutOfMemoryDialog(@NotNull MemoryKind memoryKind) {
     super(false);
     myMemoryKind = memoryKind;
     setTitle(DiagnosticBundle.message("diagnostic.out.of.memory.title"));
 
     myMessageLabel.setIcon(Messages.getErrorIcon());
-    myMessageLabel.setText(DiagnosticBundle.message(
-        "diagnostic.out.of.memory.error",
-        memoryKind == MemoryKind.HEAP ? VMOptions.XMX_OPTION_NAME : memoryKind == MemoryKind.PERM_GEN ? VMOptions.PERM_GEN_OPTION_NAME : VMOptions.CODE_CACHE_OPTION_NAME,
-        ApplicationNamesInfo.getInstance().getProductName()));
+    myMessageLabel.setText(DiagnosticBundle.message("diagnostic.out.of.memory.error", memoryKind.optionName, ApplicationNamesInfo.getInstance().getProductName()));
 
     File file = VMOptions.getWriteFile();
     if (file != null) {
@@ -87,29 +84,17 @@ public class OutOfMemoryDialog extends DialogWrapper {
     };
     myShutdownAction.putValue(DialogWrapper.DEFAULT_ACTION, true);
 
-    configControls(VMOptions.XMX_OPTION_NAME,
-                   VMOptions.readXmx(),
-                   memoryKind == MemoryKind.HEAP,
-                   myHeapSizeLabel,
-                   myHeapSizeField,
-                   myHeapUnitsLabel,
-                   myHeapCurrentValueLabel);
+    myHeapSize = VMOptions.readXmx();
+    configControls(MemoryKind.HEAP.optionName, myHeapSize, memoryKind == MemoryKind.HEAP,
+                   myHeapSizeLabel, myHeapSizeField, myHeapUnitsLabel, myHeapCurrentValueLabel);
 
-    configControls(VMOptions.PERM_GEN_OPTION_NAME,
-                   VMOptions.readMaxPermGen(),
-                   memoryKind == MemoryKind.PERM_GEN,
-                   myPermGenSizeLabel,
-                   myPermGenSizeField,
-                   myPermGenUnitsLabel,
-                   myPermGenCurrentValueLabel);
+    myPermGenSize = VMOptions.readMaxPermGen();
+    configControls(MemoryKind.PERM_GEN.optionName, myPermGenSize, memoryKind == MemoryKind.PERM_GEN,
+                   myPermGenSizeLabel, myPermGenSizeField, myPermGenUnitsLabel, myPermGenCurrentValueLabel);
 
-    configControls(VMOptions.CODE_CACHE_OPTION_NAME,
-                   VMOptions.readCodeCache(),
-                   memoryKind == MemoryKind.CODE_CACHE,
-                   myCodeCacheSizeLabel,
-                   myCodeCacheSizeField,
-                   myCodeCacheUnitsLabel,
-                   myCodeCacheCurrentValueLabel);
+    myCodeCacheSize = VMOptions.readCodeCache();
+    configControls(MemoryKind.CODE_CACHE.optionName, myCodeCacheSize, memoryKind == MemoryKind.CODE_CACHE,
+                   myCodeCacheSizeLabel, myCodeCacheSizeField, myCodeCacheUnitsLabel, myCodeCacheCurrentValueLabel);
 
     init();
   }
@@ -137,17 +122,20 @@ public class OutOfMemoryDialog extends DialogWrapper {
 
   private void save() {
     try {
-      VMOptions.writeXmx(Integer.parseInt(myHeapSizeField.getText()));
+      int heapSize = Integer.parseInt(myHeapSizeField.getText());
+      if (heapSize != myHeapSize) VMOptions.writeXmx(heapSize);
     }
     catch (NumberFormatException ignored) { }
 
     try {
-      VMOptions.writeMaxPermGen(Integer.parseInt(myPermGenSizeField.getText()));
+      int permGenSize = Integer.parseInt(myPermGenSizeField.getText());
+      if (permGenSize != myPermGenSize) VMOptions.writeMaxPermGen(permGenSize);
     }
     catch (NumberFormatException ignored) { }
 
     try {
-      VMOptions.writeCodeCache(Integer.parseInt(myCodeCacheSizeField.getText()));
+      int codeCacheSize = Integer.parseInt(myCodeCacheSizeField.getText());
+      if (codeCacheSize != myCodeCacheSize) VMOptions.writeCodeCache(codeCacheSize);
     }
     catch (NumberFormatException ignored) { }
   }
@@ -165,8 +153,8 @@ public class OutOfMemoryDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myMemoryKind == MemoryKind.HEAP ? myHeapSizeField :
-           myMemoryKind == MemoryKind.PERM_GEN ? myPermGenSizeField :
-           myCodeCacheSizeField;
+    return myMemoryKind == MemoryKind.PERM_GEN ? myPermGenSizeField :
+           myMemoryKind == MemoryKind.CODE_CACHE ? myCodeCacheSizeField :
+           myHeapSizeField;
   }
 }

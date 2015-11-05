@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.diagnostic;
 
+import com.intellij.diagnostic.VMOptions.MemoryKind;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -26,7 +27,6 @@ import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.io.MappingFailedException;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
@@ -34,16 +34,17 @@ import java.lang.reflect.InvocationTargetException;
 /**
  * @author kir
  */
+@SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
 public class DefaultIdeaErrorLogger implements ErrorLogger {
   private static boolean ourOomOccurred = false;
   private static boolean ourLoggerBroken = false;
   private static boolean ourMappingFailedNotificationPosted = false;
 
-  @NonNls private static final String FATAL_ERROR_NOTIFICATION_PROPERTY = "idea.fatal.error.notification";
-  @NonNls private static final String DISABLED_VALUE = "disabled";
-  @NonNls private static final String ENABLED_VALUE = "enabled";
-  @NonNls private static final String PARAM_PERM_GEN = "PermGen";
+  private static final String FATAL_ERROR_NOTIFICATION_PROPERTY = "idea.fatal.error.notification";
+  private static final String DISABLED_VALUE = "disabled";
+  private static final String ENABLED_VALUE = "enabled";
 
+  @Override
   public boolean canHandle(IdeaLoggingEvent event) {
     if (ourLoggerBroken) return false;
 
@@ -59,25 +60,31 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       return notificationEnabled ||
              showPluginError ||
              ApplicationManagerEx.getApplicationEx().isInternal() ||
-             isOOMError(event.getThrowable()) ||
+             getOOMErrorKind(event.getThrowable()) != null ||
              event.getThrowable() instanceof MappingFailedException;
     }
     catch (LinkageError e) {
       if (e.getMessage().contains("Could not initialize class com.intellij.diagnostic.IdeErrorsDialog")) {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
         ourLoggerBroken = true;
       }
       throw e;
     }
   }
 
+  @Override
   public void handle(IdeaLoggingEvent event) {
     if (ourLoggerBroken) return;
 
     try {
       Throwable throwable = event.getThrowable();
-      if (isOOMError(throwable)) {
-        processOOMError(throwable);
+      final MemoryKind kind = getOOMErrorKind(throwable);
+      if (kind != null) {
+        ourOomOccurred = true;
+        SwingUtilities.invokeAndWait(new Runnable() {
+          public void run() {
+            new OutOfMemoryDialog(kind).show();
+          }
+        });
       }
       else if (throwable instanceof MappingFailedException) {
         processMappingFailed(event);
@@ -95,36 +102,22 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       //noinspection InstanceofCatchParameter
       if (message != null && message.contains("Could not initialize class com.intellij.diagnostic.MessagePool") ||
           e instanceof NullPointerException && ApplicationManager.getApplication() == null) {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
         ourLoggerBroken = true;
       }
     }
   }
 
-  private static boolean isOOMError(Throwable throwable) {
-    return throwable instanceof OutOfMemoryError ||
-        (throwable instanceof VirtualMachineError &&
-         throwable.getMessage() != null &&
-         throwable.getMessage().contains("CodeCache"));
+  private static MemoryKind getOOMErrorKind(Throwable t) {
+    if (t instanceof OutOfMemoryError) {
+      return t.getMessage() != null && t.getMessage().contains("PermGen") ? MemoryKind.PERM_GEN : MemoryKind.HEAP;
+    }
+    if (t instanceof VirtualMachineError && t.getMessage() != null && t.getMessage().contains("CodeCache")) {
+      return MemoryKind.CODE_CACHE;
+    }
+    return null;
   }
 
-  private static void processOOMError(final Throwable throwable) throws InterruptedException, InvocationTargetException {
-    ourOomOccurred = true;
-
-    SwingUtilities.invokeAndWait(new Runnable() {
-      public void run() {
-        String message = throwable.getMessage();
-        OutOfMemoryDialog.MemoryKind k = message != null && message.contains(PARAM_PERM_GEN)
-                                         ? OutOfMemoryDialog.MemoryKind.PERM_GEN
-                                         : message != null && message.contains("CodeCache")
-                                           ? OutOfMemoryDialog.MemoryKind.CODE_CACHE
-                                           : OutOfMemoryDialog.MemoryKind.HEAP;
-        new OutOfMemoryDialog(k).show();
-      }
-    });
-  }
-
-  private static void processMappingFailed(final IdeaLoggingEvent event) throws InterruptedException, InvocationTargetException {
+  private static void processMappingFailed(IdeaLoggingEvent event) throws InterruptedException, InvocationTargetException {
     if (!ourMappingFailedNotificationPosted && SystemInfo.isWindows && SystemInfo.is32Bit) {
       ourMappingFailedNotificationPosted = true;
       @SuppressWarnings("ThrowableResultOfMethodCallIgnored") String exceptionMessage = event.getThrowable().getMessage();

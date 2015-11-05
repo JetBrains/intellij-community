@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,78 +37,75 @@ import java.util.regex.Pattern;
 public class VMOptions {
   private static final Logger LOG = Logger.getInstance("#com.intellij.diagnostic.VMOptions");
 
-  @NonNls static final String XMX_OPTION_NAME = "Xmx";
-  @NonNls static final String PERM_GEN_OPTION_NAME = "XX:MaxPermSize";
-  @NonNls static final String CODE_CACHE_OPTION_NAME = "XX:ReservedCodeCacheSize";
-  @NonNls static final String MAC_ARCH_VM_OPTIONS = SystemInfo.is64Bit ? "VMOptions.x86_64" : "VMOptions.i386";
+  public enum MemoryKind {
+    HEAP("Xmx", ""), PERM_GEN("XX:MaxPermSize", "="), CODE_CACHE("XX:ReservedCodeCacheSize", "=");
 
-  @NonNls private static final String XMX_OPTION = "-" + XMX_OPTION_NAME;
-  @NonNls private static final String PERM_GEN_OPTION = "-" + PERM_GEN_OPTION_NAME + "=";
-  @NonNls private static final String CODE_CACHE_OPTION = "-" + CODE_CACHE_OPTION_NAME + "=";
+    public final String optionName;
+    public final String option;
+    public final Pattern pattern;
 
-  @NonNls private static final String MEM_SIZE_EXPR = "(\\d*)([a-zA-Z]*)";
-  @NonNls private static final Pattern XMX_PATTERN = Pattern.compile(XMX_OPTION + MEM_SIZE_EXPR);
-  @NonNls private static final Pattern PERM_GEN_PATTERN = Pattern.compile(PERM_GEN_OPTION + MEM_SIZE_EXPR);
-  @NonNls private static final Pattern CODE_CACHE_PATTERN = Pattern.compile(CODE_CACHE_OPTION + MEM_SIZE_EXPR);
+    MemoryKind(String name, String separator) {
+      optionName = name;
+      option = "-" + name + separator;
+      pattern = Pattern.compile(option + "(\\d*)([a-zA-Z]*)");
+    }
+  }
 
   public static int readXmx() {
-    return readOption(XMX_PATTERN);
+    return getOption(MemoryKind.HEAP);
   }
 
   public static int readMaxPermGen() {
-    return readOption(PERM_GEN_PATTERN);
+    return getOption(MemoryKind.PERM_GEN);
   }
 
   public static int readCodeCache() {
-    return readOption(CODE_CACHE_PATTERN);
+    return getOption(MemoryKind.CODE_CACHE);
   }
 
   public static void writeXmx(int value) {
-    writeOption(XMX_OPTION, value, XMX_PATTERN);
+    writeOption(MemoryKind.HEAP, value);
   }
 
   public static void writeMaxPermGen(int value) {
-    writeOption(PERM_GEN_OPTION, value, PERM_GEN_PATTERN);
+    writeOption(MemoryKind.PERM_GEN, value);
   }
 
   public static void writeCodeCache(int value) {
-    writeOption(CODE_CACHE_OPTION, value, CODE_CACHE_PATTERN);
+    writeOption(MemoryKind.CODE_CACHE, value);
   }
 
-  @Nullable
-  public static String read() {
-    File file = getReadFile();
-    if (file == null) return null;
-
-    try {
-      return FileUtil.loadFile(file);
+  private static int getOption(MemoryKind kind) {
+    List<String> arguments;
+    if (ourTestPath != null) {
+      try {
+        String content = FileUtil.loadFile(new File(ourTestPath));
+        arguments = Collections.singletonList(content);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
-    catch (IOException e) {
-      LOG.info(e);
-      return null;
+    else {
+      arguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
     }
-  }
 
-  private static int readOption(Pattern pattern) {
-    String content = read();
-    if (content == null) return -1;
-
-    Matcher m = pattern.matcher(content);
-    if (!m.find()) return -1;
-
-    String valueString = m.group(1);
-    String unitString = m.group(2);
-
-    try {
-      int value = Integer.parseInt(valueString);
-      double multiplier = parseUnit(unitString);
-
-      return (int)(value * multiplier);
+    for (String argument : arguments) {
+      Matcher m = kind.pattern.matcher(argument);
+      if (m.find()) {
+        try {
+          int value = Integer.parseInt(m.group(1));
+          double multiplier = parseUnit(m.group(2));
+          return (int)(value * multiplier);
+        }
+        catch (NumberFormatException e) {
+          LOG.info(e);
+          break;
+        }
+      }
     }
-    catch (NumberFormatException e) {
-      LOG.info(e);
-      return -1;
-    }
+
+    return -1;
   }
 
   private static double parseUnit(String unitString) {
@@ -114,51 +114,63 @@ public class VMOptions {
     return 1;
   }
 
-  private static void writeOption(String option, int value, Pattern pattern) {
+  private static void writeOption(MemoryKind option, int value) {
     File file = getWriteFile();
     if (file == null) return;
 
     try {
-      String optionValue = option + value + "m";
-      String content = read();
+      String content = file.exists() ? FileUtil.loadFile(file) : read();
 
-      if (content == null) content = "";
-      content = replace(pattern, content, optionValue, "", "", content + " " + optionValue);
+      String optionValue = option.option + value + "m";
+
+      if (!StringUtil.isEmptyOrSpaces(content)) {
+        Matcher m = option.pattern.matcher(content);
+        if (m.find()) {
+          StringBuffer b = new StringBuffer();
+          m.appendReplacement(b, Matcher.quoteReplacement(optionValue));
+          m.appendTail(b);
+          content = b.toString();
+        }
+        else {
+          content = StringUtil.trimTrailing(content) + SystemProperties.getLineSeparator() + optionValue;
+        }
+      }
+      else {
+        content = optionValue;
+      }
 
       if (file.exists()) {
         FileUtil.setReadOnlyAttribute(file.getPath(), false);
       }
+      else {
+        FileUtil.ensureExists(file.getParentFile());
+      }
 
-      @SuppressWarnings("SSBasedInspection") byte[] bytes = content.getBytes();
-      FileUtil.writeToFile(file, bytes);
+      FileUtil.writeToFile(file, content);
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
+  }
+
+  @Nullable
+  public static String read() {
+    try {
+      File newFile = getWriteFile();
+      if (newFile != null && newFile.exists()) {
+        return FileUtil.loadFile(newFile);
+      }
+
+      String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
+      if (vmOptionsFile != null) {
+        return FileUtil.loadFile(new File(vmOptionsFile));
+      }
     }
     catch (IOException e) {
       LOG.info(e);
     }
-  }
 
-  private static String replace(Pattern pattern,
-                                String text,
-                                String replacement,
-                                String prefix,
-                                String suffix,
-                                String defaultResult) {
-    Matcher m = pattern.matcher(text);
-    if (!m.find()) return defaultResult;
-
-    StringBuffer b = new StringBuffer();
-    m.appendReplacement(b, prefix + Matcher.quoteReplacement(replacement) + suffix);
-    m.appendTail(b);
-
-    return b.toString();
-  }
-
-  @Nullable
-  public static File getReadFile() {
-    if (ourTestPath != null) {
-      return new File(ourTestPath);
-    }
-    return getFile(false);
+    return null;
   }
 
   @Nullable
@@ -167,40 +179,28 @@ public class VMOptions {
       return new File(ourTestPath);
     }
 
-    return getFile(true);
-  }
+    String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
+    if (vmOptionsFile == null) {
+      // launchers should specify a path to an options file used to configure a JVM
+      LOG.warn("VM options file path missing");
+      return null;
+    }
 
-  @Nullable
-  private static File getFile(boolean isWriteAccess) {
-    final String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
-    if (!StringUtil.isEmptyOrSpaces(vmOptionsFile)) {
+    if (!FileUtil.isAncestor(PathManager.getHomePath(), vmOptionsFile, true)) {
+      // a file is located outside the IDE installation - meaning it is safe to overwrite
       return new File(vmOptionsFile);
     }
 
-    final String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
-    final String platformSuffix = SystemInfo.is64Bit ? "64" : "";
-    final String osSuffix = SystemInfo.isWindows ? ".exe" : "";
-    final File binFile = new File(PathManager.getBinPath() + File.separatorChar + productName + platformSuffix + osSuffix + ".vmoptions");
-
-    if (SystemInfo.isMac) {
-      File customFile = new File(FileUtil.expandUserHome(PathManager.getConfigPath() + "/" + productName + ".vmoptions"));
-      if (customFile.exists()) return customFile;
-      if (!customFile.exists() && isWriteAccess && binFile.exists()) {
-        copyVmFile(binFile, customFile);
-        return customFile;
-      }
+    String location = PathManager.getCustomOptionsDirectory();
+    if (location == null) {
+      LOG.warn("custom options directory not specified (" + PathManager.PROPERTY_PATHS_SELECTOR + " not set?)");
+      return null;
     }
 
-    return binFile.exists() ? binFile : null;
-  }
-
-  private static void copyVmFile(File binFile, File customFile) {
-    try {
-      FileUtil.copy(binFile, customFile);
-    }
-    catch (IOException e) {
-      LOG.debug(e);
-    }
+    String name = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
+    String platformSuffix = SystemInfo.is64Bit ? "64" : "";
+    String osSuffix = SystemInfo.isWindows ? ".exe" : "";
+    return new File(location, name + platformSuffix + osSuffix + ".vmoptions");
   }
 
   private static String ourTestPath;
