@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.util.registry.Registry;
-import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -82,8 +81,8 @@ public class SoftWrapStressTest extends AbstractEditorTest {
   }
 
   private static void checkConsistencyWithFoldingsAndTabs(CacheEntry entry) {
-    Map<Integer, FoldRegion> actualFoldRegions = new HashMap<Integer, FoldRegion>();
-    List<Integer> actualTabPositions = new ArrayList<Integer>();
+    Map<Integer, FoldRegion> actualFoldRegions = new HashMap<>();
+    List<Integer> actualTabPositions = new ArrayList<>();
     for (int i = entry.startOffset; i < entry.endOffset; i++) {
       FoldRegion region = myEditor.getFoldingModel().getCollapsedRegionAtOffset(i);
       if (region == null) {
@@ -97,16 +96,13 @@ public class SoftWrapStressTest extends AbstractEditorTest {
         }
       }
     }
-    final Map<Integer, FoldRegion> cachedFoldRegions = new HashMap<Integer, FoldRegion>();
-    entry.getFoldingData().forEachEntry(new TIntObjectProcedure<FoldingData>() {
-      @Override
-      public boolean execute(int offset, FoldingData data) {
-        cachedFoldRegions.put(offset, data.getFoldRegion());
-        return true;
-      }
+    final Map<Integer, FoldRegion> cachedFoldRegions = new HashMap<>();
+    entry.getFoldingData().forEachEntry((offset, data) -> {
+      cachedFoldRegions.put(offset, data.getFoldRegion());
+      return true;
     });
     assertEquals(actualFoldRegions, cachedFoldRegions);
-    List<Integer> cachedTabPositions = new ArrayList<Integer>();
+    List<Integer> cachedTabPositions = new ArrayList<>();
     for (TabData tabData : entry.getTabData()) {
       cachedTabPositions.add(tabData.offset);
     }
@@ -188,7 +184,7 @@ public class SoftWrapStressTest extends AbstractEditorTest {
   @NotNull
   private static Set<Integer> checkSoftWraps() {
     List<? extends SoftWrap> softWraps = myEditor.getSoftWrapModel().getSoftWrapsForRange(0, myEditor.getDocument().getTextLength());
-    Set<Integer> softWrapOffsets = new HashSet<Integer>();
+    Set<Integer> softWrapOffsets = new HashSet<>();
     int lastOffset = -1;
     for (SoftWrap softWrap : softWraps) {
       assertEquals(softWrap.getStart(), softWrap.getEnd());
@@ -253,12 +249,9 @@ public class SoftWrapStressTest extends AbstractEditorTest {
       final int endOffset = random.nextInt(textLength + 1);
       if (startOffset == endOffset) return;
       final FoldingModel foldingModel = editor.getFoldingModel();
-      foldingModel.runBatchFoldingOperation(new Runnable() {
-        @Override
-        public void run() {
-          foldingModel.addFoldRegion(Math.min(startOffset, endOffset), Math.max(startOffset, endOffset), ".");
-        }
-      });
+      foldingModel.runBatchFoldingOperation(() -> foldingModel.addFoldRegion(Math.min(startOffset, endOffset), 
+                                                                             Math.max(startOffset, endOffset), 
+                                                                             "."));
     }
   }
   
@@ -269,12 +262,7 @@ public class SoftWrapStressTest extends AbstractEditorTest {
       FoldRegion[] foldRegions = foldingModel.getAllFoldRegions();
       if (foldRegions.length == 0) return;
       final FoldRegion region = foldRegions[random.nextInt(foldRegions.length)];
-      foldingModel.runBatchFoldingOperation(new Runnable() {
-        @Override
-        public void run() {
-          foldingModel.removeFoldRegion(region);
-        }
-      });
+      foldingModel.runBatchFoldingOperation(() -> foldingModel.removeFoldRegion(region));
     }
   }
   
@@ -285,12 +273,7 @@ public class SoftWrapStressTest extends AbstractEditorTest {
       FoldRegion[] foldRegions = foldingModel.getAllFoldRegions();
       if (foldRegions.length == 0) return;
       final FoldRegion region = foldRegions[random.nextInt(foldRegions.length)];
-      foldingModel.runBatchFoldingOperation(new Runnable() {
-        @Override
-        public void run() {
-          region.setExpanded(false);
-        }
-      });
+      foldingModel.runBatchFoldingOperation(() -> region.setExpanded(false));
     }
   }
   
@@ -301,12 +284,7 @@ public class SoftWrapStressTest extends AbstractEditorTest {
       FoldRegion[] foldRegions = foldingModel.getAllFoldRegions();
       if (foldRegions.length == 0) return;
       final FoldRegion region = foldRegions[random.nextInt(foldRegions.length)];
-      foldingModel.runBatchFoldingOperation(new Runnable() {
-        @Override
-        public void run() {
-          region.setExpanded(true);
-        }
-      });
+      foldingModel.runBatchFoldingOperation(() -> region.setExpanded(true));
     }
   }
 }
