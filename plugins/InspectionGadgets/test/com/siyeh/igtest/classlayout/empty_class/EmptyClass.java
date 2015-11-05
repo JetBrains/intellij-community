@@ -8,4 +8,4 @@ public class EmptyClass {
 }
 class MyList extends java.util.ArrayList<String> {}
 class MyException extends java.lang.Exception {}
-abstract class ReportMe implements java.util.List {}
+abstract class <warning descr="Class 'ReportMe' is empty">ReportMe</warning> implements java.util.List {}
