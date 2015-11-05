@@ -301,7 +301,7 @@ public class InferenceIncorporationPhase {
         if (!(sType instanceof PsiWildcardType) && !(tType instanceof PsiWildcardType) && sType != null && tType != null) {
           addConstraint(new TypeEqualityConstraint(sType, tType));
         }
-        return true;
+        return false;
       }
     }) != null;
   }
