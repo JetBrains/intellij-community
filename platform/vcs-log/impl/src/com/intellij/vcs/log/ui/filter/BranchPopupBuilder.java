@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,8 +132,8 @@ public abstract class BranchPopupBuilder {
 
   private static void putActionsForReferences(List<RefGroup> references, Groups actions) {
     for (final RefGroup refGroup : references) {
-      if (refGroup.getRefs().size() == 1) {
-        String name = refGroup.getRefs().iterator().next().getName();
+      if (refGroup instanceof SingletonRefGroup) {
+        String name = refGroup.getName();
         if (!actions.singletonGroups.contains(name)) {
           actions.singletonGroups.add(name);
         }
