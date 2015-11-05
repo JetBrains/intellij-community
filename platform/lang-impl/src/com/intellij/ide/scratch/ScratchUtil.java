@@ -15,12 +15,7 @@
  */
 package com.intellij.ide.scratch;
 
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.LanguageSubstitutors;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -37,12 +32,5 @@ public class ScratchUtil {
    */
   public static boolean isScratch(@Nullable VirtualFile file) {
     return file != null && file.getFileType() == ScratchFileType.INSTANCE;
-  }
-
-  @Nullable
-  public static Language getLanguage(@NotNull Project project, @Nullable VirtualFile file) {
-    Language language = LanguageUtil.getFileLanguage(file);
-    if (language == null) return null;
-    return LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, project);
   }
 }
