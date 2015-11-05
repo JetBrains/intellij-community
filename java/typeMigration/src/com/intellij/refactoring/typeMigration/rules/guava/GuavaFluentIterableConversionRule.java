@@ -29,7 +29,6 @@ import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -304,6 +303,10 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
         if (aClass == null || !FLUENT_ITERABLE.equals(aClass.getQualifiedName())) {
           return null;
         }
+        break;
+      }
+      else if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).resolve() instanceof PsiVariable) {
+        labeler.migrateExpressionType(qualifier, to, qualifier.getParent(), false, false);
         break;
       }
       else {
