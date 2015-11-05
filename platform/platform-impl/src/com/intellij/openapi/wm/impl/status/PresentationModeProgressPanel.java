@@ -23,6 +23,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.TransparentPanel;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -51,6 +52,8 @@ public class PresentationModeProgressPanel {
     Font font = JBUI.Fonts.label(11);
     myText.setFont(font);
     myText2.setFont(font);
+    myText.setIcon(EmptyIcon.create(1, 16));
+    myText2.setIcon(EmptyIcon.create(1, 16));
     myUpdateQueue = new MergingUpdateQueue("Presentation Mode Progress", 100, true, null);
     myUpdate = new Update("Update UI") {
       @Override
