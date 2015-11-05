@@ -91,8 +91,6 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
   }
 
   static {
-    DESCRIPTORS_MAP.put("of", new TypeConversionDescriptorFactory("FluentIterable.of($arr$)", "java.util.Arrays.stream($arr$)", false, true, true));
-
     DESCRIPTORS_MAP.put("isEmpty", new TypeConversionDescriptorFactory("$q$.isEmpty()", "$q$.findAny().isPresent()", false));
     DESCRIPTORS_MAP.put("skip", new TypeConversionDescriptorFactory("$q$.skip($p$)", "$q$.skip($p$)", false, true, true));
     DESCRIPTORS_MAP.put("limit", new TypeConversionDescriptorFactory("$q$.limit($p$)", "$q$.limit($p$)", false, true, true));
@@ -137,15 +135,26 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     TypeConversionDescriptor descriptorBase = null;
     PsiType conversionType = null;
     boolean needSpecifyType = true;
-    if (methodName.equals("from")) {
-      descriptorBase = new TypeConversionDescriptor("FluentIterable.from($it$)", null) {
+    if (methodName.equals("of")) {
+      descriptorBase = new TypeConversionDescriptor(null, "java.util.Arrays.stream($arr$)") {
         @Override
         public PsiExpression replace(PsiExpression expression) {
+          setStringToReplace((((PsiMethodCallExpression)expression).getMethodExpression().getQualifierExpression() != null
+                              ? "FluentIterable." : "") + "of($arr$)");
+          return super.replace(expression);
+        }
+      };
+    } else if (methodName.equals("from")) {
+      descriptorBase = new TypeConversionDescriptor(null, null) {
+        @Override
+        public PsiExpression replace(PsiExpression expression) {
+          final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
           PsiExpression argument =
-            PseudoLambdaReplaceTemplate.replaceTypeParameters(((PsiMethodCallExpression)expression).getArgumentList().getExpressions()[0]);
+            PseudoLambdaReplaceTemplate.replaceTypeParameters(methodCall.getArgumentList().getExpressions()[0]);
           if (argument == null) {
             return expression;
           }
+          setStringToReplace((methodCall.getMethodExpression().getQualifierExpression() != null ? "FluentIterable." : "") + "from($it$)");
           boolean isCollection =
             InheritanceUtil.isInheritor(PsiTypesUtil.getPsiClass(argument.getType()), CommonClassNames.JAVA_UTIL_COLLECTION);
           setReplaceByString(isCollection ? "$it$.stream()" : "java.util.stream.StreamSupport.stream($it$.spliterator(), false)");
