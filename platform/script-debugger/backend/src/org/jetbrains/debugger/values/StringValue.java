@@ -1,14 +1,14 @@
-package org.jetbrains.debugger.values;
+package org.jetbrains.debugger.values
 
-import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promise
 
-public interface StringValue extends Value {
-  boolean isTruncated();
+interface StringValue : Value {
+  val isTruncated: Boolean
 
-  int getLength();
+  val length: Int
 
   /**
    * Asynchronously reloads object value with extended size limit
    */
-  Promise<String> getFullString();
+  val fullString: Promise<String>
 }
