@@ -422,14 +422,14 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     final List<ExternalSystemNode<?>> result = new SmartList<ExternalSystemNode<?>>();
     final MultiMap<Key<?>, DataNode<?>> groups = ExternalSystemApiUtil.group(dataNode.getChildren());
     for (ExternalSystemViewContributor contributor : ExternalSystemViewContributor.EP_NAME.getExtensions()) {
-      Set<Key<?>> keys = ContainerUtil.newTreeSet(contributor.getKeys());
+      if (!contributor.getSystemId().equals(ProjectSystemId.IDE) &&
+          !contributor.getSystemId().equals(externalProjectsView.getSystemId())) {
+        continue;
+      }
 
-      final MultiMap<Key<?>, DataNode<?>> dataNodes = MultiMap.create();
-      for (Key<?> key : keys) {
-        final Collection<DataNode<?>> values = groups.get(key);
-        if(key != null) {
-          dataNodes.put(key, values);
-        }
+      final MultiMap<Key<?>, DataNode<?>> dataNodes = new ContainerUtil.KeyOrderedMultiMap<Key<?>, DataNode<?>>();
+      for (Key<?> key : contributor.getKeys()) {
+        ContainerUtil.putIfNotNull(key, groups.get(key), dataNodes);
       }
 
       if (dataNodes.isEmpty()) continue;

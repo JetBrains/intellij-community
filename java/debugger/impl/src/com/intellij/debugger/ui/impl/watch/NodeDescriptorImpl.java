@@ -29,6 +29,7 @@ import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.InconsistentDebugInfoException;
 import com.sun.jdi.InvalidStackFrameException;
 import com.sun.jdi.ObjectReference;
+import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -88,7 +89,13 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
       catch (InvalidStackFrameException e) {
         throw new EvaluateException(DebuggerBundle.message("error.invalid.stackframe"));
       }
+      catch (VMDisconnectedException e) {
+        throw e;
+      }
       catch (RuntimeException e) {
+        if (e.getCause() instanceof InterruptedException) {
+          throw e;
+        }
         LOG.error(e);
         throw new EvaluateException("Internal error, see logs for more details");
       }

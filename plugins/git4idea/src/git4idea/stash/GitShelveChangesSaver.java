@@ -99,7 +99,7 @@ public class GitShelveChangesSaver extends GitChangesSaver {
   }
 
   @Override
-  protected boolean wereChangesSaved() {
+  public boolean wereChangesSaved() {
     return myShelvedLists != null && !myShelvedLists.isEmpty();
   }
 
@@ -108,8 +108,14 @@ public class GitShelveChangesSaver extends GitChangesSaver {
     return "shelf";
   }
 
+  @NotNull
   @Override
-  protected void showSavedChanges() {
+  public String getOperationName() {
+    return "shelve";
+  }
+
+  @Override
+  public void showSavedChanges() {
     myShelveViewManager.activateView(myShelvedLists.get(myShelvedLists.keySet().iterator().next()));
   }
 }

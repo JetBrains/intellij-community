@@ -26,33 +26,33 @@ import org.jetbrains.settingsRepository.git.read
 import org.junit.Rule
 import org.junit.Test
 
-class BareGitTest {
+internal class BareGitTest {
   val tempDirManager = TemporaryDirectory()
-  Rule fun getTemporaryFolder() = tempDirManager
+  @Rule fun getTemporaryFolder() = tempDirManager
 
-  Test fun `remote doesn't have commits`() {
-    val repository = cloneBare(tempDirManager.createRepository("remote").getWorkTree().getAbsolutePath(), tempDirManager.newDirectory("local"))
+  @Test fun `remote doesn't have commits`() {
+    val repository = cloneBare(tempDirManager.createRepository("remote").getWorkTree().absolutePath, tempDirManager.newDirectory("local"))
     assertThat(repository.read("\$ROOT_CONFIG$/keymaps/Mac OS X from RubyMine.xml")).isNull()
   }
 
-  Test fun bare() {
+  @Test fun bare() {
     val remoteRepository = tempDirManager.createRepository()
     val filePath = "keymaps/Mac OS X from RubyMine.xml"
     remoteRepository.add(filePath, SAMPLE_FILE_CONTENT)
     remoteRepository.commit("")
 
-    val repository = cloneBare(remoteRepository.getWorkTree().getAbsolutePath(), tempDirManager.newDirectory())
+    val repository = cloneBare(remoteRepository.getWorkTree().absolutePath, tempDirManager.newDirectory())
     assertThat(FileUtil.loadTextAndClose(repository.read(filePath)!!)).isEqualTo(SAMPLE_FILE_CONTENT)
   }
 
-  Test fun processChildren() {
+  @Test fun processChildren() {
     val remoteRepository = tempDirManager.createRepository()
 
     val filePath = "keymaps/Mac OS X from RubyMine.xml"
     remoteRepository.add(filePath, SAMPLE_FILE_CONTENT)
     remoteRepository.commit("")
 
-    val repository = cloneBare(remoteRepository.getWorkTree().getAbsolutePath(), tempDirManager.newDirectory())
+    val repository = cloneBare(remoteRepository.getWorkTree().absolutePath, tempDirManager.newDirectory())
 
     val data = THashMap<String, String>()
     repository.processChildren("keymaps") {name, input ->

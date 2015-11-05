@@ -36,23 +36,23 @@ class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, 
       super.pathRenamed(oldPath, newPath, event)
     }
     finally {
-      val requestor = event?.getRequestor()
+      val requestor = event?.requestor
       if (requestor == null || requestor !is StateStorage /* not renamed as result of explicit rename */) {
         val module = componentManager as ModuleEx
-        val oldName = module.getName()
+        val oldName = module.name
         module.rename(StringUtil.trimEnd(PathUtilRt.getFileName(newPath), ModuleFileType.DOT_DEFAULT_EXTENSION))
-        ModuleManagerImpl.getInstanceImpl(module.getProject()).fireModuleRenamedByVfsEvent(module, oldName)
+        ModuleManagerImpl.getInstanceImpl(module.project).fireModuleRenamedByVfsEvent(module, oldName)
       }
     }
   }
 
   override fun beforeElementLoaded(element: Element) {
     val optionElement = Element("component").setAttribute("name", "DeprecatedModuleOptionManager")
-    val iterator = element.getAttributes().iterator()
+    val iterator = element.attributes.iterator()
     for (attribute in iterator) {
-      if (attribute.getName() != ProjectStateStorageManager.VERSION_OPTION) {
+      if (attribute.name != ProjectStateStorageManager.VERSION_OPTION) {
         iterator.remove()
-        optionElement.addContent(Element("option").setAttribute("key", attribute.getName()).setAttribute("value", attribute.getValue()))
+        optionElement.addContent(Element("option").setAttribute("key", attribute.name).setAttribute("value", attribute.value))
       }
     }
 

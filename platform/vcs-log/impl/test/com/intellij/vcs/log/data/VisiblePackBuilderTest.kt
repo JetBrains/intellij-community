@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.data
 
 import com.intellij.mock.MockVirtualFile
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Function
 import com.intellij.vcs.log.*
@@ -30,15 +29,13 @@ import com.intellij.vcs.log.impl.TestVcsLogProvider.DEFAULT_USER
 import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl
 import com.intellij.vcs.log.ui.tables.GraphTableModel
 import org.junit.Test
-import java.util.ArrayList
-import java.util.HashMap
-import java.util.HashSet
+import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class VisiblePackBuilderTest {
 
-  Test fun `no filters`() {
+  @Test fun `no filters`() {
     val graph = graph {
       1(2) *"master"
       2(3)
@@ -49,7 +46,7 @@ class VisiblePackBuilderTest {
     assertEquals(4, visiblePack.getVisibleGraph().getVisibleCommitCount())
   }
 
-  Test fun `branch filter`() {
+  @Test fun `branch filter`() {
     val graph = graph {
       1(3) *"master"
       2(3) *"feature"
@@ -62,7 +59,7 @@ class VisiblePackBuilderTest {
     assertDoesNotContain(visibleGraph, 2)
   }
 
-  Test fun `filter by user in memory`() {
+  @Test fun `filter by user in memory`() {
     val graph = graph {
       1(2) *"master"
       2(3)
@@ -78,20 +75,20 @@ class VisiblePackBuilderTest {
     assertDoesNotContain(visibleGraph, 3)
   }
 
-  Test fun `filter by branch deny`() {
+  @Test fun `filter by branch deny`() {
     val graph = graph {
       1(3) *"master"
       2(3) *"feature"
       3(4)
       4()
     }
-    val visiblePack = graph.build(filters(VcsLogBranchFilterImpl(setOf(), setOf("master"))))
+    val visiblePack = graph.build(filters(VcsLogBranchFilterImpl.fromTextPresentation(setOf("-master"), setOf("master"))))
     val visibleGraph = visiblePack.getVisibleGraph()
     assertEquals(3, visibleGraph.getVisibleCommitCount())
     assertDoesNotContain(visibleGraph, 1)
   }
 
-  Test fun `filter by branch deny works with extra results from vcs provider`() {
+  @Test fun `filter by branch deny works with extra results from vcs provider`() {
     val graph = graph {
       1(3) *"master"  +null
       2(3) *"feature" +null
@@ -112,7 +109,7 @@ class VisiblePackBuilderTest {
     }
 
     graph.providers.entrySet().iterator().next().getValue().setFilteredCommitsProvider(func)
-    val visiblePack = graph.build(filters(VcsLogBranchFilterImpl(setOf(), setOf("master")), userFilter(DEFAULT_USER)))
+    val visiblePack = graph.build(filters(VcsLogBranchFilterImpl.fromTextPresentation(setOf("-master"), setOf("master")), userFilter(DEFAULT_USER)))
     val visibleGraph = visiblePack.getVisibleGraph()
     assertEquals(3, visibleGraph.getVisibleCommitCount())
     assertDoesNotContain(visibleGraph, 1)
@@ -130,7 +127,7 @@ class VisiblePackBuilderTest {
   inner class Graph(val commits: List<GraphCommit<Int>>,
                     val refs: Set<VisiblePackBuilderTest.Ref>,
                     val data: HashMap<GraphCommit<Int>, Data>) {
-    val root = MockVirtualFile("root") : VirtualFile
+    val root: VirtualFile = MockVirtualFile("root")
     val providers: Map<VirtualFile, TestVcsLogProvider> = mapOf(root to TestVcsLogProvider(root))
     val hashMap = generateHashMap(commits.maxBy { it.getId() }!!.getId())
 
@@ -145,7 +142,7 @@ class VisiblePackBuilderTest {
         val metadata = if (it.value.user == null)
           null
         else VcsCommitMetadataImpl(hash, hashMap.getHashes(it.key.getParents()), 1L, root, it.value.subject,
-            it.value.user, it.value.subject, it.value.user, 1L)
+            it.value.user!!, it.value.subject, it.value.user!!, 1L)
         Pair(it.key.getId(), metadata)
       }.toMap()
 
@@ -184,7 +181,7 @@ class VisiblePackBuilderTest {
       = VcsLogFilterCollectionImpl(branchFilter(branch), userFilter(user), null, null, null, null, null)
 
   fun branchFilter(branch: List<String>?): VcsLogBranchFilterImpl? {
-    return if (branch != null) VcsLogBranchFilterImpl(branch, setOf()) else null
+    return if (branch != null) VcsLogBranchFilterImpl.fromTextPresentation(branch, branch.toHashSet()) else null
   }
 
   fun userFilter(user: VcsUser?): VcsLogUserFilter? {

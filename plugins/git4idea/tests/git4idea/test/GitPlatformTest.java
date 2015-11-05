@@ -25,11 +25,13 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.vcs.AbstractVcsTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThrowableRunnable;
 import git4idea.DialogManager;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
@@ -66,10 +68,18 @@ public abstract class GitPlatformTest extends PlatformTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    myTestRoot = new File(FileUtil.getTempDirectory());
+    myTestRoot = new File(FileUtil.getTempDirectory(), "testRoot");
     myFilesToDelete.add(myTestRoot);
 
-    super.setUp();
+    checkTestRootIsEmpty(myTestRoot);
+
+    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
+      @Override
+      public void run() throws Exception {
+        GitPlatformTest.super.setUp();
+      }
+    });
+
     enableDebugLogging();
 
     myProjectRoot = myProject.getBaseDir();
@@ -92,6 +102,17 @@ public abstract class GitPlatformTest extends PlatformTestCase {
     removeSilently();
   }
 
+  private static void checkTestRootIsEmpty(@NotNull File testRoot) {
+    File[] files = testRoot.listFiles();
+    if (files != null && files.length > 0) {
+      LOG.warn("Test root was not cleaned up during some previous test run. " +
+               "testRoot: " + testRoot + ", files: " + Arrays.toString(files));
+      for (File file : files) {
+        LOG.assertTrue(FileUtil.delete(file));
+      }
+    }
+  }
+
   @Override
   protected File getIprFile() throws IOException {
     File projectRoot = new File(myTestRoot, "project");
@@ -101,6 +122,11 @@ public abstract class GitPlatformTest extends PlatformTestCase {
   @Override
   protected void setUpModule() {
     // we don't need a module in Git tests
+  }
+
+  @Override
+  protected boolean isRunInEdt() {
+    return false;
   }
 
   @Override
@@ -126,7 +152,12 @@ public abstract class GitPlatformTest extends PlatformTestCase {
     }
     finally {
       try {
-        super.tearDown();
+        EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
+          @Override
+          public void run() throws Exception {
+            GitPlatformTest.super.tearDown();
+          }
+        });
       }
       finally {
         if (myAssertionsInTestDetected) {

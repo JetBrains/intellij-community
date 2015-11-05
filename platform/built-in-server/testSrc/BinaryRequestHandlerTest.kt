@@ -6,25 +6,20 @@ import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.net.NetUtils
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
-import io.netty.channel.Channel
 import io.netty.channel.ChannelHandler
 import io.netty.channel.ChannelHandlerContext
-import io.netty.channel.ChannelInitializer
 import io.netty.util.CharsetUtil
 import junit.framework.TestCase
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.io.ChannelExceptionHandler
-import org.jetbrains.io.Decoder
-import org.jetbrains.io.MessageDecoder
-import org.jetbrains.io.NettyUtil
+import org.jetbrains.io.*
 import org.junit.ClassRule
 import org.junit.Test
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.TimeUnit
 
 // we don't handle String in efficient way - because we want to test readContent/readChars also
-public class BinaryRequestHandlerTest {
+internal class BinaryRequestHandlerTest {
   companion object {
     @ClassRule val projectRule = ProjectRule()
   }
@@ -33,27 +28,25 @@ public class BinaryRequestHandlerTest {
     val text = "Hello!"
     val result = AsyncPromise<String>()
 
-    val bootstrap = NettyUtil.oioClientBootstrap().handler(object : ChannelInitializer<Channel>() {
-      override fun initChannel(channel: Channel) {
-        channel.pipeline().addLast(object : Decoder() {
-          override fun messageReceived(context: ChannelHandlerContext, input: ByteBuf) {
-            val requiredLength = 4 + text.length()
-            val response = readContent(input, context, requiredLength) { buffer, context, isCumulateBuffer -> buffer.toString(buffer.readerIndex(), requiredLength, CharsetUtil.UTF_8) }
-            if (response != null) {
-              result.setResult(response)
-            }
+    val bootstrap = oioClientBootstrap().handler {
+      it.pipeline().addLast(object : Decoder() {
+        override fun messageReceived(context: ChannelHandlerContext, input: ByteBuf) {
+          val requiredLength = 4 + text.length
+          val response = readContent(input, context, requiredLength) { buffer, context, isCumulateBuffer -> buffer.toString(buffer.readerIndex(), requiredLength, CharsetUtil.UTF_8) }
+          if (response != null) {
+            result.setResult(response)
           }
-        }, ChannelExceptionHandler.getInstance())
-      }
-    })
+        }
+      }, ChannelExceptionHandler.getInstance())
+    }
 
-    val port = BuiltInServerManager.getInstance().waitForStart().getPort()
+    val port = BuiltInServerManager.getInstance().waitForStart().port
     val channel = bootstrap.connect(NetUtils.getLoopbackAddress(), port).syncUninterruptibly().channel()
     val buffer = channel.alloc().buffer()
     buffer.writeByte('C'.toInt())
     buffer.writeByte('H'.toInt())
-    buffer.writeLong(MyBinaryRequestHandler.ID.getMostSignificantBits())
-    buffer.writeLong(MyBinaryRequestHandler.ID.getLeastSignificantBits())
+    buffer.writeLong(MyBinaryRequestHandler.ID.mostSignificantBits)
+    buffer.writeLong(MyBinaryRequestHandler.ID.leastSignificantBits)
 
     val message = Unpooled.copiedBuffer(text, CharsetUtil.UTF_8)
     buffer.writeShort(message.readableBytes())
@@ -67,7 +60,7 @@ public class BinaryRequestHandlerTest {
         }
       })
 
-      if (result.getState() == Promise.State.PENDING) {
+      if (result.state == Promise.State.PENDING) {
         val semaphore = Semaphore()
         semaphore.down()
         result.processed { semaphore.up() }

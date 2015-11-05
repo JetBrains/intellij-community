@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,21 +31,23 @@ import java.awt.event.FocusEvent;
  */
 public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
 
-  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
-  public static ComponentUI createUI(final JComponent c) {
-    c.addFocusListener(new FocusAdapter() {
+  public DarculaPasswordFieldUI(final JPasswordField passwordField) {
+    passwordField.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
-        c.repaint();
+        passwordField.repaint();
       }
 
       @Override
       public void focusLost(FocusEvent e) {
-        c.repaint();
+        passwordField.repaint();
       }
     });
+  }
 
-    return new DarculaPasswordFieldUI();
+  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
+  public static ComponentUI createUI(final JComponent c) {
+    return new DarculaPasswordFieldUI((JPasswordField) c);
   }
 
   @Override
@@ -53,7 +55,7 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
     Graphics2D g = (Graphics2D)graphics;
     final JTextComponent c = getComponent();
     final Container parent = c.getParent();
-    if (parent != null) {
+    if (c.isOpaque() && parent != null) {
       g.setColor(parent.getBackground());
       g.fillRect(0, 0, c.getWidth(), c.getHeight());
     }

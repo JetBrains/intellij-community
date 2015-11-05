@@ -42,6 +42,8 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
   private VirtualEnvSdkFlavor() {
   }
   private final static String[] NAMES = new String[]{"jython", "pypy", "python.exe", "jython.bat", "pypy.exe"};
+  public final static String[] CONDA_DEFAULT_ROOTS = new String[]{"anaconda", "anaconda3", "miniconda", "miniconda3",
+    "Anaconda", "Anaconda3", "Miniconda", "Miniconda3"};
 
   public static VirtualEnvSdkFlavor INSTANCE = new VirtualEnvSdkFlavor();
 
@@ -59,10 +61,44 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
     if (path != null)
       candidates.addAll(findInDirectory(path));
 
+    for (VirtualFile file : getCondaDefaultLocations()) {
+      candidates.addAll(findInDirectory(file));
+    }
     return candidates;
   }
 
-  @Nullable
+  public static List<VirtualFile> getCondaDefaultLocations() {
+    List<VirtualFile> roots = new ArrayList<VirtualFile>();
+    final VirtualFile userHome = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getUserHome().replace('\\','/'));
+    if (userHome != null) {
+      for (String root : CONDA_DEFAULT_ROOTS) {
+        VirtualFile condaFolder = userHome.findChild(root);
+        addEnvsFolder(roots, condaFolder);
+        if (SystemInfo.isWindows) {
+          final VirtualFile appData = userHome.findFileByRelativePath("AppData\\Local\\Continuum\\" + root);
+          addEnvsFolder(roots, appData);
+          condaFolder = LocalFileSystem.getInstance().findFileByPath("C:\\" + root);
+          addEnvsFolder(roots, condaFolder);
+        }
+        else {
+          final String systemWidePath = "/opt/anaconda";
+          condaFolder = LocalFileSystem.getInstance().findFileByPath(systemWidePath);
+          addEnvsFolder(roots, condaFolder);
+        }
+      }
+    }
+    return roots;
+  }
+
+  private static void addEnvsFolder(@NotNull final List<VirtualFile> roots, @Nullable final VirtualFile condaFolder) {
+    if (condaFolder != null) {
+      final VirtualFile envs = condaFolder.findChild("envs");
+      if (envs != null) {
+        roots.add(envs);
+      }
+    }
+  }
+
   public static VirtualFile getDefaultLocation() {
     final String path = System.getenv().get("WORKON_HOME");
     if (!StringUtil.isEmpty(path)) {

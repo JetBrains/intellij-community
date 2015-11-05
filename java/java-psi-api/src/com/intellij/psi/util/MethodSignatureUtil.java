@@ -58,6 +58,20 @@ public class MethodSignatureUtil {
       }
     };
 
+  /**
+   * def: (8.4.2 Method Signature) Two method signatures m1 and m2 are override-equivalent iff either m1 is a subsignature of m2 or m2 is a subsignature of m1.
+   *
+   * erasure (erasure) = erasure, so we would check if erasures are equal and then check if the number of type parameters agree: 
+   *      if signature(m1)=signature(m2), then m1.typeParams=m2.typeParams
+   *      if (erasure(signature(m1))=signature(m2), then m2.typeParams.length=0 and vise versa
+   */
+  public static boolean areOverrideEquivalent(PsiMethod method1, PsiMethod method2) {
+    final int typeParamsLength1 = method1.getTypeParameters().length;
+    final int typeParamsLength2 = method2.getTypeParameters().length;
+    return (typeParamsLength1 == typeParamsLength2 || typeParamsLength1 == 0 || typeParamsLength2 == 0) &&
+           areErasedParametersEqual(method1.getSignature(PsiSubstitutor.EMPTY), method2.getSignature(PsiSubstitutor.EMPTY));
+  }
+  
   public static boolean areErasedParametersEqual(@NotNull MethodSignature method1, @NotNull MethodSignature method2) {
     PsiType[] erased1 = method1 instanceof MethodSignatureBase
                         ? ((MethodSignatureBase)method1).getErasedParameterTypes() : calcErasedParameterTypes(method1);

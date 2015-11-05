@@ -21,6 +21,8 @@ import com.intellij.ide.IdeView;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
@@ -36,7 +38,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
   @Override
   public void actionPerformed(AnActionEvent e) {
     IdeView view = e.getData(LangDataKeys.IDE_VIEW);
-    Project project = e.getData(CommonDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
 
     if (view == null || project == null) {
       return;
@@ -44,15 +46,19 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);
 
     if (directory == null) return;
-    boolean isDirectory = !PsiDirectoryFactory.getInstance(project).isPackage(directory);
+    final boolean isDirectory = !PsiDirectoryFactory.getInstance(project).isPackage(directory);
 
-    CreateDirectoryOrPackageHandler validator = new CreateDirectoryOrPackageHandler(project, directory, isDirectory,
+    final CreateDirectoryOrPackageHandler validator = new CreateDirectoryOrPackageHandler(project, directory, isDirectory,
                                                                                    isDirectory ? "\\/" : ".");
-    Messages.showInputDialog(project, isDirectory
-                                      ? IdeBundle.message("prompt.enter.new.directory.name")
-                                      : IdeBundle.message("prompt.enter.new.package.name"),
-                                      isDirectory ? IdeBundle.message("title.new.directory") : IdeBundle.message("title.new.package"),
-                                      Messages.getQuestionIcon(), "", validator);
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      public void run() {
+        Messages.showInputDialog(project, isDirectory
+                                          ? IdeBundle.message("prompt.enter.new.directory.name")
+                                          : IdeBundle.message("prompt.enter.new.package.name"),
+                                          isDirectory ? IdeBundle.message("title.new.directory") : IdeBundle.message("title.new.package"),
+                                          Messages.getQuestionIcon(), "", validator);
+      }
+    });
 
     final PsiElement result = validator.getCreatedElement();
     if (result != null) {

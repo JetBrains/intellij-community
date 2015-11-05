@@ -21,11 +21,11 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecution
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectBuildClasspathPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
-import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewState;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -80,15 +80,12 @@ public abstract class AbstractExternalSystemLocalSettings {
 
   @NotNull private final ProjectSystemId myExternalSystemId;
   @NotNull private final Project         myProject;
-  @NotNull private final PlatformFacade  myPlatformFacade;
 
   protected AbstractExternalSystemLocalSettings(@NotNull ProjectSystemId externalSystemId,
-                                                @NotNull Project project,
-                                                @NotNull PlatformFacade facade)
+                                                @NotNull Project project)
   {
     myExternalSystemId = externalSystemId;
     myProject = project;
-    myPlatformFacade = facade;
   }
 
   /**
@@ -254,7 +251,7 @@ public abstract class AbstractExternalSystemLocalSettings {
     for (ExternalProjectSettings projectSettings : settings.getLinkedProjectsSettings()) {
       pathsToForget.remove(projectSettings.getExternalProjectPath());
     }
-    for (Module module : myPlatformFacade.getModules(myProject)) {
+    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
       String id = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
       if (!myExternalSystemId.toString().equals(id)) {
         continue;

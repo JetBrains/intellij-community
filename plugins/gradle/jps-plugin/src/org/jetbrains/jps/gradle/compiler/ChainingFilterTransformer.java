@@ -16,6 +16,8 @@
 package org.jetbrains.jps.gradle.compiler;
 
 import com.intellij.openapi.util.Ref;
+import org.apache.tools.ant.Project;
+import org.apache.tools.ant.filters.ExpandProperties;
 import org.gradle.api.Transformer;
 import org.gradle.util.ConfigureUtil;
 import org.jetbrains.jps.gradle.model.impl.ResourceRootFilter;
@@ -27,10 +29,7 @@ import java.io.File;
 import java.io.FilterReader;
 import java.io.Reader;
 import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 
 /**
@@ -70,7 +69,7 @@ public class ChainingFilterTransformer implements Transformer<Reader, Reader> {
   }
 
   private Reader doTransform(ResourceRootFilter filter, Reader original) {
-    if ("RenamingCopyFilter" .equals(filter.filterType)) {
+    if ("RenamingCopyFilter".equals(filter.filterType)) {
       final Matcher matcher = (Matcher)filter.getProperties().get("matcher");
       final String replacement = (String)filter.getProperties().get("replacement");
       if (matcher == null || replacement == null) return original;
@@ -95,6 +94,15 @@ public class ChainingFilterTransformer implements Transformer<Reader, Reader> {
       FilterReader result = (FilterReader)constructor.newInstance(original);
       final Map<Object, Object> properties = filter.getProperties();
       if (!properties.isEmpty()) {
+        if (ExpandProperties.class.getName().equals(filter.filterType)) {
+          final Map<Object, Object> antProps = new HashMap<Object, Object>(properties);
+          final Project project = new Project();
+          for (Map.Entry<Object, Object> entry : antProps.entrySet()) {
+            project.setProperty(entry.getKey().toString(), entry.getValue().toString());
+          }
+          properties.clear();
+          properties.put("project", project);
+        }
         ConfigureUtil.configureByMap(properties, result);
       }
       return result;

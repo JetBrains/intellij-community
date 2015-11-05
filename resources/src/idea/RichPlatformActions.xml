@@ -110,6 +110,8 @@
       <add-to-group group-id="MainMenu" anchor="before" relative-to-action="RunMenu"/>
     </group>
 
+    <action id="DebugBuildProcess" class="com.intellij.compiler.actions.DebugBuildProcessToggleAction"/>
+
     <group id="CompilerErrorViewPopupMenu">
       <action id="ExcludeFromValidation" class="com.intellij.compiler.options.ExcludeFromValidationAction"/>
     </group>
@@ -158,7 +160,7 @@
 
     <!-- Help -->
     <action id="WhatsNewAction" class="com.intellij.ide.actions.WhatsNewAction">
-      <add-to-group group-id="HelpMenu" anchor="after" relative-to-action="OnlineDocAction"/>
+      <add-to-group group-id="HelpMenu" anchor="after" relative-to-action="ShowTips"/>
     </action>
 
     <!-- Toolbar -->

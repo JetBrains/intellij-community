@@ -64,8 +64,39 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
 
     final PsiElementFactory psiElementFactory = JavaPsiFacade.getElementFactory(element.getProject());
     PsiCodeBlock blockFromText = psiElementFactory.createCodeBlockFromText(blockText, lambdaExpression);
-    ChangeContextUtil.encodeContextInfo(blockFromText, true);
+    qualifyThisExpressions(lambdaExpression, psiElementFactory, blockFromText);
+    blockFromText = psiElementFactory.createCodeBlockFromText(blockFromText.getText(), null);
+    
     PsiNewExpression newExpression = (PsiNewExpression)psiElementFactory.createExpressionFromText("new " + functionalInterfaceType.getCanonicalText() + "(){}", lambdaExpression);
+    newExpression = (PsiNewExpression)JavaCodeStyleManager.getInstance(lambdaExpression.getProject()).shortenClassReferences(lambdaExpression.replace(newExpression));
+
+    final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
+    LOG.assertTrue(anonymousClass != null);
+    final List<PsiGenerationInfo<PsiMethod>> infos = OverrideImplementUtil.overrideOrImplement(anonymousClass, method);
+    if (infos != null && infos.size() == 1) {
+      final PsiMethod member = infos.get(0).getPsiMember();
+      final PsiParameter[] parameters = member.getParameterList().getParameters();
+      if (parameters.length == paramListCopy.length) {
+        for (int i = 0; i < parameters.length; i++) {
+          final PsiParameter parameter = parameters[i];
+          final String lambdaParamName = paramListCopy[i].getName();
+          if (lambdaParamName != null) {
+            parameter.setName(lambdaParamName);
+          }
+        }
+      }
+      PsiCodeBlock codeBlock = member.getBody();
+      LOG.assertTrue(codeBlock != null);
+
+      codeBlock = (PsiCodeBlock)codeBlock.replace(blockFromText);
+      GenerateMembersUtil.positionCaret(editor, member, true);
+    }
+  }
+
+  private static void qualifyThisExpressions(final PsiLambdaExpression lambdaExpression,
+                                             final PsiElementFactory psiElementFactory,
+                                             final PsiCodeBlock blockFromText) {
+    ChangeContextUtil.encodeContextInfo(blockFromText, true);
     final PsiClass thisClass = RefactoringChangeUtil.getThisClass(lambdaExpression);
     final String thisClassName = thisClass != null ? thisClass.getName() : null;
     if (thisClassName != null) {
@@ -99,28 +130,6 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
       for (PsiElement psiElement : replacements.keySet()) {
         psiElement.replace(replacements.get(psiElement));
       }
-    }
-    blockFromText = psiElementFactory.createCodeBlockFromText(blockFromText.getText(), null);
-    newExpression = (PsiNewExpression)JavaCodeStyleManager.getInstance(lambdaExpression.getProject()).shortenClassReferences(lambdaExpression.replace(newExpression));
-
-    final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
-    LOG.assertTrue(anonymousClass != null);
-    final List<PsiGenerationInfo<PsiMethod>> infos = OverrideImplementUtil.overrideOrImplement(anonymousClass, method);
-    if (infos != null && infos.size() == 1) {
-      final PsiMethod member = infos.get(0).getPsiMember();
-      final PsiParameter[] parameters = member.getParameterList().getParameters();
-      for (int i = 0; i < parameters.length; i++) {
-        final PsiParameter parameter = parameters[i];
-        final String lambdaParamName = paramListCopy[i].getName();
-        if (lambdaParamName != null) {
-          parameter.setName(lambdaParamName);
-        }
-      }
-      PsiCodeBlock codeBlock = member.getBody();
-      LOG.assertTrue(codeBlock != null);
-
-      codeBlock = (PsiCodeBlock)codeBlock.replace(blockFromText);
-      GenerateMembersUtil.positionCaret(editor, member, true);
     }
   }
 

@@ -155,10 +155,15 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
   private void doMergeChildrenChanges(ExternalSystemNode currentNode, DataNode<?> newDataNode, ExternalSystemNode newNode) {
     final ExternalSystemNode[] cached = currentNode.getCached();
     if (cached != null) {
-      Map<Object, ExternalSystemNode> oldDataMap = ContainerUtil.newLinkedHashMap();
+
+      final List<Object> duplicates = ContainerUtil.newArrayList();
+      final Map<Object, ExternalSystemNode> oldDataMap = ContainerUtil.newLinkedHashMap();
       for (ExternalSystemNode node : cached) {
         Object key = node.getData() != null ? node.getData() : node.getName();
-        oldDataMap.put(key, node);
+        final Object systemNode = oldDataMap.put(key, node);
+        if(systemNode != null) {
+          duplicates.add(key);
+        }
       }
 
       Map<Object, ExternalSystemNode> newDataMap = ContainerUtil.newLinkedHashMap();
@@ -171,6 +176,10 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
         else {
           unchangedNewDataMap.put(key, node);
         }
+      }
+
+      for (Object duplicate : duplicates) {
+        newDataMap.remove(duplicate);
       }
 
       currentNode.removeAll(oldDataMap.values());

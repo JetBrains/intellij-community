@@ -118,7 +118,7 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
 
   @Override
   public boolean isValid() {
-    return myExistential.isValid();
+    return myExistential.isValid() && myContext.isValid();
   }
 
   @Override

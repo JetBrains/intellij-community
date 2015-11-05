@@ -112,7 +112,7 @@ public class PyCustomType implements PyClassLikeType {
 
     // Delegate calls to classes, we mimic but filter if filter is set.
     for (final PyClassLikeType typeToMimic : myTypesToMimic) {
-      final List<? extends RatedResolveResult> results = typeToMimic.resolveMember(name, location, direction, resolveContext, inherited);
+      final List<? extends RatedResolveResult> results = typeToMimic.toInstance().resolveMember(name, location, direction, resolveContext, inherited);
       if (results != null) {
         globalResult.addAll(Collections2.filter(results, new ResolveFilter()));
       }
@@ -253,9 +253,21 @@ public class PyCustomType implements PyClassLikeType {
   }
 
   @Override
-  public void visitMembers(@NotNull final Processor<PsiElement> processor, final boolean inherited, @NotNull TypeEvalContext context) {
+  public final void visitMembers(@NotNull final Processor<PsiElement> processor, final boolean inherited, @NotNull final TypeEvalContext context) {
     for (final PyClassLikeType type : myTypesToMimic) {
-      type.visitMembers(processor, inherited, context);
+      // Only visit methods that are allowed by filter (if any)
+      type.visitMembers(new Processor<PsiElement>() {
+        @Override
+        public boolean process(final PsiElement t) {
+          if (!(t instanceof PyElement)) {
+            return true;
+          }
+          if (myFilter == null || myFilter.process((PyElement)t)) {
+            return processor.process(t);
+          }
+          return true;
+        }
+      }, inherited, context);
     }
   }
 

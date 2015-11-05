@@ -39,6 +39,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
@@ -274,10 +275,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   public void setAncestor(NodeDescriptor oldDescriptor) {
     super.setAncestor(oldDescriptor);
     myIsNew = false;
-    ValueDescriptorImpl other = (ValueDescriptorImpl)oldDescriptor;
-    if (other.myValueReady) {
-      myValue = other.getValue();
-      myValueReady = true;
+    if (!myValueReady) {
+      ValueDescriptorImpl other = (ValueDescriptorImpl)oldDescriptor;
+      if (other.myValueReady) {
+        myValue = other.getValue();
+        myValueReady = true;
+      }
     }
   }
 
@@ -537,6 +540,10 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public boolean canSetValue() {
     return myValueReady && !myIsSynthetic && isLvalue();
+  }
+
+  public XValueModifier getModifier(JavaValue value) {
+    return null;
   }
 
   @NotNull

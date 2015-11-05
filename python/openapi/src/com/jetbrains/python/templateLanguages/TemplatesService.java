@@ -25,7 +25,6 @@ import com.jetbrains.python.packaging.PyPackageManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -114,5 +113,8 @@ public abstract class TemplatesService {
   public abstract void generateTemplates(@NotNull final TemplateSettingsHolder settings, VirtualFile baseDir);
   public abstract void installTemplateEngine(@NotNull final TemplateSettingsHolder settings, @NotNull final PyPackageManager packageManager,
                                              @NotNull final Project project, @NotNull final String prefix);
+
+  public abstract void addLanguageSelectedListener(Runnable listener);
+  public abstract void removeLanguageSelectedListener(Runnable listener);
 }
 

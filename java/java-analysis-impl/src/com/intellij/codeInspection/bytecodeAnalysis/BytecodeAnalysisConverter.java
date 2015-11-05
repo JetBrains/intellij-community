@@ -107,7 +107,7 @@ public class BytecodeAnalysisConverter {
     byte[] digest = new byte[HASH_SIZE];
     System.arraycopy(classDigest, 0, digest, 0, CLASS_HASH_SIZE);
     System.arraycopy(sigDigest, 0, digest, CLASS_HASH_SIZE, SIGNATURE_HASH_SIZE);
-    return new HKey(digest, mkDirectionKey(key.direction), key.stable);
+    return new HKey(digest, mkDirectionKey(key.direction), key.stable, key.negated);
   }
 
   /**
@@ -131,7 +131,7 @@ public class BytecodeAnalysisConverter {
     byte[] digest = new byte[HASH_SIZE];
     System.arraycopy(classDigest, 0, digest, 0, CLASS_HASH_SIZE);
     System.arraycopy(sigDigest, 0, digest, CLASS_HASH_SIZE, SIGNATURE_HASH_SIZE);
-    return new HKey(digest, mkDirectionKey(direction), true);
+    return new HKey(digest, mkDirectionKey(direction), true, false);
   }
 
   @Nullable

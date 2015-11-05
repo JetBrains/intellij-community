@@ -216,14 +216,14 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       return apply(new CompareData(lineFragments, isEqualContents));
     }
     catch (DiffTooBigException e) {
-      return applyNotification(DiffNotifications.DIFF_TOO_BIG);
+      return applyNotification(DiffNotifications.createDiffTooBig());
     }
     catch (ProcessCanceledException e) {
       throw e;
     }
     catch (Throwable e) {
       LOG.error(e);
-      return applyNotification(DiffNotifications.ERROR);
+      return applyNotification(DiffNotifications.createError());
     }
   }
 
@@ -235,11 +235,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
         clearDiffPresentation();
 
-        if (data.isEqualContent()) myPanel.addNotification(DiffNotifications.EQUAL_CONTENTS);
+        if (data.isEqualContent()) myPanel.addNotification(DiffNotifications.createEqualContents());
 
         if (data.getFragments() != null) {
           for (LineFragment fragment : data.getFragments()) {
-            myDiffChanges.add(new SimpleDiffChange(SimpleDiffViewer.this, fragment, getHighlightPolicy().isFineFragments()));
+            myDiffChanges.add(new SimpleDiffChange(SimpleDiffViewer.this, fragment));
           }
         }
 
@@ -589,7 +589,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
       setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide")).getShortcutSet());
       getTemplatePresentation().setText("Replace");
-      getTemplatePresentation().setIcon(focusedSide.select(AllIcons.Diff.ArrowRight, AllIcons.Diff.Arrow));
+      getTemplatePresentation().setIcon(DiffUtil.getArrowIcon(focusedSide));
     }
 
     @Override
@@ -611,7 +611,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
       setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.AppendLeftSide", "Diff.AppendRightSide")).getShortcutSet());
       getTemplatePresentation().setText("Insert");
-      getTemplatePresentation().setIcon(focusedSide.select(AllIcons.Diff.ArrowRightDown, AllIcons.Diff.ArrowLeftDown));
+      getTemplatePresentation().setIcon(DiffUtil.getArrowDownIcon(focusedSide));
     }
 
     @Override

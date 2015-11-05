@@ -106,13 +106,27 @@ public class PySdkUtil {
                                                final int timeout,
                                                @Nullable byte[] stdin,
                                                boolean needEOFMarker) {
+    return getProcessOutput(new GeneralCommandLine(command), homePath, extraEnv, timeout, stdin, needEOFMarker);
+  }
+
+  public static ProcessOutput getProcessOutput(@NotNull GeneralCommandLine cmd, @Nullable String homePath,
+                                               @Nullable @NonNls Map<String, String> extraEnv,
+                                               int timeout) {
+    return getProcessOutput(cmd, homePath, extraEnv, timeout, null, true);
+  }
+
+  public static ProcessOutput getProcessOutput(@NotNull GeneralCommandLine cmd, @Nullable String homePath,
+                                               @Nullable @NonNls Map<String, String> extraEnv,
+                                               int timeout,
+                                               @Nullable byte[] stdin, boolean needEOFMarker) {
     if (homePath == null || !new File(homePath).exists()) {
       return new ProcessOutput();
     }
     final Map<String, String> systemEnv = System.getenv();
     final Map<String, String> env = extraEnv != null ? mergeEnvVariables(systemEnv, extraEnv) : systemEnv;
     try {
-      final Process process = new GeneralCommandLine(command).withWorkDirectory(homePath).withEnvironment(env).createProcess();
+
+      final Process process = cmd.withWorkDirectory(homePath).withEnvironment(env).createProcess();
       final CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
       if (stdin != null) {
         final OutputStream processInput = processHandler.getProcessInput();
@@ -159,6 +173,7 @@ public class PySdkUtil {
                                                        @NotNull Map<String, String> extraEnvironment) {
     final Map<String, String> result = new HashMap<String, String>(environment);
     for (Map.Entry<String, String> entry : extraEnvironment.entrySet()) {
+      //TODO: merge python path also?
       if (PATH_ENV_VARIABLE.equals(entry.getKey()) && result.containsKey(PATH_ENV_VARIABLE)) {
         result.put(PATH_ENV_VARIABLE, result.get(PATH_ENV_VARIABLE) + File.pathSeparator + entry.getValue());
       }

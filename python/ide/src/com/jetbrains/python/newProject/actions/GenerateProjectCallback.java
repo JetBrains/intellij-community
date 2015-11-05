@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
@@ -67,8 +66,11 @@ public class GenerateProjectCallback implements NullableConsumer<ProjectSettings
         }
       });
       PySdkService.getInstance().solidifySdk(sdk);
-      sdk = SdkConfigurationUtil.setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, PythonSdkType.getInstance(), true, null,
-                                          null);
+      sdk = SdkConfigurationUtil.createAndAddSDK(sdkHome.getPath(), PythonSdkType.getInstance());
+      if (sdk != null) {
+        PythonSdkType.getInstance().setupSdkPathsImmediately(sdk, project);
+      }
+
       model.addSdk(sdk);
       settingsStep.setSdk(sdk);
       try {

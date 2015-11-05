@@ -184,7 +184,13 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
           LOG.error(this + ".createFile() must create new file instance but got the same: " + psiFile);
         }
         if (psiFile instanceof PsiFileEx) {
-          ((PsiFileEx)psiFile).markInvalidated();
+          DebugUtil.startPsiModification("invalidating throw-away copy");
+          try {
+            ((PsiFileEx)psiFile).markInvalidated();
+          }
+          finally {
+            DebugUtil.finishPsiModification();
+          }
         }
         psiFile = alreadyCreated;
       }
@@ -608,16 +614,9 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
     @Override
     public long getModificationStamp() {
-      final VirtualFile virtualFile = getVirtualFile();
-      if (virtualFile instanceof LightVirtualFile) {
-        Document doc = getCachedDocument();
-        if (doc != null) return getLastCommittedStamp(doc);
-        return virtualFile.getModificationStamp();
-      }
-
-      final Document document = getDocument();
+      final Document document = getCachedDocument();
       if (document == null) {
-        return virtualFile.getModificationStamp();
+        return getVirtualFile().getModificationStamp();
       }
       return getLastCommittedStamp(document);
     }

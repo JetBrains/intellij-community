@@ -15,9 +15,7 @@
  */
 package com.jetbrains.python.debugger;
 
-import com.intellij.ide.scratch.RootType;
-import com.intellij.ide.scratch.ScratchFileService;
-import com.intellij.ide.scratch.ScratchFileType;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -32,6 +30,7 @@ import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointTypeBase;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -70,14 +69,8 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
     return stoppable.get();
   }
 
-  private static boolean isPythonScratch(Project project, VirtualFile file) {
-    if (file.getFileType() == ScratchFileType.INSTANCE) {
-      RootType type = ScratchFileService.getInstance().getRootType(file);
-      return type != null && type.substituteLanguage(project, file) == PythonFileType.INSTANCE.getLanguage();
-    }
-    else {
-      return false;
-    }
+  private static boolean isPythonScratch(@NotNull Project project, @NotNull VirtualFile file) {
+    return ScratchUtil.isScratch(file) && ScratchUtil.getLanguage(project, file) == PythonLanguage.INSTANCE;
   }
 
   private static boolean notStoppableElementType(IElementType elementType) {

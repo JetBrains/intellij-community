@@ -62,11 +62,15 @@ public abstract class PsiTestCase extends ModuleTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myPsiManager = null;
-    myFile = null;
-    myTestDataBefore = null;
-    myTestDataAfter = null;
-    super.tearDown();
+    try {
+      myPsiManager = null;
+      myFile = null;
+      myTestDataBefore = null;
+      myTestDataAfter = null;
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @NotNull
@@ -113,8 +117,7 @@ public abstract class PsiTestCase extends ModuleTestCase {
   }
 
   protected PsiElement configureByFileWithMarker(String filePath, String marker) throws Exception{
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(filePath.replace(File.separatorChar, '/'));
-    assertNotNull("file " + filePath + " not found", vFile);
+    final VirtualFile vFile = VfsTestUtil.findFileByCaseSensitivePath(filePath);
 
     String fileText = VfsUtil.loadText(vFile);
     fileText = StringUtil.convertLineSeparators(fileText);

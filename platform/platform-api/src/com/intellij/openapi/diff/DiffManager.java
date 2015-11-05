@@ -23,6 +23,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
+/**
+ * @deprecated use {@link com.intellij.diff.DiffManager} instead
+ */
+@Deprecated
 public abstract class DiffManager {
   public static DiffManager getInstance() {
     return ServiceManager.getService(DiffManager.class);

@@ -71,7 +71,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
-import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
@@ -252,6 +251,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   }
 
   public void selectScope(final NamedScope scope) {
+    myUpdateQueue.cancelAllUpdates();
     refreshScope(scope);
     if (scope != CustomScopesProviderEx.getAllScope() && scope != null) {
       CURRENT_SCOPE_NAME = scope.getName();
@@ -882,8 +882,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
         }
         else if (node instanceof FileNode) {
           final PsiFile psiFile = (PsiFile)node.getPsiElement();
-          LOG.assertTrue(psiFile != null);
-          return psiFile.getContainingDirectory();
+          return psiFile != null ? psiFile.getContainingDirectory() : null;
         }
       }
       return null;

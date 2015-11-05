@@ -400,17 +400,22 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   @Override
-  public long getLength(@NotNull final VirtualFile file) {
+  public long getLength(@NotNull VirtualFile file) {
     long len;
     if (mustReloadContent(file)) {
       len = reloadLengthFromDelegate(file, getDelegate(file));
     }
     else {
-      final int id = getFileId(file);
-      len = FSRecords.getLength(id);
+      len = getLastRecordedLength(file);
     }
 
     return len;
+  }
+
+  @Override
+  public long getLastRecordedLength(@NotNull VirtualFile file) {
+    int id = getFileId(file);
+    return FSRecords.getLength(id);
   }
 
   @NotNull

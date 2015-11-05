@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.Centerizer;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -148,11 +147,6 @@ public class TabLabel extends JPanel {
           g.setComposite(oldComposite);
           g.setClip(oldClip);
         }
-      }
-
-      @Override
-      protected void applyAdditionalHints(@NotNull Graphics2D g) {
-        UISettings.setupAntialiasing(g);
       }
     };
     label.setOpaque(false);

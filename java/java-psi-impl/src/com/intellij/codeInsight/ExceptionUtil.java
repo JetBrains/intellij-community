@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
@@ -266,7 +267,12 @@ public class ExceptionUtil {
       unhandledExceptions = getUnhandledExceptions(expression, topElement, includeSelfCalls);
     }
     else if (element instanceof PsiMethodReferenceExpression) {
-      unhandledExceptions = getUnhandledExceptions((PsiMethodReferenceExpression)element, topElement);
+      PsiExpression qualifierExpression = ((PsiMethodReferenceExpression)element).getQualifierExpression();
+      return qualifierExpression != null ? collectUnhandledExceptions(qualifierExpression, topElement, null, false) 
+                                         : null;
+    }
+    else if (element instanceof PsiLambdaExpression) {
+      return null;
     }
     else if (element instanceof PsiThrowStatement) {
       PsiThrowStatement statement = (PsiThrowStatement)element;
@@ -326,7 +332,13 @@ public class ExceptionUtil {
     }
 
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      foundExceptions = collectUnhandledExceptions(child, topElement, foundExceptions, includeSelfCalls);
+      Set<PsiClassType> foundInChild = collectUnhandledExceptions(child, topElement, foundExceptions, includeSelfCalls);
+      if (foundExceptions == null) {
+        foundExceptions = foundInChild;
+      }
+      else if (foundInChild != null) {
+        foundExceptions.addAll(foundInChild);
+      }
     }
 
     return foundExceptions;
@@ -429,8 +441,9 @@ public class ExceptionUtil {
       return Collections.emptyList();
     }
     final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(methodCall.getArgumentList());
-    final JavaResolveResult result = properties != null ? properties.getInfo() : methodCall.resolveMethodGenerics();
-    final PsiMethod method = (PsiMethod)result.getElement();
+    final JavaResolveResult result = properties != null ? properties.getInfo() : InferenceSession.getResolveResult(methodCall);
+    final PsiElement element = result.getElement();
+    final PsiMethod method = element instanceof PsiMethod ? (PsiMethod)element : null;
     if (method == null) {
       return Collections.emptyList();
     }

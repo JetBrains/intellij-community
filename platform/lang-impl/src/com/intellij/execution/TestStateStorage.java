@@ -24,7 +24,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
-import com.intellij.util.io.*;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +37,7 @@ import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 
 /**
@@ -41,6 +46,8 @@ import java.util.concurrent.ScheduledFuture;
 public class TestStateStorage implements Disposable {
 
   private static final File TEST_HISTORY_PATH = new File(PathManager.getSystemPath(), "testHistory");
+  private final File myFile;
+
   public static File getTestHistoryRoot(Project project) {
     return new File(TEST_HISTORY_PATH, project.getLocationHash());
   }
@@ -66,10 +73,10 @@ public class TestStateStorage implements Disposable {
 
   public TestStateStorage(Project project) {
 
-    File file = new File(getTestHistoryRoot(project).getPath() + "/testStateMap");
-    FileUtilRt.createParentDirs(file);
+    myFile = new File(getTestHistoryRoot(project).getPath() + "/testStateMap");
+    FileUtilRt.createParentDirs(myFile);
     try {
-      myMap = create(file);
+      myMap = initializeMap();
     } catch (IOException e) {
       LOG.error(e);
     }
@@ -83,14 +90,18 @@ public class TestStateStorage implements Disposable {
     Disposer.register(project, this);
   }
 
+  private PersistentHashMap<String, Record> initializeMap() throws IOException {
+    return IOUtil.openCleanOrResetBroken(getComputable(myFile), myFile);
+  }
+
   private synchronized void flushMap() {
     if (myMapFlusher == null) return; // disposed
     if (myMap != null && myMap.isDirty()) myMap.force();
   }
 
   @NotNull
-  private static PersistentHashMap<String, Record> create(final File file) throws IOException {
-    return IOUtil.openCleanOrResetBroken(new ThrowableComputable<PersistentHashMap<String, Record>, IOException>() {
+  private static ThrowableComputable<PersistentHashMap<String, Record>, IOException> getComputable(final File file) {
+    return new ThrowableComputable<PersistentHashMap<String, Record>, IOException>() {
       @Override
       public PersistentHashMap<String, Record> compute() throws IOException {
         return new PersistentHashMap<String, Record>(file, new EnumeratorStringDescriptor(), new DataExternalizer<Record>() {
@@ -106,7 +117,7 @@ public class TestStateStorage implements Disposable {
           }
         });
       }
-    }, file);
+    };
   }
 
   @Nullable
@@ -115,9 +126,32 @@ public class TestStateStorage implements Disposable {
       return myMap == null ? null : myMap.get(testUrl);
     }
     catch (IOException e) {
-      LOG.error(e);
+      thingsWentWrongLetsReinitialize(e, "Can't get state for " + testUrl);
       return null;
     }
+  }
+
+  @Nullable
+  public synchronized Map<String, Record> getRecentTests(int limit, Date since) {
+    if (myMap == null) return null;
+
+    Map<String, Record> result = ContainerUtil.newHashMap();
+    try {
+      for (String key : myMap.getAllKeysWithExistingMapping()) {
+        Record record = myMap.get(key);
+        if (record != null && record.date.compareTo(since) > 0) {
+          result.put(key, record);
+          if (result.size() >= limit) {
+            break;
+          }
+        }
+      }
+    }
+    catch (IOException e) {
+      thingsWentWrongLetsReinitialize(e, "Can't get recent tests");
+    }
+    
+    return result;
   }
 
   public synchronized void writeState(@NotNull String testUrl, Record record) {
@@ -126,7 +160,7 @@ public class TestStateStorage implements Disposable {
       myMap.put(testUrl, record);
     }
     catch (IOException e) {
-      LOG.error(e);
+      thingsWentWrongLetsReinitialize(e, "Can't write state for " + testUrl);
     }
   }
 
@@ -140,6 +174,28 @@ public class TestStateStorage implements Disposable {
     }
     catch (IOException e) {
       LOG.error(e);
+    }
+    finally {
+      myMap = null;
+    }
+  }
+
+  private void thingsWentWrongLetsReinitialize(IOException e, String message) {
+    try {
+      if (myMap != null) {
+        try {
+          myMap.close();
+        }
+        catch (IOException ignore) {
+        }
+        IOUtil.deleteAllFilesStartingWith(myFile);
+      }
+      myMap = initializeMap();
+      LOG.error(message, e);
+    }
+    catch (IOException e1) {
+      LOG.error("Cannot repair", e1);
+      myMap = null;
     }
   }
 }

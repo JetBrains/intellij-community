@@ -40,7 +40,7 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
 
   public SliceLeafValueRootNode(@NotNull Project project, PsiElement leafExpression, SliceNode root, List<SliceNode> children,
                                 SliceAnalysisParams params) {
-    super(project, SliceUsage.createRootUsage(leafExpression, params), root.targetEqualUsages);
+    super(project, JavaSliceUsage.createRootUsage(leafExpression, params), root.targetEqualUsages);
     myCachedChildren = children;
   }
 
@@ -69,7 +69,7 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
   }
 
   @Override
-  public void customizeCellRenderer(@NotNull SliceUsageCellRenderer renderer,
+  public void customizeCellRenderer(@NotNull SliceUsageCellRendererBase renderer,
                                     @NotNull JTree tree,
                                     Object value,
                                     boolean selected,
@@ -96,7 +96,7 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
 
   private static void appendElementText(@NotNull UsageInfo2UsageAdapter usage,
                                         @NotNull final PsiElement element,
-                                        @NotNull final SliceUsageCellRenderer renderer) {
+                                        @NotNull final SliceUsageCellRendererBase renderer) {
     PsiFile file = element.getContainingFile();
     List<TextChunk> result = new ArrayList<TextChunk>();
     ChunkExtractor.getExtractor(element.getContainingFile())

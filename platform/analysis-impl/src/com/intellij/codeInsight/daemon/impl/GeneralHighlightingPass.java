@@ -66,9 +66,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass");
   private static final String PRESENTABLE_NAME = DaemonBundle.message("pass.syntax");
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
-  static final Condition<PsiFile> SHOULD_HIGHIGHT_FILTER = new Condition<PsiFile>() {
+  static final Condition<PsiFile> SHOULD_HIGHLIGHT_FILTER = new Condition<PsiFile>() {
     @Override
-    public boolean value(PsiFile file) {
+    public boolean value(@NotNull PsiFile file) {
       return HighlightingLevelManager.getInstance(file.getProject()).shouldHighlight(file);
     }
   };
@@ -198,7 +198,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       List<ProperTextRange> insideRanges = new ArrayList<ProperTextRange>();
       List<ProperTextRange> outsideRanges = new ArrayList<ProperTextRange>();
       Divider.divideInsideAndOutside(getFile(), myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), myPriorityRange, insideElements, insideRanges, outsideElements,
-                                     outsideRanges, false, SHOULD_HIGHIGHT_FILTER);
+                                     outsideRanges, false, SHOULD_HIGHLIGHT_FILTER);
       // put file element always in outsideElements
       if (!insideElements.isEmpty() && insideElements.get(insideElements.size()-1) instanceof PsiFile) {
         PsiElement file = insideElements.remove(insideElements.size() - 1);

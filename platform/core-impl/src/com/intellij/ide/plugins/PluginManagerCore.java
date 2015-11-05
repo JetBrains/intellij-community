@@ -57,6 +57,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class PluginManagerCore {
+  private static final Logger LOG = Logger.getInstance(PluginManagerCore.class);
+
   @NonNls private static final String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
   @NonNls public static final String CORE_PLUGIN_ID = "com.intellij";
   @NonNls private static final String META_INF = "META-INF";
@@ -1102,7 +1104,15 @@ public class PluginManagerCore {
     return shouldLoad;
   }
 
-  static boolean isIncompatible(@NotNull IdeaPluginDescriptor descriptor) {
+  public static boolean isCompatible(@NotNull IdeaPluginDescriptor descriptor) {
+    return !isIncompatible(descriptor);
+  }
+
+  public static boolean isCompatible(@NotNull IdeaPluginDescriptor descriptor, @Nullable BuildNumber buildNumber) {
+    return !isIncompatible(descriptor, buildNumber);
+  }
+
+  public static boolean isIncompatible(@NotNull IdeaPluginDescriptor descriptor) {
     return isIncompatible(descriptor, getBuildNumber());
   }
 
@@ -1115,6 +1125,7 @@ public class PluginManagerCore {
       if (!StringUtil.isEmpty(descriptor.getSinceBuild())) {
         BuildNumber sinceBuild = BuildNumber.fromString(descriptor.getSinceBuild(), descriptor.getName());
         if (sinceBuild.compareTo(buildNumber) > 0) {
+          LOG.warn("Can't load " + descriptor + ": since build " + sinceBuild + " does not match " + buildNumber);
           return true;
         }
       }
@@ -1122,11 +1133,14 @@ public class PluginManagerCore {
       if (!StringUtil.isEmpty(descriptor.getUntilBuild()) && !buildNumber.isSnapshot()) {
         BuildNumber untilBuild = BuildNumber.fromString(descriptor.getUntilBuild(), descriptor.getName());
         if (untilBuild.compareTo(buildNumber) < 0) {
+          LOG.warn("Can't load " + descriptor + ": until build " + untilBuild + " does not match " + buildNumber);
           return true;
         }
       }
     }
-    catch (RuntimeException ignored) { }
+    catch (RuntimeException e) {
+      LOG.error(e);
+    }
 
     return false;
   }

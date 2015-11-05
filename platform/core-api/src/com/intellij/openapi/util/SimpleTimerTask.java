@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class SimpleTimerTask {
 
@@ -27,7 +28,7 @@ public class SimpleTimerTask {
   private final Object LOCK = new Object();
   private final SimpleTimer myTimer;
 
-  public SimpleTimerTask(final long targetTime, Runnable runnable, SimpleTimer timer) {
+  public SimpleTimerTask(final long targetTime, @NotNull Runnable runnable, @NotNull SimpleTimer timer) {
     myTargetTime = targetTime;
     myRunnable = runnable;
     myTimer = timer;

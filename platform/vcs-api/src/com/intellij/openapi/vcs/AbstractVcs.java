@@ -30,7 +30,6 @@ import com.intellij.openapi.vcs.diff.RevisionSelector;
 import com.intellij.openapi.vcs.history.VcsAnnotationCachedProxy;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.impl.IllegalStateProxy;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
@@ -159,7 +158,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    */
   @Nullable
   protected CheckinEnvironment createCheckinEnvironment() {
-    return IllegalStateProxy.create(CheckinEnvironment.class);
+    return null;
   }
 
   /**
@@ -180,7 +179,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    */
   @Nullable
   protected RollbackEnvironment createRollbackEnvironment() {
-    return IllegalStateProxy.create(RollbackEnvironment.class);
+    return null;
   }
 
   /**
@@ -213,7 +212,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    */
   @Nullable
   protected UpdateEnvironment createUpdateEnvironment() {
-    return IllegalStateProxy.create(UpdateEnvironment.class);
+    return null;
   }
 
   /**
@@ -268,13 +267,17 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   /**
-   * Invoked when a changelist is deleted explicitly by user or implicitly (e.g. after default changelist switch when the previous one was empty).
-   * @return UNSURE if the VCS doesn't object to the deletion. YES or NO indicating the permission to remove if a dialog was shown asking the user whether
-   * the changelist really is to be removed.
+   * Invoked when a changelist is deleted explicitly by user or implicitly (e.g. after default changelist switch
+   * when the previous one was empty).
+   * @param list change list that's about to be removed
+   * @param explicitly whether it's a result of explicit Delete action, or just after switching the active changelist.
+   * @return UNSURE if the VCS has nothing to say about this changelist.
+   * YES or NO if the changelist has to be removed or not, and no further confirmations are needed about this changelist
+   * (in particular, the VCS can show a confirmation to the user by itself)
    */
   @CalledInAwt
   @NotNull
-  public ThreeState mayRemoveChangeList(@NotNull LocalChangeList list) {
+  public ThreeState mayRemoveChangeList(@NotNull LocalChangeList list, boolean explicitly) {
     return ThreeState.UNSURE;
   }
 
@@ -580,6 +583,12 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   public void setRollbackEnvironment(RollbackEnvironment rollbackEnvironment) {
     if (myRollbackEnvironment != null) throw new IllegalStateException("Attempt to redefine rollback environment");
     myRollbackEnvironment = rollbackEnvironment;
+  }
+
+  public void setupEnvironments() {
+    setCheckinEnvironment(createCheckinEnvironment());
+    setUpdateEnvironment(createUpdateEnvironment());
+    setRollbackEnvironment(createRollbackEnvironment());
   }
 
   public boolean reportsIgnoredDirectories() {

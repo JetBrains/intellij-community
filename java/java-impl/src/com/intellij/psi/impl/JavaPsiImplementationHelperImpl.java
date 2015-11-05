@@ -198,7 +198,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
     final VirtualFile[] children = dirFile.getChildren();
     for (VirtualFile child : children) {
-      if (StdFileTypes.CLASS.equals(child.getFileType())) {
+      if (StdFileTypes.CLASS.equals(child.getFileType()) && child.isValid()) {
         final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(child);
         if (psiFile instanceof PsiJavaFile) {
           return (PsiJavaFile)psiFile;

@@ -124,7 +124,16 @@ public class GenerateAction extends DumbAwareAction implements PreloadableAction
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      myAction.actionPerformed(e);
+      final Project project = getEventProject(e);
+      assert project != null;
+      final DumbService dumbService = DumbService.getInstance(project);
+      try {
+        dumbService.setAlternativeResolveEnabled(true);
+        myAction.actionPerformed(e);
+      }
+      finally {
+        dumbService.setAlternativeResolveEnabled(false);
+      }
     }
   }
 }

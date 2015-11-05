@@ -19,11 +19,9 @@ import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -42,8 +40,7 @@ public class LookupDocumentSavingVetoer extends FileDocumentSynchronizationVetoe
       }
       LookupEx lookup = LookupManager.getInstance(project).getActiveLookup();
       if (lookup != null) {
-        Editor editor = InjectedLanguageUtil.getTopLevelEditor(lookup.getEditor());
-        if (editor.getDocument() == document) {
+        if (lookup.getTopLevelEditor().getDocument() == document) {
           return false;
         }
       }

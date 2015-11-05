@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -38,6 +39,8 @@ import java.awt.event.FocusEvent;
  * @author Konstantin Bulenkov
  */
 public class DarculaSpinnerUI extends BasicSpinnerUI {
+  protected JButton prevButton;
+  protected JButton nextButton;
   private FocusAdapter myFocusListener = new FocusAdapter() {
     @Override
     public void focusGained(FocusEvent e) {
@@ -82,22 +85,26 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
     }
   }
 
-  @Override
-  protected Component createPreviousButton() {
-    JButton button = createArrow(SwingConstants.SOUTH);
-    button.setName("Spinner.previousButton");
+  protected JButton createButton(@MagicConstant(intValues = {SwingConstants.NORTH, SwingConstants.SOUTH}) int direction, String name) {
+    JButton button = createArrow(direction);
+    button.setName(name);
     button.setBorder(new EmptyBorder(1, 1, 1, 1));
-    installPreviousButtonListeners(button);
+    if (direction == SwingConstants.NORTH) {
+      installNextButtonListeners(button);
+    } else {
+      installPreviousButtonListeners(button);
+    }
     return button;
   }
 
   @Override
+  protected Component createPreviousButton() {
+    return prevButton = createButton(SwingConstants.SOUTH, "Spinner.previousButton");
+  }
+
+  @Override
   protected Component createNextButton() {
-    JButton button = createArrow(SwingConstants.NORTH);
-    button.setName("Spinner.nextButton");
-    button.setBorder(new EmptyBorder(1, 1, 1, 1));
-    installNextButtonListeners(button);
-    return button;
+    return nextButton = createButton(SwingConstants.NORTH, "Spinner.nextButton");
   }
 
 
@@ -107,24 +114,36 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
       @Override
       public void layoutContainer(Container parent) {
         super.layoutContainer(parent);
-        final JComponent editor = spinner.getEditor();
+        JComponent editor = spinner.getEditor();
         if (editor != null) {
-          final Rectangle bounds = editor.getBounds();
-          editor.setBounds(bounds.x, bounds.y, bounds.width - 6, bounds.height);
+          layoutEditor(editor);
         }
       }
     };
+  }
+
+  protected void layoutEditor(@NotNull JComponent editor) {
+    if (editor != null) {
+      final Rectangle bounds = editor.getBounds();
+      editor.setBounds(bounds.x, bounds.y, bounds.width - 6, bounds.height);
+    }
+  }
+
+  protected void paintArrowButton(Graphics g,
+                                  BasicArrowButton button,
+                                  @MagicConstant(intValues = {SwingConstants.NORTH, SwingConstants.SOUTH}) int direction) {
+    int y = direction == SwingConstants.NORTH ? button.getHeight() - 6 : 2;
+    button.paintTriangle(g, (button.getWidth() - 8)/2 - 1, y, 0, direction, spinner.isEnabled());
   }
 
   private JButton createArrow(@MagicConstant(intValues = {SwingConstants.NORTH, SwingConstants.SOUTH}) int direction) {
     final Color shadow = UIUtil.getPanelBackground();
     final Color enabledColor = new JBColor(Gray._255, UIUtil.getLabelForeground());
     final Color disabledColor = new JBColor(Gray._200, UIUtil.getLabelForeground().darker());
-    JButton b = new BasicArrowButton(direction, shadow, shadow, enabledColor, shadow) {
+    BasicArrowButton b = new BasicArrowButton(direction, shadow, shadow, enabledColor, shadow) {
       @Override
       public void paint(Graphics g) {
-        int y = direction == NORTH ? getHeight() - 6 : 2;
-        paintTriangle(g, (getWidth() - 8)/2 - 1, y, 0, direction, DarculaSpinnerUI.this.spinner.isEnabled());
+        paintArrowButton(g, this, direction);
       }
 
       @Override
@@ -170,10 +189,10 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
     return b;
   }
 
-  static class LayoutManagerDelegate implements LayoutManager {
+  protected static class LayoutManagerDelegate implements LayoutManager {
     protected final LayoutManager myDelegate;
 
-    LayoutManagerDelegate(LayoutManager delegate) {
+    public LayoutManagerDelegate(LayoutManager delegate) {
       myDelegate = delegate;
     }
 

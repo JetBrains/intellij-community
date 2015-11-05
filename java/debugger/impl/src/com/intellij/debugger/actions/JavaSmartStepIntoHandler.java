@@ -67,8 +67,9 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     }
     TextRange curLineRange = DocumentUtil.getLineTextRange(doc, line);
     PsiElement element = position.getElementAt();
-    PsiElement method = getBody(DebuggerUtilsEx.getContainingMethod(element));
-    final TextRange lineRange = (method != null) ? curLineRange.intersection(method.getTextRange()) : curLineRange;
+    PsiParameterListOwner method = DebuggerUtilsEx.getContainingMethod(element);
+    PsiElement body = method != null ? method.getBody() : null;
+    final TextRange lineRange = (body != null) ? curLineRange.intersection(body.getTextRange()) : curLineRange;
 
     if (lineRange == null || lineRange.isEmpty()) {
       return Collections.emptyList();
@@ -227,15 +228,5 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       return targets;
     }
     return Collections.emptyList();
-  }
-
-  private static PsiElement getBody(@Nullable PsiElement containingMethod) {
-    if (containingMethod instanceof PsiMethod) {
-      return ((PsiMethod)containingMethod).getBody();
-    }
-    else if (containingMethod instanceof PsiLambdaExpression) {
-      return ((PsiLambdaExpression)containingMethod).getBody();
-    }
-    return null;
   }
 }

@@ -35,7 +35,7 @@ public abstract class BaseLineStatusRangeAction extends AnAction implements Dumb
   }
 
   public void update(final AnActionEvent e) {
-    e.getPresentation().setEnabled(!myLineStatusTracker.isSilentMode() && isEnabled());
+    e.getPresentation().setEnabled(!myLineStatusTracker.isSilentMode() && !myLineStatusTracker.isReleased() && isEnabled());
   }
 
   public abstract boolean isEnabled();

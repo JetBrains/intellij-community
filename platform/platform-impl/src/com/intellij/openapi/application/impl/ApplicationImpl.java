@@ -30,7 +30,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ComponentConfig;
-import com.intellij.openapi.components.ComponentsPackage;
+import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
@@ -57,7 +57,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiLock;
 import com.intellij.ui.Splash;
@@ -66,8 +65,8 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TLongArrayList;
-import gnu.trove.TLongProcedure;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -79,6 +78,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -128,8 +128,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private boolean myLoaded;
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
-  private volatile boolean myActive;
-
   private static final int IS_EDT_FLAG = 1<<30; // we don't mess with sign bit since we want to do arithmetic
   private static final int IS_READ_LOCK_ACQUIRED_FLAG = 1<<29;
 
@@ -169,7 +167,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @NotNull
   @Deprecated
   public IComponentStore getStateStore() {
-    return ComponentsPackage.getStateStore(this);
+    return ServiceKt.getStateStore(this);
   }
 
   public ApplicationImpl(boolean isInternal,
@@ -487,7 +485,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
           }
 
           // we set it after beforeApplicationLoaded call, because app store can depends on stream provider state
-          ComponentsPackage.getStateStore(ApplicationImpl.this).setPath(effectiveConfigPath);
+          ServiceKt.getStateStore(ApplicationImpl.this).setPath(effectiveConfigPath);
         }
       });
       t = System.currentTimeMillis() - t;
@@ -557,10 +555,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     Disposer.dispose(myLastDisposable); // dispose it last
 
     if (LOG.isDebugEnabled()) {
-      final long[] sum = {0};
-      writePauses.forEach(new TLongProcedure() {
+      final int[] sum = {0};
+      writePauses.forEach(new TIntProcedure() {
         @Override
-        public boolean execute(long value) {
+        public boolean execute(int value) {
           sum[0] += value;
           return true;
         }
@@ -569,8 +567,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                 "\nTotal write actions: " + writePauses.size() +
                 "\nTotal write pauses : " + sum[0] + "ms"+
                 "\nAverage write pause: " + sum[0] / writePauses.size() + "ms" +
-                "\nMedian  write pause: " + ArrayUtil.averageAmongMedians(writePauses.toNativeArray(), 3) + "ms" +
-                ""
+                "\nMedian  write pause: " + ArrayUtil.averageAmongMedians(writePauses.toNativeArray(), 3) + "ms"
       );
     }
   }
@@ -1191,46 +1188,19 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return true;
   }
 
-  /**
-   * !!!!! CAUTION !!!!!
-   * !!!!! CAUTION !!!!!
-   * !!!!! CAUTION !!!!!
-   *
-   * THIS IS AN "ABSOLUTELY-GURU METHOD".
-   * NOBODY AND UNDER ANY CIRCUMSTANCES SHOULD ADD OTHER USAGES OF IT :)
-   * ONLY DENIS IS PERMITTED TO USE THIS METHOD!!!
-   *
-   * !!!!! CAUTION !!!!!
-   * !!!!! CAUTION !!!!!
-   * !!!!! CAUTION !!!!!
-   *
-   * There are no legitimate usages of the method outside of IdeEventQueue.processAppActivationEvents()
-   */
-  public void tryToApplyActivationState(Window window, boolean activation) {
-    if (activation && !isActive()) {
-      myActive = true;
-      IdeFrame ideFrame = getIdeFrameFromWindow(window);
-      if (ideFrame != null) {
-        getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationActivated(ideFrame);
-      }
-    }
-    else if (!activation && isActive()) {
-      myActive = false;
-      IdeFrame ideFrame = getIdeFrameFromWindow(window);
-      if (ideFrame != null) {
-        getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC).applicationDeactivated(ideFrame);
-      }
-    }
-  }
-
-  private static IdeFrame getIdeFrameFromWindow(Window window) {
-    Component frame = UIUtil.findUltimateParent(window);
-    return frame instanceof IdeFrame ? (IdeFrame)frame : null;
-  }
-
   @Override
   public boolean isActive() {
-    return isUnitTestMode() || myActive || isOnAir();
+    if (isOnAir() || isHeadlessEnvironment()) return true;
+    if (isUnitTestMode()) return true;
+
+    Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+
+    if (ApplicationActivationStateManager.getState().isInactive()
+      && activeWindow != null) {
+      ApplicationActivationStateManager.updateState(activeWindow);
+    }
+
+    return ApplicationActivationStateManager.getState().isActive();
   }
 
   @NotNull
@@ -1250,7 +1220,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myWriteActionPending;
   }
 
-  private final TLongArrayList writePauses = new TLongArrayList();
+  private final TIntArrayList writePauses = new TIntArrayList();
   private void startWrite(@Nullable Class clazz) {
     assertIsDispatchThread(getStatus(), "Write access is allowed from event dispatch thread only");
     boolean writeActionPending = myWriteActionPending;
@@ -1294,7 +1264,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myWriteActionsStack.push(clazz);
     if (LOG.isDebugEnabled()) {
       long end = System.currentTimeMillis();
-      writePauses.add(end - start);
+      writePauses.add((int)(end - start));
     }
     fireWriteActionStarted(clazz);
   }
@@ -1465,7 +1435,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     if (mySaveSettingsIsInProgress.compareAndSet(false, true)) {
       try {
-        StoreUtil.save(ComponentsPackage.getStateStore(this), null);
+        StoreUtil.save(ServiceKt.getStateStore(this), null);
       }
       finally {
         mySaveSettingsIsInProgress.set(false);
@@ -1536,5 +1506,17 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
            (isInternal() ? " (Internal)" : "") +
            (isHeadlessEnvironment() ? " (Headless)" : "") +
            (isCommandLine() ? " (Command line)" : "");
+  }
+
+  @TestOnly
+  public void disableEventsUntil(@NotNull Disposable disposable) {
+    final List<ApplicationListener> listeners = new ArrayList<ApplicationListener>(myDispatcher.getListeners());
+    myDispatcher.getListeners().removeAll(listeners);
+    Disposer.register(disposable, new Disposable() {
+      @Override
+      public void dispose() {
+        myDispatcher.getListeners().addAll(listeners);
+      }
+    });
   }
 }

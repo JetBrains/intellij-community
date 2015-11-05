@@ -16,7 +16,12 @@
 
 package com.intellij.refactoring.util;
 
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FocusChangeListener;
+import com.intellij.ui.EditorSettingsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 import com.intellij.psi.PsiElement;
@@ -68,4 +73,22 @@ public class RefactoringUIUtil {
 
     return buffer.toString();
   }
+
+  public static final EditorSettingsProvider SELECT_ALL_ON_FOCUS = new EditorSettingsProvider() {
+    @Override
+    public void customizeSettings(EditorEx editor) {
+      editor.addFocusListener(new FocusChangeListener() {
+        @Override
+        public void focusGained(Editor editor) {
+          if (LookupManager.getActiveLookup(editor) == null) {
+            editor.getSelectionModel().setSelection(0, editor.getDocument().getTextLength());
+          }
+        }
+
+        @Override
+        public void focusLost(Editor editor) {
+        }
+      });
+    }
+  };
 }

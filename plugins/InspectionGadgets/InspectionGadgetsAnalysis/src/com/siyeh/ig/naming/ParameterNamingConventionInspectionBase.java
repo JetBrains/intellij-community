@@ -43,22 +43,8 @@ public class ParameterNamingConventionInspectionBase extends ConventionInspectio
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    final String parametername = (String)infos[0];
-    if (parametername.length() < getMinLength()) {
-      return InspectionGadgetsBundle.message(
-        "parameter.naming.convention.problem.descriptor.short");
-    }
-    else if (parametername.length() > getMaxLength()) {
-      return InspectionGadgetsBundle.message(
-        "parameter.naming.convention.problem.descriptor.long");
-    }
-    else {
-      return InspectionGadgetsBundle.message(
-        "parameter.naming.convention.problem.descriptor.regex.mismatch",
-        getRegex());
-    }
+  protected String getElementDescription() {
+    return InspectionGadgetsBundle.message("parameter.naming.convention.element.description");
   }
 
   @Override

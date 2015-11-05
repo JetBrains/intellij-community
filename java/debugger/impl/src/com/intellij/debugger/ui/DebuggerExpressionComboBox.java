@@ -49,8 +49,8 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
   public static final Key<String> KEY = Key.create("DebuggerComboBoxEditor.KEY");
   public static final int MAX_ROWS = 20;
 
-  private MyEditorComboBoxEditor myEditor;
-  private ComboBox myComboBox;
+  private final MyEditorComboBoxEditor myEditor;
+  private final ComboBox myComboBox;
 
   private class MyEditorComboBoxEditor extends EditorComboBoxEditor {
 
@@ -86,7 +86,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
 
   }
 
-  private static DocumentListener REPLACE_NEWLINES_LISTENER = new DocumentAdapter() {
+  private static final DocumentListener REPLACE_NEWLINES_LISTENER = new DocumentAdapter() {
     @Override
     public void documentChanged(DocumentEvent e) {
       final String text = e.getNewFragment().toString();

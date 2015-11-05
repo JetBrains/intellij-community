@@ -98,6 +98,18 @@ public class FontPreferencesTest {
                expectedEffectiveFontFamilies,
                expectedFontFamily,
                namesAndSizes);
+
+    // check object copying
+    FontPreferences preferences = new FontPreferences();
+    myPreferences.copyTo(preferences);
+    // check myTemplateFontSize
+    String fontName = "Another" + getNonExistingFontName();
+    assertEquals(myPreferences.getSize(fontName), preferences.getSize(fontName));
+    // check other fields
+    checkState(myPreferences,
+               preferences.getRealFontFamilies(),
+               preferences.getEffectiveFontFamilies(),
+               preferences.getFontFamily());
   }
 
   @SuppressWarnings("AssignmentToForLoopParameter")

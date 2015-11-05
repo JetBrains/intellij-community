@@ -265,7 +265,7 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
       }
     }
 
-    if (result.isEmpty()) return null;
+    if (result.isEmpty() && problems.isEmpty()) return null;
 
     for (PsiVariable variable : result) {
       final PsiIdentifier nameIdentifier = variable.getNameIdentifier();

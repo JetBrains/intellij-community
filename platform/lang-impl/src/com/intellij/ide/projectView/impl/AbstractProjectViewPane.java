@@ -79,7 +79,7 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class AbstractProjectViewPane implements DataProvider, Disposable, BusyObject {
-  public static ExtensionPointName<AbstractProjectViewPane> EP_NAME = ExtensionPointName.create("com.intellij.projectViewPane");
+  public static final ExtensionPointName<AbstractProjectViewPane> EP_NAME = ExtensionPointName.create("com.intellij.projectViewPane");
 
   @NotNull
   protected final Project myProject;
@@ -602,7 +602,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   protected void enableDnD() {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      myDropTarget = new ProjectViewDropTarget(myTree, new Retriever(){
+      myDropTarget = new ProjectViewDropTarget(myTree, new Retriever() {
         @Override
         public PsiElement getPsiElement(@Nullable TreeNode node) {
           return getPSIElement(getElementFromTreeNode(node));
@@ -612,13 +612,29 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         public Module getModule(TreeNode treeNode) {
           return getNodeModule(getElementFromTreeNode(treeNode));
         }
-      }, myProject);
+      }, myProject) {
+        @Override
+        public void cleanUpOnLeave() {
+          beforeDnDLeave();
+          super.cleanUpOnLeave();
+        }
+
+        @Override
+        public boolean update(DnDEvent event) {
+          beforeDnDUpdate();
+          return super.update(event);
+        }
+      };
       myDragSource = new MyDragSource();
       myDndManager = DnDManager.getInstance();
       myDndManager.registerSource(myDragSource, myTree);
       myDndManager.registerTarget(myDropTarget, myTree);
     }
   }
+
+  protected void beforeDnDUpdate() { }
+
+  protected void beforeDnDLeave() { }
 
   public void setTreeBuilder(final AbstractTreeBuilder treeBuilder) {
     if (treeBuilder != null) {

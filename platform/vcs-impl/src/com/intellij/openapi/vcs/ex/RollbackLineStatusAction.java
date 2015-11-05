@@ -45,7 +45,7 @@ public class RollbackLineStatusAction extends DumbAwareAction {
       return;
     }
     LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());
-    if (tracker == null || tracker.isSilentMode()) {
+    if (tracker == null || tracker.isReleased() || tracker.isSilentMode()) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }

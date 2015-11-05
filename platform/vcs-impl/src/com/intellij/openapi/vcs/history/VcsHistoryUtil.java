@@ -22,14 +22,11 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
@@ -156,33 +153,18 @@ public class VcsHistoryUtil {
   /**
    * Shows difference between two revisions of a file in a diff tool.
    * The content of revisions is queried in a background thread.
-   * If {@code findOlderNewer} is set to {@code true}, revisions may be specified in any order:
-   * this method will sort them so that the older revision is at the left, and the newer one is at the right.
-   * @param findOlderNewer specify {@code true} to let method compare revisions, and put the older revision at the left, and newer revision
-   *                       at the right.<br/>
-   *                       Specify {@code false} to put {@code revision1} at the left, and {@code revision2} at the right.
+   *
    * @see #showDiff(Project, FilePath, VcsFileRevision, VcsFileRevision, String, String)
    */
-  public static void showDifferencesInBackground(@NotNull final Project project, @NotNull final FilePath filePath,
-                                                 @NotNull final VcsFileRevision revision1, @NotNull final VcsFileRevision revision2,
-                                                 final boolean findOlderNewer) {
-    new Task.Backgroundable(project, "Loading revisions to compare") {
+  public static void showDifferencesInBackground(@NotNull final Project project,
+                                                 @NotNull final FilePath filePath,
+                                                 @NotNull final VcsFileRevision older,
+                                                 @NotNull final VcsFileRevision newer) {
+    new Task.Backgroundable(project, "Comparing Revisions...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        VcsFileRevision left = revision1;
-        VcsFileRevision right = revision2;
-        if (findOlderNewer) {
-          Pair<VcsFileRevision, VcsFileRevision> pair = sortRevisions(revision1, revision2);
-          left = pair.first;
-          right = pair.second;
-        }
-
         try {
-          final String leftTitle = left.getRevisionNumber().asString() +
-                                   (left instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
-          final String rightTitle = right.getRevisionNumber().asString() +
-                                    (right instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
-          showDiff(project, filePath, left, right, leftTitle, rightTitle);
+          showDiff(project, filePath, older, newer, makeTitle(older), makeTitle(newer));
         }
         catch (final VcsException e) {
           LOG.info(e);
@@ -196,26 +178,13 @@ public class VcsHistoryUtil {
         catch (IOException e) {
           LOG.info(e);
         }
-        catch (ProcessCanceledException ex) {
-          LOG.info(ex);
-        }
+      }
+
+      @NotNull
+      private String makeTitle(@NotNull VcsFileRevision revision) {
+        return revision.getRevisionNumber().asString() +
+               (revision instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
       }
     }.queue();
   }
-
-  /**
-   * Compares the given revisions and returns a pair of them, where the first one is older, and second is newer.
-   */
-  @NotNull
-  public static Couple<VcsFileRevision> sortRevisions(@NotNull VcsFileRevision revision1,
-                                                      @NotNull VcsFileRevision revision2) {
-    VcsFileRevision left = revision1;
-    VcsFileRevision right = revision2;
-    if (compare(revision1, revision2) > 0) {
-      left = revision2;
-      right = revision1;
-    }
-    return Couple.of(left, right);
-  }
-
 }

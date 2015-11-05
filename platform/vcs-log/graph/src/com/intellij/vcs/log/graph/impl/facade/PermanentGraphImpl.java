@@ -17,6 +17,8 @@
 package com.intellij.vcs.log.graph.impl.facade;
 
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -78,7 +80,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   @NotNull private final Set<CommitId> myBranchesCommitId;
   @NotNull private final Set<Integer> myBranchNodeIds;
   @NotNull private final ReachableNodes myReachableNodes;
-  @NotNull private final BekIntMap myBekIntMap;
+  @NotNull private final Supplier<BekIntMap> myBekIntMap;
 
   public PermanentGraphImpl(@NotNull PermanentLinearGraphImpl permanentLinearGraph,
                             @NotNull GraphLayoutImpl permanentGraphLayout,
@@ -92,7 +94,12 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     myBranchesCommitId = branchesCommitId;
     myBranchNodeIds = permanentCommitsInfo.convertToNodeIds(branchesCommitId);
     myReachableNodes = new ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentLinearGraph));
-    myBekIntMap = BekSorter.createBekMap(myPermanentLinearGraph, myPermanentGraphLayout, myPermanentCommitsInfo.getTimestampGetter());
+    myBekIntMap = Suppliers.memoize(new Supplier<BekIntMap>() {
+      @Override
+      public BekIntMap get() {
+        return BekSorter.createBekMap(myPermanentLinearGraph, myPermanentGraphLayout, myPermanentCommitsInfo.getTimestampGetter());
+      }
+    });
   }
 
   @NotNull
@@ -105,10 +112,10 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
       baseController = new BaseController(this);
     }
     else if (sortType == SortType.LinearBek) {
-      baseController = new LinearBekController(new BekBaseController(this, myBekIntMap), this);
+      baseController = new LinearBekController(new BekBaseController(this, myBekIntMap.get()), this);
     }
     else {
-      baseController = new BekBaseController(this, myBekIntMap);
+      baseController = new BekBaseController(this, myBekIntMap.get());
     }
 
     LinearGraphController controller;

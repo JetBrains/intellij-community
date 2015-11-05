@@ -23,14 +23,15 @@ import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.execution.junit.PatternConfigurationProducer;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -45,16 +46,14 @@ import static org.jetbrains.plugins.gradle.execution.test.runner.TestRunnerUtils
  */
 public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
 
-  private static final List<String> TASKS_TO_RUN = ContainerUtil.newArrayList("cleanTest", "test");
-
   public TestMethodGradleConfigurationProducer() {
     super(GradleExternalTaskConfigurationType.getInstance());
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(ExternalSystemRunConfiguration configuration,
-                                                  ConfigurationContext context,
-                                                  Ref<PsiElement> sourceElement) {
+  protected boolean doSetupConfigurationFromContext(ExternalSystemRunConfiguration configuration,
+                                                    ConfigurationContext context,
+                                                    Ref<PsiElement> sourceElement) {
     if (RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
       return false;
     }
@@ -78,10 +77,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
   }
 
   @Override
-  public boolean isConfigurationFromContext(ExternalSystemRunConfiguration configuration, ConfigurationContext context) {
-    if (configuration == null) return false;
-    if (!GradleConstants.SYSTEM_ID.equals(configuration.getSettings().getExternalSystemId())) return false;
-
+  protected boolean doIsConfigurationFromContext(ExternalSystemRunConfiguration configuration, ConfigurationContext context) {
     if (RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
       return false;
     }
@@ -97,14 +93,16 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     final PsiClass containingClass = psiMethod.getContainingClass();
     if (containingClass == null) return false;
 
-    if (context.getModule() == null) return false;
+    final Module module = context.getModule();
+    if (module == null) return false;
 
-    if (!StringUtil.equals(
-      context.getModule().getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY),
-      configuration.getSettings().getExternalProjectPath())) {
+    final String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
+    if (projectPath == null) return false;
+
+    if (!StringUtil.equals(projectPath, configuration.getSettings().getExternalProjectPath())) {
       return false;
     }
-    if (!configuration.getSettings().getTaskNames().containsAll(TASKS_TO_RUN)) return false;
+    if (!configuration.getSettings().getTaskNames().containsAll(getTasksToRun(module))) return false;
 
     final String scriptParameters = configuration.getSettings().getScriptParameters() + ' ';
     final String testFilter = creatTestFilter(containingClass, psiMethod);
@@ -153,14 +151,19 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
                                                       @NotNull ConfigurationContext context,
                                                       @NotNull PsiMethod psiMethod,
                                                       @NotNull PsiClass... containingClasses) {
-    if (!StringUtil.equals(
-      context.getModule().getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY),
-      GradleConstants.SYSTEM_ID.toString())) {
-      return false;
-    }
+    final Module module = context.getModule();
+    if (module == null) return false;
 
-    configuration.getSettings().setExternalProjectPath(context.getModule().getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY));
-    configuration.getSettings().setTaskNames(TASKS_TO_RUN);
+    if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return false;
+
+    final String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
+    if (projectPath == null) return false;
+
+    List<String> tasksToRun = getTasksToRun(module);
+    if (tasksToRun.isEmpty()) return false;
+
+    configuration.getSettings().setExternalProjectPath(projectPath);
+    configuration.getSettings().setTaskNames(tasksToRun);
 
     StringBuilder buf = new StringBuilder();
     for (PsiClass aClass : containingClasses) {
@@ -168,7 +171,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     }
 
     configuration.getSettings().setScriptParameters(buf.toString().trim());
-    configuration.setName(psiMethod.getName());
+    configuration.setName((containingClasses.length == 1 ? containingClasses[0].getName() + "." : "") + psiMethod.getName());
     return true;
   }
 

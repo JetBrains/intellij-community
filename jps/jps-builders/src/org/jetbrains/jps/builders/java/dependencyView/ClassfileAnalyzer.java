@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
@@ -33,25 +34,13 @@ import java.util.Set;
  * @author: db
  * Date: 31.01.11
  */
-
 class ClassfileAnalyzer {
   public static final String LAMBDA_FACTORY_CLASS = "java/lang/invoke/LambdaMetafactory";
+
   private final DependencyContext myContext;
 
   ClassfileAnalyzer(DependencyContext context) {
     this.myContext = context;
-  }
-
-  private static class Holder<T> {
-    private T x = null;
-
-    public void set(final T x) {
-      this.x = x;
-    }
-
-    public T get() {
-      return x;
-    }
   }
 
   private class ClassCrawler extends ClassVisitor {
@@ -60,23 +49,26 @@ class ClassfileAnalyzer {
         super(Opcodes.ASM5);
       }
 
-      public void visit(String name, Object value) {
-      }
+      @Override
+      public void visit(String name, Object value) { }
 
+      @Override
       public void visitEnum(String name, String desc, String value) {
         myRetentionPolicy = RetentionPolicy.valueOf(value);
       }
 
+      @Override
       public AnnotationVisitor visitAnnotation(String name, String desc) {
         return null;
       }
 
+      @Override
       public AnnotationVisitor visitArray(String name) {
         return null;
       }
 
-      public void visitEnd() {
-      }
+      @Override
+      public void visitEnd() { }
     }
 
     private class AnnotationTargetCrawler extends AnnotationVisitor {
@@ -84,23 +76,26 @@ class ClassfileAnalyzer {
         super(Opcodes.ASM5);
       }
 
-      public void visit(String name, Object value) {
-      }
+      @Override
+      public void visit(String name, Object value) { }
 
+      @Override
       public void visitEnum(final String name, String desc, final String value) {
         myTargets.add(ElemType.valueOf(value));
       }
 
+      @Override
       public AnnotationVisitor visitAnnotation(String name, String desc) {
         return this;
       }
 
+      @Override
       public AnnotationVisitor visitArray(String name) {
         return this;
       }
 
-      public void visitEnd() {
-      }
+      @Override
+      public void visitEnd() { }
     }
 
     private class AnnotationCrawler extends AnnotationVisitor {
@@ -165,6 +160,7 @@ class ClassfileAnalyzer {
         return "()L" + name + ";";
       }
 
+      @Override
       public void visit(String name, Object value) {
         final String methodDescr = getMethodDescr(value);
         final int methodName = myContext.get(name);
@@ -180,6 +176,7 @@ class ClassfileAnalyzer {
         myUsedArguments.add(methodName);
       }
 
+      @Override
       public void visitEnum(String name, String desc, String value) {
         final int methodName = myContext.get(name);
         final String methodDescr = "()" + desc;
@@ -190,15 +187,18 @@ class ClassfileAnalyzer {
         myUsedArguments.add(methodName);
       }
 
+      @Override
       public AnnotationVisitor visitAnnotation(String name, String desc) {
         return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(myContext, myContext.get(desc)), myTarget);
       }
 
+      @Override
       public AnnotationVisitor visitArray(String name) {
         myUsedArguments.add(myContext.get(name));
         return this;
       }
 
+      @Override
       public void visitEnd() {
         final TIntHashSet s = myAnnotationArguments.get(myType);
 
@@ -218,14 +218,17 @@ class ClassfileAnalyzer {
     }
 
     private final SignatureVisitor mySignatureCrawler = new BaseSignatureVisitor() {
+      @Override
       public SignatureVisitor visitClassBound() {
         return mySignatureWithGenericBoundUsageCrawler;
       }
 
+      @Override
       public SignatureVisitor visitInterfaceBound() {
         return mySignatureWithGenericBoundUsageCrawler;
       }
 
+      @Override
       public SignatureVisitor visitTypeArgument(char wildcard) {
         return mySignatureWithGenericBoundUsageCrawler;
       }
@@ -248,15 +251,10 @@ class ClassfileAnalyzer {
     private String[] myInterfaces;
     private String mySignature;
 
-    final Holder<String> myClassNameHolder = new Holder<String>();
-    final Holder<String> myOuterClassName = new Holder<String>();
-    final Holder<Boolean> myLocalClassFlag = new Holder<Boolean>();
-    final Holder<Boolean> myAnonymousClassFlag = new Holder<Boolean>();
-
-    {
-      myLocalClassFlag.set(false);
-      myAnonymousClassFlag.set(false);
-    }
+    private final Ref<String> myClassNameHolder = Ref.create();
+    private final Ref<String> myOuterClassName = Ref.create();
+    private final Ref<Boolean> myLocalClassFlag = Ref.create(false);
+    private final Ref<Boolean> myAnonymousClassFlag = Ref.create(false);
 
     private final Set<MethodRepr> myMethods = new THashSet<MethodRepr>();
     private final Set<FieldRepr> myFields = new THashSet<FieldRepr>();
@@ -264,8 +262,8 @@ class ClassfileAnalyzer {
     private final Set<ElemType> myTargets = EnumSet.noneOf(ElemType.class);
     private RetentionPolicy myRetentionPolicy = null;
 
-    final Map<TypeRepr.ClassType, TIntHashSet> myAnnotationArguments = new THashMap<TypeRepr.ClassType, TIntHashSet>();
-    final Map<TypeRepr.ClassType, Set<ElemType>> myAnnotationTargets = new THashMap<TypeRepr.ClassType, Set<ElemType>>();
+    private final Map<TypeRepr.ClassType, TIntHashSet> myAnnotationArguments = new THashMap<TypeRepr.ClassType, TIntHashSet>();
+    private final Map<TypeRepr.ClassType, Set<ElemType>> myAnnotationTargets = new THashMap<TypeRepr.ClassType, Set<ElemType>>();
 
     public ClassCrawler(final int fn) {
       super(Opcodes.ASM5);
@@ -277,12 +275,10 @@ class ClassfileAnalyzer {
     }
 
     public Pair<ClassRepr, Set<UsageRepr.Usage>> getResult() {
-      final ClassRepr repr =
-        myTakeIntoAccount ? new ClassRepr(
-          myContext, myAccess, myFileName, myName, myContext.get(mySignature), myContext.get(mySuperClass), myInterfaces,
-          myFields,
-          myMethods, myTargets, myRetentionPolicy, myContext
-          .get(myOuterClassName.get()), myLocalClassFlag.get(), myAnonymousClassFlag.get(), myUsages) : null;
+      ClassRepr repr = myTakeIntoAccount ? new ClassRepr(
+        myContext, myAccess, myFileName, myName, myContext.get(mySignature), myContext.get(mySuperClass), myInterfaces,
+        myFields, myMethods, myTargets, myRetentionPolicy, myContext.get(myOuterClassName.get()), myLocalClassFlag.get(),
+        myAnonymousClassFlag.get(), myUsages) : null;
 
       if (repr != null) {
         repr.updateClassUsages(myContext, myUsages);
@@ -348,8 +344,7 @@ class ClassfileAnalyzer {
     }
 
     @Override
-    public void visitSource(String source, String debug) {
-    }
+    public void visitSource(String source, String debug) { }
 
     @Override
     public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
@@ -369,7 +364,7 @@ class ClassfileAnalyzer {
 
     @Override
     public MethodVisitor visitMethod(final int access, final String n, final String desc, final String signature, final String[] exceptions) {
-      final Holder<Object> defaultValue = new Holder<Object>();
+      final Ref<Object> defaultValue = Ref.create();
 
       processSignature(signature);
 
@@ -615,76 +610,90 @@ class ClassfileAnalyzer {
     }
 
     private class BaseSignatureVisitor extends SignatureVisitor {
-
       public BaseSignatureVisitor() {
         super(Opcodes.ASM5);
       }
 
-      public void visitFormalTypeParameter(String name) {
-      }
+      @Override
+      public void visitFormalTypeParameter(String name) { }
 
+      @Override
       public SignatureVisitor visitClassBound() {
         return this;
       }
 
+      @Override
       public SignatureVisitor visitInterfaceBound() {
         return this;
       }
 
+      @Override
       public SignatureVisitor visitSuperclass() {
         return this;
       }
 
+      @Override
       public SignatureVisitor visitInterface() {
         return this;
       }
 
+      @Override
       public SignatureVisitor visitParameterType() {
         return this;
       }
 
+      @Override
       public SignatureVisitor visitReturnType() {
         return this;
       }
 
+      @Override
       public SignatureVisitor visitExceptionType() {
         return this;
       }
 
-      public void visitBaseType(char descriptor) {
-      }
+      @Override
+      public void visitBaseType(char descriptor) { }
 
-      public void visitTypeVariable(String name) {
-      }
+      @Override
+      public void visitTypeVariable(String name) { }
 
+      @Override
       public SignatureVisitor visitArrayType() {
         return this;
       }
 
-      public void visitInnerClassType(String name) {
-      }
+      @Override
+      public void visitInnerClassType(String name) { }
 
-      public void visitTypeArgument() {
-      }
+      @Override
+      public void visitTypeArgument() { }
 
+      @Override
       public SignatureVisitor visitTypeArgument(char wildcard) {
         return this;
       }
 
-      public void visitEnd() {
-      }
+      @Override
+      public void visitEnd() { }
 
+      @Override
       public void visitClassType(String name) {
-        final int className = myContext.get(name);
+        int className = myContext.get(name);
         myUsages.add(UsageRepr.createClassUsage(myContext, className));
       }
     }
   }
 
-  public Pair<ClassRepr, Set<UsageRepr.Usage>> analyze(final int fileName, final ClassReader cr) {
-    final ClassCrawler visitor = new ClassCrawler(fileName);
+  public Pair<ClassRepr, Set<UsageRepr.Usage>> analyze(int fileName, ClassReader cr) {
+    ClassCrawler visitor = new ClassCrawler(fileName);
 
-    cr.accept(visitor, 0);
+    try {
+      cr.accept(visitor, 0);
+    }
+    catch (RuntimeException e) {
+      throw new RuntimeException("Corrupted .class file: " + myContext.getValue(fileName), e);
+    }
 
     return visitor.getResult();
   }

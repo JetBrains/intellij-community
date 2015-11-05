@@ -22,15 +22,14 @@ package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.impl.SimpleStackFrameContext;
-import com.intellij.debugger.jdi.LocalVariableProxyImpl;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.ui.impl.watch.LocalVariableDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,7 +42,7 @@ import com.intellij.psi.PsiVariable;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Map;
 
 class LocalVariableEvaluator implements Evaluator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.LocalVariableEvaluator");
@@ -51,16 +50,12 @@ class LocalVariableEvaluator implements Evaluator {
   private final String myLocalVariableName;
   private EvaluationContextImpl myContext;
   private LocalVariableProxyImpl myEvaluatedVariable;
+  private DecompiledLocalVariable myEvaluatedDecompiledVariable;
   private final boolean myCanScanFrames;
-  private int myParameterIndex = -1;
 
   public LocalVariableEvaluator(String localVariableName, boolean canScanFrames) {
     myLocalVariableName = localVariableName;
     myCanScanFrames = canScanFrames;
-  }
-
-  public void setParameterIndex(int parameterIndex) {
-    myParameterIndex = parameterIndex;
   }
 
   @Override
@@ -74,6 +69,7 @@ class LocalVariableEvaluator implements Evaluator {
       ThreadReferenceProxyImpl threadProxy = null;
       int lastFrameIndex = -1;
       PsiVariable variable = null;
+      DebugProcessImpl process = context.getDebugProcess();
 
       boolean topFrame = true;
 
@@ -82,7 +78,7 @@ class LocalVariableEvaluator implements Evaluator {
           LocalVariableProxyImpl local = frameProxy.visibleVariableByName(myLocalVariableName);
           if (local != null) {
             if (topFrame ||
-                variable.equals(resolveVariable(frameProxy, myLocalVariableName, context.getProject(), context.getDebugProcess()))) {
+                variable.equals(resolveVariable(frameProxy, myLocalVariableName, context.getProject(), process))) {
               myEvaluatedVariable = local;
               myContext = context;
               return frameProxy.getValue(local);
@@ -93,21 +89,27 @@ class LocalVariableEvaluator implements Evaluator {
           if (!(e.getCause() instanceof AbsentInformationException)) {
             throw e;
           }
-          if (topFrame) {
-            if (myParameterIndex < 0) {
-              throw e;
+
+          // try to look in slots
+          try {
+            Map<DecompiledLocalVariable, Value> vars = LocalVariablesUtil.fetchValues(frameProxy, process);
+            for (Map.Entry<DecompiledLocalVariable, Value> entry : vars.entrySet()) {
+              DecompiledLocalVariable var = entry.getKey();
+              if (var.getMatchedNames().contains(myLocalVariableName) || var.getDefaultName().equals(myLocalVariableName)) {
+                myEvaluatedDecompiledVariable = var;
+                myContext = context;
+                return entry.getValue();
+              }
             }
-            final List<Value> values = frameProxy.getArgumentValues();
-            if (values.isEmpty() || myParameterIndex >= values.size()) {
-              throw e;
-            }
-            return values.get(myParameterIndex);
+          }
+          catch (Exception e1) {
+            LOG.info(e1);
           }
         }
 
         if (myCanScanFrames) {
           if (topFrame) {
-            variable = resolveVariable(frameProxy, myLocalVariableName, context.getProject(), context.getDebugProcess());
+            variable = resolveVariable(frameProxy, myLocalVariableName, context.getProject(), process);
             if (variable == null) break;
           }
           if (threadProxy == null /* initialize it lazily */) {
@@ -138,7 +140,7 @@ class LocalVariableEvaluator implements Evaluator {
   @Override
   public Modifier getModifier() {
     Modifier modifier = null;
-    if (myEvaluatedVariable != null && myContext != null) {
+    if ((myEvaluatedVariable != null || myEvaluatedDecompiledVariable != null) && myContext != null) {
       modifier = new Modifier() {
         @Override
         public boolean canInspect() {
@@ -155,7 +157,12 @@ class LocalVariableEvaluator implements Evaluator {
           StackFrameProxyImpl frameProxy = myContext.getFrameProxy();
           try {
             assert frameProxy != null;
-            frameProxy.setValue(myEvaluatedVariable, value);
+            if (myEvaluatedVariable != null) {
+              frameProxy.setValue(myEvaluatedVariable, value);
+            }
+            else { // no debug info
+              LocalVariablesUtil.setValue(frameProxy.getStackFrame(), myEvaluatedDecompiledVariable.getSlot(), value);
+            }
           }
           catch (EvaluateException e) {
             LOG.error(e);

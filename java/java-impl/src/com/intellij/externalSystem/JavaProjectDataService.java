@@ -19,7 +19,7 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService;
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -53,8 +53,7 @@ public class JavaProjectDataService extends AbstractProjectDataService<JavaProje
   public void importData(@NotNull final Collection<DataNode<JavaProjectData>> toImport,
                          @Nullable final ProjectData projectData,
                          @NotNull final Project project,
-                         @NotNull final PlatformFacade platformFacade,
-                         final boolean synchronous) {
+                         @NotNull final IdeModifiableModelsProvider modelsProvider) {
     if (toImport.isEmpty() || projectData == null) {
       return;
     }
@@ -78,22 +77,34 @@ public class JavaProjectDataService extends AbstractProjectDataService<JavaProje
     JavaSdk javaSdk = JavaSdk.getInstance();
     ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
     Sdk sdk = rootManager.getProjectSdk();
-    if (sdk instanceof JavaSdk) {
+    if(sdk != null) {
       JavaSdkVersion currentVersion = javaSdk.getVersion(sdk);
       if (currentVersion == null || !currentVersion.isAtLeast(version)) {
-        Sdk newJdk = findJdk(version);
-        if (newJdk != null) {
-          rootManager.setProjectSdk(sdk);
-          LanguageLevel level = version.getMaxLanguageLevel();
-          LanguageLevelProjectExtension ext = LanguageLevelProjectExtension.getInstance(project);
-          if (level.compareTo(ext.getLanguageLevel()) < 0) {
-            ext.setLanguageLevel(level);
-          }
+        updateSdk(project, version);
+      }
+    } else {
+      updateSdk(project, version);
+    }
+
+    // Language level.
+    setLanguageLevel(javaProjectData.getLanguageLevel(), project);
+  }
+
+  private static void updateSdk(@NotNull final Project project, @NotNull final JavaSdkVersion version) {
+    final Sdk sdk = findJdk(version);
+    if (sdk == null) return;
+
+    ExternalSystemApiUtil.executeProjectChangeAction(new DisposeAwareProjectChange(project) {
+      @Override
+      public void execute() {
+        ProjectRootManager.getInstance(project).setProjectSdk(sdk);
+        LanguageLevel level = version.getMaxLanguageLevel();
+        LanguageLevelProjectExtension languageLevelExtension = LanguageLevelProjectExtension.getInstance(project);
+        if (level.compareTo(languageLevelExtension.getLanguageLevel()) < 0) {
+          languageLevelExtension.setLanguageLevel(level);
         }
       }
-    }
-    // Language level.
-    setLanguageLevel(javaProjectData.getLanguageLevel(), project, synchronous);
+    });
   }
 
   @Nullable
@@ -114,12 +125,12 @@ public class JavaProjectDataService extends AbstractProjectDataService<JavaProje
   }
 
   @SuppressWarnings("MethodMayBeStatic")
-  public void setLanguageLevel(@NotNull final LanguageLevel languageLevel, @NotNull Project project, boolean synchronous) {
+  public void setLanguageLevel(@NotNull final LanguageLevel languageLevel, @NotNull Project project) {
     final LanguageLevelProjectExtension languageLevelExtension = LanguageLevelProjectExtension.getInstance(project);
     if (languageLevelExtension.getLanguageLevel().isAtLeast(languageLevel)) {
       return;
     }
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
+    ExternalSystemApiUtil.executeProjectChangeAction(new DisposeAwareProjectChange(project) {
       @Override
       public void execute() {
         languageLevelExtension.setLanguageLevel(languageLevel);

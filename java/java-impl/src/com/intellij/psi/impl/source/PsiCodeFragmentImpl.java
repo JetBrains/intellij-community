@@ -103,12 +103,6 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
   }
 
   @Override
-  public boolean isValid() {
-    if (!super.isValid()) return false;
-    return myContext == null || myContext.isValid();
-  }
-
-  @Override
   @NotNull
   public FileType getFileType() {
     return StdFileTypes.JAVA;
@@ -116,7 +110,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
 
   @Override
   public PsiElement getContext() {
-    return myContext;
+    return myContext != null && myContext.isValid() ? myContext : super.getContext();
   }
 
   @Override

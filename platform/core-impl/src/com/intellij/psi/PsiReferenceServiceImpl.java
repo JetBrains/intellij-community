@@ -31,8 +31,9 @@ public class PsiReferenceServiceImpl extends PsiReferenceService {
     if (element instanceof ContributedReferenceHost) {
       return Arrays.asList(ReferenceProvidersRegistry.getReferencesFromProviders(element, hints));
     }
-    else {
-      return Arrays.asList(element.getReferences());
+    if (element instanceof HintedReferenceHost) {
+      return Arrays.asList(((HintedReferenceHost)element).getReferences(hints));
     }
+    return Arrays.asList(element.getReferences());
   }
 }

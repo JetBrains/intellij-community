@@ -15,12 +15,13 @@
  */
 package com.intellij.openapi.options.ex;
 
+import com.intellij.BundleBase;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,16 +42,8 @@ public class ConfigurableExtensionPointUtil {
   }
 
 
-  public static List<Configurable> buildConfigurablesList(final ConfigurableEP<Configurable>[] extensions,
-                                                          final List<Configurable> components,
-                                                          @Nullable ConfigurableFilter filter) {
+  public static List<Configurable> buildConfigurablesList(final ConfigurableEP<Configurable>[] extensions, @Nullable ConfigurableFilter filter) {
     final List<Configurable> result = new ArrayList<Configurable>();
-    for (Configurable component : components) {
-      if (!isSuppressed(component, filter)) {
-        result.add(component);
-      }
-    }
-
     final Map<String, ConfigurableWrapper> idToConfigurable = ContainerUtil.newHashMap();
     List<String> idsInEpOrder = ContainerUtil.newArrayList();
     for (ConfigurableEP<Configurable> ep : extensions) {
@@ -138,7 +131,7 @@ public class ConfigurableExtensionPointUtil {
    * @return the root configurable group that represents a tree of settings
    */
   public static ConfigurableGroup getConfigurableGroup(@Nullable Project project, boolean withIdeSettings) {
-    return getConfigurableGroup(getConfigurables(project, withIdeSettings, true), project);
+    return getConfigurableGroup(getConfigurables(project, withIdeSettings), project);
   }
 
   /**
@@ -158,7 +151,43 @@ public class ConfigurableExtensionPointUtil {
         LOG.warn("ignore group: " + groupId);
       }
     }
+    if (root != null && root.myList != null && Registry.is("ide.settings.replace.group.with.single.configurable")) {
+      replaceGroupWithSingleConfigurable(root.myList);
+    }
     return root;
+  }
+
+  private static void replaceGroupWithSingleConfigurable(List<Configurable> list) {
+    for (int i = 0; i < list.size(); i++) {
+      Configurable configurable = list.get(i);
+      if (configurable instanceof SortedConfigurableGroup) {
+        SortedConfigurableGroup group = (SortedConfigurableGroup)configurable;
+        configurable = getConfigurableToReplace(group.myList, group.getWeight());
+        if (configurable != null) {
+          list.set(i, configurable);
+        }
+      }
+    }
+  }
+
+  private static Configurable getConfigurableToReplace(List<Configurable> list, int weight) {
+    if (list != null) {
+      replaceGroupWithSingleConfigurable(list);
+      if (1 == list.size()) {
+        Configurable configurable = list.get(0);
+        if (configurable instanceof SortedConfigurableGroup) {
+          SortedConfigurableGroup group = (SortedConfigurableGroup)configurable;
+          group.myWeight = weight; // modify weight according to the replacing group
+          return group;
+        }
+        if (configurable instanceof ConfigurableWrapper) {
+          ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+          wrapper.myWeight = weight; // modify weight according to the replacing group
+          return wrapper;
+        }
+      }
+    }
+    return null;
   }
 
   /**
@@ -315,29 +344,19 @@ public class ConfigurableExtensionPointUtil {
   /**
    * @param project         a project used to load project settings or {@code null}
    * @param withIdeSettings specifies whether to load application settings or not
-   * @param loadComponents  specifies whether to load Configurable components or not
    * @return the list of all valid settings according to parameters
    */
-  private static List<Configurable> getConfigurables(@Nullable Project project, boolean withIdeSettings, boolean loadComponents) {
+  private static List<Configurable> getConfigurables(@Nullable Project project, boolean withIdeSettings) {
     List<Configurable> list = ContainerUtil.newArrayList();
     if (withIdeSettings) {
       Application application = ApplicationManager.getApplication();
       if (application != null) {
-        if (loadComponents) {
-          for (Configurable configurable : ComponentsPackage.getComponents(application, Configurable.class)) {
-            addValid(list, configurable, project);
-          }
-        }
         for (ConfigurableEP<Configurable> extension : application.getExtensions(Configurable.APPLICATION_CONFIGURABLE)) {
           addValid(list, ConfigurableWrapper.wrapConfigurable(extension), null);
         }
       }
     }
     if (project != null && !project.isDisposed()) {
-      //noinspection unchecked
-      for (Configurable configurable : ComponentsPackage.getComponents(project, Configurable.class)) {
-        addValid(list, configurable, project);
-      }
       for (ConfigurableEP<Configurable> extension : project.getExtensions(Configurable.PROJECT_CONFIGURABLE)) {
         addValid(list, ConfigurableWrapper.wrapConfigurable(extension), project);
       }
@@ -396,8 +415,10 @@ public class ConfigurableExtensionPointUtil {
   }
 
   private static String getString(ResourceBundle bundle, String resource) {
+    if (bundle == null) return null;
     try {
-      return bundle == null ? null : bundle.getObject(resource).toString();
+      // mimic CommonBundle.message(..) behavior
+      return BundleBase.replaceMnemonicAmpersand(bundle.getString(resource));
     }
     catch (MissingResourceException ignored) {
       return null;

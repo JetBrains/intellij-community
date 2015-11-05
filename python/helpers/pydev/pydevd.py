@@ -1,11 +1,8 @@
 #IMPORTANT: pydevd_constants must be the 1st thing defined because it'll keep a reference to the original sys._getframe
 from __future__ import nested_scopes # Jython 2.1 support
 
-import pydev_monkey_qt
-from pydevd_utils import save_main_module
 import pydevd_utils
-
-pydev_monkey_qt.patch_qt()
+from pydevd_utils import save_main_module
 
 import traceback
 
@@ -92,6 +89,8 @@ import pydevd_traceproperty
 from _pydev_imps import _pydev_time as time, _pydev_thread
 
 import _pydev_threading as threading
+from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
+from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
 
 import os
 import atexit
@@ -377,6 +376,8 @@ class PyDB:
         self.plugin = None
         self.has_plugin_line_breaks = False
         self.has_plugin_exception_breaks = False
+        self.thread_analyser = None
+        self.asyncio_analyser = None
 
         # matplotlib support in debugger and debug console
         self.mpl_in_use = False
@@ -1567,6 +1568,12 @@ class PyDB:
 
             filename, base = GetFilenameAndBase(frame)
 
+            if self.thread_analyser is not None:
+                self.thread_analyser.log_event(frame)
+
+            if self.asyncio_analyser is not None:
+                self.asyncio_analyser.log_event(frame)
+
             is_file_to_ignore = DictContains(DONT_TRACE, base) #we don't want to debug threading or anything related to pydevd
 
             #print('trace_dispatch', base, frame.f_lineno, event, frame.f_code.co_name, is_file_to_ignore)
@@ -1684,7 +1691,7 @@ class PyDB:
 
 
         PyDBCommandThread(self).start()
-        if self.signature_factory is not None:
+        if self.signature_factory is not None or self.thread_analyser is not None:
             # we need all data to be sent to IDE even after program finishes
             CheckOutputThread(self).start()
 
@@ -1712,19 +1719,6 @@ class PyDB:
         return None
 
     def run(self, file, globals=None, locals=None, module=False, set_trace=True):
-        if module:
-            filename = self.get_fullname(file)
-            if filename is None:
-                sys.stderr.write("No module named %s\n" % file)
-                return
-            else:
-                file = filename
-
-        if os.path.isdir(file):
-            new_target = os.path.join(file, '__main__.py')
-            if os.path.isfile(new_target):
-                file = new_target
-
         if globals is None:
             m = save_main_module(file, 'pydevd')
             globals = m.__dict__
@@ -1762,13 +1756,42 @@ class PyDB:
             while not self.readyToRun:
                 time.sleep(0.1)  # busy wait until we receive run command
 
+        if self.thread_analyser is not None:
+            wrap_threads()
+            t = threadingCurrentThread()
+            self.thread_analyser.set_start_time(cur_time())
+            send_message("threading_event", 0, t.getName(), GetThreadId(t), "thread", "start", file, 1, None, parent=GetThreadId(t))
+
+        if self.asyncio_analyser is not None:
+            # we don't have main thread in asyncio graph, so we should add a fake event
+            send_message("asyncio_event", 0, "Task", "Task", "thread", "stop", file, 1, frame=None, parent=None)
+
         try:
             self.init_matplotlib_support()
         except:
             sys.stderr.write("Matplotlib support in debugger failed\n")
             traceback.print_exc()
 
-        pydev_imports.execfile(file, globals, locals)  # execute the script
+        launch = pydev_imports.execfile
+
+        if module:
+            try:
+                import runpy
+                launch = lambda f, g, l: runpy.run_module(f, init_globals=g)
+            except:
+                filename = self.get_fullname(file)
+                if filename is None:
+                    sys.stderr.write("No module named %s\n" % file)
+                    return
+                else:
+                    file = filename
+
+        if os.path.isdir(file):
+            new_target = os.path.join(file, '__main__.py')
+            if os.path.isfile(new_target):
+                file = new_target
+
+        launch(file, globals, locals)  # execute the script
 
     def exiting(self):
         sys.stdout.flush()
@@ -1799,6 +1822,11 @@ def set_debug(setup):
     setup['DEBUG_TRACE_LEVEL'] = 3
 
 
+def enable_qt_support():
+    import pydev_monkey_qt
+    pydev_monkey_qt.patch_qt()
+
+
 def processCommandLine(argv):
     """ parses the arguments.
         removes our arguments from the command line """
@@ -1810,6 +1838,9 @@ def processCommandLine(argv):
     setup['multiproc'] = False #Used by PyCharm (reuses connection: ssh tunneling)
     setup['multiprocess'] = False # Used by PyDev (creates new connection to ide)
     setup['save-signatures'] = False
+    setup['save-threading'] = False
+    setup['save-asyncio'] = False
+    setup['qt-support'] = False
     setup['print-in-debugger-startup'] = False
     setup['cmd-line'] = False
     setup['module'] = False
@@ -1833,7 +1864,11 @@ def processCommandLine(argv):
             setup['server'] = True
         elif argv[i] == '--file':
             del argv[i]
-            setup['file'] = argv[i]
+            file = argv[i]
+            if file.startswith('-m'):
+                setup['module'] = True
+                file = file[2:]
+            setup['file'] = file
             i = len(argv) # pop out, file is our last argument
         elif argv[i] == '--DEBUG_RECORD_SOCKET_READS':
             del argv[i]
@@ -1850,6 +1885,16 @@ def processCommandLine(argv):
         elif argv[i] == '--save-signatures':
             del argv[i]
             setup['save-signatures'] = True
+        elif argv[i] == '--save-threading':
+            del argv[i]
+            setup['save-threading'] = True
+        elif argv[i] == '--save-asyncio':
+            del argv[i]
+            setup['save-asyncio'] = True
+        elif argv[i] == '--qt-support':
+            del argv[i]
+            setup['qt-support'] = True
+
         elif argv[i] == '--print-in-debugger-startup':
             del argv[i]
             setup['print-in-debugger-startup'] = True
@@ -2212,6 +2257,7 @@ if __name__ == '__main__':
     f = setup['file']
     fix_app_engine_debug = False
 
+    debugger = PyDB()
 
     try:
         import pydev_monkey
@@ -2299,7 +2345,6 @@ if __name__ == '__main__':
     except:
         pass  # It's ok not having stackless there...
 
-    debugger = PyDB()
     is_module = setup['module']
 
     if fix_app_engine_debug:
@@ -2338,6 +2383,13 @@ if __name__ == '__main__':
                 # Only import it if we're going to use it!
                 from pydevd_signature import SignatureFactory
                 debugger.signature_factory = SignatureFactory()
+        if setup['qt-support']:
+            enable_qt_support()
+        if setup['save-threading']:
+            debugger.thread_analyser = ThreadingLogger()
+        if setup['save-asyncio']:
+            if IS_PY3K:
+                debugger.asyncio_analyser = AsyncioLogger()
 
         try:
             debugger.connect(host, port)

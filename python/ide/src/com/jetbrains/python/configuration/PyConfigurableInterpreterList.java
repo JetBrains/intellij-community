@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -68,52 +69,13 @@ public class PyConfigurableInterpreterList {
         result.add(sdk);
       }
     }
+    Collections.sort(result, new PyInterpreterComparator(project));
+    addDetectedSdks(result);
 
-    Collections.sort(result, new Comparator<Sdk>() {
-      @Override
-      public int compare(Sdk o1, Sdk o2) {
-        if (!(o1.getSdkType() instanceof PythonSdkType) ||
-            !(o2.getSdkType() instanceof PythonSdkType))
-          return -Comparing.compare(o1.getName(), o2.getName());
+    return result;
+  }
 
-        final boolean isVEnv1 = PythonSdkType.isVirtualEnv(o1);
-        final boolean isVEnv2 = PythonSdkType.isVirtualEnv(o2);
-        final boolean isRemote1 = PySdkUtil.isRemote(o1);
-        final boolean isRemote2 = PySdkUtil.isRemote(o2);
-
-        if (isVEnv1) {
-          if (isVEnv2) {
-            if (project != null && associatedWithCurrent(o1, project)) {
-              if (associatedWithCurrent(o2, project)) return compareSdk(o1, o2);
-              return -1;
-            }
-            return compareSdk(o1, o2);
-          }
-          return -1;
-        }
-        if (isVEnv2)   return 1;
-        if (isRemote1) {
-          if (isRemote2) {
-            return compareSdk(o1, o2);
-          }
-          return 1;
-        }
-        if (isRemote2) return -1;
-
-        return compareSdk(o1, o2);
-      }
-
-      private int compareSdk(final Sdk o1, final Sdk o2) {
-        final PythonSdkFlavor flavor1 = PythonSdkFlavor.getFlavor(o1);
-        final PythonSdkFlavor flavor2 = PythonSdkFlavor.getFlavor(o2);
-        final LanguageLevel level1 = flavor1 != null ? flavor1.getLanguageLevel(o1) : LanguageLevel.getDefault();
-        final LanguageLevel level2 = flavor2 != null ? flavor2.getLanguageLevel(o2) : LanguageLevel.getDefault();
-        final int compare = Comparing.compare(level1, level2);
-        if (compare != 0) return -compare;
-        return Comparing.compare(o1.getName(), o2.getName());
-      }
-    });
-
+  private void addDetectedSdks(@NotNull final List<Sdk> result) {
     final PySdkService sdkService = PySdkService.getInstance();
     final List<String> sdkHomes = new ArrayList<String>();
     sdkHomes.addAll(VirtualEnvSdkFlavor.INSTANCE.suggestHomePaths());
@@ -122,10 +84,8 @@ public class PyConfigurableInterpreterList {
       sdkHomes.addAll(flavor.suggestHomePaths());
     }
     Collections.sort(sdkHomes);
+    sdkHomes.addAll(sdkService.getAddedSdks());
     for (String sdkHome : SdkConfigurationUtil.filterExistingPaths(PythonSdkType.getInstance(), sdkHomes, getModel().getSdks())) {
-      result.add(new PyDetectedSdk(sdkHome));
-    }
-    for (String sdkHome : SdkConfigurationUtil.filterExistingPaths(PythonSdkType.getInstance(), sdkService.getAddedSdks(), getModel().getSdks())) {
       result.add(new PyDetectedSdk(sdkHome));
     }
     Iterables.removeIf(result, new Predicate<Sdk>() {
@@ -134,22 +94,74 @@ public class PyConfigurableInterpreterList {
         return input != null && sdkService.isRemoved(input);
       }
     });
-    return result;
-  }
-
-  private static boolean associatedWithCurrent(Sdk o1, Project project) {
-    final PythonSdkAdditionalData data = (PythonSdkAdditionalData)o1.getSdkAdditionalData();
-    if (data != null) {
-      final String path = data.getAssociatedProjectPath();
-      final String projectBasePath = project.getBasePath();
-      if (path != null && path.equals(projectBasePath)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   public List<Sdk> getAllPythonSdks() {
     return getAllPythonSdks(null);
+  }
+
+  private static class PyInterpreterComparator implements Comparator<Sdk> {
+    @Nullable private final Project myProject;
+
+    public PyInterpreterComparator(@Nullable final Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public int compare(Sdk o1, Sdk o2) {
+      if (!(o1.getSdkType() instanceof PythonSdkType) ||
+          !(o2.getSdkType() instanceof PythonSdkType)) {
+        return -Comparing.compare(o1.getName(), o2.getName());
+      }
+
+      final boolean isVEnv1 = PythonSdkType.isVirtualEnv(o1);
+      final boolean isVEnv2 = PythonSdkType.isVirtualEnv(o2);
+      final boolean isRemote1 = PySdkUtil.isRemote(o1);
+      final boolean isRemote2 = PySdkUtil.isRemote(o2);
+
+      if (isVEnv1) {
+        if (isVEnv2) {
+          if (myProject != null && associatedWithCurrent(o1, myProject)) {
+            if (associatedWithCurrent(o2, myProject)) return compareSdk(o1, o2);
+            return -1;
+          }
+          return compareSdk(o1, o2);
+        }
+        return -1;
+      }
+      if (isVEnv2) return 1;
+      if (isRemote1) {
+        if (isRemote2) {
+          return compareSdk(o1, o2);
+        }
+        return 1;
+      }
+      if (isRemote2) return -1;
+
+      return compareSdk(o1, o2);
+    }
+
+    private static int compareSdk(final Sdk o1, final Sdk o2) {
+      final PythonSdkFlavor flavor1 = PythonSdkFlavor.getFlavor(o1);
+      final PythonSdkFlavor flavor2 = PythonSdkFlavor.getFlavor(o2);
+      final LanguageLevel level1 = flavor1 != null ? flavor1.getLanguageLevel(o1) : LanguageLevel.getDefault();
+      final LanguageLevel level2 = flavor2 != null ? flavor2.getLanguageLevel(o2) : LanguageLevel.getDefault();
+      final int compare = Comparing.compare(level1, level2);
+      if (compare != 0) return -compare;
+      return Comparing.compare(o1.getName(), o2.getName());
+    }
+
+
+    private static boolean associatedWithCurrent(Sdk o1, Project project) {
+      final PythonSdkAdditionalData data = (PythonSdkAdditionalData)o1.getSdkAdditionalData();
+      if (data != null) {
+        final String path = data.getAssociatedProjectPath();
+        final String projectBasePath = project.getBasePath();
+        if (path != null && path.equals(projectBasePath)) {
+          return true;
+        }
+      }
+      return false;
+    }
   }
 }

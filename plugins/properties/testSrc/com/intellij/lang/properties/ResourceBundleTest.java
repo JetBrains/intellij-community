@@ -38,18 +38,18 @@ public class ResourceBundleTest extends LightPlatformCodeInsightFixtureTestCase 
   }
 
   public void testRenameResourceBundleEntryFile() {
-    final PsiFile toRenameFile = myFixture.addFileToProject("old_p.properties", "");
-    final PsiFile toCheck = myFixture.addFileToProject("old_p_en.properties", "");
+    doTestRenameResourceBundleEntryFile("old_p.properties", "old_p_en.properties",
+                                        "new_p.properties", "new_p_en.properties");
+  }
 
-    final RenameProcessor processor = new RenameProcessor(getProject(), toRenameFile, "new_p.properties", true, true);
-    for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
-      if (factory instanceof ResourceBundleRenamerFactory) {
-        processor.addRenamerFactory(factory);
-      }
-    }
-    processor.run();
+  public void testRenameResourceBundleEntryFile2() {
+    doTestRenameResourceBundleEntryFile("ppp.properties", "ppp_en.properties",
+                                        "qqq.properties", "qqq_en.properties");
+  }
 
-    assertEquals("new_p_en.properties", toCheck.getName());
+  public void testRenameResourceBundleEntryFile3() {
+    doTestRenameResourceBundleEntryFile("p.properties.properties", "p.properties_en.properties",
+                                        "p.properties", "p_en.properties");
   }
 
   public void testRenamePropertyKey() {
@@ -57,5 +57,23 @@ public class ResourceBundleTest extends LightPlatformCodeInsightFixtureTestCase 
     myFixture.configureByText("p_en.properties", "ke<caret>y=en_value");
     myFixture.renameElementAtCaret("new_key");
     assertEquals(toCheckFile.getText(), "new_key=value");
+  }
+
+  private void doTestRenameResourceBundleEntryFile(String fileNameToRenameBefore,
+                                                   String fileNameToCheckBefore,
+                                                   String fileNameToRenameAfter,
+                                                   String fileNameToCheckAfter) {
+    final PsiFile toRenameFile = myFixture.addFileToProject(fileNameToRenameBefore, "");
+    final PsiFile toCheck = myFixture.addFileToProject(fileNameToCheckBefore, "");
+
+    final RenameProcessor processor = new RenameProcessor(getProject(), toRenameFile, fileNameToRenameAfter, true, true);
+    for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
+      if (factory instanceof ResourceBundleRenamerFactory) {
+        processor.addRenamerFactory(factory);
+      }
+    }
+    processor.run();
+
+    assertEquals(fileNameToCheckAfter, toCheck.getName());
   }
 }

@@ -5,7 +5,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class IpnbCodeCell extends IpnbEditableCell {
@@ -14,7 +13,7 @@ public class IpnbCodeCell extends IpnbEditableCell {
   @NotNull private final List<IpnbOutputCell> myCellOutputs;
 
   public IpnbCodeCell(@NotNull final String language,
-                      @NotNull final String[] input,
+                      @NotNull final List<String> input,
                       @Nullable final Integer number,
                       @NotNull final List<IpnbOutputCell> cellOutputs) {
     super(input);
@@ -53,6 +52,6 @@ public class IpnbCodeCell extends IpnbEditableCell {
   @SuppressWarnings({"CloneDoesntCallSuperClone", "CloneDoesntDeclareCloneNotSupportedException"})
   @Override
   public Object clone() {
-    return new IpnbCodeCell(myLanguage, Arrays.copyOf(getSource(), getSource().length), myPromptNumber, new ArrayList<IpnbOutputCell>(myCellOutputs));
+    return new IpnbCodeCell(myLanguage, new ArrayList<String>(getSource()), myPromptNumber, new ArrayList<IpnbOutputCell>(myCellOutputs));
   }
 }

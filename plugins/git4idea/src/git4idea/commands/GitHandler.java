@@ -58,8 +58,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
 
+import static git4idea.commands.GitCommand.LockingPolicy.WRITE;
 import static java.util.Collections.singletonList;
 
 /**
@@ -110,9 +110,6 @@ public abstract class GitHandler {
   private final Map<String, String> myEnv;
   private GitVcsApplicationSettings myAppSettings;
   private GitVcsSettings myProjectSettings;
-
-  private Runnable mySuspendAction; // Suspend action used by {@link #suspendWriteLock()}
-  private Runnable myResumeAction; // Resume action used by {@link #resumeWriteLock()}
 
   private long myStartTime; // git execution start timestamp
   private static final long LONG_TIME = 10 * 1000;
@@ -339,19 +336,6 @@ public abstract class GitHandler {
   }
 
   /**
-   * Add file path parameters. The parameters are made relative to the working directory
-   *
-   * @param files a parameters to add
-   * @throws IllegalArgumentException if some path is not under root.
-   */
-  public void addRelativePathsForFiles(@NotNull final Collection<File> files) {
-    checkNotStarted();
-    for (File file : files) {
-      myCommandLine.addParameter(VcsFileUtil.relativePath(myWorkingDirectory, file));
-    }
-  }
-
-  /**
    * Add virtual file parameters. The parameters are made relative to the working directory
    *
    * @param files a parameters to add
@@ -526,12 +510,14 @@ public abstract class GitHandler {
         public void onLineAvailable(@NonNls String line, Key outputType) {
           String lowerCaseLine = line.toLowerCase();
           if (lowerCaseLine.contains("authentication failed") || lowerCaseLine.contains("403 forbidden")) {
+            LOG.debug("auth listener: auth failure detected: " + line);
             myHttpAuthFailed = true;
           }
         }
 
         @Override
         public void processTerminated(int exitCode) {
+          LOG.debug("auth listener: process terminated. auth failed=" + myHttpAuthFailed + ", cancelled=" + authenticator.wasCancelled());
           if (!authenticator.wasCancelled()) {
             if (myHttpAuthFailed) {
               authenticator.forgetPassword();
@@ -596,7 +582,12 @@ public abstract class GitHandler {
    * @param exitCode a exit code for process
    */
   protected synchronized void setExitCode(int exitCode) {
-    myExitCode = exitCode;
+    if (myExitCode == null) {
+      myExitCode = exitCode;
+    }
+    else {
+      LOG.info("Not setting exit code " + exitCode + ", because it was already set to " + myExitCode);
+    }
   }
 
   /**
@@ -716,42 +707,6 @@ public abstract class GitHandler {
   }
 
   /**
-   * Set processor for standard input. This is a place where input to the git application could be generated.
-   *
-   * @param inputProcessor the processor
-   */
-  public void setInputProcessor(Processor<OutputStream> inputProcessor) {
-    myInputProcessor = inputProcessor;
-  }
-
-  /**
-   * Set suspend/resume actions
-   *
-   * @param suspend the suspend action
-   * @param resume  the resume action
-   */
-  synchronized void setSuspendResume(Runnable suspend, Runnable resume) {
-    mySuspendAction = suspend;
-    myResumeAction = resume;
-  }
-
-  /**
-   * Suspend write lock held by the handler
-   */
-  public synchronized void suspendWriteLock() {
-    assert mySuspendAction != null;
-    mySuspendAction.run();
-  }
-
-  /**
-   * Resume write lock held by the handler
-   */
-  public synchronized void resumeWriteLock() {
-    assert mySuspendAction != null;
-    myResumeAction.run();
-  }
-
-  /**
    * @return true if the command line is too big
    */
   public boolean isLargeCommandLine() {
@@ -764,106 +719,22 @@ public abstract class GitHandler {
         final GitVcs vcs = GitVcs.getInstance(myProject);
     if (vcs == null) { return; }
 
-    boolean suspendable = false;
-    switch (myCommand.lockingPolicy()) {
-      case READ:
-        // need to lock only write operations: reads can be performed even when a write operation is going on
-        break;
-      case WRITE_SUSPENDABLE:
-        suspendable = true;
-        //noinspection fallthrough
-      case WRITE:
-        vcs.getCommandLock().writeLock().lock();
-        break;
+    if (WRITE == myCommand.lockingPolicy()) {
+      // need to lock only write operations: reads can be performed even when a write operation is going on
+      vcs.getCommandLock().writeLock().lock();
     }
     try {
-      if (suspendable) {
-        final Object EXIT = new Object();
-        final Object SUSPEND = new Object();
-        final Object RESUME = new Object();
-        final LinkedBlockingQueue<Object> queue = new LinkedBlockingQueue<Object>();
-        Runnable suspend = new Runnable() {
-          public void run() {
-            queue.add(SUSPEND);
-          }
-        };
-        Runnable resume = new Runnable() {
-          public void run() {
-            queue.add(RESUME);
-          }
-        };
-        setSuspendResume(suspend, resume);
-        start();
-        if (isStarted()) {
-          if (postStartAction != null) {
-            postStartAction.run();
-          }
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            public void run() {
-              waitFor();
-              queue.add(EXIT);
-            }
-          });
-          boolean suspended = false;
-          while (true) {
-            Object action;
-            while (true) {
-              try {
-                action = queue.take();
-                break;
-              }
-              catch (InterruptedException e) {
-                if (LOG.isDebugEnabled()) {
-                  LOG.debug("queue.take() is interrupted", e);
-                }
-              }
-            }
-            if (action == EXIT) {
-              if (suspended) {
-                LOG.error("Exiting while RW lock is suspended (reacquiring W-lock command)");
-                vcs.getCommandLock().writeLock().lock();
-              }
-              break;
-            }
-            else if (action == SUSPEND) {
-              if (suspended) {
-                LOG.error("Suspending suspended W-lock (ignoring command)");
-              }
-              else {
-                vcs.getCommandLock().writeLock().unlock();
-                suspended = true;
-              }
-            }
-            else if (action == RESUME) {
-              if (!suspended) {
-                LOG.error("Resuming not suspended W-lock (ignoring command)");
-              }
-              else {
-                vcs.getCommandLock().writeLock().lock();
-                suspended = false;
-              }
-            }
-          }
+      start();
+      if (isStarted()) {
+        if (postStartAction != null) {
+          postStartAction.run();
         }
-      }
-      else {
-        start();
-        if (isStarted()) {
-          if (postStartAction != null) {
-            postStartAction.run();
-          }
-          waitFor();
-        }
+        waitFor();
       }
     }
     finally {
-      switch (myCommand.lockingPolicy()) {
-        case READ:
-          break;
-        case WRITE_SUSPENDABLE:
-        case WRITE:
-          vcs.getCommandLock().writeLock().unlock();
-          break;
+      if (WRITE == myCommand.lockingPolicy()) {
+        vcs.getCommandLock().writeLock().unlock();
       }
 
       logTime();

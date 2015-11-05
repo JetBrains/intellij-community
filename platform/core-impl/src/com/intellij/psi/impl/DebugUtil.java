@@ -22,6 +22,7 @@ import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,13 +34,16 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.stubs.ObjectStubSerializer;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 @SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor", "UnusedDeclaration", "TestOnlyProblems"})
 public class DebugUtil {
@@ -512,6 +516,7 @@ public class DebugUtil {
 
   private static final ThreadLocal<Object> ourPsiModificationTrace = new ThreadLocal<Object>();
   private static final ThreadLocal<Integer> ourPsiModificationDepth = new ThreadLocal<Integer>();
+  private static final Set<Integer> ourNonTransactedTraces = ContainerUtil.newConcurrentSet();
 
   /**
    * Marks a start of PSI modification action. Any PSI/AST elements invalidated inside such an action will contain a debug trace
@@ -593,7 +598,9 @@ public class DebugUtil {
     Object trace = ourPsiModificationTrace.get();
     if (trace == null) {
       trace = new Throwable();
-      LOG.info("PSI invalidated outside transaction", (Throwable)trace);
+      if (ourNonTransactedTraces.add(ExceptionUtil.getThrowableText((Throwable)trace).hashCode())) {
+        LOG.info("PSI invalidated outside transaction", (Throwable)trace);
+      }
     }
     return trace;
   }
@@ -611,4 +618,38 @@ public class DebugUtil {
     }
   }
 
+  @NotNull
+  public static String diagnosePsiDocumentInconsistency(@NotNull PsiElement element, @NotNull Document document) {
+    PsiUtilCore.ensureValid(element);
+
+    PsiFile file = element.getContainingFile();
+    if (file == null) return "no file for " + element + " of " + element.getClass();
+
+    PsiUtilCore.ensureValid(file);
+
+    FileViewProvider viewProvider = file.getViewProvider();
+    PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
+
+    Document actualDocument = manager.getDocument(file);
+    String fileDiagnostics = "File[" + file + " " + file.getName() + ", " + file.getLanguage() + ", " + viewProvider + "]";
+    if (actualDocument != document) {
+      return "wrong document for " + fileDiagnostics + "; expected " + document + "; actual " + actualDocument;
+    }
+
+    PsiFile cachedPsiFile = manager.getCachedPsiFile(document);
+    FileViewProvider actualViewProvider = cachedPsiFile == null ? null : cachedPsiFile.getViewProvider();
+    if (actualViewProvider != viewProvider) {
+      return "wrong view provider for " + document + ", expected " + viewProvider + "; actual " + actualViewProvider;
+    }
+
+    if (!manager.isCommitted(document)) return "not committed document " + document + ", " + fileDiagnostics;
+
+    int fileLength = file.getTextLength();
+    int docLength = document.getTextLength();
+    if (fileLength != docLength) {
+      return "file/doc text length different, " + fileDiagnostics + " file.length=" + fileLength + "; doc.length=" + docLength;
+    }
+
+    return "unknown inconsistency in " + fileDiagnostics;
+  }
 }

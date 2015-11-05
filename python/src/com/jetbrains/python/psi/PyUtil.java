@@ -23,12 +23,17 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.scratch.ScratchRootType;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -47,11 +52,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
@@ -289,64 +293,6 @@ public class PyUtil {
     node.addChild(itemNode, beforeThis);
     if (!isLast) node.addChild(gen.createComma(), beforeThis);
     if (addWhitespace) node.addChild(ASTFactory.whitespace(" "), beforeThis);
-  }
-
-  /**
-   * Removes an element from a a comma-separated list in a PSI tree. E.g. can turn "foo, bar, baz" into "foo, baz",
-   * removing commas as needed. It removes a trailing comma if it results from deletion.
-   *
-   * @param item what to remove. Its parent is considered the list, and commas must be its peers.
-   */
-  public static void removeListNode(PsiElement item) {
-    PsiElement parent = item.getParent();
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(parent)) {
-      return;
-    }
-    // remove comma after the item
-    ASTNode binder = parent.getNode();
-    assert binder != null : "parent node is null, ensureWritable() lied";
-    boolean got_comma_after = eraseWhitespaceAndComma(binder, item, false);
-    if (!got_comma_after) {
-      // there was not a comma after the item; remove a comma before the item
-      eraseWhitespaceAndComma(binder, item, true);
-    }
-    // finally
-    item.delete();
-  }
-
-  /**
-   * Removes whitespace and comma(s) that are siblings of the item, up to the first non-whitespace and non-comma.
-   *
-   * @param parent_node node of the parent of item.
-   * @param item        starting point; we erase left or right of it, but not it.
-   * @param backwards   true to erase prev siblings, false to erase next siblings.
-   * @return true       if a comma was found and removed.
-   */
-  public static boolean eraseWhitespaceAndComma(ASTNode parent_node, PsiElement item, boolean backwards) {
-    // we operate on AST, PSI won't let us delete whitespace easily.
-    boolean is_comma;
-    boolean got_comma = false;
-    ASTNode current = item.getNode();
-    ASTNode candidate;
-    boolean have_skipped_the_item = false;
-    while (current != null) {
-      candidate = current;
-      current = backwards ? current.getTreePrev() : current.getTreeNext();
-      if (have_skipped_the_item) {
-        is_comma = ",".equals(candidate.getText());
-        got_comma |= is_comma;
-        if (is_comma || candidate.getElementType() == TokenType.WHITE_SPACE) {
-          parent_node.removeChild(candidate);
-        }
-        else {
-          break;
-        }
-      }
-      else {
-        have_skipped_the_item = true;
-      }
-    }
-    return got_comma;
   }
 
   /**
@@ -595,41 +541,23 @@ public class PyUtil {
     return AccessDirection.READ;
   }
 
-  public static boolean deleteParameter(@NotNull final PyFunction problemFunction, int index) {
-    final PyParameterList parameterList = problemFunction.getParameterList();
-    final PyParameter[] parameters = parameterList.getParameters();
-    if (parameters.length <= 0) return false;
-
-    PsiElement first = parameters[index];
-    PsiElement last = parameters.length > index + 1 ? parameters[index + 1] : parameterList.getLastChild();
-    PsiElement prevSibling = last.getPrevSibling() != null ? last.getPrevSibling() : parameters[index];
-
-    parameterList.deleteChildRange(first, prevSibling);
-    return true;
-  }
-
   public static void removeQualifier(@NotNull final PyReferenceExpression element) {
     final PyExpression qualifier = element.getQualifier();
     if (qualifier == null) return;
 
     if (qualifier instanceof PyCallExpression) {
-      final StringBuilder newElement = new StringBuilder(element.getLastChild().getText());
       final PyExpression callee = ((PyCallExpression)qualifier).getCallee();
       if (callee instanceof PyReferenceExpression) {
         final PyExpression calleeQualifier = ((PyReferenceExpression)callee).getQualifier();
         if (calleeQualifier != null) {
-          newElement.insert(0, calleeQualifier.getText() + ".");
+          qualifier.replace(calleeQualifier);
+          return;
         }
       }
-      final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(element.getProject());
-      final PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(element), newElement.toString());
-      element.replace(expression);
     }
-    else {
-      final PsiElement dot = qualifier.getNextSibling();
-      if (dot != null) dot.delete();
-      qualifier.delete();
-    }
+    final PsiElement dot = PyPsiUtils.getNextNonWhitespaceSibling(qualifier);
+    if (dot != null) dot.delete();
+    qualifier.delete();
   }
 
   /**
@@ -896,6 +824,27 @@ public class PyUtil {
     return result;
   }
 
+  /**
+   * Force re-highlighting in all open editors that belong to specified project.
+   */
+  public static void rehighlightOpenEditors(final @NotNull Project project) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+
+        for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+          if (editor instanceof EditorEx && editor.getProject() == project) {
+            final VirtualFile vFile = ((EditorEx)editor).getVirtualFile();
+            if (vFile != null) {
+              final EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, vFile);
+              ((EditorEx)editor).setHighlighter(highlighter);
+            }
+          }
+        }
+      }
+    });
+  }
+
   public static class KnownDecoratorProviderHolder {
     public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 
@@ -1074,7 +1023,7 @@ public class PyUtil {
    * @param name
    * @return true iff the name looks like a class-private one, starting with two underscores but not ending with two underscores.
    */
-  public static boolean isClassPrivateName(String name) {
+  public static boolean isClassPrivateName(@NotNull String name) {
     return name.startsWith("__") && !name.endsWith("__");
   }
 
@@ -1239,10 +1188,10 @@ public class PyUtil {
 
   public static class MethodFlags {
 
-    private boolean myIsStaticMethod;
-    private boolean myIsMetaclassMethod;
-    private boolean myIsSpecialMetaclassMethod;
-    private boolean myIsClassMethod;
+    private final boolean myIsStaticMethod;
+    private final boolean myIsMetaclassMethod;
+    private final boolean myIsSpecialMetaclassMethod;
+    private final boolean myIsClassMethod;
 
     /**
      * @return true iff the method belongs to a metaclass (an ancestor of 'type').
@@ -1504,6 +1453,7 @@ public class PyUtil {
     return resultCasted;
   }
 
+
   /**
    * Inserts specified element into the statement list either at the beginning or at its end. If new element is going to be
    * inserted at the beginning, any preceding docstrings and/or calls to super methods will be skipped.
@@ -1519,7 +1469,23 @@ public class PyUtil {
   public static PsiElement addElementToStatementList(@NotNull PsiElement element,
                                                      @NotNull PyStatementList statementList,
                                                      boolean toTheBeginning) {
-    final boolean statementListWasEmpty = statementList.getStatements().length == 0;
+    final PsiElement prevElem = PyPsiUtils.getPrevNonWhitespaceSibling(statementList);
+    // If statement list is on the same line as previous element (supposedly colon), move its only statement on the next line
+    if (prevElem != null && onSameLine(statementList, prevElem)) {
+      final PsiDocumentManager manager = PsiDocumentManager.getInstance(statementList.getProject());
+      final Document document = manager.getDocument(statementList.getContainingFile());
+      if (document != null) {
+        final PsiElement container = statementList.getParent();
+        manager.doPostponedOperationsAndUnblockDocument(document);
+        final String indentation = "\n" + PyIndentUtil.getElementIndent(statementList);
+        // If statement list was empty initially, we need to add some anchor statement ("pass"), so that preceding new line was not
+        // parsed as following entire StatementListContainer (e.g. function). It's going to be replaced anyway.
+        final String text = statementList.getStatements().length == 0 ? indentation + PyNames.PASS : indentation;
+        document.insertString(statementList.getTextRange().getStartOffset(), text);
+        manager.commitDocument(document);
+        statementList = ((PyStatementListContainer)container).getStatementList();
+      }
+    }
     final PsiElement firstChild = statementList.getFirstChild();
     if (firstChild == statementList.getLastChild() && firstChild instanceof PyPassStatement) {
       element = firstChild.replace(element);
@@ -1556,23 +1522,6 @@ public class PyUtil {
       }
       else {
         element = statementList.add(element);
-      }
-    }
-    if (statementListWasEmpty) {
-      final PsiElement parent = statementList.getParent();
-      if (parent instanceof PyStatementListContainer) {
-        final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(parent.getProject());
-        final PsiFile pyFile = parent.getContainingFile();
-        final Document document = documentManager.getDocument(pyFile);
-        if (document != null && document.getLineNumber(parent.getTextOffset()) == document.getLineNumber(statementList.getTextOffset())) {
-          final CodeStyleSettings codeStyleManager = CodeStyleSettingsManager.getSettings(parent.getProject());
-          final IndentOptions indentOptions = codeStyleManager.getCommonSettings(pyFile.getLanguage()).getIndentOptions();
-          final int indentSize = indentOptions.INDENT_SIZE;
-          final String indentation = StringUtil.repeatSymbol(' ', PyPsiUtils.getElementIndentation(parent) + indentSize);
-          documentManager.doPostponedOperationsAndUnblockDocument(document);
-          document.insertString(statementList.getTextOffset(), "\n" + indentation);
-          documentManager.commitDocument(document);
-        }
       }
     }
     return element;
@@ -1815,8 +1764,7 @@ public class PyUtil {
   }
 
   public static boolean isInScratchFile(@NotNull PsiElement element) {
-    PsiFile file = element.getContainingFile();
-    return file != null && ScratchRootType.getInstance().isScratchFile(file.getVirtualFile());
+    return ScratchFileService.isInScratchRoot(PsiUtilCore.getVirtualFile(element));
   }
 
   /**

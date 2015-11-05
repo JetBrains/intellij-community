@@ -38,6 +38,7 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,9 +46,8 @@ import java.util.regex.Pattern;
  * @author denis
  */
 public class SwitchBootJdkAction extends AnAction implements DumbAware {
-
   @NonNls private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.SwitchBootJdkAction");
-  @NonNls private static final String productJdkConfigFileName = ApplicationNamesInfo.getInstance().getScriptName() + ".jdk";
+  @NonNls private static final String productJdkConfigFileName = getExecutable() + ".jdk";
   @NonNls private static final File productJdkConfigFile = new File(PathManager.getConfigPath(), productJdkConfigFileName);
   @NonNls private static final File customJdkFile = new File(PathManager.getHomePath() + File.separator + "jre" + File.separator + "jdk");
 
@@ -144,7 +144,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
     private File bundleAsFile;
     private String visualRepresentation;
 
-    public JdkBundleDescriptor(File bundleAsFile, String visualRepresentation) {
+    public JdkBundleDescriptor(@NotNull File bundleAsFile, @NotNull String visualRepresentation) {
       this.bundleAsFile = bundleAsFile;
       this.visualRepresentation = visualRepresentation;
     }
@@ -162,12 +162,13 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
 
     @NotNull private final ComboBox myComboBox;
 
-    protected SwitchBootJdkDialog(@Nullable Project project, List<JdkBundleDescriptor> jdkBundlesList) {
+    protected SwitchBootJdkDialog(@Nullable Project project, final List<JdkBundleDescriptor> jdkBundlesList) {
       super(project, false);
 
       final ArrayList<JdkBundleDescriptor> pathsList = JdkUtil.findJdkPaths();
       if (!jdkBundlesList.isEmpty()) {
-        pathsList.add(0, jdkBundlesList.get(0));
+        JdkBundleDescriptor jdkBundleDescription = jdkBundlesList.get(0);
+        pathsList.add(0, jdkBundleDescription);
       }
 
       myComboBox = new ComboBox();
@@ -175,18 +176,41 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
       DefaultComboBoxModel model = new DefaultComboBoxModel();
 
       for (JdkBundleDescriptor jdkBundlePath : pathsList) {
-        if (!jdkBundlesList.isEmpty() && FileUtil.filesEqual(jdkBundlePath.getBundleAsFile(),jdkBundlesList.get(0).getBundleAsFile())) {
+        if (!(jdkBundlesList.isEmpty() || jdkBundlePath == null)
+            && FileUtil.filesEqual(jdkBundlePath.getBundleAsFile(),jdkBundlesList.get(0).getBundleAsFile()))
+        {
           continue;
         }
         model.addElement(jdkBundlePath);
       }
 
       myComboBox.setModel(model);
+
+      if (pathsList.isEmpty()) {
+        myComboBox.setEnabled(false);
+      }
+
       myComboBox.setRenderer(new ListCellRendererWrapper() {
         @Override
         public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          JdkBundleDescriptor jdkBundleDescriptor = ((JdkBundleDescriptor)value);
-          setText(jdkBundleDescriptor.getVisualRepresentation());
+          if (value != null) {
+            JdkBundleDescriptor jdkBundleDescriptor = ((JdkBundleDescriptor)value);
+            setText(jdkBundleDescriptor.getVisualRepresentation());
+          } else {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Null value has been passed to a cell renderer. Available JDKs count: " + pathsList.size());
+              StringBuilder jdkNames = new StringBuilder();
+              for (JdkBundleDescriptor jdkBundlePath : pathsList) {
+                if (!jdkBundlesList.isEmpty()) {
+                  continue;
+                }
+                jdkNames.append(jdkBundlePath.getVisualRepresentation()).append("; ");
+              }
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Available JDKs names: " + jdkNames.toString());
+              }
+            }
+          }
         }
       });
 
@@ -225,12 +249,16 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
       ArrayList<JdkBundleDescriptor> jdkPathsList = new ArrayList<JdkBundleDescriptor>();
       if (!SystemInfo.isMac) return jdkPathsList;
 
-
       if (customJdkFile.exists()) {
           jdkPathsList.add(new JdkBundleDescriptor(customJdkFile, "JDK bundled with IDE"));
       }
 
-      jdkPathsList.addAll(jdkBundlesFromLocation(STANDARD_JDK_6_LOCATION_ON_MAC_OS_X, "1.6.0"));
+      ArrayList<JdkBundleDescriptor> jdk6List = jdkBundlesFromLocation(STANDARD_JDK_6_LOCATION_ON_MAC_OS_X, "1.6.0");
+
+      if (jdk6List.isEmpty()) {
+        jdkPathsList.addAll(jdkBundlesFromLocation(STANDARD_JDK_LOCATION_ON_MAC_OS_X, "1.6.0"));
+      }
+
       jdkPathsList.addAll(jdkBundlesFromLocation(STANDARD_JDK_LOCATION_ON_MAC_OS_X, "jdk1.8.0_(\\d*).jdk"));
 
       return jdkPathsList;
@@ -243,26 +271,30 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
       File standardJdkLocationOnMacFile = new File(jdkLocationOnMacOsX);
 
       if (!standardJdkLocationOnMacFile.exists()) {
-        LOG.info("Location does not exists: " + jdkLocationOnMacOsX);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Location does not exists: " + jdkLocationOnMacOsX);
+        }
         return localJdkPathsList;
       }
 
       File[] filesInStandardJdkLocation = standardJdkLocationOnMacFile.listFiles();
 
+      if (filesInStandardJdkLocation == null) {
+        LOG.debug("Some IO  exception happened.");
+        return localJdkPathsList;
+      }
+
       int latestUpdateNumber = 0;
       JdkBundleDescriptor latestBundle = null;
 
-      String regex = filter;
-
-      Pattern p = Pattern.compile(regex);
+      Pattern p = Pattern.compile(filter);
 
       for (File possibleJdkBundle : filesInStandardJdkLocation) {
         // todo add some logic to verify the bundle
 
         Matcher m = p.matcher(possibleJdkBundle.getName());
 
-
-        while(m.find()) {
+        while (m.find()) {
           try {
             if (m.groupCount() > 0) {
               int updateNumber = Integer.parseInt(m.group(1));
@@ -273,7 +305,9 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
               latestBundle = new JdkBundleDescriptor(possibleJdkBundle, possibleJdkBundle.getName());
             }
           } catch (NumberFormatException nfe) {
-            LOG.error("Fail parsing update number");
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Fail parsing update number");
+            }
           }
         }
 
@@ -287,4 +321,9 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
     }
   }
 
+  @NotNull
+  private static String getExecutable() {
+    final String executable = System.getProperty("idea.executable");
+    return executable != null ? executable : ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
+  }
 }

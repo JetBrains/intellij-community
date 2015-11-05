@@ -212,6 +212,13 @@ public final class JsonReaderEx implements Closeable {
     return subReader;
   }
 
+  @Nullable
+  public JsonReaderEx createSubReaderAndSkipValue() {
+    JsonReaderEx subReader = subReader();
+    skipValue();
+    return subReader;
+  }
+
   public final void setLenient(boolean lenient) {
     this.lenient = lenient;
   }

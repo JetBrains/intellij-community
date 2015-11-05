@@ -28,11 +28,13 @@ import org.jdom.Element
 import org.jdom.output.Format
 import java.io.ByteArrayInputStream
 import java.io.OutputStreamWriter
-import java.util.Arrays
-import java.util.TreeMap
+import java.util.*
 import java.util.concurrent.atomic.AtomicReferenceArray
 
 class StateMap private constructor(private val names: Array<String>, private val states: AtomicReferenceArray<Any?>) {
+  override fun toString(): String =
+    if (this == EMPTY) "EMPTY" else states.toString();
+
   companion object {
     private val XML_FORMAT = Format.getRawFormat().setTextMode(Format.TextMode.TRIM).setOmitEncoding(true).setOmitDeclaration(true)
 
@@ -78,7 +80,7 @@ class StateMap private constructor(private val names: Array<String>, private val
           LOG.info("Serialization error: serialized are different, but unserialized are equal")
         }
         else {
-          LOG.info("$key ${StringUtil.repeat("=", 80 - key.length())}\nBefore:\n$before\nAfter:\n$after")
+          LOG.info("$key ${StringUtil.repeat("=", 80 - key.length)}\nBefore:\n$before\nAfter:\n$after")
         }
       }
       return newBytes
@@ -88,10 +90,10 @@ class StateMap private constructor(private val names: Array<String>, private val
       val byteOut = BufferExposingByteArrayOutputStream()
       OutputStreamWriter(SnappyOutputStream(byteOut), CharsetToolkit.UTF8_CHARSET).use {
         val xmlOutputter = JDOMUtil.MyXMLOutputter()
-        xmlOutputter.setFormat(XML_FORMAT)
+        xmlOutputter.format = XML_FORMAT
         xmlOutputter.output(state, it)
       }
-      return ArrayUtil.realloc(byteOut.getInternalBuffer(), byteOut.size())
+      return ArrayUtil.realloc(byteOut.internalBuffer, byteOut.size())
     }
 
     private fun unarchiveState(state: ByteArray) = JDOMUtil.load(SnappyInputStream(ByteArrayInputStream(state)))
@@ -205,7 +207,7 @@ fun setStateAndCloneIfNeed(key: String, newState: Element?, oldStates: StateMap,
 }
 
 // true if updated (not equals to previous state)
-private fun updateState(states: MutableMap<String, Any>, key: String, newState: Element?, newLiveStates: MutableMap<String, Element>? = null): Boolean {
+internal fun updateState(states: MutableMap<String, Any>, key: String, newState: Element?, newLiveStates: MutableMap<String, Element>? = null): Boolean {
   if (newState == null || JDOMUtil.isEmpty(newState)) {
     states.remove(key)
     return true

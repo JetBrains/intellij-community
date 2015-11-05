@@ -24,7 +24,7 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.openapi.project.Project;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -41,13 +41,14 @@ public abstract class PyCommandLineTestCase extends PyTestCase {
   protected static int verifyPyDevDParameters(List<String> params) {
     params = Lists.newArrayList(params);
     int debugParam = params.remove("--DEBUG") ? 1 : 0;
-    assertEquals(PythonHelpersLocator.getHelperPath("pydev/pydevd.py"), params.get(0));
+    int qtDebugParam = params.remove("--qt-support") ? 1 : 0;
+    assertEquals(PythonHelper.DEBUGGER.asParamString(), params.get(0));
     assertEquals("--multiproc", params.get(1));
     assertEquals("--client", params.get(2));
     assertEquals("--port", params.get(4));
     assertEquals("" + PORT, params.get(5));
     assertEquals("--file", params.get(6));
-    return 7 + debugParam;
+    return 7 + debugParam + qtDebugParam;
   }
 
   protected <T extends AbstractPythonRunConfiguration> T createConfiguration(final ConfigurationType configurationType, Class<T> cls) {
@@ -71,7 +72,7 @@ public abstract class PyCommandLineTestCase extends PyTestCase {
     try {
       PythonCommandLineState state = getState(configuration, DefaultDebugExecutor.getDebugExecutorInstance());
       assert state != null;
-      return state.generateCommandLine(PyDebugRunner.createCommandLinePatchers(configuration.getProject(), state, configuration, PORT))
+      return state.generateCommandLine(new PyDebugRunner().createCommandLinePatchers(configuration.getProject(), state, configuration, PORT))
         .getParametersList()
         .getList();
     }

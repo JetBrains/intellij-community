@@ -75,10 +75,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.IntArrayList;
@@ -259,6 +256,7 @@ public class BuildManager implements Disposable {
   private volatile int myListenPort = -1;
   @NotNull
   private final Charset mySystemCharset = CharsetToolkit.getDefaultSystemCharset();
+  private volatile boolean myBuildProcessDebuggingEnabled;
 
   public BuildManager(final ProjectManager projectManager) {
     final Application application = ApplicationManager.getApplication();
@@ -280,7 +278,7 @@ public class BuildManager implements Disposable {
     conn.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        if (shouldTriggerMake(events)) {
+        if (!IS_UNIT_TEST_MODE && shouldTriggerMake(events)) {
           scheduleAutoMake();
         }
       }
@@ -516,6 +514,9 @@ public class BuildManager implements Disposable {
       }
       finally {
         myAutomakeFutures.remove(future);
+        if (handler.unprocessedFSChangesDetected()) {
+          scheduleAutoMake();
+        }
       }
     }
   }
@@ -597,6 +598,13 @@ public class BuildManager implements Disposable {
       }
     }
     return futures;
+  }
+
+  private void cancelAllPreloadedBuilds() {
+    String[] paths = ArrayUtil.toStringArray(myPreloadedBuilds.keySet());
+    for (String path : paths) {
+      cancelPreloadedBuilds(path);
+    }
   }
 
   private void cancelPreloadedBuilds(final String projectPath) {
@@ -844,7 +852,7 @@ public class BuildManager implements Disposable {
 
   private boolean isProcessPreloadingEnabled(Project project) {
     // automatically disable process preloading when debugging or testing
-    if (IS_UNIT_TEST_MODE || !Registry.is("compiler.process.preload") || Registry.intValue("compiler.process.debug.port") > 0) {
+    if (IS_UNIT_TEST_MODE || !Registry.is("compiler.process.preload") || myBuildProcessDebuggingEnabled) {
       return false;
     }
     if (project.isDisposed()) {
@@ -1107,10 +1115,21 @@ public class BuildManager implements Disposable {
     }
 
     // debugging
-    final int debugPort = Registry.intValue("compiler.process.debug.port");
-    if (debugPort > 0) {
-      cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
-      cmdLine.addParameter("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + debugPort);
+    int debugPort = -1;
+    if (myBuildProcessDebuggingEnabled) {
+      debugPort = Registry.intValue("compiler.process.debug.port");
+      if (debugPort <= 0) {
+        try {
+          debugPort = NetUtils.findAvailableSocketPort();
+        }
+        catch (IOException e) {
+          throw new ExecutionException("Cannot find free port to debug build process", e);
+        }
+      }
+      if (debugPort > 0) {
+        cmdLine.addParameter("-XX:+HeapDumpOnOutOfMemoryError");
+        cmdLine.addParameter("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + debugPort);
+      }
     }
 
     if (!Registry.is("compiler.process.use.memory.temp.cache")) {
@@ -1297,7 +1316,7 @@ public class BuildManager implements Disposable {
   }
 
   private int startListening() throws Exception {
-    final ServerBootstrap bootstrap = NettyUtil.nioServerBootstrap(new NioEventLoopGroup(1, PooledThreadExecutor.INSTANCE));
+    final ServerBootstrap bootstrap = NettyUtil.nioServerBootstrap(new NioEventLoopGroup(1, ConcurrencyUtil.newNamedThreadFactory("External compiler")));
     bootstrap.childHandler(new ChannelInitializer() {
       @Override
       protected void initChannel(Channel channel) throws Exception {
@@ -1323,6 +1342,17 @@ public class BuildManager implements Disposable {
       builder.append(FileUtil.toCanonicalPath(file));
     }
     return builder.toString();
+  }
+
+  public boolean isBuildProcessDebuggingEnabled() {
+    return myBuildProcessDebuggingEnabled;
+  }
+
+  public void setBuildProcessDebuggingEnabled(boolean buildProcessDebuggingEnabled) {
+    myBuildProcessDebuggingEnabled = buildProcessDebuggingEnabled;
+    if (myBuildProcessDebuggingEnabled) {
+      cancelAllPreloadedBuilds();
+    }
   }
 
   private static abstract class BuildManagerPeriodicTask implements Runnable {

@@ -18,6 +18,7 @@ package com.intellij.psi.formatter.common;
 import com.intellij.formatting.Block;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.text.CharArrayUtil;
 
 import java.util.Iterator;
 import java.util.List;
@@ -44,15 +45,32 @@ public class NewLineBlocksIterator implements Iterator<Block> {
   @Override
   public boolean hasNext() {
     if (myCurrentDocumentLine < myTotalLines) {
-      popUntilTopBlockStartOffsetGreaterOrEqual(myCurrentLineStartOffset);
+      popUntilTopBlockStartsNewLine();
       return !myStack.isEmpty();
     }
     return false;
   }
 
+  private void popUntilTopBlockStartsNewLine() {
+    popUntilTopBlockStartOffsetGreaterOrEqual(myCurrentLineStartOffset);
+    if (myStack.isEmpty()) return;
+
+    Block block = myStack.peek();
+    while (block != null && !isStartingNewLine(block)) {
+      myCurrentDocumentLine++;
+      if (myCurrentDocumentLine >= myTotalLines) {
+        myStack.clear();
+        break;
+      }
+      myCurrentLineStartOffset = myDocument.getLineStartOffset(myCurrentDocumentLine);
+      popUntilTopBlockStartOffsetGreaterOrEqual(myCurrentLineStartOffset);
+      block = myStack.isEmpty() ? null : myStack.peek();
+    }
+  }
+
   @Override
   public Block next() {
-    popUntilTopBlockStartOffsetGreaterOrEqual(myCurrentLineStartOffset);
+    popUntilTopBlockStartsNewLine();
 
     Block current = myStack.peek();
     TextRange currentBlockRange = current.getTextRange();
@@ -99,6 +117,17 @@ public class NewLineBlocksIterator implements Iterator<Block> {
     while (iterator.hasPrevious()) {
       myStack.push(iterator.previous());
     }
+  }
+
+  private boolean isStartingNewLine(Block block) {
+    TextRange range = block.getTextRange();
+    int blockStart = range.getStartOffset();
+
+    int lineNumber = myDocument.getLineNumber(blockStart);
+    int lineStartOffset = myDocument.getLineStartOffset(lineNumber);
+
+    CharSequence text = myDocument.getCharsSequence();
+    return CharArrayUtil.isEmptyOrSpaces(text, lineStartOffset, blockStart);
   }
 
   @Override

@@ -1,7 +1,5 @@
 # TODO:
-# - Tuple[..., t]
-# - @no_type_check as class decorator
-# - https://github.com/ambv/typehinting/issues/62
+# - Generic[T, T] is invalid
 # - Look for TODO below
 
 # TODO nits:
@@ -12,7 +10,6 @@ import abc
 from abc import abstractmethod, abstractproperty
 import collections
 import functools
-import inspect
 import re as stdlib_re  # Avoid confusion with the re we export.
 import sys
 import types
@@ -63,16 +60,10 @@ __all__ = [
     'List',
     'Set',
     'NamedTuple',  # Not really a type.
-
-    # Compile-time constants.
-    'POSIX',
-    'PY2',
-    'PY3',
-    'WINDOWS',
+    'Generator',
 
     # One-off things.
     'AnyStr',
-    'Undefined',
     'cast',
     'get_type_hints',
     'no_type_check',
@@ -83,13 +74,6 @@ __all__ = [
     'io',
     're',
 ]
-
-
-# Simple constants defined in the PEP.
-PY2 = sys.version_info[0] == 2
-PY3 = sys.version_info[0] >= 3
-WINDOWS = sys.platform == 'win32'
-POSIX = not WINDOWS
 
 
 def _qualname(x):
@@ -144,6 +128,8 @@ class TypingMeta(type):
 class Final:
     """Mix-in class to prevent instantiation."""
 
+    __slots__ = ()
+
     def __new__(self, *args, **kwds):
         raise TypeError("Cannot instantiate %r" % self.__class__)
 
@@ -164,6 +150,12 @@ class _ForwardRef(TypingMeta):
         self.__forward_code__ = code
         self.__forward_evaluated__ = False
         self.__forward_value__ = None
+        typing_globals = globals()
+        frame = sys._getframe(1)
+        while frame is not None and frame.f_globals is typing_globals:
+            frame = frame.f_back
+        assert frame is not None
+        self.__forward_frame__ = frame
         return self
 
     def _eval_type(self, globalns, localns):
@@ -174,10 +166,30 @@ class _ForwardRef(TypingMeta):
             raise TypeError('ForwardRef globalns must be a dict -- got %r' %
                             (globalns,))
         if not self.__forward_evaluated__:
-            self.__forward_value__ = eval(self.__forward_code__,
-                                          globalns, localns)
+            if globalns is None and localns is None:
+                globalns = localns = {}
+            elif globalns is None:
+                globalns = localns
+            elif localns is None:
+                localns = globalns
+            self.__forward_value__ = _type_check(
+                eval(self.__forward_code__, globalns, localns),
+                "Forward references must evaluate to types.")
             self.__forward_evaluated__ = True
         return self.__forward_value__
+
+    def __instancecheck__(self, obj):
+        raise TypeError("Forward references cannot be used with isinstance().")
+
+    def __subclasscheck__(self, cls):
+        if not self.__forward_evaluated__:
+            globalns = self.__forward_frame__.f_globals
+            localns = self.__forward_frame__.f_locals
+            try:
+                self._eval_type(globalns, localns)
+            except NameError:
+                return False  # Too early.
+        return issubclass(cls, self.__forward_value__)
 
     def __repr__(self):
         return '_ForwardRef(%r)' % (self.__forward_arg__,)
@@ -193,6 +205,8 @@ class _TypeAlias:
     some arbitrary class C) raises TypeError rather than returning
     False.
     """
+
+    __slots__ = ('name', 'type_var', 'impl_type', 'type_checker')
 
     def __new__(cls, *args, **kwds):
         """Constructor.
@@ -234,15 +248,15 @@ class _TypeAlias:
         assert isinstance(parameter, type), repr(parameter)
         if not isinstance(self.type_var, TypeVar):
             raise TypeError("%s cannot be further parameterized." % self)
-        if not issubclass(parameter, self.type_var):
-            raise TypeError("%s is not a valid substitution for %s." %
-                            (parameter, self.type_var))
+        if self.type_var.__constraints__:
+            if not issubclass(parameter, Union[self.type_var.__constraints__]):
+                raise TypeError("%s is not a valid substitution for %s." %
+                                (parameter, self.type_var))
         return self.__class__(self.name, parameter,
                               self.impl_type, self.type_checker)
 
     def __instancecheck__(self, obj):
-        return (isinstance(obj, self.impl_type) and
-                isinstance(self.type_checker(obj), self.type_var))
+        raise TypeError("Type aliases cannot be used with isinstance().")
 
     def __subclasscheck__(self, cls):
         if cls is Any:
@@ -314,8 +328,8 @@ class AnyMeta(TypingMeta):
         self = super().__new__(cls, name, bases, namespace, _root=_root)
         return self
 
-    def __instancecheck__(self, instance):
-        return True
+    def __instancecheck__(self, obj):
+        raise TypeError("Any cannot be used with isinstance().")
 
     def __subclasscheck__(self, cls):
         if not isinstance(cls, type):
@@ -331,177 +345,108 @@ class Any(Final, metaclass=AnyMeta, _root=True):
     - As a special case, Any and object are subclasses of each other.
     """
 
+    __slots__ = ()
+
 
 class TypeVar(TypingMeta, metaclass=TypingMeta, _root=True):
     """Type variable.
 
     Usage::
 
-      T1 = TypeVar('T1')  # Unconstrained
-      T2 = TypeVar('T2', t1, t2, ...)  # Constrained to any of (t1, t2, ...)
+      T = TypeVar('T')  # Can be anything
+      A = TypeVar('A', str, bytes)  # Must be str or bytes
 
-    For an unconstrained type variable T, isinstance(x, T) is false
-    for all x, and similar for issubclass(cls, T).  Example::
+    Type variables exist primarily for the benefit of static type
+    checkers.  They serve as the parameters for generic types as well
+    as for generic function definitions.  See class Generic for more
+    information on generic types.  Generic functions work as follows:
 
-      T = TypeVar('T')
-      assert not isinstance(42, T)
-      assert not issubclass(int, T)
+      def repeat(x: T, n: int) -> Sequence[T]:
+          '''Return a list containing n references to x.'''
+          return [x]*n
 
-    For a constrained type variable T, isinstance(x, T) is true for
-    any x that is an instance of at least one of T's constraints,
-    and similar for issubclass(cls, T).  Example::
+      def longest(x: A, y: A) -> A:
+          '''Return the longest of two strings.'''
+          return x if len(x) >= len(y) else y
 
-      AnyStr = TypeVar('AnyStr', str, bytes)
-      # AnyStr behaves similar to Union[str, bytes] (but not exactly!)
-      assert not isinstance(42, AnyStr)
-      assert isinstance('', AnyStr)
-      assert isinstance(b'', AnyStr)
-      assert not issubclass(int, AnyStr)
-      assert issubclass(str, AnyStr)
-      assert issubclass(bytes, AnyStr)
+    The latter example's signature is essentially the overloading
+    of (str, str) -> str and (bytes, bytes) -> bytes.  Also note
+    that if the arguments are instances of some subclass of str,
+    the return type is still plain str.
 
-    Type variables that are distinct objects are never equal (even if
-    created with the same parameters).
+    At runtime, isinstance(x, T) will raise TypeError.  However,
+    issubclass(C, T) is true for any class C, and issubclass(str, A)
+    and issubclass(bytes, A) are true, and issubclass(int, A) is
+    false.
 
-    You can temporarily *bind* a type variable to a specific type by
-    calling its bind() method and using the result as a context
-    manager (i.e., in a with-statement).  Example::
+    Type variables may be marked covariant or contravariant by passing
+    covariant=True or contravariant=True.  See PEP 484 for more
+    details.  By default type variables are invariant.
 
-      with T.bind(int):
-          # In this block, T is nearly an alias for int.
-          assert isinstance(42, T)
-          assert issubclass(int, T)
+    Type variables can be introspected. e.g.:
 
-    There is still a difference between T and int; issubclass(T, int)
-    is False.  However, issubclass(int, T) is true.
-
-    Binding a constrained type variable will replace the binding type
-    with the most derived of its constraints that matches.  Example::
-
-      class MyStr(str):
-          pass
-
-      with AnyStr.bind(MyStr):
-          # In this block, AnyStr is an alias for str, not for MyStr.
-          assert isinstance('', AnyStr)
-          assert issubclass(str, AnyStr)
-          assert not isinstance(b'', AnyStr)
-          assert not issubclass(bytes, AnyStr)
-
+      T.__name__ == 'T'
+      T.__constraints__ == ()
+      T.__covariant__ == False
+      T.__contravariant__ = False
+      A.__constraints__ == (str, bytes)
     """
 
-    def __new__(cls, name, *constraints):
+    def __new__(cls, name, *constraints, bound=None,
+                covariant=False, contravariant=False):
         self = super().__new__(cls, name, (Final,), {}, _root=True)
+        if covariant and contravariant:
+            raise ValueError("Bivariant type variables are not supported.")
+        self.__covariant__ = bool(covariant)
+        self.__contravariant__ = bool(contravariant)
+        if constraints and bound is not None:
+            raise TypeError("Constraints cannot be combined with bound=...")
+        if constraints and len(constraints) == 1:
+            raise TypeError("A single constraint is not allowed")
         msg = "TypeVar(name, constraint, ...): constraints must be types."
         self.__constraints__ = tuple(_type_check(t, msg) for t in constraints)
-        self.__binding__ = None
+        if bound:
+            self.__bound__ = _type_check(bound, "Bound must be a type.")
+        else:
+            self.__bound__ = None
         return self
 
     def _has_type_var(self):
         return True
 
     def __repr__(self):
-        return '~' + self.__name__
+        if self.__covariant__:
+            prefix = '+'
+        elif self.__contravariant__:
+            prefix = '-'
+        else:
+            prefix = '~'
+        return prefix + self.__name__
 
     def __instancecheck__(self, instance):
-        if self.__binding__ is not None:
-            return isinstance(instance, self.__binding__)
-        elif not self.__constraints__:
-            return False
-        else:
-            return isinstance(instance, Union[self.__constraints__])
+        raise TypeError("Type variables cannot be used with isinstance().")
 
     def __subclasscheck__(self, cls):
-        if cls is Any:
-            return True
+        # TODO: Make this raise TypeError too?
         if cls is self:
             return True
-        elif self.__binding__ is not None:
-            return issubclass(cls, self.__binding__)
-        elif not self.__constraints__:
-            return False
-        else:
-            return issubclass(cls, Union[self.__constraints__])
-
-    def bind(self, binding):
-        binding = _type_check(binding, "TypeVar.bind(t): t must be a type.")
+        if cls is Any:
+            return True
+        if self.__bound__ is not None:
+            return issubclass(cls, self.__bound__)
         if self.__constraints__:
-            best = None
-            for t in self.__constraints__:
-                if (issubclass(binding, t) and
-                    (best is None or issubclass(t, best))):
-                    best = t
-            if best is None:
-                raise TypeError(
-                    "TypeVar.bind(t): t must match one of the constraints.")
-            binding = best
-        return VarBinding(self, binding)
-
-    def _bind(self, binding):
-        old_binding = self.__binding__
-        self.__binding__ = binding
-        return old_binding
-
-    def _unbind(self, binding, old_binding):
-        assert self.__binding__ is binding, (self.__binding__,
-                                             binding, old_binding)
-        self.__binding__ = old_binding
-
-
-# Compatibility for for mypy's typevar().
-def typevar(name, values=()):
-    return TypeVar(name, *values)
-
-
-class VarBinding:
-    """TypeVariable binding returned by TypeVar.bind()."""
-
-    # TODO: This is not thread-safe.  We could solve this in one of
-    # two ways: by using a lock or by using thread-local state.  But
-    # either of these feels overly heavy, and still doesn't work
-    # e.g. in an asyncio Task.
-
-    def __init__(self, var, binding):
-        assert isinstance(var, TypeVar), (var, binding)
-        assert isinstance(binding, type), (var, binding)
-        self._var = var
-        self._binding = binding
-        self._old_binding = None
-        self._entered = False
-
-    def __enter__(self):
-        if self._entered:
-            # This checks for the following scenario:
-            # bv = T.bind(<some_type>)
-            # with bv:
-            #     with bv:  # Will raise here.
-            #         ...
-            # However, the following scenario is OK (if somewhat odd):
-            # bv = T.bind(<some_type>)
-            # with bv:
-            #     ...
-            # with bv:
-            #     ...
-            # The following scenario is also fine:
-            # with T.bind(<some_type>):
-            #     with T.bind(<some_other_type>):
-            #         ...
-            raise TypeError("Cannot reuse variable binding recursively.")
-        self._old_binding = self._var._bind(self._binding)
-        self._entered = True
-
-    def __exit__(self, *args):
-        try:
-            self._var._unbind(self._binding, self._old_binding)
-        finally:
-            self._entered = False
-            self._old_binding = None
+            return any(issubclass(cls, c) for c in self.__constraints__)
+        return True
 
 
 # Some unconstrained type variables.  These are used by the container types.
 T = TypeVar('T')  # Any type.
 KT = TypeVar('KT')  # Key type.
 VT = TypeVar('VT')  # Value type.
+T_co = TypeVar('T_co', covariant=True)  # Any type covariant containers.
+V_co = TypeVar('V_co', covariant=True)  # Any type covariant containers.
+VT_co = TypeVar('VT_co', covariant=True)  # Value type covariant containers.
+T_contra = TypeVar('T_contra', contravariant=True)  # Ditto contravariant.
 
 # A useful type variable with constraints.  This represents string types.
 # TODO: What about bytearray, memoryview?
@@ -538,11 +483,16 @@ class UnionMeta(TypingMeta):
         # E.g. Union[int, Employee, Manager] == Union[int, Employee].
         # If Any or object is present it will be the sole survivor.
         # If both Any and object are present, Any wins.
+        # Never discard type variables, except against Any.
+        # (In particular, Union[str, AnyStr] != AnyStr.)
         all_params = set(params)
         for t1 in params:
             if t1 is Any:
                 return Any
-            if any(issubclass(t1, t2) for t2 in all_params - {t1}):
+            if isinstance(t1, TypeVar):
+                continue
+            if any(issubclass(t1, t2)
+                   for t2 in all_params - {t1} if not isinstance(t2, TypeVar)):
                 all_params.remove(t1)
         # It's not a union if there's only one type left.
         if len(all_params) == 1:
@@ -595,9 +545,8 @@ class UnionMeta(TypingMeta):
     def __hash__(self):
         return hash(self.__union_set_params__)
 
-    def __instancecheck__(self, instance):
-        return (self.__union_set_params__ is not None and
-                any(isinstance(instance, t) for t in self.__union_params__))
+    def __instancecheck__(self, obj):
+        raise TypeError("Unions cannot be used with isinstance().")
 
     def __subclasscheck__(self, cls):
         if cls is Any:
@@ -692,13 +641,17 @@ class Optional(Final, metaclass=OptionalMeta, _root=True):
     Optional[X] is equivalent to Union[X, type(None)].
     """
 
+    __slots__ = ()
+
 
 class TupleMeta(TypingMeta):
     """Metaclass for Tuple."""
 
-    def __new__(cls, name, bases, namespace, parameters=None, _root=False):
+    def __new__(cls, name, bases, namespace, parameters=None,
+                use_ellipsis=False, _root=False):
         self = super().__new__(cls, name, bases, namespace, _root=_root)
         self.__tuple_params__ = parameters
+        self.__tuple_use_ellipsis__ = use_ellipsis
         return self
 
     def _has_type_var(self):
@@ -722,8 +675,11 @@ class TupleMeta(TypingMeta):
     def __repr__(self):
         r = super().__repr__()
         if self.__tuple_params__ is not None:
+            params = [_type_repr(p) for p in self.__tuple_params__]
+            if self.__tuple_use_ellipsis__:
+                params.append('...')
             r += '[%s]' % (
-                ', '.join(_type_repr(p) for p in self.__tuple_params__))
+                ', '.join(params))
         return r
 
     def __getitem__(self, parameters):
@@ -731,10 +687,17 @@ class TupleMeta(TypingMeta):
             raise TypeError("Cannot re-parameterize %r" % (self,))
         if not isinstance(parameters, tuple):
             parameters = (parameters,)
-        msg = "Class[arg, ...]: each arg must be a type."
+        if len(parameters) == 2 and parameters[1] == Ellipsis:
+            parameters = parameters[:1]
+            use_ellipsis = True
+            msg = "Tuple[t, ...]: t must be a type."
+        else:
+            use_ellipsis = False
+            msg = "Tuple[t0, t1, ...]: each t must be a type."
         parameters = tuple(_type_check(p, msg) for p in parameters)
         return self.__class__(self.__name__, self.__bases__,
-                              dict(self.__dict__), parameters, _root=True)
+                              dict(self.__dict__), parameters,
+                              use_ellipsis=use_ellipsis, _root=True)
 
     def __eq__(self, other):
         if not isinstance(other, TupleMeta):
@@ -744,14 +707,8 @@ class TupleMeta(TypingMeta):
     def __hash__(self):
         return hash(self.__tuple_params__)
 
-    def __instancecheck__(self, t):
-        if not isinstance(t, tuple):
-            return False
-        if self.__tuple_params__ is None:
-            return True
-        return (len(t) == len(self.__tuple_params__) and
-                all(isinstance(x, p)
-                    for x, p in zip(t, self.__tuple_params__)))
+    def __instancecheck__(self, obj):
+        raise TypeError("Tuples cannot be used with isinstance().")
 
     def __subclasscheck__(self, cls):
         if cls is Any:
@@ -766,6 +723,8 @@ class TupleMeta(TypingMeta):
             return True
         if cls.__tuple_params__ is None:
             return False  # ???
+        if cls.__tuple_use_ellipsis__ != self.__tuple_use_ellipsis__:
+            return False
         # Covariance.
         return (len(self.__tuple_params__) == len(cls.__tuple_params__) and
                 all(issubclass(x, p)
@@ -782,6 +741,8 @@ class Tuple(Final, metaclass=TupleMeta, _root=True):
 
     To specify a variable-length tuple of homogeneous type, use Sequence[T].
     """
+
+    __slots__ = ()
 
 
 class CallableMeta(TypingMeta):
@@ -816,7 +777,10 @@ class CallableMeta(TypingMeta):
     def _eval_type(self, globalns, localns):
         if self.__args__ is None and self.__result__ is None:
             return self
-        args = [_eval_type(t, globalns, localns) for t in self.__args__]
+        if self.__args__ is Ellipsis:
+            args = self.__args__
+        else:
+            args = [_eval_type(t, globalns, localns) for t in self.__args__]
         result = _eval_type(self.__result__, globalns, localns)
         if args == self.__args__ and result == self.__result__:
             return self
@@ -827,10 +791,12 @@ class CallableMeta(TypingMeta):
     def __repr__(self):
         r = super().__repr__()
         if self.__args__ is not None or self.__result__ is not None:
-            r += '%s[[%s], %s]' % (_qualname(self),
-                                   ', '.join(_type_repr(t)
-                                             for t in self.__args__),
-                                   _type_repr(self.__result__))
+            if self.__args__ is Ellipsis:
+                args_r = '...'
+            else:
+                args_r = '[%s]' % ', '.join(_type_repr(t)
+                                            for t in self.__args__)
+            r += '[%s, %s]' % (args_r, _type_repr(self.__result__))
         return r
 
     def __getitem__(self, parameters):
@@ -853,56 +819,14 @@ class CallableMeta(TypingMeta):
     def __hash__(self):
         return hash(self.__args__) ^ hash(self.__result__)
 
-    def __instancecheck__(self, instance):
-        if not callable(instance):
-            return False
+    def __instancecheck__(self, obj):
+        # For unparametrized Callable we allow this, because
+        # typing.Callable should be equivalent to
+        # collections.abc.Callable.
         if self.__args__ is None and self.__result__ is None:
-            return True
-        assert self.__args__ is not None
-        assert self.__result__ is not None
-        my_args, my_result = self.__args__, self.__result__
-        # Would it be better to use Signature objects?
-        try:
-            (args, varargs, varkw, defaults, kwonlyargs, kwonlydefaults,
-             annotations) = inspect.getfullargspec(instance)
-        except TypeError:
-            return False  # We can't find the signature.  Give up.
-        msg = ("When testing isinstance(<callable>, Callable[...], "
-               "<calleble>'s annotations must be types.")
-        if my_args is not Ellipsis:
-            if kwonlyargs and (not kwonlydefaults or
-                               len(kwonlydefaults) < len(kwonlyargs)):
-                return False
-            if isinstance(instance, types.MethodType):
-                # For methods, getfullargspec() includes self/cls,
-                # but it's not part of the call signature, so drop it.
-                del args[0]
-            min_call_args = len(args)
-            if defaults:
-                min_call_args -= len(defaults)
-            if varargs:
-                max_call_args = 999999999
-                if len(args) < len(my_args):
-                    args += [varargs] * (len(my_args) - len(args))
-            else:
-                max_call_args = len(args)
-            if not min_call_args <= len(my_args) <= max_call_args:
-                return False
-            for my_arg_type, name in zip(my_args, args):
-                if name in annotations:
-                    annot_type = _type_check(annotations[name], msg)
-                else:
-                    annot_type = Any
-                if not issubclass(my_arg_type, annot_type):
-                    return False
-                # TODO: If mutable type, check invariance?
-        if 'return' in annotations:
-            annot_return_type = _type_check(annotations['return'], msg)
-            # Note contravariance here!
-            if not issubclass(annot_return_type, my_result):
-                return False
-        # Can't find anything wrong...
-        return True
+            return isinstance(obj, collections_abc.Callable)
+        else:
+            raise TypeError("Callable[] cannot be used with isinstance().")
 
     def __subclasscheck__(self, cls):
         if cls is Any:
@@ -926,6 +850,31 @@ class Callable(Final, metaclass=CallableMeta, _root=True):
     such function types are rarely used as callback types.
     """
 
+    __slots__ = ()
+
+
+def _gorg(a):
+    """Return the farthest origin of a generic class."""
+    assert isinstance(a, GenericMeta)
+    while a.__origin__ is not None:
+        a = a.__origin__
+    return a
+
+
+def _geqv(a, b):
+    """Return whether two generic classes are equivalent.
+
+    The intention is to consider generic class X and any of its
+    parameterized forms (X[T], X[int], etc.)  as equivalent.
+
+    However, X is not equivalent to a subclass of X.
+
+    The relation is reflexive, symmetric and transitive.
+    """
+    assert isinstance(a, GenericMeta) and isinstance(b, GenericMeta)
+    # Reduce each to its origin.
+    return _gorg(a) is _gorg(b)
+
 
 class GenericMeta(TypingMeta, abc.ABCMeta):
     """Metaclass for generic types."""
@@ -933,9 +882,15 @@ class GenericMeta(TypingMeta, abc.ABCMeta):
     # TODO: Constrain more how Generic is used; only a few
     # standard patterns should be allowed.
 
+    # TODO: Use a more precise rule than matching __name__ to decide
+    # whether two classes are the same.  Also, save the formal
+    # parameters.  (These things are related!  A solution lies in
+    # using origin.)
+
     __extra__ = None
 
-    def __new__(cls, name, bases, namespace, parameters=None, extra=None):
+    def __new__(cls, name, bases, namespace,
+                parameters=None, origin=None, extra=None):
         if parameters is None:
             # Extract parameters from direct base classes.  Only
             # direct bases are considered and only those that are
@@ -969,6 +924,7 @@ class GenericMeta(TypingMeta, abc.ABCMeta):
             self.__extra__ = extra
         # Else __extra__ is inherited, eventually from the
         # (meta-)class default above.
+        self.__origin__ = origin
         return self
 
     def _has_type_var(self):
@@ -988,7 +944,7 @@ class GenericMeta(TypingMeta, abc.ABCMeta):
     def __eq__(self, other):
         if not isinstance(other, GenericMeta):
             return NotImplemented
-        return (self.__name__ == other.__name__ and
+        return (_geqv(self, other) and
                 self.__parameters__ == other.__parameters__)
 
     def __hash__(self):
@@ -1006,14 +962,20 @@ class GenericMeta(TypingMeta, abc.ABCMeta):
                 if not isinstance(p, TypeVar):
                     raise TypeError("Initial parameters must be "
                                     "type variables; got %s" % p)
+            if len(set(params)) != len(params):
+                raise TypeError("All type variables in Generic[...] must be distinct.")
         else:
             if len(params) != len(self.__parameters__):
                 raise TypeError("Cannot change parameter count from %d to %d" %
                                 (len(self.__parameters__), len(params)))
             for new, old in zip(params, self.__parameters__):
-                if isinstance(old, TypeVar) and not old.__constraints__:
-                    # Substituting for an unconstrained TypeVar is always OK.
-                    continue
+                if isinstance(old, TypeVar):
+                    if not old.__constraints__:
+                        # Substituting for an unconstrained TypeVar is OK.
+                        continue
+                    if issubclass(new, Union[old.__constraints__]):
+                        # Specializing a constrained type variable is OK.
+                        continue
                 if not issubclass(new, old):
                     raise TypeError(
                         "Cannot substitute %s for %s in %s" %
@@ -1021,23 +983,49 @@ class GenericMeta(TypingMeta, abc.ABCMeta):
 
         return self.__class__(self.__name__, self.__bases__,
                               dict(self.__dict__),
-                              parameters=params, extra=self.__extra__)
+                              parameters=params,
+                              origin=self,
+                              extra=self.__extra__)
 
     def __subclasscheck__(self, cls):
         if cls is Any:
             return True
+        if isinstance(cls, GenericMeta):
+            # For a class C(Generic[T]) where T is co-variant,
+            # C[X] is a subclass of C[Y] iff X is a subclass of Y.
+            origin = self.__origin__
+            if origin is not None and origin is cls.__origin__:
+                assert len(self.__parameters__) == len(origin.__parameters__)
+                assert len(cls.__parameters__) == len(origin.__parameters__)
+                for p_self, p_cls, p_origin in zip(self.__parameters__,
+                                                   cls.__parameters__,
+                                                   origin.__parameters__):
+                    if isinstance(p_origin, TypeVar):
+                        if p_origin.__covariant__:
+                            # Covariant -- p_cls must be a subclass of p_self.
+                            if not issubclass(p_cls, p_self):
+                                break
+                        elif p_origin.__contravariant__:
+                            # Contravariant.  I think it's the opposite. :-)
+                            if not issubclass(p_self, p_cls):
+                                break
+                        else:
+                            # Invariant -- p_cls and p_self must equal.
+                            if p_self != p_cls:
+                                break
+                    else:
+                        # If the origin's parameter is not a typevar,
+                        # insist on invariance.
+                        if p_self != p_cls:
+                            break
+                else:
+                    return True
+                # If we break out of the loop, the superclass gets a chance.
         if super().__subclasscheck__(cls):
             return True
-        if self.__extra__ is None:
+        if self.__extra__ is None or isinstance(cls, GenericMeta):
             return False
         return issubclass(cls, self.__extra__)
-
-    def __instancecheck__(self, obj):
-        if super().__instancecheck__(obj):
-            return True
-        if self.__extra__ is None:
-            return False
-        return isinstance(obj, self.__extra__)
 
 
 class Generic(metaclass=GenericMeta):
@@ -1068,47 +1056,15 @@ class Generic(metaclass=GenericMeta):
           # Same body as above.
     """
 
+    __slots__ = ()
 
-class Undefined:
-    """An undefined value.
-
-    Example::
-
-      x = Undefined(typ)
-
-    This tells the type checker that x has the given type but its
-    value should be considered undefined.  At runtime x is an instance
-    of Undefined.  The actual type can be introspected by looking at
-    x.__type__ and its str() and repr() are defined, but any other
-    operations or attributes will raise an exception.
-
-    An alternative syntax is also supported:
-
-      x = Undefined  # type: typ
-
-    This has the same meaning to the static type checker but uses less
-    overhead at run-time, at the cost of not being introspectible.
-
-    NOTE: Do not under any circumstances check for Undefined.  We
-    don't want this to become something developers rely upon, like
-    JavaScript's undefined.  Code that returns or uses an Undefined
-    value in any way should be considered broken.  Static type
-    checkers should warn about using potentially Undefined values.
-    """
-
-    __slots__ = ['__type__']
-
-    def __new__(cls, typ):
-        typ = _type_check(typ, "Undefined(t): t must be a type.")
-        self = super().__new__(cls)
-        self.__type__ = typ
-        return self
-
-    __hash__ = None
-
-    def __repr__(self):
-        return '%s(%s)' % (_type_repr(self.__class__),
-                           _type_repr(self.__type__))
+    def __new__(cls, *args, **kwds):
+        next_in_mro = object
+        # Look for the last occurrence of Generic or Generic[...].
+        for i, c in enumerate(cls.__mro__[:-1]):
+            if isinstance(c, GenericMeta) and _gorg(c) is Generic:
+                next_in_mro = cls.__mro__[i+1]
+        return next_in_mro.__new__(_gorg(cls))
 
 
 def cast(typ, val):
@@ -1151,8 +1107,9 @@ def get_type_hints(obj, globalns=None, localns=None):
     (unless you are familiar with how eval() and exec() work).  The
     search order is locals first, then globals.
 
-    - If no dict arguments are passed, the defaults are taken from the
-      globals and locals of the caller, respectively.
+    - If no dict arguments are passed, an attempt is made to use the
+      globals from obj, and these are also used as the locals.  If the
+      object does not appear to have globals, an exception is raised.
 
     - If one dict argument is passed, it is used for both globals and
       locals.
@@ -1163,9 +1120,9 @@ def get_type_hints(obj, globalns=None, localns=None):
     if getattr(obj, '__no_type_check__', None):
         return {}
     if globalns is None:
-        globalns = sys._getframe(1).f_globals
+        globalns = getattr(obj, '__globals__', {})
         if localns is None:
-            localns = sys._getframe(1).f_locals
+            localns = globalns
     elif localns is None:
         localns = globalns
     defaults = _get_defaults(obj)
@@ -1181,13 +1138,22 @@ def get_type_hints(obj, globalns=None, localns=None):
 
 
 # TODO: Also support this as a class decorator.
-def no_type_check(func):
+def no_type_check(arg):
     """Decorator to indicate that annotations are not type hints.
 
-    This mutates the function in place.
+    The argument must be a class or function; if it is a class, it
+    applies recursively to all methods defined in that class (but not
+    to methods defined in its superclasses or subclasses).
+
+    This mutates the function(s) in place.
     """
-    func.__no_type_check__ = True
-    return func
+    if isinstance(arg, type):
+        for obj in arg.__dict__.values():
+            if isinstance(obj, types.FunctionType):
+                obj.__no_type_check__ = True
+    else:
+        arg.__no_type_check__ = True
+    return arg
 
 
 def no_type_check_decorator(decorator):
@@ -1210,18 +1176,17 @@ def overload(func):
     raise RuntimeError("Overloading is only supported in library stubs")
 
 
-class _Protocol(Generic):
-    """Internal base class for protocol classes.
+class _ProtocolMeta(GenericMeta):
+    """Internal metaclass for _Protocol.
 
-    This implements a simple-minded structural isinstance check
-    (similar but more general than the one-offs in collections.abc
-    such as Hashable).
+    This exists so _Protocol classes can be generic without deriving
+    from Generic.
     """
 
-    _is_protocol = True
+    def __instancecheck__(self, obj):
+        raise TypeError("Protocols cannot be used with isinstance().")
 
-    @classmethod
-    def __subclasshook__(self, cls):
+    def __subclasscheck__(self, cls):
         if not self._is_protocol:
             # No structural checks since this isn't a protocol.
             return NotImplemented
@@ -1235,10 +1200,9 @@ class _Protocol(Generic):
 
         for attr in attrs:
             if not any(attr in d.__dict__ for d in cls.__mro__):
-                return NotImplemented
+                return False
         return True
 
-    @classmethod
     def _get_protocol_attrs(self):
         # Get all Protocol base classes.
         protocol_bases = []
@@ -1260,11 +1224,27 @@ class _Protocol(Generic):
                         attr != '__abstractmethods__' and
                         attr != '_is_protocol' and
                         attr != '__dict__' and
+                        attr != '__slots__' and
                         attr != '_get_protocol_attrs' and
+                        attr != '__parameters__' and
+                        attr != '__origin__' and
                         attr != '__module__'):
                         attrs.add(attr)
 
         return attrs
+
+
+class _Protocol(metaclass=_ProtocolMeta):
+    """Internal base class for protocol classes.
+
+    This implements a simple-minded structural isinstance check
+    (similar but more general than the one-offs in collections.abc
+    such as Hashable).
+    """
+
+    __slots__ = ()
+
+    _is_protocol = True
 
 
 # Various ABCs mimicking those in collections.abc.
@@ -1273,15 +1253,16 @@ class _Protocol(Generic):
 Hashable = collections_abc.Hashable  # Not generic.
 
 
-class Iterable(Generic[T], extra=collections_abc.Iterable):
-    pass
+class Iterable(Generic[T_co], extra=collections_abc.Iterable):
+    __slots__ = ()
 
 
-class Iterator(Iterable, extra=collections_abc.Iterator):
-    pass
+class Iterator(Iterable[T_co], extra=collections_abc.Iterator):
+    __slots__ = ()
 
 
 class SupportsInt(_Protocol):
+    __slots__ = ()
 
     @abstractmethod
     def __int__(self) -> int:
@@ -1289,65 +1270,88 @@ class SupportsInt(_Protocol):
 
 
 class SupportsFloat(_Protocol):
+    __slots__ = ()
 
     @abstractmethod
     def __float__(self) -> float:
         pass
 
 
-class SupportsAbs(_Protocol[T]):
+class SupportsComplex(_Protocol):
+    __slots__ = ()
 
     @abstractmethod
-    def __abs__(self) -> T:
+    def __complex__(self) -> complex:
         pass
 
 
-class SupportsRound(_Protocol[T]):
+class SupportsBytes(_Protocol):
+    __slots__ = ()
 
     @abstractmethod
-    def __round__(self, ndigits: int = 0) -> T:
+    def __bytes__(self) -> bytes:
         pass
 
 
-class Reversible(_Protocol[T]):
+class SupportsAbs(_Protocol[T_co]):
+    __slots__ = ()
 
     @abstractmethod
-    def __reversed__(self) -> 'Iterator[T]':
+    def __abs__(self) -> T_co:
+        pass
+
+
+class SupportsRound(_Protocol[T_co]):
+    __slots__ = ()
+
+    @abstractmethod
+    def __round__(self, ndigits: int = 0) -> T_co:
+        pass
+
+
+class Reversible(_Protocol[T_co]):
+    __slots__ = ()
+
+    @abstractmethod
+    def __reversed__(self) -> 'Iterator[T_co]':
         pass
 
 
 Sized = collections_abc.Sized  # Not generic.
 
 
-class Container(Generic[T], extra=collections_abc.Container):
-    pass
+class Container(Generic[T_co], extra=collections_abc.Container):
+    __slots__ = ()
 
 
 # Callable was defined earlier.
 
 
-class AbstractSet(Sized, Iterable, Container, extra=collections_abc.Set):
+class AbstractSet(Sized, Iterable[T_co], Container[T_co],
+                  extra=collections_abc.Set):
     pass
 
 
-class MutableSet(AbstractSet, extra=collections_abc.MutableSet):
+class MutableSet(AbstractSet[T], extra=collections_abc.MutableSet):
     pass
 
 
-class Mapping(Sized, Iterable[KT], Container[KT], Generic[KT, VT],
+# NOTE: Only the value type is covariant.
+class Mapping(Sized, Iterable[KT], Container[KT], Generic[VT_co],
               extra=collections_abc.Mapping):
     pass
 
 
-class MutableMapping(Mapping, extra=collections_abc.MutableMapping):
+class MutableMapping(Mapping[KT, VT], extra=collections_abc.MutableMapping):
     pass
 
 
-class Sequence(Sized, Iterable, Container, extra=collections_abc.Sequence):
+class Sequence(Sized, Iterable[T_co], Container[T_co],
+               extra=collections_abc.Sequence):
     pass
 
 
-class MutableSequence(Sequence, extra=collections_abc.MutableSequence):
+class MutableSequence(Sequence[T], extra=collections_abc.MutableSequence):
     pass
 
 
@@ -1358,39 +1362,25 @@ class ByteString(Sequence[int], extra=collections_abc.ByteString):
 ByteString.register(type(memoryview(b'')))
 
 
-class _ListMeta(GenericMeta):
+class List(list, MutableSequence[T]):
 
-    def __instancecheck__(self, obj):
-        if not super().__instancecheck__(obj):
-            return False
-        itemtype = self.__parameters__[0]
-        for x in obj:
-            if not isinstance(x, itemtype):
-                return False
-        return True
+    def __new__(cls, *args, **kwds):
+        if _geqv(cls, List):
+            raise TypeError("Type List cannot be instantiated; "
+                            "use list() instead")
+        return list.__new__(cls, *args, **kwds)
 
 
-class List(list, MutableSequence, metaclass=_ListMeta):
-    pass
+class Set(set, MutableSet[T]):
+
+    def __new__(cls, *args, **kwds):
+        if _geqv(cls, Set):
+            raise TypeError("Type Set cannot be instantiated; "
+                            "use set() instead")
+        return set.__new__(cls, *args, **kwds)
 
 
-class _SetMeta(GenericMeta):
-
-    def __instancecheck__(self, obj):
-        if not super().__instancecheck__(obj):
-            return False
-        itemtype = self.__parameters__[0]
-        for x in obj:
-            if not isinstance(x, itemtype):
-                return False
-        return True
-
-
-class Set(set, MutableSet, metaclass=_SetMeta):
-    pass
-
-
-class _FrozenSetMeta(_SetMeta):
+class _FrozenSetMeta(GenericMeta):
     """This metaclass ensures set is not a subclass of FrozenSet.
 
     Without this metaclass, set would be considered a subclass of
@@ -1403,48 +1393,63 @@ class _FrozenSetMeta(_SetMeta):
             return False
         return super().__subclasscheck__(cls)
 
-    def __instancecheck__(self, obj):
-        if issubclass(obj.__class__, Set):
-            return False
-        return super().__instancecheck__(obj)
+
+class FrozenSet(frozenset, AbstractSet[T_co], metaclass=_FrozenSetMeta):
+    __slots__ = ()
+
+    def __new__(cls, *args, **kwds):
+        if _geqv(cls, FrozenSet):
+            raise TypeError("Type FrozenSet cannot be instantiated; "
+                            "use frozenset() instead")
+        return frozenset.__new__(cls, *args, **kwds)
 
 
-class FrozenSet(frozenset, AbstractSet, metaclass=_FrozenSetMeta):
+class MappingView(Sized, Iterable[T_co], extra=collections_abc.MappingView):
     pass
 
 
-class MappingView(Sized, Iterable, extra=collections_abc.MappingView):
+class KeysView(MappingView[KT], AbstractSet[KT],
+               extra=collections_abc.KeysView):
     pass
 
 
-class KeysView(MappingView, Set[KT], extra=collections_abc.KeysView):
+# TODO: Enable Set[Tuple[KT, VT_co]] instead of Generic[KT, VT_co].
+class ItemsView(MappingView, Generic[KT, VT_co],
+                extra=collections_abc.ItemsView):
     pass
 
 
-# TODO: Enable Set[Tuple[KT, VT]] instead of Generic[KT, VT].
-class ItemsView(MappingView, Generic[KT, VT], extra=collections_abc.ItemsView):
+class ValuesView(MappingView[VT_co], extra=collections_abc.ValuesView):
     pass
 
 
-class ValuesView(MappingView, extra=collections_abc.ValuesView):
-    pass
+class Dict(dict, MutableMapping[KT, VT]):
+
+    def __new__(cls, *args, **kwds):
+        if _geqv(cls, Dict):
+            raise TypeError("Type Dict cannot be instantiated; "
+                            "use dict() instead")
+        return dict.__new__(cls, *args, **kwds)
 
 
-class _DictMeta(GenericMeta):
-
-    def __instancecheck__(self, obj):
-        if not super().__instancecheck__(obj):
-            return False
-        keytype, valuetype = self.__parameters__
-        for key, value in obj.items():
-            if not (isinstance(key, keytype) and
-                    isinstance(value, valuetype)):
-                return False
-        return True
+# Determine what base class to use for Generator.
+if hasattr(collections_abc, 'Generator'):
+    # Sufficiently recent versions of 3.5 have a Generator ABC.
+    _G_base = collections_abc.Generator
+else:
+    # Fall back on the exact type.
+    _G_base = types.GeneratorType
 
 
-class Dict(dict, MutableMapping, metaclass=_DictMeta):
-    pass
+class Generator(Iterator[T_co], Generic[T_co, T_contra, V_co],
+                extra=_G_base):
+    __slots__ = ()
+
+    def __new__(cls, *args, **kwds):
+        if _geqv(cls, Generator):
+            raise TypeError("Type Generator cannot be instantiated; "
+                            "create a subclass instead")
+        return super().__new__(cls, *args, **kwds)
 
 
 def NamedTuple(typename, fields):
@@ -1481,6 +1486,8 @@ class IO(Generic[AnyStr]):
     pervasive in the interface; however we currently do not offer a
     way to track the other distinctions in the type system.
     """
+
+    __slots__ = ()
 
     @abstractproperty
     def mode(self) -> str:
@@ -1566,6 +1573,8 @@ class IO(Generic[AnyStr]):
 class BinaryIO(IO[bytes]):
     """Typed version of the return of open() in binary mode."""
 
+    __slots__ = ()
+
     @abstractmethod
     def write(self, s: Union[bytes, bytearray]) -> int:
         pass
@@ -1577,6 +1586,8 @@ class BinaryIO(IO[bytes]):
 
 class TextIO(IO[str]):
     """Typed version of the return of open() in text mode."""
+
+    __slots__ = ()
 
     @abstractproperty
     def buffer(self) -> BinaryIO:

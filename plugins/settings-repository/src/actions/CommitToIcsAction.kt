@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.settingsRepository.actions
 
 import com.intellij.openapi.components.ServiceManager
@@ -9,6 +24,7 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
@@ -21,14 +37,13 @@ import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.checkin.BeforeCheckinDialogHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
 import org.jetbrains.settingsRepository.CommitToIcsDialog
-import org.jetbrains.settingsRepository.IcsBundle
 import org.jetbrains.settingsRepository.ProjectId
 import org.jetbrains.settingsRepository.icsManager
-import java.util.UUID
+import org.jetbrains.settingsRepository.icsMessage
+import java.util.*
 
 class CommitToIcsAction : CommonCheckinFilesAction() {
   class IcsBeforeCommitDialogHandler : CheckinHandlerFactory() {
@@ -52,11 +67,11 @@ class CommitToIcsAction : CommonCheckinFilesAction() {
     }
   }
 
-  override fun getActionName(dataContext: VcsContext) = IcsBundle.message("action.CommitToIcs.text")
+  override fun getActionName(dataContext: VcsContext) = icsMessage("action.CommitToIcs.text")
 
   override fun isApplicableRoot(file: VirtualFile, status: FileStatus, dataContext: VcsContext): Boolean {
-    val project = dataContext.getProject()
-    return project is ProjectEx && (project.stateStore as IProjectStore).getStorageScheme() == StorageScheme.DIRECTORY_BASED && super.isApplicableRoot(file, status, dataContext) && !file.isDirectory() && isProjectConfigFile(file, dataContext.getProject()!!)
+    val project = dataContext.project
+    return project is ProjectEx && (project.stateStore as IProjectStore).storageScheme == StorageScheme.DIRECTORY_BASED && super.isApplicableRoot(file, status, dataContext) && !file.isDirectory && isProjectConfigFile(file, dataContext.project!!)
   }
 
   override fun prepareRootsForCommit(roots: Array<out FilePath>, project: Project) = roots as Array<FilePath>
@@ -67,7 +82,7 @@ class CommitToIcsAction : CommonCheckinFilesAction() {
       return
     }
 
-    val changes = context.getSelectedChanges()
+    val changes = context.selectedChanges
     val collectConsumer = ProjectChangeCollectConsumer(project)
     if (changes != null && changes.isNotEmpty()) {
       for (change in changes) {
@@ -89,7 +104,7 @@ private class ProjectChangeCollectConsumer(private val project: Project) {
   private var projectChanges: MutableList<Change>? = null
 
   fun consume(change: Change) {
-    if (isProjectConfigFile(change.getVirtualFile(), project)) {
+    if (isProjectConfigFile(change.virtualFile, project)) {
       if (projectChanges == null) {
         projectChanges = SmartList<Change>()
       }
@@ -103,7 +118,7 @@ private class ProjectChangeCollectConsumer(private val project: Project) {
 }
 
 private fun getProjectId(project: Project): String? {
-  val projectId = ServiceManager.getService<ProjectId>(project, javaClass<ProjectId>())!!
+  val projectId = ServiceManager.getService<ProjectId>(project, ProjectId::class.java)!!
   if (projectId.uid == null) {
     if (MessageDialogBuilder.yesNo("Settings Server Project Mapping", "Project is not mapped on Settings Server. Would you like to map?").project(project).doNotAsk(object : DialogWrapper.PropertyDoNotAskOption("") {
       override fun setToBeShown(value: Boolean, exitCode: Int) {
@@ -151,8 +166,5 @@ private fun isProjectConfigFile(file: VirtualFile?, project: Project): Boolean {
   if (file == null) {
     return false
   }
-
-  val projectFile = project.getProjectFile()
-  val projectConfigDir = projectFile?.getParent()
-  return projectConfigDir != null && VfsUtilCore.isAncestor(projectConfigDir, file, true)
+  return FileUtil.isAncestor(project.basePath!!, file.path, true)
 }

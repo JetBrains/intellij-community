@@ -27,8 +27,6 @@ class FileGenerationTest extends LightGroovyTestCase {
   final String basePath = TestUtils.testDataPath + 'refactoring/convertGroovyToJava/file'
 
   private void doTest() {
-    addLinkedHashMap()
-
     final String testName = getTestName(true)
     final PsiFile file = myFixture.configureByFile("${testName}.groovy");
     assertInstanceOf file, GroovyFile

@@ -113,7 +113,7 @@ public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
           return Result.create(new GrGdkMethodImpl(original, isStatic, originInfo),
                                PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
         }
-      });
+      }, false);
       original.putUserData(cachedValueKey, cachedValue);
     }
 

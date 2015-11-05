@@ -17,6 +17,7 @@ package org.jetbrains.io;
 
 import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.net.NetUtils;
 import io.netty.bootstrap.ServerBootstrap;
@@ -81,7 +82,7 @@ public final class SubServer implements CustomPortServerManager.CustomPortServic
     }
     catch (Exception e) {
       try {
-        NettyUtil.log(e, BuiltInServer.LOG);
+        NettyUtil.log(e, Logger.getInstance(BuiltInServer.class));
       }
       finally {
         user.cannotBind(e, port);

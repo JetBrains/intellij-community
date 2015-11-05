@@ -443,8 +443,9 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
       Object selectedValue = pathToSelect[i];
       panel.setSelectedValue(selectedValue);
       if (i < pathToSelect.length - 1) {
-        panel = (FinderRecursivePanel)panel.getSecondComponent();
-        assert panel != null : Arrays.toString(pathToSelect);
+        final JComponent component = panel.getSecondComponent();
+        assert component instanceof FinderRecursivePanel : Arrays.toString(pathToSelect);
+        panel = (FinderRecursivePanel)component;
       }
     }
 

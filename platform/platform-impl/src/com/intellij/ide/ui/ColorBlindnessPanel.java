@@ -15,11 +15,14 @@
  */
 package com.intellij.ide.ui;
 
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.components.labels.SwingActionLink;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.util.ui.JBUI;
 
+import java.awt.event.ActionEvent;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -30,11 +33,21 @@ import javax.swing.event.ChangeListener;
 final class ColorBlindnessPanel extends JPanel implements ChangeListener {
   private final JCheckBox myCheckBox = new JCheckBox();
   private final JComboBox myComboBox = new ComboBox();
+  private ColorBlindness myBlindness;
 
   public ColorBlindnessPanel() {
     super(new HorizontalLayout(JBUI.scale(10)));
     add(HorizontalLayout.LEFT, myCheckBox);
     add(HorizontalLayout.LEFT, myComboBox);
+
+    JLabel label = new SwingActionLink(new AbstractAction(UIBundle.message("color.blindness.link.to.help")) {
+      @Override
+      public void actionPerformed(ActionEvent event) {
+        HelpManager.getInstance().invokeHelp("Colorblind_Settings");
+      }
+    });
+    add(HorizontalLayout.LEFT, label);
+    
     myCheckBox.setSelected(false);
     myCheckBox.addChangeListener(this);
     myCheckBox.setText(UIBundle.message("color.blindness.checkbox.text"));
@@ -58,6 +71,9 @@ final class ColorBlindnessPanel extends JPanel implements ChangeListener {
 
   public ColorBlindness getColorBlindness() {
     if (myCheckBox.isSelected()) {
+      if (myBlindness != null) {
+        return myBlindness;
+      }
       Object object = myComboBox.getSelectedItem();
       if (object instanceof Item) {
         Item item = (Item)object;
@@ -68,8 +84,10 @@ final class ColorBlindnessPanel extends JPanel implements ChangeListener {
   }
 
   public void setColorBlindness(ColorBlindness blindness) {
+    // invisible combobox should not be used to store values
+    myBlindness = myComboBox.isVisible() ? null : blindness;
     Item item = null;
-    if (blindness != null) {
+    if (myBlindness == null && blindness != null) {
       int count = myComboBox.getItemCount();
       for (int i = 0; i < count && item == null; i++) {
         Object object = myComboBox.getItemAt(i);
@@ -81,7 +99,7 @@ final class ColorBlindnessPanel extends JPanel implements ChangeListener {
         }
       }
     }
-    myCheckBox.setSelected(item != null);
+    myCheckBox.setSelected(myBlindness != null || item != null);
     if (item != null) {
       myComboBox.setSelectedItem(item);
     }

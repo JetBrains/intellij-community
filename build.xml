@@ -16,8 +16,7 @@
     <isset property="build" />
   </condition>
 
-  <condition property="test.patterns" value="${testpatterns}"
-             else="org.jetbrains.android.*;com.android.tools.idea.*;com.google.gct.*;com.intellij.android.*">
+  <condition property="test.patterns" value="${testpatterns}" else="">
     <isset property="testpatterns" />
   </condition>
 
@@ -34,7 +33,16 @@
   <target name="init">
     <mkdir dir="${out.dir}"/>
     <mkdir dir="${tmp.dir}"/>
-    <ant dir="build" antfile="download_kotlin.xml"/>
+    <java classname="org.apache.tools.ant.Main" fork="true" failonerror="true" dir="${project.home}">
+      <sysproperty key="gant.script" value="${project.home}/build/scripts/download_kotlin.gant"/>
+      <classpath>
+        <fileset dir="${project.home}/lib/ant/lib">
+          <include name="*.jar"/>
+        </fileset>
+      </classpath>
+      <arg value="-f"/>
+      <arg value="${project.home}/build/gant.xml"/>
+    </java>
   </target>
 
   <macrodef name="call_gant">
@@ -42,15 +50,15 @@
     <sequential>
       <java failonerror="true" jar="${project.home}/lib/ant/lib/ant-launcher.jar" fork="true">
         <jvmarg line="-Xmx612m -XX:MaxPermSize=152m"/>
-        <jvmarg value="-Djna.nosys=true" />
-        <jvmarg value="-Dout=${out.dir}" />
-        <jvmarg value="-DbuildNumber=${build.number}" />
-        <jvmarg value="-Didea.test.patterns=${test.patterns}" />
-        <jvmarg value="-Dproduct=${product.name}" />
+        <sysproperty key="jna.nosys" value="true" />
+        <sysproperty key="out" value="${out.dir}" />
+        <sysproperty key="buildNumber" value="${build.number}" />
+        <sysproperty key="idea.test.patterns" value="${test.patterns}" />
+        <sysproperty key="product" value="${product.name}" />
         <sysproperty key="java.awt.headless" value="true"/>
-        <arg line="&quot;-Dgant.script=@{script}&quot;"/>
-        <arg line="&quot;-Dteamcity.build.tempDir=${tmp.dir}&quot;"/>
-        <arg line="&quot;-Didea.test.group=ALL_EXCLUDE_DEFINED&quot;"/>
+        <sysproperty key="gant.script" value="@{script}"/>
+        <sysproperty key="teamcity.build.tempDir" value="${tmp.dir}"/>
+        <sysproperty key="idea.test.group" value="ALL_EXCLUDE_DEFINED"/>
         <arg value="-f"/>
         <arg value="${project.home}/build/gant.xml"/>
       </java>

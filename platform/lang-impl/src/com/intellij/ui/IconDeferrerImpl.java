@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public class IconDeferrerImpl extends IconDeferrer {
       return size() > 100;
     }
   };
-  private long myLastClearTimestamp = 0;
+  private long myLastClearTimestamp;
   @SuppressWarnings("UnusedDeclaration")
   private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
     @Override
@@ -73,35 +73,35 @@ public class IconDeferrerImpl extends IconDeferrer {
   }
 
   @Override
-  public <T> Icon defer(final Icon base, final T param, @NotNull final Function<T, Icon> f) {
-    return deferImpl(base, param, f, false);
+  public <T> Icon defer(final Icon base, final T param, @NotNull final Function<T, Icon> evaluator) {
+    return deferImpl(base, param, evaluator, false);
   }
 
   @Override
-  public <T> Icon deferAutoUpdatable(Icon base, T param, @NotNull Function<T, Icon> f) {
-    return deferImpl(base, param, f, true);
+  public <T> Icon deferAutoUpdatable(Icon base, T param, @NotNull Function<T, Icon> evaluator) {
+    return deferImpl(base, param, evaluator, true);
   }
 
-  private <T> Icon deferImpl(Icon base, T param, @NotNull Function<T, Icon> f, final boolean autoupdatable) {
+  private <T> Icon deferImpl(Icon base, T param, @NotNull Function<T, Icon> evaluator, final boolean autoUpdatable) {
     if (myEvaluationIsInProgress.get().booleanValue()) {
-      return f.fun(param);
+      return evaluator.fun(param);
     }
 
     synchronized (LOCK) {
       Icon result = myIconsCache.get(param);
       if (result == null) {
         final long started = myLastClearTimestamp;
-        result = new DeferredIconImpl<T>(base, param, f, new DeferredIconImpl.IconListener<T>() {
+        result = new DeferredIconImpl<T>(base, param, evaluator, new DeferredIconImpl.IconListener<T>() {
           @Override
           public void evalDone(DeferredIconImpl<T> source, T key, @NotNull Icon r) {
             synchronized (LOCK) {
               // check if our results is not outdated yet
               if (started == myLastClearTimestamp) {
-                myIconsCache.put(key, autoupdatable ? source: r);
+                myIconsCache.put(key, autoUpdatable ? source: r);
               }
             }
           }
-        }, autoupdatable);
+        }, autoUpdatable);
         myIconsCache.put(param, result);
       }
 
@@ -124,5 +124,10 @@ public class IconDeferrerImpl extends IconDeferrer {
     finally {
       myEvaluationIsInProgress.set(Boolean.FALSE);
     }
+  }
+
+  @Override
+  public boolean equalIcons(Icon icon1, Icon icon2) {
+    return DeferredIconImpl.equalIcons(icon1, icon2);
   }
 }

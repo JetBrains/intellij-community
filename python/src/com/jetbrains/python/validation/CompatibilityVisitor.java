@@ -30,6 +30,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -170,16 +171,36 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyStarExpression(PyStarExpression node) {
     super.visitPyStarExpression(node);
-    int len = 0;
-    StringBuilder message = new StringBuilder(myCommonMessage);
-    for (int i = 0; i != myVersionsToProcess.size(); ++i) {
-      LanguageLevel languageLevel = myVersionsToProcess.get(i);
-      if (!languageLevel.isPy3K()) {
-        len = appendLanguageLevel(message, len, languageLevel);
+
+    if (node.isAssignmentTarget()) {
+      for (LanguageLevel level : myVersionsToProcess) {
+        if (level.isOlderThan(LanguageLevel.PYTHON30)) {
+          registerProblem(node, "Python versions < 3.0 do not support starred expressions as assignment targets");
+          break;
+        }
       }
     }
-    commonRegisterProblem(message, " not support this syntax. Starred expressions are not allowed as assignment targets in Python 2",
-                          len, node, null);
+
+    if (node.isUnpacking()) {
+      for (LanguageLevel level : myVersionsToProcess) {
+        if (level.isOlderThan(LanguageLevel.PYTHON35)) {
+          registerProblem(node, "Python versions < 3.5 do not support starred expressions in tuples, lists, and sets");
+          break;
+        }
+      }
+    }
+  }
+
+  @Override
+  public void visitPyDoubleStarExpression(PyDoubleStarExpression node) {
+    super.visitPyDoubleStarExpression(node);
+
+    for (LanguageLevel level : myVersionsToProcess) {
+      if (level.isOlderThan(LanguageLevel.PYTHON35)) {
+        registerProblem(node, "Python versions < 3.5 do not support starred expressions in dicts");
+        break;
+      }
+    }
   }
 
   @Override
@@ -383,6 +404,13 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     for (PyWithItem item : problemItems) {
       registerProblem(item, message.toString());
     }
+    checkAsyncKeyword(node);
+  }
+
+  @Override
+  public void visitPyForStatement(PyForStatement node) {
+    super.visitPyForStatement(node);
+    checkAsyncKeyword(node);
   }
 
   @Override
@@ -478,16 +506,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     int len = 0;
     StringBuilder message = new StringBuilder(myCommonMessage);
 
-    if (myVersionsToProcess.contains(LanguageLevel.PYTHON24) || myVersionsToProcess.contains(LanguageLevel.PYTHON25)) {
-      boolean hasStar = false;
-      for (PyExpression argument : node.getArguments()) {
-        if (hasStar && argument instanceof PyKeywordArgument) {
-          registerProblem(argument, "Python version < 2.6 doesn't support this syntax. Named parameter cannot appear past *arg or **kwarg.");
-        }
-        if (argument instanceof PyStarArgument) hasStar = true;
-      }
-    }
-
     for (int i = 0; i != myVersionsToProcess.size(); ++i) {
       LanguageLevel languageLevel = myVersionsToProcess.get(i);
       if (!languageLevel.isPy3K()) {
@@ -505,6 +523,27 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     }
     commonRegisterProblem(message, " not support this syntax. super() should have arguments in Python 2",
                           len, node, null);
+
+    highlightIncorrectArguments(node);
+  }
+
+  @Override
+  public void visitPyFunction(PyFunction node) {
+    super.visitPyFunction(node);
+    checkAsyncKeyword(node);
+  }
+
+  @Override
+  public void visitPyPrefixExpression(PyPrefixExpression node) {
+    super.visitPyPrefixExpression(node);
+    if (node.getOperator() == PyTokenTypes.AWAIT_KEYWORD) {
+      for (LanguageLevel level : myVersionsToProcess) {
+        if (level.isOlderThan(LanguageLevel.PYTHON35)) {
+          registerProblem(node, "Python versions < 3.5 do not support this syntax");
+          break;
+        }
+      }
+    }
   }
 
   @Override
@@ -567,6 +606,18 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       final IElementType operationType = operation.getNode().getElementType();
       if (PyTokenTypes.ATEQ.equals(operationType)) {
         checkMatrixMultiplicationOperator(operation);
+      }
+    }
+  }
+
+  private void checkAsyncKeyword(PsiElement node) {
+    final ASTNode asyncNode = node.getNode().findChildByType(PyTokenTypes.ASYNC_KEYWORD);
+    if (asyncNode != null) {
+      for (LanguageLevel level : myVersionsToProcess) {
+        if (level.isOlderThan(LanguageLevel.PYTHON35)) {
+          registerProblem(node, asyncNode.getTextRange(), "Python versions < 3.5 do not support this syntax", null, true);
+          break;
+        }
       }
     }
   }
@@ -671,5 +722,85 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       }
     }
     return false;
+  }
+
+  private void highlightIncorrectArguments(@NotNull PyCallExpression callExpression) {
+    final Set<String> keywordArgumentNames = new HashSet<String>();
+    boolean seenKeywordArgument = false;
+    boolean seenKeywordContainer = false;
+    boolean seenPositionalContainer = false;
+    for (PyExpression argument : callExpression.getArguments()) {
+      if (argument instanceof PyKeywordArgument) {
+        seenKeywordArgument = true;
+        final String keyword = ((PyKeywordArgument)argument).getKeyword();
+        boolean reported = false;
+        if (keywordArgumentNames.contains(keyword)) {
+          registerProblem(argument, "Keyword argument repeated", new PyRemoveArgumentQuickFix());
+          reported = true;
+        }
+        if (seenPositionalContainer && !reported) {
+          for (LanguageLevel level : myVersionsToProcess) {
+            if (level.isOlderThan(LanguageLevel.PYTHON26)) {
+              registerProblem(argument, "Python versions < 2.6 do not allow keyword arguments after *expression",
+                              new PyRemoveArgumentQuickFix());
+              reported = true;
+              break;
+            }
+          }
+        }
+        if (seenKeywordContainer && !reported) {
+          for (LanguageLevel level : myVersionsToProcess) {
+            if (level.isOlderThan(LanguageLevel.PYTHON35)) {
+              registerProblem(argument, "Python versions < 3.5 do not allow keyword arguments after **expression",
+                              new PyRemoveArgumentQuickFix());
+              break;
+            }
+          }
+        }
+        keywordArgumentNames.add(keyword);
+      }
+      else if (argument instanceof PyStarArgument) {
+        final PyStarArgument starArgument = (PyStarArgument)argument;
+        if (starArgument.isKeyword()) {
+          if (seenKeywordContainer) {
+            for (LanguageLevel level : myVersionsToProcess) {
+              if (level.isOlderThan(LanguageLevel.PYTHON35)) {
+                registerProblem(argument, "Python versions < 3.5 do not allow duplicate **expressions", new PyRemoveArgumentQuickFix());
+                break;
+              }
+            }
+          }
+          seenKeywordContainer = true;
+        }
+        else {
+          if (seenPositionalContainer) {
+            for (LanguageLevel level : myVersionsToProcess) {
+              if (level.isOlderThan(LanguageLevel.PYTHON35)) {
+                registerProblem(argument, "Python versions < 3.5 do not allow duplicate *expressions", new PyRemoveArgumentQuickFix());
+                break;
+              }
+            }
+          }
+          seenPositionalContainer = true;
+        }
+      }
+      else {
+        if (seenKeywordArgument) {
+          registerProblem(argument, "Positional argument after keyword argument", new PyRemoveArgumentQuickFix());
+        }
+        else if (seenPositionalContainer) {
+          for (LanguageLevel level : myVersionsToProcess) {
+            if (level.isOlderThan(LanguageLevel.PYTHON35)) {
+              registerProblem(argument, "Python versions < 3.5 do not allow positional arguments after *expression",
+                              new PyRemoveArgumentQuickFix());
+              break;
+            }
+          }
+        }
+        else if (seenKeywordContainer) {
+          registerProblem(argument, "Positional argument after **expression", new PyRemoveArgumentQuickFix());
+        }
+      }
+    }
   }
 }

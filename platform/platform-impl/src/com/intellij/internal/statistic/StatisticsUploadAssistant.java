@@ -47,7 +47,7 @@ public class StatisticsUploadAssistant {
 
   public static boolean isShouldShowNotification() {
     return UsageStatisticsPersistenceComponent.getInstance().isShowNotification() &&
-           (System.currentTimeMillis() - Time.DAY > ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFirstRunTime());
+           (System.currentTimeMillis() - Time.WEEK > ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFirstRunTime());
   }
 
   public static boolean isTimeToSend() {

@@ -596,6 +596,22 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals("Try to find String array initializer expressions", 0,
                  findMatchesCount(s9, "new '_{0,0}:String [] { '_* }"));
+
+    String s10 = "int time = 99;\n" +
+                 "String str = time < 0 ? \"\" : \"\";" +
+                 "String str2 = time < time ? \"\" : \"\";";
+
+    assertEquals("Find expressions mistaken for declarations by parser in block mode", 1,
+                 findMatchesCount(s10, "time < time"));
+
+    assertEquals("Find expressions mistaken for declarations by parser in block mode 2", 1,
+                 findMatchesCount(s10, "time < 0"));
+
+    assertEquals("Find expressions mistaken for declarations by parser in block mode 3", 1,
+                 findMatchesCount(s10, "time < 0 ? '_a : '_b"));
+
+    assertEquals("Find expressions mistaken for declarations by parser in block mode 4", 2,
+                 findMatchesCount(s10, "'_a < '_b"));
   }
 
   public void testLiteral() {
@@ -685,14 +701,42 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       1,
       findMatchesCount(s11,s12_3)
     );
+  }
 
-    String source = "class A { String ss[][]; }";
+  public void testFindArrayDeclarations() {
+    String source = "class A {" +
+                    "  String ss[][];" +
+                    "  int f()[] {" +
+                    "    return null;" +
+                    "  }" +
+                    "}";
+
     String target = "String[][] $s$;";
-    assertEquals(
-      "should find multi dimensional c-style array declarations",
-      1,
-      findMatchesCount(source, target)
-    );
+    assertEquals("should find multi-dimensional c-style array declarations", 1, findMatchesCount(source, target));
+
+    String target2 = "class '_A { int[] 'f(); }";
+    assertEquals("should find c-style method return type declarations", 1, findMatchesCount(source, target2));
+
+    String target3 = "class '_A { int 'f(); }";
+    assertEquals("should not find methods with array return types",0, findMatchesCount(source, target3));
+
+    String source2 = "class A {" +
+                     "  void y(int... i) {}" +
+                     "  void y(String... ss) {}" +
+                     "  void y(boolean b) {}" +
+                     "}";
+    assertEquals("find ellipsis type 1", 1, findMatchesCount(source2, "String[] '_a"));
+    assertEquals("find ellipsis type 2", 1, findMatchesCount(source2, "int[] '_a"));
+    assertEquals("find ellipsis type 3", 1, findMatchesCount(source2, "class '_X { void '_m(int... '_a); }"));
+    assertEquals("find ellipsis type 4", 2, findMatchesCount(source2, "'_T[] '_a"));
+
+    String source3 = "class A {" +
+                     "  private int[] is;" +
+                     "}";
+    assertEquals("find primitive array 1", 1, findMatchesCount(source3, "int[] '_a;"));
+    assertEquals("find primitive array 2", 1, findMatchesCount(source3, "'_T[] '_a;"));
+    assertEquals("find primitive array 3", 1, findMatchesCount(source3, "'_T:[regex( int )][] '_a;"));
+    assertEquals("find primitive array 4", 1, findMatchesCount(source3, "'_T:[regex( int\\[\\] )] '_a;"));
   }
 
   // @todo support back references (\1 in another reg exp or as fild member)
@@ -3291,5 +3335,30 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("find declarations with only one field", 1, findMatchesCount(source, "int '_a;"));
     assertEquals("find all declarations", 4, findMatchesCount(source, "int '_a+;"));
     assertEquals("find all fields", 9, findMatchesCount(source, "int 'a+;"));
+
+    String source2 = "class ABC {" +
+                     "    String u;" +
+                     "    String s,t," +
+                     "    void m() {}" +
+                     "}";
+    assertEquals("find incomplete code", 1, findMatchesCount(source2, "'_a '_b{2,100};"));
+  }
+
+  public void testFindWithSimpleMemberPattern() {
+    String source  = "class X {" +
+                     "  static {}" +
+                     "  static {}" +
+                     "  static {" +
+                     "    System.out.println();" +
+                     "  }" +
+                     "  void one() {}" +
+                     "  void two() {" +
+                     "    System.out.println();" +
+                     "  }" +
+                     "}";
+
+    assertEquals("find with simple method pattern", 2, findMatchesCount(source, "void '_a();"));
+    assertEquals("find with simple method pattern 2", 1, findMatchesCount(source, "void one();"));
+    assertEquals("find with simple static initializer pattern", 3, findMatchesCount(source, "static { '_statement*;}"));
   }
 }

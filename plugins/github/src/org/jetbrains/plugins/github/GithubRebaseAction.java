@@ -254,8 +254,8 @@ public class GithubRebaseAction extends DumbAwareAction {
                                             @NotNull final VirtualFile root,
                                             @NotNull final ProgressIndicator indicator) {
     final GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
-
-    final GitRebaser rebaser = new GitRebaser(project, ServiceManager.getService(Git.class), indicator);
+    Git git = ServiceManager.getService(Git.class);
+    final GitRebaser rebaser = new GitRebaser(project, git, indicator);
 
     final GitLineHandler handler = new GitLineHandler(project, root, GitCommand.REBASE);
     handler.setStdoutSuppressed(false);
@@ -269,29 +269,25 @@ public class GithubRebaseAction extends DumbAwareAction {
     final GitLocalChangesWouldBeOverwrittenDetector localChangesDetector = new GitLocalChangesWouldBeOverwrittenDetector(root, CHECKOUT);
     handler.addLineListener(untrackedFilesDetector);
     handler.addLineListener(localChangesDetector);
+    handler.addLineListener(GitStandardProgressAnalyzer.createListener(indicator));
 
-    GitTask pullTask = new GitTask(project, handler, "Rebasing from upstream/master");
-    pullTask.setProgressIndicator(indicator);
-    pullTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
-    pullTask.execute(true, false, new GitTaskResultHandlerAdapter() {
-      @Override
-      protected void onSuccess() {
-        root.refresh(false, true);
-        repositoryManager.updateRepository(root);
+    String oldText = indicator.getText();
+    indicator.setText("Rebasing from upstream/master...");
+    GitCommandResult rebaseResult = git.runCommand(handler);
+    indicator.setText(oldText);
+    repositoryManager.updateRepository(root);
+    if (rebaseResult.success()) {
+      root.refresh(false, true);
+      GithubNotifications.showInfo(project, "Success", "Successfully rebased GitHub fork");
+    }
+    else {
+      GitUpdateResult result = rebaser.handleRebaseFailure(handler, root, rebaseConflictDetector,
+                                                           untrackedFilesDetector, localChangesDetector);
+      if (result == GitUpdateResult.NOTHING_TO_UPDATE ||
+          result == GitUpdateResult.SUCCESS ||
+          result == GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS) {
         GithubNotifications.showInfo(project, "Success", "Successfully rebased GitHub fork");
       }
-
-      @Override
-      protected void onFailure() {
-        GitUpdateResult result = rebaser.handleRebaseFailure(handler, root, rebaseConflictDetector,
-                                                             untrackedFilesDetector, localChangesDetector);
-        repositoryManager.updateRepository(root);
-        if (result == GitUpdateResult.NOTHING_TO_UPDATE ||
-            result == GitUpdateResult.SUCCESS ||
-            result == GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS) {
-          GithubNotifications.showInfo(project, "Success", "Successfully rebased GitHub fork");
-        }
-      }
-    });
+    }
   }
 }

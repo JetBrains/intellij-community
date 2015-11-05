@@ -17,7 +17,7 @@ package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -42,8 +42,7 @@ import java.util.List;
 class InjectedSelfElementInfo extends SmartPointerElementInfo {
   private final SmartPsiFileRange myInjectedFileRangeInHostFile;
   @Nullable private final AffixOffsets myAffixOffsets;
-  private final Class<? extends PsiElement> anchorClass;
-  private final Language anchorLanguage;
+  private final AnchorTypeInfo myType;
   @NotNull
   private final SmartPsiElementPointer<PsiLanguageInjectionHost> myHostContext;
 
@@ -61,8 +60,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     assert !(hostFile.getViewProvider() instanceof FreeThreadedFileViewProvider) : "hostContext parameter must not be and injected element: "+hostContext;
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
     myInjectedFileRangeInHostFile = smartPointerManager.createSmartPsiFileRangePointer(hostFile, hostRange);
-    anchorLanguage = containingFile.getLanguage();
-    anchorClass = injectedElement.getClass(); //containingFile.findElementAt(injectedRange.getStartOffset()).getClass();
+    myType = AnchorTypeInfo.obtainInfo(injectedElement, LanguageUtil.getRootLanguage(containingFile));
 
     int startAffixIndex = -1;
     int startAffixOffset = -1;
@@ -116,7 +114,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     ProperTextRange rangeInInjected = hostToInjected(true, segment, injectedPsi, myAffixOffsets);
     if (rangeInInjected == null) return null;
 
-    return SelfElementInfo.findElementInside(injectedPsi, rangeInInjected.getStartOffset(), rangeInInjected.getEndOffset(), anchorClass, anchorLanguage);
+    return SelfElementInfo.findElementInside(injectedPsi, rangeInInjected.getStartOffset(), rangeInInjected.getEndOffset(), myType);
   }
 
   private PsiFile getInjectedFileIn(@NotNull final PsiElement hostContext,

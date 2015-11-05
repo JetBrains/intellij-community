@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
+import com.intellij.util.FontUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -124,18 +125,16 @@ public class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
       else if (treeNode instanceof GroupNode) {
         GroupNode node = (GroupNode)treeNode;
 
-        if (node.isRoot()) {
-          append(StringUtil.capitalize(myPresentation.getUsagesWord()), patchAttrs(node, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES));
-        }
-        else {
+        if (!node.isRoot()) {
           append(node.getGroup().getText(myView),
                  patchAttrs(node, showAsReadOnly ? ourReadOnlyAttributes : SimpleTextAttributes.REGULAR_ATTRIBUTES));
           setIcon(node.getGroup().getIcon(expanded));
         }
 
         int count = node.getRecursiveUsageCount();
-        append(" (" + StringUtil.pluralize(count + " " + myPresentation.getUsagesWord(), count) + ")",
-               patchAttrs(node, ourNumberOfUsagesAttribute));
+        SimpleTextAttributes attributes = patchAttrs(node, ourNumberOfUsagesAttribute);
+        append(FontUtil.spaceAndThinSpace() + count,
+               SimpleTextAttributes.GRAYED_ATTRIBUTES.derive(attributes.getStyle(), null, null, null));
       }
       else if (treeNode instanceof UsageNode) {
         UsageNode node = (UsageNode)treeNode;
@@ -146,9 +145,12 @@ public class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
 
         if (node.isValid()) {
           TextChunk[] text = node.getUsage().getPresentation().getText();
-          for (TextChunk textChunk : text) {
-            SimpleTextAttributes simples = textChunk.getSimpleAttributesIgnoreBackground();
-            append(textChunk.getText(), patchAttrs(node, simples));
+          for (int i = 0; i < text.length; i++) {
+            TextChunk chunk = text[i];
+            SimpleTextAttributes simples = chunk.getSimpleAttributesIgnoreBackground();
+            String chunkText = chunk.getText();
+            String fragment = i == 0 ? chunkText + FontUtil.spaceAndThinSpace() : chunkText;
+            append(fragment, patchAttrs(node, simples));
           }
         }
       }
@@ -210,7 +212,7 @@ public class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         }
 
         int count = node.getRecursiveUsageCount();
-        result.append(" (").append(StringUtil.pluralize(count + " " + myPresentation.getUsagesWord(), count)).append(")");
+        result.append(" ").append(count);
       }
       else if (treeNode instanceof UsageNode) {
         UsageNode node = (UsageNode)treeNode;

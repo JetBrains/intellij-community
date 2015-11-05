@@ -17,7 +17,7 @@
     <colorSettingsPage implementation="com.intellij.xdebugger.impl.ui.DebuggerColorsPage"/>
 
     <applicationService serviceInterface="com.intellij.xdebugger.settings.XDebuggerSettingsManager"
-                        serviceImplementation="com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager"/>
+                        serviceImplementation="com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.xdebugger.XDebuggerUtil"
                         serviceImplementation="com.intellij.xdebugger.impl.XDebuggerUtilImpl"/>

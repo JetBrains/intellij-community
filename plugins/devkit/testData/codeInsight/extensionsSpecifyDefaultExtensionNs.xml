@@ -1,0 +1,12 @@
+<idea-plugin>
+  <id>com.intellij.myPlugin</id>
+
+  <extensions defaultExtensionNs="com.intellij"/>
+
+  <<error descr="Specify defaultExtensionNs=\"com.intellij\" explicitly">extensions</error>>
+  </extensions>
+
+  <extensions <error descr="Use defaultExtensionNs instead">xmlns="<error descr="URI is not registered (Settings | Languages & Frameworks | Schemas and DTDs)">com.intellij.myPlugin</error>"</error>>
+  </extensions>
+
+</idea-plugin>

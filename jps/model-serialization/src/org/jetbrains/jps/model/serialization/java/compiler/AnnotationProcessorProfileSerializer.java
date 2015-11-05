@@ -45,10 +45,12 @@ public class AnnotationProcessorProfileSerializer {
     profile.setEnabled(Boolean.valueOf(element.getAttributeValue(ENABLED, "false")));
 
     final Element srcOutput = element.getChild("sourceOutputDir");
-    profile.setGeneratedSourcesDirectoryName(srcOutput != null ? srcOutput.getAttributeValue(NAME) : null, false);
+    final String out = srcOutput != null ? srcOutput.getAttributeValue(NAME) : null;
+    profile.setGeneratedSourcesDirectoryName(out != null? FileUtil.toSystemDependentName(out) : null, false);
 
     final Element srcTestOutput = element.getChild("sourceTestOutputDir");
-    profile.setGeneratedSourcesDirectoryName(srcTestOutput != null ? srcTestOutput.getAttributeValue(NAME) : null, true);
+    final String testOut = srcTestOutput != null ? srcTestOutput.getAttributeValue(NAME) : null;
+    profile.setGeneratedSourcesDirectoryName(testOut != null? FileUtil.toSystemDependentName(testOut) : null, true);
 
     final Element isRelativeToContentRoot = element.getChild("outputRelativeToContentRoot");
     if (isRelativeToContentRoot != null) {
@@ -104,10 +106,10 @@ public class AnnotationProcessorProfileSerializer {
 
     final String srcDirName = profile.getGeneratedSourcesDirectoryName(false);
     if (!StringUtil.equals(ProcessorConfigProfile.DEFAULT_PRODUCTION_DIR_NAME, srcDirName)) {
-      addChild(element, "sourceOutputDir").setAttribute(NAME, srcDirName);
+      addChild(element, "sourceOutputDir").setAttribute(NAME, FileUtil.toSystemIndependentName(srcDirName));
     }
     final String testSrcDirName = profile.getGeneratedSourcesDirectoryName(true);
-    if (!StringUtil.equals(ProcessorConfigProfile.DEFAULT_TESTS_DIR_NAME, testSrcDirName)) {
+    if (!StringUtil.equals(ProcessorConfigProfile.DEFAULT_TESTS_DIR_NAME, FileUtil.toSystemIndependentName(testSrcDirName))) {
       addChild(element, "sourceTestOutputDir").setAttribute(NAME, testSrcDirName);
     }
 

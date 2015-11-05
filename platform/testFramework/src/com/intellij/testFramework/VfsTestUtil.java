@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,15 @@ package com.intellij.testFramework;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.text.StringTokenizer;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.io.File;
@@ -91,19 +95,8 @@ public class VfsTestUtil {
     }
   }
 
-  public static void deleteFile(final VirtualFile file) {
-    try {
-      AccessToken token = WriteAction.start();
-      try {
-        file.delete(VfsTestUtil.class);
-      }
-      finally {
-        token.finish();
-      }
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  public static void deleteFile(@NotNull VirtualFile file) {
+    UtilKt.deleteFile(file);
   }
 
   public static void clearContent(VirtualFile file) {
@@ -123,6 +116,33 @@ public class VfsTestUtil {
     }
     catch (IOException e) {
       throw new AssertionError(e);
+    }
+  }
+
+  @NotNull
+  public static VirtualFile findFileByCaseSensitivePath(@NotNull String absolutePath) {
+    String vfsPath = FileUtil.toSystemIndependentName(absolutePath);
+    VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(vfsPath);
+    Assert.assertNotNull("file " + absolutePath + " not found", vFile);
+    String realVfsPath = vFile.getPath();
+    if (!SystemInfo.isFileSystemCaseSensitive && !vfsPath.equals(realVfsPath) &&
+        vfsPath.equalsIgnoreCase(realVfsPath)) {
+      Assert.fail("Please correct case-sensitivity of path to prevent test failure on case-sensitive file systems:\n" +
+                  "     path " + vfsPath + "\n" +
+                  "real path " + realVfsPath);
+    }
+    return vFile;
+  }
+
+  public static void assertFilePathEndsWithCaseSensitivePath(@NotNull VirtualFile file, @NotNull String suffixPath) {
+    String vfsSuffixPath = FileUtil.toSystemIndependentName(suffixPath);
+    String vfsPath = file.getPath();
+    if (!SystemInfo.isFileSystemCaseSensitive && !vfsPath.endsWith(vfsSuffixPath) &&
+        StringUtil.endsWithIgnoreCase(vfsPath, vfsSuffixPath)) {
+      String realSuffixPath = vfsPath.substring(vfsPath.length() - vfsSuffixPath.length());
+      Assert.fail("Please correct case-sensitivity of path to prevent test failure on case-sensitive file systems:\n" +
+                  "     path " + suffixPath + "\n" +
+                  "real path " + realSuffixPath);
     }
   }
 }

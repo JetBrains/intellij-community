@@ -49,7 +49,7 @@ import static com.intellij.codeInsight.completion.CompletionUtilCore.DUMMY_IDENT
 /**
  * @author Mike
  */
-public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
+public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, HintedReferenceHost {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlAttributeImpl");
 
   private final int myHC = ourHC++;
@@ -317,7 +317,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       @Override
       public PomModelEvent runInner() {
         final PomModelEvent event = new PomModelEvent(model);
-        XmlChangeSet xmlAspectChangeSet = new XmlAspectChangeSetImpl(model, (XmlFile)getContainingFile());
+        PsiFile file = getContainingFile();
+        XmlChangeSet xmlAspectChangeSet = new XmlAspectChangeSetImpl(model, file instanceof XmlFile ? (XmlFile)file : null);
         xmlAspectChangeSet.add(new XmlAttributeSetImpl(getParent(), oldName, null));
         xmlAspectChangeSet.add(new XmlAttributeSetImpl(getParent(), nameText, getValue()));
         event.registerChangeSet(model.getModelAspect(XmlAspect.class), xmlAspectChangeSet);
@@ -330,14 +331,36 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
 
   @Override
   public PsiReference getReference() {
-    final PsiReference[] refs = getReferences();
+    final PsiReference[] refs = getReferences(PsiReferenceService.Hints.NO_HINTS);
     if (refs.length > 0) return refs[0];
     return null;
   }
 
   @Override
+  public boolean shouldAskParentForReferences(@NotNull PsiReferenceService.Hints hints) {
+    return false;
+  }
+
+  /**
+   * Use {@link #getReferences(PsiReferenceService.Hints)} instead of calling or overriding this method.
+   */
+  @Deprecated
   @NotNull
-  public PsiReference[] getReferences() {
+  @Override
+  public final PsiReference[] getReferences() {
+    return getReferences(PsiReferenceService.Hints.NO_HINTS);
+  }
+
+  @NotNull
+  @Override
+  public PsiReference[] getReferences(@NotNull PsiReferenceService.Hints hints) {
+    if (hints.offsetInElement != null) {
+      XmlElement nameElement = getNameElement();
+      if (nameElement == null || hints.offsetInElement > nameElement.getStartOffsetInParent() + nameElement.getTextLength()) {
+        return PsiReference.EMPTY_ARRAY;
+      }
+    }
+
     final PsiReference[] referencesFromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(this);
     PsiReference[] refs;
     if (isNamespaceDeclaration()) {

@@ -88,13 +88,14 @@ public class XmlCharFilter extends CharFilter {
     switch(c){
       case '-':
       case ':':
+      case '?':
         return Result.ADD_TO_PREFIX;
       case '/':
         if (isWithinTag(lookup)) {
           if (prefixLength > 0) {
             return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
           }
-          XmlAutoPopupHandler.autoPopupXmlLookup(lookup.getEditor().getProject(), lookup.getEditor());
+          XmlAutoPopupHandler.autoPopupXmlLookup(lookup.getProject(), lookup.getEditor());
           return Result.HIDE_LOOKUP;
         }
         return Result.ADD_TO_PREFIX;

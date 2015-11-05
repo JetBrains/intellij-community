@@ -121,6 +121,18 @@ public abstract class PyElementGenerator {
 
   public abstract PyNamedParameter createParameter(@NotNull String name);
 
+  /**
+   * @param text parameters list already in parentheses, e.g. {@code (foo, *args, **kwargs)}.
+   */
+  @NotNull
+  public abstract PyParameterList createParameterList(@NotNull LanguageLevel languageLevel, @NotNull String text);
+
+  /**
+   * @param text argument list already in parentheses, e.g. {@code (1, 2, *xs)}.
+   */
+  @NotNull
+  public abstract PyArgumentList createArgumentList(@NotNull LanguageLevel languageLevel, @NotNull String text);
+
   public abstract PyKeywordArgument createKeywordArgument(LanguageLevel languageLevel, String keyword, String value);
 
   public abstract PsiFile createDummyFile(LanguageLevel langLevel, String contents);

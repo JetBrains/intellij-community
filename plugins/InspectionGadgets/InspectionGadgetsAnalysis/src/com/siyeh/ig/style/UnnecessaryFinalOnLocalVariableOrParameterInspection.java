@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -165,7 +164,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
       }
       for (PsiElement declaredElement : declaredElements) {
         final PsiLocalVariable variable = (PsiLocalVariable)declaredElement;
-        if (isNotEffectivelyFinal(containingBlock, variable)) {
+        if (isNecessaryFinal(containingBlock, variable)) {
           return;
         }
       }
@@ -240,15 +239,12 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspection extends BaseIn
       registerError(statement, parameter);
     }
 
-    private boolean isNotEffectivelyFinal(PsiElement method, PsiVariable parameter) {
-      if (!PsiUtil.isLanguageLevel8OrHigher(parameter)) {
-        return VariableAccessUtils.variableIsUsedInInnerClass(parameter, method);
-      }
-      return !HighlightControlFlowUtil.isEffectivelyFinal(parameter, method, null);
+    private boolean isNecessaryFinal(PsiElement method, PsiVariable parameter) {
+      return !PsiUtil.isLanguageLevel8OrHigher(parameter) && VariableAccessUtils.variableIsUsedInInnerClass(parameter, method);
     }
 
     private void registerError(PsiElement context, PsiVariable parameter) {
-      if (!isNotEffectivelyFinal(context, parameter)) {
+      if (!isNecessaryFinal(context, parameter)) {
         registerModifierError(PsiModifier.FINAL, parameter, parameter);
       }
     }

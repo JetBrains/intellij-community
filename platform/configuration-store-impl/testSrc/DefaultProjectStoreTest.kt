@@ -4,70 +4,98 @@ import com.intellij.externalDependencies.DependencyOnPlugin
 import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.externalDependencies.ProjectExternalDependency
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.service
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.*
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.ProjectRule
-import com.intellij.testFramework.RuleChain
-import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.testFramework.*
 import org.assertj.core.api.Assertions.assertThat
+import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExternalResource
-import java.io.File
+import java.nio.file.Paths
 
-class DefaultProjectStoreTest {
+internal class DefaultProjectStoreTest {
   companion object {
-    ClassRule val projectRule = ProjectRule()
+    @ClassRule val projectRule = ProjectRule()
+
+    private const val TEST_COMPONENT_NAME = "Foo"
+
+    @State(name = TEST_COMPONENT_NAME, storages = arrayOf(
+      Storage(file = StoragePathMacros.PROJECT_FILE),
+      Storage(file = "${StoragePathMacros.PROJECT_CONFIG_DIR}/testSchemes", scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = TestStateSplitter::class))
+    )
+    private class TestComponent: PersistentStateComponent<Element> {
+      private var element = Element("state")
+
+      override fun getState() = element.clone()
+
+      override fun loadState(state: Element) {
+        element = state.clone()
+      }
+    }
   }
 
   private val tempDirManager = TemporaryDirectory()
 
-  private val requiredPlugins: List<ProjectExternalDependency> = listOf(DependencyOnPlugin("fake", "0", "1"))
+  private val requiredPlugins = listOf<ProjectExternalDependency>(DependencyOnPlugin("fake", "0", "1"))
 
   private val ruleChain = RuleChain(
     tempDirManager,
-    object : ExternalResource() {
-      private var isDoNotSave = false
+    WrapRule {
+      val app = ApplicationManagerEx.getApplicationEx()
+      val path = Paths.get(app.stateStore.stateStorageManager.expandMacros(StoragePathMacros.APP_CONFIG))
+      // dream about using in memory fs per test as ICS partially does and avoid such hacks
+      path.refreshVfs()
 
-      override fun before() {
-        val app = ApplicationManagerEx.getApplicationEx()
-        isDoNotSave = app.isDoNotSave()
-        app.doNotSave(false)
-      }
-
-      override fun after() {
-        val app = ApplicationManagerEx.getApplicationEx()
+      val isDoNotSave = app.isDoNotSave
+      app.doNotSave(false);
+      {
         try {
           app.doNotSave(isDoNotSave)
         }
         finally {
-          FileUtil.delete(File(app.stateStore.getStateStorageManager().expandMacros(StoragePathMacros.APP_CONFIG)))
+          path.deleteRecursively()
+          val virtualFile = LocalFileSystem.getInstance().findFileByPathIfCached(path.systemIndependentPath)
+          runInEdtAndWait { runWriteAction { virtualFile?.delete(null) } }
         }
-      }
-    },
-    object : ExternalResource() {
-      private var externalDependenciesManager: ExternalDependenciesManager? = null
-
-      override fun before() {
-        externalDependenciesManager = ProjectManager.getInstance().getDefaultProject().service<ExternalDependenciesManager>()
-        externalDependenciesManager!!.setAllDependencies(requiredPlugins)
-      }
-
-      override fun after() {
-        externalDependenciesManager?.setAllDependencies(emptyList())
       }
     }
   )
 
-  public Rule fun getChain(): RuleChain = ruleChain
+  @Rule fun getChain() = ruleChain
 
-  public Test fun `new project from default`() {
-    createProject(tempDirManager) {
-      assertThat(it.service<ExternalDependenciesManager>().getAllDependencies()).isEqualTo(requiredPlugins)
+  @Test fun `new project from default - file-based storage`() {
+    val externalDependenciesManager = ProjectManager.getInstance().defaultProject.service<ExternalDependenciesManager>()
+    externalDependenciesManager.allDependencies = requiredPlugins
+    try {
+      createProjectAndUseInLoadComponentStateMode(tempDirManager) {
+        assertThat(it.service<ExternalDependenciesManager>().allDependencies).isEqualTo(requiredPlugins)
+      }
+    }
+    finally {
+      externalDependenciesManager.allDependencies = emptyList()
+    }
+  }
+
+  @Test fun `new project from default - directory-based storage`() {
+    val defaultProject = ProjectManager.getInstance().defaultProject
+    val defaultTestComponent = TestComponent()
+    defaultTestComponent.loadState(JDOMUtil.load("""<component><main name="$TEST_COMPONENT_NAME"/><sub name="foo" /><sub name="bar" /></component>""".reader()))
+    val stateStore = defaultProject.stateStore as ComponentStoreImpl
+    stateStore.initComponent(defaultTestComponent, true)
+    try {
+      // obviously, project must be directory-based also
+      createProjectAndUseInLoadComponentStateMode(tempDirManager, directoryBased = true) {
+        val component = TestComponent()
+        it.stateStore.initComponent(component, true)
+        assertThat(JDOMUtil.writeElement(component.state)).isEqualTo(JDOMUtil.writeElement(defaultTestComponent.state))
+      }
+    }
+    finally {
+      stateStore.removeComponent(TEST_COMPONENT_NAME)
     }
   }
 }

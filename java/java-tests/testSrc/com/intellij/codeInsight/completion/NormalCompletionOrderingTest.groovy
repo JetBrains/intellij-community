@@ -696,8 +696,9 @@ interface TxANotAnno {}
   }
 
   public void testPreferValueTypesReturnedFromMethod() {
-    checkPreferredItems 0, 'StringBuffer', 'String', 'Serializable', 'SomeInterface', 'SomeOtherClass'
+    checkPreferredItems 0, 'StringBuffer', 'String', 'Serializable', 'SomeInterface', 'SomeInterface', 'SomeOtherClass'
     assert 'SomeInterface<String>' == LookupElementPresentation.renderElement(myFixture.lookupElements[3]).itemText
+    assert 'SomeInterface' == LookupElementPresentation.renderElement(myFixture.lookupElements[4]).itemText
   }
 
   public void testPreferCastTypesHavingSpecifiedMethod() {
@@ -706,6 +707,10 @@ interface TxANotAnno {}
 
   public void testNaturalSorting() {
     checkPreferredItems 0, 'fun1', 'fun2', 'fun10'
+  }
+
+  public void testPreferVarsHavingReferencedMember() {
+    checkPreferredItems 0, 'xzMap', 'xaString'
   }
 
 }

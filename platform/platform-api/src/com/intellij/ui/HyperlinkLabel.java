@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.parser.ParserDelegator;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.io.StringReader;
@@ -66,16 +67,11 @@ public class HyperlinkLabel extends HighlightableComponent {
   }
 
   public HyperlinkLabel(String text) {
-    this(text,
-         PlatformColors.BLUE,
-         new JBColor(new NotNullProducer<Color>() {
-           @NotNull
-           @Override
-           public Color produce() {
-             return UIUtil.getLabelBackground();
-           }
-         }),
-         PlatformColors.BLUE);
+    this(text, UIUtil.getLabelBackground());
+  }
+  
+  public HyperlinkLabel(String text, Color background) {
+    this(text, PlatformColors.BLUE, background, PlatformColors.BLUE);
   }
 
   public HyperlinkLabel(String text, final Color textForegroundColor, final Color textBackgroundColor, final Color textEffectColor) {
@@ -112,6 +108,13 @@ public class HyperlinkLabel extends HighlightableComponent {
     this.setMinimumSize(preferredSize);
   }
 
+  @Override
+  protected void processComponentKeyEvent(KeyEvent event) {
+    if (event.getModifiers() == 0 && event.getKeyCode() == KeyEvent.VK_SPACE) {
+      event.consume();
+      fireHyperlinkEvent();
+    }
+  }
 
   protected void processMouseEvent(MouseEvent e) {
     if (e.getID() == MouseEvent.MOUSE_EXITED) {

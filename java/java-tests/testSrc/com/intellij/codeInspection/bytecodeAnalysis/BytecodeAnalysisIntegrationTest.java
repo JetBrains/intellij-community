@@ -191,6 +191,98 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
     assertEmpty(diffs);
   }
 
+  /*
+  public void testExportInferredAnnotations() {
+    exportInferredAnnotations();
+  }
+  */
+
+  public void exportInferredAnnotations() {
+    setUpLibraries();
+    setUpExternalUpAnnotations();
+
+    final PsiPackage rootPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
+    assert rootPackage != null;
+
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+    JavaRecursiveElementVisitor visitor = new JavaRecursiveElementVisitor() {
+      @Override
+      public void visitPackage(PsiPackage aPackage) {
+        // annotations are in classpaths, but we are not interested in inferred annotations for them
+        if ("org.intellij.lang.annotations".equals(aPackage.getQualifiedName())) {
+          return;
+        }
+        for (PsiPackage subPackage : aPackage.getSubPackages(scope)) {
+          visitPackage(subPackage);
+        }
+        for (PsiClass aClass : aPackage.getClasses(scope)) {
+          processClass(aClass);
+          for (PsiClass innerClass : aClass.getInnerClasses()) {
+            processClass(innerClass);
+          }
+        }
+      }
+
+      private void processClass(PsiClass aClass) {
+        for (PsiMethod method : aClass.getMethods()) {
+          exportMethodAnnotations(method);
+        }
+        for (PsiClass innerClass : aClass.getInnerClasses()) {
+          processClass(innerClass);
+        }
+      }
+    };
+
+    rootPackage.accept(visitor);
+  }
+
+  private void exportMethodAnnotations(PsiMethod method) {
+
+    // @Contract
+    PsiAnnotation inferredContractAnnotation = findInferredAnnotation(method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+    if (inferredContractAnnotation != null) {
+      PsiNameValuePair[] attributes = inferredContractAnnotation.getParameterList().getAttributes();
+      ExternalAnnotationsManager.getInstance(myModule.getProject()).annotateExternally(method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT, method.getContainingFile(), attributes);
+    }
+
+    {
+      // @NotNull method
+      PsiAnnotation inferredNotNullMethodAnnotation = findInferredAnnotation(method, AnnotationUtil.NOT_NULL);
+      if (inferredNotNullMethodAnnotation != null) {
+        ExternalAnnotationsManager.getInstance(myModule.getProject()).annotateExternally(method, AnnotationUtil.NOT_NULL, method.getContainingFile(), null);
+      }
+
+    }
+
+    {
+      // @Nullable method
+      PsiAnnotation inferredNullableMethodAnnotation = findInferredAnnotation(method, AnnotationUtil.NULLABLE);
+
+      if (inferredNullableMethodAnnotation != null) {
+        ExternalAnnotationsManager.getInstance(myModule.getProject()).annotateExternally(method, AnnotationUtil.NULLABLE, method.getContainingFile(), null);
+      }
+    }
+
+    for (PsiParameter parameter : method.getParameterList().getParameters()) {
+      {
+        // @NotNull parameter
+        PsiAnnotation inferredNotNull = findInferredAnnotation(parameter, AnnotationUtil.NOT_NULL);
+        if (inferredNotNull != null) {
+          ExternalAnnotationsManager.getInstance(myModule.getProject()).annotateExternally(parameter, AnnotationUtil.NOT_NULL, method.getContainingFile(), null);
+        }
+      }
+
+      {
+        // @Nullable parameter
+        PsiAnnotation inferredNullable = findInferredAnnotation(parameter, AnnotationUtil.NULLABLE);
+        if (inferredNullable != null) {
+          ExternalAnnotationsManager.getInstance(myModule.getProject()).annotateExternally(parameter, AnnotationUtil.NULLABLE, method.getContainingFile(), null);
+        }
+      }
+    }
+
+  }
+
   private void checkMethodAnnotations(PsiMethod method) {
 
     if (ProjectBytecodeAnalysis.getKey(method, myMessageDigest) == null) {

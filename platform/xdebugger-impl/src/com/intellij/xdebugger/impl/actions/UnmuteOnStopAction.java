@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.xdebugger.impl.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 
 /**
  * @author egor
@@ -26,11 +26,11 @@ import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
 public class UnmuteOnStopAction extends ToggleAction implements DumbAware {
   @Override
   public boolean isSelected(AnActionEvent e) {
-    return XDebuggerSettingsManager.getInstanceImpl().getGeneralSettings().isUnmuteOnStop();
+    return XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isUnmuteOnStop();
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    XDebuggerSettingsManager.getInstanceImpl().getGeneralSettings().setUnmuteOnStop(state);
+    XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().setUnmuteOnStop(state);
   }
 }

@@ -19,7 +19,7 @@ import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
 import java.awt.BorderLayout
 
-class IcsConfigurable : ConfigurableBase<IcsConfigurableUi, IcsSettings>("ics", IcsBundle.message("ics.settings"), "reference.settings.ics") {
+class IcsConfigurable : ConfigurableBase<IcsConfigurableUi, IcsSettings>("ics", icsMessage("ics.settings"), "reference.settings.ics") {
   override fun getSettings() = icsManager.settings
 
   override fun createUi() = IcsConfigurableUi()
@@ -31,18 +31,18 @@ class IcsConfigurableUi : ConfigurableUi<IcsSettings> {
   private val readOnlyEditor = createReadOnlySourcesEditor()
 
   init {
-    panel.readOnlySourcesPanel.add(readOnlyEditor.getComponent(), BorderLayout.CENTER)
+    panel.readOnlySourcesPanel.add(readOnlyEditor.component, BorderLayout.CENTER)
   }
 
   override fun reset(settings: IcsSettings) {
-    panel.autoSyncCheckBox.setSelected(settings.autoSync)
+    panel.autoSyncCheckBox.isSelected = settings.autoSync
     readOnlyEditor.reset(settings)
   }
 
-  override fun isModified(settings: IcsSettings) = panel.autoSyncCheckBox.isSelected() != settings.autoSync || readOnlyEditor.isModified(settings)
+  override fun isModified(settings: IcsSettings) = panel.autoSyncCheckBox.isSelected != settings.autoSync || readOnlyEditor.isModified(settings)
 
   override fun apply(settings: IcsSettings) {
-    settings.autoSync = panel.autoSyncCheckBox.isSelected()
+    settings.autoSync = panel.autoSyncCheckBox.isSelected
     readOnlyEditor.apply(settings)
     saveSettings(settings, icsManager.settingsFile)
   }

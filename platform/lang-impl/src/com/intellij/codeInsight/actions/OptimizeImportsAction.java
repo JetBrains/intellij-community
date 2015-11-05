@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -39,6 +40,7 @@ import javax.swing.border.EmptyBorder;
 public class OptimizeImportsAction extends AnAction {
   private static final @NonNls String HELP_ID = "editing.manageImports";
   private static final String NO_IMPORTS_OPTIMIZED = "Unused imports not found";
+  private static boolean myProcessVcsChangedFilesInTests;
 
 
   @Override
@@ -86,12 +88,14 @@ public class OptimizeImportsAction extends AnAction {
           text = CodeInsightBundle.message("process.scope.project", projectContext.getPresentableUrl());
           hasChanges = FormatChangedTextUtil.hasChanges(projectContext);
         }
-        DialogWrapper dialog = new OptimizeImportsDialog(project, text, hasChanges);
-        if (!dialog.showAndGet()) {
+        Boolean isProcessVcsChangedText = isProcessVcsChangedText(project, text, hasChanges);
+        if (isProcessVcsChangedText == null) {
           return;
         }
         if (moduleContext != null) {
-          new OptimizeImportsProcessor(project, moduleContext).run();
+          OptimizeImportsProcessor processor = new OptimizeImportsProcessor(project, moduleContext);
+          processor.setProcessChangedTextOnly(isProcessVcsChangedText);
+          processor.run();
         }
         else {
           new OptimizeImportsProcessor(projectContext).run();
@@ -220,6 +224,24 @@ public class OptimizeImportsAction extends AnAction {
   private static boolean isOptimizeImportsAvailable(final PsiFile file) {
     return !LanguageImportStatements.INSTANCE.forFile(file).isEmpty();
   }
+
+  private static Boolean isProcessVcsChangedText(Project project, String text, boolean hasChanges) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return myProcessVcsChangedFilesInTests;
+    }
+    
+    OptimizeImportsDialog dialog = new OptimizeImportsDialog(project, text, hasChanges);
+    if (!dialog.showAndGet()) {
+      return null;
+    }
+    
+    return dialog.isProcessOnlyVcsChangedFiles();
+  }
+  
+  @TestOnly
+  protected static void setProcessVcsChangedFilesInTests(boolean value) {
+    myProcessVcsChangedFilesInTests = value;
+  }  
 
   private static class OptimizeImportsDialog extends DialogWrapper {
     private final boolean myContextHasChanges;

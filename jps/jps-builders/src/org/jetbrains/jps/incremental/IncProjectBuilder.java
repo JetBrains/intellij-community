@@ -193,9 +193,11 @@ public class IncProjectBuilder {
       runBuild(context, forceCleanCaches);
       myProjectDescriptor.dataManager.saveVersion();
       reportRebuiltModules(context);
+      reportUnprocessedChanges(context);
     }
     catch (StopBuildException e) {
       reportRebuiltModules(context);
+      reportUnprocessedChanges(context);
       // some builder decided to stop the build
       // report optional progress message if any
       final String msg = e.getMessage();
@@ -307,6 +309,17 @@ public class IncProjectBuilder {
     }
     message.append(" changes");
     context.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, message.toString()));
+  }
+
+  private static void reportUnprocessedChanges(CompileContextImpl context) {
+    final ProjectDescriptor pd = context.getProjectDescriptor();
+    final BuildFSState fsState = pd.fsState;
+    for (BuildTarget<?> target : pd.getBuildTargetIndex().getAllTargets()) {
+      if (fsState.hasUnprocessedChanges(context, target)) {
+        context.processMessage(new UnprocessedFSChangesNotification());
+        break;
+      }
+    }
   }
 
   private static void flushContext(CompileContext context) {
@@ -665,7 +678,14 @@ public class IncProjectBuilder {
       }
       myTotalTargetsWork = totalAffected;
 
-      if (BuildRunner.PARALLEL_BUILD_ENABLED && MAX_BUILDER_THREADS > 1) {
+      boolean compileInParallel = BuildRunner.PARALLEL_BUILD_ENABLED;
+      if (compileInParallel && MAX_BUILDER_THREADS <= 1) {
+        LOG.info("Switched off parallel compilation because maximum number of builder threads is less than 2. Set '"
+                 + GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION + "' system property to a value greater than 1 to really enable parallel compilation.");
+        compileInParallel = false;
+      }
+
+      if (compileInParallel) {
         new BuildParallelizer(context).buildInParallel();
       }
       else {

@@ -18,9 +18,7 @@ package com.intellij.openapi.vcs.checkout;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 
@@ -32,10 +30,15 @@ public class CheckoutAction extends AnAction implements DumbAware {
     myProvider = provider;
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
-    project = (project == null) ? ProjectManager.getInstance().getDefaultProject() : project;
-    myProvider.doCheckout(project, getListener(project));
+  public void actionPerformed(final AnActionEvent e) {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        Project project = e.getData(CommonDataKeys.PROJECT);
+        project = (project == null) ? ProjectManager.getInstance().getDefaultProject() : project;
+        myProvider.doCheckout(project, getListener(project));
+      }
+    });
   }
 
   protected CheckoutProvider.Listener getListener(Project project) {

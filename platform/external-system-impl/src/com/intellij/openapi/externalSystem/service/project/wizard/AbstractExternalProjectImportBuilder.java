@@ -1,10 +1,10 @@
 package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
@@ -13,8 +13,9 @@ import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjec
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
-import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
-import com.intellij.openapi.externalSystem.service.project.PlatformFacadeImpl;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
+import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
@@ -30,6 +31,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -125,22 +127,17 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     boolean isFromUI = model != null;
 
     final List<Module> modules = ContainerUtil.newSmartList();
-    final PlatformFacade platformFacade = isFromUI ? new PlatformFacadeImpl() {
+    final IdeModifiableModelsProvider modelsProvider = isFromUI ? new IdeUIModifiableModelsProvider(
+      project, model, (ModulesConfigurator)modulesProvider, artifactModel) {
       @NotNull
       @Override
-      public Collection<Module> getModules(@NotNull Project project) {
-        return ContainerUtil.list(modulesProvider.getModules());
-      }
-
-      @Override
-      public Module newModule(Project project, @NotNull @NonNls String filePath, String moduleTypeId) {
-        final Module module = model.newModule(filePath, moduleTypeId);
-        // set module type id explicitly otherwise it can not be set if there is an existing module (with the same filePath) and w/o 'type' attribute
-        module.setOption(Module.ELEMENT_TYPE, moduleTypeId);
+      public Module newModule(@NotNull @NonNls String filePath,
+                              String moduleTypeId) {
+        final Module module = super.newModule(filePath, moduleTypeId);
         modules.add(module);
         return module;
       }
-    } : ServiceManager.getService(PlatformFacade.class);
+    } : new IdeModifiableModelsProviderImpl(project);
     AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(project, myExternalSystemId);
     final ExternalProjectSettings projectSettings = getCurrentExternalProjectSettings();
 
@@ -156,15 +153,17 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     systemSettings.setLinkedProjectsSettings(projects);
 
     if (externalProjectNode != null) {
-      ExternalProjectDataSelectorDialog dialog = new ExternalProjectDataSelectorDialog(
-        project, new InternalExternalProjectInfo(myExternalSystemId, projectSettings.getExternalProjectPath(), externalProjectNode));
-      if (dialog.hasMultipleDataToSelect()) {
-        dialog.showAndGet();
-      } else {
-        dialog.dispose();
+      if(!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        ExternalProjectDataSelectorDialog dialog = new ExternalProjectDataSelectorDialog(
+          project, new InternalExternalProjectInfo(myExternalSystemId, projectSettings.getExternalProjectPath(), externalProjectNode));
+        if (dialog.hasMultipleDataToSelect()) {
+          dialog.showAndGet();
+        } else {
+          dialog.dispose();
+        }
       }
 
-      myProjectDataManager.importData(externalProjectNode, project, platformFacade, true);
+      myProjectDataManager.importData(externalProjectNode, project, modelsProvider, true);
       myExternalProjectNode = null;
 
       // resolve dependencies

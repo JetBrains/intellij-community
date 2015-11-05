@@ -15,7 +15,10 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import org.intellij.lang.annotations.Language;
 import org.intellij.lang.annotations.Pattern;
@@ -190,11 +193,31 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
 
     inspectionStarted(session, false);
 
+    final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(holder.getProject());
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
         element.accept(customVisitor);
+        processInjectedFile(element);
+
         super.visitElement(element);
+      }
+
+      private void processInjectedFile(PsiElement element) {
+        if (element instanceof PsiLanguageInjectionHost) {
+          final List<Pair<PsiElement, TextRange>> files = injectedLanguageManager.getInjectedPsiFiles(element);
+          if (files != null) {
+            for (Pair<PsiElement, TextRange> pair : files) {
+              pair.first.accept(new PsiRecursiveElementWalkingVisitor() {
+                @Override
+                public void visitElement(PsiElement injectedElement) {
+                  injectedElement.accept(customVisitor);
+                  super.visitElement(injectedElement);
+                }
+              });
+            }
+          }
+        }
       }
     });
 

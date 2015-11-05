@@ -15,18 +15,19 @@
  */
 package org.jetbrains.debugger
 
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.TObjectHashingStrategy
-import org.jetbrains.util.concurrency.Promise
-import org.jetbrains.util.concurrency.RejectedPromise
-import org.jetbrains.util.concurrency.ResolvedPromise
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.rejectedPromise
+import org.jetbrains.concurrency.resolvedPromise
 import java.util.concurrent.ConcurrentMap
 
-public abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager {
-  override val breakpoints: MutableSet<T> = ContainerUtil.newConcurrentSet<T>()
+abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager {
+  override val breakpoints = ContainerUtil.newConcurrentSet<T>()
 
   protected val breakpointDuplicationByTarget: ConcurrentMap<T, T> = ContainerUtil.newConcurrentMap<T, T>(object : TObjectHashingStrategy<T> {
     override fun computeHashCode(b: T): Int {
@@ -42,37 +43,43 @@ public abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointM
     override fun equals(b1: T, b2: T) = b1.target.javaClass == b2.target.javaClass && b1.target == b2.target && b1.line == b2.line && b1.column == b2.column && StringUtil.equals(b1.condition, b2.condition)
   })
 
-  protected val dispatcher: EventDispatcher<BreakpointManager.BreakpointListener> = EventDispatcher.create(javaClass<BreakpointManager.BreakpointListener>())
+  protected val dispatcher: EventDispatcher<BreakpointListener> = EventDispatcher.create(BreakpointListener::class.java)
 
   protected abstract fun createBreakpoint(target: BreakpointTarget, line: Int, column: Int, condition: String?, ignoreCount: Int, enabled: Boolean): T
 
-  protected abstract fun doSetBreakpoint(target: BreakpointTarget, breakpoint: T): Promise<Breakpoint>
+  protected abstract fun doSetBreakpoint(target: BreakpointTarget, breakpoint: T): Promise<out Breakpoint>
 
-  override fun setBreakpoint(target: BreakpointTarget, line: Int, column: Int, condition: String?, ignoreCount: Int, enabled: Boolean): Breakpoint {
+  override final fun setBreakpoint(target: BreakpointTarget, line: Int, column: Int, condition: String?, ignoreCount: Int, enabled: Boolean, promiseRef: Ref<Promise<out Breakpoint>>?): Breakpoint {
     val breakpoint = createBreakpoint(target, line, column, condition, ignoreCount, enabled)
     val existingBreakpoint = breakpointDuplicationByTarget.putIfAbsent(breakpoint, breakpoint)
     if (existingBreakpoint != null) {
+      promiseRef?.set(resolvedPromise(breakpoint))
       return existingBreakpoint
     }
 
     breakpoints.add(breakpoint)
     if (enabled) {
-      doSetBreakpoint(target, breakpoint).rejected { dispatcher.getMulticaster().errorOccurred(breakpoint, it.getMessage() ?: it.toString()) }
+      val promise = doSetBreakpoint(target, breakpoint)
+        .rejected { dispatcher.multicaster.errorOccurred(breakpoint, it.message ?: it.toString()) }
+      promiseRef?.set(promise)
+    }
+    else {
+      promiseRef?.set(resolvedPromise(breakpoint))
     }
     return breakpoint
   }
 
-  override fun remove(breakpoint: Breakpoint): Promise<*> {
-    @suppress("UNCHECKED_CAST")
+  override final fun remove(breakpoint: Breakpoint): Promise<*> {
+    @Suppress("UNCHECKED_CAST")
     val b = breakpoint as T
     val existed = breakpoints.remove(b)
     if (existed) {
       breakpointDuplicationByTarget.remove(b)
     }
-    return if (!existed || !b.isVmRegistered()) ResolvedPromise() else doClearBreakpoint(b)
+    return if (!existed || !b.isVmRegistered()) resolvedPromise() else doClearBreakpoint(b)
   }
 
-  override fun removeAll(): Promise<*> {
+  override final fun removeAll(): Promise<*> {
     val list = breakpoints.toList()
     breakpoints.clear()
     breakpointDuplicationByTarget.clear()
@@ -87,18 +94,38 @@ public abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointM
 
   protected abstract fun doClearBreakpoint(breakpoint: T): Promise<*>
 
-  override fun addBreakpointListener(listener: BreakpointManager.BreakpointListener) {
+  override final fun addBreakpointListener(listener: BreakpointListener) {
     dispatcher.addListener(listener)
   }
 
   protected fun notifyBreakpointResolvedListener(breakpoint: T) {
     if (breakpoint.isResolved) {
-      dispatcher.getMulticaster().resolved(breakpoint)
+      dispatcher.multicaster.resolved(breakpoint)
     }
   }
 
-  @suppress("UNCHECKED_CAST")
+  @Suppress("UNCHECKED_CAST")
   override fun flush(breakpoint: Breakpoint) = (breakpoint as T).flush(this)
 
-  override fun enableBreakpoints(enabled: Boolean): Promise<*> = RejectedPromise<Any?>("Unsupported")
+  override fun enableBreakpoints(enabled: Boolean): Promise<*> = rejectedPromise<Any?>("Unsupported")
+}
+
+class DummyBreakpointManager : BreakpointManager {
+  override val breakpoints: Iterable<Breakpoint>
+    get() = emptyList()
+
+  override fun setBreakpoint(target: BreakpointTarget, line: Int, column: Int, condition: String?, ignoreCount: Int, enabled: Boolean, promiseRef: Ref<Promise<out Breakpoint>>?): Breakpoint {
+    throw UnsupportedOperationException()
+  }
+
+  override fun remove(breakpoint: Breakpoint) = resolvedPromise()
+
+  override fun addBreakpointListener(listener: BreakpointListener) {
+  }
+
+  override fun removeAll() = resolvedPromise()
+
+  override fun flush(breakpoint: Breakpoint) = resolvedPromise()
+
+  override fun enableBreakpoints(enabled: Boolean) = resolvedPromise()
 }

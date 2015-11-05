@@ -33,11 +33,32 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
     importProject(
       "apply plugin: 'java'"
     );
-    assertModules("project");
-    compileModules("project");
+    assertModules("project", "project_main", "project_test");
+    compileModules("project_main", "project_test");
 
     assertCopied("build/resources/main/dir/file.properties");
     assertCopied("build/resources/test/dir/file-test.properties");
+  }
+
+  @Test
+  public void testResourceCopyingFromSourcesFolder() throws Exception {
+    createProjectSubFile("src/main/resources/dir/file.properties");
+    createProjectSubFile("src/test/resources/dir/file-test.properties");
+    createProjectSubFile("src/main/java/file.txt");
+    importProject(
+      "apply plugin: 'java'\n" +
+      "sourceSets {\n" +
+      "  main {\n" +
+      "    resources.srcDir file('src/main/java')\n" +
+      "  }\n" +
+      "}"
+    );
+    assertModules("project", "project_main", "project_test");
+    compileModules("project_main", "project_test");
+
+    assertCopied("build/resources/main/dir/file.properties");
+    assertCopied("build/resources/test/dir/file-test.properties");
+    assertCopied("build/resources/main/file.txt");
   }
 
   @Test
@@ -55,8 +76,8 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
       "  }\n" +
       "}"
     );
-    assertModules("project");
-    compileModules("project");
+    assertModules("project", "project_main", "project_test");
+    compileModules("project_main", "project_test");
 
     assertCopied("muchBetterOutputDir/dir/file.properties");
     assertCopied("muchBetterTestOutputDir/dir/file-test.properties");
@@ -88,8 +109,8 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
       "  }\n" +
       "}"
     );
-    assertModules("project");
-    compileModules("project");
+    assertModules("project", "project_main", "project_test");
+    compileModules("project_main", "project_test");
 
     assertCopiedResources();
   }
@@ -110,8 +131,8 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
       "  }\n" +
       "}"
     );
-    assertModules("project");
-    compileModules("project");
+    assertModules("project", "project_main", "project_test");
+    compileModules("project_main", "project_test");
 
     assertCopiedResources();
   }
@@ -138,8 +159,8 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
       "  exclude '*.xxx'\n" +
       "}\n"
     );
-    assertModules("project");
-    compileModules("project");
+    assertModules("project", "project_main", "project_test");
+    compileModules("project_main", "project_test");
 
     assertCopiedResources();
   }

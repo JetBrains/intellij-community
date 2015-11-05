@@ -1,17 +1,20 @@
 package org.jetbrains.protocolReader
 
 fun addReaderParameter(subtyping: Boolean, out: TextOutput) {
-  out.append(if (subtyping) PENDING_INPUT_READER_NAME else READER_NAME)
+  if (subtyping) {
+    out.append(PENDING_INPUT_READER_NAME).append("!!")
+  }
+  else {
+    out.append(READER_NAME)
+  }
 }
 
 /**
  * A parser that accepts value of JSON field and outputs value in another form (e.g. string
  * is converted to enum constant) to serve field getters in JsonType interfaces.
  */
-abstract class ValueReader {
-  open public fun asJsonTypeParser(): ObjectValueReader? {
-    return null
-  }
+internal abstract class ValueReader {
+  open fun asJsonTypeParser(): ObjectValueReader? = null
 
   abstract fun appendFinishedValueTypeName(out: TextOutput)
 
@@ -31,7 +34,5 @@ abstract class ValueReader {
     addReaderParameter(subtyping, out)
   }
 
-  public fun isThrowsIOException(): Boolean {
-    return false
-  }
+  fun isThrowsIOException() = false
 }

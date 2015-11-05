@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -11,8 +26,8 @@ import org.eclipse.jgit.errors.TransportException
 import org.eclipse.jgit.internal.JGitText
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.revwalk.RevSort
 import org.eclipse.jgit.revwalk.RevWalk
-import org.eclipse.jgit.revwalk.RevWalkUtils
 import org.eclipse.jgit.revwalk.filter.RevFilter
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.transport.CredentialsProvider
@@ -29,16 +44,16 @@ import java.io.File
 import java.io.InputStream
 
 fun wrapIfNeedAndReThrow(e: TransportException) {
-  if (e.getStatus() == TransportException.Status.CANNOT_RESOLVE_REPO) {
+  if (e is org.eclipse.jgit.errors.NoRemoteRepositoryException || e.status == TransportException.Status.CANNOT_RESOLVE_REPO) {
     throw org.jetbrains.settingsRepository.NoRemoteRepositoryException(e)
   }
 
   val message = e.getMessage()!!
-  if (e.getStatus() == TransportException.Status.NOT_AUTHORIZED || e.getStatus() == TransportException.Status.NOT_PERMITTED ||
+  if (e.status == TransportException.Status.NOT_AUTHORIZED || e.status == TransportException.Status.NOT_PERMITTED ||
       message.contains(JGitText.get().notAuthorized) || message.contains("Auth cancel") || message.contains("Auth fail") || message.contains(": reject HostKey:") /* JSch */) {
     throw AuthenticationException(e)
   }
-  else if (e.getStatus() == TransportException.Status.CANCELLED || message == "Download cancelled") {
+  else if (e.status == TransportException.Status.CANCELLED || message == "Download cancelled") {
     throw ProcessCanceledException()
   }
   else {
@@ -47,10 +62,15 @@ fun wrapIfNeedAndReThrow(e: TransportException) {
 }
 
 fun Repository.fetch(remoteConfig: RemoteConfig, credentialsProvider: CredentialsProvider? = null, progressMonitor: ProgressMonitor? = null): FetchResult? {
-  val transport = Transport.open(this, remoteConfig)
   try {
-    transport.setCredentialsProvider(credentialsProvider)
-    return transport.fetch(progressMonitor ?: NullProgressMonitor.INSTANCE, null)
+    val transport = Transport.open(this, remoteConfig)
+    try {
+      transport.credentialsProvider = credentialsProvider
+      return transport.fetch(progressMonitor ?: NullProgressMonitor.INSTANCE, null)
+    }
+    finally {
+      transport.close()
+    }
   }
   catch (e: TransportException) {
     val message = e.getMessage()!!
@@ -63,13 +83,10 @@ fun Repository.fetch(remoteConfig: RemoteConfig, credentialsProvider: Credential
     wrapIfNeedAndReThrow(e)
     return null
   }
-  finally {
-    transport.close()
-  }
 }
 
 fun Repository.disableAutoCrLf(): Repository {
-  val config = getConfig()
+  val config = config
   config.setString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOCRLF, ConfigConstants.CONFIG_KEY_FALSE)
   config.save()
   return this
@@ -101,7 +118,7 @@ fun Repository.commit(message: String? = null, reflogComment: String? = null, au
 fun Repository.resetHard(): DirCacheCheckout {
   val resetCommand = ResetCommand(this).setMode(ResetCommand.ResetType.HARD)
   resetCommand.call()
-  return resetCommand.getDirCacheCheckout()!!
+  return resetCommand.dirCacheCheckout!!
 }
 
 fun Config.getRemoteBranchFullName(): String {
@@ -116,7 +133,7 @@ public fun Repository.setUpstream(url: String?, branchName: String = Constants.M
   // our local branch named 'master' in any case
   val localBranchName = Constants.MASTER
 
-  val config = getConfig()
+  val config = config
   val remoteName = Constants.DEFAULT_REMOTE_NAME
   if (StringUtil.isEmptyOrSpaces(url)) {
     LOG.debug("Unset remote")
@@ -160,17 +177,17 @@ public fun cloneBare(uri: String, dir: File, credentialsStore: NotNullLazyValue<
     head = result.getAdvertisedRef(branch) ?: result.getAdvertisedRef(Constants.R_HEADS + branch) ?: result.getAdvertisedRef(Constants.R_TAGS + branch)
   }
 
-  if (head == null || head.getObjectId() == null) {
+  if (head == null || head.objectId == null) {
     return repository
   }
 
-  if (head.getName().startsWith(Constants.R_HEADS)) {
+  if (head.name.startsWith(Constants.R_HEADS)) {
     val newHead = repository.updateRef(Constants.HEAD)
     newHead.disableRefLog()
-    newHead.link(head.getName())
-    val branchName = Repository.shortenRefName(head.getName())
+    newHead.link(head.name)
+    val branchName = Repository.shortenRefName(head.name)
     config.setString(ConfigConstants.CONFIG_BRANCH_SECTION, branchName, ConfigConstants.CONFIG_KEY_REMOTE, Constants.DEFAULT_REMOTE_NAME)
-    config.setString(ConfigConstants.CONFIG_BRANCH_SECTION, branchName, ConfigConstants.CONFIG_KEY_MERGE, head.getName())
+    config.setString(ConfigConstants.CONFIG_BRANCH_SECTION, branchName, ConfigConstants.CONFIG_KEY_MERGE, head.name)
     val autoSetupRebase = config.getString(ConfigConstants.CONFIG_BRANCH_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOSETUPREBASE)
     if (ConfigConstants.CONFIG_KEY_ALWAYS == autoSetupRebase || ConfigConstants.CONFIG_KEY_REMOTE == autoSetupRebase) {
       config.setBoolean(ConfigConstants.CONFIG_BRANCH_SECTION, branchName, ConfigConstants.CONFIG_KEY_REBASE, true)
@@ -178,9 +195,9 @@ public fun cloneBare(uri: String, dir: File, credentialsStore: NotNullLazyValue<
     config.save()
   }
 
-  val commit = RevWalk(repository).use { it.parseCommit(head!!.getObjectId()) }
-  val u = repository.updateRef(Constants.HEAD, !head!!.getName().startsWith(Constants.R_HEADS))
-  u.setNewObjectId(commit.getId())
+  val commit = RevWalk(repository).use { it.parseCommit(head!!.objectId) }
+  val u = repository.updateRef(Constants.HEAD, !head!!.name.startsWith(Constants.R_HEADS))
+  u.setNewObjectId(commit.id)
   u.forceUpdate()
   return repository
 }
@@ -189,15 +206,15 @@ private fun findBranchToCheckout(result: FetchResult): Ref? {
   val idHead = result.getAdvertisedRef(Constants.HEAD) ?: return null
 
   val master = result.getAdvertisedRef(Constants.R_HEADS + Constants.MASTER)
-  if (master != null && master.getObjectId().equals(idHead.getObjectId())) {
+  if (master != null && master.objectId.equals(idHead.objectId)) {
     return master
   }
 
-  for (r in result.getAdvertisedRefs()) {
-    if (!r.getName().startsWith(Constants.R_HEADS)) {
+  for (r in result.advertisedRefs) {
+    if (!r.name.startsWith(Constants.R_HEADS)) {
       continue
     }
-    if (r.getObjectId().equals(idHead.getObjectId())) {
+    if (r.objectId.equals(idHead.objectId)) {
       return r
     }
   }
@@ -208,27 +225,27 @@ public fun Repository.processChildren(path: String, filter: ((name: String) -> B
   val lastCommitId = resolve(Constants.HEAD) ?: return
   val reader = newObjectReader()
   reader.use {
-    val treeWalk = TreeWalk.forPath(reader, path, RevWalk(reader).parseCommit(lastCommitId).getTree()) ?: return
-    if (!treeWalk.isSubtree()) {
+    val treeWalk = TreeWalk.forPath(reader, path, RevWalk(reader).parseCommit(lastCommitId).tree) ?: return
+    if (!treeWalk.isSubtree) {
       // not a directory
       LOG.warn("File $path is not a directory")
       return
     }
 
-    treeWalk.setFilter(TreeFilter.ALL)
+    treeWalk.filter = TreeFilter.ALL
     treeWalk.enterSubtree()
 
     while (treeWalk.next()) {
       val fileMode = treeWalk.getFileMode(0)
       if (fileMode == FileMode.REGULAR_FILE || fileMode == FileMode.SYMLINK || fileMode == FileMode.EXECUTABLE_FILE) {
-        val fileName = treeWalk.getNameString()
+        val fileName = treeWalk.nameString
         if (filter != null && !filter(fileName)) {
           continue
         }
 
         val objectLoader = reader.open(treeWalk.getObjectId(0), Constants.OBJ_BLOB)
         // we ignore empty files
-        if (objectLoader.getSize() == 0L) {
+        if (objectLoader.size == 0L) {
           LOG.warn("File $path skipped because empty (length 0)")
           continue
         }
@@ -244,17 +261,17 @@ public fun Repository.processChildren(path: String, filter: ((name: String) -> B
 public fun Repository.read(path: String): InputStream? {
   val lastCommitId = resolve(Constants.HEAD)
   if (lastCommitId == null) {
-    LOG.warn("Repository ${getDirectory().getName()} doesn't have HEAD")
+    LOG.warn("Repository ${directory.name} doesn't have HEAD")
     return null
   }
 
   val reader = newObjectReader()
   var releaseReader = true
   try {
-    val treeWalk = TreeWalk.forPath(reader, path, RevWalk(reader).parseCommit(lastCommitId).getTree()) ?: return null
+    val treeWalk = TreeWalk.forPath(reader, path, RevWalk(reader).parseCommit(lastCommitId).tree) ?: return null
     val objectLoader = reader.open(treeWalk.getObjectId(0), Constants.OBJ_BLOB)
     val input = objectLoader.openStream()
-    if (objectLoader.isLarge()) {
+    if (objectLoader.isLarge) {
       // we cannot release reader because input uses it internally (window cursor -> inflater)
       releaseReader = false
       return InputStreamWrapper(input, reader)
@@ -305,24 +322,38 @@ private class InputStreamWrapper(private val delegate: InputStream, private val 
   }
 }
 
-fun ObjectReader.getCachedBytes(dirCacheEntry: DirCacheEntry) = open(dirCacheEntry.getObjectId(), Constants.OBJ_BLOB).getCachedBytes()
+fun ObjectReader.getCachedBytes(dirCacheEntry: DirCacheEntry) = open(dirCacheEntry.objectId, Constants.OBJ_BLOB).cachedBytes
 
 public fun Repository.getAheadCommitsCount(): Int {
-  val config = getConfig()
+  val config = config
   val shortBranchName = Repository.shortenRefName(config.getRemoteBranchFullName())
-  val trackingBranch = BranchConfig(config, shortBranchName).getTrackingBranch() ?: return -1
-  val tracking = getRef(trackingBranch) ?: return -1
+  val trackingBranch = BranchConfig(config, shortBranchName).trackingBranch ?: return -1
   val local = getRef("${Constants.R_HEADS}$shortBranchName") ?: return -1
   val walk = RevWalk(this)
-  val localCommit = walk.parseCommit(local.getObjectId())
-  val trackingCommit = walk.parseCommit(tracking.getObjectId())
+  val localCommit = walk.parseCommit(local.objectId)
 
-  walk.setRevFilter(RevFilter.MERGE_BASE)
-  walk.markStart(localCommit)
-  walk.markStart(trackingCommit)
-  val mergeBase = walk.next()
+  val trackingCommit = getRef(trackingBranch)?.let { walk.parseCommit(it.objectId) }
 
-  walk.reset()
-  walk.setRevFilter(RevFilter.ALL)
-  return RevWalkUtils.count(walk, localCommit, mergeBase)
+  walk.revFilter = RevFilter.MERGE_BASE
+  if (trackingCommit == null) {
+    walk.markStart(localCommit)
+    walk.sort(RevSort.REVERSE)
+  }
+  else {
+    walk.markStart(localCommit)
+    walk.markStart(trackingCommit)
+    val mergeBase = walk.next()
+    walk.reset()
+
+    walk.markStart(localCommit)
+    walk.markUninteresting(mergeBase)
+  }
+
+  walk.revFilter = RevFilter.ALL
+
+  var num = 0
+  for (c in walk) {
+    num++
+  }
+  return num
 }

@@ -56,9 +56,7 @@ public final class ShellCommand {
   public HgCommandResult execute(final boolean showTextOnIndicator, boolean isBinary) throws ShellCommandException, InterruptedException {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     try {
-      final Process process = myCommandLine.createProcess();
-      HgCommandProcessHandler processHandler =
-        new HgCommandProcessHandler(process, myCommandLine.toString(), myCommandLine.getCharset(), isBinary);
+      HgCommandProcessHandler processHandler = new HgCommandProcessHandler(myCommandLine, isBinary);
       CapturingProcessAdapter outputAdapter = new CapturingProcessAdapter() {
 
         @Override

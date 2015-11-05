@@ -93,8 +93,6 @@ public abstract class PsiDocumentManager {
 
   /**
    * If the document is committed, runs action synchronously, otherwise schedules to execute it right after it has been committed.
-   * @param document
-   * @param action
    */
   public abstract void performForCommittedDocument(@NotNull Document document, @NotNull Runnable action);
 
@@ -108,7 +106,6 @@ public abstract class PsiDocumentManager {
   public abstract void commitDocument(@NotNull Document document);
 
   /**
-   * @param document
    * @return the document text that PSI should be based upon. For changed documents, it's their old text until the document is committed.
    * This sequence is immutable.
    * @see com.intellij.util.text.ImmutableCharSequence
@@ -126,10 +123,21 @@ public abstract class PsiDocumentManager {
   public abstract long getLastCommittedStamp(@NotNull Document document);
 
   /**
+   * Returns the document for specified PsiFile intended to be used when working with committed PSI, e.g. outside dispatch thread.
+   * @param file the file for which the document is requested.
+   * @return an immutable document corresponding to the current PSI state. For committed documents, the contents and timestamp are equal to
+   * the ones of {@link #getDocument(PsiFile)}. For uncommitted documents, the text is {@link #getLastCommittedText(Document)} and
+   * the modification stamp is {@link #getLastCommittedStamp(Document)}.
+   * @since 143.* builds
+   */
+  @Nullable
+  public abstract Document getLastCommittedDocument(@NotNull PsiFile file);
+
+  /**
    * Returns the list of documents which have been modified but not committed.
    *
    * @return the list of uncommitted documents.
-   * @see #commitDocument(com.intellij.openapi.editor.Document)
+   * @see #commitDocument(Document)
    */
   @NotNull
   public abstract Document[] getUncommittedDocuments();
@@ -139,7 +147,7 @@ public abstract class PsiDocumentManager {
    *
    * @param document the document to check.
    * @return true if the document was modified but not committed, false otherwise
-   * @see #commitDocument(com.intellij.openapi.editor.Document)
+   * @see #commitDocument(Document)
    */
   public abstract boolean isUncommited(@NotNull Document document);
 

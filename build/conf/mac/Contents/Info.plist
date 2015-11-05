@@ -57,6 +57,9 @@
     <key>NSAppSleepDisabled</key>
     <@@mavericks_app_nap_disabled@@/>
 
+    <key>NSSupportsAutomaticGraphicsSwitching</key>
+    <true/>
+
     @@archs@@
     <key>LSRequiresNativeExecution</key>
     <string>YES</string>

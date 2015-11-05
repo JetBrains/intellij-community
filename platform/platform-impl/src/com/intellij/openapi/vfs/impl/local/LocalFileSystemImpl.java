@@ -50,7 +50,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
   private final Object myLock = new Object();
   private final Set<WatchRequestImpl> myRootsToWatch = new THashSet<WatchRequestImpl>();
-  private TreeNode myNormalizedTree = null;
+  private TreeNode myNormalizedTree;
   private final ManagingFS myManagingFS;
   private final FileWatcher myWatcher;
 
@@ -64,6 +64,10 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       if (index >= 0) rootPath = rootPath.substring(0, index);
 
       File rootFile = new File(FileUtil.toSystemDependentName(rootPath));
+      if (!rootFile.isAbsolute()) {
+        throw new FileNotFoundException("Invalid path: " + rootPath);
+      }
+
       if (index > 0 || !(FileUtil.isRootPath(rootFile) || rootFile.isDirectory())) {
         File parentFile = rootFile.getParentFile();
         if (parentFile == null) {
@@ -96,8 +100,8 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   }
 
   private static class TreeNode {
-    private WatchRequestImpl watchRequest = null;
-    private Map<String, TreeNode> nodes = new THashMap<String, TreeNode>(1, FileUtil.PATH_HASHING_STRATEGY);
+    private WatchRequestImpl watchRequest;
+    private final Map<String, TreeNode> nodes = new THashMap<String, TreeNode>(1, FileUtil.PATH_HASHING_STRATEGY);
   }
 
   public LocalFileSystemImpl(@NotNull ManagingFS managingFS) {
@@ -106,14 +110,14 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     if (myWatcher.isOperational()) {
       final int PERIOD = 1000;
       Runnable runnable = new Runnable() {
+        @Override
         public void run() {
           final Application application = ApplicationManager.getApplication();
           if (application == null || application.isDisposed()) return;
           storeRefreshStatusToFiles();
-          JobScheduler.getScheduler().schedule(this, PERIOD, TimeUnit.MILLISECONDS);
         }
       };
-      JobScheduler.getScheduler().schedule(runnable, PERIOD, TimeUnit.MILLISECONDS);
+      JobScheduler.getScheduler().scheduleWithFixedDelay(runnable, PERIOD, PERIOD, TimeUnit.MILLISECONDS);
     }
   }
 

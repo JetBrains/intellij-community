@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.completion
 
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.lookup.LookupElement
@@ -954,13 +955,13 @@ class Fopppp {
 
   public void testExcludeStringBuffer() {
     assert doContainsTest('StringBuffer', 'StringBuff<caret>f')
-    CodeInsightSettings.instance.EXCLUDED_PACKAGES = [StringBuffer.name] as String[]
-    try {
-      assert !doContainsTest('StringBuffer', 'StringBuff<caret>f')
-    }
-    finally {
-      CodeInsightSettings.instance.EXCLUDED_PACKAGES = new String[0]
-    }
+    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, StringBuffer.name)
+    assert !doContainsTest('StringBuffer', 'StringBuff<caret>f')
+  }
+
+  public void testStaticMethodOnExcludedClass() {
+    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, String.name)
+    assert doContainsTest('valueOf', 'String.val<caret>f')
   }
 
   private doContainsTest(String itemToCheck, String text) {

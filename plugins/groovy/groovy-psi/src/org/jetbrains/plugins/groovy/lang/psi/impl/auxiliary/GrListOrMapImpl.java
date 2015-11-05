@@ -192,7 +192,6 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
           GlobalSearchScope scope = listOrMap.getResolveScope();
           JavaPsiFacade facade = JavaPsiFacade.getInstance(listOrMap.getProject());
           PsiClass hashMap = facade.findClass(GroovyCommonClassNames.JAVA_UTIL_LINKED_HASH_MAP, scope);
-          if (hashMap == null) hashMap = facade.findClass(CommonClassNames.JAVA_UTIL_MAP, scope);
           if (hashMap != null) {
             PsiSubstitutor mapSubstitutor = PsiSubstitutor.EMPTY.
               put(hashMap.getTypeParameters()[0], com.intellij.psi.util.PsiUtil.substituteTypeParameter(lType,  CommonClassNames.JAVA_UTIL_MAP, 0, false)).

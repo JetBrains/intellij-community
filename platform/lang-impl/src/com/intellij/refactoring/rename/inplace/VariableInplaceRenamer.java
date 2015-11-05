@@ -186,6 +186,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     return selectAll != null && selectAll.booleanValue();
   }
 
+  @NotNull
   protected VariableInplaceRenamer createInplaceRenamerToRestart(PsiNamedElement variable, Editor editor, String initialName) {
     return new VariableInplaceRenamer(variable, editor, myProject, initialName, myOldName);
   }
@@ -241,7 +242,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
             if (!ApplicationManager.getApplication().isUnitTestMode()) {
               final AutomaticRenamingDialog renamingDialog = new AutomaticRenamingDialog(myProject, renamer);
               if (!renamingDialog.showAndGet()) {
-                return;
+                continue;
               }
             }
 

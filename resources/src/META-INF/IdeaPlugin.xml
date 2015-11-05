@@ -68,7 +68,7 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.execution.impl.JavaScratchCompilationSupport</implementation-class>
+      <implementation-class>com.intellij.execution.scratch.JavaScratchCompilationSupport</implementation-class>
     </component>
   </project-components>
 
@@ -221,7 +221,7 @@
     </extensionPoint>
 
     <extensionPoint name="expressionConverter" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.refactoring.introduceParameter.ExpressionConverter"/>
+      <with attribute="implementationClass" implements="com.intellij.psi.impl.ExpressionConverter"/>
     </extensionPoint>
 
     <extensionPoint name="refactoring.pullUpHelperFactory" beanClass="com.intellij.lang.LanguageExtensionPoint">
@@ -250,7 +250,7 @@
     <extensionPoint name="getterSetterProvider" interface="com.intellij.codeInsight.generation.GetterSetterPrototypeProvider"/>
 
     <extensionPoint name="library.dependencyScopeSuggester" interface="com.intellij.openapi.roots.LibraryDependencyScopeSuggester"/>
-    <extensionPoint name="projectModelModifier" interface="com.intellij.openapi.roots.ProjectModelModifier"
+    <extensionPoint name="projectModelModifier" interface="com.intellij.openapi.roots.JavaProjectModelModifier"
                     area="IDEA_PROJECT"/>
 
     <extensionPoint name="refactoring.safeDelete.JavaSafeDeleteDelegate" beanClass="com.intellij.lang.LanguageExtensionPoint">
@@ -374,10 +374,8 @@
     <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ExcludeFromCompletionLookupActionProvider"
                            id="excludeFromCompletion" order="last"/>
 
-    <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.UnfocusedNameIdentifier" id="javaNameIdentifier"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavadocCompletionConfidence" id="javadoc" order="before javaComments"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInComments" id="javaComments"/>
-    <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.AlwaysFocusLookup" id="javaTrue" order="last"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionCompletionConfidence" id="javaReflection" />
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings" id="javaSkipAutopopupInStrings"/>
 
@@ -531,17 +529,13 @@
     <moduleService serviceInterface="com.intellij.openapi.roots.ModulePackageIndex"
                    serviceImplementation="com.intellij.openapi.roots.impl.ModulePackageIndexImpl"/>
 
-    <projectService serviceInterface="com.intellij.openapi.roots.ProjectModelModificationService"
-                    serviceImplementation="com.intellij.openapi.roots.impl.ProjectModelModificationServiceImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.JavaProjectModelModificationService"
+                    serviceImplementation="com.intellij.openapi.roots.impl.JavaProjectModelModificationServiceImpl"/>
     <projectModelModifier implementation="com.intellij.openapi.roots.impl.IdeaProjectModelModifier" order="last"/>
 
     <projectService serviceInterface="com.intellij.usages.impl.rules.DirectoryGroupingRule"
                     serviceImplementation="com.intellij.usages.impl.rules.PackageGroupingRule"/>
 
-    <projectService serviceInterface="com.intellij.slicer.SliceToolwindowSettings"
-                    serviceImplementation="com.intellij.slicer.SliceToolwindowSettings"/>
-    <projectService serviceInterface="com.intellij.slicer.SliceManager"
-                    serviceImplementation="com.intellij.slicer.SliceManager"/>
 
     <projectService serviceInterface="com.intellij.codeInspection.ex.EntryPointsManager"
                     serviceImplementation="com.intellij.codeInspection.ex.EntryPointsManagerImpl"/>
@@ -560,7 +554,7 @@
                         serviceImplementation="com.intellij.framework.library.impl.DownloadableLibraryServiceImpl"/>
 
     <projectService serviceImplementation="com.intellij.javadoc.JavadocGenerationManager"/>
-    <projectService serviceImplementation="com.intellij.codeInsight.ProjectCodeInsightSettings"/>
+    <projectService serviceImplementation="com.intellij.codeInsight.JavaProjectCodeInsightSettings"/>
 
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl"/>
 
@@ -767,11 +761,7 @@
                      groupName="Performance issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.CollectionAddAllCanBeReplacedWithConstructorInspection"
                      displayName="Collection.addAll() can be replaced with parametrized constructor"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="GuavaFluentIterable"
-                     groupBundle="messages.InspectionsBundle"
-                     groupName="Java language level migration aids" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.java18StreamApi.GuavaFluentIterableInspection"
-                     displayName="Guava's FluentIterable can be replaced by java.util.stream.Stream"/>
+
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.quickFix.RedundantLambdaParameterTypeIntention</className>
       <category>Java/Declaration</category>
@@ -779,6 +769,14 @@
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitIfAction</className>
       <category>Java/Control Flow</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.SplitFilterAction</className>
+      <category>Java/Streams</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.MergeFilterChainAction</className>
+      <category>Java/Streams</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.InvertIfConditionAction</className>
@@ -1040,6 +1038,7 @@
     <lang.whiteSpaceFormattingStrategy language="JAVA"
                                        implementationClass="com.intellij.psi.formatter.JavadocWhiteSpaceFormattingStrategy"/>
     <lang.rearranger language="JAVA" implementationClass="com.intellij.psi.codeStyle.arrangement.JavaRearranger"/>
+    <lang.formatting.extractor language="JAVA" implementationClass="com.intellij.psi.codeStyle.extractor.differ.JavaExtractor"/>
 
     <lang.documentationProvider language="JAVA" implementationClass="com.intellij.lang.java.JavaDocumentationProvider"/>
     <documentationProvider implementation="com.intellij.lang.java.FileDocumentationProvider" order="last"/>
@@ -1118,6 +1117,8 @@
 
     <langCodeStyleSettingsProvider implementation="com.intellij.ide.JavaLanguageCodeStyleSettingsProvider"/>
     <lang.lineWrapStrategy language="JAVA" implementationClass="com.intellij.psi.formatter.java.JavaLineWrapPositionStrategy"/>
+
+    <lang.sliceProvider language="JAVA" implementationClass="com.intellij.slicer.JavaSliceProvider"/>
 
     <stacktrace.fold substring="at java.awt.EventDispatchThread"/>
     <stacktrace.fold substring="at java.awt.Window.dispatchEventImpl("/>
@@ -1333,8 +1334,10 @@
     <configurationProducer implementation="com.intellij.execution.applet.AppletConfigurationProducer"/>
     <configurationType implementation="com.intellij.execution.application.ApplicationConfigurationType"/>
     <configurationType implementation="com.intellij.execution.jar.JarApplicationConfigurationType"/>
+    <configurationType implementation="com.intellij.execution.scratch.JavaScratchConfigurationType"/>
     <runConfigurationProducer implementation="com.intellij.execution.jar.JarApplicationConfigurationProducer"/>
     <runConfigurationProducer implementation="com.intellij.execution.application.ApplicationConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.intellij.execution.scratch.JavaScratchConfigurationProducer"/>
     <configurationType implementation="com.intellij.execution.remote.RemoteConfigurationType"/>
 
     <runLineMarkerContributor language="JAVA" implementationClass="com.intellij.execution.application.ApplicationRunLineMarkerProvider"/>
@@ -1493,6 +1496,7 @@
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaSuperClassNameOccurenceIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaMethodParameterTypesIndex"/>
+    <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaUnitIndex"/>
 
     <fileBasedIndex implementation="com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.RefQueueIndex"/>
@@ -1555,6 +1559,7 @@
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
                         serviceImplementation="com.intellij.profile.codeInspection.JavaAwareInspectionProfileManager"/>
 
+    <resolveScopeProvider implementation="com.intellij.psi.impl.file.impl.JavaOutOfSourcesResolveScopeProvider"/>
     <resolveScopeEnlarger implementation="com.intellij.psi.NonClasspathResolveScopeEnlarger"/>
 
     <xdebugger.debuggerSupport implementation="com.intellij.debugger.ui.JavaDebuggerSupport"/>
@@ -1625,7 +1630,6 @@
 
     <applicationService serviceImplementation="com.intellij.execution.JavaRunConfigurationExtensionManager"/>
     <runConfigurationExtension implementation="com.intellij.execution.testDiscovery.TestDiscoveryExtension"/>
-    <runConfigurationExtension implementation="com.intellij.execution.impl.JavaScratchRunConfigurationExtension"/>
 
     <regExpLanguageHost forClass="com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl"
                         implementationClass="com.intellij.psi.impl.JavaRegExpHost"/>
@@ -1686,6 +1690,8 @@
                     serviceImplementation="com.intellij.platform.ProjectBaseDirectory"/>
     <projectService serviceInterface="com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis"
                     serviceImplementation="com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis"/>
+    <projectService serviceInterface="com.intellij.psi.stubsHierarchy.impl.HierarchyService"
+                    serviceImplementation="com.intellij.psi.stubsHierarchy.impl.HierarchyService"/>
     <spellchecker.support language="JAVA" implementationClass="com.intellij.spellchecker.JavaSpellcheckingStrategy"/>
 
     <codeInsight.template.postfixTemplateProvider language="JAVA"
@@ -1713,5 +1719,6 @@
     <action id="ShowSiblings" class="com.intellij.codeInsight.hint.actions.ShowSiblingsAction">
       <add-to-group group-id="QuickActions" anchor="after" relative-to-action="QuickImplementations"/>
     </action>
+    <action id="ShowRecentTests" class="com.intellij.testIntegration.ShowRecentTests"/>
   </actions>
 </idea-plugin>

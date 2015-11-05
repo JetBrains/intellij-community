@@ -85,7 +85,7 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
       sure(FileModificationService.getInstance().preparePsiElementForWrite(file));
       // try to at least match parameter count
       // TODO: get parameter style from code style
-      PyFunctionBuilder builder = new PyFunctionBuilder(myIdentifier);
+      PyFunctionBuilder builder = new PyFunctionBuilder(myIdentifier, problemElement);
       PsiElement problemParent = problemElement.getParent();
       if (problemParent instanceof PyCallExpression) {
         PyArgumentList arglist = ((PyCallExpression)problemParent).getArgumentList();

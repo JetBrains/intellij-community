@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -90,6 +91,11 @@ public class CreateFromTemplateDialog extends DialogWrapper {
   }
 
   public PsiElement create(){
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      doCreate(myTemplate.getName() + "." + myTemplate.getExtension());
+      Disposer.dispose(getDisposable());
+      return myCreatedElement;
+    }
     if (myAttrPanel != null) {
       if (myAttrPanel.hasSomethingToAsk()) {
         show();

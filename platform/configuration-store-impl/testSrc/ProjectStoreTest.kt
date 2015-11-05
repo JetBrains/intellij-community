@@ -25,6 +25,7 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
+import com.intellij.util.PathUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
@@ -32,39 +33,41 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.File
 
-fun createProject(tempDirManager: TemporaryDirectory, task: (Project) -> Unit) {
-  createOrLoadProject(tempDirManager, task)
+fun createProjectAndUseInLoadComponentStateMode(tempDirManager: TemporaryDirectory, directoryBased: Boolean = false, task: (Project) -> Unit) {
+  createOrLoadProject(tempDirManager, task, directoryBased = directoryBased)
 }
 
-fun loadProject(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String)? = null, task: (Project) -> Unit) {
-  createOrLoadProject(tempDirManager, task, projectCreator)
+fun loadAndUseProject(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String), task: (Project) -> Unit) {
+  createOrLoadProject(tempDirManager, task, projectCreator, false)
 }
 
-private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Project) -> Unit, projectCreator: ((VirtualFile) -> String)? = null) {
+private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Project) -> Unit, projectCreator: ((VirtualFile) -> String)? = null, directoryBased: Boolean) {
   runInEdtAndWait {
     var filePath: String
     if (projectCreator == null) {
-      filePath = tempDirManager.newDirectory("test${ProjectFileType.DOT_DEFAULT_EXTENSION}").systemIndependentPath
+      filePath = tempDirManager.newDirectory("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}").systemIndependentPath
     }
     else {
       filePath = runWriteAction { projectCreator(tempDirManager.newVirtualDirectory()) }
     }
 
     val projectManager = ProjectManagerEx.getInstanceEx() as ProjectManagerImpl
-    var project = if (projectCreator == null) projectManager.newProject(null, filePath, true, false, false)!! else projectManager.loadProject(filePath)!!
-    try {
-      projectManager.openTestProject(project)
-      task(project)
-    }
-    finally {
-      projectManager.closeProject(project, false, true, false)
+    var project = if (projectCreator == null) projectManager.newProject(null, filePath, true, false)!! else projectManager.loadProject(filePath)!!
+    project.runInLoadComponentStateMode {
+      try {
+        projectManager.openTestProject(project)
+        task(project)
+      }
+      finally {
+        projectManager.closeProject(project, false, true, false)
+      }
     }
   }
 }
 
-class ProjectStoreTest {
+internal class ProjectStoreTest {
   companion object {
-    ClassRule val projectRule = ProjectRule()
+    @ClassRule val projectRule = ProjectRule()
   }
 
   val tempDirManager = TemporaryDirectory()
@@ -72,16 +75,11 @@ class ProjectStoreTest {
   private val ruleChain = RuleChain(tempDirManager)
   @Rule fun getChain() = ruleChain
 
-  Language("XML")
+  @Language("XML")
   private val iprFileContent =
-    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-      "<project version=\"4\">\n" +
-      "  <component name=\"AATestComponent\">\n" +
-      "    <option name=\"value\" value=\"customValue\" />\n" +
-      "  </component>\n" +
-      "</project>"
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\">\n  <component name=\"AATestComponent\">\n    <option name=\"value\" value=\"customValue\" />\n  </component>\n</project>"
 
-  State(name = "AATestComponent", storages = arrayOf(Storage(file = StoragePathMacros.PROJECT_FILE)))
+  @State(name = "AATestComponent", storages = arrayOf(Storage(file = StoragePathMacros.PROJECT_FILE)))
   private class TestComponent : PersistentStateComponent<TestState> {
     private var state: TestState? = null
 
@@ -94,39 +92,43 @@ class ProjectStoreTest {
 
   data class TestState(var value: String = "default")
 
-  public Test fun directoryBasedStorage() {
-    loadProject(tempDirManager, {
+  @Test fun directoryBasedStorage() {
+    loadAndUseProject(tempDirManager, {
       it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)
       it.path
     }) { project ->
       val testComponent = test(project)
 
+      assertThat(project.basePath).isEqualTo(PathUtil.getParentPath((PathUtil.getParentPath(project.projectFilePath!!))))
+
       // test reload on external change
-      val file = File(project.stateStore.getStateStorageManager().expandMacros(StoragePathMacros.PROJECT_FILE))
+      val file = File(project.stateStore.stateStorageManager.expandMacros(StoragePathMacros.PROJECT_FILE))
       file.writeText(file.readText().replace("""<option name="value" value="foo" />""", """<option name="value" value="newValue" />"""))
 
-      project.getBaseDir().refresh(false, true)
+      project.baseDir.refresh(false, true)
       (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
 
-      assertThat(testComponent.getState()).isEqualTo(TestState("newValue"))
+      assertThat(testComponent.state).isEqualTo(TestState("newValue"))
     }
   }
 
-  public Test fun fileBasedStorage() {
-    loadProject(tempDirManager, { it.writeChild("test${ProjectFileType.DOT_DEFAULT_EXTENSION}", iprFileContent).path }) { project ->
+  @Test fun fileBasedStorage() {
+    loadAndUseProject(tempDirManager, { it.writeChild("test${ProjectFileType.DOT_DEFAULT_EXTENSION}", iprFileContent).path }) { project ->
       test(project)
+
+      assertThat(project.basePath).isEqualTo(PathUtil.getParentPath(project.projectFilePath!!))
     }
   }
 
   private fun test(project: Project): TestComponent {
     val testComponent = TestComponent()
     project.stateStore.initComponent(testComponent, true)
-    assertThat(testComponent.getState()).isEqualTo(TestState("customValue"))
+    assertThat(testComponent.state).isEqualTo(TestState("customValue"))
 
-    testComponent.getState()!!.value = "foo"
+    testComponent.state!!.value = "foo"
     project.saveStore()
 
-    val file = File(project.stateStore.getStateStorageManager().expandMacros(StoragePathMacros.PROJECT_FILE))
+    val file = File(project.stateStore.stateStorageManager.expandMacros(StoragePathMacros.PROJECT_FILE))
     assertThat(file).isFile()
     // test exact string - xml prolog, line separators, indentation and so on must be exactly the same
     // todo get rid of default component states here

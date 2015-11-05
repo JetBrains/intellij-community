@@ -68,8 +68,8 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
       myExtensions = Extensions.getExtensions(IndexedRootsProvider.EP_NAME);
     }
     for (IndexedRootsProvider provider : myExtensions) {
-      for(VirtualFile file:IndexableSetContributor.getRootsToIndex(provider)) {
-        (file.isDirectory() ? directories:files).add(file);
+      for (VirtualFile root : IndexableSetContributor.getRootsToIndex(provider)) {
+        (root.isDirectory() ? directories : files).add(root);
       }
       if (myProject != null) {
         Set<VirtualFile> projectRoots = IndexableSetContributor.getProjectRootsToIndex(provider, myProject);

@@ -33,12 +33,21 @@ public abstract class SmartPointerManager {
   }
 
   /**
-   * Creates a smart pointer to the specified PSI element.
+   * Creates a smart pointer to the specified PSI element. If the element's containing file is known, it's more preferable to use
+   * {@link #createSmartPsiElementPointer(PsiElement, PsiFile)}.
    *
    * @param element the element to create a pointer to.
    * @return the smart pointer instance.
    */
   @NotNull public abstract <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element);
+
+  /**
+   * Creates a smart pointer to the specified PSI element.
+   *
+   * @param element the element to create a pointer to.
+   * @param containingFile the result of <code>element.getContainingFile()</code>.
+   * @return the smart pointer instance.
+   */
   @NotNull public abstract <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element, PsiFile containingFile);
 
   /**
@@ -60,5 +69,10 @@ public abstract class SmartPointerManager {
    * @return true if both pointers point to the same PSI element.
    */
   public abstract boolean pointToTheSameElement(@NotNull SmartPsiElementPointer pointer1, @NotNull SmartPsiElementPointer pointer2);
-  public abstract boolean removePointer(@NotNull SmartPsiElementPointer pointer);
+
+  /**
+   * Disposes a smart pointer and frees the resources associated with it. Calling this method is not obligatory: pointers are
+   * freed correctly when they're not used anymore. But disposing the pointers explicitly might be beneficial for performance.
+   */
+  public abstract void removePointer(@NotNull SmartPsiElementPointer pointer);
 }

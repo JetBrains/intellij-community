@@ -498,7 +498,9 @@ class Foo {
     if (name in ["testNavigationActionsDontTerminateTemplate", "testTemplateWithEnd", "testDisappearingVar",
                  "test do replace macro value with empty result",
                  "test do not replace macro value with null result",
-                 "test escape string characters in soutv", "test do not replace macro value with empty result"]) {
+                 "test escape string characters in soutv",
+                 "test escape shouldn't move caret to the end marker",
+                 "test do not replace macro value with empty result"]) {
       runnable.run();
       return;
     }

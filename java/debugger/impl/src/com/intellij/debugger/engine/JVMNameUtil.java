@@ -51,6 +51,7 @@ public class JVMNameUtil {
 
   public static final String CONSTRUCTOR_NAME = "<init>";
 
+  @Nullable
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static String getPrimitiveSignature(String typeName) {
     if(PsiType.BOOLEAN.getCanonicalText().equals(typeName)) {
@@ -125,7 +126,7 @@ public class JVMNameUtil {
   }
 
   private static class JVMNameBuffer {
-    List<JVMName> myList = new ArrayList<JVMName>();
+    private final List<JVMName> myList = new ArrayList<JVMName>();
 
     public void append(@NotNull JVMName evaluator){
       myList.add(evaluator);
@@ -243,6 +244,7 @@ public class JVMNameUtil {
     }
   }
 
+  @NotNull
   public static JVMName getJVMRawText(String qualifiedName) {
     return new JVMRawText(qualifiedName);
   }
@@ -265,7 +267,8 @@ public class JVMNameUtil {
       return getJVMQualifiedName(psiClass);
     }
   }
-                               
+
+  @NotNull
   public static JVMName getJVMQualifiedName(@NotNull PsiClass psiClass) {
     final String name = getNonAnonymousClassName(psiClass);
     if (name != null) {
@@ -290,7 +293,7 @@ public class JVMNameUtil {
   }
 
   @Nullable
-  public static String getNonAnonymousClassName(PsiClass aClass) {
+  public static String getNonAnonymousClassName(@NotNull PsiClass aClass) {
     if (PsiUtil.isLocalOrAnonymousClass(aClass)) {
       return null;
     }
@@ -309,10 +312,12 @@ public class JVMNameUtil {
     return DebuggerManager.getInstance(aClass.getProject()).getVMClassQualifiedName(aClass);
   }
 
+  @NotNull
   public static JVMName getJVMConstructorSignature(@Nullable PsiMethod method, @Nullable PsiClass declaringClass) {
     return getJVMSignature(method, true, declaringClass);
   }
 
+  @NotNull
   public static JVMName getJVMSignature(@NotNull PsiMethod method) {
     return getJVMSignature(method, method.isConstructor(), method.getContainingClass());
   }
@@ -322,11 +327,12 @@ public class JVMNameUtil {
     return method.isConstructor() ? CONSTRUCTOR_NAME : method.getName();
   }
 
+  @NotNull
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static JVMName getJVMSignature(@Nullable PsiMethod method, boolean constructor, @Nullable PsiClass declaringClass) {
     JVMNameBuffer signature = new JVMNameBuffer();
     signature.append("(");
-    
+
     if (constructor) {
       if (declaringClass != null) {
         final PsiClass outerClass = declaringClass.getContainingClass();
@@ -473,12 +479,7 @@ public class JVMNameUtil {
   }
 
   public static PsiClass getTopLevelParentClass(PsiClass psiClass) {
-    PsiClass enclosing = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class, true);
-    while (enclosing != null) {
-      psiClass = enclosing;
-      enclosing = PsiTreeUtil.getParentOfType(enclosing, PsiClass.class, true); 
-    }
-    return psiClass;
+    return PsiTreeUtil.getTopmostParentOfType(psiClass, PsiClass.class);
   }
 
   @Nullable

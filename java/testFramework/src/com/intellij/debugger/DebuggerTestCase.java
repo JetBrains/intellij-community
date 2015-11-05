@@ -61,6 +61,7 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.sun.jdi.Location;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -111,8 +112,12 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
   @Override
   protected void tearDown() throws Exception {
-    FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
-    super.tearDown();
+    try {
+      FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   protected void createLocalProcess(String className) throws ExecutionException, InterruptedException, InvocationTargetException {
@@ -421,6 +426,17 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     return createDebuggerContext(suspendContext, suspendContext.getFrameProxy());
   }
 
+  protected void printLocation(SuspendContextImpl suspendContext) {
+    try {
+      Location location = suspendContext.getFrameProxy().location();
+      String message = "paused at " + location.sourceName() + ":" + location.lineNumber();
+      println(message, ProcessOutputTypes.SYSTEM);
+    }
+    catch (Throwable e) {
+      addException(e);
+    }
+  }
+
   protected void createBreakpointInHelloWorld() {
     DebuggerInvocationUtil.invokeAndWait(myProject, new Runnable() {
       @Override
@@ -465,11 +481,16 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     return debuggerSession;
   }
 
-  public static class MockConfiguration implements ModuleRunConfiguration {
+  public class MockConfiguration implements ModuleRunConfiguration {
     @Override
     @NotNull
     public Module[] getModules() {
-      return Module.EMPTY_ARRAY;
+      if (myModule != null) {
+        return new Module[]{myModule};
+      }
+      else {
+        return Module.EMPTY_ARRAY;
+      }
     }
 
     @Override

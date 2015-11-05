@@ -24,7 +24,7 @@
       <keyboard-shortcut first-keystroke="meta shift Y" />
       <keyboard-shortcut first-keystroke="meta 6" />
     </action>
-    <action id="ActivateChangesToolWindow">
+    <action id="ActivateVersionControlToolWindow">
       <keyboard-shortcut first-keystroke="meta 9" />
       <keyboard-shortcut first-keystroke="meta shift 9" />
     </action>

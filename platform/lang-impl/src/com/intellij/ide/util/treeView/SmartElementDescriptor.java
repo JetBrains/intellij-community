@@ -27,25 +27,29 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class SmartElementDescriptor extends NodeDescriptor{
-  protected PsiElement myElement;
   private final SmartPsiElementPointer mySmartPointer;
 
   public SmartElementDescriptor(@NotNull Project project, NodeDescriptor parentDescriptor, @NotNull PsiElement element) {
     super(project, parentDescriptor);
-    myElement = element;
     mySmartPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(element);
+  }
+
+  @Nullable
+  public final PsiElement getPsiElement() {
+    return mySmartPointer.getElement();
   }
 
   @Override
   public Object getElement() {
-    return myElement;
+    return getPsiElement();
   }
 
   protected boolean isMarkReadOnly() {
@@ -59,27 +63,27 @@ public class SmartElementDescriptor extends NodeDescriptor{
   // Should be called in atomic action
   @Override
   public boolean update() {
-    myElement = mySmartPointer.getElement();
-    if (myElement == null) return true;
+    PsiElement element = mySmartPointer.getElement();
+    if (element == null) return true;
     int flags = Iconable.ICON_FLAG_VISIBILITY;
     if (isMarkReadOnly()){
       flags |= Iconable.ICON_FLAG_READ_STATUS;
     }
     Icon icon = null;
     try {
-      icon = myElement.getIcon(flags);
+      icon = element.getIcon(flags);
     }
-    catch (IndexNotReadyException e) {
+    catch (IndexNotReadyException ignored) {
     }
     Color color = null;
 
     if (isMarkModified() ){
-      VirtualFile virtualFile = PsiUtilBase.getVirtualFile(myElement);
+      VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
       if (virtualFile != null) {
         color = FileStatusManager.getInstance(myProject).getStatus(virtualFile).getColor();
       }
     }
-    if (CopyPasteManager.getInstance().isCutElement(myElement)) {
+    if (CopyPasteManager.getInstance().isCutElement(element)) {
       color = CopyPasteManager.CUT_COLOR;
     }
 

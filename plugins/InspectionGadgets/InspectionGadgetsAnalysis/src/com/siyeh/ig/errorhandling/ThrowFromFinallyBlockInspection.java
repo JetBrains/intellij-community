@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,12 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.psi.PsiThrowStatement;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ThrowFromFinallyBlockInspection extends BaseInspection {
@@ -48,16 +49,54 @@ public class ThrowFromFinallyBlockInspection extends BaseInspection {
     return new ThrowFromFinallyBlockVisitor();
   }
 
-  private static class ThrowFromFinallyBlockVisitor
-    extends BaseInspectionVisitor {
+  private static class ThrowFromFinallyBlockVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitThrowStatement(PsiThrowStatement statement) {
       super.visitThrowStatement(statement);
-      if (!ControlFlowUtils.isInFinallyBlock(statement)) {
+      final PsiCodeBlock finallyBlock = getContainingFinallyBlock(statement);
+      if (finallyBlock == null) {
         return;
+      }
+      final PsiExpression exception = ParenthesesUtils.stripParentheses(statement.getException());
+      if (exception instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)exception;
+        final PsiElement target = referenceExpression.resolve();
+        if (target == null || !PsiTreeUtil.isAncestor(finallyBlock, target, true)) {
+          // variable from outside finally block is thrown
+          return;
+        }
       }
       registerStatementError(statement);
     }
+  }
+
+  private static PsiCodeBlock getContainingFinallyBlock(@NotNull PsiThrowStatement throwStatement) {
+    final PsiExpression exception = throwStatement.getException();
+    final PsiType type = exception != null ? exception.getType() : null;
+    PsiElement currentElement = throwStatement;
+    while (true) {
+      final PsiTryStatement tryStatement = PsiTreeUtil
+        .getParentOfType(currentElement, PsiTryStatement.class, true, PsiClass.class, PsiLambdaExpression.class);
+      if (tryStatement == null) {
+        return null;
+      }
+      final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
+      if (PsiTreeUtil.isAncestor(finallyBlock, currentElement, true)) {
+        return finallyBlock;
+      }
+      if (type != null && isCaught(tryStatement, type)) {
+        return null;
+      }
+      currentElement = tryStatement;
+    }
+  }
+
+  private static boolean isCaught(PsiTryStatement tryStatement, PsiType exceptionType) {
+    for (PsiParameter parameter : tryStatement.getCatchBlockParameters()) {
+      final PsiType type = parameter.getType();
+      if (type.isAssignableFrom(exceptionType)) return true;
+    }
+    return false;
   }
 }

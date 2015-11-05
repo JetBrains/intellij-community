@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -128,7 +129,9 @@ public class DelayedDocumentWatcher {
         return;
       }
       if (!myChangedFiles.contains(file)) {
-        // optimization: if possible, avoid possible expensive 'myChangedFileFilter.value(file)' call
+        if (ProjectCoreUtil.isProjectOrWorkspaceFile(file)) {
+          return;
+        }
         if (myChangedFileFilter != null && !myChangedFileFilter.value(file)) {
           return;
         }

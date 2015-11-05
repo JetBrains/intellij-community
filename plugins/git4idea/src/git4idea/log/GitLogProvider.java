@@ -405,17 +405,24 @@ public class GitLogProvider implements VcsLogProvider {
 
     List<String> filterParameters = ContainerUtil.newArrayList();
 
-    if (filterCollection.getBranchFilter() != null && !filterCollection.getBranchFilter().getBranchNames().isEmpty()) {
+    VcsLogBranchFilter branchFilter = filterCollection.getBranchFilter();
+    if (branchFilter != null) {
       GitRepository repository = getRepository(root);
       assert repository != null : "repository is null for root " + root + " but was previously reported as 'ready'";
 
+      Collection<GitBranch> branches = ContainerUtil
+        .newArrayList(ContainerUtil.concat(repository.getBranches().getLocalBranches(), repository.getBranches().getRemoteBranches()));
+      Collection<String> branchNames = GitBranchUtil.convertBranchesToNames(branches);
+      Collection<String> predefinedNames = ContainerUtil.list("HEAD");
+
       boolean atLeastOneBranchExists = false;
-      for (String branchName : filterCollection.getBranchFilter().getBranchNames()) {
-        if (branchName.equals("HEAD") || repository.getBranches().findBranchByName(branchName) != null) {
+      for (String branchName : ContainerUtil.concat(branchNames, predefinedNames)) {
+        if (branchFilter.matches(branchName)) {
           filterParameters.add(branchName);
           atLeastOneBranchExists = true;
         }
       }
+
       if (!atLeastOneBranchExists) { // no such branches in this repository => filter matches nothing
         return Collections.emptyList();
       }
@@ -444,7 +451,7 @@ public class GitLogProvider implements VcsLogProvider {
 
     if (filterCollection.getTextFilter() != null) {
       String textFilter = filterCollection.getTextFilter().getText();
-      filterParameters.add(prepareParameter("grep", textFilter));
+      filterParameters.add(prepareParameter("grep", StringUtil.escapeChars(textFilter, '[', ']')));
     }
 
     filterParameters.add("--regexp-ignore-case"); // affects case sensitivity of any filter (except file filter)

@@ -25,7 +25,7 @@ import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
+import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Stack;
@@ -268,7 +268,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
 
     Set<PsiField> classFields = myCachedClassFields.get(containingClass);
     if (classFields == null) {
-      classFields = ContainerUtil.map2Set(containingClass.getFields(), new Function.Self<PsiField, PsiField>());
+      classFields = ContainerUtil.map2Set(containingClass.getFields(), Functions.<PsiField>id());
       myCachedClassFields.put(containingClass, classFields);
     }
 

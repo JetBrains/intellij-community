@@ -65,7 +65,7 @@ import javax.swing.*;
 import java.util.List;
 
 public abstract class Breakpoint<P extends JavaBreakpointProperties> implements FilteredRequestor, ClassPrepareRequestor {
-  public static Key<Breakpoint> DATA_KEY = Key.create("JavaBreakpoint");
+  public static final Key<Breakpoint> DATA_KEY = Key.create("JavaBreakpoint");
 
   final XBreakpoint<P> myXBreakpoint;
   protected final Project myProject;

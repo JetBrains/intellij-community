@@ -27,11 +27,11 @@ import javax.swing.*;
 public class MacIntelliJIconCache {
   private static final HashMap<String, Icon> cache = new HashMap<String, Icon>();
 
-  public static Icon getIcon(String name, boolean selected, boolean focused, boolean disabled) {
+  public static Icon getIcon(String name, boolean selected, boolean focused, boolean enabled) {
     String key = name;
     if (selected) key+= "Selected";
     if (focused) key+= "Focused";
-    else if (disabled) key+="Disabled";
+    else if (!enabled) key+="Disabled";
     if (IntelliJLaf.isGraphite()) key= "graphite/" + key;
     Icon icon = cache.get(key);
     if (icon == null) {
@@ -42,9 +42,9 @@ public class MacIntelliJIconCache {
   }
 
   public static Icon getIcon(String name, boolean selected, boolean focused) {
-    return getIcon(name, selected, focused, false);
+    return getIcon(name, selected, focused, true);
   }
   public static Icon getIcon(String name) {
-    return getIcon(name, false, false, false);
+    return getIcon(name, false, false, true);
   }
 }

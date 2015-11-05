@@ -72,7 +72,7 @@ public class TextDiffViewerUtil {
   public static TextDiffSettings getTextSettings(@NotNull DiffContext context) {
     TextDiffSettings settings = context.getUserData(TextDiffSettingsHolder.KEY);
     if (settings == null) {
-      settings = TextDiffSettings.getSettings(context.getUserData(DiffUserDataKeysEx.PLACE));
+      settings = TextDiffSettings.getSettings(context.getUserData(DiffUserDataKeys.PLACE));
       context.putUserData(TextDiffSettingsHolder.KEY, settings);
       if (DiffUtil.isUserDataFlagSet(DiffUserDataKeys.DO_NOT_IGNORE_WHITESPACES, context)) {
         settings.setIgnorePolicy(IgnorePolicy.DEFAULT);

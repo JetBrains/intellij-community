@@ -16,11 +16,9 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.lang.annotation.Annotation;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.TextRange;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.documentation.*;
+import com.jetbrains.python.documentation.docstrings.*;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
 
@@ -66,19 +64,24 @@ public class DocStringAnnotator extends PyAnnotator {
 
   private void annotateDocStringStmt(final PyStringLiteralExpression stmt) {
     if (stmt != null) {
-      final Module module = ModuleUtilCore.findModuleForPsiElement(stmt);
-      if (module == null) return;
-      final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(module);
-      if (!settings.isPlain(stmt.getContainingFile())) {
-        String[] tags = settings.isEpydocFormat(stmt.getContainingFile()) ? EpydocString.ALL_TAGS : SphinxDocString.ALL_TAGS;
-        int pos = 0;
-        while(true) {
-          TextRange textRange = DocStringReferenceProvider.findNextTag(stmt.getText(), pos, tags);
-          if (textRange == null) break;
-          Annotation annotation = getHolder().createInfoAnnotation(textRange.shiftRight(stmt.getTextRange().getStartOffset()), null);
-          annotation.setTextAttributes(PyHighlighter.PY_DOC_COMMENT_TAG);
-          pos = textRange.getEndOffset();
-        }
+      final DocStringFormat format = DocStringUtil.getConfiguredDocStringFormat(stmt);
+      final String[] tags;
+      if (format == DocStringFormat.EPYTEXT) {
+        tags = EpydocString.ALL_TAGS;
+      }
+      else if (format == DocStringFormat.REST) {
+        tags = SphinxDocString.ALL_TAGS;
+      }
+      else {
+        return;
+      }
+      int pos = 0;
+      while (true) {
+        TextRange textRange = DocStringReferenceProvider.findNextTag(stmt.getText(), pos, tags);
+        if (textRange == null) break;
+        Annotation annotation = getHolder().createInfoAnnotation(textRange.shiftRight(stmt.getTextRange().getStartOffset()), null);
+        annotation.setTextAttributes(PyHighlighter.PY_DOC_COMMENT_TAG);
+        pos = textRange.getEndOffset();
       }
     }
   }

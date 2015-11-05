@@ -18,16 +18,15 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
 import com.intellij.ui.OptionGroup;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -62,8 +61,11 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
 
     JPanel optionsPanel = new JPanel(new GridBagLayout());
 
-    OptionGroup keepBlankLinesOptionsGroup = createKeepBlankLinesOptionsGroup();
-    OptionGroup blankLinesOptionsGroup = createBlankLinesOptionsGroup();
+    Map<CodeStyleSettingPresentation.SettingsGroup, List<CodeStyleSettingPresentation>> settings = CodeStyleSettingPresentation
+      .getStandardSettings(getSettingsType());
+
+    OptionGroup keepBlankLinesOptionsGroup = createOptionsGroup(BLANK_LINES_KEEP, settings.get(new CodeStyleSettingPresentation.SettingsGroup(BLANK_LINES_KEEP)));
+    OptionGroup blankLinesOptionsGroup = createOptionsGroup(BLANK_LINES, settings.get(new CodeStyleSettingPresentation.SettingsGroup(BLANK_LINES)));
     if (keepBlankLinesOptionsGroup != null) {
       keepBlankLinesOptionsGroup.setAnchor(keepBlankLinesOptionsGroup.findAnchor());
       optionsPanel.add(keepBlankLinesOptionsGroup.createPanel(),
@@ -109,37 +111,13 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
   }
 
   @Nullable
-  private OptionGroup createBlankLinesOptionsGroup() {
-    OptionGroup optionGroup = new OptionGroup(BLANK_LINES);
+  private OptionGroup createOptionsGroup(@NotNull String groupName, @NotNull List<CodeStyleSettingPresentation> settings) {
+    OptionGroup optionGroup = new OptionGroup(groupName);
 
-    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.before.package.statement"), "BLANK_LINES_BEFORE_PACKAGE");
-    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.after.package.statement"), "BLANK_LINES_AFTER_PACKAGE");
-    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.before.imports"), "BLANK_LINES_BEFORE_IMPORTS");
-    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.after.imports"), "BLANK_LINES_AFTER_IMPORTS");
-    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.around.class"), "BLANK_LINES_AROUND_CLASS");
-    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.after.class.header"), "BLANK_LINES_AFTER_CLASS_HEADER");
-    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.after.anonymous.class.header"),
-                 "BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER");
-    createOption(optionGroup, "Around field in interface:", "BLANK_LINES_AROUND_FIELD_IN_INTERFACE");
-    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.around.field"), "BLANK_LINES_AROUND_FIELD");
-    createOption(optionGroup, "Around method in interface:", "BLANK_LINES_AROUND_METHOD_IN_INTERFACE");
-    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.around.method"), "BLANK_LINES_AROUND_METHOD");
-    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.before.method.body"), "BLANK_LINES_BEFORE_METHOD_BODY");
-    initCustomOptions(optionGroup, BLANK_LINES);
-
-    if (optionGroup.getComponents().length == 0) return null;
-
-    return optionGroup;
-  }
-
-  @Nullable
-  private OptionGroup createKeepBlankLinesOptionsGroup() {
-    OptionGroup optionGroup = new OptionGroup(BLANK_LINES_KEEP);
-
-    createOption(optionGroup, ApplicationBundle.message("editbox.keep.blanklines.in.declarations"), "KEEP_BLANK_LINES_IN_DECLARATIONS");
-    createOption(optionGroup, ApplicationBundle.message("editbox.keep.blanklines.in.code"), "KEEP_BLANK_LINES_IN_CODE");
-    createOption(optionGroup, ApplicationBundle.message("editbox.keep.blanklines.before.rbrace"), "KEEP_BLANK_LINES_BEFORE_RBRACE");
-    initCustomOptions(optionGroup, BLANK_LINES_KEEP);
+    for (CodeStyleSettingPresentation setting: settings) {
+      createOption(optionGroup, setting.getUiName(), setting.getFieldName());
+    }
+    initCustomOptions(optionGroup, groupName);
 
     if (optionGroup.getComponents().length == 0) return null;
 

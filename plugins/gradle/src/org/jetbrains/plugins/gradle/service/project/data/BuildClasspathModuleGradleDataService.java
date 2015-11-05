@@ -25,16 +25,20 @@ import com.intellij.openapi.externalSystem.model.project.ExternalModuleBuildClas
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectBuildClasspathPojo;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
@@ -52,7 +56,7 @@ import java.util.*;
  * @since 8/27/13
  */
 @Order(ExternalSystemConstants.UNORDERED)
-public class BuildClasspathModuleGradleDataService implements ProjectDataService<BuildScriptClasspathData, Module> {
+public class BuildClasspathModuleGradleDataService extends AbstractProjectDataService<BuildScriptClasspathData, Module> {
 
   private static final Logger LOG = Logger.getInstance(BuildClasspathModuleGradleDataService.class);
 
@@ -64,12 +68,10 @@ public class BuildClasspathModuleGradleDataService implements ProjectDataService
 
   @Override
   public void importData(@NotNull final Collection<DataNode<BuildScriptClasspathData>> toImport,
+                         @Nullable final ProjectData projectData,
                          @NotNull final Project project,
-                         boolean synchronous) {
-    if (toImport.isEmpty()) {
-      return;
-    }
-    if (!project.isInitialized()) {
+                         @NotNull final IdeModifiableModelsProvider modelsProvider) {
+    if (projectData == null || toImport.isEmpty()) {
       return;
     }
 
@@ -79,20 +81,19 @@ public class BuildClasspathModuleGradleDataService implements ProjectDataService
     assert manager != null;
     AbstractExternalSystemLocalSettings localSettings = manager.getLocalSettingsProvider().fun(project);
 
-    //noinspection MismatchedQueryAndUpdateOfCollection
-    Map<String/* externalProjectPath */, Set<String>> externalProjectGradleSdkLibs = new FactoryMap<String, Set<String>>() {
-      @Nullable
+    final String linkedExternalProjectPath = projectData.getLinkedExternalProjectPath();
+    final NotNullLazyValue<Set<String>> externalProjectGradleSdkLibs = new NotNullLazyValue<Set<String>>() {
+      @NotNull
       @Override
-      protected Set<String> create(String externalProjectPath) {
-        GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(externalProjectPath);
+      protected Set<String> compute() {
+        GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedExternalProjectPath);
         if (settings == null || settings.getDistributionType() == null) return Collections.emptySet();
 
         final Set<String> gradleSdkLibraries = ContainerUtil.newLinkedHashSet();
         File gradleHome =
-          gradleInstallationManager.getGradleHome(settings.getDistributionType(), externalProjectPath, settings.getGradleHome());
+          gradleInstallationManager.getGradleHome(settings.getDistributionType(), linkedExternalProjectPath, settings.getGradleHome());
         if (gradleHome != null && gradleHome.isDirectory()) {
-
-          final Collection<File> libraries = gradleInstallationManager.getClassRoots(project, externalProjectPath);
+          final Collection<File> libraries = gradleInstallationManager.getClassRoots(project, linkedExternalProjectPath);
           if (libraries != null) {
             for (File library : libraries) {
               gradleSdkLibraries.add(FileUtil.toCanonicalPath(library.getPath()));
@@ -103,14 +104,35 @@ public class BuildClasspathModuleGradleDataService implements ProjectDataService
       }
     };
 
+    final NotNullLazyValue<Set<String>> buildSrcProjectsRoots = new NotNullLazyValue<Set<String>>() {
+      @NotNull
+      @Override
+      protected Set<String> compute() {
+        Set<String> result = new LinkedHashSet<String>();
+        //// add main java root of buildSrc project
+        result.add(linkedExternalProjectPath + "/buildSrc/src/main/java");
+        //// add main groovy root of buildSrc project
+        result.add(linkedExternalProjectPath + "/buildSrc/src/main/groovy");
+        for (Module module : modelsProvider.getModules(projectData)) {
+          final String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
+          if(projectPath != null && StringUtil.startsWith(projectPath, linkedExternalProjectPath + "/buildSrc")) {
+            final List<String> sourceRoots = ContainerUtil.map(modelsProvider.getSourceRoots(module, false), new Function<VirtualFile, String>() {
+              @Override
+              public String fun(VirtualFile file) {
+                return file.getPath();
+              }
+            });
+            result.addAll(sourceRoots);
+          }
+        }
+        return result;
+      }
+    };
+
+    final Map<String, ExternalProjectBuildClasspathPojo> localProjectBuildClasspath =
+      ContainerUtil.newHashMap(localSettings.getProjectBuildClasspath());
     for (final DataNode<BuildScriptClasspathData> node : toImport) {
       if (GradleConstants.SYSTEM_ID.equals(node.getData().getOwner())) {
-
-
-        DataNode<ProjectData> projectDataNode = ExternalSystemApiUtil.findParent(node, ProjectKeys.PROJECT);
-        assert projectDataNode != null;
-
-        String linkedExternalProjectPath = projectDataNode.getData().getLinkedExternalProjectPath();
         DataNode<ModuleData> moduleDataNode = ExternalSystemApiUtil.findParent(node, ProjectKeys.MODULE);
         if (moduleDataNode == null) continue;
 
@@ -132,32 +154,25 @@ public class BuildClasspathModuleGradleDataService implements ProjectDataService
           }
         }
 
-        ExternalProjectBuildClasspathPojo projectBuildClasspathPojo =
-          localSettings.getProjectBuildClasspath().get(linkedExternalProjectPath);
+        ExternalProjectBuildClasspathPojo projectBuildClasspathPojo = localProjectBuildClasspath.get(linkedExternalProjectPath);
         if (projectBuildClasspathPojo == null) {
           projectBuildClasspathPojo = new ExternalProjectBuildClasspathPojo(
             moduleDataNode.getData().getExternalName(),
             ContainerUtil.<String>newArrayList(),
             ContainerUtil.<String, ExternalModuleBuildClasspathPojo>newHashMap());
-          localSettings.getProjectBuildClasspath().put(linkedExternalProjectPath, projectBuildClasspathPojo);
+          localProjectBuildClasspath.put(linkedExternalProjectPath, projectBuildClasspathPojo);
         }
 
-        List<String> projectBuildClasspath = ContainerUtil.newArrayList(externalProjectGradleSdkLibs.get(linkedExternalProjectPath));
-        // add main java root of buildSrc project
-        projectBuildClasspath.add(linkedExternalProjectPath + "/buildSrc/src/main/java");
-        // add main groovy root of buildSrc project
-        projectBuildClasspath.add(linkedExternalProjectPath + "/buildSrc/src/main/groovy");
+        List<String> projectBuildClasspath = ContainerUtil.newArrayList(externalProjectGradleSdkLibs.getValue());
+        projectBuildClasspath.addAll(buildSrcProjectsRoots.getValue());
 
         projectBuildClasspathPojo.setProjectBuildClasspath(projectBuildClasspath);
         projectBuildClasspathPojo.getModulesBuildClasspath().put(
           externalModulePath, new ExternalModuleBuildClasspathPojo(externalModulePath, ContainerUtil.newArrayList(buildClasspath)));
       }
     }
+    localSettings.setProjectBuildClasspath(localProjectBuildClasspath);
 
     GradleBuildClasspathManager.getInstance(project).reload();
-  }
-
-  @Override
-  public void removeData(@NotNull Collection<? extends Module> toRemove, @NotNull Project project, boolean synchronous) {
   }
 }

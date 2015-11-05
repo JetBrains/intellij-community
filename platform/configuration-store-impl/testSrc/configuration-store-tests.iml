@@ -18,5 +18,6 @@
     <orderEntry type="module" module-name="eclipse" scope="TEST" />
     <orderEntry type="module" module-name="configuration-store-impl" />
     <orderEntry type="module" module-name="util-tests" scope="TEST" />
+    <orderEntry type="module" module-name="test-framework-java8" />
   </component>
 </module>

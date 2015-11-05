@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -129,6 +130,7 @@ public class SelectWordHandler extends EditorActionHandler {
         }
       }
 
+      if (element instanceof PsiFile) return null;
       element = element.getNextSibling();
       if (element == null) return null;
       TextRange range = element.getTextRange();
@@ -150,9 +152,7 @@ public class SelectWordHandler extends EditorActionHandler {
       }
     }
 
-    if (element != null && element.getTextRange().getEndOffset() > editor.getDocument().getTextLength()) {
-      throw new AssertionError("Wrong element range " + element + "; committed=" + PsiDocumentManager.getInstance(project).isCommitted(document));
-    }
+    checkElementRange(document, element);
 
     final TextRange selectionRange = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
 
@@ -172,6 +172,12 @@ public class SelectWordHandler extends EditorActionHandler {
     });
 
     return minimumRange.get();
+  }
+
+  private static void checkElementRange(Document document, PsiElement element) {
+    if (element != null && element.getTextRange().getEndOffset() > document.getTextLength()) {
+      throw new AssertionError(DebugUtil.diagnosePsiDocumentInconsistency(element, document));
+    }
   }
 
   private static int adjustCaretOffset(@NotNull Editor editor) {

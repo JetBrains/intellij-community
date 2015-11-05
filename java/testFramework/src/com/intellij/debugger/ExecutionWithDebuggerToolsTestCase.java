@@ -39,10 +39,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.CompositeException;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jdi.Method;
 import com.sun.jdi.ThreadReference;
@@ -58,7 +59,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   private final SynchronizationBasedSemaphore myScriptRunnablesSema = new SynchronizationBasedSemaphore();
   protected static final int RATHER_LATER_INVOKES_N = 10;
   public DebugProcessImpl myDebugProcess = null;
-  private final CompositeException myException = new CompositeException();
+  private final List<Throwable> myException = new SmartList<Throwable>();
 
   private static class InvokeRatherLaterRequest {
     private final DebuggerCommandImpl myDebuggerCommand;
@@ -112,19 +113,37 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
   @Override
   protected void tearDown() throws Exception {
-    super.tearDown();
-    throwExceptionsIfAny();
+    try {
+      super.tearDown();
+    }
+    finally {
+      throwExceptionsIfAny();
+    }
   }
 
-  protected void throwExceptionsIfAny() throws CompositeException {
+  protected void throwExceptionsIfAny() {
     synchronized (myException) {
-      myException.throwIfNotEmpty();
+      CompoundRuntimeException.throwIfNotEmpty(myException);
     }
   }
 
   protected void onBreakpoint(SuspendContextRunnable runnable) {
     addDefaultBreakpointListener();
     myScriptRunnables.add(runnable);
+  }
+
+  protected void doWhenPausedThenResume(final SuspendContextRunnable runnable) {
+    onBreakpoint(new SuspendContextRunnable() {
+      @Override
+      public void run(SuspendContextImpl suspendContext) throws Exception {
+        try {
+          runnable.run(suspendContext);
+        }
+        finally {
+          resume(suspendContext);
+        }
+      }
+    });
   }
 
   protected void addDefaultBreakpointListener() {

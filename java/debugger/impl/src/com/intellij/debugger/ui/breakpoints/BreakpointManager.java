@@ -450,14 +450,14 @@ public class BreakpointManager {
         xBreakpoint = createXLineBreakpoint(JavaMethodBreakpointType.class, breakpointNode);
       }
       else {
-        xBreakpoint = createXBreakpoint(JavaWildcardMethodBreakpointType.class, breakpointNode);
+        xBreakpoint = createXBreakpoint(JavaWildcardMethodBreakpointType.class);
       }
     }
     else if (category.equals(FieldBreakpoint.CATEGORY.toString())) {
       xBreakpoint = createXLineBreakpoint(JavaFieldBreakpointType.class, breakpointNode);
     }
     else if (category.equals(ExceptionBreakpoint.CATEGORY.toString())) {
-      xBreakpoint = createXBreakpoint(JavaExceptionBreakpointType.class, breakpointNode);
+      xBreakpoint = createXBreakpoint(JavaExceptionBreakpointType.class);
     }
     if (xBreakpoint == null) {
       throw new IllegalStateException("Unknown breakpoint category " + category);
@@ -465,14 +465,12 @@ public class BreakpointManager {
     return getJavaBreakpoint(xBreakpoint);
   }
 
-  private <B extends XBreakpoint<?>> XBreakpoint createXBreakpoint(Class<? extends XBreakpointType<B, ?>> typeCls,
-                                                                           Element breakpointNode) throws InvalidDataException {
+  private <B extends XBreakpoint<?>> XBreakpoint createXBreakpoint(Class<? extends XBreakpointType<B, ?>> typeCls) {
     final XBreakpointType<B, ?> type = XDebuggerUtil.getInstance().findBreakpointType(typeCls);
     return ApplicationManager.getApplication().runWriteAction(new Computable<XBreakpoint>() {
       @Override
       public XBreakpoint compute() {
-        return XDebuggerManager.getInstance(myProject).getBreakpointManager()
-          .addBreakpoint((XBreakpointType)type, type.createProperties());
+        return XDebuggerManager.getInstance(myProject).getBreakpointManager().addBreakpoint((XBreakpointType)type, type.createProperties());
       }
     });
   }

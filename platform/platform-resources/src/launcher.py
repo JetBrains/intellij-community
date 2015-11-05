@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import socket
@@ -36,11 +36,11 @@ for i, arg in enumerate(sys.argv[1:]):
         if ':' in arg:
             file_path, line_number = arg.rsplit(':', 1)
             if line_number.isdigit():
-              args.append('-l')
-              args.append(line_number)
-              args.append(os.path.abspath(file_path))
+                args.append('-l')
+                args.append(line_number)
+                args.append(os.path.abspath(file_path))
             else:
-              args.append(os.path.abspath(arg))
+                args.append(os.path.abspath(arg))
         else:
             args.append(os.path.abspath(arg))
 
@@ -82,18 +82,20 @@ try:
     port = int(f.read())
 except Exception:
     type, value, traceback = sys.exc_info()
-    print(value)
+    print('No IDE instance has been found. New one will be started.')
     port = -1
 
 if port == -1:
     # SocketLock actually allows up to 50 ports, but the checking takes too long
     for port in range(6942, 6942 + 10):
-        if launch_with_port(port): exit()
+        if launch_with_port(port):
+            exit()
 else:
-    if launch_with_port(port): exit()
+    if launch_with_port(port):
+        exit()
 
 if sys.platform == "darwin":
-    # Mac OS: RUN_PATH is *.app path
+    # OS X: RUN_PATH is *.app path
     if len(args):
         args.insert(0, "--args")
     os.execvp("open", ["-a", RUN_PATH] + args)

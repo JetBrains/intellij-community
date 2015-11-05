@@ -641,7 +641,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       if (classCopy == null) {
         return null;
       }
-      final PsiMethod emptyMethod = (PsiMethod)classCopy.add(generateEmptyMethod("name"));
+      final PsiMethod emptyMethod = (PsiMethod)classCopy.addAfter(generateEmptyMethod("name"), classCopy.getLBrace());
       prepareMethodBody(emptyMethod, false);
       if (myNotNullConditionalCheck || myNullConditionalCheck) {
         return Nullness.NULLABLE;
@@ -672,6 +672,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
 
       final String nameByComment = getNameByComment();
+      final PsiField field = JavaPsiFacade.getElementFactory(myProject).createField("fieldNameToReplace", myReturnType instanceof PsiEllipsisType ? ((PsiEllipsisType)myReturnType).toArrayType() : myReturnType);
       final List<String> getters = new ArrayList<String>(ContainerUtil.map(initialMethodNames, new Function<String, String>() {
         @Override
         public String fun(String propertyName) {
@@ -679,7 +680,8 @@ public class ExtractMethodProcessor implements MatchProvider {
             LOG.info(propertyName + "; " + myExpression);
             return null;
           }
-          return GenerateMembersUtil.suggestGetterName(propertyName, myReturnType, myProject);
+          field.setName(propertyName);
+          return GenerateMembersUtil.suggestGetterName(field);
         }
       }));
       ContainerUtil.addIfNotNull(nameByComment, getters);

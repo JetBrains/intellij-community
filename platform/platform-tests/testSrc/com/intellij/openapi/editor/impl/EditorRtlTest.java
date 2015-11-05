@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.TestFileType;
 
 import java.awt.*;
@@ -31,18 +30,6 @@ import java.io.IOException;
 public class EditorRtlTest extends AbstractEditorTest {
   private static final char RTL_CHAR_REPRESENTATION = 'R';
   private static final char RTL_CHAR = '\u05d0'; // Hebrew 'aleph' letter
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    Registry.get("editor.new.rendering").setValue(true);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
-    Registry.get("editor.new.rendering").setValue(false);
-  }
 
   public void testPositionCalculations() throws IOException {
     prepareText("LLRR");
@@ -499,12 +486,12 @@ public class EditorRtlTest extends AbstractEditorTest {
   }
   
   public void testJavadocTokensAreMergedForBidiLayoutPurposes() throws Exception {
-    prepare("<caret>/** R R */ class Foo {}", TestFileType.JAVA);
-    for (int i = 0; i < 5; i++) {
+    prepare("<caret>/**R R*/ class Foo {}", TestFileType.JAVA);
+    for (int i = 0; i < 4; i++) {
       right();
     }
 
-    checkResult("/** R R<caret> */ class Foo {}");
+    checkResult("/**R R<caret>*/ class Foo {}");
   }
   
   public void testXmlTextIsLaidOutCorrectly() throws Exception {
@@ -551,6 +538,32 @@ public class EditorRtlTest extends AbstractEditorTest {
     assertVisualCaretLocation(1, 2, true);
     right();
     assertVisualCaretLocation(1, 3, true);
+  }
+  
+  public void testLineGeneralDirectionAutodetection() throws Exception {
+    prepareText("<caret>RLR");
+    right();
+    checkResult("RLR<caret>");
+  }
+  
+  public void testTabInsideRtlText() throws Exception {
+    prepareText("<caret>R\tRR");
+    right();
+    checkResult("R<caret>\tRR");
+    right();
+    checkResult("<caret>R\tRR");
+    right();
+    checkResult("R<caret>\tRR");
+    right();
+    checkResult("R\t<caret>RR");
+    right();
+    checkResult("R\tRR<caret>");
+    right();
+    checkResult("R\tR<caret>R");
+    right();
+    checkResult("R\t<caret>RR");
+    right();
+    checkResult("R\tRR<caret>");
   }
   
   private void prepareText(String text) throws IOException {

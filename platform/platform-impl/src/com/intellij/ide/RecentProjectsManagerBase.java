@@ -16,17 +16,14 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -36,7 +33,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.impl.SystemDock;
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.SmartList;
@@ -66,6 +62,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public abstract class RecentProjectsManagerBase extends RecentProjectsManager implements PersistentStateComponent<RecentProjectsManagerBase.State> {
+  private static final int MAX_PROJECTS_IN_MAIN_MENU = 6;
   private static final Map<String, MyIcon> ourProjectIcons = new HashMap<String, MyIcon>();
   private static Icon ourSmallAppIcon;
 
@@ -79,6 +76,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     public Map<String, String> names = ContainerUtil.newLinkedHashMap();
     public List<ProjectGroup> groups = new SmartList<ProjectGroup>();
     public String lastPath;
+    public Map<String, RecentProjectMetaInfo> additionalInfo = ContainerUtil.newLinkedHashMap();
 
     public String lastProjectLocation;
 
@@ -322,12 +320,12 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   @Override
-  public AnAction[] getRecentProjectsActions(boolean addClearListItem) {
-    return getRecentProjectsActions(addClearListItem, false);
+  public AnAction[] getRecentProjectsActions(boolean forMainMenu) {
+    return getRecentProjectsActions(forMainMenu, false);
   }
 
   @Override
-  public AnAction[] getRecentProjectsActions(boolean addClearListItem, boolean useGroups) {
+  public AnAction[] getRecentProjectsActions(boolean forMainMenu, boolean useGroups) {
     final Set<String> paths;
     synchronized (myStateLock) {
       myState.validateRecentProjects();
@@ -377,6 +375,10 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
           final AnAction action = createOpenAction(path, duplicates);
           if (action != null) {
             children.add(action);
+
+            if (forMainMenu && children.size() >= MAX_PROJECTS_IN_MAIN_MENU) {
+              break;
+            }
           }
         }
         actions.add(new ProjectGroupActionGroup(group, children));
@@ -397,25 +399,6 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
     if (actions.isEmpty()) {
       return AnAction.EMPTY_ARRAY;
-    }
-
-    if (addClearListItem) {
-      AnAction clearListAction = new DumbAwareAction(IdeBundle.message("action.clear.list")) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          String message = IdeBundle.message("action.clear.list.message");
-          String title = IdeBundle.message("action.clear.list.title");
-          if (Messages.showOkCancelDialog(e.getProject(), message, title, Messages.getQuestionIcon()) == Messages.OK) {
-            synchronized (myStateLock) {
-              myState.recentPaths.clear();
-            }
-            WelcomeFrame.clearRecents();
-          }
-        }
-      };
-      
-      actions.add(Separator.getInstance());
-      actions.add(clearListAction);
     }
 
     return actions.toArray(new AnAction[actions.size()]);
@@ -443,9 +426,28 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   private void markPathRecent(String path) {
     synchronized (myStateLock) {
       myState.lastPath = path;
+      ProjectGroup group = getProjectGroup(path);
       removePath(path);
       myState.recentPaths.add(0, path);
+      if (group != null) {
+        List<String> projects = group.getProjects();
+        projects.add(0, path);
+        group.save(projects);
+      }
+      myState.additionalInfo.remove(path);
+      myState.additionalInfo.put(path, RecentProjectMetaInfo.create());
     }
+  }
+
+  @Nullable
+  private ProjectGroup getProjectGroup(String path) {
+    if (path == null) return null;
+    for (ProjectGroup group : myState.groups) {
+      if (group.getProjects().contains(path)) {
+        return group;
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -612,6 +614,26 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
     public long getTimestamp() {
       return second;
+    }
+  }
+
+  public static class RecentProjectMetaInfo {
+    public String build;
+    public String productionCode;
+    public boolean eap;
+    public String binFolder;
+    public long projectOpenTimestamp;
+    public long buildTimestamp;
+
+    public static RecentProjectMetaInfo create() {
+      RecentProjectMetaInfo info = new RecentProjectMetaInfo();
+      info.build = ApplicationInfoEx.getInstanceEx().getBuild().asString();
+      info.productionCode = ApplicationInfoEx.getInstanceEx().getBuild().getProductCode();
+      info.eap = ApplicationInfoEx.getInstanceEx().isEAP();
+      info.binFolder = PathManager.getBinPath();
+      info.projectOpenTimestamp = System.currentTimeMillis();
+      info.buildTimestamp = ApplicationInfoEx.getInstanceEx().getBuildDate().getTimeInMillis();
+      return info;
     }
   }
 }

@@ -1,0 +1,4 @@
+def f():
+    """
+    Raises: <caret>
+    """

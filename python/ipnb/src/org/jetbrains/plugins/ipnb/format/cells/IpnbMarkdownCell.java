@@ -2,8 +2,10 @@ package org.jetbrains.plugins.ipnb.format.cells;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class IpnbMarkdownCell extends IpnbEditableCell {
-  public IpnbMarkdownCell(@NotNull final String[] source) {
+  public IpnbMarkdownCell(@NotNull final List<String> source) {
     super(source);
   }
 

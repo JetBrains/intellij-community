@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.completion.CompletionConfidence;
-import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ThreeState;
@@ -26,11 +25,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Bulenkov
  */
 public class JavaReflectionCompletionConfidence extends CompletionConfidence {
-  @NotNull
-  @Override
-  public ThreeState shouldFocusLookup(@NotNull CompletionParameters parameters) {
-    return ThreeState.UNSURE;
-  }
 
   @NotNull
   @Override

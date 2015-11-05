@@ -64,7 +64,7 @@ public class JavaCompletionSorting {
 
     CompletionSorter sorter = CompletionSorter.defaultSorter(parameters, result.getPrefixMatcher());
     if (!smart && afterNew) {
-      sorter = sorter.weighBefore("liftShorter", new PreferExpected(true, expectedTypes));
+      sorter = sorter.weighBefore("liftShorter", new PreferExpected(true, expectedTypes, position));
     } else if (PsiTreeUtil.getParentOfType(position, PsiReferenceList.class) == null) {
       sorter = ((CompletionSorterImpl)sorter).withClassifier("liftShorterClasses", true, new LiftShorterClasses(position));
     }
@@ -77,7 +77,7 @@ public class JavaCompletionSorting {
     if (!smart) {
       ContainerUtil.addIfNotNull(afterPrefix, preferStatics(position, expectedTypes));
       if (!afterNew) {
-        afterPrefix.add(new PreferExpected(false, expectedTypes));
+        afterPrefix.add(new PreferExpected(false, expectedTypes, position));
       }
     }
     ContainerUtil.addIfNotNull(afterPrefix, recursion(parameters, expectedTypes));
@@ -138,7 +138,7 @@ public class JavaCompletionSorting {
     };
   }
 
-  private static ExpectedTypeMatching getExpectedTypeMatching(LookupElement item, ExpectedTypeInfo[] expectedInfos) {
+  private static ExpectedTypeMatching getExpectedTypeMatching(LookupElement item, ExpectedTypeInfo[] expectedInfos, @Nullable String expectedMemberName) {
     PsiType itemType = JavaCompletionUtil.getLookupElementType(item);
 
     if (itemType != null) {
@@ -170,6 +170,22 @@ public class JavaCompletionSorting {
     }
     else if (expectedInfos.length > 0) {
       return ExpectedTypeMatching.unexpected;
+    }
+
+    return preferByMemberName(expectedMemberName, itemType);
+  }
+
+  @NotNull
+  private static ExpectedTypeMatching preferByMemberName(@Nullable String expectedMemberName, @Nullable PsiType itemType) {
+    if (expectedMemberName != null) {
+      PsiClass itemClass = PsiUtil.resolveClassInClassTypeOnly(itemType);
+      if (itemClass != null) {
+        if (itemClass.findMethodsByName(expectedMemberName, true).length > 0 ||
+            itemClass.findFieldByName(expectedMemberName, true) != null ||
+            itemClass.findInnerClassByName(expectedMemberName, true) != null) {
+          return ExpectedTypeMatching.expected;
+        }
+      }
     }
 
     return ExpectedTypeMatching.normal;
@@ -429,14 +445,28 @@ public class JavaCompletionSorting {
     private final boolean myConstructorPossible;
     private final ExpectedTypeInfo[] myExpectedTypes;
     private final List<PsiType> myExpectedClasses = new SmartList<PsiType>();
+    private final String myExpectedMemberName;
 
-    public PreferExpected(boolean constructorPossible, ExpectedTypeInfo[] expectedTypes) {
+    public PreferExpected(boolean constructorPossible, ExpectedTypeInfo[] expectedTypes, PsiElement position) {
       super("expectedType");
       myConstructorPossible = constructorPossible;
       myExpectedTypes = expectedTypes;
       for (ExpectedTypeInfo info : expectedTypes) {
         ContainerUtil.addIfNotNull(myExpectedClasses, PsiUtil.substituteTypeParameter(info.getDefaultType(), CommonClassNames.JAVA_LANG_CLASS, 0, false));
       }
+
+      myExpectedMemberName = calcExpectedMemberName(position);
+    }
+
+    @Nullable
+    private static String calcExpectedMemberName(PsiElement position) {
+      if (position.getParent() instanceof PsiJavaCodeReferenceElement) {
+        PsiElement grand = position.getParent().getParent();
+        if (grand instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)grand).getQualifier() == position.getParent()) {
+          return ((PsiJavaCodeReferenceElement)grand).getReferenceName();
+        }
+      }
+      return null;
     }
 
     @NotNull
@@ -451,10 +481,10 @@ public class JavaCompletionSorting {
             }
           }
         }
-        return ExpectedTypeMatching.normal;
+        return preferByMemberName(myExpectedMemberName, itemType);
       }
 
-      return getExpectedTypeMatching(item, myExpectedTypes);
+      return getExpectedTypeMatching(item, myExpectedTypes, myExpectedMemberName);
     }
   }
 

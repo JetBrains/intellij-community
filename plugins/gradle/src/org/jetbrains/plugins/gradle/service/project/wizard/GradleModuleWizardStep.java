@@ -15,34 +15,22 @@
  */
 package org.jetbrains.plugins.gradle.service.project.wizard;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.wizard.ExternalModuleSettingsStep;
-import com.intellij.openapi.externalSystem.service.ui.ExternalProjectPathField;
-import com.intellij.openapi.externalSystem.service.ui.SelectExternalProjectDialog;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.EditorTextField;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.NullableConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -50,7 +38,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
@@ -61,7 +48,6 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
 
   private static final String INHERIT_GROUP_ID_KEY = "GradleModuleWizard.inheritGroupId";
   private static final String INHERIT_VERSION_KEY = "GradleModuleWizard.inheritVersion";
-  private static final String EMPTY_PARENT = "<none>";
   private static final String DEFAULT_VERSION = "1.0-SNAPSHOT";
 
   @Nullable
@@ -73,13 +59,12 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
   @Nullable
   private ProjectData myParent;
 
+  private final GradleParentProjectForm myParentProjectForm;
+
   private String myInheritedGroupId;
   private String myInheritedVersion;
 
   private JPanel myMainPanel;
-
-  private EditorTextField myParentPathField;
-  private JButton mySelectParent;
 
   private JTextField myGroupIdField;
   private JCheckBox myInheritGroupIdCheckBox;
@@ -92,19 +77,19 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     myProjectOrNull = context.getProject();
     myBuilder = builder;
     myContext = context;
+    myParentProjectForm = new GradleParentProjectForm(context, new NullableConsumer<ProjectData>() {
+      @Override
+      public void consume(@Nullable ProjectData data) {
+        myParent = data;
+        updateComponents();
+      }
+    });
     initComponents();
     loadSettings();
   }
 
   private void initComponents() {
-    mySelectParent.setIcon(AllIcons.Actions.Module);
-    mySelectParent.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myParent = doSelectProject(myParent);
-        updateComponents();
-      }
-    });
-
+    myAddToPanel.add(myParentProjectForm.getComponent());
     ActionListener updatingListener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         updateComponents();
@@ -117,16 +102,6 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myGroupIdField;
-  }
-
-  private ProjectData doSelectProject(ProjectData current) {
-    assert myProjectOrNull != null : "must not be called when creating a new project";
-
-    SelectExternalProjectDialog d = new SelectExternalProjectDialog(GradleConstants.SYSTEM_ID, myProjectOrNull, current);
-    if (!d.showAndGet()) {
-      return current;
-    }
-    return d.getResult();
   }
 
   @Override
@@ -216,14 +191,12 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
 
 
   private void updateComponents() {
-    boolean isAddToVisible = !myContext.isCreatingNewProject() && myProjectOrNull != null && isGradleModuleExist();
+    final boolean isAddToVisible = myParentProjectForm.isVisible();
 
-    myAddToPanel.setVisible(isAddToVisible);
     myInheritGroupIdCheckBox.setVisible(isAddToVisible);
     myInheritVersionCheckBox.setVisible(isAddToVisible);
 
-    myParentPathField.setText(myParent == null ? EMPTY_PARENT : myParent.getLinkedExternalProjectPath());
-    collapseIfPossible(myParentPathField, GradleConstants.SYSTEM_ID, getProject());
+    myParentProjectForm.updateComponents();
 
     if (myParent == null) {
       myContext.putUserData(ExternalModuleSettingsStep.SKIP_STEP_KEY, Boolean.FALSE);
@@ -257,7 +230,7 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     }
   }
 
-  private boolean isGradleModuleExist() {
+  public static boolean isGradleModuleExist(WizardContext myContext) {
     for (Module module : myContext.getModulesProvider().getModules()) {
       if (ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return true;
     }
@@ -291,85 +264,6 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
   @Override
   public Icon getIcon() {
     return WIZARD_ICON;
-  }
-
-  private void createUIComponents() {
-    Project project = getProject();
-    myParentPathField = new TextViewer("", project);
-  }
-
-  @NotNull
-  private Project getProject() {
-    Project project = myProjectOrNull != null ? myProjectOrNull : ArrayUtil.getFirstElement(ProjectManager.getInstance().getOpenProjects());
-    return project == null ? ProjectManager.getInstance().getDefaultProject() : project;
-  }
-
-  private static void collapseIfPossible(@NotNull EditorTextField editorTextField,
-                                         @NotNull ProjectSystemId systemId,
-                                         @NotNull Project project) {
-    Editor editor = editorTextField.getEditor();
-    if (editor != null) {
-      String rawText = editor.getDocument().getText();
-      if (StringUtil.isEmpty(rawText)) return;
-      if (EMPTY_PARENT.equals(rawText)) {
-        editorTextField.setEnabled(false);
-        return;
-      }
-      final Collection<ExternalProjectInfo> projectsData =
-        ProjectDataManager.getInstance().getExternalProjectsData(project, systemId);
-      for (ExternalProjectInfo projectInfo : projectsData) {
-        if (projectInfo.getExternalProjectStructure() != null && projectInfo.getExternalProjectPath().equals(rawText)) {
-          editorTextField.setEnabled(true);
-          ExternalProjectPathField.collapse(
-            editorTextField.getEditor(), projectInfo.getExternalProjectStructure().getData().getExternalName());
-          return;
-        }
-      }
-    }
-  }
-
-  private static class TextViewer extends EditorTextField {
-    private final boolean myEmbeddedIntoDialogWrapper;
-    private final boolean myUseSoftWraps;
-
-    public TextViewer(@NotNull String initialText, @NotNull Project project) {
-      this(createDocument(initialText), project, true, true);
-    }
-
-    public TextViewer(@NotNull Document document, @NotNull Project project, boolean embeddedIntoDialogWrapper, boolean useSoftWraps) {
-      super(document, project, FileTypes.PLAIN_TEXT, true, false);
-      myEmbeddedIntoDialogWrapper = embeddedIntoDialogWrapper;
-      myUseSoftWraps = useSoftWraps;
-      setFontInheritedFromLAF(false);
-    }
-
-    private static Document createDocument(@NotNull String initialText) {
-      return EditorFactory.getInstance().createDocument(initialText);
-    }
-
-    @Override
-    public void setText(@Nullable String text) {
-      super.setText(text != null ? StringUtil.convertLineSeparators(text) : null);
-    }
-
-    @Override
-    protected EditorEx createEditor() {
-      final EditorEx editor = super.createEditor();
-      editor.setHorizontalScrollbarVisible(true);
-      editor.setCaretEnabled(isEnabled());
-      editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-      editor.setEmbeddedIntoDialogWrapper(myEmbeddedIntoDialogWrapper);
-      editor.setBorder(UIUtil.getTextFieldBorder());
-      editor.setOneLineMode(true);
-      editor.getComponent().setPreferredSize(null);
-      editor.getSettings().setUseSoftWraps(myUseSoftWraps);
-      return editor;
-    }
-
-    @Override
-    protected void setViewerEnabled(boolean enabled) {
-      // do not reset com.intellij.ui.EditorTextField.myIsViewer field
-    }
   }
 
   private static void setTestIfEmpty(@NotNull JTextField field, @Nullable String text) {

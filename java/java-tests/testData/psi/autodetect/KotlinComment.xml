@@ -1,0 +1,14 @@
+<Block start="0" end="10">
+  <Block start="0" end="3">
+    <Indent type="NORMAL"/>
+  </Block>
+  <Block start="5" end="6">
+    <Indent type="NORMAL"/>
+    <Block start="5" end="6">
+      <Indent type="SPACE" spaces="1"/>
+    </Block>
+  </Block>
+  <Block start="8" end="10">
+    <Indent type="SPACE" spaces="1"/>
+  </Block>
+</Block>

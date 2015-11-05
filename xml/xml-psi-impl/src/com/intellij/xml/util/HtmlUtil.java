@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,6 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
-import com.intellij.xml.util.documentation.HtmlDescriptorsTable;
 import com.intellij.xml.util.documentation.MimeTypeDictionary;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -232,10 +231,6 @@ public class HtmlUtil {
     return HtmlPsiUtil.getRealXmlDocument(doc);
   }
 
-  public static String[] getHtmlTagNames() {
-    return HtmlDescriptorsTable.getHtmlTagNames();
-  }
-  
   public static boolean isShortNotationOfBooleanAttributePreferred() {
     return Registry.is("html.prefer.short.notation.of.boolean.attributes", true);
   }
@@ -502,7 +497,7 @@ public class HtmlUtil {
     XmlElementDescriptor descriptor = context.getDescriptor();
     if (descriptor != null) {
       XmlNSDescriptor nsDescriptor = descriptor.getNSDescriptor();
-      XmlFile descriptorFile = nsDescriptor.getDescriptorFile();
+      XmlFile descriptorFile = nsDescriptor != null ? nsDescriptor.getDescriptorFile() : null;
       String descriptorPath = descriptorFile != null ? descriptorFile.getVirtualFile().getPath() : null;
       return Comparing.equal(Html5SchemaProvider.getHtml5SchemaLocation(), descriptorPath) ||
              Comparing.equal(Html5SchemaProvider.getXhtml5SchemaLocation(), descriptorPath);
@@ -632,7 +627,13 @@ public class HtmlUtil {
   }
 
   public static boolean supportsXmlTypedHandlers(PsiFile file) {
-    return "JavaScript".equals(file.getLanguage().getID());
+    Language language = file.getLanguage();
+    while (language != null) {
+      if ("JavaScript".equals(language.getID())) return true;
+      language = language.getBaseLanguage();
+    }
+
+    return false;
   }
 
   public static boolean hasHtmlPrefix(@NotNull String url) {

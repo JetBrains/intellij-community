@@ -15,11 +15,10 @@
  */
 package com.jetbrains.python.remote;
 
-import com.intellij.remote.RemoteProcessHandlerBase;
 import com.jetbrains.python.debugger.PositionConverterProvider;
 
 /**
  * @author yole
  */
-public interface RemoteDebuggableProcessHandler extends RemoteProcessHandlerBase, PositionConverterProvider{
+public interface RemoteDebuggableProcessHandler extends PyRemoteProcessControl, PositionConverterProvider{
 }

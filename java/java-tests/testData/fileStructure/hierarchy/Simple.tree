@@ -1,10 +1,10 @@
 -Simple.java
  -Simple
   aaa(): void
-  bbb(): void
+  [bbb(): void]
   clone(): Object
   equals(Object): boolean
-  [fff(): void]
+  fff(): void
   finalize(): void
   getClass(): Class<?>
   hashCode(): int

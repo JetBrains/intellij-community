@@ -156,6 +156,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "shift meta RIGHT",         "EditorLineEndWithSelection", "ResizeToolWindowRight", },
     { "meta E",                   "RecentFiles", "Vcs.ShowMessageHistory"},
     { "alt R",                    "Django.RunManageTaskAction", "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction"},
+    { "ctrl m",                   "EditorMatchBrace", "Vcs.ShowMessageHistory"},
     });
     put("Mac OS X", new String[][] {
     { "BACK_SPACE",               "$Delete", "EditorBackSpace", "Images.Thumbnails.UpFolder"},
@@ -490,7 +491,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
   }
 
   @NonNls private static final Set<String> unknownActionIds = new THashSet<String>(Arrays.asList(
-    "ActivateChangesToolWindow", "ActivateFavoritesToolWindow", "ActivateCommanderToolWindow", "ActivateDebugToolWindow", "ActivateFindToolWindow",
+    "ActivateVersionControlToolWindow", "ActivateFavoritesToolWindow", "ActivateCommanderToolWindow", "ActivateDebugToolWindow", "ActivateFindToolWindow",
     "ActivateHierarchyToolWindow", "ActivateMessagesToolWindow", "ActivateProjectToolWindow", "ActivateRunToolWindow",
     "ActivateStructureToolWindow", "ActivateTODOToolWindow", "ActivateWebToolWindow","ActivatePaletteToolWindow",
     "ActivateTerminalToolWindow",

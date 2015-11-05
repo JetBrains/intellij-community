@@ -15,8 +15,8 @@
  */
 package com.jetbrains.python.remote;
 
-import com.intellij.util.PathMappingSettings;
 import com.intellij.util.AbstractPathMapper;
+import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +29,7 @@ import java.util.Map;
  * @author Alexander Koshevoy
  */
 public class PyRemotePathMapper extends AbstractPathMapper implements Cloneable {
-  private final MultiMap<PyPathMappingType, PathMappingSettings.PathMapping> myPathMappings = MultiMap.create();
+  private final MultiMap<PyPathMappingType, PathMappingSettings.PathMapping> myPathMappings = MultiMap.createSet();
 
   @NotNull
   public static PyRemotePathMapper fromSettings(@NotNull PathMappingSettings settings, @NotNull PyPathMappingType mappingType) {
@@ -110,5 +110,10 @@ public class PyRemotePathMapper extends AbstractPathMapper implements Cloneable 
       }
     }
     return pathMapper;
+  }
+
+  @Override
+  public PyRemotePathMapper clone() {
+    return cloneMapper(this);
   }
 }

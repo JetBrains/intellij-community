@@ -22,6 +22,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -142,8 +143,13 @@ public class PyOperatorReference extends PyReferenceImpl {
     final ArrayList<RatedResolveResult> results = new ArrayList<RatedResolveResult>();
     if (object != null && name != null) {
       final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
-      final PyType type = typeEvalContext.getType(object);
+      PyType type = typeEvalContext.getType(object);
       typeEvalContext.trace("Side text is %s, type is %s", object.getText(), type);
+      if (type instanceof PyClassLikeType) {
+        if (((PyClassLikeType)type).isDefinition()) {
+          type = ((PyClassLikeType)type).getMetaClassType(typeEvalContext, true);
+        }
+      }
       if (type != null) {
         List<? extends RatedResolveResult> res = type.resolveMember(name, object, AccessDirection.of(myElement), myContext);
         if (res != null && res.size() > 0) {

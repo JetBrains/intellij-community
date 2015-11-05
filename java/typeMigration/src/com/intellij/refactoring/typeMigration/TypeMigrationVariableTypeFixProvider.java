@@ -27,7 +27,12 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
 
   @NotNull
   public IntentionAction[] getFixes(@NotNull PsiVariable variable, @NotNull PsiType toReturn) {
-    return new IntentionAction[]{new VariableTypeFix(variable, toReturn) {
+    return new IntentionAction[]{createTypeMigrationFix(variable, toReturn)};
+  }
+
+  @NotNull
+  public static VariableTypeFix createTypeMigrationFix(@NotNull final PsiVariable variable, @NotNull final PsiType toReturn) {
+    return new VariableTypeFix(variable, toReturn) {
       @NotNull
       @Override
       public String getText() {
@@ -40,27 +45,32 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
                          @Nullable("is null when called from inspection") Editor editor,
                          @NotNull PsiElement startElement,
                          @NotNull PsiElement endElement) {
-        final PsiVariable myVariable = (PsiVariable)startElement;
-
-        if (!FileModificationService.getInstance().prepareFileForWrite(myVariable.getContainingFile())) return;
-        try {
-          myVariable.normalizeDeclaration();
-          final TypeMigrationRules rules = new TypeMigrationRules(TypeMigrationLabeler.getElementType(myVariable));
-          rules.setMigrationRootType(getReturnType());
-          rules.setBoundScope(GlobalSearchScope.projectScope(project));
-          TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, myVariable);
-          JavaCodeStyleManager.getInstance(project).shortenClassReferences(myVariable);
-          UndoUtil.markPsiFileForUndo(file);
-        }
-        catch (IncorrectOperationException e) {
-          LOG1.error(e);
-        }
+        runTypeMigrationOnVariable((PsiVariable)startElement, getReturnType(), editor);
       }
 
       @Override
       public boolean startInWriteAction() {
         return true;
       }
-    }};
+    };
+  }
+
+  public static void runTypeMigrationOnVariable(@NotNull PsiVariable variable,
+                                                @NotNull PsiType targetType,
+                                                @Nullable("is null when called from inspection") Editor editor) {
+    Project project = variable.getProject();
+    if (!FileModificationService.getInstance().prepareFileForWrite(variable.getContainingFile())) return;
+    try {
+      variable.normalizeDeclaration();
+      final TypeMigrationRules rules = new TypeMigrationRules(TypeMigrationLabeler.getElementType(variable));
+      rules.setMigrationRootType(targetType);
+      rules.setBoundScope(GlobalSearchScope.projectScope(project));
+      TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, variable);
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(variable);
+      UndoUtil.markPsiFileForUndo(variable.getContainingFile());
+    }
+    catch (IncorrectOperationException e) {
+      LOG1.error(e);
+    }
   }
 }

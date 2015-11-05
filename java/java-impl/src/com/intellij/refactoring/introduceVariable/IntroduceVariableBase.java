@@ -817,7 +817,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
                                                   final IntroduceVariableSettings settings) {
     final PsiElement container = anchorStatement.getParent();
     PsiElement child = anchorStatement;
-    if (!RefactoringUtil.isLoopOrIf(container)) {
+    final boolean isInsideLoop = RefactoringUtil.isLoopOrIf(container);
+    if (!isInsideLoop) {
       child = locateAnchor(child);
       if (isFinalVariableOnLHS(expr)) {
         child = child.getNextSibling();
@@ -827,10 +828,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     boolean tempDeleteSelf = false;
     final boolean replaceSelf = settings.isReplaceLValues() || !RefactoringUtil.isAssignmentLHS(expr);
-    if (!RefactoringUtil.isLoopOrIf(container)) {
-      if (expr.getParent() instanceof PsiExpressionStatement && anchor.equals(anchorStatement)) {
-        PsiStatement statement = (PsiStatement) expr.getParent();
-        PsiElement parent = statement.getParent();
+    final PsiElement exprParent = expr.getParent();
+    if (!isInsideLoop) {
+      if (exprParent instanceof PsiExpressionStatement && anchor.equals(anchorStatement)) {
+        PsiElement parent = exprParent.getParent();
         if (parent instanceof PsiCodeBlock ||
             //fabrique
             parent instanceof PsiCodeFragment) {
@@ -840,6 +841,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       tempDeleteSelf &= replaceSelf;
     }
     final boolean deleteSelf = tempDeleteSelf;
+    final boolean replaceLoop = isInsideLoop ? exprParent instanceof PsiExpressionStatement 
+                                             : container instanceof PsiLambdaExpression && exprParent == container;
 
 
     final int col = editor != null ? editor.getCaretModel().getLogicalPosition().column : 0;
@@ -858,9 +861,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       public PsiVariable compute() {
         try {
           PsiStatement statement = null;
-          final boolean isInsideLoop = RefactoringUtil.isLoopOrIf(container);
           if (!isInsideLoop && deleteSelf) {
-            statement = (PsiStatement) expr.getParent();
+            statement = (PsiStatement)exprParent;
           }
 
           final PsiExpression expr1 = fieldConflictsResolver.fixInitializer(expr);
@@ -880,7 +882,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           if (!isInsideLoop) {
             declaration = addDeclaration(declaration, initializer);
             LOG.assertTrue(expr1.isValid());
-            if (deleteSelf) { // never true
+            if (deleteSelf) {
               final PsiElement lastChild = statement.getLastChild();
               if (lastChild instanceof PsiComment) { // keep trailing comment
                 declaration.addBefore(lastChild, null);
@@ -926,7 +928,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
             }
           }
 
-          declaration = (PsiDeclarationStatement) RefactoringUtil.putStatementInLoopBody(declaration, container, anchorStatement);
+          declaration = (PsiDeclarationStatement) RefactoringUtil.putStatementInLoopBody(declaration, container, anchorStatement, replaceSelf && replaceLoop);
           declaration = (PsiDeclarationStatement)JavaCodeStyleManager.getInstance(project).shortenClassReferences(declaration);
           PsiVariable var = (PsiVariable) declaration.getDeclaredElements()[0];
           PsiUtil.setModifierProperty(var, PsiModifier.FINAL, settings.isDeclareFinal());

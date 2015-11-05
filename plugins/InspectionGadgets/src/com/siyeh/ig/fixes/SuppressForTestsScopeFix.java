@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,14 +97,14 @@ public class SuppressForTestsScopeFix extends InspectionGadgetsFix {
     if (tool == null) {
       return;
     }
-    final NamedScope namedScope = NamedScopesHolder.getScope(project, "Tests");
-    final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
-    final HighlightDisplayLevel level = profile.getErrorLevel(key, namedScope, project);
     if (add) {
+      final NamedScope namedScope = NamedScopesHolder.getScope(project, "Tests");
+      final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+      final HighlightDisplayLevel level = profile.getErrorLevel(key, namedScope, project);
       profile.addScope(tool, namedScope, level, false, project);
     }
     else {
-      profile.removeScope(shortName, 0, project);
+      profile.removeScope(shortName, "Tests", project);
     }
     profile.scopesChanged();
   }

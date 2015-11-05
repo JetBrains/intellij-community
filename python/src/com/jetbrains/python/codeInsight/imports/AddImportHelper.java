@@ -30,7 +30,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
-import com.jetbrains.python.documentation.DocStringUtil;
+import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.formatter.PyBlock;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;

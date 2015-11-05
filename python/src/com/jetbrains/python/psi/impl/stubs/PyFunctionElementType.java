@@ -56,7 +56,8 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     String message = function.extractDeprecationMessage();
     final PyStringLiteralExpression docStringExpression = function.getDocStringExpression();
     return new PyFunctionStubImpl(psi.getName(), PyPsiUtils.strValue(docStringExpression),
-                                  message == null ? null : StringRef.fromString(message), parentStub, getStubElementType());
+                                  message == null ? null : StringRef.fromString(message), function.isAsync(), parentStub,
+                                  getStubElementType());
   }
 
   public void serialize(@NotNull final PyFunctionStub stub, @NotNull final StubOutputStream dataStream)
@@ -64,6 +65,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     dataStream.writeName(stub.getName());
     dataStream.writeUTFFast(stub.getDocString() != null ? stub.getDocString() : "");
     dataStream.writeName(stub.getDeprecationMessage());
+    dataStream.writeBoolean(stub.isAsync());
   }
 
   @NotNull
@@ -71,7 +73,9 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     String name = StringRef.toString(dataStream.readName());
     String docString = dataStream.readUTFFast();
     StringRef deprecationMessage = dataStream.readName();
-    return new PyFunctionStubImpl(name, docString.length() > 0 ? docString : null, deprecationMessage, parentStub, getStubElementType());
+    final boolean isAsync = dataStream.readBoolean();
+    return new PyFunctionStubImpl(name, docString.length() > 0 ? docString : null, deprecationMessage, isAsync, parentStub,
+                                  getStubElementType());
   }
 
   public void indexStub(@NotNull final PyFunctionStub stub, @NotNull final IndexSink sink) {

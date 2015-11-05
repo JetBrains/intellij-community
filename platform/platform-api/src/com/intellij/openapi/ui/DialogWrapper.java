@@ -23,6 +23,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -30,7 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -306,7 +307,6 @@ public abstract class DialogWrapper {
   private boolean myDisposed = false;
   private boolean myValidationStarted = false;
   private final ErrorPainter myErrorPainter = new ErrorPainter();
-  private JComponent myErrorPane;
   private boolean myErrorPainterInstalled = false;
 
   /**
@@ -356,7 +356,7 @@ public abstract class DialogWrapper {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        IdeGlassPaneUtil.installPainter(myErrorPane, myErrorPainter, myDisposable);
+        IdeGlassPaneUtil.installPainter(getContentPanel(), myErrorPainter, myDisposable);
       }
     });
   }
@@ -483,7 +483,7 @@ public abstract class DialogWrapper {
 
     JPanel panel = new JPanel(new BorderLayout());
     final JPanel lrButtonsPanel = new JPanel(new GridBagLayout());
-    final Insets insets = SystemInfo.isMacOSLeopard ? JBUI.emptyInsets() : new Insets(8, 0, 0, 0); //don't wrap to JBInsets
+    final Insets insets = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets() : new Insets(8, 0, 0, 0); //don't wrap to JBInsets
 
     if (actions.length > 0 || leftSideActions.length > 0) {
       int gridX = 0;
@@ -603,10 +603,21 @@ public abstract class DialogWrapper {
 
     JPanel wrapper = new JPanel(new GridBagLayout());
     wrapper.add(checkBox);
-
     panel.add(wrapper, BorderLayout.WEST);
     panel.add(southPanel, BorderLayout.EAST);
     checkBox.setBorder(JBUI.Borders.emptyRight(20));
+    if (SystemInfo.isMac) {
+      JButton helpButton = null;
+      for (JButton button : UIUtil.findComponentsOfType(southPanel, JButton.class)) {
+        if ("help".equals(button.getClientProperty("JButton.buttonType"))) {
+          helpButton = button;
+          break;
+        }
+      }
+      if (helpButton != null) {
+        return JBUI.Panels.simplePanel(panel).addToLeft(helpButton);
+      }
+    }
 
     return panel;
   }
@@ -637,7 +648,7 @@ public abstract class DialogWrapper {
       }
     }
 
-    JPanel buttonsPanel = new JPanel(new GridLayout(1, actions.length, SystemInfo.isMacOSLeopard ? 0 : 5, 0));
+    JPanel buttonsPanel = new JPanel(new GridLayout(1, actions.length, SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? 8 : 0 : 5, 0));
     for (final Action action : actions) {
       JButton button = createJButtonForAction(action);
       final Object value = action.getValue(Action.MNEMONIC_KEY);
@@ -1257,10 +1268,6 @@ public abstract class DialogWrapper {
     final JComponent c = createCenterPanel();
     if (c != null) {
       centerSection.add(c, BorderLayout.CENTER);
-      myErrorPane = c;
-    }
-    if (myErrorPane == null) {
-      myErrorPane = root;
     }
 
     final JPanel southSection = new JPanel(new BorderLayout());
@@ -1352,7 +1359,12 @@ public abstract class DialogWrapper {
     };
 
     if (getValidationThreadToUse() == Alarm.ThreadToUse.SWING_THREAD) {
-      myValidationAlarm.addRequest(validateRequest, myValidationDelay, ModalityState.current());
+      // null if headless
+      JRootPane rootPane = getRootPane();
+      myValidationAlarm.addRequest(validateRequest, myValidationDelay,
+                                   ApplicationManager.getApplication() == null
+                                   ? null
+                                   : rootPane == null ? ModalityState.current() : ModalityState.stateForComponent(rootPane));
     }
     else {
       myValidationAlarm.addRequest(validateRequest, myValidationDelay);
@@ -1661,7 +1673,7 @@ public abstract class DialogWrapper {
     if (cancelKeyboardAction != null) {
       rootPane
         .registerKeyboardAction(cancelKeyboardAction, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-      registerForEveryKeyboardShortcut(cancelKeyboardAction, CommonShortcuts.getCloseActiveWindow());
+      ActionUtil.registerForEveryKeyboardShortcut(getRootPane(), cancelKeyboardAction, CommonShortcuts.getCloseActiveWindow());
     }
 
     if (ApplicationInfo.contextHelpAvailable()) {
@@ -1672,7 +1684,7 @@ public abstract class DialogWrapper {
         }
       };
 
-      registerForEveryKeyboardShortcut(helpAction, CommonShortcuts.getContextHelp());
+      ActionUtil.registerForEveryKeyboardShortcut(getRootPane(), helpAction, CommonShortcuts.getContextHelp());
       rootPane.registerKeyboardAction(helpAction, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
     }
 
@@ -1709,36 +1721,11 @@ public abstract class DialogWrapper {
     return new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
-          MenuElement[] selectedPath = menuSelectionManager.getSelectedPath();
-          if (selectedPath.length > 0) { // hide popup menu if any
-            menuSelectionManager.clearSelectedPath();
-          }
-          else {
-            if (ApplicationManager.getApplication() == null) {
-              doCancelAction(e);
-              return;
-            }
-            final StackingPopupDispatcher popupDispatcher = StackingPopupDispatcher.getInstance();
-            if (popupDispatcher != null && !popupDispatcher.isPopupFocused()) {
-              doCancelAction(e);
-            }
+          if (!PopupUtil.handleEscKeyEvent()) {
+            doCancelAction(e);
           }
         }
       };
-  }
-
-  private void registerForEveryKeyboardShortcut(ActionListener action, @NotNull ShortcutSet shortcuts) {
-    for (Shortcut shortcut : shortcuts.getShortcuts()) {
-      if (shortcut instanceof KeyboardShortcut) {
-        KeyboardShortcut ks = (KeyboardShortcut)shortcut;
-        KeyStroke first = ks.getFirstKeyStroke();
-        KeyStroke second = ks.getSecondKeyStroke();
-        if (second == null) {
-          getRootPane().registerKeyboardAction(action, first, JComponent.WHEN_IN_FOCUSED_WINDOW);
-        }
-      }
-    }
   }
 
   private void focusPreviousButton() {

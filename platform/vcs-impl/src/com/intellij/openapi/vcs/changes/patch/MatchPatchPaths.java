@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.ShelvedBinary
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
@@ -77,7 +78,8 @@ public class MatchPatchPaths {
                                    @NotNull List<FilePatch> newOrWithoutMatches,
                                    @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> result) {
     for (FilePatch patch : newOrWithoutMatches) {
-      final String[] strings = patch.getAfterName().replace('\\', '/').split("/");
+      String afterName = patch.getAfterName();
+      final String[] strings = afterName != null ? afterName.replace('\\', '/').split("/") : ArrayUtil.EMPTY_STRING_ARRAY;
       Pair<VirtualFile, Integer> best = null;
       for (int i = strings.length - 2; i >= 0; --i) {
         final String name = strings[i];
@@ -87,7 +89,7 @@ public class MatchPatchPaths {
           for (VirtualFile file : files) {
             Pair<VirtualFile, Integer> pair = compareNamesImpl(strings, file, i);
             if (pair != null && pair.getSecond() < i) {
-              if (best == null || pair.getSecond() < best.getSecond()) {
+              if (best == null || pair.getSecond() < best.getSecond() || isGoodAndProjectBased(best, pair)) {
                 best = pair;
               }
             }
@@ -106,6 +108,11 @@ public class MatchPatchPaths {
         result.putValue(myBaseDir, patchInProgress);
       }
     }
+  }
+
+  private boolean isGoodAndProjectBased(@NotNull Pair<VirtualFile, Integer> bestVariant,
+                                        @NotNull Pair<VirtualFile, Integer> currentVariant) {
+    return currentVariant.getSecond().equals(bestVariant.getSecond()) && myBaseDir.equals(currentVariant.getFirst());
   }
 
   private static void selectByContextOrByStrip(@NotNull List<PatchAndVariants> candidates,

@@ -65,7 +65,15 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     Language language = file.getLanguage();
-    return editor.getSelectionModel().hasSelection() && LanguageCodeStyleSettingsProvider.forLanguage(language) != null && file.isWritable();
+    return editor.getSelectionModel().hasSelection() && file.isWritable() && hasSettingsToShow(language);
+  }
+  
+  private static boolean hasSettingsToShow(Language language) {
+    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(language);
+    if (provider == null) {
+      return false;
+    }
+    return CodeFragmentCodeStyleSettingsPanel.hasOptionsToShow(provider);
   }
 
   @Override

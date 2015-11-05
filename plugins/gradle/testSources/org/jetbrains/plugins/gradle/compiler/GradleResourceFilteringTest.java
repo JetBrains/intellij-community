@@ -43,8 +43,8 @@ public class GradleResourceFilteringTest extends GradleCompilingTestCase {
       "  filter(HeadFilter, lines:3, skip:2)\n" +
       "}"
     );
-    assertModules("project");
-    compileModules("project");
+    assertModules("project", "project_main", "project_test");
+    compileModules("project_main");
 
     assertCopied("build/resources/main/dir/file.txt", "3 another text\n" +
                                                       "4\n" +
@@ -70,8 +70,8 @@ public class GradleResourceFilteringTest extends GradleCompilingTestCase {
       "  filter(ReplaceTokens, tokens:[token1:'<11111>', token2:'<2222>'], beginToken: '#', endToken: '#')\n" +
       "}"
     );
-    assertModules("project");
-    compileModules("project");
+    assertModules("project", "project_main", "project_test");
+    compileModules("project_main");
 
     assertCopied("build/resources/main/dir/file.txt", "1 Header\n" +
                                                       "2\n" +
@@ -94,10 +94,29 @@ public class GradleResourceFilteringTest extends GradleCompilingTestCase {
       "  rename 'file.txt', 'file001.txt'\n" +
       "}"
     );
-    assertModules("project");
-    compileModules("project");
+    assertModules("project", "project_main", "project_test");
+    compileModules("project_main");
 
     assertCopied("build/resources/main/dir/file001.txt");
+  }
+
+  @Test
+  public void testExpandPropertiesFilter() throws Exception {
+    createProjectSubFile(
+      "src/main/resources/dir/file.txt", "some text ${myProp} another text");
+    importProject(
+      "apply plugin: 'java'\n" +
+      "\n" +
+      "import org.apache.tools.ant.filters.*\n" +
+      "ant.project.setProperty('myProp', 'myPropValue')\n" +
+      "processResources {\n" +
+      "  filter (ExpandProperties, project: ant.project)\n" +
+      "}"
+    );
+    assertModules("project", "project_main", "project_test");
+    compileModules("project_main");
+
+    assertCopied("build/resources/main/dir/file.txt", "some text myPropValue another text");
   }
 
   @Test
@@ -121,8 +140,8 @@ public class GradleResourceFilteringTest extends GradleCompilingTestCase {
       "  rename 'file.txt', 'file001.txt'\n" +
       "}"
     );
-    assertModules("project");
-    compileModules("project");
+    assertModules("project", "project_main", "project_test");
+    compileModules("project_main");
 
     assertCopied("build/resources/main/dir/file001.txt", "3 another text<11111>\n" +
                                                          "4\n" +

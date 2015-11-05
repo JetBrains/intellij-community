@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.idea.devkit.dom.impl;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.Condition;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.ResolvingConverter;
@@ -41,7 +42,7 @@ class LanguageResolvingConverter extends ResolvingConverter<LanguageResolvingUti
     return LookupElementBuilder.create(o.clazz, o.id)
       .withIcon(o.icon)
       .withTailText(o.displayName == null ? null : " (" + o.displayName + ")")
-      .withTypeText(o.clazz.getQualifiedName(), true);
+      .withTypeText(o.type, true);
   }
 
   @Nullable
@@ -53,6 +54,12 @@ class LanguageResolvingConverter extends ResolvingConverter<LanguageResolvingUti
         return definition.id.equals(s);
       }
     });
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getPsiElement(@Nullable LanguageResolvingUtil.LanguageDefinition resolvedValue) {
+    return resolvedValue != null ? resolvedValue.clazz : null;
   }
 
   @Nullable

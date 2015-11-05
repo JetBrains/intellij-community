@@ -18,7 +18,7 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +31,7 @@ import java.util.Collections;
  * @author Vladislav.Soroka
  * @since 5/5/2015
  */
-public abstract class AbstractProjectDataService<E, I> implements ProjectDataServiceEx<E, I> {
+public abstract class AbstractProjectDataService<E, I> implements ProjectDataService<E, I> {
 
   public final Computable.PredefinedValueComputable<Collection<I>> EMPTY_LIST =
     new Computable.PredefinedValueComputable<Collection<I>>(Collections.<I>emptyList());
@@ -44,8 +44,7 @@ public abstract class AbstractProjectDataService<E, I> implements ProjectDataSer
   public void importData(@NotNull Collection<DataNode<E>> toImport,
                          @Nullable ProjectData projectData,
                          @NotNull Project project,
-                         @NotNull PlatformFacade platformFacade,
-                         boolean synchronous) {
+                         @NotNull IdeModifiableModelsProvider modelsProvider) {
   }
 
   @NotNull
@@ -53,7 +52,7 @@ public abstract class AbstractProjectDataService<E, I> implements ProjectDataSer
   public Computable<Collection<I>> computeOrphanData(@NotNull Collection<DataNode<E>> toImport,
                                                      @NotNull ProjectData projectData,
                                                      @NotNull Project project,
-                                                     @NotNull PlatformFacade platformFacade) {
+                                                     @NotNull IdeModifiableModelsProvider modelsProvider) {
     return EMPTY_LIST;
   }
 
@@ -62,23 +61,15 @@ public abstract class AbstractProjectDataService<E, I> implements ProjectDataSer
                          @NotNull Collection<DataNode<E>> toIgnore,
                          @NotNull ProjectData projectData,
                          @NotNull Project project,
-                         @NotNull PlatformFacade platformFacade,
-                         boolean synchronous) {
+                         @NotNull IdeModifiableModelsProvider modelsProvider) {
   }
 
-  /**
-   * @deprecated to be removed in v15
-   */
-  @Deprecated
-  @Override
-  public void importData(@NotNull Collection<DataNode<E>> toImport, @NotNull Project project, boolean synchronous) {
+  public void postProcess(@NotNull Collection<DataNode<E>> toImport,
+                          @Nullable ProjectData projectData,
+                          @NotNull Project project,
+                          @NotNull IdeModifiableModelsProvider modelsProvider) {
   }
 
-  /**
-   * @deprecated to be removed in v15
-   */
-  @Deprecated
-  @Override
-  public void removeData(@NotNull Collection<? extends I> toRemove, @NotNull Project project, boolean synchronous) {
+  public void onSuccessImport(@NotNull Project project) {
   }
 }

@@ -43,7 +43,7 @@ public abstract class JUnitConfigurationProducer extends JavaRunConfigurationPro
 
   @Override
   public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
-    return !other.isProducedBy(TestMethodConfigurationProducer.class);
+    return !other.isProducedBy(AbstractTestMethodConfigurationProducer.class);
   }
 
   @Override

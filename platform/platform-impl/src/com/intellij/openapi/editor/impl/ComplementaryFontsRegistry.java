@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.Patches;
+import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -50,17 +52,27 @@ public class ComplementaryFontsRegistry {
   private static final String[] BOLD_ITALIC_NAMES = {"bolditalic", "bold-italic", "bold italic", "boldoblique", "bold-oblique", 
     "bold oblique", "demibold italic", "negreta cursiva","demi oblique"};
 
+  // Explicit mapping fontName->style for cases where generic rules (given above) don't work.
+  private static final Map<String, Integer> FONT_NAME_TO_STYLE = new HashMap<String, Integer>();
+  static {
+    FONT_NAME_TO_STYLE.put("AnkaCoder-b",           Font.BOLD);
+    FONT_NAME_TO_STYLE.put("AnkaCoder-i",           Font.ITALIC);
+    FONT_NAME_TO_STYLE.put("AnkaCoder-bi",          Font.BOLD | Font.ITALIC);
+    FONT_NAME_TO_STYLE.put("SourceCodePro-It",      Font.ITALIC);
+    FONT_NAME_TO_STYLE.put("SourceCodePro-BoldIt",  Font.BOLD | Font.ITALIC);
+  }
+
   static {
     final UISettings settings = UISettings.getInstance();
-    ourOldUseAntialiasing = settings.ANTIALIASING_IN_EDITOR;
+    ourOldUseAntialiasing = !AntialiasingType.OFF.equals(settings.EDITOR_AA_TYPE);
 
     // Reset font info on 'use antialiasing' setting change.
     // Assuming that the listener is notified from the EDT only.
     settings.addUISettingsListener(new UISettingsListener() {
       @Override
       public void uiSettingsChanged(UISettings source) {
-        if (ourOldUseAntialiasing ^ source.ANTIALIASING_IN_EDITOR) {
-          ourOldUseAntialiasing = source.ANTIALIASING_IN_EDITOR;
+        if (ourOldUseAntialiasing ^ !AntialiasingType.OFF.equals(settings.EDITOR_AA_TYPE)) {
+          ourOldUseAntialiasing = !AntialiasingType.OFF.equals(settings.EDITOR_AA_TYPE);
           for (FontInfo fontInfo : ourUsedFonts.values()) {
             fontInfo.reset();
           }
@@ -110,7 +122,7 @@ public class ComplementaryFontsRegistry {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ourFontNames.add("Monospaced");
     } else {
-      if (SystemInfo.isMac) {
+      if (Patches.JDK_MAC_FONT_STYLE_DETECTION_WORKAROUND) {
         fillStyledFontMap();
       }
       String[] fontNames = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
@@ -127,7 +139,14 @@ public class ComplementaryFontsRegistry {
     Font[] allFonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
     for (Font font : allFonts) {
       String name = font.getName();
-      int style = getFontStyle(name);
+      Integer style = null;
+      if (!SystemInfo.isAppleJvm) {
+        style = FONT_NAME_TO_STYLE.get(name); // workaround with explicit fontName->style mapping doesn't work on Apple JVM
+      }
+      if (style == null) {
+        if (!Patches.JDK_MAC_FONT_STYLE_BUG) continue;
+        style = getFontStyle(name);
+      }
       if (style != Font.PLAIN) {
         String familyName = font.getFamily();
         Pair<String, Integer>[] entry = ourStyledFontMap.get(familyName);
@@ -198,7 +217,7 @@ public class ComplementaryFontsRegistry {
   @Nullable
   private static FontInfo doGetFontAbleToDisplay(char c, int size, @JdkConstants.FontStyle int style, @NotNull String defaultFontFamily) {
     synchronized (lock) {
-      if (SystemInfo.isMac && style > 0 && style < 4) {
+      if (Patches.JDK_MAC_FONT_STYLE_DETECTION_WORKAROUND && style > 0 && style < 4) {
         Pair<String, Integer>[] replacement = ourStyledFontMap.get(defaultFontFamily);
         if (replacement != null) {
           defaultFontFamily = replacement[style].first;

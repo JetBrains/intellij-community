@@ -29,7 +29,6 @@ import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.AccessToken;
@@ -61,11 +60,9 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -783,27 +780,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
     }
 
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      return true;
-    }
-
-    switch (CodeInsightSettings.getInstance().AUTOPOPUP_FOCUS_POLICY) {
-      case CodeInsightSettings.ALWAYS:
-        return true;
-      case CodeInsightSettings.NEVER:
-        return false;
-    }
-
-    final Language language = PsiUtilCore.getLanguageAtOffset(parameters.getPosition().getContainingFile(), parameters.getOffset());
-    for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
-      //noinspection deprecation
-      final ThreeState result = confidence.shouldFocusLookup(parameters);
-      if (result != ThreeState.UNSURE) {
-        LOG.debug(confidence + " has returned shouldFocusLookup=" + result);
-        return result == ThreeState.YES;
-      }
-    }
-    return false;
+    return true;
   }
 
   void startCompletion(final CompletionInitializationContext initContext) {

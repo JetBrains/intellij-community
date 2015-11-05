@@ -187,11 +187,16 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     public int compareTo(@NotNull MatchedValue o) {
       boolean edt = ApplicationManager.getApplication().isDispatchThread();
 
-      if (value instanceof ActionWrapper && o.value instanceof ActionWrapper && edt) {
-        boolean p1Enable = ((ActionWrapper)value).isAvailable();
-        boolean p2enable = ((ActionWrapper)o.value).isAvailable();
-        if (p1Enable && !p2enable) return -1;
-        if (!p1Enable && p2enable) return 1;
+      if (value instanceof ActionWrapper && o.value instanceof ActionWrapper) {
+        if (edt) {
+          boolean p1Enable = ((ActionWrapper)value).isAvailable();
+          boolean p2enable = ((ActionWrapper)o.value).isAvailable();
+          if (p1Enable && !p2enable) return -1;
+          if (!p1Enable && p2enable) return 1;
+        }
+        //noinspection unchecked
+        int compared = value.compareTo(o.value);
+        if (compared != 0) return compared;
       }
       
       if (value instanceof ActionWrapper && o.value instanceof BooleanOptionDescription) {
@@ -563,24 +568,26 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return myMatcher.get();
   }
 
-  public static class ActionWrapper implements Comparable<ActionWrapper>{
-    private final AnAction myAction;
-    private final MatchMode myMode;
-    private final String myGroupName;
+  public static class ActionWrapper implements Comparable<ActionWrapper> {
+    @NotNull private final AnAction myAction;
+    @NotNull private final MatchMode myMode;
+    @Nullable  private final String myGroupName;
     private final DataContext myDataContext;
     private Presentation myPresentation;
 
-    public ActionWrapper(@NotNull AnAction action, @Nullable String groupName, MatchMode mode, DataContext dataContext) {
+    public ActionWrapper(@NotNull AnAction action, @Nullable String groupName, @NotNull MatchMode mode, DataContext dataContext) {
       myAction = action;
       myMode = mode;
       myGroupName = groupName;
       myDataContext = dataContext;
     }
 
+    @NotNull
     public AnAction getAction() {
       return myAction;
     }
 
+    @NotNull
     public MatchMode getMode() {
       return myMode;
     }
@@ -591,16 +598,20 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       if (compared != 0) return compared;
       Presentation myPresentation = myAction.getTemplatePresentation();
       Presentation oPresentation = o.getAction().getTemplatePresentation();
-      int byText = StringUtil.compare(myPresentation.getText(), oPresentation.getText(), true);
+      String myText = myPresentation.getText();
+      String oText = oPresentation.getText();
+      int byTextLength = StringUtil.notNullize(myText).length() - StringUtil.notNullize(oText).length();
+      if (byTextLength != 0) return byTextLength;
+      int byText = StringUtil.compare(myText, oText, true);
       if (byText != 0) return byText;
       int byGroup = Comparing.compare(myGroupName, o.getGroupName());
-      if (byGroup !=0) return byGroup;
+      if (byGroup != 0) return byGroup;
       int byDesc = StringUtil.compare(myPresentation.getDescription(), oPresentation.getDescription(), true);
       if (byDesc != 0) return byDesc;
       return 0;
     }
 
-    private boolean isAvailable() {
+    public boolean isAvailable() {
       return getPresentation().isEnabledAndVisible();
     }
 
@@ -626,7 +637,8 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
     @Override
     public int hashCode() {
-      return myAction.getTemplatePresentation().getText().hashCode();
+      String text = myAction.getTemplatePresentation().getText();
+      return text != null ? text.hashCode() : 0;
     }
 
     @Override

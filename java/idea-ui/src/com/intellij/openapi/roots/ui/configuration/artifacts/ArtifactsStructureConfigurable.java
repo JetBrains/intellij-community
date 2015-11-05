@@ -49,6 +49,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -344,9 +345,8 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   }
 
   @Override
-  protected void removeArtifact(Artifact artifact) {
-    myPackagingEditorContext.getOrCreateModifiableArtifactModel().removeArtifact(artifact);
-    myContext.getDaemonAnalyzer().removeElement(myPackagingEditorContext.getOrCreateArtifactElement(artifact));
+  protected List<? extends RemoveConfigurableHandler<?>> getRemoveHandlers() {
+    return Collections.singletonList(new ArtifactRemoveHandler());
   }
 
   @Override
@@ -371,6 +371,21 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
 
   @Override
   public void dispose() {
+  }
+
+  private class ArtifactRemoveHandler extends RemoveConfigurableHandler<Artifact> {
+    public ArtifactRemoveHandler() {
+      super(ArtifactConfigurableBase.class);
+    }
+
+    @Override
+    public boolean remove(@NotNull Collection<Artifact> artifacts) {
+      for (Artifact artifact : artifacts) {
+        myPackagingEditorContext.getOrCreateModifiableArtifactModel().removeArtifact(artifact);
+        myContext.getDaemonAnalyzer().removeElement(myPackagingEditorContext.getOrCreateArtifactElement(artifact));
+      }
+      return true;
+    }
   }
 
   private class AddArtifactAction extends DumbAwareAction {

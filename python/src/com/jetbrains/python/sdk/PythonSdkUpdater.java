@@ -16,7 +16,6 @@
 package com.jetbrains.python.sdk;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -59,8 +58,6 @@ import java.util.List;
 public class PythonSdkUpdater implements StartupActivity {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.PythonSdkUpdater");
 
-  private final Set<String> myAlreadyUpdated = new HashSet<String>();
-
   public static PythonSdkUpdater getInstance() {
     final StartupActivity[] extensions = Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY);
     for (StartupActivity extension : extensions) {
@@ -69,10 +66,6 @@ public class PythonSdkUpdater implements StartupActivity {
       }
     }
     throw new UnsupportedOperationException("could not find self");
-  }
-
-  public void markAlreadyUpdated(String path) {
-    myAlreadyUpdated.add(path);
   }
 
   @Override
@@ -85,13 +78,13 @@ public class PythonSdkUpdater implements StartupActivity {
     updateActiveSdks(project, 7000);
   }
 
-  public void updateActiveSdks(@NotNull final Project project, final int delay) {
+  public static void updateActiveSdks(@NotNull final Project project, final int delay) {
     final Set<Sdk> sdksToUpdate = new HashSet<Sdk>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       final Sdk sdk = PythonSdkType.findPythonSdk(module);
       if (sdk != null) {
         final SdkTypeId sdkType = sdk.getSdkType();
-        if (sdkType instanceof PythonSdkType && !myAlreadyUpdated.contains(sdk.getHomePath())) {
+        if (sdkType instanceof PythonSdkType) {
           sdksToUpdate.add(sdk);
         }
       }
@@ -103,7 +96,7 @@ public class PythonSdkUpdater implements StartupActivity {
     }
   }
 
-  private void updateSdks(final Project project, final int delay, final Set<Sdk> sdksToUpdate) {
+  private static void updateSdks(final Project project, final int delay, final Set<Sdk> sdksToUpdate) {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         if (delay > 0) {
@@ -121,24 +114,7 @@ public class PythonSdkUpdater implements StartupActivity {
               @Override
               public void run(@NotNull ProgressIndicator indicator) {
                 for (final Sdk sdk : sdksToUpdate) {
-                  try {
-                    LOG.info("Performing background update of skeletons for SDK " + sdk.getHomePath());
-                    updateSdk(project, null, PySdkUpdater.fromSdkPath(sdk.getHomePath()), PythonSdkType.findSkeletonsPath(sdk));
-                  }
-                  catch (InvalidSdkException e) {
-                    if (PythonSdkType.isVagrant(sdk)) {
-                      PythonSdkType.notifyRemoteSdkSkeletonsFail(e, new Runnable() {
-                        @Override
-                        public void run() {
-                          updateSdks(project, delay, Sets.newHashSet(sdk));
-                        }
-                      });
-                    }
-                    else if (!PythonSdkType.isInvalid(sdk)) {
-                      LOG.error(e);
-                    }
-                  }
-                  myAlreadyUpdated.add(sdk.getHomePath());
+                  updateSdk(sdk, project);
                 }
               }
             });
@@ -148,8 +124,33 @@ public class PythonSdkUpdater implements StartupActivity {
     });
   }
 
-  public static void updateSdk(@Nullable Project project, @Nullable Component ownerComponent, @NotNull final PySdkUpdater sdkUpdater, String skeletonsPath)
+  public static void updateSdk(final Sdk sdk, final Project project) {
+    try {
+      LOG.info("Performing background update of skeletons for SDK " + sdk.getHomePath());
+      updateSdk(project, null, PySdkUpdater.fromSdkPath(sdk.getHomePath()));
+    }
+    catch (PySdkUpdater.PySdkNotFoundException e) {
+      LOG.info("Sdk " + sdk.getName() + " was removed during update process.");
+    }
+    catch (InvalidSdkException e) {
+      if (PythonSdkType.isVagrant(sdk) || PythonSdkType.isDocker(sdk)) {
+        PythonSdkType.notifyRemoteSdkSkeletonsFail(e, new Runnable() {
+          @Override
+          public void run() {
+            updateSdk(sdk, project);
+          }
+        });
+      }
+      else if (!PythonSdkType.isInvalid(sdk)) {
+        LOG.error(e);
+      }
+    }
+  }
+
+  public static void updateSdk(@Nullable Project project, @Nullable Component ownerComponent, @NotNull final PySdkUpdater sdkUpdater)
     throws InvalidSdkException {
+    String skeletonsPath = PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), sdkUpdater.getHomePath());
+
     PySkeletonRefresher.refreshSkeletonsOfSdk(project, ownerComponent, skeletonsPath, sdkUpdater); // NOTE: whole thing would need a rename
     if (!PySdkUtil.isRemote(sdkUpdater.getSdk())) {
       updateSysPath(sdkUpdater);
@@ -194,7 +195,8 @@ public class PythonSdkUpdater implements StartupActivity {
     addNewSysPathEntries(sdkUpdater, sysPath);
     removeSourceRoots(sdkUpdater);
     removeDuplicateClassRoots(sdkUpdater);
-    updateSkeletonsPath(sdkUpdater);
+    updateBinarySkeletonsPath(sdkUpdater);
+    updateUserSkeletonsPath(sdkUpdater);
   }
 
   /**
@@ -252,28 +254,41 @@ public class PythonSdkUpdater implements StartupActivity {
   }
 
   /**
+   * Updates user skeletons path in the Python SDK table.
+   */
+  private static void updateUserSkeletonsPath(@NotNull PySdkUpdater sdkUpdater) {
+    updateSkeletonsPath(sdkUpdater, PyUserSkeletonsUtil.getUserSkeletonsDirectory(), PyUserSkeletonsUtil.USER_SKELETONS_DIR,
+                        "User skeletons");
+  }
+
+  /**
    * Updates binary skeletons path in the Python SDK table.
    */
-  private static void updateSkeletonsPath(@NotNull PySdkUpdater sdkUpdater) {
+  private static void updateBinarySkeletonsPath(@NotNull PySdkUpdater sdkUpdater) {
     final String skeletonsPath = PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), sdkUpdater.getHomePath());
     if (skeletonsPath != null) {
       final VirtualFile skeletonsDir = StandardFileSystems.local().refreshAndFindFileByPath(skeletonsPath);
       if (skeletonsDir != null) {
-        LOG.info("Binary skeletons directory for SDK \"" + sdkUpdater.getSdk().getName() + "\" (" + sdkUpdater.getHomePath() + "): " + skeletonsDir.getPath());
-        final List<VirtualFile> sourceRoots = Arrays.asList(sdkUpdater.getSdk().getRootProvider().getFiles(OrderRootType.CLASSES));
-        boolean skeletonsDirFound = false;
-        for (final VirtualFile root : sourceRoots) {
-          if (root.equals(skeletonsDir)) {
-            skeletonsDirFound = true;
-          }
-          if (PythonSdkType.isSkeletonsPath(root.getPath()) && !skeletonsDirFound) {
-            sdkUpdater.addRoot(root, OrderRootType.CLASSES);
-          }
-        }
-        if (!skeletonsDirFound) {
-          sdkUpdater.addRoot(skeletonsDir, OrderRootType.CLASSES);
+        updateSkeletonsPath(sdkUpdater, skeletonsDir, PythonSdkType.SKELETON_DIR_NAME, "Binary skeletons");
+      }
+    }
+  }
+
+  private static void updateSkeletonsPath(@NotNull PySdkUpdater sdkUpdater,
+                                          @Nullable VirtualFile skeletonsDir,
+                                          @NotNull String skeletonsDirPattern,
+                                          @NotNull String skeletonsTitle) {
+    if (skeletonsDir != null) {
+      LOG.info(skeletonsTitle + " directory for SDK \"" + sdkUpdater.getSdk().getName() + "\" (" + sdkUpdater.getHomePath() + "): " +
+               skeletonsDir.getPath());
+      final List<VirtualFile> sourceRoots = Arrays.asList(sdkUpdater.getSdk().getRootProvider().getFiles(OrderRootType.CLASSES));
+      sdkUpdater.removeRoots(OrderRootType.CLASSES);
+      for (final VirtualFile root : sourceRoots) {
+        if (!root.getPath().contains(skeletonsDirPattern)) {
+          sdkUpdater.addRoot(root, OrderRootType.CLASSES);
         }
       }
+      sdkUpdater.addRoot(skeletonsDir, OrderRootType.CLASSES);
     }
   }
 

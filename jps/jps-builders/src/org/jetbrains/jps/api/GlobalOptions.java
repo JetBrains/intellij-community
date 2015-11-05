@@ -26,4 +26,14 @@ public interface GlobalOptions {
   String COMPILE_PARALLEL_MAX_THREADS_OPTION = "compile.parallel.max.threads";
   String REBUILD_ON_DEPENDENCY_CHANGE_OPTION = "rebuild.on.dependency.change";
   String LOG_DIR_OPTION = "jps.log.dir";
+
+  /**
+   * Set this property to 'false' to disable default logging. By default the log is written to build.log file in the directory specified by {@link #LOG_DIR_OPTION}.
+   */
+  String USE_DEFAULT_FILE_LOGGING_OPTION = "jps.use.default.file.logging";
+
+  // builder ID for all global build messages sent to the controlling IDE
+  String JPS_SYSTEM_BUILDER_ID = "JPS";
+  // notification about the files changed during compilation, but not compiled in current compilation session
+  String JPS_UNPROCESSED_FS_CHANGES_MESSAGE_ID = "!unprocessed_fs_changes_detected!";
 }

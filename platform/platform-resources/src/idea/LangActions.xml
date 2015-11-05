@@ -777,6 +777,7 @@
     </group>
 
     <group id="XDebugger.Frames.TopToolbar">
+      <action id="Debugger.ShowLibraryFrames" class="com.intellij.xdebugger.impl.actions.ShowLibraryFramesAction"/>
     </group>
 
     <group id="XDebugger.Variables.Tree.Popup">

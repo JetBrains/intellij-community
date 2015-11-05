@@ -15,20 +15,32 @@
  */
 package com.intellij.openapi.externalSystem.service.project
 
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.Result
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.test.AbstractExternalSystemTest
 import com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.roots.JavadocOrderRootType
-import com.intellij.openapi.roots.LibraryOrderEntry
-import com.intellij.openapi.roots.ModuleSourceOrderEntry
-import com.intellij.openapi.roots.OrderEntry
-import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.openapi.roots.*
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.util.ArrayUtil
+import org.jetbrains.annotations.NotNull
 
 import static com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.*
+import static com.intellij.openapi.externalSystem.test.ExternalSystemTestCase.collectRootsInside
+
 /**
  * @author Denis Zhdanov
  * @since 8/8/13 5:17 PM
@@ -44,19 +56,18 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
 
     applyProjectState([projectNode, projectNode])
 
-    def helper = ServiceManager.getService(ProjectStructureHelper.class)
-    def module = helper.findIdeModule('module', project)
+    def modelsProvider = new IdeModelsProviderImpl(project);
+    def module = modelsProvider.findIdeModule('module')
     assertNotNull(module)
-    
-    def facade = ServiceManager.getService(PlatformFacade.class)
-    def entries = facade.getOrderEntries(module)
+
+    def entries = modelsProvider.getOrderEntries(module)
     def dependencies = [:].withDefault { 0 }
     for (OrderEntry entry : entries) {
       if (entry instanceof LibraryOrderEntry) {
         def name = (entry as LibraryOrderEntry).libraryName
         dependencies[name]++
       }
-    }
+      }
     ExternalSystemTestUtil.assertMapsEqual(['Test_external_system_id: lib1': 1, 'Test_external_system_id: lib2': 1], dependencies)
   }
 
@@ -86,20 +97,18 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
 
     applyProjectState([projectNodeInitial, projectNodeRefreshed])
 
-    def helper = ServiceManager.getService(ProjectStructureHelper.class)
-    def module = helper.findIdeModule('module', project)
+    def modelsProvider = new IdeModelsProviderImpl(project);
+    def module = modelsProvider.findIdeModule('module')
     assertNotNull(module)
-
-    def facade = ServiceManager.getService(PlatformFacade.class)
-    def entries = facade.getOrderEntries(module)
+    def entries = modelsProvider.getOrderEntries(module)
     def folders = [:].withDefault { 0 }
     for (OrderEntry entry : entries) {
       if (entry instanceof ModuleSourceOrderEntry) {
         def contentEntry = (entry as ModuleSourceOrderEntry).getRootModel().getContentEntries().first()
-        folders['source']+=contentEntry.sourceFolders.length
-        folders['excluded']+=contentEntry.excludeFolders.length
+        folders['source'] += contentEntry.sourceFolders.length
+        folders['excluded'] += contentEntry.excludeFolders.length
       }
-    }
+      }
     ExternalSystemTestUtil.assertMapsEqual(['source': 4, 'excluded': 2], folders)
   }
 
@@ -128,12 +137,11 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
             lib('lib1', level: 'module', bin: [libBinPath.absolutePath], src: [libSrcPath.absolutePath],  doc: [libDocPath.absolutePath]) } } }
     ])
 
-    def helper = ServiceManager.getService(ProjectStructureHelper.class)
-    def module = helper.findIdeModule('module', project)
+    def modelsProvider = new IdeModelsProviderImpl(project);
+    def module = modelsProvider.findIdeModule('module')
     assertNotNull(module)
 
-    def facade = ServiceManager.getService(PlatformFacade.class)
-    def entries = facade.getOrderEntries(module)
+    def entries = modelsProvider.getOrderEntries(module)
     def dependencies = [:].withDefault { 0 }
     entries.each { OrderEntry entry ->
       if (entry instanceof LibraryOrderEntry) {
@@ -153,8 +161,87 @@ public class ExternalProjectServiceTest extends AbstractExternalSystemTest {
         else {
           fail()
         }
+        }
+      }
+    ExternalSystemTestUtil.assertMapsEqual(['Test_external_system_id: lib1': 1], dependencies)
+  }
+
+  void 'test excluded directories merge'() {
+    String rootPath = ExternalSystemApiUtil.toCanonicalPath(project.basePath);
+    def contentRoots = [
+      (EXCLUDED): ['.gradle', 'build']
+    ]
+
+    def projectRootBuilder = {
+      buildExternalProjectInfo {
+        project {
+          module {
+            contentRoot(rootPath) {
+              contentRoots.each { key, values -> values.each { folder(type: key, path: "$rootPath/$it") } }
+            } } } } }
+
+    DataNode<ProjectData> projectNodeInitial = projectRootBuilder()
+
+    contentRoots[(EXCLUDED)].remove(0)
+    contentRoots[(EXCLUDED)].add("newExclDir")
+
+    DataNode<ProjectData> projectNodeRefreshed = projectRootBuilder()
+    applyProjectState([projectNodeInitial, projectNodeRefreshed])
+
+    def modelsProvider = new IdeModelsProviderImpl(project);
+    def module = modelsProvider.findIdeModule('module')
+    assertNotNull(module)
+    def folders = []
+    for (OrderEntry entry : modelsProvider.getOrderEntries(module)) {
+      if (entry instanceof ModuleSourceOrderEntry) {
+        def contentEntry = (entry as ModuleSourceOrderEntry).getRootModel().getContentEntries().first()
+        folders = contentEntry.excludeFolders.collect {new File(it.url).name}
       }
     }
-    ExternalSystemTestUtil.assertMapsEqual(['Test_external_system_id: lib1': 1], dependencies)
+    assertEquals(new HashSet<>(folders), new HashSet<>([".gradle", "build", "newExclDir"]));
+  }
+
+  void 'test project SDK configuration import'() {
+    String myJdkName = "My JDK";
+    String myJdkHome = IdeaTestUtil.requireRealJdkHome();
+
+    List<String> allowedRoots = new ArrayList<String>();
+    allowedRoots.add(myJdkHome);
+    allowedRoots.addAll(collectRootsInside(myJdkHome));
+    final String[] newRootsArray = ArrayUtil.toStringArray(allowedRoots);
+    VfsRootAccess.allowRootAccess(newRootsArray);
+    Disposer.register(myTestRootDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        VfsRootAccess.disallowRootAccess(newRootsArray);
+      }
+    });
+
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        Sdk oldJdk = ProjectJdkTable.getInstance().findJdk(myJdkName);
+        if (oldJdk != null) {
+          ProjectJdkTable.getInstance().removeJdk(oldJdk);
+        }
+        VirtualFile jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myJdkHome));
+        Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, JavaSdk.getInstance(), true, null, myJdkName);
+        assertNotNull("Cannot create JDK for " + myJdkHome, jdk);
+        ProjectJdkTable.getInstance().addJdk(jdk);
+      }
+    }.execute();
+
+    DataNode<ProjectData> projectNode = buildExternalProjectInfo {
+      project {
+        javaProject(jdk: '1.7', languageLevel: '1.7') {
+        } } }
+
+    applyProjectState([projectNode])
+
+    ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
+    Sdk sdk = rootManager.getProjectSdk();
+    assertNotNull(sdk)
+    LanguageLevelProjectExtension languageLevelExtension = LanguageLevelProjectExtension.getInstance(project);
+    assertEquals(LanguageLevel.JDK_1_7, languageLevelExtension.languageLevel)
   }
 }

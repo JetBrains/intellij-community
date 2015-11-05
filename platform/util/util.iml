@@ -21,6 +21,9 @@
     <orderEntry type="library" exported="" name="ForkJoin" level="project" />
     <orderEntry type="library" exported="" name="Snappy-Java" level="project" />
     <orderEntry type="library" name="imgscalr" level="project" />
+    <orderEntry type="library" name="batik" level="project" />
+    <orderEntry type="library" name="xmlgraphics-commons" level="project" />
+    <orderEntry type="library" name="xml-apis-ext" level="project" />
   </component>
   <component name="copyright">
     <Base>

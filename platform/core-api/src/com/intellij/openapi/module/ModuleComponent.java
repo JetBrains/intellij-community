@@ -21,6 +21,12 @@ import com.intellij.openapi.components.BaseComponent;
  * Base interface for module-level components. The constructor of the classes
  * implementing this interface can accept as parameters the module instance and
  * any application-, project- or module-level components this component depends on.
+ *
+ * <p>
+ * <strong>Note that if you register a class as a module component it will be loaded, its instance will be created and
+ * {@link #initComponent()}, {@link #projectOpened()}, {@link #moduleAdded()} methods will be called for each module even if user doesn't use
+ * any feature of your plugin. So consider using specific extensions instead to ensure that the plugin will not impact IDE performance
+ * until user calls its actions explicitly.</strong>
  */
 public interface ModuleComponent extends BaseComponent {
   /**

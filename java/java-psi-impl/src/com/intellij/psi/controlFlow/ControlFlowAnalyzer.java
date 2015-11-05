@@ -1307,6 +1307,11 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
           startElement(lExpr);
         }
 
+        PsiExpression qualifier = ((PsiReferenceExpression)lExpr).getQualifierExpression();
+        if (qualifier != null) {
+          qualifier.accept(this);
+        }
+
         if (expression.getOperationTokenType() != JavaTokenType.EQ) {
           generateReadInstruction(variable);
         }

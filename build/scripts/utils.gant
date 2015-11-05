@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
+
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.jps.gant.JpsGantTool
 import org.jetbrains.jps.gant.TeamCityBuildInfoPrinter
-import org.jetbrains.jps.model.java.JavaResourceRootType
-import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.jps.model.java.JdkVersionDetector
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.java.JpsJavaSdkType
+import org.jetbrains.jps.model.java.*
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
@@ -234,6 +232,14 @@ binding.setVariable("prepareOutputFolder", {
   }
 })
 
+binding.setVariable("clearBuildCaches", {
+  //todo[nik] this is temporary solution until we update bootstrap jps-builders jars to the new version where cleaning is performed in JpsGantProjectBuilder#cleanOutput
+  def storageRoot = projectBuilder.dataStorageRoot
+  if (storageRoot != null) {
+    FileUtil.delete(storageRoot)
+  }
+})
+
 boolean hasSourceRoots(JpsModule module) {
   return module.getSourceRoots(JavaSourceRootType.SOURCE).iterator().hasNext()
 }
@@ -244,14 +250,6 @@ binding.setVariable("findModule", {String name ->
 
 binding.setVariable("allModules", {
   return project.modules
-})
-
-binding.setVariable("printUnusedModules", {Set<String> usedModules ->
-  allModules().each {JpsModule m ->
-    if (!usedModules.contains(m.name) && hasSourceRoots(m)) {
-      projectBuilder.warning("Module $m.name is not used in project layout")
-    }
-  }
 })
 
 requireProperty("home", guessHome())
@@ -271,7 +269,7 @@ projectBuilder.buildInfoPrinter = new TeamCityBuildInfoPrinter()
 projectBuilder.compressJars = false
 
 binding.setVariable("notifyArtifactBuilt", { String artifactPath ->
-  if (!artifactPath.startsWith(home)) {
+  if (!FileUtil.startsWith(artifactPath, home)) {
     projectBuilder.error("Artifact path $artifactPath should start with $home")
   }
   def relativePath = artifactPath.substring(home.length())
@@ -286,7 +284,7 @@ binding.setVariable("notifyArtifactBuilt", { String artifactPath ->
 })
 
 def debugPort = System.getProperty("debug.port")
-def debugSuspend = System.getProperty("rи") ?: "n"
+def debugSuspend = System.getProperty("debug.suspend") ?: "n"
 if (debugSuspend == 'y') {
   println """
 
@@ -347,6 +345,7 @@ binding.setVariable("commonJvmArgsForTests", {
     "-Didea.config.path=${p("teamcity.build.tempDir")}/config",
     "-Didea.system.path=${p("teamcity.build.tempDir")}/system",
     "-Xdebug",
+    "-XX:ReservedCodeCacheSize=240m",
     "-XX:-OmitStackTraceInFastThrow",
     jdwp
   ]
@@ -764,6 +763,16 @@ binding.setVariable("zipSourcesOfModules", { String targetFilePath, Collection<S
   notifyArtifactBuilt(targetFilePath)
 })
 
+binding.setVariable("moduleSrc", {String moduleName ->
+  result = []
+  JpsModule module = findModule(moduleName)
+  if (module == null) projectBuilder.error("Module $moduleName not found")
+  module.getSourceRoots(JavaSourceRootType.SOURCE).each { root ->
+    result << ant.zipfileset(dir: root.file.absolutePath , prefix: root.properties.packagePrefix.replace('.', '/'), erroronmissingdir: false)
+  }
+  result
+})
+
 /**
  * E.g.
  *
@@ -847,12 +856,26 @@ private List<File> getChildren(File file) {
   return file.listFiles().sort { File f -> f.name.toLowerCase() }
 }
 
+binding.setVariable("signExecutableFiles", { String binDir ->
+  projectBuilder.stage("Signing binaries")
+  def fileBinDir = new File(binDir)
+  def fileName = ""
+  getChildren(fileBinDir).each {
+    fileName = it.getName()
+    if (fileName.endsWith(".exe")) {
+      executeExternalAnt(["dirName": binDir, "fileName": fileName], "$home/build/signBuild.xml")
+    }
+  }
+  projectBuilder.stage("Signing done")
+})
+
 binding.setVariable("bundledJDKs"){
   requireProperty("jdk16.mac", "true")
   requireProperty("jdk.bundled.win", "1.8")
   requireProperty("jdk.bundled.linux", "false")
   requireProperty("jdk.bundled.mac", "1.8")
   requireProperty("jdk.custom.mac", "true")
+  requireProperty("jdk.custom.linux", "false")
   if (new File("${home}/build/jdk").exists()) {
     if (p("jdk.bundled.win") != "false") {
       setProperty("winJDK", getPathToBundledJDK(new File("${home}/build/jdk/win"), "jdk" + p("jdk.bundled.win"), "x32.zip"))
@@ -861,6 +884,11 @@ binding.setVariable("bundledJDKs"){
     if (p("jdk.bundled.linux") != "false") {
       setProperty("linuxJDK", getPathToBundledJDK(new File("${home}/build/jdk/linux"), "jdk" + p("jdk.bundled.linux"), ".tar"))
       extractRedistJre(linuxJDK, "${paths.sandbox}/bundled.linux.jdk/jre")
+    }
+    def customLinuxJdkDir = new File("${home}/build/jdk/custom/linux")
+    if (p("jdk.custom.linux") == "true" && (customLinuxJdkDir.exists() && customLinuxJdkDir.isDirectory())) {
+      setProperty("linuxCustomJDK", getPathToBundledJDK(customLinuxJdkDir, "openjdk.1.8", ".tar.gz"))
+      extractRedistJre(linuxCustomJDK, "${paths.sandbox}/custom.linux.jdk")
     }
     if (p("jdk.bundled.mac") != "false") {
       setProperty("macJDK", getPathToBundledJDK(new File("${home}/build/jdk/mac"), "jdk" + p("jdk.bundled.mac"), ".tar"))
@@ -906,6 +934,7 @@ binding.setVariable("buildWinZip", { String zipPath, List paths, String zipPrefi
 binding.setVariable("buildCrossPlatformZip", { String zipPath, String sandbox, List commonPaths, String distWin, String distUnix, String distMac ->
   projectBuilder.stage("Building cross-platform zip")
 
+  def executableName = StringUtil.trimEnd(new File(distMac, "bin").list().find { it.endsWith(".vmoptions") }, ".vmoptions")
   def zipDir = "$sandbox/cross-platform-zip"
   def ideaPropertiesFile = commonPaths.collect { new File(it, "bin/idea.properties") }.find { it.exists() }
   ["win", "linux"].each {
@@ -915,16 +944,16 @@ binding.setVariable("buildCrossPlatformZip", { String zipPath, String sandbox, L
   ant.fixcrlf(file: "$zipDir/bin/win/idea.properties", eol: "dos")
   ant.copy(todir: "$zipDir/bin/linux") {
     fileset(dir: "$distUnix/bin") {
-      include(name: "idea*.vmoptions")
+      include(name: "*.vmoptions")
     }
   }
   ant.copy(todir: "$zipDir/bin/mac") {
     fileset(dir: "$distMac/bin") {
-      include(name: "idea.vmoptions")
+      include(name: "${executableName}.vmoptions")
       include(name: "idea.properties")
     }
   }
-  ant.copy(file: "$distMac/bin/idea.vmoptions", tofile: "$zipDir/bin/mac/idea64.vmoptions")
+  ant.copy(file: "$distMac/bin/${executableName}.vmoptions", tofile: "$zipDir/bin/mac/${executableName}64.vmoptions")
   ant.copy(todir: "$zipDir/bin") {
     fileset(dir: "$distMac/bin") {
       include(name: "*.jnilib")
@@ -942,17 +971,17 @@ binding.setVariable("buildCrossPlatformZip", { String zipPath, String sandbox, L
 
     fileset(dir: distWin) {
       exclude(name: "bin/fsnotifier*.exe")
-      exclude(name: "bin/idea*.exe.vmoptions")
-      exclude(name: "bin/idea*.exe")
+      exclude(name: "bin/*.exe.vmoptions")
+      exclude(name: "bin/${executableName}*.exe")
     }
     zipfileset(dir: "$distWin/bin", prefix: "bin/win") {
       include(name: "fsnotifier*.exe")
-      include(name: "idea*.exe.vmoptions")
+      include(name: "*.exe.vmoptions")
     }
 
     fileset(dir: distUnix) {
       exclude(name: "bin/fsnotifier*")
-      exclude(name: "bin/idea*.vmoptions")
+      exclude(name: "bin/*.vmoptions")
       exclude(name: "bin/*.sh")
       exclude(name: "help/**")
     }
@@ -970,7 +999,7 @@ binding.setVariable("buildCrossPlatformZip", { String zipPath, String sandbox, L
       exclude(name: "bin/*.py")
       exclude(name: "bin/*.jnilib")
       exclude(name: "bin/idea.properties")
-      exclude(name: "bin/idea*.vmoptions")
+      exclude(name: "bin/*.vmoptions")
     }
     zipfileset(dir: "$distMac/bin", filemode: "775", prefix: "bin") {
       include(name: "restarter*")
@@ -1157,6 +1186,7 @@ binding.setVariable("collectUsedJars", { List modules, List approvedJars, List f
 binding.setVariable("buildModulesAndCollectUsedJars", { List modules, List approvedJars, List forbiddenJars ->
   def modulesToBuild = []
   def usedJars = collectUsedJars(modules, approvedJars, forbiddenJars, modulesToBuild)
+  clearBuildCaches()
   projectBuilder.cleanOutput()
   projectBuilder.buildModules(modulesToBuild)
 

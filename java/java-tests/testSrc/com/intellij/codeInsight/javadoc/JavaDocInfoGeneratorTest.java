@@ -252,13 +252,21 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   }
   
   public void testPackageInfoFromComment() throws Exception {
+    doTestPackageInfo("some");
+  }
+
+  public void testPackageInfoWithCopyright() throws Exception {
+    doTestPackageInfo("packageInfoWithCopyright");
+  }
+  
+  private void doTestPackageInfo(String caretPositionedAt) throws Exception {
     final String rootPath = getTestDataPath() + "/codeInsight/javadocIG/";
     VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootPath, myFilesToDelete);
-    VirtualFile piFile = root.findFileByRelativePath("packageInfoFromComment/package-info.java");
+    VirtualFile piFile = root.findFileByRelativePath(getTestName(true) + "/package-info.java");
     assertNotNull(piFile);
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(piFile);
     assertNotNull(psiFile);
-    final String info = JavaExternalDocumentationTest.getDocumentationText(psiFile, psiFile.getText().indexOf("some"));
+    final String info = JavaExternalDocumentationTest.getDocumentationText(psiFile, psiFile.getText().indexOf(caretPositionedAt));
     String htmlText = FileUtil.loadFile(new File(rootPath + getTestName(true) + File.separator + "packageInfo.html"));
     assertEquals(StringUtil.convertLineSeparators(htmlText.trim()), replaceEnvironmentDependentContent(info));
   }

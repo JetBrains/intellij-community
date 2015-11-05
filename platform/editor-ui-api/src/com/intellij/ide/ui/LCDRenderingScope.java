@@ -15,87 +15,13 @@
  */
 package com.intellij.ide.ui;
 
-import sun.swing.SwingUtilities2;
-import java.awt.*;
-
+// Use AntialiasingType instead
+@Deprecated
 public enum LCDRenderingScope {
+  @Deprecated
   IDE,
+  @Deprecated
   EXCLUDING_EDITOR,
-  OFF;
-
-  public static LCDRenderingScope getWithLongestName() {
-    return IDE;
-  }
-
-  private static final SwingUtilities2.AATextInfo aaEnabled =
-    new SwingUtilities2.AATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_ON, 140);
-
-  private static final SwingUtilities2.AATextInfo lcdEnabled =
-    new SwingUtilities2.AATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB, 140);
-
-  private static final SwingUtilities2.AATextInfo aaDisabled = null;
-
-  public static Object getAAHintForSwingComponent() {
-    UISettings uiSettings = UISettings.getInstance();
-    if (uiSettings.ANTIALIASING_IN_IDE) {
-      if (uiSettings.LCD_RENDERING_SCOPE == OFF) {
-        return aaEnabled;
-      }
-      return lcdEnabled;
-    }
-    return aaDisabled;
-  }
-
-
-  public static Object getKeyForCurrentScope(boolean inEditor) {
-    Object renderingHint = RenderingHints.VALUE_TEXT_ANTIALIAS_OFF;
-
-    UISettings uiSettings = UISettings.getInstance();
-
-    if (uiSettings != null && uiSettings.ANTIALIASING_IN_IDE) {
-      switch (uiSettings.LCD_RENDERING_SCOPE) {
-        case IDE:
-          renderingHint = RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB;
-          break;
-        case EXCLUDING_EDITOR:
-          if (!inEditor) {
-            renderingHint = RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB;
-            break;
-          }
-        case OFF:
-          renderingHint = RenderingHints.VALUE_TEXT_ANTIALIAS_ON;
-          break;
-      }
-    }
-    return renderingHint;
-  }
-
-  @Override
-  public String toString() {
-    String description ;
-    switch (this) {
-      case IDE:
-        description = "LCD Rendering in IDE and Editor";
-        break;
-      case EXCLUDING_EDITOR:
-        description = "LCD Rendering in IDE";
-        break;
-      case OFF:
-        description = "Without LCD rendering";
-        break;
-      default:
-        description = "LCD Rendering in IDE";
-    }
-    return description;
-  }
-
-  public static boolean shouldRenderEditor(LCDRenderingScope scope) {
-    if (!UISettings.getInstance().ANTIALIASING_IN_IDE) return false;
-    switch (scope) {
-      case IDE:
-        return true;
-      default:
-        return false;
-    }
-  }
+  @Deprecated
+  OFF
 }

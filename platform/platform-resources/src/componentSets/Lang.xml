@@ -40,7 +40,6 @@
 
     <component>
       <implementation-class>com.intellij.ide.script.IdeStartupScripts</implementation-class>
-      <skipForDefaultProject/>
     </component>
 
   </application-components>
@@ -123,6 +122,10 @@
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.GeneralHighlightingPassFactory</implementation-class>
+      <skipForDefaultProject/>
+    </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.ChameleonSyntaxHighlightingPass$Factory</implementation-class>
       <skipForDefaultProject/>
     </component>
     <component>

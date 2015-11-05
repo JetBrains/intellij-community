@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,14 +32,14 @@ public class ProjectPlaybackCall {
     try {
       File parentDir = FileUtil.createTempDirectory("funcTest", "");
       File sourceDir = context.getPathMacro().resolveFile(path, context.getBaseDir());
-      
+
       context.message("Cloning project: " + sourceDir.getAbsolutePath(), context.getCurrentLine());
       FileUtil.copyDir(sourceDir, parentDir);
       File projectDir = new File(parentDir, sourceDir.getName());
       return openProject(context, projectDir.getAbsolutePath());
     }
     catch (IOException e) {
-      return new AsyncResult.Rejected<String>("Cannot create temp directory for clone");
+      return AsyncResult.rejected("Cannot create temp directory for clone");
     }
   }
 

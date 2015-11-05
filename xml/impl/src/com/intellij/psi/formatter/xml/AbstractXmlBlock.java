@@ -371,6 +371,10 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   public abstract boolean insertLineBreakBeforeTag();
+  
+  public int getBlankLinesBeforeTag() {
+    return insertLineBreakBeforeTag() ? 1 : 0;
+  }
 
   public abstract boolean removeLineBreakBeforeTag();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,15 @@ import com.intellij.openapi.vcs.changes.ChangeListOwner;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 public class ChangesBrowserLockedFoldersNode extends ChangesBrowserNode implements TreeLinkMouseListener.HaveTooltip {
   private final Project myProject;
@@ -53,9 +55,9 @@ public class ChangesBrowserLockedFoldersNode extends ChangesBrowserNode implemen
   public void render(final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
     renderer.append(userObject.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     renderer.append(getCountText(), SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
-    renderer.append("   ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    renderer.append(spaceAndThinSpace(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     final CleanupStarter starter = new CleanupStarter(myProject, this);
-    renderer.append("do cleanup...", new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, Color.red), starter);
+    renderer.append("do cleanup...", new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, JBColor.RED), starter);
   }
 
   private static class CleanupStarter implements Runnable {

@@ -16,8 +16,6 @@
 package com.intellij.compiler.notNullVerification;
 
 import com.intellij.compiler.instrumentation.FailSafeMethodVisitor;
-import com.sun.istack.internal.NotNull;
-import com.sun.istack.internal.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
 
 import java.io.ByteArrayOutputStream;
@@ -115,8 +113,8 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
   }
 
   private static class NotNullState {
-    @Nullable String message;
-    @NotNull String exceptionType;
+    String message;
+    String exceptionType;
 
     NotNullState(String exceptionType) {
       this.exceptionType = exceptionType;
@@ -125,6 +123,10 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
   @Override
   public MethodVisitor visitMethod(final int access, final String name, String desc, String signature, String[] exceptions) {
+    if ((access & Opcodes.ACC_BRIDGE) != 0) {
+      return super.visitMethod(access, name, desc, signature, exceptions);
+    }
+
     final Type[] args = Type.getArgumentTypes(desc);
     final Type returnType = Type.getReturnType(desc);
     final MethodVisitor v = cv.visitMethod(access, name, desc, signature, exceptions);

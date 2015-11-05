@@ -91,6 +91,11 @@ class EditVarConstraintsDialog extends DialogWrapper {
   private JPanel occurencePanel;
   private JPanel textConstraintsPanel;
   private JLabel myRegExHelpLabel;
+  private JButton myZeroZeroButton;
+  private JButton myOneOneButton;
+  private JButton myZeroInfinityButton;
+  private JButton myOneInfinityButton;
+  private JButton myZeroOneButton;
 
   private static Project myProject;
 
@@ -107,6 +112,44 @@ class EditVarConstraintsDialog extends DialogWrapper {
       @Override
       public void documentChanged(DocumentEvent e) {
         applyWithinTypeHierarchy.setEnabled(e.getDocument().getTextLength() > 0 && fileType == StdFileTypes.JAVA);
+      }
+    });
+    myZeroZeroButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        minoccurs.setText("0");
+        maxoccurs.setText("0");
+        maxoccursUnlimited.setSelected(false);
+      }
+    });
+    myZeroOneButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        minoccurs.setText("0");
+        maxoccurs.setText("1");
+        maxoccursUnlimited.setSelected(false);
+      }
+    });
+    myOneOneButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        minoccurs.setText("1");
+        maxoccurs.setText("1");
+        maxoccursUnlimited.setSelected(false);
+      }
+    });
+    myZeroInfinityButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        minoccurs.setText("0");
+        maxoccursUnlimited.setSelected(true);
+      }
+    });
+    myOneInfinityButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        minoccurs.setText("1");
+        maxoccursUnlimited.setSelected(true);
       }
     });
     read.addChangeListener(new MyChangeListener(notRead, false));

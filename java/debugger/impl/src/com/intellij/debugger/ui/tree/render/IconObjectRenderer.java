@@ -16,10 +16,12 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.FullValueEvaluatorProvider;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
@@ -42,15 +44,22 @@ class IconObjectRenderer extends ToStringBasedRenderer implements FullValueEvalu
   }
 
   @Override
-  public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener)
+  public Icon calcValueIcon(final ValueDescriptor descriptor, final EvaluationContext evaluationContext, final DescriptorLabelListener listener)
     throws EvaluateException {
-    String getterName = AllIcons.Debugger.Value.getIconHeight() <= 16 ? "iconToBytesPreviewNormal" : "iconToBytesPreviewRetina";
-    if (!Registry.is("debugger.auto.fetch.icons") || DebuggerUtilsImpl.isRemote(evaluationContext.getDebugProcess())) {
-      return null; // do not auto load icon for remote
-    }
-    else {
-      return ImageObjectRenderer.getIcon(evaluationContext, descriptor.getValue(), getterName);
-    }
+    EvaluationContextImpl evalContext = ((EvaluationContextImpl)evaluationContext);
+    DebugProcessImpl debugProcess = evalContext.getDebugProcess();
+
+    if (!Registry.is("debugger.auto.fetch.icons") || DebuggerUtilsImpl.isRemote(debugProcess)) return null;
+
+    debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(evalContext.getSuspendContext()) {
+      @Override
+      public void contextAction() throws Exception {
+        String getterName = AllIcons.Debugger.Value.getIconHeight() <= 16 ? "iconToBytesPreviewNormal" : "iconToBytesPreviewRetina";
+        descriptor.setValueIcon(ImageObjectRenderer.getIcon(evaluationContext, descriptor.getValue(), getterName));
+        listener.labelChanged();
+      }
+    });
+    return null;
   }
 
   @Nullable

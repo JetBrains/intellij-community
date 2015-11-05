@@ -15,36 +15,50 @@
  */
 package com.intellij.openapi.options;
 
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Document;
-import org.jdom.JDOMException;
+import org.jdom.Element;
 import org.jdom.Parent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
+public abstract class SchemeProcessor<T extends ExternalizableScheme> {
+  public abstract Parent writeScheme(@NotNull T scheme) throws WriteExternalException;
 
-/**
- * Please extend {@link BaseSchemeProcessor} to avoid compatibility issues
- */
-public interface SchemeProcessor<T extends ExternalizableScheme> {
-  @Deprecated
-  T readScheme(@NotNull Document schemeContent) throws InvalidDataException, IOException, JDOMException;
+  public void initScheme(@NotNull T scheme) {
+  }
 
-  Parent writeScheme(@NotNull T scheme) throws WriteExternalException;
+  public void onSchemeAdded(@NotNull T scheme) {
+  }
 
-  @Deprecated
+  public void onSchemeDeleted(@NotNull T scheme) {
+  }
+
   /**
-   * @deprecated Implement {@link BaseSchemeProcessor#getState(ExternalizableScheme)}
+   * Scheme switched.
    */
-  boolean shouldBeSaved(@NotNull T scheme);
+  public void onCurrentSchemeChanged(@Nullable Scheme oldScheme) {
+  }
 
-  void initScheme(@NotNull T scheme);
+  @Nullable
+  protected T readScheme(@NotNull Element element) throws Exception {
+    throw new AbstractMethodError();
+  }
 
-  void onSchemeAdded(@NotNull T scheme);
+  @Nullable
+  /**
+   * @param duringLoad If occurred during {@link SchemesManager#loadSchemes()} call
+   * Returns null if element is not valid.
+   */
+  public T readScheme(@NotNull Element element, boolean duringLoad) throws Exception {
+    return readScheme(element);
+  }
 
-  void onSchemeDeleted(@NotNull T scheme);
+  public enum State {
+    UNCHANGED, NON_PERSISTENT, POSSIBLY_CHANGED
+  }
 
-  void onCurrentSchemeChanged(@Nullable Scheme oldScheme);
+  @NotNull
+  public State getState(@NotNull T scheme) {
+    return State.POSSIBLY_CHANGED;
+  }
 }

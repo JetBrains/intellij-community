@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/*
+/**
  * Use ProgressManager.executeProcessUnderProgress() to pass modality state if needed
  */
 public abstract class DiffRequestFactory {

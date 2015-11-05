@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.util.TestUtils
 
@@ -475,6 +476,104 @@ trait LoggingHandler implements T1 {
 ''', PsiMethod).containingClass
 
     assertEquals("T1", clazz.qualifiedName)
+  }
+
+  void 'test class vs property uppercase'() {
+    myFixture.addFileToProject('bar/Foo.groovy', '''\
+package bar
+
+class Foo {
+    def UPPERCASE
+}
+''')
+    resolveByText('''
+def bar = new bar.Foo()
+bar.UPPER<caret>CASE
+''', GrAccessorMethod)
+
+    myFixture.addFileToProject('bar/UPPERCASE.groovy', '''\
+package bar
+
+class UPPERCASE {}
+''')
+    resolveByText('''
+def bar = new bar.Foo()
+bar.UPPER<caret>CASE
+''', GrTypeDefinition)
+  }
+
+  void 'test class vs property capitalized'() {
+    myFixture.addFileToProject('bar/Foo.groovy', '''\
+package bar
+
+class Foo {
+    def Capitalized
+}
+''')
+    resolveByText('''
+def bar = new bar.Foo()
+bar.Capital<caret>ized
+''', GrAccessorMethod)
+
+    myFixture.addFileToProject('bar/Capitalized.groovy', '''\
+package bar
+
+class Capitalized {}
+''')
+    resolveByText('''
+def bar = new bar.Foo()
+bar.Capital<caret>ized
+''', GrTypeDefinition)
+  }
+
+  void 'test class vs property lowercase'() {
+    myFixture.addFileToProject('bar/Foo.groovy', '''\
+package bar
+
+class Foo {
+    def lowercase
+}
+''')
+    resolveByText('''
+def bar = new bar.Foo()
+bar.lower<caret>case
+''', GrAccessorMethod)
+
+    myFixture.addFileToProject('bar/lowercase.groovy', '''\
+package bar
+
+class lowercase {}
+''')
+    resolveByText('''
+def bar = new bar.Foo()
+bar.lower<caret>case
+''', GrAccessorMethod)
+  }
+
+  void 'test class vs property capitalized with whitespaces and comments'() {
+    myFixture.addFileToProject('bar/Foo.groovy', '''\
+package bar
+
+class Foo {
+    def Capitalized
+}
+''')
+    resolveByText('''
+def bar = new bar.Foo()
+bar/*comment*/
+    .Capital<caret>ized
+''', GrAccessorMethod)
+
+    myFixture.addFileToProject('bar/Capitalized.groovy', '''\
+package bar
+
+class Capitalized {}
+''')
+    resolveByText('''
+def bar = new bar.Foo()
+bar/*comment*/
+    .Capital<caret>ized
+''', GrTypeDefinition)
   }
 
   private void doTest(String fileName = getTestName(false) + ".groovy") { resolve(fileName, PsiClass) }

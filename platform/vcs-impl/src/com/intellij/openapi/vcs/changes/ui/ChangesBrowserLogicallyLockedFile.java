@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.intellij.openapi.vcs.changes.LogicalLock;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 
+import static com.intellij.util.FontUtil.spaceAndThinSpace;
+
 public class ChangesBrowserLogicallyLockedFile extends ChangesBrowserFileNode {
   private final LogicalLock myLogicalLock;
 
@@ -31,7 +33,7 @@ public class ChangesBrowserLogicallyLockedFile extends ChangesBrowserFileNode {
   @Override
   public void render(ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
     super.render(renderer, selected, expanded, hasFocus);
-    renderer.append(" locked by ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    renderer.append(spaceAndThinSpace() + "locked by ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
     renderer.append(myLogicalLock.getOwner(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 }

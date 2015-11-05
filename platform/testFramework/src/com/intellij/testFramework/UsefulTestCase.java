@@ -136,10 +136,10 @@ public abstract class UsefulTestCase extends TestCase {
     super.setUp();
 
     if (shouldContainTempFiles()) {
-      String testName = getTestName(true);
+      String testName =  FileUtil.sanitizeFileName(getTestName(true));
       if (StringUtil.isEmptyOrSpaces(testName)) testName = "";
       testName = new File(testName).getName(); // in case the test name contains file separators
-      myTempDir = FileUtil.toSystemDependentName(ORIGINAL_TEMP_DIR + "/" + TEMP_DIR_MARKER + testName + "_"+ RNG.nextInt(1000));
+      myTempDir = new File(ORIGINAL_TEMP_DIR, TEMP_DIR_MARKER + testName).getPath();
       FileUtil.resetCanonicalTempPathCache(myTempDir);
     }
     ApplicationInfoImpl.setInPerformanceTest(isPerformanceTest());
@@ -232,26 +232,23 @@ public abstract class UsefulTestCase extends TestCase {
     containerMap.clear();
   }
 
-  @NotNull
-  protected List<Throwable> checkForSettingsDamage() throws Exception {
+  protected void checkForSettingsDamage(@NotNull List<Throwable> exceptions) {
     Application app = ApplicationManager.getApplication();
     if (isPerformanceTest() || app == null || app instanceof MockApplication) {
-      return Collections.emptyList();
+      return;
     }
 
     CodeStyleSettings oldCodeStyleSettings = myOldCodeStyleSettings;
     if (oldCodeStyleSettings == null) {
-      return Collections.emptyList();
+      return;
     }
 
     myOldCodeStyleSettings = null;
 
-    return doCheckForSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings());
+    doCheckForSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings(), exceptions);
   }
 
-  @NotNull
-  public static List<Throwable> doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings, @NotNull CodeStyleSettings currentCodeStyleSettings) throws Exception {
-    List<Throwable> result = new SmartList<Throwable>();
+  public static void doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings, @NotNull CodeStyleSettings currentCodeStyleSettings, @NotNull List<Throwable> exceptions) {
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     try {
       Element newS = new Element("temp");
@@ -267,15 +264,15 @@ public abstract class UsefulTestCase extends TestCase {
         catch (Exception ignored) {
         }
       }
-      result.add(error);
+      exceptions.add(error);
     }
 
     currentCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
     try {
       checkSettingsEqual(oldCodeStyleSettings, currentCodeStyleSettings, "Code style settings damaged");
     }
-    catch (AssertionError e) {
-      result.add(e);
+    catch (Throwable e) {
+      exceptions.add(e);
     }
     finally {
       currentCodeStyleSettings.clearCodeStyleSettings();
@@ -285,16 +282,14 @@ public abstract class UsefulTestCase extends TestCase {
       InplaceRefactoring.checkCleared();
     }
     catch (AssertionError e) {
-      result.add(e);
+      exceptions.add(e);
     }
     try {
       StartMarkAction.checkCleared();
     }
     catch (AssertionError e) {
-      result.add(e);
+      exceptions.add(e);
     }
-
-    return result;
   }
 
   protected void storeSettings() {
@@ -348,49 +343,35 @@ public abstract class UsefulTestCase extends TestCase {
     return PlatformTestUtil.canRunTest(getClass());
   }
 
-  public static void edt(@NotNull final ThrowableRunnable r) {
-    try {
-      UIUtil.invokeAndWaitIfNeeded(r);
-    }
-    catch (RuntimeException re) {
-      throw re;
-    }
-    catch (Throwable throwable) {
-      throw new RuntimeException(throwable);
-    }
-  }
-
-  public static void edt(@NotNull final Runnable r) {
-    edt(new ThrowableRunnable() {
-      @Override
-      public void run() throws Throwable {
-        r.run();
-      }
-    });
+  public static void edt(@NotNull Runnable r) {
+    EdtTestUtil.runInEdtAndWait(r);
   }
 
   protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
-    edt(runnable);
+    EdtTestUtil.runInEdtAndWait(runnable);
   }
 
   protected void defaultRunBare() throws Throwable {
     Throwable exception = null;
-    long setupStart = System.nanoTime();
-    setUp();
-    long setupCost = (System.nanoTime() - setupStart) / 1000000;
-    logPerClassCost(setupCost, TOTAL_SETUP_COST_MILLIS);
-
     try {
+      long setupStart = System.nanoTime();
+      setUp();
+      long setupCost = (System.nanoTime() - setupStart) / 1000000;
+      logPerClassCost(setupCost, TOTAL_SETUP_COST_MILLIS);
+
       runTest();
-    } catch (Throwable running) {
+    }
+    catch (Throwable running) {
       exception = running;
-    } finally {
+    }
+    finally {
       try {
         long teardownStart = System.nanoTime();
         tearDown();
         long teardownCost = (System.nanoTime() - teardownStart) / 1000000;
         logPerClassCost(teardownCost, TOTAL_TEARDOWN_COST_MILLIS);
-      } catch (Throwable tearingDown) {
+      }
+      catch (Throwable tearingDown) {
         if (exception == null) exception = tearingDown;
       }
     }
@@ -753,39 +734,23 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected String getTestName(boolean lowercaseFirstLetter) {
-    String name = getName();
-    return getTestName(name, lowercaseFirstLetter);
+    return getTestName(getName(), lowercaseFirstLetter);
   }
 
   public static String getTestName(String name, boolean lowercaseFirstLetter) {
-    if (name == null) {
-      return "";
-    }
-    name = StringUtil.trimStart(name, "test");
-    if (StringUtil.isEmpty(name)) {
-      return "";
-    }
-    return lowercaseFirstLetter(name, lowercaseFirstLetter);
+    return name == null ? "" : PlatformTestUtil.getTestName(name, lowercaseFirstLetter);
   }
 
+  /** @deprecated use {@link PlatformTestUtil#lowercaseFirstLetter(String, boolean)} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
   public static String lowercaseFirstLetter(String name, boolean lowercaseFirstLetter) {
-    if (lowercaseFirstLetter && !isAllUppercaseName(name)) {
-      name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
-    }
-    return name;
+    return PlatformTestUtil.lowercaseFirstLetter(name, lowercaseFirstLetter);
   }
 
+  /** @deprecated use {@link PlatformTestUtil#isAllUppercaseName(String)} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
   public static boolean isAllUppercaseName(String name) {
-    int uppercaseChars = 0;
-    for (int i = 0; i < name.length(); i++) {
-      if (Character.isLowerCase(name.charAt(i))) {
-        return false;
-      }
-      if (Character.isUpperCase(name.charAt(i))) {
-        uppercaseChars++;
-      }
-    }
-    return uppercaseChars >= 3;
+    return PlatformTestUtil.isAllUppercaseName(name);
   }
 
   protected String getTestDirectoryName() {
@@ -871,7 +836,7 @@ public abstract class UsefulTestCase extends TestCase {
     });
   }
 
-  protected static void checkAllTimersAreDisposed() {
+  protected static void checkAllTimersAreDisposed(@NotNull List<Throwable> exceptions) {
     Field firstTimerF;
     Object timerQueue;
     Object timer;
@@ -894,8 +859,10 @@ public abstract class UsefulTestCase extends TestCase {
       }
     }
     catch (Throwable e) {
-      throw new RuntimeException(e);
+      exceptions.add(e);
+      return;
     }
+
     if (timer != null) {
       if (firstTimerF != null) {
         ReflectionUtil.resetField(timerQueue, firstTimerF);
@@ -910,13 +877,13 @@ public abstract class UsefulTestCase extends TestCase {
           timer = getTimer.invoke(timer);
         }
         catch (Exception e) {
-          throw new RuntimeException(e);
+          exceptions.add(e);
+          return;
         }
       }
       Timer t = (Timer)timer;
       text = "Timer (listeners: "+Arrays.asList(t.getActionListeners()) + ") "+text;
-
-      fail("Not disposed Timer: " + text + "; queue:" + timerQueue);
+      exceptions.add(new AssertionFailedError("Not disposed Timer: " + text + "; queue:" + timerQueue));
     }
   }
 

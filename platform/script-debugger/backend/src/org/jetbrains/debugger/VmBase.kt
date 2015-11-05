@@ -15,20 +15,11 @@
  */
 package org.jetbrains.debugger
 
-import org.jetbrains.util.concurrency.Promise
-
-public abstract class VmBase protected constructor(override val debugListener: DebugEventListener) : Vm, AttachStateManager {
-  private var evaluateContext: EvaluateContext? = null
+abstract class VmBase(override val debugListener: DebugEventListener) : Vm, AttachStateManager {
+  override val evaluateContext by lazy(LazyThreadSafetyMode.NONE) { computeEvaluateContext() }
 
   override val attachStateManager: AttachStateManager
     get() = this
-
-  override synchronized fun getEvaluateContext(): EvaluateContext? {
-    if (evaluateContext == null) {
-      evaluateContext = computeEvaluateContext()
-    }
-    return evaluateContext
-  }
 
   protected open fun computeEvaluateContext(): EvaluateContext? = null
 }

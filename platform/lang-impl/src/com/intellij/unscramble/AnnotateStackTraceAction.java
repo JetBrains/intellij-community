@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
@@ -47,10 +46,12 @@ import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.CalledWithReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,11 +67,10 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
 
   private final EditorHyperlinkSupport myHyperlinks;
   private Map<Integer, LastRevision> cache;
-  private int newestLine = -1;
+  private Date newestDate;
   private int maxDateLength = 0;
   private final Editor myEditor;
   private boolean myGutterShowed = false;
-  private final HashMap<VirtualFile, List<Integer>> files2lines = new HashMap<VirtualFile, List<Integer>>();
 
   public AnnotateStackTraceAction(@NotNull Editor editor, @NotNull EditorHyperlinkSupport hyperlinks) {
     super("Show files modification info", null, AllIcons.Actions.Annotate);
@@ -94,42 +94,27 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
       }
 
       private void showGutter() {
-        final EditorGutterAction action = new EditorGutterAction() {
+        ActiveAnnotationGutter gutter = new ActiveAnnotationGutter() {
           @Override
           public void doAction(int lineNum) {
             final LastRevision revision = cache.get(lineNum);
-            final List<RangeHighlighter> links = myHyperlinks.findAllHyperlinksOnLine(lineNum);
-            if (!links.isEmpty()) {
-              final RangeHighlighter key = links.get(links.size() - 1);
-              HyperlinkInfo info = EditorHyperlinkSupport.getHyperlinkInfo(key);
+            if (revision == null) return;
 
-              if (info instanceof FileHyperlinkInfo) {
-                final VirtualFile file = ((FileHyperlinkInfo)info).getDescriptor().getFile();
-                final Project project = getProject();
-                final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
-                if (vcs != null) {
-                  final VcsRevisionNumber number = revision.getNumber();
-                  final VcsKey vcsKey = vcs.getKeyInstanceMethod();
-                  ShowAllAffectedGenericAction.showSubmittedFiles(project, number, file, vcsKey);
-                }
-              }
+            VirtualFile file = getHyperlinkVirtualFile(myHyperlinks.findAllHyperlinksOnLine(lineNum));
+            if (file == null) return;
+
+            final Project project = getProject();
+            final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
+            if (vcs != null) {
+              final VcsRevisionNumber number = revision.getNumber();
+              final VcsKey vcsKey = vcs.getKeyInstanceMethod();
+              ShowAllAffectedGenericAction.showSubmittedFiles(project, number, file, vcsKey);
             }
           }
 
           @Override
           public Cursor getCursor(int lineNum) {
-            return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
-          }
-        };
-
-        myEditor.getGutter().registerTextAnnotation(new ActiveAnnotationGutter() {
-          @Override
-          public void doAction(int lineNum) {
-          }
-
-          @Override
-          public Cursor getCursor(int lineNum) {
-            return Cursor.getDefaultCursor();
+            return cache.containsKey(lineNum) ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : Cursor.getDefaultCursor();
           }
 
           @Override
@@ -145,11 +130,8 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
           public String getToolTip(int line, Editor editor) {
             final LastRevision revision = cache.get(line);
             if (revision != null) {
-              return XmlStringUtil.wrapInHtml(
-                revision.getAuthor() +
-                " " +
-                DateFormatUtil.formatDateTime(revision.getDate()) +
-                "<br/>" +
+              return XmlStringUtil.escapeString(
+                revision.getAuthor() + " " + DateFormatUtil.formatDateTime(revision.getDate()) + "\n" +
                 revision.getMessage()
               );
             }
@@ -158,7 +140,8 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
 
           @Override
           public EditorFontType getStyle(int line, Editor editor) {
-            return line == newestLine ? EditorFontType.BOLD : EditorFontType.PLAIN;
+            LastRevision revision = cache.get(line);
+            return revision != null && revision.getDate().equals(newestDate) ? EditorFontType.BOLD : EditorFontType.PLAIN;
           }
 
           @Override
@@ -180,39 +163,37 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
           public void gutterClosed() {
             myGutterShowed = false;
           }
-        }, action);
+        };
+        myEditor.getGutter().registerTextAnnotation(gutter, gutter);
 
         myGutterShowed = true;
       }
 
       @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        Date newestDate = null;
+      public void run(@NotNull final ProgressIndicator indicator) {
+        final List<VirtualFile> files = new ArrayList<VirtualFile>();
+        final HashMap<VirtualFile, List<Integer>> files2lines = new HashMap<VirtualFile, List<Integer>>();
 
-        List<VirtualFile> files = new ArrayList<VirtualFile>();
-        for (int line = 0; line < myEditor.getDocument().getLineCount(); line++) {
-          indicator.checkCanceled();
-          final List<RangeHighlighter> links = myHyperlinks.findAllHyperlinksOnLine(line);
-          if (links.size() > 0) {
-            final RangeHighlighter key = links.get(links.size() - 1);
-            final HyperlinkInfo info = EditorHyperlinkSupport.getHyperlinkInfo(key);
-            if (info instanceof FileHyperlinkInfo) {
-              final OpenFileDescriptor fileDescriptor = ((FileHyperlinkInfo)info).getDescriptor();
-              if (fileDescriptor != null) {
-                final VirtualFile file = fileDescriptor.getFile();
-                if (files2lines.containsKey(file)) {
-                  files2lines.get(file).add(line);
-                } else {
-                  final ArrayList<Integer> lines = new ArrayList<Integer>();
-                  lines.add(line);
-                  files2lines.put(file, lines);
-                  files.add(file);
-                }
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            for (int line = 0; line < myEditor.getDocument().getLineCount(); line++) {
+              indicator.checkCanceled();
+              VirtualFile file = getHyperlinkVirtualFile(myHyperlinks.findAllHyperlinksOnLine(line));
+              if (file == null) continue;
+
+              if (files2lines.containsKey(file)) {
+                files2lines.get(file).add(line);
+              }
+              else {
+                final ArrayList<Integer> lines = new ArrayList<Integer>();
+                lines.add(line);
+                files2lines.put(file, lines);
+                files.add(file);
               }
             }
           }
-        }
-
+        });
 
         for (VirtualFile file : files) {
           indicator.checkCanceled();
@@ -224,7 +205,6 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
             final Date date = revision.getDate();
             if (newestDate == null || date.after(newestDate)) {
               newestDate = date;
-              newestLine = lines.get(0);
             }
             final int length = DateFormatUtil.formatPrettyDate(date).length();
             if (length > maxDateLength) {
@@ -283,7 +263,18 @@ public class AnnotateStackTraceAction extends AnAction implements DumbAware {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(cache == null || !myGutterShowed);
+    e.getPresentation().setEnabled(!myGutterShowed);
+  }
+
+  @Nullable
+  @CalledWithReadLock
+  private static VirtualFile getHyperlinkVirtualFile(@NotNull List<RangeHighlighter> links) {
+    RangeHighlighter key = ContainerUtil.getLastItem(links);
+    if (key == null) return null;
+    HyperlinkInfo info = EditorHyperlinkSupport.getHyperlinkInfo(key);
+    if (!(info instanceof FileHyperlinkInfo)) return null;
+    OpenFileDescriptor descriptor = ((FileHyperlinkInfo)info).getDescriptor();
+    return descriptor != null ? descriptor.getFile() : null;
   }
 
   private static class LastRevision {

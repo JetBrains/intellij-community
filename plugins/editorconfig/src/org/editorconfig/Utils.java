@@ -20,7 +20,7 @@ public class Utils {
   }
 
   public static boolean isEnabled(CodeStyleSettings currentSettings) {
-    return currentSettings.getCustomSettings(EditorConfigSettings.class).ENABLED;
+    return currentSettings != null && currentSettings.getCustomSettings(EditorConfigSettings.class).ENABLED;
   }
 
   public static void invalidConfigMessage(Project project, String configValue, String configKey, String filePath) {

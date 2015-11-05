@@ -15,6 +15,7 @@ public interface CommandLineElementTypes {
   IElementType EQ = new IElementType("=", null);
   IElementType LITERAL_STARTS_FROM_DIGIT = new IElementType("LITERAL_STARTS_FROM_DIGIT", null);
   IElementType LITERAL_STARTS_FROM_LETTER = new IElementType("LITERAL_STARTS_FROM_LETTER", null);
+  IElementType LITERAL_STARTS_FROM_SYMBOL = new IElementType("LITERAL_STARTS_FROM_SYMBOL", null);
   IElementType LONG_OPTION_NAME_TOKEN = new IElementType("LONG_OPTION_NAME_TOKEN", null);
   IElementType SHORT_OPTION_NAME_TOKEN = new IElementType("SHORT_OPTION_NAME_TOKEN", null);
 

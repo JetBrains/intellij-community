@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,11 +59,13 @@ public class TestLogger extends com.intellij.openapi.diagnostic.Logger {
 
   @Override
   public void warn(String message, @Nullable Throwable t) {
+    t = checkException(t);
     LoggedErrorProcessor.getInstance().processWarn(message, t, myLogger);
   }
 
   @Override
   public void error(String message, @Nullable Throwable t, @NotNull String... details) {
+    t = checkException(t);
     LoggedErrorProcessor.getInstance().processError(message, t, details, myLogger);
   }
 

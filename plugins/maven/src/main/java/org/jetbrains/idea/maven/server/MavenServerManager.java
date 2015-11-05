@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,8 +93,25 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   private final Alarm myShutdownAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   private State myState = new State();
-  private final File myBundledMaven2Home;
-  private final File myBundledMaven3Home;
+  private static class BundledMavenPathHolder {
+    private static final File myBundledMaven2Home;
+    private static final File myBundledMaven3Home;
+
+    static {
+      final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
+      final String root = pluginFileOrDir.getParent();
+
+      if (pluginFileOrDir.isDirectory()) {
+        File parentFile = getMavenPluginParentFile();
+        myBundledMaven2Home = new File(parentFile, "maven2-server-impl/lib/maven2");
+        myBundledMaven3Home = new File(parentFile, "maven30-server-impl/lib/maven3");
+      }
+      else {
+        myBundledMaven2Home = new File(root, "maven2");
+        myBundledMaven3Home = new File(root, "maven3");
+      }
+    }
+  }
 
   static class State {
     @Deprecated
@@ -116,19 +133,6 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
 
   public MavenServerManager() {
     super(null);
-
-    final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
-    final String root = pluginFileOrDir.getParent();
-
-    if (pluginFileOrDir.isDirectory()) {
-      File parentFile = getMavenPluginParentFile();
-      myBundledMaven2Home = new File(parentFile, "maven2-server-impl/lib/maven2");
-      myBundledMaven3Home = new File(parentFile, "maven30-server-impl/lib/maven3");
-    }
-    else {
-      myBundledMaven2Home = new File(root, "maven2");
-      myBundledMaven3Home = new File(root, "maven3");
-    }
 
     mySupport = new RemoteProcessSupport<Object, MavenServer, Object>(MavenServer.class) {
       @Override
@@ -356,8 +360,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
 
         GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(exePath, params, false);
 
-        OSProcessHandler processHandler =
-          new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString(), commandLine.getCharset());
+        OSProcessHandler processHandler = new OSProcessHandler(commandLine);
 
         processHandler.setShouldDestroyProcessRecursively(false);
 
@@ -387,7 +390,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
 
   public List<File> collectClassPathAndLibsFolder(boolean forceMaven2) {
     final String currentMavenVersion = forceMaven2 ? "2.2.1" : getCurrentMavenVersion();
-    File mavenHome = forceMaven2 ? myBundledMaven2Home : currentMavenVersion == null ? myBundledMaven3Home : getCurrentMavenHomeFile();
+    File mavenHome = forceMaven2 ? BundledMavenPathHolder.myBundledMaven2Home : currentMavenVersion == null ? BundledMavenPathHolder.myBundledMaven3Home : getCurrentMavenHomeFile();
 
     final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
     final List<File> classpath = new ArrayList<File>();
@@ -401,7 +404,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         addDir(classpath, new File(parentFile, "maven2-server-impl/lib"));
         // use bundled maven 2.2.1 for all 2.0.x version (since we use org.apache.maven.project.interpolation.StringSearchModelInterpolator introduced in 2.1.0)
         if (StringUtil.compareVersionNumbers(currentMavenVersion, "2.1.0") < 0) {
-          mavenHome = myBundledMaven2Home;
+          mavenHome = BundledMavenPathHolder.myBundledMaven2Home;
         }
       }
       else {
@@ -616,13 +619,13 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   }
 
   @Nullable
-  public File getMavenHomeFile(@Nullable String mavenHome) {
+  public static File getMavenHomeFile(@Nullable String mavenHome) {
     if(mavenHome == null) return null;
     if (StringUtil.equals(BUNDLED_MAVEN_2, mavenHome)) {
-      return myBundledMaven2Home;
+      return BundledMavenPathHolder.myBundledMaven2Home;
     }
     if (StringUtil.equals(BUNDLED_MAVEN_3, mavenHome)) {
-      return myBundledMaven3Home;
+      return BundledMavenPathHolder.myBundledMaven3Home;
     }
     final File home = new File(mavenHome);
     return MavenUtil.isValidMavenHome(home) ? home : null;

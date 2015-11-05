@@ -21,26 +21,25 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorCustomization;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TextFieldWithAutoCompletion;
+import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.Collection;
 
-public abstract class TextFieldWithProgress extends JPanel {
-  @NotNull private final TextFieldWithAutoCompletion<String> myTextField;
+public abstract class TextFieldWithProgress<T> extends JPanel {
+  @NotNull private final TextFieldWithAutoCompletion<T> myTextField;
   @NotNull private final AsyncProcessIcon myProgressIcon;
 
-  public TextFieldWithProgress(@NotNull Project project, @NotNull Collection<String> variants) {
+  public TextFieldWithProgress(@NotNull Project project,
+                               @NotNull TextFieldWithAutoCompletionListProvider<T> completionProvider) {
     super(new BorderLayout());
     setBorder(IdeBorderFactory.createEmptyBorder(3));
 
     myProgressIcon = new AsyncProcessIcon("Loading commits");
-    myTextField =
-      new TextFieldWithAutoCompletion<String>(project, new TextFieldWithAutoCompletion.StringsCompletionProvider(variants, null), false,
-                                              null) {
+    myTextField = new TextFieldWithAutoCompletion<T>(project, completionProvider, false, null) {
         @Override
         public void setBackground(Color bg) {
           super.setBackground(bg);

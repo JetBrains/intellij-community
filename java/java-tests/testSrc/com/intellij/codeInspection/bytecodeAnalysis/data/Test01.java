@@ -79,4 +79,14 @@ public class Test01 {
     return new Test01();
   }
 
+  @ExpectContract(value = "!null->false;null->true", pure = true)
+  static boolean isNull(Object o) {
+    return o == null;
+  }
+
+  @ExpectContract(value = "!null->true;null->false", pure = true)
+  static boolean isNotNull(Object o) {
+    return !isNull(o);
+  }
+
 }

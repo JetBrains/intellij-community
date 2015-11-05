@@ -16,8 +16,8 @@
 
 package com.intellij.ui;
 
-import com.intellij.util.containers.Convertor;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
+import com.intellij.util.containers.Convertor;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
@@ -47,7 +47,10 @@ public class TreeTableSpeedSearch extends SpeedSearchBase<TreeTable> {
 
   protected void selectElement(Object element, String selectedText) {
     final TreePath treePath = (TreePath)element;
-    TableUtil.selectRows(myComponent, new int[] {myComponent.convertRowIndexToView(myComponent.getTree().getRowForPath(treePath))});
+    final int row = myComponent.getTree().getRowForPath(treePath);
+    TableUtil.selectRows(myComponent, new int[] {
+      myComponent.convertRowIndexToView(row)
+    });
     TableUtil.scrollSelectionToVisible(myComponent);
   }
 

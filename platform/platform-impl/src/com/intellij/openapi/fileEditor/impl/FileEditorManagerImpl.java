@@ -915,7 +915,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
             .getSelectedFileEditorProvider(myEditorHistoryManager, file, providers);
         }
         else {
-          selectedProvider = entry.mySelectedProvider;
+          selectedProvider = entry.getSelectedProvider();
         }
         if (selectedProvider != null) {
           for (int i = editors.length - 1; i >= 0; i--) {
@@ -945,13 +945,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         }
 
         if (newEditor) {
-          if (window.isShowing()) {
-            window.setPaintBlocked(true);
-          }
           notifyPublisher(new Runnable() {
             @Override
             public void run() {
-              window.setPaintBlocked(false);
               if (isFileOpen(file)) {
                 getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
                   .fileOpened(FileEditorManagerImpl.this, file);

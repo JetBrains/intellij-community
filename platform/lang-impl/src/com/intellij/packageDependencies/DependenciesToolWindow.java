@@ -57,10 +57,15 @@ public class DependenciesToolWindow {
     });
   }
 
-  public void addContent(Content content) {
-    myContentManager.addContent(content);
-    myContentManager.setSelectedContent(content);
-    ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.DEPENDENCIES).activate(null);
+  public void addContent(final Content content) {
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        myContentManager.addContent(content);
+        myContentManager.setSelectedContent(content);
+        ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.DEPENDENCIES).activate(null);
+      }
+    };
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(runnable);
   }
 
   public void closeContent(Content content) {

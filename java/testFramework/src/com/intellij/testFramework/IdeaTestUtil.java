@@ -25,10 +25,12 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +42,8 @@ import java.util.List;
 import static org.junit.Assume.assumeTrue;
 
 public class IdeaTestUtil extends PlatformTestUtil {
+  private static final String MOCK_JDK_DIR_NAME_PREFIX = "mockJDK-";
+
   public static void main(String[] args) {
     printDetectedPerformanceTimings();
   }
@@ -89,15 +93,23 @@ public class IdeaTestUtil extends PlatformTestUtil {
   }
 
   public static File getMockJdk14Path() {
-    return getPathForJdkNamed("mockJDK-1.4");
+    return getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + "1.4");
   }
 
   public static File getMockJdk17Path() {
-    return getPathForJdkNamed("mockJDK-1.7");
+    return getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + "1.7");
   }
 
   public static File getMockJdk18Path() {
-    return getPathForJdkNamed("mockJDK-1.8");
+    return getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + "1.8");
+  }
+
+  public static String getMockJdkVersion(String path) {
+    String name = PathUtil.getFileName(path);
+    if (name.startsWith(MOCK_JDK_DIR_NAME_PREFIX)) {
+      return "java " + StringUtil.trimStart(name, MOCK_JDK_DIR_NAME_PREFIX);
+    }
+    return null;
   }
 
   private static File getPathForJdkNamed(String name) {
@@ -120,8 +132,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
 
   private static VirtualFile findJar(String name) {
     String path = PathManager.getHomePath() + '/' + name;
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
-    assert file != null : "not found: " + path;
+    VirtualFile file = VfsTestUtil.findFileByCaseSensitivePath(path);
     VirtualFile jar = JarFileSystem.getInstance().getJarRootForLocalFile(file);
     assert jar != null : "no .jar for: " + path;
     return jar;

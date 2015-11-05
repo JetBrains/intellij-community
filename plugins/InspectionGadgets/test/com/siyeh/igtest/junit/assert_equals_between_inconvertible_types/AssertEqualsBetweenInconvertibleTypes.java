@@ -29,4 +29,10 @@ public class AssertEqualsBetweenInconvertibleTypes {
 
     interface A {}
     interface B extends A {}
+
+    private static class GenericClass<T> {}
+
+    public static boolean areEqual(Object a, GenericClass<String> b) {
+        return a.equals(b);
+    }
 }

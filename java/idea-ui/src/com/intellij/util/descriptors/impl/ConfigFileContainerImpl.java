@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,13 @@ import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.descriptors.*;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author nik
@@ -77,11 +76,7 @@ public class ConfigFileContainerImpl extends SimpleModificationTracker implement
   @Override
   @Nullable
   public ConfigFile getConfigFile(ConfigFileMetaData metaData) {
-    final Collection<ConfigFile> descriptors = myConfigFiles.get(metaData);
-    if (descriptors == null || descriptors.isEmpty()) {
-      return null;
-    }
-    return descriptors.iterator().next();
+    return ContainerUtil.getFirstItem(myConfigFiles.get(metaData));
   }
 
   @Override
@@ -132,9 +127,9 @@ public class ConfigFileContainerImpl extends SimpleModificationTracker implement
     return myMetaDataProvider;
   }
 
-  public void updateDescriptors(final MultiValuesMap<ConfigFileMetaData, ConfigFileInfo> descriptorsMap) {
-    Set<ConfigFile> toDelete = new HashSet<ConfigFile>(myConfigFiles.values());
-    Set<ConfigFile> added = new HashSet<ConfigFile>();
+  public void updateDescriptors(@NotNull MultiValuesMap<ConfigFileMetaData, ConfigFileInfo> descriptorsMap) {
+    Set<ConfigFile> toDelete = myConfigFiles.isEmpty() ? Collections.<ConfigFile>emptySet() : new HashSet<ConfigFile>(myConfigFiles.values());
+    Set<ConfigFile> added = null;
 
     for (Map.Entry<ConfigFileMetaData, Collection<ConfigFileInfo>> entry : descriptorsMap.entrySet()) {
       ConfigFileMetaData metaData = entry.getKey();
@@ -142,8 +137,7 @@ public class ConfigFileContainerImpl extends SimpleModificationTracker implement
       final Collection<ConfigFile> oldDescriptors = myConfigFiles.get(metaData);
       if (oldDescriptors != null) {
         for (ConfigFile descriptor : oldDescriptors) {
-          if (newDescriptors.contains(descriptor.getInfo())) {
-            newDescriptors.remove(descriptor.getInfo());
+          if (newDescriptors.remove(descriptor.getInfo())) {
             toDelete.remove(descriptor);
           }
         }
@@ -152,6 +146,9 @@ public class ConfigFileContainerImpl extends SimpleModificationTracker implement
         final ConfigFileImpl configFile = new ConfigFileImpl(this, configuration);
         Disposer.register(this, configFile);
         myConfigFiles.put(metaData, configFile);
+        if (added == null) {
+          added = new THashSet<ConfigFile>();
+        }
         added.add(configFile);
       }
     }
@@ -162,9 +159,11 @@ public class ConfigFileContainerImpl extends SimpleModificationTracker implement
     }
 
     myCachedConfigFiles = null;
-    for (ConfigFile configFile : added) {
-      incModificationCount();
-      myDispatcher.getMulticaster().configFileAdded(configFile);
+    if (added != null) {
+      for (ConfigFile configFile : added) {
+        incModificationCount();
+        myDispatcher.getMulticaster().configFileAdded(configFile);
+      }
     }
     for (ConfigFile configFile : toDelete) {
       incModificationCount();

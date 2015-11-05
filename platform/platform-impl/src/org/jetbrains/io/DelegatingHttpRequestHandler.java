@@ -16,6 +16,7 @@
 package org.jetbrains.io;
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.UIUtil;
 import io.netty.buffer.Unpooled;
@@ -41,7 +42,9 @@ final class DelegatingHttpRequestHandler extends DelegatingHttpRequestHandlerBas
   private static final AttributeKey<HttpRequestHandler> PREV_HANDLER = AttributeKey.valueOf("DelegatingHttpRequestHandler.handler");
 
   @Override
-  protected boolean process(@NotNull ChannelHandlerContext context, @NotNull FullHttpRequest request, @NotNull QueryStringDecoder urlDecoder) throws IOException, ImageWriteException {
+  protected boolean process(@NotNull ChannelHandlerContext context,
+                            @NotNull FullHttpRequest request,
+                            @NotNull QueryStringDecoder urlDecoder) throws IOException, ImageWriteException {
     Attribute<HttpRequestHandler> prevHandlerAttribute = context.attr(PREV_HANDLER);
     HttpRequestHandler connectedHandler = prevHandlerAttribute.get();
     if (connectedHandler != null) {
@@ -60,7 +63,7 @@ final class DelegatingHttpRequestHandler extends DelegatingHttpRequestHandlerBas
         }
       }
       catch (Throwable e) {
-        BuiltInServer.LOG.error(e);
+        Logger.getInstance(BuiltInServer.class).error(e);
       }
     }
 

@@ -94,6 +94,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testEqualsEnumConstant() throws Throwable { doTest(); }
   public void testSwitchEnumConstant() { doTest(); }
   public void testEnumConstantNotNull() throws Throwable { doTest(); }
+  public void testCompareToEnumConstant() throws Throwable { doTest(); }
   public void testEqualsConstant() throws Throwable { doTest(); }
   public void testDontSaveTypeValue() { doTest(); }
   public void testFinalLoopVariableInstanceof() throws Throwable { doTest(); }
@@ -244,6 +245,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testDoubleCCEWarning() { doTest(); }
   public void testLongCircuitOperations() { doTest(); }
   public void testUnconditionalForLoop() { doTest(); }
+  public void testIncrementParenthesized() { doTest(); }
   public void testAnonymousMethodIndependence() { doTest(); }
   public void testAnonymousFieldIndependence() { doTest(); }
   public void testNoConfusionWithAnonymousConstantInitializer() { doTest(); }
@@ -369,6 +371,18 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     doTest();
     myFixture.launchAction(myFixture.findSingleIntention("Remove redundant assignment"));
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
+  public void testDontSimplifyAssignment() {
+    doTest();
+    assertEmpty(myFixture.filterAvailableIntentions("Simplify"));
+  }
+
+  public void testVolatileFieldNPEFixes() {
+    doTest();
+    assertEmpty(myFixture.filterAvailableIntentions("Surround"));
+    assertEmpty(myFixture.filterAvailableIntentions("Assert"));
+    assertNotEmpty(myFixture.filterAvailableIntentions("Introduce variable"));
   }
 
   public void testAssertThat() {

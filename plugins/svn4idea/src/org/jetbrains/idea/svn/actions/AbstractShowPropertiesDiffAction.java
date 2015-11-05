@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.actions;
 
+import com.intellij.diff.DiffManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -24,10 +25,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
-import com.intellij.diff.DiffDialogHints;
-import com.intellij.diff.DiffManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
@@ -35,7 +33,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.MarkerVcsContentRevision;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,15 +97,6 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
 
   private static boolean isUnderSvn(@Nullable ContentRevision revision) {
     return revision instanceof MarkerVcsContentRevision && SvnVcs.getKey().equals(((MarkerVcsContentRevision)revision).getVcsKey());
-  }
-
-  protected boolean checkVcs(final Project project, final Change change) {
-    final VirtualFile virtualFile = ChangesUtil.getFilePath(change).getVirtualFile();
-    if (virtualFile == null) {
-      return false;
-    }
-    final AbstractVcs vcs = ChangesUtil.getVcsForFile(virtualFile, project);
-    return (vcs != null) && SvnVcs.VCS_NAME.equals(vcs.getName());
   }
 
   public void actionPerformed(final AnActionEvent e) {

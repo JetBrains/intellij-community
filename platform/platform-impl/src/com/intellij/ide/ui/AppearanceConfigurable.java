@@ -18,7 +18,9 @@ package com.intellij.ide.ui;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentsPackage;
+import com.intellij.openapi.components.ServiceKt;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -28,14 +30,18 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.FontComboBox;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Dictionary;
@@ -45,11 +51,9 @@ import java.util.Hashtable;
  * @author Eugene Belyaev
  */
 public class AppearanceConfigurable extends BaseConfigurable implements SearchableConfigurable {
-  private MyComponent myComponent;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.AppearanceConfigurable");
 
-  public String getDisplayName() {
-    return IdeBundle.message("title.appearance");
-  }
+  private MyComponent myComponent;
 
   public AppearanceConfigurable() {
     myComponent = new MyComponent();
@@ -59,13 +63,33 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     if (myComponent == null)  {
       myComponent = new MyComponent();
     }
-
   }
 
+  @Override
+  public String getDisplayName() {
+    return IdeBundle.message("title.appearance");
+  }
+
+  @Override
+  @NotNull
+  public String getId() {
+    //noinspection ConstantConditions
+    return getHelpTopic();
+  }
+
+  @Override
+  @Nullable
+  public Runnable enableSearch(String option) {
+    return null;
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
   public JComponent createComponent() {
+    UISettings settings = UISettings.getInstance();
+
     initComponent();
-    DefaultComboBoxModel aModel = new DefaultComboBoxModel(UIUtil.getValidFontNames(Registry.is("ide.settings.appearance.font.family.only")));
-    myComponent.myFontCombo.setModel(aModel);
+
     myComponent.myFontSizeCombo.setModel(new DefaultComboBoxModel(UIUtil.getStandardFontSizes()));
     myComponent.myPresentationModeFontSize.setModel(new DefaultComboBoxModel(UIUtil.getStandardFontSizes()));
     myComponent.myFontSizeCombo.setEditable(true);
@@ -74,20 +98,15 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myLafComboBox.setModel(new DefaultComboBoxModel(LafManager.getInstance().getInstalledLookAndFeels()));
     myComponent.myLafComboBox.setRenderer(new LafComboBoxRenderer());
 
-    myComponent.myAntialiasingCheckBox.setSelected(UISettings.getInstance().ANTIALIASING_IN_IDE);
-    myComponent.myLCDRenderingScopeCombo.setEnabled(UISettings.getInstance().ANTIALIASING_IN_IDE);
+    myComponent.myAntialiasingInIDE.setModel(new DefaultComboBoxModel(AntialiasingType.values()));
+    myComponent.myAntialiasingInEditor.setModel(new DefaultComboBoxModel(AntialiasingType.values()));
 
-    myComponent.myAntialiasingCheckBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myComponent.myLCDRenderingScopeCombo.setEnabled(myComponent.myAntialiasingCheckBox.isSelected());
-      }
-    });
+    myComponent.myAntialiasingInIDE.setSelectedItem(settings.IDE_AA_TYPE);
+    myComponent.myAntialiasingInEditor.setSelectedItem(settings.EDITOR_AA_TYPE);
+    myComponent.myAntialiasingInIDE.setRenderer(new AAListCellRenderer(false));
+    myComponent.myAntialiasingInEditor.setRenderer(new AAListCellRenderer(true));
 
-    myComponent.myLCDRenderingScopeCombo.setModel(new DefaultComboBoxModel(LCDRenderingScope.values()));
-    myComponent.myLCDRenderingScopeCombo.setSelectedItem(UISettings.getInstance().LCD_RENDERING_SCOPE);
-
-    Dictionary<Integer, JComponent> delayDictionary = new Hashtable<Integer, JComponent>();
+    @SuppressWarnings("UseOfObsoleteCollectionType") Dictionary<Integer, JComponent> delayDictionary = new Hashtable<Integer, JComponent>();
     delayDictionary.put(new Integer(0), new JLabel("0"));
     delayDictionary.put(new Integer(1200), new JLabel("1200"));
     //delayDictionary.put(new Integer(2400), new JLabel("2400"));
@@ -102,6 +121,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myInitialTooltipDelaySlider.setMinorTickSpacing(100);
 
     myComponent.myEnableAlphaModeCheckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         boolean state = myComponent.myEnableAlphaModeCheckBox.isSelected();
         myComponent.myAlphaModeDelayTextField.setEnabled(state);
@@ -123,6 +143,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myAlphaModeRatioSlider.setMajorTickSpacing(50);
     myComponent.myAlphaModeRatioSlider.setMinorTickSpacing(10);
     myComponent.myAlphaModeRatioSlider.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         myComponent.myAlphaModeRatioSlider.setToolTipText(myComponent.myAlphaModeRatioSlider.getValue() + "%");
       }
@@ -133,13 +154,14 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     return myComponent.myPanel;
   }
 
+  @Override
   public void apply() {
     initComponent();
     UISettings settings = UISettings.getInstance();
     int _fontSize = getIntValue(myComponent.myFontSizeCombo, settings.FONT_SIZE);
     int _presentationFontSize = getIntValue(myComponent.myPresentationModeFontSize, settings.PRESENTATION_MODE_FONT_SIZE);
     boolean shouldUpdateUI = false;
-    String _fontFace = (String)myComponent.myFontCombo.getSelectedItem();
+    String _fontFace = myComponent.myFontCombo.getFontName();
     LafManager lafManager = LafManager.getInstance();
     if (_fontSize != settings.FONT_SIZE || !settings.FONT_FACE.equals(_fontFace)) {
       settings.FONT_SIZE = _fontSize;
@@ -152,13 +174,18 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       shouldUpdateUI = true;
     }
 
-    if (myComponent.myAntialiasingCheckBox.isSelected() != settings.ANTIALIASING_IN_IDE) {
-      settings.ANTIALIASING_IN_IDE = myComponent.myAntialiasingCheckBox.isSelected();
+    if (!myComponent.myAntialiasingInIDE.getSelectedItem().equals(settings.IDE_AA_TYPE)) {
+      settings.IDE_AA_TYPE = (AntialiasingType)myComponent.myAntialiasingInIDE.getSelectedItem();
+      for (Window w : Window.getWindows()) {
+        for (JComponent c : UIUtil.uiTraverser(w).filter(JComponent.class)) {
+          c.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent());
+        }
+      }
       shouldUpdateUI = true;
     }
 
-    if (!myComponent.myLCDRenderingScopeCombo.getSelectedItem().equals(settings.LCD_RENDERING_SCOPE)) {
-      settings.LCD_RENDERING_SCOPE = (LCDRenderingScope)myComponent.myLCDRenderingScopeCombo.getSelectedItem();
+    if (!myComponent.myAntialiasingInEditor.getSelectedItem().equals(settings.EDITOR_AA_TYPE)) {
+      settings.EDITOR_AA_TYPE = (AntialiasingType)myComponent.myAntialiasingInEditor.getSelectedItem();
       shouldUpdateUI = true;
     }
 
@@ -206,7 +233,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     if (settings.COLOR_BLINDNESS != blindness) {
       settings.COLOR_BLINDNESS = blindness;
       update = true;
-      ComponentsPackage.getStateStore(ApplicationManager.getApplication()).reloadState(DefaultColorSchemesManager.class);
+      ServiceKt.getStateStore(ApplicationManager.getApplication()).reloadState(DefaultColorSchemesManager.class);
       updateEditorScheme = true;
     }
 
@@ -224,6 +251,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
         lafManager.setCurrentLookAndFeel(lafInfo);
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
             if (UIUtil.isUnderDarcula()) {
               DarculaInstaller.install();
@@ -293,13 +321,20 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     return value;
   }
 
+  @Override
   public void reset() {
     initComponent();
     UISettings settings = UISettings.getInstance();
 
-    myComponent.myFontCombo.setSelectedItem(settings.FONT_FACE);
-    myComponent.myAntialiasingCheckBox.setSelected(settings.ANTIALIASING_IN_IDE);
-    myComponent.myLCDRenderingScopeCombo.setSelectedItem(settings.LCD_RENDERING_SCOPE);
+    myComponent.myFontCombo.setFontName(settings.FONT_FACE);
+
+    // todo migrate
+    //myComponent.myAntialiasingCheckBox.setSelected(settings.ANTIALIASING_IN_IDE);
+    //myComponent.myLCDRenderingScopeCombo.setSelectedItem(settings.LCD_RENDERING_SCOPE);
+
+    myComponent.myAntialiasingInIDE.setSelectedItem(settings.IDE_AA_TYPE);
+    myComponent.myAntialiasingInEditor.setSelectedItem(settings.EDITOR_AA_TYPE);
+
     myComponent.myFontSizeCombo.setSelectedItem(Integer.toString(settings.FONT_SIZE));
     myComponent.myPresentationModeFontSize.setSelectedItem(Integer.toString(settings.PRESENTATION_MODE_FONT_SIZE));
     myComponent.myAnimateWindowsCheckBox.setSelected(settings.ANIMATE_WINDOWS);
@@ -344,15 +379,31 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.updateCombo();
   }
 
+  public static String antialiasingTypeInEditorAsString (boolean antialiased, LCDRenderingScope scope) {
+    if (!antialiased) return "No antialiasing";
+    switch (scope) {
+      case IDE:
+        return "Subpixel";
+      case OFF:
+      case EXCLUDING_EDITOR:
+        return "Greyscale";
+    }
+    LOG.info("Wrong antialiasing state");
+    return "No antialiasing";
+  }
+
+  @Override
   public boolean isModified() {
     initComponent();
     UISettings settings = UISettings.getInstance();
 
     boolean isModified = false;
-    isModified |= !Comparing.equal(myComponent.myFontCombo.getSelectedItem(), settings.FONT_FACE);
+    isModified |= !Comparing.equal(myComponent.myFontCombo.getFontName(), settings.FONT_FACE);
     isModified |= !Comparing.equal(myComponent.myFontSizeCombo.getEditor().getItem(), Integer.toString(settings.FONT_SIZE));
-    isModified |= myComponent.myAntialiasingCheckBox.isSelected() != settings.ANTIALIASING_IN_IDE;
-    isModified |= !myComponent.myLCDRenderingScopeCombo.getSelectedItem().equals(settings.LCD_RENDERING_SCOPE);
+
+    isModified |= !myComponent.myAntialiasingInIDE.getSelectedItem().equals(settings.IDE_AA_TYPE);
+    isModified |= !myComponent.myAntialiasingInEditor.getSelectedItem().equals(settings.EDITOR_AA_TYPE);
+
     isModified |= myComponent.myAnimateWindowsCheckBox.isSelected() != settings.ANIMATE_WINDOWS;
     isModified |= myComponent.myWindowShortcutsCheckBox.isSelected() != settings.SHOW_TOOL_WINDOW_NUMBERS;
     isModified |= myComponent.myShowToolStripesCheckBox.isSelected() == settings.HIDE_TOOL_STRIPES;
@@ -402,17 +453,19 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     return isModified;
   }
 
+  @Override
   public void disposeUIResources() {
     myComponent = null;
   }
 
+  @Override
   public String getHelpTopic() {
     return "preferences.lookFeel";
   }
 
   private static class MyComponent {
     private JPanel myPanel;
-    private JComboBox myFontCombo;
+    private FontComboBox myFontCombo;
     private JComboBox myFontSizeCombo;
     private JCheckBox myAnimateWindowsCheckBox;
     private JCheckBox myWindowShortcutsCheckBox;
@@ -420,8 +473,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     private JCheckBox myShowMemoryIndicatorCheckBox;
     private JComboBox myLafComboBox;
     private JCheckBox myCycleScrollingCheckBox;
-    private JBCheckBox myAntialiasingCheckBox;
-    private ComboBox myLCDRenderingScopeCombo;
 
     private JCheckBox myMoveMouseOnDefaultButtonCheckBox;
     private JCheckBox myEnableAlphaModeCheckBox;
@@ -447,9 +498,12 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     private ComboBox myPresentationModeFontSize;
     private JCheckBox myNavigateToPreviewCheckBox;
     private ColorBlindnessPanel myColorBlindnessPanel;
+    private JComboBox myAntialiasingInIDE;
+    private JComboBox myAntialiasingInEditor;
 
     public MyComponent() {
       myOverrideLAFFonts.addActionListener( new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           updateCombo();
         }
@@ -474,14 +528,36 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     }
   }
 
-  @NotNull
-  public String getId() {
-    //noinspection ConstantConditions
-    return getHelpTopic();
-  }
+  private static class AAListCellRenderer extends ListCellRendererWrapper<AntialiasingType> {
+    private static final SwingUtilities2.AATextInfo SUBPIXEL_HINT = new SwingUtilities2.AATextInfo(
+      RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB, UIUtil.getLcdContrastValue());
+    private static final SwingUtilities2.AATextInfo GREYSCALE_HINT = new SwingUtilities2.AATextInfo(
+      RenderingHints.VALUE_TEXT_ANTIALIAS_ON, UIUtil.getLcdContrastValue());
+    private final boolean useEditorAASettings;
 
-  @Nullable
-  public Runnable enableSearch(String option) {
-    return null;
+    public AAListCellRenderer(boolean useEditorAASettings) {
+      super();
+      this.useEditorAASettings = useEditorAASettings;
+    }
+
+    @Override
+    public void customize(JList list, AntialiasingType value, int index, boolean selected, boolean hasFocus) {
+      if (value == AntialiasingType.SUBPIXEL) {
+        setClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, SUBPIXEL_HINT);
+      }
+      else if (value == AntialiasingType.GREYSCALE) {
+        setClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, GREYSCALE_HINT);
+      }
+      else if (value == AntialiasingType.OFF) {
+        setClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, null);
+      }
+
+      if (useEditorAASettings) {
+        setFont(new Font(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName(),
+                         Font.PLAIN, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize()));
+      }
+
+      setText(value.toString());
+    }
   }
 }

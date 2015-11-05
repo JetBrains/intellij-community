@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,10 @@ import java.util.Collection;
 import java.util.Enumeration;
 
 /**
- * Base interface for concurrent int key -> value:V map
+ * Base interface for concurrent (long key -> V value) map
  * Null values are NOT allowed
  *
- * Methods are adapted from {@link java.util.concurrent.ConcurrentMap} to integer keys
+ * Methods are adapted from {@link java.util.concurrent.ConcurrentMap} to long keys
  * @see java.util.concurrent.ConcurrentMap
  */
 public interface ConcurrentLongObjectMap<V> {

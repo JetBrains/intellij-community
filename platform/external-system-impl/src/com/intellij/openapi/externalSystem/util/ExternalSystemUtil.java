@@ -51,8 +51,6 @@ import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolv
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
-import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
-import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
@@ -67,8 +65,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -97,7 +93,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -301,149 +296,6 @@ public class ExternalSystemUtil {
     return timeStamp;
   }
 
-  //public static void processOrphanModules(@NotNull final Project project,
-  //                                        @NotNull final ProjectSystemId projectSystemId,
-  //                                        @NotNull final String externalProjectPath) {
-  //  final ExternalProjectInfo externalProjectInfo = getExternalProjectInfo(project, projectSystemId, externalProjectPath);
-  //  if (externalProjectInfo != null) {
-  //    Collection<DataNode<ModuleData>> moduleNodes = ExternalSystemApiUtil.findAllRecursively(
-  //      externalProjectInfo.getExternalProjectStructure(), ProjectKeys.MODULE);
-  //
-  //    processOrphanModules(project, moduleNodes);
-  //  }
-  //}
-  //
-  //public static void processOrphanModules(@NotNull Project project, @NotNull Collection<DataNode<ModuleData>> toImport) {
-  //  if (project.isDisposed()) return;
-  //  if (ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
-  //    //LOG.info(String.format(
-  //    //  "Checking for orphan modules. External paths returned by external system: '%s'", myExternalModulePaths
-  //    //));
-  //  }
-  //  PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
-  //  MultiMap<ProjectSystemId, Module> orphanIdeModules = MultiMap.create();
-  //
-  //  final MultiMap<DataNode<ProjectData>, DataNode<ModuleData>> grouped = ExternalSystemApiUtil.groupBy(toImport, ProjectKeys.PROJECT);
-  //
-  //  for (DataNode<ProjectData> node : grouped.keySet()) {
-  //    for (Module module : platformFacade.getModules(project)) {
-  //      final ProjectData projectData = node.getData();
-  //      if (!ExternalSystemApiUtil.isExternalSystemAwareModule(projectData.getOwner(), module)) continue;
-  //
-  //      final String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
-  //      if (projectData.getLinkedExternalProjectPath().equals(rootProjectPath)) {
-  //        final String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
-  //        final String projectId = ExternalSystemApiUtil.getExternalProjectId(module);
-  //        final DataNode<ModuleData> found = ContainerUtil.find(grouped.get(node), new Condition<DataNode<ModuleData>>() {
-  //          @Override
-  //          public boolean value(DataNode<ModuleData> node) {
-  //            final ModuleData moduleData = node.getData();
-  //            return moduleData.getId().equals(projectId) &&
-  //                   moduleData.getLinkedExternalProjectPath().equals(projectPath);
-  //          }
-  //        });
-  //
-  //        if (found == null || found.isIgnored()) {
-  //          orphanIdeModules.putValue(projectData.getOwner(), module);
-  //        }
-  //      }
-  //    }
-  //  }
-  //
-  //  if (!orphanIdeModules.isEmpty()) {
-  //    for (Map.Entry<ProjectSystemId, Collection<Module>> entry : orphanIdeModules.entrySet()) {
-  //      ruleOrphanModules(new SmartList<Module>(entry.getValue()), project, entry.getKey());
-  //    }
-  //  }
-  //}
-  //
-  //public static void ruleOrphanModules(@NotNull final List<Module> orphanModules,
-  //                                     @NotNull final Project project,
-  //                                     @NotNull final ProjectSystemId externalSystemId) {
-  //  //noinspection unchecked
-  //  ruleOrphanModules(orphanModules, project, externalSystemId, Consumer.EMPTY_CONSUMER);
-  //}
-
-  ///**
-  // * There is a possible case that an external module has been un-linked from ide project. There are two ways to process
-  // * ide modules which correspond to that external project:
-  // * <pre>
-  // * <ol>
-  // *   <li>Remove them from ide project as well;</li>
-  // *   <li>Keep them at ide project as well;</li>
-  // * </ol>
-  // * </pre>
-  // * This method handles that situation, i.e. it asks a user what should be done and acts accordingly.
-  // *
-  // * @param orphanModules     modules which correspond to the un-linked external project
-  // * @param project           current ide project
-  // * @param externalSystemId  id of the external system which project has been un-linked from ide project
-  // */
-  //public static void ruleOrphanModules(@NotNull final List<Module> orphanModules,
-  //                                     @NotNull final Project project,
-  //                                     @NotNull final ProjectSystemId externalSystemId,
-  //                                     @NotNull final Consumer<Boolean> result)
-  //{
-  //  UIUtil.invokeLaterIfNeeded(new Runnable() {
-  //    @Override
-  //    public void run() {
-  //
-  //      final JPanel content = new JPanel(new GridBagLayout());
-  //      content.add(new JLabel(ExternalSystemBundle.message("orphan.modules.text", externalSystemId.getReadableName())),
-  //                  ExternalSystemUiUtil.getFillLineConstraints(0));
-  //
-  //      final CheckBoxList<Module> orphanModulesList = new CheckBoxList<Module>();
-  //      orphanModulesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-  //      orphanModulesList.setItems(orphanModules, new Function<Module, String>() {
-  //        @Override
-  //        public String fun(Module module) {
-  //          return module.getName();
-  //        }
-  //      });
-  //      for (Module module : orphanModules) {
-  //        orphanModulesList.setItemSelected(module, true);
-  //      }
-  //      orphanModulesList.setBorder(IdeBorderFactory.createEmptyBorder(8));
-  //      content.add(orphanModulesList, ExternalSystemUiUtil.getFillLineConstraints(0));
-  //      content.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 8, 0));
-  //
-  //      DialogWrapper dialog = new DialogWrapper(project) {
-  //
-  //        {
-  //          setTitle(ExternalSystemBundle.message("import.title", externalSystemId.getReadableName()));
-  //          init();
-  //        }
-  //
-  //        @Nullable
-  //        @Override
-  //        protected JComponent createCenterPanel() {
-  //          return new JBScrollPane(content);
-  //        }
-  //      };
-  //      boolean ok = dialog.showAndGet();
-  //      result.consume(ok);
-  //      if (!ok) {
-  //        return;
-  //      }
-  //
-  //      List<Module> toRemove = ContainerUtilRt.newArrayList();
-  //      for (int i = 0; i < orphanModules.size(); i++) {
-  //        Module module = orphanModules.get(i);
-  //        if (orphanModulesList.isItemSelected(i)) {
-  //          toRemove.add(module);
-  //        }
-  //        else {
-  //          ModuleDataService.unlinkModuleFromExternalSystem(module);
-  //        }
-  //      }
-  //
-  //      if (!toRemove.isEmpty()) {
-  //        ServiceManager.getService(ProjectDataManager.class).removeData(ProjectKeys.MODULE, toRemove, project, true);
-  //      }
-  //    }
-  //  });
-  //}
-
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   @Nullable
   private static String extractDetails(@NotNull Throwable e) {
@@ -459,16 +311,6 @@ public class ExternalSystemUtil {
                                     @NotNull final String externalProjectPath,
                                     final boolean isPreviewMode,
                                     @NotNull final ProgressExecutionMode progressExecutionMode) {
-    final PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
-    refreshProject(project, platformFacade, externalSystemId, externalProjectPath, isPreviewMode, progressExecutionMode);
-  }
-
-  public static void refreshProject(@NotNull final Project project,
-                                    @NotNull final PlatformFacade platformFacade,
-                                    @NotNull final ProjectSystemId externalSystemId,
-                                    @NotNull final String externalProjectPath,
-                                    final boolean isPreviewMode,
-                                    @NotNull final ProgressExecutionMode progressExecutionMode) {
     refreshProject(project, externalSystemId, externalProjectPath, new ExternalProjectRefreshCallback() {
       @Override
       public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
@@ -476,7 +318,7 @@ public class ExternalSystemUtil {
           return;
         }
         final boolean synchronous = progressExecutionMode == ProgressExecutionMode.MODAL_SYNC;
-        ServiceManager.getService(ProjectDataManager.class).importData(externalProject, project, platformFacade, synchronous);
+        ServiceManager.getService(ProjectDataManager.class).importData(externalProject, project, synchronous);
       }
 
       @Override
@@ -1014,31 +856,10 @@ public class ExternalSystemUtil {
       }
 
       myProjectDataManager.importData(externalProject, myProject, true);
-      processOrphanProjectLibraries();
     }
 
     @Override
     public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
-    }
-
-    private void processOrphanProjectLibraries() {
-      final PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
-      final List<Library> orphanIdeLibraries = ContainerUtilRt.newArrayList();
-
-      platformFacade.updateLibraryTable(myProject, new Consumer<LibraryTable.ModifiableModel>() {
-        @Override
-        public void consume(LibraryTable.ModifiableModel modifiableModel) {
-          for (Library library : modifiableModel.getLibraries()) {
-            if (!ExternalSystemApiUtil.isExternalSystemLibrary(library, myExternalSystemId)) continue;
-            if (ProjectStructureHelper.isOrphanProjectLibrary(library, platformFacade.getModules(myProject))) {
-              orphanIdeLibraries.add(library);
-            }
-          }
-          for (Library orphanIdeLibrary : orphanIdeLibraries) {
-            modifiableModel.removeLibrary(orphanIdeLibrary);
-          }
-        }
-      });
     }
   }
 }

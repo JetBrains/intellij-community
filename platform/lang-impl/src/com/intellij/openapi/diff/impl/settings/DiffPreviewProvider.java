@@ -53,6 +53,10 @@ public abstract class DiffPreviewProvider {
                                                   "  void foo() {\n" +
                                                   "   // Left changes\n" +
                                                   "  }\n" +
+                                                  "\n" +
+                                                  "  void bar() {\n" +
+                                                  "\n" +
+                                                  "  }\n" +
                                                   "}";
   @NonNls private static final String CENTER_TEXT = "class MyClass {\n" +
                                                     "  int value;\n" +
@@ -61,6 +65,10 @@ public abstract class DiffPreviewProvider {
                                                     "  }\n" +
                                                     "\n" +
                                                     "  void removedFromLeft() {}\n" +
+                                                    "\n" +
+                                                    "  void bar() {\n" +
+                                                    "\n" +
+                                                    "  }\n" +
                                                     "}";
   @NonNls private static final String RIGHT_TEXT = "class MyClass {\n" +
                                                    "  long value;\n" +
@@ -70,5 +78,9 @@ public abstract class DiffPreviewProvider {
                                                    "  }\n" +
                                                    "\n" +
                                                    "  void removedFromLeft() {}\n" +
+                                                   "\n" +
+                                                   "  void bar() {\n" +
+                                                   "  }\n" +
+                                                   "\n" +
                                                    "}";
 }

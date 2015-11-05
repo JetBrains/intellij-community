@@ -16,9 +16,8 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
@@ -101,7 +100,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
       public void run() {
         MavenRootModelAdapter adapter = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
                                                                   getModule("project"),
-                                                                  new MavenDefaultModifiableModelsProvider(myProject));
+                                                                  new IdeModifiableModelsProviderImpl(myProject));
         adapter.addSourceFolder(dir1.getPath(), JavaSourceRootType.SOURCE);
         adapter.addExcludedFolder(dir2.getPath());
         adapter.getRootModel().commit();

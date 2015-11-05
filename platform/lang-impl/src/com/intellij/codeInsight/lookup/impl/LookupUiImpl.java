@@ -124,7 +124,7 @@ class LookupUiImpl implements LookupUi {
     mySortingLabel.setOpaque(true);
     new ChangeLookupSorting().installOn(mySortingLabel);
     updateSorting();
-    myModalityState = ModalityState.stateForComponent(myLookup.getEditor().getComponent());
+    myModalityState = ModalityState.stateForComponent(myLookup.getTopLevelEditor().getComponent());
 
     addListeners();
 
@@ -207,7 +207,7 @@ class LookupUiImpl implements LookupUi {
     myLookup.getComponent().addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
-        final ActionCallback done = IdeFocusManager.getInstance(myProject).requestFocus(myLookup.getEditor().getContentComponent(), true);
+        final ActionCallback done = IdeFocusManager.getInstance(myProject).requestFocus(myLookup.getTopLevelEditor().getContentComponent(), true);
         IdeFocusManager.getInstance(myProject).typeAheadUntil(done);
         new Alarm(myLookup).addRequest(new Runnable() {
           @Override
@@ -257,7 +257,7 @@ class LookupUiImpl implements LookupUi {
     }
     LOG.assertTrue(!ApplicationManager.getApplication().isUnitTestMode());
 
-    Editor editor = myLookup.getEditor();
+    Editor editor = myLookup.getTopLevelEditor();
     if (editor.getComponent().getRootPane() == null || editor instanceof EditorWindow && !((EditorWindow)editor).isValid()) {
       return;
     }
@@ -291,7 +291,7 @@ class LookupUiImpl implements LookupUi {
     final JComponent lookupComponent = myLookup.getComponent();
     Dimension dim = lookupComponent.getPreferredSize();
     int lookupStart = myLookup.getLookupStart();
-    Editor editor = myLookup.getEditor();
+    Editor editor = myLookup.getTopLevelEditor();
     if (lookupStart < 0 || lookupStart > editor.getDocument().getTextLength()) {
       LOG.error(lookupStart + "; offset=" + editor.getCaretModel().getOffset() + "; element=" +
                 myLookup.getPsiElement());

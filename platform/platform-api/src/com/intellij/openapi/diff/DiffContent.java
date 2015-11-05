@@ -31,7 +31,9 @@ import java.util.List;
  * Represents some data that probably can be compared with some other.
  *
  * @see com.intellij.openapi.diff.DiffRequest
+ * @deprecated use {@link com.intellij.diff.contents.DiffContent} instead
  */
+@Deprecated
 public abstract class DiffContent {
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myIsEmpty;

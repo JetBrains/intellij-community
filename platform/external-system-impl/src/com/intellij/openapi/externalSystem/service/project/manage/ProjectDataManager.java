@@ -16,12 +16,13 @@
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.impl.stores.BatchUpdateListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
+import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -33,6 +34,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -57,13 +59,12 @@ public class ProjectDataManager {
     com.intellij.openapi.util.Key.create("externalSystem.data.ready");
 
   @NotNull private final NotNullLazyValue<Map<Key<?>, List<ProjectDataService<?, ?>>>> myServices;
-  private final PlatformFacade myPlatformFacade;
 
   public static ProjectDataManager getInstance() {
     return ServiceManager.getService(ProjectDataManager.class);
   }
 
-  public ProjectDataManager(@NotNull PlatformFacade platformFacade) {
+  public ProjectDataManager() {
     myServices = new NotNullLazyValue<Map<Key<?>, List<ProjectDataService<?, ?>>>>() {
       @NotNull
       @Override
@@ -83,9 +84,9 @@ public class ProjectDataManager {
         return result;
       }
     };
-    myPlatformFacade = platformFacade;
   }
 
+  @Deprecated // to be removed in 15.1
   @Nullable
   public ProjectDataService<?, ?> getDataService(Key<?> key) {
     final List<ProjectDataService<?, ?>> dataServices = myServices.getValue().get(key);
@@ -95,8 +96,8 @@ public class ProjectDataManager {
 
   @SuppressWarnings("unchecked")
   public void importData(@NotNull Collection<DataNode<?>> nodes,
-                         @NotNull final Project project,
-                         @NotNull PlatformFacade platformFacade,
+                         @NotNull Project project,
+                         @NotNull IdeModifiableModelsProvider modelsProvider,
                          boolean synchronous) {
     if (project.isDisposed()) return;
 
@@ -129,8 +130,7 @@ public class ProjectDataManager {
       ExternalSystemUtil.scheduleExternalViewStructureUpdate(project, projectSystemId);
     }
 
-    final BatchUpdateListener publisher = project.getMessageBus().syncPublisher(BatchUpdateListener.TOPIC);
-    publisher.onBatchUpdateStarted();
+    List<Runnable> onSuccessImportTasks = ContainerUtil.newSmartList();
     try {
       final Set<Map.Entry<Key<?>, Collection<DataNode<?>>>> entries = grouped.entrySet();
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -139,27 +139,34 @@ public class ProjectDataManager {
       }
       final int size = entries.size();
       int count = 0;
+      List<Runnable> postImportTasks = ContainerUtil.newSmartList();
       for (Map.Entry<Key<?>, Collection<DataNode<?>>> entry : entries) {
         if (indicator != null) {
           String message = ExternalSystemBundle.message(
             "progress.update.text", projectSystemId != null ? projectSystemId.getReadableName() : "",
-            "Importing " + getReadableText(entry.getKey()));
+            "Refresh " + getReadableText(entry.getKey()));
           indicator.setText(message);
           indicator.setFraction((double)count++ / size);
         }
-        doImportData(entry.getKey(), entry.getValue(), projectData, project, platformFacade, synchronous);
+        doImportData(entry.getKey(), entry.getValue(), projectData, project, modelsProvider, postImportTasks, onSuccessImportTasks);
       }
+
+      for (Runnable postImportTask : postImportTasks) {
+        postImportTask.run();
+      }
+
+      commit(modelsProvider, project, synchronous, "Imported data");
       if (indicator != null) {
         indicator.setIndeterminate(true);
       }
     }
-    finally {
-      ExternalSystemApiUtil.executeOnEdt(synchronous, new Runnable() {
-        @Override
-        public void run() {
-          publisher.onBatchUpdateFinished();
-        }
-      });
+    catch (Throwable t) {
+      dispose(modelsProvider, project, synchronous);
+      ExceptionUtil.rethrowAllAsUnchecked(t);
+    }
+
+    for (Runnable onSuccessImportTask : ContainerUtil.reverse(onSuccessImportTasks)) {
+      onSuccessImportTask.run();
     }
   }
 
@@ -187,33 +194,34 @@ public class ProjectDataManager {
     for (DataNode<T> node : nodes) {
       dummy.add(node);
     }
-    importData(dummy, project, myPlatformFacade, synchronous);
+    importData(dummy, project, new IdeModifiableModelsProviderImpl(project), synchronous);
   }
 
   public <T> void importData(@NotNull DataNode<T> node,
                              @NotNull Project project,
-                             @NotNull PlatformFacade platformFacade,
+                             @NotNull IdeModifiableModelsProvider modelsProvider,
                              boolean synchronous) {
     Collection<DataNode<?>> dummy = ContainerUtil.newSmartList();
     dummy.add(node);
-    importData(dummy, project, platformFacade, synchronous);
+    importData(dummy, project, modelsProvider, synchronous);
   }
 
   public <T> void importData(@NotNull DataNode<T> node,
                              @NotNull Project project,
                              boolean synchronous) {
-    importData(node, project, myPlatformFacade, synchronous);
+    importData(node, project, new IdeModifiableModelsProviderImpl(project), synchronous);
   }
 
   @SuppressWarnings("unchecked")
   private <T> void doImportData(@NotNull Key<T> key,
                                 @NotNull Collection<DataNode<?>> nodes,
-                                @Nullable ProjectData projectData,
-                                @NotNull Project project,
-                                @NotNull PlatformFacade platformFacade,
-                                boolean synchronous) {
+                                @Nullable final ProjectData projectData,
+                                @NotNull final Project project,
+                                @NotNull final IdeModifiableModelsProvider modelsProvider,
+                                @NotNull final List<Runnable> postImportTasks,
+                                @NotNull final List<Runnable> onSuccessImportTasks) {
     if (project.isDisposed()) return;
-    if(project instanceof ProjectImpl) {
+    if (project instanceof ProjectImpl) {
       assert ((ProjectImpl)project).isComponentsCreated();
     }
 
@@ -233,7 +241,7 @@ public class ProjectDataManager {
 
     ensureTheDataIsReadyToUse((Collection)toImport);
 
-    List<ProjectDataService<?, ?>> services = myServices.getValue().get(key);
+    final List<ProjectDataService<?, ?>> services = myServices.getValue().get(key);
     if (services == null) {
       LOG.warn(String.format(
         "Can't import data nodes '%s'. Reason: no service is registered for key %s. Available services for %s",
@@ -243,32 +251,49 @@ public class ProjectDataManager {
     else {
       for (ProjectDataService<?, ?> service : services) {
         final long importStartTime = System.currentTimeMillis();
-        if (service instanceof ProjectDataServiceEx) {
-          ((ProjectDataServiceEx<T, ?>)service).importData(toImport, projectData, project, platformFacade, synchronous);
+        ((ProjectDataService)service).importData(toImport, projectData, project, modelsProvider);
+        final long importTimeInMs = (System.currentTimeMillis() - importStartTime);
+        LOG.debug(String.format("Service %s imported data in %d ms", service.getClass().getSimpleName(), importTimeInMs));
+
+        if(projectData != null) {
+          ensureTheDataIsReadyToUse((Collection)toIgnore);
+          final long removeStartTime = System.currentTimeMillis();
+          final Computable<Collection<?>> orphanIdeDataComputable =
+            ((ProjectDataService)service).computeOrphanData(toImport, projectData, project, modelsProvider);
+          ((ProjectDataService)service).removeData(orphanIdeDataComputable, toIgnore, projectData, project, modelsProvider);
+          final long removeTimeInMs = (System.currentTimeMillis() - removeStartTime);
+          LOG.debug(String.format("Service %s computed and removed data in %d ms", service.getClass().getSimpleName(), removeTimeInMs));
         }
-        else {
-          ((ProjectDataService<T, ?>)service).importData(toImport, project, synchronous);
-        }
-        final long importTimeInSeconds = (System.currentTimeMillis() - importStartTime) / 1000;
-        LOG.debug(String.format("Service %s imported data in %d seconds", service.getClass().getSimpleName(), importTimeInSeconds));
       }
     }
 
-    ensureTheDataIsReadyToUse((Collection)toIgnore);
-
     if (services != null && projectData != null) {
-      for (ProjectDataService<?, ?> service : services) {
-        if (service instanceof ProjectDataServiceEx) {
-          final long removeStartTime = System.currentTimeMillis();
-          final ProjectDataServiceEx dataServiceEx = (ProjectDataServiceEx)service;
-          final Computable<Collection<?>> orphanIdeDataComputable =
-            dataServiceEx.computeOrphanData(toImport, projectData, project, platformFacade);
-          dataServiceEx.removeData(orphanIdeDataComputable, toIgnore, projectData, project, platformFacade, synchronous);
-          final long removeTimeInSeconds = (System.currentTimeMillis() - removeStartTime) / 1000;
-          LOG.debug(String.format("Service %s computed and removed data in %d seconds",
-                                  service.getClass().getSimpleName(), removeTimeInSeconds));
+      postImportTasks.add(new Runnable() {
+        @Override
+        public void run() {
+          for (ProjectDataService<?, ?> service : services) {
+            if (service instanceof AbstractProjectDataService) {
+              final long taskStartTime = System.currentTimeMillis();
+              ((AbstractProjectDataService)service).postProcess(toImport, projectData, project, modelsProvider);
+              final long taskTimeInMs = (System.currentTimeMillis() - taskStartTime);
+              LOG.debug(String.format("Service %s run post import task in %d ms", service.getClass().getSimpleName(), taskTimeInMs));
+            }
+          }
         }
-      }
+      });
+      onSuccessImportTasks.add(new Runnable() {
+        @Override
+        public void run() {
+          for (ProjectDataService<?, ?> service : services) {
+            if (service instanceof AbstractProjectDataService) {
+              final long taskStartTime = System.currentTimeMillis();
+              ((AbstractProjectDataService)service).onSuccessImport(project);
+              final long taskTimeInMs = (System.currentTimeMillis() - taskStartTime);
+              LOG.debug(String.format("Service %s run post import task in %d ms", service.getClass().getSimpleName(), taskTimeInMs));
+            }
+          }
+        }
+      });
     }
   }
 
@@ -286,34 +311,27 @@ public class ProjectDataManager {
   }
 
   @SuppressWarnings("unchecked")
-  @Deprecated
-  public <E, I> void removeData(@NotNull Key<E> key, @NotNull Collection<I> toRemove, @NotNull Project project, boolean synchronous) {
-    List<ProjectDataService<?, ?>> services = myServices.getValue().get(key);
-    for (ProjectDataService service : services) {
-      service.removeData(toRemove, project, synchronous);
-    }
-  }
-
-  @SuppressWarnings("unchecked")
   public <E, I> void removeData(@NotNull Key<E> key,
                                 @NotNull Collection<I> toRemove,
                                 @NotNull final Collection<DataNode<E>> toIgnore,
                                 @NotNull final ProjectData projectData,
                                 @NotNull Project project,
-                                @NotNull PlatformFacade platformFacade,
+                                @NotNull final IdeModifiableModelsProvider modelsProvider,
                                 boolean synchronous) {
-    List<ProjectDataService<?, ?>> services = myServices.getValue().get(key);
-    for (ProjectDataService service : services) {
-      final long removeStartTime = System.currentTimeMillis();
-      if (service instanceof ProjectDataServiceEx) {
-        ((ProjectDataServiceEx)service).removeData(new Computable.PredefinedValueComputable<Collection>(toRemove),
-                                                   toIgnore, projectData, project, platformFacade, synchronous);
+    try {
+      List<ProjectDataService<?, ?>> services = myServices.getValue().get(key);
+      for (ProjectDataService service : services) {
+        final long removeStartTime = System.currentTimeMillis();
+        service.removeData(new Computable.PredefinedValueComputable<Collection>(toRemove), toIgnore, projectData, project, modelsProvider);
+        final long removeTimeInMs = System.currentTimeMillis() - removeStartTime;
+        LOG.debug(String.format("Service %s removed data in %d ms", service.getClass().getSimpleName(), removeTimeInMs));
       }
-      else {
-        service.removeData(toRemove, project, synchronous);
-      }
-      final long removeTimeInSeconds = (System.currentTimeMillis() - removeStartTime) / 1000;
-      LOG.debug(String.format("Service %s removed data in %d seconds", service.getClass().getSimpleName(), removeTimeInSeconds));
+
+      commit(modelsProvider, project, synchronous, "Removed data");
+    }
+    catch (Throwable t) {
+      dispose(modelsProvider, project, synchronous);
+      ExceptionUtil.rethrowAllAsUnchecked(t);
     }
   }
 
@@ -323,7 +341,7 @@ public class ProjectDataManager {
                                 @NotNull final ProjectData projectData,
                                 @NotNull Project project,
                                 boolean synchronous) {
-    removeData(key, toRemove, toIgnore, projectData, project, myPlatformFacade, synchronous);
+    removeData(key, toRemove, toIgnore, projectData, project, new IdeModifiableModelsProviderImpl(project), synchronous);
   }
 
   public void updateExternalProjectData(@NotNull Project project, @NotNull ExternalProjectInfo externalProjectInfo) {
@@ -372,5 +390,31 @@ public class ProjectDataManager {
         dataNode.clear(true);
       }
     }
+  }
+
+  private static void commit(@NotNull final IdeModifiableModelsProvider modelsProvider,
+                             @NotNull Project project,
+                             boolean synchronous,
+                             @NotNull final String commitDesc) {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
+      @Override
+      public void execute() {
+        final long startTime = System.currentTimeMillis();
+        modelsProvider.commit();
+        final long timeInMs = System.currentTimeMillis() - startTime;
+        LOG.debug(String.format("%s committed in %d ms", commitDesc, timeInMs));
+      }
+    });
+  }
+
+  private static void dispose(@NotNull final IdeModifiableModelsProvider modelsProvider,
+                              @NotNull Project project,
+                              boolean synchronous) {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
+      @Override
+      public void execute() {
+        modelsProvider.dispose();
+      }
+    });
   }
 }

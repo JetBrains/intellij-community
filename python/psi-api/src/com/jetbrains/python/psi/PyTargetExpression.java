@@ -28,7 +28,8 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public interface PyTargetExpression extends PyQualifiedExpression, PsiNamedElement, PsiNameIdentifierOwner, PyDocStringOwner,
-                                            PyQualifiedNameOwner, PyReferenceOwner, StubBasedPsiElement<PyTargetExpressionStub> {
+                                            PyQualifiedNameOwner, PyReferenceOwner, StubBasedPsiElement<PyTargetExpressionStub>,
+                                            PyPossibleClassMember {
   PyTargetExpression[] EMPTY_ARRAY = new PyTargetExpression[0];
 
   /**
@@ -54,7 +55,4 @@ public interface PyTargetExpression extends PyQualifiedExpression, PsiNamedEleme
 
   @NotNull
   PsiReference getReference();
-  
-  @Nullable
-  PyClass getContainingClass();
 }

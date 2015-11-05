@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Document;
@@ -162,10 +161,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
         final Set<TypeConstraint> typeConstraints = getExpectedTypeInfos(parameters);
         for (TypeConstraint typeConstraint : typeConstraints) {
           final PsiType type = typeConstraint.getType();
-          final LookupItem item = PsiTypeLookupItem.createLookupItem(type, position, PsiTypeLookupItem.isDiamond(type), ChooseTypeExpression.IMPORT_FIXER);
-          if (item.getObject() instanceof PsiClass) {
-            JavaCompletionUtil.setShowFQN(item);
-          }
+          final PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(type, position, PsiTypeLookupItem.isDiamond(type), ChooseTypeExpression.IMPORT_FIXER).setShowPackage();
           item.setInsertHandler(new InsertHandler<LookupElement>() {
             @Override
             public void handleInsert(InsertionContext context, LookupElement item) {
@@ -188,7 +184,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
 
               editor.getCaretModel().moveToOffset(context.getTailOffset());
               editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-              GroovyCompletionUtil.addImportForItem(context.getFile(), context.getStartOffset(), ((LookupItem)item));
+              GroovyCompletionUtil.addImportForItem(context.getFile(), context.getStartOffset(), item);
             }
           });
           result.addElement(item);
@@ -294,12 +290,11 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     for (PsiType type : GroovyExpectedTypesProvider.getDefaultExpectedTypes(placeToInferType)) {
       if (type instanceof PsiArrayType) {
         final PsiType _type = GenericsUtil.eliminateWildcards(type);
-        final LookupItem item = PsiTypeLookupItem.createLookupItem(_type, place, PsiTypeLookupItem.isDiamond(_type), ChooseTypeExpression.IMPORT_FIXER);
+        final PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(_type, place, PsiTypeLookupItem.isDiamond(_type), ChooseTypeExpression.IMPORT_FIXER).setShowPackage();
         if (item.getObject() instanceof PsiClass) {
-          JavaCompletionUtil.setShowFQN(item);
-          item.setInsertHandler(new InsertHandler<LookupItem>() {
+          item.setInsertHandler(new InsertHandler<LookupElement>() {
             @Override
-            public void handleInsert(InsertionContext context, LookupItem item) {
+            public void handleInsert(InsertionContext context, LookupElement item) {
               GroovyCompletionUtil.addImportForItem(context.getFile(), context.getStartOffset(), item);
             }
           });
@@ -415,13 +410,10 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
       }
     }
 
-    final PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(GenericsUtil.eliminateWildcards(type), place, isDiamond, ChooseTypeExpression.IMPORT_FIXER);
+    final PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(GenericsUtil.eliminateWildcards(type), place, isDiamond, ChooseTypeExpression.IMPORT_FIXER).setShowPackage();
     Object object = item.getObject();
-    if (object instanceof PsiClass) {
-      JavaCompletionUtil.setShowFQN(item);
-      if (((PsiClass)object).hasModifierProperty(PsiModifier.ABSTRACT)) {
-        item.setIndicateAnonymous(true);
-      }
+    if (object instanceof PsiClass && ((PsiClass)object).hasModifierProperty(PsiModifier.ABSTRACT)) {
+      item.setIndicateAnonymous(true);
     }
     item.setInsertHandler(new AfterNewClassInsertHandler((PsiClassType)type, true));
     return item;

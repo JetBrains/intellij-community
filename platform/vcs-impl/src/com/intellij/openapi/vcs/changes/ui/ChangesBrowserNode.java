@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ import javax.swing.tree.MutableTreeNode;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+
+import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 /**
  * @author max
@@ -79,8 +81,8 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     myAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
-  public static ChangesBrowserNode create(final Project project, @NotNull final LocallyDeletedChange change) {
-    return new ChangesBrowserLocallyDeletedNode(change, project);
+  public static ChangesBrowserNode create(@NotNull final LocallyDeletedChange change) {
+    return new ChangesBrowserLocallyDeletedNode(change);
   }
 
   public static ChangesBrowserNode create(final Project project, @NotNull Object userObject) {
@@ -208,23 +210,25 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     appendCount(renderer);
   }
 
+  @NotNull
   protected String getCountText() {
     int count = getCount();
     int dirCount = getDirectoryCount();
+    if (dirCount == 0 && count == 0) return "";
     if (dirCount == 0) {
-      return " " + VcsBundle.message("changes.nodetitle.changecount", count);
+      return spaceAndThinSpace() + VcsBundle.message("changes.nodetitle.changecount", count);
     }
     else if (count == 0 && dirCount > 0) {
-      return " " + VcsBundle.message("changes.nodetitle.directory.changecount", dirCount);
+      return spaceAndThinSpace() + VcsBundle.message("changes.nodetitle.directory.changecount", dirCount);
     }
     else {
-      return " " + VcsBundle.message("changes.nodetitle.directory.file.changecount", dirCount, count);
+      return spaceAndThinSpace() + VcsBundle.message("changes.nodetitle.directory.file.changecount", dirCount, count);
     }
   }
 
   protected void appendCount(final ColoredTreeCellRenderer renderer) {
-    final String countText = getCountText();
-    renderer.append(countText, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
+    String countText = getCountText();
+    renderer.append(countText, SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
   public String toString() {

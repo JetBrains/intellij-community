@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
@@ -48,7 +47,7 @@ public class GrMethodMergingContributor extends CompletionContributor {
       final ArrayList<PsiMethod> allMethods = new ArrayList<PsiMethod>();
       for (LookupElement item : items) {
         Object o = item.getPsiElement();
-        if (item.getUserData(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null || !(o instanceof PsiMethod)) {
+        if (item.getUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR) != null || !(o instanceof PsiMethod)) {
           return AutoCompletionDecision.SHOW_LOOKUP;
         }
 

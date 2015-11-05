@@ -100,21 +100,23 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       myVisitedFragments.add(codeFragment);
       ArrayList<Evaluator> evaluators = new ArrayList<Evaluator>();
 
-      CodeFragmentEvaluator oldFragmentEvaluator = myCurrentFragmentEvaluator;
-      myCurrentFragmentEvaluator = new CodeFragmentEvaluator(oldFragmentEvaluator);
+      CodeFragmentEvaluator oldFragmentEvaluator = setNewCodeFragmentEvaluator();
 
-      for (PsiElement child = codeFragment.getFirstChild(); child != null; child = child.getNextSibling()) {
-        child.accept(this);
-        if(myResult != null) {
-          evaluators.add(myResult);
+      try {
+        for (PsiElement child = codeFragment.getFirstChild(); child != null; child = child.getNextSibling()) {
+          child.accept(this);
+          if (myResult != null) {
+            evaluators.add(myResult);
+          }
+          myResult = null;
         }
-        myResult = null;
+
+        myCurrentFragmentEvaluator.setStatements(evaluators.toArray(new Evaluator[evaluators.size()]));
+        myResult = myCurrentFragmentEvaluator;
       }
-
-      myCurrentFragmentEvaluator.setStatements(evaluators.toArray(new Evaluator[evaluators.size()]));
-      myResult = myCurrentFragmentEvaluator;
-
-      myCurrentFragmentEvaluator = oldFragmentEvaluator;
+      finally {
+        myCurrentFragmentEvaluator = oldFragmentEvaluator;
+      }
     }
 
     @Override
@@ -199,17 +201,29 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       throwEvaluateException(DebuggerBundle.message("evaluation.error.statement.not.supported", statement.getText()));
     }
 
+    private CodeFragmentEvaluator setNewCodeFragmentEvaluator() {
+      CodeFragmentEvaluator old = myCurrentFragmentEvaluator;
+      myCurrentFragmentEvaluator = new CodeFragmentEvaluator(myCurrentFragmentEvaluator);
+      return old;
+    }
+
     @Override
     public void visitBlockStatement(PsiBlockStatement statement) {
-      PsiStatement[] statements = statement.getCodeBlock().getStatements();
-      Evaluator [] evaluators = new Evaluator[statements.length];
-      for (int i = 0; i < statements.length; i++) {
-        PsiStatement psiStatement = statements[i];
-        psiStatement.accept(this);
-        evaluators[i] = new DisableGC(myResult);
-        myResult = null;
+      CodeFragmentEvaluator oldFragmentEvaluator = setNewCodeFragmentEvaluator();
+      try {
+        PsiStatement[] statements = statement.getCodeBlock().getStatements();
+        Evaluator[] evaluators = new Evaluator[statements.length];
+        for (int i = 0; i < statements.length; i++) {
+          PsiStatement psiStatement = statements[i];
+          psiStatement.accept(this);
+          evaluators[i] = new DisableGC(myResult);
+          myResult = null;
+        }
+        myResult = new BlockStatementEvaluator(evaluators);
       }
-      myResult = new BlockStatementEvaluator(evaluators);
+      finally {
+        myCurrentFragmentEvaluator = oldFragmentEvaluator;
+      }
     }
 
     @Override
@@ -634,17 +648,9 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         final String localName = psiVar.getName();
         PsiClass variableClass = getContainingClass(psiVar);
         if (getContextPsiClass() == null || getContextPsiClass().equals(variableClass)) {
-          PsiElement method = PsiTreeUtil.getContextOfType(expression, PsiMethod.class, PsiLambdaExpression.class);
+          PsiElement method = DebuggerUtilsEx.getContainingMethod(expression);
           boolean canScanFrames = method instanceof PsiLambdaExpression || ContextUtil.isJspImplicit(element);
-          LocalVariableEvaluator localVarEvaluator = new LocalVariableEvaluator(localName, canScanFrames);
-          if (psiVar instanceof PsiParameter) {
-            final PsiParameter param = (PsiParameter)psiVar;
-            final PsiParameterList paramList = PsiTreeUtil.getParentOfType(param, PsiParameterList.class, true);
-            if (paramList != null) {
-              localVarEvaluator.setParameterIndex(paramList.getParameterIndex(param));
-            }
-          }
-          myResult = localVarEvaluator;
+          myResult = new LocalVariableEvaluator(localName, canScanFrames);
           return;
         }
         // the expression references final var outside the context's class (in some of the outer classes)

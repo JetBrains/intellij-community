@@ -38,7 +38,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.roots.ProjectModelModificationService;
+import com.intellij.openapi.roots.JavaProjectModelModificationService;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.ui.Messages;
@@ -183,8 +183,8 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
                                              "\nIntelliJ IDEA nullity annotations are freely usable and redistributable under the Apache 2.0 license.\nWould you like to do it now?",
                                     title, Messages.getErrorIcon()) == Messages.OK) {
       Module firstModule = modulesWithoutAnnotations.iterator().next();
-      ProjectModelModificationService.getInstance(project).addDependency(modulesWithoutAnnotations, JetBrainsAnnotationsExternalLibraryResolver.getAnnotationsLibraryDescriptor(firstModule),
-                                                                         DependencyScope.COMPILE);
+      JavaProjectModelModificationService.getInstance(project).addDependency(modulesWithoutAnnotations, JetBrainsAnnotationsExternalLibraryResolver.getAnnotationsLibraryDescriptor(firstModule),
+                                                                             DependencyScope.COMPILE);
       return true;
     }
     return false;

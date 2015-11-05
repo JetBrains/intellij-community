@@ -37,7 +37,7 @@ public interface PyFunction
 extends
   PsiNamedElement, StubBasedPsiElement<PyFunctionStub>,
   PsiNameIdentifierOwner, PyStatement, PyCallable, NameDefiner, PyDocStringOwner, ScopeOwner, PyDecoratable, PyTypedElement,
-  PyStatementListContainer{
+  PyStatementListContainer, PyPossibleClassMember{
 
   PyFunction[] EMPTY_ARRAY = new PyFunction[0];
   ArrayFactory<PyFunction> ARRAY_FACTORY = new ArrayFactory<PyFunction>() {
@@ -58,9 +58,6 @@ extends
   ASTNode getNameNode();
 
   @Nullable
-  PyClass getContainingClass();
-
-  @Nullable
   PyType getReturnTypeFromDocString();
 
   /**
@@ -78,6 +75,8 @@ extends
    */
   @Nullable
   Modifier getModifier();
+
+  boolean isAsync();
 
   /**
    * Flags that mark common alterations of a function: decoration by and wrapping in classmethod() and staticmethod().

@@ -16,7 +16,10 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Couple;
@@ -354,7 +357,7 @@ public class ScrollingUtil {
     UIUtil.maybeInstall(map, MOVE_END_ID, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0));
   }
 
-  public static abstract class ListScrollAction extends AnAction {
+  public static abstract class ListScrollAction extends DumbAwareAction {
     protected ListScrollAction(final ShortcutSet shortcutSet, final JComponent component) {
       registerCustomShortcutSet(shortcutSet, component);
     }
@@ -573,12 +576,12 @@ public class ScrollingUtil {
     }.registerCustomShortcutSet(CommonShortcuts.getMoveEnd(), table);
     new DumbAwareAction() {
       public void actionPerformed(AnActionEvent e) {
-        moveDown(table, e.getModifiers(), UISettings.getInstance().CYCLE_SCROLLING);
+        moveDown(table, e.getModifiers(), cycleScrolling);
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMoveDown(), table);
     new DumbAwareAction() {
       public void actionPerformed(AnActionEvent e) {
-        moveUp(table, e.getModifiers(), UISettings.getInstance().CYCLE_SCROLLING);
+        moveUp(table, e.getModifiers(), cycleScrolling);
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMoveUp(), table);
     new DumbAwareAction() {

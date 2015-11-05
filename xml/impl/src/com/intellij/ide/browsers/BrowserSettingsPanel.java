@@ -312,7 +312,7 @@ final class BrowserSettingsPanel {
     GeneralSettings generalSettings = GeneralSettings.getInstance();
 
     DefaultBrowserPolicy defaultBrowserPolicy = getDefaultBrowser();
-    if (browserManager.getDefaultBrowserPolicy() != defaultBrowserPolicy ||
+    if (getDefaultBrowserPolicy(browserManager) != defaultBrowserPolicy ||
         browserManager.isShowBrowserHover() != showBrowserHover.isSelected()) {
       return true;
     }
@@ -346,9 +346,7 @@ final class BrowserSettingsPanel {
 
   public void reset() {
     final WebBrowserManager browserManager = WebBrowserManager.getInstance();
-    DefaultBrowserPolicy defaultBrowserPolicy = browserManager.getDefaultBrowserPolicy();
-    DefaultBrowserPolicy effectiveDefaultBrowserPolicy = defaultBrowserPolicy == DefaultBrowserPolicy.SYSTEM && !BrowserLauncherAppless.canUseSystemDefaultBrowserPolicy()
-                                                         ? DefaultBrowserPolicy.ALTERNATIVE : defaultBrowserPolicy;
+    DefaultBrowserPolicy effectiveDefaultBrowserPolicy = getDefaultBrowserPolicy(browserManager);
     defaultBrowserPolicyComboBox.setSelectedItem(effectiveDefaultBrowserPolicy);
 
     GeneralSettings settings = GeneralSettings.getInstance();
@@ -358,6 +356,15 @@ final class BrowserSettingsPanel {
     customPathValue = settings.getBrowserPath();
     alternativeBrowserPathField.setEnabled(effectiveDefaultBrowserPolicy == DefaultBrowserPolicy.ALTERNATIVE);
     updateCustomPathTextFieldValue(effectiveDefaultBrowserPolicy);
+  }
+
+  private static DefaultBrowserPolicy getDefaultBrowserPolicy(WebBrowserManager manager) {
+    DefaultBrowserPolicy policy = manager.getDefaultBrowserPolicy();
+    if (policy != DefaultBrowserPolicy.SYSTEM || BrowserLauncherAppless.canUseSystemDefaultBrowserPolicy()) {
+      return policy;
+    }
+    // if system default browser policy cannot be used 
+    return DefaultBrowserPolicy.ALTERNATIVE;
   }
 
   public void selectBrowser(@NotNull WebBrowser browser) {

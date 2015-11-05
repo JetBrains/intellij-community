@@ -23,10 +23,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -82,7 +84,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     final StringBuilder stdOut = new StringBuilder();
     final StringBuilder stdErr = new StringBuilder();
     final StringBuilder stdAll = new StringBuilder();
-
+    final Ref<Boolean> failed = new Ref<Boolean>(false);
 
     final ProcessAdapter processListener = new ProcessAdapter() {
       @Override
@@ -112,16 +114,23 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
         try {
           runner.runProcess(sdkHome, getProject(), processListener);
         }
-        catch (final ExecutionException e) {
-          throw new IllegalStateException("Exception thrown while running test", e);
+        catch (final Throwable e) {
+          final IllegalStateException exception = new IllegalStateException("Exception thrown while running test", e);
+          failed.set(true);
+          processFinishedSemaphore.up();
+          throw exception;
         }
       }
     }, ModalityState.NON_MODAL);
 
 
-    processFinishedSemaphore.waitFor();
+    processFinishedSemaphore.waitFor(60000);
     XDebuggerTestUtil.waitForSwing();
-    checkTestResults(runner, stdOut.toString(), stdErr.toString(), stdAll.toString());
+    if (failed.get()) {
+      Assert.fail("Failed to run test, see logs for exceptions");
+    } else {
+      checkTestResults(runner, stdOut.toString(), stdErr.toString(), stdAll.toString());
+    }
   }
 
   /**

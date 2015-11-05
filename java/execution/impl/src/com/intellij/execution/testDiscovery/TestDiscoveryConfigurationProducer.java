@@ -70,7 +70,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
         return false;
       }
       configuration.setPosition(position);
-      configuration.setName("Tests for " + StringUtil.getShortName(position.first) + "," + position.second);
+      configuration.setName("Tests for " + StringUtil.getShortName(position.first) + "." + position.second);
       setupPackageConfiguration(configurationContext, configuration, TestSearchScope.MODULE_WITH_DEPENDENCIES);
       return true;
     }

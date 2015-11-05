@@ -111,6 +111,18 @@ public class GraphAlgorithmsImpl extends GraphAlgorithms {
     }));
   }
 
+  @Override
+  public <Node> void collectOutsRecursively(@NotNull Graph<Node> graph, Node start, Set<Node> set) {
+    if (!set.add(start)) {
+      return;
+    }
+    Iterator<Node> iterator = graph.getOut(start);
+    while (iterator.hasNext()) {
+      Node node = iterator.next();
+      collectOutsRecursively(graph, node, set);
+    }
+  }
+
   @NotNull
   @Override
   public <Node> Collection<Chunk<Node>> computeStronglyConnectedComponents(@NotNull Graph<Node> graph) {

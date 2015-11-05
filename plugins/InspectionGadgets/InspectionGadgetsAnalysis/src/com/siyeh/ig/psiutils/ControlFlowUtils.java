@@ -332,15 +332,6 @@ public class ControlFlowUtils {
   }
 
   public static boolean isInFinallyBlock(@NotNull PsiElement element) {
-    final PsiType type;
-    if (element instanceof PsiThrowStatement) {
-      final PsiThrowStatement throwStatement = (PsiThrowStatement)element;
-      final PsiExpression exception = throwStatement.getException();
-      type = exception != null ? exception.getType() : null;
-    }
-    else {
-      type = null;
-    }
     PsiElement currentElement = element;
     while (true) {
       final PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(currentElement, PsiTryStatement.class, true, PsiClass.class, PsiLambdaExpression.class);
@@ -348,22 +339,15 @@ public class ControlFlowUtils {
         return false;
       }
       final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
-      if (PsiTreeUtil.isAncestor(finallyBlock, currentElement, true)) {
-        return true;
-      }
-      if (type != null && isCaught(tryStatement, type)) {
-        return false;
+      if (finallyBlock != null) {
+        if (PsiTreeUtil.isAncestor(finallyBlock, currentElement, true)) {
+          final PsiMethod elementMethod = PsiTreeUtil.getParentOfType(currentElement, PsiMethod.class);
+          final PsiMethod finallyMethod = PsiTreeUtil.getParentOfType(finallyBlock, PsiMethod.class);
+          return elementMethod != null && elementMethod.equals(finallyMethod);
+        }
       }
       currentElement = tryStatement;
     }
-  }
-
-  public static boolean isCaught(PsiTryStatement tryStatement, PsiType exceptionType) {
-    for (PsiParameter parameter : tryStatement.getCatchBlockParameters()) {
-      final PsiType type = parameter.getType();
-      if (type.isAssignableFrom(exceptionType)) return true;
-    }
-    return false;
   }
 
   public static boolean isInCatchBlock(@NotNull PsiElement element) {
@@ -386,14 +370,8 @@ public class ControlFlowUtils {
   public static PsiStatement stripBraces(@Nullable PsiStatement statement) {
     if (statement instanceof PsiBlockStatement) {
       final PsiBlockStatement block = (PsiBlockStatement)statement;
-      final PsiCodeBlock codeBlock = block.getCodeBlock();
-      final PsiStatement[] statements = codeBlock.getStatements();
-      if (statements.length == 1) {
-        return statements[0];
-      }
-      else {
-        return block;
-      }
+      final PsiStatement onlyStatement = getOnlyStatementInBlock(block.getCodeBlock());
+      return (onlyStatement != null) ? onlyStatement : block;
     }
     else {
       return statement;
@@ -469,6 +447,72 @@ public class ControlFlowUtils {
       }
     }
     return false;
+  }
+
+  @Nullable
+  public static PsiStatement getFirstStatementInBlock(@Nullable PsiCodeBlock codeBlock) {
+    return PsiTreeUtil.getChildOfType(codeBlock, PsiStatement.class);
+  }
+
+  @Nullable
+  public static PsiStatement getLastStatementInBlock(@Nullable PsiCodeBlock codeBlock) {
+    return getLastChildOfType(codeBlock, PsiStatement.class);
+  }
+
+  private static <T extends PsiElement> T getLastChildOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
+    if (element == null) return null;
+    for (PsiElement child = element.getLastChild(); child != null; child = child.getPrevSibling()) {
+      if (aClass.isInstance(child)) {
+        //noinspection unchecked
+        return (T)child;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * @return null, if zero or more than one statements in the specified code block.
+   */
+  @Nullable
+  public static PsiStatement getOnlyStatementInBlock(@Nullable PsiCodeBlock codeBlock) {
+    return getOnlyChildOfType(codeBlock, PsiStatement.class);
+  }
+
+  private static <T extends PsiElement> T getOnlyChildOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
+    if (element == null) return null;
+    T result = null;
+    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (aClass.isInstance(child)) {
+        if (result == null) {
+          //noinspection unchecked
+          result = (T)child;
+        }
+        else {
+          return null;
+        }
+      }
+    }
+    return result;
+  }
+
+  public static boolean hasStatementCount(@Nullable PsiCodeBlock codeBlock, int count) {
+    return hasChildrenOfTypeCount(codeBlock, count, PsiStatement.class);
+  }
+
+  static <T extends PsiElement> boolean hasChildrenOfTypeCount(@Nullable PsiElement element, int count, @NotNull Class<T> aClass) {
+    if (element == null) return false;
+    int i = 0;
+    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (aClass.isInstance(child)) {
+        i++;
+        if (i > count) return false;
+      }
+    }
+    return i == count;
+  }
+
+  public static boolean isEmptyCodeBlock(PsiCodeBlock codeBlock) {
+    return hasStatementCount(codeBlock, 0);
   }
 
   public static boolean methodAlwaysThrowsException(@NotNull PsiMethod method) {

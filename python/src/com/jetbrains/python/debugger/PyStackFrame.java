@@ -16,6 +16,7 @@
 package com.jetbrains.python.debugger;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -80,9 +81,15 @@ public class PyStackFrame extends XStackFrame {
 
     boolean isExternal = true;
     final VirtualFile file = myPosition.getFile();
-    final Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document != null) {
-      isExternal = !ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(file);
+    AccessToken lock = ApplicationManager.getApplication().acquireReadActionLock();
+    try {
+      final Document document = FileDocumentManager.getInstance().getDocument(file);
+      if (document != null) {
+        isExternal = !ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(file);
+      }
+    }
+    finally {
+      lock.finish();
     }
 
     component.append(myFrameInfo.getName(), gray(SimpleTextAttributes.REGULAR_ATTRIBUTES, isExternal));

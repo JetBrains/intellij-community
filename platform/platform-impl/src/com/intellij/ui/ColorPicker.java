@@ -193,8 +193,15 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     UIManager.LookAndFeelInfo info = LafManager.getInstance().getCurrentLookAndFeel();
     if (info != null && (info.getName().startsWith("IDEA") || info.getName().equals("Windows Classic")))
       lafFix = 1;
-    final JTextField field = new JTextField(doc, "", (hex ? 5:2) + lafFix);
-    field.setSize(50, -1);
+    final JTextField field;
+    if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+      field = new JTextField("");
+      field.setDocument(doc);
+      field.setPreferredSize(new Dimension(hex ? 60 : 40, 26));
+    } else {
+      field = new JTextField(doc, "", (hex ? 5 : 2) + lafFix);
+      field.setSize(50, -1);
+    }
     doc.setSource(field);
     field.getDocument().addDocumentListener(this);
     field.addFocusListener(new FocusAdapter() {
@@ -1131,7 +1138,6 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
         myGraphics = (Graphics2D)myImage.getGraphics();
         myGraphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-        pickerDialog.setBackground(UIUtil.TRANSPARENT_COLOR);
       }
 
       return pickerDialog;

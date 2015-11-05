@@ -25,6 +25,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -142,6 +143,12 @@ public abstract class AbstractTestProxy extends CompositePrintable {
     return myExceptionMark;
   }
 
+  @NotNull
+  public List<DiffHyperlink> getDiffViewerProviders() {
+    final DiffHyperlink provider = getDiffViewerProvider();
+    return provider == null ? Collections.<DiffHyperlink>emptyList() : Collections.singletonList(provider);
+  }
+  
   @Nullable
   public DiffHyperlink getDiffViewerProvider() {
     return null;

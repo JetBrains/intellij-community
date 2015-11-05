@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -146,11 +147,10 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
         return;
       }
       final PsiCodeBlock body = constructor.getBody();
-      if (body == null) {
-        return;
+      if (ControlFlowUtils.isEmptyCodeBlock(body)) {
+        registerMethodError(constructor);
       }
-      final PsiStatement[] statements = body.getStatements();
-      if (statements.length == 0 || statements.length == 1 && isSuperConstructorInvocationWithoutArguments(statements[0])) {
+      else if (isSuperConstructorInvocationWithoutArguments(ControlFlowUtils.getOnlyStatementInBlock(body))) {
         registerMethodError(constructor);
       }
     }

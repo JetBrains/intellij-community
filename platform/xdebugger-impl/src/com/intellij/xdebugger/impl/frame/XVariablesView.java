@@ -15,6 +15,8 @@
  */
 package com.intellij.xdebugger.impl.frame;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -22,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ObjectLongHashMap;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
@@ -31,9 +34,11 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -47,9 +52,17 @@ import static com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode.createIn
 public class XVariablesView extends XVariablesViewBase {
   public static final Key<InlineVariablesInfo> DEBUG_VARIABLES = Key.create("debug.variables");
   public static final Key<ObjectLongHashMap<VirtualFile>> DEBUG_VARIABLES_TIMESTAMPS = Key.create("debug.variables.timestamps");
+  private final JComponent myComponent;
 
   public XVariablesView(@NotNull XDebugSessionImpl session) {
     super(session.getProject(), session.getDebugProcess().getEditorsProvider(), session.getValueMarkers());
+    myComponent = new MyPanel();
+    myComponent.add(super.getPanel());
+  }
+
+  @Override
+  public JComponent getPanel() {
+    return myComponent;
   }
 
   @Override
@@ -171,6 +184,17 @@ public class XVariablesView extends XVariablesViewBase {
       public int hashCode() {
         return myNode.hashCode();
       }
+    }
+  }
+
+  private class MyPanel extends BorderLayoutPanel implements DataProvider {
+    @Nullable
+    @Override
+    public Object getData(@NonNls String dataId) {
+      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+        return getCurrentFile(getTree());
+      }
+      return null;
     }
   }
 }

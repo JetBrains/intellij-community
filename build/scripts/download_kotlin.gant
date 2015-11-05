@@ -1,0 +1,168 @@
+import com.intellij.util.text.VersionComparatorUtil
+
+import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
+
+String kotlinBuildConfigurationOnPublicTeamCity = "Kotlin_M15_2_Idea142branch150versionNoTests"
+
+target('default': 'Ensures that build/kotlinc directory contains JARs from Kotlin plugin compatible with current IDEA sources. These JARs are used by build scripts.') {
+  def communityHome = guessHome(this)
+  def reasonToUpdate = getReasonToUpdate(communityHome, new File(communityHome, "build/kotlinc"))
+  if (reasonToUpdate == null) {
+    projectBuilder.info("Compatible Kotlin plugin already installed, no update is required")
+    return
+  }
+
+  projectBuilder.info("Kotlin plugin will be updated: $reasonToUpdate")
+
+  if (isDefined("workIdeaHome")) {
+    if (updatePluginFromWorkIdeaInstallation(communityHome, workIdeaHome)) {
+      return
+    }
+  }
+
+  if (isDefined("kotlin.teamcity.host")) {
+    if (downloadAndExtract(new TeamCityBuildLocator(p("kotlin.teamcity.host"), p("kotlin.build.type.id"), p("kotlin.build.selector")), communityHome)) {
+      return
+    }
+  }
+  if (!downloadAndExtract(new TeamCityBuildLocator("https://teamcity.jetbrains.com", kotlinBuildConfigurationOnPublicTeamCity, "status:SUCCESS"), communityHome)) {
+    projectBuilder.error("Failed to install Kotlin plugin")
+  }
+}
+
+private boolean updatePluginFromWorkIdeaInstallation(String communityHome, String workIdeaHome) {
+  def kotlinPluginFromWorkIdea = new File(workIdeaHome, "plugins/Kotlin")
+  if (!kotlinPluginFromWorkIdea.exists()) {
+    projectBuilder.info("Cannot use Kotlin from $workIdeaHome: the plugin directory doesn't exist")
+    return false
+  }
+
+  def reasonToUpdate = getReasonToUpdate(communityHome, new File(kotlinPluginFromWorkIdea, "kotlinc"))
+  if (reasonToUpdate != null) {
+    projectBuilder.info("Cannot use Kotlin from $workIdeaHome: $reasonToUpdate")
+    return false
+  }
+
+  ant.delete(dir: "$communityHome/build/kotlinc")
+  ant.copy(todir: "$communityHome/build/kotlinc/plugin/Kotlin") {
+    ant.fileset(dir: kotlinPluginFromWorkIdea)
+  }
+  ant.copy(todir: "$communityHome/build/kotlinc") {
+    ant.fileset(dir: "$kotlinPluginFromWorkIdea/kotlinc")
+  }
+  ant.copy(todir: "$communityHome/build/kotlinc/jps") {
+    ant.fileset(dir: "$kotlinPluginFromWorkIdea/lib/jps")
+  }
+  projectBuilder.info("Kotlin plugin updated from $workIdeaHome installation")
+  return true
+}
+
+private String getReasonToUpdate(String communityHome, File kotlincHome) {
+  def buildTxt = new File(kotlincHome, "build.txt")
+  if (!buildTxt.exists()) {
+    return "Kotlin binaries aren't found at $kotlincHome"
+  }
+
+  String currentKotlinVersion
+  try {
+    currentKotlinVersion = buildTxt.text
+  }
+  catch (IOException e) {
+    return "cannot read Kotlin version from $buildTxt.absolutePath: $e"
+  }
+
+  def externalDependenciesXml = new File(communityHome, ".idea/externalDependencies.xml")
+  if (!externalDependenciesXml.exists()) {
+    return "cannot read required Kotlin version from $externalDependenciesXml.absolutePath: the file doesn't exist"
+  }
+
+  def root = new XmlParser().parse(externalDependenciesXml)
+  def pluginTag = root.component?.find { it.@name == "ExternalDependencies" }?.plugin?.find { it.@id == "org.jetbrains.kotlin" }
+  if (pluginTag == null) return "cannot find Kotlin plugin in $externalDependenciesXml.absolutePath"
+
+  String minVersion = pluginTag['@min-version']
+  if (minVersion == null) return "minimum required version for Kotlin plugin isn't specified in $externalDependenciesXml.absolutePath"
+  String maxVersion = pluginTag['@max-version']
+  if (maxVersion == null) return "maximum required version for Kotlin plugin isn't specified in $externalDependenciesXml.absolutePath"
+
+  if (VersionComparatorUtil.compare(currentKotlinVersion, minVersion) < 0) {
+    return "current Kotlin version is $currentKotlinVersion, but at least $minVersion is required";
+  }
+  if (VersionComparatorUtil.compare(currentKotlinVersion, maxVersion) > 0) {
+    return "current Kotlin version is $currentKotlinVersion, but at most $maxVersion is required";
+  }
+  return null
+}
+
+private boolean downloadAndExtract(TeamCityBuildLocator buildLocator, String communityHome) {
+  String buildNumber;
+  try {
+    buildNumber = new URL(buildLocator.buildNumberUrl).text
+  }
+  catch (Exception e) {
+    projectBuilder.info("Cannot get Kotlin build number from $buildLocator.buildNumberUrl: $e")
+    return false
+  }
+
+
+  def pluginZip = new File(communityHome, "build/kotlin-plugin-${buildNumber}.zip")
+  def pluginZipPath = pluginZip.absolutePath
+  if (!pluginZip.exists()) {
+    ant.delete(dir: "$communityHome/build", includes: "kotlin-plugin-*.zip")
+    projectBuilder.info("Downloading Kotlin build $buildNumber")
+    ant.get(src: buildLocator.getDownloadUrl(buildNumber), dest: pluginZipPath)
+  }
+  else {
+    projectBuilder.info("Extracting Kotlin build $buildNumber")
+  }
+
+  def kotlincDir = "$communityHome/build/kotlinc"
+  ant.delete(dir: kotlincDir)
+  ant.unzip(src: pluginZipPath, dest: "$kotlincDir/plugin")
+  ant.unzip(src: pluginZipPath, dest: "$kotlincDir") {
+    ant.patternset(includes: "Kotlin/kotlinc/**")
+    ant.globmapper(from: "Kotlin/kotlinc/*", to: "*")
+  }
+  ant.unzip(src: pluginZipPath, dest: "$kotlincDir/jps") {
+    ant.patternset(includes: "Kotlin/lib/jps/**")
+    ant.globmapper(from: "Kotlin/lib/jps/*", to: "*")
+  }
+  return true
+}
+
+class TeamCityBuildLocator {
+  String host;
+  String buildTypeId;
+  String buildSelector;
+
+  TeamCityBuildLocator(String host, String buildTypeId, String buildSelector) {
+    this.host = host
+    this.buildTypeId = buildTypeId
+    this.buildSelector = buildSelector
+  }
+
+  String getBuildNumberUrl() {
+    return "$host/guestAuth/app/rest/buildTypes/id:$buildTypeId/builds/$buildSelector,count:1/number"
+  }
+
+  String getDownloadUrl(String buildNumber) {
+    String encodedBuildNumber = URLEncoder.encode(buildNumber, "UTF-8")
+    return "$host/guestAuth/repository/download/$buildTypeId/$encodedBuildNumber/kotlin-plugin-${encodedBuildNumber}.zip"
+  }
+}

@@ -49,12 +49,12 @@ public interface PyClassLikeType extends PyCallableType, PyWithAncestors {
   // TODO: Pull to PyType at next iteration
   /**
    * Visits all class members. This method is better then bare class since it uses type info and supports not only classes but
-   * class-like structures as well. Consider using user-friendly wrapper {@link PyClassLikeTypeUtil#getMembersOfType(PyClassLikeType, Class, TypeEvalContext)}
+   * class-like structures as well. Consider using user-friendly wrapper {@link PyTypeUtil#getMembersOfType(PyClassLikeType, Class, TypeEvalContext)}
    *
    * @param processor visitor
    * @param inherited call on parents too
    * @param context   context to be used to resolve types
-   * @see PyClassLikeTypeUtil#getMembersOfType(PyClassLikeType, Class, TypeEvalContext)
+   * @see PyTypeUtil#getMembersOfType(PyClassLikeType, Class, TypeEvalContext)
    */
   void visitMembers(@NotNull Processor<PsiElement> processor, boolean inherited, @NotNull TypeEvalContext context);
 

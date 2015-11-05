@@ -33,10 +33,10 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -66,6 +66,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -398,7 +399,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       return;
     }
 
-    AnnotateToggleAction.doAnnotate(editor, myProject, file, annotation, vcs, false);
+    AnnotateToggleAction.doAnnotate(editor, myProject, file, annotation, vcs);
   }
 
   public void showDifferences(final VcsFileRevision version1, final VcsFileRevision version2, final File file) {
@@ -587,8 +588,11 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
   @Override
   @NotNull
-  public List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider, @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
+  public List<VirtualFile> showMergeDialog(@NotNull List<VirtualFile> files,
+                                           @NotNull MergeProvider provider,
+                                           @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
     if (files.isEmpty()) return Collections.emptyList();
+    VfsUtil.markDirtyAndRefresh(false, false, false, ArrayUtil.toObjectArray(files, VirtualFile.class));
     final MultipleFileMergeDialog fileMergeDialog = new MultipleFileMergeDialog(myProject, files, provider, mergeDialogCustomizer);
     fileMergeDialog.show();
     return fileMergeDialog.getProcessedFiles();
@@ -713,8 +717,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       }
     };
 
+    // we can's use runProcessWithProgressAsynchronously(task) because then ModalityState.NON_MODAL would be used
     CoreProgressManager progressManager = (CoreProgressManager)ProgressManager.getInstance();
-    progressManager.runProcessWithProgressAsynchronously(task, new EmptyProgressIndicator(), null, ModalityState.current());
+    progressManager.runProcessWithProgressAsynchronously(task, new BackgroundableProcessIndicator(task), null, ModalityState.current());
   }
 
   @Nullable

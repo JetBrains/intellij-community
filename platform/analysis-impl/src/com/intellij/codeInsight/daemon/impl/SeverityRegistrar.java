@@ -21,7 +21,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -47,7 +46,7 @@ import java.util.List;
  * User: anna
  * Date: 24-Feb-2006
  */
-public class SeverityRegistrar implements JDOMExternalizable, Comparator<HighlightSeverity> {
+public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   @NonNls private static final String INFO_TAG = "info";
   @NonNls private static final String COLOR_ATTRIBUTE = "color";
   private final Map<String, SeverityBasedTextAttributes> myMap = ContainerUtil.newConcurrentMap();
@@ -132,7 +131,6 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
 
-  @Override
   public void readExternal(Element element) {
     myMap.clear();
     myRendererColors.clear();
@@ -178,7 +176,6 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     severitiesChanged();
   }
 
-  @Override
   public void writeExternal(Element element) {
     List<HighlightSeverity> list = getOrderAsList(getOrderMap());
     for (HighlightSeverity severity : list) {
@@ -286,11 +283,11 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
   @Override
-  public int compare(final HighlightSeverity s1, final HighlightSeverity s2) {
+  public int compare(@NotNull HighlightSeverity s1, @NotNull HighlightSeverity s2) {
     return compare(s1, s2, getOrderMap());
   }
 
-  private static int compare(HighlightSeverity s1, HighlightSeverity s2, OrderMap orderMap) {
+  private static int compare(@NotNull HighlightSeverity s1, @NotNull HighlightSeverity s2, @NotNull OrderMap orderMap) {
     int o1 = orderMap.getOrder(s1, -1);
     int o2 = orderMap.getOrder(s2, -1);
     return o1 - o2;

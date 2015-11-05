@@ -18,16 +18,15 @@ package org.jetbrains.plugins.gradle.integrations.javaee;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.data.War;
-import org.jetbrains.plugins.gradle.model.data.WarDirectory;
-import org.jetbrains.plugins.gradle.model.data.WebConfigurationModelData;
-import org.jetbrains.plugins.gradle.model.data.WebResource;
+import org.jetbrains.plugins.gradle.model.data.*;
 import org.jetbrains.plugins.gradle.model.web.WebConfiguration;
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -47,7 +46,7 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
   private static final Logger LOG = Logger.getInstance(JavaEEGradleProjectResolverExtension.class);
 
   @Override
-  public void populateModuleExtraModels(@NotNull IdeaModule gradleModule, @NotNull DataNode<ModuleData> ideModule) {
+  public void populateModuleExtraModels(@NotNull IdeaModule gradleModule, @NotNull final DataNode<ModuleData> ideModule) {
     final List<War> warModels;
     final WebConfiguration webConfiguration = resolverCtx.getExtraProject(gradleModule, WebConfiguration.class);
     if (webConfiguration != null) {
@@ -62,7 +61,19 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
             return war;
           }
         });
-      ideModule.createChild(WebConfigurationModelData.KEY, new WebConfigurationModelData(GradleConstants.SYSTEM_ID, warModels));
+
+      final String mainSourceSetModuleId = ideModule.getData().getId() + ":main";
+      DataNode<? extends ModuleData> targetModuleNode =
+        ExternalSystemApiUtil.find(ideModule, GradleSourceSetData.KEY, new BooleanFunction<DataNode<GradleSourceSetData>>() {
+          @Override
+          public boolean fun(DataNode<GradleSourceSetData> node) {
+            return mainSourceSetModuleId.equals(node.getData().getId());
+          }
+        });
+      if(targetModuleNode == null) {
+        targetModuleNode = ideModule;
+      }
+      targetModuleNode.createChild(WebConfigurationModelData.KEY, new WebConfigurationModelData(GradleConstants.SYSTEM_ID, warModels));
     }
     nextResolver.populateModuleExtraModels(gradleModule, ideModule);
   }

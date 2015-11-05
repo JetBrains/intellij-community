@@ -21,7 +21,7 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.InferredAnnotationsManager;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
-import com.intellij.javadoc.JavadocConfiguration;
+import com.intellij.javadoc.JavadocGeneratorRunProfile;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -233,7 +234,7 @@ public class JavaDocInfoGenerator {
     myProject = project;
     myElement = element;
     
-    Sdk jdk = JavadocConfiguration.getSdk(myProject);
+    Sdk jdk = JavadocGeneratorRunProfile.getSdk(myProject);
     mySdkVersion = jdk == null ? null : JavaSdk.getInstance().getVersion(jdk);
   }
 
@@ -732,7 +733,7 @@ public class JavaDocInfoGenerator {
       if (packageInfoFile != null) {
         final ASTNode node = packageInfoFile.getNode();
         if (node != null) {
-          final ASTNode docCommentNode = node.findChildByType(JavaDocElementType.DOC_COMMENT);
+          final ASTNode docCommentNode = findRelevantCommentNode(node);
           if (docCommentNode != null) {
             final PsiDocComment docComment = (PsiDocComment)docCommentNode.getPsi();
 
@@ -753,6 +754,19 @@ public class JavaDocInfoGenerator {
         break;
       }
     }
+  }
+
+  /**
+   * Finds doc comment immediately preceding package statement
+   */
+  @Nullable
+  private static ASTNode findRelevantCommentNode(@NotNull ASTNode fileNode) {
+    ASTNode node = fileNode.findChildByType(JavaElementType.PACKAGE_STATEMENT);
+    if (node == null) node = fileNode.getLastChildNode();
+    while (node != null && node.getElementType() != JavaDocElementType.DOC_COMMENT) {
+      node = node.getTreePrev();
+    }
+    return node;
   }
 
   public void generateCommonSection(StringBuilder buffer, PsiDocComment docComment) {
@@ -917,12 +931,13 @@ public class JavaDocInfoGenerator {
       if (nameReferenceElement == null) continue;
       final PsiElement resolved = nameReferenceElement.resolve();
       boolean inferred = AnnotationUtil.isInferredAnnotation(annotation);
-
-      if (!(shownAnnotations.add(annotation.getQualifiedName()) || isRepeatableAnnotationType(resolved))) {
+      String qualifiedName = annotation.getQualifiedName();
+      if (!(shownAnnotations.add(qualifiedName) || isRepeatableAnnotationType(resolved))) {
         continue;
       }
 
-      if (resolved instanceof PsiClass) {
+      if (resolved instanceof PsiClass && 
+          qualifiedName != null && JavaDocUtil.findReferenceTarget(owner.getManager(), qualifiedName, owner) != null) {
         final PsiClass annotationType = (PsiClass)resolved;
         if (isDocumentedAnnotationType(annotationType)) {
           if (inferred) buffer.append("<i>");

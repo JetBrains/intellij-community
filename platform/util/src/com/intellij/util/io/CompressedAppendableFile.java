@@ -22,7 +22,6 @@ import com.intellij.util.CompressionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.SLRUMap;
 import gnu.trove.TLongArrayList;
-import org.iq80.snappy.CorruptionException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -201,11 +200,13 @@ public class CompressedAppendableFile {
         } catch (IOException ignore) {}
       }
 
-      assert false;
+      assert false:"data corruption detected:"+chunkNumber + "," + myChunkTableLength;
       return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
-    catch (CorruptionException e) {
+    catch (RuntimeException e) { // CorruptedException, ArrayIndexOutofBounds, etc
       throw new IOException(e);
+    } catch(AssertionError ae) {
+      throw new IOException(ae);
     }
   }
 

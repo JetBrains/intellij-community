@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -41,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
@@ -56,6 +58,7 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -90,7 +93,8 @@ public class GrIntroduceFieldProcessor {
       myLocalVariable = GrIntroduceHandlerBase.resolveLocalVar(myContext);
       assert myLocalVariable != null : myContext.getExpression() + ", " + myContext.getVar() + ", " + myContext.getStringPart();
     }
-    myInitializer = (GrExpression)getInitializer().copy();
+    GrExpression originalInitializer = getInitializer();
+    myInitializer = originalInitializer == null ? null : (GrExpression)originalInitializer.copy();
 
     List<PsiElement> replaced = processOccurrences(targetClass, field);
 
@@ -102,10 +106,10 @@ public class GrIntroduceFieldProcessor {
         field.setInitializerGroovy(myInitializer);
         break;
       case CONSTRUCTOR:
-        initializeInConstructor(field);
+        initializeInConstructor(field, replaced);
         break;
       case SETUP_METHOD:
-        initializeInSetup(field);
+        initializeInSetup(field, replaced);
         break;
     }
 
@@ -149,12 +153,7 @@ public class GrIntroduceFieldProcessor {
 
     final GrExpression expression = myContext.getExpression();
     assert expression != null;
-    if (PsiUtil.isExpressionStatement(expression)) {
-      return Collections.<PsiElement>singletonList(expression);
-    }
-    else {
-      return Collections.singletonList(replaceOccurrence(field, expression, targetClass));
-    }
+    return Collections.singletonList(replaceOccurrence(field, expression, targetClass));
   }
 
   private void updateCaretPosition(@NotNull PsiElement occurrence) {
@@ -187,8 +186,10 @@ public class GrIntroduceFieldProcessor {
 
   @Nullable
   private static PsiElement getAnchorForDeclaration(@NotNull GrTypeDefinition targetClass) {
-    PsiElement anchor = targetClass.getBody().getLBrace();
+    final GrTypeDefinitionBody body = targetClass.getBody();
+    if (body == null) return null;
 
+    PsiElement anchor = body.getLBrace();
     final GrMembersDeclaration[] declarations = targetClass.getMemberDeclarations();
     for (GrMembersDeclaration declaration : declarations) {
       if (declaration instanceof GrVariableDeclaration) anchor = declaration;
@@ -198,13 +199,13 @@ public class GrIntroduceFieldProcessor {
     return anchor;
   }
 
-  void initializeInSetup(@NotNull GrVariable field) {
+  void initializeInSetup(@NotNull GrVariable field, @NotNull Collection<PsiElement> replaced) {
     final PsiMethod setUpMethod = TestFrameworks.getInstance().findOrCreateSetUpMethod(((PsiClass)myContext.getScope()));
     assert setUpMethod instanceof GrMethod;
 
     final GrOpenBlock body = ((GrMethod)setUpMethod).getBlock();
-    final PsiElement anchor = findAnchorForAssignment(body);
-    generateAssignment(field, (GrStatement)anchor, body, null);
+    final GrStatement anchor = findAnchorForAssignment(body, replaced);
+    generateAssignment(field, anchor, body, null);
   }
 
   void initializeInMethod(@NotNull GrVariable field, @NotNull List<PsiElement> replaced) {
@@ -230,32 +231,33 @@ public class GrIntroduceFieldProcessor {
       GrIntroduceHandlerBase.assertStatement(anchor, myContext.getScope());
     }
 
-    PsiElement occurrence = replaced.get(0);
-    if (!mySettings.replaceAllOccurrences() && !isRefToField(occurrence, field) && PsiUtil.isExpressionStatement(occurrence)) {
-      generateAssignment(field, (GrStatement)anchor, container, occurrence);
+    initializeInMethodInner(field, container, (GrStatement)anchor, replaced.get(0));
+  }
+
+  private void initializeInMethodInner(@NotNull GrVariable field,
+                                       @Nullable GrStatementOwner container,
+                                       @Nullable GrStatement anchor,
+                                       @Nullable PsiElement occurence) {
+    if (!mySettings.replaceAllOccurrences() && PsiUtil.isExpressionStatement(occurence) && Comparing.equal(anchor, occurence)) {
+      generateAssignment(field, anchor, container, occurence);
     }
     else {
-      generateAssignment(field, (GrStatement)anchor, container, null);
+      generateAssignment(field, anchor, container, null);
     }
   }
 
-  private static boolean isRefToField(@NotNull PsiElement occurrence, @NotNull PsiElement field) {
-    return occurrence instanceof GrReferenceExpression && ((GrReferenceExpression)occurrence).resolve() == field;
-  }
-
-
-  void initializeInConstructor(@NotNull GrVariable field) {
+  void initializeInConstructor(@NotNull GrVariable field, @NotNull Collection<PsiElement> replaced) {
     final PsiClass scope = (PsiClass)myContext.getScope();
 
     if (scope instanceof GrAnonymousClassDefinition) {
-      initializeInAnonymousClassInitializer(field, (GrAnonymousClassDefinition)scope);
+      initializeInAnonymousClassInitializer(field, (GrAnonymousClassDefinition)scope, replaced);
     }
     else {
-      initializeInConstructor(field, scope);
+      initializeInConstructor(field, scope, replaced);
     }
   }
 
-  private void initializeInConstructor(@NotNull GrVariable field, @NotNull PsiClass scope) {
+  private void initializeInConstructor(@NotNull GrVariable field, @NotNull PsiClass scope, @NotNull Collection<PsiElement> replaced) {
     PsiMethod[] constructors = scope.getConstructors();
     if (constructors.length == 0) {
       constructors = new PsiMethod[]{generateConstructor(scope)};
@@ -264,9 +266,9 @@ public class GrIntroduceFieldProcessor {
     for (PsiMethod constructor : constructors) {
       final GrConstructorInvocation invocation = PsiImplUtil.getChainingConstructorInvocation((GrMethod)constructor);
       if (invocation != null && invocation.isThisCall()) continue;
-      final PsiElement anchor = findAnchorForAssignment(((GrMethod)constructor).getBlock());
-
-      generateAssignment(field, (GrStatement)anchor, ((GrMethod)constructor).getBlock(), null);
+      final GrOpenBlock body = ((GrMethod)constructor).getBlock();
+      final GrStatement anchor = findAnchorForAssignment(body, replaced);
+      initializeInMethodInner(field, body, anchor, ContainerUtil.getFirstItem(replaced));
     }
   }
 
@@ -281,21 +283,23 @@ public class GrIntroduceFieldProcessor {
     return (PsiMethod)scope.add(constructor);
   }
 
-  private void initializeInAnonymousClassInitializer(@NotNull GrVariable field, @NotNull GrAnonymousClassDefinition scope) {
+  private void initializeInAnonymousClassInitializer(@NotNull GrVariable field,
+                                                     @NotNull GrAnonymousClassDefinition scope,
+                                                     @NotNull Collection<PsiElement> replaced) {
     final GrClassInitializer[] initializers = scope.getInitializers();
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myContext.getProject());
     final GrClassInitializer initializer = initializers.length == 0 ? (GrClassInitializer)scope.add(factory.createClassInitializer())
                                                                     : initializers[0];
 
-    final PsiElement anchor = findAnchorForAssignment(initializer.getBlock());
-    generateAssignment(field, (GrStatement)anchor, initializer.getBlock(), null);
+    final GrStatement anchor = findAnchorForAssignment(initializer.getBlock(), replaced);
+    initializeInMethodInner(field, initializer.getBlock(), anchor, ContainerUtil.getFirstItem(replaced));
   }
 
   private void generateAssignment(@NotNull GrVariable field,
                                   @Nullable GrStatement anchor,
-                                  @NotNull GrStatementOwner defaultContainer,
+                                  @Nullable GrStatementOwner defaultContainer,
                                   @Nullable PsiElement occurrenceToDelete) {
-    if (myInitializer == null) return;
+    if (myInitializer == null || defaultContainer == null) return;
 
     GrAssignmentExpression init = (GrAssignmentExpression)GroovyPsiElementFactory.getInstance(myContext.getProject())
       .createExpressionFromText(mySettings.getName() + " = " + myInitializer.getText());
@@ -325,15 +329,16 @@ public class GrIntroduceFieldProcessor {
   }
 
   @Nullable
-  private PsiElement findAnchorForAssignment(final GrCodeBlock block) {
-    final List<PsiElement> elements = ContainerUtil.findAll(myContext.getOccurrences(), new Condition<PsiElement>() {
+  private static GrStatement findAnchorForAssignment(@Nullable final GrCodeBlock block, @NotNull Collection<PsiElement> replaced) {
+    if (block == null) return null;
+    final List<PsiElement> elements = ContainerUtil.findAll(replaced, new Condition<PsiElement>() {
       @Override
       public boolean value(PsiElement element) {
         return PsiTreeUtil.isAncestor(block, element, true);
       }
     });
     if (elements.isEmpty()) return null;
-    return GrIntroduceHandlerBase.findAnchor(ContainerUtil.toArray(elements, new PsiElement[elements.size()]), block);
+    return (GrStatement)GrIntroduceHandlerBase.findAnchor(ContainerUtil.toArray(elements, new PsiElement[elements.size()]), block);
   }
 
   @NotNull

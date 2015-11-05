@@ -37,6 +37,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -215,7 +216,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
       expectedTypes = new PsiType[]{type};
     }
     else {
-      type = myMethodCall.getArgumentList().getExpressions()[0].getType();
+      type = RefactoringUtil.getTypeByExpression(myMethodCall.getArgumentList().getExpressions()[0]);
       if (type == null || PsiType.NULL.equals(type)) type = PsiType.getJavaLangObject(manager, myMethodCall.getResolveScope());
       expectedTypes = new PsiType[]{type};
     }

@@ -32,6 +32,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,6 +93,8 @@ public class RegistryUi implements Disposable {
     myTable.setStriped(true);
 
     myDescriptionLabel = new JTextArea(3, 50);
+    myDescriptionLabel.setWrapStyleWord(true);
+    myDescriptionLabel.setLineWrap(true);
     myDescriptionLabel.setEditable(false);
     final JScrollPane label = ScrollPaneFactory.createScrollPane(myDescriptionLabel);
     final JPanel descriptionPanel = new JPanel(new BorderLayout());
@@ -303,6 +306,18 @@ public class RegistryUi implements Disposable {
 
       private AbstractAction myCloseAction;
 
+      @Nullable
+      @Override
+      protected JComponent createNorthPanel() {
+        if (!ApplicationManager.getApplication().isInternal()) {
+          JLabel warningLabel = new JLabel(XmlStringUtil.wrapInHtml("<b>Changing registry values may lead to unpredictable results. Don’t change them it unless you were explicitly asked to do that by JetBrains employee.</b>"));
+          warningLabel.setIcon(UIUtil.getWarningIcon());
+          warningLabel.setForeground(JBColor.RED);
+          return warningLabel;
+        }
+        return null;
+      }
+
       @Override
       protected JComponent createCenterPanel() {
         return myContent;
@@ -408,7 +423,7 @@ public class RegistryUi implements Disposable {
       myLabel.setIcon(null);
       myLabel.setText(null);
       myLabel.setHorizontalAlignment(SwingConstants.LEFT);
-      Color fg = isSelected ? table.getSelectionForeground() : table.getForeground();
+      Color fg = isSelected ? table.getSelectionForeground() : v.isChangedFromDefault() ? JBColor.blue : table.getForeground();
       Color bg = isSelected ? table.getSelectionBackground() : table.getBackground();
       
       if (v != null) {

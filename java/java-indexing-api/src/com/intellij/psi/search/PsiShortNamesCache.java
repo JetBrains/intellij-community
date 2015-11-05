@@ -131,7 +131,7 @@ public abstract class PsiShortNamesCache {
   }
 
   public boolean processAllMethodNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
-    return ContainerUtil.process(getAllFieldNames(), processor);
+    return ContainerUtil.process(getAllMethodNames(), processor);
   }
 
   public boolean processAllFieldNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {

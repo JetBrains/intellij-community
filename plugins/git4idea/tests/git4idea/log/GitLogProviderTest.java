@@ -39,7 +39,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.openapi.vcs.Executor.touch;
 import static git4idea.test.GitExecutor.*;
 import static git4idea.test.GitTestUtil.setupUsername;
 import static java.util.Collections.singleton;
@@ -167,14 +166,14 @@ public class GitLogProviderTest extends GitSingleRepoTest {
 
   public void test_filter_by_branch() throws Exception {
     List<String> hashes = generateHistoryForFilters(true);
-    VcsLogBranchFilter branchFilter = new VcsLogBranchFilterImpl(singleton("feature"), Collections.<String>emptySet());
+    VcsLogBranchFilter branchFilter = VcsLogBranchFilterImpl.fromBranch("feature");
     List<String> actualHashes = getFilteredHashes(branchFilter, null);
     assertEquals(hashes, actualHashes);
   }
 
   public void test_filter_by_branch_and_user() throws Exception {
     List<String> hashes = generateHistoryForFilters(false);
-    VcsLogBranchFilter branchFilter = new VcsLogBranchFilterImpl(singleton("feature"), Collections.<String>emptySet());
+    VcsLogBranchFilter branchFilter = VcsLogBranchFilterImpl.fromBranch("feature");
     VcsLogUserFilter userFilter = new VcsLogUserFilterImpl(singleton(GitTestUtil.USER_NAME), Collections.<VirtualFile, VcsUser>emptyMap(),
                                                            Collections.<VcsUser>emptySet());
     List<String> actualHashes = getFilteredHashes(branchFilter, userFilter);
@@ -227,11 +226,6 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     tac("a.txt");
     git("tag ATAG");
     tac("b.txt");
-  }
-
-  private static String tac(@NotNull String file) {
-    touch(file, "content" + Math.random());
-    return addCommit("touched " + file);
   }
 
   private static void createTaggedBranch() {

@@ -17,8 +17,9 @@
 package com.theoryinpractice.testng.ui.actions;
 
 import com.intellij.execution.actions.AbstractAddToTestsPatternAction;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.configurations.ConfigurationType;
+import com.theoryinpractice.testng.configuration.AbstractTestNGPatternConfigurationProducer;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.configuration.TestNGConfigurationType;
 import com.theoryinpractice.testng.configuration.TestNGPatternConfigurationProducer;
@@ -31,7 +32,7 @@ public class TestNGAddToTestsPatternAction extends AbstractAddToTestsPatternActi
 
   @Override
   @NotNull
-  protected TestNGPatternConfigurationProducer getPatternBasedProducer() {
+  protected AbstractTestNGPatternConfigurationProducer getPatternBasedProducer() {
     return RunConfigurationProducer.getInstance(TestNGPatternConfigurationProducer.class);
   }
 

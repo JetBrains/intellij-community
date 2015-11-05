@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,31 +15,26 @@
  */
 package com.intellij.execution.configurations;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ColoredProcessHandler;
-import com.intellij.execution.process.DefaultJavaProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
-import com.intellij.execution.ExecutionException;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author spleaner
  */
 public class JavaCommandLineStateUtil {
-  private JavaCommandLineStateUtil() {
-  }
+  private JavaCommandLineStateUtil() { }
 
   @NotNull
-  public static OSProcessHandler startProcess(@NotNull final GeneralCommandLine commandLine) throws ExecutionException {
+  public static OSProcessHandler startProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     return startProcess(commandLine, false);
   }
   
   @NotNull
-  public static OSProcessHandler startProcess(@NotNull final GeneralCommandLine commandLine,
-                                              final boolean ansiColoring) throws ExecutionException {
-
-    final OSProcessHandler processHandler = ansiColoring ? new ColoredProcessHandler(commandLine)
-                                                         : new DefaultJavaProcessHandler(commandLine);
+  public static OSProcessHandler startProcess(@NotNull GeneralCommandLine commandLine, boolean ansiColoring) throws ExecutionException {
+    OSProcessHandler processHandler = ansiColoring ? new ColoredProcessHandler(commandLine) : new OSProcessHandler(commandLine);
     ProcessTerminatedListener.attach(processHandler);
     return processHandler;
   }

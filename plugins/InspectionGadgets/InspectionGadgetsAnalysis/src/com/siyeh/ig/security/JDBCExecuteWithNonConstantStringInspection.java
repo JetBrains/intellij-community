@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,47 +15,39 @@
  */
 package com.siyeh.ig.security;
 
-import com.intellij.psi.*;
-import com.intellij.psi.util.ConstantExpressionUtil;
-import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import org.jetbrains.annotations.NonNls;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.Set;
+import javax.swing.*;
 
-public class JDBCExecuteWithNonConstantStringInspection
-  extends BaseInspection {
+public class JDBCExecuteWithNonConstantStringInspection extends BaseInspection {
 
-  /**
-   * @noinspection StaticCollection
-   */
-  @NonNls private static final Set<String> s_execMethodNames =
-    new HashSet<String>(4);
-
-  static {
-    s_execMethodNames.add("execute");
-    s_execMethodNames.add("executeQuery");
-    s_execMethodNames.add("executeUpdate");
-    s_execMethodNames.add("addBatch");
-  }
-
+  @SuppressWarnings("PublicField")
+  public boolean considerStaticFinalConstant = false;
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "jdbc.execute.with.non.constant.string.display.name");
+    return InspectionGadgetsBundle.message("jdbc.execute.with.non.constant.string.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "jdbc.execute.with.non.constant.string.problem.descriptor");
+    return InspectionGadgetsBundle.message("jdbc.execute.with.non.constant.string.problem.descriptor");
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("consider.static.final.fields.constant.option"),
+                                          this, "considerStaticFinalConstant");
   }
 
   @Override
@@ -63,46 +55,13 @@ public class JDBCExecuteWithNonConstantStringInspection
     return new RuntimeExecVisitor();
   }
 
-  private static class RuntimeExecVisitor extends BaseInspectionVisitor {
+  private class RuntimeExecVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression = expression
-        .getMethodExpression();
-      final String methodName = methodExpression.getReferenceName();
-      if (!s_execMethodNames.contains(methodName)) {
-        return;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiClass aClass = method.getContainingClass();
-      if (aClass == null) {
-        return;
-      }
-      if (!InheritanceUtil.isInheritor(aClass, "java.sql.Statement")) {
-        return;
-      }
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      final PsiExpression[] args = argumentList.getExpressions();
-      if (args.length == 0) {
-        return;
-      }
-      final PsiExpression arg = args[0];
-      final PsiType type = arg.getType();
-      if (type == null) {
-        return;
-      }
-      final String typeText = type.getCanonicalText();
-      if (!CommonClassNames.JAVA_LANG_STRING.equals(typeText)) {
-        return;
-      }
-      final String stringValue =
-        (String)ConstantExpressionUtil.computeCastTo(arg, type);
-      if (stringValue != null) {
+      if (!MethodCallUtils.callWithNonConstantString(expression, considerStaticFinalConstant, "java.sql.Statement",
+                                                     "execute", "executeQuery", "executeUpdate", "addBatch")) {
         return;
       }
       registerMethodCallError(expression);

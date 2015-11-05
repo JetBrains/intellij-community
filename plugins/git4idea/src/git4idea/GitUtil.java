@@ -66,6 +66,8 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
 
+import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
+
 /**
  * Git utility/helper methods
  */
@@ -90,6 +92,13 @@ public class GitUtil {
   public static final String DOT_GIT = ".git";
 
   public static final String ORIGIN_HEAD = "origin/HEAD";
+
+  public static final Function<GitRepository, VirtualFile> REPOSITORY_TO_ROOT = new Function<GitRepository, VirtualFile>() {
+    @Override
+    public VirtualFile fun(@NotNull GitRepository repository) {
+      return repository.getRoot();
+    }
+  };
 
   private final static Logger LOG = Logger.getInstance(GitUtil.class);
 
@@ -250,7 +259,7 @@ public class GitUtil {
    * @param value a value to parse
    * @return timestamp as {@link Date} object
    */
-  private static Date parseTimestamp(String value) {
+  public static Date parseTimestamp(String value) {
     final long parsed;
     parsed = Long.parseLong(value.trim());
     return new Date(parsed * 1000);
@@ -706,12 +715,7 @@ public class GitUtil {
 
   @NotNull
   public static Collection<VirtualFile> getRootsFromRepositories(@NotNull Collection<GitRepository> repositories) {
-    return ContainerUtil.map(repositories, new Function<GitRepository, VirtualFile>() {
-      @Override
-      public VirtualFile fun(@NotNull GitRepository repository) {
-        return repository.getRoot();
-      }
-    });
+    return ContainerUtil.map(repositories, REPOSITORY_TO_ROOT);
   }
 
   @NotNull
@@ -966,7 +970,7 @@ public class GitUtil {
     msg = msg.trim();
     for (String prefix : PREFIXES) {
       if (msg.startsWith(prefix)) {
-        return msg.substring(prefix.length()).trim();
+        msg = msg.substring(prefix.length()).trim();
       }
     }
     return msg;
@@ -980,5 +984,20 @@ public class GitUtil {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public static String joinToHtml(@NotNull Collection<GitRepository> repositories) {
+    return StringUtil.join(repositories, new Function<GitRepository, String>() {
+      @Override
+      public String fun(GitRepository repository) {
+        return repository.getPresentableUrl();
+      }
+    }, "<br/>");
+  }
+
+  @NotNull
+  public static String mention(@NotNull GitRepository repository) {
+    return getRepositoryManager(repository.getProject()).moreThanOneRoot() ? " in " + getShortRepositoryName(repository) : "";
   }
 }

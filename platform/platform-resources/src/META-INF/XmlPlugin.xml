@@ -11,9 +11,9 @@
   </xi:include>
 
   <application-components>
-    <component>
-      <implementation-class>com.intellij.javaee.DefaultHtmlDoctypeInitialConfigurator</implementation-class>
-    </component>
+    <!--<component>-->
+      <!--<implementation-class>com.intellij.javaee.DefaultHtmlDoctypeInitialConfigurator</implementation-class>-->
+    <!--</component>-->
     <component>
       <implementation-class>com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer</implementation-class>
     </component>
@@ -139,8 +139,6 @@
     <completion.contributor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlNoVariantsDelegator" order="before xmlNonFirst"/>
     <completion.contributor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlLocationCompletionContributor"/>
 
-    <completion.confidence language="XML" implementationClass="com.intellij.codeInsight.completion.XmlNameCompletionConfidence" id="xml"/>
-    <completion.confidence language="HTML" implementationClass="com.intellij.codeInsight.completion.XmlNameCompletionConfidence" id="html"/>
     <completion.confidence language="HTML" implementationClass="com.intellij.codeInsight.completion.HtmlTextCompletionConfidence" id="htmlText"/>
     <completion.confidence language="XHTML" implementationClass="com.intellij.codeInsight.completion.HtmlTextCompletionConfidence" id="xhtmlText"/>
 

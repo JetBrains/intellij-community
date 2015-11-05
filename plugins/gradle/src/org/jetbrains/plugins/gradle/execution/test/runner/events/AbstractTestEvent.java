@@ -15,40 +15,41 @@
  */
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleConsoleProperties;
-import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager;
 
 /**
  * @author Vladislav.Soroka
  * @since 2/28/14
  */
 public abstract class AbstractTestEvent implements TestEvent {
-  private final GradleTestsExecutionConsoleManager myConsoleManager;
+  private final GradleTestsExecutionConsole myExecutionConsole;
 
-  public AbstractTestEvent(GradleTestsExecutionConsoleManager consoleManager) {
-    this.myConsoleManager = consoleManager;
+  public AbstractTestEvent(GradleTestsExecutionConsole executionConsole) {
+    this.myExecutionConsole = executionConsole;
   }
 
-  public GradleTestsExecutionConsoleManager getConsoleManager() {
-    return myConsoleManager;
+  public GradleTestsExecutionConsole getExecutionConsole() {
+    return myExecutionConsole;
   }
 
   protected SMTestRunnerResultsForm getResultsViewer() {
-    return myConsoleManager.getExecutionConsole().getResultsViewer();
+    return myExecutionConsole.getResultsViewer();
   }
 
   protected Project getProject() {
-    return myConsoleManager.getExecutionConsole().getProperties().getProject();
+    return myExecutionConsole.getProperties().getProject();
   }
 
   protected GradleConsoleProperties getProperties() {
-    return (GradleConsoleProperties)getConsoleManager().getExecutionConsole().getProperties();
+    return (GradleConsoleProperties)getExecutionConsole().getProperties();
   }
 
   @Nullable
@@ -78,5 +79,14 @@ public abstract class AbstractTestEvent implements TestEvent {
 
   protected void addToInvokeLater(final Runnable runnable) {
     ExternalSystemApiUtil.addToInvokeLater(runnable);
+  }
+
+  @Nullable
+  protected SMTestProxy findTestProxy(final String proxyId) {
+    return getExecutionConsole().getTestsMap().get(proxyId);
+  }
+
+  protected void registerTestProxy(final String proxyId, SMTestProxy testProxy) {
+    myExecutionConsole.getTestsMap().put(proxyId, testProxy);
   }
 }

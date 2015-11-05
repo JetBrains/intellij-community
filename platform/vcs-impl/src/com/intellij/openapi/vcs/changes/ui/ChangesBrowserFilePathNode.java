@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 
 import java.io.File;
+
+import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 /**
  * @author yole
@@ -55,8 +57,8 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
     else {
       if (renderer.isShowFlatten()) {
         renderer.append(path.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        final FilePath parentPath = path.getParentPath();
-        renderer.append(" (" + FileUtil.getLocationRelativeToUserHome(parentPath.getPresentableUrl()) + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        FilePath parentPath = path.getParentPath();
+        renderer.append(spaceAndThinSpace() + FileUtil.getLocationRelativeToUserHome(parentPath.getPresentableUrl()), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
       else {
         renderer.append(getRelativePath(safeCastToFilePath(((ChangesBrowserNode)getParent()).getUserObject()), path),

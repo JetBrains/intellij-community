@@ -79,4 +79,8 @@ public class PyMakeFunctionFromMethodQuickFixTest extends PyQuickFixTestCase {
   public void testLocalClass() {
     doQuickFixTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.function"));
   }
+
+  public void testRemoveQualifiers() {
+    doQuickFixTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.function"));
+  }
 }

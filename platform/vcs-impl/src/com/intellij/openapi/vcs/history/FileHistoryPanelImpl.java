@@ -641,6 +641,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
     myDualView.setCellWrapper(new MyCellWrapper(sessionGetter));
 
+    myDualView.installDoubleClickHandler(new MyDiffAction());
+
     final TableView flatView = myDualView.getFlatView();
     TableViewModel sortableModel = flatView.getTableViewModel();
     sortableModel.setSortable(true);
@@ -768,19 +770,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
 
     final MyDiffAction diffAction = new MyDiffAction();
+    diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), null);
     result.add(diffAction);
-    if (!popup) {
-      List<Shortcut> shortcuts = new SmartList<Shortcut>();
-      ContainerUtil.addAll(shortcuts, CommonShortcuts.getDiff().getShortcuts());
-      ContainerUtil.addAll(shortcuts, CommonShortcuts.DOUBLE_CLICK_1.getShortcuts());
-      CustomShortcutSet shortcutSet = new CustomShortcutSet(ContainerUtil.toArray(shortcuts, new Shortcut[shortcuts.size()]));
 
-      diffAction.registerCustomShortcutSet(shortcutSet, myDualView.getFlatView());
-      diffAction.registerCustomShortcutSet(shortcutSet, myDualView.getTreeView());
-    }
-    else {
-      diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), this);
-    }
     result.add(ActionManager.getInstance().getAction("Vcs.ShowDiffWithLocal"));
 
     final AnAction diffGroup = ActionManager.getInstance().getAction(VCS_HISTORY_ACTIONS_GROUP);
@@ -862,7 +854,15 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
       int selectionSize = sel.size();
       if (selectionSize > 1) {
-        myDiffHandler.showDiffForTwo(e.getRequiredData(CommonDataKeys.PROJECT), myFilePath, sel.get(0).getRevision(), sel.get(sel.size() - 1).getRevision());
+        List<VcsFileRevision> selectedRevisions = ContainerUtil.sorted(ContainerUtil.map(sel, new Function<TreeNodeOnVcsRevision, VcsFileRevision>() {
+          @Override
+          public VcsFileRevision fun(TreeNodeOnVcsRevision treeNode) {
+            return treeNode.getRevision();
+          }
+        }), myRevisionsInOrderComparator);
+        VcsFileRevision olderRevision = selectedRevisions.get(0);
+        VcsFileRevision newestRevision = selectedRevisions.get(sel.size() - 1);
+        myDiffHandler.showDiffForTwo(e.getRequiredData(CommonDataKeys.PROJECT), myFilePath, olderRevision, newestRevision);
       }
       else if (selectionSize == 1) {
         final TableView<TreeNodeOnVcsRevision> flatView = myDualView.getFlatView();

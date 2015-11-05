@@ -3,8 +3,15 @@
  */
 package com.intellij.codeInspection.javaDoc;
 
+import com.intellij.codeInsight.intention.impl.AddJavadocIntention;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.Gray;
@@ -12,7 +19,10 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -30,6 +40,38 @@ public class JavaDocLocalInspection extends JavaDocLocalInspectionBase {
   @Override
   public JComponent createOptionsPanel() {
     return new OptionsPanel();
+  }
+
+  @Override
+  protected LocalQuickFix createAddJavadocFix(@NotNull final PsiElement nameIdentifier, boolean isOnTheFly) {
+    if (isOnTheFly) {
+      final AddJavadocIntention intention = new AddJavadocIntention();
+      return new LocalQuickFixAndIntentionActionOnPsiElement(nameIdentifier) {
+        @Override
+        public void invoke(@NotNull Project project,
+                           @NotNull PsiFile file,
+                           @Nullable("is null when called from inspection") Editor editor,
+                           @NotNull PsiElement startElement,
+                           @NotNull PsiElement endElement) {
+          intention.invoke(project, editor, startElement);
+        }
+
+        @NotNull
+        @Override
+        public String getText() {
+          return intention.getText();
+        }
+
+        @Nls
+        @NotNull
+        @Override
+        public String getFamilyName() {
+          return intention.getFamilyName();
+        }
+      };
+    }
+
+    return super.createAddJavadocFix(nameIdentifier, false);
   }
 
   private class OptionsPanel extends JPanel {

@@ -117,6 +117,11 @@ public class PyExtractMethodUtil {
               .refactoringStarted(getRefactoringId(), beforeData);
 
             final StringBuilder builder = new StringBuilder();
+            final boolean isAsync = fragment.isAsync();
+            if (isAsync) {
+              builder.append("async ");
+            }
+            builder.append("def f():\n    ");
             final List<PsiElement> newMethodElements = new ArrayList<PsiElement>(elementsRange);
             final boolean hasOutputVariables = !fragment.getOutputVariables().isEmpty();
 
@@ -124,14 +129,17 @@ public class PyExtractMethodUtil {
             final LanguageLevel languageLevel = LanguageLevel.forElement(statement1);
             if (hasOutputVariables) {
               // Generate return modified variables statements
-              StringUtil.join(fragment.getOutputVariables(), ", ", builder);
+              final String outputVariables = StringUtil.join(fragment.getOutputVariables(), ", ");
+              String newMethodText = builder + "return " + outputVariables;
+              builder.append(outputVariables);
 
-              final PsiElement returnStatement = generator.createFromText(languageLevel, PyElement.class, "return " + builder.toString());
+              final PyFunction function = generator.createFromText(languageLevel, PyFunction.class, newMethodText);
+              final PsiElement returnStatement = function.getStatementList().getStatements()[0];
               newMethodElements.add(returnStatement);
             }
 
             // Generate method
-            PyFunction generatedMethod = generateMethodFromElements(project, methodName, variableData, newMethodElements, flags);
+            PyFunction generatedMethod = generateMethodFromElements(project, methodName, variableData, newMethodElements, flags, isAsync);
             generatedMethod = insertGeneratedMethod(statement1, generatedMethod);
 
             // Process parameters
@@ -148,7 +156,10 @@ public class PyExtractMethodUtil {
             else if (fragment.isReturnInstructionInside()) {
               builder.append("return ");
             }
-            if (fragment.isYieldInside()) {
+            if (isAsync) {
+              builder.append("await ");
+            }
+            else if (fragment.isYieldInside()) {
               builder.append("yield from ");
             }
             if (isMethod) {
@@ -156,7 +167,8 @@ public class PyExtractMethodUtil {
             }
             builder.append(methodName).append("(");
             builder.append(createCallArgsString(variableData)).append(")");
-            PsiElement callElement = generator.createFromText(languageLevel, PyElement.class, builder.toString());
+            final PyFunction function = generator.createFromText(languageLevel, PyFunction.class, builder.toString());
+            PsiElement callElement = function.getStatementList().getStatements()[0];
 
             // replace statements with call
             callElement = replaceElements(elementsRange, callElement);
@@ -297,7 +309,8 @@ public class PyExtractMethodUtil {
             @Override
             public void run() {
               // Generate method
-              PyFunction generatedMethod = generateMethodFromExpression(project, methodName, variableData, expression, flags);
+              final boolean isAsync = fragment.isAsync();
+              PyFunction generatedMethod = generateMethodFromExpression(project, methodName, variableData, expression, flags, isAsync);
               generatedMethod = insertGeneratedMethod(expression, generatedMethod);
 
               // Process parameters
@@ -306,7 +319,14 @@ public class PyExtractMethodUtil {
 
               // Generating call element
               final StringBuilder builder = new StringBuilder();
-              if (fragment.isYieldInside()) {
+              if (isAsync) {
+                builder.append("async ");
+              }
+              builder.append("def f():\n    ");
+              if (isAsync) {
+                builder.append("await ");
+              }
+              else if (fragment.isYieldInside()) {
                 builder.append("yield from ");
               }
               else {
@@ -318,8 +338,9 @@ public class PyExtractMethodUtil {
               builder.append(methodName);
               builder.append("(").append(createCallArgsString(variableData)).append(")");
               final PyElementGenerator generator = PyElementGenerator.getInstance(project);
-              final PyElement generated =
-                generator.createFromText(LanguageLevel.forElement(expression), PyElement.class, builder.toString());
+              final PyFunction function = generator.createFromText(LanguageLevel.forElement(expression), PyFunction.class,
+                                                                   builder.toString());
+              final PyElement generated = function.getStatementList().getStatements()[0];
               PsiElement callElement = null;
               if (generated instanceof PyReturnStatement) {
                 callElement = ((PyReturnStatement)generated).getExpression();
@@ -434,7 +455,7 @@ public class PyExtractMethodUtil {
       }
     }
     // Change signature according to pass settings and
-    final PyFunctionBuilder builder = new PyFunctionBuilder("foo");
+    final PyFunctionBuilder builder = new PyFunctionBuilder("foo", generatedMethod);
     if (isClassMethod) {
       builder.parameter("cls");
     }
@@ -468,7 +489,7 @@ public class PyExtractMethodUtil {
     final PsiNamedElement parent = PsiTreeUtil.getParentOfType(anchor, PyFile.class, PyClass.class, PyFunction.class);
 
     final PsiElement result;
-    // The only safe case to insert extracted function *after* original scope owner is function.
+    // The only safe case to insert extracted function *after* the original scope owner is when it's function.
     if (parent instanceof PyFunction) {
       result = parent.getParent().addAfter(generatedMethod, parent);
     }
@@ -495,10 +516,13 @@ public class PyExtractMethodUtil {
                                                          @NotNull final String methodName,
                                                          @NotNull final AbstractVariableData[] variableData,
                                                          @NotNull final PsiElement expression,
-                                                         @Nullable final PyUtil.MethodFlags flags) {
-    final PyFunctionBuilder builder = new PyFunctionBuilder(methodName);
+                                                         @Nullable final PyUtil.MethodFlags flags, boolean isAsync) {
+    final PyFunctionBuilder builder = new PyFunctionBuilder(methodName, expression);
     addDecorators(builder, flags);
     addFakeParameters(builder, variableData);
+    if (isAsync) {
+      builder.makeAsync();
+    }
     final String text;
     if (expression instanceof PyYieldExpression) {
       text = String.format("(%s)", expression.getText());
@@ -515,10 +539,14 @@ public class PyExtractMethodUtil {
                                                        @NotNull final String methodName,
                                                        @NotNull final AbstractVariableData[] variableData,
                                                        @NotNull final List<PsiElement> elementsRange,
-                                                       @Nullable PyUtil.MethodFlags flags) {
+                                                       @Nullable PyUtil.MethodFlags flags,
+                                                       boolean isAsync) {
     assert !elementsRange.isEmpty() : "Empty statements list was selected!";
 
-    final PyFunctionBuilder builder = new PyFunctionBuilder(methodName);
+    final PyFunctionBuilder builder = new PyFunctionBuilder(methodName, elementsRange.get(0));
+    if (isAsync) {
+      builder.makeAsync();
+    }
     addDecorators(builder, flags);
     addFakeParameters(builder, variableData);
     final PyFunction method = builder.buildFunction(project, LanguageLevel.forElement(elementsRange.get(0)));

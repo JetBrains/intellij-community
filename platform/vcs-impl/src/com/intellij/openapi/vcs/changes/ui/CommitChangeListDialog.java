@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,13 +48,17 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.OnOffListener;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
+import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +81,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private final CommitContext myCommitContext;
   private final CommitMessage myCommitMessageArea;
   private Splitter mySplitter;
-  private final JPanel myAdditionalOptionsPanel;
+  @Nullable private final JPanel myAdditionalOptionsPanel;
 
   private final ChangesBrowser myBrowser;
   private final ChangesBrowserExtender myBrowserExtender;
@@ -119,6 +123,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private final String myOkActionText;
   private CommitAction myCommitAction;
   @Nullable private CommitResultHandler myResultHandler;
+
+  private static final float SPLITTER_PROPORTION_OPTION_DEFAULT = 0.5f;
+  private static final float DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT = 0.6f;
+  private static final boolean DETAILS_SHOW_OPTION_DEFAULT = false;
 
   private static class MyUpdateButtonsRunnable implements Runnable {
     private CommitChangeListDialog myDialog;
@@ -347,9 +355,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     myActionName = VcsBundle.message("commit.dialog.title");
 
-    myAdditionalOptionsPanel = new JPanel();
-
-    myAdditionalOptionsPanel.setLayout(new BorderLayout());
     Box optionsBox = Box.createVerticalBox();
 
     boolean hasVcsOptions = false;
@@ -432,7 +437,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     if (hasVcsOptions || beforeVisible || afterVisible) {
       optionsBox.add(Box.createVerticalGlue());
+      myAdditionalOptionsPanel = new JPanel(new BorderLayout());
       myAdditionalOptionsPanel.add(optionsBox, BorderLayout.NORTH);
+    }
+    else {
+      myAdditionalOptionsPanel = null;
     }
 
     myOkActionText = actionName;
@@ -459,7 +468,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     myWarningLabel = new JLabel();
     myWarningLabel.setUI(new MultiLineLabelUI());
-    myWarningLabel.setForeground(Color.red);
+    myWarningLabel.setForeground(JBColor.RED);
 
     updateWarning();
 
@@ -496,12 +505,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void showDetailsIfSaved() {
-    String value = PropertiesComponent.getInstance().getValue(DETAILS_SHOW_OPTION);
-    if (value != null) {
-      Boolean asBoolean = Boolean.valueOf(value);
-      if (Boolean.TRUE.equals(asBoolean)) {
-        myDetailsSplitter.initOn();
-      }
+    boolean showDetails = PropertiesComponent.getInstance().getBoolean(DETAILS_SHOW_OPTION, DETAILS_SHOW_OPTION_DEFAULT);
+    if (showDetails) {
+      myDetailsSplitter.initOn();
     }
     SwingUtilities.invokeLater(new Runnable() {
       @Override
@@ -796,12 +802,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myUpdateButtonsRunnable.cancel();
     super.dispose();
     Disposer.dispose(myDiffDetails);
-    PropertiesComponent.getInstance().setValue(SPLITTER_PROPORTION_OPTION, String.valueOf(mySplitter.getProportion()));
+    PropertiesComponent.getInstance().setValue(SPLITTER_PROPORTION_OPTION, mySplitter.getProportion(), SPLITTER_PROPORTION_OPTION_DEFAULT);
     float usedProportion = myDetailsSplitter.getUsedProportion();
     if (usedProportion > 0) {
-      PropertiesComponent.getInstance().setValue(DETAILS_SPLITTER_PROPORTION_OPTION, String.valueOf(usedProportion));
+      PropertiesComponent.getInstance().setValue(DETAILS_SPLITTER_PROPORTION_OPTION, usedProportion, DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT);
     }
-    PropertiesComponent.getInstance().setValue(DETAILS_SHOW_OPTION, String.valueOf(myDetailsSplitter.isOn()));
+    PropertiesComponent.getInstance().setValue(DETAILS_SHOW_OPTION, myDetailsSplitter.isOn(), DETAILS_SHOW_OPTION_DEFAULT);
   }
 
   @Override
@@ -1001,40 +1007,36 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Override
   @Nullable
   protected JComponent createCenterPanel() {
-    JPanel rootPane = new JPanel(new BorderLayout());
-
     mySplitter = new Splitter(true);
     mySplitter.setHonorComponentsMinimumSize(true);
     mySplitter.setFirstComponent(myBrowser);
     mySplitter.setSecondComponent(myCommitMessageArea);
     initMainSplitter();
 
-    rootPane.add(mySplitter, BorderLayout.CENTER);
-
     myChangesInfoCalculator = new ChangeInfoCalculator();
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
-    JPanel legendPanel = new JPanel(new BorderLayout());
-    legendPanel.add(myLegend.getComponent(), BorderLayout.EAST);
-    myBrowser.getBottomPanel().add(legendPanel, BorderLayout.SOUTH);
+    myBrowser.getBottomPanel().add(JBUI.Panels.simplePanel().addToRight(myLegend.getComponent()), BorderLayout.SOUTH);
 
-    JPanel infoPanel = new JPanel(new BorderLayout());
-    JScrollPane optionsPane = ScrollPaneFactory.createScrollPane(myAdditionalOptionsPanel, true);
-    optionsPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    optionsPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-    optionsPane.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
-    infoPanel.add(optionsPane, BorderLayout.CENTER);
-    rootPane.add(infoPanel, BorderLayout.EAST);
-    infoPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 0));
+    JPanel mainPanel;
+    if (myAdditionalOptionsPanel != null) {
+      JScrollPane optionsPane = ScrollPaneFactory.createScrollPane(myAdditionalOptionsPanel, true);
+      optionsPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+      optionsPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+      optionsPane.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
+      JPanel infoPanel = JBUI.Panels.simplePanel(optionsPane).withBorder(JBUI.Borders.emptyLeft(10));
 
-    final JPanel wrapper = new JPanel(new GridBagLayout());
-    final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                                         new Insets(0, 0, 0, 0), 0, 0);
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(wrapper, BorderLayout.WEST);
-    rootPane.add(panel, BorderLayout.SOUTH);
+      mainPanel = new JPanel(new MyOptionsLayout(mySplitter, infoPanel, 150));
+      mainPanel.add(mySplitter);
+      mainPanel.add(infoPanel);
+    } else {
+      mainPanel = mySplitter;
+    }
 
-    myWarningLabel.setBorder(BorderFactory.createEmptyBorder(5,5,0,5));
-    wrapper.add(myWarningLabel, gb);
+    myWarningLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
+    final JPanel panel = new JPanel(new GridBagLayout());
+    panel.add(myWarningLabel, new GridBag().anchor(GridBagConstraints.NORTHWEST).weightx(1));
+
+    JPanel rootPane = JBUI.Panels.simplePanel(mainPanel).addToBottom(panel);
 
     // TODO: there are no reason to use such heavy interface for a simple task.
     myDetailsSplitter = new SplitterWithSecondHideable(true, "Details", rootPane,
@@ -1063,6 +1065,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                        }) {
       @Override
       protected RefreshablePanel createDetails() {
+        final JPanel panel = JBUI.Panels.simplePanel(myDiffDetails.getComponent());
         return new RefreshablePanel() {
           @Override
           public boolean refreshDataSynch() {
@@ -1079,12 +1082,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
           @Override
           public JPanel getPanel() {
-            return (JPanel)myDiffDetails.getComponent(); // TODO: i don't like this cast.
+            return panel;
           }
 
           @Override
           public void away() {
-
           }
 
           @Override
@@ -1094,24 +1096,15 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
           @Override
           public void dispose() {
-
           }
         };
       }
 
       @Override
       protected float getSplitterInitialProportion() {
-        float value = 0;
-        final String remembered = PropertiesComponent.getInstance().getValue(DETAILS_SPLITTER_PROPORTION_OPTION);
-        if (remembered != null) {
-          try {
-            value = Float.valueOf(remembered);
-          } catch (NumberFormatException e) {
-            //
-          }
-        }
+        float value = PropertiesComponent.getInstance().getFloat(DETAILS_SPLITTER_PROPORTION_OPTION, DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT);
         if (value <= 0.05 || value >= 0.95) {
-          return 0.6f;
+          return DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT;
         }
         return value;
       }
@@ -1121,16 +1114,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void initMainSplitter() {
-    final String s = PropertiesComponent.getInstance().getValue(SPLITTER_PROPORTION_OPTION);
-    if (s != null) {
-      try {
-        mySplitter.setProportion(Float.valueOf(s).floatValue());
-      } catch (NumberFormatException e) {
-        //
-      }
-    } else {
-      mySplitter.setProportion(0.5f);
-    }
+    mySplitter.setProportion(PropertiesComponent.getInstance().getFloat(SPLITTER_PROPORTION_OPTION, SPLITTER_PROPORTION_OPTION_DEFAULT));
   }
 
   public Collection<AbstractVcs> getAffectedVcses() {
@@ -1415,6 +1399,35 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     @Override
     protected void onAfterNavigate() {
       doCancelAction();
+    }
+  }
+
+  private static class MyOptionsLayout extends AbstractLayoutManager {
+    private final JComponent myPanel;
+    private final JComponent myOptions;
+    private final int myMinOptionsWidth;
+
+    public MyOptionsLayout(@NotNull JComponent panel, @NotNull JComponent options, int minOptionsWidth) {
+      myPanel = panel;
+      myOptions = options;
+      myMinOptionsWidth = minOptionsWidth;
+    }
+
+    @Override
+    public Dimension preferredLayoutSize(Container parent) {
+      Dimension size1 = myPanel.getPreferredSize();
+      Dimension size2 = myOptions.getPreferredSize();
+      return new Dimension(size1.width + size2.width, Math.max(size1.height, size2.height));
+    }
+
+    @Override
+    public void layoutContainer(Container parent) {
+      Rectangle bounds = parent.getBounds();
+      int availableWidth = bounds.width - myPanel.getPreferredSize().width;
+      int preferredWidth = myOptions.getPreferredSize().width;
+      int optionsWidth = Math.max(Math.min(availableWidth, preferredWidth), myMinOptionsWidth);
+      myPanel.setBounds(new Rectangle(0, 0, bounds.width - optionsWidth, bounds.height));
+      myOptions.setBounds(new Rectangle(bounds.width - optionsWidth, 0, optionsWidth, bounds.height));
     }
   }
 }

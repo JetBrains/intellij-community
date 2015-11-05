@@ -232,6 +232,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testRecursiveAtSiteSubstitutorsWithAdditionalConstraints() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

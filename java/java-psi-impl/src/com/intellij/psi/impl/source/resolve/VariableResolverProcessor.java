@@ -42,12 +42,8 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
   private PsiElement myCurrentFileContext = null;
 
   public VariableResolverProcessor(@NotNull PsiJavaCodeReferenceElement place, @NotNull PsiFile placeFile) {
-    super(place.getText(), ourFilter, new PsiConflictResolver[]{new JavaVariableConflictResolver()}, new SmartList<CandidateInfo>(), place, placeFile);
+    super(place.getReferenceName(), ourFilter, new PsiConflictResolver[]{new JavaVariableConflictResolver()}, new SmartList<CandidateInfo>(), place, placeFile);
 
-    PsiElement referenceName = place.getReferenceNameElement();
-    if (referenceName instanceof PsiIdentifier){
-      setName(referenceName.getText());
-    }
     PsiClass access = null;
     PsiElement qualifier = place.getQualifier();
     if (qualifier instanceof PsiExpression) {
@@ -85,7 +81,9 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
 
   @Override
   public void add(@NotNull PsiElement element, @NotNull PsiSubstitutor substitutor) {
-    final boolean staticProblem = myStaticScopeFlag && !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC);
+    final boolean staticProblem = myStaticScopeFlag && 
+                                  !((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC) &&
+                                  !(element instanceof PsiVariable && PsiUtil.isCompileTimeConstant((PsiVariable)element));
     add(new CandidateInfo(element, substitutor, myPlace, myAccessClass, staticProblem, myCurrentFileContext));
   }
 
@@ -108,6 +106,7 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
   @Override
   public <T> T getHint(@NotNull Key<T> hintKey) {
     if (hintKey == ElementClassHint.KEY) {
+      //noinspection unchecked
       return (T)this;
     }
 

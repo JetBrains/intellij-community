@@ -768,6 +768,12 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return new AddMethodQualifierFix(methodCall);
   }
 
+  @NotNull
+  @Override
+  public IntentionAction createWrapLongWithMathToIntExactFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
+    return new WrapLongWithMathToIntExactFix(type, expression);
+  }
+
   private static boolean timeToOptimizeImports(@NotNull PsiFile file) {
     if (!CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY) return false;
 

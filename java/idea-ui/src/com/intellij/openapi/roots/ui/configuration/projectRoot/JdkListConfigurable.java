@@ -38,10 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class JdkListConfigurable extends BaseStructureConfigurable {
   private final ProjectSdksModel myJdksTreeModel;
@@ -212,9 +209,8 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   }
 
   @Override
-  protected void removeJdk(final Sdk jdk) {
-    myJdksTreeModel.removeSdk(jdk);
-    myContext.getDaemonAnalyzer().removeElement(new SdkProjectStructureElement(myContext, jdk));
+  protected List<? extends RemoveConfigurableHandler<?>> getRemoveHandlers() {
+    return Collections.singletonList(new SdkRemoveHandler());
   }
 
   @Override
@@ -222,5 +218,20 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   @Nullable
   String getEmptySelectionString() {
     return "Select an SDK to view or edit its details here";
+  }
+
+  private class SdkRemoveHandler extends RemoveConfigurableHandler<Sdk> {
+    public SdkRemoveHandler() {
+      super(JdkConfigurable.class);
+    }
+
+    @Override
+    public boolean remove(@NotNull Collection<Sdk> sdks) {
+      for (Sdk sdk : sdks) {
+        myJdksTreeModel.removeSdk(sdk);
+        myContext.getDaemonAnalyzer().removeElement(new SdkProjectStructureElement(myContext, sdk));
+      }
+      return true;
+    }
   }
 }

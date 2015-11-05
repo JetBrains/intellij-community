@@ -39,7 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -137,12 +137,12 @@ public class RunInspectionAction extends GotoActionBase {
                                     @NotNull Project project,
                                     Module module) {
         final AnalysisScope scope = super.getScope(uiOptions, defaultScope, project, module);
-        final SearchScope filterScope = fileFilterPanel.getSearchScope();
+        final GlobalSearchScope filterScope = fileFilterPanel.getSearchScope();
         if (filterScope == null) {
           return scope;
         }
-        final SearchScope filteredScope = filterScope.intersectWith(scope.toSearchScope());
-        return new AnalysisScope(filteredScope, project);
+        scope.setFilter(filterScope);
+        return scope;
       }
     };
 

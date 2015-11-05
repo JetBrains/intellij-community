@@ -30,14 +30,14 @@ class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor,
   override fun normalizeFileSpec(fileSpec: String): String {
     var path = super.normalizeFileSpec(fileSpec)
     if (path.startsWithMacro(StoragePathMacros.PROJECT_CONFIG_DIR)) {
-      return path.substring(StoragePathMacros.PROJECT_CONFIG_DIR.length() + 1)
+      return path.substring(StoragePathMacros.PROJECT_CONFIG_DIR.length + 1)
     }
     return path
   }
 
-  override fun expandNormalizedPath(path: String): String {
+  override fun expandMacros(path: String): String {
     if (path[0] == '$') {
-      return super.expandNormalizedPath(path)
+      return super.expandMacros(path)
     }
     else {
       return "${expandMacro(StoragePathMacros.PROJECT_CONFIG_DIR)}/$path"

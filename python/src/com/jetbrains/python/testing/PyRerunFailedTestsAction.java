@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,7 +100,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
     }
 
     @Override
-    protected String getRunner() {
+    protected HelperPackage getRunner() {
       return myState.getRunner();
     }
 
@@ -109,9 +110,9 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
       List<AbstractTestProxy> failedTests = getFailedTests(myProject);
       for (AbstractTestProxy failedTest : failedTests) {
         if (failedTest.isLeaf()) {
-          final Location location = failedTest.getLocation(myProject, myConsoleProperties.getScope());
+          final Location<?> location = failedTest.getLocation(myProject, myConsoleProperties.getScope());
           if (location != null) {
-            String spec = getConfiguration().getTestSpec(location);
+            final String spec = getConfiguration().getTestSpec(location, failedTest);
             if (spec != null && !specs.contains(spec)) {
               specs.add(spec);
             }
@@ -122,19 +123,19 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
     }
 
     @Override
-    protected void addAfterParameters(GeneralCommandLine cmd) throws ExecutionException {
+    protected void addAfterParameters(GeneralCommandLine cmd) {
       myState.addAfterParameters(cmd);
     }
 
     @Override
-    protected void addBeforeParameters(GeneralCommandLine cmd) throws ExecutionException {
+    protected void addBeforeParameters(GeneralCommandLine cmd) {
       myState.addBeforeParameters(cmd);
     }
 
     @Override
-    public void addPredefinedEnvironmentVariables(Map<String, String> envs, boolean passParentEnvs) {
-      myState.addPredefinedEnvironmentVariables(envs,
-                                                passParentEnvs);
+    public void customizeEnvironmentVars(Map<String, String> envs, boolean passParentEnvs) {
+      myState.customizeEnvironmentVars(envs,
+                                       passParentEnvs);
     }
   }
 }

@@ -19,13 +19,12 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.MethodFilter;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author egor
  */
 public abstract class JvmSteppingCommandProvider {
-  public static ExtensionPointName<JvmSteppingCommandProvider> EP_NAME =
+  public static final ExtensionPointName<JvmSteppingCommandProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.debugger.jvmSteppingCommandProvider");
 
   /**

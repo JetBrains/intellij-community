@@ -146,14 +146,29 @@ target('default': "Build artifacts") {
   layoutEducational("${paths.sandbox}/classes/production", usedJars)
 
   def extraArgs = ["build.code": "pycharm${buildName}", "build.number": "PE-$buildNumber", "artifacts.path": "${paths.artifacts}"]
+  def sitFileName = "pycharm${buildName}"
+  ant.copy(file: "${paths.artifacts}/pycharm${buildName}.mac.zip", tofile: "${paths.artifacts}/${sitFileName}.sit")
+
   signMacZip("pycharm", extraArgs)
-  notifyArtifactBuilt("${paths.artifacts}/pycharm${buildName}.sit")
+  notifyArtifactBuilt("${paths.artifacts}/${sitFileName}.sit")
   buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs)
 
   if (p("jdk.bundled.mac") != "false" && new File(macJDK).exists()) {
-    signMacZip("pycharm", extraArgs + ["sitFileName": "pycharm${buildName}-jdk-bundled", "jdk_archive_name": macJDK])
-    buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs + ["sitFileName": "pycharm${buildName}-jdk-bundled"])
+    sitFileName = "${sitFileName}-jdk-bundled"
+    ant.copy(file: "${paths.artifacts}/pycharm${buildName}.mac.zip", tofile: "${paths.artifacts}/${sitFileName}.sit")
+    signMacZip("pycharm", extraArgs + ["sitFileName": "${sitFileName}", "jdk_archive_name": macJDK])
+    buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs + ["sitFileName": "${sitFileName}"])
   }
+
+  //custom jdk bundled
+  if (p("jdk.custom.mac") == "true" && new File(macCustomJDK).exists()) {
+    sitFileName = "pycharm${buildName}-custom-jdk-bundled"
+    ant.copy(file: "${paths.artifacts}/pycharm${buildName}.mac.zip", tofile: "${paths.artifacts}/${sitFileName}.sit")
+    signMacZip("pycharm", extraArgs + ["sitFileName": "${sitFileName}", "jdk_archive_name": macCustomJDK])
+    buildDmg("pycharm", "${pythonEduHome}/build/DMG_background.png", extraArgs + ["sitFileName": "${sitFileName}"])
+  }
+
+  ant.delete(file: "${paths.artifacts}/pycharm${buildName}.mac.zip")
 }
 
 public layoutEducational(String classesPath, Set usedJars) {
@@ -196,7 +211,7 @@ public layoutEducational(String classesPath, Set usedJars) {
     "$pythonEduHome/resources"]
   buildWinLauncher(ch, "$ch/bin/WinLauncher/WinLauncher.exe", launcher,
                    appInfo, "$pythonEduHome/build/pycharm_edu_launcher.properties", system_selector, resourcePaths)
-  executeExternalAnt(["dirName": "${paths.distWin}/bin", "fileName": "pycharm.exe"], "$home/build/signBuild.xml")
+  signExecutableFiles("${paths.distWin}/bin")
 
   buildWinZip("${paths.artifacts}/pycharm${buildName}.zip", [paths.distAll, paths.distWin, "${paths.sandbox}/bundled.win.jdk"])
 
@@ -212,9 +227,7 @@ public layoutEducational(String classesPath, Set usedJars) {
 
 
   String macAppRoot = isEap() ? "PyCharm Edu ${p("component.version.major")}.${p("component.version.minor")} EAP.app/Contents" : "PyCharm Edu.app/Contents"
-  buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.sit", [paths.distAll], paths.distMac)
-  ant.copy(file: "${paths.artifacts}/pycharm${buildName}.sit", tofile: "${paths.artifacts}/pycharm${buildName}-jdk-bundled.sit")
-  //ant.delete(file: "${paths.artifacts}/pycharm${buildName}.sit")
+  buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.mac.zip", [paths.distAll], paths.distMac)
 }
 
 private layoutPlugins(layouts) {
@@ -262,7 +275,7 @@ private layoutFull(Map args, String target, Set usedJars) {
       }
       jar("extensions.jar") { module("extensions") }
 
-      jar("pycharm.jar") {
+      jar([name: "pycharm.jar", duplicate: "preserve"]) {
         pycharmImplementationModules().each {
           module(it) {
             exclude(name: "**/tips/**")

@@ -12,6 +12,7 @@
     <extensionPoint name="autoImportOptionsProvider" beanClass="com.intellij.application.options.editor.AutoImportOptionsProviderEP" area="IDEA_PROJECT">
       <with attribute="instance" implements="com.intellij.application.options.editor.AutoImportOptionsProvider"/>
     </extensionPoint>
+    <!--suppress ExtensionPointBeanClass -->
     <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
 
     <extensionPoint name="moduleConfigurable"
@@ -208,6 +209,9 @@
 
     <extensionPoint name="lang.rearranger" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.codeStyle.arrangement.Rearranger"/>
+    </extensionPoint>
+    <extensionPoint name="lang.formatting.extractor" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.psi.codeStyle.extractor.differ.LangCodeStyleExtractor"/>
     </extensionPoint>
     <extensionPoint name="rearranger.ui" interface="com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent$Factory"/>
 
@@ -848,6 +852,10 @@
 
     <extensionPoint name="packageDependencies.visitor" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.packageDependencies.DependencyVisitorFactory"/>
+    </extensionPoint>
+
+    <extensionPoint name="lang.sliceProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.slicer.SliceLanguageSupportProvider"/>
     </extensionPoint>
   </extensionPoints>
 </idea-plugin>

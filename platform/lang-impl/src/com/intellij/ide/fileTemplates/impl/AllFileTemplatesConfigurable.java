@@ -23,7 +23,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentsPackage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
@@ -44,7 +43,6 @@ import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -164,6 +162,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     final FileTemplate newTemplate = new CustomFileTemplate(name, selected.getExtension());
     newTemplate.setText(selected.getText());
     newTemplate.setReformatCode(selected.isReformatCode());
+    newTemplate.setLiveTemplateEnabled(selected.isLiveTemplateEnabled());
     myCurrentTab.addTemplate(newTemplate);
     myModified = true;
     myCurrentTab.selectTemplate(newTemplate);
@@ -218,11 +217,8 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
 
     final List<FileTemplateTab> allTabs = new ArrayList<FileTemplateTab>(Arrays.asList(myTemplatesList, myIncludesList, myCodeTemplatesList));
 
-    final Set<FileTemplateGroupDescriptorFactory> factories = new THashSet<FileTemplateGroupDescriptorFactory>();
-    factories.addAll(ComponentsPackage.getComponents(ApplicationManager.getApplication(), FileTemplateGroupDescriptorFactory.class));
-    ContainerUtil.addAll(factories, Extensions.getExtensions(FileTemplateGroupDescriptorFactory.EXTENSION_POINT_NAME));
-
-    if (!factories.isEmpty()) {
+    final FileTemplateGroupDescriptorFactory[] factories = Extensions.getExtensions(FileTemplateGroupDescriptorFactory.EXTENSION_POINT_NAME);
+    if (factories.length != 0) {
       myOtherTemplatesList = new FileTemplateTabAsTree(OTHER_TITLE) {
         @Override
         public void onTemplateSelected() {

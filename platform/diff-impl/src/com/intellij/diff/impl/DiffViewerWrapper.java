@@ -21,6 +21,11 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
+/*
+ * This is not an extension point you are looking for.
+ * <p/>
+ * Please, consider using DiffTool, DiffExtension or introducing a better extension point instead.
+ */
 public interface DiffViewerWrapper {
   Key<DiffViewerWrapper> KEY = Key.create("Diff.DiffViewerWrapper");
 

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -28,10 +27,8 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -53,7 +50,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
@@ -112,7 +108,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final Map<VcsBackgroundableActions, BackgroundableActionEnabledHandler> myBackgroundableActionHandlerMap;
 
   private final List<Pair<String, TextAttributes>> myPendingOutput = new ArrayList<Pair<String, TextAttributes>>();
-  private VcsEventsListenerManagerImpl myVcsEventListenerManager;
 
   private final VcsHistoryCache myVcsHistoryCache;
   private final ContentRevisionCache myContentRevisionCache;
@@ -134,10 +129,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myInitialization = new VcsInitialization(myProject);
     myMappings = new NewMappings(myProject, myMessageBus, this, manager);
     myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
-
-    if (!myProject.isDefault()) {
-      myVcsEventListenerManager = new VcsEventsListenerManagerImpl();
-    }
 
     myVcsHistoryCache = new VcsHistoryCache();
     myContentRevisionCache = new ContentRevisionCache();
@@ -228,25 +219,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public void projectOpened() {
-    final StartupManager manager = StartupManager.getInstance(myProject);
-    manager.registerPostStartupActivity(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-        if (toolWindowManager != null) { // Can be null in tests
-          if (!Registry.is("vcs.merge.toolwindows")) {
-            ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.VCS, true, ToolWindowAnchor.BOTTOM, myProject, true);
-            myContentManager = toolWindow.getContentManager();
-            toolWindow.setIcon(AllIcons.Toolwindows.VcsSmallTab);
-            toolWindow.installWatcher(myContentManager);
-          }
-        }
-        else {
-          myContentManager = ContentFactory.SERVICE.getInstance().createContentManager(true, myProject);
-        }
-      }
-    });
-
     addInitializationRequest(VcsInitObject.AFTER_COMMON, new Runnable() {
       @Override
       public void run() {
@@ -373,8 +345,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public ContentManager getContentManager() {
-    if (myContentManager == null && Registry.is("vcs.merge.toolwindows")) {
-      final ToolWindow changes = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
+    if (myContentManager == null) {
+      ToolWindow changes = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
       myContentManager = changes == null ? null : changes.getContentManager();
     }
     return myContentManager;
@@ -807,8 +779,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   @Override
+  @Nullable
   public VcsEventsListenerManager getVcsEventsListenerManager() {
-    return myVcsEventListenerManager;
+    return null;
   }
 
   @Override
@@ -821,11 +794,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @Override
   public String haveDefaultMapping() {
     return myMappings.haveDefaultMapping();
-  }
-
-  @Override
-  protected VcsEnvironmentsProxyCreator getProxyCreator() {
-    return myVcsEventListenerManager;
   }
 
   public BackgroundableActionEnabledHandler getBackgroundableActionHandler(final VcsBackgroundableActions action) {

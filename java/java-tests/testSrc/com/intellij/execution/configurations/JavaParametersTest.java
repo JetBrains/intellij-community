@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.roots.ModuleRootManagerTestCase;
+import org.intellij.lang.annotations.MagicConstant;
 
 /**
  * @author nik
@@ -96,13 +97,22 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
                     getJDomJar());
   }
 
-  private static void assertClasspath(final Module module, final int type, VirtualFile... roots) throws CantRunException {
+  public void testUseNewestJreVersion() throws CantRunException {
+    Module dep = createModule("dep");
+    ModuleRootModificationUtil.addDependency(myModule, dep, DependencyScope.TEST, true);
+    ModuleRootModificationUtil.setModuleSdk(myModule, getMockJdk17WithRtJarOnly());
+    ModuleRootModificationUtil.setModuleSdk(dep, getMockJdk18WithRtJarOnly());
+    assertClasspath(myModule, JavaParameters.JDK_AND_CLASSES, getRtJarJdk17());
+    assertClasspath(myModule, JavaParameters.JDK_AND_CLASSES_AND_TESTS, getRtJarJdk18());
+  }
+
+  private static void assertClasspath(final Module module, @MagicConstant(flagsFromClass = JavaParameters.class) int type, VirtualFile... roots) throws CantRunException {
     final JavaParameters javaParameters = new JavaParameters();
     javaParameters.configureByModule(module, type);
     assertRoots(javaParameters.getClassPath(), roots);
   }
 
-  private void assertClasspath(final Project project, final int type, VirtualFile... roots) throws CantRunException {
+  private void assertClasspath(final Project project, @MagicConstant(flagsFromClass = JavaParameters.class) int type, VirtualFile... roots) throws CantRunException {
     final JavaParameters javaParameters = new JavaParameters();
     javaParameters.configureByProject(project, type, getTestProjectJdk());
     assertRoots(javaParameters.getClassPath(), roots);

@@ -18,10 +18,10 @@ package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 import java.util.List;
@@ -35,18 +35,15 @@ public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscap
 
   private final List<AnsiEscapeDecoder.ColoredTextAcceptor> myColoredTextListeners = ContainerUtil.newArrayList();
 
-  public ColoredProcessHandler(final GeneralCommandLine commandLine) throws ExecutionException {
-    super(commandLine.createProcess(), commandLine.getCommandLineString(), commandLine.getCharset());
-    setHasPty(commandLine instanceof PtyCommandLine);
+  public ColoredProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+    super(commandLine);
   }
 
-  public ColoredProcessHandler(Process process, String commandLine) {
+  public ColoredProcessHandler(@NotNull Process process, @Nullable String commandLine) {
     super(process, commandLine);
   }
 
-  public ColoredProcessHandler(final Process process,
-                               final String commandLine,
-                               @NotNull final Charset charset) {
+  public ColoredProcessHandler(@NotNull Process process, @Nullable String commandLine, @NotNull Charset charset) {
     super(process, commandLine, charset);
   }
 

@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,8 +89,16 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
 
   @Nullable
   public static PsiCallExpression canBeMethodReferenceProblem(@Nullable final PsiElement body,
-                                                                 final PsiParameter[] parameters,
-                                                                 PsiType functionalInterfaceType) {
+                                                              final PsiParameter[] parameters,
+                                                              final PsiType functionalInterfaceType) {
+    return canBeMethodReferenceProblem(body, parameters, functionalInterfaceType, null);
+  }
+
+  @Nullable
+  public static PsiCallExpression canBeMethodReferenceProblem(@Nullable final PsiElement body,
+                                                              final PsiParameter[] parameters,
+                                                              PsiType functionalInterfaceType, 
+                                                              @Nullable PsiElement context) {
     final PsiCallExpression callExpression = extractMethodCallFromBlock(body);
     if (callExpression instanceof PsiNewExpression) {
       final PsiNewExpression newExpression = (PsiNewExpression)callExpression;
@@ -103,7 +112,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
       LOG.assertTrue(callExpression != null);
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(callExpression.getProject());
       final PsiMethodReferenceExpression methodReferenceExpression = 
-        (PsiMethodReferenceExpression)elementFactory.createExpressionFromText(methodReferenceText, callExpression);
+        (PsiMethodReferenceExpression)elementFactory.createExpressionFromText(methodReferenceText, context != null ? context : callExpression);
       final Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
       try {
         map.put(methodReferenceExpression, functionalInterfaceType);
@@ -115,6 +124,10 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
           }
           if (!(element instanceof PsiMethod)) {
             LOG.assertTrue(callExpression instanceof PsiNewExpression);
+            if (((PsiNewExpression)callExpression).getQualifier() != null) {
+              return null;
+            }
+
             final PsiExpression[] dims = ((PsiNewExpression)callExpression).getArrayDimensions();
             if (dims.length == 1 && parameters.length == 1){
               if (!resolvesToParameter(dims[0], parameters[0])) {
@@ -161,7 +174,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     }
 
     if (expressions.length == 0 && parameters.length == 0) {
-      return true;
+      return !(callExpression instanceof PsiNewExpression && qualifier != null);
     }
 
     final int offset = parameters.length - calledParametersCount;
@@ -366,7 +379,10 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
         return getClassReferenceName(containingClass);
       }
       else {
-        final PsiClass parentContainingClass = PsiTreeUtil.getParentOfType(methodCall, PsiClass.class);
+        PsiClass parentContainingClass = PsiTreeUtil.getParentOfType(methodCall, PsiClass.class);
+        if (parentContainingClass instanceof PsiAnonymousClass) {
+          parentContainingClass = PsiTreeUtil.getParentOfType(parentContainingClass, PsiClass.class, true);
+        }
         PsiClass treeContainingClass = parentContainingClass;
         while (treeContainingClass != null && !InheritanceUtil.isInheritorOrSelf(treeContainingClass, containingClass, true)) {
           treeContainingClass = PsiTreeUtil.getParentOfType(treeContainingClass, PsiClass.class, true);
@@ -413,8 +429,15 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     }
 
     final PsiType qualifierExpressionType = qualifierExpression.getType();
-    return qualifierExpressionType != null && !TypeConversionUtil.containsWildcards(qualifierExpressionType)
-           ? qualifierExpressionType.getCanonicalText() : getClassReferenceName(containingClass);
+    if (qualifierExpressionType != null && !TypeConversionUtil.containsWildcards(qualifierExpressionType)) {
+      try {
+        final String canonicalText = qualifierExpressionType.getCanonicalText();
+        JavaPsiFacade.getElementFactory(containingClass.getProject()).createExpressionFromText(canonicalText + "::foo", qualifierExpression);
+        return canonicalText;
+      }
+      catch (IncorrectOperationException ignore){}
+    }
+    return getClassReferenceName(containingClass);
   }
 
   private static String getClassReferenceName(PsiClass containingClass) {

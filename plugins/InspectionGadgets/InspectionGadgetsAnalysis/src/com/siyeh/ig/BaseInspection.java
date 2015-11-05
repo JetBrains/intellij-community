@@ -29,6 +29,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -87,6 +88,19 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
   @NotNull
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
     return InspectionGadgetsFix.EMPTY_ARRAY;
+  }
+
+  protected void writeBooleanOption(@NotNull Element node, String property) {
+    writeBooleanOption(node, property, null);
+  }
+
+  protected void writeBooleanOption(@NotNull Element node, String property, @Nullable Boolean defaultValueToIgnore) {
+    final Boolean value = ReflectionUtil.getField(this.getClass(), this, boolean.class, property);
+    assert value != null;
+    if (defaultValueToIgnore != null && defaultValueToIgnore.equals(value)) {
+      return;
+    }
+    node.addContent(new Element("option").setAttribute("name", property).setAttribute("value", value.toString()));
   }
 
   public abstract BaseInspectionVisitor buildVisitor();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -307,6 +307,29 @@ class GroovyLightProjectDescriptor  {
 ''', false, false, false, CUR_METHOD)
   }
 
+  void 'test GString closure injection and initialize in current method'() {
+    doTest '''\
+class GroovyLightProjectDescriptor  {
+    public void configureModule() {
+        print ("${<selection>mockGroovy2_1LibraryName</selection>}!/");
+    }
+
+    def getMockGroovy2_1LibraryName() {''}
+}
+''', '''\
+class GroovyLightProjectDescriptor  {
+    def f
+
+    public void configureModule() {
+        f = mockGroovy2_1LibraryName
+        print ("${f}!/");
+    }
+
+    def getMockGroovy2_1LibraryName() {''}
+}
+''', false, false, false, CUR_METHOD
+  }
+
   void testInitializeInMethodInThenBranch() {
     doTest('''\
 class A {
@@ -345,6 +368,177 @@ class A {
 }''', false, true, false, FIELD_DECLARATION, true, null)
   }
 
+  void 'test replace top level expression within constructor and initialize in current method'() {
+    doTest '''\
+class TestClass {
+    TestClass() {
+        new St<caret>ring()
+    }
+
+    TestClass(a) {
+    }
+}
+''', '''\
+class TestClass {
+    def f
+
+    TestClass() {
+        f = new String()
+    }
+
+    TestClass(a) {
+    }
+}
+''', false, false, false, CUR_METHOD
+  }
+
+  void 'test replace top level expression within constructor and initialize field'() {
+    doTest '''\
+class TestClass {
+    TestClass() {
+        new St<caret>ring()
+    }
+
+    TestClass(a) {
+    }
+}
+''', '''\
+class TestClass {
+    def f = new String()
+
+    TestClass() {
+        f
+    }
+
+    TestClass(a) {
+    }
+}
+''', false, false, false, FIELD_DECLARATION
+  }
+
+  void 'test replace top level expression within constructor and initialize in constructor'() {
+    doTest '''\
+class TestClass {
+    TestClass() {
+        new St<caret>ring()
+    }
+
+    TestClass(a) {
+    }
+}
+''', '''\
+class TestClass {
+    def f
+
+    TestClass() {
+        f = new String()
+    }
+
+    TestClass(a) {
+        f = new String()
+    }
+}
+''', false, false, false, CONSTRUCTOR
+  }
+
+  void 'test replace non top level expression within constructor and initialize in current method'() {
+    doTest '''\
+class TestClass {
+    TestClass() {
+        <selection>new String()</selection>.empty
+    }
+
+    TestClass(a) {
+    }
+}
+''', '''\
+class TestClass {
+    def f
+
+    TestClass() {
+        f = new String()
+        f.empty
+    }
+
+    TestClass(a) {
+    }
+}
+''', false, false, false, CUR_METHOD
+  }
+
+  void 'test replace non top level expression within constructor and initialize field'() {
+    doTest '''\
+class TestClass {
+    TestClass() {
+        <selection>new String()</selection>.empty
+    }
+
+    TestClass(a) {
+    }
+}
+''', '''\
+class TestClass {
+    def f = new String()
+
+    TestClass() {
+        f.empty
+    }
+
+    TestClass(a) {
+    }
+}
+''', false, false, false, FIELD_DECLARATION
+  }
+
+  void 'test replace non top level expression within constructor and initialize in constructor'() {
+    doTest '''\
+class TestClass {
+    TestClass() {
+        <selection>new String()</selection>.empty
+    }
+
+    TestClass(a) {
+    }
+}
+''', '''\
+class TestClass {
+    def f
+
+    TestClass() {
+        f = new String()
+        f.empty
+    }
+
+    TestClass(a) {
+        f = new String()
+    }
+}
+''', false, false, false, CONSTRUCTOR
+  }
+
+  void 'test replace string injection and initialize in constructor'() {
+    doTest '''\
+class TestClass {
+    TestClass() {
+        "${<selection>new String()</selection>}"
+    }
+    TestClass(a) {
+    }
+}
+''','''\
+class TestClass {
+    def f
+
+    TestClass() {
+        f = new String()
+        "${f}"
+    }
+    TestClass(a) {
+        f = new String()
+    }
+}
+''', false, false, false, CONSTRUCTOR
+  }
 
   private void doTest(final boolean isStatic,
                       final boolean removeLocal,

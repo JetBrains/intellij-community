@@ -323,21 +323,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return null;
   }
 
-  public int setRightCustomEdgeTokenBinderForNode(int lastIndex,
-                                                  @NotNull LighterASTNode node,
-                                                  @NotNull WhitespacesAndCommentsBinder binder) {
-    int i = lastIndex;
-    DoneMarker d = ((StartMarker)node).myDoneMarker;
-    d.myEdgeTokenBinder = binder;
-    for (int len = myProduction.size(); i < len; i ++) {
-      ProductionMarker m = myProduction.get(i);
-      if (m.myLexemeIndex < d.myLexemeIndex) continue;
-      if (m.myLexemeIndex > d.myLexemeIndex || m == d) break;
-      m.myEdgeTokenBinder = binder;
-    }
-    return i;
-  }
-
   private abstract static class Node implements LighterASTNode {
     public abstract int hc();
   }
@@ -780,23 +765,29 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myCachedTokenType = null;
   }
 
+  private IElementType remapCurrentToken() {
+    if (myCachedTokenType != null) return myCachedTokenType;
+    if (myRemapper != null) {
+      remapCurrentToken(myRemapper.filter(myLexTypes[myCurrentLexeme], myLexStarts[myCurrentLexeme],
+                                          myLexStarts[myCurrentLexeme + 1], myLexer.getBufferSequence()));
+    }
+    return myLexTypes[myCurrentLexeme];
+  }
+
   private IElementType calcTokenType() {
     if (eof()) return null;
 
     if (myRemapper != null) {
-      IElementType type = myLexTypes[myCurrentLexeme];
-      type = myRemapper.filter(type, myLexStarts[myCurrentLexeme], myLexStarts[myCurrentLexeme + 1], myLexer.getBufferSequence());
-      myLexTypes[myCurrentLexeme] = type; // filter may have changed the type
+      //remaps current token, and following, which remaps to spaces and comments
       skipWhitespace();
-      type = myLexTypes[myCurrentLexeme];
-      return type;
     }
     return myLexTypes[myCurrentLexeme];
   }
 
   @Override
-  public void setTokenTypeRemapper(final ITokenTypeRemapper remapper) {
+  public void setTokenTypeRemapper(ITokenTypeRemapper remapper) {
     myRemapper = remapper;
+    myTokenTypeChecked = false;
     clearCachedTokenType();
   }
 
@@ -870,7 +861,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private void skipWhitespace() {
-    while (myCurrentLexeme < myLexemeCount && whitespaceOrComment(myLexTypes[myCurrentLexeme])) {
+    while (myCurrentLexeme < myLexemeCount && whitespaceOrComment(remapCurrentToken())) {
       onSkip(myLexTypes[myCurrentLexeme], myLexStarts[myCurrentLexeme], myCurrentLexeme + 1 < myLexemeCount ? myLexStarts[myCurrentLexeme + 1] : myText.length());
       myCurrentLexeme++;
       clearCachedTokenType();
@@ -1215,14 +1206,16 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   @NotNull
   private StartMarker prepareLightTree() {
-    myTokenTypeChecked = true;
-    balanceWhiteSpaces();
-
     if (myProduction.isEmpty()) {
       LOG.error("Parser produced no markers. Text:\n" + myText);
     }
+    // build tree only once to avoid threading issues in read-only PSI
+    StartMarker rootMarker = (StartMarker)myProduction.get(0);
+    if (rootMarker.myFirstChild != null) return rootMarker;
 
-    final StartMarker rootMarker = (StartMarker)myProduction.get(0);
+    myTokenTypeChecked = true;
+    balanceWhiteSpaces();
+
     rootMarker.myParent = rootMarker.myFirstChild = rootMarker.myLastChild = rootMarker.myNext = null;
     StartMarker curNode = rootMarker;
     final Stack<StartMarker> nodes = ContainerUtil.newStack();
@@ -1308,7 +1301,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         assertMarkersBalanced(((StartMarker)item).myDoneMarker != null, item);
       }
 
-      int prevProductionLexIndex = myProduction.get(i - 1).myLexemeIndex;
+      boolean recursive = item.myEdgeTokenBinder instanceof WhitespacesAndCommentsBinder.RecursiveBinder;
+      int prevProductionLexIndex = recursive ? 0 : myProduction.get(i - 1).myLexemeIndex;
       int wsStartIndex = Math.max(item.myLexemeIndex, lastIndex);
       while (wsStartIndex > prevProductionLexIndex && whitespaceOrComment(myLexTypes[wsStartIndex - 1])) wsStartIndex--;
       int wsEndIndex = item.myLexemeIndex;
@@ -1319,6 +1313,15 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         tokenTextGetter.configure(wsStartIndex);
         boolean atEnd = wsStartIndex == 0 || wsEndIndex == myLexemeCount;
         item.myLexemeIndex = wsStartIndex + item.myEdgeTokenBinder.getEdgePosition(wsTokens, atEnd, tokenTextGetter);
+        if (recursive) {
+          for (int k = i - 1; k > 1; k--) {
+            ProductionMarker prev = myProduction.get(k);
+            if (prev.myLexemeIndex >= item.myLexemeIndex) {
+              prev.myLexemeIndex = item.myLexemeIndex;
+            }
+            else break;
+          }
+        }
       }
       else if (item.myLexemeIndex < wsStartIndex) {
         item.myLexemeIndex = wsStartIndex;

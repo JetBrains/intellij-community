@@ -611,14 +611,16 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
           super.addNotify();
 
           // adding in addNotify to make sure the editor is ready for further customization
-          StringComboboxEditor comboboxEditor = new StringComboboxEditor(project, FileTypes.PLAIN_TEXT, myAuthorField, true);
+          StringComboboxEditor comboboxEditor = new StringComboboxEditor(project, FileTypes.PLAIN_TEXT, myAuthorField, true) {
+            @Override
+            protected void onEditorCreate(EditorEx editor) {
+              EditorCustomization customization = SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
+              if (customization != null) {
+                customization.customize(editor);
+              }
+            }
+          };
           myAuthorField.setEditor(comboboxEditor);
-          EditorEx editor = (EditorEx)comboboxEditor.getEditor();
-          assert editor != null;
-          EditorCustomization customization = SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
-          if (customization != null) {
-            customization.customize(editor);
-          }
         }
       };
       myAuthorField.setRenderer(new ListCellRendererWrapper<String>() {

@@ -17,15 +17,12 @@ package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.documentation.PyDocumentationSettings;
-import com.jetbrains.python.editor.PythonDocCommentUtil;
+import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
@@ -77,17 +74,9 @@ public class PyRemoveParameterQuickFix implements LocalQuickFix {
       final PyStringLiteralExpression expression = pyFunction.getDocStringExpression();
       final String paramName = ((PyParameter)element).getName();
       if (expression != null && paramName != null) {
-        final Module module = ModuleUtilCore.findModuleForPsiElement(pyFunction);
-        assert module != null;
-        PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
-        String prefix = documentationSettings.isEpydocFormat(pyFunction.getContainingFile()) ? "@" : ":";
-        final String replacement = PythonDocCommentUtil.removeParamFromDocstring(expression.getText(), prefix, paramName);
-        PyExpression str =
-          PyElementGenerator.getInstance(project).createDocstring(replacement).getExpression();
-        expression.replace(str);
+        PyDocstringGenerator.forDocStringOwner(pyFunction).withoutParam(paramName).buildAndInsert();
       }
     }
-
     element.delete();
   }
 }

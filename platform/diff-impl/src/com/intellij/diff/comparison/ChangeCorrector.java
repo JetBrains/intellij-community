@@ -15,13 +15,12 @@
  */
 package com.intellij.diff.comparison;
 
-import com.intellij.diff.comparison.ByChar.Char;
 import com.intellij.diff.comparison.ByLine.Line;
-import com.intellij.diff.comparison.ByLine.LineWrapper;
 import com.intellij.diff.comparison.iterables.DiffIterableUtil;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -35,15 +34,6 @@ import static com.intellij.diff.comparison.iterables.DiffIterableUtil.fair;
  * Given matching between some sub-sequences of base sequences - build matching on whole base sequences
  */
 abstract class ChangeCorrector {
-  // TODO: use additional list with original indexes instead of interface ?
-  // TODO: we can use information about elements, that could not be matched (because they was not matched during first step)
-
-  public interface CorrectableData {
-    int getOriginalIndex();
-  }
-
-  @NotNull private final List<? extends CorrectableData> myData1;
-  @NotNull private final List<? extends CorrectableData> myData2;
   private final int myLength1;
   private final int myLength2;
   @NotNull private final FairDiffIterable myChanges;
@@ -52,14 +42,10 @@ abstract class ChangeCorrector {
 
   @NotNull protected final DiffIterableUtil.ChangeBuilder myBuilder;
 
-  public ChangeCorrector(@NotNull List<? extends CorrectableData> data1,
-                         @NotNull List<? extends CorrectableData> data2,
-                         int length1,
+  public ChangeCorrector(int length1,
                          int length2,
                          @NotNull FairDiffIterable changes,
                          @NotNull ProgressIndicator indicator) {
-    myData1 = data1;
-    myData2 = data2;
     myLength1 = length1;
     myLength2 = length2;
     myChanges = changes;
@@ -74,47 +60,52 @@ abstract class ChangeCorrector {
     return fair(myBuilder.finish());
   }
 
-  private int offset1 = 0;
-  private int offset2 = 0;
-
   protected void execute() {
+    int last1 = 0;
+    int last2 = 0;
+
     for (Range ch : myChanges.iterateUnchanged()) {
       int count = ch.end1 - ch.start1;
       for (int i = 0; i < count; i++) {
-        CorrectableData data1 = myData1.get(ch.start1 + i);
-        CorrectableData data2 = myData2.get(ch.start2 + i);
-        matchedPair(data1.getOriginalIndex(), data2.getOriginalIndex());
+        int index1 = getOriginalIndex1(ch.start1 + i);
+        int index2 = getOriginalIndex2(ch.start2 + i);
+
+        matchGap(last1, index1, last2, index2);
+        myBuilder.markEqual(index1, index2);
+
+        last1 = index1 + 1;
+        last2 = index2 + 1;
       }
     }
-    matchGap(offset1, myLength1, offset2, myLength2);
-  }
-
-
-  private void matchedPair(int off1, int off2) {
-    matchGap(offset1, off1, offset2, off2);
-    myBuilder.markEqual(off1, off2);
-    offset1 = off1 + 1;
-    offset2 = off2 + 1;
+    matchGap(last1, myLength1, last2, myLength2);
   }
 
   // match elements in range [start1 - end1) -> [start2 - end2)
   protected abstract void matchGap(int start1, int end1, int start2, int end2);
+
+  protected abstract int getOriginalIndex1(int index);
+
+  protected abstract int getOriginalIndex2(int index);
 
   //
   // Implementations
   //
 
   public static class DefaultCharChangeCorrector extends ChangeCorrector {
+    @NotNull private final ByChar.CharOffsets myChars1;
+    @NotNull private final ByChar.CharOffsets myChars2;
     @NotNull private final CharSequence myText1;
     @NotNull private final CharSequence myText2;
 
-    public DefaultCharChangeCorrector(@NotNull List<Char> chars1,
-                                      @NotNull List<Char> chars2,
+    public DefaultCharChangeCorrector(@NotNull ByChar.CharOffsets chars1,
+                                      @NotNull ByChar.CharOffsets chars2,
                                       @NotNull CharSequence text1,
                                       @NotNull CharSequence text2,
                                       @NotNull FairDiffIterable changes,
                                       @NotNull ProgressIndicator indicator) {
-      super(chars1, chars2, text1.length(), text2.length(), changes, indicator);
+      super(text1.length(), text2.length(), changes, indicator);
+      myChars1 = chars1;
+      myChars2 = chars2;
       myText1 = text1;
       myText2 = text2;
     }
@@ -134,19 +125,33 @@ abstract class ChangeCorrector {
 
       myBuilder.markEqual(expand.end1, expand.end2, end1, end2);
     }
+
+    @Override
+    protected int getOriginalIndex1(int index) {
+      return myChars1.offsets[index];
+    }
+
+    @Override
+    protected int getOriginalIndex2(int index) {
+      return myChars2.offsets[index];
+    }
   }
 
   public static class SmartLineChangeCorrector extends ChangeCorrector {
+    @NotNull private final TIntArrayList myIndexes1;
+    @NotNull private final TIntArrayList myIndexes2;
     @NotNull private final List<Line> myLines1;
     @NotNull private final List<Line> myLines2;
 
-    public SmartLineChangeCorrector(@NotNull List<LineWrapper> newLines1,
-                                    @NotNull List<LineWrapper> newLines2,
+    public SmartLineChangeCorrector(@NotNull TIntArrayList indexes1,
+                                    @NotNull TIntArrayList indexes2,
                                     @NotNull List<Line> lines1,
                                     @NotNull List<Line> lines2,
                                     @NotNull FairDiffIterable changes,
                                     @NotNull ProgressIndicator indicator) {
-      super(newLines1, newLines2, lines1.size(), lines2.size(), changes, indicator);
+      super(lines1.size(), lines2.size(), changes, indicator);
+      myIndexes1 = indexes1;
+      myIndexes2 = indexes2;
       myLines1 = lines1;
       myLines2 = lines2;
     }
@@ -165,6 +170,16 @@ abstract class ChangeCorrector {
       }
 
       myBuilder.markEqual(expand.end1, expand.end2, end1, end2);
+    }
+
+    @Override
+    protected int getOriginalIndex1(int index) {
+      return myIndexes1.get(index);
+    }
+
+    @Override
+    protected int getOriginalIndex2(int index) {
+      return myIndexes2.get(index);
     }
   }
 }

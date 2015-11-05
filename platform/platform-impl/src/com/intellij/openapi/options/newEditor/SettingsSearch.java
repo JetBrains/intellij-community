@@ -72,9 +72,6 @@ abstract class SettingsSearch extends SearchTextField implements KeyListener {
         return true;
       }
       if (getTextEditor().isFocusOwner()) {
-        if ("pressed ENTER".equals(strokeString)) {
-          return true; // avoid closing dialog on ENTER
-        }
         try {
           myDelegatingNow = true;
           int code = stroke.getKeyCode();

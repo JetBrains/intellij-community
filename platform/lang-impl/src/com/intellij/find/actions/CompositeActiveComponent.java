@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.find.actions;
 
 import com.intellij.ui.ActiveComponent;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,7 +29,7 @@ class CompositeActiveComponent implements ActiveComponent {
   public CompositeActiveComponent(@NotNull ActiveComponent... components) {
     myComponents = components;
 
-    myComponent = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 0));
+    myComponent = new JPanel(new FlowLayout(FlowLayout.CENTER, JBUI.scale(2), JBUI.scale(4)));
     myComponent.setBorder(null);
     myComponent.setOpaque(false);
     for (ActiveComponent component : components) {

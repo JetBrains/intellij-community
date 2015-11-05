@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,9 +44,9 @@ public class ChangesBrowserManyUnversionedFilesNode extends ChangesBrowserNode {
   @Override
   public void render(ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
     renderer.append(userObject.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    final String s = " (" + (myDirsSize > 0 ? myDirsSize + " directories and " : "") + (myUnversionedSize - myDirsSize) + " files) ";
-    renderer.append(s, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
-    renderer.append("Click to browse", SimpleTextAttributes.LINK_ATTRIBUTES, myShower);
+    final String s = " " + (myDirsSize > 0 ? myDirsSize + " directories and " : "") + (myUnversionedSize - myDirsSize) + " files ";
+    renderer.append(s, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    renderer.append("browse", SimpleTextAttributes.LINK_ATTRIBUTES, myShower);
   }
 
   private static class MyUnversionedShower implements Runnable {

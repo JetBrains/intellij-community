@@ -17,8 +17,15 @@ package com.intellij.psi.codeStyle.autodetect;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.formatting.Block;
+import com.intellij.formatting.FormattingModelXmlReader;
+import com.intellij.formatting.TestBlock;
+import com.intellij.formatting.TestFormattingModel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.psi.formatter.common.NewLineBlocksIterator;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.Iterator;
 
 public class NewLineBlocksIteratorTest extends AbstractNewLineBlocksIteratorTest {
@@ -37,7 +44,7 @@ public class NewLineBlocksIteratorTest extends AbstractNewLineBlocksIteratorTest
        0, 3, 30, 60, 82, 107, 136, 154, 184, 220, 226, 232, 237
     };
 
-    checkNewLineBlocksStartOffsets(newLineBlocksStartOffsets);
+    checkStartOffsets(newLineBlocksStartOffsets);
   }
 
   public void testDoNotReverseBlocks() {
@@ -47,15 +54,30 @@ public class NewLineBlocksIteratorTest extends AbstractNewLineBlocksIteratorTest
       0, 39, 48, 118, 177, 235, 243
     };
 
-    checkNewLineBlocksStartOffsets(newLineBlocksStartOffsets);
+    checkStartOffsets(newLineBlocksStartOffsets);
   }
+  
+  public void testFirstBlockOnNewLineNotStartsIt() throws IOException, JDOMException {
+    String text = "var x = r'''\n" +
+                  "''';";
+    
+    Iterator<Block> it = newIteratorFromTestFormattingModel(text);
+    checkStartOffsets(new int[] {0}, it);
+  }
+  
   
   public void testBigFileWithOnlyErrorElements_DoNotProduceSOE() {
     configureByFile(getFileName() + ".java");
-    Iterator<Block> iterator = createNewLineBlocksIterator();
+    Iterator<Block> iterator = newLineBlockIterator();
     while (iterator.hasNext()) {
       iterator.next();
     }
   }
-
+  
+  protected Iterator<Block> newIteratorFromTestFormattingModel(String text) throws IOException, JDOMException {
+    TestFormattingModel model = new TestFormattingModel(text);
+    Document document = model.getDocument();
+    TestBlock block = new FormattingModelXmlReader(model).readTestBlock(getTestDataPath(), getFileName() + ".xml");
+    return new NewLineBlocksIterator(block, document);
+  }
 }

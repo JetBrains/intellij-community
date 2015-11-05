@@ -90,7 +90,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
       public void run() {
         // create ServiceManagerImpl at first to force extension classes registration
         getPicoContainer().getComponentInstance(ModuleServiceManagerImpl.class);
-        ComponentsPackage.getStateStore(ModuleImpl.this).setPath(path);
+        ServiceKt.getStateStore(ModuleImpl.this).setPath(path);
 
         if (beforeComponentCreation != null) {
           beforeComponentCreation.run();
@@ -140,13 +140,13 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   @Override
   public void rename(String newName) {
     myName = newName;
-    ComponentsPackage.getStateStore(this).getStateStorageManager().rename(StoragePathMacros.MODULE_FILE, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+    ServiceKt.getStateStore(this).getStateStorageManager().rename(StoragePathMacros.MODULE_FILE, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
   }
 
   @Override
   @NotNull
   public String getModuleFilePath() {
-    return ComponentsPackage.getStateStore(this).getStateStorageManager().expandMacros(StoragePathMacros.MODULE_FILE);
+    return ServiceKt.getStateStore(this).getStateStorageManager().expandMacros(StoragePathMacros.MODULE_FILE);
   }
 
   @Override
@@ -340,7 +340,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
     private void setModuleFilePath(String newFilePath) {
       ClasspathStorage.modulePathChanged(ModuleImpl.this, newFilePath);
-      ComponentsPackage.getStateStore(ModuleImpl.this).setPath(FileUtilRt.toSystemIndependentName(newFilePath));
+      ServiceKt.getStateStore(ModuleImpl.this).setPath(FileUtilRt.toSystemIndependentName(newFilePath));
     }
 
     @Override

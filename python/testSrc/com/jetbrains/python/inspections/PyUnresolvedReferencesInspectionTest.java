@@ -510,7 +510,14 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-16146
+  public void testUnresolvedSubscriptionOnClass() {
+    doTest();
+  }
 
+  public void testBuiltinListGetItem() {
+    doTest();
+  }
 
   @NotNull
   @Override

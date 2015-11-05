@@ -24,14 +24,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.remote.RemoteFile;
-import com.intellij.remote.RemoteSdkAdditionalData;
-import com.intellij.remote.RemoteSdkCredentials;
-import com.intellij.remote.VagrantNotStartedException;
+import com.intellij.remote.*;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
+import com.jetbrains.python.run.PyRemoteProcessStarterManagerUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,11 +53,18 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
   protected String getHelperPath(String helper) throws ExecutionException {
     final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
     if (sdkData instanceof PyRemoteSdkAdditionalDataBase) {
-      final PyRemoteSdkAdditionalDataBase remoteSdkData = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
+      final PyRemoteSdkAdditionalDataBase remoteSdkData = (PyRemoteSdkAdditionalDataBase) sdkData;
       try {
-        final RemoteSdkCredentials remoteSdkCredentials = remoteSdkData.getRemoteSdkCredentials(false);
-        if (!StringUtil.isEmpty(remoteSdkCredentials.getHelpersPath())) {
-          return new RemoteFile(remoteSdkCredentials.getHelpersPath(), helper).getPath();
+        String helpersPath;
+        if (remoteSdkData.getRemoteConnectionType() != CredentialsType.DOCKER) {
+          final RemoteSdkCredentials remoteSdkCredentials = remoteSdkData.getRemoteSdkCredentials(false);
+          helpersPath = remoteSdkCredentials.getHelpersPath();
+        }
+        else {
+          helpersPath = remoteSdkData.getHelpersPath();
+        }
+        if (!StringUtil.isEmpty(helpersPath)) {
+          return new RemoteFile(helpersPath, helper).getPath();
         }
         else {
           return null;
@@ -80,26 +85,38 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
   protected ProcessOutput getPythonProcessOutput(@NotNull String helperPath,
                                                  @NotNull List<String> args,
                                                  boolean askForSudo,
-                                                 boolean showProgress, @Nullable String workingDir) throws ExecutionException {
+                                                 boolean showProgress, @Nullable final String workingDir) throws ExecutionException {
     final String homePath = mySdk.getHomePath();
     if (homePath == null) {
       throw new ExecutionException("Cannot find Python interpreter for SDK " + mySdk.getName());
     }
     final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
     if (sdkData instanceof PyRemoteSdkAdditionalDataBase) { //remote interpreter
-      RemoteSdkCredentials remoteSdkCredentials;
-      try {
-        remoteSdkCredentials = ((RemoteSdkAdditionalData)sdkData).getRemoteSdkCredentials(false);
-      }
-      catch (InterruptedException e) {
-        LOG.error(e);
-        remoteSdkCredentials = null;
-      }
-      catch (ExecutionException e) {
-        throw analyzeException(e, helperPath, args);
-      }
       final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
-      if (manager != null && remoteSdkCredentials != null) {
+
+      RemoteSdkCredentials remoteSdkCredentials;
+      if (((PyRemoteSdkAdditionalDataBase)sdkData).getRemoteConnectionType() != CredentialsType.DOCKER) {
+        try {
+          remoteSdkCredentials = ((RemoteSdkAdditionalData)sdkData).getRemoteSdkCredentials(false);
+        }
+        catch (InterruptedException e) {
+          LOG.error(e);
+          remoteSdkCredentials = null;
+        }
+        catch (ExecutionException e) {
+          throw analyzeException(e, helperPath, args);
+        }
+        if (manager != null && remoteSdkCredentials != null) {
+          if (askForSudo) {
+            askForSudo = !manager.ensureCanWrite(null, remoteSdkCredentials, remoteSdkCredentials.getInterpreterPath());
+          }
+        }
+        else {
+          throw new PyExecutionException(PythonRemoteInterpreterManager.WEB_DEPLOYMENT_PLUGIN_IS_DISABLED, helperPath, args);
+        }
+      }
+
+      if (manager != null) {
         final List<String> cmdline = new ArrayList<String>();
         cmdline.add(homePath);
         cmdline.add(RemoteFile.detectSystemByPath(homePath).createRemoteFile(helperPath).getPath());
@@ -109,14 +126,23 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
             return quoteIfNeeded(input);
           }
         }));
-        if (askForSudo) {
-          askForSudo = !manager.ensureCanWrite(null, remoteSdkCredentials, remoteSdkCredentials.getInterpreterPath());
-        }
         ProcessOutput processOutput;
         do {
-          PyRemotePathMapper pathMapper = manager.setupMappings(null, (PyRemoteSdkAdditionalDataBase)sdkData, null);
-          processOutput =
-            manager.runRemoteProcess(null, remoteSdkCredentials, pathMapper, ArrayUtil.toStringArray(cmdline), workingDir, askForSudo);
+          final PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData = (PyRemoteSdkAdditionalDataBase)sdkData;
+          final PyRemotePathMapper pathMapper = manager.setupMappings(null, remoteSdkAdditionalData, null);
+          try {
+            processOutput = PyRemoteProcessStarterManagerUtil.getManager(remoteSdkAdditionalData).executeRemoteProcess(null,
+                                                                                                                       ArrayUtil
+                                                                                                                         .toStringArray(
+                                                                                                                           cmdline),
+                                                                                                                       workingDir, manager,
+                                                                                                                       remoteSdkAdditionalData,
+                                                                                                                       pathMapper,
+                                                                                                                       askForSudo, true);
+          }
+          catch (InterruptedException e) {
+            throw new ExecutionException(e);
+          }
           if (askForSudo && processOutput.getStderr().contains("sudo: 3 incorrect password attempts")) {
             continue;
           }

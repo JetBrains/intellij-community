@@ -76,8 +76,7 @@ public class ExecutionHelper {
     @NotNull final Project myProject,
     @NotNull final List<? extends Exception> errors,
     @NotNull final String tabDisplayName,
-    @Nullable final VirtualFile file)
-  {
+    @Nullable final VirtualFile file) {
     showExceptions(myProject, errors, Collections.<Exception>emptyList(), tabDisplayName, file);
   }
 
@@ -86,8 +85,7 @@ public class ExecutionHelper {
     @NotNull final List<? extends Exception> errors,
     @NotNull final List<? extends Exception> warnings,
     @NotNull final String tabDisplayName,
-    @Nullable final VirtualFile file)
-  {
+    @Nullable final VirtualFile file) {
     if (ApplicationManager.getApplication().isUnitTestMode() && !errors.isEmpty()) {
       throw new RuntimeException(errors.get(0));
     }
@@ -133,12 +131,13 @@ public class ExecutionHelper {
     @NotNull final List<? extends Exception> exceptions,
     @NotNull ErrorViewPanel errorTreeView,
     @Nullable final VirtualFile file,
-    @NotNull final String defaultMessage)
-  {
+    @NotNull final String defaultMessage) {
     for (final Exception exception : exceptions) {
-      String[] messages = StringUtil.splitByLines(exception.getMessage());
+      String message = exception.getMessage();
+
+      String[] messages = StringUtil.isNotEmpty(message) ? StringUtil.splitByLines(message) : ArrayUtil.EMPTY_STRING_ARRAY;
       if (messages.length == 0) {
-        messages = new String[] { defaultMessage };
+        messages = new String[]{defaultMessage};
       }
       errorTreeView.addMessage(messageCategory, messages, file, -1, -1, null);
     }
@@ -388,7 +387,7 @@ public class ExecutionHelper {
         };
       }
       else {
-        process = createTimeLimitedExecutionProcess(processHandler, mode.getTimeout(), presentableCmdline);
+        process = createTimeLimitedExecutionProcess(processHandler, mode, presentableCmdline);
       }
     }
     if (mode.withModalProgress()) {
@@ -482,7 +481,7 @@ public class ExecutionHelper {
   }
 
   private static Runnable createTimeLimitedExecutionProcess(final ProcessHandler processHandler,
-                                                            final int timeout,
+                                                            final ExecutionMode mode,
                                                             @NotNull final String presentableCmdline) {
     return new Runnable() {
       private final Semaphore mySemaphore = new Semaphore();
@@ -491,10 +490,9 @@ public class ExecutionHelper {
         @Override
         public void run() {
           try {
-            final boolean finished = processHandler.waitFor(1000 * timeout);
+            final boolean finished = processHandler.waitFor(1000 * mode.getTimeout());
             if (!finished) {
-              final String msg = "Timeout (" + timeout + " sec) on executing: " + presentableCmdline;
-              LOG.error(msg);
+              mode.getTimeoutCallback().consume(mode, presentableCmdline);
               processHandler.destroyProcess();
             }
           }

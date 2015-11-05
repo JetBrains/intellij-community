@@ -16,16 +16,16 @@
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
-import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager;
 
 /**
  * @author Vladislav.Soroka
  * @since 2/28/14
  */
 public class AfterSuiteEvent extends AbstractTestEvent {
-  public AfterSuiteEvent(GradleTestsExecutionConsoleManager consoleManager) {
-    super(consoleManager);
+  public AfterSuiteEvent(GradleTestsExecutionConsole executionConsole) {
+    super(executionConsole);
   }
 
   @Override
@@ -36,7 +36,7 @@ public class AfterSuiteEvent extends AbstractTestEvent {
     addToInvokeLater(new Runnable() {
       @Override
       public void run() {
-        final SMTestProxy testProxy = getConsoleManager().getTestsMap().get(testId);
+        final SMTestProxy testProxy = findTestProxy(testId);
         if (testProxy == null) return;
 
         switch (result) {
@@ -53,9 +53,6 @@ public class AfterSuiteEvent extends AbstractTestEvent {
             break;
         }
 
-        if (testProxy.isEmptySuite() && !(testProxy instanceof SMTestProxy.SMRootTestProxy)) {
-          testProxy.getParent().getChildren().remove(testProxy);
-        }
         getResultsViewer().onSuiteFinished(testProxy);
       }
     });

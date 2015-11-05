@@ -23,17 +23,15 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubTree;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AnchorElementInfoFactory implements SmartPointerElementInfoFactory {
+public class AnchorElementInfoFactory extends SmartPointerElementInfoFactory {
   @Override
   @Nullable
-  public SmartPointerElementInfo createElementInfo(@NotNull PsiElement element) {
-    PsiFile containingFile = element.getContainingFile();
+  public SmartPointerElementInfo createElementInfo(@NotNull PsiElement element, @NotNull PsiFile containingFile) {
     if (element instanceof StubBasedPsiElement && containingFile instanceof PsiFileWithStubSupport) {
       PsiFileWithStubSupport stubFile = (PsiFileWithStubSupport)containingFile;
       StubTree stubTree = stubFile.getStubTree();
@@ -42,8 +40,9 @@ public class AnchorElementInfoFactory implements SmartPointerElementInfoFactory 
         StubBasedPsiElement stubPsi = (StubBasedPsiElement)element;
         int stubId = PsiAnchor.calcStubIndex(stubPsi);
         IStubElementType myStubElementType = stubPsi.getElementType();
-        IElementType contentElementType = ((PsiFileImpl)containingFile).getContentElementType();
-        if (stubId != -1 && contentElementType instanceof IStubFileElementType) { // TemplateDataElementType is not IStubFileElementType
+
+        IStubFileElementType elementTypeForStubBuilder = ((PsiFileImpl)containingFile).getElementTypeForStubBuilder();
+        if (stubId != -1 && elementTypeForStubBuilder != null) { // TemplateDataElementType is not IStubFileElementType
           return new AnchorElementInfo(element, stubFile, stubId, myStubElementType);
         }
       }
@@ -59,11 +58,14 @@ public class AnchorElementInfoFactory implements SmartPointerElementInfoFactory 
   @Nullable
   static PsiElement getAnchor(@NotNull PsiElement element) {
     PsiUtilCore.ensureValid(element);
-    PsiElement anchor = null;
+    if (!element.isPhysical()) return null;
+
     for (SmartPointerAnchorProvider provider : SmartPointerAnchorProvider.EP_NAME.getExtensions()) {
-      anchor = provider.getAnchor(element);
-      if (anchor != null && anchor.isPhysical()) return anchor;
+      PsiElement anchor = provider.getAnchor(element);
+      if (anchor != null && anchor.isPhysical() && AnchorElementInfo.restoreFromAnchor(anchor) == element) {
+        return anchor;
+      }
     }
-    return anchor;
+    return null;
   }
 }

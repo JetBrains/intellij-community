@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,13 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.*;
-import com.intellij.openapi.editor.impl.softwrap.*;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapImpl;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.text.StringUtil;
@@ -77,7 +79,7 @@ public class SoftWrapApplianceManager implements Dumpable {
   private final WidthsStorage                              myOffset2widthInPixels = new WidthsStorage();
 
   private final SoftWrapsStorage               myStorage;
-  private final EditorEx                       myEditor;
+  private final EditorImpl                     myEditor;
   private       SoftWrapPainter                myPainter;
   private final CachingSoftWrapDataMapper      myDataMapper;
 
@@ -105,7 +107,7 @@ public class SoftWrapApplianceManager implements Dumpable {
 
 
   public SoftWrapApplianceManager(@NotNull SoftWrapsStorage storage,
-                                  @NotNull EditorEx editor,
+                                  @NotNull EditorImpl editor,
                                   @NotNull SoftWrapPainter painter,
                                   CachingSoftWrapDataMapper dataMapper)
   {
@@ -193,7 +195,7 @@ public class SoftWrapApplianceManager implements Dumpable {
         if (range.getEndOffset() > lastOffset) {
           recalculateSoftWraps(new IncrementalCacheUpdateEvent(myEditor.getDocument(),
                                                                Math.max(range.getStartOffset(), lastOffset), range.getEndOffset(),
-                                                               myDataMapper));
+                                                               myDataMapper, myEditor));
         }
       }
     }
@@ -270,7 +272,8 @@ public class SoftWrapApplianceManager implements Dumpable {
     myContext.fontType = attributes.getFontType();
     myContext.rangeEndOffset = event.getMandatoryEndOffset();
 
-    EditorPosition position = new EditorPosition(logical, start, myEditor);
+    EditorPosition position = myEditor.myUseNewRendering ? new EditorPosition(logical, event.getStartVisualPosition(), start, myEditor) : 
+                              new EditorPosition(logical, start, myEditor);
     position.x = start == 0 ? myEditor.getPrefixTextWidthInPixels() : 0;
     int spaceWidth = EditorUtil.getSpaceWidth(myContext.fontType, myEditor);
     int plainSpaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, myEditor);
@@ -895,7 +898,8 @@ public class SoftWrapApplianceManager implements Dumpable {
 
   private void updateLastTopLeftCornerOffset() {
     int visualLine = 1 + myEditor.getScrollingModel().getVisibleArea().y / myEditor.getLineHeight();
-    myLastTopLeftCornerOffset = myDataMapper.getVisualLineStartOffset(visualLine);
+    myLastTopLeftCornerOffset = myEditor.myUseNewRendering ? myEditor.visualLineStartOffset(visualLine) :
+                                myDataMapper.getVisualLineStartOffset(visualLine);
   }
   
   private int getNumberOfSoftWrapsBefore(int offset) {
@@ -999,7 +1003,7 @@ public class SoftWrapApplianceManager implements Dumpable {
   }
 
   public void beforeDocumentChange(DocumentEvent event) {
-    myDocumentChangedEvent = new IncrementalCacheUpdateEvent(event, myDataMapper); 
+    myDocumentChangedEvent = new IncrementalCacheUpdateEvent(event, myDataMapper, myEditor); 
   }
 
   public void documentChanged(DocumentEvent event) {

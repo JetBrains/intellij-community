@@ -465,7 +465,7 @@ class EditorPainter implements TextDrawingCallback {
       Collection<LineExtensionInfo> extensions = painter.getLineExtensions(project, virtualFile, line);
       if (extensions != null) {
         for (LineExtensionInfo info : extensions) {
-          LineLayout layout = new LineLayout(myView, info.getText(), info.getFontType(), g.getFontRenderContext());
+          LineLayout layout = new LineLayout(myView, info.getText(), info.getFontType());
           g.setColor(info.getColor());
           x = paintLineLayoutWithEffect(g, layout, x, y, info.getEffectColor(), info.getEffectType());
           int currentLineWidth = (int)x;
@@ -584,14 +584,13 @@ class EditorPainter implements TextDrawingCallback {
       }
     }
     else {
-      int maxWidth = myView.getMaxWidthInLineRange(startPosition.line, endPosition.line) - 1;
-      TFloatArrayList leadingRanges = adjustedLogicalRangeToVisualRanges(startOffset, 
-                                                                         myView.visualPositionToOffset(new VisualPosition(
-                                                                           startPosition.line, Integer.MAX_VALUE, true)));
-      TFloatArrayList trailingRanges = adjustedLogicalRangeToVisualRanges(myView.visualPositionToOffset(new VisualPosition(endPosition.line,
-                                                                                                                           0)),
-                                                                          endOffset);
+      TFloatArrayList leadingRanges = adjustedLogicalRangeToVisualRanges(
+        startOffset, myView.visualPositionToOffset(new VisualPosition(startPosition.line, Integer.MAX_VALUE, true)));
+      TFloatArrayList trailingRanges = adjustedLogicalRangeToVisualRanges(
+        myView.visualPositionToOffset(new VisualPosition(endPosition.line, 0)), endOffset);
       if (!leadingRanges.isEmpty() && !trailingRanges.isEmpty()) {
+        int maxWidth = Math.max(myView.getMaxWidthInLineRange(startPosition.line, endPosition.line - 1, null) - 1,
+                                (int)trailingRanges.get(trailingRanges.size() - 1));
         boolean containsInnerLines = endPosition.line > startPosition.line + 1;
         int leadingTopY = myView.visualLineToY(startPosition.line);
         int leadingBottomY = leadingTopY + lineHeight;
@@ -691,31 +690,37 @@ class EditorPainter implements TextDrawingCallback {
   private TFloatArrayList logicalRangeToVisualRanges(int startOffset, int endOffset) {
     assert startOffset <= endOffset;
     TFloatArrayList result = new TFloatArrayList();
-    for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, startOffset, false)) {
-      int minOffset = fragment.getMinOffset();
-      int maxOffset = fragment.getMaxOffset();
-      if (startOffset == endOffset) {
-        if (startOffset >= minOffset && startOffset <= maxOffset) {
-          float x = fragment.offsetToX(startOffset);
-          result.add(x);
-          result.add(x);
-          break;
+    if (myDocument.getTextLength() == 0) {
+      result.add(0);
+      result.add(0);
+    }
+    else {
+      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, startOffset, false, null)) {
+        int minOffset = fragment.getMinOffset();
+        int maxOffset = fragment.getMaxOffset();
+        if (startOffset == endOffset) {
+          if (startOffset >= minOffset && startOffset <= maxOffset) {
+            float x = fragment.offsetToX(startOffset);
+            result.add(x);
+            result.add(x);
+            break;
+          }
         }
-      }
-      else if (startOffset < maxOffset && endOffset > minOffset) {
-        float x1 = fragment.offsetToX(Math.max(minOffset, startOffset));
-        float x2 = fragment.offsetToX(Math.min(maxOffset, endOffset));
-        if (x1 > x2) {
-          float tmp = x1;
-          x1 = x2;
-          x2 = tmp;
-        }
-        if (result.isEmpty() || x1 > result.get(result.size() - 1)) {
-          result.add(x1);
-          result.add(x2);
-        }
-        else {
-          result.set(result.size() - 1, x2);
+        else if (startOffset < maxOffset && endOffset > minOffset) {
+          float x1 = fragment.offsetToX(Math.max(minOffset, startOffset));
+          float x2 = fragment.offsetToX(Math.min(maxOffset, endOffset));
+          if (x1 > x2) {
+            float tmp = x1;
+            x1 = x2;
+            x2 = tmp;
+          }
+          if (result.isEmpty() || x1 > result.get(result.size() - 1)) {
+            result.add(x1);
+            result.add(x2);
+          }
+          else {
+            result.set(result.size() - 1, x2);
+          }
         }
       }
     }
@@ -754,7 +759,8 @@ class EditorPainter implements TextDrawingCallback {
       if (myEditor.isInsertMode() != settings.isBlockCursor()) {
         int lineWidth = JBUI.scale(settings.getLineCursorWidth());
         g.fillRect(x, y, lineWidth, lineHeight);
-        if (myDocument.getTextLength() > 0 && caret != null && !myView.getLineLayout(caret.getLogicalPosition().line).isLtr()) {
+        if (myDocument.getTextLength() > 0 && caret != null && 
+            !myView.getTextLayoutCache().getLineLayout(caret.getLogicalPosition().line).isLtr()) {
           g.fillPolygon(new int[]{
                           isRtl ? x + lineWidth : x,
                           isRtl ? x + lineWidth - CARET_DIRECTION_MARK_SIZE : x + CARET_DIRECTION_MARK_SIZE,
@@ -769,8 +775,9 @@ class EditorPainter implements TextDrawingCallback {
         g.fillRect(startX, y, width, lineHeight - 1);
         if (myDocument.getTextLength() > 0 && caret != null) {
           int targetVisualColumn = caret.getVisualPosition().column;
-          for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, 
-                                                                                                  caret.getVisualLineStart(), false)) {
+          for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView,
+                                                                                                  caret.getVisualLineStart(), 
+                                                                                                  false, null)) {
             int startVisualColumn = fragment.getStartVisualColumn();
             int endVisualColumn = fragment.getEndVisualColumn();
             if (startVisualColumn < targetVisualColumn && endVisualColumn > targetVisualColumn ||
@@ -808,7 +815,7 @@ class EditorPainter implements TextDrawingCallback {
     int prevEndOffset = -1;
     boolean firstFragment = true;
     int maxColumn = 0;
-    for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, offset, false)) {
+    for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, offset, false, null)) {
       int fragmentStartOffset = fragment.getStartOffset();
       int start = fragmentStartOffset;
       int end = fragment.getEndOffset();
@@ -822,8 +829,10 @@ class EditorPainter implements TextDrawingCallback {
           if (it.getEndOffset() <= offset) {
             it.advance();
           }
-          painter.paintBeforeLineStart(g, it.getStartOffset() == offset ? it.getBeforeLineStartBackgroundAttributes() :
-                                          it.getMergedAttributes(), fragment.getStartVisualColumn(), fragment.getStartX(), y);
+          if (x >= clip.getMinX()) {
+            painter.paintBeforeLineStart(g, it.getStartOffset() == offset ? it.getBeforeLineStartBackgroundAttributes() :
+                                            it.getMergedAttributes(), fragment.getStartVisualColumn(), x, y);
+          }
         }
       }
       FoldRegion foldRegion = fragment.getCurrentFoldRegion();
@@ -841,22 +850,27 @@ class EditorPainter implements TextDrawingCallback {
           TextAttributes attributes = it.getMergedAttributes();
           int curEnd = fragment.isRtl() ? Math.max(it.getEndOffset(), end) : Math.min(it.getEndOffset(), end);
           float xNew = fragment.offsetToX(x, start, curEnd);
-          painter.paint(g, fragment, 
-                        fragment.isRtl() ? fragmentStartOffset - start : start - fragmentStartOffset,
-                        fragment.isRtl() ? fragmentStartOffset - curEnd : curEnd - fragmentStartOffset, 
-                        attributes, x, xNew, y);
+          if (xNew >= clip.getMinX()) {
+            painter.paint(g, fragment, 
+                          fragment.isRtl() ? fragmentStartOffset - start : start - fragmentStartOffset,
+                          fragment.isRtl() ? fragmentStartOffset - curEnd : curEnd - fragmentStartOffset, 
+                          attributes, x, xNew, y);
+          }
           x = xNew;
           start = curEnd;
         }
       }
       else {
         float xNew = fragment.getEndX();
-        painter.paint(g, fragment, 0, fragment.getEndVisualColumn() - fragment.getStartVisualColumn(), getFoldRegionAttributes(foldRegion), 
-                      x, xNew, y);
+        if (xNew >= clip.getMinX()) {
+          painter.paint(g, fragment, 0, fragment.getEndVisualColumn() - fragment.getStartVisualColumn(), getFoldRegionAttributes(foldRegion), 
+                        x, xNew, y);
+        }
         x = xNew;
         prevEndOffset = -1;
         it = null;
       }
+      if (x > clip.getMaxX()) return;
       maxColumn = fragment.getEndVisualColumn();
     }
     if (it == null || it.getEndOffset() != visualLineEndOffset) {

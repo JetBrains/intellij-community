@@ -27,6 +27,8 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -37,6 +39,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,9 +58,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
-import org.jetbrains.idea.maven.importing.MavenModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
@@ -569,13 +570,30 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     myWatcher.resetManagedFilesAndProfilesInTests(files, profiles);
   }
 
-  public void addManagedFilesWithProfiles(List<VirtualFile> files, MavenExplicitProfiles profiles) {
+  public void addManagedFilesWithProfiles(final List<VirtualFile> files, MavenExplicitProfiles profiles) {
     if (!isInitialized()) {
       initNew(files, profiles);
     }
     else {
       myWatcher.addManagedFilesWithProfiles(files, profiles);
     }
+
+    MavenUtil.invokeLater(myProject, new Runnable() {
+      @Override
+      public void run() {
+        if (myProject == null || !myProject.isDefault() && !myProject.isDisposed()) {
+          for (Notification notification : EventLog.getLogModel(myProject).getNotifications()) {
+            if (NON_MANAGED_POM_NOTIFICATION_GROUP_ID.equals(notification.getGroupId())) {
+              for (VirtualFile file : files) {
+                if (StringUtil.startsWith(notification.getContent(), file.getPresentableUrl())) {
+                  notification.expire();
+                }
+              }
+            }
+          }
+        }
+      }
+    });
   }
 
   public void addManagedFiles(@NotNull List<VirtualFile> files) {
@@ -1130,10 +1148,10 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public List<Module> importProjects() {
-    return importProjects(new MavenDefaultModifiableModelsProvider(myProject));
+    return importProjects(new IdeModifiableModelsProviderImpl(myProject));
   }
 
-  public List<Module> importProjects(final MavenModifiableModelsProvider modelsProvider) {
+  public List<Module> importProjects(final IdeModifiableModelsProvider modelsProvider) {
     final Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges;
     final boolean importModuleGroupsRequired;
     synchronized (myImportingDataLock) {
@@ -1150,7 +1168,17 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       public void run() {
         MavenProjectImporter projectImporter = new MavenProjectImporter(myProject,
                                                                         myProjectsTree,
-                                                                        getFileToModuleMapping(modelsProvider),
+                                                                        getFileToModuleMapping(new MavenModelsProvider() {
+                                                                          @Override
+                                                                          public Module[] getModules() {
+                                                                            return modelsProvider.getModules();
+                                                                          }
+
+                                                                          @Override
+                                                                          public VirtualFile[] getContentRoots(Module module) {
+                                                                            return modelsProvider.getContentRoots(module);
+                                                                          }
+                                                                        }),
                                                                         projectsToImportWithChanges,
                                                                         importModuleGroupsRequired,
                                                                         modelsProvider,

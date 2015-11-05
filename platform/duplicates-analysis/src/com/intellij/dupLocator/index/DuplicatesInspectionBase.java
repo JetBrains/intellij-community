@@ -170,12 +170,13 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
         final Integer offset = entry.getKey();
         if (!usingLightProfile && processor.fragmentSize.get(offset) < MIN_FRAGMENT_SIZE) continue;
         final VirtualFile file = processor.reportedFiles.get(offset);
-        String path;
+        String path = null;
 
         if (file.equals(virtualFile)) path = "this file";
         else if (baseDir != null) {
           path = VfsUtilCore.getRelativePath(file, baseDir);
-        } else {
+        }
+        if (path == null) {
           path = file.getPath();
         }
         String message = "Found duplicated code in " + path;
@@ -190,7 +191,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
         LocalQuickFix viewAllDupesFix = hash != 0 ? createShowOtherDupesFix(virtualFile, offset, (int)hash, (int)(hash >> 32), psiFile.getProject()) : null;
 
         ProblemDescriptor descriptor = manager
-          .createProblemDescriptor(targetElement, rangeInElement, message, ProblemHighlightType.WEAK_WARNING, isOnTheFly, fix, viewAllDupesFix);
+          .createProblemDescriptor(targetElement, rangeInElement, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly, fix, viewAllDupesFix);
         descriptors.add(descriptor);
       }
     }

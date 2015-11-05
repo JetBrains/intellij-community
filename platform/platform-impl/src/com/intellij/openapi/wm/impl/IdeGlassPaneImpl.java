@@ -36,16 +36,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.MenuDragMouseEvent;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.AWTEventListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.util.*;
 import java.util.List;
 
 public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEventQueue.EventDispatcher {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.IdeGlassPaneImpl");
+  private static final String PREPROCESSED_CURSOR_KEY = "SuperCursor";
 
   private final List<EventListener> myMouseListeners = new ArrayList<EventListener>();
   private final Set<EventListener> mySortedMouseListeners = new TreeSet<EventListener>(new Comparator<EventListener>() {
@@ -146,7 +149,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
     if (e.getID() == MouseEvent.MOUSE_DRAGGED) {
       if (ApplicationManager.getApplication() != null) {
-        IdeTooltipManager.getInstance().hideCurrent((MouseEvent)e, null, null);
+        IdeTooltipManager.getInstance().hideCurrent((MouseEvent)e);
       }
     }
 
@@ -343,6 +346,9 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
               }
 
               if (cursor != null && !cursor.equals(target.getCursor())) {
+                if (target instanceof JComponent) {
+                  ((JComponent)target).putClientProperty(PREPROCESSED_CURSOR_KEY, Boolean.TRUE);
+                }
                 target.setCursor(cursor);
               }
             }
@@ -391,9 +397,15 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   private void restoreLastComponent(Component newC) {
     if (myLastCursorComponent != null && myLastCursorComponent != newC) {
       myLastCursorComponent.setCursor(myLastOriginalCursor);
+      if (myLastCursorComponent instanceof JComponent) {
+        ((JComponent)myLastCursorComponent).putClientProperty(PREPROCESSED_CURSOR_KEY, null);
+      }
     }
   }
 
+  public static boolean hasPreProcessedCursor(@NotNull  JComponent component) {
+    return component.getClientProperty(PREPROCESSED_CURSOR_KEY) != null;
+  }
 
   public void setCursor(Cursor cursor, @NotNull Object requestor) {
     if (cursor == null) {

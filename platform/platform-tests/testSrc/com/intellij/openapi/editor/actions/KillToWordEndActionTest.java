@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,9 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.CaretModelImpl;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ide.KillRingTransferable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -131,6 +127,20 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
     assertEquals("first second", string);
   }
 
+  public void testBeforeLastWordAtLine() throws Exception {
+    configureFromFileText(getTestName(false) + ".txt", "abc <caret>def\nghi");
+    killToWordEnd();
+    checkResultByText("abc <caret>\nghi");
+    assertEquals("def", getContents());
+  }
+
+  public void testBeforeLastWordAtLineWithTrailingSpace() throws Exception {
+    configureFromFileText(getTestName(false) + ".txt", "abc <caret>def \nghi");
+    killToWordEnd();
+    checkResultByText("abc <caret> \nghi");
+    assertEquals("def", getContents());
+  }
+
   public void testSubsequentKillsInterruptedBySave() throws Exception {
     String text = "public class ParentCopy {\n" +
                   "        public Insets getBorderInsets(<caret>Component c) {\n" +
@@ -157,28 +167,22 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
                   "    }";
     configureFromFileText(getTestName(false) + ".java", text);
     final FoldingModel model = myEditor.getFoldingModel();
-    model.runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        final FoldRegion foldRegion = model.addFoldRegion(70, 90, "");
-        assertNotNull(foldRegion);
-        foldRegion.setExpanded(false);
-        assertFalse(foldRegion.isExpanded());
-      }
+    model.runBatchFoldingOperation(() -> {
+      final FoldRegion foldRegion = model.addFoldRegion(70, 90, "");
+      assertNotNull(foldRegion);
+      foldRegion.setExpanded(false);
+      assertFalse(foldRegion.isExpanded());
     });
 
     cutToLineEnd();
     cutToLineEnd();
-    model.runBatchFoldingOperationDoNotCollapseCaret(new Runnable() {
-      @Override
-      public void run() {
-        final FoldRegion[] regions = model.getAllFoldRegions();
-        for (FoldRegion region : regions) {
-          assertNotNull(region);
-          region.setExpanded(true);
-        }
-
+    model.runBatchFoldingOperationDoNotCollapseCaret(() -> {
+      final FoldRegion[] regions = model.getAllFoldRegions();
+      for (FoldRegion region : regions) {
+        assertNotNull(region);
+        region.setExpanded(true);
       }
+
     });
     cutToLineEnd();
     cutToLineEnd();

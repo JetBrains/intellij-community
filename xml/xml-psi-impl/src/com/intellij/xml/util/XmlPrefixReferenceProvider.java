@@ -43,17 +43,20 @@ public class XmlPrefixReferenceProvider extends PsiReferenceProvider {
     int i = value.indexOf(':');
     if (i <= 0) return PsiReference.EMPTY_ARRAY;
     PsiElement parent = attributeValue.getParent();
-    if (parent instanceof XmlAttribute && !XmlNSDescriptorImpl.checkSchemaNamespace(((XmlAttribute)parent).getParent())) {
-      XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
-      if (descriptor instanceof XmlAttributeDescriptorImpl) {
-        String type = ((XmlAttributeDescriptorImpl)descriptor).getType();
-        if (type != null && type.endsWith(":QName")) {
-          String prefix = XmlUtil.findPrefixByQualifiedName(type);
-          String ns = ((XmlTag)descriptor.getDeclaration()).getNamespaceByPrefix(prefix);
-          if (XmlNSDescriptorImpl.checkSchemaNamespace(ns)) {
-            return new PsiReference[] {
-              new SchemaPrefixReference(attributeValue, TextRange.from(1, i), value.substring(0, i), null)
-            };
+    if (parent instanceof XmlAttribute) {
+      XmlTag tag = ((XmlAttribute)parent).getParent();
+      if (tag != null && !XmlNSDescriptorImpl.checkSchemaNamespace(tag)) {
+        XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
+        if (descriptor instanceof XmlAttributeDescriptorImpl) {
+          String type = ((XmlAttributeDescriptorImpl)descriptor).getType();
+          if (type != null && type.endsWith(":QName")) {
+            String prefix = XmlUtil.findPrefixByQualifiedName(type);
+            String ns = ((XmlTag)descriptor.getDeclaration()).getNamespaceByPrefix(prefix);
+            if (XmlNSDescriptorImpl.checkSchemaNamespace(ns)) {
+              return new PsiReference[] {
+                new SchemaPrefixReference(attributeValue, TextRange.from(1, i), value.substring(0, i), null)
+              };
+            }
           }
         }
       }

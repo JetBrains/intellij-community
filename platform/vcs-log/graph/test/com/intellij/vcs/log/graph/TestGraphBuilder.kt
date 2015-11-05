@@ -15,31 +15,31 @@
  */
 package com.intellij.vcs.log.graph
 
-import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
-import java.util.ArrayList
-import com.intellij.vcs.log.graph.api.LinearGraph
-import com.intellij.vcs.log.graph.api.elements.GraphEdge
-import com.intellij.vcs.log.graph.api.elements.GraphNode
-import com.intellij.util.containers.MultiMap
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.HashMap
-import com.intellij.vcs.log.graph.api.elements.GraphNodeType
+import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.graph.BaseTestGraphBuilder.SimpleEdge
 import com.intellij.vcs.log.graph.BaseTestGraphBuilder.SimpleNode
-import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
-import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.vcs.log.graph.utils.TimestampGetter
-import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
-import kotlin.test.assertNull
-import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.api.EdgeFilter
-import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl
+import com.intellij.vcs.log.graph.api.LinearGraph
+import com.intellij.vcs.log.graph.api.elements.GraphEdge
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
+import com.intellij.vcs.log.graph.api.elements.GraphNode
+import com.intellij.vcs.log.graph.api.elements.GraphNodeType
+import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
+import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
+import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder
+import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils
+import com.intellij.vcs.log.graph.utils.TimestampGetter
+import java.util.*
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
-public trait BaseTestGraphBuilder {
+public interface BaseTestGraphBuilder {
   public val Int.U: SimpleNode get() = SimpleNode(this, GraphNodeType.USUAL)
   public val Int.UNM: SimpleNode get() = SimpleNode(this, GraphNodeType.UNMATCHED)
   public val Int.NOT_LOAD: SimpleNode get() = SimpleNode(this, GraphNodeType.NOT_LOAD_COMMIT)
@@ -95,7 +95,7 @@ public class TestGraphBuilder : BaseTestGraphBuilder {
 
     init {
       val idsMap = HashMap<Int, Int>()
-      nodes = buildNodes.map2 {(index, it) ->
+      nodes = buildNodes.map2 {index, it ->
         idsMap[index] = it.nodeId
         GraphNode(index, it.type)
       }
@@ -123,7 +123,7 @@ public class TestGraphBuilder : BaseTestGraphBuilder {
 
     }
 
-    override fun nodesCount() = nodes.size()
+    override fun nodesCount() = nodes.size
 
     override fun getNodeId(nodeIndex: Int): Int = nodeIndexToId[nodeIndex]!!
 
@@ -147,10 +147,10 @@ public class TestGraphBuilder : BaseTestGraphBuilder {
 private fun LinearGraph.assertEdge(nodeIndex: Int, edge: GraphEdge) {
   if (edge.getType().isNormalEdge()) {
     if (nodeIndex == edge.getUpNodeIndex()) {
-      assertTrue(getAdjacentEdges(edge.getDownNodeIndex(), EdgeFilter.NORMAL_UP).contains(edge))
+      assertTrue(getAdjacentEdges(edge.getDownNodeIndex()!!, EdgeFilter.NORMAL_UP).contains(edge))
     } else {
       assertTrue(nodeIndex == edge.getDownNodeIndex())
-      assertTrue(getAdjacentEdges(edge.getUpNodeIndex(), EdgeFilter.NORMAL_DOWN).contains(edge))
+      assertTrue(getAdjacentEdges(edge.getUpNodeIndex()!!, EdgeFilter.NORMAL_DOWN).contains(edge))
     }
   } else {
     when (edge.getType()) {
@@ -181,7 +181,7 @@ public fun LinearGraph.asTestGraphString(sorted: Boolean = false): String = Stri
     // edges
     var adjacentEdges = getAdjacentEdges(nodeIndex, EdgeFilter.ALL)
     if (sorted) {
-      adjacentEdges = adjacentEdges.sortBy(GraphStrUtils.GRAPH_ELEMENT_COMPARATOR)
+      adjacentEdges = adjacentEdges.sortedWith(GraphStrUtils.GRAPH_ELEMENT_COMPARATOR)
     }
 
     append("(")
@@ -189,7 +189,7 @@ public fun LinearGraph.asTestGraphString(sorted: Boolean = false): String = Stri
       assertEdge(nodeIndex, it)
       if (it.getUpNodeIndex() == nodeIndex) {
         val startId = if (it.getType().isNormalEdge()) {
-          getNodeId(it.getDownNodeIndex()).toString()
+          getNodeId(it.getDownNodeIndex()!!).toString()
         } else if (it.getTargetId() != null) {
           it.getTargetId().toString()
         } else {
@@ -247,7 +247,7 @@ class TestPermanentGraphInfo(
     override fun getTimestamp(index: Int) = commitInfo.getTimestamp(graph.getNodeId(index))
   }
 
-  val graphLayout = GraphLayoutBuilder.build(graph) {(x, y) ->
+  val graphLayout = GraphLayoutBuilder.build(graph) {x, y ->
     if (headsOrder.isEmpty()) {
       graph.getNodeId(x) - graph.getNodeId(y)
     } else {
@@ -266,7 +266,7 @@ class TestPermanentGraphInfo(
   }
 
   override fun getPermanentCommitsInfo() = commitInfo
-  override fun getPermanentLinearGraph() = object : PermanentLinearGraphImpl(), LinearGraph by graph {}
+  override fun getPermanentLinearGraph() : PermanentLinearGraphImpl = object : PermanentLinearGraphImpl(), LinearGraph by graph {}
   override fun getPermanentGraphLayout() = graphLayout
   override fun getBranchNodeIds() = branchNodes
 

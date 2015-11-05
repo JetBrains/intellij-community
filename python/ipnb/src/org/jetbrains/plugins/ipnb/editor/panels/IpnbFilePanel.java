@@ -38,6 +38,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, Disposable {
@@ -101,7 +102,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     try {
       myIpnbPanels.clear();
       mySelectedCell = null;
-      myIpnbFile = IpnbParser.parseIpnbFile(myDocument, myVirtualFile.getPath());
+      myIpnbFile = IpnbParser.parseIpnbFile(myDocument, myVirtualFile);
       if (myIpnbFile.getCells().isEmpty()) {
         CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
           public void run() {
@@ -168,13 +169,17 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       panel = new IpnbHeadingPanel((IpnbHeadingCell)cell);
       addComponent(panel);
     }
+    else if (cell instanceof IpnbRawCell) {
+      // A raw cell is defined as content that should be included unmodified in nbconvert output.
+      // It's not visible for user
+    }
     else {
       throw new UnsupportedOperationException(cell.getClass().toString());
     }
   }
 
   public void createAndAddCell(final boolean below) {
-    final IpnbCodeCell cell = new IpnbCodeCell("python", new String[]{""}, null, new ArrayList<IpnbOutputCell>());
+    final IpnbCodeCell cell = new IpnbCodeCell("python", Collections.<String>emptyList(), null, new ArrayList<IpnbOutputCell>());
     final IpnbCodePanel codePanel = new IpnbCodePanel(myProject, myParent, cell);
 
     addCell(codePanel, below);
@@ -489,7 +494,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
         ipnbPanel.setEditing(false);
         ipnbPanel.requestFocus();
         repaint();
-        setSelectedCell(ipnbPanel);
+        setSelectedCell(ipnbPanel, true);
       }
     }
   }
@@ -499,6 +504,10 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   }
 
   public void setSelectedCell(@NotNull final IpnbEditablePanel ipnbPanel) {
+    setSelectedCell(ipnbPanel, false);
+  }
+
+  public void setSelectedCell(@NotNull final IpnbEditablePanel ipnbPanel, boolean mouse) {
     if (ipnbPanel.equals(mySelectedCell)) return;
     if (mySelectedCell != null)
       mySelectedCell.setEditing(false);
@@ -507,7 +516,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     UIUtil.requestFocus(this);
     repaint();
     if (ipnbPanel.getBounds().getHeight() != 0) {
-      myListener.selectionChanged(ipnbPanel);
+      myListener.selectionChanged(ipnbPanel, mouse);
     }
   }
 
@@ -575,5 +584,10 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
   public Project getProject() {
     return myProject;
+  }
+
+  @NotNull
+  public VirtualFile getVirtualFile() {
+    return myVirtualFile;
   }
 }

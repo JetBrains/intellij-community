@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +30,7 @@ import java.awt.*;
 
 public class CheckboxTreeBase extends Tree {
   private final CheckboxTreeHelper myHelper;
-  private final EventDispatcher<CheckboxTreeListener> myEventDispatcher;
+  private final EventDispatcher<CheckboxTreeListener> myEventDispatcher = EventDispatcher.create(CheckboxTreeListener.class);;
 
   public CheckboxTreeBase() {
     this(new CheckboxTreeCellRendererBase(), null);
@@ -40,7 +41,12 @@ public class CheckboxTreeBase extends Tree {
   }
 
   public CheckboxTreeBase(CheckboxTreeCellRendererBase cellRenderer, @Nullable CheckedTreeNode root, CheckPolicy checkPolicy) {
-    myEventDispatcher = EventDispatcher.create(CheckboxTreeListener.class);
+    myHelper = new CheckboxTreeHelper(checkPolicy, myEventDispatcher);
+    if (root != null) {
+      // override default model ("colors", etc.) ASAP to avoid CCE in renderers
+      setModel(new DefaultTreeModel(root));
+      setSelectionRow(0);
+    }
     myEventDispatcher.addListener(new CheckboxTreeListener() {
       @Override
       public void mouseDoubleClicked(@NotNull CheckedTreeNode node) {
@@ -57,13 +63,7 @@ public class CheckboxTreeBase extends Tree {
         CheckboxTreeBase.this.nodeStateWillChange(node);
       }
     });
-    myHelper = new CheckboxTreeHelper(checkPolicy, myEventDispatcher);
     myHelper.initTree(this, this, cellRenderer);
-
-    setSelectionRow(0);
-    if (root != null) {
-      setModel(new DefaultTreeModel(root));
-    }
   }
 
   @Deprecated
@@ -130,7 +130,7 @@ public class CheckboxTreeBase extends Tree {
 
   public static class CheckboxTreeCellRendererBase extends JPanel implements TreeCellRenderer {
     private final ColoredTreeCellRenderer myTextRenderer;
-    public final JCheckBox myCheckbox;
+    public final ThreeStateCheckBox myCheckbox;
     private final boolean myUsePartialStatusForParentNodes;
 
     public CheckboxTreeCellRendererBase(boolean opaque) {
@@ -140,7 +140,9 @@ public class CheckboxTreeBase extends Tree {
     public CheckboxTreeCellRendererBase(boolean opaque, final boolean usePartialStatusForParentNodes) {
       super(new BorderLayout());
       myUsePartialStatusForParentNodes = usePartialStatusForParentNodes;
-      myCheckbox = new JCheckBox();
+      myCheckbox = new ThreeStateCheckBox();
+      myCheckbox.setSelected(false);
+      myCheckbox.setThirdStateEnabled(false);
       myTextRenderer = new ColoredTreeCellRenderer() {
         public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) { }
       };

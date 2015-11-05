@@ -27,6 +27,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.PsiElementOrderComparator;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Nls;
@@ -142,8 +143,8 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         }
         separator = true;
       }
-      int j = 1;
       if (!unwantedChildren.isEmpty()) {
+        int j = 1;
         while (!unwantedChildren.contains(Integer.valueOf(j)) && j < tryBlockChildren.length - 1) {
           tryStatement.getParent().addBefore(tryBlockChildren[j], tryStatement);
           unwantedChildren.add(j);
@@ -277,8 +278,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         else if (thenBranch instanceof PsiBlockStatement) {
           final PsiBlockStatement blockStatement = (PsiBlockStatement)thenBranch;
           final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-          final PsiStatement[] statements = codeBlock.getStatements();
-          return statements.length == 1 && isCloseStatement(statements[0], variables);
+          return isCloseStatement(ControlFlowUtils.getOnlyStatementInBlock(codeBlock), variables);
         }
         else {
           return false;
@@ -329,7 +329,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
           hasInitializer = !PsiType.NULL.equals(type);
         }
         final int index = findInitialization(tryBlockStatements, variable, hasInitializer);
-        if (!(index >= 0 ^ hasInitializer) || isVariableUsedOutsideContext(variable, tryBlock)) {
+        if ((index >= 0) == hasInitializer || isVariableUsedOutsideContext(variable, tryBlock)) {
           return;
         }
       }
@@ -409,11 +409,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       else if (thenBranch instanceof PsiBlockStatement) {
         final PsiBlockStatement blockStatement = (PsiBlockStatement)thenBranch;
         final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-        final PsiStatement[] statements = codeBlock.getStatements();
-        if (statements.length != 1) {
-          return null;
-        }
-        resourceVariable = findAutoCloseableVariable(statements[0]);
+        resourceVariable = findAutoCloseableVariable(ControlFlowUtils.getOnlyStatementInBlock(codeBlock));
       }
       else {
         return null;

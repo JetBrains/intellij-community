@@ -25,6 +25,7 @@ import com.intellij.diff.tools.holders.BinaryEditorHolder;
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.StatusPanel;
 import com.intellij.diff.tools.util.side.TwosideDiffViewer;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -76,36 +77,37 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
 
       final VirtualFile file1 = ((FileContent)contents.get(0)).getFile();
       final VirtualFile file2 = ((FileContent)contents.get(1)).getFile();
-      if (!file1.isValid() || !file2.isValid()) {
-        return applyNotification(DiffNotifications.ERROR);
-      }
 
-      final boolean equal = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      final JComponent notification = ApplicationManager.getApplication().runReadAction(new Computable<JComponent>() {
         @Override
-        public Boolean compute() {
+        public JComponent compute() {
+          if (!file1.isValid() || !file2.isValid()) {
+            return DiffNotifications.createError();
+          }
+
           try {
             // we can't use getInputStream() here because we can't restore BOM marker
             // (getBom() can return null for binary files, while getInputStream() strips BOM for all files).
             // It can be made for files from VFS that implements FileSystemInterface though.
             byte[] bytes1 = file1.contentsToByteArray();
             byte[] bytes2 = file2.contentsToByteArray();
-            return Arrays.equals(bytes1, bytes2);
+            return Arrays.equals(bytes1, bytes2) ? DiffNotifications.createEqualContents() : null;
           }
           catch (IOException e) {
             LOG.warn(e);
-            return false;
+            return null;
           }
         }
       });
 
-      return applyNotification(equal ? DiffNotifications.EQUAL_CONTENTS : null);
+      return applyNotification(notification);
     }
     catch (ProcessCanceledException e) {
       throw e;
     }
     catch (Throwable e) {
       LOG.error(e);
-      return applyNotification(DiffNotifications.ERROR);
+      return applyNotification(DiffNotifications.createError());
     }
   }
 
@@ -156,7 +158,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       setCurrentSide(getCurrentSide().other());
-      myContext.requestFocus();
+      DiffUtil.requestFocus(getProject(), getPreferredFocusedComponent());
     }
   }
 }

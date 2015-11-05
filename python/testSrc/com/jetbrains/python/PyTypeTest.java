@@ -23,10 +23,29 @@ import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author yole
  */
 public class PyTypeTest extends PyTestCase {
+  /**
+   * Call of union returns union of all callable types in this union
+   */
+  public void testCallableInUnion() throws Exception {
+    doTest("str",
+           "import random\n" +
+           "def spam():\n" +
+           "    return \"D\"\n" +
+           "class Eggs:\n" +
+           "    pass\n" +
+           "class Eggs2:\n" +
+           "    pass\n" +
+           "dd = spam if random.randint != 42 else Eggs2()\n" +
+           "var = dd if random.randint != 42 else dd\n" +
+           "expr = var()");
+  }
+
   public void testTupleType() {
     doTest("str",
            "t = ('a', 2)\n" +
@@ -46,7 +65,7 @@ public class PyTypeTest extends PyTestCase {
            "expr = '1' + '2'");
     doTest("Union[str, unicode]",
            "expr = '%s' % ('a')");
-    doTest("list[int]",
+    doTest("List[int]",
            "expr = [1] + [2]");
   }
 
@@ -95,7 +114,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testSet() {
-    doTest("set[int]",
+    doTest("Set[int]",
            "expr = {1, 2, 3}");
   }
 
@@ -152,7 +171,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testSliceType() {
-    doTest("list[int]",
+    doTest("List[int]",
            "l = [1, 2, 3]; expr = l[0:1]");
   }
 
@@ -357,28 +376,6 @@ public class PyTypeTest extends PyTestCase {
     assertNull(actual);
   }
 
-  // PY-6702
-  public void testYieldFromType() {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON33);
-    try {
-      doTest("Union[str, int, float]",
-             "def subgen():\n" +
-             "    for i in [1, 2, 3]:\n" +
-             "        yield i\n" +
-             "\n" +
-             "def gen():\n" +
-             "    yield 'foo'\n" +
-             "    yield from subgen()\n" +
-             "    yield 3.14\n" +
-             "\n" +
-             "for expr in gen():\n" +
-             "    pass\n");
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
-  }
-
   public void testFunctionAssignment() {
     doTest("int",
            "def f():\n" +
@@ -459,7 +456,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-7215
   public void testFunctionWithNestedGenerator() {
-    doTest("list[int]",
+    doTest("List[int]",
            "def f():\n" +
            "    def g():\n" +
            "        yield 10\n" +
@@ -475,6 +472,15 @@ public class PyTypeTest extends PyTestCase {
            "expr = f().next()\n");
   }
 
+  public void testGeneratorFunctionType() {
+    doTest("__generator[str, Any, int]",
+           "def f():\n" +
+           "    yield 'foo'\n" +
+           "    return 0\n" +
+           "\n" +
+           "expr = f()\n");
+  }
+
   // PY-7020
   public void testListComprehensionType() {
     final PyExpression expr = parseExpr("expr = [str(x) for x in range(10)]\n");
@@ -482,11 +488,10 @@ public class PyTypeTest extends PyTestCase {
     final PyType type = context.getType(expr);
     assertNotNull(type);
     assertInstanceOf(type, PyCollectionType.class);
-    assertEquals(type.getName(), "list");
+    assertEquals("list", type.getName());
     final PyCollectionType collectionType = (PyCollectionType)type;
-    final PyType elementType = collectionType.getElementType(context);
-    assertNotNull(elementType);
-    assertEquals(elementType.getName(), "str");
+    final List<PyType> elementTypes = collectionType.getElementTypes(context);
+    assertEquals("str", elementTypes.get(0).getName());
   }
 
   // PY-7021
@@ -496,11 +501,20 @@ public class PyTypeTest extends PyTestCase {
     final PyType type = context.getType(expr);
     assertNotNull(type);
     assertInstanceOf(type, PyCollectionType.class);
-    assertEquals(type.getName(), "__generator");
+    assertEquals("__generator", type.getName());
     final PyCollectionType collectionType = (PyCollectionType)type;
-    final PyType elementType = collectionType.getElementType(context);
-    assertNotNull(elementType);
-    assertEquals(elementType.getName(), "str");
+    final List<PyType> elementTypes = collectionType.getElementTypes(context);
+    assertEquals("str", elementTypes.get(0).getName());
+    assertTrue(PyTypeChecker.isUnknown(elementTypes.get(1)));
+    assertEquals("None", elementTypes.get(2).getName());
+  }
+
+  // PY-7021
+  public void testIterOverGeneratorComprehension() {
+    doTest("str",
+           "xs = (str(x) for x in range(10))\n" +
+           "for expr in xs:\n" +
+           "    pass\n");
   }
 
   // EA-40207
@@ -622,7 +636,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testFunctionTypeAsUnificationArgument() {
-    doTest("Union[list[int], str, unicode]",
+    doTest("Union[List[int], str, unicode]",
            "def map2(f, xs):\n" +
            "    '''\n" +
            "    :type f: (T) -> V | None\n" +

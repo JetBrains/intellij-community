@@ -22,6 +22,9 @@ import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @see com.intellij.diff.DiffRequestFactory
+ */
 public abstract class DiffRequest implements UserDataHolder {
   protected final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
 
@@ -41,6 +44,9 @@ public abstract class DiffRequest implements UserDataHolder {
   public void onAssigned(boolean isAssigned) {
   }
 
+  /**
+   * @see com.intellij.diff.util.DiffUserDataKeys
+   */
   @Nullable
   @Override
   public <T> T getUserData(@NotNull Key<T> key) {

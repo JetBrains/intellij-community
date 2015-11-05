@@ -41,6 +41,11 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
       return;
     }
 
+    if (myAnnotation.getFile() == null) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+
     if (getRevisions() == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
@@ -83,7 +88,7 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
   @Override
   protected VcsFileRevision getFileRevision(@NotNull AnActionEvent e) {
     List<VcsFileRevision> revisions = getRevisions();
-    assert getRevisions() != null;
+    assert revisions != null;
 
     if (currentLine < 0 || currentLine >= revisions.size()) return null;
     return revisions.get(currentLine);

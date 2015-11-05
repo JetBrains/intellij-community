@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 Bas Leijdekkers
+ * Copyright 2007-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nullable;
 
 public class NonNlsUtils {
@@ -248,7 +249,7 @@ public class NonNlsUtils {
       if (method == null) {
         return false;
       }
-      if (isChainable(method)) {
+      if (MethodUtils.isChainable(method)) {
         final PsiMethodCallExpression expression =
           (PsiMethodCallExpression)qualifier;
         if (isQualifierNonNlsAnnotated(expression)) {
@@ -257,29 +258,6 @@ public class NonNlsUtils {
       }
     }
     return false;
-  }
-
-  private static boolean isChainable(PsiMethod method) {
-    if (method == null) {
-      return false;
-    }
-    method = (PsiMethod)method.getNavigationElement();
-    final PsiCodeBlock body = method.getBody();
-    if (body == null) {
-      return false;
-    }
-    final PsiStatement[] statements = body.getStatements();
-    if (statements.length == 0) {
-      return false;
-    }
-    final PsiStatement lastStatement = statements[statements.length - 1];
-    if (!(lastStatement instanceof PsiReturnStatement)) {
-      return false;
-    }
-    final PsiReturnStatement returnStatement =
-      (PsiReturnStatement)lastStatement;
-    final PsiExpression returnValue = returnStatement.getReturnValue();
-    return returnValue instanceof PsiThisExpression;
   }
 
   private static boolean isNonNlsAnnotatedModifierListOwner(

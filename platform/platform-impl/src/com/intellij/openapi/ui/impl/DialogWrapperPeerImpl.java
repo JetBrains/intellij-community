@@ -18,6 +18,7 @@ package com.intellij.openapi.ui.impl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
+import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
@@ -57,6 +58,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import java.awt.*;
@@ -872,11 +874,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       super.dispose();
 
 
+      removeAll(); // remove root pane from a component's list
       if (rootPane != null) { // Workaround for bug in native code to hold rootPane
         try {
-          ReflectionUtil.resetField(rootPane, "glassPane");
-          ReflectionUtil.resetField(rootPane, "contentPane");
-
+          Disposer.clearOwnFields(rootPane);
           rootPane = null;
 
           ReflectionUtil.resetField(this, "windowListener");
@@ -955,12 +956,15 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       }
 
       @Override
-      public void windowOpened(WindowEvent e) {
+      public void windowOpened(final WindowEvent e) {
         SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
             myOpened = true;
             final DialogWrapper activeWrapper = getActiveWrapper();
+            for (JComponent c : UIUtil.uiTraverser(e.getWindow()).filter(JComponent.class)) {
+              c.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent());
+            }
             if (activeWrapper == null) {
               myFocusedCallback.setRejected();
               myTypeAheadDone.setRejected();

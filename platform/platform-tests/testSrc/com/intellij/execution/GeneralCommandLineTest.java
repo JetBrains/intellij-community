@@ -16,6 +16,7 @@
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.util.Pair;
@@ -343,8 +344,8 @@ public class GeneralCommandLineTest {
                                       Map<String, String> testEnv,
                                       Map<String, String> expectedOutputEnv,
                                       boolean passParentEnv) throws ExecutionException, IOException {
-    command.first.getEnvironment().putAll(testEnv);
-    command.first.setPassParentEnvironment(passParentEnv);
+    command.first.withEnvironment(testEnv);
+    command.first.withParentEnvironmentType(passParentEnv ? ParentEnvironmentType.SYSTEM : ParentEnvironmentType.NONE);
     String output = execHelper(command);
 
     Set<String> lines = ContainerUtil.newHashSet(StringUtil.convertLineSeparators(output).split("\n"));

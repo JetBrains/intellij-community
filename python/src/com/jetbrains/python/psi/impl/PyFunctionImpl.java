@@ -41,7 +41,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.documentation.DocStringUtil;
+import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -183,6 +183,12 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Nullable
   @Override
   public PyType getReturnType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+    final PyType type = getReturnType(context);
+    return isAsync() ? createCoroutineType(type) : type;
+  }
+
+  @Nullable
+  private PyType getReturnType(@NotNull TypeEvalContext context) {
     for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
       final Ref<PyType> returnTypeRef = typeProvider.getReturnType(this, context);
       if (returnTypeRef != null) {
@@ -318,7 +324,9 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         final PyType type = context.getType(node);
         if (node.isDelegating() && type instanceof PyCollectionType) {
           final PyCollectionType collectionType = (PyCollectionType)type;
-          types.add(collectionType.getElementType(context));
+          // TODO: Select the parameter types that matches T in Iterable[T]
+          final List<PyType> elementTypes = collectionType.getElementTypes(context);
+          types.add(elementTypes.isEmpty() ? null : elementTypes.get(0));
         }
         else {
           types.add(type);
@@ -340,7 +348,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     if (elementType != null) {
       final PyClass generator = cache.getClass(PyNames.FAKE_GENERATOR);
       if (generator != null) {
-        return Ref.create(new PyCollectionTypeImpl(generator, false, elementType.get()));
+        final List<PyType> parameters = Arrays.asList(elementType.get(), null, getReturnStatementType(context));
+        return Ref.create(new PyCollectionTypeImpl(generator, false, parameters));
       }
     }
     if (!types.isEmpty()) {
@@ -351,7 +360,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Nullable
   public PyType getReturnStatementType(TypeEvalContext typeEvalContext) {
-    ReturnVisitor visitor = new ReturnVisitor(this, typeEvalContext);
+    final ReturnVisitor visitor = new ReturnVisitor(this, typeEvalContext);
     final PyStatementList statements = getStatementList();
     statements.accept(visitor);
     if (isGeneratedStub() && !visitor.myHasReturns) {
@@ -361,6 +370,16 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       return null;
     }
     return visitor.result();
+  }
+
+  @Nullable
+  private PyType createCoroutineType(@Nullable PyType returnType) {
+    final PyBuiltinCache cache = PyBuiltinCache.getInstance(this);
+    if (returnType instanceof PyClassLikeType && PyNames.FAKE_COROUTINE.equals(((PyClassLikeType)returnType).getClassQName())) {
+      return returnType;
+    }
+    final PyClass generator = cache.getClass(PyNames.FAKE_COROUTINE);
+    return generator != null ? new PyCollectionTypeImpl(generator, false, Collections.singletonList(returnType)) : null;
   }
 
   public PyFunction asMethod() {
@@ -634,6 +653,15 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       }
     }
     return null;
+  }
+
+  @Override
+  public boolean isAsync() {
+    final PyFunctionStub stub = getStub();
+    if (stub != null) {
+      return stub.isAsync();
+    }
+    return getNode().findChildByType(PyTokenTypes.ASYNC_KEYWORD) != null;
   }
 
   @Nullable

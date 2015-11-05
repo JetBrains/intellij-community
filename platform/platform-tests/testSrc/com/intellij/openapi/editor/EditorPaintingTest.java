@@ -25,11 +25,11 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
+import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.MockFontLayoutService;
@@ -49,11 +49,16 @@ import java.util.Map;
 
 @TestDataPath("$CONTENT_ROOT/testData/editor/painting")
 public class EditorPaintingTest extends AbstractEditorTest {
-  private static final boolean GENERATE_MISSING_TEST_DATA = false;
 
   public void testWholeLineHighlighterAtDocumentEnd() throws Exception {
     initText("foo");
     addLineHighlighter(0, 3, HighlighterLayer.WARNING, null, Color.red);
+    checkResult();
+  }
+
+  public void testBoxedHighlightingLastLinePartially() throws Exception {
+    initText("foo\nbar bar");
+    addBorderHighlighter(2, 7, HighlighterLayer.WARNING, Color.red);
     checkResult();
   }
 
@@ -70,30 +75,42 @@ public class EditorPaintingTest extends AbstractEditorTest {
     addRangeHighlighter(0, 3, 0, null, Color.blue);
     checkResult();
   }
+  
+  public void testEmptyBorderInEmptyDocument() throws Exception {
+    initText("");
+    addBorderHighlighter(0, 0, HighlighterLayer.WARNING, Color.red);
+    checkResult();
+  }
 
   private static void addRangeHighlighter(int startOffset, int endOffset, int layer, Color foregroundColor, Color backgroundColor) {
-    myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer,
-                                                  new TextAttributes(foregroundColor, backgroundColor, null, null, Font.PLAIN),
-                                                  HighlighterTargetArea.EXACT_RANGE);
+    addRangeHighlighter(startOffset, endOffset, layer, new TextAttributes(foregroundColor, backgroundColor, null, null, Font.PLAIN));
   }
-  
+
   private static void addLineHighlighter(int startOffset, int endOffset, int layer, Color foregroundColor, Color backgroundColor) {
-    myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer,
-                                                  new TextAttributes(foregroundColor, backgroundColor, null, null, Font.PLAIN),
-                                                  HighlighterTargetArea.LINES_IN_RANGE);
+    addLineHighlighter(startOffset, endOffset, layer, new TextAttributes(foregroundColor, backgroundColor, null, null, Font.PLAIN));
+  }
+
+  private static void addRangeHighlighter(int startOffset, int endOffset, int layer, TextAttributes textAttributes) {
+    myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, textAttributes, HighlighterTargetArea.EXACT_RANGE);
+  }
+
+  private static void addLineHighlighter(int startOffset, int endOffset, int layer, TextAttributes textAttributes) {
+    myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, textAttributes, HighlighterTargetArea.LINES_IN_RANGE);
+  }
+
+  private static void addBorderHighlighter(int startOffset, int endOffset, int layer, Color borderColor) {
+    addRangeHighlighter(startOffset, endOffset, layer, new TextAttributes(null, null, borderColor, EffectType.BOXED, Font.PLAIN));
   }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     FontLayoutService.setInstance(new MockFontLayoutService(BitmapFont.CHAR_WIDTH, BitmapFont.CHAR_HEIGHT, BitmapFont.CHAR_DESCENT));
-    Registry.get("editor.new.rendering").setValue(true);
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      Registry.get("editor.new.rendering").setValue(false);
       FontLayoutService.setInstance(null);
     }
     finally {
@@ -124,6 +141,10 @@ public class EditorPaintingTest extends AbstractEditorTest {
     }
 
     File fileWithExpectedResult = getTestDataFile(expectedResultFileName);
+    if (OVERWRITE_TESTDATA) {
+      ImageIO.write(image, "png", fileWithExpectedResult);
+      System.out.println("File " + fileWithExpectedResult.getPath() + " created.");
+    }
     if (fileWithExpectedResult.exists()) {
       BufferedImage expectedResult = ImageIO.read(fileWithExpectedResult);
       if (expectedResult.getWidth() != image.getWidth()) {
@@ -141,12 +162,8 @@ public class EditorPaintingTest extends AbstractEditorTest {
       }
     }
     else {
-      if (GENERATE_MISSING_TEST_DATA) {
-        ImageIO.write(image, "png", fileWithExpectedResult);
-      }
-      else {
-        fail("Test data is missing", fileWithExpectedResult, image);
-      }
+      ImageIO.write(image, "png", fileWithExpectedResult);
+      fail("Missing test data created: " + fileWithExpectedResult.getPath());
     }
   }
 

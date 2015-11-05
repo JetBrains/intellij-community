@@ -48,4 +48,54 @@ public class ThrowFromFinallyBlock
         }
     }
 
+    interface BaseStream extends AutoCloseable {
+        @Override
+        void close();
+    }
+
+    static Runnable composedClose(BaseStream a, BaseStream b) {
+        return new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    a.close();
+                }
+                catch (Error | RuntimeException e1) {
+                    try {
+                        b.close();
+                    }
+                    catch (Error | RuntimeException e2) {
+                        e1.addSuppressed(e2);
+                    }
+                    finally {
+                        throw e1;
+                    }
+                }
+                b.close();
+            }
+        };
+    }
+
+  /**
+   * adapted from http://www.oracle.com/technetwork/articles/java/trywithresources-401775.html
+   */
+    public static void runWithoutMasking(FileInputStream a) throws IOException {
+        IOException myException = null;
+        try {
+            a.read();
+        } catch (IOException e) {
+            myException = e;
+            throw e;
+        } finally {
+            if (myException != null) {
+                try {
+                    a.close();
+                } catch (Throwable t) {
+                    myException.addSuppressed(t);
+                }
+            } else {
+                a.close();
+            }
+        }
+    }
 }

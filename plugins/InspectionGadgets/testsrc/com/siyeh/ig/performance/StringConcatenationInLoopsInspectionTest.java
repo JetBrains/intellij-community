@@ -1,12 +1,20 @@
 package com.siyeh.ig.performance;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class StringConcatenationInLoopsInspectionTest extends IGInspectionTestCase {
+public class StringConcatenationInLoopsInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    final StringConcatenationInLoopsInspection tool = new StringConcatenationInLoopsInspection();
-    tool.m_ignoreUnlessAssigned = false;
-    doTest("com/siyeh/igtest/performance/string_concatenation_in_loops", tool);
+  public void testStringConcatenationInLoop() throws Exception {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    final StringConcatenationInLoopsInspection inspection = new StringConcatenationInLoopsInspection();
+    inspection.m_ignoreUnlessAssigned = false;
+    return inspection;
   }
 }

@@ -22,6 +22,7 @@ import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.pom.java.LanguageLevel;
@@ -32,15 +33,19 @@ import com.intellij.psi.filters.position.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.openapi.util.Conditions.notInstanceOf;
 import static com.intellij.patterns.PsiJavaPatterns.*;
 import static com.intellij.patterns.StandardPatterns.not;
+import static com.intellij.psi.SyntaxTraverser.psiApi;
 
 public class JavaKeywordCompletion {
   public static final ElementPattern<PsiElement> AFTER_DOT = psiElement().afterLeaf(".");
@@ -578,8 +583,9 @@ public class JavaKeywordCompletion {
            isAfterPrimitiveOrArrayType(position);
   }
 
-  private static void addPrimitiveTypes(final Consumer<LookupElement> result, PsiElement position) {
-    if (AFTER_DOT.accepts(position)) {
+  static void addPrimitiveTypes(final Consumer<LookupElement> result, PsiElement position) {
+    if (AFTER_DOT.accepts(position) ||
+        psiElement().inside(psiAnnotation()).accepts(position) && !expectsClassLiteral(position)) {
       return;
     }
 
@@ -623,6 +629,15 @@ public class JavaKeywordCompletion {
     }
   }
 
+  private static boolean expectsClassLiteral(PsiElement position) {
+    return ContainerUtil.find(JavaSmartCompletionContributor.getExpectedTypes(position, false), new Condition<ExpectedTypeInfo>() {
+      @Override
+      public boolean value(ExpectedTypeInfo info) {
+        return InheritanceUtil.isInheritor(info.getType(), CommonClassNames.JAVA_LANG_CLASS);
+      }
+    }) != null;
+  }
+
   private static boolean isAtResourceVariableStart(PsiElement position) {
     return psiElement().insideStarting(psiElement(PsiTypeElement.class).withParent(PsiResourceList.class)).accepts(position);
   }
@@ -654,6 +669,10 @@ public class JavaKeywordCompletion {
     }
     if (psiElement().inside(PsiSwitchStatement.class).accepts(position)) {
       result.consume(br);
+    }
+
+    for (PsiLabeledStatement labeled : psiApi().parents(position).takeWhile(notInstanceOf(PsiMember.class)).filter(PsiLabeledStatement.class)) {
+      result.consume(TailTypeDecorator.withTail(LookupElementBuilder.create("break " + labeled.getName()).bold(), TailType.SEMICOLON));
     }
   }
 

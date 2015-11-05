@@ -18,7 +18,7 @@ package com.jetbrains.python.run;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.remote.RemoteProcessHandlerBase;
+import com.intellij.remote.RemoteProcessControl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,9 +26,9 @@ import org.jetbrains.annotations.Nullable;
  * @author traff
  */
 public class PyRemoteTracebackFilter extends PythonTracebackFilter {
-  private final RemoteProcessHandlerBase myHandler;
+  private final RemoteProcessControl myHandler;
 
-  public PyRemoteTracebackFilter(Project project, String workingDirectory, RemoteProcessHandlerBase remoteProcessHandler) {
+  public PyRemoteTracebackFilter(Project project, String workingDirectory, RemoteProcessControl remoteProcessHandler) {
     super(project, workingDirectory);
 
     myHandler = remoteProcessHandler;

@@ -64,10 +64,14 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
     if (!(enclosingElement instanceof PsiMethod) || nodeDescriptor == null) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
-    final PsiMethod method = (PsiMethod)enclosingElement;
+
     final PsiMethod baseMethod = (PsiMethod)((CallHierarchyNodeDescriptor)nodeDescriptor).getTargetElement();
+    if (baseMethod == null) {
+      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    }
     final SearchScope searchScope = getSearchScope(myScopeType, baseMethod.getContainingClass());
 
+    final PsiMethod method = (PsiMethod)enclosingElement;
     final PsiClass originalClass = method.getContainingClass();
     assert originalClass != null;
     final PsiClassType originalType = JavaPsiFacade.getElementFactory(myProject).createType(originalClass);

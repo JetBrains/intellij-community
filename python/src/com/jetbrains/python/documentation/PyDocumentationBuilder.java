@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.documentation;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -30,6 +31,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.*;
 import com.jetbrains.python.console.PyConsoleUtil;
+import com.jetbrains.python.documentation.docstrings.DocStringUtil;
+import com.jetbrains.python.documentation.docstrings.PyStructuredDocstringFormatter;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
@@ -54,16 +57,16 @@ import java.util.regex.Pattern;
 
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.*;
 
-class PyDocumentationBuilder {
+public class PyDocumentationBuilder {
   private final PsiElement myElement;
   private final PsiElement myOriginalElement;
   private ChainIterable<String> myResult;
-  private ChainIterable<String> myProlog;      // sequence for reassignment info, etc
-  private ChainIterable<String> myBody;        // sequence for doc string
-  private ChainIterable<String> myEpilog;      // sequence for doc "copied from" notices and such
+  private final ChainIterable<String> myProlog;      // sequence for reassignment info, etc
+  private final ChainIterable<String> myBody;        // sequence for doc string
+  private final ChainIterable<String> myEpilog;      // sequence for doc "copied from" notices and such
 
   private static final Pattern ourSpacesPattern = Pattern.compile("^\\s+");
-  private ChainIterable<String> myReassignmentChain;
+  private final ChainIterable<String> myReassignmentChain;
 
   public PyDocumentationBuilder(PsiElement element, PsiElement originalElement) {
     myElement = element;
@@ -78,6 +81,7 @@ class PyDocumentationBuilder {
     myReassignmentChain = new ChainIterable<String>();
   }
 
+  @Nullable
   public String build() {
     final TypeEvalContext context = TypeEvalContext.userInitiated(myElement.getProject(), myElement.getContainingFile());
     final PsiElement outerElement = myOriginalElement != null ? myOriginalElement.getParent() : null;
@@ -103,9 +107,11 @@ class PyDocumentationBuilder {
       PythonDocumentationProvider.describeExpressionTypeWithLinks(myBody, (PyReferenceExpression)outerElement, context);
     }
 
-    if (elementDefinition != null &&
-        PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens().contains(elementDefinition.getNode().getElementType())) {
-      buildForKeyword(elementDefinition.getText());
+    if (elementDefinition != null) {
+      final ASTNode node = elementDefinition.getNode();
+      if (node != null && PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens().contains(node.getElementType())) {
+        buildForKeyword(elementDefinition.getText());
+      }
     }
     final String url = PythonDocumentationProvider.getUrlFor(myElement, myOriginalElement, true);
     if (url != null) {
@@ -147,9 +153,9 @@ class PyDocumentationBuilder {
   private void buildFromParameter(@NotNull final TypeEvalContext context, @Nullable final PsiElement outerElement,
                                   @NotNull final PsiElement elementDefinition) {
     myBody.addItem(combUp("Parameter " + PyUtil.getReadableRepr(elementDefinition, false)));
-    boolean typeFromDocstringAdded = addTypeAndDescriptionFromDocstring((PyNamedParameter)elementDefinition);
+    final boolean typeFromDocstringAdded = addTypeAndDescriptionFromDocstring((PyNamedParameter)elementDefinition);
     if (outerElement instanceof PyExpression) {
-      PyType type = context.getType((PyExpression)outerElement);
+      final PyType type = context.getType((PyExpression)outerElement);
       if (type != null) {
         String typeString = null;
         if (type instanceof PyDynamicallyEvaluatedType) {
@@ -159,7 +165,7 @@ class PyDocumentationBuilder {
         }
         else {
           if (outerElement.getReference() != null) {
-            PsiElement target = outerElement.getReference().resolve();
+            final PsiElement target = outerElement.getReference().resolve();
 
             if (target instanceof PyTargetExpression) {
               final String targetName = ((PyTargetExpression)target).getName();
@@ -268,7 +274,7 @@ class PyDocumentationBuilder {
       myBody.add(PythonDocumentationProvider.describeClass(pyClass, TagBold, true, false));
     }
     else if (elementDefinition instanceof PyFunction) {
-      PyFunction pyFunction = (PyFunction)elementDefinition;
+      final PyFunction pyFunction = (PyFunction)elementDefinition;
       if (!isProperty) {
         pyClass = pyFunction.getContainingClass();
         if (pyClass != null) {
@@ -318,8 +324,8 @@ class PyDocumentationBuilder {
       final PyCallExpression call = (PyCallExpression)myElement;
       final Pair<String, PyFunction> wrapInfo = PyCallExpressionHelper.interpretAsModifierWrappingCall(call, myOriginalElement);
       if (wrapInfo != null) {
-        String wrapperName = wrapInfo.getFirst();
-        PyFunction wrappedFunction = wrapInfo.getSecond();
+        final String wrapperName = wrapInfo.getFirst();
+        final PyFunction wrappedFunction = wrapInfo.getSecond();
         myReassignmentChain.addWith(TagSmall, $(PyBundle.message("QDOC.wrapped.in.$0", wrapperName)).addItem(BR));
         return wrappedFunction;
       }
@@ -327,7 +333,7 @@ class PyDocumentationBuilder {
     return myElement;
   }
 
-  private static PsiElement resolveWithoutImplicits(final PyReferenceExpression element) {
+  private static PsiElement resolveWithoutImplicits(@NotNull PyReferenceExpression element) {
     final QualifiedResolveResult resolveResult = element.followAssignmentsChain(PyResolveContext.noImplicits());
     return resolveResult.isImplicit() ? null : resolveResult.getElement();
   }
@@ -362,19 +368,19 @@ class PyDocumentationBuilder {
         final String inheritedDoc = docstringElement.getStringValue();
         if (inheritedDoc.length() > 1) {
           myEpilog.addItem(BR).addItem(BR);
-          String ancestor_name = ancestor.getName();
-          String marker = (pyClass == ancestor) ? PythonDocumentationProvider.LINK_TYPE_CLASS : PythonDocumentationProvider.LINK_TYPE_PARENT;
-          final String ancestor_link =
-            $().addWith(new LinkWrapper(marker + ancestor_name), $(ancestor_name)).toString();
+          final String ancestorName = ancestor.getName();
+          final String marker = (pyClass == ancestor) ? PythonDocumentationProvider.LINK_TYPE_CLASS : PythonDocumentationProvider.LINK_TYPE_PARENT;
+          final String ancestorLink =
+            $().addWith(new LinkWrapper(marker + ancestorName), $(ancestorName)).toString();
           if (isFromClass) {
-            myEpilog.addItem(PyBundle.message("QDOC.copied.from.class.$0", ancestor_link));
+            myEpilog.addItem(PyBundle.message("QDOC.copied.from.class.$0", ancestorLink));
           }
           else {
-            myEpilog.addItem(PyBundle.message("QDOC.copied.from.$0.$1", ancestor_link, methodName));
+            myEpilog.addItem(PyBundle.message("QDOC.copied.from.$0.$1", ancestorLink, methodName));
           }
           myEpilog.addItem(BR).addItem(BR);
-          ChainIterable<String> formatted = new ChainIterable<String>();
-          ChainIterable<String> unformatted = new ChainIterable<String>();
+          final ChainIterable<String> formatted = new ChainIterable<String>();
+          final ChainIterable<String> unformatted = new ChainIterable<String>();
           addFormattedDocString(pyFunction, inheritedDoc, formatted, unformatted);
           myEpilog.addWith(TagCode, formatted).add(unformatted);
           notFound = false;
@@ -394,13 +400,13 @@ class PyDocumentationBuilder {
   }
 
   private void addPredefinedMethodDoc(PyFunction fun, String mothodName) {
-    PyClassType objectType = PyBuiltinCache.getInstance(fun).getObjectType(); // old- and new-style classes share the __xxx__ stuff
+    final PyClassType objectType = PyBuiltinCache.getInstance(fun).getObjectType(); // old- and new-style classes share the __xxx__ stuff
     if (objectType != null) {
-      PyClass objectClass = objectType.getPyClass();
-      PyFunction predefinedMethod = objectClass.findMethodByName(mothodName, false);
+      final PyClass objectClass = objectType.getPyClass();
+      final PyFunction predefinedMethod = objectClass.findMethodByName(mothodName, false);
       if (predefinedMethod != null) {
-        PyStringLiteralExpression predefinedDocstring = predefinedMethod.getDocStringExpression();
-        String predefinedDoc = predefinedDocstring != null ? predefinedDocstring.getStringValue() : null;
+        final PyStringLiteralExpression predefinedDocstring = predefinedMethod.getDocStringExpression();
+        final String predefinedDoc = predefinedDocstring != null ? predefinedDocstring.getStringValue() : null;
         if (predefinedDoc != null && predefinedDoc.length() > 1) { // only a real-looking doc string counts
           addFormattedDocString(fun, predefinedDoc, myBody, myBody);
           myEpilog.addItem(BR).addItem(BR).addItem(PyBundle.message("QDOC.copied.from.builtin"));
@@ -409,11 +415,13 @@ class PyDocumentationBuilder {
     }
   }
 
-  private static void addFormattedDocString(PsiElement element, @NotNull String docstring,
-                                            ChainIterable<String> formattedOutput, ChainIterable<String> unformattedOutput) {
+  private static void addFormattedDocString(@NotNull PsiElement element,
+                                            @NotNull String docstring,
+                                            @NotNull ChainIterable<String> formattedOutput,
+                                            @NotNull ChainIterable<String> unformattedOutput) {
     final Project project = element.getProject();
 
-    List<String> formatted = PyStructuredDocstringFormatter.formatDocstring(element, docstring);
+    final List<String> formatted = PyStructuredDocstringFormatter.formatDocstring(element, docstring);
     if (formatted != null) {
       unformattedOutput.add(formatted);
       return;
@@ -421,11 +429,11 @@ class PyDocumentationBuilder {
 
     boolean isFirstLine;
     final List<String> result = new ArrayList<String>();
-    String[] lines = removeCommonIndentation(docstring);
+    final String[] lines = removeCommonIndentation(docstring);
 
     // reconstruct back, dropping first empty fragment as needed
     isFirstLine = true;
-    int tabSize = CodeStyleSettingsManager.getSettings(project).getTabSize(PythonFileType.INSTANCE);
+    final int tabSize = CodeStyleSettingsManager.getSettings(project).getTabSize(PythonFileType.INSTANCE);
     for (String line : lines) {
       if (isFirstLine && ourSpacesPattern.matcher(line).matches()) continue; // ignore all initial whitespace
       if (isFirstLine) {
@@ -482,27 +490,24 @@ class PyDocumentationBuilder {
   }
 
   private static Pair<String, String> getTypeAndDescription(@Nullable final String docString, @NotNull final PyNamedParameter followed) {
-    StructuredDocString structuredDocString = DocStringUtil.parse(docString);
     String type = null;
     String desc = null;
-    if (structuredDocString != null) {
+    if (docString != null) {
+      final StructuredDocString structuredDocString = DocStringUtil.parse(docString);
       final String name = followed.getName();
       type = structuredDocString.getParamType(name);
-
       desc = structuredDocString.getParamDescription(name);
     }
-
     return Pair.create(type, desc);
   }
 
   private void buildFromAttributeDoc() {
-    PyClass cls = PsiTreeUtil.getParentOfType(myElement, PyClass.class);
+    final PyClass cls = PsiTreeUtil.getParentOfType(myElement, PyClass.class);
     assert cls != null;
-    String type = PyUtil.isInstanceAttribute((PyExpression)myElement) ? "Instance attribute " : "Class attribute ";
+    final String type = PyUtil.isInstanceAttribute((PyExpression)myElement) ? "Instance attribute " : "Class attribute ";
     myProlog
       .addItem(type).addWith(TagBold, $().addWith(TagCode, $(((PyTargetExpression)myElement).getName())))
-      .addItem(" of class ").addWith(PythonDocumentationProvider.LinkMyClass, $().addWith(TagCode, $(cls.getName()))).addItem(BR)
-    ;
+      .addItem(" of class ").addWith(PythonDocumentationProvider.LinkMyClass, $().addWith(TagCode, $(cls.getName()))).addItem(BR);
 
     final String docString = ((PyTargetExpression)myElement).getDocStringValue();
     if (docString != null) {
@@ -512,7 +517,7 @@ class PyDocumentationBuilder {
 
   public static String[] removeCommonIndentation(@NotNull final String docstring) {
     // detect common indentation
-    String[] lines = LineTokenizer.tokenize(docstring, false);
+    final String[] lines = LineTokenizer.tokenize(docstring, false);
     boolean isFirst = true;
     int cutWidth = Integer.MAX_VALUE;
     int firstIndentedLine = 0;
@@ -535,11 +540,12 @@ class PyDocumentationBuilder {
     // remove common indentation
     if (cutWidth > 0 && cutWidth < Integer.MAX_VALUE) {
       for (int i = firstIndentedLine; i < lines.length; i += 1) {
-        if (lines[i].length() >= cutWidth)
+        if (lines[i].length() >= cutWidth) {
           lines[i] = lines[i].substring(cutWidth);
+        }
       }
     }
-    List<String> result = new ArrayList<String>();
+    final List<String> result = new ArrayList<String>();
     for (String line : lines) {
       if (line.startsWith(PyConsoleUtil.ORDINARY_PROMPT)) break;
       result.add(line);
@@ -547,7 +553,7 @@ class PyDocumentationBuilder {
     return ArrayUtil.toStringArray(result);
   }
 
-  private void addModulePath(PyFile followed) {
+  private void addModulePath(@NotNull PyFile followed) {
     // what to prepend to a module description?
     final VirtualFile file = followed.getVirtualFile();
     if (file == null) {
@@ -555,11 +561,11 @@ class PyDocumentationBuilder {
     }
     else {
       final String path = file.getPath();
-      RootFinder finder = new RootFinder(path);
+      final RootFinder finder = new RootFinder(path);
       RootVisitorHost.visitRoots(followed, finder);
       final String rootPath = finder.getResult();
       if (rootPath != null) {
-        String afterPart = path.substring(rootPath.length());
+        final String afterPart = path.substring(rootPath.length());
         myProlog.addWith(TagSmall, $(rootPath).addWith(TagBold, $(afterPart)));
       }
       else {
@@ -570,14 +576,14 @@ class PyDocumentationBuilder {
 
   private static class RootFinder implements RootVisitor {
     private String myResult;
-    private String myPath;
+    private final String myPath;
 
     private RootFinder(String path) {
       myPath = path;
     }
 
-    public boolean visitRoot(VirtualFile root, Module module, Sdk sdk, boolean isModuleSource) {
-      String vpath = VfsUtilCore.urlToPath(root.getUrl());
+    public boolean visitRoot(@NotNull VirtualFile root, Module module, Sdk sdk, boolean isModuleSource) {
+      final String vpath = VfsUtilCore.urlToPath(root.getUrl());
       if (myPath.startsWith(vpath)) {
         myResult = vpath;
         return false;

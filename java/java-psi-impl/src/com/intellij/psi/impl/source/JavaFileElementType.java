@@ -24,11 +24,15 @@ import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
+import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
+import com.intellij.psi.impl.java.stubs.hierarchy.JavaStubIndexer;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
+import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.tree.java.JavaFileElement;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.ILightStubFileElementType;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
+import com.intellij.util.indexing.IndexingDataKeys;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +42,7 @@ import java.io.IOException;
  * @author max
  */
 public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileStub> {
-  public static final int STUB_VERSION = 21;
+  public static final int STUB_VERSION = 22;
 
   public JavaFileElementType() {
     super("java.FILE", JavaLanguage.INSTANCE);
@@ -106,5 +110,12 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
   }
 
   @Override
-  public void indexStub(@NotNull final PsiJavaFileStub stub, @NotNull final IndexSink sink) { }
+  public void indexStub(@NotNull final PsiJavaFileStub stub, @NotNull final IndexSink sink) {
+    Integer fileId = stub.getUserData(IndexingDataKeys.VIRTUAL_FILE_ID);
+    if (fileId == null) return;
+    IndexTree.Unit unit = JavaStubIndexer.translate(fileId, stub);
+    if (unit != null) {
+      sink.occurrence(JavaStubIndexKeys.UNITS, unit);
+    }
+  }
 }

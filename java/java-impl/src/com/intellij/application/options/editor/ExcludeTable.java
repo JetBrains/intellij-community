@@ -16,7 +16,7 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.ProjectCodeInsightSettings;
+import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.execution.util.ListTableWithButtons;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
@@ -193,7 +193,7 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
     for (String s : CodeInsightSettings.getInstance().EXCLUDED_PACKAGES) {
       rows.add(new Item(s, ExclusionScope.IDE));
     }
-    for (String s : ProjectCodeInsightSettings.getSettings(myProject).excludedNames) {
+    for (String s : JavaProjectCodeInsightSettings.getSettings(myProject).excludedNames) {
       rows.add(new Item(s, ExclusionScope.Project));
     }
     Collections.sort(rows, new Comparator<Item>() {
@@ -208,7 +208,7 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
 
   void apply() {
     CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = ArrayUtil.toStringArray(getExcludedPackages(ExclusionScope.IDE));
-    ProjectCodeInsightSettings.getSettings(myProject).excludedNames = getExcludedPackages(ExclusionScope.Project);
+    JavaProjectCodeInsightSettings.getSettings(myProject).excludedNames = getExcludedPackages(ExclusionScope.Project);
   }
 
   private List<String> getExcludedPackages(ExclusionScope scope) {
@@ -225,7 +225,7 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
   boolean isModified() {
     return !getExcludedPackages(ExclusionScope.IDE).equals(Arrays.asList(CodeInsightSettings.getInstance().EXCLUDED_PACKAGES))
            ||
-           !getExcludedPackages(ExclusionScope.Project).equals(ProjectCodeInsightSettings.getSettings(myProject).excludedNames);
+           !getExcludedPackages(ExclusionScope.Project).equals(JavaProjectCodeInsightSettings.getSettings(myProject).excludedNames);
 
   }
 

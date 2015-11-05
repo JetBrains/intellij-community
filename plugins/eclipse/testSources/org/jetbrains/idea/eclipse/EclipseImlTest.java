@@ -37,6 +37,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
@@ -57,7 +59,8 @@ public class EclipseImlTest extends IdeaTestCase {
     final File currentTestRoot = new File(testRoot, getTestName(true));
     assertTrue(currentTestRoot.getAbsolutePath(), currentTestRoot.isDirectory());
 
-    FileUtil.copyDir(currentTestRoot, new File(getProject().getBaseDir().getPath()));
+    VirtualFile vTestRoot = LocalFileSystem.getInstance().findFileByIoFile(currentTestRoot);
+    copyDirContentsTo(vTestRoot, getProject().getBaseDir());
   }
 
   private void doTest() throws Exception {

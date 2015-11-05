@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.ChangeListOwner;
@@ -29,12 +28,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
-public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode implements TreeLinkMouseListener.HaveTooltip {
-  private final Project myProject;
+import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
-  public ChangesBrowserLocallyDeletedNode(LocallyDeletedChange userObject, Project project) {
+public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode implements TreeLinkMouseListener.HaveTooltip {
+  public ChangesBrowserLocallyDeletedNode(LocallyDeletedChange userObject) {
     super(userObject);
-    myProject = project;
     myCount = 1;
   }
 
@@ -68,7 +66,7 @@ public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode impleme
     if (renderer.isShowFlatten()) {
       final File parentFile = filePath.getIOFile().getParentFile();
       if (parentFile != null) {
-        renderer.append(" (" + parentFile.getPath() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        renderer.append(spaceAndThinSpace() + parentFile.getPath(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
     }
     else if (getCount() != 1 || getDirectoryCount() != 0) {

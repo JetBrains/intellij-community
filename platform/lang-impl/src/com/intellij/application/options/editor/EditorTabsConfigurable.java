@@ -80,6 +80,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
 
     boolean none = i == UISettings.TABS_NONE;
     myHideKnownExtensions.setEnabled(!none);
+    myHideTabsCheckbox.setEnabled(!none && myScrollTabLayoutInEditorCheckBox.isSelected());
     myScrollTabLayoutInEditorCheckBox.setEnabled(!none);
     myCbModifiedTabsMarkedWithAsterisk.setEnabled(!none);
     myShowTabsTooltipsCheckBox.setEnabled(!none);

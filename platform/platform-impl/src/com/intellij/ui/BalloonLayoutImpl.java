@@ -72,6 +72,9 @@ public class BalloonLayoutImpl implements BalloonLayout {
     balloon.show(myLayeredPane);
   }
 
+  public boolean isEmpty() {
+    return myBalloons.isEmpty();
+  }
 
   public void queueRelayout() {
     myRelayoutAlarm.cancelAllRequests();

@@ -46,16 +46,9 @@ public final class ScratchRootType extends RootType {
     super("scratches", "Scratches");
   }
 
-  public boolean isScratchFile(@Nullable VirtualFile file) {
-    if (file == null) return false;
-    ScratchFileService service = ScratchFileService.getInstance();
-    return service != null && service.getRootType(file) == this;
-  }
-
   @Override
   public Language substituteLanguage(@NotNull Project project, @NotNull VirtualFile file) {
-    Language language = ScratchFileService.getInstance().getScratchesMapping().getMapping(file);
-    return substituteLanguageImpl(language, file, project);
+    return ScratchFileService.getInstance().getScratchesMapping().getMapping(file);
   }
 
   @Nullable

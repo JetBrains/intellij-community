@@ -170,14 +170,15 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
                                                            @NotNull final Side side) {
     final Project project = viewer.getProject();
     assert project != null;
+    final ContentDiffRequest request = viewer.getRequest();
 
-    AnnotationData data = getDataFromCache(viewer, side);
+    AnnotationData data = getDataFromCache(request, side);
     if (data != null) {
       annotator.showAnnotation(viewer, side, data);
       return;
     }
 
-    final FileAnnotationLoader loader = createAnnotationsLoader(project, viewer.getRequest(), side);
+    final FileAnnotationLoader loader = createAnnotationsLoader(project, request, side);
     assert loader != null;
 
     final DiffContextEx diffContext = ObjectUtils.tryCast(viewer.getContext(), DiffContextEx.class);
@@ -208,13 +209,13 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
               }
 
               if (loader.getResult() == null) return;
-              if (viewer.isDisposed()) return;
-
-              annotator.showAnnotation(viewer, side, loader.getResult());
-
               if (loader.shouldCache()) {
-                putDataToCache(viewer, side, loader.getResult());
+                // data race is possible here, but we expect AnnotationData to be immutable, so this is not an issue
+                putDataToCache(request, side, loader.getResult());
               }
+
+              if (viewer.isDisposed()) return;
+              annotator.showAnnotation(viewer, side, loader.getResult());
             }
           }, indicator.getModalityState());
         }
@@ -273,7 +274,7 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
   @Nullable
   private static FileAnnotationLoader doCreateAnnotationsLoader(@Nullable AbstractVcs vcs, @Nullable final VirtualFile file) {
     if (vcs == null || file == null) return null;
-    final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
+    final AnnotationProvider annotationProvider = vcs.getCachingAnnotationProvider();
     if (annotationProvider == null) return null;
 
     // TODO: cache them too, listening for ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener() ?
@@ -301,18 +302,18 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
     };
   }
 
-  private static void putDataToCache(@NotNull DiffViewerBase viewer, @NotNull Side side, @NotNull AnnotationData data) {
-    AnnotationData[] cache = viewer.getRequest().getUserData(CACHE_KEY);
+  private static void putDataToCache(@NotNull DiffRequest request, @NotNull Side side, @NotNull AnnotationData data) {
+    AnnotationData[] cache = request.getUserData(CACHE_KEY);
     if (cache == null || cache.length != 2) {
       cache = new AnnotationData[2];
-      viewer.getRequest().putUserData(CACHE_KEY, cache);
+      request.putUserData(CACHE_KEY, cache);
     }
     cache[side.getIndex()] = data;
   }
 
   @Nullable
-  private static AnnotationData getDataFromCache(@NotNull DiffViewerBase viewer, @NotNull Side side) {
-    AnnotationData[] cache = viewer.getRequest().getUserData(CACHE_KEY);
+  private static AnnotationData getDataFromCache(@NotNull DiffRequest request, @NotNull Side side) {
+    AnnotationData[] cache = request.getUserData(CACHE_KEY);
     if (cache != null && cache.length == 2) {
       return side.select(cache);
     }
@@ -411,7 +412,7 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
     @Override
     public void showAnnotation(@NotNull TwosideTextDiffViewer viewer, @NotNull Side side, @NotNull AnnotationData data) {
       Project project = ObjectUtils.assertNotNull(viewer.getProject());
-      AnnotateToggleAction.doAnnotate(viewer.getEditor(side), project, null, data.annotation, data.vcs, null);
+      AnnotateToggleAction.doAnnotate(viewer.getEditor(side), project, null, data.annotation, data.vcs);
     }
 
     @Override
@@ -444,7 +445,7 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
     public void showAnnotation(@NotNull OnesideTextDiffViewer viewer, @NotNull Side side, @NotNull AnnotationData data) {
       if (side != viewer.getSide()) return;
       Project project = ObjectUtils.assertNotNull(viewer.getProject());
-      AnnotateToggleAction.doAnnotate(viewer.getEditor(), project, null, data.annotation, data.vcs, null);
+      AnnotateToggleAction.doAnnotate(viewer.getEditor(), project, null, data.annotation, data.vcs);
     }
 
     @Override
@@ -540,20 +541,22 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
     @NotNull private final AbstractVcs myVcs;
     private final boolean myShouldCache;
 
-    private VcsException myException;
-    private FileAnnotation myResult;
+    @Nullable private VcsException myException;
+    @Nullable private FileAnnotation myResult;
 
     public FileAnnotationLoader(@NotNull AbstractVcs vcs, boolean cache) {
       myVcs = vcs;
       myShouldCache = cache;
     }
 
+    @Nullable
     public VcsException getException() {
       return myException;
     }
 
+    @Nullable
     public AnnotationData getResult() {
-      return new AnnotationData(myVcs, myResult);
+      return myResult != null ? new AnnotationData(myVcs, myResult) : null;
     }
 
     public boolean shouldCache() {

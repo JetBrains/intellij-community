@@ -645,7 +645,10 @@ public class ExpectedTypeUtils {
         final PsiArrayType arrayType = (PsiArrayType)parameterType;
         return substitutor.substitute(arrayType.getComponentType());
       }
-      final PsiType type = substitutor.substitute(parameterType);
+      final PsiType type = GenericsUtil.getVariableTypeByExpressionType(substitutor.substitute(parameterType));
+      if (type == null) {
+        return null;
+      }
       final TypeStringCreator typeStringCreator = new TypeStringCreator();
       type.accept(typeStringCreator);
       if (typeStringCreator.isModified()) {

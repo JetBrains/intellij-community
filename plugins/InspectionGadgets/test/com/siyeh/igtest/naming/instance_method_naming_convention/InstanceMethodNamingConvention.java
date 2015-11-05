@@ -12,12 +12,12 @@ public class InstanceMethodNamingConvention implements Runnable
 
     }
 
-    public void <warning descr="Instance method name 'foo' is too short">foo</warning>()
+    public void <warning descr="Instance method name 'foo' is too short (3 < 4)">foo</warning>()
     {
 
     }
 
-    public void <warning descr="Instance method name 'methodNameTooLoooooooooooooooooooooooooooooooooooooooooooooong' is too long">methodNameTooLoooooooooooooooooooooooooooooooooooooooooooooong</warning>()
+    public void <warning descr="Instance method name 'methodNameTooLoooooooooooooooooooooooooooooooooooooooooooooong' is too long (62 > 32)">methodNameTooLoooooooooooooooooooooooooooooooooooooooooooooong</warning>()
     {
 
     }

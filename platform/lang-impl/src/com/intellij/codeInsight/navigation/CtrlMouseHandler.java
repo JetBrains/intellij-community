@@ -828,31 +828,35 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
         @Override
         public void onCanceled(@NotNull ProgressIndicator indicator) {
+          LOG.debug("Highlighting was cancelled");
         }
       });
     }
 
     private void doExecute(@NotNull PsiFile file, int offset) {
       final Info info;
+      final DocInfo docInfo;
       try {
         info = getInfoAt(myEditor, file, offset, myBrowseMode);
         if (info == null) return;
+        docInfo = info.getInfo();
       }
       catch (IndexNotReadyException e) {
         showDumbModeNotification(myProject);
         return;
       }
 
+      LOG.debug("Obtained info about element under cursor");
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
           if (myDisposed || myEditor.isDisposed() || !myEditor.getComponent().isShowing()) return;
-          showHint(info);
+          showHint(info, docInfo);
         }
       });
     }
 
-    private void showHint(@NotNull Info info) {
+    private void showHint(@NotNull Info info, @NotNull DocInfo docInfo) {
       if (myDisposed || myEditor.isDisposed()) return;
       Component internalComponent = myEditor.getContentComponent();
       if (myHighlighter != null) {
@@ -871,8 +875,6 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
 
       myHighlighter = installHighlighterSet(info, myEditor);
-
-      DocInfo docInfo = info.getInfo();
 
       if (docInfo.text == null) return;
 

@@ -52,3 +52,39 @@ class LambdaReturn {
         return new RuntimeException(message);
     }
 }
+/**
+ * An exception with fluent setters
+ */
+class FluentException extends Exception {
+    private String info;
+
+    private FluentException() {
+    }
+
+    private FluentException( String s ) {
+        super( s );
+    }
+
+    public FluentException withInfo( String s ) {
+        info = s;
+        return this;
+    }
+
+    public static FluentException factory( String msg ) {
+        return new FluentException( msg );
+    }
+
+    public String getInfo() {
+        return info;
+    }
+}
+
+/**
+ * A sample call site
+ */
+class TestIt {
+    public void test() throws FluentException {
+        // The call to 'factory' gets flagged
+        throw FluentException.factory( "foo" ).withInfo( "bar" );
+    }
+}

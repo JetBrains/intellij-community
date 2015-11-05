@@ -837,7 +837,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     return getXmlName().evaluateChildName(xmlName);
   }
 
-  public List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description, final NotNullFunction<DomInvocationHandler, List<XmlTag>> tagsGetter) {
+  public List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description) {
     if (myStub != null && description.isStubbed()) {
       if (description instanceof DomChildDescriptionImpl) {
         XmlName xmlName = ((DomChildDescriptionImpl)description).getXmlName();
@@ -855,7 +855,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
           @Nullable
           @Override
           public DomElement fun(DomStub stub) {
-            if (stub instanceof ElementStub && ((ElementStub)stub).isCustom()) {
+            if (stub instanceof ElementStub && stub.isCustom()) {
               EvaluatedXmlName name = new DummyEvaluatedXmlName(stub.getName(), "");
               return new CollectionElementInvocationHandler(name, (CustomDomChildrenDescriptionImpl)description, myManager, (ElementStub)stub).getProxy();
             }
@@ -867,7 +867,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     XmlTag tag = getXmlTag();
     if (tag == null) return Collections.emptyList();
 
-    final List<XmlTag> subTags = tagsGetter.fun(this);
+    final List<XmlTag> subTags = getCollectionSubTags(description, tag);
     if (subTags.isEmpty()) return Collections.emptyList();
 
     List<DomElement> elements = new ArrayList<DomElement>(subTags.size());
@@ -887,6 +887,13 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       }
     }
     return Collections.unmodifiableList(elements);
+  }
+
+  private List<XmlTag> getCollectionSubTags(@NotNull AbstractCollectionChildDescription description, @NotNull XmlTag tag) {
+    if (description instanceof CollectionChildDescriptionImpl) {
+      return ((CollectionChildDescriptionImpl)description).getCollectionSubTags(this, tag);
+    }
+    return DomImplUtil.getCustomSubTags(this, tag.getSubTags(), getFile());
   }
 
   private static class StableCopyFactory<T extends DomElement> implements NullableFactory<T> {
@@ -912,6 +919,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
       if (handler == null || !handler.getClass().equals(myHandlerClass)) return null;
 
+      //noinspection unchecked
       return (T)element;
     }
   }

@@ -29,7 +29,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.edu.EduNames;
@@ -55,15 +54,13 @@ public abstract class CCRunTestsAction extends AnAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    final Presentation presentation = e.getPresentation();
     if (!CCProjectService.setCCActionAvailable(e)) {
-      EduUtils.enableAction(e, false);
+      presentation.setEnabledAndVisible(false);
       return;
     }
 
-    Presentation presentation = e.getPresentation();
-    presentation.setText("");
-    presentation.setVisible(false);
-    presentation.setEnabled(false);
+    presentation.setEnabledAndVisible(false);
 
     final ConfigurationContext context = ConfigurationContext.getFromContext(e.getDataContext());
     Location location = context.getLocation();
@@ -74,40 +71,15 @@ public abstract class CCRunTestsAction extends AnAction {
     PsiFile psiFile = psiElement.getContainingFile();
     Project project = e.getProject();
     if (project == null || psiFile == null) {
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
       return;
     }
-    final CCProjectService service = CCProjectService.getInstance(project);
-    final Course course = service.getCourse();
-    final PsiDirectory taskDir = psiFile.getContainingDirectory();
-    if (taskDir == null) return;
-    final PsiDirectory lessonDir = taskDir.getParent();
-    if (lessonDir == null) return;
-    if (course == null) return;
-    final Lesson lesson = course.getLesson(lessonDir.getName());
-    if (lesson == null) return;
-    final Task task = lesson.getTask(taskDir.getName());
-    if (task == null) {
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
-      return;
-    }
-    TaskFile taskFile = service.getTaskFile(psiFile.getVirtualFile());
+    TaskFile taskFile = CCProjectService.getInstance(project).getTaskFile(psiFile.getVirtualFile());
     if (taskFile == null) {
-      LOG.info("could not find task file");
-      presentation.setVisible(false);
-      presentation.setEnabled(false);
       return;
     }
     if (psiFile.getName().contains(".answer")) {
-      presentation.setEnabled(true);
-      presentation.setVisible(true);
-      presentation.setText("Run tests from '" + psiFile.getName() + "'");
-    }
-    else {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
+      presentation.setEnabledAndVisible(true);
+      presentation.setText("Run tests from '" + FileUtil.getNameWithoutExtension(psiFile.getName()) + "'");
     }
   }
 

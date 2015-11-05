@@ -129,4 +129,17 @@ public class Patches {
    * See <a href="https://bugs.openjdk.java.net/browse/JDK-8042123">JDK-8042123</a>
    */
   public static final boolean JDK_BUG_ID_8042123 = !SystemInfo.isJavaVersionAtLeast("1.8.0_40");
+
+  /**
+   * JDK on Mac detects font style for system fonts based only on their name (PostScript name).
+   * This doesn't work for some fonts which don't use recognizable style suffixes in their names.
+   * Corresponding JDK request for enhancement - <a href="https://bugs.openjdk.java.net/browse/JDK-8139151">JDK-8139151</a>.
+   */
+  public static final boolean JDK_MAC_FONT_STYLE_DETECTION_WORKAROUND = SystemInfo.isMac;
+
+  /**
+   * Older JDK versions could mistakenly use derived italics font, when genuine italics font was available in the system.
+   * The issue was fixed in JDK 1.8.0_60 as part of <a href="https://bugs.openjdk.java.net/browse/JDK-8064833">JDK-8064833</a>.
+   */
+  public static final boolean JDK_MAC_FONT_STYLE_BUG = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast("1.8.0_60");
 }

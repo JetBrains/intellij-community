@@ -20,6 +20,8 @@ public class NumericLiterals {
     long l5 = 0b0001_0010_0100_1000l;
     long l6 = <error descr="Binary numbers must contain at least one binary digit">0Bl</error>;
     long l7 = <error descr="Long number too large">0B1_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111_1111L</error>;
+    long l8 = <error descr="Long number too large">9_223_372_036_854_775_808L</error>;
+    long l9 = -9_223_372_036_854_775_808L;
 
     float f1 = 1_0f;
     float f2 = 1e1_2f;

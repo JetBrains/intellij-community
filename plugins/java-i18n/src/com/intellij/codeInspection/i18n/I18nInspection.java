@@ -123,8 +123,8 @@ public class I18nInspection extends BaseLocalInspectionTool {
   public void readSettings(@NotNull Element node) throws InvalidDataException {
     super.readSettings(node);
     for (Object o : node.getChildren()) {
-      if (o instanceof Element && Comparing.strEqual(node.getAttributeValue("name"), SKIP_FOR_ENUM)) {
-        final String ignoreForConstantsAttr = node.getAttributeValue("value");
+      if (o instanceof Element && Comparing.strEqual(((Element)o).getAttributeValue("name"), SKIP_FOR_ENUM)) {
+        final String ignoreForConstantsAttr = ((Element)o).getAttributeValue("value");
         if (ignoreForConstantsAttr != null) {
           ignoreForEnumConstants = Boolean.parseBoolean(ignoreForConstantsAttr);
         }
@@ -568,11 +568,11 @@ public class I18nInspection extends BaseLocalInspectionTool {
       return false;
     }
 
-    if (JavaI18nUtil.isPassedToAnnotatedParam(project, expression, AnnotationUtil.NON_NLS, new HashMap<String, Object>(), nonNlsTargets)) {
+    if (JavaI18nUtil.isPassedToAnnotatedParam(expression, AnnotationUtil.NON_NLS, new HashMap<String, Object>(), nonNlsTargets)) {
       return false;
     }
 
-    if (isInNonNlsCall(project, expression, nonNlsTargets)) {
+    if (isInNonNlsCall(expression, nonNlsTargets)) {
       return false;
     }
 
@@ -580,11 +580,11 @@ public class I18nInspection extends BaseLocalInspectionTool {
       return false;
     }
 
-    if (isPassedToNonNlsVariable(project, expression, nonNlsTargets)) {
+    if (isPassedToNonNlsVariable(expression, nonNlsTargets)) {
       return false;
     }
 
-    if (JavaI18nUtil.mustBePropertyKey(project, expression, new HashMap<String, Object>())) {
+    if (JavaI18nUtil.mustBePropertyKey(expression, new HashMap<String, Object>())) {
       return false;
     }
 
@@ -678,10 +678,9 @@ public class I18nInspection extends BaseLocalInspectionTool {
            || isPackageNonNls(psiPackage.getParentPackage());
   }
 
-  private boolean isPassedToNonNlsVariable(@NotNull Project project,
-                                           @NotNull PsiLiteralExpression expression,
+  private boolean isPassedToNonNlsVariable(@NotNull PsiLiteralExpression expression,
                                            final Set<PsiModifierListOwner> nonNlsTargets) {
-    PsiExpression toplevel = JavaI18nUtil.getToplevelExpression(project, expression);
+    PsiExpression toplevel = JavaI18nUtil.getTopLevelExpression(expression);
     PsiVariable var = null;
     if (toplevel instanceof PsiAssignmentExpression) {
       PsiExpression lExpression = ((PsiAssignmentExpression)toplevel).getLExpression();
@@ -785,8 +784,9 @@ public class I18nInspection extends BaseLocalInspectionTool {
     return false;
   }
 
-  private static boolean isInNonNlsCall(@NotNull Project project, @NotNull PsiExpression expression, final Set<PsiModifierListOwner> nonNlsTargets) {
-    expression = JavaI18nUtil.getToplevelExpression(project, expression);
+  private static boolean isInNonNlsCall(@NotNull PsiExpression expression,
+                                        final Set<PsiModifierListOwner> nonNlsTargets) {
+    expression = JavaI18nUtil.getTopLevelExpression(expression);
     final PsiElement parent = expression.getParent();
     if (parent instanceof PsiExpressionList) {
       final PsiElement grParent = parent.getParent();

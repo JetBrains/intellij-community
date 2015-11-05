@@ -187,6 +187,10 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.Modifi
   }
 
   @Override
+  public void dispose() {
+  }
+
+  @Override
   public boolean isChanged() {
     return myRootModel.isChanged();
   }

@@ -15,11 +15,9 @@
  */
 package com.intellij.execution.testDiscovery;
 
+import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.MethodBrowser;
-import com.intellij.execution.ui.AlternativeJREPanel;
-import com.intellij.execution.ui.ClassBrowser;
-import com.intellij.execution.ui.CommonJavaParametersPanel;
-import com.intellij.execution.ui.ConfigurationModuleSelector;
+import com.intellij.execution.ui.*;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.options.SettingsEditor;
@@ -51,9 +49,9 @@ public class TestDiscoveryConfigurable<T extends TestDiscoveryConfiguration> ext
   private final ConfigurationModuleSelector myModuleSelector;
   // Fields
   private JPanel myWholePanel = new JPanel(new BorderLayout());
-  private LabeledComponent<JComboBox> myModule = new LabeledComponent<JComboBox>();
+  private LabeledComponent<ModulesComboBox> myModule = new LabeledComponent<ModulesComboBox>();
   private CommonJavaParametersPanel myCommonJavaParameters = new CommonJavaParametersPanel();
-  private AlternativeJREPanel myAlternativeJREPanel = new AlternativeJREPanel();
+  private JrePathEditor myJrePathEditor;
   private LabeledComponent<EditorTextFieldWithBrowseButton> myClass = new LabeledComponent<EditorTextFieldWithBrowseButton>();
   private LabeledComponent<EditorTextFieldWithBrowseButton> myMethod = new LabeledComponent<EditorTextFieldWithBrowseButton>();
 
@@ -65,7 +63,7 @@ public class TestDiscoveryConfigurable<T extends TestDiscoveryConfiguration> ext
   public TestDiscoveryConfigurable(final Project project) {
     myModule.setText("Use classpath of");
     myModule.setLabelLocation(BorderLayout.WEST);
-    myModule.setComponent(new JComboBox());
+    myModule.setComponent(new ModulesComboBox());
     myModuleSelector = new ConfigurationModuleSelector(project, getModulesComponent());
     myCommonJavaParameters.setModuleContext(myModuleSelector.getModule());
     myCommonJavaParameters.setHasModuleMacro();
@@ -169,11 +167,12 @@ public class TestDiscoveryConfigurable<T extends TestDiscoveryConfiguration> ext
     myWholePanel.add(classpathPanel, BorderLayout.SOUTH);
 
     classpathPanel.add(myModule, BorderLayout.NORTH);
-    classpathPanel.add(myAlternativeJREPanel, BorderLayout.CENTER);
+    myJrePathEditor = new JrePathEditor(DefaultJreSelector.fromModuleDependencies(getModulesComponent(), false));
+    classpathPanel.add(myJrePathEditor, BorderLayout.CENTER);
     UIUtil.setEnabled(myCommonJavaParameters.getProgramParametersComponent(), false, true);
 
     setAnchor(myModule.getLabel());
-    myAlternativeJREPanel.setAnchor(myModule.getLabel());
+    myJrePathEditor.setAnchor(myModule.getLabel());
     myCommonJavaParameters.setAnchor(myModule.getLabel());
   }
 
@@ -185,8 +184,8 @@ public class TestDiscoveryConfigurable<T extends TestDiscoveryConfiguration> ext
 
   public void applyEditorTo(final TestDiscoveryConfiguration configuration) {
     applyHelpersTo(configuration);
-    configuration.setAlternativeJrePath(myAlternativeJREPanel.getPath());
-    configuration.setAlternativeJrePathEnabled(myAlternativeJREPanel.isPathEnabled());
+    configuration.setAlternativeJrePath(myJrePathEditor.getJrePathOrName());
+    configuration.setAlternativeJrePathEnabled(myJrePathEditor.isAlternativeJreSelected());
     configuration.setPosition(myPositionRb.isSelected() ? Pair.create(myClass.getComponent().getText().trim(), 
                                                                       myMethod.getComponent().getText().trim()) : null);
     if (myChangesRb.isSelected()) {
@@ -202,7 +201,8 @@ public class TestDiscoveryConfigurable<T extends TestDiscoveryConfiguration> ext
   public void resetEditorFrom(final TestDiscoveryConfiguration configuration) {
     myCommonJavaParameters.reset(configuration);
     getModuleSelector().reset(configuration);
-    myAlternativeJREPanel.init(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
+    myJrePathEditor
+      .setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
     final Pair<String, String> position = configuration.getPosition();
     if (position != null) {
       myPositionRb.setSelected(true);
@@ -225,7 +225,7 @@ public class TestDiscoveryConfigurable<T extends TestDiscoveryConfiguration> ext
     updateComponents();
   }
 
-  public JComboBox getModulesComponent() {
+  public ModulesComboBox getModulesComponent() {
     return myModule.getComponent();
   }
 

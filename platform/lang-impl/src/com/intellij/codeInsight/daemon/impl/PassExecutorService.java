@@ -440,7 +440,7 @@ class PassExecutorService implements Disposable {
                   return;
                 }
 
-                if (!myUpdateProgress.isCanceled()) {
+                if (!myUpdateProgress.isCanceled() && !myProject.isDisposed()) {
                   myPass.collectInformation(myUpdateProgress);
                 }
               }

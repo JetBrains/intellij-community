@@ -71,6 +71,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.reassigned.parameter"), CodeInsightColors.REASSIGNED_PARAMETER_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.implicit.anonymous.parameter"), CodeInsightColors.IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.instance.field"), CodeInsightColors.INSTANCE_FIELD_ATTRIBUTES),
+    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.instance.final.field"), CodeInsightColors.INSTANCE_FINAL_FIELD_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.static.field"), CodeInsightColors.STATIC_FIELD_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.static.final.field"), CodeInsightColors.STATIC_FINAL_FIELD_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.parameter"), CodeInsightColors.PARAMETER_ATTRIBUTES),
@@ -120,6 +121,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
     ourTags.put("annotationName", CodeInsightColors.ANNOTATION_NAME_ATTRIBUTES);
     ourTags.put("annotationAttributeName", CodeInsightColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES);
     ourTags.put("javadocTagValue", JavaHighlightingColors.DOC_COMMENT_TAG_VALUE);
+    ourTags.put("instanceFinalField", CodeInsightColors.INSTANCE_FINAL_FIELD_ATTRIBUTES);
   }
 
   @Override
@@ -168,6 +170,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
       "  private double <unusedField>unusedField</unusedField> = 12345.67890;\n" +
       "  private <unknownType>UnknownType</unknownType> <field>anotherString</field> = \"Another\\nStrin\\g\";\n" +
       "  public static int <static>staticField</static> = 0;\n" +
+      "  public final int <instanceFinalField>instanceFinalField</instanceFinalField> = 0;\n" +
       "\n" +
       "  public <constructorDeclaration>SomeClass</constructorDeclaration>(<interface>AnInterface</interface> <param>param</param>, int[] <reassignedParameter>reassignedParam</reassignedParameter>) {\n" +
       "    <error>int <localVar>localVar</localVar> = \"IntelliJ\"</error>; // Error, incompatible types\n" +

@@ -69,7 +69,7 @@ public class BuiltInWebBrowserUrlProvider extends WebBrowserUrlProvider implemen
     }
 
     String host = currentAuthority.substring(0, portIndex);
-    if (!BuiltInWebServerPackage.isOwnHostName(host)) {
+    if (!BuiltInWebServerKt.isOwnHostName(host)) {
       return false;
     }
 

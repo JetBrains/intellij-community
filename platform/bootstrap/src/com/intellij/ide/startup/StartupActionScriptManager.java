@@ -73,10 +73,10 @@ public class StartupActionScriptManager {
     File file = new File(getActionScriptPath());
     if (file.exists()) {
       boolean fileCorrupted = false;
-      ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file));
+      FileInputStream fis = new FileInputStream(file);
       try {
-        //noinspection unchecked
-        return (List<ActionCommand>)ois.readObject();
+        //noinspection unchecked, IOResourceOpenedButNotSafelyClosed
+        return (List<ActionCommand>)new ObjectInputStream(fis).readObject();
       }
       catch (Throwable e) {    // ClassNotFoundException / IOException
         fileCorrupted = true;
@@ -88,7 +88,7 @@ public class StartupActionScriptManager {
       }
       finally {
         try {
-          ois.close();
+          fis.close();
         } finally {
           if (fileCorrupted) FileUtil.delete(file); // do not need corrupted file anymore
         }

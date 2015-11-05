@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.Assert;
@@ -46,21 +48,18 @@ public class SvnAuthenticationTest extends PlatformTestCase {
   private SvnConfiguration myConfiguration;
 
   @Override
-  protected void runBareRunnable(Runnable runnable) throws Throwable {
+  protected void runBareRunnable(ThrowableRunnable<Throwable> runnable) throws Throwable {
     runnable.run();
   }
 
   @Override
   protected void setUp() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          SvnAuthenticationTest.super.setUp();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+    EdtTestUtil.runInEdtAndWait((Runnable)() -> {
+      try {
+        SvnAuthenticationTest.super.setUp();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
 

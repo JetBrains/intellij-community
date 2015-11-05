@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * (c) 2015 Silent Forest AB
- * created: 17 March 2015
- */
 package com.siyeh.ig.fixes.performance;
 
 import com.siyeh.InspectionGadgetsBundle;

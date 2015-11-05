@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.actionSystem.ex;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -30,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -191,5 +189,20 @@ public class ActionUtil {
     Object property = component.getClientProperty(AnAction.ourClientProperty);
     //noinspection unchecked
     return property == null ? Collections.<AnAction>emptyList() : (List<AnAction>)property;
+  }
+
+  public static void registerForEveryKeyboardShortcut(@NotNull JComponent component,
+                                                      @NotNull ActionListener action,
+                                                      @NotNull ShortcutSet shortcuts) {
+    for (Shortcut shortcut : shortcuts.getShortcuts()) {
+      if (shortcut instanceof KeyboardShortcut) {
+        KeyboardShortcut ks = (KeyboardShortcut)shortcut;
+        KeyStroke first = ks.getFirstKeyStroke();
+        KeyStroke second = ks.getSecondKeyStroke();
+        if (second == null) {
+          component.registerKeyboardAction(action, first, JComponent.WHEN_IN_FOCUSED_WINDOW);
+        }
+      }
+    }
   }
 }

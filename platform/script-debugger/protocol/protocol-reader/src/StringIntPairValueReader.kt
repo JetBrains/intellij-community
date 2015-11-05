@@ -1,6 +1,6 @@
 package org.jetbrains.protocolReader
 
-class StringIntPairValueReader : ValueReader() {
+internal class StringIntPairValueReader : ValueReader() {
   override fun appendFinishedValueTypeName(out: TextOutput) {
     out.append("StringIntPair")
   }

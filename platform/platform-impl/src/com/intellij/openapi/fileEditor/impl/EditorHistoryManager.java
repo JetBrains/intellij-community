@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -28,8 +28,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -40,74 +40,58 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
 
-public final class EditorHistoryManager extends AbstractProjectComponent implements JDOMExternalizable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorHistoryManager");
-  private Element myElement;
+@State(name = "editorHistoryManager", storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE))
+public final class EditorHistoryManager implements PersistentStateComponent<Element>, ProjectComponent {
+  private static final Logger LOG = Logger.getInstance(EditorHistoryManager.class);
 
-  public static EditorHistoryManager getInstance(final Project project){
+  private final Project myProject;
+
+  public static EditorHistoryManager getInstance(@NotNull Project project){
     return project.getComponent(EditorHistoryManager.class);
   }
 
   /**
    * State corresponding to the most recent file is the last
    */
-  private final List<HistoryEntry> myEntriesList = Collections.synchronizedList(new ArrayList<HistoryEntry>());
+  private final List<HistoryEntry> myEntriesList = new ArrayList<HistoryEntry>();
 
-  /**
-   * Invoked by reflection
-   */
-  EditorHistoryManager(final Project project, final UISettings uiSettings) {
-    super(project);
-    uiSettings.addUISettingsListener(new MyUISettingsListener(), project);
-  }
+  EditorHistoryManager(@NotNull Project project, @NotNull UISettings uiSettings) {
+    myProject = project;
 
-  @Override
-  public void projectOpened(){
-
-    MessageBusConnection connection = myProject.getMessageBus().connect();
-    connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new MyEditorManagerBeforeListener());
-    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new MyEditorManagerListener());
-
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
-      new DumbAwareRunnable() {
-        @Override
-        public void run() {
-          // myElement may be null if node that corresponds to this manager does not exist
-          if (myElement != null) {
-            final List children = myElement.getChildren(HistoryEntry.TAG);
-            myElement = null;
-            //noinspection unchecked
-            for (final Element e : (Iterable<Element>)children) {
-              try {
-                myEntriesList.add(new HistoryEntry(myProject, e));
-              }
-              catch (InvalidDataException e1) {
-                // OK here
-              }
-              catch (ProcessCanceledException e1) {
-                // OK here
-              }
-              catch (Exception anyException) {
-                LOG.error(anyException);
-              }
-            }
-            trimToSize();
-          }
-        }
+    uiSettings.addUISettingsListener(new UISettingsListener() {
+      @Override
+      public void uiSettingsChanged(UISettings source) {
+        trimToSize();
       }
-    );
+    }, project);
+
+    MessageBusConnection connection = project.getMessageBus().connect();
+    connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new FileEditorManagerListener.Before.Adapter() {
+      @Override
+      public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        updateHistoryEntry(file, false);
+      }
+    });
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new MyEditorManagerListener());
   }
 
-  @Override
-  @NotNull
-  public String getComponentName(){
-    return "editorHistoryManager";
+  private synchronized void addEntry(HistoryEntry entry) {
+    myEntriesList.add(entry);
   }
 
-  private void fileOpenedImpl(@NotNull final VirtualFile file) {
-    fileOpenedImpl(file, null, null);
+  private synchronized void removeEntry(HistoryEntry entry) {
+    boolean removed = myEntriesList.remove(entry);
+    if (removed) entry.destroy();
+  }
+
+  private synchronized void moveOnTop(HistoryEntry entry) {
+    myEntriesList.remove(entry);
+    myEntriesList.add(entry);
   }
 
   /**
@@ -148,8 +132,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
 
     final HistoryEntry entry = getEntry(file);
     if(entry != null){
-      myEntriesList.remove(entry);
-      myEntriesList.add(entry);
+      moveOnTop(entry);
     }
     else {
       final FileEditorState[] states=new FileEditorState[editors.length];
@@ -160,7 +143,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
         providers[i] = provider;
         states[i] = editors[i].getState(FileEditorStateLevel.FULL);
       }
-      myEntriesList.add(new HistoryEntry(file, providers, states, providers[selectedProviderIndex]));
+      addEntry(HistoryEntry.createHeavy(myProject, file, providers, states, providers[selectedProviderIndex]));
       trimToSize();
     }
   }
@@ -221,24 +204,11 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
     final Pair <FileEditor, FileEditorProvider> selectedEditorWithProvider = editorManager.getSelectedEditorWithProvider(file);
     if (selectedEditorWithProvider != null) {
       //LOG.assertTrue(selectedEditorWithProvider != null);
-      entry.mySelectedProvider = selectedEditorWithProvider.getSecond ();
-      LOG.assertTrue(entry.mySelectedProvider != null);
+      entry.setSelectedProvider(selectedEditorWithProvider.getSecond());
+      LOG.assertTrue(entry.getSelectedProvider() != null);
 
       if(changeEntryOrderOnly){
-        myEntriesList.remove(entry);
-        myEntriesList.add(entry);
-      }
-    }
-  }
-
-  /**
-   * Removes all entries that correspond to invalid files
-   */
-  private void validateEntries(){
-    for(int i=myEntriesList.size()-1; i>=0; i--){
-      final HistoryEntry entry = myEntriesList.get(i);
-      if(!entry.myFile.isValid()){
-        myEntriesList.remove(i);
+        moveOnTop(entry);
       }
     }
   }
@@ -246,13 +216,13 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
   /**
    * @return array of valid files that are in the history, oldest first. May contain duplicates.
    */
-  public VirtualFile[] getFiles(){
-    validateEntries();
-    final VirtualFile[] result = new VirtualFile[myEntriesList.size()];
-    for(int i=myEntriesList.size()-1; i>=0 ;i--){
-      result[i] = myEntriesList.get(i).myFile;
+  public synchronized VirtualFile[] getFiles(){
+    final List<VirtualFile> result = new ArrayList<VirtualFile>(myEntriesList.size());
+    for (HistoryEntry entry : myEntriesList) {
+      VirtualFile file = entry.getFile();
+      if (file != null) result.add(file);
     }
-    return result;
+    return VfsUtilCore.toVirtualFileArray(result);
   }
 
   /**
@@ -261,16 +231,16 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
   public LinkedHashSet<VirtualFile> getFileSet() {
     LinkedHashSet<VirtualFile> result = ContainerUtil.newLinkedHashSet();
     for (VirtualFile file : getFiles()) {
-      // if the file occurs several times in the history, only its last occurrence counts 
+      // if the file occurs several times in the history, only its last occurrence counts
       result.remove(file);
       result.add(file);
     }
     return result;
   }
 
-  public boolean hasBeenOpen(@NotNull VirtualFile f) {
+  public synchronized boolean hasBeenOpen(@NotNull VirtualFile f) {
     for (HistoryEntry each : myEntriesList) {
-      if (Comparing.equal(each.myFile, f)) return true;
+      if (Comparing.equal(each.getFile(), f)) return true;
     }
     return false;
   }
@@ -279,18 +249,17 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
    * Removes specified <code>file</code> from history. The method does
    * nothing if <code>file</code> is not in the history.
    *
-   * @exception java.lang.IllegalArgumentException if <code>file</code>
+   * @exception IllegalArgumentException if <code>file</code>
    * is <code>null</code>
    */
-  public void removeFile(@NotNull final VirtualFile file){
+  public synchronized void removeFile(@NotNull final VirtualFile file){
     final HistoryEntry entry = getEntry(file);
     if(entry != null){
-      myEntriesList.remove(entry);
+      removeEntry(entry);
     }
   }
 
   public FileEditorState getState(@NotNull VirtualFile file, final FileEditorProvider provider) {
-    validateEntries();
     final HistoryEntry entry = getEntry(file);
     return entry != null ? entry.getState(provider) : null;
   }
@@ -299,16 +268,15 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
    * @return may be null
    */
   public FileEditorProvider getSelectedProvider(final VirtualFile file) {
-    validateEntries();
     final HistoryEntry entry = getEntry(file);
-    return entry != null ? entry.mySelectedProvider : null;
+    return entry != null ? entry.getSelectedProvider() : null;
   }
 
-  private HistoryEntry getEntry(@NotNull VirtualFile file){
-    validateEntries();
+  private synchronized HistoryEntry getEntry(@NotNull VirtualFile file) {
     for (int i = myEntriesList.size() - 1; i >= 0; i--) {
       final HistoryEntry entry = myEntriesList.get(i);
-      if(file.equals(entry.myFile)){
+      VirtualFile entryFile = entry.getFile();
+      if (file.equals(entryFile)) {
         return entry;
       }
     }
@@ -319,28 +287,51 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
    * If total number of files in history more then <code>UISettings.RECENT_FILES_LIMIT</code>
    * then removes the oldest ones to fit the history to new size.
    */
-  private void trimToSize(){
+  private synchronized void trimToSize(){
     final int limit = UISettings.getInstance().RECENT_FILES_LIMIT + 1;
     while(myEntriesList.size()>limit){
-      myEntriesList.remove(0);
+      HistoryEntry removed = myEntriesList.remove(0);
+      removed.destroy();
     }
   }
 
   @Override
-  public void readExternal(final Element element) {
+  public void loadState(@NotNull Element element) {
     // we have to delay xml processing because history entries require EditorStates to be created
     // which is done via corresponding EditorProviders, those are not accessible before their
     // is initComponent() called
-    myElement = element.clone();
+    final Element state = element.clone();
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
+      @Override
+      public void run() {
+        for (Element e : state.getChildren(HistoryEntry.TAG)) {
+          try {
+            addEntry(HistoryEntry.createHeavy(myProject, e));
+          }
+          catch (InvalidDataException e1) {
+            // OK here
+          }
+          catch (ProcessCanceledException e1) {
+            // OK here
+          }
+          catch (Exception anyException) {
+            LOG.error(anyException);
+          }
+        }
+        trimToSize();
+      }
+    });
   }
 
   @Override
-  public void writeExternal(final Element element){
+  public synchronized Element getState() {
+    Element element = new Element("state");
     // update history before saving
     final VirtualFile[] openFiles = FileEditorManager.getInstance(myProject).getOpenFiles();
     for (int i = openFiles.length - 1; i >= 0; i--) {
       final VirtualFile file = openFiles[i];
-      if(getEntry(file) != null){ // we have to update only files that are in history
+      // we have to update only files that are in history
+      if (getEntry(file) != null) {
         updateHistoryEntry(file, false);
       }
     }
@@ -348,6 +339,33 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
     for (final HistoryEntry entry : myEntriesList) {
       entry.writeExternal(element, myProject);
     }
+    return element;
+  }
+
+  @Override
+  public void projectOpened() {
+  }
+
+  @Override
+  public void projectClosed() {
+  }
+
+  @Override
+  public void initComponent() {
+  }
+
+  @Override
+  public synchronized void disposeComponent() {
+    for (HistoryEntry entry : myEntriesList) {
+      entry.destroy();
+    }
+    myEntriesList.clear();
+  }
+
+  @NotNull
+  @Override
+  public String getComponentName() {
+    return "editorHistoryManager";
   }
 
   /**
@@ -356,7 +374,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
   private final class MyEditorManagerListener extends FileEditorManagerAdapter{
     @Override
     public void fileOpened(@NotNull final FileEditorManager source, @NotNull final VirtualFile file){
-      fileOpenedImpl(file);
+      fileOpenedImpl(file, null, null);
     }
 
     @Override
@@ -370,23 +388,6 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
           updateHistoryEntry(event.getNewFile(), true);
         }
       });
-    }
-  }
-
-  private final class MyEditorManagerBeforeListener extends FileEditorManagerListener.Before.Adapter {
-    @Override
-    public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-      updateHistoryEntry(file, false);
-    }
-  }
-
-  /**
-   * Cuts/extends history length
-   */
-  private final class MyUISettingsListener implements UISettingsListener{
-    @Override
-    public void uiSettingsChanged(final UISettings source) {
-      trimToSize();
     }
   }
 }

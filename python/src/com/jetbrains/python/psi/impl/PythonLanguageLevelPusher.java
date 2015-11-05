@@ -223,7 +223,15 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
       }
     }
     if (needReparseOpenFiles) {
-      FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          if (project.isDisposed()) {
+            return;
+          }
+          FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
+        }
+      });
     }
   }
 

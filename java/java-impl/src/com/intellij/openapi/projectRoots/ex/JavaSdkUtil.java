@@ -15,12 +15,21 @@
  */
 package com.intellij.openapi.projectRoots.ex;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JdkVersionUtil;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.rt.compiler.JavacRunner;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -55,5 +64,23 @@ public class JavaSdkUtil {
   public static List<String> getJUnit4JarPaths() {
     return Arrays.asList(getJunit4JarPath(),
                          PathUtil.getJarPathForClass(ReflectionUtil.forName("org.hamcrest.Matcher")));
+  }
+
+  public static boolean isLanguageLevelAcceptable(@NotNull Project project, @NotNull Module module, @NotNull LanguageLevel level) {
+    return isJdkSupportsLevel(getRelevantJdk(project, module), level);
+  }
+
+  private static boolean isJdkSupportsLevel(@Nullable final Sdk jdk, @NotNull LanguageLevel level) {
+    if (jdk == null) return true;
+    String versionString = jdk.getVersionString();
+    JavaSdkVersion version = versionString == null ? null : JdkVersionUtil.getVersion(versionString);
+    return version != null && version.getMaxLanguageLevel().isAtLeast(level);
+  }
+
+  @Nullable
+  private static Sdk getRelevantJdk(@NotNull Project project, @NotNull Module module) {
+    Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
+    Sdk moduleJdk = ModuleRootManager.getInstance(module).getSdk();
+    return moduleJdk == null ? projectJdk : moduleJdk;
   }
 }

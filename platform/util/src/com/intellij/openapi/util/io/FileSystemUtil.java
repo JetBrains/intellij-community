@@ -23,7 +23,6 @@ import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.sun.jna.Library;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
@@ -267,7 +266,7 @@ public class FileSystemUtil {
         long lastModified = (Long)myToMillis.invoke(attributes.get("lastModifiedTime"));
         if (SystemInfo.isWindows) {
           boolean isHidden = new File(path).getParent() == null ? false : (Boolean)attributes.get("hidden");
-          boolean isWritable = !(Boolean)attributes.get("readonly");
+          boolean isWritable = isDirectory || !(Boolean)attributes.get("readonly");
           return new FileAttributes(isDirectory, isOther, isSymbolicLink, isHidden, size, lastModified, isWritable);
         }
         else {
@@ -354,32 +353,40 @@ public class FileSystemUtil {
   // thanks to SVNKit for the idea of platform-specific offsets
   private static class JnaUnixMediatorImpl extends Mediator {
     @SuppressWarnings({"OctalInteger", "SpellCheckingInspection"})
-    private interface LibC extends Library {
-      int S_MASK = 0177777;
-      int S_IFMT = 0170000;
-      int S_IFLNK = 0120000;  // symbolic link
-      int S_IFREG = 0100000;  // regular file
-      int S_IFDIR = 0040000;  // directory
-      int PERM_MASK = 0777;
-      int EXECUTE_MASK = 0111;
-      int WRITE_MASK = 0222;
-      int W_OK = 2;           // write permission flag for access(2)
+    private static class LibC {
+      static final int S_MASK = 0177777;
+      static final int S_IFMT = 0170000;
+      static final int S_IFLNK = 0120000;  // symbolic link
+      static final int S_IFREG = 0100000;  // regular file
+      static final int S_IFDIR = 0040000;  // directory
+      static final int PERM_MASK = 0777;
+      static final int EXECUTE_MASK = 0111;
+      static final int WRITE_MASK = 0222;
+      static final int W_OK = 2;           // write permission flag for access(2)
 
-      int getuid();
-      int getgid();
-      int lstat(String path, Pointer stat);
-      int stat(String path, Pointer stat);
-      int __lxstat64(int ver, String path, Pointer stat);
-      int __xstat64(int ver, String path, Pointer stat);
-      int chmod(String path, int mode);
-      int access(String path, int mode);
+      static native int getuid();
+      static native int getgid();
+      static native int chmod(String path, int mode);
+      static native int access(String path, int mode);
+    }
+
+    @SuppressWarnings("SpellCheckingInspection")
+    private static class UnixLibC {
+      static native int lstat(String path, Pointer stat);
+      static native int stat(String path, Pointer stat);
+    }
+
+    @SuppressWarnings("SpellCheckingInspection")
+    private static class LinuxLibC {
+      static native int __lxstat64(int ver, String path, Pointer stat);
+      static native int __xstat64(int ver, String path, Pointer stat);
     }
 
     private static final int[] LINUX_32 =  {16, 44, 72, 24, 28};
     private static final int[] LINUX_64 =  {24, 48, 88, 28, 32};
     private static final int[] LNX_PPC32 = {16, 48, 80, 24, 28};
     private static final int[] LNX_PPC64 = LINUX_64;
-    private static final int[] LINUX_ARM = LNX_PPC32;
+    private static final int[] LNX_ARM32 = LNX_PPC32;
     private static final int[] BSD_32 =    { 8, 48, 32, 12, 16};
     private static final int[] BSD_64 =    { 8, 72, 40, 12, 16};
     private static final int[] SUN_OS_32 = {20, 48, 64, 28, 32};
@@ -392,7 +399,6 @@ public class FileSystemUtil {
     private static final int OFF_UID  = 3;
     private static final int OFF_GID  = 4;
 
-    private final LibC myLibC;
     private final int[] myOffsets;
     private final int myUid;
     private final int myGid;
@@ -402,8 +408,9 @@ public class FileSystemUtil {
       if (SystemInfo.isLinux) {
         if ("arm".equals(SystemInfo.OS_ARCH)) {
           if (SystemInfo.is32Bit) {
-            myOffsets = LINUX_ARM;
-          } else {
+            myOffsets = LNX_ARM32;
+          }
+          else {
             throw new IllegalStateException("AArch64 architecture is not supported");
           }
         }
@@ -424,15 +431,17 @@ public class FileSystemUtil {
         throw new IllegalStateException("Unsupported OS/arch: " + SystemInfo.OS_NAME + "/" + SystemInfo.OS_ARCH);
       }
 
-      myLibC = (LibC)Native.loadLibrary("c", LibC.class);
-      myUid = myLibC.getuid();
-      myGid = myLibC.getgid();
+      Native.register(LibC.class, "c");
+      Native.register(SystemInfo.isLinux ? LinuxLibC.class : UnixLibC.class, "c");
+
+      myUid = LibC.getuid();
+      myGid = LibC.getgid();
     }
 
     @Override
     protected FileAttributes getAttributes(@NotNull String path) throws Exception {
       Memory buffer = new Memory(256);
-      int res = SystemInfo.isLinux ? myLibC.__lxstat64(STAT_VER, path, buffer) : myLibC.lstat(path, buffer);
+      int res = SystemInfo.isLinux ? LinuxLibC.__lxstat64(STAT_VER, path, buffer) : UnixLibC.lstat(path, buffer);
       if (res != 0) return null;
 
       int mode = getModeFlags(buffer) & LibC.S_MASK;
@@ -451,13 +460,13 @@ public class FileSystemUtil {
       long mTime2 = myCoarseTs ? 0 : SystemInfo.is32Bit ? buffer.getInt(myOffsets[OFF_TIME] + 4) : buffer.getLong(myOffsets[OFF_TIME] + 8);
       long mTime = mTime1 * 1000 + mTime2 / 1000000;
 
-      boolean writable = ownFile(buffer) ? (mode & LibC.WRITE_MASK) != 0 : myLibC.access(path, LibC.W_OK) == 0;
+      boolean writable = ownFile(buffer) ? (mode & LibC.WRITE_MASK) != 0 : LibC.access(path, LibC.W_OK) == 0;
 
       return new FileAttributes(isDirectory, isSpecial, isSymlink, false, size, mTime, writable);
     }
 
-    private boolean loadFileStatus(@NotNull String path, Memory buffer) {
-      return (SystemInfo.isLinux ? myLibC.__xstat64(STAT_VER, path, buffer) : myLibC.stat(path, buffer)) == 0;
+    private static boolean loadFileStatus(String path, Memory buffer) {
+      return (SystemInfo.isLinux ? LinuxLibC.__xstat64(STAT_VER, path, buffer) : UnixLibC.stat(path, buffer)) == 0;
     }
 
     @Override
@@ -490,7 +499,7 @@ public class FileSystemUtil {
       else {
         permissions = sourcePermissions;
       }
-      return myLibC.chmod(target, permissions) == 0;
+      return LibC.chmod(target, permissions) == 0;
     }
 
     private int getModeFlags(Memory buffer) {
@@ -537,19 +546,19 @@ public class FileSystemUtil {
       if (myFileSystem != null) {
         final int flags = (Integer)myGetBooleanAttributes.invoke(myFileSystem, file);
         if (flags != 0) {
-          final boolean isDirectory = isSet(flags, BA_DIRECTORY);
-          final boolean isSpecial = notSet(flags, BA_REGULAR | BA_DIRECTORY);
-          final boolean isHidden = isSet(flags, BA_HIDDEN);
-          return new FileAttributes(isDirectory, isSpecial, false, isHidden, file.length(), file.lastModified(), file.canWrite());
+          boolean isDirectory = isSet(flags, BA_DIRECTORY);
+          boolean isSpecial = notSet(flags, BA_REGULAR | BA_DIRECTORY);
+          boolean isHidden = isSet(flags, BA_HIDDEN);
+          boolean isWritable = SystemInfo.isWindows && isDirectory || file.canWrite();
+          return new FileAttributes(isDirectory, isSpecial, false, isHidden, file.length(), file.lastModified(), isWritable);
         }
       }
-      else {
-        if (file.exists()) {
-          final boolean isDirectory = file.isDirectory();
-          final boolean isSpecial = !isDirectory && !file.isFile();
-          final boolean isHidden = file.isHidden();
-          return new FileAttributes(isDirectory, isSpecial, false, isHidden, file.length(), file.lastModified(), file.canWrite());
-        }
+      else if (file.exists()) {
+        boolean isDirectory = file.isDirectory();
+        boolean isSpecial = !isDirectory && !file.isFile();
+        boolean isHidden = file.isHidden();
+        boolean isWritable = SystemInfo.isWindows && isDirectory || file.canWrite();
+        return new FileAttributes(isDirectory, isSpecial, false, isHidden, file.length(), file.lastModified(), isWritable);
       }
 
       return null;

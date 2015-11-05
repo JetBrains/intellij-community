@@ -13,13 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 23.11.2006
- * Time: 17:20:10
- */
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -40,6 +33,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
+
 public class UnshelveChangesAction extends DumbAwareAction {
   private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.UnshelveChangesAction");
 
@@ -55,30 +50,19 @@ public class UnshelveChangesAction extends DumbAwareAction {
     }
     LOG.assertTrue(changeLists != null);
 
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    final List<LocalChangeList> allChangeLists = changeListManager.getChangeListsCopy();
     String defaultName = changeLists[0].DESCRIPTION;
-    LocalChangeList list = null;
-    if (changeLists.length == 1) {
-      final LocalChangeList sameNamedList = changeListManager.findChangeList(defaultName);
-      if (sameNamedList != null) {
-        list = sameNamedList;
-      }
-    }
-    if (list == null) {
-      list = changeListManager.getDefaultChangeList();
-    }
-    final ChangeListChooser chooser = new ChangeListChooser(project, allChangeLists, list,
+    final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    LocalChangeList list =
+      changeLists.length == 1 ? getPredefinedChangeList(defaultName, changeListManager) : changeListManager.getDefaultChangeList();
+    final ChangeListChooser chooser = new ChangeListChooser(project, changeListManager.getChangeListsCopy(), list,
                                                             VcsBundle.message("unshelve.changelist.chooser.title"), defaultName);
-    if (!chooser.showAndGet()) {
-      return;
-    }
+    if (!chooser.showAndGet()) return;
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
     final List<ShelvedBinaryFile> finalBinaryFiles = binaryFiles;
     final List<ShelvedChange> finalChanges = changes;
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Unshelve changes", true, BackgroundFromStartOption.getInstance()) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Unshelve Changes", true, BackgroundFromStartOption.getInstance()) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         for (ShelvedChangeList changeList : changeLists) {

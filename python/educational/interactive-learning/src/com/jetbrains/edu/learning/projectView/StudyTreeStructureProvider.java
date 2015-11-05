@@ -33,8 +33,9 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
       if (project != null) {
         if (node.getValue() instanceof PsiDirectory) {
           final PsiDirectory nodeValue = (PsiDirectory)node.getValue();
-          if (!nodeValue.getName().contains(EduNames.USER_TESTS) && !nodeValue.getName().startsWith(".")) {
-            StudyDirectoryNode newNode = new StudyDirectoryNode(project, nodeValue, settings);
+          final String name = nodeValue.getName();
+          if (name != null && !name.contains(EduNames.USER_TESTS) && !name.startsWith(".")) {
+            AbstractTreeNode newNode = createStudyDirectoryNode(settings, project, nodeValue);
             nodes.add(newNode);
           }
         }
@@ -63,6 +64,11 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
       }
     }
     return nodes;
+  }
+
+  @NotNull
+  protected AbstractTreeNode createStudyDirectoryNode(ViewSettings settings, Project project, PsiDirectory nodeValue) {
+    return new StudyDirectoryNode(project, nodeValue, settings);
   }
 
   private static void addNonInvisibleFiles(@NotNull final Collection<AbstractTreeNode> nodes,

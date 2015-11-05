@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+
+import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 /**
  * @author yole
@@ -69,13 +71,13 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
 
     final String originText = change.getOriginText(myProject);
     if (originText != null) {
-      renderer.append(" " + originText, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      renderer.append(spaceAndThinSpace() + originText, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
 
     if (renderer.isShowFlatten()) {
       final File parentFile = filePath.getIOFile().getParentFile();
       if (parentFile != null) {
-        renderer.append(" (" + FileUtil.getLocationRelativeToUserHome(parentFile.getPath()) + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        renderer.append(spaceAndThinSpace() + FileUtil.getLocationRelativeToUserHome(parentFile.getPath()), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
       appendSwitched(renderer);
     }
@@ -109,7 +111,7 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
     if (virtualFile != null && ! myProject.isDefault()) {
       String branch = ChangeListManager.getInstance(myProject).getSwitchedBranch(virtualFile);
       if (branch != null) {
-        renderer.append(" [switched to " + branch + "]", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        renderer.append(spaceAndThinSpace() + "[switched to " + branch + "]", SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     }
   }

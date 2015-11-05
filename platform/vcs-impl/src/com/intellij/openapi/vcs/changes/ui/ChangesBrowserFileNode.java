@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 /**
  * @author yole
@@ -60,7 +62,7 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> impl
     if (renderer.isShowFlatten() && file.isValid()) {
       final VirtualFile parentFile = file.getParent();
       assert parentFile != null;
-      renderer.append(" (" + FileUtil.getLocationRelativeToUserHome(parentFile.getPresentableUrl()) + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      renderer.append(spaceAndThinSpace() + FileUtil.getLocationRelativeToUserHome(parentFile.getPresentableUrl()), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
     else if (getCount() != 1 || getDirectoryCount() != 0) {
       appendCount(renderer);

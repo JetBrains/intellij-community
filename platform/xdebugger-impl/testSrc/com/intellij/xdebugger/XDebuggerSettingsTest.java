@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.testFramework.PlatformLiteFixture;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jdom.Element;
 
@@ -34,11 +34,11 @@ public class XDebuggerSettingsTest extends PlatformLiteFixture {
     registerExtensionPoint(XDebuggerSettings.EXTENSION_POINT, XDebuggerSettings.class);
     registerExtension(XDebuggerSettings.EXTENSION_POINT, new MyDebuggerSettings());
     getApplication().registerService(XDebuggerUtil.class, XDebuggerUtilImpl.class);
-    getApplication().registerService(com.intellij.xdebugger.settings.XDebuggerSettingsManager.class, XDebuggerSettingsManager.class);
+    getApplication().registerService(com.intellij.xdebugger.settings.XDebuggerSettingsManager.class, XDebuggerSettingManagerImpl.class);
   }
 
   public void testSerialize() throws Exception {
-    XDebuggerSettingsManager settingsManager = XDebuggerSettingsManager.getInstanceImpl();
+    XDebuggerSettingManagerImpl settingsManager = XDebuggerSettingManagerImpl.getInstanceImpl();
 
     MyDebuggerSettings settings = MyDebuggerSettings.getInstance();
     assertNotNull(settings);
@@ -50,7 +50,7 @@ public class XDebuggerSettingsTest extends PlatformLiteFixture {
     settings.myOption = "42";
     assertSame(settings, MyDebuggerSettings.getInstance());
 
-    settingsManager.loadState(XmlSerializer.deserialize(element, XDebuggerSettingsManager.SettingsState.class));
+    settingsManager.loadState(XmlSerializer.deserialize(element, XDebuggerSettingManagerImpl.SettingsState.class));
     assertSame(settings, MyDebuggerSettings.getInstance());
     assertEquals("239", settings.myOption);
   }

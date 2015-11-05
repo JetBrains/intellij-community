@@ -21,7 +21,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.components.ComponentsPackage;
+import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -178,7 +178,7 @@ public class StorageUtil {
   private static void collect(@NotNull ComponentManager componentManager,
                               @NotNull  Set<String> unknownMacros,
                               @NotNull Map<TrackingPathMacroSubstitutor, IComponentStore> substitutorToStore) {
-    IComponentStore store = ComponentsPackage.getStateStore(componentManager);
+    IComponentStore store = ServiceKt.getStateStore(componentManager);
     TrackingPathMacroSubstitutor substitutor = store.getStateStorageManager().getMacroSubstitutor();
     if (substitutor == null) {
       return;

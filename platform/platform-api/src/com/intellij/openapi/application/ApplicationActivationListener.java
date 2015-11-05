@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,11 +34,24 @@ public interface ApplicationActivationListener {
    */
   void applicationDeactivated(IdeFrame ideFrame);
 
+  /**
+   * This is more precise notification than {code applicationDeactivated} callback.
+   * It is intended for focus subsystem and purposes where we do not want
+   * to be bothered by false application deactivation events.
+   *
+   * The shortcoming of the method is that a notification is delivered
+   * with a delay. See {code app.deactivation.timeout} key in the registry
+   */
+  void delayedApplicationDeactivated(IdeFrame ideFrame);
+
   abstract class Adapter implements ApplicationActivationListener {
     @Override
     public void applicationActivated(IdeFrame ideFrame) { }
 
     @Override
     public void applicationDeactivated(IdeFrame ideFrame) { }
+
+    @Override
+    public void delayedApplicationDeactivated(IdeFrame ideFrame) { }
   }
 }

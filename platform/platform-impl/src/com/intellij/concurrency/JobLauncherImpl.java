@@ -288,14 +288,17 @@ public class JobLauncherImpl extends JobLauncher {
         catch (CancellationException e) {
           // was canceled in the middle of execution
           // can't do anything but wait. help other tasks in the meantime
-          pool.awaitQuiescence(millis, TimeUnit.MILLISECONDS);
+          if (Thread.currentThread() instanceof ForkJoinWorkerThread) { // if called outside FJP the FJTask.fork() starts up commonPool which is undesirable
+            pool.awaitQuiescence(millis, TimeUnit.MILLISECONDS);
+          }
         }
       }
     }
   }
 
   /**
-   * Process all elements from the {@code failedToProcess} and then {@code things} concurrently in the underlying pool maintaining its load.
+   * Process all elements from the {@code failedToProcess} and then {@code things} concurrently in the underlying pool.
+   * Processing happens concurrently maintaining {@code JobSchedulerImpl.CORES_COUNT} parallelism.
    * Stop when {@code tombStone} element is occurred.
    * If was unable to process some element, add it back to the {@code failedToProcess} queue.
    * @return true if all elements processed successfully, false if at least one processor returned false or exception occurred

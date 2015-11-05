@@ -64,19 +64,14 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
           UpdateHighlightersUtil.setHighlightersInRange(project, document, priorityIntersection, scheme, infos,
                                                         (MarkupModelEx)markupModel, groupId);
         }
-        showAutoImportPopups(editor, project, psiFile);
-        if (editor != null) {
+        if (editor != null && !editor.isDisposed()) {
+          // usability: show auto import popup as soon as possible
+          new ShowAutoImportPass(project, psiFile, editor).applyInformationToEditor();
+          
           DaemonListeners.repaintErrorStripeRenderer(editor, project);
         }
       }
     });
-  }
-
-  private static void showAutoImportPopups(Editor editor, Project project, PsiFile psiFile) {
-    // usability: show auto import popup as soon as possible
-    if (editor != null) {
-      new ShowAutoImportPass(project, psiFile, editor).applyInformationToEditor();
-    }
   }
 
   @Override

@@ -26,7 +26,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonProcessRunner;
 import org.jetbrains.annotations.Nullable;
@@ -48,28 +48,26 @@ public abstract class RestCommandLineState extends PythonCommandLineState {
   @Override
   protected void buildCommandLineParameters(GeneralCommandLine commandLine) {
     ParametersList parametersList = commandLine.getParametersList();
-    ParamsGroup exe_options = parametersList.getParamsGroup(GROUP_EXE_OPTIONS);
-    assert exe_options != null;
-    exe_options.addParametersString(myConfiguration.getInterpreterOptions());
+    ParamsGroup exeOptions = parametersList.getParamsGroup(GROUP_EXE_OPTIONS);
+    assert exeOptions != null;
+    exeOptions.addParametersString(myConfiguration.getInterpreterOptions());
 
-    ParamsGroup script_parameters = parametersList.getParamsGroup(GROUP_SCRIPT);
-    assert script_parameters != null;
-    String runner = PythonHelpersLocator.getHelperPath(getRunnerPath());
-    if (runner != null )
-      script_parameters.addParameter(runner);
+    ParamsGroup scriptParameters = parametersList.getParamsGroup(GROUP_SCRIPT);
+    assert scriptParameters != null;
+    getRunner().addToGroup(scriptParameters, commandLine);
     final String key = getKey();
     if (key != null)
-      script_parameters.addParameter(key);
-    script_parameters.addParameter(getTask());
+      scriptParameters.addParameter(key);
+    scriptParameters.addParameter(getTask());
 
     final String params = myConfiguration.getParams();
-    if (params != null) script_parameters.addParametersString(params);
+    if (params != null) scriptParameters.addParametersString(params);
 
     if (!StringUtil.isEmptyOrSpaces(myConfiguration.getInputFile()))
-      script_parameters.addParameter(myConfiguration.getInputFile());
+      scriptParameters.addParameter(myConfiguration.getInputFile());
 
     if (!StringUtil.isEmptyOrSpaces(myConfiguration.getOutputFile()))
-      script_parameters.addParameter(myConfiguration.getOutputFile());
+      scriptParameters.addParameter(myConfiguration.getOutputFile());
 
     if (!StringUtil.isEmptyOrSpaces(myConfiguration.getWorkingDirectory()))
       commandLine.setWorkDirectory(myConfiguration.getWorkingDirectory());
@@ -77,7 +75,7 @@ public abstract class RestCommandLineState extends PythonCommandLineState {
 
   protected ProcessHandler doCreateProcess(GeneralCommandLine commandLine) throws ExecutionException {
     final Runnable afterTask = getAfterTask();
-    ProcessHandler processHandler = PythonProcessRunner.createProcess(commandLine);
+    ProcessHandler processHandler = PythonProcessRunner.createProcess(commandLine, false);
     if (afterTask != null) {
       processHandler.addProcessListener(new ProcessAdapter() {
                                             public void processTerminated(ProcessEvent event) {
@@ -106,7 +104,7 @@ public abstract class RestCommandLineState extends PythonCommandLineState {
     return null;
   }
 
-  protected abstract String getRunnerPath();
+  protected abstract HelperPackage getRunner();
 
   protected abstract String getTask();
 

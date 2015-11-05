@@ -224,7 +224,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         if (usage instanceof NonCodeUsageInfo) return;
 
         throw new UnsupportedOperationException(
-          "usage: " + usage.getClass().getName() + ", referenced: " + referenced.getClass().getName() + "text: " + referenced.getText());
+          "usage: " + usage.getClass().getName() + 
+          ", usage element: " + usage.getElement() + 
+          ", referenced: " + referenced.getClass().getName() + 
+          ", text: " + referenced.getText());
       }
     });
 
@@ -782,7 +785,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
       PsiExpression initializer = myFactory.createExpressionFromText(defaultValue, null);
       PsiDeclarationStatement declaration =
-        myFactory.createVariableDeclarationStatement(name, callSubstitutor.substitute(paramType), initializer);
+        myFactory.createVariableDeclarationStatement(name, GenericsUtil.getVariableTypeByExpressionType(callSubstitutor.substitute(paramType)), initializer);
       declaration = (PsiDeclarationStatement)block.addAfter(declaration, null);
       parmVars[i] = (PsiLocalVariable)declaration.getDeclaredElements()[0];
       PsiUtil.setModifierProperty(parmVars[i], PsiModifier.FINAL, parm.hasModifierProperty(PsiModifier.FINAL));
@@ -791,9 +794,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     PsiLocalVariable thisVar = null;
     PsiClass containingClass = myMethod.getContainingClass();
     if (!myMethod.hasModifierProperty(PsiModifier.STATIC) && containingClass != null) {
-      PsiType thisType = myFactory.createType(containingClass, callSubstitutor);
-      String[] names = myJavaCodeStyle.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, thisType)
-        .names;
+      PsiType thisType = GenericsUtil.getVariableTypeByExpressionType(myFactory.createType(containingClass, callSubstitutor));
+      String[] names = myJavaCodeStyle.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, thisType).names;
       String thisVarName = names[0];
       thisVarName = myJavaCodeStyle.suggestUniqueVariableName(thisVarName, myMethod.getFirstChild(), true);
       PsiExpression initializer = myFactory.createExpressionFromText("null", null);

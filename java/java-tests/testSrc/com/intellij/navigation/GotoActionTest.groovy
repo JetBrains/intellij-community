@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 package com.intellij.navigation
+
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+
 /**
  * @author peter
  */
@@ -28,17 +30,34 @@ class GotoActionTest extends LightCodeInsightFixtureTestCase {
     def pattern = 'Rebas'
     def fork = 'Rebase my GitHub fork'
     def rebase = 'Rebase...'
-    def items = [new GotoActionModel.MatchedValue(createAction(fork), pattern), new GotoActionModel.MatchedValue(createAction(rebase), pattern)].sort()
+    def items = [matchedValue(fork, pattern),
+                 matchedValue(rebase, pattern)].sort()
     assert [rebase, fork] == items.collect { it.valueText }
   }
 
-  private static GotoActionModel.ActionWrapper createAction(String text) {
+  public void "test sort by match mode"() {
+    def pattern = 'by'
+    def byName = 'By Name'
+    def byDesc = 'By Desc'
+    def items = [matchedValue(byName, pattern),
+                 matchedValue(byDesc, pattern, GotoActionModel.MatchMode.DESCRIPTION)].sort()
+    assert [byName, byDesc] == items.collect { it.valueText }
+  }
+  
+  static def matchedValue(String fork, String pattern) {
+    matchedValue(fork, pattern, GotoActionModel.MatchMode.NAME)
+  }
+
+  static def matchedValue(String fork, String pattern, GotoActionModel.MatchMode mode) {
+    new GotoActionModel.MatchedValue(createAction(fork, mode), pattern)
+  }
+
+  static def createAction(String text, GotoActionModel.MatchMode mode) {
     def action = new AnAction(text) {
       @Override
       void actionPerformed(AnActionEvent e) {
       }
     }
-    return new GotoActionModel.ActionWrapper(action, "", GotoActionModel.MatchMode.NAME, DataContext.EMPTY_CONTEXT)
+    new GotoActionModel.ActionWrapper(action, "", mode, DataContext.EMPTY_CONTEXT)
   }
-
 }

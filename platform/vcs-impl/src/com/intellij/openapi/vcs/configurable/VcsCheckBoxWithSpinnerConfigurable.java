@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,6 +49,7 @@ public abstract class VcsCheckBoxWithSpinnerConfigurable implements Configurable
   }
 
   @Override
+  @NotNull
   public JComponent createComponent() {
     JPanel wrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     myHighlightRecentlyChanged = new JCheckBox(myCheckboxText);

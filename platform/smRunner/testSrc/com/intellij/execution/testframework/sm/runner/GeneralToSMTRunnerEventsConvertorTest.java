@@ -16,11 +16,10 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.sm.runner.history.ImportedToGeneralTestEventsConverter;
 import com.intellij.execution.testframework.sm.Marker;
 import com.intellij.execution.testframework.sm.runner.events.*;
+import com.intellij.execution.testframework.sm.runner.history.ImportedToGeneralTestEventsConverter;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeView;
@@ -35,7 +34,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import java.io.StringReader;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Roman Chernyatchik
@@ -184,11 +182,6 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     myEventsProcessor.onTestFailure(new TestFailedEvent("some_test", "msg 2", "trace 2", false, null, null));
 
     assertEquals(1, myEventsProcessor.getRunningTestsQuantity());
-    final Set<AbstractTestProxy> failedTests = myEventsProcessor.getFailedTestsSet();
-    assertEquals(1, failedTests.size());
-    for (final AbstractTestProxy test : failedTests) {
-      assertEquals("some_test", test.getName());
-    }
     assertEquals("\nmsg 1\ntrace 1\n\nmsg 2\ntrace 2\n", myMockResettablePrinter.getStdErr());
   }
 
@@ -223,7 +216,6 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     myEventsProcessor.onTestFinished(new TestFinishedEvent("some_test", 10l));
 
     assertEquals(0, myEventsProcessor.getRunningTestsQuantity());
-    assertEquals(0, myEventsProcessor.getFailedTestsSet().size());
 
     assertNotNull(proxy);
     assertFalse(proxy.isDefect());

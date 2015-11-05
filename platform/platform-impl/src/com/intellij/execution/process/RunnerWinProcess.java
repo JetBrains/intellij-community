@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
+/** @deprecated use {@link KillableColoredProcessHandler#KillableColoredProcessHandler(GeneralCommandLine, boolean)} (to be removed in IDEA 16) */
+@SuppressWarnings({"unused", "deprecation"})
 public class RunnerWinProcess extends ProcessWrapper {
 
   private RunnerWinProcess(@NotNull Process originalProcess) {
@@ -37,7 +39,7 @@ public class RunnerWinProcess extends ProcessWrapper {
   @NotNull
   public static Process create(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     if (!SystemInfo.isWindows) {
-      throw new RuntimeException(RunnerWinProcess.class.getSimpleName() + " works on Windows only!");
+      throw new RuntimeException("RunnerWinProcess works on Windows only!");
     }
     boolean success = RunnerMediator.injectRunnerCommand(commandLine);
     Process process = commandLine.createProcess();

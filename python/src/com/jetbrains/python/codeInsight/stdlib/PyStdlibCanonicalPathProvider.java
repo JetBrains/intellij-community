@@ -38,7 +38,7 @@ public class PyStdlibCanonicalPathProvider implements PyCanonicalPathProvider {
     if (qName.getComponentCount() > 0) {
       final List<String> components = qName.getComponents();
       final String head = components.get(0);
-      if (head.equals("_abcoll") || head.equals("_collections")) {
+      if (head.equals("_abcoll") || head.equals("_collections") || head.equals("_collections_abc")) {
         components.set(0, "collections");
         return QualifiedName.fromComponents(components);
       }

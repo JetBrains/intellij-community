@@ -10,7 +10,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.util.Consumer
@@ -18,13 +17,10 @@ import com.intellij.util.net.NetUtils
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.AsyncValueLoader
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.util.concurrency
-import org.jetbrains.util.concurrency.toPromise
+import org.jetbrains.concurrency.isRejected
 import javax.swing.Icon
 
-val LOG: Logger = Logger.getInstance(javaClass<NetService>())
-
-public abstract class NetService @jvmOverloads protected constructor(protected val project: Project, private val consoleManager: ConsoleManager = ConsoleManager()) : Disposable {
+abstract class NetService @JvmOverloads protected constructor(protected val project: Project, private val consoleManager: ConsoleManager = ConsoleManager()) : Disposable {
   protected val processHandler: AsyncValueLoader<OSProcessHandler> = object : AsyncValueLoader<OSProcessHandler>() {
     override fun isCancelOnReject() = true
 
@@ -46,33 +42,31 @@ public abstract class NetService @jvmOverloads protected constructor(protected v
         return promise
       }
 
-      promise.rejected(Consumer {
+      promise.rejected {
         processHandler.destroyProcess()
         Promise.logError(LOG, it)
-      })
+      }
 
       val processListener = MyProcessAdapter()
       processHandler.addProcessListener(processListener)
       processHandler.startNotify()
 
-      if (promise.getState() == Promise.State.REJECTED) {
+      if (promise.isRejected) {
         return promise
       }
 
-      ApplicationManager.getApplication().executeOnPooledThread(object : Runnable {
-        override fun run() {
-          if (promise.getState() != Promise.State.REJECTED) {
-            try {
-              connectToProcess(promise.toPromise(), port, processHandler, processListener)
-            }
-            catch (e: Throwable) {
-              if (!promise.setError(e)) {
-                LOG.error(e)
-              }
+      ApplicationManager.getApplication().executeOnPooledThread {
+        if (!promise.isRejected) {
+          try {
+            connectToProcess(promise, port, processHandler, processListener)
+          }
+          catch (e: Throwable) {
+            if (!promise.setError(e)) {
+              LOG.error(e)
             }
           }
         }
-      })
+      }
       return promise
     }
 
@@ -86,10 +80,10 @@ public abstract class NetService @jvmOverloads protected constructor(protected v
     }
   }
 
-  throws(ExecutionException::class)
+  @Throws(ExecutionException::class)
   protected abstract fun createProcessHandler(project: Project, port: Int): OSProcessHandler?
 
-  protected open fun connectToProcess(promise: concurrency.AsyncPromise<OSProcessHandler>, port: Int, processHandler: OSProcessHandler, errorOutputConsumer: Consumer<String>) {
+  protected open fun connectToProcess(promise: AsyncPromise<OSProcessHandler>, port: Int, processHandler: OSProcessHandler, errorOutputConsumer: Consumer<String>) {
     promise.setResult(processHandler)
   }
 
@@ -106,7 +100,7 @@ public abstract class NetService @jvmOverloads protected constructor(protected v
 
   protected abstract fun getConsoleToolWindowIcon(): Icon
 
-  public open fun getConsoleToolWindowActions(): ActionGroup = DefaultActionGroup()
+  open fun getConsoleToolWindowActions(): ActionGroup = DefaultActionGroup()
 
   private inner class MyProcessAdapter : ProcessAdapter(), Consumer<String> {
     override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {

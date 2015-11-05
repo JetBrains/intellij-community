@@ -15,8 +15,9 @@
  */
 package com.intellij.openapi.editor.ex.util;
 
-import com.intellij.ide.ui.LCDRenderingScope;
+import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
 
@@ -32,7 +33,10 @@ public class EditorUIUtil {
 
     Graphics2D g2d = (Graphics2D)g;
 
-    g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, LCDRenderingScope.getKeyForCurrentScope(true));
+    int lcdContrastValue = UIUtil.getLcdContrastValue();
+
+    g2d.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, lcdContrastValue);
+    g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(true));
 
     UISettings.setupFractionalMetrics(g2d);
   }

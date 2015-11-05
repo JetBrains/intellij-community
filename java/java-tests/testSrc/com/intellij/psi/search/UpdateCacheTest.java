@@ -39,6 +39,7 @@ import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtil;
@@ -149,7 +150,7 @@ public class UpdateCacheTest extends PsiTestCase {
 
     final String projectLocation = myProject.getPresentableUrl();
     assert projectLocation != null : myProject;
-    myProject.save();
+    PlatformTestUtil.saveProject(myProject);
     final VirtualFile content = ModuleRootManager.getInstance(getModule()).getContentRoots()[0];
     Project project = myProject;
     ProjectUtil.closeAndDispose(project);

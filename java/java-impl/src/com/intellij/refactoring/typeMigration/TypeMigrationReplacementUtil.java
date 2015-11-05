@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -38,13 +39,17 @@ public class TypeMigrationReplacementUtil {
   private TypeMigrationReplacementUtil() {
   }
 
-  public static void replaceExpression(PsiExpression expression, final Project project, Object conversion) {
+  public static PsiElement replaceExpression(PsiExpression expression, final Project project, Object conversion) {
     if (conversion instanceof TypeConversionDescriptorBase) {
-      ((TypeConversionDescriptorBase)conversion).replace(expression);
+      try {
+        return ((TypeConversionDescriptorBase)conversion).replace(expression);
+      } catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
     } else if (conversion instanceof String) {
       String replacement = (String)conversion;
       try {
-        expression.replace(
+        return expression.replace(
             JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(replacement, expression));
       }
       catch (IncorrectOperationException e) {
@@ -61,7 +66,7 @@ public class TypeMigrationReplacementUtil {
       if (conversion instanceof PsiMethod) {
         if (resolved instanceof PsiMethod) {
           try {
-            expression.replace(
+            return expression.replace(
                 JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(newref, expression));
           }
           catch (IncorrectOperationException e) {
@@ -70,7 +75,7 @@ public class TypeMigrationReplacementUtil {
         }
         else {
           try {
-            expression.replace(JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(
+            return expression.replace(JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(
                 newref + "()", expression));
           }
           catch (IncorrectOperationException e) {
@@ -81,7 +86,7 @@ public class TypeMigrationReplacementUtil {
       else if (conversion instanceof PsiField) {
         if (resolved instanceof PsiField) {
           try {
-            expression.replace(
+            return expression.replace(
                 JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(newref, expression));
           }
           catch (IncorrectOperationException e) {
@@ -93,7 +98,7 @@ public class TypeMigrationReplacementUtil {
 
           if (parent instanceof PsiMethodCallExpression) {
             try {
-              parent.replace(
+              return parent.replace(
                   JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(newref, expression));
             }
             catch (IncorrectOperationException e) {
@@ -103,6 +108,7 @@ public class TypeMigrationReplacementUtil {
         }
       }
     }
+    return expression;
   }
 
   static void migratePsiMemberType(final PsiElement element, final Project project, PsiType migratedType) {
@@ -134,20 +140,19 @@ public class TypeMigrationReplacementUtil {
     }
   }
 
-  static void replaceNewExpressionType(final Project project, final PsiNewExpression expression, final Map.Entry<TypeMigrationUsageInfo, PsiType> info) {
+  static PsiNewExpression replaceNewExpressionType(final Project project, final PsiNewExpression expression, final Map.Entry<TypeMigrationUsageInfo, PsiType> info) {
     final PsiType changeType = info.getValue();
     if (changeType != null) {
       try {
         final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
         final PsiType componentType = changeType.getDeepComponentType();
         if (classReference != null) {
-          final PsiElement psiElement = replaceTypeWithClassReferenceOrKeyword(project, componentType, classReference);
+          final PsiElement psiElement = changeType.equals(expression.getType())
+                                        ? classReference
+                                        : replaceTypeWithClassReferenceOrKeyword(project, componentType, classReference);
           final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(psiElement, PsiNewExpression.class);
-          if (newExpression != null && PsiDiamondTypeUtil.canCollapseToDiamond(newExpression, newExpression, changeType)) {
-            final PsiJavaCodeReferenceElement anonymousClassReference = newExpression.getClassOrAnonymousClassReference();
-            if (anonymousClassReference != null) {
-              PsiDiamondTypeUtil.replaceExplicitWithDiamond(anonymousClassReference.getParameterList());
-            }
+          if (!tryToReplaceWithDiamond(newExpression, changeType)) {
+            return newExpression;
           }
         }
         else {
@@ -161,6 +166,18 @@ public class TypeMigrationReplacementUtil {
         LOG.error(e);
       }
     }
+    return null;
+  }
+
+  static boolean tryToReplaceWithDiamond(PsiNewExpression newExpression, @Nullable PsiType changeType) {
+    if (newExpression != null && PsiDiamondTypeUtil.canCollapseToDiamond(newExpression, newExpression, changeType)) {
+      final PsiJavaCodeReferenceElement anonymousClassReference = newExpression.getClassOrAnonymousClassReference();
+      if (anonymousClassReference != null) {
+        PsiDiamondTypeUtil.replaceExplicitWithDiamond(anonymousClassReference.getParameterList());
+      }
+      return true;
+    }
+    return false;
   }
 
   private static PsiElement replaceTypeWithClassReferenceOrKeyword(Project project, PsiType componentType, PsiElement typePlace) {

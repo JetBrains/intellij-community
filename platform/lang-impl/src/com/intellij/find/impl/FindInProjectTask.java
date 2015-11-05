@@ -46,11 +46,15 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBinaryFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.search.*;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.UsageLimitUtil;
@@ -115,7 +119,7 @@ class FindInProjectTask {
     myProgress = progress != null ? progress : new EmptyProgressIndicator();
   }
 
-  public void findUsages(@NotNull final Processor<UsageInfo> consumer, @NotNull FindUsagesProcessPresentation processPresentation) {
+  public void findUsages(@NotNull final Processor<UsageInfo> consumer, @NotNull final FindUsagesProcessPresentation processPresentation) {
     try {
       myProgress.setIndeterminate(true);
       myProgress.setText("Scanning indexed files...");
@@ -220,14 +224,13 @@ class FindInProjectTask {
       myProgress.setText(text);
       myProgress.setText2(FindBundle.message("find.searching.for.string.in.file.occurrences.progress", count));
 
-      PsiFile psiFile = findFile(virtualFile);
+      PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+        @Override
+        public PsiFile compute() {
+          return findFile(virtualFile);
+        }
+      });
       if (psiFile == null) continue;
-
-      if (!(psiFile instanceof PsiBinaryFile)) {
-        PsiFile sourceFile = (PsiFile)psiFile.getNavigationElement();
-        if (sourceFile != null) psiFile = sourceFile;
-        if (psiFile.getFileType().isBinary()) continue;
-      }
 
       int countInFile = FindInProjectUtil.processUsagesInFile(psiFile, myFindModel, new Processor<UsageInfo>() {
         @Override
@@ -262,6 +265,7 @@ class FindInProjectTask {
     }
   }
 
+  // must return non-binary files
   @NotNull
   private Collection<VirtualFile> collectFilesInScope(@NotNull final Set<VirtualFile> alreadySearched, final boolean skipIndexed) {
     SearchScope customScope = myFindModel.isCustomScope() ? myFindModel.getCustomScope() : null;
@@ -271,7 +275,7 @@ class FindInProjectTask {
     final boolean hasTrigrams = hasTrigrams(myFindModel.getStringToFind());
 
     class EnumContentIterator implements ContentIterator {
-      final Set<VirtualFile> myFiles = new LinkedHashSet<VirtualFile>();
+      private final Set<VirtualFile> myFiles = new LinkedHashSet<VirtualFile>();
 
       @Override
       public boolean processFile(@NotNull final VirtualFile virtualFile) {
@@ -290,7 +294,12 @@ class FindInProjectTask {
               return;
             }
 
-            if (!alreadySearched.contains(virtualFile)) myFiles.add(virtualFile);
+            PsiFile psiFile = findFile(virtualFile);
+            VirtualFile sourceVirtualFile = PsiUtilCore.getVirtualFile(psiFile);
+
+            if (sourceVirtualFile != null && !alreadySearched.contains(sourceVirtualFile)) {
+              myFiles.add(sourceVirtualFile);
+            }
           }
 
           private final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
@@ -494,12 +503,14 @@ class FindInProjectTask {
   }
 
   private PsiFile findFile(@NotNull final VirtualFile virtualFile) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-      @Override
-      public PsiFile compute() {
-        return myPsiManager.findFile(virtualFile);
+    PsiFile psiFile = myPsiManager.findFile(virtualFile);
+    if (psiFile != null && !(psiFile instanceof PsiBinaryFile)) {
+      PsiFile sourceFile = (PsiFile)psiFile.getNavigationElement();
+      if (sourceFile != null) psiFile = sourceFile;
+      if (psiFile.getFileType().isBinary()) {
+        psiFile = null;
       }
-    });
+    }
+    return psiFile;
   }
-
 }

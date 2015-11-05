@@ -211,13 +211,25 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
     doTest();
   }
 
+  public void testDelegatePlace() throws Exception {
+    doTest(true, true);
+  }
+
+  public void testClearOverrideAnnotation() throws Exception {
+    doTest(true, true);
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }
 
   private void doTest(final boolean addClassParameter) throws Exception {
+    doTest(addClassParameter, false);
+  }
+
+  private void doTest(final boolean addClassParameter, boolean delegate) throws Exception {
     configureByFile("/refactoring/makeMethodStatic/before" + getTestName(false) + ".java");
-    perform(addClassParameter);
+    perform(addClassParameter, delegate);
     checkResultByFile("/refactoring/makeMethodStatic/after" + getTestName(false) + ".java");
   }
 
@@ -230,6 +242,10 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
 
 
   private static void perform(boolean addClassParameter) {
+    perform(addClassParameter, false);
+  }
+
+  private static void perform(boolean addClassParameter, boolean delegate) {
     PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiMethod);
     PsiMethod method = (PsiMethod) element;
@@ -237,7 +253,7 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
     new MakeMethodStaticProcessor(
             getProject(),
             method,
-            new Settings(true, addClassParameter ? "anObject" : null, null)).run();
+            new Settings(true, addClassParameter ? "anObject" : null, null, delegate)).run();
   }
 
   private static void performWithFields() {

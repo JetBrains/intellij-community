@@ -17,12 +17,15 @@ package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.xmlb.annotations.*;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
+import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
+import com.jetbrains.python.run.PythonRunParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,7 +87,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
   }
 
   @Tag("console-settings")
-  public static class PyConsoleSettings {
+  public static class PyConsoleSettings implements PythonRunParams {
     public String myCustomStartScript = PydevConsoleRunner.CONSOLE_START_COMMAND;
     public String mySdkHome = null;
     public String myInterpreterOptions = "";
@@ -104,7 +107,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       this.myCustomStartScript = myCustomStartScript;
     }
 
-    public void apply(AbstractPyCommonOptionsForm form) {
+    public void apply(AbstractPythonRunConfigurationParams form) {
       mySdkHome = form.getSdkHome();
       myInterpreterOptions = form.getInterpreterOptions();
       myEnvs = form.getEnvs();
@@ -129,7 +132,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
              || !myMappings.equals(form.getMappingSettings());
     }
 
-    public void reset(Project project, AbstractPyCommonOptionsForm form) {
+    public void reset(Project project, AbstractPythonRunConfigurationParams form) {
       form.setEnvs(myEnvs);
       form.setInterpreterOptions(myInterpreterOptions);
       form.setSdkHome(mySdkHome);
@@ -190,12 +193,12 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     }
 
     @Attribute("add-content-roots")
-    public boolean addContentRoots() {
+    public boolean shouldAddContentRoots() {
       return myAddContentRoots;
     }
 
     @Attribute("add-source-roots")
-    public boolean addSourceRoots() {
+    public boolean shouldAddSourceRoots() {
       return myAddSourceRoots;
     }
 
@@ -217,6 +220,11 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       mySdkHome = sdkHome;
     }
 
+    @Override
+    public void setModule(Module module) {
+      setModuleName(module.getName());
+    }
+
     public void setInterpreterOptions(String interpreterOptions) {
       myInterpreterOptions = interpreterOptions;
     }
@@ -225,12 +233,33 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       myUseModuleSdk = useModuleSdk;
     }
 
+    @Override
+    public boolean isPassParentEnvs() {
+      return true; // doesn't make sense for console
+    }
+
+    @Override
+    public void setPassParentEnvs(boolean passParentEnvs) {
+      // doesn't make sense for console
+    }
+
     public void setModuleName(String moduleName) {
       myModuleName = moduleName;
     }
 
     public void setEnvs(Map<String, String> envs) {
       myEnvs = envs;
+    }
+
+    @Nullable
+    @Override
+    public PathMappingSettings getMappingSettings() {
+      return getMappings();
+    }
+
+    @Override
+    public void setMappingSettings(@Nullable PathMappingSettings mappingSettings) {
+
     }
 
     public void setWorkingDirectory(String workingDirectory) {

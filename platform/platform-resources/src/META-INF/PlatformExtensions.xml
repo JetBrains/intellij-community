@@ -41,7 +41,6 @@
                         serviceImplementation="com.intellij.openapi.progress.impl.ProgressManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.ide.ui.customization.CustomActionsSchema"/>
-    <exportable serviceInterface="com.intellij.ide.ui.customization.CustomActionsSchema"/>
 
     <applicationService serviceInterface="com.intellij.openapi.project.DefaultProjectFactory"
                         serviceImplementation="com.intellij.openapi.project.DefaultProjectFactoryImpl"/>
@@ -110,6 +109,7 @@
       <configurable id="diff.external" displayName="External Diff Tools"
                     instance="com.intellij.diff.settings.ExternalDiffSettingsConfigurable"/>
     </applicationConfigurable>
+    <statistics.usagesCollector implementation="com.intellij.diff.statistics.DiffUsagesCollector"/>
 
     <applicationService serviceInterface="com.intellij.ui.SystemNotifications"
                         serviceImplementation="com.intellij.ui.SystemNotificationsImpl"/>
@@ -173,9 +173,9 @@
                         serviceImplementation="com.intellij.execution.process.impl.OSProcessManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.options.SchemesManagerFactory"
-                        serviceImplementation="com.intellij.configurationStore.ApplicationSchemeManagerFactory"/>
+                        serviceImplementation="com.intellij.configurationStore.SchemeManagerFactoryBase$ApplicationSchemeManagerFactory"/>
     <projectService serviceInterface="com.intellij.openapi.options.SchemesManagerFactory"
-                    serviceImplementation="com.intellij.configurationStore.ProjectSchemeManagerFactory"/>
+                    serviceImplementation="com.intellij.configurationStore.SchemeManagerFactoryBase$ProjectSchemeManagerFactory"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.colors.TextAttributesKey$TextAttributeKeyDefaultsProvider"
@@ -232,8 +232,7 @@
     <projectService serviceInterface="com.intellij.ui.content.MessageView"
                     serviceImplementation="com.intellij.ui.content.impl.MessageViewImpl"/>
 
-    <projectService serviceInterface="com.intellij.ui.tabs.FileColorSharedConfigurationManager"
-                    serviceImplementation="com.intellij.ui.tabs.FileColorSharedConfigurationManager"/>
+    <projectService serviceImplementation="com.intellij.ui.tabs.FileColorProjectLevelConfigurationManager"/>
 
     <projectService serviceInterface="com.intellij.openapi.project.DumbService"
                     serviceImplementation="com.intellij.openapi.project.DumbServiceImpl"/>
@@ -443,7 +442,9 @@
     <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupLocalConfiguration"/>
     <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupSharedConfiguration"/>
     <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupTaskManager"/>
-    <projectConfigurable groupId="tools" instance="com.intellij.execution.startup.ProjectStartupConfigurable"/>
+    <projectConfigurable groupId="tools" instance="com.intellij.execution.startup.ProjectStartupConfigurable"
+                         displayName="Startup Tasks"
+                         id="preferences.startup.tasks"/>
     <postStartupActivity implementation="com.intellij.execution.startup.ProjectStartupRunner"/>
   </extensions>
 </idea-plugin>

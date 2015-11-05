@@ -29,8 +29,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.groovy.compiler.rt.ClassDependencyLoader;
+import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -38,7 +38,10 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.regex.Pattern;
 
@@ -48,6 +51,7 @@ import java.util.regex.Pattern;
 class InProcessGroovyc implements GroovycFlavor {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.InProcessGroovyc");
   private static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-(.*))?\\.jar");
+  private static final Pattern GROOVY_JAR_PATTERN = Pattern.compile("groovy(-(.*))?\\.jar");
   private static final ThreadPoolExecutor ourExecutor = ConcurrencyUtil.newSingleThreadExecutor("Groovyc");
   private static SoftReference<Pair<String, ClassLoader>> ourParentLoaderCache;
   private static final UrlClassLoader.CachePool ourLoaderCachePool = UrlClassLoader.createCachePool();
@@ -70,6 +74,10 @@ class InProcessGroovyc implements GroovycFlavor {
                                                 ? new LinkedBlockingQueue<String>() : null;
 
     final JointCompilationClassLoader loader = createCompilationClassLoader(compilationClassPath);
+    if (loader == null) {
+      parser.addCompilerMessage(parser.reportNoGroovy());
+      return null;
+    }
 
     final Future<Void> future = ourExecutor.submit(new Callable<Void>() {
       @Override
@@ -161,10 +169,26 @@ class InProcessGroovyc implements GroovycFlavor {
     }
   }
 
-  @NotNull
-  private JointCompilationClassLoader createCompilationClassLoader(Collection<String> compilationClassPath) throws MalformedURLException {
+  @Nullable
+  private JointCompilationClassLoader createCompilationClassLoader(Collection<String> compilationClassPath) throws Exception {
     ClassLoader parent = obtainParentLoader(compilationClassPath);
-    return new JointCompilationClassLoader(UrlClassLoader.build().
+
+    ClassLoader groovyClassLoader = null;
+    try {
+      ClassLoader auxiliary = parent != null ? parent : buildCompilationClassLoader(compilationClassPath, null).get();
+      Class<?> gcl = auxiliary.loadClass("groovy.lang.GroovyClassLoader");
+      groovyClassLoader = (ClassLoader)gcl.getConstructor(ClassLoader.class).newInstance(parent);
+    }
+    catch (ClassNotFoundException e) {
+      return null;
+    }
+
+    return new JointCompilationClassLoader(buildCompilationClassLoader(compilationClassPath, groovyClassLoader));
+  }
+
+  private UrlClassLoader.Builder buildCompilationClassLoader(Collection<String> compilationClassPath, ClassLoader parent)
+    throws MalformedURLException {
+    return UrlClassLoader.build().
       urls(toUrls(compilationClassPath)).parent(parent).allowLock().
       useCache(ourLoaderCachePool, new UrlClassLoader.CachingCondition() {
         @Override
@@ -183,7 +207,7 @@ class InProcessGroovyc implements GroovycFlavor {
             return false;
           }
         }
-      }));
+      });
   }
 
   @Nullable
@@ -192,16 +216,22 @@ class InProcessGroovyc implements GroovycFlavor {
       return null;
     }
 
-    String groovyAll = ContainerUtil.find(compilationClassPath, new Condition<String>() {
+    List<String> groovyJars = ContainerUtil.findAll(compilationClassPath, new Condition<String>() {
       @Override
       public boolean value(String s) {
-        return GROOVY_ALL_JAR_PATTERN.matcher(StringUtil.getShortName(s, '/')).matches();
+        String fileName = StringUtil.getShortName(s, '/');
+        return GROOVY_ALL_JAR_PATTERN.matcher(fileName).matches() || GROOVY_JAR_PATTERN.matcher(fileName).matches();
       }
     });
-    if (groovyAll == null) {
+
+    LOG.debug("Groovy jars: " + groovyJars);
+
+    if (groovyJars.size() != 1 || !GROOVY_ALL_JAR_PATTERN.matcher(groovyJars.get(0)).matches()) {
+      // avoid complications caused by caching classes from several groovy versions in classpath
       return null;
     }
 
+    String groovyAll = groovyJars.get(0);
     Pair<String, ClassLoader> pair = SoftReference.dereference(ourParentLoaderCache);
     if (pair != null && pair.first.equals(groovyAll)) {
       return pair.second;

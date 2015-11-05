@@ -339,6 +339,19 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
     });
   }
 
+  public Self withLastChildSkipping(@NotNull final ElementPattern skip, @NotNull final ElementPattern pattern) {
+    return with(new PatternCondition<T>("withLastChildSkipping") {
+      @Override
+      public boolean accepts(@NotNull T t, ProcessingContext context) {
+        PsiElement last = t.getLastChild();
+        while (last != null && skip.accepts(last)) {
+          last = last.getPrevSibling();
+        }
+        return pattern.accepts(last);
+      }
+    });
+  }
+
   public static class Capture<T extends PsiElement> extends PsiElementPattern<T,Capture<T>> {
 
     protected Capture(final Class<T> aClass) {

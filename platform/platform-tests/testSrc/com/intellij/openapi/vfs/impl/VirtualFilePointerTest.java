@@ -21,6 +21,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -31,10 +34,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.Timings;
+import com.intellij.testFramework.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
@@ -126,7 +126,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     final LoggingListener fileToDeleteListener = new LoggingListener();
     final VirtualFilePointer fileToDeletePointer = createPointerByFile(fileToDelete, fileToDeleteListener);
     assertTrue(fileToDeletePointer.isValid());
-    delete(getVirtualFile(fileToDelete));
+    VfsTestUtil.deleteFile(getVirtualFile(fileToDelete));
     assertFalse(fileToDeletePointer.isValid());
     assertEquals("[before:true, after:false]", fileToDeleteListener.getLog().toString());
   }
@@ -213,7 +213,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     assertTrue(fileToCreatePointer.isValid());
     assertEquals(child, fileToCreatePointer.getFile());
 
-    delete(child);
+    VfsTestUtil.deleteFile(child);
     assertFalse(fileToCreatePointer.isValid());
     assertNull(fileToCreatePointer.getFile());
   }
@@ -570,14 +570,14 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     assertTrue(created);
 
 
-    doVfsRefresh();
+    doVfsRefresh(tempDir);
 
     assertTrue(pointer.isValid());
 
     boolean deleted = file.delete();
     assertTrue(deleted);
 
-    doVfsRefresh();
+    doVfsRefresh(tempDir);
     assertFalse(pointer.isValid());
   }
 
@@ -594,13 +594,8 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     }).cpuBound().assertTiming();
   }
 
-  private static void doVfsRefresh() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        LocalFileSystem.getInstance().refresh(false);
-      }
-    });
+  private static void doVfsRefresh(File dir) {
+    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir).refresh(false, true);
   }
 
   public void testDoubleDispose() throws IOException {
@@ -651,7 +646,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     ioPtr.getParentFile().mkdirs();
     ioPtr.createNewFile();
 
-    doVfsRefresh();
+    doVfsRefresh(ioTempDir);
     final VirtualFilePointer pointer = createPointerByFile(ioPtr, null);
     assertTrue(pointer.isValid());
     final VirtualFile virtualFile = pointer.getFile();
@@ -677,7 +672,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
       for (int i=0;i< N;i++) {
         assertNotNull(pointer.getFile());
         FileUtil.delete(ioPtrBase);
-        doVfsRefresh();
+        doVfsRefresh(ioTempDir);
 
         // ptr is now null, cached as map
 
@@ -696,7 +691,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
         assertTrue(ioPtr.createNewFile());
 
         stressRead(pointer, reads);
-        doVfsRefresh();
+        doVfsRefresh(ioTempDir);
       }
     }
     finally {
@@ -778,5 +773,49 @@ public class VirtualFilePointerTest extends PlatformTestCase {
         }
       }
     }).assertTiming();
+  }
+
+  public void testCidrConfusions() throws IOException {
+    File tempDirectory = createTempDirectory();
+    final VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory);
+
+    VirtualFile dir1 = createChildDirectory(root, "dir1");
+    VirtualFile dir2 = createChildDirectory(root, "dir2");
+
+    PsiTestUtil.addSourceRoot(getModule(), dir1);
+    PsiTestUtil.addLibrary(getModule(), "mylib", "", new String[]{dir2.getPath()}, new String[0]);
+
+    assertSourceIs(dir1);
+    assertLibIs(dir2);
+
+    delete(dir1);
+    assertSourceIs(null); // srcDir deleted, no more sources
+    assertLibIs(dir2);    // libDir stays the same
+
+    rename(dir2, "dir1");
+    assertSourceIs(dir2); // srcDir re-appeared, sources are "dir1"
+    assertLibIs(dir2);    // libDir renamed, libs are "dir1" now
+
+    rename(dir2, "dir2");
+    assertSourceIs(dir2); // srcDir renamed, sources are "dir2" now
+    assertLibIs(dir2);    // libDir renamed, libs are "dir2" now
+
+    dir1 = createChildDirectory(root, "dir1");
+    assertSourceIs(dir2); // srcDir stays the same
+    assertLibIs(dir2);    // libDir stays the same
+
+    PsiTestUtil.removeAllRoots(getModule(), getTestProjectJdk());
+  }
+
+  private void assertLibIs(VirtualFile dir2) {
+    VirtualFile libRoot = assertOneElement(
+      OrderEntryUtil.getModuleLibraries(ModuleRootManager.getInstance(getModule())).get(0).getFiles(OrderRootType.CLASSES));
+    assertEquals(dir2, libRoot);
+  }
+
+  private void assertSourceIs(VirtualFile dir1) {
+    VirtualFile[] roots = ModuleRootManager.getInstance(getModule()).getSourceRoots();
+    VirtualFile[] expected = dir1 == null ? VirtualFile.EMPTY_ARRAY : new VirtualFile[]{dir1};
+    assertOrderedEquals(roots, expected);
   }
 }

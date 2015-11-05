@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,6 +114,6 @@ public class RepositoryHelperTest {
   private List<IdeaPluginDescriptor> loadPlugins(String data) throws IOException {
     FileUtil.writeToFile(myTempFile, data);
     String url = myTempFile.toURI().toURL().toString();
-    return RepositoryHelper.loadPlugins(url, null, null);
+    return RepositoryHelper.loadPlugins(url, null);
   }
 }

@@ -105,8 +105,12 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
               }
             }
           }
-        } else if (myS instanceof PsiClassType) {
+        }
+        else if (myS instanceof PsiClassType) {
           SResult = ((PsiClassType)myS).resolveGenerics();
+        }
+        else if (myS instanceof PsiArrayType) {
+          return myT.isAssignableFrom(myS);
         }
 
         if (SResult == null) return false;
@@ -160,6 +164,6 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
 
   @Override
   public String toString() {
-    return myS.getPresentableText() + " < " + myT.getPresentableText();
+    return myT.getPresentableText() + " < " + myS.getPresentableText();
   }
 }

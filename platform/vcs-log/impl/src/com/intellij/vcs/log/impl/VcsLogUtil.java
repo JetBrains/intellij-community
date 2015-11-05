@@ -15,16 +15,15 @@
  */
 package com.intellij.vcs.log.impl;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.VcsLogRootFilter;
-import com.intellij.vcs.log.VcsLogStructureFilter;
-import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.graph.VisibleGraph;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -143,5 +142,40 @@ public class VcsLogUtil {
       collectRoots(filterCollection.getStructureFilter().getFiles(), Collections.singleton(root));
 
     return new HashSet<VirtualFile>(rootsAndFiles.second.get(root));
+  }
+
+  @NotNull
+  public static Collection<VcsRef> getVisibleBranches(@NotNull VcsLog log, VcsLogUiImpl logUi) {
+    VcsLogFilterCollection filters = logUi.getFilterUi().getFilters();
+    Set<VirtualFile> roots = logUi.getDataPack().getLogProviders().keySet();
+    final Set<VirtualFile> visibleRoots = getAllVisibleRoots(roots, filters.getRootFilter(), filters.getStructureFilter());
+
+    return ContainerUtil.filter(log.getAllReferences(), new Condition<VcsRef>() {
+      @Override
+      public boolean value(VcsRef ref) {
+        return visibleRoots.contains(ref.getRoot());
+      }
+    });
+  }
+
+  @Nullable
+  public static String getSingleFilteredBranch(@NotNull VcsLogBranchFilter filter, @NotNull VcsLogRefs refs) {
+    String branchName = null;
+    Set<VirtualFile> checkedRoots = ContainerUtil.newHashSet();
+    for (VcsRef branch : refs.getBranches()) {
+      if (!filter.matches(branch.getName())) continue;
+
+      if (branchName == null) {
+        branchName = branch.getName();
+      }
+      else if (!branch.getName().equals(branchName)) {
+        return null;
+      }
+
+      if (checkedRoots.contains(branch.getRoot())) return null;
+      checkedRoots.add(branch.getRoot());
+    }
+
+    return branchName;
   }
 }

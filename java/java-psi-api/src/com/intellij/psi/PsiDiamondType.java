@@ -58,6 +58,19 @@ public abstract class PsiDiamondType extends PsiType {
       }
     };
 
+    public static final DiamondInferenceResult UNRESOLVED_CONSTRUCTOR = new DiamondInferenceResult() {
+      @NotNull
+      @Override
+      public PsiType[] getTypes() {
+        return PsiType.EMPTY_ARRAY;
+      }
+
+      @Override
+      public String getErrorMessage() {
+        return "Cannot infer arguments (unable to resolve constructor)";
+      }
+    };
+
     public static final DiamondInferenceResult ANONYMOUS_INNER_RESULT = new DiamondInferenceResult() {
       @NotNull
       @Override
@@ -101,7 +114,7 @@ public abstract class PsiDiamondType extends PsiType {
       return myErrorMessage != null;
     }
 
-    public void addInferredType(PsiType psiType) {
+    protected void addInferredType(PsiType psiType) {
       if (myErrorMessage != null) return;
       if (psiType == null) {
         myErrorMessage = "Cannot infer type arguments for " + myNewExpressionPresentableText;

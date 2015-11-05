@@ -92,7 +92,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myTargetDirectoryField.getChildComponent();
+    return myTargetDirectoryField;
   }
 
   @Override
@@ -169,8 +169,13 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
                           RefactoringBundle.message("move.specified.elements"));
     }
 
-    myTargetDirectoryField.getChildComponent()
-      .setText(initialTargetDirectory == null ? "" : initialTargetDirectory.getVirtualFile().getPresentableUrl());
+    final String initialTargetPath = initialTargetDirectory == null ? "" : initialTargetDirectory.getVirtualFile().getPresentableUrl();
+    myTargetDirectoryField.getChildComponent().setText(initialTargetPath);
+    final int lastDirectoryIdx = initialTargetPath.lastIndexOf(File.separator);
+    final int textLength = initialTargetPath.length();
+    if (lastDirectoryIdx > 0 && lastDirectoryIdx + 1 < textLength) {
+      myTargetDirectoryField.getChildComponent().getTextEditor().select(lastDirectoryIdx + 1, textLength);
+    }
 
     validateOKButton();
     myHelpID = helpID;
@@ -239,4 +244,15 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
   public PsiDirectory getTargetDirectory() {
     return myTargetDirectory;
   }
+
+  @Override
+  public void show() {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        MoveFilesOrDirectoriesDialog.super.show();
+      }
+    });
+  }
+
 }

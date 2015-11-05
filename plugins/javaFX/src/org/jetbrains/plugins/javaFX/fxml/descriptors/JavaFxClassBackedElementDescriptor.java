@@ -369,7 +369,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
     }
     PsiClass aClass = myPsiClass;
     final XmlAttribute constAttr = context.getAttribute(FxmlConstants.FX_CONSTANT);
-    if (constAttr != null) {
+    if (constAttr != null && aClass != null) {
       final PsiField constField = aClass.findFieldByName(constAttr.getValue(), false);
       if (constField != null) {
         aClass = PsiUtil.resolveClassInType(constField.getType());

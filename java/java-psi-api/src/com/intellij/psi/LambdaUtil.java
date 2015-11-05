@@ -468,10 +468,28 @@ public class LambdaUtil {
         return "Static interface method invocations are not supported at this language level";
       }
 
-      if (qualifierExpression == null && 
-          (scope instanceof PsiImportStaticStatement || PsiTreeUtil.isAncestor(containingClass, methodReferenceExpression, true)) || 
-          qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).resolve() == containingClass) {
+      if (qualifierExpression == null && (scope instanceof PsiImportStaticStatement || PsiTreeUtil.isAncestor(containingClass, methodReferenceExpression, true))) {
         return null;
+      }
+      if (qualifierExpression instanceof PsiReferenceExpression) {
+        final PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
+        if (resolve == containingClass) {
+          return null;
+        }
+        
+        if (resolve instanceof PsiTypeParameter) {
+          final Set<PsiClass> classes = new HashSet<PsiClass>();
+          for (PsiClassType type : ((PsiTypeParameter)resolve).getExtendsListTypes()) {
+            final PsiClass aClass = type.resolve();
+            if (aClass != null) {
+              classes.add(aClass);
+            }
+          }
+          
+          if (classes.size() == 1 && classes.contains(containingClass)) {
+            return null;
+          }
+        }
       }
       return "Static method may be invoked on containing interface class only";
     }

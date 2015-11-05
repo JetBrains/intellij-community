@@ -211,10 +211,12 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       .createExpressionFromText("new " + expectedType.getCanonicalText() + "[]{" + anonymousClass.getText() + "}", anonymousClass);
     PsiArrayInitializerExpression initializer = newArrayExpression.getArrayInitializer();
     LOG.assertTrue(initializer != null);
-    return replacePsiElementWithLambda(initializer.getInitializers()[0], true);
+    return replacePsiElementWithLambda(initializer.getInitializers()[0], true, false);
   }
 
-  public static PsiExpression replacePsiElementWithLambda(@NotNull PsiElement element, final boolean ignoreEqualsMethod) {
+  public static PsiExpression replacePsiElementWithLambda(@NotNull PsiElement element,
+                                                          final boolean ignoreEqualsMethod,
+                                                          boolean forceIgnoreTypeCast) {
     if (element instanceof PsiNewExpression) {
       if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return null;
       final PsiAnonymousClass anonymousClass = ((PsiNewExpression)element).getAnonymousClass();
@@ -282,6 +284,11 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       }
       ChangeContextUtil.decodeContextInfo(lambdaExpression, null, null);
 
+      final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
+      if (forceIgnoreTypeCast) {
+        return (PsiExpression)javaCodeStyleManager.shortenClassReferences(lambdaExpression);
+      }
+
       PsiTypeCastExpression typeCast = (PsiTypeCastExpression)elementFactory
         .createExpressionFromText("(" + canonicalText + ")" + withoutTypesDeclared, lambdaExpression);
       final PsiExpression typeCastOperand = typeCast.getOperand();
@@ -298,7 +305,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
         LOG.assertTrue(operand != null);
         return (PsiExpression)typeCast.replace(operand);
       }
-      return (PsiExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(typeCast);
+      return (PsiExpression)javaCodeStyleManager.shortenClassReferences(typeCast);
     }
     return null;
   }
@@ -320,7 +327,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (element != null) {
-        replacePsiElementWithLambda(element, false);
+        replacePsiElementWithLambda(element, false, false);
       }
     }
 

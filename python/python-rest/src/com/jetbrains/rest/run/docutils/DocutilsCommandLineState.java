@@ -19,6 +19,8 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.HelperPackage;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.rest.run.RestCommandLineState;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,8 +53,8 @@ public class DocutilsCommandLineState extends RestCommandLineState {
   }
 
   @Override
-  protected String getRunnerPath() {
-    return "rest_runners/rst2smth.py";
+  protected HelperPackage getRunner() {
+    return PythonHelper.REST_RUNNER;
   }
 
   @Override

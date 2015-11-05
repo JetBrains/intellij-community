@@ -28,7 +28,7 @@ import java.io.IOException;
  * @author yole
  */
 public abstract class CustomTargetExpressionStubType<T extends CustomTargetExpressionStub> {
-  public static ExtensionPointName<CustomTargetExpressionStubType> EP_NAME = ExtensionPointName.create("Pythonid.customTargetExpressionStubType");
+  public static final ExtensionPointName<CustomTargetExpressionStubType> EP_NAME = ExtensionPointName.create("Pythonid.customTargetExpressionStubType");
 
   @Nullable
   public abstract T createStub(PyTargetExpression psi);

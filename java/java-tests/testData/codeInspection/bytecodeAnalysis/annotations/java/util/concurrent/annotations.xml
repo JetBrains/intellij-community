@@ -1,40 +1,40 @@
 <root>
-  <item name="java.util.concurrent.TimeUnit int excessNanos(long, long)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.util.concurrent.TimeUnit long convert(long, java.util.concurrent.TimeUnit) 1">
-    <annotation name="org.jetbrains.annotations.NotNull"/>
-  </item>
-  <item name="java.util.concurrent.TimeUnit long convert(long, java.util.concurrent.TimeUnit)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.util.concurrent.TimeUnit long doConvert(int, long)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.util.concurrent.TimeUnit long toMicros(long)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.util.concurrent.TimeUnit long toMillis(long)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.util.concurrent.TimeUnit long toNanos(long)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
-  <item name="java.util.concurrent.TimeUnit long toSeconds(long)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="pure=true"/>
-    </annotation>
-  </item>
+    <item name='java.util.concurrent.TimeUnit int excessNanos(long, long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.concurrent.TimeUnit long convert(long, java.util.concurrent.TimeUnit)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.concurrent.TimeUnit long convert(long, java.util.concurrent.TimeUnit) 1'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.concurrent.TimeUnit long doConvert(int, long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.concurrent.TimeUnit long toMicros(long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.concurrent.TimeUnit long toMillis(long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.concurrent.TimeUnit long toNanos(long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.concurrent.TimeUnit long toSeconds(long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
 </root>

@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public class SubsequentVariablesAligner implements ChildAlignmentStrategyProvider {
+public class SubsequentVariablesAligner extends ChildAlignmentStrategyProvider {
 
   private final static Set<IElementType> TYPES_TO_ALIGN = ContainerUtil.newHashSet(
     JavaTokenType.IDENTIFIER,
@@ -59,8 +59,5 @@ public class SubsequentVariablesAligner implements ChildAlignmentStrategyProvide
 
     return myAlignmentStrategy;
   }
-
-  private static boolean isWhiteSpaceWithBlankLines(@Nullable ASTNode node) {
-    return node != null && node.getElementType() == TokenType.WHITE_SPACE && StringUtil.countNewLines(node.getChars()) > 1;
-  }
+  
 }

@@ -17,11 +17,10 @@ package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.RunConfigurationBase;
-import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.components.ComponentSerializationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
@@ -164,12 +163,16 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
     myDeploymentSource = null;
     if (state != null) {
       myServerName = state.myServerName;
-      Element deploymentTag = state.myDeploymentTag;
+      final Element deploymentTag = state.myDeploymentTag;
       if (deploymentTag != null) {
         String typeId = deploymentTag.getAttributeValue(DEPLOYMENT_SOURCE_TYPE_ATTRIBUTE);
-        DeploymentSourceType<?> type = findDeploymentSourceType(typeId);
+        final DeploymentSourceType<?> type = findDeploymentSourceType(typeId);
         if (type != null) {
-          myDeploymentSource = type.load(deploymentTag, getProject());
+          myDeploymentSource = new ReadAction<DeploymentSource>() {
+            protected void run(final @NotNull Result<DeploymentSource> result) {
+              result.setResult(type.load(deploymentTag, getProject()));
+            }
+          }.execute().getResultObject();
           myDeploymentConfiguration = myDeploymentConfigurator.createDefaultConfiguration(myDeploymentSource);
           ComponentSerializationUtil.loadComponentState(myDeploymentConfiguration.getSerializer(), deploymentTag.getChild(SETTINGS_ELEMENT));
         }
@@ -210,6 +213,27 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
     }
     XmlSerializer.serializeInto(state, element, SERIALIZATION_FILTERS);
     super.writeExternal(element);
+  }
+
+  @Override
+  public RunConfiguration clone() {
+    Element element = new Element("tag");
+    try {
+      writeExternal(element);
+    }
+    catch (WriteExternalException e) {
+      LOG.error(e);
+    }
+
+    DeployToServerRunConfiguration result = (DeployToServerRunConfiguration)super.clone();
+
+    try {
+      result.readExternal(element);
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
+    return result;
   }
 
   public static class ConfigurationState {

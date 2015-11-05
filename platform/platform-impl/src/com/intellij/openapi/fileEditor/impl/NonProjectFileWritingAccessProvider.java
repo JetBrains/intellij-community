@@ -18,7 +18,7 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentsPackage;
+import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -162,7 +162,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
         if (dotIdea != null && VfsUtilCore.isAncestor(dotIdea, file, false)) return true;
       }
 
-      IProjectStore store = (IProjectStore)ComponentsPackage.getStateStore(project);
+      IProjectStore store = (IProjectStore)ServiceKt.getStateStore(project);
       String filePath = file.getPath();
       if (FileUtil.namesEqual(filePath, store.getWorkspaceFilePath()) || FileUtil.namesEqual(filePath, store.getProjectFilePath())) {
         return true;

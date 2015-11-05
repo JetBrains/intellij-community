@@ -16,6 +16,7 @@
 package com.intellij.openapi.options;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collection;
@@ -66,5 +67,9 @@ public class EmptySchemesManager extends SchemesManager {
   @Override
   public File getRootDirectory() {
     return null;
+  }
+
+  @Override
+  public void setCurrentSchemeName(@Nullable String schemeName, boolean notify) {
   }
 }

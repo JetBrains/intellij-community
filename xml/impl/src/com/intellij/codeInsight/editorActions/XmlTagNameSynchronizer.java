@@ -57,6 +57,7 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -70,9 +71,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
   private static final Logger LOG = Logger.getInstance(XmlTagNameSynchronizer.class);
   private static final Set<String> SUPPORTED_LANGUAGES = ContainerUtil.set(HTMLLanguage.INSTANCE.getID(),
                                                                            XMLLanguage.INSTANCE.getID(),
-                                                                           XHTMLLanguage.INSTANCE.getID(),
-                                                                           "JavaScript",
-                                                                           "ECMA Script Level 4");
+                                                                           XHTMLLanguage.INSTANCE.getID());
 
   private static final Key<TagNameSynchronizer> SYNCHRONIZER_KEY = Key.create("tag_name_synchronizer");
   private final FileDocumentManager myFileDocumentManager;
@@ -102,7 +101,8 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
     final PsiFile psiFile = file != null && file.isValid() ? PsiManager.getInstance(project).findFile(file) : null;
     if (psiFile != null) {
       for (Language language : psiFile.getViewProvider().getLanguages()) {
-        if (SUPPORTED_LANGUAGES.contains(language.getID())) return language;
+        if ( SUPPORTED_LANGUAGES.contains(language.getID()) ||
+             HtmlUtil.supportsXmlTypedHandlers(psiFile)) return language;
       }
     }
     return null;
@@ -162,7 +162,9 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
 
       final Document document = event.getDocument();
       if (myState == State.APPLYING || UndoManager.getInstance(myEditor.getProject()).isUndoInProgress() ||
-          !PomModelImpl.isAllowPsiModification() || ((DocumentEx)document).isInBulkUpdate()) return;
+          !PomModelImpl.isAllowPsiModification() || ((DocumentEx)document).isInBulkUpdate()) {
+        return;
+      }
 
       final int offset = event.getOffset();
       final int oldLength = event.getOldLength();
@@ -268,7 +270,8 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
             break;
           }
           if (!XmlUtil.isValidTagNameChar(c)) break;
-        } catch (IndexOutOfBoundsException e) {
+        }
+        catch (IndexOutOfBoundsException e) {
           LOG.error("incorrect offset:" + i + ", initial: " + offset, new Attachment("document.txt", sequence.toString()));
           return null;
         }
@@ -308,7 +311,8 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
           final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
           if (lookup != null) {
             lookup.performGuardedChange(apply);
-          } else {
+          }
+          else {
             apply.run();
           }
         }

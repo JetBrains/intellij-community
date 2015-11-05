@@ -16,14 +16,20 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReferenceParameterList;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class ClsReferenceParameterListImpl extends ClsElementImpl implements PsiReferenceParameterList {
-  @NonNls private static final String EXTENDS_PREFIX = "?extends";
-  @NonNls private static final String SUPER_PREFIX = "?super";
+  @NonNls private static final Pattern EXTENDS_PREFIX = Pattern.compile("^(\\?\\s*extends\\s*)(.*)");
+  @NonNls private static final Pattern SUPER_PREFIX = Pattern.compile("^(\\?\\s*super\\s*)(.*)");
 
   private final PsiElement myParent;
   private final ClsTypeElementImpl[] myTypeParameters;
@@ -38,17 +44,21 @@ public class ClsReferenceParameterListImpl extends ClsElementImpl implements Psi
     for (int i = 0; i < length; i++) {
       String s = classParameters[length - i - 1];
       char variance = ClsTypeElementImpl.VARIANCE_NONE;
-      if (s.startsWith(EXTENDS_PREFIX)) {
+      final Matcher extendsMatcher = EXTENDS_PREFIX.matcher(s);
+      if (extendsMatcher.find()) {
         variance = ClsTypeElementImpl.VARIANCE_EXTENDS;
-        s = s.substring(EXTENDS_PREFIX.length());
+        s = extendsMatcher.group(2);
       }
-      else if (s.startsWith(SUPER_PREFIX)) {
-        variance = ClsTypeElementImpl.VARIANCE_SUPER;
-        s = s.substring(SUPER_PREFIX.length());
-      }
-      else if (StringUtil.startsWithChar(s, '?')) {
-        variance = ClsTypeElementImpl.VARIANCE_INVARIANT;
-        s = s.substring(1);
+      else {
+        final Matcher superMatcher = SUPER_PREFIX.matcher(s);
+        if (superMatcher.find()) {
+          variance = ClsTypeElementImpl.VARIANCE_SUPER;
+          s = superMatcher.group(2);
+        }
+        else if (StringUtil.startsWithChar(s, '?')) {
+          variance = ClsTypeElementImpl.VARIANCE_INVARIANT;
+          s = s.substring(1);
+        }
       }
 
       myTypeParameters[i] = new ClsTypeElementImpl(this, s, variance);

@@ -16,14 +16,12 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
@@ -167,11 +165,7 @@ public class SearchCommand {
           info = new UsageInfo(parent, startOffset, end - parentStart);
         }
         else {
-          PsiElement element = result.getMatch();
-          if (element instanceof PsiNameIdentifierOwner) {
-            element = ObjectUtils.notNull(((PsiNameIdentifierOwner)element).getNameIdentifier(), element);
-          }
-          info = new UsageInfo(element, result.getStart(), result.getEnd() == -1 ? element.getTextLength() : result.getEnd());
+          info = new UsageInfo(StructuralSearchUtil.getPresentableElement(result.getMatch()));
         }
 
         Usage usage = new UsageInfo2UsageAdapter(info);

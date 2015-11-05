@@ -108,8 +108,22 @@ public class JUnit4TestRunnerUtil {
                   if (methods.contains(methodName)) {
                     return true;
                   }
-                  return name != null && methodName.endsWith(name) && 
-                         methods.contains(methodName.substring(0, methodName.length() - name.length()));
+                  if (name != null) {
+                    return methodName.endsWith(name) &&
+                           methods.contains(methodName.substring(0, methodName.length() - name.length()));
+                  }
+
+                  final Class testClass = description.getTestClass();
+                  if (testClass != null) {
+                    final RunWith classAnnotation = (RunWith)testClass.getAnnotation(RunWith.class);
+                    if (classAnnotation != null && Parameterized.class.isAssignableFrom(classAnnotation.value())) {
+                      final int idx = methodName.indexOf("[");
+                      if (idx > -1) {
+                        return methods.contains(methodName.substring(0, idx));
+                      }
+                    }
+                  }
+                  return false;
                 }
                 return true;
               }

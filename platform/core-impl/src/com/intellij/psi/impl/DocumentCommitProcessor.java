@@ -68,9 +68,9 @@ public abstract class DocumentCommitProcessor {
     @NotNull final Object reason;
     @NotNull final ModalityState myCreationModalityState;
     private final CharSequence myLastCommittedText;
-    public boolean removed; // task marked as removed, should be ignored.
+    public boolean removed; // task marked as removed should be ignored.
 
-    public CommitTask(@NotNull Document document,
+    protected CommitTask(@NotNull Document document,
                       @NotNull Project project,
                       @NotNull ProgressIndicator indicator,
                       @NotNull Object reason,
@@ -242,9 +242,8 @@ public abstract class DocumentCommitProcessor {
     if (myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() != document.getTextLength()) {
       final String documentText = document.getText();
       String fileText = file.getText();
-      LOG.error("commitDocument left PSI inconsistent: " + file +
-                "; file len=" + myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() +
-                "; doc len=" + document.getTextLength() +
+      LOG.error("commitDocument left PSI inconsistent: " + DebugUtil.diagnosePsiDocumentInconsistency(file, document) +
+                "; node len=" + myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() +
                 "; doc.getText() == file.getText(): " + Comparing.equal(fileText, documentText),
                 new Attachment("file psi text", fileText),
                 new Attachment("old text", documentText));

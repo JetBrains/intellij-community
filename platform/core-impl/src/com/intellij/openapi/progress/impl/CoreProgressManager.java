@@ -439,7 +439,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     try {
       if (indicator instanceof WrappedProgressIndicator) {
         ProgressIndicator wrappee = ((WrappedProgressIndicator)indicator).getOriginalProgressIndicator();
-        assert wrappee != indicator : indicator + " wraps itself";
+        if (wrappee == indicator) throw new IllegalArgumentException(indicator + " wraps itself");
         registerIndicatorAndRun(wrappee, currentThread, oldIndicator, process);
       }
       else {

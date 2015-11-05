@@ -38,7 +38,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.UIUtil;
@@ -557,8 +556,11 @@ public class ScopeEditorPanel {
               final TreeModel model = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE).createTreeModel(myProject, myTreeMarker);
               ((PackageDependenciesNode)model.getRoot()).sortChildren();
               if (myErrorMessage == null) {
-                myMatchingCountLabel
-                  .setText(IdeBundle.message("label.scope.contains.files", model.getMarkedFileCount(), model.getTotalFileCount()));
+                String message = IdeBundle.message("label.scope.contains.files", model.getMarkedFileCount(), model.getTotalFileCount());
+                if (FilePatternPackageSet.SCOPE_FILE.equals(DependencyUISettings.getInstance().SCOPE_TYPE)) {
+                  message = UIUtil.toHtml(message + "<br/>(Non-project files are not shown)");
+                }
+                myMatchingCountLabel.setText(message);
                 myMatchingCountLabel.setForeground(new JLabel().getForeground());
               }
               else {

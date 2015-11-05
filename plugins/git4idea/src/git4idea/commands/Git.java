@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitCommit;
+import git4idea.branch.GitRebaseParams;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
@@ -168,4 +169,7 @@ public interface Git {
 
   @NotNull
   GitCommandResult remotePrune(@NotNull GitRepository repository, @NotNull GitRemote remote);
+
+  @NotNull
+  GitCommandResult rebase(@NotNull GitRepository repository, @NotNull GitRebaseParams params, @NotNull GitLineHandlerListener... listeners);
 }

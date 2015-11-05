@@ -608,4 +608,10 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
   public IntentionAction addMethodQualifierFix(@NotNull PsiMethodCallExpression methodCall) {
     return QuickFixes.EMPTY_FIX;
   }
+
+  @NotNull
+  @Override
+  public IntentionAction createWrapLongWithMathToIntExactFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
+    return QuickFixes.EMPTY_FIX;
+  }
 }

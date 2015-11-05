@@ -16,6 +16,9 @@ public interface Deployment {
   String getName();
 
   @NotNull
+  String getPresentableName();
+
+  @NotNull
   DeploymentStatus getStatus();
 
   @NotNull
@@ -29,4 +32,12 @@ public interface Deployment {
 
   @NotNull
   DeploymentLogManager getOrCreateLogManager(@NotNull Project project);
+
+  void setStatus(@NotNull DeploymentStatus status, @Nullable String statusText);
+
+  @NotNull
+  ServerConnection<?> getConnection();
+
+  @Nullable
+  String getGroup();
 }

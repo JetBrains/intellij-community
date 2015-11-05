@@ -27,6 +27,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PagePool;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
 import java.io.EOFException;
@@ -41,7 +42,13 @@ import java.util.zip.InflaterInputStream;
 public class RefCountingStorage extends AbstractStorage {
   private final Map<Integer, Future<?>> myPendingWriteRequests = ContainerUtil.newConcurrentMap();
   private int myPendingWriteRequestsSize;
-  private final ThreadPoolExecutor myPendingWriteRequestsExecutor = new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<Runnable>(), ConcurrencyUtil.newNamedThreadFactory("RefCountingStorage write content helper"));
+  private final ExecutorService myPendingWriteRequestsExecutor = createExecutor();
+
+  @NotNull
+  protected ExecutorService createExecutor() {
+    return new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<Runnable>(), ConcurrencyUtil
+      .newNamedThreadFactory("RefCountingStorage write content helper"));
+  }
 
   private final boolean myDoNotZipCaches;
   private static final int MAX_PENDING_WRITE_SIZE = 20 * 1024 * 1024;

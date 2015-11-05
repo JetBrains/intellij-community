@@ -17,11 +17,9 @@ package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.Printer;
-import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,17 +27,14 @@ import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Set;
 
 public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsProcessor {
-  private static final Logger LOG = Logger.getInstance(GeneralIdBasedToSMTRunnerEventsConvertor.class.getName());
 
   private final TIntObjectHashMap<Node> myNodeByIdMap = new TIntObjectHashMap<Node>();
   private final Set<Node> myRunningTestNodes = ContainerUtil.newHashSet();
   private final SMTestProxy.SMRootTestProxy myTestsRootProxy;
   private final Node myTestsRootNode;
-  private final String myTestFrameworkName;
 
   private boolean myIsTestingFinished = false;
   private SMTestLocator myLocator = null;
@@ -48,10 +43,9 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   public GeneralIdBasedToSMTRunnerEventsConvertor(Project project,
                                                   @NotNull SMTestProxy.SMRootTestProxy testsRootProxy,
                                                   @NotNull String testFrameworkName) {
-    super(project);
+    super(project, testFrameworkName);
     myTestsRootProxy = testsRootProxy;
     myTestsRootNode = new Node(0, null, testsRootProxy);
-    myTestFrameworkName = testFrameworkName;
     myNodeByIdMap.put(myTestsRootNode.getId(), myTestsRootNode);
   }
 
@@ -199,6 +193,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         if (node != null) {
           SMTestProxy testProxy = node.getProxy();
           testProxy.setDuration(testFinishedEvent.getDuration());
+          testProxy.setInputFilePath(testFinishedEvent.getOutputFile());
           testProxy.setFinished();
           fireOnTestFinished(testProxy);
           terminateNode(node, State.FINISHED);
@@ -411,20 +406,6 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       return myTestsRootNode;
     }
     return myRunningTestNodes.iterator().next();
-  }
-
-  private void logProblem(@NotNull String msg) {
-    logProblem(msg, SMTestRunnerConnectionUtil.isInDebugMode());
-  }
-
-  private void logProblem(@NotNull String msg, boolean throwError) {
-    final String text = "[" + myTestFrameworkName + "] " + msg;
-    if (throwError) {
-      LOG.error(text);
-    }
-    else {
-      LOG.warn(text);
-    }
   }
 
   private enum State {

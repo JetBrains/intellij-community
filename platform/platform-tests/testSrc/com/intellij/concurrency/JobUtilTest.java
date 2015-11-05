@@ -411,14 +411,16 @@ public class JobUtilTest extends PlatformTestCase {
         boolean wasDone = job.isDone();
         boolean wasStarted = started.get();
         boolean wasFinished = finished.get();
-        if (!wasFinished) {
-          assertTrue(wasStarted+", "+wasDone, wasDone == !wasStarted);
+        if (wasStarted && !wasFinished) {
+          assertFalse(wasDone);
         }
         // else no guarantees
 
+        // but can be finished=true but done=false still
         if (wasDone) {
           assertTrue(wasFinished);
         }
+
       }
     }
   }

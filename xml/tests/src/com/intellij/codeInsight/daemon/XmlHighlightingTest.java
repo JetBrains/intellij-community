@@ -210,6 +210,10 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     });
   }
 
+  public void testSvg() throws Exception {
+    doTest(getFullRelativeTestName(".svg"), true, false);
+  }
+
   public void testNavigateToDeclDefinedWithEntity() throws Exception {
     final String baseName = BASE_PATH + getTestName(false);
 

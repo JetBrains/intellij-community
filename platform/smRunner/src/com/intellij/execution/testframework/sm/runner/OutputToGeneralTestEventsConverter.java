@@ -326,6 +326,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     @NonNls private static final String ATTR_KEY_TEST_ERROR = "error";
     @NonNls private static final String ATTR_KEY_TEST_COUNT = "count";
     @NonNls private static final String ATTR_KEY_TEST_DURATION = "duration";
+    @NonNls private static final String ATTR_KEY_TEST_OUTPUT_FILE = "outputFile";
     @NonNls private static final String ATTR_KEY_LOCATION_URL = "locationHint";
     @NonNls private static final String ATTR_KEY_LOCATION_URL_OLD = "location";
     @NonNls private static final String ATTR_KEY_STACKTRACE_DETAILS = "details";
@@ -410,6 +411,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       }
 
       TestFinishedEvent testFinishedEvent = new TestFinishedEvent(testFinished, duration);
+      testFinishedEvent.setOutputFile(testFinished.getAttributes().get(ATTR_KEY_TEST_OUTPUT_FILE));
       fireOnTestFinished(testFinishedEvent);
     }
 
@@ -428,6 +430,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
     public void visitTestFailed(@NotNull final TestFailed testFailed) {
       final Map<String, String> attributes = testFailed.getAttributes();
+      LOG.assertTrue(testFailed.getFailureMessage() != null, "No failure message for: " + myTestFrameworkName);
       final boolean testError = attributes.get(ATTR_KEY_TEST_ERROR) != null;
       TestFailedEvent testFailedEvent = new TestFailedEvent(testFailed, testError, 
                                                             attributes.get(ATTR_KEY_EXPECTED_FILE_PATH),
@@ -535,7 +538,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
         fireRootPresentationAdded(attributes.get("name"), attributes.get("comment"), attributes.get("location"));
       }
       else {
-        GeneralToSMTRunnerEventsConvertor.logProblem(LOG, "Unexpected service message:" + name, myTestFrameworkName);
+        GeneralTestEventsProcessor.logProblem(LOG, "Unexpected service message:" + name, myTestFrameworkName);
       }
     }
 

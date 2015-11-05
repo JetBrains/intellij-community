@@ -19,8 +19,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
@@ -33,21 +32,15 @@ import java.awt.*;
 /**
  * @author pegov
  */
-public class ToggleFullScreenAction extends ToggleAction implements DumbAware {
+public class ToggleFullScreenAction extends DumbAwareAction {
   private static final String TEXT_ENTER_FULL_SCREEN = ActionsBundle.message("action.ToggleFullScreen.text.enter");
   private static final String TEXT_EXIT_FULL_SCREEN = ActionsBundle.message("action.ToggleFullScreen.text.exit");
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
-    IdeFrameEx frame = getFrame();
-    return frame != null && frame.isInFullScreen();
-  }
-
-  @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void actionPerformed(AnActionEvent e) {
     IdeFrameEx frame = getFrame();
     if (frame != null) {
-      frame.toggleFullScreen(state);
+      frame.toggleFullScreen(!frame.isInFullScreen());
     }
   }
 

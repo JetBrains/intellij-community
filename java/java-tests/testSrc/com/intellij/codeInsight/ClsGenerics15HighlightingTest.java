@@ -27,4 +27,5 @@ public class ClsGenerics15HighlightingTest extends ClsGenericsHighlightingTest {
 
   public void testIDEA97887() { doTest(); }
   public void testIDEA118733() { doTest(); }
+  public void testIDEA146452() { doTest(); }
 }

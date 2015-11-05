@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.projectWizard.ProjectSettingsStep;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
@@ -37,10 +38,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.module.JavaModuleType;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -49,6 +47,7 @@ import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -62,6 +61,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.util.GradleVersion;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder;
@@ -111,6 +111,23 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     super(GradleConstants.SYSTEM_ID, new GradleProjectSettings());
   }
 
+  @NotNull
+  @Override
+  public Module createModule(@NotNull ModifiableModuleModel moduleModel)
+    throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
+    LOG.assertTrue(getName() != null);
+    final String originModuleFilePath = getModuleFilePath();
+    LOG.assertTrue(originModuleFilePath != null);
+
+    String moduleName = myProjectId == null ? getName() : myProjectId.getArtifactId();
+    String moduleFilePath = myWizardContext.getProjectFileDirectory() + "/.idea/modules/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
+    deleteModuleFile(moduleFilePath);
+    final ModuleType moduleType = getModuleType();
+    final Module module = moduleModel.newModule(moduleFilePath, moduleType.getId());
+    setupModule(module);
+    return module;
+  }
+
   @Override
   public void setupRootModel(final ModifiableRootModel modifiableRootModel) throws ConfigurationException {
     String contentEntryPath = getContentEntryPath();
@@ -127,9 +144,10 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
 
     modifiableRootModel.addContentEntry(modelContentRootDir);
     // todo this should be moved to generic ModuleBuilder
-    if (myJdk != null){
+    if (myJdk != null) {
       modifiableRootModel.setSdk(myJdk);
-    } else {
+    }
+    else {
       modifiableRootModel.inheritSdk();
     }
 
@@ -144,7 +162,11 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     assert rootProjectPath != null;
 
     final VirtualFile gradleBuildFile = setupGradleBuildFile(modelContentRootDir);
-    setupGradleSettingsFile(rootProjectPath, modelContentRootDir, modifiableRootModel);
+    setupGradleSettingsFile(
+      rootProjectPath, modelContentRootDir, modifiableRootModel.getProject().getName(),
+      myProjectId == null ? modifiableRootModel.getModule().getName() : myProjectId.getArtifactId(),
+      myWizardContext.isCreatingNewProject() || myParentProject == null
+    );
 
     if (gradleBuildFile != null) {
       modifiableRootModel.getModule().putUserData(
@@ -269,19 +291,19 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   }
 
   @Nullable
-  private VirtualFile setupGradleSettingsFile(@NotNull String rootProjectPath,
-                                              @NotNull VirtualFile modelContentRootDir,
-                                              @NotNull ModifiableRootModel model)
+  public static VirtualFile setupGradleSettingsFile(@NotNull String rootProjectPath,
+                                                    @NotNull VirtualFile modelContentRootDir,
+                                                    String projectName,
+                                                    String moduleName,
+                                                    boolean renderNewFile)
     throws ConfigurationException {
     final VirtualFile file = getOrCreateExternalProjectConfigFile(rootProjectPath, GradleConstants.SETTINGS_FILE_NAME);
     if (file == null) return null;
 
-    final String moduleName = myProjectId == null ? model.getModule().getName() : myProjectId.getArtifactId();
-    if (myWizardContext.isCreatingNewProject() || myParentProject == null) {
+    if (renderNewFile) {
       final String moduleDirName = VfsUtilCore.getRelativePath(modelContentRootDir, file.getParent(), '/');
 
       Map<String, String> attributes = ContainerUtil.newHashMap();
-      final String projectName = model.getProject().getName();
       attributes.put(TEMPLATE_ATTRIBUTE_PROJECT_NAME, projectName);
       attributes.put(TEMPLATE_ATTRIBUTE_MODULE_PATH, moduleDirName);
       attributes.put(TEMPLATE_ATTRIBUTE_MODULE_NAME, moduleName);

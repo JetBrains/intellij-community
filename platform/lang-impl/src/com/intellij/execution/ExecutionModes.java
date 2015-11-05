@@ -15,6 +15,9 @@
  */
 package com.intellij.execution;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.PairConsumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -23,6 +26,15 @@ import javax.swing.*;
  * @author Roman.Chernyatchik, oleg
  */
 public class ExecutionModes {
+  private static final Logger LOG = Logger.getInstance(ExecutionMode.class);
+  private static final PairConsumer<ExecutionMode, String> DEFAULT_TIMEOUT_CALLBACK = new PairConsumer<ExecutionMode, String>() {
+    @Override
+    public void consume(ExecutionMode mode, String presentableCmdLine) {
+      final String msg = "Timeout (" + mode.getTimeout() + " sec) on executing: " + presentableCmdLine;
+      LOG.error(msg);
+    }
+  };
+
   /**
    * Process will be run in back ground mode
    */
@@ -60,12 +72,23 @@ public class ExecutionModes {
    */
   public static class SameThreadMode extends ExecutionMode {
     private final int myTimeout;
+    @NotNull
+    private final PairConsumer<ExecutionMode, String> myTimeoutCallback;
 
     public SameThreadMode(final boolean cancelable,
                           @Nullable final String title2,
                           final int timeout) {
+      this(cancelable, title2, timeout, DEFAULT_TIMEOUT_CALLBACK);
+    }
+
+    public SameThreadMode(final boolean cancelable,
+                          @Nullable final String title2,
+                          final int timeout,
+                          @NotNull final PairConsumer<ExecutionMode, String> timeoutCallback
+    ) {
       super(cancelable, null, title2, false, false, null);
       myTimeout = timeout;
+      myTimeoutCallback = timeoutCallback;
     }
 
     public SameThreadMode(@Nullable final String title2) {
@@ -93,6 +116,12 @@ public class ExecutionModes {
     @Override
     public int getTimeout() {
       return myTimeout;
+    }
+
+    @NotNull
+    @Override
+    public PairConsumer<ExecutionMode, String> getTimeoutCallback() {
+      return myTimeoutCallback;
     }
   }
 }

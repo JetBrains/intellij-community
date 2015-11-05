@@ -22,18 +22,14 @@ import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.InternalIterator;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -178,24 +174,6 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
     }
     final RendererConfiguration uiConfiguration = new RendererConfiguration(settings);
     flushTo(uiConfiguration);
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      Element root = new Element("root");
-      try {
-        uiConfiguration.writeExternal(root);
-      }
-      catch (WriteExternalException e) {
-        e.printStackTrace();
-      }
-      System.out.println("uiConfiguration: " + JDOMUtil.writeElement(root));
-      Element root1 = new Element("root");
-      try {
-        rendererConfiguration.writeExternal(root1);
-      }
-      catch (WriteExternalException e) {
-        e.printStackTrace();
-      }
-      System.out.println("rendererConfiguration: " + JDOMUtil.writeElement(root1));
-    }
     return !uiConfiguration.equals(rendererConfiguration);
   }
 

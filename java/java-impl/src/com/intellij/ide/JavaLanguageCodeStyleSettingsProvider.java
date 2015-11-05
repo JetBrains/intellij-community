@@ -67,7 +67,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENT", "After closing angle bracket", groupName);
 
       groupName = CodeStyleSettingsCustomizable.SPACES_IN_TYPE_PARAMETERS;
-      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER", "Before opening angle bracket", groupName);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER", ApplicationBundle.message("checkbox.spaces.before.opening.angle.bracket"), groupName);
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS", "Around type bounds", groupName);
     }
     else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
@@ -155,6 +155,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "SPECIAL_ELSE_IF_TREATMENT",
                                    "ENUM_CONSTANTS_WRAP",
                                    "ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS",
+                                   "ALIGN_SUBSEQUENT_SIMPLE_METHODS",
                                    "WRAP_FIRST_METHOD_IN_CALL_CHAIN");
 
       consumer.showCustomOption(JavaCodeStyleSettings.class,

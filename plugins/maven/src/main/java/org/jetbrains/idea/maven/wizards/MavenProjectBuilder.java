@@ -34,8 +34,8 @@ import com.intellij.projectImport.ProjectImportBuilder;
 import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
-import org.jetbrains.idea.maven.importing.MavenUIModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
+import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
@@ -130,8 +130,8 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
 
     boolean isFromUI = model != null;
     return manager.importProjects(isFromUI
-                                  ? new MavenUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel)
-                                  : new MavenDefaultModifiableModelsProvider(project));
+                                  ? new IdeUIModifiableModelsProvider(project, model, (ModulesConfigurator)modulesProvider, artifactModel)
+                                  : new IdeModifiableModelsProviderImpl(project));
   }
 
   private void appendProfilesFromString(Collection<String> selectedProfiles, String profilesList) {

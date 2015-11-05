@@ -16,27 +16,23 @@
 package com.intellij.diff.merge
 
 import com.intellij.diff.DiffTestCase
-import com.intellij.diff.assertEquals
-import com.intellij.diff.assertTrue
-import com.intellij.diff.merge.MergeTestBase.TestBuilder
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.ThreeSide
-import kotlin.test.fail
 
-public class MergeAutoTest : MergeTestBase() {
+class MergeAutoTest : MergeTestBase() {
   companion object {
     private val MODIFICATION_CYCLE_COUNT = 5
     private val MODIFICATION_CYCLE_SIZE = 3
   }
 
-  public fun testUndo() {
+  fun testUndo() {
     doUndoTest(System.currentTimeMillis(), 10, 300)
   }
 
   private fun doUndoTest(seed: Long, runs: Int, maxLength: Int) {
     doTest(seed, runs, maxLength) { text1, text2, text3, debugData ->
       testN(text1, text2, text3) {
-        if (changes.size() == 0) {
+        if (changes.size == 0) {
           assertEquals(text1, text2)
           assertEquals(text1, text3)
           assertEquals(text2, text3)
@@ -62,8 +58,8 @@ public class MergeAutoTest : MergeTestBase() {
   }
 
   private fun TestBuilder.doApply(): Unit {
-    val index = RNG.nextInt(changes.size())
-    val change = changes.get(index)
+    val index = RNG.nextInt(changes.size)
+    val change = changes[index]
 
     val side = Side.fromLeft(RNG.nextBoolean())
     val modifier = RNG.nextBoolean()
@@ -72,8 +68,8 @@ public class MergeAutoTest : MergeTestBase() {
   }
 
   private fun TestBuilder.doIgnore(): Unit {
-    val index = RNG.nextInt(changes.size())
-    val change = changes.get(index)
+    val index = RNG.nextInt(changes.size)
+    val change = changes[index]
 
     val side = Side.fromLeft(RNG.nextBoolean())
     val modifier = RNG.nextBoolean()
@@ -82,7 +78,7 @@ public class MergeAutoTest : MergeTestBase() {
   }
 
   private fun TestBuilder.doReplace(): Unit {
-    val length = document.getTextLength()
+    val length = document.textLength
 
     var index1: Int = 0;
     var index2: Int = 0;
@@ -113,9 +109,9 @@ public class MergeAutoTest : MergeTestBase() {
   }
 
   private fun checkChangesRangeOrdering(changes: List<TextMergeChange>) {
-    for (i in 1..changes.size() - 1) {
-      val lastEnd = changes.get(i - 1).getEndLine(ThreeSide.BASE)
-      val start = changes.get(i).getStartLine(ThreeSide.BASE)
+    for (i in 1..changes.size - 1) {
+      val lastEnd = changes[i - 1].getEndLine(ThreeSide.BASE)
+      val start = changes[i].getStartLine(ThreeSide.BASE)
       assertTrue(lastEnd <= start, "lastEnd: $lastEnd, start: $start")
     }
   }

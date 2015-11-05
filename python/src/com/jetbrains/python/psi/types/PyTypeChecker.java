@@ -121,9 +121,16 @@ public class PyTypeChecker {
         if (!matchClasses(superClass, subClass, context)) {
           return false;
         }
-        final PyType superElementType = ((PyCollectionType)expected).getElementType(context);
-        final PyType subElementType = ((PyCollectionType)actual).getElementType(context);
-        return match(superElementType, subElementType, context, substitutions, recursive);
+        // TODO: Match generic parameters based on the correspondence between the generic parameters of subClass and its base classes
+        final List<PyType> superElementTypes = ((PyCollectionType)expected).getElementTypes(context);
+        final List<PyType> subElementTypes = ((PyCollectionType)actual).getElementTypes(context);
+        for (int i = 0; i < subElementTypes.size(); i++) {
+          final PyType superElementType = i < superElementTypes.size() ? superElementTypes.get(i) : null;
+          if (!match(superElementType, subElementTypes.get(i), context, substitutions, recursive)) {
+            return false;
+          }
+        }
+        return true;
       }
       else if (expected instanceof PyTupleType && actual instanceof PyTupleType) {
         final PyTupleType superTupleType = (PyTupleType)expected;
@@ -207,7 +214,7 @@ public class PyTypeChecker {
 
   @NotNull
   public static Set<String> getClassTypeAttributes(@NotNull PyClassType type, boolean inherited, @NotNull TypeEvalContext context) {
-    final Set<String> attributes = getClassAttributes(type.getPyClass(), inherited, context);
+    final Set<String> attributes = getClassAttributes(type.getPyClass(), inherited, type.isDefinition(), context);
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       final Collection<PyCustomMember> members = provider.getMembers(type, null);
       for (PyCustomMember member : members) {
@@ -218,7 +225,10 @@ public class PyTypeChecker {
   }
 
   @NotNull
-  private static Set<String> getClassAttributes(@NotNull PyClass cls, boolean inherited, @NotNull TypeEvalContext context) {
+  private static Set<String> getClassAttributes(@NotNull PyClass cls,
+                                                boolean inherited,
+                                                boolean isDefinition,
+                                                @NotNull TypeEvalContext context) {
     final Set<String> attributes = new HashSet<String>();
     for (PyFunction function : cls.getMethods(false)) {
       attributes.add(function.getName());
@@ -232,8 +242,11 @@ public class PyTypeChecker {
     if (inherited) {
       for (PyClass ancestor : cls.getAncestorClasses(null)) {
         final PyType ancestorType = context.getType(ancestor);
-        if (ancestorType instanceof PyClassType) {
-          attributes.addAll(getClassTypeAttributes((PyClassType)ancestorType, false, context));
+        if (ancestorType instanceof PyClassLikeType) {
+          final PyClassLikeType classType = isDefinition ? (PyClassLikeType)ancestorType : ((PyClassLikeType)ancestorType).toInstance();
+          if (classType instanceof PyClassType) {
+            attributes.addAll(getClassTypeAttributes((PyClassType)classType, false, context));
+          }
         }
       }
     }
@@ -309,7 +322,9 @@ public class PyTypeChecker {
     }
     else if (type instanceof PyCollectionType) {
       final PyCollectionType collection = (PyCollectionType)type;
-      collectGenerics(collection.getElementType(context), context, collected, visited);
+      for (PyType elementType : collection.getElementTypes(context)) {
+        collectGenerics(elementType, context, collected, visited);
+      }
     }
     else if (type instanceof PyTupleType) {
       final PyTupleType tuple = (PyTupleType)type;
@@ -350,9 +365,12 @@ public class PyTypeChecker {
       }
       else if (type instanceof PyCollectionTypeImpl) {
         final PyCollectionTypeImpl collection = (PyCollectionTypeImpl)type;
-        final PyType elem = collection.getElementType(context);
-        final PyType subst = substitute(elem, substitutions, context);
-        return new PyCollectionTypeImpl(collection.getPyClass(), collection.isDefinition(), subst);
+        final List<PyType> elementTypes = collection.getElementTypes(context);
+        final List<PyType> substitutes = new ArrayList<PyType>();
+        for (PyType elementType : elementTypes) {
+          substitutes.add(substitute(elementType, substitutions, context));
+        }
+        return new PyCollectionTypeImpl(collection.getPyClass(), collection.isDefinition(), substitutes);
       }
       else if (type instanceof PyTupleType) {
         final PyTupleType tuple = (PyTupleType)type;
@@ -505,24 +523,33 @@ public class PyTypeChecker {
     if (type == null) {
       return null;
     }
-    else if (type instanceof PyUnionType) {
-      Boolean result = true;
-      for (PyType member : ((PyUnionType)type).getMembers()) {
-        final Boolean callable = isCallable(member);
-        if (callable == null) {
-          return null;
-        }
-        else if (!callable) {
-          result = false;
-        }
-      }
-      return result;
+    if (type instanceof PyUnionType) {
+      return isUnionCallable((PyUnionType)type);
     }
-    else if (type instanceof PyCallableType) {
+    if (type instanceof PyCallableType) {
       return ((PyCallableType) type).isCallable();
     }
-    else if (type instanceof PyStructuralType && ((PyStructuralType)type).isInferredFromUsages()) {
+    if (type instanceof PyStructuralType && ((PyStructuralType)type).isInferredFromUsages()) {
       return true;
+    }
+    return false;
+  }
+
+  /**
+   * If at least one is callable -- it is callable.
+   * If at least one is unknown -- it is unknown.
+   * It is false otherwise.
+   */
+  @Nullable
+  private static Boolean isUnionCallable(@NotNull final PyUnionType type) {
+    for (final PyType member : type.getMembers()) {
+      final Boolean callable = isCallable(member);
+      if (callable == null) {
+        return null;
+      }
+      if (callable) {
+        return true;
+      }
     }
     return false;
   }

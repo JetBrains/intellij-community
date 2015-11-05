@@ -166,7 +166,7 @@ public class PersistentHashMapValueStorage {
     return result;
   }
 
-  private static void saveData(byte[] data,
+  private void saveData(byte[] data,
                         int offset,
                         int dataLength,
                         long prevChunkAddress,
@@ -354,7 +354,7 @@ public class PersistentHashMapValueStorage {
     forceAppender(myPath);
 
     checkCancellation();
-    long startedTime = System.nanoTime();
+    long startedTime = ourDumpChunkRemovalTime ? System.nanoTime() : 0;
     long chunk = tailChunkAddress;
     int chunkCount = 0;
 
@@ -426,7 +426,7 @@ public class PersistentHashMapValueStorage {
 
     if (chunkCount > 1 && !myCompactionMode) {
       checkCancellation();
-      long endCompactionTime = System.nanoTime();
+      long endCompactionTime = ourDumpChunkRemovalTime ? System.nanoTime() : 0;
       long diff = endCompactionTime - startedTime;
 
       myChunksRemovalTime += diff;
@@ -451,12 +451,16 @@ public class PersistentHashMapValueStorage {
 
   private long readPrevChunkAddress(long chunk) throws IOException {
     final long prevOffsetDiff = DataInputOutputUtil.readLONG(myBufferDataStreamWrapper);
-    assert prevOffsetDiff < chunk:chunk + "," + prevOffsetDiff + "," + mySize;
+    if(prevOffsetDiff >= chunk) {
+      throw new IOException("readPrevChunkAddress:" + chunk + "," + prevOffsetDiff + "," + mySize + "," + myFile);
+    }
     return prevOffsetDiff != 0 ? chunk - prevOffsetDiff : 0;
   }
 
-  private static void writePrevChunkAddress(long prevChunkAddress, long currentChunkAddress, DataOutputStream dataOutputStream) throws IOException {
-    assert currentChunkAddress >= prevChunkAddress;
+  private void writePrevChunkAddress(long prevChunkAddress, long currentChunkAddress, DataOutputStream dataOutputStream) throws IOException {
+    if(currentChunkAddress < prevChunkAddress) {
+      throw new IOException("writePrevChunkAddress:" + currentChunkAddress + "," + prevChunkAddress + "," + myFile);
+    }
     long diff = currentChunkAddress - prevChunkAddress;
     DataInputOutputUtil.writeLONG(dataOutputStream, prevChunkAddress == 0 ? 0 : diff);
   }

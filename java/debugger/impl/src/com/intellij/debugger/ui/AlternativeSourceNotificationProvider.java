@@ -95,12 +95,13 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
 
     if (DumbService.getInstance(myProject).isDumb()) return null;
 
-    PsiClass[] alternatives = JavaPsiFacade.getInstance(myProject).findClasses(name, GlobalSearchScope.allScope(myProject));
+    ArrayList<PsiClass> alts = ContainerUtil.newArrayList(
+      JavaPsiFacade.getInstance(myProject).findClasses(name, GlobalSearchScope.allScope(myProject)));
+    ContainerUtil.removeDuplicates(alts);
 
     FILE_PROCESSED_KEY.set(file, true);
 
-    if (alternatives.length > 1) {
-      ArrayList<PsiClass> alts = ContainerUtil.newArrayList(alternatives);
+    if (alts.size() > 1) {
       for (PsiClass cls : alts) {
         if (cls.equals(baseClass) || cls.getNavigationElement().equals(baseClass)) {
           alts.remove(cls);

@@ -23,7 +23,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
@@ -52,8 +51,8 @@ public class DaemonCodeAnalyzerSettingsImpl extends DaemonCodeAnalyzerSettings i
   @Override
   public Element getState() {
     Element element = XmlSerializer.serialize(this, new SkipDefaultsSerializationFilter());
-    String profile = InspectionProfileManager.getInstance().getRootProfile().getName();
-    if (!"Default".equals(profile)) {
+    String profile = InspectionProfileManagerImpl.getInstanceImpl().getRootProfileName();
+    if (!InspectionProfileImpl.DEFAULT_PROFILE_NAME.equals(profile)) {
       element.setAttribute("profile", profile);
     }
     return element;

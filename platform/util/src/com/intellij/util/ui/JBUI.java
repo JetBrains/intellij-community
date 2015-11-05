@@ -79,6 +79,10 @@ public class JBUI {
   }
 
   public static void setScaleFactor(float scale) {
+    if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
+      return;
+    }
+
     if (scale < 1.25f) scale = 1.0f;
     else if (scale < 1.5f) scale = 1.25f;
     else if (scale < 1.75f) scale = 1.5f;

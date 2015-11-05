@@ -1,0 +1,12 @@
+<Block start="0" end="7">
+  <Block start="0" end="3"/>
+  <Block start="4" end="7">
+    <Indent type="CONTINUATION"/>
+    <Block start="4" end="7">
+      <Indent type="CONTINUATION"/>
+      <Block start="4" end="7">
+        <Indent type="CONTINUATION"/>
+      </Block>
+    </Block>
+  </Block>
+</Block>

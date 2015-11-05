@@ -23,7 +23,6 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -74,12 +73,12 @@ public class ProjectFileVersionImpl extends ProjectFileVersion implements Projec
       return;
     }
 
-    VirtualFile file = ProjectUtil.isDirectoryBased(myProject) ? myProject.getBaseDir() : myProject.getProjectFile();
-    if (file == null) {
+    String path = ProjectUtil.isDirectoryBased(myProject) ? myProject.getBasePath() : myProject.getProjectFilePath();
+    if (path == null) {
       LOG.info("Cannot save conversion result: filePath == null");
     }
     else {
-      ConversionService.getInstance().saveConversionResult(FileUtil.toSystemDependentName(file.getPath()));
+      ConversionService.getInstance().saveConversionResult(FileUtil.toSystemDependentName(path));
     }
   }
 

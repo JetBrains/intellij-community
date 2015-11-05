@@ -17,12 +17,12 @@ package com.intellij.testFramework;
 
 import com.intellij.ide.actions.ViewStructureAction;
 import com.intellij.ide.util.FileStructurePopup;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
@@ -33,33 +33,28 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Konstantin Bulenkov
  */
-public class FileStructureTestFixture {
-  private final PsiFile myFile;
+public class FileStructureTestFixture implements Disposable {
+  private final CodeInsightTestFixture myFixture;
+
   private FileStructurePopup myPopup;
+  private PsiFile myFile;
 
-  public FileStructureTestFixture(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    myFile = file;
-    myPopup = ViewStructureAction.createPopup(project, TextEditorProvider.getInstance().getTextEditor(editor));
-    assert myPopup != null;
-    myPopup.createCenterPanel();
-    getBuilder().getUi().getUpdater().setPassThroughMode(true);
-  }
-
-  public void dispose() {
-    Disposer.dispose(myPopup);
+  public FileStructureTestFixture(CodeInsightTestFixture fixture) {
+    myFixture = fixture;
   }
 
   @Nullable
   public FilteringTreeStructure.FilteringNode update() {
     final Ref<FilteringTreeStructure.FilteringNode> nodeRef = new Ref<FilteringTreeStructure.FilteringNode>();
-    myPopup.getTreeBuilder().refilter().doWhenProcessed(new Runnable() {
+    final FileStructurePopup popup = getPopup();
+    popup.getTreeBuilder().refilter().doWhenProcessed(new Runnable() {
       @Override
       public void run() {
         getStructure().rebuild();
         updateTree();
         getBuilder().updateFromRoot();
         TreeUtil.expandAll(getTree());
-        nodeRef.set(myPopup.selectPsiElement(myPopup.getCurrentElement(myFile)));
+        nodeRef.set(popup.selectPsiElement(popup.getCurrentElement(myFile)));
         getBuilder().getUi().select(nodeRef.get(), null);
       }
     });
@@ -67,15 +62,15 @@ public class FileStructureTestFixture {
   }
 
   public Tree getTree() {
-    return myPopup.getTree();
+    return getPopup().getTree();
   }
 
   public FilteringTreeBuilder getBuilder() {
-    return myPopup.getTreeBuilder();
+    return getPopup().getTreeBuilder();
   }
 
   public FileStructurePopup.MyTreeSpeedSearch getSpeedSearch() {
-    return (FileStructurePopup.MyTreeSpeedSearch)myPopup.getSpeedSearch();
+    return (FileStructurePopup.MyTreeSpeedSearch)getPopup().getSpeedSearch();
   }
 
 
@@ -102,6 +97,24 @@ public class FileStructureTestFixture {
 
   @NotNull
   public FileStructurePopup getPopup() {
+    if (myPopup == null || myFile != myFixture.getFile()) {
+      if (myPopup != null) {
+        Disposer.dispose(myPopup);
+        myPopup = null;
+      }
+      myFile = myFixture.getFile();
+      myPopup = ViewStructureAction.createPopup(myFixture.getProject(), TextEditorProvider.getInstance().getTextEditor(myFixture.getEditor()));
+      assert myPopup != null;
+      Disposer.register(this, myPopup);
+      myPopup.createCenterPanel();
+      myPopup.getTreeBuilder().getUi().getUpdater().setPassThroughMode(true);
+    }
     return myPopup;
+  }
+
+  @Override
+  public void dispose() {
+    myPopup = null;
+    myFile = null;
   }
 }

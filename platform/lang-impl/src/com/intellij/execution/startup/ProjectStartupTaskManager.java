@@ -18,6 +18,7 @@ package com.intellij.execution.startup;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -84,8 +85,8 @@ public class ProjectStartupTaskManager {
     final List<RunnerAndConfigurationSettings> result = new ArrayList<RunnerAndConfigurationSettings>();
     final List<ProjectStartupConfigurationBase.ConfigurationDescriptor> list = configuration.getList();
     for (ProjectStartupConfigurationBase.ConfigurationDescriptor descriptor : list) {
-      final RunnerAndConfigurationSettings settings = myRunManager.findConfigurationByName(descriptor.getName());
-      if (settings != null && settings.getUniqueID().equals(descriptor.getId())) {
+      final RunnerAndConfigurationSettings settings = ((RunManagerImpl) myRunManager).getConfigurationById(descriptor.getId());
+      if (settings != null && settings.getName().equals(descriptor.getName())) {
         result.add(settings);
       } else {
         NOTIFICATION_GROUP.createNotification(PREFIX + " Run Configuration '" + descriptor.getName() + "' not found, removed from list.",
@@ -100,9 +101,9 @@ public class ProjectStartupTaskManager {
     myLocal.rename(oldId, settings);
   }
 
-  public void delete(final String name) {
-    if (myShared.deleteConfiguration(name)) return;
-    myLocal.deleteConfiguration(name);
+  public void delete(final String id) {
+    if (myShared.deleteConfiguration(id)) return;
+    myLocal.deleteConfiguration(id);
   }
 
   public void setStartupConfigurations(final @NotNull Collection<RunnerAndConfigurationSettings> shared,

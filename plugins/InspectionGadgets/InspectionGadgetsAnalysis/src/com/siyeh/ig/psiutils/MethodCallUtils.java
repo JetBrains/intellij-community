@@ -18,6 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -208,10 +209,13 @@ public class MethodCallUtils {
     return variable.equals(element);
   }
 
+  @Nullable
   public static PsiMethod findMethodWithReplacedArgument(@NotNull PsiCall call, @NotNull PsiExpression target,
                                                          @NotNull PsiExpression replacement) {
     final PsiExpressionList argumentList = call.getArgumentList();
-    assert argumentList != null;
+    if (argumentList == null) {
+      return null;
+    }
     final PsiExpression[] expressions = argumentList.getExpressions();
     int index = -1;
     for (int i = 0; i < expressions.length; i++) {
@@ -220,7 +224,9 @@ public class MethodCallUtils {
         index = i;
       }
     }
-    assert index >= 0;
+    if (index < 0) {
+      return null;
+    }
     final PsiCall copy = (PsiCall)call.copy();
     final PsiExpressionList copyArgumentList = copy.getArgumentList();
     assert copyArgumentList != null;
@@ -243,6 +249,53 @@ public class MethodCallUtils {
     final SuperCallVisitor visitor = new SuperCallVisitor(methodName);
     context.accept(visitor);
     return visitor.isSuperCallFound();
+  }
+
+  public static boolean callWithNonConstantString(@NotNull PsiMethodCallExpression expression, boolean considerStaticFinalConstant,
+                                                  String className, String... methodNames) {
+    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    final String methodName = methodExpression.getReferenceName();
+    boolean found = false;
+    for (String name : methodNames) {
+      if (name.equals(methodName)) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      return false;
+    }
+    final PsiMethod method = expression.resolveMethod();
+    if (method == null) {
+      return false;
+    }
+    final PsiClass aClass = method.getContainingClass();
+    if (aClass == null) {
+      return false;
+    }
+    if (!com.intellij.psi.util.InheritanceUtil.isInheritor(aClass, className)) {
+      return false;
+    }
+    final PsiExpressionList argumentList = expression.getArgumentList();
+    final PsiExpression argument = ParenthesesUtils.stripParentheses(ExpressionUtils.getFirstExpressionInList(argumentList));
+    if (argument == null) {
+      return false;
+    }
+    final PsiType type = argument.getType();
+    if (type == null || !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+      return false;
+    }
+    if (considerStaticFinalConstant && argument instanceof PsiReferenceExpression) {
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)argument;
+      final PsiElement target = referenceExpression.resolve();
+      if (target instanceof PsiField) {
+        final PsiField field = (PsiField)target;
+        if (field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL)) {
+          return false;
+        }
+      }
+    }
+    return !PsiUtil.isConstantExpression(argument);
   }
 
   private static class SuperCallVisitor extends JavaRecursiveElementWalkingVisitor {

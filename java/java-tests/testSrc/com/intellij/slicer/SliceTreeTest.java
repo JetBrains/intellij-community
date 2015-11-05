@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.ToolWindowHeadlessManagerImpl;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -46,7 +45,7 @@ public class SliceTreeTest extends SliceTestCase {
     params.scope = new AnalysisScope(getProject());
     params.dataFlowToThis = true;
 
-    SliceUsage usage = SliceUsage.createRootUsage(element, params);
+    SliceUsage usage = LanguageSlicing.getProvider(element).createRootUsage(element, params);
 
 
     ToolWindowHeadlessManagerImpl.MockToolWindow toolWindow = new ToolWindowHeadlessManagerImpl.MockToolWindow(myProject);
@@ -90,7 +89,7 @@ public class SliceTreeTest extends SliceTestCase {
   public void testTypingDoesNotInterfereWithDuplicates() throws Exception {
     SliceTreeStructure treeStructure = configureTree("DupSlice");
     SliceNode root = (SliceNode)treeStructure.getRootElement();
-    List<SliceNode> nodes = new ArrayList<SliceNode>();
+    List<SliceNode> nodes = new ArrayList<>();
     expandNodesTo(root, nodes);
 
     TIntArrayList hasDups = new TIntArrayList();
@@ -150,26 +149,17 @@ public class SliceTreeTest extends SliceTestCase {
     Map<SliceNode, Collection<PsiElement>> map = SliceLeafAnalyzer.createMap();
     Collection<PsiElement> leaves = SliceLeafAnalyzer.calcLeafExpressions(root, treeStructure, map);
     assertNotNull(leaves);
-    List<PsiElement> list = new ArrayList<PsiElement>(leaves);
-    String message = ContainerUtil.map(list, new Function<PsiElement, String>() {
-      @Override
-      public String fun(PsiElement element) {
-        return element.getClass() +": '"+element.getText()+"' ("+ SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY.computeHashCode(element)+") ";
-      }
-    }).toString();
+    List<PsiElement> list = new ArrayList<>(leaves);
+    String message = ContainerUtil.map(list, element -> element.getClass() + ": '" + element.getText() + "' (" + SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY.computeHashCode(element) + ") ").toString();
     assertEquals(map.entrySet()+"\n"+message, 2, leaves.size());
-    Collections.sort(list, new Comparator<PsiElement>() {
-      @Override
-      public int compare(PsiElement o1, PsiElement o2) {
-        return o1.getText().compareTo(o2.getText());
-      }
-    });
+    Collections.sort(list, (o1, o2) -> o1.getText().compareTo(o2.getText()));
     assertTrue(list.get(0) instanceof PsiLiteralExpression);
     assertEquals(false, ((PsiLiteral)list.get(0)).getValue());
     assertTrue(list.get(1) instanceof PsiLiteralExpression);
     assertEquals(true, ((PsiLiteral)list.get(1)).getValue());
   }
 
+  @SuppressWarnings("ConstantConditions")
   public void testGroupByValuesCorrectLeaves() throws Exception {
     SliceTreeStructure treeStructure = configureTree("DuplicateLeaves");
     SliceRootNode root = (SliceRootNode)treeStructure.getRootElement();
@@ -229,94 +219,89 @@ public class SliceTreeTest extends SliceTestCase {
 
     checkStructure(newRoot, "Null Values\n" +
                             "  Value: o\n" +
-                            "    (6: 12) |String| |l|;\n" +
-                            "      (52: 13) |l| |=| |d|;\n" +
-                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
-                            "          (15: 13) |set|(|o|)|;\n" +
+                            "    6|String| |l|;\n" +
+                            "      52|l| |=| |d|;\n" +
+                            "        51|void| |set|(|String| |d|)| |{\n" +
+                            "          15|set|(|o|)|;\n" +
                             "  Value: nu()\n" +
-                            "    (6: 12) |String| |l|;\n" +
-                            "      (52: 13) |l| |=| |d|;\n" +
-                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
-                            "          (29: 13) |set|(|nu|(|)|)|;\n" +
+                            "    6|String| |l|;\n" +
+                            "      52|l| |=| |d|;\n" +
+                            "        51|void| |set|(|String| |d|)| |{\n" +
+                            "          29|set|(|nu|(|)|)|;\n" +
                             "  Value: t\n" +
-                            "    (6: 12) |String| |l|;\n" +
-                            "      (52: 13) |l| |=| |d|;\n" +
-                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
-                            "          (46: 15) |x|.|set|(|t|)|;\n" +
+                            "    6|String| |l|;\n" +
+                            "      52|l| |=| |d|;\n" +
+                            "        51|void| |set|(|String| |d|)| |{\n" +
+                            "          46|x|.|set|(|t|)|;\n" +
                             "NotNull Values\n" +
                             "  Value: \"\"\n" +
-                            "    (6: 12) |String| |l|;\n" +
-                            "      (52: 13) |l| |=| |d|;\n" +
-                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
-                            "          (19: 13) |set|(|CON|)|;\n" +
-                            "            (5: 39) |private| |final| |static| |String| |CON| |=| |\"\"|;\n" +
+                            "    6|String| |l|;\n" +
+                            "      52|l| |=| |d|;\n" +
+                            "        51|void| |set|(|String| |d|)| |{\n" +
+                            "          19|set|(|CON|)|;\n" +
+                            "            5|private| |final| |static| |String| |CON| |=| |\"\"|;\n" +
                             "  Value: \"xxx\"\n" +
-                            "    (6: 12) |String| |l|;\n" +
-                            "      (52: 13) |l| |=| |d|;\n" +
-                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
-                            "          (10: 13) |set|(|\"xxx\"|)|;\n" +
+                            "    6|String| |l|;\n" +
+                            "      52|l| |=| |d|;\n" +
+                            "        51|void| |set|(|String| |d|)| |{\n" +
+                            "          10|set|(|\"xxx\"|)|;\n" +
                             "  Value: new String()\n" +
-                            "    (6: 12) |String| |l|;\n" +
-                            "      (52: 13) |l| |=| |d|;\n" +
-                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
-                            "          (17: 13) |set|(|new| |String|(|)|)|;\n" +
+                            "    6|String| |l|;\n" +
+                            "      52|l| |=| |d|;\n" +
+                            "        51|void| |set|(|String| |d|)| |{\n" +
+                            "          17|set|(|new| |String|(|)|)|;\n" +
                             "  Value: nn()\n" +
-                            "    (6: 12) |String| |l|;\n" +
-                            "      (52: 13) |l| |=| |d|;\n" +
-                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
-                            "          (18: 13) |set|(|nn|(|)|)|;\n" +
+                            "    6|String| |l|;\n" +
+                            "      52|l| |=| |d|;\n" +
+                            "        51|void| |set|(|String| |d|)| |{\n" +
+                            "          18|set|(|nn|(|)|)|;\n" +
                             "  Value: nn\n" +
-                            "    (6: 12) |String| |l|;\n" +
-                            "      (52: 13) |l| |=| |d|;\n" +
-                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
-                            "          (21: 13) |set|(|nn|)|;\n" +
+                            "    6|String| |l|;\n" +
+                            "      52|l| |=| |d|;\n" +
+                            "        51|void| |set|(|String| |d|)| |{\n" +
+                            "          21|set|(|nn|)|;\n" +
                             "  Value: g\n" +
-                            "    (6: 12) |String| |l|;\n" +
-                            "      (52: 13) |l| |=| |d|;\n" +
-                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
-                            "          (27: 13) |set|(|g|)|;\n" +
+                            "    6|String| |l|;\n" +
+                            "      52|l| |=| |d|;\n" +
+                            "        51|void| |set|(|String| |d|)| |{\n" +
+                            "          27|set|(|g|)|;\n" +
                             "  Value: \"null\"\n" +
-                            "    (6: 12) |String| |l|;\n" +
-                            "      (52: 13) |l| |=| |d|;\n" +
-                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
-                            "          (48: 15) |x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
-                            "            (48: 27) |x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
+                            "    6|String| |l|;\n" +
+                            "      52|l| |=| |d|;\n" +
+                            "        51|void| |set|(|String| |d|)| |{\n" +
+                            "          48|x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
+                            "            48|x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
                             "  Value: t\n" +
-                            "    (6: 12) |String| |l|;\n" +
-                            "      (52: 13) |l| |=| |d|;\n" +
-                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
-                            "          (48: 15) |x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
-                            "            (48: 36) |x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
+                            "    6|String| |l|;\n" +
+                            "      52|l| |=| |d|;\n" +
+                            "        51|void| |set|(|String| |d|)| |{\n" +
+                            "          48|x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
+                            "            48|x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
                             "  Value: d\n" +
-                            "    (6: 12) |String| |l|;\n" +
-                            "      (55: 13) |l| |=| |d|;\n" +
+                            "    6|String| |l|;\n" +
+                            "      55|l| |=| |d|;\n" +
                             "Other Values\n" +
                             "  Value: private String d;\n" +
-                            "    (6: 12) |String| |l|;\n" +
-                            "      (52: 13) |l| |=| |d|;\n" +
-                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
-                            "          (30: 13) |set|(|hz|(|)|)|;\n" +
-                            "            (42: 16) |return| |d|;\n" +
-                            "              (7: 20) |private| |String| |d|;\n" +
+                            "    6|String| |l|;\n" +
+                            "      52|l| |=| |d|;\n" +
+                            "        51|void| |set|(|String| |d|)| |{\n" +
+                            "          30|set|(|hz|(|)|)|;\n" +
+                            "            42|return| |d|;\n" +
+                            "              7|private| |String| |d|;\n" +
                             "  Value: String g\n" +
-                            "    (6: 12) |String| |l|;\n" +
-                            "      (52: 13) |l| |=| |d|;\n" +
-                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
-                            "          (11: 13) |set|(|g|)|;\n" +
-                            "            (9: 21) |public| |X|(|String| |g|)| |{\n" +
+                            "    6|String| |l|;\n" +
+                            "      52|l| |=| |d|;\n" +
+                            "        51|void| |set|(|String| |d|)| |{\n" +
+                            "          11|set|(|g|)|;\n" +
+                            "            9|public| |X|(|String| |g|)| |{\n" +
                             "");
   }
 
   private static void checkStructure(final SliceNode root, @NonNls String dataExpected) {
-    List<SliceNode> actualNodes = new ArrayList<SliceNode>((Collection)root.getChildren());
+    List<SliceNode> actualNodes = new ArrayList<>((Collection)root.getChildren());
     Collections.sort(actualNodes, SliceTreeBuilder.SLICE_NODE_COMPARATOR);
 
-    Object[] actualStrings = ContainerUtil.map2Array(actualNodes, new Function<SliceNode, Object>() {
-      @Override
-      public Object fun(SliceNode node) {
-        return node.toString();
-      }
-    });
+    Object[] actualStrings = ContainerUtil.map2Array(actualNodes, SliceNode::toString);
 
     String[] childrenExpected = dataExpected.isEmpty() ? ArrayUtil.EMPTY_STRING_ARRAY : dataExpected.split("\n");
     String curChildren = "";
@@ -354,9 +339,9 @@ public class SliceTreeTest extends SliceTestCase {
     checkStructure(newRoot,
         "Null Values\n" +
         "  Value: null\n" +
-        "    (2: 10) |String| |l|;\n" +
-        "      (4: 9) |l| |=| |null|;\n" +
-        "      (7: 9) |l| |=| |null|;\n" +
+        "    2|String| |l|;\n" +
+        "      4|l| |=| |null|;\n" +
+        "      7|l| |=| |null|;\n" +
         ""
                    );
   }
@@ -367,12 +352,7 @@ public class SliceTreeTest extends SliceTestCase {
     Map<SliceNode, Collection<PsiElement>> map = SliceLeafAnalyzer.createMap();
     Collection<PsiElement> leaves = SliceLeafAnalyzer.calcLeafExpressions(root, treeStructure, map);
     assertEquals(2, leaves.size());
-    Set<String> names = ContainerUtil.map2Set(leaves, new Function<PsiElement, String>() {
-      @Override
-      public String fun(PsiElement element) {
-        return element.getText();
-      }
-    });
+    Set<String> names = ContainerUtil.map2Set(leaves, PsiElement::getText);
     assertEquals(ContainerUtil.newHashSet("\"uuu\"", "\"xxx\""), names);
   }
 
@@ -387,12 +367,7 @@ public class SliceTreeTest extends SliceTestCase {
     final SliceRootNode root = (SliceRootNode)treeStructure.getRootElement();
     Map<SliceNode, Collection<PsiElement>> map = SliceLeafAnalyzer.createMap();
     Collection<PsiElement> leaves = SliceLeafAnalyzer.calcLeafExpressions(root, treeStructure, map);
-    return ContainerUtil.map2Set(leaves, new Function<PsiElement, String>() {
-      @Override
-      public String fun(PsiElement element) {
-        return element.getText();
-      }
-    });
+    return ContainerUtil.map2Set(leaves, PsiElement::getText);
   }
 
   public void testArrayCopyTrack() throws Exception {

@@ -41,6 +41,7 @@
     <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.documentation.PythonDocumentationProvider"/>
     <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.console.PydevDocumentationProvider"/>
     <lang.emacs language="Python" implementationClass="com.jetbrains.python.editor.PyEmacsHandler"/>
+    <highlightRangeExtension implementation="com.jetbrains.python.validation.DumbAwareHighlightingAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyAnnotatingVisitor"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyDumbAwareAnnotator"/>
     <quoteHandler fileType="Python" className="com.jetbrains.python.editor.PythonQuoteHandler"/>
@@ -92,6 +93,8 @@
 
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageService"
                         serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
+    <applicationService serviceInterface="com.jetbrains.python.packaging.PyCondaPackageService"
+                        serviceImplementation="com.jetbrains.python.packaging.PyCondaPackageService"/>
     <applicationService serviceInterface="com.jetbrains.python.module.PyModuleService"
                         serviceImplementation="com.jetbrains.python.module.PyModuleServiceImpl"/>
 
@@ -166,7 +169,7 @@
       <className>com.jetbrains.python.codeInsight.intentions.PyConvertStaticMethodToFunctionIntention</className>
       <category>Python</category>
     </intentionAction>
-
+    
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.SpecifyTypeInDocstringIntention</className>
       <category>Python</category>
@@ -318,7 +321,8 @@
     <localInspection language="Python" shortName="PyExceptionInheritInspection" suppressId="PyExceptionInherit" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.exception.not.inherit" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyExceptionInheritInspection"/>
     <localInspection language="Python" shortName="PyDefaultArgumentInspection" suppressId="PyDefaultArgument" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.default.argument" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyDefaultArgumentInspection"/>
     <localInspection language="Python" shortName="PyRaisingNewStyleClassInspection" suppressId="PyRaisingNewStyleClass" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.raising.new.style.class" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyRaisingNewStyleClassInspection"/>
-    <localInspection language="Python" shortName="PyDocstringInspection" suppressId="PyDocstring" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.docstring" groupKey="INSP.GROUP.python" enabledByDefault="false"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyDocstringInspection"/>
+    <localInspection language="Python" shortName="PyIncorrectDocstringInspection" suppressId="PyIncorrectDocstring" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.incorrect.docstring" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyIncorrectDocstringInspection"/>
+    <localInspection language="Python" shortName="PyMissingOrEmptyDocstringInspection" suppressId="PyMissingOrEmptyDocstring" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.missing.or.empty.docstring" groupKey="INSP.GROUP.python" enabledByDefault="false" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyMissingOrEmptyDocstringInspection"/>
     <localInspection language="Python" shortName="PyUnboundLocalVariableInspection" suppressId="PyUnboundLocalVariable" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.unbound" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyUnboundLocalVariableInspection"/>
     <localInspection language="Python" shortName="PyStatementEffectInspection" suppressId="PyStatementEffect" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.statement.effect" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyStatementEffectInspection"/>
     <localInspection language="Python" shortName="PySimplifyBooleanCheckInspection" suppressId="PySimplifyBooleanCheck" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.check.can.be.simplified" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PySimplifyBooleanCheckInspection"/>
@@ -479,8 +483,9 @@
     <search.optionContributor implementation="com.jetbrains.python.configuration.PySearchableOptionContributor"/>
     <moduleService serviceInterface="com.jetbrains.python.documentation.PyDocumentationSettings"
                    serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings"/>
-    <psi.referenceContributor implementation="com.jetbrains.python.documentation.DocStringReferenceContributor"/>
-    <completion.contributor language="Python" implementationClass="com.jetbrains.python.documentation.DocStringTagCompletionContributor"/>
+    <psi.referenceContributor implementation="com.jetbrains.python.documentation.docstrings.DocStringReferenceContributor"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.python.documentation.docstrings.DocStringTagCompletionContributor"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.python.documentation.docstrings.DocStringSectionHeaderCompletionContributor"/>
 
     <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
                     serviceImplementation="com.jetbrains.python.psi.search.PyProjectScopeBuilder"
@@ -521,8 +526,9 @@
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/PythonDarcula.xml"/>
 
     <postStartupActivity implementation="com.jetbrains.python.sdk.PythonSdkUpdater"/>
-    <postStartupActivity implementation="com.jetbrains.python.packaging.PyPIPackagesUpdater"/>
-    <postStartupActivity implementation="com.jetbrains.python.testing.PyTestRunnerUpdater"/>
+    <postStartupActivity implementation="com.jetbrains.python.packaging.PyPackagesUpdater"/>
+    <directoryProjectConfigurator implementation="com.jetbrains.python.testing.PyIntegratedToolsProjectConfigurator" id="integratedTools" order="after sdk"/>
+
 
     <macro implementation="com.jetbrains.python.sdk.InterpreterDirectoryMacro"/>
 
@@ -593,8 +599,12 @@
     <extensionPoint qualifiedName="Pythonid.importCandidateProvider" interface="com.jetbrains.python.codeInsight.imports.PyImportCandidateProvider"/>
     <extensionPoint qualifiedName="Pythonid.dialectsTokenSetContributor" interface="com.jetbrains.python.PythonDialectsTokenSetContributor"/>
     <extensionPoint qualifiedName="Pythonid.runConfigurationExtension" interface="com.jetbrains.python.run.PythonRunConfigurationExtension"/>
-    <extensionPoint qualifiedName="Pythonid.visitorFilter" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+    <extensionPoint qualifiedName="Pythonid.visitorFilter" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.jetbrains.python.inspections.PythonVisitorFilter"/>
+    </extensionPoint>
     <extensionPoint qualifiedName="Pythonid.remoteInterpreterManager" interface="com.jetbrains.python.remote.PythonRemoteInterpreterManager"/>
+    <extensionPoint qualifiedName="Pythonid.remoteSkeletonGeneratorFactory" interface="com.jetbrains.python.remote.PyRemoteSkeletonGeneratorFactory"/>
+    <extensionPoint qualifiedName="Pythonid.remoteProcessStarterManager" interface="com.jetbrains.python.run.PyRemoteProcessStarterManager"/>
     <extensionPoint qualifiedName="Pythonid.keywordArgumentProvider" interface="com.jetbrains.python.psi.impl.PyKeywordArgumentProvider"/>
     <extensionPoint qualifiedName="Pythonid.canonicalPathProvider" interface="com.jetbrains.python.psi.resolve.PyCanonicalPathProvider"/>
     <extensionPoint qualifiedName="Pythonid.templateContextProvider" interface="com.jetbrains.python.templateLanguages.TemplateContextProvider"/>
@@ -617,6 +627,7 @@
     <dumbAnnotator implementation="com.jetbrains.python.validation.GeneratorInArgumentListAnnotator"/>
     <dumbAnnotator implementation="com.jetbrains.python.validation.StarAnnotator"/>
     <dumbAnnotator implementation="com.jetbrains.python.validation.StringLiteralQuotesAnnotator"/>
+    <dumbAnnotator implementation="com.jetbrains.python.validation.DumbAwareHighlightingAnnotator"/>
 
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PropertyStubType"/>
     <dialectsTokenSetContributor implementation="com.jetbrains.python.PythonTokenSetContributor"/>
@@ -733,6 +744,8 @@
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="CompareClipboardWithSelection"/>
 
       <keyboard-shortcut keymap="$default" first-keystroke="alt shift E"/>
+      <keyboard-shortcut keymap="Mac OS X" first-keystroke="control shift E" />
+      <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="control shift E" />
       <keyboard-shortcut keymap="Eclipse" first-keystroke="ctrl alt E" replace-all="true"/>
       <keyboard-shortcut keymap="NetBeans 6.5" first-keystroke="ctrl alt E" replace-all="true"/>
     </action>
@@ -777,13 +790,13 @@
       <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.Tree.AddToWatches"/>
     </action>
 
-    <action id="PyConvertModuleToPackage" class="com.jetbrains.python.refactoring.convert.PyConvertModuleToPackageAction"
+    <action id="PyConvertModuleToPackage" class="com.jetbrains.python.refactoring.convertModulePackage.PyConvertModuleToPackageAction"
             text="Convert to Python Package"
             description="Create package with the same name and move content of the module to its __init__.py">
       <add-to-group group-id="RefactoringMenu" anchor="last" />
     </action>
 
-    <action id="PyConvertPackageToModuleAction" class="com.jetbrains.python.refactoring.convert.PyConvertPackageToModuleAction"
+    <action id="PyConvertPackageToModuleAction" class="com.jetbrains.python.refactoring.convertModulePackage.PyConvertPackageToModuleAction"
             text="Convert to Python Module"
             description="Create module with the same name and move content of __init__.py to that module">
       <add-to-group group-id="RefactoringMenu" anchor="last" />
@@ -794,6 +807,12 @@
             use-shortcut-of="ForceStepInto">
       <add-to-group group-id="DebugMainMenu" relative-to-action="StepInto" anchor="after"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" relative-to-action="StepInto" anchor="after"/>
+    </action>
+
+    <action id="PyConvertLocalFunctionToTopLevelFunctionAction" class="com.jetbrains.python.refactoring.makeFunctionTopLevel.PyMakeFunctionTopLevelRefactoring"
+            text="Make Top-Level Function"
+            description="Convert local function or method to top-level function, transforming names from enclosing scope and instance attributes into parameters">
+      <add-to-group group-id="RefactoringMenu"/>
     </action>
 
   </actions>

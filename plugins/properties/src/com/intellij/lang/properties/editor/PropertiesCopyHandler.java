@@ -15,13 +15,13 @@
  */
 package com.intellij.lang.properties.editor;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -39,11 +39,8 @@ import com.intellij.refactoring.copy.CopyHandlerDelegateBase;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.Function;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.*;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
@@ -122,7 +119,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
 
     final Project project = resourceBundle.getProject();
     if (properties.size() != propertiesFileMapping.size() &&
-        Messages.YES == Messages.showYesNoDialog(project,
+        Messages.NO == Messages.showYesNoDialog(project,
                                                  "Source and target resource bundles properties files are not matched correctly. Copy properties anyway?",
                                                  "Resource Bundles Are not Matched", null)) {
       return;
@@ -131,6 +128,13 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
     WriteCommandAction.runWriteCommandAction(project, new Runnable() {
       @Override
       public void run() {
+        if (!FileModificationService.getInstance().preparePsiElementsForWrite(ContainerUtil.map(propertiesFileMapping.values(),
+                                                                                                new Function<PropertiesFile, PsiElement>() {
+                                                                                                  @Override
+                                                                                                  public PsiElement fun(PropertiesFile file) {
+                                                                                                    return file.getContainingFile();
+                                                                                                  }
+                                                                                                }))) return;
         for (Map.Entry<IProperty, PropertiesFile> entry : propertiesFileMapping.entrySet()) {
           final String value = entry.getKey().getValue();
           final PropertiesFile target = entry.getValue();
@@ -212,10 +216,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
       PropertiesReferenceManager.getInstance(myProject).processAllPropertiesFiles(new PropertiesFileProcessor() {
         @Override
         public boolean process(String baseName, PropertiesFile propertiesFile) {
-          final PsiFile file = propertiesFile.getContainingFile();
-          if (file.isWritable()) {
-            resourceBundles.add(propertiesFile.getResourceBundle());
-          }
+          resourceBundles.add(propertiesFile.getResourceBundle());
           return true;
         }
       });
@@ -255,6 +256,8 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
           myCurrentResourceBundle = ((ResourceBundleAsFileSystemItem)e.getItem()).getResourceBundle();
         }
       });
+      resourceBundleComboBox.setSelectedItem(new ResourceBundleAsFileSystemItem(myCurrentResourceBundle));
+
       myPropertyNameTextField = new JBTextField(ContainerUtil.getFirstItem(myProperties).getKey());
       myPropertyNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
@@ -280,7 +283,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
   private static class ResourceBundleAsFileSystemItem extends SyntheticFileSystemItem {
     private final ResourceBundle myResourceBundle;
 
-    public ResourceBundleAsFileSystemItem(ResourceBundle resourceBundle) {
+    public ResourceBundleAsFileSystemItem(@NotNull ResourceBundle resourceBundle) {
       super(resourceBundle.getProject());
       myResourceBundle = resourceBundle;
     }
@@ -320,6 +323,19 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
     @Override
     public Icon getIcon(int flags) {
       return AllIcons.Nodes.ResourceBundle;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      ResourceBundleAsFileSystemItem item = (ResourceBundleAsFileSystemItem)o;
+      return myResourceBundle.equals(item.myResourceBundle);
+    }
+
+    @Override
+    public int hashCode() {
+      return myResourceBundle.hashCode();
     }
   }
 

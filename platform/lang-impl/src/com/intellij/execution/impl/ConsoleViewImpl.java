@@ -119,7 +119,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private final Alarm mySpareTimeAlarm = new Alarm(this);
   @Nullable
   private final Alarm myHeavyAlarm;
-  private       int   myHeavyUpdateTicket;
+  private volatile int myHeavyUpdateTicket;
 
   private final Collection<ChangeListener> myListeners = new CopyOnWriteArraySet<ChangeListener>();
   private final List<AnAction> customActions = new ArrayList<AnAction>();
@@ -128,8 +128,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private EditorHyperlinkSupport myHyperlinks;
   private MyDiffContainer myJLayeredPane;
   private JPanel myMainPanel;
-  private final Runnable myFinishProgress;
-  private boolean myAllowHeavyFilters = false;
+  private boolean myAllowHeavyFilters;
   private boolean myLastStickingToEnd;
   private boolean myCancelStickToEnd;
 
@@ -249,7 +248,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private String myHelpId;
 
   private final Alarm myFlushUserInputAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
-  private final Alarm myFlushAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
+  private final Alarm myFlushAlarm = new Alarm(this);
 
   private final Set<MyFlushRunnable> myCurrentRequests = new HashSet<MyFlushRunnable>();
 
@@ -257,7 +256,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @Nullable private final InputFilter myInputMessageFilter;
 
-  private final Alarm myFoldingAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
+  private final Alarm myFoldingAlarm = new Alarm(this);
   private final List<FoldRegion> myPendingFoldRegions = new ArrayList<FoldRegion>();
 
   public ConsoleViewImpl(final Project project, boolean viewer) {
@@ -329,12 +328,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myInputMessageFilter = null;
     }
 
-    myFinishProgress = new Runnable() {
-      @Override
-      public void run() {
-        myJLayeredPane.finishUpdating();
-      }
-    };
     consoleTooMuchTextBufferRatio = Registry.intValue("console.too.much.text.buffer.ratio");
 
     project.getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
@@ -382,13 +375,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
     if (myFlushAlarm.isDisposed()) return;
     cancelAllFlushRequests();
-    addFlushRequest(new MyClearRunnable());
+    UIUtil.invokeAndWaitIfNeeded(new MyClearRunnable());
     cancelHeavyAlarm();
   }
 
   @Override
   public void scrollTo(final int offset) {
-    if (myEditor == null || myFlushAlarm.isDisposed()) return;
+    if (myEditor == null) return;
     class ScrollRunnable extends MyFlushRunnable {
       private final int myOffset = offset;
 
@@ -413,7 +406,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   public void requestScrollingToEnd() {
-    if (myEditor == null || myFlushAlarm.isDisposed()) {
+    if (myEditor == null) {
       return;
     }
 
@@ -434,7 +427,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     addFlushRequest(scrollRunnable, 0);
   }
 
-  private void addFlushRequest(MyFlushRunnable flushRunnable, final int millis) {
+  private void addFlushRequest(@NotNull MyFlushRunnable flushRunnable, final int millis) {
     synchronized (myCurrentRequests) {
       if (!myFlushAlarm.isDisposed() && myCurrentRequests.add(flushRunnable)) {
         myFlushAlarm.addRequest(flushRunnable, millis, getStateForUpdate());
@@ -648,7 +641,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (contentType == ConsoleViewContentType.USER_INPUT && NEW_LINE_MATCHER.indexIn(s) >= 0) {
         flushDeferredUserInput();
       }
-      if (myEditor != null && !myFlushAlarm.isDisposed()) {
+      if (myEditor != null) {
         final boolean shouldFlushNow = myBuffer.isUseCyclicBuffer() && myBuffer.getLength() >= myBuffer.getCyclicBufferSize();
         addFlushRequest(new MyFlushRunnable(), shouldFlushNow ? 0 : DEFAULT_FLUSH_DELAY);
       }
@@ -664,7 +657,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void requestFlushImmediately() {
-    if (myEditor != null && !myFlushAlarm.isDisposed()) {
+    if (myEditor != null) {
       addFlushRequest(new MyFlushRunnable());
     }
   }
@@ -695,7 +688,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       //already disposed
       return;
     }
-    final boolean shouldStickToEnd = clear || (!myCancelStickToEnd && isStickingToEnd());
+    final boolean shouldStickToEnd = clear || !myCancelStickToEnd && isStickingToEnd();
     myCancelStickToEnd = false; // Cancel only needs to last for one update. Next time, isStickingToEnd() will be false.
     if (clear) {
       final DocumentEx document = editor.getDocument();
@@ -1091,7 +1084,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           myFilters.applyHeavyFilter(documentCopy, startOffset, startLine, new Consumer<FilterMixin.AdditionalHighlight>() {
             @Override
             public void consume(final FilterMixin.AdditionalHighlight additionalHighlight) {
-              if (myFlushAlarm.isDisposed()) return;
               addFlushRequest(new MyFlushRunnable() {
                 @Override
                 public void doRun() {
@@ -1110,7 +1102,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         }
         finally {
           if (myHeavyAlarm.isEmpty()) {
-            SwingUtilities.invokeLater(myFinishProgress);
+            SwingUtilities.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                myJLayeredPane.finishUpdating();
+              }
+            });
           }
         }
       }
@@ -1246,7 +1243,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       this(null);
     }
 
-    public ClearAllAction(final ConsoleView consoleView) {
+    public ClearAllAction(ConsoleView consoleView) {
       super(ExecutionBundle.message("clear.all.from.console.action.name"), "Clear the contents of the console", AllIcons.Actions.GC);
       myConsoleView = consoleView;
     }
@@ -1883,7 +1880,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
      * @return placeholder text if given line should be folded; <code>null</code> otherwise
      */
     @Nullable
-    public String getPlaceholder(int line) {
+    private String getPlaceholder(int line) {
       if (myEditor == null || line != 0) {
         return null;
       }
@@ -1990,6 +1987,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     public void update(AnActionEvent e) {
       e.getPresentation().setEnabled(myHyperlinks.getLinkNavigationRunnable(myEditor.getCaretModel().getLogicalPosition()) != null);
     }
+  }
+
+  @NotNull
+  public String getText() {
+    return myEditor.getDocument().getText();
   }
 }
 

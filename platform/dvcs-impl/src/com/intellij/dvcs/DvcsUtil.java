@@ -16,6 +16,7 @@
 package com.intellij.dvcs;
 
 import com.intellij.dvcs.push.PushSupport;
+import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
@@ -54,6 +55,7 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.TimedVcsCommit;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.intellij.images.editor.ImageFileEditor;
 import org.jetbrains.annotations.Contract;
@@ -74,19 +76,13 @@ public class DvcsUtil {
   private static final int SHORT_HASH_LENGTH = 8;
   private static final int LONG_HASH_LENGTH = 40;
 
+  /**
+   * @deprecated use {@link VcsImplUtil#getShortVcsRootName}
+   */
   @NotNull
+  @Deprecated
   public static String getShortRepositoryName(@NotNull Project project, @NotNull VirtualFile root) {
-    VirtualFile projectDir = project.getBaseDir();
-
-    String repositoryPath = root.getPresentableUrl();
-    if (projectDir != null) {
-      String relativePath = VfsUtilCore.getRelativePath(root, projectDir, File.separatorChar);
-      if (relativePath != null) {
-        repositoryPath = relativePath;
-      }
-    }
-
-    return repositoryPath.isEmpty() ? root.getName() : repositoryPath;
+    return VcsImplUtil.getShortVcsRootName(project, root);
   }
 
   @NotNull
@@ -271,8 +267,18 @@ public class DvcsUtil {
                                                                 @Nullable AbstractVcs vcs,
                                                                 @Nullable VirtualFile file,
                                                                 @Nullable String defaultRootPathValue) {
-    T repository = manager.getRepositoryForRoot(getVcsRoot(project, file));
+    T repository = manager.getRepositoryForRoot(guessVcsRoot(project, file));
     return repository != null ? repository : manager.getRepositoryForRoot(guessRootForVcs(project, vcs, defaultRootPathValue));
+  }
+
+  @Nullable
+  public static <T extends Repository> T guessCurrentRepositoryQuick(@NotNull Project project,
+                                                                     @NotNull AbstractRepositoryManager<T> manager,
+                                                                     @Nullable String defaultRootPathValue) {
+    T repository = manager.getRepositoryForRootQuick(guessVcsRoot(project, getSelectedFile(project)));
+    return repository != null
+           ? repository
+           : manager.getRepositoryForRootQuick(guessRootForVcs(project, manager.getVcs(), defaultRootPathValue));
   }
 
   @Nullable
@@ -393,7 +399,7 @@ public class DvcsUtil {
   }
 
   @Nullable
-  public static VirtualFile getVcsRoot(@NotNull Project project, @Nullable VirtualFile file) {
+  private static VirtualFile guessVcsRoot(@NotNull Project project, @Nullable VirtualFile file) {
     VirtualFile root = null;
     if (file != null) {
       root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);

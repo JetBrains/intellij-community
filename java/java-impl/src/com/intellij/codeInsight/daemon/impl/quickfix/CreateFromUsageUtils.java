@@ -63,6 +63,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -138,8 +139,7 @@ public class CreateFromUsageUtils {
     JVMElementFactory factory = JVMElementFactories.getFactory(aClass.getLanguage(), aClass.getProject());
 
     LOG.assertTrue(!aClass.isInterface() ||
-                   method.hasModifierProperty(PsiModifier.DEFAULT) ||
-                   method.hasModifierProperty(PsiModifier.STATIC) ||
+                   PsiUtil.isLanguageLevel8OrHigher(method) ||
                    method.getLanguage() != JavaLanguage.INSTANCE, "Interface bodies should be already set up");
 
     FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(template.getExtension());
@@ -252,7 +252,7 @@ public class CreateFromUsageUtils {
       Pair<PsiExpression, PsiType> arg = arguments.get(i);
       PsiExpression exp = arg.first;
 
-      PsiType argType = exp == null ? arg.second : exp.getType();
+      PsiType argType = exp == null ? arg.second : RefactoringUtil.getTypeByExpression(exp);
       SuggestedNameInfo suggestedInfo = JavaCodeStyleManager.getInstance(psiManager.getProject()).suggestVariableName(
         VariableKind.PARAMETER, null, exp, argType);
       @NonNls String[] names = suggestedInfo.names; //TODO: callback about used name

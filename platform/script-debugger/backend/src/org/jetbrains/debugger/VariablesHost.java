@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.debugger;
 
 import org.jetbrains.annotations.NotNull;
@@ -20,12 +35,7 @@ public abstract class VariablesHost<VALUE_MANAGER extends ValueManager> {
       @NotNull
       @Override
       public Promise<List<Variable>> load(@NotNull VariablesHost host) {
-        if (host.valueManager.isObsolete()) {
-          return ValueManager.reject();
-        }
-        else {
-          return host.load();
-        }
+        return host.valueManager.isObsolete() ? ValueManager.reject() : host.load();
       }
     };
 
@@ -69,7 +79,7 @@ public abstract class VariablesHost<VALUE_MANAGER extends ValueManager> {
    * Some backends requires to reload the whole call stack on scope variable modification, but not all API is asynchronous (compromise, to not increase complexity),
    * for example, {@link CallFrame#getVariableScopes()} is not asynchronous method. So, you must use returned callback to postpone your code working with updated data.
    */
-  public Promise<Void> clearCaches() {
+  public Promise<?> clearCaches() {
     cacheStamp = -1;
     VARIABLES_LOADER.reset(this);
     return Promise.DONE;

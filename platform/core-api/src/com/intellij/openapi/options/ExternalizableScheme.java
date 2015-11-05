@@ -16,13 +16,7 @@
 package com.intellij.openapi.options;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public interface ExternalizableScheme extends Scheme {
-  @SuppressWarnings({"unused", "deprecation"})
-  @Nullable
-  @Deprecated
-  ExternalInfo getExternalInfo();
-
   void setName(@NotNull String newName);
 }

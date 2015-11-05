@@ -22,14 +22,14 @@ import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.actions.ChooseByNameItemProvider;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.actions.GotoFileAction;
 import com.intellij.ide.actions.WindowAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
+import com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder;
+import com.intellij.ide.ui.laf.intellij.MacIntelliJTextFieldUI;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -456,16 +456,6 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
                   }
                 }
 
-                EventQueue queue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-                if (queue instanceof IdeEventQueue) {
-                  if (((IdeEventQueue)queue).wasRootRecentlyClicked(oppositeComponent)) {
-                    Component root = SwingUtilities.getRoot(myTextField);
-                    if (root == null || root.isShowing()) {
-                      hideHint();
-                    }
-                  }
-                }
-
                 hideHint();
               }
             }
@@ -612,7 +602,7 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
     myListScrollPane = ScrollPaneFactory.createScrollPane(myList);
     myListScrollPane.setViewportBorder(JBUI.Borders.empty());
 
-    myTextFieldPanel.setBorder(new EmptyBorder(2, 2, 2, 2));
+    myTextFieldPanel.setBorder(JBUI.Borders.empty(5));
 
     showTextFieldPanel();
 
@@ -819,10 +809,17 @@ public abstract class ChooseByNameBase extends ChooseByNameViewModel {
     private MyTextField() {
       super(40);
       if (!UIUtil.isUnderGTKLookAndFeel()) {
-        if (!(getUI() instanceof DarculaTextFieldUI)) {
-          setUI(DarculaTextFieldUI.createUI(this));
+        if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+          if (!(getUI() instanceof MacIntelliJTextFieldUI)) {
+            setUI(MacIntelliJTextFieldUI.createUI(this));
+          }
+          setBorder(new MacIntelliJTextBorder());
+        } else {
+          if (!(getUI() instanceof DarculaTextFieldUI)) {
+            setUI(DarculaTextFieldUI.createUI(this));
+          }
+          setBorder(new DarculaTextBorder());
         }
-        setBorder(new DarculaTextBorder());
       }
       enableEvents(AWTEvent.KEY_EVENT_MASK);
       myCompletionKeyStroke = getShortcut(IdeActions.ACTION_CODE_COMPLETION);

@@ -219,11 +219,6 @@ public class ExecUtil {
     }
     else if (hasPkExec.getValue()) {
       command.add(0, "pkexec");
-      command.add(1, "env");
-      int i = 2;
-      for (Map.Entry<String, String> entry : commandLine.getEnvironment().entrySet()) {
-        command.add(i++, entry.getKey() + "=" + escapeUnixShellArgument(entry.getValue()));
-      }
       sudoCommandLine = new GeneralCommandLine(command);
     }
     else if (SystemInfo.isUnix && hasTerminalApp()) {
@@ -267,7 +262,7 @@ public class ExecUtil {
   }
 
   @NotNull
-  private static String escapeUnixShellArgument(@NotNull String arg) {
+  public static String escapeUnixShellArgument(@NotNull String arg) {
     return "'" + arg.replace("'", "'\"'\"'") + "'";
   }
 

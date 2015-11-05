@@ -95,6 +95,16 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
     init();
   }
 
+  @Override
+  public void show() {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      @Override
+      public void run() {
+        OptionsEditorDialog.super.show();
+      }
+    });
+  }
+
   @Nullable
   private static Configurable getPreselectedByDisplayName(final ConfigurableGroup[] groups, final String preselectedConfigurableDisplayName,
                                                    final Project project) {
@@ -172,20 +182,16 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
   protected void doOKAction() {
     myEditor.flushModifications();
 
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      public void run() {
-        if (myEditor.canApply()) {
-          myEditor.apply();
-          if (!updateStatus()) return;
-        }
+    if (myEditor.canApply()) {
+      myEditor.apply();
+      if (!updateStatus()) return;
+    }
 
-        saveCurrentConfigurable();
+    saveCurrentConfigurable();
 
-        ApplicationManager.getApplication().saveAll();
+    ApplicationManager.getApplication().saveAll();
 
-        OptionsEditorDialog.super.doOKAction();
-      }
-    });
+    super.doOKAction();
   }
 
 
@@ -301,12 +307,7 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
     }
 
     public void actionPerformed(final ActionEvent e) {
-      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-        @Override
-        public void run() {
-          myEditor.apply();
-        }
-      });
+      myEditor.apply();
       myEditor.revalidate();
       myEditor.repaint();
     }

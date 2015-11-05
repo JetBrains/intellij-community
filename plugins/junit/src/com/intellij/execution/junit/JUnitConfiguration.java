@@ -612,6 +612,9 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
         final String fqName = myPattern.iterator().next();
         return (fqName.contains("*") ? fqName : StringUtil.getShortName(fqName)) + (size > 1 ? " and " + (size - 1) + " more" : "");
       }
+      if (TEST_CATEGORY.equals(TEST_OBJECT)) {
+        return "@Category(" + (StringUtil.isEmpty(CATEGORY_NAME) ? "Invalid" : CATEGORY_NAME) + ")";
+      }
       final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName());
       if (TEST_METHOD.equals(TEST_OBJECT)) {
         return className + '.' + getMethodName();

@@ -34,7 +34,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -137,7 +137,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     myTreePanel.getTree().expandNodesOnLoad(rootFilter);
     myTreePanel.getTree().selectNodeOnLoad(rootFilter);
 
-    EvaluationMode mode = XDebuggerSettingsManager.getInstanceImpl().getGeneralSettings().getEvaluationDialogMode();
+    EvaluationMode mode = XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().getEvaluationDialogMode();
     myIsCodeFragmentEvaluationSupported = evaluator.isCodeFragmentEvaluationSupported();
     if (mode == EvaluationMode.CODE_FRAGMENT && !myIsCodeFragmentEvaluationSupported) {
       mode = EvaluationMode.EXPRESSION;
@@ -147,6 +147,12 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     }
     switchToMode(mode, text);
     init();
+  }
+
+  @Override
+  protected void dispose() {
+    super.dispose();
+    myMainPanel.removeAll();
   }
 
   private void updateSourcePosition() {
@@ -257,7 +263,8 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       return new ExpressionInputComponent(project, myEditorsProvider, mySourcePosition, text, myDisposable);
     }
     else {
-      return new CodeFragmentInputComponent(project, myEditorsProvider, mySourcePosition, text, myDisposable);
+      return new CodeFragmentInputComponent(project, myEditorsProvider, mySourcePosition, text,
+                                            getDimensionServiceKey() + ".splitter", myDisposable);
     }
   }
 
@@ -329,7 +336,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       XExpression text = getInputEditor().getExpression();
       EvaluationMode newMode = (myMode == EvaluationMode.EXPRESSION) ? EvaluationMode.CODE_FRAGMENT : EvaluationMode.EXPRESSION;
       // remember only on user selection
-      XDebuggerSettingsManager.getInstanceImpl().getGeneralSettings().setEvaluationDialogMode(newMode);
+      XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().setEvaluationDialogMode(newMode);
       switchToMode(newMode, text);
     }
   }

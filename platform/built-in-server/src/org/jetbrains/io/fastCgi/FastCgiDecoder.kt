@@ -9,7 +9,7 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.util.CharsetUtil
 import org.jetbrains.io.Decoder
 
-class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>, private val responseHandler: FastCgiService) : Decoder(), Decoder.FullMessageConsumer<Void> {
+internal class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>, private val responseHandler: FastCgiService) : Decoder(), Decoder.FullMessageConsumer<Void> {
   private enum class State {
     HEADER,
     CONTENT
@@ -76,7 +76,7 @@ class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>, private 
 
   override fun channelInactive(context: ChannelHandlerContext) {
     try {
-      if (!dataBuffers.isEmpty()) {
+      if (!dataBuffers.isEmpty) {
         dataBuffers.forEachEntry(object : TIntObjectProcedure<ByteBuf> {
           override fun execute(a: Int, buffer: ByteBuf): Boolean {
             try {
@@ -92,7 +92,7 @@ class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>, private 
       }
     }
     finally {
-      super<Decoder>.channelInactive(context)
+      super.channelInactive(context)
     }
   }
 
@@ -110,12 +110,12 @@ class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>, private 
       RecordType.END_REQUEST -> {
         val appStatus = buffer.readInt()
         val protocolStatus = buffer.readUnsignedByte().toInt()
-        if (appStatus != 0 || protocolStatus != ProtocolStatus.REQUEST_COMPLETE.ordinal()) {
+        if (appStatus != 0 || protocolStatus != ProtocolStatus.REQUEST_COMPLETE.ordinal) {
           LOG.warn("Protocol status $protocolStatus")
           dataBuffers.remove(id)
           responseHandler.responseReceived(id, null)
         }
-        else if (protocolStatus == ProtocolStatus.REQUEST_COMPLETE.ordinal()) {
+        else if (protocolStatus == ProtocolStatus.REQUEST_COMPLETE.ordinal) {
           responseHandler.responseReceived(id, dataBuffers.remove(id))
         }
       }
@@ -136,8 +136,10 @@ class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>, private 
             data.writerIndex(data.writerIndex() + data.readableBytes())
           }
           else {
+            // must be computed here before we set data to new composite buffer
+            val newLength = data.readableBytes() + sliced.readableBytes()
             data = context.alloc().compositeBuffer(Decoder.DEFAULT_MAX_COMPOSITE_BUFFER_COMPONENTS).addComponents(data, sliced)
-            data.writerIndex(data.writerIndex() + data.readableBytes() + sliced.readableBytes())
+            data.writerIndex(data.writerIndex() + newLength)
           }
           dataBuffers.put(id, data)
         }
@@ -153,7 +155,7 @@ class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>, private 
         }
       }
 
-      else -> LOG.error("Unknown type " + type)
+      else -> LOG.error("Unknown type $type")
     }
     return null
   }

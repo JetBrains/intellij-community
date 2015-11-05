@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.methodmetrics;
 
 import com.intellij.psi.*;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
 class ReturnPointCountVisitor extends JavaRecursiveElementWalkingVisitor {
@@ -79,11 +80,7 @@ class ReturnPointCountVisitor extends JavaRecursiveElementWalkingVisitor {
     }
     final PsiBlockStatement blockStatement = (PsiBlockStatement)thenBranch;
     final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-    final PsiStatement[] statements = codeBlock.getStatements();
-    if (statements.length != 1) {
-      return false;
-    }
-    final PsiStatement containedStatement = statements[0];
+    final PsiStatement containedStatement = ControlFlowUtils.getOnlyStatementInBlock(codeBlock);
     return containedStatement instanceof PsiReturnStatement;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,11 +35,10 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
   public static final String CONSOLE_SETTINGS_HELP_REFERENCE = "reference.project.settings.console";
   public static final String CONSOLE_SETTINGS_HELP_REFERENCE_PYTHON = "reference.project.settings.console.python";
 
-
   private PyConsoleOptionsPanel myPanel;
 
   private final PyConsoleOptions myOptionsProvider;
-  private Project myProject;
+  private final Project myProject;
 
   public PyConsoleOptionsConfigurable(PyConsoleOptions optionsProvider, Project project) {
     myOptionsProvider = optionsProvider;
@@ -90,7 +89,7 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
 
       @Override
       public Runnable enableSearch(String option) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return null;
       }
 
       @Nls

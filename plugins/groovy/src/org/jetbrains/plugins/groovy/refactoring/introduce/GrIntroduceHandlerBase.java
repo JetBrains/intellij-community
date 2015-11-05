@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -203,6 +203,11 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   public static List<GrExpression> collectExpressions(final PsiFile file, final Editor editor, final int offset, boolean acceptVoidCalls) {
     int correctedOffset = correctOffset(editor, offset);
     final PsiElement elementAtCaret = file.findElementAt(correctedOffset);
+    return collectExpressions(elementAtCaret, acceptVoidCalls);
+  }
+
+  @NotNull
+  public static List<GrExpression> collectExpressions(PsiElement elementAtCaret, boolean acceptVoidCalls) {
     final List<GrExpression> expressions = new ArrayList<GrExpression>();
 
     for (GrExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, GrExpression.class);
@@ -212,6 +217,9 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       if (expression instanceof GrParenthesizedExpression && !expressions.contains(((GrParenthesizedExpression)expression).getOperand())) {
         expressions.add(((GrParenthesizedExpression)expression).getOperand());
       }
+      if (expression.getParent() instanceof GrReferenceExpression
+          && expression instanceof GrReferenceExpression
+          && ((GrReferenceExpression)expression).resolve() instanceof PsiClass) continue;
       if (expressionIsIncorrect(expression, acceptVoidCalls)) continue;
 
       expressions.add(expression);

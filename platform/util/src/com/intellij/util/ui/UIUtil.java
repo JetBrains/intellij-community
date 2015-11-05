@@ -230,7 +230,17 @@ public class UIUtil {
   private static final Color INACTIVE_HEADER_COLOR = Gray._128;
   private static final Color BORDER_COLOR = Color.LIGHT_GRAY;
 
-  public static final Color CONTRAST_BORDER_COLOR = new JBColor(0x9b9b9b, 0x282828);
+  public static final Color CONTRAST_BORDER_COLOR = new JBColor(new NotNullProducer<Color>() {
+    final Color color = new JBColor(0x9b9b9b, 0x282828);
+    @NotNull
+    @Override
+    public Color produce() {
+      if (SystemInfo.isMac && isUnderIntelliJLaF()) {
+        return Gray.xC9;
+      }
+      return color;
+    }
+  });
   public static final Color SIDE_PANEL_BACKGROUND = new JBColor(new Color(0xE6EBF0), new Color(0x3E434C));
 
   public static final Color AQUA_SEPARATOR_FOREGROUND_COLOR = new JBColor(Gray._190, Gray.x51);
@@ -425,7 +435,7 @@ public class UIUtil {
               return ourRetina.get();
             }
           }
-          else if (SystemInfo.isJavaVersionAtLeast("1.7.0_40") && SystemInfo.isOracleJvm) {
+          else if (SystemInfo.isJavaVersionAtLeast("1.7.0_40") /*&& !SystemInfo.isOracleJvm*/) {
             try {
               GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
               final GraphicsDevice device = env.getDefaultScreenDevice();
@@ -1621,20 +1631,24 @@ public class UIUtil {
       g.setColor(getPanelBackground());
       g.fillRect(x, 0, width, height);
 
-      ((Graphics2D)g).setPaint(getGradientPaint(0, 0, new Color(0, 0, 0, 5), 0, height, new Color(0, 0, 0, 20)));
+      ((Graphics2D)g).setPaint(getGradientPaint(0, 0, Gray.x00.withAlpha(5), 0, height, Gray.x00.withAlpha(20)));
       g.fillRect(x, 0, width, height);
 
       if (active) {
         g.setColor(new Color(100, 150, 230, toolWindow ? 50 : 30));
         g.fillRect(x, 0, width, height);
       }
-      g.setColor(new Color(0, 0, 0, toolWindow ? 90 : 50));
-      if (drawTopLine) g.drawLine(x, 0, width, 0);
+      g.setColor(Gray.x00.withAlpha(toolWindow ? 90 : 50));
+      if (drawTopLine && !(SystemInfo.isMac && isUnderIntelliJLaF())) g.drawLine(x, 0, width, 0);
       if (drawBottomLine) g.drawLine(x, height - (isRetina() ? 1 : 2), width, height - (isRetina() ? 1 : 2));
 
-      g.setColor(isUnderDarcula() ? Gray._255.withAlpha(30) : new Color(255, 255, 255, 100));
-      g.drawLine(x, drawTopLine ? 1 : 0, width, drawTopLine ? 1 : 0);
+      if (SystemInfo.isMac && isUnderIntelliJLaF()) {
+        g.setColor(Gray.xC9);
+      } else {
+        g.setColor(isUnderDarcula() ? Gray._255.withAlpha(30) : Gray.xFF.withAlpha(100));
+      }
 
+      g.drawLine(x, drawTopLine ? 1 : 0, width, drawTopLine ? 1 : 0);
     } finally {
       config.restore();
     }
@@ -1964,24 +1978,32 @@ public class UIUtil {
     return null;
   }
 
-  @NonNls
-  public static String getCssFontDeclaration(final Font font) {
+  @Language("HTML")
+  public static String getCssFontDeclaration(@NotNull Font font) {
     return getCssFontDeclaration(font, null, null, null);
   }
 
   @Language("HTML")
-  @NonNls
-  public static String getCssFontDeclaration(final Font font, @Nullable Color fgColor, @Nullable Color linkColor, @Nullable String liImg) {
-    URL resource = liImg != null ? SystemInfo.class.getResource(liImg) : null;
+  public static String getCssFontDeclaration(@NotNull Font font, @Nullable Color fgColor, @Nullable Color linkColor, @Nullable String liImg) {
+    StringBuilder builder = new StringBuilder().append("<style>\n");
+    String familyAndSize = "font-family:'" + font.getFamily() + "'; font-size:" + font.getSize() + "pt;";
 
-    @NonNls String fontFamilyAndSize = "font-family:'" + font.getFamily() + "'; font-size:" + font.getSize() + "pt;";
-    @NonNls @Language("HTML")
-    String body = "body, div, td, p {" + fontFamilyAndSize + " " + (fgColor != null ? "color:#" + ColorUtil.toHex(fgColor)+";" : "") + "}\n";
+    builder.append("body, div, td, p {").append(familyAndSize);
+    if (fgColor != null) builder.append(" color:#").append(ColorUtil.toHex(fgColor)).append(';');
+    builder.append("}\n");
+
+    builder.append("a {").append(familyAndSize);
+    if (linkColor != null) builder.append(" color:#").append(ColorUtil.toHex(linkColor)).append(';');
+    builder.append("}\n");
+
+    builder.append("code {font-size:").append(font.getSize()).append("pt;}\n");
+
+    URL resource = liImg != null ? SystemInfo.class.getResource(liImg) : null;
     if (resource != null) {
-      body += "ul {list-style-image:url('" + StringUtil.escapeCharCharacters(resource.toExternalForm()) + "');}\n";
+      builder.append("ul {list-style-image:url('").append(StringUtil.escapeCharCharacters(resource.toExternalForm())).append("');}\n");
     }
-    @NonNls String link = linkColor != null ? "a {" + fontFamilyAndSize + " color:#"+ColorUtil.toHex(linkColor) + ";}\n" : "";
-    return "<style>\n" + body + link + "</style>";
+
+    return builder.append("</style>").toString();
   }
 
   public static boolean isWinLafOnVista() {
@@ -2423,6 +2445,11 @@ public class UIUtil {
           Font winFont = (Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
           if (winFont != null) font = winFont;
         }
+        else if (SystemInfo.isLinux && JBUI.isHiDPI()) {
+          // We don't expect the default GUI font to be scaled on Linux and do it ourselves.
+          // TODO: this is valid until HIDPI support comes to J2D/Swing on Linux.
+          font = JBFont.create(font);
+        }
         ourSystemFontData = Pair.create(font.getName(), font.getSize());
       }
     }
@@ -2450,7 +2477,8 @@ public class UIUtil {
   }
 
   public static void installComboBoxCopyAction(JComboBox comboBox) {
-    final Component editorComponent = comboBox.getEditor().getEditorComponent();
+    final ComboBoxEditor editor = comboBox.getEditor();
+    final Component editorComponent = editor != null ? editor.getEditorComponent() : null;
     if (!(editorComponent instanceof JTextComponent)) return;
     final InputMap inputMap = ((JTextComponent)editorComponent).getInputMap();
     for (KeyStroke keyStroke : inputMap.allKeys()) {
@@ -2611,6 +2639,11 @@ public class UIUtil {
   @NotNull
   public static JBTreeTraverser<Component> uiTraverser() {
     return new JBTreeTraverser<Component>(COMPONENT_CHILDREN);
+  }
+
+  @NotNull
+  public static JBTreeTraverser<Component> uiTraverser(@Nullable Component component) {
+    return new JBTreeTraverser<Component>(COMPONENT_CHILDREN).withRoot(component);
   }
 
   public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = Key.create("NOT_IN_HIERARCHY_COMPONENTS");
@@ -2855,9 +2888,8 @@ public class UIUtil {
           g.drawString(text, xOffset, yOffset[0]);
           if (!StringUtil.isEmpty(shortcut)) {
             Color oldColor = g.getColor();
-            if (isUnderDarcula()) {
-              g.setColor(new Color(60, 118, 249));
-            }
+            g.setColor(new JBColor(new Color(82, 99, 155), 
+                                   new Color(88, 157, 246)));
             g.drawString(shortcut, xOffset + fm.stringWidth(text + (isUnderDarcula() ? " " : "")), yOffset[0]);
             g.setColor(oldColor);
           }
@@ -3064,6 +3096,33 @@ public class UIUtil {
     }
 
     return null;
+  }
+
+  public static int getLcdContrastValue() {
+    int lcdContrastValue  = Registry.get("lcd.contrast.value").asInteger();
+
+    // Evaluate the value depending on our current theme
+    if (lcdContrastValue == 0) {
+      if (SystemInfo.isMacIntel64) {
+        lcdContrastValue = isUnderDarcula() ? 140 : 200;
+      } else {
+        Map map = (Map)Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");
+
+        if (map == null) {
+          lcdContrastValue = 140;
+        } else {
+          Object o = map.get(RenderingHints.KEY_TEXT_LCD_CONTRAST);
+          lcdContrastValue = (o == null) ? 140 : ((Integer)o);
+        }
+      }
+    }
+
+    if (lcdContrastValue < 100 || lcdContrastValue > 250) {
+      // the default value
+      lcdContrastValue = 140;
+    }
+
+    return lcdContrastValue;
   }
 
   /**
@@ -3416,5 +3475,27 @@ public class UIUtil {
     if (textComponent instanceof JTextArea) {
       ((JTextArea)textComponent).setColumns(columns);
     }
+  }
+
+  /**
+   * Returns the first focusable component in the specified container.
+   * This method returns {@code null} if container is {@code null},
+   * or if focus traversal policy cannot be determined,
+   * or if found focusable component is not a {@link JComponent}.
+   *
+   * @param container a container whose first focusable component is to be returned
+   * @return the first focusable component or {@code null} if it cannot be found
+   */
+  public static JComponent getPreferredFocusedComponent(Container container) {
+    Container parent = container;
+    if (parent == null) return null;
+    FocusTraversalPolicy policy = parent.getFocusTraversalPolicy();
+    while (policy == null) {
+      parent = parent.getParent();
+      if (parent == null) return null;
+      policy = parent.getFocusTraversalPolicy();
+    }
+    Component component = policy.getFirstComponent(container);
+    return component instanceof JComponent ? (JComponent)component : null;
   }
 }

@@ -188,11 +188,18 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
 
   @Override
   public boolean isValid() {
-    return getDescriptor() != null && super.isValid();
+    return true;
   }
 
   @Override
   public FileStatus getNodeStatus() {
     return FileStatus.NOT_CHANGED;
+  }
+
+  public String toString() {
+    if (userObject instanceof OfflineProblemDescriptor) {
+      return ((OfflineProblemDescriptor)userObject).getDescription();
+    }
+    return super.toString();
   }
 }

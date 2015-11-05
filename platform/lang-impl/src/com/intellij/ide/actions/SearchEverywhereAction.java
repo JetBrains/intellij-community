@@ -38,6 +38,8 @@ import com.intellij.ide.ui.OptionsTopHitProvider;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
+import com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder;
+import com.intellij.ide.ui.laf.intellij.MacIntelliJTextFieldUI;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
@@ -113,6 +115,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
@@ -1003,14 +1007,20 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private static class MySearchTextField extends SearchTextField implements DataProvider, Disposable {
     public MySearchTextField() {
       super(false);
-      getTextEditor().setOpaque(false);
-      getTextEditor().setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(getTextEditor()));
-      getTextEditor().setBorder(new DarculaTextBorder());
+      JTextField editor = getTextEditor();
+      editor.setOpaque(false);
+      if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+        editor.setUI((MacIntelliJTextFieldUI)MacIntelliJTextFieldUI.createUI(editor));
+        editor.setBorder(new MacIntelliJTextBorder());
+      } else {
+        editor.setUI((DarculaTextFieldUI)DarculaTextFieldUI.createUI(editor));
+        editor.setBorder(new DarculaTextBorder());
+      }
 
-      getTextEditor().putClientProperty("JTextField.Search.noBorderRing", Boolean.TRUE);
+      editor.putClientProperty("JTextField.Search.noBorderRing", Boolean.TRUE);
       if (UIUtil.isUnderDarcula()) {
-        getTextEditor().setBackground(Gray._45);
-        getTextEditor().setForeground(Gray._240);
+        editor.setBackground(Gray._45);
+        editor.setForeground(Gray._240);
       }
     }
 
@@ -1058,8 +1068,22 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private String myLocationString;
     private Icon myLocationIcon;
     private Project myProject;
-    private JPanel myMainPanel = new JPanel(new BorderLayout());
+    private MyAccessibleComponent myMainPanel = new MyAccessibleComponent(new BorderLayout());
     private JLabel myTitle = new JLabel();
+
+    private class MyAccessibleComponent extends JPanel {
+      private Accessible myAccessible;
+      public MyAccessibleComponent(LayoutManager layout) {
+        super(layout);
+      }
+      void setAccessible(Accessible comp) {
+        myAccessible = comp;
+      }
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        return myAccessible != null ? myAccessible.getAccessibleContext() : super.getAccessibleContext();
+      }
+    }
 
     @Override
     public void clear() {
@@ -1130,6 +1154,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myMainPanel.add(createTitle(" " + title), BorderLayout.NORTH);
       }
       myMainPanel.add(cmp, BorderLayout.CENTER);
+      if (cmp instanceof Accessible) {
+        myMainPanel.setAccessible((Accessible)cmp);
+      }
       final int width = myMainPanel.getPreferredSize().width;
       if (width > myPopupActualWidth) {
         myPopupActualWidth = width;
@@ -1139,94 +1166,107 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     @Override
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    protected void customizeCellRenderer(JList list, final Object value, int index, final boolean selected, boolean hasFocus) {
       setPaintFocusBorder(false);
       setIcon(EmptyIcon.ICON_16);
-      AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-      try {
-        if (value instanceof PsiElement) {
-          String name = myClassModel.getElementName(value);
-          assert name != null;
-          append(name);
-        } else if (value instanceof ChooseRunConfigurationPopup.ItemWrapper) {
-          final ChooseRunConfigurationPopup.ItemWrapper wrapper = (ChooseRunConfigurationPopup.ItemWrapper)value;
-          append(wrapper.getText());
-          setIcon(wrapper.getIcon());
-          setLocationString(ourShiftIsPressed.get() ? "Run" : "Debug");
-          myLocationIcon = ourShiftIsPressed.get() ? AllIcons.Toolwindows.ToolWindowRun : AllIcons.Toolwindows.ToolWindowDebugger;
-        } else if (isVirtualFile(value)) {
-          final VirtualFile file = (VirtualFile)value;
-          if (file instanceof VirtualFilePathWrapper) {
-            append(((VirtualFilePathWrapper)file).getPresentablePath());
-          } else {
-            append(file.getName());
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          if (value instanceof PsiElement) {
+            String name = myClassModel.getElementName(value);
+            assert name != null;
+            append(name);
           }
-          setIcon(IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, myProject));
-        }
-        else if (isActionValue(value)) {
-          final GotoActionModel.ActionWrapper actionWithParentGroup = value instanceof GotoActionModel.ActionWrapper ? (GotoActionModel.ActionWrapper)value : null;
-          final AnAction anAction = actionWithParentGroup == null ? (AnAction)value : actionWithParentGroup.getAction();
-          final Presentation templatePresentation = anAction.getTemplatePresentation();
-          Icon icon = templatePresentation.getIcon();
-          if (anAction instanceof ActivateToolWindowAction) {
-            final String id = ((ActivateToolWindowAction)anAction).getToolWindowId();
-            ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(id);
-            if (toolWindow != null) {
-              icon = toolWindow.getIcon();
+          else if (value instanceof ChooseRunConfigurationPopup.ItemWrapper) {
+            final ChooseRunConfigurationPopup.ItemWrapper wrapper = (ChooseRunConfigurationPopup.ItemWrapper)value;
+            append(wrapper.getText());
+            setIcon(wrapper.getIcon());
+            setLocationString(ourShiftIsPressed.get() ? "Run" : "Debug");
+            myLocationIcon = ourShiftIsPressed.get() ? AllIcons.Toolwindows.ToolWindowRun : AllIcons.Toolwindows.ToolWindowDebugger;
+          }
+          else if (isVirtualFile(value)) {
+            final VirtualFile file = (VirtualFile)value;
+            if (file instanceof VirtualFilePathWrapper) {
+              append(((VirtualFilePathWrapper)file).getPresentablePath());
             }
+            else {
+              append(file.getName());
+            }
+            setIcon(IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, myProject));
           }
+          else if (isActionValue(value)) {
+            final GotoActionModel.ActionWrapper actionWithParentGroup =
+              value instanceof GotoActionModel.ActionWrapper ? (GotoActionModel.ActionWrapper)value : null;
+            final AnAction anAction = actionWithParentGroup == null ? (AnAction)value : actionWithParentGroup.getAction();
+            final Presentation templatePresentation = anAction.getTemplatePresentation();
+            Icon icon = templatePresentation.getIcon();
+            if (anAction instanceof ActivateToolWindowAction) {
+              final String id = ((ActivateToolWindowAction)anAction).getToolWindowId();
+              ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(id);
+              if (toolWindow != null) {
+                icon = toolWindow.getIcon();
+              }
+            }
 
-          append(templatePresentation.getText());
-          if (actionWithParentGroup != null) {
-            final String groupName = actionWithParentGroup.getGroupName();
+            append(templatePresentation.getText());
+            if (actionWithParentGroup != null) {
+              final String groupName = actionWithParentGroup.getGroupName();
+              if (!StringUtil.isEmpty(groupName)) {
+                setLocationString(groupName);
+              }
+            }
+
+            final String groupName = actionWithParentGroup == null ? null : actionWithParentGroup.getGroupName();
             if (!StringUtil.isEmpty(groupName)) {
               setLocationString(groupName);
             }
-          }
-
-          final String groupName = actionWithParentGroup == null ? null : actionWithParentGroup.getGroupName();
-          if (!StringUtil.isEmpty(groupName)) {
-            setLocationString(groupName);
-          }
-          if (icon != null && icon.getIconWidth() <= 16 && icon.getIconHeight() <= 16) {
-            setIcon(IconUtil.toSize(icon, 16, 16));
-          }
-        }
-        else if (isSetting(value)) {
-          String text = getSettingText((OptionDescription)value);
-          append(text);
-          final String id = ((OptionDescription)value).getConfigurableId();
-          final String name = myConfigurables.get(id);
-          if (name != null) {
-            setLocationString(name);
-          }
-        }
-        else if (value instanceof OptionsTopHitProvider) {
-          append("#" + ((OptionsTopHitProvider)value).getId());
-        }
-        else {
-          ItemPresentation presentation = null;
-          if (value instanceof ItemPresentation) {
-            presentation = (ItemPresentation)value;
-          }
-          else if (value instanceof NavigationItem) {
-            presentation = ((NavigationItem)value).getPresentation();
-          }
-          if (presentation != null) {
-            final String text = presentation.getPresentableText();
-            append(text == null ? value.toString() : text);
-            final String location = presentation.getLocationString();
-            if (!StringUtil.isEmpty(location)) {
-              setLocationString(location);
+            if (icon != null && icon.getIconWidth() <= 16 && icon.getIconHeight() <= 16) {
+              setIcon(IconUtil.toSize(icon, 16, 16));
             }
-            Icon icon = presentation.getIcon(false);
-            if (icon != null) setIcon(icon);
+          }
+          else if (isSetting(value)) {
+            String text = getSettingText((OptionDescription)value);
+            SimpleTextAttributes attrs = SimpleTextAttributes.REGULAR_ATTRIBUTES;
+            if (value instanceof Changeable && ((Changeable)value).hasChanged()) {
+              if (selected) {
+                attrs = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
+              }
+              else {
+                SimpleTextAttributes base = SimpleTextAttributes.LINK_BOLD_ATTRIBUTES;
+                attrs = base.derive(SimpleTextAttributes.STYLE_BOLD, base.getFgColor(), null, null);
+              }
+            }
+            append(text, attrs);
+            final String id = ((OptionDescription)value).getConfigurableId();
+            final String name = myConfigurables.get(id);
+            if (name != null) {
+              setLocationString(name);
+            }
+          }
+          else if (value instanceof OptionsTopHitProvider) {
+            append("#" + ((OptionsTopHitProvider)value).getId());
+          }
+          else {
+            ItemPresentation presentation = null;
+            if (value instanceof ItemPresentation) {
+              presentation = (ItemPresentation)value;
+            }
+            else if (value instanceof NavigationItem) {
+              presentation = ((NavigationItem)value).getPresentation();
+            }
+            if (presentation != null) {
+              final String text = presentation.getPresentableText();
+              append(text == null ? value.toString() : text);
+              final String location = presentation.getLocationString();
+              if (!StringUtil.isEmpty(location)) {
+                setLocationString(location);
+              }
+              Icon icon = presentation.getIcon(false);
+              if (icon != null) setIcon(icon);
+            }
           }
         }
-      }
-      finally {
-        token.finish();
-      }
+      });
     }
 
     public void recalculateWidth() {
@@ -1427,7 +1467,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         return;
       }
       final List<ActivateToolWindowAction> actions = new ArrayList<ActivateToolWindowAction>();
-      for (ActivateToolWindowAction action : ToolWindowsGroup.getToolWindowActions(project)) {
+      for (ActivateToolWindowAction action : ToolWindowsGroup.getToolWindowActions(project, false)) {
         String text = action.getTemplatePresentation().getText();
         if (text != null && StringUtil.startsWithIgnoreCase(text, pattern)) {
           actions.add(action);

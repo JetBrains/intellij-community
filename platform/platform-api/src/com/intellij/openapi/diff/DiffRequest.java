@@ -30,7 +30,9 @@ import java.util.*;
 
 /**
  * A request for a diff or merge operation.
+ * @deprecated use {@link com.intellij.diff.requests.DiffRequest} instead
  */
+@Deprecated
 public abstract class DiffRequest {
   @NonNls private static final String COMMON_DIFF_GROUP_KEY = "DiffWindow";
 

@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
+import com.intellij.openapi.externalSystem.model.project.Identifiable;
 import com.intellij.openapi.util.Couple;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +49,15 @@ public abstract class ExternalProjectStructureCustomizer {
    */
   @NotNull
   public Set<? extends Key<?>> getPublicDataKeys() {
+    return Collections.emptySet();
+  }
+
+  /**
+   * Set of data keys, which respective data can have dependencies or can depend on other data
+   * @return data keys
+   */
+  @NotNull
+  public Set<? extends Key<? extends Identifiable>> getDependencyAwareDataKeys() {
     return Collections.emptySet();
   }
 

@@ -15,18 +15,18 @@
  */
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
-import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleSMTestProxy;
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
-import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager;
 
 /**
  * @author Vladislav.Soroka
  * @since 2/28/14
  */
 public class BeforeSuiteEvent extends AbstractTestEvent {
-  public BeforeSuiteEvent(GradleTestsExecutionConsoleManager consoleManager) {
-    super(consoleManager);
+  public BeforeSuiteEvent(GradleTestsExecutionConsole executionConsole) {
+    super(executionConsole);
   }
 
   @Override
@@ -37,24 +37,15 @@ public class BeforeSuiteEvent extends AbstractTestEvent {
     final String fqClassName = getTestClassName(eventXml);
 
     if (StringUtil.isEmpty(parentTestId)) {
-      getConsoleManager().getTestsMap().put(testId, getResultsViewer().getTestsRootNode());
+      registerTestProxy(testId, getResultsViewer().getTestsRootNode());
     }
     else {
       String locationUrl = findLocationUrl(null, fqClassName);
-      final SMTestProxy testProxy = new SMTestProxy(name, true, locationUrl);
-      testProxy.setLocator(getConsoleManager().getUrlProvider());
+      final GradleSMTestProxy testProxy = new GradleSMTestProxy(name, true, locationUrl, null);
+      testProxy.setLocator(getExecutionConsole().getUrlProvider());
+      testProxy.setParentId(parentTestId);
       testProxy.setStarted();
-      getConsoleManager().getTestsMap().put(testId, testProxy);
-      final SMTestProxy parentTestProxy = getConsoleManager().getTestsMap().get(parentTestId);
-      if (parentTestProxy != null) {
-        addToInvokeLater(new Runnable() {
-          @Override
-          public void run() {
-            parentTestProxy.addChild(testProxy);
-            getResultsViewer().onSuiteStarted(testProxy);
-          }
-        });
-      }
+      registerTestProxy(testId, testProxy);
     }
   }
 }

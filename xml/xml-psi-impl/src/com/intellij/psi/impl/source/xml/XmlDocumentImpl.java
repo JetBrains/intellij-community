@@ -240,14 +240,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
       }
       final XmlFile descriptorFile = nsDescriptor.getDescriptorFile();
       if (descriptorFile != null) {
-        final XmlNSDescriptor finalNsDescriptor = nsDescriptor;
-        return CachedValuesManager.getCachedValue(descriptorFile, new CachedValueProvider<XmlNSDescriptor>() {
-          @Nullable
-          @Override
-          public Result<XmlNSDescriptor> compute() {
-            return Result.<XmlNSDescriptor>create(new HtmlNSDescriptorImpl(finalNsDescriptor), descriptorFile);
-          }
-        });
+        return getCachedHtmlNsDescriptor(descriptorFile);
       }
       return new HtmlNSDescriptorImpl(nsDescriptor);
     }
@@ -309,7 +302,19 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
 
     return null;
   }
-  
+
+  private static XmlNSDescriptor getCachedHtmlNsDescriptor(final XmlFile descriptorFile) {
+    return CachedValuesManager.getCachedValue(descriptorFile, new CachedValueProvider<XmlNSDescriptor>() {
+      @Nullable
+      @Override
+      public Result<XmlNSDescriptor> compute() {
+        final XmlDocument document = descriptorFile.getDocument();
+        if (document == null) return Result.create(null, descriptorFile);
+        return Result.<XmlNSDescriptor>create(new HtmlNSDescriptorImpl((XmlNSDescriptor)document.getMetaData()), descriptorFile);
+      }
+    });
+  }
+
   @NotNull
   private static String getFilePathForLogging(@Nullable PsiFile file) {
     if (file == null) {

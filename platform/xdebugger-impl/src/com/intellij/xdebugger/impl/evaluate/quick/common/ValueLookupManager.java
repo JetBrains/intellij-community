@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Alarm;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +39,7 @@ import java.awt.*;
 
 public class ValueLookupManager extends EditorMouseAdapter implements EditorMouseMotionListener {
   /**
-   * @see com.intellij.xdebugger.XDebuggerUtil#disableValueLookup(com.intellij.openapi.editor.Editor)
+   * @see XDebuggerUtil#disableValueLookup(Editor)
    */
   public static final Key<Boolean> DISABLE_VALUE_LOOKUP = Key.create("DISABLE_VALUE_LOOKUP");
 
