@@ -117,7 +117,7 @@ public class JavaTestFinder implements TestFinder {
     for (String eachName : names) {
       if (pattern.matcher(eachName).matches()) {
         for (PsiClass eachClass : cache.getClassesByName(eachName, scope)) {
-          if (isTestClass(eachClass)) {
+          if (isTestClass(eachClass, klass)) {
             if (!processor.process(Pair.create(eachClass, TestFinderHelper.calcTestNameProximity(klassName, eachName)))) {
               return true;
             }
@@ -128,9 +128,9 @@ public class JavaTestFinder implements TestFinder {
     return false;
   }
 
-  protected boolean isTestClass(PsiClass eachClass) {
+  protected boolean isTestClass(PsiClass eachClass, PsiClass klass) {
     final TestFrameworks frameworks = TestFrameworks.getInstance();
-    return eachClass.isPhysical() && (frameworks.isTestClass(eachClass) || frameworks.isPotentialTestClass(eachClass));
+    return eachClass.isPhysical() && (frameworks.isTestClass(eachClass) || eachClass != klass && frameworks.isPotentialTestClass(eachClass));
   }
 
   @Nullable
