@@ -1152,6 +1152,30 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     );
   }
 
+  public void testScriptSearch() {
+    final String source = "package a;" +
+                          "class BX extends java.util.List {" +
+                          "  private static final java.util.List VALUE = new BX();" +
+                          "}" +
+                          "class CX extends java.util.List {" +
+                          "  private static final String S = \"\";" +
+                          "}";
+    // find static final fields whose type is a proper ancestor of the class declaring their fields
+    assertEquals("all variables accessible from script", 1,
+                 findMatchesCount(source,
+                                  "[script(\""                                                         +
+                                  "import com.intellij.psi.util.InheritanceUtil\n"                     +
+                                  "import com.intellij.psi.util.PsiTreeUtil\n"                         +
+                                  "import com.intellij.psi.PsiClass\n"                                 +
+                                  "init != null &&"                                                    + // redundant reference to '_init
+                                  "InheritanceUtil.isInheritor(\n"                                     +
+                                  "        PsiTreeUtil.getParentOfType(variable, PsiClass.class),\n"   + // reference to 'variable
+                                  "        true, \n"                                                   +
+                                  "        Type.type.canonicalText\n"                                  + // reference to '_Type
+                                  ")\n\")]"                                                            +
+                                  "static final '_Type 'variable = '_init;"));
+  }
+
   public void testCheckScriptValidation() {
     final String s1 = "";
     final String s2 = "'_b:[script( \"^^^\" )]";
