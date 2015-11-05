@@ -18,6 +18,7 @@ package org.jetbrains.jps.model.java.impl;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,21 +84,29 @@ public class JavaSdkUtil {
       }
     }
 
-    String[] additionalJars = {
-      "jre/bin/default/jclSC170/vm.jar",
-      "jre/lib/i386/default/jclSC170/vm.jar",
-      "jre/lib/amd64/default/jclSC170/vm.jar",
-      "jre/bin/default/jclSC160/vm.jar",
-      "jre/lib/i386/default/jclSC160/vm.jar",
-      "jre/lib/amd64/default/jclSC160/vm.jar",
-      "lib/classes.zip"
+    String[] ibmJdkVmJarDirs = {
+      "jre/bin/default",
+      "jre/lib/i386/default",
+      "jre/lib/amd64/default"
     };
-    for (String relativePath : additionalJars) {
-      File jar = new File(home, relativePath);
-      if (jar.isFile()) {
-        rootFiles.add(jar);
+    for (String relativePath : ibmJdkVmJarDirs) {
+      File[] vmJarDirs = new File(home, relativePath).listFiles(FileUtilRt.ALL_DIRECTORIES);
+      if (vmJarDirs != null) {
+        for (File dir : vmJarDirs) {
+          if (dir.getName().startsWith("jclSC")) {
+            File vmJar = new File(dir, "vm.jar");
+            if (vmJar.isFile()) {
+              rootFiles.add(vmJar);
+            }
+          }
+        }
       }
     }
+    File classesZip = new File(home, "lib/classes.zip");
+    if (classesZip.isFile()) {
+      rootFiles.add(classesZip);
+    }
+
 
     if (rootFiles.isEmpty()) {
       File classesDir = new File(home, "classes");
