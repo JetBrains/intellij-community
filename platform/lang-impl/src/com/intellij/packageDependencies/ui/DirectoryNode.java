@@ -121,6 +121,20 @@ public class DirectoryNode extends PackageDependenciesNode {
       if (child instanceof FileNode || recursively) {
         child.fillFiles(set, true);
       }
+      else if (child instanceof DirectoryNode) {
+        final VirtualFile directory = ((DirectoryNode)child).getDirectory();
+        if (directory != null) {
+          final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+          final VirtualFile contentRoot = fileIndex.getContentRootForFile(directory);
+          final VirtualFile sourceRoot = fileIndex.getSourceRootForFile(directory);
+          if (directory.equals(contentRoot) ||
+              contentRoot != null && contentRoot.equals(directory.getParent()) ||
+              directory.equals(sourceRoot) ||
+              sourceRoot != null && sourceRoot.equals(directory.getParent())) {
+            child.fillFiles(set, false);
+          }
+        }
+      }
     }
   }
 
