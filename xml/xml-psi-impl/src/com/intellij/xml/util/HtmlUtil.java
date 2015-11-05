@@ -318,22 +318,7 @@ public class HtmlUtil {
       final String tagName = tokenizer.nextToken();
       if (tagName.length() == 0) continue;
 
-      descriptors[index++] = new XmlElementDescriptorImpl(null) {
-        @Override
-        public String getName(PsiElement context) {
-          return tagName;
-        }
-
-        @Override
-        public String getDefaultName() {
-          return tagName;
-        }
-
-        @Override
-        public boolean allowElementsFromNamespace(final String namespace, final XmlTag context) {
-          return true;
-        }
-      };
+      descriptors[index++] = new CustomXmlTagDescriptor(tagName);
     }
 
     return descriptors;
@@ -683,5 +668,29 @@ public class HtmlUtil {
 
   public static boolean isScriptTag(@Nullable XmlTag tag) {
     return tag != null && tag.getLocalName().equalsIgnoreCase(SCRIPT_TAG_NAME);
+  }
+
+  public static class CustomXmlTagDescriptor extends XmlElementDescriptorImpl {
+    private final String myTagName;
+
+    public CustomXmlTagDescriptor(String tagName) {
+      super(null);
+      myTagName = tagName;
+    }
+
+    @Override
+    public String getName(PsiElement context) {
+      return myTagName;
+    }
+
+    @Override
+    public String getDefaultName() {
+      return myTagName;
+    }
+
+    @Override
+    public boolean allowElementsFromNamespace(final String namespace, final XmlTag context) {
+      return true;
+    }
   }
 }
