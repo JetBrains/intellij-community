@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -359,6 +358,8 @@ public final class LoadTextUtil {
     return CharsetUtil.extractCharsetFromFileContent(project, virtualFile, virtualFile.getFileType(), text);
   }
 
+  private static boolean ourDecompileProgressStarted = false;
+
   @NotNull
   public static CharSequence loadText(@NotNull final VirtualFile file) {
     if (file instanceof LightVirtualFile) {
@@ -376,26 +377,34 @@ public final class LoadTextUtil {
         CharSequence text;
 
         Application app = ApplicationManager.getApplication();
-        if (app != null && app.isDispatchThread() && !app.isWriteAccessAllowed() && !GraphicsEnvironment.isHeadless()) {
+        if (app != null && app.isDispatchThread() && !app.isWriteAccessAllowed() && !ourDecompileProgressStarted) {
           final Ref<CharSequence> result = Ref.create(ArrayUtil.EMPTY_CHAR_SEQUENCE);
           final Ref<Throwable> error = Ref.create();
-          ProgressManager.getInstance().run(new Task.Modal(null, "Decompiling " + file.getName(), true) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              indicator.setIndeterminate(true);
-              try {
-                result.set(ApplicationUtil.runWithCheckCanceled(new Callable<CharSequence>() {
-                  @Override
-                  public CharSequence call() {
-                    return decompiler.decompile(file);
-                  }
-                }, indicator));
+
+          ourDecompileProgressStarted = true;
+          try {
+            ProgressManager.getInstance().run(new Task.Modal(null, "Decompiling " + file.getName(), true) {
+              @Override
+              public void run(@NotNull ProgressIndicator indicator) {
+                indicator.setIndeterminate(true);
+                try {
+                  result.set(ApplicationUtil.runWithCheckCanceled(new Callable<CharSequence>() {
+                    @Override
+                    public CharSequence call() {
+                      return decompiler.decompile(file);
+                    }
+                  }, indicator));
+                }
+                catch (Throwable t) {
+                  error.set(t);
+                }
               }
-              catch (Throwable t) {
-                error.set(t);
-              }
-            }
-          });
+            });
+          }
+          finally {
+            ourDecompileProgressStarted = false;
+          }
+
           ExceptionUtil.rethrowUnchecked(error.get());
           text = result.get();
         }
