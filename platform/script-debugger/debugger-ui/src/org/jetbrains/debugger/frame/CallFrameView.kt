@@ -27,8 +27,11 @@ import org.jetbrains.debugger.*
 class CallFrameView @JvmOverloads constructor(val callFrame: CallFrame,
                                               private val viewSupport: DebuggerViewSupport,
                                               val script: Script? = null,
-                                              private val sourceInfo: SourceInfo? = viewSupport.getSourceInfo(script, callFrame),
-                                              private val isInLibraryContent: Boolean = sourceInfo != null && viewSupport.isInLibraryContent(sourceInfo, script)) : XStackFrame(), VariableContext {
+                                              sourceInfo: SourceInfo? = null,
+                                              isInLibraryContent: Boolean? = null) : XStackFrame(), VariableContext {
+  private val sourceInfo = sourceInfo ?: viewSupport.getSourceInfo(script, callFrame)
+  private val isInLibraryContent: Boolean = isInLibraryContent ?: (this.sourceInfo != null && viewSupport.isInLibraryContent(this.sourceInfo, script))
+
   private var evaluator: XDebuggerEvaluator? = null
 
   override fun getEqualityObject() = callFrame.equalityObject
