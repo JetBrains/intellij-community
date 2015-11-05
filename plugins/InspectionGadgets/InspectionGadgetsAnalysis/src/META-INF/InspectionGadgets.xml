@@ -2700,6 +2700,10 @@
                      key="while.loop.spins.on.field.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.threading.WhileLoopSpinsOnFieldInspection"/>
+    <localInspection groupPath="Java" language="JAVA" suppressId="StaticInitializerReferencesSubClass" shortName="StaticInitializerReferencesSubClass"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="static.initializer.references.subclass.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues" enabledByDefault="true"
+                     level="WARNING" implementationClass="com.siyeh.ig.threading.StaticInitializerReferencesSubClassInspection"/>
 
     <!--group.names.visibility.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="AmbiguousMethodCall" bundle="com.siyeh.InspectionGadgetsBundle" key="ambiguous.method.call.display.name"
