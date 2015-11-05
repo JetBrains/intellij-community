@@ -27,10 +27,8 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -221,14 +219,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public void projectOpened() {
-    final StartupManager manager = StartupManager.getInstance(myProject);
-    manager.registerPostStartupActivity(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        myContentManager = ContentFactory.SERVICE.getInstance().createContentManager(true, myProject);
-      }
-    });
-
     addInitializationRequest(VcsInitObject.AFTER_COMMON, new Runnable() {
       @Override
       public void run() {

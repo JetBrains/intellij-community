@@ -17,6 +17,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.NotNullFunction;
@@ -74,7 +75,7 @@ public abstract class IndexableSetContributor implements IndexedRootsProvider {
 
   /**
    * @return an additional project-dependent set of {@link VirtualFile} instances to index,
-   *         the returned set should not contain nulls
+   *         the returned set should not contain nulls or invalid files
    */
   @NotNull
   public Set<VirtualFile> getAdditionalProjectRootsToIndex(@NotNull Project project) {
@@ -83,7 +84,7 @@ public abstract class IndexableSetContributor implements IndexedRootsProvider {
 
   /**
    * @return an additional project-independent set of {@link VirtualFile} instances to index,
-   *         the returned set should not contain nulls
+   *         the returned set should not contain nulls or invalid files
    */
   @NotNull
   public abstract Set<VirtualFile> getAdditionalRootsToIndex();
@@ -93,12 +94,16 @@ public abstract class IndexableSetContributor implements IndexedRootsProvider {
                                                  @NotNull String methodInfo,
                                                  @NotNull Set<VirtualFile> roots) {
     for (VirtualFile root : roots) {
-      if (root == null) {
+      if (root == null || !root.isValid()) {
         LOG.error("Please fix " + contributor.getClass().getName() + "#" + methodInfo + ".\n" +
-                  "The returned set is not expected to contain nulls, but it is " + roots);
-        Set<VirtualFile> result = ContainerUtil.newHashSet(roots.size());
-        ContainerUtil.addAllNotNull(result, roots);
-        return result;
+                  (root == null ? "The returned set is not expected to contain nulls, but it is " + roots
+                                : "Invalid file returned: " + root));
+        return ContainerUtil.newLinkedHashSet(ContainerUtil.filter(roots, new Condition<VirtualFile>() {
+          @Override
+          public boolean value(VirtualFile virtualFile) {
+            return virtualFile != null && virtualFile.isValid();
+          }
+        }));
       }
     }
     return roots;

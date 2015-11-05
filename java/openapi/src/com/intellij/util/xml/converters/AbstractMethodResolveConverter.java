@@ -145,14 +145,8 @@ public abstract class AbstractMethodResolveConverter<ParentType extends DomEleme
 
   @NotNull
   @Override
-  public Set<String> getAdditionalVariants(@NotNull ConvertContext context) {
-    return Collections.singleton(ALL_METHODS);
-  }
-
-  @NotNull
-  @Override
   public Set<String> getAdditionalVariants() {
-    return super.getAdditionalVariants();
+    return Collections.singleton(ALL_METHODS);
   }
 
   public PsiMethod fromString(final String methodName, final ConvertContext context) {

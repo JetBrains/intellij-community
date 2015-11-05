@@ -27,6 +27,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbModePermission;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
@@ -51,7 +53,7 @@ public class CreatePackageAction extends DumbAwareAction {
     final PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);
 
     if (directory == null) return;
-    CreateDirectoryOrPackageHandler validator = new CreateDirectoryOrPackageHandler(project, directory, false, ".") {
+    final CreateDirectoryOrPackageHandler validator = new CreateDirectoryOrPackageHandler(project, directory, false, ".") {
       @Override
       protected void createDirectories(String subDirName) {
         super.createDirectories(subDirName);
@@ -61,9 +63,13 @@ public class CreatePackageAction extends DumbAwareAction {
         }
       }
     };
-    Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.package.name"),
-                                      IdeBundle.message("title.new.package"),
-                                      Messages.getQuestionIcon(), "", validator);
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
+      public void run() {
+        Messages.showInputDialog(project, IdeBundle.message("prompt.enter.new.package.name"),
+                                          IdeBundle.message("title.new.package"),
+                                          Messages.getQuestionIcon(), "", validator);
+      }
+    });
     final PsiFileSystemItem result = validator.getCreatedElement();
     if (result != null) {
       view.selectElement(result);
