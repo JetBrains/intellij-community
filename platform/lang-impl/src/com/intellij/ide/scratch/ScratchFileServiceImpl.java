@@ -224,7 +224,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     public SyntaxHighlighter create(@NotNull FileType fileType, @Nullable Project project, @Nullable VirtualFile file) {
       if (project == null || file == null || !(fileType instanceof ScratchFileType)) return null;
 
-      Language language = ScratchUtil.getLanguage(project, file);
+      Language language = LanguageUtil.getLanguageForPsi(project, file);
       return language == null ? null : SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file);
     }
   }
