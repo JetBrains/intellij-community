@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 public class TestFinishedEvent extends TreeNodeEvent {
 
   private final long myDuration;
+  private String myOutputFile;
 
   public TestFinishedEvent(@NotNull TestFinished testFinished, long duration) {
     this(testFinished.getTestName(), TreeNodeEvent.getNodeId(testFinished), duration);
@@ -49,5 +50,13 @@ public class TestFinishedEvent extends TreeNodeEvent {
   @Override
   protected void appendToStringInfo(@NotNull StringBuilder buf) {
     append(buf, "duration", myDuration);
+  }
+
+  public void setOutputFile(String outputFile) {
+    myOutputFile = outputFile;
+  }
+
+  public String getOutputFile() {
+    return myOutputFile;
   }
 }
