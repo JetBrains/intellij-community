@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.PsiNavigateUtil;
-import com.intellij.util.Time;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -33,10 +32,10 @@ import java.util.Date;
 import java.util.Map;
 
 public class ShowRecentTests extends AnAction {
-  private static final int TEST_LIMIT = 20;
+  private static final int TEST_LIMIT = Integer.MAX_VALUE;
   
   private static Date getSinceDate() {
-    return new Date(System.currentTimeMillis() - 2 * Time.HOUR);
+    return new Date(0);
   }
   
   @Override
