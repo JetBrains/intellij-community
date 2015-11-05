@@ -455,11 +455,11 @@ public class JavaCompletionSorting {
         ContainerUtil.addIfNotNull(myExpectedClasses, PsiUtil.substituteTypeParameter(info.getDefaultType(), CommonClassNames.JAVA_LANG_CLASS, 0, false));
       }
 
-      myExpectedMemberName = calcExpectedMemberName(position);
+      myExpectedMemberName = calcExpectedMemberNameByParentCall(position);
     }
 
     @Nullable
-    private static String calcExpectedMemberName(PsiElement position) {
+    private static String calcExpectedMemberNameByParentCall(PsiElement position) {
       if (position.getParent() instanceof PsiJavaCodeReferenceElement) {
         PsiElement grand = position.getParent().getParent();
         if (grand instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)grand).getQualifier() == position.getParent()) {

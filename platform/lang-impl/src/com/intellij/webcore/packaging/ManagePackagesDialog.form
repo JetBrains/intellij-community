@@ -5,9 +5,7 @@
     <constraints>
       <xy x="49" y="40" width="451" height="540"/>
     </constraints>
-    <properties>
-      <preferredSize width="900" height="700"/>
-    </properties>
+    <properties/>
     <border type="none"/>
     <children>
       <grid id="64782" binding="myFilter" custom-create="true" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
