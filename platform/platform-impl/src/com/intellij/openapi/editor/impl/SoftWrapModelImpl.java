@@ -627,7 +627,12 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
     if (!isSoftWrappingEnabled()) {
       return;
     }
-    executeSafely(myFoldProcessingEndTask);
+    if (myEditor.myUseNewRendering) {
+      myFoldProcessingEndTask.run(true);
+    }
+    else {
+      executeSafely(myFoldProcessingEndTask);
+    }
   }
 
   @Override
