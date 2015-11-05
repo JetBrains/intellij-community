@@ -446,6 +446,8 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
         }
       });
     }
+
+    repaint();
   }
 
   private void updateBorder(int ndx) {
@@ -657,6 +659,8 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
       myWidgetMap.remove(bean.widget.ID());
       Disposer.dispose(bean.widget);
+
+      repaint();
     }
 
     updateChildren(new ChildAction() {

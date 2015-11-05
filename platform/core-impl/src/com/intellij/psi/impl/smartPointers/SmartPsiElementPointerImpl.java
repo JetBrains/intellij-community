@@ -205,11 +205,6 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     return new SelfElementInfo(project, proper, AnchorTypeInfo.obtainInfo(element, LanguageUtil.getRootLanguage(element)), containingFile, false);
   }
 
-  @Override
-  public void fastenBelt() {
-    myElementInfo.fastenBelt();
-  }
-
   @NotNull
   SmartPointerElementInfo getElementInfo() {
     return myElementInfo;

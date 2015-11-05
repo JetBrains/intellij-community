@@ -29,6 +29,7 @@ import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.ide.diff.JarFileDiffElement;
 import com.intellij.ide.diff.VirtualFileDiffElement;
 import com.intellij.ide.highlighter.ArchiveFileType;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -59,6 +60,8 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
   @NotNull private final JPanel myPanel;
 
   public DirDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
+    UsageTrigger.trigger("diff.DirDiffViewer");
+
     myContext = context;
     myRequest = request;
 

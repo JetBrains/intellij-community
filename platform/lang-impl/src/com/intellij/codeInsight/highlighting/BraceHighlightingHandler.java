@@ -240,7 +240,7 @@ public class BraceHighlightingHandler {
         @NotNull
         @Override
         public HighlighterIterator createIterator(int startOffset) {
-          return new HighlighterIteratorWrapper(super.createIterator(startOffset - offset)) {
+          return new HighlighterIteratorWrapper(super.createIterator(Math.max(startOffset - offset, 0))) {
             @Override
             public int getStart() {
               return super.getStart() + offset;

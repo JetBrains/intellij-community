@@ -30,7 +30,7 @@ CD "%DEV_IDEA_HOME%"
 
 SET ANT_HOME=%DEV_IDEA_HOME%\lib\ant
 SET EXEC_ANT="%JAVA_HOME%\bin\java.exe" -Dant.home="%ANT_HOME%" -classpath "%ANT_HOME%\lib\ant-launcher.jar" org.apache.tools.ant.launch.Launcher
-%EXEC_ANT% -f build/update.xml
+%EXEC_ANT% -f build/update.xml -Dwork.idea.home="%WORK_IDEA_HOME%"
 IF NOT ERRORLEVEL 0 GOTO failed
 IF NOT EXIST "%DEV_IDEA_HOME%\out\deploy" GOTO failed
 

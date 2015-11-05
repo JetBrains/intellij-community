@@ -20,14 +20,13 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
-import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 
 /**
  * Fragment of text using a common font
  */
 class TextFragment implements LineFragment {
-  // glyph location that should definitely be outside of painted region
-  private static final Point NOWHERE = new Point(1000000000, 1000000000);
+  private static final double CLIP_MARGIN = 1e4;
   
   @NotNull
   private final GlyphVector myGlyphVector;
@@ -81,37 +80,16 @@ class TextFragment implements LineFragment {
       g.drawGlyphVector(myGlyphVector, x, y);
     }
     else {
-      // We cannot use our own GlyphVector implementation, as it wouldn't support
-      // Mac-specific automatic font fallback (negative glyph indices will be rejected,
-      // even though they are used inside StandardGlyphVector in that case).
-      // We also cannot clone myGlyphVector without casting to sun.font.StandardGlyphVector, 
-      // as clone() method is not public in GlyphVector (even though it's Cloneable).
-      // So we are modifying glyph positions in-place, and restore them after painting.
-      int logicalStartOffset = isRtl() ? myCharPositions.length - endColumn : startColumn;
-      int logicalEndOffset = isRtl() ? myCharPositions.length - startColumn : endColumn;
-      int glyphCount = myGlyphVector.getNumGlyphs();
-      Point2D[] savedPositions = new Point2D[glyphCount + 1];
-      int lastPaintedGlyph = -1;
-      for (int i = 0; i < glyphCount; i++) {
-        savedPositions[i] = myGlyphVector.getGlyphPosition(i);
-        int c = myGlyphVector.getGlyphCharIndex(i);
-        if (c >= logicalStartOffset && c < logicalEndOffset) {
-          lastPaintedGlyph = i;
-        }
-        else {
-          myGlyphVector.setGlyphPosition(i, NOWHERE);
-        }
-      }
-      savedPositions[glyphCount] = myGlyphVector.getGlyphPosition(glyphCount);
-      myGlyphVector.setGlyphPosition(glyphCount, savedPositions[lastPaintedGlyph + 1]);
-      try {
-        g.drawGlyphVector(myGlyphVector, x - getX(startColumn), y);
-      }
-      finally {
-        for (int i = 0; i <= glyphCount; i++) {
-          myGlyphVector.setGlyphPosition(i, savedPositions[i]);
-        }
-      }
+      Shape savedClip = g.getClip();
+      Rectangle2D bounds = myGlyphVector.getVisualBounds();
+      float startX = x - getX(startColumn);
+      double xMin = startColumn == 0 ? x + bounds.getMinX() - CLIP_MARGIN : x;
+      double xMax = endColumn == myCharPositions.length ? startX + bounds.getMaxX() + CLIP_MARGIN : startX + getX(endColumn);
+      double yMin = y + bounds.getMinY() - CLIP_MARGIN;
+      double yMax = y + bounds.getMaxY() + CLIP_MARGIN;
+      g.clip(new Rectangle2D.Double(xMin, yMin, xMax - xMin, yMax - yMin));
+      g.drawGlyphVector(myGlyphVector, startX, y);
+      g.setClip(savedClip);
     }
   }
   

@@ -112,8 +112,12 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
   @Override
   protected void tearDown() throws Exception {
-    FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
-    super.tearDown();
+    try {
+      FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   protected void createLocalProcess(String className) throws ExecutionException, InterruptedException, InvocationTargetException {

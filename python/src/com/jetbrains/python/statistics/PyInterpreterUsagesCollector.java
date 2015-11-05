@@ -23,6 +23,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,16 +41,47 @@ public class PyInterpreterUsagesCollector extends AbstractApplicationUsagesColle
   @Override
   public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) throws CollectUsagesException {
     Set<UsageDescriptor> result = new HashSet<UsageDescriptor>();
-    for(Module m: ModuleManager.getInstance(project).getModules()) {
+    for (Module m : ModuleManager.getInstance(project).getModules()) {
       Sdk pythonSdk = PythonSdkType.findPythonSdk(m);
       if (pythonSdk != null) {
         String versionString = pythonSdk.getVersionString();
-        if (versionString != null) {
-          result.add(new UsageDescriptor(versionString, 1));
+        if (StringUtil.isEmpty(versionString)) {
+          versionString = "unknown version";
         }
+        if (PythonSdkType.isRemote(pythonSdk)) {
+          versionString = versionString + " (" + getRemoteSuffix(pythonSdk) + ")";
+        }
+        
+        if (PythonSdkType.isVirtualEnv(pythonSdk)) {
+          versionString += " [virtualenv]";
+        }
+
+        if (PythonSdkType.isCondaVirtualEnv(pythonSdk)) {
+          versionString += " [condavenv]";
+        }
+        result.add(new UsageDescriptor(versionString, 1));
       }
     }
     return result;
+  }
+
+  @NotNull
+  private static String getRemoteSuffix(@NotNull Sdk pythonSdk) {
+    if (pythonSdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataBase) {
+      switch (((PyRemoteSdkAdditionalDataBase)pythonSdk.getSdkAdditionalData()).getRemoteConnectionType()) {
+        case DOCKER:
+          return "Remote Docker";
+        case VAGRANT:
+          return "Remote Vagrant";
+        case WEB_DEPLOYMENT:
+          return "Remote Deployment";
+        case SSH_HOST:
+          return "Remote SSH";
+        default:
+          return "Remote";
+      }
+    }
+    return "";
   }
 
   @NotNull

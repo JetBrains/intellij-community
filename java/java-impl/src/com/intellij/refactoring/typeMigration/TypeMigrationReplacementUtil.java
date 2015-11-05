@@ -147,7 +147,9 @@ public class TypeMigrationReplacementUtil {
         final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
         final PsiType componentType = changeType.getDeepComponentType();
         if (classReference != null) {
-          final PsiElement psiElement = replaceTypeWithClassReferenceOrKeyword(project, componentType, classReference);
+          final PsiElement psiElement = changeType.equals(expression.getType())
+                                        ? classReference
+                                        : replaceTypeWithClassReferenceOrKeyword(project, componentType, classReference);
           final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(psiElement, PsiNewExpression.class);
           if (!tryToReplaceWithDiamond(newExpression, changeType)) {
             return newExpression;

@@ -23,6 +23,7 @@ import com.google.gson.reflect.TypeToken;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -68,6 +69,9 @@ public class ResourceRootFilter {
         throw new RuntimeException("Unsupported filter: " + properties , e);
       } catch (JsonParseException e) {
         throw new RuntimeException("Unsupported filter: " + properties , e);
+      }
+      if(propertiesMap == null) {
+        propertiesMap = new HashMap<Object, Object>();
       }
     }
     return propertiesMap;

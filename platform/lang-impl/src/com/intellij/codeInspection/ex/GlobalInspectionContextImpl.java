@@ -84,10 +84,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Constructor;
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 
 public class GlobalInspectionContextImpl extends GlobalInspectionContextBase implements GlobalInspectionContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
@@ -328,7 +325,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   }
 
   @Override
-  protected void notifyInspectionsFinished() {
+  protected void notifyInspectionsFinished(final AnalysisScope scope) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
@@ -337,7 +334,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
         if (myView != null) {
           if (!myView.update() && !getUIOptions().SHOW_ONLY_DIFF) {
-            NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message"), MessageType.INFO).notify(getProject());
+            NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message", scope.getFileCount(), scope.getDisplayName()), MessageType.INFO).notify(getProject());
             close(true);
           }
           else {
@@ -389,7 +386,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     final BlockingQueue<PsiFile> filesToInspect = new ArrayBlockingQueue<PsiFile>(1000);
     final Queue<PsiFile> filesFailedToInspect = new LinkedBlockingQueue<PsiFile>();
     // use original progress indicator here since we don't want it to cancel on write action start
-    startIterateScope(scope, localScopeFiles, headlessEnvironment, filesToInspect, progressIndicator);
+    Future<?> future = startIterateScopeInBackground(scope, localScopeFiles, headlessEnvironment, filesToInspect, progressIndicator);
 
     Processor<PsiFile> processor = new Processor<PsiFile>() {
       @Override
@@ -410,31 +407,43 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         return true;
       }
     };
-    while (true) {
-      Disposable disposable = Disposer.newDisposable();
-      ProgressIndicator wrapper = new SensitiveProgressWrapper(progressIndicator);
-      wrapper.start();
-      ProgressIndicatorUtils.forceWriteActionPriority(wrapper, disposable);
+    try {
+      while (true) {
+        Disposable disposable = Disposer.newDisposable();
+        ProgressIndicator wrapper = new SensitiveProgressWrapper(progressIndicator);
+        wrapper.start();
+        ProgressIndicatorUtils.forceWriteActionPriority(wrapper, disposable);
 
-      try {
-        // use wrapper here to cancel early when write action start but do not affect the original indicator
-        ((JobLauncherImpl)JobLauncher.getInstance()).processQueue(filesToInspect, filesFailedToInspect, wrapper, TOMBSTONE, processor);
-        break;
-      }
-      catch (ProcessCanceledException ignored) {
-        progressIndicator.checkCanceled();
-        // PCE may be thrown from inside wrapper when write action started
-        // go on with the write and then resume processing the rest of the queue
-        assert !ApplicationManager.getApplication().isReadAccessAllowed();
-        assert !ApplicationManager.getApplication().isDispatchThread();
+        try {
+          // use wrapper here to cancel early when write action start but do not affect the original indicator
+          ((JobLauncherImpl)JobLauncher.getInstance()).processQueue(filesToInspect, filesFailedToInspect, wrapper, TOMBSTONE, processor);
+          break;
+        }
+        catch (ProcessCanceledException ignored) {
+          progressIndicator.checkCanceled();
+          // PCE may be thrown from inside wrapper when write action started
+          // go on with the write and then resume processing the rest of the queue
+          assert !ApplicationManager.getApplication().isReadAccessAllowed();
+          assert !ApplicationManager.getApplication().isDispatchThread();
 
-        // wait for write action to complete
-        ApplicationManager.getApplication().runReadAction(EmptyRunnable.getInstance());
-      }
-      finally {
-        Disposer.dispose(disposable);
+          // wait for write action to complete
+          ApplicationManager.getApplication().runReadAction(EmptyRunnable.getInstance());
+        }
+        finally {
+          Disposer.dispose(disposable);
+        }
       }
     }
+    finally {
+      filesToInspect.clear(); // let background thread a chance to put TOMBSTONE and complete
+      try {
+        future.get(30, TimeUnit.SECONDS);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
+
     progressIndicator.checkCanceled();
 
     for (Tools tools : globalSimpleTools) {
@@ -500,12 +509,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   private static final PsiFile TOMBSTONE = PsiUtilCore.NULL_PSI_FILE;
 
-  private void startIterateScope(@NotNull final AnalysisScope scope,
-                                 @Nullable final Collection<VirtualFile> localScopeFiles,
-                                 final boolean headlessEnvironment,
-                                 @NotNull final BlockingQueue<PsiFile> outFilesToInspect,
-                                 @NotNull final ProgressIndicator progressIndicator) {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+  @NotNull
+  private Future<?> startIterateScopeInBackground(@NotNull final AnalysisScope scope,
+                                                  @Nullable final Collection<VirtualFile> localScopeFiles,
+                                                  final boolean headlessEnvironment,
+                                                  @NotNull final BlockingQueue<PsiFile> outFilesToInspect,
+                                                  @NotNull final ProgressIndicator progressIndicator) {
+    return ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         try {
@@ -822,7 +832,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     ProgressManager.getInstance().run(task);
   }
 
-  private void cleanup(@NotNull AnalysisScope scope,
+  private void cleanup(@NotNull final AnalysisScope scope,
                        @NotNull InspectionProfile profile,
                        @NotNull final Project project,
                        @Nullable final Runnable postRunnable,
@@ -903,7 +913,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         @Override
         public void run() {
           if (commandName != null) {
-            NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message"), MessageType.INFO).notify(getProject());
+            NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message", scope.getFileCount(), scope.getDisplayName()), MessageType.INFO).notify(getProject());
           }
           if (postRunnable != null) {
             postRunnable.run();

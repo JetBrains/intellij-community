@@ -15,8 +15,21 @@
  */
 package com.intellij.openapi.diagnostic
 
+import com.intellij.openapi.progress.ProcessCanceledException
+
 inline fun Logger.debug(lazyMessage: () -> String) {
   if (isDebugEnabled) {
     debug(lazyMessage())
+  }
+}
+
+inline fun Logger.catchAndLog(runnable: () -> Unit) {
+  try {
+    runnable()
+  }
+  catch (e: ProcessCanceledException) {
+  }
+  catch (e: Throwable) {
+    error(e)
   }
 }

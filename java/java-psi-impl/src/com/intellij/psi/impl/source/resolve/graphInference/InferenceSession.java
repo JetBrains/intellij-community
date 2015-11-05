@@ -58,7 +58,7 @@ public class InferenceSession {
     }
   };
 
-  private static final Key<Map<PsiTypeParameter, String>> INFERENCE_FAILURE_MESSAGE = Key.create("FAILURE_MESSAGE");
+  private static final Key<List<String>> INFERENCE_FAILURE_MESSAGE = Key.create("FAILURE_MESSAGE");
   private static final String EQUALITY_CONSTRAINTS_PRESENTATION = "equality constraints";
   private static final String UPPER_BOUNDS_PRESENTATION = "upper bounds";
   private static final String LOWER_BOUNDS_PRESENTATION = "lower bounds";
@@ -431,7 +431,7 @@ public class InferenceSession {
     final Computable<JavaResolveResult> computableResolve = new Computable<JavaResolveResult>() {
       @Override
       public JavaResolveResult compute() {
-        return getResolveResult(callExpression, argumentList);
+        return getResolveResult(callExpression);
       }
     };
     MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
@@ -441,29 +441,33 @@ public class InferenceSession {
            : PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, false, computableResolve);
   }
 
-  public static JavaResolveResult getResolveResult(final PsiCall callExpression, final PsiExpressionList argumentList) {
+  public static JavaResolveResult getResolveResult(final PsiCall callExpression) {
     if (callExpression instanceof PsiNewExpression) {
-      final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)callExpression).getClassOrAnonymousClassReference();
-      if (classReference != null) {
-        PsiUtilCore.ensureValid(argumentList);
-        return CachedValuesManager.getCachedValue(classReference, new CachedValueProvider<JavaResolveResult>() {
-          @Nullable
-          @Override
-          public Result<JavaResolveResult> compute() {
-            final JavaResolveResult resolveResult = classReference.advancedResolve(false);
+      PsiUtilCore.ensureValid(callExpression);
+      return CachedValuesManager.getCachedValue(callExpression, new CachedValueProvider<JavaResolveResult>() {
+        @Nullable
+        @Override
+        public Result<JavaResolveResult> compute() {
+          final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)callExpression).getClassOrAnonymousClassReference();
+          JavaResolveResult constructor = JavaResolveResult.EMPTY;
+          JavaResolveResult resolveResult = null;
+          if (classReference != null) {
+            resolveResult = classReference.advancedResolve(false);
             final PsiElement psiClass = resolveResult.getElement();
-            JavaResolveResult constructor = JavaResolveResult.EMPTY;
             if (psiClass != null) {
               final JavaPsiFacade facade = JavaPsiFacade.getInstance(callExpression.getProject());
-              constructor = facade.getResolveHelper().resolveConstructor(facade.getElementFactory().createType((PsiClass)psiClass).rawType(), argumentList, callExpression);
+              final PsiExpressionList argumentList = callExpression.getArgumentList();
+              if (argumentList != null) {
+                constructor = facade.getResolveHelper().resolveConstructor(facade.getElementFactory().createType((PsiClass)psiClass).rawType(),
+                                                                           argumentList,
+                                                                           callExpression);
+              }
             }
-            return new Result<JavaResolveResult>(constructor.getElement() == null ? resolveResult : constructor, PsiModificationTracker.MODIFICATION_COUNT);
           }
-        });
-      }
-      else {
-        return JavaResolveResult.EMPTY;
-      }
+          return new Result<JavaResolveResult>(constructor.getElement() == null && resolveResult != null ? resolveResult : constructor,
+                                               PsiModificationTracker.MODIFICATION_COUNT);
+        }
+      });
     }
     return callExpression.resolveMethodGenerics();
   }
@@ -875,7 +879,7 @@ public class InferenceSession {
       final List<InferenceVariable> vars = InferenceVariablesOrder.resolveOrder(allVars, this);
       if (!myIncorporationPhase.hasCaptureConstraints(vars)) {
         PsiSubstitutor firstSubstitutor = resolveSubset(vars, substitutor);
-        if (firstSubstitutor != null && hasBoundProblems(vars, firstSubstitutor)) {
+        if (hasBoundProblems(vars, firstSubstitutor)) {
           firstSubstitutor = null;
         }
         if (firstSubstitutor != null) {
@@ -949,6 +953,19 @@ public class InferenceSession {
     return var.getName();
   }
 
+  private PsiSubstitutor resolveSubsetOrdered(Set<InferenceVariable> varsToResolve, PsiSubstitutor siteSubstitutor) {
+    PsiSubstitutor substitutor = siteSubstitutor;
+    final HashSet<InferenceVariable> copy = new HashSet<InferenceVariable>(varsToResolve);
+    while (!copy.isEmpty()) {
+      final List<InferenceVariable> vars = InferenceVariablesOrder.resolveOrder(copy, this);
+      final PsiSubstitutor resolveSubset = resolveSubset(vars, substitutor);
+      copy.removeAll(vars);
+      substitutor = substitutor.putAll(resolveSubset);
+    }
+    return substitutor;
+  }
+
+  @NotNull
   private PsiSubstitutor resolveSubset(Collection<InferenceVariable> vars, PsiSubstitutor substitutor) {
     for (InferenceVariable var : vars) {
       LOG.assertTrue(var.getInstantiation() == PsiType.NULL);
@@ -970,8 +987,8 @@ public class InferenceSession {
     if (eqBound != PsiType.NULL && (myErased || eqBound != null)) {
       if (lowerBound != PsiType.NULL && !TypeConversionUtil.isAssignable(eqBound, lowerBound)) {
         registerIncompatibleErrorMessage(
-          incompatibleBoundsMessage(var, substitutor, InferenceBound.EQ, EQUALITY_CONSTRAINTS_PRESENTATION, InferenceBound.LOWER, LOWER_BOUNDS_PRESENTATION),
-          var.getParameter());
+          incompatibleBoundsMessage(var, substitutor, InferenceBound.EQ, EQUALITY_CONSTRAINTS_PRESENTATION, InferenceBound.LOWER, LOWER_BOUNDS_PRESENTATION)
+        );
         return PsiType.NULL;
       } else {
         type = eqBound;
@@ -1000,7 +1017,7 @@ public class InferenceSession {
             incompatibleBoundsMessage = incompatibleBoundsMessage(var, substitutor, InferenceBound.LOWER, LOWER_BOUNDS_PRESENTATION, InferenceBound.UPPER, UPPER_BOUNDS_PRESENTATION);
           }
           if (incompatibleBoundsMessage != null) {
-            registerIncompatibleErrorMessage(incompatibleBoundsMessage, var.getParameter());
+            registerIncompatibleErrorMessage(incompatibleBoundsMessage);
             return PsiType.NULL;
           }
         }
@@ -1009,22 +1026,24 @@ public class InferenceSession {
     return type;
   }
 
-  private void registerIncompatibleErrorMessage(String value, PsiTypeParameter parameter) {
+  private void registerIncompatibleErrorMessage(String value) {
     if (myContext != null) {
-      Map<PsiTypeParameter, String> errorMessage = myContext.getUserData(INFERENCE_FAILURE_MESSAGE);
+      List<String> errorMessage = myContext.getUserData(INFERENCE_FAILURE_MESSAGE);
       if (errorMessage == null) {
-        errorMessage = new LinkedHashMap<PsiTypeParameter, String>();
+        errorMessage = Collections.synchronizedList(new ArrayList<String>());
         myContext.putUserData(INFERENCE_FAILURE_MESSAGE, errorMessage);
       }
-      errorMessage.put(parameter, value);
+      if (!errorMessage.contains(value)) {
+        errorMessage.add(value);
+      }
     }
   }
 
   @Nullable
-  public static String getInferenceErrorMessage(PsiElement context) {
-    final Map<PsiTypeParameter, String> errorsMap = context.getUserData(INFERENCE_FAILURE_MESSAGE);
-    if (errorsMap != null) {
-      return StringUtil.join(errorsMap.values(), "\n");
+  public static String getInferenceErrorMessage(@NotNull PsiElement context) {
+    final List<String> errors = context.getUserData(INFERENCE_FAILURE_MESSAGE);
+    if (errors != null) {
+      return StringUtil.join(errors, "\n");
     }
     return null;
   }
@@ -1173,10 +1192,7 @@ public class InferenceSession {
     }
 
     //resolve input variables
-    PsiSubstitutor substitutor = resolveSubset(varsToResolve, siteSubstitutor);
-    if (substitutor == null) {
-      return false;
-    }
+    PsiSubstitutor substitutor = resolveSubsetOrdered(varsToResolve, siteSubstitutor);
 
     if (myContext instanceof PsiCall) {
       PsiExpressionList argumentList = ((PsiCall)myContext).getArgumentList();
@@ -1327,8 +1343,6 @@ public class InferenceSession {
       }
     }
     else if (PsiMethodReferenceUtil.isResolvedBySecondSearch(reference, signature, varargs, isStatic, parameters.length)) { //instance methods
-      initBounds(containingClass.getTypeParameters());
-
       final PsiType pType = signature.getParameterTypes()[0];
 
       // 15.13.1 If the ReferenceType is a raw type, and there exists a parameterization of this type, T, that is a supertype of P1,
@@ -1344,6 +1358,7 @@ public class InferenceSession {
               return receiverSubstitutor;
             }
           }
+          mySiteSubstitutor = mySiteSubstitutor.putAll(receiverSubstitutor);
           psiSubstitutor = receiverSubstitutor;
         }
       }
@@ -1698,5 +1713,9 @@ public class InferenceSession {
       }
     }
     return null;
+  }
+
+  public void registerSiteSubstitutor(PsiSubstitutor substitutor) {
+    mySiteSubstitutor = mySiteSubstitutor.putAll(substitutor);
   }
 }

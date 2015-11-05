@@ -11,6 +11,7 @@ import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -81,14 +82,21 @@ public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
   @Override
   public PsiExpression replace(PsiExpression expression) {
     if (getExpression() != null) expression = getExpression();
-    final Project project = expression.getProject();
+    return replaceExpression(expression, getStringToReplace(), getReplaceByString());
+  }
+
+  @NotNull
+  public static PsiExpression replaceExpression(@NotNull PsiExpression expression,
+                                                String stringToReplace,
+                                                String replaceByString) {
+    Project project = expression.getProject();
     final ReplaceOptions options = new ReplaceOptions();
     final MatchOptions matchOptions = options.getMatchOptions();
     matchOptions.setFileType(StdFileTypes.JAVA);
     final Replacer replacer = new Replacer(project, null);
-    final String replacement = replacer.testReplace(expression.getText(), getStringToReplace(), getReplaceByString(), options);
+    final String replacement = replacer.testReplace(expression.getText(), stringToReplace, replaceByString, options);
     return (PsiExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(expression.replace(
-          JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(replacement, expression)));
+      JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(replacement, expression)));
   }
 
   @Override

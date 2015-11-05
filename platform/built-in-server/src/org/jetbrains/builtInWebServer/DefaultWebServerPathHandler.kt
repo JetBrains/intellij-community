@@ -15,29 +15,30 @@
  */
 package org.jetbrains.builtInWebServer
 
+import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.endsWithName
 import com.intellij.openapi.util.io.endsWithSlash
 import com.intellij.openapi.util.io.getParentPath
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtilRt
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.jetbrains.io.Responses
+import java.io.File
 
 private class DefaultWebServerPathHandler : WebServerPathHandler() {
   override fun process(path: String,
                        project: Project,
                        request: FullHttpRequest,
                        context: ChannelHandlerContext,
-                       projectName: String?,
+                       projectName: String,
                        decodedRawPath: String,
                        isCustomHost: Boolean): Boolean {
     val channel = context.channel()
     val pathToFileManager = WebServerPathToFileManager.getInstance(project)
     var pathInfo = pathToFileManager.pathToInfoCache.getIfPresent(path)
-    var indexUsed = false
     if (pathInfo == null || !pathInfo.isValid) {
       pathInfo = pathToFileManager.doFindByRelativePath(path)
       if (pathInfo == null) {
@@ -53,21 +54,29 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
       pathToFileManager.pathToInfoCache.put(path, pathInfo)
     }
 
+    var indexUsed = false
     if (pathInfo.isDirectory()) {
       if (!endsWithSlash(decodedRawPath)) {
-        redirectToDirectory(request, channel, if (isCustomHost) path else ("$projectName/$path"))
+        redirectToDirectory(request, channel, if (isCustomHost) path else "$projectName/$path")
         return true
       }
 
-      var virtualFile = pathInfo.file ?: LocalFileSystem.getInstance().refreshAndFindFileByIoFile(pathInfo.ioFile!!)
-      virtualFile = if (virtualFile == null) null else findIndexFile(virtualFile)
-      if (virtualFile == null) {
+      var indexVirtualFile: VirtualFile? = null
+      var indexFile: File? = null
+      if (pathInfo.file == null) {
+        indexFile = findIndexFile(pathInfo.ioFile!!)
+      }
+      else {
+        indexVirtualFile = findIndexFile(pathInfo.file!!)
+      }
+
+      if (indexFile == null && indexVirtualFile == null) {
         Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, "Index file doesn't exist.", request)
         return true
       }
 
       indexUsed = true
-      pathInfo = PathInfo(null, virtualFile, pathInfo.root, pathInfo.moduleName, pathInfo.isLibrary)
+      pathInfo = PathInfo(indexFile, indexVirtualFile, pathInfo.root, pathInfo.moduleName, pathInfo.isLibrary)
       pathToFileManager.pathToInfoCache.put(path, pathInfo)
     }
 
@@ -79,30 +88,18 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
         // FallbackResource feature in action, /login requested, /index.php retrieved, we must not redirect /login to /login/
         val parentPath = getParentPath(pathInfo.path)
         if (parentPath != null && endsWithName(path, PathUtilRt.getFileName(parentPath))) {
-          redirectToDirectory(request, channel, if (isCustomHost) path else ("$projectName/$path"))
+          redirectToDirectory(request, channel, if (isCustomHost) path else "$projectName/$path")
           return true
         }
       }
     }
 
-    val canonicalRequestPath = StringBuilder()
-    canonicalRequestPath.append('/')
-    if (!isCustomHost) {
-      canonicalRequestPath.append(projectName).append('/')
-    }
-    canonicalRequestPath.append(path)
-    if (indexUsed) {
-      canonicalRequestPath.append('/').append(pathInfo.name)
-    }
-
+    val canonicalPath = if (indexUsed) "$path/${pathInfo.name}" else path
     for (fileHandler in WebServerFileHandler.EP_NAME.extensions) {
-      try {
-        if (fileHandler.process(pathInfo, canonicalRequestPath, project, request, channel, isCustomHost)) {
+      LOG.catchAndLog {
+        if (fileHandler.process(pathInfo, canonicalPath, project, request, channel, if (isCustomHost) null else projectName)) {
           return true
         }
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
       }
     }
     return false

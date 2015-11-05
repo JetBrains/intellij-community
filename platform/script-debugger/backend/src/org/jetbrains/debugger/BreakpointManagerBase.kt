@@ -15,6 +15,7 @@
  */
 package org.jetbrains.debugger
 
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
@@ -48,16 +49,22 @@ abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager 
 
   protected abstract fun doSetBreakpoint(target: BreakpointTarget, breakpoint: T): Promise<out Breakpoint>
 
-  override final fun setBreakpoint(target: BreakpointTarget, line: Int, column: Int, condition: String?, ignoreCount: Int, enabled: Boolean): Breakpoint {
+  override final fun setBreakpoint(target: BreakpointTarget, line: Int, column: Int, condition: String?, ignoreCount: Int, enabled: Boolean, promiseRef: Ref<Promise<out Breakpoint>>?): Breakpoint {
     val breakpoint = createBreakpoint(target, line, column, condition, ignoreCount, enabled)
     val existingBreakpoint = breakpointDuplicationByTarget.putIfAbsent(breakpoint, breakpoint)
     if (existingBreakpoint != null) {
+      promiseRef?.set(resolvedPromise(breakpoint))
       return existingBreakpoint
     }
 
     breakpoints.add(breakpoint)
     if (enabled) {
-      doSetBreakpoint(target, breakpoint).rejected { dispatcher.multicaster.errorOccurred(breakpoint, it.message ?: it.toString()) }
+      val promise = doSetBreakpoint(target, breakpoint)
+        .rejected { dispatcher.multicaster.errorOccurred(breakpoint, it.message ?: it.toString()) }
+      promiseRef?.set(promise)
+    }
+    else {
+      promiseRef?.set(resolvedPromise(breakpoint))
     }
     return breakpoint
   }
@@ -107,7 +114,7 @@ class DummyBreakpointManager : BreakpointManager {
   override val breakpoints: Iterable<Breakpoint>
     get() = emptyList()
 
-  override fun setBreakpoint(target: BreakpointTarget, line: Int, column: Int, condition: String?, ignoreCount: Int, enabled: Boolean): Breakpoint {
+  override fun setBreakpoint(target: BreakpointTarget, line: Int, column: Int, condition: String?, ignoreCount: Int, enabled: Boolean, promiseRef: Ref<Promise<out Breakpoint>>?): Breakpoint {
     throw UnsupportedOperationException()
   }
 

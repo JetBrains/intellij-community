@@ -201,13 +201,11 @@ public class ChooseActionsDialog extends DialogWrapper {
   }
 
   private void filterTreeByShortcut(Shortcut shortcut) {
-    if (shortcut != null) {
-      if (!myTreeExpansionMonitor.isFreeze()) myTreeExpansionMonitor.freeze();
-      myActionsTree.reset(myKeymap, myQuicklists);
-      myActionsTree.filterTree(shortcut, myQuicklists);
-      final JTree tree = myActionsTree.getTree();
-      TreeUtil.expandAll(tree);
-    }
+    if (!myTreeExpansionMonitor.isFreeze()) myTreeExpansionMonitor.freeze();
+    myActionsTree.reset(myKeymap, myQuicklists);
+    myActionsTree.filterTree(shortcut, myQuicklists);
+    final JTree tree = myActionsTree.getTree();
+    TreeUtil.expandAll(tree);
   }
 
   public void dispose() {

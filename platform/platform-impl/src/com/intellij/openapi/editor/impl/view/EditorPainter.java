@@ -584,14 +584,13 @@ class EditorPainter implements TextDrawingCallback {
       }
     }
     else {
-      int maxWidth = myView.getMaxWidthInLineRange(startPosition.line, endPosition.line, null) - 1;
-      TFloatArrayList leadingRanges = adjustedLogicalRangeToVisualRanges(startOffset, 
-                                                                         myView.visualPositionToOffset(new VisualPosition(
-                                                                           startPosition.line, Integer.MAX_VALUE, true)));
-      TFloatArrayList trailingRanges = adjustedLogicalRangeToVisualRanges(myView.visualPositionToOffset(new VisualPosition(endPosition.line,
-                                                                                                                           0)),
-                                                                          endOffset);
+      TFloatArrayList leadingRanges = adjustedLogicalRangeToVisualRanges(
+        startOffset, myView.visualPositionToOffset(new VisualPosition(startPosition.line, Integer.MAX_VALUE, true)));
+      TFloatArrayList trailingRanges = adjustedLogicalRangeToVisualRanges(
+        myView.visualPositionToOffset(new VisualPosition(endPosition.line, 0)), endOffset);
       if (!leadingRanges.isEmpty() && !trailingRanges.isEmpty()) {
+        int maxWidth = Math.max(myView.getMaxWidthInLineRange(startPosition.line, endPosition.line - 1, null) - 1,
+                                (int)trailingRanges.get(trailingRanges.size() - 1));
         boolean containsInnerLines = endPosition.line > startPosition.line + 1;
         int leadingTopY = myView.visualLineToY(startPosition.line);
         int leadingBottomY = leadingTopY + lineHeight;
@@ -691,31 +690,37 @@ class EditorPainter implements TextDrawingCallback {
   private TFloatArrayList logicalRangeToVisualRanges(int startOffset, int endOffset) {
     assert startOffset <= endOffset;
     TFloatArrayList result = new TFloatArrayList();
-    for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, startOffset, false, null)) {
-      int minOffset = fragment.getMinOffset();
-      int maxOffset = fragment.getMaxOffset();
-      if (startOffset == endOffset) {
-        if (startOffset >= minOffset && startOffset <= maxOffset) {
-          float x = fragment.offsetToX(startOffset);
-          result.add(x);
-          result.add(x);
-          break;
+    if (myDocument.getTextLength() == 0) {
+      result.add(0);
+      result.add(0);
+    }
+    else {
+      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, startOffset, false, null)) {
+        int minOffset = fragment.getMinOffset();
+        int maxOffset = fragment.getMaxOffset();
+        if (startOffset == endOffset) {
+          if (startOffset >= minOffset && startOffset <= maxOffset) {
+            float x = fragment.offsetToX(startOffset);
+            result.add(x);
+            result.add(x);
+            break;
+          }
         }
-      }
-      else if (startOffset < maxOffset && endOffset > minOffset) {
-        float x1 = fragment.offsetToX(Math.max(minOffset, startOffset));
-        float x2 = fragment.offsetToX(Math.min(maxOffset, endOffset));
-        if (x1 > x2) {
-          float tmp = x1;
-          x1 = x2;
-          x2 = tmp;
-        }
-        if (result.isEmpty() || x1 > result.get(result.size() - 1)) {
-          result.add(x1);
-          result.add(x2);
-        }
-        else {
-          result.set(result.size() - 1, x2);
+        else if (startOffset < maxOffset && endOffset > minOffset) {
+          float x1 = fragment.offsetToX(Math.max(minOffset, startOffset));
+          float x2 = fragment.offsetToX(Math.min(maxOffset, endOffset));
+          if (x1 > x2) {
+            float tmp = x1;
+            x1 = x2;
+            x2 = tmp;
+          }
+          if (result.isEmpty() || x1 > result.get(result.size() - 1)) {
+            result.add(x1);
+            result.add(x2);
+          }
+          else {
+            result.set(result.size() - 1, x2);
+          }
         }
       }
     }

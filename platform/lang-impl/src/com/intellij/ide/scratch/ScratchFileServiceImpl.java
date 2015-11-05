@@ -47,6 +47,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.LanguageSubstitutor;
+import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.PairConsumer;
@@ -189,13 +190,6 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     protected Language handleUnknownMapping(VirtualFile file, String value) {
       return PlainTextLanguage.INSTANCE;
     }
-
-    @Nullable
-    @Override
-    public Language getMapping(@Nullable VirtualFile file) {
-      Language fromMapping = super.getMapping(file);
-      return fromMapping != null ? fromMapping : ScratchFileType.getOriginalLanguage(file);
-    }
   }
 
   public static class TypeFactory extends FileTypeFactory {
@@ -210,9 +204,17 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     @Nullable
     @Override
     public Language getLanguage(@NotNull VirtualFile file, @NotNull Project project) {
+      return substituteLanguage(project, file);
+    }
+
+    @Nullable
+    public static Language substituteLanguage(@NotNull Project project, @NotNull VirtualFile file) {
       RootType rootType = ScratchFileService.getInstance().getRootType(file);
       if (rootType == null) return null;
-      return rootType.substituteLanguage(project, file);
+      Language language = rootType.substituteLanguage(project, file);
+      Language adjusted = language != null ? language : getLanguageByFileName(file);
+      return adjusted != null && adjusted != ScratchFileType.INSTANCE.getLanguage() ?
+             LanguageSubstitutors.INSTANCE.substituteLanguage(adjusted, file, project) : adjusted;
     }
   }
 
@@ -221,14 +223,9 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     @Nullable
     public SyntaxHighlighter create(@NotNull FileType fileType, @Nullable Project project, @Nullable VirtualFile file) {
       if (project == null || file == null || !(fileType instanceof ScratchFileType)) return null;
-      RootType rootType = ScratchFileService.getInstance().getRootType(file);
-      if (rootType == null) return null;
-      Language language = rootType.substituteLanguage(project, file);
-      SyntaxHighlighter highlighter = language == null ? null : SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file);
-      if (highlighter != null) return highlighter;
-      FileType originalFileType = ScratchFileType.getOriginalFileType(file);
-      highlighter = originalFileType == null ? null : SyntaxHighlighterFactory.getSyntaxHighlighter(originalFileType, project, file);
-      return highlighter;
+
+      Language language = ScratchUtil.getLanguage(project, file);
+      return language == null ? null : SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file);
     }
   }
 
@@ -316,5 +313,10 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     finally {
       token.finish();
     }
+  }
+
+  @Nullable
+  private static Language getLanguageByFileName(@Nullable VirtualFile file) {
+    return file == null ? null : LanguageUtil.getFileTypeLanguage(FileTypeManager.getInstance().getFileTypeByFileName(file.getName()));
   }
 }

@@ -31,7 +31,7 @@ import com.intellij.xdebugger.frame.presentation.XKeywordValuePresentation
 import com.intellij.xdebugger.frame.presentation.XNumericValuePresentation
 import com.intellij.xdebugger.frame.presentation.XStringValuePresentation
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
-import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.*
 import org.jetbrains.debugger.values.*
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -77,7 +77,7 @@ class VariableView(name: String, private val variable: Variable, private val con
             computePresentation(it.value, node)
           }
         }
-        .rejected(node) { setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(null, it.getMessage()), it.getMessage(), node) }
+        .rejected(node) { setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(null, it.message), it.message, node) }
       return
     }
 
@@ -473,7 +473,7 @@ private fun createNumberPresentation(value: String): XValuePresentation {
 private fun createErrorMessageConsumer(callback: XValueCallback): Consumer<Throwable> {
   return object : Consumer<Throwable> {
     override fun consume(error: Throwable) {
-      callback.errorOccurred(error.getMessage()!!)
+      callback.errorOccurred(error.message!!)
     }
   }
 }

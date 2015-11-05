@@ -17,6 +17,8 @@ package com.intellij.util;
 
 import junit.framework.TestCase;
 
+import java.util.Arrays;
+
 /**
  * @author Sergey.Malenkov
  */
@@ -66,5 +68,21 @@ public class ArrayUtilTest extends TestCase {
     for (int i = 0; i < actual.length; i++) {
       assertEquals(expected[i], actual[i]);
     }
+  }
+
+  private static void assertArrayEquals(int[] expected, int[] actual) {
+    assertTrue(Arrays.equals(expected, actual));
+  }
+
+  public void testReverse() throws Exception {
+    checkArrayReverse(new int[]{}, new int[]{});
+    checkArrayReverse(new int[]{1}, new int[]{1});
+    checkArrayReverse(new int[]{1, 2, 3, 4}, new int[]{4, 3, 2, 1});
+    checkArrayReverse(new int[]{1, 2, 3, 4, 5}, new int[]{5, 4, 3, 2, 1});
+  }
+
+  private static void checkArrayReverse(int[] array, int[] expectedReversedArray) {
+    int[] reversed = ArrayUtil.reverseArray(array);
+    assertArrayEquals(expectedReversedArray, reversed);
   }
 }

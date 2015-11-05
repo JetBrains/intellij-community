@@ -34,6 +34,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -122,6 +123,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   @SuppressWarnings("SpellCheckingInspection")
   public static final String PYDEV_PYDEVCONSOLE_PY = "pydev/pydevconsole.py";
   public static final int PORTS_WAITING_TIMEOUT = 20000;
+  private static final String CONSOLE_FEATURE = "python.console";
 
   @NotNull
   private Sdk mySdk;
@@ -376,7 +378,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
             try {
               initAndRun(myStatementsToExecute);
             }
-            catch (ExecutionException e) {
+            catch (Exception e) {
               LOG.warn("Error running console", e);
               assert myProject != null;
               ExecutionHelper.showErrors(myProject, Arrays.<Exception>asList(e), getTitle(), null);
@@ -444,6 +446,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     if (PySdkUtil.isRemote(mySdk)) {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
+        UsageTrigger.trigger(CONSOLE_FEATURE + ".remote");
         return createRemoteConsoleProcess(manager, myGeneralCommandLine.getParametersList().getArray(),
                                           myGeneralCommandLine.getEnvironment(), myGeneralCommandLine.getWorkDirectory());
       }
@@ -454,6 +457,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       Map<String, String> envs = myGeneralCommandLine.getEnvironment();
       EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, myGeneralCommandLine.getCharset());
 
+      UsageTrigger.trigger(CONSOLE_FEATURE + ".local");
       final Process server = myGeneralCommandLine.createProcess();
 
       try {

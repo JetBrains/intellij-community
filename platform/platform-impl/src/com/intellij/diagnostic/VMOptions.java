@@ -22,7 +22,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
@@ -155,15 +154,11 @@ public class VMOptions {
   }
 
   @Nullable
-  private static File getReadFile() {
+  public static File getReadFile() {
     if (ourTestPath != null) {
       return new File(ourTestPath);
     }
-
-    File custom = getCustomFile(true);
-    if (custom != null) return custom;
-
-    return getDefaultFile();
+    return getFile(false);
   }
 
   @Nullable
@@ -172,65 +167,40 @@ public class VMOptions {
       return new File(ourTestPath);
     }
 
-    File custom = getCustomFile(false);
-    if (custom != null) return custom;
-
-    return getDefaultFile();
+    return getFile(true);
   }
 
   @Nullable
-  public static File getDefaultFile() {
-    final File f = new File(doGetSettingsFilePath(false)).getAbsoluteFile();
-    if (!f.exists()) return null;
-
-    try {
-      return f.getCanonicalFile();
-    }
-    catch (IOException e) {
-      LOG.debug(e);
-      return f;
-    }
-  }
-
-  @Nullable
-  public static File getCustomFile(boolean ifExists) {
-    if (!SystemInfo.isMac) return null;
-
-    final File f = new File(doGetSettingsFilePath(true)).getAbsoluteFile();
-    if (!f.exists()) {
-      if (ifExists) return null;
-      return f;
-    }
-
-    try {
-      return f.getCanonicalFile();
-    }
-    catch (IOException e) {
-      LOG.debug(e);
-      return f;
-    }
-  }
-
-  @NotNull
-  private static String doGetSettingsFilePath(boolean customLocation) {
+  private static File getFile(boolean isWriteAccess) {
     final String vmOptionsFile = System.getProperty("jb.vmOptionsFile");
     if (!StringUtil.isEmptyOrSpaces(vmOptionsFile)) {
-      return vmOptionsFile;
-    }
-
-    if (SystemInfo.isMac) {
-      if (customLocation) {
-        return PathManager.getConfigPath() + "/idea.vmoptions";
-      }
-      else {
-        return PathManager.getBinPath() + "/idea.vmoptions";
-      }
+      return new File(vmOptionsFile);
     }
 
     final String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
     final String platformSuffix = SystemInfo.is64Bit ? "64" : "";
     final String osSuffix = SystemInfo.isWindows ? ".exe" : "";
-    return PathManager.getBinPath() + File.separatorChar + productName + platformSuffix + osSuffix + ".vmoptions";
+    final File binFile = new File(PathManager.getBinPath() + File.separatorChar + productName + platformSuffix + osSuffix + ".vmoptions");
+
+    if (SystemInfo.isMac) {
+      File customFile = new File(FileUtil.expandUserHome(PathManager.getConfigPath() + "/" + productName + ".vmoptions"));
+      if (customFile.exists()) return customFile;
+      if (!customFile.exists() && isWriteAccess && binFile.exists()) {
+        copyVmFile(binFile, customFile);
+        return customFile;
+      }
+    }
+
+    return binFile.exists() ? binFile : null;
+  }
+
+  private static void copyVmFile(File binFile, File customFile) {
+    try {
+      FileUtil.copy(binFile, customFile);
+    }
+    catch (IOException e) {
+      LOG.debug(e);
+    }
   }
 
   private static String ourTestPath;

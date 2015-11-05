@@ -18,7 +18,6 @@ package org.jetbrains.io;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.net.NetUtils;
@@ -30,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class BuiltInServer implements Disposable {
   // Some antiviral software detect viruses by the fact of accessing these ports so we should not touch them to appear innocent.
@@ -75,7 +76,13 @@ public class BuiltInServer implements Disposable {
                                     int portsCount,
                                     boolean tryAnyPort,
                                     @Nullable NotNullProducer<ChannelHandler> handler) throws Exception {
-    return start(new NioEventLoopGroup(workerCount, ConcurrencyUtil.newNamedThreadFactory("Netty Builtin Server")), true, firstPort, portsCount, tryAnyPort, handler);
+    return start(new NioEventLoopGroup(workerCount, new ThreadFactory() {
+      private final AtomicInteger counter = new AtomicInteger();
+      @Override
+      public Thread newThread(Runnable r) {
+        return new Thread(r, "Netty Builtin Server " + counter.incrementAndGet());
+      }
+    }), true, firstPort, portsCount, tryAnyPort, handler);
   }
 
   @NotNull

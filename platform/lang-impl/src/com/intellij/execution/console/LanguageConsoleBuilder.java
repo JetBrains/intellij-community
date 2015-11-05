@@ -124,7 +124,7 @@ public final class LanguageConsoleBuilder {
   private void doInitAction(@NotNull LanguageConsoleView console, @NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType) {
     ConsoleExecuteAction action = new ConsoleExecuteAction(console, executeActionHandler, executionEnabled);
     action.registerCustomShortcutSet(action.getShortcutSet(), console.getConsoleEditor().getComponent());
-    new ConsoleHistoryController(historyType, null, console).install();
+    new ConsoleHistoryController(new MyConsoleRootType(historyType), null, console).install();
   }
 
   /**
@@ -144,7 +144,7 @@ public final class LanguageConsoleBuilder {
 
     ConsoleExecuteAction action = new ConsoleExecuteAction(console, handler, enabledCondition);
     action.registerCustomShortcutSet(action.getShortcutSet(), console.getConsoleEditor().getComponent());
-    new ConsoleHistoryController(historyType, historyPersistenceId, console).install();
+    new ConsoleHistoryController(new MyConsoleRootType(historyType), historyPersistenceId, console).install();
     return action;
   }
 
@@ -178,7 +178,7 @@ public final class LanguageConsoleBuilder {
 
   @NotNull
   public LanguageConsoleView build(@NotNull Project project, @NotNull Language language) {
-    GutteredLanguageConsole consoleView = new GutteredLanguageConsole(language.getDisplayName() + " Console", project, language, gutterContentProvider, psiFileFactory);
+    GutteredLanguageConsole consoleView = new GutteredLanguageConsole(new MyHelper(project, language.getDisplayName() + " Console", language, psiFileFactory), gutterContentProvider);
     if (oneLineInput) {
       consoleView.getConsoleEditor().setOneLineMode(true);
     }
@@ -199,23 +199,37 @@ public final class LanguageConsoleBuilder {
     return consoleView;
   }
 
+  private static class MyHelper extends LanguageConsoleImpl.Helper {
+    private final PairFunction<VirtualFile, Project, PsiFile> psiFileFactory;
+
+    GutteredLanguageConsole console;
+
+    public MyHelper(@NotNull  Project project, @NotNull String title, @NotNull Language language, @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
+      super(project, new LightVirtualFile(title, language, ""));
+      this.psiFileFactory = psiFileFactory;
+    }
+
+    @NotNull
+    @Override
+    public PsiFile getFile() {
+      return psiFileFactory == null ? super.getFile() : psiFileFactory.fun(virtualFile, project);
+    }
+
+    @Override
+    public void setupEditor(@NotNull EditorEx editor) {
+      super.setupEditor(editor);
+
+      console.setupEditor(editor);
+    }
+  }
+
   private final static class GutteredLanguageConsole extends LanguageConsoleImpl {
     private final GutterContentProvider gutterContentProvider;
 
-    public GutteredLanguageConsole(@NotNull String title,
-                                   @NotNull Project project,
-                                   @NotNull Language language,
-                                   @Nullable GutterContentProvider gutterContentProvider,
-                                   @Nullable final PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
-      super(new Helper(project, new LightVirtualFile(title, language, "")) {
-        @NotNull
-        @Override
-        public PsiFile getFile() {
-          return psiFileFactory == null ? super.getFile() : psiFileFactory.fun(virtualFile, project);
-        }
+    public GutteredLanguageConsole(@NotNull MyHelper helper, @Nullable GutterContentProvider gutterContentProvider) {
+      super(helper);
 
-      });
-
+      helper.console = this;
       this.gutterContentProvider = gutterContentProvider == null ? new BasicGutterContentProvider() : gutterContentProvider;
     }
 
@@ -229,10 +243,7 @@ public final class LanguageConsoleBuilder {
       return 1;
     }
 
-    @Override
-    protected void setupEditorDefault(@NotNull EditorEx editor) {
-      super.setupEditorDefault(editor);
-
+    void setupEditor(@NotNull EditorEx editor) {
       if (editor == getConsoleEditor()) {
         return;
       }
@@ -441,6 +452,12 @@ public final class LanguageConsoleBuilder {
           gutterSizeUpdater = null;
         }
       }
+    }
+  }
+
+  private static class MyConsoleRootType extends ConsoleRootType {
+    public MyConsoleRootType(String historyType) {
+      super(historyType, null);
     }
   }
 }

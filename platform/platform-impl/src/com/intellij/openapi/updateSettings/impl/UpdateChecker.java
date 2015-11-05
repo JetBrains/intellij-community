@@ -332,7 +332,9 @@ public final class UpdateChecker {
 
     String pluginVersion = downloader.getPluginVersion();
     IdeaPluginDescriptor installedPlugin = PluginManager.getPlugin(PluginId.getId(pluginId));
-    if (installedPlugin == null || pluginVersion == null || PluginDownloader.compareVersionsSkipBroken(installedPlugin, pluginVersion) > 0) {
+    if (installedPlugin == null ||
+        pluginVersion == null ||
+        PluginDownloader.compareVersionsSkipBrokenAndIncompatible(installedPlugin, pluginVersion) > 0) {
       IdeaPluginDescriptor descriptor;
 
       PluginDownloader oldDownloader = ourUpdatedPlugins.get(pluginId);
@@ -351,7 +353,7 @@ public final class UpdateChecker {
       }
 
       if (descriptor != null &&
-          !PluginManagerCore.isIncompatible(descriptor, downloader.getBuildNumber()) &&
+          PluginManagerCore.isCompatible(descriptor, downloader.getBuildNumber()) &&
           !state.wasUpdated(descriptor.getPluginId())) {
         toUpdate.put(PluginId.getId(pluginId), downloader);
       }

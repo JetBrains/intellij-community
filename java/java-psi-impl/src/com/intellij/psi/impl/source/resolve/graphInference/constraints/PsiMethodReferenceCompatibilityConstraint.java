@@ -22,7 +22,10 @@ import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfacePa
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -164,13 +167,6 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       }
       LOG.assertTrue(referencedMethodReturnType != null, method);
 
-      if (!PsiTreeUtil.isContextAncestor(containingClass, myExpression, false) ||
-          PsiUtil.getEnclosingStaticElement(myExpression, containingClass) != null) {
-        session.initBounds(myExpression, containingClass.getTypeParameters());
-      }
-
-      session.initBounds(myExpression, method.getTypeParameters());
-
       //if i) the method reference elides NonWildTypeArguments, 
       //  ii) the compile-time declaration is a generic method, and 
       // iii) the return type of the compile-time declaration mentions at least one of the method's type parameters;
@@ -179,6 +175,8 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         LOG.assertTrue(interfaceClass != null);
         if (PsiPolyExpressionUtil.mentionsTypeParameters(referencedMethodReturnType,
                                                          ContainerUtil.newHashSet(method.getTypeParameters()))) {
+          session.registerSiteSubstitutor(psiSubstitutor);
+          session.initBounds(myExpression, method.getTypeParameters());
           //the constraint reduces to the bound set B3 which would be used to determine the method reference's invocation type 
           //when targeting the return type of the function type, as defined in 18.5.2.
           session.collectApplicabilityConstraints(myExpression, ((MethodCandidateInfo)resolve), groundTargetType);
@@ -198,8 +196,11 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         }
       }
 
-      final PsiType capturedReturnType = PsiImplUtil.normalizeWildcardTypeByPosition(psiSubstitutor.substitute(referencedMethodReturnType),
-                                                                                     myExpression);
+      if (myExpression.isConstructor() && PsiUtil.isRawSubstitutor(containingClass, qualifierResolveResult.getSubstitutor())) {
+        session.initBounds(myExpression, containingClass.getTypeParameters());
+      }
+
+      final PsiType capturedReturnType = PsiImplUtil.normalizeWildcardTypeByPosition(psiSubstitutor.substitute(referencedMethodReturnType), myExpression);
       constraints.add(new TypeCompatibilityConstraint(returnType, session.substituteWithInferenceVariables(capturedReturnType)));
     }
     

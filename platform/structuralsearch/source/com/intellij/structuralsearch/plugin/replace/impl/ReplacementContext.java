@@ -43,7 +43,7 @@ public class ReplacementContext {
       for (String s : variableMap.keySet()) {
         final MatchResult matchResult = replacementInfo.getVariableMap().get(s);
         PsiElement match = matchResult.getMatchRef() != null ? matchResult.getMatch() : null;
-        if (StructuralSearchUtil.isIdentifier(match)) match = match.getParent();
+        match = StructuralSearchUtil.getParentIfIdentifier(match);
 
         if (match instanceof PsiNamedElement) {
           final String name = ((PsiNamedElement)match).getName();

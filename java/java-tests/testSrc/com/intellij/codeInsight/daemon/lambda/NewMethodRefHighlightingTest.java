@@ -442,6 +442,10 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testContainingClassTypeParametersShouldNotBeInferredDuringMethodReferenceProcessing() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

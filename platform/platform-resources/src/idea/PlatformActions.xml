@@ -462,17 +462,17 @@
         <action id="GotoAction" class="com.intellij.ide.actions.GotoActionAction"/>
         <separator/>
         <action id="HelpTopics" class="com.intellij.ide.actions.HelpTopicsAction" icon="AllIcons.Actions.Help"/>
+        <action id="OnlineDocAction" class="com.intellij.ide.actions.OnlineDocAction"/>
+        <action id="Help.KeymapReference" class="com.intellij.ide.actions.RefCardAction" icon="AllIcons.General.DefaultKeymap"/>
+        <action id="Help.JetBrainsTV" class="com.intellij.ide.actions.JetBrainsTvAction"/>
         <action id="ShowTips" class="com.intellij.ide.actions.ShowTipsAction"/>
+        <separator/>
         <action id="ProductivityGude" class="com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsAction"/>
         <separator/>
         <action id="TechnicalSupport" class="com.intellij.ide.actions.TechnicalSupportAction"/>
         <action id="SendFeedback" class="com.intellij.ide.actions.SendFeedbackAction"/>
-        <action id="LogDebugConfigure" class="com.intellij.ide.actions.DebugLogConfigureAction"/>
         <action id="ShowLog" class="com.intellij.ide.actions.ShowLogAction"/>
-        <separator/>
-        <action id="OnlineDocAction" class="com.intellij.ide.actions.OnlineDocAction"/>
-        <action id="Help.KeymapReference" class="com.intellij.ide.actions.RefCardAction" icon="AllIcons.General.DefaultKeymap"/>
-        <action id="Help.JetBrainsTV" class="com.intellij.ide.actions.JetBrainsTvAction"/>
+        <action id="LogDebugConfigure" class="com.intellij.ide.actions.DebugLogConfigureAction"/>
         <separator/>
         <action id="CheckForUpdate" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction"/>
         <action id="About" class="com.intellij.ide.actions.AboutAction"/>

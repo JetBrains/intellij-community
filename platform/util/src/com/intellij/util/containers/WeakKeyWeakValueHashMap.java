@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,115 +15,36 @@
  */
 package com.intellij.util.containers;
 
-import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.Map;
 
-public final class WeakKeyWeakValueHashMap<K,V> implements Map<K,V>{
-  private final WeakHashMap<K, ValueReference<K,V>> myWeakKeyMap = new WeakHashMap<K, ValueReference<K, V>>();
-  private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
+public final class WeakKeyWeakValueHashMap<K,V> extends RefKeyRefValueHashMap<K,V> implements Map<K,V>{
+  public WeakKeyWeakValueHashMap() {
+    super(new WeakHashMap<K, ValueReference<K, V>>());
+  }
 
-  private static class ValueReference<K,V> extends WeakReference<V> {
+  private static class WeakValueReference<K,V> extends WeakReference<V> implements ValueReference<K,V> {
     @NotNull private final WeakHashMap.Key<K> key;
 
-    private ValueReference(@NotNull WeakHashMap.Key<K> key, V referent, ReferenceQueue<? super V> q) {
+    private WeakValueReference(@NotNull WeakHashMap.Key<K> key, V referent, ReferenceQueue<? super V> q) {
       super(referent, q);
       this.key = key;
     }
-  }
 
-  // returns true if some refs were tossed
-  boolean processQueue() {
-    boolean processed = myWeakKeyMap.processQueue();
-    while(true) {
-      ValueReference<K,V> ref = (ValueReference<K, V>)myQueue.poll();
-      if (ref == null) break;
-      WeakHashMap.Key<K> weakKey = ref.key;
-      myWeakKeyMap.removeKey(weakKey);
-      processed = true;
+    @NotNull
+    @Override
+    public RefHashMap.Key<K> getKey() {
+      return key;
     }
-    return processed;
   }
 
   @Override
-  public V get(Object key) {
-    ValueReference<K,V> ref = myWeakKeyMap.get(key);
-    return SoftReference.dereference(ref);
-  }
-
-  @Override
-  public V put(K key, V value) {
-    processQueue();
-    WeakHashMap.Key<K> weakKey = myWeakKeyMap.createKey(key);
-    ValueReference<K, V> reference = new ValueReference<K, V>(weakKey, value, myQueue);
-    ValueReference<K,V> oldRef = myWeakKeyMap.putKey(weakKey, reference);
-    return SoftReference.dereference(oldRef);
-  }
-
-  @Override
-  public V remove(Object key) {
-    processQueue();
-    ValueReference<K,V> ref = myWeakKeyMap.remove(key);
-    return SoftReference.dereference(ref);
-  }
-
-  @Override
-  public void putAll(@NotNull Map<? extends K, ? extends V> t) {
-    throw new RuntimeException("method not implemented");
-  }
-
-  @Override
-  public void clear() {
-    myWeakKeyMap.clear();
-    processQueue();
-  }
-
-  @Override
-  public int size() {
-    return myWeakKeyMap.size(); //?
-  }
-
-  @Override
-  public boolean isEmpty() {
-    return myWeakKeyMap.isEmpty(); //?
-  }
-
-  @Override
-  public boolean containsKey(Object key) {
-    return get(key) != null;
-  }
-
-  @Override
-  public boolean containsValue(Object value) {
-    throw new RuntimeException("method not implemented");
-  }
-
-  @NotNull
-  @Override
-  public Set<K> keySet() {
-    return myWeakKeyMap.keySet();
-  }
-
-  @NotNull
-  @Override
-  public Collection<V> values() {
-    List<V> result = new ArrayList<V>();
-    final Collection<ValueReference<K, V>> refs = myWeakKeyMap.values();
-    for (ValueReference<K, V> ref : refs) {
-      final V value = ref.get();
-      if (value != null) {
-        result.add(value);
-      }
-    }
-    return result;
-  }
-
-  @NotNull
-  @Override
-  public Set<Entry<K, V>> entrySet() {
-    throw new RuntimeException("method not implemented");
+  protected ValueReference<K, V> createValueReference(@NotNull RefHashMap.Key<K> key,
+                                                      V referent,
+                                                      ReferenceQueue<? super V> q) {
+    return new WeakValueReference<K, V>(key, referent, q);
   }
 }

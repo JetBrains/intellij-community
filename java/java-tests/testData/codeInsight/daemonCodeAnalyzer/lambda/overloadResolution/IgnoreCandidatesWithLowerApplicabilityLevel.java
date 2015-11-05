@@ -16,7 +16,7 @@ class MyTest<T> {
       return this;
     }
 
-    public Builder<E> add(E... elements) {
+    public Builder<E> add(E... <warning descr="Parameter 'elements' is never used">elements</warning>) {
       return this;
     }
   }

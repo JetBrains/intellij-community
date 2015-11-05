@@ -49,7 +49,7 @@ class PyConsoleSourceHighlighter {
     myLexer.start(text, 0, text.length(), getLexerState());
     while (hasNext()) {
       Pair<String, ConsoleViewContentType> pair = next();
-      myPythonConsoleView.print(pair.first, pair.second);
+      myPythonConsoleView.printText(pair.first, pair.second);
     }
   }
 

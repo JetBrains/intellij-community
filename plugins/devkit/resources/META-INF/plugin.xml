@@ -11,6 +11,7 @@
   <vendor>JetBrains</vendor>
 
   <depends>com.intellij.properties</depends>
+  <depends>com.intellij.java-i18n</depends>
 
   <resource-bundle>org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
 
@@ -128,6 +129,10 @@
     <localInspection language="JAVA" shortName="UnsafeReturnStatementVisitor" displayName="Unsafe return statements visitor"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UnsafeReturnStatementVisitorInspection" />
+    <localInspection language="JAVA" shortName="StatefulEp" displayName="Stateful Extension"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.StatefulEpInspection"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>

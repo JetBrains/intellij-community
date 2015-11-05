@@ -1,25 +1,17 @@
 package org.jetbrains.protocolReader
 
-class ObjectValueReader(val type: TypeRef<*>, private val isSubtyping: Boolean, primitiveValueName: String?) : ValueReader() {
-  val primitiveValueName: String?
+internal class ObjectValueReader(val type: TypeRef<*>, private val isSubtyping: Boolean, primitiveValueName: String?) : ValueReader() {
+  val primitiveValueName = if (primitiveValueName == null || primitiveValueName.isEmpty()) null else primitiveValueName
 
-  init {
-    this.primitiveValueName = if (primitiveValueName == null || primitiveValueName.isEmpty()) null else primitiveValueName
+  override fun asJsonTypeParser() = this
+
+  fun isSubtyping() = isSubtyping
+
+  override fun appendFinishedValueTypeName(out: TextOutput) {
+    out.append(type.typeClass.canonicalName)
   }
 
-  override public fun asJsonTypeParser(): ObjectValueReader {
-    return this
-  }
-
-  public fun isSubtyping(): Boolean {
-    return isSubtyping
-  }
-
-  override public fun appendFinishedValueTypeName(out: TextOutput) {
-    out.append(type.typeClass.getCanonicalName())
-  }
-
-  override public fun appendInternalValueTypeName(scope: FileScope, out: TextOutput) {
+  override fun appendInternalValueTypeName(scope: FileScope, out: TextOutput) {
     out.append(scope.getTypeImplReference(type.type!!))
   }
 
@@ -34,7 +26,7 @@ class ObjectValueReader(val type: TypeRef<*>, private val isSubtyping: Boolean, 
     out.append(')')
   }
 
-  override public fun writeArrayReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
+  override fun writeArrayReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
     beginReadCall("ObjectArray", subtyping, out)
     writeFactoryArgument(scope, out)
     out.append(')')
@@ -46,6 +38,6 @@ class ObjectValueReader(val type: TypeRef<*>, private val isSubtyping: Boolean, 
   }
 
   fun writeFactoryNewExpression(scope: ClassScope, out: TextOutput) {
-    out.append("new ").append(TYPE_FACTORY_NAME_PREFIX).append(scope.requireFactoryGenerationAndGetName(type.type!!)).append("()")
+    out.append(TYPE_FACTORY_NAME_PREFIX).append(scope.requireFactoryGenerationAndGetName(type.type!!)).append("()")
   }
 }

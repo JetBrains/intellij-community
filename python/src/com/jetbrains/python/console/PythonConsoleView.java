@@ -172,6 +172,10 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     myExecuteActionHandler.processLine(statement, true);
   }
 
+  public void printText(String text, final ConsoleViewContentType outputType) {
+    super.print(text, outputType);
+  }
+
   public void print(String text, @NotNull final Key attributes) {
     print(text, outputTypeForAttributes(attributes));
   }
@@ -295,13 +299,13 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   }
 
   public void restoreWindow() {
-    JSplitPane pane = (JSplitPane)getComponent(0);
+    JBSplitter pane = (JBSplitter)getComponent(0);
     removeAll();
     if (mySplitView != null) {
       Disposer.dispose(mySplitView);
       mySplitView = null;
     }
-    add(pane.getLeftComponent(), BorderLayout.CENTER);
+    add(pane.getFirstComponent(), BorderLayout.CENTER);
     validate();
     repaint();
   }

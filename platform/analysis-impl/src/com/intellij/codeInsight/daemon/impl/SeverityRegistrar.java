@@ -283,11 +283,11 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   }
 
   @Override
-  public int compare(final HighlightSeverity s1, final HighlightSeverity s2) {
+  public int compare(@NotNull HighlightSeverity s1, @NotNull HighlightSeverity s2) {
     return compare(s1, s2, getOrderMap());
   }
 
-  private static int compare(HighlightSeverity s1, HighlightSeverity s2, OrderMap orderMap) {
+  private static int compare(@NotNull HighlightSeverity s1, @NotNull HighlightSeverity s2, @NotNull OrderMap orderMap) {
     int o1 = orderMap.getOrder(s1, -1);
     int o2 = orderMap.getOrder(s2, -1);
     return o1 - o2;

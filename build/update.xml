@@ -25,6 +25,17 @@
     <attribute name="deploy"/>
 
     <sequential>
+      <java classname="org.apache.tools.ant.Main" fork="true" failonerror="true" dir="${project.home}">
+        <sysproperty key="workIdeaHome" value="${work.idea.home}"/>
+        <sysproperty key="gant.script" value="${project.home}/build/scripts/download_kotlin.gant"/>
+        <classpath>
+          <fileset dir="${project.home}/lib/ant/lib">
+            <include name="*.jar"/>
+          </fileset>
+        </classpath>
+        <arg value="-f"/>
+        <arg value="${project.home}/build/gant.xml"/>
+      </java>
       <java failonerror="true" classname="org.apache.tools.ant.Main" fork="true">
         <jvmarg line="-Xms64m -Xmx512m"/>
         <jvmarg line="&quot;-Ddeploy=@{deploy}&quot;"/>

@@ -298,6 +298,10 @@ public class ConcurrentMapsTest {
   @Test(timeout = TIMEOUT)
   public void testWeakKeyWeakValueTossedWeakKeyAndValue() {
     WeakKeyWeakValueHashMap<Object, Object> map = new WeakKeyWeakValueHashMap<>();
+    checkTossed(map);
+  }
+
+  private static void checkTossed(RefKeyRefValueHashMap<Object, Object> map) {
     map.put(new Object(), new Object());
 
     do {
@@ -306,6 +310,32 @@ public class ConcurrentMapsTest {
     }
     while (!map.processQueue());
     assertTrue(map.isEmpty());
+
+    Object hardKey = map;
+    map.put(hardKey, new Object());
+
+    do {
+      tryGcSoftlyReachableObjects();
+      System.gc();
+    }
+    while (!map.processQueue());
+    assertTrue(map.isEmpty());
+
+    Object hardValue = map;
+    map.put(new Object(), hardValue);
+
+    do {
+      tryGcSoftlyReachableObjects();
+      System.gc();
+    }
+    while (!map.processQueue());
+    assertTrue(map.isEmpty());
+  }
+
+  @Test(timeout = TIMEOUT)
+  public void testWeakKeySoftValueTossedWeakKeyAndValue() {
+    WeakKeySoftValueHashMap<Object, Object> map = new WeakKeySoftValueHashMap<>();
+    checkTossed(map);
   }
 
   @Test(timeout = TIMEOUT)

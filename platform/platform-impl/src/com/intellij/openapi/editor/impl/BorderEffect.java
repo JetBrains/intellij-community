@@ -79,11 +79,6 @@ public class BorderEffect {
     paintBorder(myGraphics, myEditor, startOffset, endOffset, color, effectType);
   }
 
-  private boolean intersectsRange(RangeHighlighterEx rangeHighlighter) {
-    return myRange.contains(rangeHighlighter.getAffectedAreaStartOffset()) ||
-           myRange.contains(rangeHighlighter.getAffectedAreaEndOffset());
-  }
-
   public void paintHighlighters(MarkupModelEx markupModel) {
     markupModel.processRangeHighlightersOverlappingWith(myStartOffset, myEndOffset, new Processor<RangeHighlighterEx>() {
       @Override
@@ -91,7 +86,7 @@ public class BorderEffect {
         if (!rangeHighlighter.getEditorFilter().avaliableIn(myEditor)) return true;
 
         TextAttributes textAttributes = rangeHighlighter.getTextAttributes();
-        if (isBorder(textAttributes) && intersectsRange(rangeHighlighter)) {
+        if (isBorder(textAttributes)) {
           paintBorder(rangeHighlighter, textAttributes);
         }
         return true;
@@ -144,8 +139,11 @@ public class BorderEffect {
       }
       return;
     }
+    int startLine = editor.offsetToVisualLine(startOffset);
+    int endLine = editor.offsetToVisualLine(endOffset);
+    int maxWidth = Math.max(endX, editor.getMaxWidthInVisualLineRange(startLine, endLine - 1, false));
     BorderGraphics border = new BorderGraphics(g, startX, startY, effectType);
-    border.horizontalTo(editor.getMaxWidthInRange(startOffset, endOffset) - 1);
+    border.horizontalTo(maxWidth);
     border.verticalRel(height - 1);
     border.horizontalTo(endX);
     if (endX > 0) {

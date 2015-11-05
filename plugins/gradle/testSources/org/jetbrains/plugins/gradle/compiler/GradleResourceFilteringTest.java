@@ -101,6 +101,25 @@ public class GradleResourceFilteringTest extends GradleCompilingTestCase {
   }
 
   @Test
+  public void testExpandPropertiesFilter() throws Exception {
+    createProjectSubFile(
+      "src/main/resources/dir/file.txt", "some text ${myProp} another text");
+    importProject(
+      "apply plugin: 'java'\n" +
+      "\n" +
+      "import org.apache.tools.ant.filters.*\n" +
+      "ant.project.setProperty('myProp', 'myPropValue')\n" +
+      "processResources {\n" +
+      "  filter (ExpandProperties, project: ant.project)\n" +
+      "}"
+    );
+    assertModules("project", "project_main", "project_test");
+    compileModules("project_main");
+
+    assertCopied("build/resources/main/dir/file.txt", "some text myPropValue another text");
+  }
+
+  @Test
   public void testFiltersChain() throws Exception {
     createProjectSubFile(
       "src/main/resources/dir/file.txt", "1 Header\n" +

@@ -17,6 +17,8 @@ package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -35,7 +37,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class ZipHandler extends ArchiveHandler {
-  private volatile String myCanonicalPathToZip;
+  private volatile String myCanonicalPathToZip = null;
+  private volatile long myFileStamp = DEFAULT_TIMESTAMP;
 
   public ZipHandler(@NotNull String path) {
     super(path);
@@ -71,6 +74,15 @@ public class ZipHandler extends ArchiveHandler {
       myCanonicalPathToZip = value = getFileToUse().getCanonicalPath();
     }
     return value;
+  }
+
+  private long getFileStamp() {
+    long stamp = myFileStamp;
+    if (stamp == DEFAULT_TIMESTAMP) {
+      FileAttributes attributes = FileSystemUtil.getAttributes(getFileToUse());
+      myFileStamp = stamp = attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
+    }
+    return stamp;
   }
 
   @NotNull
@@ -123,7 +135,7 @@ public class ZipHandler extends ArchiveHandler {
     if (".".equals(path.second)) {
       return parentInfo;
     }
-    info = store(map, parentInfo, path.second, isDirectory, entry.getSize(), entry.getTime(), entryName);
+    info = store(map, parentInfo, path.second, isDirectory, entry.getSize(), getFileStamp(), entryName);
     return info;
   }
 

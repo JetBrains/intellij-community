@@ -1,5 +1,5 @@
 public class X {
-  boolean f(boolean a) {
+  int f(boolean a) {
     return a?3:4;
   }
 }

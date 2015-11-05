@@ -214,7 +214,7 @@
     <action id="ActivateHierarchyToolWindow">
       <keyboard-shortcut first-keystroke="meta 8"/>
     </action>
-    <action id="ActivateChangesToolWindow">
+    <action id="ActivateVersionControlToolWindow">
       <keyboard-shortcut first-keystroke="meta 9"/>
       <keyboard-shortcut first-keystroke="meta shift 9"/>
     </action>

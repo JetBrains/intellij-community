@@ -262,7 +262,12 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
         selectionPaths.add(new TreePath(((DefaultMutableTreeNode)treeNode).getPath()));
       }
     }
-    myTree.setSelectionPaths(selectionPaths.toArray(new TreePath[selectionPaths.size()]));
+    final TreePath[] paths = selectionPaths.toArray(new TreePath[selectionPaths.size()]);
+    myTree.setSelectionPaths(paths);
+
+    if (paths.length > 0) {
+      TreeUtil.showRowCentered(myTree, myTree.getRowForPath(paths[0]), true, true);
+    }
   }
 
 

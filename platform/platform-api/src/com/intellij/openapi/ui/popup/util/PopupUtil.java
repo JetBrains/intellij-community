@@ -21,10 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.BalloonBuilder;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -204,5 +201,24 @@ public class PopupUtil {
     if(!comboBox.isPopupVisible() || component == null) return false;
     ComboPopup popup = ReflectionUtil.getField(comboBox.getUI().getClass(), comboBox.getUI(), ComboPopup.class, "popup");
     return popup != null && SwingUtilities.isDescendingFrom(popup.getList(), component);
+  }
+
+  public static boolean handleEscKeyEvent() {
+    MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
+    MenuElement[] selectedPath = menuSelectionManager.getSelectedPath();
+    if (selectedPath.length > 0) { // hide popup menu if any
+      menuSelectionManager.clearSelectedPath();
+      return true;
+    }
+    else {
+      if (ApplicationManager.getApplication() == null) {
+        return false;
+      }
+      final StackingPopupDispatcher popupDispatcher = StackingPopupDispatcher.getInstance();
+      if (popupDispatcher != null && !popupDispatcher.isPopupFocused()) {
+        return false;
+      }
+      return true;
+    }
   }
 }

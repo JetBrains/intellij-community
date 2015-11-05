@@ -15,16 +15,15 @@
  */
 package com.intellij.debugger;
 
-public class NoDataException extends Exception {
+import com.intellij.openapi.diagnostic.ControlFlowException;
+
+public class NoDataException extends Exception implements ControlFlowException {
   @SuppressWarnings({"deprecation", "ThrowableInstanceNeverThrown"})
   public static final NoDataException INSTANCE = new NoDataException();
 
-  /**
-   * @deprecated Use shared {@link NoDataException#INSTANCE} instead
-   */
+  /** @deprecated Use shared {@link NoDataException#INSTANCE} instead */
   @Deprecated
-  public NoDataException() {
-  }
+  public NoDataException() { }
 
   @Override
   public synchronized Throwable fillInStackTrace() {

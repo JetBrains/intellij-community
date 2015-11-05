@@ -12,28 +12,28 @@ import java.lang.reflect.Type
 import java.lang.reflect.WildcardType
 import java.util.*
 
-fun InterfaceReader(protocolInterfaces: List<Class<*>>): InterfaceReader {
-  val map = LinkedHashMap<Class<*>, TypeWriter<*>?>(protocolInterfaces.size())
+internal fun InterfaceReader(protocolInterfaces: List<Class<*>>): InterfaceReader {
+  val map = LinkedHashMap<Class<*>, TypeWriter<*>?>(protocolInterfaces.size)
   for (typeClass in protocolInterfaces) {
     map.put(typeClass, null)
   }
   return InterfaceReader(map)
 }
 
-private val LONG_PARSER = PrimitiveValueReader("long", "-1")
+private val LONG_PARSER = PrimitiveValueReader("Long", "-1")
 
-private val INTEGER_PARSER = PrimitiveValueReader("int", "-1")
+private val INTEGER_PARSER = PrimitiveValueReader("Int", "-1")
 
-private val BOOLEAN_PARSER = PrimitiveValueReader("boolean")
-private val FLOAT_PARSER = PrimitiveValueReader("float")
+private val BOOLEAN_PARSER = PrimitiveValueReader("Boolean", "false")
+private val FLOAT_PARSER = PrimitiveValueReader("Float")
 
-private val NUMBER_PARSER = PrimitiveValueReader("double")
+private val NUMBER_PARSER = PrimitiveValueReader("Double", "Double.NaN")
 
 private val STRING_PARSER = PrimitiveValueReader("String")
 private val NULLABLE_STRING_PARSER = PrimitiveValueReader(className = "String", nullable = true)
 
 private val RAW_STRING_PARSER = PrimitiveValueReader("String", null, true)
-private val RAW_STRING_OR_MAP_PARSER = object : PrimitiveValueReader("Object", null, true) {
+private val RAW_STRING_OR_MAP_PARSER = object : PrimitiveValueReader("Any", null, true) {
   override fun writeReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
     out.append("readRawStringOrMap(")
     addReaderParameter(subtyping, out)
@@ -45,7 +45,7 @@ private val JSON_PARSER = RawValueReader()
 
 private val STRING_INT_PAIR_PARSER = StringIntPairValueReader()
 
-val VOID_PARSER: ValueReader = object : ValueReader() {
+internal val VOID_PARSER: ValueReader = object : ValueReader() {
   override fun appendFinishedValueTypeName(out: TextOutput) {
     out.append("void")
   }
@@ -55,19 +55,19 @@ val VOID_PARSER: ValueReader = object : ValueReader() {
   }
 }
 
-fun createHandler(typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>?>, aClass: Class<*>): TypeWriter<*> {
+internal fun createHandler(typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>?>, aClass: Class<*>): TypeWriter<*> {
   val reader = InterfaceReader(typeToTypeHandler)
-  reader.processed.addAll(typeToTypeHandler.keySet())
+  reader.processed.addAll(typeToTypeHandler.keys)
   reader.go(arrayOf(aClass))
   return typeToTypeHandler.get(aClass)!!
 }
 
-class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>?>) {
+internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<*>?>) {
   val processed = THashSet<Class<*>>()
   private val refs = ArrayList<TypeRef<*>>()
   val subtypeCasters = ArrayList<SubtypeCaster>()
 
-  fun go(classes: Array<Class<*>> = typeToTypeHandler.keySet().toTypedArray()): LinkedHashMap<Class<*>, TypeWriter<*>?> {
+  fun go(classes: Array<Class<*>> = typeToTypeHandler.keys.toTypedArray()): LinkedHashMap<Class<*>, TypeWriter<*>?> {
     for (typeClass in classes) {
       createIfNotExists(typeClass)
     }
@@ -76,7 +76,7 @@ class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<
     while (hasUnresolved) {
       hasUnresolved = false
       // refs can be modified - new items can be added
-      for (i in 0..refs.size() - 1) {
+      for (i in 0..refs.size - 1) {
         val ref = refs.get(i)
         ref.type = typeToTypeHandler.get(ref.typeClass)
         if (ref.type == null) {
@@ -117,7 +117,7 @@ class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<
     }
 
     val fields = FieldProcessor(this, typeClass)
-    for (method in fields.methodHandlerMap.keySet()) {
+    for (method in fields.methodHandlerMap.keys) {
       val returnType = method.returnType
       if (returnType != typeClass) {
         createIfNotExists(returnType)
@@ -194,7 +194,7 @@ class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, TypeWriter<
         var argumentType = type.actualTypeArguments[if (isList) 0 else 1]
         if (argumentType is WildcardType) {
           val wildcard = argumentType
-          if (wildcard.lowerBounds.size() == 0 && wildcard.upperBounds.size() == 1) {
+          if (wildcard.lowerBounds.size == 0 && wildcard.upperBounds.size == 1) {
             argumentType = wildcard.upperBounds[0]
           }
         }

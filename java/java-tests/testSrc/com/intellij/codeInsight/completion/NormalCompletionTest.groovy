@@ -999,6 +999,7 @@ public class ListUtils {
   public void testOnlyAnnotationsAfterAt() throws Throwable { doTest() }
   public void testOnlyAnnotationsAfterAt2() throws Throwable { doTest('\n') }
   public void testAnnotationBeforeIdentifier() { doTest('\n') }
+  public void testAnnotationBeforeIdentifierFinishWithSpace() { doTest(' ') }
 
   public void testOnlyExceptionsInCatch1() throws Exception { doTest('\n') }
   public void testOnlyExceptionsInCatch2() throws Exception { doTest('\n') }

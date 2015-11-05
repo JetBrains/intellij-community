@@ -4,10 +4,14 @@
   <extensionPoints>
     <extensionPoint name="myLanguageEP" beanClass="MyLanguageAttributeEPBean"/>
   </extensionPoints>
+  
+  <resource-bundle>MyBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij.myPlugin">
 
-    <myLanguageEP language="MyLanguageID"/>
+    <myLanguageEP language="My<caret>LanguageID"/>
+    <myLanguageEP language="MyAnonymousLanguageID"/>
+    <myLanguageEP language="MyAnonymousLanguageWithNameFromBundleID"/>
 
     <myLanguageEP language="<error descr="Cannot resolve language with id ''INVALID_VALUE''">INVALID_VALUE</error>"/>
 

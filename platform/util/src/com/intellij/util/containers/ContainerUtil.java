@@ -505,6 +505,11 @@ public class ContainerUtil extends ContainerUtilRt {
     return result;
   }
 
+  @Contract(pure = true)
+  public static <T> T getOrElse(@NotNull List<T> elements, int i, T defaultValue) {
+    return elements.size() > i ? elements.get(i) : defaultValue;
+  }
+
   public static class ImmutableMapBuilder<K, V> {
     private final Map<K, V> myMap = new THashMap<K, V>();
 
@@ -2815,6 +2820,11 @@ public class ContainerUtil extends ContainerUtilRt {
     protected Map<K, Collection<V>> createMap(int initialCapacity, float loadFactor) {
       return new TreeMap<K, Collection<V>>();
     }
+  }
+
+  @NotNull
+  public static <K,V> Map<K,V> createWeakKeySoftValueMap() {
+    return new WeakKeySoftValueHashMap<K, V>();
   }
 }
 

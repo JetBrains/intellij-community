@@ -101,14 +101,16 @@ public class SharedImplUtil {
 
   @NotNull
   public static CharTable findCharTableByTree(ASTNode tree) {
-    while (tree != null) {
-      final CharTable userData = tree.getUserData(CharTable.CHAR_TABLE_KEY);
-      if (userData != null) return userData;
-      if (tree instanceof FileElement) return ((FileElement)tree).getCharTable();
-      tree = tree.getTreeParent();
+    for (ASTNode o = tree; o != null; o = o.getTreeParent()) {
+      CharTable charTable = o.getUserData(CharTable.CHAR_TABLE_KEY);
+      if (charTable != null) {
+        return charTable;
+      }
+      if (o instanceof FileASTNode) {
+        return ((FileASTNode)o).getCharTable();
+      }
     }
-    LOG.error("Invalid root element");
-    return null;
+    throw new AssertionError("CharTable not found in: " + tree);
   }
 
   public static PsiElement addRange(PsiElement thisElement,

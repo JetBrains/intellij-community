@@ -213,16 +213,14 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
     urlToFileCache.putIfAbsent(url, file)
   }
 
-  abstract fun getLocationsForBreakpoint(breakpoint: XLineBreakpoint<*>, onlySourceMappedBreakpoints: Boolean): List<Location>
+  open fun getLocationsForBreakpoint(breakpoint: XLineBreakpoint<*>): List<Location> = throw UnsupportedOperationException()
 
   override fun isLibraryFrameFilterSupported() = true
 }
 
-class LineBreakpointHandler(breakpointTypeClass: Class<out XLineBreakpointType<*>>,
-                            private val manager: LineBreakpointManager,
-                            private val onlySourceMappedBreakpoints: Boolean) : XBreakpointHandler<XLineBreakpoint<*>>(breakpointTypeClass) {
+class LineBreakpointHandler(breakpointTypeClass: Class<out XLineBreakpointType<*>>, private val manager: LineBreakpointManager) : XBreakpointHandler<XLineBreakpoint<*>>(breakpointTypeClass) {
   override fun registerBreakpoint(breakpoint: XLineBreakpoint<*>) {
-    manager.setBreakpoint(breakpoint, onlySourceMappedBreakpoints)
+    manager.setBreakpoint(breakpoint)
   }
 
   override fun unregisterBreakpoint(breakpoint: XLineBreakpoint<*>, temporary: Boolean) {

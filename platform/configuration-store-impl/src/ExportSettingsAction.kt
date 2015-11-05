@@ -44,7 +44,7 @@ import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.PairProcessor
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ReflectionUtil
-import com.intellij.util.SmartList
+import com.intellij.util.containers.putValue
 import com.intellij.util.io.ZipUtil
 import gnu.trove.THashSet
 import java.io.File
@@ -149,17 +149,6 @@ private fun exportInstalledPlugins(zipOut: MyZipOutputStream) {
   }
   finally {
     zipOut.closeEntry()
-  }
-}
-
-fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
-  var list = get(key)
-  if (list == null) {
-    list = SmartList<V>(value)
-    put(key, list)
-  }
-  else {
-    list.add(value)
   }
 }
 

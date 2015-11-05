@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.MergeCommitsHighlighter;
 import git4idea.GitBranch;
 import git4idea.commands.GitCommand;
@@ -89,9 +90,7 @@ public class DeepComparator implements Disposable {
         }
         else {
           VcsLogBranchFilter branchFilter = myUi.getFilterUi().getFilters().getBranchFilter();
-          if (branchFilter == null ||
-              branchFilter.getBranchNames().size() != 1 ||
-              !branchFilter.getBranchNames().iterator().next().equals(myTask.myComparedBranch)) {
+          if (branchFilter == null || !myTask.myComparedBranch.equals(VcsLogUtil.getSingleFilteredBranch(branchFilter, myUi.getDataPack().getRefs()))) {
             stopAndUnhighlight();
           }
         }

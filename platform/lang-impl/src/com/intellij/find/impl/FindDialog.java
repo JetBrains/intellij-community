@@ -58,7 +58,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectAttachProcessor;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBundle;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
@@ -354,7 +357,7 @@ public class FindDialog extends DialogWrapper {
           @Override
           public void run() {
             int row = myResultsPreviewTable.getSelectedRow();
-            if (row >= 0 && row + 1 < myResultsPreviewTable.getRowCount()) {
+            if (row >= -1 && row + 1 < myResultsPreviewTable.getRowCount()) {
               myResultsPreviewTable.setRowSelectionInterval(row + 1, row + 1);
               TableUtil.scrollSelectionToVisible(myResultsPreviewTable);
             }
@@ -365,13 +368,17 @@ public class FindDialog extends DialogWrapper {
       new AnAction() {
         @Override
         public void actionPerformed(AnActionEvent e) {
-          if (myResultsPreviewTable != null &&
-              myContent.getSelectedIndex() == RESULTS_PREVIEW_TAB_INDEX) {
+          if (isResultsPreviewTabActive()) {
             navigateToSelectedUsage(myResultsPreviewTable);
           }
         }
       }.registerCustomShortcutSet(CommonShortcuts.getEditSource(), comboBox, myDisposable);
     }
+  }
+
+  private boolean isResultsPreviewTabActive() {
+    return myResultsPreviewTable != null &&
+        myContent.getSelectedIndex() == RESULTS_PREVIEW_TAB_INDEX;
   }
 
   private void makeResultsPreviewActionOverride(final JComboBox component, KeyStroke keyStroke, String newActionKey, final Runnable newAction) {
@@ -382,8 +389,7 @@ public class FindDialog extends DialogWrapper {
     component.getActionMap().put(newActionKey, new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        if(myResultsPreviewTable != null &&
-          myContent.getSelectedIndex() == RESULTS_PREVIEW_TAB_INDEX) {
+        if(isResultsPreviewTabActive()) {
           newAction.run();
           return;
         }
@@ -480,7 +486,7 @@ public class FindDialog extends DialogWrapper {
                 @Override
                 public void run() {
                   model.addRow(new Object[]{usage});
-                  if (model.getRowCount() == 1 && myResultsPreviewTable.getModel() == model) {
+                  if (model.getRowCount() == 1 && myResultsPreviewTable.getModel() == model && isResultsPreviewTabActive()) {
                     myResultsPreviewTable.setRowSelectionInterval(0, 0);
                   }
                 }
@@ -514,9 +520,10 @@ public class FindDialog extends DialogWrapper {
   }
 
   private void scheduleResultsUpdate() {
-    if (mySearchRescheduleOnCancellationsAlarm == null) return;
-    mySearchRescheduleOnCancellationsAlarm.cancelAllRequests();
-    mySearchRescheduleOnCancellationsAlarm.addRequest(new Runnable() {
+    final Alarm alarm = mySearchRescheduleOnCancellationsAlarm;
+    if (alarm == null || alarm.isDisposed()) return;
+    alarm.cancelAllRequests();
+    alarm.addRequest(new Runnable() {
       @Override
       public void run() {
         findSettingsChanged();

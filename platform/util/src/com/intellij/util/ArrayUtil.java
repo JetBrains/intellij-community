@@ -641,12 +641,6 @@ public class ArrayUtil extends ArrayUtilRt {
     return newArray;
   }
 
-  public static void reverse(@NotNull char[] array) {
-    for (int i = 0; i < array.length; i++) {
-      swap(array, array.length - i - 1, i);
-    }
-  }
-
   @Contract(pure=true)
   public static int lexicographicCompare(@NotNull String[] obj1, @NotNull String[] obj2) {
     for (int i = 0; i < Math.max(obj1.length, obj2.length); i++) {

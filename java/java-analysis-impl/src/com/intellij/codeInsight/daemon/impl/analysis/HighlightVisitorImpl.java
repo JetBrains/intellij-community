@@ -323,7 +323,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           }
           else {
             if (!LambdaUtil.isLambdaFullyInferred(expression, functionalInterfaceType) && !expression.hasFormalParameterTypes()) {
-              String description = InferenceSession.getInferenceErrorMessage(PsiTreeUtil.getParentOfType(expression, PsiCallExpression.class));
+              final PsiCallExpression callExpression = PsiTreeUtil.getParentOfType(expression, PsiCallExpression.class);
+              String description = callExpression != null ? InferenceSession.getInferenceErrorMessage(callExpression) : null;
               if (description == null) {
                 description = "Cyclic inference";
               }

@@ -855,7 +855,7 @@
   <action id="ActivateHierarchyToolWindow">
     <keyboard-shortcut first-keystroke="alt 8"/>
   </action>
-  <action id="ActivateChangesToolWindow">
+  <action id="ActivateVersionControlToolWindow">
     <keyboard-shortcut first-keystroke="alt 9"/>
     <keyboard-shortcut first-keystroke="alt shift 9"/>
   </action>

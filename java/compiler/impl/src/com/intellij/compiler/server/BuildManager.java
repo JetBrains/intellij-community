@@ -278,7 +278,7 @@ public class BuildManager implements Disposable {
     conn.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        if (shouldTriggerMake(events)) {
+        if (!IS_UNIT_TEST_MODE && shouldTriggerMake(events)) {
           scheduleAutoMake();
         }
       }

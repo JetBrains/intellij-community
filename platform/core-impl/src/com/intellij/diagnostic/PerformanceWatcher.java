@@ -274,15 +274,8 @@ public class PerformanceWatcher implements ApplicationComponent {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void dumpThreadsToConsole(String message) {
-    OutputStreamWriter writer = new OutputStreamWriter(System.err);
-    try {
-      writer.write(message);
-      writer.write("\n");
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    ThreadDumper.dumpThreadsToFile(getInstance().myThreadMXBean, writer);
+    System.err.println(message);
+    System.err.println(ThreadDumper.dumpThreadsToString());
   }
 
   private void updateStacktraceCommonPart(final StackTraceElement[] stackTraceElements) {

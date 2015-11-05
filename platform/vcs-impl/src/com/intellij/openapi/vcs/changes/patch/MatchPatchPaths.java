@@ -110,8 +110,9 @@ public class MatchPatchPaths {
     }
   }
 
-  private boolean isGoodAndProjectBased(@NotNull Pair<VirtualFile, Integer> best, @NotNull Pair<VirtualFile, Integer> pair) {
-    return pair.getSecond().equals(best.getSecond()) && myBaseDir.equals(pair.getFirst());
+  private boolean isGoodAndProjectBased(@NotNull Pair<VirtualFile, Integer> bestVariant,
+                                        @NotNull Pair<VirtualFile, Integer> currentVariant) {
+    return currentVariant.getSecond().equals(bestVariant.getSecond()) && myBaseDir.equals(currentVariant.getFirst());
   }
 
   private static void selectByContextOrByStrip(@NotNull List<PatchAndVariants> candidates,

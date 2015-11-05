@@ -156,6 +156,14 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   }
 
   @Override
+  public void updateUI() {
+    super.updateUI();
+    if (myFilteringPanel != null) {
+      SwingUtilities.updateComponentTreeUI(myFilteringPanel);
+    }
+  }
+
+  @Override
   public void quickListRenamed(final QuickList oldQuickList, final QuickList newQuickList) {
     for (Keymap keymap : myEditor.getModel().getItems()) {
       String actionId = oldQuickList.getActionId();
@@ -445,13 +453,11 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   }
 
   private void filterTreeByShortcut(Shortcut shortcut) {
-    if (shortcut != null) {
-      myTreeExpansionMonitor.freeze();
-      myActionsTree.filterTree(shortcut, myQuickLists);
-      final JTree tree = myActionsTree.getTree();
-      TreeUtil.expandAll(tree);
-      myTreeExpansionMonitor.restore();
-    }
+    myTreeExpansionMonitor.freeze();
+    myActionsTree.filterTree(shortcut, myQuickLists);
+    final JTree tree = myActionsTree.getTree();
+    TreeUtil.expandAll(tree);
+    myTreeExpansionMonitor.restore();
   }
 
   public void showOption(String option) {

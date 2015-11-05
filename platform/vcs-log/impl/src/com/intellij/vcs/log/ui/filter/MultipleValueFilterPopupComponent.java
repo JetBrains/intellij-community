@@ -64,7 +64,9 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
     if (!recentlyFilteredUsers.isEmpty()) {
       group.addSeparator("Recent");
       for (List<String> recentGroup : recentlyFilteredUsers) {
-        group.add(new PredefinedValueAction(recentGroup));
+        if (!recentGroup.isEmpty()) {
+          group.add(new PredefinedValueAction(recentGroup));
+        }
       }
       group.addSeparator();
     }

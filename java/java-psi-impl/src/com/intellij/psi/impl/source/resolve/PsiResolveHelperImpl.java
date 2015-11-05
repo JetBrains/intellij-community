@@ -39,7 +39,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
 
   @Override
   @NotNull
-  public JavaResolveResult resolveConstructor(PsiClassType classType, PsiExpressionList argumentList, PsiElement place) {
+  public JavaResolveResult resolveConstructor(PsiClassType classType, @NotNull PsiExpressionList argumentList, PsiElement place) {
     JavaResolveResult[] result = multiResolveConstructor(classType, argumentList, place);
     return result.length == 1 ? result[0] : JavaResolveResult.EMPTY;
   }

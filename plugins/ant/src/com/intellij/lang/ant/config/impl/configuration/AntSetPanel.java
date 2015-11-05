@@ -93,7 +93,7 @@ public class AntSetPanel {
   }
 
   private static class Form implements AntUIUtil.PropertiesEditor<AntInstallation> {
-    private final Splitter mySplitter = new JBSplitter("antConfigurations.splitter", 03f);
+    private final Splitter mySplitter = new JBSplitter("antConfigurations.splitter", 0.3f);
     private final RightPanel myRightPanel;
     private final AnActionListEditor<AntInstallation> myAnts = new AnActionListEditor<AntInstallation>();
     private final UIPropertyBinding.Composite myBinding = new UIPropertyBinding.Composite();

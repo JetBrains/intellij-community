@@ -875,7 +875,21 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   @NotNull
   public <K, V> List<V> getValues(@NotNull final ID<K, V> indexId, @NotNull K dataKey, @NotNull final GlobalSearchScope filter) {
     final List<V> values = new SmartList<V>();
-    processValuesImpl(indexId, dataKey, true, null, new ValueProcessor<V>() {
+    VirtualFile restrictToFile = null;
+
+    if (filter instanceof Iterable) {
+      final Iterator<VirtualFile> virtualFileIterator = ((Iterable<VirtualFile>)filter).iterator();
+
+      if (virtualFileIterator.hasNext()) {
+        VirtualFile restrictToFileCandidate = virtualFileIterator.next();
+
+        if (!virtualFileIterator.hasNext()) {
+          restrictToFile = restrictToFileCandidate;
+        }
+      }
+    }
+
+    processValuesImpl(indexId, dataKey, true, restrictToFile, new ValueProcessor<V>() {
       @Override
       public boolean process(final VirtualFile file, final V value) {
         values.add(value);

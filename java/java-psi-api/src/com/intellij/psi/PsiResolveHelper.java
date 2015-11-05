@@ -54,7 +54,7 @@ public interface PsiResolveHelper {
    * @return the result of the resolve, or {@link JavaResolveResult#EMPTY} if the resolve failed.
    */
   @NotNull
-  JavaResolveResult resolveConstructor(PsiClassType type, PsiExpressionList argumentList, PsiElement place);
+  JavaResolveResult resolveConstructor(PsiClassType type, @NotNull PsiExpressionList argumentList, PsiElement place);
 
   /**
    * Resolves a constructor and returns all variants for the resolve.
