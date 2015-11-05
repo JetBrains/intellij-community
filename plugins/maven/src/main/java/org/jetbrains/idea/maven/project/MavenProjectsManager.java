@@ -39,6 +39,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -569,13 +570,30 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     myWatcher.resetManagedFilesAndProfilesInTests(files, profiles);
   }
 
-  public void addManagedFilesWithProfiles(List<VirtualFile> files, MavenExplicitProfiles profiles) {
+  public void addManagedFilesWithProfiles(final List<VirtualFile> files, MavenExplicitProfiles profiles) {
     if (!isInitialized()) {
       initNew(files, profiles);
     }
     else {
       myWatcher.addManagedFilesWithProfiles(files, profiles);
     }
+
+    MavenUtil.invokeLater(myProject, new Runnable() {
+      @Override
+      public void run() {
+        if (myProject == null || !myProject.isDefault() && !myProject.isDisposed()) {
+          for (Notification notification : EventLog.getLogModel(myProject).getNotifications()) {
+            if (NON_MANAGED_POM_NOTIFICATION_GROUP_ID.equals(notification.getGroupId())) {
+              for (VirtualFile file : files) {
+                if (StringUtil.startsWith(notification.getContent(), file.getPresentableUrl())) {
+                  notification.expire();
+                }
+              }
+            }
+          }
+        }
+      }
+    });
   }
 
   public void addManagedFiles(@NotNull List<VirtualFile> files) {
