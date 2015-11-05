@@ -312,7 +312,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         }
 
         testProxy.setDuration(duration);
-        testProxy.setInputFilePath(testFinishedEvent.getOutputFile());
+        testProxy.setFrameworkOutputFile(testFinishedEvent.getOutputFile());
         testProxy.setFinished();
         myRunningTestsFullNameToProxy.remove(fullTestName);
         myCurrentChildren.remove(testProxy);
