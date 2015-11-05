@@ -17,10 +17,13 @@ package com.intellij.psi.codeStyle.autodetect;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 public class DetectIndentAndTypeTest extends LightPlatformCodeInsightFixtureTestCase {
 
@@ -146,4 +149,25 @@ public class DetectIndentAndTypeTest extends LightPlatformCodeInsightFixtureTest
                           "\t}\n" +
                           "}\n");
   }
+  
+  public void testDoNotIndentOptions_WhenTabsDetected_AndUseTabsWasSetByDefault() {
+    CommonCodeStyleSettings common = mySettings.getCommonSettings(JavaLanguage.INSTANCE);
+    CommonCodeStyleSettings.IndentOptions indentOptions = common.getIndentOptions();
+
+    assert indentOptions != null;
+    
+    indentOptions.USE_TAB_CHARACTER = true;
+    
+    indentOptions.TAB_SIZE = 8;
+    indentOptions.INDENT_SIZE = 4;
+    indentOptions.CONTINUATION_INDENT_SIZE = 8;
+
+    myFixture.configureByText(JavaFileType.INSTANCE, myText);
+    PsiFile file = myFixture.getFile();
+    CommonCodeStyleSettings.IndentOptions options = mySettings.getIndentOptionsByFile(file);
+
+    assertThat(options.INDENT_SIZE).isEqualTo(4);
+    assertThat(indentOptions.CONTINUATION_INDENT_SIZE).isEqualTo(8);
+  }
+  
 }

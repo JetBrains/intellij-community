@@ -4,9 +4,7 @@ import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -38,7 +36,10 @@ import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.SoftReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class makes program structure tree matching:
@@ -47,6 +48,7 @@ public class MatcherImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.structuralsearch.impl.matcher.MatcherImpl");
   // project being worked on
   private final Project project;
+  private final PsiDocumentManager documentManager;
 
   // context of matching
   private final MatchContext matchContext;
@@ -69,6 +71,7 @@ public class MatcherImpl {
       matchContext.setOptions(matchOptions);
       cacheCompiledPattern(matchOptions, PatternCompiler.compilePattern(project,matchOptions));
     }
+    documentManager = PsiDocumentManager.getInstance(this.project);
   }
 
   static class LastMatchData {
@@ -534,23 +537,6 @@ public class MatcherImpl {
 
       if (files.size() == 0) return;
 
-      final Runnable action = new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              if (project.isDisposed()) return;
-              final PsiFile psiFile = files.get(0).getContainingFile();
-              final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-              final Document document = manager.getDocument(psiFile);
-              if (document != null) manager.commitDocument(document);
-            }
-          });
-        }
-      };
-      ApplicationManager.getApplication().invokeAndWait(action, ModalityState.defaultModalityState());
-
-      if (project.isDisposed()) return;
-
       final LanguageFileType fileType = (LanguageFileType)matchContext.getOptions().getFileType();
       final Language patternLanguage = fileType.getLanguage();
       for (PsiElement file : files) {
@@ -559,8 +545,7 @@ public class MatcherImpl {
         }
 
         final PsiElement finalFile = file;
-        ApplicationManager.getApplication().runReadAction(
-          new Runnable() {
+        documentManager.commitAndRunReadAction(new Runnable() {
             public void run() {
               PsiElement file = finalFile;
               if (!file.isValid()) return;

@@ -19,10 +19,12 @@ package com.intellij.lang;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
@@ -46,6 +48,13 @@ public final class LanguageUtil {
     }
   };
 
+
+  @Nullable
+  public static Language getLanguageForPsi(@NotNull Project project, @Nullable VirtualFile file) {
+    Language language = getFileLanguage(file);
+    if (language == null) return null;
+    return LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, project);
+  }
 
   @Nullable
   public static Language getFileLanguage(@Nullable VirtualFile file) {

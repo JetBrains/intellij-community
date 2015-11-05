@@ -224,7 +224,7 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
     }
 
     PsiType methodReturnType = interfaceMethod.getReturnType();
-    if (methodReturnType != null && methodReturnType != PsiType.VOID) {
+    if (methodReturnType != null && !PsiType.VOID.equals(methodReturnType)) {
       Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
       try {
         if (map.put(this, leftType) != null) {
@@ -249,7 +249,7 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
     }
     final PsiType methodReturnType = interfaceMethod.getReturnType();
     final PsiElement body = getBody();
-    if (methodReturnType == PsiType.VOID) {
+    if (PsiType.VOID.equals(methodReturnType)) {
       if (body instanceof PsiCodeBlock) {
         return isVoidCompatible();
       } else {

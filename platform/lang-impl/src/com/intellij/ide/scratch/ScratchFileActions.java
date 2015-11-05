@@ -17,6 +17,7 @@ package com.intellij.ide.scratch;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.PerFileMappings;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -196,7 +197,7 @@ public class ScratchFileActions {
         @Override
         public Language fun(VirtualFile file) {
           Language lang = fileService.getScratchesMapping().getMapping(file);
-          return lang != null ? lang : ScratchUtil.getLanguage(project, file);
+          return lang != null ? lang : LanguageUtil.getLanguageForPsi(project, file);
         }
       };
     }
