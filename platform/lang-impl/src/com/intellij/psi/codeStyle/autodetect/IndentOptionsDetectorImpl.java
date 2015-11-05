@@ -75,11 +75,11 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
 
   private void adjustIndentOptions(@NotNull IndentOptions indentOptions, @NotNull IndentUsageStatistics stats) {
     if (isTabsUsed(stats)) {
-      setUseTabs(indentOptions, true);
+      adjustForTabUsage(indentOptions);
     }
     else if (isSpacesUsed(stats)) {
-      setUseTabs(indentOptions, false);
-
+      indentOptions.USE_TAB_CHARACTER = false;
+      
       int newIndentSize = getPositiveIndentSize(stats);
       if (newIndentSize > 0) {
         if (indentOptions.INDENT_SIZE != newIndentSize) {
@@ -100,16 +100,16 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
     return stats.getTotalLinesWithLeadingTabs() > stats.getTotalLinesWithLeadingSpaces();
   }
 
-  private void setUseTabs(@NotNull IndentOptions indentOptions, boolean useTabs) {
-    if (indentOptions.USE_TAB_CHARACTER != useTabs) {
-      indentOptions.USE_TAB_CHARACTER = useTabs;
-      int continuationRatio = indentOptions.INDENT_SIZE == 0 ? 1 
-                              : indentOptions.CONTINUATION_INDENT_SIZE / indentOptions.INDENT_SIZE;
-
-      indentOptions.INDENT_SIZE = indentOptions.TAB_SIZE;
-      indentOptions.CONTINUATION_INDENT_SIZE = indentOptions.TAB_SIZE * continuationRatio;
-      LOG.debug("Tab usage set to " + useTabs + " for file " + myFile);
-    }
+  private void adjustForTabUsage(@NotNull IndentOptions indentOptions) {
+    if (indentOptions.USE_TAB_CHARACTER) return;
+    
+    int continuationRatio = indentOptions.INDENT_SIZE == 0 ? 1 : indentOptions.CONTINUATION_INDENT_SIZE / indentOptions.INDENT_SIZE;
+    
+    indentOptions.USE_TAB_CHARACTER = true;
+    indentOptions.INDENT_SIZE = indentOptions.TAB_SIZE;
+    indentOptions.CONTINUATION_INDENT_SIZE = indentOptions.TAB_SIZE * continuationRatio;
+    
+    LOG.debug("Using tabs for: " + myFile);
   }
 
   private static int getPositiveIndentSize(@NotNull IndentUsageStatistics stats) {
