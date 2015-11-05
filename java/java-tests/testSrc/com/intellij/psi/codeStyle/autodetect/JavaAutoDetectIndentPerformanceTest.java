@@ -36,14 +36,31 @@ public class JavaAutoDetectIndentPerformanceTest extends AbstractIndentAutoDetec
   @NotNull
   @Override
   protected String getFileNameWithExtension() {
-    return getTestName(true) + ".java";
+    return "bigFile.java";
   }
 
-  public void testBigFile() {
-    Ref<IndentOptions> ref = checkPerformanceRelativelyToFileRead();
-    //to ensure if worked as expected
-    Assert.assertEquals("Detect indent mismatch", 2, ref.get().INDENT_SIZE);
+  public void testBigColdFile() {
+    Ref<IndentOptions> ref = Ref.create();
+    long fileLoadTime = trackTime(() -> configureByFile(getFileNameWithExtension()));
 
+    long detectingTime = trackTime(() -> ref.set(detectIndentOptions()));
+    double ratio = (double)detectingTime / fileLoadTime;
+    if (ratio > 0.2) {
+      TeamCityLogger.error("Detecting indent have taken too much time proportionally to file read time " + ratio);
+    } else {
+      String msg = "Detecting indent relatively to file read " + ratio;
+      TeamCityLogger.info(msg);
+      System.out.println(msg);
+    }
+    
+    //to ensure it worked as expected
+    Assert.assertEquals("Detect indent mismatch", 2, ref.get().INDENT_SIZE);
+  }
+  
+  public void testBigHotFile() {
+    configureByFile(getFileNameWithExtension());
+    AbstractIndentAutoDetectionTest.detectIndentOptions();
+    
     PlatformTestUtil
       .startPerformanceTest("Detecting indent on hot file", 30, AbstractIndentAutoDetectionTest::detectIndentOptions)
       .cpuBound()
@@ -55,22 +72,4 @@ public class JavaAutoDetectIndentPerformanceTest extends AbstractIndentAutoDetec
     runnable.run();
     return System.currentTimeMillis() - startTime;
   }
-  
-  private Ref<IndentOptions> checkPerformanceRelativelyToFileRead() {
-    Ref<IndentOptions> ref = Ref.create();
-    long fileLoadTime = trackTime(() -> configureByFile(getFileNameWithExtension()));
-    
-    long detectingTime = trackTime(() -> ref.set(detectIndentOptions()));
-    double ratio = (double)detectingTime / fileLoadTime;
-    if (ratio > 0.2) {
-      TeamCityLogger.error("Detecting indent have taken too much time proportionally to file read time " + ratio);
-    } else {
-      String msg = "Detecting indent relatively to file read " + ratio;
-      TeamCityLogger.info(msg);
-      System.out.println(msg);
-    }
-    
-    return ref;
-  }
-  
 }
