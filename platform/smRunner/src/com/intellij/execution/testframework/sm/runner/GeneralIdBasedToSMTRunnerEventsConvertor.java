@@ -193,7 +193,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         if (node != null) {
           SMTestProxy testProxy = node.getProxy();
           testProxy.setDuration(testFinishedEvent.getDuration());
-          testProxy.setInputFilePath(testFinishedEvent.getOutputFile());
+          testProxy.setFrameworkOutputFile(testFinishedEvent.getOutputFile());
           testProxy.setFinished();
           fireOnTestFinished(testProxy);
           terminateNode(node, State.FINISHED);
