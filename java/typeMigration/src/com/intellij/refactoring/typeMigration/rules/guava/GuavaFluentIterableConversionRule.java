@@ -220,7 +220,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
         final TypeConversionDescriptor descriptor = base.create();
         needSpecifyType = base.isChainedMethod();
         if (needSpecifyType && !base.isFluentIterableReturnType()) {
-          conversionType = getTypeParametersAsText(GuavaOptionalConversionRule.JAVA_OPTIONAL, context.getType(), context);
+          conversionType = addTypeParameters(GuavaOptionalConversionRule.JAVA_OPTIONAL, context.getType(), context);
         }
         descriptorBase = descriptor;
       }
@@ -228,7 +228,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     if (descriptorBase != null) {
       if (needSpecifyType) {
         if (conversionType == null) {
-          conversionType = getTypeParametersAsText(StreamApiConstants.JAVA_UTIL_STREAM_STREAM, context.getType(), context);
+          conversionType = addTypeParameters(StreamApiConstants.JAVA_UTIL_STREAM_STREAM, context.getType(), context);
         }
         descriptorBase.withConversionType(conversionType);
       }
@@ -238,7 +238,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
   }
 
   @NotNull
-  private static PsiType getTypeParametersAsText(String baseClassQualifiedName, PsiType type, PsiElement context) {
+  private static PsiType addTypeParameters(String baseClassQualifiedName, PsiType type, PsiElement context) {
     String parameterText = "";
     if (type != null) {
       final String canonicalText = type.getCanonicalText(false);
@@ -306,7 +306,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
         break;
       }
       else if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).resolve() instanceof PsiVariable) {
-        labeler.migrateExpressionType(qualifier, to, qualifier.getParent(), false, false);
+        labeler.migrateExpressionType(qualifier, addTypeParameters(StreamApiConstants.JAVA_UTIL_STREAM_STREAM, to, qualifier), qualifier.getParent(), false, false);
         break;
       }
       else {
