@@ -15,11 +15,10 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.SoftWrapModelEx;
+import com.intellij.util.DocumentUtil;
 
 import java.util.Arrays;
 import java.util.List;
@@ -67,6 +66,25 @@ public class EditorStressTest extends AbstractEditorTest {
   }
 
   protected void checkConsistency(Editor editor) {
+    checkSoftWrapPositions(editor);
+  }
+
+  private static void checkSoftWrapPositions(Editor editor) {
+    Document document = editor.getDocument();
+    FoldingModel foldingModel = editor.getFoldingModel();
+    List<? extends SoftWrap> softWraps = ((SoftWrapModelEx)editor.getSoftWrapModel()).getRegisteredSoftWraps();
+    int lastSoftWrapOffset = -1;
+    for (SoftWrap wrap : softWraps) {
+      int softWrapOffset = wrap.getStart();
+      assertTrue("Soft wraps are not ordered", softWrapOffset > lastSoftWrapOffset);
+      FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(softWrapOffset);
+      assertTrue("Soft wrap is inside fold region", foldRegion == null || foldRegion.getStartOffset() == softWrapOffset);
+      assertFalse("Soft wrap before line break", softWrapOffset == DocumentUtil.getLineEndOffset(softWrapOffset, document) &&
+                                                 foldRegion == null);
+      assertFalse("Soft wrap after line break", softWrapOffset == DocumentUtil.getLineStartOffset(softWrapOffset, document) && 
+                                                !foldingModel.isOffsetCollapsed(softWrapOffset - 1));
+      lastSoftWrapOffset = softWrapOffset;
+    }
   }
 
   interface Action {
