@@ -467,25 +467,25 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   }
 
   private void addKeyboardShortcut(@NotNull String actionId, @Nullable Shortcut shortcut) {
-    Keymap keymap = createKeymapCopyIfNeeded();
-    addKeyboardShortcut(actionId, shortcut, keymap, this, myQuickLists);
+    Keymap keymapSelected = myEditor.getModel().getSelected();
+    addKeyboardShortcut(actionId, shortcut, keymapSelected, this, myQuickLists);
     repaintLists();
     currentKeymapChanged();
   }
 
   public static void addKeyboardShortcut(@NotNull String actionId,
                                          @Nullable Shortcut shortcut,
-                                         @NotNull Keymap keymap,
+                                         @NotNull Keymap keymapSelected,
                                          @NotNull Component parent,
                                          @NotNull QuickList[] quickLists) {
     KeyboardShortcutDialog dialog = new KeyboardShortcutDialog(parent);
-    KeyboardShortcut keyboardShortcut = dialog.showAndGet(shortcut, actionId, keymap, quickLists);
+    KeyboardShortcut keyboardShortcut = dialog.showAndGet(shortcut, actionId, keymapSelected, quickLists);
     if (keyboardShortcut == null) {
       return;
     }
 
-    Map<String, ArrayList<KeyboardShortcut>> conflicts = keymap.getConflicts(actionId, keyboardShortcut);
-    if (!conflicts.isEmpty()) {
+    Keymap keymap = null;
+    if (dialog.hasConflicts()) {
       int result = Messages.showYesNoCancelDialog(
         parent, 
         KeyMapBundle.message("conflict.shortcut.dialog.message"),
@@ -496,6 +496,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         Messages.getWarningIcon());
 
       if (result == Messages.YES) {
+        keymap = createKeymapCopyIfNeededAndPossible(parent, keymapSelected);
+        Map<String, ArrayList<KeyboardShortcut>> conflicts = keymap.getConflicts(actionId, keyboardShortcut);
         for (String id : conflicts.keySet()) {
           for (KeyboardShortcut s : conflicts.get(id)) {
             keymap.removeShortcut(id, s);
@@ -508,6 +510,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
 
     // if shortcut is already registered to this action, just select it in the list
+
+    if (keymap == null) keymap = createKeymapCopyIfNeededAndPossible(parent, keymapSelected);
     Shortcut[] shortcuts = keymap.getShortcuts(actionId);
     for (Shortcut s : shortcuts) {
       if (s.equals(keyboardShortcut)) {
@@ -527,16 +531,16 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       return;
     }
 
-    Keymap keymap = createKeymapCopyIfNeeded();
+    Keymap keymapSelected = myEditor.getModel().getSelected();
 
     MouseShortcutDialog dialog = new MouseShortcutDialog(this, restrictions.allowMouseDoubleClick);
-    MouseShortcut mouseShortcut = dialog.showAndGet(shortcut, actionId, keymap, myQuickLists);
+    MouseShortcut mouseShortcut = dialog.showAndGet(shortcut, actionId, keymapSelected, myQuickLists);
     if (mouseShortcut == null) {
       return;
     }
 
-    String[] actionIds = keymap.getActionIds(mouseShortcut);
-    if (actionIds.length > 1 || (actionIds.length == 1 && !actionId.equals(actionIds[0]))) {
+    Keymap keymap = null;
+    if (dialog.hasConflicts()) {
       int result = Messages.showYesNoCancelDialog(
         this,
         KeyMapBundle.message("conflict.shortcut.dialog.message"),
@@ -547,6 +551,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         Messages.getWarningIcon());
 
       if (result == Messages.YES) {
+        keymap = createKeymapCopyIfNeededAndPossible(this, keymapSelected);
+        String[] actionIds = keymap.getActionIds(mouseShortcut);
         for (String id : actionIds) {
           keymap.removeShortcut(id, mouseShortcut);
         }
@@ -558,6 +564,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     // if shortcut is already registered to this action, just select it in the list
 
+    if (keymap == null) keymap = createKeymapCopyIfNeededAndPossible(this, keymapSelected);
     Shortcut[] shortcuts = keymap.getShortcuts(actionId);
     for (Shortcut shortcut1 : shortcuts) {
       if (shortcut1.equals(mouseShortcut)) {
@@ -576,6 +583,15 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   private void repaintLists() {
     myActionsTree.getComponent().repaint();
+  }
+
+  @NotNull
+  private static Keymap createKeymapCopyIfNeededAndPossible(Component parent, Keymap keymap) {
+    if (parent instanceof KeymapPanel) {
+      KeymapPanel panel = (KeymapPanel)parent;
+      keymap = panel.createKeymapCopyIfNeeded();
+    }
+    return keymap;
   }
 
   @NotNull

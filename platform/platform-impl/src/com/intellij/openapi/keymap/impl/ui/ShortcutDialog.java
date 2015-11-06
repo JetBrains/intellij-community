@@ -74,6 +74,10 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
     return myGroup == null ? null : myGroup.getActionQualifiedPath(actionId);
   }
 
+  boolean hasConflicts() {
+    return myConflictsPanel.isVisible();
+  }
+
   abstract Collection<String> getConflicts(T shortcut, String actionId, Keymap keymap);
 
   abstract T toShortcut(Object value);
