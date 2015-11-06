@@ -239,8 +239,7 @@ public class SoftWrapApplianceManager implements Dumpable {
       LOG.error("Soft wrapping is not supported for documents with non-standard line endings. File: " + myEditor.getVirtualFile());
     }
     if (myInProgress) {
-      LogMessageEx.error(LOG, "Detected race condition at soft wraps recalculation",
-                         (myEditor instanceof EditorImpl) ? ((EditorImpl)myEditor).dumpState() : "", event.toString());
+      LogMessageEx.error(LOG, "Detected race condition at soft wraps recalculation", myEditor.dumpState(), event.toString());
     }
     myInProgress = true;
     try {
@@ -458,10 +457,9 @@ public class SoftWrapApplianceManager implements Dumpable {
     int startOffset = myContext.currentPosition.offset;
     while (myContext.currentPosition.offset < myContext.tokenEndOffset) {
       if (counter++ > limit) {
-        String editorInfo = myEditor instanceof EditorImpl ? ((EditorImpl)myEditor).dumpState() : myEditor.getClass().toString();
         LogMessageEx.error(LOG, "Cycled soft wraps recalculation detected", String.format(
           "Start recalculation offset: %d, visible area width: %d, calculation context: %s, editor info: %s",
-          startOffset, myVisibleAreaWidth, myContext, editorInfo));
+          startOffset, myVisibleAreaWidth, myContext, myEditor.dumpState()));
         for (int i = myContext.currentPosition.offset; i < myContext.tokenEndOffset; i++) {
           char c = myContext.text.charAt(i);
           if (c == '\n') {
