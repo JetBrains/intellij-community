@@ -133,19 +133,19 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
                 fields["return"] = n
 
         for n in node.children:
-            if not n.children:
+            if len(n.children) < 2:
                 continue
-            child = n.children[0]
-            rawsource = child.rawsource
+            field_name, field_body = n.children[0], n.children[1]
+            rawsource = field_name.rawsource
             if rawsource.startswith("type "):
                 index = rawsource.index("type ")
                 name = re.sub(r'\\\*', '*', rawsource[index + 5:])
                 if name in fields:
-                    fields[name].type = n.children[1][0][0]
+                    fields[name].type = field_body[0][0] if field_body.children else ''
                     node.children.remove(n)
             if rawsource == "rtype":
                 if "return" in fields:
-                    fields["return"].type = n.children[1][0][0]
+                    fields["return"].type = field_body[0][0] if field_body.children else ''
                     node.children.remove(n)
 
         HTMLTranslator.visit_field_list(self, node)
