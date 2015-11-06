@@ -75,7 +75,7 @@ public class ReplaceExpressionUtil {
     }
     else if (i == JavaElementType.ARRAY_ACCESS_EXPRESSION) {
       int role = ((CompositeElement)oldParent).getChildRole(oldExpr);
-      return role != ChildRole.ARRAY_DIMENSION && priority < parentPriority;
+      return role != ChildRole.ARRAY_DIMENSION && role != ChildRole.INDEX && priority < parentPriority;
     }
     else if (i == JavaElementType.ARRAY_INITIALIZER_EXPRESSION) {
       return false;
