@@ -81,7 +81,7 @@ public class JavaMethodMergingContributor extends CompletionContributor {
 
   private static int getPriority(LookupElement element) {
     PsiMethod method = assertNotNull(getItemMethod(element));
-    return (method.getReturnType() == PsiType.VOID ? 0 : 1) +
+    return (PsiType.VOID.equals(method.getReturnType()) ? 0 : 1) +
            (method.getParameterList().getParametersCount() > 0 ? 2 : 0);
   }
 

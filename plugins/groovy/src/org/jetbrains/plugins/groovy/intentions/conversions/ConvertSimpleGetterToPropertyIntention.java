@@ -96,7 +96,7 @@ public class ConvertSimpleGetterToPropertyIntention extends Intention {
 
         GrStatement statement = statements[0];
         if (!(statement instanceof GrReturnStatement && ((GrReturnStatement)statement).getReturnValue() != null ||
-              statement instanceof GrExpression && ((GrExpression)statement).getType() != PsiType.VOID)) {
+              statement instanceof GrExpression && !PsiType.VOID.equals(((GrExpression)statement).getType()))) {
           return false;
         }
         return true;

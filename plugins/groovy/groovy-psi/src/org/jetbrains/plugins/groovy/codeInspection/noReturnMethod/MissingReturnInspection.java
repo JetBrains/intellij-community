@@ -84,10 +84,10 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
           PsiClass resolved = ((PsiClassType)inferredReturnType).resolve();
           if (resolved != null && !(resolved instanceof PsiTypeParameter)) return mustReturnValue;
         }
-        return inferredReturnType != null && inferredReturnType != PsiType.VOID ? shouldReturnValue : shouldNotReturnValue;
+        return inferredReturnType != null && !PsiType.VOID.equals(inferredReturnType) ? shouldReturnValue : shouldNotReturnValue;
       }
       else if (subject instanceof GrMethod) {
-        return ((GrMethod)subject).getReturnTypeElementGroovy() != null && ((GrMethod)subject).getReturnType() != PsiType.VOID
+        return ((GrMethod)subject).getReturnTypeElementGroovy() != null && !PsiType.VOID.equals(((GrMethod)subject).getReturnType())
                ? mustReturnValue
                : shouldNotReturnValue;
       }

@@ -445,7 +445,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
     final PsiExpression[] arguments = argumentList.getExpressions();
     if (arguments.length == 3) {
       return arguments[0].getType() instanceof PsiArrayType &&
-             arguments[1].getType() == PsiType.INT && arguments[2].getType() == PsiType.INT;
+             PsiType.INT.equals(arguments[1].getType()) && PsiType.INT.equals(arguments[2].getType());
     }
     return arguments.length == 1;
   }

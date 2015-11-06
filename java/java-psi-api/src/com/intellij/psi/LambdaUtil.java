@@ -132,7 +132,7 @@ public class LambdaUtil {
 
   public static boolean isLambdaFullyInferred(PsiLambdaExpression expression, PsiType functionalInterfaceType) {
     final boolean hasParams = expression.getParameterList().getParametersCount() > 0;
-    if (hasParams || getFunctionalInterfaceReturnType(functionalInterfaceType) != PsiType.VOID) {   //todo check that void lambdas without params check
+    if (hasParams || !PsiType.VOID.equals(getFunctionalInterfaceReturnType(functionalInterfaceType))) {   //todo check that void lambdas without params check
       
       return !dependsOnTypeParams(functionalInterfaceType, functionalInterfaceType, expression);
     }
@@ -570,7 +570,7 @@ public class LambdaUtil {
   }
 
   public static String checkReturnTypeCompatible(PsiLambdaExpression lambdaExpression, PsiType functionalInterfaceReturnType) {
-    if (functionalInterfaceReturnType == PsiType.VOID) {
+    if (PsiType.VOID.equals(functionalInterfaceReturnType)) {
       final PsiElement body = lambdaExpression.getBody();
       if (body instanceof PsiCodeBlock) {
         if (!getReturnExpressions(lambdaExpression).isEmpty()) return "Unexpected return value";

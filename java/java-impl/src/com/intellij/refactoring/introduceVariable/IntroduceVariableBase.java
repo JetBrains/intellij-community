@@ -236,7 +236,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     PsiExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
     while (expression != null) {
       if (!expressions.contains(expression) && !(expression instanceof PsiParenthesizedExpression) && !(expression instanceof PsiSuperExpression) &&
-          (acceptVoid || expression.getType() != PsiType.VOID)) {
+          (acceptVoid || !PsiType.VOID.equals(expression.getType()))) {
         if (expression instanceof PsiMethodReferenceExpression) {
           expressions.add(expression);
         }

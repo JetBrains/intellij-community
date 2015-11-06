@@ -496,8 +496,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
         JavaDocumentationProvider.generateParametersTakingDocFromSuperMethods(project, builder, commenter, method);
 
         final PsiType returnType = method.getInferredReturnType();
-        if ((returnType != null || method.getModifierList().hasModifierProperty(GrModifier.DEF)) &&
-            returnType != PsiType.VOID) {
+        if ((returnType != null || method.getModifierList().hasModifierProperty(GrModifier.DEF)) && !PsiType.VOID.equals(returnType)) {
           builder.append(CodeDocumentationUtil.createDocCommentLine(RETURN_TAG, project, commenter));
           builder.append(LINE_SEPARATOR);
         }

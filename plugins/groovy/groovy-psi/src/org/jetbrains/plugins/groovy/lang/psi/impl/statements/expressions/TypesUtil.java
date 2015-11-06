@@ -441,7 +441,7 @@ public class TypesUtil {
                                          @NotNull PsiManager manager,
                                          @NotNull GlobalSearchScope resolveScope,
                                          boolean boxVoid) {
-    if (result instanceof PsiPrimitiveType && (boxVoid || result != PsiType.VOID)) {
+    if (result instanceof PsiPrimitiveType && (boxVoid || !PsiType.VOID.equals(result))) {
       PsiPrimitiveType primitive = (PsiPrimitiveType)result;
       String boxedTypeName = primitive.getBoxedTypeName();
       if (boxedTypeName != null) {

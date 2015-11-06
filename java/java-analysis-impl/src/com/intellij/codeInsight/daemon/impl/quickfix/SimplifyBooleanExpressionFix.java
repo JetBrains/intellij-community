@@ -109,7 +109,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   public static void simplifyIfStatement(final PsiExpression expression) throws IncorrectOperationException {
     PsiElement parent = expression.getParent();
     if (!(parent instanceof PsiIfStatement) || ((PsiIfStatement)parent).getCondition() != expression) return;
-    if (!(expression instanceof PsiLiteralExpression) || expression.getType() != PsiType.BOOLEAN) return;
+    if (!(expression instanceof PsiLiteralExpression) || !PsiType.BOOLEAN.equals(expression.getType())) return;
     boolean condition = Boolean.parseBoolean(expression.getText());
     PsiIfStatement ifStatement = (PsiIfStatement)parent;
     if (condition) {
@@ -210,7 +210,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   }
 
   public static boolean canBeSimplified(@NotNull PsiExpression expression) {
-    if (!(expression instanceof PsiConditionalExpression) && expression.getType() != PsiType.BOOLEAN) return false;
+    if (!(expression instanceof PsiConditionalExpression) && !PsiType.BOOLEAN.equals(expression.getType())) return false;
 
     final ExpressionVisitor expressionVisitor = new ExpressionVisitor(expression.getManager(), false);
     final Ref<Boolean> canBeSimplified = new Ref<Boolean>(Boolean.FALSE);

@@ -48,7 +48,7 @@ public class GrIntroduceLocalVariableIntention extends Intention {
 
   private static boolean isTargetVisible(PsiElement element) {
     if (PsiUtil.isExpressionStatement(element) && element instanceof GrExpression) {
-      if (((GrExpression)element).getType() != PsiType.VOID) {
+      if (!PsiType.VOID.equals(((GrExpression)element).getType())) {
         if (PsiTreeUtil.getParentOfType(element, GrAssignmentExpression.class) == null) {
           return true;
         }

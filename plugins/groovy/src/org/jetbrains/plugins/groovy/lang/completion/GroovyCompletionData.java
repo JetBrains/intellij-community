@@ -323,7 +323,7 @@ public class GroovyCompletionData {
 
     PsiElement parent = flowOwner.getParent();
     if (parent instanceof GrMethod) {
-      return ((GrMethod)parent).getReturnType() != PsiType.VOID;
+      return !PsiType.VOID.equals(((GrMethod)parent).getReturnType());
     }
     else if (parent instanceof GrClassInitializer) {
       return false;

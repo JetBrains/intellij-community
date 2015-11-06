@@ -193,7 +193,7 @@ class BooleanMethodIsAlwaysInvertedInspectionBase extends GlobalJavaBatchInspect
       if (refElement instanceof RefMethod) {
         final PsiElement element = refElement.getElement();
         if (!(element instanceof PsiMethod)) return;
-        if (((PsiMethod)element).getReturnType() != PsiType.BOOLEAN) return;
+        if (!PsiType.BOOLEAN.equals(((PsiMethod)element).getReturnType())) return;
         refElement.putUserData(ALWAYS_INVERTED, Boolean.TRUE); //initial mark boolean methods
       }
     }

@@ -267,10 +267,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (expressionType == null) {
       expressionType = PsiType.VOID;
     }
-    myHasExpressionOutput = expressionType != PsiType.VOID;
+    myHasExpressionOutput = !PsiType.VOID.equals(expressionType);
 
     final PsiType returnStatementType = getExpectedReturnType();
-    myHasReturnStatementOutput = myHasReturnStatement && returnStatementType != null && returnStatementType != PsiType.VOID;
+    myHasReturnStatementOutput = myHasReturnStatement && returnStatementType != null && !PsiType.VOID.equals(returnStatementType);
 
     if (myGenerateConditionalExit && myOutputVariables.length == 1) {
       if (!(myOutputVariables[0].getType() instanceof PsiPrimitiveType)) {
@@ -381,7 +381,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private boolean areAllExitPointsAreNotNull(PsiType returnStatementType) {
     if (insertNotNullCheckIfPossible() && myControlFlowWrapper.getOutputVariables(false).length == 0) {
-      boolean isNotNull = returnStatementType != null && returnStatementType != PsiType.VOID;
+      boolean isNotNull = returnStatementType != null && !PsiType.VOID.equals(returnStatementType);
       for (PsiStatement statement : myExitStatements) {
         if (statement instanceof PsiReturnStatement) {
           final PsiExpression returnValue = ((PsiReturnStatement)statement).getReturnValue();
@@ -432,7 +432,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       return;
     }
     final PsiMethod method = (PsiMethod)myCodeFragmentMember;
-    if (!method.isConstructor() || myReturnType != PsiType.VOID) {
+    if (!method.isConstructor() || !PsiType.VOID.equals(myReturnType)) {
       return;
     }
     final PsiCodeBlock body = method.getBody();

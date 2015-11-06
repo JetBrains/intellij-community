@@ -60,7 +60,7 @@ public class SubstitutedExpressionEvaluationHelper {
           final PsiMethodCallExpression c = (PsiMethodCallExpression)o;
           final PsiMethod m = (PsiMethod)c.getMethodExpression().resolve();
           final PsiType returnType = m != null? m.getReturnType() : null;
-          if (returnType != null && returnType != PsiType.VOID) {
+          if (returnType != null && !PsiType.VOID.equals(returnType)) {
             // find substitution
             final Object substituted = calcSubstituted(m);
             if (substituted != null) return substituted;

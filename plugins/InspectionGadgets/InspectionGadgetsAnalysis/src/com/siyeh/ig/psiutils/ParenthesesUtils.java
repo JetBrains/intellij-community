@@ -137,9 +137,9 @@ public class ParenthesesUtils {
       return false;
     }
     if (JavaTokenType.PLUS == tokenType || JavaTokenType.ASTERISK == tokenType) {
-      return primitiveType != PsiType.FLOAT && primitiveType != PsiType.DOUBLE;
+      return !PsiType.FLOAT.equals(primitiveType) && !PsiType.DOUBLE.equals(primitiveType);
     } else if (JavaTokenType.EQEQ == tokenType || JavaTokenType.NE == tokenType) {
-      return primitiveType == PsiType.BOOLEAN;
+      return PsiType.BOOLEAN.equals(primitiveType);
     } else if (JavaTokenType.AND == tokenType || JavaTokenType.OR == tokenType || JavaTokenType.XOR == tokenType) {
       return true;
     } else if (JavaTokenType.OROR == tokenType || JavaTokenType.ANDAND == tokenType) {

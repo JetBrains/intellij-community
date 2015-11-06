@@ -97,7 +97,7 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
   }
 
   private static boolean isBoolean(PsiMethod method) {
-    return method.getReturnType() == PsiType.BOOLEAN;
+    return PsiType.BOOLEAN.equals(method.getReturnType());
   }
 
   private boolean addAccessor(PsiMethod method, ResolveState state) {

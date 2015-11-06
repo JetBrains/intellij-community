@@ -119,7 +119,7 @@ public class GrReferenceResolveRunner {
   private boolean processQualifier(@NotNull GrExpression qualifier) {
     PsiType qualifierType = qualifier.getType();
     ResolveState state = ResolveState.initial().put(ClassHint.RESOLVE_CONTEXT, qualifier);
-    if (qualifierType == null || qualifierType == PsiType.VOID) {
+    if (qualifierType == null || PsiType.VOID.equals(qualifierType)) {
       if (qualifier instanceof GrReferenceExpression) {
         PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
         if (resolved != null && !resolved.processDeclarations(processor, state, null, place)) return false;

@@ -145,7 +145,7 @@ public class DelegateWithDefaultParamValueIntentionAction extends PsiElementBase
         final String methodCall;
         if (method.getReturnType() == null) {
           methodCall = "this";
-        } else if (method.getReturnType() != PsiType.VOID) {
+        } else if (!PsiType.VOID.equals(method.getReturnType())) {
           methodCall = "return " + method.getName();
         } else {
           methodCall = method.getName();

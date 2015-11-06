@@ -61,7 +61,7 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
     if (psiField.getTypeElement() == null) return false;
     final PsiType fieldType = psiField.getType();
     final PsiClass fieldTypeClass = PsiUtil.resolveClassInType(fieldType);
-    if (fieldType instanceof PsiPrimitiveType && fieldType != PsiType.VOID || fieldType instanceof PsiArrayType) return true;
+    if (fieldType instanceof PsiPrimitiveType && !PsiType.VOID.equals(fieldType) || fieldType instanceof PsiArrayType) return true;
     return fieldTypeClass != null && !Comparing.strEqual(fieldTypeClass.getQualifiedName(), ThreadLocal.class.getName())
            && AllowedApiFilterExtension.isClassAllowed(ThreadLocal.class.getName(), element);
   }
@@ -121,7 +121,7 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
       if (initializer == null) {
         final PsiType type = psiField.getType();
         String initializerText = null;
-        if (type == PsiType.BOOLEAN) {
+        if (PsiType.BOOLEAN.equals(type)) {
           initializerText = "false";
         }
         else if (type instanceof PsiPrimitiveType) {

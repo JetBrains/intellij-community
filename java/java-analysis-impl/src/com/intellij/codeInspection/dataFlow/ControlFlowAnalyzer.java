@@ -1218,7 +1218,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void generateBoxingUnboxingInstructionFor(@NotNull PsiExpression expression, PsiType expectedType) {
-    if (expectedType == PsiType.VOID) return;
+    if (PsiType.VOID.equals(expectedType)) return;
 
     PsiType exprType = expression.getType();
 

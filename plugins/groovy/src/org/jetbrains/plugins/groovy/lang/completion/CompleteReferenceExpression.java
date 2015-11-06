@@ -290,7 +290,7 @@ public class CompleteReferenceExpression {
     Project project = qualifier.getProject();
     final PsiType qualifierType = TypesUtil.boxPrimitiveType(qualifier.getType(), qualifier.getManager(), qualifier.getResolveScope());
     final ResolveState state = ResolveState.initial();
-    if (qualifierType == null || qualifierType == PsiType.VOID) {
+    if (qualifierType == null || PsiType.VOID.equals(qualifierType)) {
       if (qualifier instanceof GrReferenceExpression) {
         PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
         if (resolved instanceof PsiPackage || resolved instanceof PsiVariable) {

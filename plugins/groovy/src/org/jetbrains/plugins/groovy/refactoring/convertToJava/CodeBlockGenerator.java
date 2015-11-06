@@ -101,7 +101,7 @@ public class CodeBlockGenerator extends Generator {
     boolean shouldInsertReturnNull;
     myExitPoints.clear();
     PsiType returnType = context.typeProvider.getReturnType(method);
-    if (!method.isConstructor() && returnType != PsiType.VOID) {
+    if (!method.isConstructor() && !PsiType.VOID.equals(returnType)) {
       myExitPoints.addAll(ControlFlowUtils.collectReturns(block));
       shouldInsertReturnNull = block != null &&
                                !(returnType instanceof PsiPrimitiveType) &&
@@ -338,7 +338,7 @@ public class CodeBlockGenerator extends Generator {
       private boolean isRealExpression(GrExpression expression) {
         final PsiType type = expression.getType();
 
-        if (type == PsiType.VOID) return false; //statement
+        if (PsiType.VOID.equals(type)) return false; //statement
 
         if (type == PsiType.NULL) return !org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isVoidMethodCall(expression);
 
@@ -351,7 +351,8 @@ public class CodeBlockGenerator extends Generator {
     builder.append("return ");
 
     final PsiType expectedReturnType = PsiImplUtil.inferReturnType(expression);
-    final PsiType nnReturnType = expectedReturnType == null || expectedReturnType == PsiType.VOID ? TypesUtil.getJavaLangObject(expression) : expectedReturnType;
+    final PsiType nnReturnType = expectedReturnType == null || PsiType.VOID.equals(expectedReturnType)
+                                 ? TypesUtil.getJavaLangObject(expression) : expectedReturnType;
     GenerationUtil.wrapInCastIfNeeded(builder, nnReturnType, expression.getNominalType(), expression, context, new StatementWriter() {
       @Override
       public void writeStatement(StringBuilder builder, ExpressionContext context) {
@@ -382,7 +383,7 @@ public class CodeBlockGenerator extends Generator {
         builder.append("if (");
         if (condition != null) {
           final PsiType type = condition.getType();
-          if (TypesUtil.unboxPrimitiveTypeWrapper(type) == PsiType.BOOLEAN) {
+          if (PsiType.BOOLEAN.equals(TypesUtil.unboxPrimitiveTypeWrapper(type))) {
             writeExpression(condition, builder, context);
           }
           else {

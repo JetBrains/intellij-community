@@ -747,7 +747,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     PsiType returnType = callSubstitutor.substitute(myMethod.getReturnType());
     String resultName = null;
     final int applicabilityLevel = PsiUtil.getApplicabilityLevel(myMethod, callSubstitutor, argumentList);
-    if (returnType != null && returnType != PsiType.VOID && tailCallType == InlineUtil.TailCallType.None) {
+    if (returnType != null && !PsiType.VOID.equals(returnType) && tailCallType == InlineUtil.TailCallType.None) {
       resultName = myJavaCodeStyle.propertyNameToVariableName("result", VariableKind.LOCAL_VARIABLE);
       resultName = myJavaCodeStyle.suggestUniqueVariableName(resultName, block.getFirstChild(), true);
       PsiDeclarationStatement declaration = myFactory.createVariableDeclarationStatement(resultName, returnType, null);

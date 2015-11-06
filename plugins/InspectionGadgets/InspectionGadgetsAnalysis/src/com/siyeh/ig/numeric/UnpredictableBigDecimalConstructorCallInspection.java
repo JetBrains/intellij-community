@@ -160,7 +160,7 @@ public class UnpredictableBigDecimalConstructorCallInspection
       final PsiParameter[] parameters = parameterList.getParameters();
       final PsiParameter firstParameter = parameters[0];
       final PsiType type = firstParameter.getType();
-      if (type != PsiType.DOUBLE) {
+      if (!PsiType.DOUBLE.equals(type)) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();

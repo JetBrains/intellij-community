@@ -38,7 +38,7 @@ public class GrBooleanTypeConverter extends GrTypeConverter {
                                           @NotNull PsiType actualType,
                                           @NotNull GroovyPsiElement context,
                                           @NotNull ApplicableTo currentPosition) {
-    if (PsiType.BOOLEAN != TypesUtil.unboxPrimitiveTypeWrapper(targetType)) return null;
+    if (!PsiType.BOOLEAN.equals(TypesUtil.unboxPrimitiveTypeWrapper(targetType))) return null;
     if (PsiType.NULL == actualType) {
       switch (currentPosition) {
         case METHOD_PARAMETER:

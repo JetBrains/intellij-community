@@ -38,7 +38,7 @@ public class WrapReturnValueAction extends BaseRefactoringAction{
     final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
     if (psiMethod != null && !(psiMethod instanceof PsiCompiledElement)) {
       final PsiType returnType = psiMethod.getReturnType();
-      return returnType != null && returnType != PsiType.VOID;
+      return returnType != null && !PsiType.VOID.equals(returnType);
     }
     return false;
   }

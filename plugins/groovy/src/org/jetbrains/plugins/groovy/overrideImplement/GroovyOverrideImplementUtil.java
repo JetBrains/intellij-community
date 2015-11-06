@@ -274,7 +274,7 @@ public class GroovyOverrideImplementUtil {
   @NotNull
   private static String callSuper(PsiMethod superMethod, PsiMethod overriding) {
     @NonNls StringBuilder buffer = new StringBuilder();
-    if (!superMethod.isConstructor() && superMethod.getReturnType() != PsiType.VOID) {
+    if (!superMethod.isConstructor() && !PsiType.VOID.equals(superMethod.getReturnType())) {
       buffer.append("return ");
     }
     buffer.append("super");

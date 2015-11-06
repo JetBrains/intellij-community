@@ -161,7 +161,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
     }
 
     final PsiType closureReturnType = inferClosureReturnType();
-    if (closureReturnType == PsiType.VOID) {
+    if (PsiType.VOID.equals(closureReturnType)) {
       myForceReturnCheckBox.setEnabled(false);
       myForceReturnCheckBox.setSelected(false);
     }

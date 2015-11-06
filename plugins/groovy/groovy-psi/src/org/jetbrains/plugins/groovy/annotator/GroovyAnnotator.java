@@ -1067,7 +1067,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       PsiMethod superMethod = superMethodSignature.getMethod();
       PsiType declaredReturnType = superMethod.getReturnType();
       PsiType superReturnType = superMethodSignature.getSubstitutor().substitute(declaredReturnType);
-      if (superReturnType == PsiType.VOID && method instanceof GrMethod && ((GrMethod)method).getReturnTypeElementGroovy() == null) return;
+      if (PsiType.VOID.equals(superReturnType) && method instanceof GrMethod && ((GrMethod)method).getReturnTypeElementGroovy() == null) return;
       if (superMethodSignature.isRaw()) superReturnType = TypeConversionUtil.erasure(declaredReturnType);
       if (returnType == null || superReturnType == null || method == superMethod) continue;
       PsiClass superClass = superMethod.getContainingClass();
