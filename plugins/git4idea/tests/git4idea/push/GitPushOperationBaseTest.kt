@@ -41,14 +41,14 @@ import java.io.File
 abstract class GitPushOperationBaseTest : GitPlatformTest() {
 
   protected lateinit var myPushSupport: GitPushSupport
+  protected lateinit var myVcsHelper: MockVcsHelper
 
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
 
     myPushSupport = findGitPushSupport()
-
-    GitTestUtil.overrideService(myProject, AbstractVcsHelper::class.java, MockVcsHelper::class.java)
+    myVcsHelper = GitTestUtil.overrideService(myProject, AbstractVcsHelper::class.java, MockVcsHelper::class.java)
   }
 
   override fun refresh() {
