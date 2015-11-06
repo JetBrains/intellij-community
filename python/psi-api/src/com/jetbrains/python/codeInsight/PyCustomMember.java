@@ -17,11 +17,8 @@ package com.jetbrains.python.codeInsight;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.*;
 import com.intellij.util.Function;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
@@ -37,9 +34,7 @@ import javax.swing.*;
 /**
  * @author Dennis.Ushakov
  */
-public class PyCustomMember extends UserDataHolderBase {
-  private static final Key<ParameterizedCachedValue<PyClass, PsiElement>>
-    RESOLVE = Key.create("resolve");
+public class PyCustomMember {
   private final String myName;
   private final boolean myResolveToInstance;
   private final Function<PsiElement, PyType> myTypeCallback;
@@ -170,26 +165,14 @@ public class PyCustomMember extends UserDataHolderBase {
   }
 
   @Nullable
-  public PsiElement resolve(@NotNull final PsiElement context) {
-
+  public PsiElement resolve(@NotNull PsiElement context) {
     if (myTarget != null) {
       return myTarget;
     }
 
     PyClass targetClass = null;
     if (myTypeName != null) {
-
-      final ParameterizedCachedValueProvider<PyClass, PsiElement> provider = new ParameterizedCachedValueProvider<PyClass, PsiElement>() {
-        @Nullable
-        @Override
-        public CachedValueProvider.Result<PyClass> compute(
-          final PsiElement param) {
-          final PyClass result = PyPsiFacade.getInstance(param.getProject()).createClassByQName(myTypeName, param);
-          return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
-        }
-      };
-      targetClass = CachedValuesManager.getManager(context.getProject()).getParameterizedCachedValue(this, RESOLVE,
-                                                                                                     provider, false, context);
+      targetClass = PyPsiFacade.getInstance(context.getProject()).createClassByQName(myTypeName, context);
     }
     final PsiElement resolveTarget = findResolveTarget(context);
     if (resolveTarget instanceof PyFunction && !myAlwaysResolveToCustomElement) {
@@ -229,7 +212,6 @@ public class PyCustomMember extends UserDataHolderBase {
 
   /**
    * Checks if some reference points to this element
-   *
    * @param reference reference to check
    * @return true if reference points to it
    */
