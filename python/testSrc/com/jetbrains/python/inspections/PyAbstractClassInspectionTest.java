@@ -52,6 +52,11 @@ public class PyAbstractClassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-16776
+  public void testNotImplementedOverriddenInParent() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

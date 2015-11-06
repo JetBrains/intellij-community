@@ -464,31 +464,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   @NotNull
   public PyFunction[] getMethods(final boolean inherited) {
-    final PyFunction[] thisClassFunctions =
-      getClassChildren(PythonDialectsTokenSetProvider.INSTANCE.getFunctionDeclarationTokens(), PyFunction.ARRAY_FACTORY);
-    if (!inherited) {
-      return thisClassFunctions;
-    }
-    // Map to get rid of duplicated (overwritten methods)
-    final Map<String, PyFunction> result = new HashMap<String, PyFunction>();
-    // We get classes in MRO order (hopefully), so last methods are last
-    for (final PyClass superClass : getAncestorClasses(null)) {
-      for (final PyFunction function : superClass.getMethods(false)) {
-        final String functionName = function.getName();
-        if (functionName != null) {
-          result.put(functionName, function);
-        }
-      }
-    }
-    // We now need to add our own methods
-    for (final PyFunction function : thisClassFunctions) {
-      final String functionName = function.getName();
-      if (functionName != null) {
-        result.put(functionName, function);
-      }
-    }
-    final Collection<PyFunction> functionsToReturn = result.values();
-    return functionsToReturn.toArray(new PyFunction[functionsToReturn.size()]);
+    return getClassChildren(PythonDialectsTokenSetProvider.INSTANCE.getFunctionDeclarationTokens(), PyFunction.ARRAY_FACTORY);
   }
 
   @Override
