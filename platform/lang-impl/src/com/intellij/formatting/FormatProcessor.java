@@ -43,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.formatting.AbstractBlockAlignmentProcessor.*;
+import static com.intellij.formatting.AbstractBlockAlignmentProcessor.Context;
 
 public class FormatProcessor {
 
@@ -1650,7 +1650,7 @@ public class FormatProcessor {
 
     private void restoreAlignments(MultiMap<Alignment, LeafBlockWrapper> blocks) {
       for (Alignment alignment : blocks.keySet()) {
-        Set<LeafBlockWrapper> toRealign = ((AlignmentImpl)alignment).getAllBlocks();
+        Set<LeafBlockWrapper> toRealign = ((AlignmentImpl)alignment).getOffsetResponsibleBlocks();
         arrangeSpaces(toRealign);
         
         LeafBlockWrapper rightMostBlock = getRightMostBlock(toRealign);
@@ -1665,13 +1665,13 @@ public class FormatProcessor {
           int delta = maxSpacesBeforeBlock - blockIndent;
           if (delta > 0) {
             int newSpaces = block.getWhiteSpace().getTotalSpaces() + delta;
-            adjustAlignmentManually(block, newSpaces);
+            adjustSpacingToKeepAligned(block, newSpaces);
           }
         }
       }
     }
 
-    private void adjustAlignmentManually(LeafBlockWrapper block, int newSpaces) {
+    private void adjustSpacingToKeepAligned(LeafBlockWrapper block, int newSpaces) {
       WhiteSpace space = block.getWhiteSpace();
       SpacingImpl property = block.getSpaceProperty();
       space.arrangeSpaces(new SpacingImpl(newSpaces, newSpaces, 
