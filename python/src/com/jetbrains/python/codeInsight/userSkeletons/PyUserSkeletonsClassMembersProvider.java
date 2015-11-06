@@ -83,7 +83,7 @@ public class PyUserSkeletonsClassMembersProvider extends PyClassMembersProviderB
 
   public static Collection<PyCustomMember> getClassMembers(@NotNull PyClass cls, boolean isDefinition) {
     final List<PyCustomMember> result = new ArrayList<PyCustomMember>();
-    for (PyFunction function : cls.getMethods(false)) {
+    for (PyFunction function : cls.getMethods()) {
       final String name = function.getName();
       final PyUtil.MethodFlags methodFlags = PyUtil.MethodFlags.of(function);
       final boolean instanceMethod = methodFlags == null || methodFlags.isInstanceMethod();

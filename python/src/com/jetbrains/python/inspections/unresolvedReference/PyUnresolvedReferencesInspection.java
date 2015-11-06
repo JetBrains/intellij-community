@@ -888,7 +888,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             }
           }
         }
-        for (PyFunction method : containedClass.getMethods(false)) {
+        for (PyFunction method : containedClass.getMethods()) {
           if (expr.getText().equals(method.getName())) {
             actions.add(new UnresolvedReferenceAddSelfQuickFix(expr, qualifier));
           }

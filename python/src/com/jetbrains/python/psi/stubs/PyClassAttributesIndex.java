@@ -41,7 +41,7 @@ public class PyClassAttributesIndex extends StringStubIndexExtension<PyClass> {
   public static List<String> getAllDeclaredAttributeNames(@NotNull PyClass pyClass) {
     final List<PsiNamedElement> members = ContainerUtil.<PsiNamedElement>concat(pyClass.getInstanceAttributes(),
                                                                                 pyClass.getClassAttributes(),
-                                                                                Arrays.asList(pyClass.getMethods(false)));
+                                                                                Arrays.asList(pyClass.getMethods()));
 
     return ContainerUtil.mapNotNull(members, new Function<PsiNamedElement, String>() {
       @Override
