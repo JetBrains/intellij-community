@@ -975,7 +975,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     deactivateToolWindowImpl(id, true, commandList);
 
-    if (hideSide && !info.isFloating()) {
+    if (hideSide && !info.isFloating() && !info.isWindowed()) {
       final List<String> ids = myLayout.getVisibleIdsOn(info.getAnchor(), this);
       for (String each : ids) {
         myActiveStack.remove(each, true);
@@ -2231,6 +2231,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       myId2WindowedDecorator.remove(info.getId());
 
       JRootPane rootPane = ((RootPaneContainer)myWindowedDecorator.getFrame()).getRootPane();
+      if (!rootPane.isShowing()) return;
       Rectangle bounds = rootPane.getBounds();
       Point location = rootPane.getLocationOnScreen();
       bounds.setBounds(location.x - DIVIDER_WIDTH, location.y - DIVIDER_WIDTH, bounds.width + 2 * DIVIDER_WIDTH, bounds.height + 2 * DIVIDER_WIDTH);
