@@ -145,6 +145,7 @@ public class AddVariableInitializerFix implements IntentionAction {
               if (psiClass != null &&
                   !psiClass.isInterface() &&
                   !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
+                  psiClass.hasModifierProperty(PsiModifier.PUBLIC) &&
                   PsiUtil.hasDefaultConstructor(psiClass)) {
                 suggestedTypes.add(type);
               }
