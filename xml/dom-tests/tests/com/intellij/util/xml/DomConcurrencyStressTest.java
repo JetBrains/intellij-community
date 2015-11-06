@@ -27,7 +27,10 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.semantic.SemService;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
+import com.intellij.util.Function;
+import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.impl.DomFileElementImpl;
 import com.intellij.util.xml.impl.DomTestCase;
 import com.intellij.util.xml.reflect.DomExtender;
@@ -35,6 +38,7 @@ import com.intellij.util.xml.reflect.DomExtenderEP;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
@@ -115,26 +119,41 @@ public class DomConcurrencyStressTest extends DomTestCase {
     for (int i=0; i<threadCount/8 + 1; i++) {
       final Ref<Throwable> exc = Ref.create(null);
 
-      final CountDownLatch reads = new CountDownLatch(8);
-      for (int j = 0; j < 8; j++) {
-        new Thread("dom concurrency"){
-          @Override
-          public void run() {
-            try {
-              runnable.run();
+      int N = 8;
+      final CountDownLatch reads = new CountDownLatch(N);
+      List<Thread> threads = ContainerUtil.map(Collections.nCopies(N, ""), new Function<String, Thread>() {
+        @Override
+        public Thread fun(String s) {
+          return new Thread("dom concurrency") {
+            @Override
+            public void run() {
+              try {
+                runnable.run();
+              }
+              catch (Throwable e) {
+                exc.set(e);
+              }
+              finally {
+                reads.countDown();
+              }
             }
-            catch (Throwable e) {
-              exc.set(e);
-            }
-            finally {
-              reads.countDown();
-            }
-          }
-        }.start();
-      }
+          };
+        }
+      });
+      ContainerUtil.process(threads, new Processor<Thread>() {
+        @Override
+        public boolean process(Thread thread) {
+          thread.start();
+          return true;
+        }
+      });
+
       reads.await();
       if (!exc.isNull()) {
         throw exc.get();
+      }
+      for (Thread thread : threads) {
+        thread.join();
       }
     }
   }
