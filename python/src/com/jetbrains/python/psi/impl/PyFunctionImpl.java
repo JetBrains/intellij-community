@@ -733,6 +733,11 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @NotNull
   @Override
   public List<PyAssignmentStatement> findAttributes() {
+    /**
+     * TODO: This method if insanely heavy since it unstubs foreign files.
+     * Need to save stubs and use them somehow.
+     *
+     */
     return CachedValuesManager.getManager(getProject()).getCachedValue(this, ATTRIBUTES_KEY, new CachedValueProvider<List<PyAssignmentStatement>>() {
       @Nullable
       @Override

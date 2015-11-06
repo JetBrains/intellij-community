@@ -67,7 +67,8 @@ public final class NameResolverTools {
   }
 
   /**
-   * Checks if FQ element name is one of provided names
+   * Checks if FQ element name is one of provided names. May be <strong>heavy</strong>.
+   * It is always better to use less accurate but lighter {@link #isCalleeShortCut(PyCallExpression, FQNamesProvider, TypeEvalContext)}
    *
    * @param element        element to check
    * @param namesProviders some enum that has one or more names
@@ -117,10 +118,7 @@ public final class NameResolverTools {
    */
   public static boolean isCalleeShortCut(@NotNull final PyCallExpression call,
                                          @NotNull final FQNamesProvider function,
-                                         @Nullable final TypeEvalContext context) {
-    if (context == null) {
-      return call.isCallee(function);
-    }
+                                         @NotNull final TypeEvalContext context) {
     final PyExpression callee = call.getCallee();
     if (callee == null) {
       return false;
