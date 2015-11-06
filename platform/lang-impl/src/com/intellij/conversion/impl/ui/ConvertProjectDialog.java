@@ -77,7 +77,7 @@ public class ConvertProjectDialog extends DialogWrapper {
                                        ApplicationNamesInfo.getInstance().getFullProductName()));
     }
     message.append(IdeBundle.message("conversion.dialog.text.2", myBackupDir.getAbsolutePath()));
-    Messages.configureMessagePaneUi(myTextPane, XmlStringUtil.wrapInHtml(message), false);
+    Messages.configureMessagePaneUi(myTextPane, XmlStringUtil.wrapInHtml(message), null);
 
     myTextPane.addHyperlinkListener(new HyperlinkListener() {
       @Override
