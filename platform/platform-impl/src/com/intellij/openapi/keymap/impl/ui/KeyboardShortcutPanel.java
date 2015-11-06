@@ -16,7 +16,6 @@
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.Shortcut;
 
 import java.awt.LayoutManager;
 import java.awt.event.ItemEvent;
@@ -24,18 +23,15 @@ import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.JCheckBox;
-import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 
 /**
  * @author Sergey.Malenkov
  */
-final class KeyboardShortcutPanel extends JPanel {
+final class KeyboardShortcutPanel extends ShortcutPanel<KeyboardShortcut> {
   final ShortcutTextField myFirstStroke = new ShortcutTextField();
   final ShortcutTextField mySecondStroke = new ShortcutTextField();
   final JCheckBox mySecondStrokeEnable = new JCheckBox();
-
-  private KeyboardShortcut myShortcut;
 
   private final ItemListener myItemListener = new ItemListener() {
     @Override
@@ -50,35 +46,33 @@ final class KeyboardShortcutPanel extends JPanel {
   private final PropertyChangeListener myPropertyListener = new PropertyChangeListener() {
     @Override
     public void propertyChange(PropertyChangeEvent event) {
-      setShortcut(newShortcut());
-      if (null == myFirstStroke.getKeyStroke()) {
-        myFirstStroke.requestFocus();
+      if (KeyboardShortcutPanel.this != event.getSource()) {
+        setShortcut(newShortcut());
+        if (null == myFirstStroke.getKeyStroke()) {
+          myFirstStroke.requestFocus();
+        }
+        else if (null == mySecondStroke.getKeyStroke() && mySecondStrokeEnable.isSelected()) {
+          mySecondStroke.requestFocus();
+        }
       }
-      else if (null == mySecondStroke.getKeyStroke() && mySecondStrokeEnable.isSelected()) {
-        mySecondStroke.requestFocus();
+      else if (event.getNewValue() instanceof KeyboardShortcut) {
+        KeyboardShortcut shortcut = (KeyboardShortcut)event.getNewValue();
+        myFirstStroke.setKeyStroke(shortcut.getFirstKeyStroke());
+        mySecondStroke.setKeyStroke(shortcut.getSecondKeyStroke());
+      }
+      else {
+        myFirstStroke.setKeyStroke(null);
+        mySecondStroke.setKeyStroke(null);
       }
     }
   };
 
   KeyboardShortcutPanel(LayoutManager layout) {
     super(layout);
+    addPropertyChangeListener("shortcut", myPropertyListener);
     myFirstStroke.addPropertyChangeListener("keyStroke", myPropertyListener);
     mySecondStroke.addPropertyChangeListener("keyStroke", myPropertyListener);
     mySecondStrokeEnable.addItemListener(myItemListener);
-  }
-
-  KeyboardShortcut getShortcut() {
-    return myShortcut;
-  }
-
-  void setShortcut(KeyboardShortcut shortcut) {
-    Shortcut old = myShortcut;
-    if (old == null || !old.equals(shortcut)) {
-      myShortcut = shortcut;
-      myFirstStroke.setKeyStroke(shortcut == null ? null : shortcut.getFirstKeyStroke());
-      mySecondStroke.setKeyStroke(shortcut == null ? null : shortcut.getSecondKeyStroke());
-      firePropertyChange("shortcut", old, shortcut);
-    }
   }
 
   private KeyboardShortcut newShortcut() {

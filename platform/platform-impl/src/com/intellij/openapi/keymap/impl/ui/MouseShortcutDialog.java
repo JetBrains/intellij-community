@@ -17,125 +17,38 @@ package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.MouseShortcut;
-import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.impl.ShortcutRestrictions;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.util.Arrays;
+import java.util.Collection;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 
 /**
  * @author Vladimir Kondratyev
+ * @author Sergey.Malenkov
  */
-class MouseShortcutDialog extends DialogWrapper{
-  private final Keymap myKeymap;
-  private final String myActionId;
-  private final Group myMainGroup;
+final class MouseShortcutDialog extends ShortcutDialog<MouseShortcut> {
+  private final JLabel myText = new JLabel("", SwingConstants.CENTER);
 
-  private final JRadioButton myRbSingleClick;
-  private final JRadioButton myRbDoubleClick;
-  private final JLabel myLblPreview;
-  private final JLabel myClickPad;
-  private final JTextArea myTarConflicts;
+  MouseShortcutDialog(Component component, boolean allowDoubleClick) {
+    super(component, "mouse.shortcut.dialog.title", new MouseShortcutPanel(allowDoubleClick));
 
-  private final MouseShortcutConsumer myShortcutConsumer;
-
-  private int myButton;
-  @JdkConstants.InputEventMask  private int myModifiers;
-
-  /**
-   * @param shortcut dialog will be initialized with this <code>shortcut</code>. It can be <code>null</code>
-   * if dialog is used to create new mouse shortcut.
-   */
-  public MouseShortcutDialog(
-    JComponent parentComponent,
-    MouseShortcut shortcut,
-    @NotNull Keymap keymap,
-    @NotNull String actiondId,
-    @NotNull Group mainGroup,
-    @NotNull ShortcutRestrictions restrictions
-  ){
-    super(parentComponent,true);
-    setTitle(KeyMapBundle.message("mouse.shortcut.dialog.title"));
-
-    myKeymap=keymap;
-    myActionId=actiondId;
-    myMainGroup=mainGroup;
-
-    myRbSingleClick=new JRadioButton(KeyMapBundle.message("mouse.shortcut.dialog.single.click.radio"));
-    myRbDoubleClick=new JRadioButton(KeyMapBundle.message("mouse.shortcut.dialog.double.click.radio"));
-    ButtonGroup buttonGroup=new ButtonGroup();
-    buttonGroup.add(myRbSingleClick);
-    buttonGroup.add(myRbDoubleClick);
-
-    myLblPreview=new JLabel(" ");
-
-    myTarConflicts=new JTextArea();
-    myTarConflicts.setFocusable(false);
-    myTarConflicts.setEditable(false);
-    myTarConflicts.setBackground(UIUtil.getPanelBackground());
-    myTarConflicts.setLineWrap(true);
-    myTarConflicts.setWrapStyleWord(true);
-
-    if(shortcut!=null){
-      if(shortcut.getClickCount()==1){
-        myRbSingleClick.setSelected(true);
-      }else{
-        myRbDoubleClick.setSelected(true);
-      }
-      myButton=shortcut.getButton();
-      myModifiers=shortcut.getModifiers();
-    }else{
-      myRbSingleClick.setSelected(true);
-      myButton=-1;
-      myModifiers=-1;
-    }
-
-    myRbDoubleClick.setEnabled(restrictions.allowMouseDoubleClick);
-
-    updatePreviewAndConflicts();
-
-    myClickPad = new JLabel(
-      KeyMapBundle.message("mouse.shortcut.label"),
-      AllIcons.General.Mouse, SwingConstants.LEADING
-    );
-    myShortcutConsumer = new MouseShortcutConsumer(shortcut) {
-      @Override
-      public void consume(MouseShortcut shortcut) {
-        myButton = shortcut.getButton();
-        myModifiers = shortcut.getModifiers();
-        updatePreviewAndConflicts();
-      }
-    };
-    myClickPad.addHierarchyListener(myShortcutConsumer);
+    myShortcutPanel.add(BorderLayout.NORTH, new JLabel(AllIcons.General.Mouse, SwingConstants.CENTER));
+    myShortcutPanel.add(BorderLayout.CENTER, myText);
+    myShortcutPanel.setBorder(BorderFactory.createCompoundBorder(
+      JBUI.Borders.customLine(MouseShortcutPanel.BORDER, 1, 0, 1, 0),
+      JBUI.Borders.empty(20)
+    ));
 
     init();
-  }
-
-  /**
-   * @return created/edited shortcut. Returns <code>null</code> if shortcut is invalid.
-   */
-  public MouseShortcut getMouseShortcut(){
-    if (myButton > 3 && myButton != MouseShortcut.BUTTON_WHEEL_UP && myButton != MouseShortcut.BUTTON_WHEEL_DOWN && getClickCount() == 2) {
-      return null;
-    }
-
-    if(myButton!=-1 && myModifiers!=-1){
-      return new MouseShortcut(myButton,myModifiers,getClickCount());
-    }else{
-      return null;
-    }
   }
 
   @Override
@@ -143,149 +56,29 @@ class MouseShortcutDialog extends DialogWrapper{
     return "preferences.mouse.shortcut";
   }
 
-  protected JComponent createCenterPanel(){
-    JPanel panel=new JPanel(new GridBagLayout());
-
-    // Single/Double click
-
-    JPanel clickCountPanel=new JPanel(new GridBagLayout());
-    clickCountPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      KeyMapBundle.message("mouse.shortcut.dialog.click.count.border"), true));
-    panel.add(
-      clickCountPanel,
-      new GridBagConstraints(0,0,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.HORIZONTAL,new Insets(0,0,0,0),0,0)
-    );
-    clickCountPanel.add(
-      myRbSingleClick,
-      new GridBagConstraints(0,0,1,1,1,0,GridBagConstraints.WEST,GridBagConstraints.NONE,new Insets(0,0,0,10),0,0)
-    );
-    clickCountPanel.add(
-      myRbDoubleClick,
-      new GridBagConstraints(1,0,1,1,1,0,GridBagConstraints.EAST,GridBagConstraints.NONE,new Insets(0,0,0,0),0,0)
-    );
-
-    ActionListener listener=new ActionListener(){
-      public void actionPerformed(ActionEvent e){
-        updatePreviewAndConflicts();
-      }
-    };
-    myRbSingleClick.addActionListener(listener);
-    myRbDoubleClick.addActionListener(listener);
-
-    // Click pad
-
-    panel.add(
-      myClickPad,
-      new GridBagConstraints(0,1,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.BOTH,new Insets(0,0,4,0),0,0)
-    );
-    myClickPad.setBorder(BorderFactory.createCompoundBorder(
-      IdeBorderFactory.createTitledBorder(KeyMapBundle.message("mouse.shortcut.dialog.click.pad.border"), true),
-      JBUI.Borders.empty(20, 0, 20, 20)));
-
-    // Shortcut preview
-
-    JPanel previewPanel=new JPanel(new GridBagLayout());
-    previewPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      KeyMapBundle.message("mouse.shortcut.dialog.shortcut.preview.border"), true));
-    panel.add(
-      previewPanel,
-      new GridBagConstraints(0,2,1,1,1,0,GridBagConstraints.CENTER,GridBagConstraints.BOTH,new Insets(0,0,4,0),0,0)
-    );
-    previewPanel.add(
-      myLblPreview,
-      new GridBagConstraints(0,0,1,1,1,1,GridBagConstraints.CENTER,GridBagConstraints.BOTH,new Insets(2,2,2,2),0,0)
-    );
-
-    // Conflicts panel
-
-    JPanel conflictsPanel=new JPanel(new GridBagLayout());
-    conflictsPanel.setBorder(IdeBorderFactory.createTitledBorder(
-      KeyMapBundle.message("mouse.shortcut.dialog.conflicts.border"), true));
-    panel.add(
-      conflictsPanel,
-      new GridBagConstraints(0,3,1,1,1,1,GridBagConstraints.CENTER,GridBagConstraints.BOTH,new Insets(0,0,0,0),0,0)
-    );
-    myTarConflicts.setPreferredSize(JBUI.size(260,60));
-    JScrollPane scrollPane= ScrollPaneFactory.createScrollPane(myTarConflicts);
-    scrollPane.setBorder(null);
-    conflictsPanel.add(
-      scrollPane,
-      new GridBagConstraints(0,0,1,1,1,1,GridBagConstraints.CENTER,GridBagConstraints.BOTH,new Insets(0,0,0,0),0,0)
-    );
-
-    return panel;
+  @Override
+  MouseShortcut toShortcut(Object value) {
+    return value instanceof MouseShortcut ? (MouseShortcut)value : null;
   }
 
-  private int getClickCount() {
-    return myRbSingleClick.isSelected() ? 1 : 2;
-  }
-  /**
-   * Updates all UI controls
-   */
-  private void updatePreviewAndConflicts(){
-    if(myButton==-1||myModifiers==-1){
-      return;
-    }
-
-    myTarConflicts.setText(null);
-
-    // Set text into preview area
-
-    // empty string should have same height
-    myLblPreview.setText(KeymapUtil.getMouseShortcutText(myButton,myModifiers,getClickCount()) + " ");
-
-    // Detect conflicts
-
-    final MouseShortcut mouseShortcut=new MouseShortcut(myButton,myModifiers,getClickCount());
-
-    if (myButton > 3 && getClickCount() == 2) {
-      myTarConflicts.setForeground(JBColor.RED);
-      myTarConflicts.setText(KeyMapBundle.message("mouse.shortcut.dialog.side.buttons.with.double.click", myButton));
-      return;
-    }
-
-    StringBuilder buffer = new StringBuilder();
-    String[] actionIds = myKeymap.getActionIds(mouseShortcut);
-    for (String actionId : actionIds) {
-      if (actionId.equals(myActionId)) {
-        continue;
-      }
-
-      String actionPath = myMainGroup.getActionQualifiedPath(actionId);
-      // actionPath == null for editor actions having corresponding $-actions
-      if (actionPath == null) {
-        continue;
-      }
-
-      Shortcut[] shortcuts = myKeymap.getShortcuts(actionId);
-      for (Shortcut shortcut1 : shortcuts) {
-        if (!(shortcut1 instanceof MouseShortcut)) {
-          continue;
-        }
-
-        MouseShortcut shortcut = (MouseShortcut)shortcut1;
-
-        if (shortcut.getButton() != mouseShortcut.getButton() || shortcut.getModifiers() != mouseShortcut.getModifiers()) {
-          continue;
-        }
-
-        if (buffer.length() > 1) {
-          buffer.append('\n');
-        }
-        buffer.append('[');
-        buffer.append(actionPath);
-        buffer.append(']');
-        break;
-      }
-    }
-
-    if (buffer.length() == 0) {
-      myTarConflicts.setForeground(UIUtil.getTextAreaForeground());
-      myTarConflicts.setText(KeyMapBundle.message("mouse.shortcut.dialog.no.conflicts.area"));
+  @Override
+  void setShortcut(MouseShortcut shortcut) {
+    super.setShortcut(shortcut);
+    if (shortcut == null) {
+      myText.setForeground(MouseShortcutPanel.FOREGROUND);
+      myText.setText(KeyMapBundle.message("dialog.mouse.pad.default.text"));
     }
     else {
-      myTarConflicts.setForeground(JBColor.RED);
-      myTarConflicts.setText(KeyMapBundle.message("mouse.shortcut.dialog.assigned.to.area", buffer.toString()));
+      myText.setForeground(UIUtil.getLabelForeground());
+      myText.setText(KeyMapBundle.message("dialog.mouse.pad.shortcut.text", KeymapUtil.getMouseShortcutText(
+        shortcut.getButton(),
+        shortcut.getModifiers(),
+        shortcut.getClickCount())));
     }
+  }
+
+  @Override
+  Collection<String> getConflicts(MouseShortcut shortcut, String actionId, Keymap keymap) {
+    return Arrays.asList(keymap.getActionIds(shortcut));
   }
 }

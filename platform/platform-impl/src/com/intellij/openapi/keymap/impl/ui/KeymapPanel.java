@@ -36,7 +36,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -479,13 +478,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
                                          @NotNull Keymap keymap,
                                          @NotNull Component parent,
                                          @NotNull QuickList[] quickLists) {
-    KeyboardShortcutDialog dialog = new KeyboardShortcutDialog(parent, actionId, quickLists);
-    dialog.setData(keymap, shortcut instanceof KeyboardShortcut ? (KeyboardShortcut)shortcut : null);
-    if (!dialog.showAndGet()) {
-      return;
-    }
-
-    KeyboardShortcut keyboardShortcut = dialog.getKeyboardShortcut();
+    KeyboardShortcutDialog dialog = new KeyboardShortcutDialog(parent);
+    KeyboardShortcut keyboardShortcut = dialog.showAndGet(shortcut, actionId, keymap, quickLists);
     if (keyboardShortcut == null) {
       return;
     }
@@ -535,22 +529,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     Keymap keymap = createKeymapCopyIfNeeded();
 
-    MouseShortcut mouseShortcut = shortcut instanceof MouseShortcut ? (MouseShortcut)shortcut : null;
-    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
-    MouseShortcutDialog dialog = new MouseShortcutDialog(
-      this,
-      mouseShortcut,
-      keymap,
-      actionId,
-      ActionsTreeUtil.createMainGroup(project, keymap, myQuickLists, null, true, null),
-      restrictions
-    );
-    if (!dialog.showAndGet()) {
-      return;
-    }
-
-    mouseShortcut = dialog.getMouseShortcut();
-
+    MouseShortcutDialog dialog = new MouseShortcutDialog(this, restrictions.allowMouseDoubleClick);
+    MouseShortcut mouseShortcut = dialog.showAndGet(shortcut, actionId, keymap, myQuickLists);
     if (mouseShortcut == null) {
       return;
     }

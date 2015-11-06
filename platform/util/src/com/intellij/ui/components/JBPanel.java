@@ -16,6 +16,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.util.ui.JBFont;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.JBComponent;
 
 import javax.swing.*;
@@ -27,6 +28,12 @@ import java.awt.*;
  */
 @SuppressWarnings("unchecked")
 public class JBPanel<T extends JBPanel> extends JPanel implements JBComponent<T> {
+  private Integer myPreferredWidth;
+  private Integer myPreferredHeight;
+  private Integer myMaximumWidth;
+  private Integer myMaximumHeight;
+  private Integer myMinimumWidth;
+  private Integer myMinimumHeight;
 
   public JBPanel(LayoutManager layout, boolean isDoubleBuffered) {
     super(layout, isDoubleBuffered);
@@ -66,5 +73,58 @@ public class JBPanel<T extends JBPanel> extends JPanel implements JBComponent<T>
   public T andOpaque() {
     setOpaque(true);
     return (T)this;
+  }
+
+  public T withPreferredWidth(int width) {
+    myPreferredWidth = width;
+    return (T)this;
+  }
+
+  public T withPreferredHeight(int height) {
+    myPreferredHeight = height;
+    return (T)this;
+  }
+
+  public T withMaximumWidth(int width) {
+    myMaximumWidth = width;
+    return (T)this;
+  }
+
+  public T withMaximumHeight(int height) {
+    myMaximumHeight = height;
+    return (T)this;
+  }
+
+  public T withMinimumWidth(int width) {
+    myMinimumWidth = width;
+    return (T)this;
+  }
+
+  public T withMinimumHeight(int height) {
+    myMinimumHeight = height;
+    return (T)this;
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    return getSize(super.getPreferredSize(), myPreferredWidth, myPreferredHeight, isPreferredSizeSet());
+  }
+
+  @Override
+  public Dimension getMaximumSize() {
+    return getSize(super.getMaximumSize(), myMaximumWidth, myMaximumHeight, isMaximumSizeSet());
+  }
+
+  @Override
+  public Dimension getMinimumSize() {
+    return getSize(super.getMinimumSize(), myMinimumWidth, myMinimumHeight, isMinimumSizeSet());
+  }
+
+  private static Dimension getSize(Dimension size, Integer width, Integer height, boolean isSet) {
+    if (!isSet && size != null) {
+      if (width != null) size.width = JBUI.scale(width);
+      if (height != null) size.height = JBUI.scale(height);
+    }
+    return size;
   }
 }

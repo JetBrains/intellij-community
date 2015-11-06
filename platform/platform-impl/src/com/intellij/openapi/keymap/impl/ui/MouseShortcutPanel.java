@@ -22,18 +22,16 @@ import java.awt.BorderLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import javax.swing.JPanel;
 
 /**
  * @author Sergey.Malenkov
  */
-final class MouseShortcutPanel extends JPanel {
+final class MouseShortcutPanel extends ShortcutPanel<MouseShortcut> {
   static final JBColor FOREGROUND = new JBColor(0x8C8C8C, 0x8C8C8C);
   static final JBColor BACKGROUND = new JBColor(0xF5F5F5, 0x4B4F52);
   static final JBColor BORDER = new JBColor(0xDEDEDE, 0x383B3D);
 
-  private MouseShortcut myShortcut;
-
+  private final int myClickCount;
   private final MouseAdapter myMouseListener = new MouseAdapter() {
     @Override
     public void mouseWheelMoved(MouseWheelEvent event) {
@@ -46,35 +44,26 @@ final class MouseShortcutPanel extends JPanel {
 
       int button = MouseShortcut.getButton(event);
       int clickCount = event instanceof MouseWheelEvent ? 1 : event.getClickCount();
-      if (0 <= button && clickCount < 3) {
+      if (0 <= button && clickCount <= myClickCount) {
         int modifiers = event.getModifiersEx();
-        if (myShortcut == null
-            || button != myShortcut.getButton()
-            || modifiers != myShortcut.getModifiers()
-            || clickCount != myShortcut.getClickCount()) {
-          setShortcut(new MouseShortcut(button, modifiers, clickCount));
-        }
+        setShortcut(new MouseShortcut(button, modifiers, clickCount));
       }
     }
   };
 
-  MouseShortcutPanel() {
+  MouseShortcutPanel(boolean allowDoubleClick) {
     super(new BorderLayout());
+    myClickCount = allowDoubleClick ? 2 : 1;
     addMouseListener(myMouseListener);
     addMouseWheelListener(myMouseListener);
     setBackground(BACKGROUND);
     setOpaque(true);
   }
 
-  MouseShortcut getShortcut() {
-    return myShortcut;
-  }
-
   void setShortcut(MouseShortcut shortcut) {
-    MouseShortcut old = myShortcut;
+    MouseShortcut old = getShortcut();
     if (old != null || shortcut != null) {
-      myShortcut = shortcut;
-      firePropertyChange("shortcut", old, shortcut);
+      super.setShortcut(shortcut);
     }
   }
 }

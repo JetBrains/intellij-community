@@ -31,10 +31,10 @@ import javax.swing.text.DefaultCaret;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
-public class ShortcutTextField extends JTextField {
+public final class ShortcutTextField extends JTextField {
   private KeyStroke myKeyStroke;
 
-  public ShortcutTextField() {
+  ShortcutTextField() {
     enableEvents(AWTEvent.KEY_EVENT_MASK);
     setFocusTraversalKeysEnabled(false);
     putClientProperty("JTextField.variant", "search");
@@ -62,21 +62,17 @@ public class ShortcutTextField extends JTextField {
     }
   }
 
-  public void setKeyStroke(KeyStroke keyStroke) {
+  void setKeyStroke(KeyStroke keyStroke) {
     KeyStroke old = myKeyStroke;
     if (old != null || keyStroke != null) {
       myKeyStroke = keyStroke;
       super.setText(KeymapUtil.getKeystrokeText(keyStroke));
       setCaretPosition(0);
-      updateCurrentKeyStrokeInfo();
       firePropertyChange("keyStroke", old, keyStroke);
     }
   }
 
-  protected void updateCurrentKeyStrokeInfo() {
-  }
-
-  public KeyStroke getKeyStroke() {
+  KeyStroke getKeyStroke() {
     return myKeyStroke;
   }
 
