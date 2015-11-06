@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -41,6 +42,7 @@ import com.intellij.util.indexing.IndexableFileSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 
 import static com.intellij.openapi.roots.ModuleRootModificationUtil.updateModel;
@@ -70,7 +72,13 @@ public class LightProjectDescriptor {
     return ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
       @Override
       public Module compute() {
-        return ModuleManager.getInstance(project).newModule("light_idea_test_case.iml", getModuleType().getId());
+        String moduleFilePath = "light_idea_test_case.iml";
+        File imlFile = new File(moduleFilePath);
+        if (imlFile.exists()) {
+          //temporary workaround for IDEA-147530: otherwise if someone saved module with this name before the created module will get its settings
+          FileUtil.delete(imlFile);
+        }
+        return ModuleManager.getInstance(project).newModule(moduleFilePath, getModuleType().getId());
       }
     });
   }
