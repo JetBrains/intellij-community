@@ -164,12 +164,15 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         }
       }
 
-      StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-        @Override
-        public void run() {
-          finishImport(project, externalProjectNode, isFromUI, modules, modelsProvider, projectSettings);
-        }
-      });
+      if (!project.isInitialized()) {
+        StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+          @Override
+          public void run() {
+            finishImport(project, externalProjectNode, isFromUI, modules, modelsProvider, projectSettings);
+          }
+        });
+      }
+      else finishImport(project, externalProjectNode, isFromUI, modules, modelsProvider, projectSettings);
     }
     return modules;
   }
