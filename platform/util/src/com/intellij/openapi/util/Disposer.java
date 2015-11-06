@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -126,12 +127,16 @@ public class Disposer {
     }
   }
 
+  @TestOnly
   public static boolean isEmpty() {
     return ourDebugMode && ourTree.isEmpty();
   }
 
-  public static void setDebugMode(final boolean debugMode) {
+  // returns old value
+  public static boolean setDebugMode(final boolean debugMode) {
+    boolean oldValue = ourDebugMode;
     ourDebugMode = debugMode;
+    return oldValue;
   }
 
   public static boolean isDebugMode() {

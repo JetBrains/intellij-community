@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,9 @@ package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.Equality;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -59,11 +58,12 @@ public final class ObjectTree<T> {
 
   public final void register(@NotNull T parent, @NotNull T child) {
     synchronized (treeLock) {
-      ObjectNode<T> parentNode = getOrCreateNodeFor(parent, null);
+      ObjectNode<T> parentNode = getNode(parent);
+      if (parentNode == null) parentNode = createNodeFor(parent, null);
 
       ObjectNode<T> childNode = getNode(child);
       if (childNode == null) {
-        childNode = createNodeFor(child, parentNode, Disposer.isDebugMode() ? new Throwable() : null);
+        childNode = createNodeFor(child, parentNode);
       }
       else {
         ObjectNode<T> oldParent = childNode.getParent();
@@ -72,38 +72,26 @@ public final class ObjectTree<T> {
         }
       }
       myRootObjects.remove(child);
-      checkWasNotAddedAlready(childNode, child);
+
+      checkWasNotAddedAlready(parentNode, childNode);
+
       parentNode.addChild(childNode);
 
       fireRegistered(childNode.getObject());
     }
   }
 
-  private void checkWasNotAddedAlready(@NotNull ObjectNode<T> childNode, @NotNull T child) {
-    ObjectNode parent = childNode.getParent();
-    boolean childIsInTree = parent != null;
-    if (!childIsInTree) return;
-
-    while (parent != null) {
-      if (parent.getObject() == child) {
-        LOG.error(child + " was already added as a child of: " + parent);
+  private void checkWasNotAddedAlready(ObjectNode<T> childNode, @NotNull ObjectNode<T> parentNode) {
+    for (ObjectNode<T> node = childNode; node != null; node = node.getParent()) {
+      if (node == parentNode) {
+        throw new IncorrectOperationException("'"+childNode.getObject() + "' was already added as a child of '" + parentNode.getObject()+"'");
       }
-      parent = parent.getParent();
     }
   }
 
   @NotNull
-  private ObjectNode<T> getOrCreateNodeFor(@NotNull T object, @Nullable ObjectNode<T> defaultParent) {
-    final ObjectNode<T> node = getNode(object);
-
-    if (node != null) return node;
-
-    return createNodeFor(object, defaultParent, Disposer.isDebugMode() ? new Throwable() : null);
-  }
-
-  @NotNull
-  private ObjectNode<T> createNodeFor(@NotNull T object, @Nullable ObjectNode<T> parentNode, @Nullable final Throwable trace) {
-    final ObjectNode<T> newNode = new ObjectNode<T>(this, parentNode, object, getNextModification(), trace);
+  private ObjectNode<T> createNodeFor(@NotNull T object, @Nullable ObjectNode<T> parentNode) {
+    final ObjectNode<T> newNode = new ObjectNode<T>(this, parentNode, object, getNextModification());
     if (parentNode == null) {
       myRootObjects.add(object);
     }
@@ -125,9 +113,7 @@ public final class ObjectTree<T> {
         executeUnregistered(object, action);
         return true;
       }
-      else {
-        return false;
-      }
+      return false;
     }
     node.execute(disposeTree, action);
     return true;
@@ -138,7 +124,7 @@ public final class ObjectTree<T> {
                                                   @NotNull List<T> recursiveGuard,
                                                   @NotNull final ObjectTreeAction<T> action) {
     synchronized (recursiveGuard) {
-      if (ArrayUtil.indexOf(recursiveGuard, object, Equality.IDENTITY) != -1) return;
+      if (ArrayUtil.indexOf(recursiveGuard, object, ContainerUtil.<T>identityStrategy()) != -1) return;
       recursiveGuard.add(object);
     }
 
@@ -147,7 +133,7 @@ public final class ObjectTree<T> {
     }
     finally {
       synchronized (recursiveGuard) {
-        int i = ArrayUtil.lastIndexOf(recursiveGuard, object, Equality.IDENTITY);
+        int i = ArrayUtil.lastIndexOf(recursiveGuard, object, ContainerUtil.<T>identityStrategy());
         assert i != -1;
         recursiveGuard.remove(i);
       }
@@ -216,7 +202,7 @@ public final class ObjectTree<T> {
       }
     }
   }
-  
+
   @TestOnly
   public boolean isEmpty() {
     synchronized (treeLock) {
