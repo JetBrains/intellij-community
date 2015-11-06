@@ -22,17 +22,18 @@ import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author gregsh
  */
 public class PasswordPromptComponent {
   private JPanel myRootPanel;
+  private JPanel myMessagePanel;
   private JPanel myUserPanel;
   private JPanel myPasswordPanel;
   private JPasswordField myPasswordField;
   private JCheckBox myRememberCheckBox;
-  private JLabel myMessageLabel;
   private JLabel myPasswordLabel;
   private JLabel myUserLabel;
   private JTextField myUserTextField;
@@ -41,17 +42,17 @@ public class PasswordPromptComponent {
   public PasswordPromptComponent(PasswordSafeSettings.ProviderType type,
                                  String message,
                                  boolean showUserName,
-                                 String passwordPrompt,
-                                 String rememberPrompt) {
+                                 String passwordFieldLabel,
+                                 String rememberCheckBoxLabel) {
     myIconLabel.setText("");
     myIconLabel.setIcon(Messages.getWarningIcon());
-    myMessageLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
-    myMessageLabel.setText(message);
+    JTextPane messageField = Messages.configureMessagePaneUi(new JTextPane(), message, UIUtil.FontSize.SMALL);
+    myMessagePanel.add(Messages.wrapToScrollPaneIfNeeded(messageField, 0, 4), BorderLayout.CENTER);
     setTargetProviderType(type);
     setUserInputVisible(showUserName);
-    if (passwordPrompt != null) myPasswordLabel.setText(passwordPrompt);
-    if (rememberPrompt != null) {
-      myRememberCheckBox.setText(rememberPrompt);
+    if (passwordFieldLabel != null) myPasswordLabel.setText(passwordFieldLabel);
+    if (rememberCheckBoxLabel != null) {
+      myRememberCheckBox.setText(rememberCheckBoxLabel);
       DialogUtil.registerMnemonic(myRememberCheckBox);
     }
   }

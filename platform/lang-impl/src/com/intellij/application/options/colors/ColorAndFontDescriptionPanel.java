@@ -36,8 +36,9 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author cdr
@@ -106,7 +107,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
       c.addActionListener(actionListener);
     }
     myEffectsCombo.addActionListener(actionListener);
-    Messages.configureMessagePaneUi(myInheritanceLabel, "<html>", false);
+    Messages.configureMessagePaneUi(myInheritanceLabel, "<html>", null);
     myInheritanceLabel.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {
