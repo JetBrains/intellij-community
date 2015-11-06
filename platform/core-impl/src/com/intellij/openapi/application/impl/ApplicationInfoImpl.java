@@ -110,6 +110,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myThirdPartySoftwareUrl;
   private String myJetbrainsTvUrl;
   private String myEvalLicenseUrl = "https://www.jetbrains.com/company/useterms.html";
+  private String myKeyConversionUrl = "https://www.jetbrains.com/shop/eform/keys-exchange";
 
   private Rectangle myAboutLogoRect;
 
@@ -187,6 +188,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String STEPS_PROVIDER = "provider";
   private static final String ELEMENT_EVALUATION = "evaluation";
   private static final String ATTRIBUTE_EVAL_LICENSE_URL = "license-url";
+  private static final String ELEMENT_LICENSING = "licensing";
+  private static final String ATTRIBUTE_KEY_CONVERSION_URL = "key-conversion-url";
   private static final String ESSENTIAL_PLUGIN = "essential-plugin";
 
   private static final String DEFAULT_PLUGINS_HOST = "http://plugins.jetbrains.com";
@@ -542,6 +545,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
+  public String getKeyConversionUrl() {
+    return myKeyConversionUrl;
+  }
+
+  @Override
   public Rectangle getAboutLogoRect() {
     return myAboutLogoRect;
   }
@@ -836,7 +844,15 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     if (evaluationElement != null) {
       final String url = evaluationElement.getAttributeValue(ATTRIBUTE_EVAL_LICENSE_URL);
       if (url != null && !url.isEmpty()) {
-        myEvalLicenseUrl = url;
+        myEvalLicenseUrl = url.trim();
+      }
+    }
+ 
+    Element licensingElement = parentNode.getChild(ELEMENT_LICENSING);
+    if (licensingElement != null) {
+      final String url = licensingElement.getAttributeValue(ATTRIBUTE_KEY_CONVERSION_URL);
+      if (url != null && !url.isEmpty()) {
+        myKeyConversionUrl = url.trim();
       }
     }
 

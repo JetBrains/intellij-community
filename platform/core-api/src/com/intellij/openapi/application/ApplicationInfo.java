@@ -36,6 +36,7 @@ public abstract class ApplicationInfo {
   public abstract String getThirdPartySoftwareURL();
   public abstract String getJetbrainsTvUrl();
   public abstract String getEvalLicenseUrl();
+  public abstract String getKeyConversionUrl();
 
   public abstract Rectangle getAboutLogoRect();
   public abstract boolean hasHelp();
