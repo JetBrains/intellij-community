@@ -110,7 +110,7 @@ public abstract class XDebuggerEditorBase {
     }
 
     DataContext dataContext = DataManager.getInstance().getDataContext(getComponent());
-    return JBPopupFactory.getInstance().createActionGroupPopup("Choose language", actions, dataContext,
+    return JBPopupFactory.getInstance().createActionGroupPopup("Choose Language", actions, dataContext,
                                                                JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
                                                                false);
   }
