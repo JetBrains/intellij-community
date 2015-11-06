@@ -155,7 +155,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
         Class clazz = String.class;
         if (withElement != null || isClassField(fieldName)) {
           clazz = PsiClass.class;
-        } else if (field.getType() == PsiType.BOOLEAN) {
+        } else if (PsiType.BOOLEAN.equals(field.getType())) {
           clazz = Boolean.class;
         }
         final DomExtension extension =

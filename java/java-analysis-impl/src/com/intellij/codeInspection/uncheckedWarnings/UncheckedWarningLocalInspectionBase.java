@@ -29,11 +29,9 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
-import com.intellij.xml.util.XmlUtil;
 import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -409,7 +407,7 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
       if (psiElement instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)psiElement;
         final PsiType returnType = method.getReturnType();
-        if (returnType != null && returnType != PsiType.VOID) {
+        if (returnType != null && !PsiType.VOID.equals(returnType)) {
           final PsiExpression returnValue = statement.getReturnValue();
           if (returnValue != null) {
             final PsiType valueType = returnValue.getType();

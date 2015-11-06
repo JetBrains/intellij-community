@@ -489,7 +489,7 @@ public class JavaKeywordCompletion {
   private static boolean mayExpectBoolean(CompletionParameters parameters) {
     for (ExpectedTypeInfo info : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
       PsiType type = info.getType();
-      if (type instanceof PsiClassType || type == PsiType.BOOLEAN) return true;
+      if (type instanceof PsiClassType || PsiType.BOOLEAN.equals(type)) return true;
     }
     return false;
   }

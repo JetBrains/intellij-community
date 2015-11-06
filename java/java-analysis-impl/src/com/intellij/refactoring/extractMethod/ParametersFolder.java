@@ -221,7 +221,7 @@ public class ParametersFolder {
           if (expression == null) break;
 
           final PsiType expressionType = ((PsiExpression)expression).getType();
-          if (expressionType != null && expressionType != PsiType.VOID && !(expression.getParent() instanceof PsiExpressionStatement)) {
+          if (expressionType != null && !PsiType.VOID.equals(expressionType) && !(expression.getParent() instanceof PsiExpressionStatement)) {
             if (dependsOnLocals(expression, inputVariables)) {
               break;
             }

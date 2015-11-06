@@ -51,27 +51,27 @@ public class GrNullVoidConverter extends GrTypeConverter {
     final PsiClassType objectType = TypesUtil.getJavaLangObject(context);
 
     if (currentPosition == ApplicableTo.EXPLICIT_CAST) {
-      if (TypesUtil.unboxPrimitiveTypeWrapper(targetType) == PsiType.VOID) {  // cast to V(v)oid
+      if (PsiType.VOID.equals(TypesUtil.unboxPrimitiveTypeWrapper(targetType))) {  // cast to V(v)oid
         if (actualType.equals(objectType)) return ConversionResult.WARNING;   // cast Object to V(v)oid compiles but fails at runtime
-        if (targetType == PsiType.VOID) {                                     // cast to void
+        if (PsiType.VOID.equals(targetType)) {                                     // cast to void
           // can cast void to void only
-          return actualType == PsiType.VOID ? ConversionResult.OK : ConversionResult.ERROR;
+          return PsiType.VOID.equals(actualType) ? ConversionResult.OK : ConversionResult.ERROR;
         }
         else {                                                                // cast to Void
           // can cast Void, void and null to Void
-          return actualType == PsiType.NULL || TypesUtil.unboxPrimitiveTypeWrapper(actualType) == PsiType.VOID
+          return actualType == PsiType.NULL || PsiType.VOID.equals(TypesUtil.unboxPrimitiveTypeWrapper(actualType))
                  ? ConversionResult.OK
                  : ConversionResult.ERROR;
         }
       }
     }
     else if (currentPosition == ApplicableTo.RETURN_VALUE) {
-      if (targetType.equals(objectType) && actualType == PsiType.VOID) {
+      if (targetType.equals(objectType) && PsiType.VOID.equals(actualType)) {
         return ConversionResult.OK;                                           // can return void from Object
       }
     }
 
-    if (actualType == PsiType.VOID) {
+    if (PsiType.VOID.equals(actualType)) {
       switch (currentPosition) {
         case EXPLICIT_CAST:
           return ConversionResult.ERROR;

@@ -234,7 +234,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     }
 
     if (expression instanceof GrClosableBlock && expression.getParent() instanceof GrStringInjection) return true;
-    if (!acceptVoidCalls && expression instanceof GrMethodCall && PsiType.VOID == expression.getType()) return true;
+    if (!acceptVoidCalls && expression instanceof GrMethodCall && PsiType.VOID.equals(expression.getType())) return true;
 
     return false;
   }
