@@ -359,6 +359,15 @@ public class  PyIntentionTest extends PyTestCase {
   public void testReturnTypeInPy3Annotation2() {      //PY-8783
     doTest(PyBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON32);
   }
+  
+  // PY-17094
+  public void testReturnTypeInPy3AnnotationLocalFunction() {
+    doTest(PyBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON32);
+  }
+  
+  public void testReturnTypeInPy3AnnotationNoColon() {
+    doTest(PyBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON32);
+  }
 
   public void testTypeAnnotation3() {  //PY-7087
     doTypeAnnotationTest();
