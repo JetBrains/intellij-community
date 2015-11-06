@@ -114,7 +114,7 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
                                                   });
     }
 
-    @NotNull
+    @Nullable
     abstract protected Object getProjectSettings(DirectoryProjectGenerator generator);
   }
 }
