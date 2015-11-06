@@ -105,11 +105,11 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
 
           checkAccessors(field, annotated, project, manager, anno, annoToRemove, holder);
 
-          if (REQUIRE_NOTNULL_FIELDS_INITIALIZED) {
-            checkNotNullFieldsInitialized(field, annotated, manager, holder);
-          }
-
           checkConstructorParameters(field, annotated, manager, anno, annoToRemove, holder);
+        }
+
+        if (REQUIRE_NOTNULL_FIELDS_INITIALIZED && !annotated.isDeclaredNullable) {
+          checkNotNullFieldsInitialized(field, manager, holder);
         }
       }
 
@@ -259,17 +259,14 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     LOG.assertTrue(parameter.isPhysical(), setter.getText());
   }
 
-  private static void checkNotNullFieldsInitialized(PsiField field,
-                                                    Annotated annotated,
-                                                    NullableNotNullManager manager, @NotNull ProblemsHolder holder) {
-    if (annotated.isDeclaredNotNull && !HighlightControlFlowUtil.isFieldInitializedAfterObjectConstruction(field)) {
-      final PsiAnnotation annotation = AnnotationUtil.findAnnotation(field, manager.getNotNulls());
-      if (annotation != null) {
-        holder.registerProblem(annotation.isPhysical() ? annotation : field.getNameIdentifier(),
-                               "Not-null fields must be initialized",
-                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-      }
-    }
+  private static void checkNotNullFieldsInitialized(PsiField field, NullableNotNullManager manager, @NotNull ProblemsHolder holder) {
+    PsiAnnotation annotation = manager.getNotNullAnnotation(field, false);
+    if (annotation == null || HighlightControlFlowUtil.isFieldInitializedAfterObjectConstruction(field)) return;
+
+    boolean byDefault = manager.isContainerAnnotation(annotation);
+    PsiJavaCodeReferenceElement name = annotation.getNameReferenceElement();
+    holder.registerProblem(annotation.isPhysical() && !byDefault ? annotation : field.getNameIdentifier(),
+                           (byDefault && name != null ? "@" + name.getReferenceName() : "Not-null") + " fields must be initialized");
   }
 
   private void checkConstructorParameters(PsiField field,
