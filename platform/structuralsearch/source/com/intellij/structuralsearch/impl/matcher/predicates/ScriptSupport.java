@@ -46,7 +46,7 @@ public class ScriptSupport {
 
   private static Map<String, Object> buildVariableMap(@NotNull MatchResult result, @NotNull Map<String, Object> out) {
     final String name = result.getName();
-    if (name != null && !result.isMultipleMatch() && !result.isScopeMatch()) {
+    if (name != null && !result.isMultipleMatch()) {
       final Object value = out.get(name);
       final PsiElement match = StructuralSearchUtil.getPresentableElement(result.getMatch());
       if (value == null) {

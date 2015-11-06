@@ -721,10 +721,10 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     }
   }
 
-  private static void appendParameter(final StringBuilder buf, final MatchResult _matchResult) {
-    for(Iterator<MatchResult> j = _matchResult.getAllSons().iterator();j.hasNext();) {
-      buf.append(j.next().getMatchImage()).append(' ').append(j.next().getMatchImage());
-    }
+  private static void appendParameter(final StringBuilder buf, final MatchResult matchResult) {
+    final List<MatchResult> sons = matchResult.getAllSons();
+    assert sons.size() == 1;
+    buf.append(sons.get(0).getMatchImage()).append(' ').append(matchResult.getMatchImage());
   }
 
   private static void removeExtraSemicolonForSingleVarInstanceInMultipleMatch(final ParameterInfo info, MatchResult r, StringBuilder buf) {

@@ -941,13 +941,12 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     myMatchingVisitor.getMatchContext().pushResult();
     final PsiIdentifier nameIdentifier = var.getNameIdentifier();
 
-    boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(nameIdentifier);
+    final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(nameIdentifier);
     final PsiVariable var2 = (PsiVariable)myMatchingVisitor.getElement();
 
     try {
       myMatchingVisitor.setResult((myMatchingVisitor.matchText(var.getNameIdentifier(), var2.getNameIdentifier()) || isTypedVar) &&
-                                  ((var.getParent() instanceof PsiClass && ((PsiClass)var.getParent()).isInterface()) ||
-                                   myMatchingVisitor.match(var.getModifierList(), var2.getModifierList())));
+                                   myMatchingVisitor.match(var.getModifierList(), var2.getModifierList()));
       if (myMatchingVisitor.getResult()) {
         final PsiTypeElement typeElement1 = var.getTypeElement();
         if (typeElement1 != null) {
@@ -971,10 +970,6 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
           ((PsiCatchSection)var.getParent()).getCatchBlock(),
           ((PsiCatchSection)var2.getParent()).getCatchBlock()
         ));
-      }
-
-      if (myMatchingVisitor.getResult() && isTypedVar) {
-        myMatchingVisitor.setResult(myMatchingVisitor.handleTypedElement(nameIdentifier, var2.getNameIdentifier()));
       }
     }
     finally {
@@ -1692,9 +1687,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
                                   myMatchingVisitor.matchSonsOptionally(method.getBody(), method2.getBody()));
     }
     finally {
-      final PsiIdentifier methodNameNode2 = method2.getNameIdentifier();
-
-      saveOrDropResult(methodNameNode, isTypedVar, methodNameNode2);
+      saveOrDropResult(methodNameNode, isTypedVar, method2.getNameIdentifier());
     }
   }
 }
