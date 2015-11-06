@@ -661,7 +661,16 @@ public class PsiImplUtil {
            findApplicableTarget((PsiAnnotation)element, TargetType.TYPE_USE) == TargetType.TYPE_USE;
   }
 
-  @Nullable
+  public static void collectTypeUseAnnotations(@NotNull PsiModifierList modifierList, @NotNull List<PsiAnnotation> annotations) {
+    for (PsiAnnotation annotation : modifierList.getAnnotations()) {
+      if (isTypeAnnotation(annotation)) {
+        annotations.add(annotation);
+      }
+    }
+  }
+
+  /** @deprecated use {@link #collectTypeUseAnnotations(PsiModifierList, List)} (to be removed in IDEA 16) */
+  @SuppressWarnings("unused")
   public static List<PsiAnnotation> getTypeUseAnnotations(@NotNull PsiModifierList modifierList) {
     SmartList<PsiAnnotation> result = null;
 
