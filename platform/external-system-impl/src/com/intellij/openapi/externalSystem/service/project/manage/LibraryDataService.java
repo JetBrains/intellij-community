@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -22,7 +23,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -110,8 +110,7 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
   @SuppressWarnings("MethodMayBeStatic")
   public void registerPaths(@NotNull Map<OrderRootType, Collection<File>> libraryFiles,
                             @NotNull Library.ModifiableModel model,
-                            @NotNull String libraryName)
-  {
+                            @NotNull String libraryName) {
     for (Map.Entry<OrderRootType, Collection<File>> entry : libraryFiles.entrySet()) {
       for (File file : entry.getValue()) {
         VirtualFile virtualFile = ExternalSystemUtil.refreshAndFindFileByIoFile(file);
@@ -166,6 +165,11 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
                           @NotNull IdeModifiableModelsProvider modelsProvider) {
 
     if (projectData == null) return;
+
+    // do not cleanup orphan project libraries if import runs from Project Structure Dialog
+    // since libraries order entries cannot be imported for modules in that case
+    // and hence #isOrphanProjectLibrary() method will work incorrectly
+    if (modelsProvider instanceof IdeUIModifiableModelsProvider) return;
 
     final List<Library> orphanIdeLibraries = ContainerUtil.newSmartList();
     final LibraryTable.ModifiableModel librariesModel = modelsProvider.getModifiableProjectLibrariesModel();
