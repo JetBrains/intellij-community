@@ -43,18 +43,20 @@ public class DirectoryIconProvider extends IconProvider implements DumbAware {
   public Icon getIcon(@NotNull final PsiElement element, final int flags) {
     if (element instanceof PsiDirectory) {
       final PsiDirectory psiDirectory = (PsiDirectory)element;
-      final VirtualFile vFile = psiDirectory.getVirtualFile();
-      Project project = psiDirectory.getProject();
-      SourceFolder sourceFolder = ProjectRootsUtil.getModuleSourceRoot(vFile, project);
-      if (sourceFolder != null) {
-        return SourceRootPresentation.getSourceRootIcon(sourceFolder);
-      }
-      else {
-        Icon excludedIcon = getIconIfExcluded(project, vFile);
-        return excludedIcon != null ? excludedIcon : PlatformIcons.DIRECTORY_CLOSED_ICON;
-      }
+      return getDirectoryIcon(psiDirectory.getVirtualFile(), psiDirectory.getProject());
     }
     return null;
+  }
+
+  public static Icon getDirectoryIcon(VirtualFile vFile, Project project) {
+    SourceFolder sourceFolder = ProjectRootsUtil.getModuleSourceRoot(vFile, project);
+    if (sourceFolder != null) {
+      return SourceRootPresentation.getSourceRootIcon(sourceFolder);
+    }
+    else {
+      Icon excludedIcon = getIconIfExcluded(project, vFile);
+      return excludedIcon != null ? excludedIcon : PlatformIcons.DIRECTORY_CLOSED_ICON;
+    }
   }
 
   @Nullable
