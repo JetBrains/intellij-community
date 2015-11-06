@@ -1832,6 +1832,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void bulkUpdateStarted() {
+    if (myUseNewRendering) {
+      myView.getPreferredSize(); // make sure size is calculated (in case it will be required while bulk mode is active)
+    }
+    
     saveCaretRelativePosition();
 
     myCaretModel.onBulkDocumentUpdateStarted();
