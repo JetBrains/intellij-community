@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiType
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
@@ -28,6 +29,10 @@ import org.jetbrains.annotations.Nullable
  * @author peter
  */
 public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCase {
+
+  JavaCodeInsightTestFixture getFixture() {
+    myFixture
+  }
 
   @Override
   @NotNull
