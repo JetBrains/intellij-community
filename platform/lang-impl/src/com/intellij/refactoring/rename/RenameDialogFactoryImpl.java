@@ -7,19 +7,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class RenameDialogFactoryImpl implements RenameDialogFactory {
 
-  @NotNull
-  private Project myProject;
-
-  public RenameDialogFactoryImpl(@NotNull Project project) {
-    myProject = project;
-  }
-
   @Override
   @NotNull
-  public RenameDialogViewModel createRenameDialog(@NotNull PsiElement substituted,
+  public RenameDialogViewModel createRenameDialog(@NotNull Project project,
+                                                  @NotNull PsiElement substituted,
                                                   @NotNull PsiElement nameSuggestionContext,
                                                   @NotNull Editor editor,
                                                   @NotNull RenamePsiElementProcessor processor) {
-    return processor.createRenameDialog(myProject, substituted, nameSuggestionContext, editor);
+    return processor.createRenameDialog(project, substituted, nameSuggestionContext, editor);
   }
 }

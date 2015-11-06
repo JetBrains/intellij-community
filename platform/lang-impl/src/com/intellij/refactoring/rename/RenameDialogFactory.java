@@ -9,14 +9,15 @@ import org.jetbrains.annotations.NotNull;
 public interface RenameDialogFactory {
 
   @NotNull
-  RenameDialogViewModel createRenameDialog(@NotNull PsiElement substituted,
-                                  @NotNull PsiElement nameSuggestionContext,
-                                  @NotNull Editor editor,
-                                  @NotNull RenamePsiElementProcessor processor);
+  RenameDialogViewModel createRenameDialog(Project project,
+                                           @NotNull PsiElement substituted,
+                                           @NotNull PsiElement nameSuggestionContext,
+                                           @NotNull Editor editor,
+                                           @NotNull RenamePsiElementProcessor processor);
 
   class SERVICE {
-    public static RenameDialogFactory getInstance(Project project) {
-      return ServiceManager.getService(project, RenameDialogFactory.class);
+    public static RenameDialogFactory getInstance() {
+      return ServiceManager.getService(RenameDialogFactory.class);
     }
   }
 }

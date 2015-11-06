@@ -350,11 +350,15 @@ public class RenameDialog extends RefactoringDialog implements RenameDialogViewM
     return RenameUtil.isValidName(myProject, myPsiElement, newName);
   }
 
-  protected NameSuggestionsField getNameSuggestionsField() {
+  public NameSuggestionsField getNameSuggestionsField() {
     return myNameSuggestionsField;
   }
 
   public JCheckBox getCbSearchInComments() {
     return myCbSearchInComments;
+  }
+
+  public JCheckBox getCbSearchTextOccurences() {
+    return myCbSearchTextOccurences;
   }
 }
