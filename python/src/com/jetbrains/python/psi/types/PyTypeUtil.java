@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -36,18 +35,13 @@ public final class PyTypeUtil {
   }
 
   /**
-   * Returns members of certain type from {@link PyClassLikeType}
-   *
-   * @param type               type itself
-   * @param expectedMemberType expected member type
-   * @param context            context to use
-   * @param <T>                expected member type
-   * @return collection of members
+   * Returns members of certain type from {@link PyClassLikeType}.
    */
   @NotNull
-  public static <T extends PsiElement> Collection<T> getMembersOfType(@NotNull final PyClassLikeType type,
-                                                                      @NotNull final Class<T> expectedMemberType,
-                                                                      @NotNull final TypeEvalContext context) {
+  public static <T extends PsiElement> List<T> getMembersOfType(@NotNull final PyClassLikeType type,
+                                                                @NotNull final Class<T> expectedMemberType,
+                                                                boolean inherited,
+                                                                @NotNull final TypeEvalContext context) {
 
     final List<T> result = new ArrayList<T>();
     type.visitMembers(new Processor<PsiElement>() {
@@ -60,7 +54,7 @@ public final class PyTypeUtil {
         }
         return true;
       }
-    }, true, context);
+    }, inherited, context);
     return result;
   }
 

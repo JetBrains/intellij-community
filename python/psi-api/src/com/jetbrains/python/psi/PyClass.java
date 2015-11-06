@@ -98,11 +98,10 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   PyExpression[] getSuperClassExpressions();
 
   /**
-   * Collects methods defined in the class and its ancestors if necessary.
+   * Collects methods defined in the class.
    * <p/>
-   * This method does not access AST if underlying PSI is stub based and {@code inherited} parameter is false.
+   * This method does not access AST if underlying PSI is stub based.
    *
-   * @param inherited return inherited (parent) methods as well
    * @return class methods
    */
   @NotNull
