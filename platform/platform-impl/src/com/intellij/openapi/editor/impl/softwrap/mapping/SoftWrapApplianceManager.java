@@ -193,8 +193,7 @@ public class SoftWrapApplianceManager implements Dumpable {
       for (Segment range : ranges) {
         int lastOffset = lastRecalculatedOffset[0];
         if (range.getEndOffset() > lastOffset) {
-          recalculateSoftWraps(new IncrementalCacheUpdateEvent(myEditor.getDocument(),
-                                                               Math.max(range.getStartOffset(), lastOffset), range.getEndOffset(),
+          recalculateSoftWraps(new IncrementalCacheUpdateEvent(Math.max(range.getStartOffset(), lastOffset), range.getEndOffset(),
                                                                myDataMapper, myEditor));
         }
       }
