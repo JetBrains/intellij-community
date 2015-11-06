@@ -428,6 +428,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testJavadocThrows() throws Throwable { doTest(); }
 
+  public void testMethodThrows() throws Throwable { doTest(); }
+
   public void testDoNotExcludeAssignedVariable() throws Throwable { doTest(); }
 
   public void testArrayIndexTailType() throws Throwable { doTest(); }
