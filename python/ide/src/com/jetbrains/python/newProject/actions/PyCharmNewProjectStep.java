@@ -16,11 +16,10 @@
 package com.jetbrains.python.newProject.actions;
 
 import com.google.common.collect.Lists;
+import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.ide.util.projectWizard.actions.ProjectSpecificAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.util.BooleanFunction;
@@ -28,50 +27,86 @@ import com.intellij.util.NullableConsumer;
 import com.jetbrains.python.newProject.PyFrameworkProjectGenerator;
 import com.jetbrains.python.newProject.PythonBaseProjectGenerator;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-public class PyCharmNewProjectStep extends DefaultActionGroup implements DumbAware {
+public class PyCharmNewProjectStep extends AbstractNewProjectStep {
 
   public PyCharmNewProjectStep() {
-    super("Select Project Type", true);
+    super(new Customization());
+  }
 
-    final NullableConsumer<ProjectSettingsStepBase> callback = new GenerateProjectCallback();
+  private static class Customization extends AbstractNewProjectStep.Customization {
+    private final List<DirectoryProjectGenerator> pluginSpecificGenerators = Lists.newArrayList();
 
-    final PythonBaseProjectGenerator baseGenerator = new PythonBaseProjectGenerator();
-    final ProjectSpecificAction action = new ProjectSpecificAction(baseGenerator, new ProjectSpecificSettingsStep(baseGenerator, callback));
-    addAll(action.getChildren(null));
-
-    final DirectoryProjectGenerator[] generators = Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
-    if (generators.length == 0) {
-      action.setPopup(false);
+    @NotNull
+    @Override
+    protected NullableConsumer<ProjectSettingsStepBase> createCallback() {
+      return new GenerateProjectCallback();
     }
-    Arrays.sort(generators, new Comparator<DirectoryProjectGenerator>() {
-      @Override
-      public int compare(DirectoryProjectGenerator o1, DirectoryProjectGenerator o2) {
-        if (o1 instanceof PyFrameworkProjectGenerator && !(o2 instanceof PyFrameworkProjectGenerator)) return -1;
-        if (!(o1 instanceof PyFrameworkProjectGenerator) && o2 instanceof PyFrameworkProjectGenerator) return 1;
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
 
-    List<DirectoryProjectGenerator> pluginSpecificGenerators = Lists.newArrayList();
-    for (DirectoryProjectGenerator generator : generators) {
+    @NotNull
+    @Override
+    protected DirectoryProjectGenerator createEmptyProjectGenerator() {
+      return new PythonBaseProjectGenerator();
+    }
+
+    @NotNull
+    @Override
+    protected ProjectSettingsStepBase createProjectSpecificSettingsStep(DirectoryProjectGenerator emptyProjectGenerator,
+                                                                        NullableConsumer<ProjectSettingsStepBase> callback) {
+      return new ProjectSpecificSettingsStep(emptyProjectGenerator, callback);
+    }
+
+    @NotNull
+    @Override
+    protected DirectoryProjectGenerator[] getProjectGenerators() {
+      DirectoryProjectGenerator[] generators = super.getProjectGenerators();
+
+      Arrays.sort(generators, new Comparator<DirectoryProjectGenerator>() {
+        @Override
+        public int compare(DirectoryProjectGenerator o1, DirectoryProjectGenerator o2) {
+          if (o1 instanceof PyFrameworkProjectGenerator && !(o2 instanceof PyFrameworkProjectGenerator)) return -1;
+          if (!(o1 instanceof PyFrameworkProjectGenerator) && o2 instanceof PyFrameworkProjectGenerator) return 1;
+          return o1.getName().compareTo(o2.getName());
+        }
+      });
+      return generators;
+    }
+
+    @Override
+    public void setUpBasicAction(ProjectSpecificAction projectSpecificAction, @NotNull DirectoryProjectGenerator[] generators) {
+      if (generators.length == 0) {
+        projectSpecificAction.setPopup(false);
+      }
+    }
+
+    @NotNull
+    @Override
+    public AnAction[] getActions(DirectoryProjectGenerator generator, NullableConsumer<ProjectSettingsStepBase> callback) {
       if (generator instanceof PythonProjectGenerator) {
         ProjectSpecificAction group =
           new ProjectSpecificAction(generator, new ProjectSpecificSettingsStep(generator, new PythonGenerateProjectCallback()));
-        addAll(group.getChildren(null));
+        return group.getChildren(null);
       }
-      else
+      else {
         pluginSpecificGenerators.add(generator);
+        return AnAction.EMPTY_ARRAY;
+      }
     }
 
-    if (!pluginSpecificGenerators.isEmpty()) {
-      PluginSpecificProjectsStep step = new PluginSpecificProjectsStep(callback, pluginSpecificGenerators);
-      addAll(step.getChildren(null));
+    @NotNull
+    @Override
+    public AnAction[] getExtraActions(NullableConsumer<ProjectSettingsStepBase> callback) {
+      if (!pluginSpecificGenerators.isEmpty()) {
+        PluginSpecificProjectsStep step = new PluginSpecificProjectsStep(callback, pluginSpecificGenerators);
+        return step.getChildren(null);
+      }
+      return AnAction.EMPTY_ARRAY;
     }
   }
 
