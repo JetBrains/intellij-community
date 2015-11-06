@@ -18,7 +18,6 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -174,7 +173,11 @@ public class MoveMembersTest extends MultiFileTestCase {
   public void testEscalateVisibility1() throws Exception {
     doTest("A", "B", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
   }
-  
+
+  public void testStringConstantInSwitchLabelExpression() throws Exception {
+    doTest("A", "B", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
+  }
+
   public void testMultipleWithDependencies() throws Exception {
     doTest("A", "B", true, VisibilityUtil.ESCALATE_VISIBILITY, 0, 1);
   }

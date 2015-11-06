@@ -179,14 +179,15 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
           changeQualifier(refExpr, usage.qualifierClass, usage.member);
         }
         else {
-          final PsiReferenceParameterList parameterList = refExpr.getParameterList();
-          if (parameterList != null && parameterList.getTypeArguments().length == 0 && !(refExpr instanceof PsiMethodReferenceExpression)){
-            refExpr.setQualifierExpression(null);
-          } else {
-            final Project project = element.getProject();
-            final PsiClass targetClass =
-              JavaPsiFacade.getInstance(project).findClass(options.getTargetClassName(), GlobalSearchScope.projectScope(project));
-            if (targetClass != null) {
+          final Project project = element.getProject();
+          final PsiClass targetClass =
+            JavaPsiFacade.getInstance(project).findClass(options.getTargetClassName(), GlobalSearchScope.projectScope(project));
+          if (targetClass != null) {
+            final PsiReferenceParameterList parameterList = refExpr.getParameterList();
+            if ((targetClass.isEnum() || PsiTreeUtil.isAncestor(targetClass, element, true)) && parameterList != null && parameterList.getTypeArguments().length == 0 && !(refExpr instanceof PsiMethodReferenceExpression)) {
+              refExpr.setQualifierExpression(null);
+            }
+            else {
               changeQualifier(refExpr, targetClass, usage.member);
             }
           }
