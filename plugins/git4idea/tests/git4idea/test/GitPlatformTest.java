@@ -56,7 +56,7 @@ public abstract class GitPlatformTest extends PlatformTestCase {
   protected GitRepositoryManager myGitRepositoryManager;
   protected GitVcsSettings myGitSettings;
   protected GitPlatformFacade myPlatformFacade;
-  protected Git myGit;
+  protected TestGitImpl myGit;
   protected GitVcs myVcs;
 
   protected TestDialogManager myDialogManager;
@@ -93,7 +93,7 @@ public abstract class GitPlatformTest extends PlatformTestCase {
 
     myGitRepositoryManager = GitUtil.getRepositoryManager(myProject);
     myPlatformFacade = ServiceManager.getService(myProject, GitPlatformFacade.class);
-    myGit = ServiceManager.getService(myProject, Git.class);
+    myGit = GitTestUtil.overrideService(Git.class, TestGitImpl.class);
     myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(myProject));
     myVcs.doActivate();
 
@@ -149,6 +149,7 @@ public abstract class GitPlatformTest extends PlatformTestCase {
       if (myVcsNotifier != null) {
         myVcsNotifier.cleanup();
       }
+      myGit.reset();
     }
     finally {
       try {

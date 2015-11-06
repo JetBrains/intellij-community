@@ -21,16 +21,11 @@ import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.Executor.mkdir
 import com.intellij.openapi.vcs.Executor.touch
 import git4idea.branch.GitRebaseParams
-import git4idea.rebase.GitRebaseBaseTest.LocalChange
 import git4idea.repo.GitRepository
 import git4idea.test.GitExecutor.git
 import git4idea.test.GitTestUtil.cleanupForAssertion
 import git4idea.test.UNKNOWN_ERROR_TEXT
 import kotlin.properties.Delegates
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 public class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
 
@@ -177,10 +172,10 @@ public class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     myAllRepositories.forEach { it.`diverge feature and master`() }
     localChange?.generate()
 
-    myFailingGit.setShouldFail { it == myCommunity }
+    myGit.setShouldRebaseFail { it == myCommunity }
     val rebaseProcess = rebase("master")
 
-    myFailingGit.setShouldFail { false }
+    myGit.setShouldRebaseFail { false }
     return rebaseProcess
   }
 
@@ -192,7 +187,7 @@ public class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
 
     val rebaseProcess = rebase("master")
 
-    myFailingGit.setShouldFail { false }
+    myGit.setShouldRebaseFail { false }
     return rebaseProcess
   }
 

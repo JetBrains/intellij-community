@@ -28,6 +28,10 @@ import git4idea.GitBranch
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitUtil
+import git4idea.commands.GitCommandResult
+import git4idea.commands.GitImpl
+import git4idea.commands.GitLineHandlerListener
+import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.test.GitExecutor.cd
 import git4idea.test.GitExecutor.git

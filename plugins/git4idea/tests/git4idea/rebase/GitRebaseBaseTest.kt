@@ -17,19 +17,15 @@ package git4idea.rebase
 
 import com.intellij.dvcs.repo.Repository
 import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType.ERROR
-import com.intellij.notification.NotificationType.INFORMATION
-import com.intellij.notification.NotificationType.WARNING
+import com.intellij.notification.NotificationType.*
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.Executor
 import git4idea.GitUtil
-import git4idea.commands.Git
 import git4idea.repo.GitRepository
 import git4idea.test.*
 import git4idea.test.GitExecutor.cd
 import git4idea.test.GitExecutor.git
 import git4idea.test.GitTestUtil.assertNotification
-import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
 public abstract class GitRebaseBaseTest : GitPlatformTest() {
@@ -37,22 +33,11 @@ public abstract class GitRebaseBaseTest : GitPlatformTest() {
   protected val LOCAL_CHANGES_WARNING : String = "Note that some local changes were <a>stashed</a> before rebase."
 
   lateinit protected var myVcsHelper: MockVcsHelper
-  lateinit protected var myFailingGit: TestGitImpl
 
   override fun setUp() {
     super.setUp()
 
     myVcsHelper = GitTestUtil.overrideService(myProject, AbstractVcsHelper::class.java, MockVcsHelper::class.java)
-    myFailingGit = GitTestUtil.overrideService(Git::class.java, TestGitImpl::class.java)
-  }
-
-  override fun tearDown() {
-    try {
-      myFailingGit.setShouldFail { false } // to do check for null
-    }
-    finally {
-      super.tearDown()
-    }
   }
 
   override fun createRepository(path: String) = GitTestUtil.createRepository(myProject, path, false)
@@ -147,7 +132,7 @@ public abstract class GitRebaseBaseTest : GitPlatformTest() {
   protected fun GitRepository.`make rebase fail after resolving conflicts`() {
     myVcsHelper.onMerge {
       resolveConflicts(this)
-      myFailingGit.setShouldFail { true }
+      myGit.setShouldRebaseFail { true }
     }
   }
 

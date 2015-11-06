@@ -19,6 +19,7 @@ import git4idea.branch.GitRebaseParams
 import git4idea.commands.GitCommandResult
 import git4idea.commands.GitImpl
 import git4idea.commands.GitLineHandlerListener
+import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 
 /**
@@ -28,17 +29,38 @@ public val UNKNOWN_ERROR_TEXT: String = "unknown error"
 
 public class TestGitImpl : GitImpl() {
 
-  private var myShouldFail: (GitRepository) -> Boolean = { false }
+  private var myRebaseShouldFail: (GitRepository) -> Boolean = { false }
+  private var myPushHandler: (GitRepository) -> GitCommandResult? = { null }
+
+  override fun push(repository: GitRepository,
+                    remote: GitRemote,
+                    spec: String,
+                    force: Boolean,
+                    updateTracking: Boolean,
+                    tagMode: String?,
+                    vararg listeners: GitLineHandlerListener): GitCommandResult {
+    return myPushHandler(repository) ?:
+        super.push(repository, remote, spec, force, updateTracking, tagMode, *listeners)
+  }
 
   override fun rebase(repository: GitRepository, params: GitRebaseParams, vararg listeners: GitLineHandlerListener): GitCommandResult {
-    return if (myShouldFail(repository))
+    return if (myRebaseShouldFail(repository))
       GitCommandResult(false, 128, listOf("fatal: error: $UNKNOWN_ERROR_TEXT"), emptyList<String>(), null)
     else
       super.rebase(repository, params, *listeners)
   }
 
-  public fun setShouldFail(shouldFail: (GitRepository) -> Boolean) {
-    myShouldFail = shouldFail
+  public fun setShouldRebaseFail(shouldFail: (GitRepository) -> Boolean) {
+    myRebaseShouldFail = shouldFail
+  }
+
+  fun onPush(pushHandler: (GitRepository) -> GitCommandResult?) {
+    myPushHandler = pushHandler;
+  }
+
+  fun reset() {
+    myRebaseShouldFail = { false }
+    myPushHandler = { null }
   }
 }
 

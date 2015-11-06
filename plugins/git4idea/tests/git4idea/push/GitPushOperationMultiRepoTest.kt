@@ -16,14 +16,9 @@
 package git4idea.push
 
 import com.intellij.dvcs.push.PushSpec
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vcs.Executor
 import com.intellij.util.containers.ContainerUtil
-import git4idea.commands.Git
 import git4idea.commands.GitCommandResult
-import git4idea.commands.GitImpl
-import git4idea.commands.GitLineHandlerListener
-import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.test.GitExecutor.*
 import git4idea.test.GitTestUtil
@@ -58,31 +53,11 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
     refresh()
   }
 
-  private class FailingPushGit : GitImpl() {
-    var myPushShouldFail: Condition<GitRepository>? = null
-
-    override fun push(repository: GitRepository,
-                      remote: GitRemote,
-                      spec: String,
-                      force: Boolean,
-                      updateTracking: Boolean,
-                      tagMode: String?,
-                      vararg listeners: GitLineHandlerListener): GitCommandResult {
-      if (myPushShouldFail!!.value(repository)) {
-        return GitCommandResult(false, 128, listOf("Failed to push to " + remote.name),
-            emptyList<String>(), null)
-      }
-      return super.push(repository, remote, spec, force, updateTracking, tagMode, *listeners)
-    }
-  }
-
   fun test_try_push_from_all_roots_even_if_one_fails() {
-    val failingPushGit = GitTestUtil.overrideService(Git::class.java, FailingPushGit::class.java)
     // fail in the first repo
-    failingPushGit.myPushShouldFail = object : Condition<GitRepository> {
-      override fun value(repository: GitRepository): Boolean {
-        return repository == myRepository
-      }
+    myGit.onPush {
+      if (it == myRepository) GitCommandResult(false, 128, listOf("Failed to push to origin"), listOf<String>(), null)
+      else null
     }
 
     cd(myRepository)
