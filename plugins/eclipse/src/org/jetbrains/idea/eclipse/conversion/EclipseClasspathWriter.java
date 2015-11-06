@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -39,7 +40,6 @@ import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl;
 
-import java.util.Arrays;
 import java.util.Map;
 
 public class EclipseClasspathWriter {
@@ -90,7 +90,7 @@ public class EclipseClasspathWriter {
   private void createClasspathEntry(@NotNull OrderEntry entry, @NotNull Element classpathRoot, @NotNull final ModuleRootModel model) throws ConversionException {
     EclipseModuleManager eclipseModuleManager = EclipseModuleManagerImpl.getInstance(entry.getOwnerModule());
     if (entry instanceof ModuleSourceOrderEntry) {
-      boolean shouldPlaceSeparately = eclipseModuleManager.isExpectedModuleSourcePlace(Arrays.binarySearch(model.getOrderEntries(), entry));
+      boolean shouldPlaceSeparately = eclipseModuleManager.isExpectedModuleSourcePlace(ArrayUtil.find(model.getOrderEntries(), entry));
       for (ContentEntry contentEntry : model.getContentEntries()) {
         VirtualFile contentRoot = contentEntry.getFile();
         for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {

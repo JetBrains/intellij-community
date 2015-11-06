@@ -32,6 +32,7 @@ import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -382,7 +383,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       private void checkModifier(final String name) {
         if (!MatchOptions.INSTANCE_MODIFIER_NAME.equals(name) &&
             !PsiModifier.PACKAGE_LOCAL.equals(name) &&
-            Arrays.binarySearch(JavaMatchingVisitor.MODIFIERS, name) < 0
+            ArrayUtil.find(JavaMatchingVisitor.MODIFIERS, name) < 0
           ) {
           throw new MalformedPatternException(SSRBundle.message("invalid.modifier.type",name));
         }
