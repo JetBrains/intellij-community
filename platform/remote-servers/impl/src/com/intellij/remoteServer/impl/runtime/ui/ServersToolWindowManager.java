@@ -64,33 +64,34 @@ public class ServersToolWindowManager extends AbstractProjectComponent {
     });
   }
 
-  private void updateWindowAvailable(boolean showIfAvailable) {
-    boolean available = ServersToolWindowFactory.isAvailable(myProject);
-
+  private void updateWindowAvailable(final boolean showIfAvailable) {
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    final ToolWindow toolWindow = toolWindowManager.getToolWindow(WINDOW_ID);
 
-    if (toolWindow == null) {
-      if (available) {
-        toolWindowManager.invokeLater(new Runnable() {
+    toolWindowManager.invokeLater(new Runnable() {
 
-          @Override
-          public void run() {
+      @Override
+      public void run() {
+        boolean available = ServersToolWindowFactory.isAvailable(myProject);
+
+        final ToolWindow toolWindow = toolWindowManager.getToolWindow(WINDOW_ID);
+
+        if (toolWindow == null) {
+          if (available) {
             createToolWindow(myProject, toolWindowManager).show(null);
           }
-        });
-      }
-      return;
-    }
+          return;
+        }
 
-    boolean doShow = !toolWindow.isAvailable() && available;
-    if (toolWindow.isAvailable() && !available) {
-      toolWindow.hide(null);
-    }
-    toolWindow.setAvailable(available, null);
-    if (showIfAvailable && doShow) {
-      toolWindow.show(null);
-    }
+        boolean doShow = !toolWindow.isAvailable() && available;
+        if (toolWindow.isAvailable() && !available) {
+          toolWindow.hide(null);
+        }
+        toolWindow.setAvailable(available, null);
+        if (showIfAvailable && doShow) {
+          toolWindow.show(null);
+        }
+      }
+    });
   }
 
   private static ToolWindow createToolWindow(Project project, ToolWindowManager toolWindowManager) {
