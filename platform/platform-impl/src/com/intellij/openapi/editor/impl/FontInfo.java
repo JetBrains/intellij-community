@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
+import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.UIUtil;
@@ -188,7 +189,7 @@ public class FontInfo {
   public int charWidth(char c) {
     final FontMetrics metrics = fontMetrics();
     if (c < 128) return charWidth[c];
-    return metrics.charWidth(c);
+    return FontLayoutService.getInstance().charWidth(metrics, c);
   }
 
   private FontMetrics fontMetrics() {
@@ -199,8 +200,8 @@ public class FontInfo {
       EditorUIUtil.setupAntialiasing(graphics);
       graphics.setFont(myFont);
       myFontMetrics = graphics.getFontMetrics();
-      for (int i = 0; i < 128; i++) {
-        charWidth[i] = myFontMetrics.charWidth(i);
+      for (char c = 0; c < 128; c++) {
+        charWidth[c] = FontLayoutService.getInstance().charWidth(myFontMetrics, c);
       }
     }
     return myFontMetrics;
