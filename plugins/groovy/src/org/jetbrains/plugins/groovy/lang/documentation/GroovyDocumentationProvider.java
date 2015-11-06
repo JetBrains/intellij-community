@@ -263,11 +263,9 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   }
 
   private static void generateTraitType(@NotNull StringBuilder buffer, @NotNull GrTraitType type, PsiElement context) {
-    PsiClassType exprType = type.getExprType();
-    List<PsiClassType> traitTypes = type.getTraitTypes();
-    appendTypeString(buffer, exprType, context);
+    appendTypeString(buffer, type.getExprType(), context);
     buffer.append(" as ");
-    for (PsiClassType traitType : traitTypes) {
+    for (PsiType traitType : type.getTraitTypes()) {
       appendTypeString(buffer, traitType, context);
       buffer.append(", ");
     }

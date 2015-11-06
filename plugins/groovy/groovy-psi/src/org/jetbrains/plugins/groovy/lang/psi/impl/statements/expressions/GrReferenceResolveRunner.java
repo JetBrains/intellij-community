@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
-
-import java.util.List;
-import java.util.ListIterator;
 
 /**
  * @author Medvedev Max
@@ -129,11 +126,6 @@ public class GrReferenceResolveRunner {
         }
       }
     }
-    else if (qualifierType instanceof PsiIntersectionType) {
-      for (PsiType conjunct : ((PsiIntersectionType)qualifierType).getConjuncts()) {
-        if (!processQualifierType(conjunct, state)) return false;
-      }
-    }
     else {
       if (!processQualifierType(qualifierType, state)) return false;
       if (qualifier instanceof GrReferenceExpression && !PsiUtil.isSuperReference(qualifier) && !PsiUtil.isInstanceThisRef(qualifier)) {
@@ -174,16 +166,12 @@ public class GrReferenceResolveRunner {
                             ? ((PsiDisjunctionType)originalQualifierType).getLeastUpperBound()
                             : originalQualifierType;
 
-    if (qualifierType instanceof PsiIntersectionType) {
+    if (qualifierType instanceof GrTraitType) {
+      return processTraitType((GrTraitType)qualifierType, state);
+    }
+    else if (qualifierType instanceof PsiIntersectionType) {
       for (PsiType conjunct : ((PsiIntersectionType)qualifierType).getConjuncts()) {
         if (!processQualifierType(conjunct, state)) return false;
-      }
-      return true;
-    }
-
-    if (qualifierType instanceof GrTraitType) {
-      if (!processTraitType((GrTraitType)qualifierType, state)) {
-        return false;
       }
       return true;
     }
@@ -217,24 +205,10 @@ public class GrReferenceResolveRunner {
   }
 
   private boolean processTraitType(@NotNull GrTraitType traitType, @NotNull ResolveState state) {
-    GrTypeDefinition mockDefinition = traitType.getMockTypeDefinition();
-    if (mockDefinition != null) {
-      if (!mockDefinition.processDeclarations(processor, state, null, place)) {
-        return false;
-      }
+    final PsiType[] conjuncts = traitType.getConjuncts();
+    for (int i = conjuncts.length - 1; i >= 0; i--) {
+      if (!processQualifierType(conjuncts[i], state)) return false;
     }
-    else {
-      PsiClassType exprType = traitType.getExprType();
-
-      if (!processQualifierType(exprType, state)) return false;
-
-      List<PsiClassType> traitTypes = traitType.getTraitTypes();
-      for (ListIterator<PsiClassType> iterator = traitTypes.listIterator(); iterator.hasPrevious(); ) {
-        PsiClassType type = iterator.previous();
-        if (!processQualifierType(type, state)) return false;
-      }
-    }
-
     return true;
   }
 }
