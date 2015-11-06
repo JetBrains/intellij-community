@@ -1,11 +1,13 @@
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchException;
 import com.intellij.structuralsearch.StructuralSearchUtil;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
 import groovy.lang.Binding;
 import groovy.lang.GroovyRuntimeException;
 import groovy.lang.GroovyShell;
@@ -32,12 +34,14 @@ import java.util.Map;
  */
 public class ScriptSupport {
   private final Script script;
+  private final ScriptLog myScriptLog;
 
-  public ScriptSupport(String text, String name) {
+  public ScriptSupport(Project project, String text, String name) {
+    myScriptLog = new ScriptLog(project);
     File scriptFile = new File(text);
     GroovyShell shell = new GroovyShell();
     try {
-      script = scriptFile.exists() ? shell.parse(scriptFile):shell.parse(text, name);
+      script = scriptFile.exists() ? shell.parse(scriptFile) : shell.parse(text, name);
     } catch (Exception ex) {
       Logger.getInstance(getClass().getName()).error(ex);
       throw new RuntimeException(ex);
@@ -78,6 +82,7 @@ public class ScriptSupport {
   public String evaluate(MatchResult result, PsiElement context) {
     try {
       final HashMap<String, Object> variableMap = new HashMap<String, Object>();
+      variableMap.put("__log__", myScriptLog);
       if (result != null) {
         buildVariableMap(result, variableMap);
         if (context == null) {
@@ -87,7 +92,7 @@ public class ScriptSupport {
       final Binding binding = new Binding(variableMap);
 
       context = StructuralSearchUtil.getPresentableElement(context);
-      binding.setVariable("__context__", context);
+      binding.setVariable(Configuration.CONTEXT_VAR_NAME, context);
       script.setBinding(binding);
 
       final Object o = script.run();

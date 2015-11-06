@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 
@@ -9,11 +10,12 @@ import com.intellij.structuralsearch.impl.matcher.MatchContext;
 public class ScriptPredicate extends AbstractStringBasedPredicate {
   private final ScriptSupport scriptSupport;
 
-  public ScriptPredicate(String name, String within) {
+  public ScriptPredicate(Project project, String name, String within) {
     super(name, within);
-    scriptSupport = new ScriptSupport(within, name);
+    scriptSupport = new ScriptSupport(project, within, name);
   }
 
+  @Override
   public boolean match(PsiElement node, PsiElement match, int start, int end, MatchContext context) {
     if (match == null) return false;
 
