@@ -22,10 +22,10 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBuilder;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.ILightStubFileElementType;
-import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.containers.Stack;
 import gnu.trove.TIntStack;
 import org.jetbrains.annotations.NotNull;
@@ -45,10 +45,10 @@ public class LightStubBuilder implements StubBuilder {
         LOG.error("File is not of LanguageFileType: " + fileType + ", " + file);
         return null;
       }
-      Language language = ((LanguageFileType)fileType).getLanguage();
-      final IFileElementType contentType = LanguageParserDefinitions.INSTANCE.forLanguage(language).getFileNodeType();
-      if (!(contentType instanceof IStubFileElementType)) {
-        LOG.error("File is not of IStubFileElementType: " + contentType + ", " + file);
+      assert file instanceof PsiFileImpl;
+      final IFileElementType contentType = ((PsiFileImpl)file).getElementTypeForStubBuilder();
+      if (contentType == null) {
+        LOG.error("File is not of IStubFileElementType: " + file);
         return null;
       }
 
