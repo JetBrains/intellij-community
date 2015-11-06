@@ -134,7 +134,7 @@ public class PyDocumentationBuilder {
       final FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/python_keywords/" + name));
       try {
         final String text = FileUtil.loadTextAndClose(reader);
-        myEpilog.addItem(text);
+        myEpilog.addItem(StringUtil.convertLineSeparators(text, "\n"));
       }
       catch (IOException ignored) {
       }
