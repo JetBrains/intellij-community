@@ -105,7 +105,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    * @return class methods
    */
   @NotNull
-  PyFunction[] getMethods(boolean inherited);
+  PyFunction[] getMethods();
 
   /**
    * Get class properties.

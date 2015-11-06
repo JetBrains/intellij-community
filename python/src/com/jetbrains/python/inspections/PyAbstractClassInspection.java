@@ -91,7 +91,7 @@ public class PyAbstractClassInspection extends PyInspection {
           return true;
         }
       }
-      for (PyFunction method : pyClass.getMethods(false)) {
+      for (PyFunction method : pyClass.getMethods()) {
         if (PyUtil.isDecoratedAsAbstract(method)) {
           return true;
         }
