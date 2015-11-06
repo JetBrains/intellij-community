@@ -221,7 +221,7 @@ public abstract class StructuralSearchProfile {
     if (info.getName().equals(match.getName())) {
       String replacementString = match.getMatchImage();
       boolean forceAddingNewLine = false;
-      if (match.getAllSons().size() > 0 && !match.isScopeMatch()) {
+      if (match.hasSons() && !match.isScopeMatch()) {
         // compound matches
         StringBuilder buf = new StringBuilder();
 

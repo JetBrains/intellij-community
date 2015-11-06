@@ -246,17 +246,15 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     matchContext.getSink().newMatch(result);
   }
 
-  private boolean doDispatch(final MatchResultImpl result, MatchResultImpl context) {
+  private boolean doDispatch(final MatchResult result, MatchResultImpl context) {
     boolean ret = false;
 
-    for (MatchResult _r : result.getAllSons()) {
-      final MatchResultImpl r = (MatchResultImpl)_r;
-
+    for (MatchResult r : result.getAllSons()) {
       if ((r.isScopeMatch() && !r.isTarget()) || r.isMultipleMatch()) {
         ret |= doDispatch(r, context);
       }
       else if (r.isTarget()) {
-        r.setContext(context);
+        ((MatchResultImpl)r).setContext(context);
         matchContext.getSink().newMatch(r);
         ret = true;
       }
@@ -273,19 +271,15 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
       result.setMatchImage(match.getText());
     }
     else {
-      MatchResultImpl sonresult;
 
       for (final PsiElement matchStatement : matchedNodes) {
-        result.getMatches().add(
-          sonresult = new MatchResultImpl(
+        result.getMatches().add(new MatchResultImpl(
             MatchResult.LINE_MATCH,
             matchStatement.getText(),
             new SmartPsiPointer(matchStatement),
             true
           )
         );
-
-        sonresult.setParent(result);
       }
 
       result.setMatchRef(

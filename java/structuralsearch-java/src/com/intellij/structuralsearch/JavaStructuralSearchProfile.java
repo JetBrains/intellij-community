@@ -531,7 +531,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         handleMethodParameter(buf, info, matchMap);
         replacementString = buf.toString();
       }
-      else if (match.getAllSons().size() > 0 && !match.isScopeMatch()) {
+      else if (match.hasSons() && !match.isScopeMatch()) {
         // compound matches
         StringBuilder buf = new StringBuilder();
         MatchResult r = null;
