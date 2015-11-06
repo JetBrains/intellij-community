@@ -144,10 +144,10 @@ public class SearchCommand {
         if (MatchResult.MULTI_LINE_MATCH.equals(result.getName())) {
           int start = -1;
           int end = -1;
-          PsiElement parent = result.getMatchRef().getElement().getParent();
+          PsiElement parent = result.getMatch().getParent();
 
           for (final MatchResult matchResult : ((MatchResultImpl)result).getMatches()) {
-            PsiElement el = matchResult.getMatchRef().getElement();
+            PsiElement el = matchResult.getMatch();
             final int elementStart = el.getTextRange().getStartOffset();
 
             if (start == -1 || start > elementStart) {

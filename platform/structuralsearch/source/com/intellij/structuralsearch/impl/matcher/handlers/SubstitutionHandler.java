@@ -96,7 +96,7 @@ public class SubstitutionHandler extends MatchingHandler {
 
     if (match!=null) {
       if (start==0 && end==-1 && result.getStart()==0 && result.getEnd()==-1) {
-        matchresult = matchContext.getMatcher().match(match,result.getMatchRef().getElement());
+        matchresult = matchContext.getMatcher().match(match,result.getMatch());
       } else {
         matchresult = StructuralSearchUtil.getProfileByPsiElement(match).getText(match, start, end).equals(
           result.getMatchImage()
@@ -245,7 +245,7 @@ public class SubstitutionHandler extends MatchingHandler {
 
     if (minOccurs >= 1 &&
         ( substitution == null ||
-          StructuralSearchUtil.getProfileByFileType(context.getOptions().getFileType()).getElementContextByPsi(substitution.getMatchRef().getElement()) != elementContext
+          StructuralSearchUtil.getProfileByFileType(context.getOptions().getFileType()).getElementContextByPsi(substitution.getMatch()) != elementContext
         )
        ) {
       return false;

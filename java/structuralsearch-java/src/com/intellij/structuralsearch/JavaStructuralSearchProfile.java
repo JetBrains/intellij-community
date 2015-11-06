@@ -551,7 +551,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
               }
             }
             else if (info.isStatementContext()) {
-              final PsiElement previousElement = previous.getMatchRef().getElement();
+              final PsiElement previousElement = previous.getMatch();
 
               if (!(previousElement instanceof PsiComment) &&
                   ( buf.charAt(buf.length() - 1) != '}' ||
@@ -729,7 +729,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   private static void removeExtraSemicolonForSingleVarInstanceInMultipleMatch(final ParameterInfo info, MatchResult r, StringBuilder buf) {
     if (info.isStatementContext()) {
-      final PsiElement element = r.getMatchRef().getElement();
+      final PsiElement element = r.getMatch();
 
       // remove extra ;
       if (buf.charAt(buf.length()-1)==';' &&
