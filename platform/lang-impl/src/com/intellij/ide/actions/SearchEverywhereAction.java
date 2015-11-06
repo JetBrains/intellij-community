@@ -49,6 +49,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguagePsiElementExternalizer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -1737,12 +1738,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                               myProgressIndicator, new Processor<Object>() {
           @Override
           public boolean process(Object o) {
-            if (isSymbol(o)) {
-              final PsiElement element = (PsiElement)o;
-              final PsiFile file = element.getContainingFile();
-              if (!myListModel.contains(o) && !symbols.contains(o) &&
-                  //some elements are non-physical like DB columns
-                  (file == null || (file.getVirtualFile() != null && (includeLibs || scope.accept(file.getVirtualFile()))))) {
+            if (SearchEverywhereClassifier.EP_Manager.isSymbol(o) && !myListModel.contains(o) && !symbols.contains(o)) {
+              VirtualFile virtualFile = SearchEverywhereClassifier.EP_Manager.getVirtualFile(o);
+              //some elements are non-physical like DB columns
+              if (o instanceof PsiElementNavigationItem) {
+                o = ((PsiElementNavigationItem)o).getTargetElement();
+              }
+              if ((o instanceof PsiElement && ((PsiElement)o).getContainingFile() == null) ||
+                  (virtualFile != null && (includeLibs || scope.accept(virtualFile)))) {
                 symbols.add(o);
               }
             }
@@ -1758,16 +1761,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       return symbols;
     }
 
-    protected boolean isSymbol(Object o) {
-      if (o instanceof PsiElement) {
-        final PsiElement e = (PsiElement)o;
-        //todo[kb] need a better way to avoid mixing java classes with symbols. Same to other languages where
-        //todo[kb] symbol provider returns classes. We need kind of suppressor API & EP here.
-        return !e.getLanguage().is(Language.findLanguageByID("JAVA")) || !(e.getParent() instanceof PsiFile);
-      }
-      return false;
-    }
-
     private SearchResult getClasses(String pattern, boolean includeLibs, final int max, ChooseByNamePopup chooseByNamePopup) {
       final SearchResult classes = new SearchResult();
       if (chooseByNamePopup == null || shouldSkipPattern(pattern)) {
@@ -1777,17 +1770,20 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                                                       myProgressIndicator, new Processor<Object>() {
           @Override
           public boolean process(Object o) {
-            if (o instanceof PsiElement && !myListModel.contains(o) && !classes.contains(o)) {
+            if (SearchEverywhereClassifier.EP_Manager.isClass(o) && !myListModel.contains(o) && !classes.contains(o)) {
               if (classes.size() == max) {
                 classes.needMore = true;
                 return false;
               }
               classes.add(o);
+
+              if (o instanceof PsiElementNavigationItem) {
+                o = ((PsiElementNavigationItem)o).getTargetElement();
+              }
               if (o instanceof PsiNamedElement) {
                 final String name = ((PsiNamedElement)o).getName();
-                final PsiFile file = ((PsiNamedElement)o).getContainingFile();
-                if (file != null) {
-                  final VirtualFile virtualFile = file.getVirtualFile();
+                VirtualFile virtualFile = SearchEverywhereClassifier.EP_Manager.getVirtualFile(o);
+                if (virtualFile != null) {
                   if (StringUtil.equals(name, virtualFile.getNameWithoutExtension())) {
                     myAlreadyAddedFiles.add(virtualFile);
                   }
