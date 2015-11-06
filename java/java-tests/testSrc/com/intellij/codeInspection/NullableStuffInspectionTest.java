@@ -59,6 +59,11 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     doTest();
   }
 
+  public void testNotNullByDefaultFieldNotInitialized() {
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    doTest();
+  }
+
   public void testNotNullAnnotationChecksInChildClassMethods() { doTest(); }
 
   public void testGetterSetterProblems() throws Exception{ doTest(); }
