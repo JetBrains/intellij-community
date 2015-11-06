@@ -34,7 +34,7 @@ import java.util.Collections;
 public class PyOverrideTest extends PyTestCase {
   private void doTest() {
     myFixture.configureByFile("override/" + getTestName(true) + ".py");
-    PyFunction toOverride = getTopLevelClass(0).getMethods(false) [0];
+    PyFunction toOverride = getTopLevelClass(0).getMethods() [0];
     PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), getTopLevelClass(1),
                                             Collections.singletonList(new PyMethodMember(toOverride)), false);
     myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
@@ -91,7 +91,7 @@ public class PyOverrideTest extends PyTestCase {
 
   public void testInnerClass() {  // PY-10976
     myFixture.configureByFile("override/" + getTestName(true) + ".py");
-    PyFunction toOverride = getTopLevelClass(0).getMethods(false)[0];
+    PyFunction toOverride = getTopLevelClass(0).getMethods()[0];
     PyClass pyClass = getTopLevelClass(1).getNestedClasses()[0];
     PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), pyClass,
                                             Collections.singletonList(new PyMethodMember(toOverride)), false);
@@ -100,7 +100,7 @@ public class PyOverrideTest extends PyTestCase {
 
   public void testInnerFunctionClass() {
     myFixture.configureByFile("override/" + getTestName(true) + ".py");
-    PyFunction toOverride = getTopLevelClass(0).getMethods(false)[0];
+    PyFunction toOverride = getTopLevelClass(0).getMethods()[0];
     final PsiElement element = myFixture.getElementAtCaret();
     PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), PsiTreeUtil.getParentOfType(element, PyClass.class, false),
                                             Collections.singletonList(new PyMethodMember(toOverride)), false);
@@ -120,7 +120,7 @@ public class PyOverrideTest extends PyTestCase {
 
   public void testImplement() {
     myFixture.configureByFile("override/" + getTestName(true) + ".py");
-    PyFunction toImplement = getTopLevelClass(0).getMethods(false)[1];
+    PyFunction toImplement = getTopLevelClass(0).getMethods()[1];
     PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), getTopLevelClass(1),
                                             Collections.singletonList(new PyMethodMember(toImplement)), true);
     myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);

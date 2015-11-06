@@ -58,7 +58,7 @@ public class PythonDocTestUtil {
   }
 
   public static boolean isDocTestClass(PyClass pyClass) {
-    for (PyFunction cls : pyClass.getMethods(false)) {
+    for (PyFunction cls : pyClass.getMethods()) {
       if (isDocTestFunction(cls)) {
         return true;
       }

@@ -50,7 +50,7 @@ public class PyElementNode extends BasePsiNode<PyElement> {
       for (PyClass aClass : pyClass.getNestedClasses()) {
         result.add(new PyElementNode(myProject, aClass, getSettings()));
       }
-      for (PyFunction function : pyClass.getMethods(false)) {
+      for (PyFunction function : pyClass.getMethods()) {
         result.add(new PyElementNode(myProject, function, getSettings()));
       }
       return result;
