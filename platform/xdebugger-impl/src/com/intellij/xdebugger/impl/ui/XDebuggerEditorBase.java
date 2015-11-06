@@ -17,14 +17,13 @@ package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -156,10 +155,10 @@ public abstract class XDebuggerEditorBase {
     Language language = text.getLanguage();
     if (language == null) {
       if (mySourcePosition != null) {
-        language = getFileTypeLanguage(mySourcePosition.getFile().getFileType());
+        language = LanguageUtil.getFileLanguage(mySourcePosition.getFile());
       }
       if (language == null) {
-        language = getFileTypeLanguage(getEditorsProvider().getFileType());
+        language = LanguageUtil.getFileTypeLanguage(getEditorsProvider().getFileType());
       }
     }
     text = new XExpressionImpl(text.getExpression(), language, text.getCustomInfo(), getMode());
@@ -180,14 +179,6 @@ public abstract class XDebuggerEditorBase {
     }
 
     doSetText(text);
-  }
-
-  @Nullable
-  public static Language getFileTypeLanguage(@Nullable FileType fileType) {
-    if (fileType instanceof LanguageFileType) {
-      return ((LanguageFileType)fileType).getLanguage();
-    }
-    return null;
   }
 
   public abstract XExpression getExpression();

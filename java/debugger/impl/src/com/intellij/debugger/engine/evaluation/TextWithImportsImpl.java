@@ -16,6 +16,7 @@
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.debugger.ui.DebuggerEditorImpl;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -26,7 +27,6 @@ import com.intellij.psi.*;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
-import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -136,7 +136,7 @@ public final class TextWithImportsImpl implements TextWithImports{
   public static XExpression toXExpression(@Nullable TextWithImports text) {
     if (text != null && !text.getText().isEmpty()) {
       return new XExpressionImpl(text.getText(),
-                                 XDebuggerEditorBase.getFileTypeLanguage(text.getFileType()),
+                                 LanguageUtil.getFileTypeLanguage(text.getFileType()),
                                  StringUtil.nullize(text.getImports()),
                                  getMode(text.getKind()));
     }
@@ -169,7 +169,7 @@ public final class TextWithImportsImpl implements TextWithImports{
       return new TextWithImportsImpl(getKind(expression.getMode()),
                                      expression.getExpression(),
                                      StringUtil.notNullize(expression.getCustomInfo()),
-                                     expression.getLanguage() != null ? expression.getLanguage().getAssociatedFileType() : null);
+                                     LanguageUtil.getLanguageFileType(expression.getLanguage()));
     }
   }
 }

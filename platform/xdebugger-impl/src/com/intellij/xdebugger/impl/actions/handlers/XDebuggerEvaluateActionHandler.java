@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
@@ -36,7 +37,6 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog;
-import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,11 +108,11 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
       if (stackFrame != null) {
         XSourcePosition position = stackFrame.getSourcePosition();
         if (position != null) {
-          language = XDebuggerEditorBase.getFileTypeLanguage(position.getFile().getFileType());
+          language = LanguageUtil.getFileLanguage(position.getFile());
         }
       }
       if (language == null && file != null) {
-        language = XDebuggerEditorBase.getFileTypeLanguage(file.getFileType());
+        language = LanguageUtil.getFileTypeLanguage(file.getFileType());
       }
       expression = new XExpressionImpl(expression.getExpression(), language, expression.getCustomInfo(), expression.getMode());
     }
