@@ -40,8 +40,8 @@ class AnnotatedTypeTest extends LightCodeInsightFixtureTestCase {
         class I { }
       }
 
-      class E1 extends Exception { }
-      class E2 extends Exception { }""".stripIndent())
+      @SuppressWarnings("ExceptionClassNameDoesntEndWithException") class E1 extends Exception { }
+      @SuppressWarnings("ExceptionClassNameDoesntEndWithException") class E2 extends Exception { }""".stripIndent())
   }
 
   public void testPrimitiveArrayType() {
@@ -78,20 +78,32 @@ class AnnotatedTypeTest extends LightCodeInsightFixtureTestCase {
 
   public void testDisjunctionType() {
     def psi = factory.createStatementFromText("try { } catch (@A @TA(1) E1 | @TA(2) E2 e) { }", context) as PsiTryStatement
-    assertTypeText(psi.catchBlockParameters[0].type, "pkg.@pkg.TA(1) E1 | pkg.@pkg.TA(2) E2", "pkg.E1 | pkg.E2")
+    assertTypeText psi.catchBlockParameters[0].type, "pkg.@pkg.TA(1) E1 | pkg.@pkg.TA(2) E2", "pkg.E1 | pkg.E2"
   }
 
   public void testDiamondType() {
     def psi = factory.createStatementFromText("Class<@TA String> cs = new Class<>()", context) as PsiDeclarationStatement
     def var = psi.declaredElements[0] as PsiVariable
-    assertTypeText(var.initializer.type, "java.lang.Class<java.lang.@pkg.TA String>", "java.lang.Class<java.lang.String>")
+    assertTypeText var.initializer.type, "java.lang.Class<java.lang.@pkg.TA String>", "java.lang.Class<java.lang.String>"
   }
 
   public void testImmediateClassType() {
     def aClass = myFixture.javaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT)
     def annotations = factory.createParameterFromText("@TA int x", context).modifierList.annotations
     def type = new PsiImmediateClassType(aClass, PsiSubstitutor.EMPTY, LanguageLevel.JDK_1_8, annotations)
-    assertTypeText(type, "java.lang.@pkg.TA Object", CommonClassNames.JAVA_LANG_OBJECT)
+    assertTypeText type, "java.lang.@pkg.TA Object", CommonClassNames.JAVA_LANG_OBJECT
+  }
+
+  public void testFieldType() {
+    def psi = factory.createFieldFromText("@A @TA(1) String f;", context)
+    assertTypeText psi.type, "java.lang.@pkg.TA(1) String", "java.lang.String"
+    assertAnnotations psi.type, "@TA(1)"
+  }
+
+  public void testMethodReturnType() {
+    def psi = factory.createMethodFromText("@A @TA(1) String m() { return null; }", context)
+    assertTypeText psi.returnType, "java.lang.@pkg.TA(1) String", "java.lang.String"
+    assertAnnotations psi.returnType, "@TA(1)"
   }
 
   private void doTest(String text, String annotated, String canonical) {
@@ -101,5 +113,9 @@ class AnnotatedTypeTest extends LightCodeInsightFixtureTestCase {
   private static void assertTypeText(PsiType type, String annotated, String canonical) {
     assert type.getCanonicalText(true) == annotated
     assert type.getCanonicalText(false) == canonical
+  }
+
+  private static void assertAnnotations(PsiType type, String... annotations) {
+    assert type.annotations.collect { it.text } == annotations.toList()
   }
 }
