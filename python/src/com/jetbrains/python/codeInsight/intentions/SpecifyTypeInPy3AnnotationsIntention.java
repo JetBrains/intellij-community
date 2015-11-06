@@ -17,19 +17,23 @@ package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.template.*;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -68,7 +72,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
       annotateParameter(project, editor, parameter);
     }
     else {
-      annotateReturnType(project, elementAt);
+      annotateReturnType(project, editor.getDocument(), elementAt);
     }
   }
 
@@ -99,24 +103,32 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
     }
   }
 
-  private void annotateReturnType(Project project, PsiElement resolved) {
-    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-
+  private void annotateReturnType(Project project, Document document, PsiElement resolved) {
     PyCallable callable = getCallable(resolved);
 
     if (callable instanceof PyFunction) {
-      final String functionSignature = "def " + callable.getName() + callable.getParameterList().getText();
-      String functionText = functionSignature +
-                            " -> object:";
-      final PyStatementList statementList = ((PyFunction)callable).getStatementList();
-      for (PyStatement st : statementList.getStatements()) {
-        functionText = functionText + "\n\t" + st.getText();
-      }
-      final PyFunction function = elementGenerator.createFromText(LanguageLevel.forElement(callable), PyFunction.class,
-                                                                  functionText);
-      callable = (PyFunction)callable.replace(function);
-      callable = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(callable);
+      final String annotationText = " -> " + PyNames.OBJECT;
+      
+      final PsiElement prevElem = PyPsiUtils.getPrevNonCommentSibling(((PyFunction)callable).getStatementList(), true);
+      assert prevElem != null;
 
+      final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
+      try {
+        final TextRange range = prevElem.getTextRange();
+        manager.doPostponedOperationsAndUnblockDocument(document);
+        if (prevElem.getNode().getElementType() == PyTokenTypes.COLON) {
+          document.insertString(range.getStartOffset(), annotationText);
+        }
+        else {
+          document.insertString(range.getEndOffset(), annotationText + ":");
+        }
+      }
+      finally {
+        manager.commitDocument(document);
+      }
+      
+      
+      callable = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(callable);
       final PyAnnotation annotation = ((PyFunction)callable).getAnnotation();
       assert annotation != null;
       final PyExpression annotationValue = annotation.getValue();
