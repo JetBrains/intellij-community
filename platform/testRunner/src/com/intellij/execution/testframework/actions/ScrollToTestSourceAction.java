@@ -32,7 +32,7 @@ public class ScrollToTestSourceAction extends ToggleBooleanProperty.Disablable {
   protected boolean isEnabled() {
     final AbstractProperty.AbstractPropertyContainer properties = getProperties();
     final TestFrameworkRunningModel model = myModel;
-    return isEnabled(properties, model);
+    return isEnabled(model);
   }
 
   @Override
@@ -40,14 +40,13 @@ public class ScrollToTestSourceAction extends ToggleBooleanProperty.Disablable {
     return true;
   }
 
-  private static boolean isEnabled(final AbstractProperty.AbstractPropertyContainer properties, final TestFrameworkRunningModel model) {
-    if (!TestConsoleProperties.TRACK_RUNNING_TEST.value(properties)) return true;
+  private static boolean isEnabled(final TestFrameworkRunningModel model) {
     return model != null && !model.isRunning();
   }
 
   public static boolean isScrollEnabled(final TestFrameworkRunningModel model) {
     final TestConsoleProperties properties = model.getProperties();
-    return isEnabled(properties, model) && TestConsoleProperties.SCROLL_TO_SOURCE.value(properties);
+    return isEnabled(model) && TestConsoleProperties.SCROLL_TO_SOURCE.value(properties);
   }
 
   public void setModel(final TestFrameworkRunningModel model) {
