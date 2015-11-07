@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
-import java.awt.geom.Line2D;
 import java.util.Collection;
 
 /**
@@ -38,11 +37,11 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   private static final double ARROW_ANGLE_COS2 = 0.7;
   private static final double ARROW_LENGTH = 0.3;
 
-  private final Stroke usual = new BasicStroke(PrintParameters.THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
-  private final Stroke hide =
+  private final Stroke myStroke = new BasicStroke(PrintParameters.THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
+  private final BasicStroke myDashedStroke =
     new BasicStroke(PrintParameters.THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);
-  private final Stroke selectUsual = new BasicStroke(PrintParameters.SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
-  private final Stroke selectHide =
+  private final Stroke mySelectedStroke = new BasicStroke(PrintParameters.SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
+  private final Stroke mySelectedDashedStroke =
     new BasicStroke(PrintParameters.SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);
 
   private Graphics2D g2;
@@ -134,36 +133,19 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   private void setStroke(boolean usual, boolean select) {
     if (usual) {
       if (select) {
-        g2.setStroke(selectUsual);
+        g2.setStroke(mySelectedStroke);
       }
       else {
-        g2.setStroke(this.usual);
+        g2.setStroke(myStroke);
       }
     }
     else {
       if (select) {
-        g2.setStroke(selectHide);
+        g2.setStroke(mySelectedDashedStroke);
       }
       else {
-        g2.setStroke(hide);
+        g2.setStroke(myDashedStroke);
       }
-    }
-  }
-
-  private interface LitePrinter {
-    void print(Color color);
-  }
-
-  private void drawLogic(boolean isSelected, boolean isUsual, Color usualColor, LitePrinter printer) {
-    if (isSelected) {
-      setStroke(isUsual, true);
-      printer.print(MARK_COLOR);
-      setStroke(isUsual, false);
-      printer.print(usualColor);
-    }
-    else {
-      setStroke(isUsual, false);
-      printer.print(usualColor);
     }
   }
 
@@ -184,23 +166,23 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
     for (final PrintElement printElement : printElements) {
-      LitePrinter printer = null;
       if (printElement instanceof EdgePrintElement) {
-        printer = new LitePrinter() {
-          @Override
-          public void print(Color color) {
-            EdgePrintElement edgePrintElement = (EdgePrintElement)printElement;
-            int from = edgePrintElement.getPositionInCurrentRow();
-            int to = edgePrintElement.getPositionInOtherRow();
 
-            if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
-              paintDownLine(from, to, color, edgePrintElement.hasArrow());
-            }
-            else {
-              paintUpLine(from, to, color, edgePrintElement.hasArrow());
-            }
-          }
-        };
+        EdgePrintElement edgePrintElement = (EdgePrintElement)printElement;
+        boolean isUsual = isUsual(edgePrintElement);
+        Color usualColor = getColor(edgePrintElement);
+
+        if (printElement.isSelected()) {
+          setStroke(isUsual, true);
+          printEdge(MARK_COLOR, true, edgePrintElement);
+          setStroke(isUsual, false);
+          printEdge(usualColor, false, edgePrintElement);
+        }
+        else {
+          setStroke(isUsual, false);
+          printEdge(usualColor, false, edgePrintElement);
+        }
+
       }
 
       if (printElement instanceof NodePrintElement) {
@@ -213,8 +195,18 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
           paintCircle(position, getColor(printElement), false);
         }
       }
+    }
+  }
 
-      if (printer != null) drawLogic(printElement.isSelected(), isUsual(printElement), getColor(printElement), printer);
+  private void printEdge(Color color, boolean isSelected, EdgePrintElement edgePrintElement) {
+    int from = edgePrintElement.getPositionInCurrentRow();
+    int to = edgePrintElement.getPositionInOtherRow();
+
+    if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
+      paintDownLine(from, to, color, edgePrintElement.hasArrow());
+    }
+    else {
+      paintUpLine(from, to, color, edgePrintElement.hasArrow());
     }
   }
 
