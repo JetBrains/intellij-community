@@ -20,8 +20,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
@@ -232,17 +234,23 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
   }
 
   private static MockGitRepository repo(final String name) {
-    VirtualFile root = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+    final Ref<VirtualFile> root = Ref.create();
+    EdtTestUtil.runInEdtAndWait(new Runnable() {
       @Override
-      public VirtualFile compute() {
-        try {
-          return ourProject.getBaseDir().createChildData(null, name);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+      public void run() {
+        root.set(ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+          @Override
+          public VirtualFile compute() {
+            try {
+              return ourProject.getBaseDir().createChildData(null, name);
+            }
+            catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+          }
+        }));
       }
     });
-    return new MockGitRepository(ourProject, root);
+    return new MockGitRepository(ourProject, root.get());
   }
 }
