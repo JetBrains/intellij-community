@@ -39,7 +39,7 @@ public abstract class GitRebaseBaseTest : GitPlatformTest() {
     myVcsHelper = GitTestUtil.overrideService(myProject, AbstractVcsHelper::class.java, MockVcsHelper::class.java)
   }
 
-  override fun createRepository(path: String) = GitTestUtil.createRepository(myProject, path, false)
+  override fun createRepository(rootDir: String) = GitTestUtil.createRepository(myProject, rootDir, false)
 
   override fun getDebugLogCategories() = listOf("#" + GitRebaseProcess::class.java.name)
 
