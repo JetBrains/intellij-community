@@ -210,6 +210,12 @@ abstract class GitPlatformTest : PlatformTestCase() {
     }
   }
 
+  protected fun installHook(gitDir: File, hookName: String, hookContent: String) {
+    val preReceive = File(gitDir, "hooks/$hookName")
+    FileUtil.writeToFile(preReceive, hookContent)
+    preReceive.setExecutable(true, false)
+  }
+
   protected fun assertSuccessfulNotification(message: String) {
       GitTestUtil.assertNotification(NotificationType.INFORMATION, "Rebase Successful", message, myVcsNotifier.lastNotification)
   }

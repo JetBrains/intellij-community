@@ -111,7 +111,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     val result = push("master", "origin/master")
 
     assertTrue("Rejected push dialog wasn't shown", dialogShown)
-    assertResult(REJECTED, -1, "master", "origin/master", result)
+    assertResult(REJECTED_NO_FF, -1, "master", "origin/master", result)
   }
 
   fun test_rejected_push_to_other_branch_doesnt_propose_to_update() {
@@ -128,7 +128,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     val result = push("feature", "origin/master")
 
     assertFalse("Rejected push dialog shouldn't be shown", dialogShown)
-    assertResult(REJECTED, -1, "feature", "origin/master", result)
+    assertResult(REJECTED_NO_FF, -1, "feature", "origin/master", result)
   }
 
   fun test_push_is_rejected_too_many_times() {
@@ -156,7 +156,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
         return updateResult
       }
     }.execute()
-    assertResult(REJECTED, -1, "master", "origin/master", GitUpdateResult.SUCCESS, listOf("bro.txt"), result)
+    assertResult(REJECTED_NO_FF, -1, "master", "origin/master", GitUpdateResult.SUCCESS, listOf("bro.txt"), result)
 
     Executor.cd(myParentRepo.path)
     val history = git("log --all --pretty=%H ")
@@ -228,7 +228,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     })
 
     val remoteTipAndPushResult = forcePushWithReject()
-    assertResult(REJECTED, -1, "master", "origin/master", remoteTipAndPushResult.second)
+    assertResult(REJECTED_NO_FF, -1, "master", "origin/master", remoteTipAndPushResult.second)
     assertFalse("Rejected push dialog should not be shown", dialogShown)
     Executor.cd(myParentRepo.path)
     assertEquals("The commit pushed from bro should be the last one", remoteTipAndPushResult.first, last())
@@ -240,7 +240,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
     val remoteTipAndPushResult = forcePushWithReject()
 
-    assertResult(REJECTED, -1, "master", "origin/master", remoteTipAndPushResult.second)
+    assertResult(REJECTED_NO_FF, -1, "master", "origin/master", remoteTipAndPushResult.second)
     Executor.cd(myParentRepo.path)
     assertEquals("The commit pushed from bro should be the last one", remoteTipAndPushResult.first, last())
   }
@@ -277,6 +277,35 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertResult(SUCCESS, 2, "master", "origin/master", GitUpdateResult.SUCCESS, listOf("bro.txt"), result)
   }
 
+  // IDEA-144179
+  fun `test don't update if rejected by some custom reason`() {
+    cd(myRepository)
+    val hash = makeCommit("file.txt")
+
+    val rejectHook = """
+      cat <<'EOF'
+      remote: Push rejected.
+      remote: refs/heads/master: 53d02a63c9cd5c919091b5d9f21381b98a8341be: commit message doesn't match regex: [A-Z][A-Z_0-9]+-[A-Za-z0-9].*
+      remote:
+      EOF
+      exit 1
+      """.trimIndent()
+    installHook(myParentRepo, "pre-receive", rejectHook)
+
+    myDialogManager.onDialog(GitRejectedPushUpdateDialog::class.java) {
+      throw AssertionError("Update shouldn't be proposed")
+    }
+
+    val result = push("master", "origin/master")
+
+    assertResult(REJECTED_OTHER, -1, "master", "origin/master", result)
+    assertNotPushed(hash)
+  }
+
+  private fun assertNotPushed(hash: String) {
+    assertEquals("", git("branch -r --contains $hash"))
+  }
+
   fun test_update_with_conflicts_cancels_push() {
     Executor.cd(myBroRepo.path)
     Executor.append("bro.txt", "bro content")
@@ -291,7 +320,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     myVcsHelper.onMerge {}
 
     val result = push("master", "origin/master")
-    assertResult(REJECTED, -1, "master", "origin/master", GitUpdateResult.INCOMPLETE, listOf("bro.txt"), result)
+    assertResult(REJECTED_NO_FF, -1, "master", "origin/master", GitUpdateResult.INCOMPLETE, listOf("bro.txt"), result)
   }
 
   fun test_push_tags() {

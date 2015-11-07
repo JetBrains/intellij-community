@@ -185,8 +185,9 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
   }
 
   private static GitPushRepoResult repoResult(GitPushNativeResult.Type nativeType, String from, String to, int commits,
-                                                 @Nullable GitUpdateResult updateResult) {
-    GitPushNativeResult nr = new GitPushNativeResult(nativeType, from);
+                                              @Nullable GitUpdateResult updateResult) {
+    String reason = nativeType == REJECTED ? GitPushNativeResult.FETCH_FIRST_REASON : null;
+    GitPushNativeResult nr = new GitPushNativeResult(nativeType, from, reason, null);
     return GitPushRepoResult.addUpdateResult(
       convertFromNative(nr, Collections.<GitPushNativeResult>emptyList(), commits, from(from), to(to)),
       updateResult);

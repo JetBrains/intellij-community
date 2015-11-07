@@ -89,7 +89,10 @@ import java.util.regex.Pattern;
 public class GitPushNativeResultParser {
 
   private static final Logger LOG = Logger.getInstance(GitPushNativeResultParser.class);
-  private static final Pattern PATTERN = Pattern.compile("^.*([ +\\-\\*!=])\\s(\\S+):(\\S+)\\s(\\S+).*$");
+  private static final Pattern PATTERN = Pattern.compile("^.*([ +\\-\\*!=])\t" +   // flag
+                                                         "(\\S+):(\\S+)\t" +       // from:to
+                                                         "([^(]+)" +               // summary maybe with a trailing space
+                                                         "(?:\\((.+)\\))?.*$");    // reason
   private static final Pattern RANGE = Pattern.compile("[0-9a-f]+[\\.]{2,3}[0-9a-f]+");
 
   @NotNull
@@ -109,7 +112,8 @@ public class GitPushNativeResultParser {
     String flag = matcher.group(1);
     String from = matcher.group(2);
     String to = matcher.group(3);
-    String summary = matcher.group(4);
+    String summary = matcher.group(4).trim(); // the summary can have a trailing space (to simplify the regexp)
+    @Nullable String reason = matcher.group(5);
 
     GitPushNativeResult.Type type = parseType(flag);
     if (type == null) {
@@ -120,7 +124,7 @@ public class GitPushNativeResultParser {
       return null;
     }
     String range = RANGE.matcher(summary).matches() ? summary : null;
-    return new GitPushNativeResult(type, from, range);
+    return new GitPushNativeResult(type, from, reason, range);
   }
 
   private static GitPushNativeResult.Type parseType(String flag) {

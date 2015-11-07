@@ -67,35 +67,49 @@ class GitPushNativeResultParserTest {
   fun success() {
     val output = " \trefs/heads/master:refs/heads/master\t3e62822..a537351"
     val results = parse(listOf(STANDARD_PREFIX, TARGET_PREFIX, output, SUCCESS_SUFFIX))
-    assertSingleResult(SUCCESS, "refs/heads/master", "3e62822..a537351", results)
+    assertSingleResult(SUCCESS, "refs/heads/master", "3e62822..a537351", null, results)
   }
 
   @Test
   fun rejected() {
     val output = "!\trefs/heads/master:refs/heads/master\t[rejected] (non-fast-forward)"
     val results = parse(listOf(STANDARD_PREFIX, TARGET_PREFIX, output, REJECT_SUFFIX))
-    assertSingleResult(REJECTED, "refs/heads/master", null, results)
+    assertSingleResult(REJECTED, "refs/heads/master", null, GitPushNativeResult.NO_FF_REJECT_REASON, results)
+  }
+
+  @Test
+  fun rejected2() {
+    val output = "!\trefs/heads/master:refs/heads/master\t[rejected] (fetch first)"
+    val results = parse(listOf(STANDARD_PREFIX, TARGET_PREFIX, output, REJECT_SUFFIX))
+    assertSingleResult(REJECTED, "refs/heads/master", null, GitPushNativeResult.FETCH_FIRST_REASON, results)
   }
 
   @Test
   fun forcedUpdate() {
     val output = "+\trefs/heads/master:refs/heads/master\tb9b3235...23760f8 (forced update)"
     val result = parse(listOf(PUSH_DEFAULT_WARNING, TARGET_PREFIX, output))
-    assertSingleResult(FORCED_UPDATE, "refs/heads/master", "b9b3235...23760f8", result)
+    assertSingleResult(FORCED_UPDATE, "refs/heads/master", "b9b3235...23760f8", "forced update", result)
+  }
+
+  @Test
+  fun remoteRejected() {
+    val output = "!\trefs/heads/master:refs/heads/master\t[remote rejected] (pre-receive hook declined)"
+    val result = parse(listOf(PUSH_DEFAULT_WARNING, TARGET_PREFIX, output))
+    assertSingleResult(REJECTED, "refs/heads/master", null, "pre-receive hook declined", result)
   }
 
   @Test
   fun upToDate() {
     val output = "=\trefs/heads/master:refs/heads/master\t[up to date]"
     val result = parse(listOf(TARGET_PREFIX, output))
-    assertSingleResult(UP_TO_DATE, "refs/heads/master", null, result)
+    assertSingleResult(UP_TO_DATE, "refs/heads/master", result)
   }
 
   @Test
   fun newRef() {
     val output = "*\trefs/heads/feature:refs/heads/feature2\t[new branch]"
     val result = parse(listOf(STANDARD_PREFIX, TARGET_PREFIX, output))
-    assertSingleResult(NEW_REF, "refs/heads/feature", null, result)
+    assertSingleResult(NEW_REF, "refs/heads/feature", result)
   }
 
   @Test
@@ -103,25 +117,34 @@ class GitPushNativeResultParserTest {
     val output = arrayOf(" \trefs/heads/master:refs/heads/master\t7aabf91..d8369de", "*\trefs/tags/some_tag:refs/tags/some_tag\t[new tag]")
     val results = parse(listOf(*output))
     assertEquals(2, results.size)
-    assertResult(SUCCESS, "refs/heads/master", "7aabf91..d8369de", results[0])
-    assertResult(NEW_REF, "refs/tags/some_tag", null, results[1])
+    assertResult(SUCCESS, "refs/heads/master", "7aabf91..d8369de", null, results[0])
+    assertResult(NEW_REF, "refs/tags/some_tag", null, null, results[1])
   }
 
   private fun assertResult(expectedType: GitPushNativeResult.Type,
                            expectedSource: String,
                            expectedRange: String?,
+                           expectedReason: String? = null,
                            actualResult: GitPushNativeResult) {
     assertEquals(expectedType, actualResult.type)
     assertEquals(expectedSource, actualResult.sourceRef)
     assertEquals(expectedRange, actualResult.range)
+    assertEquals(expectedReason, actualResult.reason)
+  }
+
+  private fun assertSingleResult(expectedType: GitPushNativeResult.Type,
+                                 expectedSource: String,
+                                 actualResults: List<GitPushNativeResult>) {
+    assertSingleResult(expectedType, expectedSource, null, null, actualResults)
   }
 
   private fun assertSingleResult(expectedType: GitPushNativeResult.Type,
                                  expectedSource: String,
                                  expectedRange: String?,
+                                 expectedReason: String?,
                                  actualResults: List<GitPushNativeResult>) {
     assertEquals(1, actualResults.size)
     val result = actualResults[0]
-    assertResult(expectedType, expectedSource, expectedRange, result)
+    assertResult(expectedType, expectedSource, expectedRange, expectedReason, result)
   }
 }
