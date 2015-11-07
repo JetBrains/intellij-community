@@ -91,9 +91,9 @@ public class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     rebaseProcess.abort(null, listOf(myUltimate), EmptyProgressIndicator())
 
     assertNotNull(confirmation, "Abort confirmation message was not shown")
-    assertEquals(cleanupForAssertion("Do you want rollback the successful rebase in project?"),
-                 cleanupForAssertion(confirmation!!),
-                 "Incorrect confirmation message text");
+    assertEquals("Incorrect confirmation message text",
+                 cleanupForAssertion("Do you want rollback the successful rebase in project?"),
+                 cleanupForAssertion(confirmation!!));
     assertNoRebaseInProgress(myAllRepositories)
     myAllRepositories.forEach { it.`assert feature not rebased on master`() }
 
@@ -115,9 +115,9 @@ public class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     rebaseProcess.abort(myCommunity, listOf(myUltimate), EmptyProgressIndicator())
 
     assertNotNull(confirmation, "Abort confirmation message was not shown")
-    assertEquals(cleanupForAssertion("Do you want just to abort rebase in community, or also rollback the successful rebase in project?"),
-                 cleanupForAssertion(confirmation!!),
-                 "Incorrect confirmation message text");
+    assertEquals("Incorrect confirmation message text",
+                 cleanupForAssertion("Do you want just to abort rebase in community, or also rollback the successful rebase in project?"),
+                 cleanupForAssertion(confirmation!!));
     assertNoRebaseInProgress(myAllRepositories)
     myAllRepositories.forEach { it.`assert feature not rebased on master`() }
 

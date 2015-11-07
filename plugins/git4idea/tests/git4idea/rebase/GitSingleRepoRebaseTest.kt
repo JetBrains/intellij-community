@@ -26,7 +26,6 @@ import git4idea.test.RepoBuilder
 import git4idea.test.UNKNOWN_ERROR_TEXT
 import git4idea.test.build
 import kotlin.properties.Delegates
-import kotlin.test.assertEquals
 
 public class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
@@ -105,7 +104,7 @@ public class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     rebaseOnMaster()
 
-    assertEquals(2, conflicts, "Incorrect number of conflicting patches")
+    assertEquals("Incorrect number of conflicting patches", 2, conflicts)
     myRepo.`assert feature rebased on master`()
     assertSuccessfulNotification("Rebased feature on master")
   }

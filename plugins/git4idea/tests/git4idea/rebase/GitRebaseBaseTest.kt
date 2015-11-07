@@ -26,7 +26,6 @@ import git4idea.test.*
 import git4idea.test.GitExecutor.cd
 import git4idea.test.GitExecutor.git
 import git4idea.test.GitTestUtil.assertNotification
-import kotlin.test.assertFalse
 
 public abstract class GitRebaseBaseTest : GitPlatformTest() {
 
@@ -156,8 +155,8 @@ public abstract class GitRebaseBaseTest : GitPlatformTest() {
 
   protected fun assertNotRebased(feature: String, master: String, repository: GitRepository) {
     cd(repository)
-    assertFalse(git("rev-parse " + master) == git("merge-base $feature $master"),
-                "$feature is unexpectedly rebased on $master" + GitUtil.mention(repository))
+    assertFalse("$feature is unexpectedly rebased on $master" + GitUtil.mention(repository),
+                git("rev-parse " + master) == git("merge-base $feature $master"))
   }
 
   protected fun assertNoRebaseInProgress(repository: GitRepository) {
@@ -175,7 +174,7 @@ public abstract class GitRebaseBaseTest : GitPlatformTest() {
   }
 
   protected fun GitRepository.assertNoLocalChanges() {
-    assertEquals("", gitStatus(), "There should be no local changes!")
+    assertEquals("There should be no local changes!", "", gitStatus())
   }
 
   protected fun GitRepository.isDirty(): Boolean {
@@ -201,8 +200,8 @@ public abstract class GitRebaseBaseTest : GitPlatformTest() {
 
     public fun assertNewFile(repository: GitRepository, file: String, content: String) {
       cd(repository)
-      assertEquals("A  " + file, git("status --porcelain"), "Incorrect git status output")
-      assertEquals(content, Executor.cat(file), "Incorrect content of the file [$file]")
+      assertEquals("Incorrect git status output", "A  " + file, git("status --porcelain"))
+      assertEquals("Incorrect content of the file [$file]", content, Executor.cat(file))
     }
   }
 }
