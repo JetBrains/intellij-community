@@ -85,8 +85,6 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.openapi.wm.impl.FloatingDecorator.DIVIDER_WIDTH;
-
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -2170,9 +2168,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       myWindowedDecorator = new WindowedDecorator(myProject, info.copy(), decorator);
       Window window = myWindowedDecorator.getFrame();
       final Rectangle bounds = info.getFloatingBounds();
-      if (bounds != null) {
-        bounds.setBounds(bounds.x + DIVIDER_WIDTH, bounds.y + DIVIDER_WIDTH, bounds.width - 2 * DIVIDER_WIDTH, bounds.height - 2 * DIVIDER_WIDTH);
-      }
       if (bounds != null &&
           bounds.width > 0 &&
           bounds.height > 0 &&
