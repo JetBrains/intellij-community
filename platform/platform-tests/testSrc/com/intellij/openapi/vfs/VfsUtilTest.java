@@ -113,6 +113,25 @@ public class VfsUtilTest extends PlatformTestCase {
     assertEquals("test text", content);
   }
 
+  public void testFindRelativeFile() throws Exception {
+    final VirtualFile root = VirtualFileManager.getInstance().findFileByUrl("temp:///");
+    assertNotNull(root);
+    VirtualFile file = VfsUtilCore.findRelativeFile(root.getUrl(), null);
+    assertEquals(root, file);
+
+    File ioTestDataDir = new File(PathManagerEx.getTestDataPath());
+    VirtualFile testDataDir = LocalFileSystem.getInstance().findFileByIoFile(ioTestDataDir);
+    assertNotNull(testDataDir);
+    assertEquals(testDataDir, VfsUtilCore.findRelativeFile(VfsUtilCore.convertFromUrl(ioTestDataDir.toURI().toURL()), null));
+    assertEquals(testDataDir, VfsUtilCore.findRelativeFile(ioTestDataDir.getAbsolutePath(), null));
+
+    File ioVfsDir = new File(ioTestDataDir, "vfs");
+    VirtualFile vfsDir = LocalFileSystem.getInstance().findFileByIoFile(ioVfsDir);
+    assertNotNull(vfsDir);
+    assertEquals(vfsDir, VfsUtilCore.findRelativeFile(ioVfsDir.getAbsolutePath(), null));
+    assertEquals(vfsDir, VfsUtilCore.findRelativeFile("vfs", testDataDir));
+  }
+
   public void testRelativePath() throws Exception {
     final File root = new File(PathManagerEx.getTestDataPath());
     final File testRoot = new File(new File(root, "vfs"), "relativePath");
