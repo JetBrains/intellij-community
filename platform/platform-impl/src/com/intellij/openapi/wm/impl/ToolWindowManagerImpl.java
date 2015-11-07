@@ -2091,7 +2091,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     private final FloatingDecorator myFloatingDecorator;
 
     /**
-     * Creates floating decorator for specified floating decorator.
+     * Creates floating decorator for specified internal decorator.
      */
     private AddFloatingDecoratorCmd(final InternalDecorator decorator, final WindowInfoImpl info) {
       super(myWindowManager.getCommandProcessor());
@@ -2163,7 +2163,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     private final WindowedDecorator myWindowedDecorator;
 
     /**
-     * Creates floating decorator for specified floating decorator.
+     * Creates windowed decorator for specified internal decorator.
      */
     private AddWindowedDecoratorCmd(final InternalDecorator decorator, final WindowInfoImpl info) {
       super(myWindowManager.getCommandProcessor());
@@ -2230,11 +2230,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       myWindowedDecorator = getWindowedDecorator(info.getId());
       myId2WindowedDecorator.remove(info.getId());
 
-      JRootPane rootPane = ((RootPaneContainer)myWindowedDecorator.getFrame()).getRootPane();
-      if (!rootPane.isShowing()) return;
-      Rectangle bounds = rootPane.getBounds();
-      Point location = rootPane.getLocationOnScreen();
-      bounds.setBounds(location.x - DIVIDER_WIDTH, location.y - DIVIDER_WIDTH, bounds.width + 2 * DIVIDER_WIDTH, bounds.height + 2 * DIVIDER_WIDTH);
+      Window frame = myWindowedDecorator.getFrame();
+      if (!frame.isShowing()) return;
+      Rectangle bounds = frame.getBounds();
+      bounds.setLocation(frame.getLocationOnScreen());
       info.setFloatingBounds(bounds);
     }
 
