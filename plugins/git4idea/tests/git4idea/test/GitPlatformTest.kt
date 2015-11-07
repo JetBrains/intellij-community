@@ -13,218 +13,198 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.test;
+package git4idea.test
 
-import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.TestLoggerFactory;
-import com.intellij.testFramework.vcs.AbstractVcsTestCase;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.ThrowableRunnable;
-import git4idea.DialogManager;
-import git4idea.GitPlatformFacade;
-import git4idea.GitUtil;
-import git4idea.GitVcs;
-import git4idea.commands.Git;
-import git4idea.commands.GitHandler;
-import git4idea.config.GitVcsSettings;
-import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.EdtTestUtil
+import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.TestLoggerFactory
+import com.intellij.testFramework.vcs.AbstractVcsTestCase
+import com.intellij.util.ArrayUtil
+import git4idea.DialogManager
+import git4idea.GitPlatformFacade
+import git4idea.GitUtil
+import git4idea.GitVcs
+import git4idea.commands.Git
+import git4idea.commands.GitHandler
+import git4idea.config.GitVcsSettings
+import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryManager
+import java.io.File
+import java.util.*
 
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
+abstract class GitPlatformTest : PlatformTestCase() {
 
-public abstract class GitPlatformTest extends PlatformTestCase {
+  protected val LOG = Logger.getInstance(GitPlatformTest::class.java)
 
-  protected static final Logger LOG = Logger.getInstance(GitPlatformTest.class);
+  protected lateinit var myProjectRoot: VirtualFile
+  protected lateinit var myProjectPath: String
+  protected lateinit var myGitRepositoryManager: GitRepositoryManager
+  protected lateinit var myGitSettings: GitVcsSettings
+  protected lateinit var myPlatformFacade: GitPlatformFacade
+  protected lateinit var myGit: TestGitImpl
+  protected lateinit var myVcs: GitVcs
+  protected lateinit var myDialogManager: TestDialogManager
+  protected lateinit var myVcsNotifier: TestVcsNotifier
 
-  protected VirtualFile myProjectRoot;
-  protected String myProjectPath;
-  protected GitRepositoryManager myGitRepositoryManager;
-  protected GitVcsSettings myGitSettings;
-  protected GitPlatformFacade myPlatformFacade;
-  protected TestGitImpl myGit;
-  protected GitVcs myVcs;
+  protected lateinit var myTestRoot: File
 
-  protected TestDialogManager myDialogManager;
-  protected TestVcsNotifier myVcsNotifier;
+  private lateinit var myTestStartedIndicator: String
 
-  protected File myTestRoot;
+  @Throws(Exception::class)
+  override fun setUp() {
+    myTestRoot = File(FileUtil.getTempDirectory(), "testRoot")
+    PlatformTestCase.myFilesToDelete.add(myTestRoot)
 
-  private String myTestStartedIndicator;
+    checkTestRootIsEmpty(myTestRoot)
 
-  @Override
-  protected void setUp() throws Exception {
-    myTestRoot = new File(FileUtil.getTempDirectory(), "testRoot");
-    myFilesToDelete.add(myTestRoot);
+    EdtTestUtil.runInEdtAndWait { super@GitPlatformTest.setUp() }
 
-    checkTestRootIsEmpty(myTestRoot);
+    myTestStartedIndicator = enableDebugLogging()
 
-    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
-      @Override
-      public void run() throws Exception {
-        GitPlatformTest.super.setUp();
-      }
-    });
+    myProjectRoot = myProject.baseDir
+    myProjectPath = myProjectRoot.path
 
-    enableDebugLogging();
+    myGitSettings = GitVcsSettings.getInstance(myProject)
+    myGitSettings.appSettings.pathToGit = GitExecutor.PathHolder.GIT_EXECUTABLE
 
-    myProjectRoot = myProject.getBaseDir();
-    myProjectPath = myProjectRoot.getPath();
+    myDialogManager = ServiceManager.getService(DialogManager::class.java) as TestDialogManager
+    myVcsNotifier = ServiceManager.getService(myProject, VcsNotifier::class.java) as TestVcsNotifier
 
-    myGitSettings = GitVcsSettings.getInstance(myProject);
-    myGitSettings.getAppSettings().setPathToGit(GitExecutor.PathHolder.GIT_EXECUTABLE);
+    myGitRepositoryManager = GitUtil.getRepositoryManager(myProject)
+    myPlatformFacade = ServiceManager.getService(myProject, GitPlatformFacade::class.java)
+    myGit = GitTestUtil.overrideService(Git::class.java, TestGitImpl::class.java)
+    myVcs = GitVcs.getInstance(myProject)!!
+    myVcs.doActivate()
 
-    myDialogManager = (TestDialogManager)ServiceManager.getService(DialogManager.class);
-    myVcsNotifier = (TestVcsNotifier)ServiceManager.getService(myProject, VcsNotifier.class);
-
-    myGitRepositoryManager = GitUtil.getRepositoryManager(myProject);
-    myPlatformFacade = ServiceManager.getService(myProject, GitPlatformFacade.class);
-    myGit = GitTestUtil.overrideService(Git.class, TestGitImpl.class);
-    myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(myProject));
-    myVcs.doActivate();
-
-    GitTestUtil.assumeSupportedGitVersion(myVcs);
-    addSilently();
-    removeSilently();
+    GitTestUtil.assumeSupportedGitVersion(myVcs)
+    addSilently()
+    removeSilently()
   }
 
-  private static void checkTestRootIsEmpty(@NotNull File testRoot) {
-    File[] files = testRoot.listFiles();
-    if (files != null && files.length > 0) {
-      LOG.warn("Test root was not cleaned up during some previous test run. " +
-               "testRoot: " + testRoot + ", files: " + Arrays.toString(files));
-      for (File file : files) {
-        LOG.assertTrue(FileUtil.delete(file));
-      }
-    }
-  }
-
-  @Override
-  protected File getIprFile() throws IOException {
-    File projectRoot = new File(myTestRoot, "project");
-    return FileUtil.createTempFile(projectRoot, getName() + "_", ProjectFileType.DOT_DEFAULT_EXTENSION);
-  }
-
-  @Override
-  protected void setUpModule() {
-    // we don't need a module in Git tests
-  }
-
-  @Override
-  protected boolean isRunInEdt() {
-    return false;
-  }
-
-  @Override
-  @NotNull
-  public String getTestName(boolean lowercaseFirstLetter) {
-    String name = super.getTestName(lowercaseFirstLetter);
-    name = StringUtil.shortenTextWithEllipsis(name.trim().replace(" ", "_"), 12, 6, "_");
-    if (name.startsWith("_")) {
-      name = name.substring(1);
-    }
-    return name;
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
+  @Throws(Exception::class)
+  override fun tearDown() {
     try {
-      if (myDialogManager != null) {
-        myDialogManager.cleanup();
-      }
-      if (myVcsNotifier != null) {
-        myVcsNotifier.cleanup();
-      }
-      myGit.reset();
+      if (wasInit { myDialogManager }) { myDialogManager.cleanup() }
+      if (wasInit { myVcsNotifier }) { myVcsNotifier.cleanup() }
+      myGit.reset()
     }
     finally {
       try {
-        EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
-          @Override
-          public void run() throws Exception {
-            GitPlatformTest.super.tearDown();
-          }
-        });
+        EdtTestUtil.runInEdtAndWait { super@GitPlatformTest.tearDown() }
       }
       finally {
         if (myAssertionsInTestDetected) {
-          TestLoggerFactory.dumpLogToStdout(myTestStartedIndicator);
+          TestLoggerFactory.dumpLogToStdout(myTestStartedIndicator)
         }
       }
     }
   }
 
-  private void enableDebugLogging() {
-    List<String> commonCategories = new ArrayList<String>(Arrays.asList("#" + Executor.class.getName(),
-                                                                        "#" + GitHandler.class.getName(),
-                                                                        GitHandler.class.getName()));
-    commonCategories.addAll(getDebugLogCategories());
-    TestLoggerFactory.enableDebugLogging(myTestRootDisposable, ArrayUtil.toStringArray(commonCategories));
-    myTestStartedIndicator = createTestStartedIndicator();
-    LOG.info(myTestStartedIndicator);
+  override fun getIprFile(): File {
+    val projectRoot = File(myTestRoot, "project")
+    return FileUtil.createTempFile(projectRoot, name + "_", ProjectFileType.DOT_DEFAULT_EXTENSION)
   }
 
-  @NotNull
-  protected Collection<String> getDebugLogCategories() {
-    return Collections.emptyList();
+  override fun setUpModule() {
+    // we don't need a module in Git tests
   }
 
-  @NotNull
-  private String createTestStartedIndicator() {
-    return "Starting " + getClass().getName() + "." + getTestName(false) + Math.random();
+  override fun isRunInEdt(): Boolean {
+    return false
   }
 
-  @NotNull
-  protected GitRepository createRepository(@NotNull String rootDir) {
-    return GitTestUtil.createRepository(myProject, rootDir);
+  override fun getTestName(lowercaseFirstLetter: Boolean): String {
+    var name = super.getTestName(lowercaseFirstLetter)
+    name = StringUtil.shortenTextWithEllipsis(name.trim { it <= ' ' }.replace(" ", "_"), 12, 6, "_")
+    if (name.startsWith("_")) {
+      name = name.substring(1)
+    }
+    return name
+  }
+
+  inline fun wasInit(f: () -> Unit): Boolean {
+    try {
+      f()
+    }
+    catch(e: UninitializedPropertyAccessException) {
+      return false
+    }
+    return true
+  }
+
+  private fun enableDebugLogging(): String {
+    val commonCategories = ArrayList(Arrays.asList("#" + Executor::class.java.name,
+                                                   "#" + GitHandler::class.java.name,
+                                                   GitHandler::class.java.name))
+    commonCategories.addAll(getDebugLogCategories())
+    TestLoggerFactory.enableDebugLogging(myTestRootDisposable, *ArrayUtil.toStringArray(commonCategories))
+    val testStartedIndicator = createTestStartedIndicator()
+    LOG.info(testStartedIndicator)
+    return testStartedIndicator
+  }
+
+  protected open fun getDebugLogCategories(): Collection<String> = emptyList()
+
+  private fun createTestStartedIndicator(): String {
+    return "Starting " + javaClass.name + "." + getTestName(false) + Math.random()
+  }
+
+  protected open fun createRepository(rootDir: String): GitRepository {
+    return GitTestUtil.createRepository(myProject, rootDir)
   }
 
   /**
    * Clones the given source repository into a bare parent.git and adds the remote origin.
    */
-  protected void prepareRemoteRepo(@NotNull GitRepository source) {
-    final String target = "parent.git";
-    final String targetName = "origin";
-    Executor.cd(myProjectRoot);
-    GitExecutor.git("clone --bare '%s' %s", source.getRoot().getPath(), target);
-    GitExecutor.cd(source);
-    GitExecutor.git("remote add %s '%s'", targetName, myProjectRoot + "/" + target);
+  protected fun prepareRemoteRepo(source: GitRepository) {
+    val target = "parent.git"
+    val targetName = "origin"
+    Executor.cd(myProjectRoot)
+    GitExecutor.git("clone --bare '%s' %s", source.root.path, target)
+    GitExecutor.cd(source)
+    GitExecutor.git("remote add %s '%s'", targetName, "$myProjectRoot/$target")
   }
 
-  protected void refresh() {
-    VfsUtil.markDirtyAndRefresh(false, true, false, myProjectRoot);
+  protected open fun refresh() {
+    VfsUtil.markDirtyAndRefresh(false, true, false, myProjectRoot)
   }
 
-  protected void doActionSilently(final VcsConfiguration.StandardConfirmation op) {
-    AbstractVcsTestCase.setStandardConfirmation(myProject, GitVcs.NAME, op, VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
+  protected fun doActionSilently(op: VcsConfiguration.StandardConfirmation) {
+    AbstractVcsTestCase.setStandardConfirmation(myProject, GitVcs.NAME, op, VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY)
   }
 
-  protected void updateChangeListManager() {
-    ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    changeListManager.ensureUpToDate(false);
+  protected fun updateChangeListManager() {
+    val changeListManager = ChangeListManager.getInstance(myProject)
+    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty()
+    changeListManager.ensureUpToDate(false)
   }
 
-  protected void addSilently() {
-    doActionSilently(VcsConfiguration.StandardConfirmation.ADD);
+  protected fun addSilently() {
+    doActionSilently(VcsConfiguration.StandardConfirmation.ADD)
   }
 
-  protected void removeSilently() {
-    doActionSilently(VcsConfiguration.StandardConfirmation.REMOVE);
+  protected fun removeSilently() {
+    doActionSilently(VcsConfiguration.StandardConfirmation.REMOVE)
   }
 
+  private fun checkTestRootIsEmpty(testRoot: File) {
+    val files = testRoot.listFiles()
+    if (files != null && files.size > 0) {
+      LOG.warn("Test root was not cleaned up during some previous test run. " + "testRoot: " + testRoot +
+                   ", files: " + Arrays.toString(files))
+      for (file in files) {
+        LOG.assertTrue(FileUtil.delete(file))
+      }
+    }
+  }
 }
