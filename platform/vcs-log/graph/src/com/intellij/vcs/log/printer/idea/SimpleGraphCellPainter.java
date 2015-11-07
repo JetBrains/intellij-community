@@ -56,6 +56,19 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     return ROW_HEIGHT;
   }
 
+  private int getDashLength() {
+    return getRowHeight() / 4 + 2;
+  }
+
+  private Stroke getDashedStroke() {
+    return new BasicStroke(PrintParameters.THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{getDashLength()}, 0);
+  }
+
+  private Stroke getSelectedDashedStroke() {
+    return new BasicStroke(PrintParameters.SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0,
+                           new float[]{getDashLength()}, 0);
+  }
+
   private void paintUpLine(int from, int to, Color color, boolean hasArrow) {
     // paint vertical lines normal size
     // paint non-vertical lines twice the size to make them dock with each other well
@@ -141,10 +154,10 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     }
     else {
       if (select) {
-        g2.setStroke(mySelectedDashedStroke);
+        g2.setStroke(getSelectedDashedStroke());
       }
       else {
-        g2.setStroke(myDashedStroke);
+        g2.setStroke(getDashedStroke());
       }
     }
   }
