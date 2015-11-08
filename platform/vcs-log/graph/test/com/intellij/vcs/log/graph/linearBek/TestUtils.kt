@@ -15,14 +15,18 @@
  */
 package com.intellij.vcs.log.graph.linearBek
 
-import com.intellij.vcs.log.graph.utils.TimestampGetter
 import com.intellij.vcs.log.graph.TestGraphBuilder
-import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder
 import com.intellij.vcs.log.graph.api.LinearGraph
-import com.intellij.vcs.log.graph.graph
-import org.junit.Assert.assertEquals
 import com.intellij.vcs.log.graph.asTestGraphString
+import com.intellij.vcs.log.graph.graph
+import com.intellij.vcs.log.graph.impl.facade.BekBaseController
+import com.intellij.vcs.log.graph.impl.facade.bek.BekChecker
+import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter
+import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutImpl
+import com.intellij.vcs.log.graph.utils.TimestampGetter
+import org.junit.Assert.assertEquals
+import kotlin.test.assertNull
 
 public class DummyTimestampGetter(val nodesCount: Int) : TimestampGetter {
   override fun size(): Int {
@@ -35,7 +39,22 @@ public class DummyTimestampGetter(val nodesCount: Int) : TimestampGetter {
 }
 
 public fun buildLayout(graphBuilder: TestGraphBuilder.() -> Unit): GraphLayoutImpl {
-  return GraphLayoutBuilder.build(graph(graphBuilder), {nodeIndex1, nodeIndex2 -> nodeIndex1 - nodeIndex2 })
+  return GraphLayoutBuilder.build(graph(graphBuilder), { nodeIndex1, nodeIndex2 -> nodeIndex1 - nodeIndex2 })
+}
+
+fun runBek(graphBuilder: TestGraphBuilder.() -> Unit): BekBaseController.BekLinearGraph {
+  val beforeBek = graph(graphBuilder)
+  val beforeLayout = buildLayout(graphBuilder)
+
+  val bekMap = BekSorter.createBekMap(beforeBek, beforeLayout, DummyTimestampGetter(beforeBek.nodesCount()))
+  val afterBek = BekBaseController.BekLinearGraph(bekMap, beforeBek)
+
+  val edge = BekChecker.findReversedEdge(afterBek)
+  if (edge != null) {
+    assertNull(Pair(bekMap.getUsualIndex(edge.first), bekMap.getUsualIndex(edge.second)), "Found reversed edge");
+  }
+
+  return afterBek
 }
 
 public fun runLinearBek(graphBuilder: TestGraphBuilder.() -> Unit): LinearBekGraph {
