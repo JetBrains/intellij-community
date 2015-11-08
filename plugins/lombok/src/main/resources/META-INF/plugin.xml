@@ -109,6 +109,8 @@
     <localInspection groupPath="Java" language="JAVA" shortName="Convert2Diamond" displayName="Explicit type can be replaced with &lt;&gt;"
                      groupName="Java language level migration aids" enabledByDefault="true" level="WARNING"
                      implementationClass="de.plushnikov.intellij.plugin.inspection.LombokExplicitTypeCanBeDiamondInspection" order="last"/>
+
+		<lang.parserDefinition language="JAVA" implementationClass="de.plushnikov.intellij.plugin.extension.LombokJavaParserDefinition" order="first"/>
   </extensions>
 
   <extensions defaultExtensionNs="Lombook Plugin">
