@@ -17,41 +17,43 @@ package git4idea.test
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.util.containers.ContainerUtil
 import git4idea.DialogManager
 import javax.swing.Icon
+import kotlin.test.assertNull
 
 /**
  *
- * TestDialogManager instead of showing the dialog, gives the control to a [TestDialogHandler] which can specify the dialog exit code
- * (thus simulating different user choices) or even change other elements in the dialog.
+ * TestDialogManager instead of showing the dialog, gives the control to a [TestDialogHandler] or a function,
+ * which can specify the dialog exit code (thus simulating different user choices) or even change other elements in the dialog.
  *
- * To use it a test should register the [TestDialogHandler] implementation. For example:
+ * Example:
  * ```
- * myDialogManager.registerDialogHandler(GitConvertFilesDialog.class, new TestDialogHandler() {
- *   @Override public int handleDialog(GitConvertFilesDialog dialog) {
- *     dialogShown.set(true);
- *     return GitConvertFilesDialog.OK_EXIT_CODE;
- *   }
- * });
+ * myDialogManager.onDialog(GitConvertFilesDialog::class.java, {
+ *   dialogShown = true
+ *   return GitConvertFilesDialog.OK_EXIT_CODE
+ * }
  * ```
  *
- * Only one TestDialogHandler can be registered per test for a certain DialogWrapper class.
+ * Only one TestDialogHandler or function can be registered per test for a certain DialogWrapper class.
  *
- * Apart from dialog, the TestDialogManager is capable to handle [Messages]. For this pass a function to the method [#]
- * @see TestDialogHandler
+ * Apart from dialogs, the TestDialogManager is capable to handle [Messages]. For this pass a function to the method [#onMessage]
  */
 public class TestDialogManager : DialogManager() {
 
-  private val myHandlers = ContainerUtil.newHashMap<Class<out Any>, TestDialogHandler<DialogWrapper>>()
-  private var myOnMessage: (String) -> Int = { throw IllegalStateException() }
+  private val DEFAULT_MESSAGE_HANDLER : (String) -> Int = { throw IllegalStateException("Message is not expected") }
+
+  private val myHandlers = hashMapOf<Class<out DialogWrapper>, (DialogWrapper) -> Int>()
+  private var myOnMessage: (String) -> Int = DEFAULT_MESSAGE_HANDLER
 
   override fun showDialog(dialog: DialogWrapper) {
-    val handler = myHandlers.get(dialog.javaClass)
     var exitCode = DialogWrapper.OK_EXIT_CODE
     try {
+      val handler = myHandlers[dialog.javaClass]
       if (handler != null) {
-        exitCode = handler.handleDialog(dialog)
+        exitCode = handler(dialog)
+      }
+      else {
+        throw IllegalStateException("The dialog is not expected here: " + dialog.javaClass)
       }
     }
     finally {
@@ -70,19 +72,19 @@ public class TestDialogManager : DialogManager() {
   }
 
   public fun <T : DialogWrapper> registerDialogHandler(dialogClass: Class<T>, handler: TestDialogHandler<T>) {
-    myHandlers.put(dialogClass, handler as TestDialogHandler<DialogWrapper>)
+    onDialog(dialogClass, { handler.handleDialog(it) })
+  }
+
+  fun <T : DialogWrapper> onDialog(dialogClass: Class<T>, handler: (T) -> Int) {
+    assertNull(myHandlers.put(dialogClass, handler as (DialogWrapper) -> Int))
   }
 
   fun onMessage(handler: (String) -> Int) {
     myOnMessage = handler
   }
 
-  @Deprecated("Use onMessage")
-  public fun registerMessageHandler(handler: TestMessageHandler) {
-    myOnMessage = { handler.handleMessage(it) }
-  }
-
   public fun cleanup() {
     myHandlers.clear()
+    myOnMessage = DEFAULT_MESSAGE_HANDLER
   }
 }
