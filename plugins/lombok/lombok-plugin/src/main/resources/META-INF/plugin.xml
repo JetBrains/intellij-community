@@ -57,6 +57,8 @@
     <renamePsiElementProcessor implementation="de.plushnikov.intellij.plugin.extension.LombokRenameFieldReferenceProcessor"/>
 
 		<java.elementFinder implementation="de.plushnikov.intellij.plugin.extension.LombokElementFinder" order="last"/>
+
+		<lang.parserDefinition language="JAVA" implementationClass="de.plushnikov.intellij.plugin.extension.LombokJavaParserDefinition" order="first"/>
   </extensions>
 
   <extensions defaultExtensionNs="Lombook Plugin">
