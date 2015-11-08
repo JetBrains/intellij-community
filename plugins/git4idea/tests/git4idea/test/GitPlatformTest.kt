@@ -16,6 +16,8 @@
 package git4idea.test
 
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
@@ -206,5 +208,19 @@ abstract class GitPlatformTest : PlatformTestCase() {
         LOG.assertTrue(FileUtil.delete(file))
       }
     }
+  }
+
+  protected fun assertSuccessfulNotification(message: String) {
+      GitTestUtil.assertNotification(NotificationType.INFORMATION, "Rebase Successful", message, myVcsNotifier.lastNotification)
+  }
+
+  protected fun assertWarningNotification(title: String, message: String) {
+    GitTestUtil.assertNotification(NotificationType.WARNING, title, message, myVcsNotifier.lastNotification)
+  }
+
+  protected fun assertErrorNotification(title: String, message: String) : Notification {
+    val notification = myVcsNotifier.lastNotification
+    GitTestUtil.assertNotification(NotificationType.ERROR, title, message, notification)
+    return notification
   }
 }

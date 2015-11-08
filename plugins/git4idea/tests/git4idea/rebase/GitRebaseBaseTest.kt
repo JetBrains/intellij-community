@@ -16,8 +16,6 @@
 package git4idea.rebase
 
 import com.intellij.dvcs.repo.Repository
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType.*
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.Executor
 import git4idea.GitUtil
@@ -25,7 +23,6 @@ import git4idea.repo.GitRepository
 import git4idea.test.*
 import git4idea.test.GitExecutor.cd
 import git4idea.test.GitExecutor.git
-import git4idea.test.GitTestUtil.assertNotification
 
 public abstract class GitRebaseBaseTest : GitPlatformTest() {
 
@@ -98,20 +95,6 @@ public abstract class GitRebaseBaseTest : GitPlatformTest() {
         2("c.txt")
       }
     }
-  }
-
-  protected fun assertSuccessfulNotification(message: String) {
-    assertNotification(INFORMATION, "Rebase Successful", message, myVcsNotifier.lastNotification)
-  }
-
-  protected fun assertWarningNotification(title: String, message: String) {
-    assertNotification(WARNING, title, message, myVcsNotifier.lastNotification)
-  }
-
-  protected fun assertErrorNotification(title: String, message: String) : Notification {
-    val notification = myVcsNotifier.lastNotification
-    assertNotification(ERROR, title, message, notification)
-    return notification
   }
 
   protected fun GitRepository.`make rebase fail on 2nd commit`() {
