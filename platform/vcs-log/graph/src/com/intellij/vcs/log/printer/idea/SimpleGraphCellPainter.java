@@ -173,14 +173,11 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
         Color usualColor = getColor(edgePrintElement);
 
         if (printElement.isSelected()) {
-          setStroke(isUsual, true);
-          printEdge(MARK_COLOR, true, edgePrintElement);
-          setStroke(isUsual, false);
-          printEdge(usualColor, false, edgePrintElement);
+          printEdge(MARK_COLOR, true, isUsual, edgePrintElement);
+          printEdge(usualColor, false, isUsual, edgePrintElement);
         }
         else {
-          setStroke(isUsual, false);
-          printEdge(usualColor, false, edgePrintElement);
+          printEdge(usualColor, false, isUsual, edgePrintElement);
         }
 
       }
@@ -198,9 +195,11 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     }
   }
 
-  private void printEdge(Color color, boolean isSelected, EdgePrintElement edgePrintElement) {
+  private void printEdge(Color color, boolean isSelected, boolean isUsual, EdgePrintElement edgePrintElement) {
     int from = edgePrintElement.getPositionInCurrentRow();
     int to = edgePrintElement.getPositionInOtherRow();
+
+    setStroke(isUsual || edgePrintElement.hasArrow(), isSelected);
 
     if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
       paintDownLine(from, to, color, edgePrintElement.hasArrow());
