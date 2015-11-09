@@ -360,7 +360,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
           }
         });
       }
-      if (progress.isRunning()) {
+      if (progress.isRunning() && !progress.isCanceled()) {
         throw new RuntimeException("Highlighting still running after "+(System.currentTimeMillis()-start)/1000+" seconds.\n"+ ThreadDumper.dumpThreadsToString());
       }
 
