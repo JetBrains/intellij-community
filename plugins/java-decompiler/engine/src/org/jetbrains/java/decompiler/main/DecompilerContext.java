@@ -156,6 +156,6 @@ public class DecompilerContext {
 
   public static String getNewLineSeparator() {
     return getOption(IFernflowerPreferences.NEW_LINE_SEPARATOR) ?
-           IFernflowerPreferences.LINE_SEPARATOR_LIN : IFernflowerPreferences.LINE_SEPARATOR_WIN;
+           IFernflowerPreferences.LINE_SEPARATOR_UNX : IFernflowerPreferences.LINE_SEPARATOR_WIN;
   }
 }

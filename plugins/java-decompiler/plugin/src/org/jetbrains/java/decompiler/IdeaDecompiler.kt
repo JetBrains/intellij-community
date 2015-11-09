@@ -144,15 +144,6 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
       val options = HashMap(myOptions.value)
       if (Registry.`is`("decompiler.use.line.mapping")) {
         options.put(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1")
-        options.put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, "0")
-      }
-      else if (Registry.`is`("decompiler.use.line.table")) {
-        options.put(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "0")
-        options.put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, "1")
-      }
-      else {
-        options.put(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "0")
-        options.put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, "0")
       }
       if (Registry.`is`("decompiler.dump.original.lines")) {
         options.put(IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1")
