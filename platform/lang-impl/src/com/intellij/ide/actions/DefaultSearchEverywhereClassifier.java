@@ -22,6 +22,9 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
+
 public class DefaultSearchEverywhereClassifier implements SearchEverywhereClassifier {
   @Override
   public boolean isClass(@Nullable Object o) {
@@ -45,6 +48,12 @@ public class DefaultSearchEverywhereClassifier implements SearchEverywhereClassi
       final PsiFile file = element.getContainingFile();
       return file != null ? file.getVirtualFile() : null;
     }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
     return null;
   }
 }
