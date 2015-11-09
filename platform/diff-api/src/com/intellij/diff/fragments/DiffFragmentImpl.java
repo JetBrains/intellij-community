@@ -36,7 +36,11 @@ public class DiffFragmentImpl implements DiffFragment {
 
     if (myStartOffset1 == myEndOffset1 &&
         myStartOffset2 == myEndOffset2) {
-      LOG.error("DiffFragmentImpl should not be empty");
+      LOG.error("DiffFragmentImpl should not be empty: " + toString());
+    }
+    if (myStartOffset1 > myEndOffset1 ||
+        myStartOffset2 > myEndOffset2) {
+      LOG.error("DiffFragmentImpl is invalid: " + toString());
     }
   }
 
