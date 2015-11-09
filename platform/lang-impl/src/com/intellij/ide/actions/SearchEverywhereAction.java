@@ -1107,23 +1107,29 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       Matcher matcher = NameUtil.buildMatcher(pattern, 0, true, true);
       if (isMoreItem(index)) {
         cmp = More.get(isSelected);
-      } else if (value instanceof VirtualFile
-                 && myProject != null
-                 && ((((VirtualFile)value).isDirectory() && (file = PsiManager.getInstance(myProject).findDirectory((VirtualFile)value)) != null )
-                     || (file = PsiManager.getInstance(myProject).findFile((VirtualFile)value)) != null)) {
-        myFileRenderer.setPatternMatcher(matcher);
-        cmp = myFileRenderer.getListCellRendererComponent(list, file, index, isSelected, cellHasFocus);
-      } else if (value instanceof PsiElement) {
-        myFileRenderer.setPatternMatcher(matcher);
-        cmp = myFileRenderer.getListCellRendererComponent(list, value, index, isSelected, isSelected);
-      } else if (value instanceof GotoActionModel.ActionWrapper) {
-        cmp = myActionsRenderer.getListCellRendererComponent(list, new GotoActionModel.MatchedValue(((GotoActionModel.ActionWrapper)value), pattern), index, isSelected, isSelected);
       } else {
-        cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
-        final JPanel p = new JPanel(new BorderLayout());
-        p.setBackground(UIUtil.getListBackground(isSelected));
-        p.add(cmp, BorderLayout.CENTER);
-        cmp = p;
+        cmp = SearchEverywhereClassifier.EP_Manager.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      }
+
+      if (cmp == null) {
+        if (value instanceof VirtualFile
+            && myProject != null
+            && ((((VirtualFile)value).isDirectory() && (file = PsiManager.getInstance(myProject).findDirectory((VirtualFile)value)) != null)
+                || (file = PsiManager.getInstance(myProject).findFile((VirtualFile)value)) != null)) {
+          myFileRenderer.setPatternMatcher(matcher);
+          cmp = myFileRenderer.getListCellRendererComponent(list, file, index, isSelected, cellHasFocus);
+        } else if (value instanceof PsiElement) {
+          myFileRenderer.setPatternMatcher(matcher);
+          cmp = myFileRenderer.getListCellRendererComponent(list, value, index, isSelected, isSelected);
+        } else if (value instanceof GotoActionModel.ActionWrapper) {
+          cmp = myActionsRenderer.getListCellRendererComponent(list, new GotoActionModel.MatchedValue(((GotoActionModel.ActionWrapper)value), pattern), index, isSelected, isSelected);
+        } else {
+          cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
+          final JPanel p = new JPanel(new BorderLayout());
+          p.setBackground(UIUtil.getListBackground(isSelected));
+          p.add(cmp, BorderLayout.CENTER);
+          cmp = p;
+        }
       }
       if (myLocationString != null || value instanceof BooleanOptionDescription) {
         final JPanel panel = new JPanel(new BorderLayout());
@@ -1739,13 +1745,18 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           @Override
           public boolean process(Object o) {
             if (SearchEverywhereClassifier.EP_Manager.isSymbol(o) && !myListModel.contains(o) && !symbols.contains(o)) {
+              PsiElement element = null;
+              if (o instanceof PsiElement) {
+                element = (PsiElement)o;
+              }
+              else if (o instanceof PsiElementNavigationItem) {
+                element = ((PsiElementNavigationItem)o).getTargetElement();
+              }
               VirtualFile virtualFile = SearchEverywhereClassifier.EP_Manager.getVirtualFile(o);
               //some elements are non-physical like DB columns
-              if (o instanceof PsiElementNavigationItem) {
-                o = ((PsiElementNavigationItem)o).getTargetElement();
-              }
-              if ((o instanceof PsiElement && ((PsiElement)o).getContainingFile() == null) ||
-                  (virtualFile != null && (includeLibs || scope.accept(virtualFile)))) {
+              boolean isElementWithoutFile = element != null && element.getContainingFile() == null;
+              boolean isFileInScope = virtualFile != null && (includeLibs || scope.accept(virtualFile));
+              if (isElementWithoutFile || isFileInScope) {
                 symbols.add(o);
               }
             }
@@ -1775,13 +1786,18 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                 classes.needMore = true;
                 return false;
               }
+
+              PsiElement element = null;
+              if (o instanceof PsiElement) {
+                element = (PsiElement)o;
+              }
+              else if (o instanceof PsiElementNavigationItem) {
+                element = ((PsiElementNavigationItem)o).getTargetElement();
+              }
               classes.add(o);
 
-              if (o instanceof PsiElementNavigationItem) {
-                o = ((PsiElementNavigationItem)o).getTargetElement();
-              }
-              if (o instanceof PsiNamedElement) {
-                final String name = ((PsiNamedElement)o).getName();
+              if (element instanceof PsiNamedElement) {
+                final String name = ((PsiNamedElement)element).getName();
                 VirtualFile virtualFile = SearchEverywhereClassifier.EP_Manager.getVirtualFile(o);
                 if (virtualFile != null) {
                   if (StringUtil.equals(name, virtualFile.getNameWithoutExtension())) {

@@ -21,6 +21,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
+
 /**
  * @author Philipp Smorygo
  */
@@ -50,6 +53,15 @@ public interface SearchEverywhereClassifier {
       }
       return null;
     }
+
+    @Nullable
+    public static Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      for (SearchEverywhereClassifier classifier : Extensions.getExtensions(SearchEverywhereClassifier.EP_NAME)) {
+        Component component = classifier.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (component != null) return component;
+      }
+      return null;
+    }
   }
 
   ExtensionPointName<SearchEverywhereClassifier> EP_NAME = ExtensionPointName.create("com.intellij.searchEverywhereClassifier");
@@ -60,4 +72,7 @@ public interface SearchEverywhereClassifier {
 
   @Nullable
   VirtualFile getVirtualFile(@NotNull Object o);
+
+  @Nullable
+  Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus);
 }
