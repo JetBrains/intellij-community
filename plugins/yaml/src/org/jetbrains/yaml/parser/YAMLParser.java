@@ -145,6 +145,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     advanceLexer();
     while (!eof()){
       if (getTokenType() == RBRACE){
+        advanceLexer();
         break;
       }
       parseSingleStatement(0);
@@ -158,6 +159,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     advanceLexer();
     while (!eof()){
       if (getTokenType() == RBRACKET){
+        advanceLexer();
         break;
       }
       parseSingleStatement(0);

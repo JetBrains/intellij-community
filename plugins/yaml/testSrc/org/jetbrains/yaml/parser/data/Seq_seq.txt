@@ -13,8 +13,8 @@ YAML file
         PsiElement(,)(',')
         PsiWhiteSpace(' ')
         PsiElement(text)('avg')
-      PsiWhiteSpace('  ')
-      PsiElement(])(']')
+        PsiWhiteSpace('  ')
+        PsiElement(])(']')
     PsiElement(Eol)('\n')
     YAML sequence
       PsiElement(-)('-')
@@ -28,7 +28,7 @@ YAML file
         PsiElement(,)(',')
         PsiWhiteSpace(' ')
         PsiElement(text)('0.278')
-      PsiElement(])(']')
+        PsiElement(])(']')
     PsiElement(Eol)('\n')
     YAML sequence
       PsiElement(-)('-')
@@ -43,4 +43,4 @@ YAML file
         PsiElement(,)(',')
         PsiWhiteSpace(' ')
         PsiElement(text)('0.288')
-      PsiElement(])(']')
+        PsiElement(])(']')

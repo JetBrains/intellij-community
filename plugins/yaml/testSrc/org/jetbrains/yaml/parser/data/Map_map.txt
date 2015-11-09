@@ -16,7 +16,7 @@ YAML file
             PsiElement(scalar key)('avg:')
             PsiWhiteSpace(' ')
             PsiElement(text)('0.278')
-    PsiElement(})('}')
+          PsiElement(})('}')
     PsiElement(Eol)('\n')
     YAML key value
       PsiElement(scalar key)('Sammy Sosa:')
@@ -39,4 +39,4 @@ YAML file
             PsiElement(text)('0.288')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
-    PsiElement(})('}')
+          PsiElement(})('}')
