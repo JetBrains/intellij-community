@@ -1207,7 +1207,7 @@ public class FindDialog extends DialogWrapper {
     gbConstraints.gridwidth = 2;
     myScopeCombo = new ScopeChooserCombo();
     myScopeCombo.init(myProject, true, true, FindSettings.getInstance().getDefaultScopeName(), new Condition<ScopeDescriptor>() {
-      final String projectFilesScopeName = PsiBundle.message("psi.search.scope.project");
+      //final String projectFilesScopeName = PsiBundle.message("psi.search.scope.project");
       final String moduleFilesScopeName;
       {
         String moduleScopeName = PsiBundle.message("search.scope.module", "");
@@ -1217,7 +1217,7 @@ public class FindDialog extends DialogWrapper {
       @Override
       public boolean value(ScopeDescriptor descriptor) {
         final String display = descriptor.getDisplay();
-        return !projectFilesScopeName.equals(display) && !display.startsWith(moduleFilesScopeName);
+        return /*!projectFilesScopeName.equals(display) &&*/ !display.startsWith(moduleFilesScopeName);
       }
     });
     myScopeCombo.getComboBox().addActionListener(new ActionListener() {
