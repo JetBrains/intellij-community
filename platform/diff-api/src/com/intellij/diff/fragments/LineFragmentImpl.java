@@ -67,7 +67,13 @@ public class LineFragmentImpl implements LineFragment {
         myStartLine2 == myEndLine2 &&
         myStartOffset1 == myEndOffset1 &&
         myStartOffset2 == myEndOffset2) {
-      LOG.error("LineFragmentImpl should not be empty");
+      LOG.error("LineFragmentImpl should not be empty: " + toString());
+    }
+    if (myStartLine1 > myEndLine1 ||
+        myStartLine2 > myEndLine2 ||
+        myStartOffset1 > myEndOffset1 ||
+        myStartOffset2 > myEndOffset2) {
+      LOG.error("LineFragmentImpl is invalid: " + toString());
     }
   }
 
