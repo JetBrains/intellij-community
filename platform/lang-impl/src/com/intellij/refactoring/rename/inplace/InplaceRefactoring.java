@@ -572,6 +572,8 @@ public abstract class InplaceRefactoring {
       if (variable != null) {
         return variable.getName();
       }
+      LOG.error("Initial name should be provided");
+      return "";
     }
     return myInitialName;
   }
