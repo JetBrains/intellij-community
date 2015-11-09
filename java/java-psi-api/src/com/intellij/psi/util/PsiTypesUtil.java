@@ -251,4 +251,41 @@ public class PsiTypesUtil {
     }
     return true;
   }
+  
+  public static boolean hasUnresolvedComponents(@NotNull PsiType type) {
+    return type.accept(new PsiTypeVisitor<Boolean>() {
+      @Nullable
+      @Override
+      public Boolean visitClassType(PsiClassType classType) {
+        final PsiClass psiClass = classType.resolve();
+        if (psiClass == null) {
+          return true;
+        }
+        for (PsiType param : classType.getParameters()) {
+          if (param.accept(this)) {
+            return true;
+          }
+        }
+        return super.visitClassType(classType);
+      }
+
+      @Nullable
+      @Override
+      public Boolean visitArrayType(PsiArrayType arrayType) {
+        return arrayType.getComponentType().accept(this);
+      }
+
+      @Nullable
+      @Override
+      public Boolean visitWildcardType(PsiWildcardType wildcardType) {
+        final PsiType bound = wildcardType.getBound();
+        return bound != null && bound.accept(this);
+      }
+
+      @Override
+      public Boolean visitType(PsiType type) {
+        return false;
+      }
+    });
+  }
 }
