@@ -19,6 +19,7 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -91,6 +92,15 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private ContentManager myContentManager;
   private ConsoleView myConsole;
+  private Disposable myConsoleDisposer = new Disposable() {
+    @Override
+    public void dispose() {
+      if (myConsole != null) {
+        Disposer.dispose(myConsole);
+        myConsole = null;
+      }
+    }
+  };
 
   private final VcsInitialization myInitialization;
 
@@ -421,6 +431,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       panel.add(toolbar.getComponent(), BorderLayout.WEST);
 
       content = ContentFactory.SERVICE.getInstance().createContent(panel, displayName, true);
+      content.setDisposer(myConsoleDisposer);
       contentManager.addContent(content);
 
       for (Pair<String, TextAttributes> pair : myPendingOutput) {
@@ -436,9 +447,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   private void releaseConsole() {
-    if (myConsole != null) {
-      Disposer.dispose(myConsole);
-    }
+    Disposer.dispose(myConsoleDisposer);
   }
 
   @Override
