@@ -132,7 +132,9 @@ public class Disposer {
     return ourDebugMode && ourTree.isEmpty();
   }
 
-  // returns old value
+  /**
+   * @return old value
+   */
   public static boolean setDebugMode(final boolean debugMode) {
     boolean oldValue = ourDebugMode;
     ourDebugMode = debugMode;
