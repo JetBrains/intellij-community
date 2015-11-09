@@ -160,22 +160,21 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
     @Override
     public void visitPyTargetExpression(PyTargetExpression node) {
-      checkSlots(node);
+      checkSlotsAndProperties(node);
     }
 
-    private void checkSlots(PyQualifiedExpression node) {
+    private void checkSlotsAndProperties(PyQualifiedExpression node) {
       final PyExpression qualifier = node.getQualifier();
       if (qualifier != null) {
         final PyType type = myTypeEvalContext.getType(qualifier);
         if (type instanceof PyClassType) {
           final PyClass pyClass = ((PyClassType)type).getPyClass();
-          if (pyClass.isNewStyleClass(null)) {
+          if (pyClass.isNewStyleClass(myTypeEvalContext)) {
             if (pyClass.getOwnSlots() == null) {
               return;
             }
-            final List<String> slots = pyClass.getSlots(null);
             final String attrName = node.getReferencedName();
-            if (slots != null && !slots.contains(attrName) && !slots.contains(PyNames.DICT)) {
+            if (!canHaveAttribute(pyClass, attrName)) {
               for (PyClass ancestor : pyClass.getAncestorClasses(myTypeEvalContext)) {
                 if (ancestor == null) {
                   return;
@@ -183,8 +182,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                 if (PyNames.OBJECT.equals(ancestor.getName())) {
                   break;
                 }
-                final List<String> ancestorSlots = ancestor.getSlots(null);
-                if (ancestorSlots == null || ancestorSlots.contains(attrName) || ancestorSlots.contains(PyNames.DICT)) {
+                if (canHaveAttribute(pyClass, attrName)) {
                   return;
                 }
               }
@@ -195,6 +193,15 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           }
         }
       }
+    }
+
+    private boolean canHaveAttribute(@NotNull PyClass cls, @Nullable String attrName) {
+      final List<String> slots = cls.getSlots(myTypeEvalContext);
+      // Class instance can contain attributes with arbitrary names
+      if (slots == null || slots.contains(PyNames.DICT)) {
+        return true;
+      }
+      return slots.contains(attrName) || cls.getProperties().containsKey(attrName);
     }
 
     @Override

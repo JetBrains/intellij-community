@@ -518,6 +518,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   public void testBuiltinListGetItem() {
     doTest();
   }
+  
+  // PY-13395
+  public void testPropertyNotListedInSlots() {
+    doTest();
+  }
 
   @NotNull
   @Override
