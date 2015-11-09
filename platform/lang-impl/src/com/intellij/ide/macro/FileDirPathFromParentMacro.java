@@ -65,7 +65,7 @@ public class FileDirPathFromParentMacro extends Macro {
     if (ind >= 0) {
       return surroundedDirPath.substring(ind + surroundedSubDir.length());
     }
-    return dirPath;
+    return dirPath.endsWith(PATH_DELIMITER) ? dirPath : dirPath + PATH_DELIMITER;
   }
 
   private static int lastIndexOf(@NotNull CharSequence buffer, @NotNull String pattern, int maxIndex, boolean ignoreCase) {
@@ -78,7 +78,7 @@ public class FileDirPathFromParentMacro extends Macro {
       boolean found = true;
       for (int j = 0; j < patternLength; j++) {
         if (ignoreCase) {
-          if (StringUtil.charsEqualIgnoreCase(pattern.charAt(j), buffer.charAt(i + j))) {
+          if (!StringUtil.charsEqualIgnoreCase(pattern.charAt(j), buffer.charAt(i + j))) {
             found = false;
             break;
           }
