@@ -83,7 +83,7 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
 
   fun testHighlighting() {
     myFixture.openFileInEditor(getTestFile("Navigation.class"))
-    IdentifierHighlighterPassFactory.doWithHighlightingEnabled({
+    IdentifierHighlighterPassFactory.doWithHighlightingEnabled {
       myFixture.editor.caretModel.moveToOffset(offset(11, 14))  // m2(): usage, declaration
       assertEquals(2, myFixture.doHighlighting().size)
       myFixture.editor.caretModel.moveToOffset(offset(15, 21))  // int i: usage, declaration
@@ -92,7 +92,7 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
       assertEquals(2, myFixture.doHighlighting().size)
       myFixture.editor.caretModel.moveToOffset(offset(19, 24))  // throws: declaration, m4() call
       assertEquals(2, myFixture.doHighlighting().size)
-    })
+    }
   }
 
   fun testLineNumberMapping() {
