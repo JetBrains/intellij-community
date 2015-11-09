@@ -36,16 +36,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   private static final int ROW_HEIGHT = 24;
   private static final double ARROW_ANGLE_COS2 = 0.7;
   private static final double ARROW_LENGTH = 0.3;
-
-  private final Stroke myStroke = new BasicStroke(PrintParameters.THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
-  private final BasicStroke myDashedStroke =
-    new BasicStroke(PrintParameters.THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);
-  private final Stroke mySelectedStroke = new BasicStroke(PrintParameters.SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
-  private final Stroke mySelectedDashedStroke =
-    new BasicStroke(PrintParameters.SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);
-
   private Graphics2D g2;
-
   @NotNull private final ColorGenerator myColorGenerator;
 
   public SimpleGraphCellPainter(@NotNull ColorGenerator colorGenerator) {
@@ -60,44 +51,57 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     return getRowHeight() / 4 + 2;
   }
 
-  private Stroke getDashedStroke() {
-    return new BasicStroke(PrintParameters.THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{getDashLength()}, 0);
+  @NotNull
+  private BasicStroke getOrdinaryStroke() {
+    return new BasicStroke(PrintParameters.getLineThickness(getRowHeight()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
   }
 
+  @NotNull
+  private BasicStroke getSelectedStroke() {
+    return new BasicStroke(PrintParameters.getSelectedLineThickness(getRowHeight()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
+  }
+
+  @NotNull
+  private Stroke getDashedStroke() {
+    return new BasicStroke(PrintParameters.getLineThickness(getRowHeight()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{getDashLength()}, 0);
+  }
+
+  @NotNull
   private Stroke getSelectedDashedStroke() {
-    return new BasicStroke(PrintParameters.SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0,
-                           new float[]{getDashLength()}, 0);
+    return new BasicStroke(PrintParameters.getSelectedLineThickness(getRowHeight()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{getDashLength()}, 0);
   }
 
   private void paintUpLine(int from, int to, Color color, boolean hasArrow) {
     // paint vertical lines normal size
     // paint non-vertical lines twice the size to make them dock with each other well
+    int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
     if (from == to) {
-      int x = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
+      int x = nodeWidth * from + nodeWidth / 2;
       int y1 = getRowHeight() / 2 - 1;
       int y2 = 0;
       paintLine(color, hasArrow, x, y1, x, y2, x, y2);
     }
     else {
-      int x1 = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
+      int x1 = nodeWidth * from + nodeWidth / 2;
       int y1 = getRowHeight() / 2;
-      int x2 = PrintParameters.WIDTH_NODE * to + PrintParameters.WIDTH_NODE / 2;
+      int x2 = nodeWidth * to + nodeWidth / 2;
       int y2 = -getRowHeight() / 2;
       paintLine(color, hasArrow, x1, y1, x2, y2, (x1 + x2) / 2, (y1 + y2) / 2);
     }
   }
 
   private void paintDownLine(int from, int to, Color color, boolean hasArrow) {
+    int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
     if (from == to) {
       int y2 = getRowHeight() - 1;
       int y1 = getRowHeight() / 2;
-      int x = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
+      int x = nodeWidth * from + nodeWidth / 2;
       paintLine(color, hasArrow, x, y1, x, y2, x, y2);
     }
     else {
-      int x1 = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
+      int x1 = nodeWidth * from + nodeWidth / 2;
       int y1 = getRowHeight() / 2;
-      int x2 = PrintParameters.WIDTH_NODE * to + PrintParameters.WIDTH_NODE / 2;
+      int x2 = nodeWidth * to + nodeWidth / 2;
       int y2 = getRowHeight() + getRowHeight() / 2;
       paintLine(color, hasArrow, x1, y1, x2, y2, (x1 + x2) / 2, (y1 + y2) / 2);
     }
@@ -132,11 +136,15 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   }
 
   private void paintCircle(int position, Color color, boolean select) {
-    int x0 = PrintParameters.WIDTH_NODE * position + PrintParameters.WIDTH_NODE / 2;
+    int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
+    int circleRadius = PrintParameters.getCircleRadius(getRowHeight());
+    int selectedCircleRadius = PrintParameters.getSelectedCircleRadius(getRowHeight());
+
+    int x0 = nodeWidth * position + nodeWidth / 2;
     int y0 = getRowHeight() / 2;
-    int r = PrintParameters.CIRCLE_RADIUS;
+    int r = circleRadius;
     if (select) {
-      r = PrintParameters.SELECT_CIRCLE_RADIUS;
+      r = selectedCircleRadius;
     }
     Ellipse2D.Double circle = new Ellipse2D.Double(x0 - r + 0.5, y0 - r + 0.5, 2 * r, 2 * r);
     g2.setColor(color);
@@ -146,10 +154,10 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   private void setStroke(boolean usual, boolean select) {
     if (usual) {
       if (select) {
-        g2.setStroke(mySelectedStroke);
+        g2.setStroke(getSelectedStroke());
       }
       else {
-        g2.setStroke(myStroke);
+        g2.setStroke(getOrdinaryStroke());
       }
     }
     else {
@@ -225,9 +233,11 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   @Nullable
   @Override
   public PrintElement mouseOver(@NotNull Collection<? extends PrintElement> printElements, int x, int y) {
+    int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
     for (PrintElement printElement : printElements) {
       if (printElement instanceof NodePrintElement) {
-        if (PositionUtil.overNode(printElement.getPositionInCurrentRow(), x, y, getRowHeight())) {
+        int circleRadius = PrintParameters.getCircleRadius(getRowHeight());
+        if (PositionUtil.overNode(printElement.getPositionInCurrentRow(), x, y, getRowHeight(), nodeWidth, circleRadius)) {
           return printElement;
         }
       }
@@ -236,13 +246,18 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     for (PrintElement printElement : printElements) {
       if (printElement instanceof EdgePrintElement) {
         EdgePrintElement edgePrintElement = (EdgePrintElement)printElement;
+        float lineThickness = PrintParameters.getLineThickness(getRowHeight());
         if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
-          if (PositionUtil.overDownEdge(edgePrintElement.getPositionInCurrentRow(), edgePrintElement.getPositionInOtherRow(), x, y, getRowHeight())) {
+          if (PositionUtil
+            .overDownEdge(edgePrintElement.getPositionInCurrentRow(), edgePrintElement.getPositionInOtherRow(), x, y, getRowHeight(),
+                          nodeWidth, lineThickness)) {
             return printElement;
           }
         }
         else {
-          if (PositionUtil.overUpEdge(edgePrintElement.getPositionInOtherRow(), edgePrintElement.getPositionInCurrentRow(), x, y, getRowHeight())) {
+          if (PositionUtil
+            .overUpEdge(edgePrintElement.getPositionInOtherRow(), edgePrintElement.getPositionInCurrentRow(), x, y, getRowHeight(),
+                        nodeWidth, lineThickness)) {
             return printElement;
           }
         }
