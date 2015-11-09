@@ -61,6 +61,7 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -119,7 +120,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private final Map<VcsBackgroundableActions, BackgroundableActionEnabledHandler> myBackgroundableActionHandlerMap;
 
-  private final List<Pair<String, TextAttributes>> myPendingOutput = new ArrayList<Pair<String, TextAttributes>>();
+  private final List<Pair<String, ConsoleViewContentType>> myPendingOutput = ContainerUtil.newArrayList();
 
   private final VcsHistoryCache myVcsHistoryCache;
   private final ContentRevisionCache myContentRevisionCache;
@@ -389,8 +390,14 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return !myMappings.isEmpty();
   }
 
+  @Deprecated
   @Override
   public void addMessageToConsoleWindow(final String message, final TextAttributes attributes) {
+    addMessageToConsoleWindow(message, new ConsoleViewContentType("", attributes));
+  }
+
+  @Override
+  public void addMessageToConsoleWindow(@Nullable final String message, @NotNull final ConsoleViewContentType contentType) {
     if (!Registry.is("vcs.showConsole")) {
       return;
     }
@@ -405,11 +412,11 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         if (myProject.isDisposed() || myProject.isDefault()) return;
         final ContentManager contentManager = getContentManager();
         if (contentManager == null) {
-          myPendingOutput.add(Pair.create(message, attributes));
+          myPendingOutput.add(Pair.create(message, contentType));
         }
         else {
           getOrCreateConsoleContent(contentManager);
-          printToConsole(message, attributes);
+          printToConsole(message, contentType);
         }
       }
     }, ModalityState.defaultModalityState());
@@ -434,7 +441,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       content.setDisposer(myConsoleDisposer);
       contentManager.addContent(content);
 
-      for (Pair<String, TextAttributes> pair : myPendingOutput) {
+      for (Pair<String, ConsoleViewContentType> pair : myPendingOutput) {
         printToConsole(pair.first, pair.second);
       }
       myPendingOutput.clear();
@@ -442,8 +449,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return content;
   }
 
-  private void printToConsole(@NotNull String message, @Nullable TextAttributes attributes) {
-    myConsole.print(message + "\n", new ConsoleViewContentType("", attributes));
+  private void printToConsole(@NotNull String message, @NotNull ConsoleViewContentType contentType) {
+    myConsole.print(message + "\n", contentType);
   }
 
   private void releaseConsole() {
