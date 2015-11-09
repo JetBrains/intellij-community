@@ -452,7 +452,7 @@ bool LoadVMOptions()
     return false;
   }
 
-  vmOptionLines.push_back(std::string("-Djb.vmOptions=") + EncodeWideACP(used));
+  vmOptionLines.push_back(std::string("-Djb.vmOptionsFile=") + EncodeWideACP(used));
 
   if (!AddClassPathOptions(vmOptionLines)) return false;
   AddPredefinedVMOptions(vmOptionLines);
