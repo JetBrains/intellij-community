@@ -15,11 +15,13 @@
  */
 package com.intellij.codeInsight.lookup;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FlatteningIterator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -28,24 +30,19 @@ import java.util.*;
  * @author peter
  */
 public abstract class ComparingClassifier<T> extends Classifier<T> {
-  protected final String myName;
   private final boolean myNegated;
 
-  public ComparingClassifier(Classifier<T> next, String name) {
-    this(next, name, false);
-  }
-
   protected ComparingClassifier(Classifier<T> next, String name, boolean negated) {
-    super(next);
-    myName = name;
+    super(next, name);
     myNegated = negated;
   }
 
   @Nullable
   public abstract Comparable getWeight(T t, ProcessingContext context);
 
+  @NotNull
   @Override
-  public Iterable<T> classify(final Iterable<T> source, final ProcessingContext context) {
+  public Iterable<T> classify(@NotNull final Iterable<T> source, @NotNull final ProcessingContext context) {
     List<T> nulls = null;
     TreeMap<Comparable, List<T>> map = new TreeMap<Comparable, List<T>>();
     for (T t : source) {
@@ -79,21 +76,14 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
     };
   }
 
+  @NotNull
   @Override
-  public void describeItems(LinkedHashMap<T, StringBuilder> map, ProcessingContext context) {
-    Map<T, String> weights = new IdentityHashMap<T, String>();
-    for (T t : map.keySet()) {
-      weights.put(t, String.valueOf(getWeight(t, context)));
-    }
-    if (new HashSet<String>(weights.values()).size() > 1 || ApplicationManager.getApplication().isUnitTestMode()) {
-      for (T t : map.keySet()) {
-        final StringBuilder builder = map.get(t);
-        if (builder.length() > 0) {
-          builder.append(", ");
-        }
-        builder.append(myName).append("=").append(weights.get(t));
+  public List<Pair<T, Object>> getSortingWeights(@NotNull Iterable<T> items, @NotNull final ProcessingContext context) {
+    return ContainerUtil.map(items, new Function<T, Pair<T, Object>>() {
+      @Override
+      public Pair<T, Object> fun(T t) {
+        return new Pair<T, Object>(t, getWeight(t, context));
       }
-    }
-    super.describeItems(map, context);
+    });
   }
 }

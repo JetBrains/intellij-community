@@ -32,10 +32,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.StandardPatterns;
@@ -93,7 +90,7 @@ public class CompletionLookupArranger extends LookupArranger {
     myLocation = new CompletionLocation(parameters);
   }
 
-  private MultiMap<CompletionSorterImpl, LookupElement> groupItemsBySorter(List<LookupElement> source) {
+  private MultiMap<CompletionSorterImpl, LookupElement> groupItemsBySorter(Iterable<LookupElement> source) {
     MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = MultiMap.createLinked();
     for (LookupElement element : source) {
       inputBySorter.putValue(obtainSorter(element), element);
@@ -106,33 +103,47 @@ public class CompletionLookupArranger extends LookupArranger {
     return myProcess.getSorter(element);
   }
 
+  @NotNull
   @Override
-  public Map<LookupElement, StringBuilder> getRelevanceStrings() {
-    final LinkedHashMap<LookupElement,StringBuilder> map = new LinkedHashMap<LookupElement, StringBuilder>();
-    for (LookupElement item : myItems) {
-      map.put(item, new StringBuilder());
-    }
-    final MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = groupItemsBySorter(new ArrayList<LookupElement>(map.keySet()));
-
-    if (inputBySorter.size() > 1) {
-      for (LookupElement element : map.keySet()) {
-        map.get(element).append(obtainSorter(element)).append(": ");
-      }
-    }
-
+  public Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<LookupElement> items,
+                                                                               boolean hideSingleValued) {
+    final LinkedHashMap<LookupElement, List<Pair<String, Object>>> map = ContainerUtil.newLinkedHashMap();
+    final MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = groupItemsBySorter(items);
+    int sorterNumber = 0;
     for (CompletionSorterImpl sorter : inputBySorter.keySet()) {
-      final LinkedHashMap<LookupElement, StringBuilder> subMap = new LinkedHashMap<LookupElement, StringBuilder>();
-      for (LookupElement element : inputBySorter.get(sorter)) {
-        subMap.put(element, map.get(element));
+      sorterNumber++;
+      Collection<LookupElement> thisSorterItems = inputBySorter.get(sorter);
+      for (LookupElement element : thisSorterItems) {
+        map.put(element, ContainerUtil.newArrayList(new Pair<String, Object>("frozen", myFrozenItems.contains(element)),
+                                                    new Pair<String, Object>("sorter", sorterNumber)));
       }
+      ProcessingContext context = createContext(false);
       Classifier<LookupElement> classifier = myClassifiers.get(sorter);
-      if (classifier != null) {
-        classifier.describeItems(subMap, createContext(false));
+      while (classifier != null) {
+        List<Pair<LookupElement, Object>> pairs = classifier.getSortingWeights(thisSorterItems, context);
+        if (!hideSingleValued || !haveSameWeights(pairs)) {
+          for (Pair<LookupElement, Object> pair : pairs) {
+            map.get(pair.first).add(Pair.create(classifier.getPresentableName(), pair.second));
+          }
+        }
+        classifier = classifier.getNext();
       }
     }
 
     return map;
 
+  }
+
+  private static boolean haveSameWeights(List<Pair<LookupElement, Object>> pairs) {
+    if (pairs.isEmpty()) return true;
+
+    for (int i = 1; i < pairs.size(); i++) {
+      if (!Comparing.equal(pairs.get(i).second, pairs.get(0).second)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   @Override
@@ -570,12 +581,19 @@ public class CompletionLookupArranger extends LookupArranger {
     private final LookupImpl myLookup;
 
     private AlphaClassifier(LookupImpl lookup) {
-      super(null);
+      super(null, "alpha");
       myLookup = lookup;
     }
 
+    @NotNull
     @Override
-    public Iterable<LookupElement> classify(Iterable<LookupElement> source, ProcessingContext context) {
+    public List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<LookupElement> items, @NotNull ProcessingContext context) {
+      return Collections.emptyList();
+    }
+
+    @NotNull
+    @Override
+    public Iterable<LookupElement> classify(@NotNull Iterable<LookupElement> source, @NotNull ProcessingContext context) {
       return sortByPresentation(source, myLookup);
     }
 

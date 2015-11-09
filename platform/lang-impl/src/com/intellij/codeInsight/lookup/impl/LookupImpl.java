@@ -67,10 +67,8 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class LookupImpl extends LightweightHint implements LookupEx, Disposable, WeighingContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupImpl");
@@ -1153,9 +1151,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return true;
   }
 
-  public Map<LookupElement,StringBuilder> getRelevanceStrings() {
+  @NotNull
+  public Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<LookupElement> items, boolean hideSingleValued) {
     synchronized (myList) {
-      return myPresentableArranger.getRelevanceStrings();
+      return myPresentableArranger.getRelevanceObjects(items, hideSingleValued);
     }
   }
 
