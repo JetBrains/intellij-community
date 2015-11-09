@@ -213,7 +213,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       myIndent = 0;
     }
     else if (type == INDENT) {
-      myIndent = myBuilder.getTokenText().length();
+      myIndent = myBuilder.rawTokenTypeStart(1) - myBuilder.getCurrentOffset();
     }
     else {
       // Drop Eol Marker if other token seen
