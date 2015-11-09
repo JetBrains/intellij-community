@@ -30,7 +30,7 @@ import javax.swing.*;
 public class SerializableHasSerializationMethodsInspectionBase
   extends SerializableInspectionBase {
 
-  private boolean ignoreClassWithoutFields = false;
+  protected boolean ignoreClassWithoutFields = false;
 
   @Override
   @NotNull
