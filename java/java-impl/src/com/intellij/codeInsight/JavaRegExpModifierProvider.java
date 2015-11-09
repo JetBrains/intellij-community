@@ -30,7 +30,7 @@ public class JavaRegExpModifierProvider implements RegExpModifierProvider {
   @Override
   public int getFlags(PsiElement elementInHost, PsiFile regexp) {
     final PsiExpressionList list = PsiTreeUtil.getParentOfType(elementInHost, PsiExpressionList.class);
-    if (list != null && list.getExpressions().length == 2 && list.getExpressionTypes()[1] == PsiType.INT) {
+    if (list != null && list.getExpressions().length == 2 && PsiType.INT.equals(list.getExpressionTypes()[1])) {
       final Object result = JavaConstantExpressionEvaluator.computeConstantExpression(list.getExpressions()[1], false);
       if (result instanceof Integer) {
         //noinspection MagicConstant

@@ -54,7 +54,7 @@ public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAc
 
     final PsiExpression expression = statement.getExpression();
 
-    return expression.getType() != PsiType.VOID && !(expression instanceof PsiAssignmentExpression);
+    return !PsiType.VOID.equals(expression.getType()) && !(expression instanceof PsiAssignmentExpression);
   }
 
   @Override

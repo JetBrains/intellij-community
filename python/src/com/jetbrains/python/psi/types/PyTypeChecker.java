@@ -230,7 +230,7 @@ public class PyTypeChecker {
                                                 boolean isDefinition,
                                                 @NotNull TypeEvalContext context) {
     final Set<String> attributes = new HashSet<String>();
-    for (PyFunction function : cls.getMethods(false)) {
+    for (PyFunction function : cls.getMethods()) {
       attributes.add(function.getName());
     }
     for (PyTargetExpression instanceAttribute : cls.getInstanceAttributes()) {

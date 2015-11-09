@@ -38,8 +38,11 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.Timings;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -75,7 +78,7 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
 
     final CountDownLatch reads = new CountDownLatch(numOfThreads);
     final Random random = new Random();
-    for (int i = 0; i < numOfThreads; i++) {
+    List<Thread> threads = ContainerUtil.map(Collections.nCopies(numOfThreads, ""), i ->
       new Thread(() -> {
         for (int i1 = 0; i1 < readIterations; i1++) {
           if (myPsiManager == null) return;
@@ -86,8 +89,8 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
         }
 
         reads.countDown();
-      }, "stress thread" + i).start();
-    }
+      }, "stress thread" + i));
+    threads.forEach(Thread::start);
 
     final Document document = documentManager.getDocument(myFile);
 
@@ -107,6 +110,15 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
     }
 
     assertTrue("Timed out", reads.await(5, TimeUnit.MINUTES));
+    ContainerUtil.process(threads, thread -> {
+      try {
+        thread.join();
+        return true;
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    });
   }
 
   private static void mark(final String s) {

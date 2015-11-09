@@ -38,6 +38,7 @@ import com.intellij.openapi.wm.impl.status.MemoryUsagePanel;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.ContainerUtil;
@@ -147,7 +148,9 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
    */
   public final void removeNotify(){
     myUISettings.removeUISettingsListener(this);
-    removeToolbar();
+    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+      removeToolbar();
+    }
     super.removeNotify();
   }
 

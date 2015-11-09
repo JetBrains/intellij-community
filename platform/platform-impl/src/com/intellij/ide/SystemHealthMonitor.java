@@ -54,7 +54,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class SystemHealthMonitor extends ApplicationComponent.Adapter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.SystemHealthMonitor");
+  private static final Logger LOG = Logger.getInstance(SystemHealthMonitor.class);
 
   private static final NotificationGroup GROUP = new NotificationGroup("System Health", NotificationDisplayType.STICKY_BALLOON, false);
   private static final NotificationGroup LOG_GROUP = NotificationGroup.logOnlyGroup("System Health (minor)");
@@ -112,9 +112,9 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
 
   private void showNotification(@PropertyKey(resourceBundle = "messages.IdeBundle") String key) {
     final String ignoreKey = "ignore." + key;
-    if (myProperties.isValueSet(ignoreKey)) {
-      return;
-    }
+    boolean ignored = myProperties.isValueSet(ignoreKey);
+    LOG.info("issue detected: " + key + (ignored ? " (ignored)" : ""));
+    if (ignored) return;
 
     final String message = IdeBundle.message(key) + IdeBundle.message("sys.health.acknowledge.link");
 

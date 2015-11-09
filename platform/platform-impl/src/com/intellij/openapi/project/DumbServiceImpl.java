@@ -151,14 +151,14 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void runWhenSmart(@NotNull Runnable runnable) {
-    if (!isDumb()) {
-      runnable.run();
-    }
-    else {
-      synchronized (myRunWhenSmartQueue) {
+    synchronized (myRunWhenSmartQueue) {
+      if (isDumb()) {
         myRunWhenSmartQueue.addLast(runnable);
+        return;
       }
     }
+
+    runnable.run();
   }
 
   private void scheduleCacheUpdate(@NotNull final DumbModeTask task, boolean forceDumbMode) {
@@ -220,7 +220,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
           application.runWriteAction(new Runnable() {
             @Override
             public void run() {
-              myDumb = true;
+              synchronized (myRunWhenSmartQueue) {
+                myDumb = true;
+              }
               myDumbStart = trace;
               myModificationCount++;
               try {
@@ -286,7 +288,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private void updateFinished(boolean modal) {
-    myDumb = false;
+    synchronized (myRunWhenSmartQueue) {
+      myDumb = false;
+    }
     myDumbStart = null;
     myModificationCount++;
     if (myProject.isDisposed()) return;

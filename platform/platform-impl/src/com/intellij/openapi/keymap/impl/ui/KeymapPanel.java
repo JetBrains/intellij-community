@@ -36,7 +36,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -468,40 +467,30 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   }
 
   private void addKeyboardShortcut(@NotNull String actionId, @Nullable Shortcut shortcut) {
-    Keymap keymap = createKeymapCopyIfNeeded();
-    addKeyboardShortcut(actionId, shortcut, keymap, this, myQuickLists);
+    Keymap keymapSelected = myEditor.getModel().getSelected();
+    assert keymapSelected != null;
+    addKeyboardShortcut(actionId, shortcut, keymapSelected, this, myQuickLists);
     repaintLists();
     currentKeymapChanged();
   }
 
   public static void addKeyboardShortcut(@NotNull String actionId,
                                          @Nullable Shortcut shortcut,
-                                         @NotNull Keymap keymap,
+                                         @NotNull Keymap keymapSelected,
                                          @NotNull Component parent,
                                          @NotNull QuickList[] quickLists) {
-    KeyboardShortcutDialog dialog = new KeyboardShortcutDialog(parent, actionId, quickLists);
-    dialog.setData(keymap, shortcut instanceof KeyboardShortcut ? (KeyboardShortcut)shortcut : null);
-    if (!dialog.showAndGet()) {
-      return;
-    }
-
-    KeyboardShortcut keyboardShortcut = dialog.getKeyboardShortcut();
+    KeyboardShortcutDialog dialog = new KeyboardShortcutDialog(parent);
+    KeyboardShortcut keyboardShortcut = dialog.showAndGet(shortcut, actionId, keymapSelected, quickLists);
     if (keyboardShortcut == null) {
       return;
     }
 
-    Map<String, ArrayList<KeyboardShortcut>> conflicts = keymap.getConflicts(actionId, keyboardShortcut);
-    if (!conflicts.isEmpty()) {
-      int result = Messages.showYesNoCancelDialog(
-        parent, 
-        KeyMapBundle.message("conflict.shortcut.dialog.message"),
-        KeyMapBundle.message("conflict.shortcut.dialog.title"),
-        KeyMapBundle.message("conflict.shortcut.dialog.remove.button"),
-        KeyMapBundle.message("conflict.shortcut.dialog.leave.button"),
-        KeyMapBundle.message("conflict.shortcut.dialog.cancel.button"),
-        Messages.getWarningIcon());
-
+    Keymap keymap = null;
+    if (dialog.hasConflicts()) {
+      int result = showConfirmationDialog(parent);
       if (result == Messages.YES) {
+        keymap = createKeymapCopyIfNeededAndPossible(parent, keymapSelected);
+        Map<String, ArrayList<KeyboardShortcut>> conflicts = keymap.getConflicts(actionId, keyboardShortcut);
         for (String id : conflicts.keySet()) {
           for (KeyboardShortcut s : conflicts.get(id)) {
             keymap.removeShortcut(id, s);
@@ -514,6 +503,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
 
     // if shortcut is already registered to this action, just select it in the list
+
+    if (keymap == null) keymap = createKeymapCopyIfNeededAndPossible(parent, keymapSelected);
     Shortcut[] shortcuts = keymap.getShortcuts(actionId);
     for (Shortcut s : shortcuts) {
       if (s.equals(keyboardShortcut)) {
@@ -533,40 +524,20 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       return;
     }
 
-    Keymap keymap = createKeymapCopyIfNeeded();
+    Keymap keymapSelected = myEditor.getModel().getSelected();
 
-    MouseShortcut mouseShortcut = shortcut instanceof MouseShortcut ? (MouseShortcut)shortcut : null;
-    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
-    MouseShortcutDialog dialog = new MouseShortcutDialog(
-      this,
-      mouseShortcut,
-      keymap,
-      actionId,
-      ActionsTreeUtil.createMainGroup(project, keymap, myQuickLists, null, true, null),
-      restrictions
-    );
-    if (!dialog.showAndGet()) {
-      return;
-    }
-
-    mouseShortcut = dialog.getMouseShortcut();
-
+    MouseShortcutDialog dialog = new MouseShortcutDialog(this, restrictions.allowMouseDoubleClick);
+    MouseShortcut mouseShortcut = dialog.showAndGet(shortcut, actionId, keymapSelected, myQuickLists);
     if (mouseShortcut == null) {
       return;
     }
 
-    String[] actionIds = keymap.getActionIds(mouseShortcut);
-    if (actionIds.length > 1 || (actionIds.length == 1 && !actionId.equals(actionIds[0]))) {
-      int result = Messages.showYesNoCancelDialog(
-        this,
-        KeyMapBundle.message("conflict.shortcut.dialog.message"),
-        KeyMapBundle.message("conflict.shortcut.dialog.title"),
-        KeyMapBundle.message("conflict.shortcut.dialog.remove.button"),
-        KeyMapBundle.message("conflict.shortcut.dialog.leave.button"),
-        KeyMapBundle.message("conflict.shortcut.dialog.cancel.button"),
-        Messages.getWarningIcon());
-
+    Keymap keymap = null;
+    if (dialog.hasConflicts()) {
+      int result = showConfirmationDialog(this);
       if (result == Messages.YES) {
+        keymap = createKeymapCopyIfNeededAndPossible(this, keymapSelected);
+        String[] actionIds = keymap.getActionIds(mouseShortcut);
         for (String id : actionIds) {
           keymap.removeShortcut(id, mouseShortcut);
         }
@@ -578,6 +549,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     // if shortcut is already registered to this action, just select it in the list
 
+    if (keymap == null) keymap = createKeymapCopyIfNeededAndPossible(this, keymapSelected);
     Shortcut[] shortcuts = keymap.getShortcuts(actionId);
     for (Shortcut shortcut1 : shortcuts) {
       if (shortcut1.equals(mouseShortcut)) {
@@ -596,6 +568,15 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   private void repaintLists() {
     myActionsTree.getComponent().repaint();
+  }
+
+  @NotNull
+  private static Keymap createKeymapCopyIfNeededAndPossible(Component parent, Keymap keymap) {
+    if (parent instanceof KeymapPanel) {
+      KeymapPanel panel = (KeymapPanel)parent;
+      keymap = panel.createKeymapCopyIfNeeded();
+    }
+    return keymap;
   }
 
   @NotNull
@@ -930,5 +911,16 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     });
 
     return group;
+  }
+
+  private static int showConfirmationDialog(Component parent) {
+    return Messages.showYesNoCancelDialog(
+      parent,
+      KeyMapBundle.message("conflict.shortcut.dialog.message"),
+      KeyMapBundle.message("conflict.shortcut.dialog.title"),
+      KeyMapBundle.message("conflict.shortcut.dialog.remove.button"),
+      KeyMapBundle.message("conflict.shortcut.dialog.leave.button"),
+      KeyMapBundle.message("conflict.shortcut.dialog.cancel.button"),
+      Messages.getWarningIcon());
   }
 }

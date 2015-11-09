@@ -171,7 +171,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
   }
 
   private static void reportMissingInterpreter() {
-    LOG.info("Found no suitable interpreter to run pep.py. Available interpreters are: [");
+    LOG.info("Found no suitable interpreter to run pep8.py. Available interpreters are: [");
     List<Sdk> allSdks = PythonSdkType.getAllSdks();
     Collections.sort(allSdks, PreferredSdkComparator.INSTANCE);
     for (Sdk sdk : allSdks) {

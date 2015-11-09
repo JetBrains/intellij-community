@@ -1174,6 +1174,36 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                   "        Type.type.canonicalText\n"                                  + // reference to '_Type
                                   ")\n\")]"                                                            +
                                   "static final '_Type 'variable = '_init;"));
+
+    final String source2 = "class A {" +
+                           "  String s = new String();" +
+                           "  int m() {" +
+                           "    int i = 2+1;" +
+                           "    return i;" +
+                           "  }" +
+                           "}";
+    assertEquals("type of variables in script are as expected", 1,
+                 findMatchesCount(source2,
+                                  "[script(\"" +
+                                  "import com.intellij.psi.*\n" +
+                                  "a instanceof PsiClass &&" +
+                                  "b instanceof PsiTypeElement &&" +
+                                  "c instanceof PsiField &&" +
+                                  "d instanceof PsiNewExpression &&" +
+                                  "e instanceof PsiTypeElement &&" +
+                                  "f instanceof PsiMethod &&" +
+                                  "g instanceof PsiTypeElement &&" +
+                                  "h instanceof PsiLocalVariable &&" +
+                                  "i instanceof PsiPolyadicExpression &&" +
+                                  "j instanceof PsiReferenceExpression" +
+                                  "\n\")]" +
+                                  "class '_a {" +
+                                  "  '_b '_c = '_d;" +
+                                  "  '_e '_f() {" +
+                                  "    '_g '_h = '_i" +
+                                  "    return '_j;" +
+                                  "  }" +
+                                  "}"));
   }
 
   public void testCheckScriptValidation() {

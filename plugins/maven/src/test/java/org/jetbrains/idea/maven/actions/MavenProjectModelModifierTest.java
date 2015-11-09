@@ -17,9 +17,7 @@ package org.jetbrains.idea.maven.actions;
 
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.ExternalLibraryDescriptor;
-import com.intellij.openapi.roots.JavaProjectModelModifier;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,8 +42,8 @@ import java.util.regex.Pattern;
 public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
   public void testAddExternalLibraryDependency() throws IOException {
     importProject("<groupId>test</groupId>" +
-                         "<artifactId>project</artifactId>" +
-                         "<version>1</version>");
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
 
     Promise<Void> result =
       getExtension().addExternalLibraryDependency(Collections.singletonList(getModule("project")), new JunitLibraryDescriptor(),
@@ -98,14 +96,21 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    Promise<Void> result =
-      getExtension().addExternalLibraryDependency(Collections.singletonList(getModule("project")), new CommonsIoLibraryDescriptorUnknownVersion(),
-                                                  DependencyScope.COMPILE);
+    Promise<Void> result = getExtension().addExternalLibraryDependency(
+      Collections.singletonList(getModule("project")), new CommonsIoLibraryDescriptorUnknownVersion(), DependencyScope.COMPILE);
     assertNotNull(result);
     final String version = assertHasDependency(myProjectPom, "commons-io", "commons-io");
     assertEquals("RELEASE", version);
     waitUntilImported(result);
-    assertModuleLibDep("project", "Maven: commons-io:commons-io:2.4");
+
+    LibraryOrderEntry dep = null;
+    for (OrderEntry e : getRootManager("project").getOrderEntries()) {
+      // can be commons-io:commons-io:2.4 or commons-io:commons-io:RELEASE
+      if (LibraryOrderEntry.class.isInstance(e) && e.getPresentableName().startsWith("Maven: commons-io:commons-io:")) {
+        dep = (LibraryOrderEntry)e;
+      }
+    }
+    assertNotNull(dep);
   }
 
   public void testAddModuleDependency() throws IOException {

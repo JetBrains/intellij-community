@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -124,7 +125,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
       beforeCommit(externalProjectNode, project);
     }
 
-    boolean isFromUI = model != null;
+    final boolean isFromUI = model != null;
 
     final List<Module> modules = ContainerUtil.newSmartList();
     final IdeModifiableModelsProvider modelsProvider = isFromUI ? new IdeUIModifiableModelsProvider(
@@ -163,44 +164,60 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         }
       }
 
-      myProjectDataManager.importData(externalProjectNode, project, modelsProvider, true);
-      myExternalProjectNode = null;
-
-      // resolve dependencies
-      final Runnable resolveDependenciesTask = new Runnable() {
-        @Override
-        public void run() {
-          ExternalSystemUtil.refreshProject(
-            project, myExternalSystemId, projectSettings.getExternalProjectPath(), false,
-            ProgressExecutionMode.IN_BACKGROUND_ASYNC);
-        }
-      };
-      if (!isFromUI) {
-        resolveDependenciesTask.run();
-      }
-      else {
-        // execute when current dialog is closed
-        ExternalSystemUtil.invokeLater(project, ModalityState.NON_MODAL, new Runnable() {
+      if (!project.isInitialized()) {
+        StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
           @Override
           public void run() {
-            final Module[] committedModules = ModuleManager.getInstance(project).getModules();
-            if (ContainerUtil.list(committedModules).containsAll(modules)) {
-              resolveDependenciesTask.run();
-            }
-            else {
-              ExternalSystemApiUtil.getLocalSettings(project, myExternalSystemId).forgetExternalProjects(
-                Collections.singleton(projectSettings.getExternalProjectPath()));
-              ExternalSystemApiUtil.getSettings(project, myExternalSystemId).unlinkExternalProject(
-                projectSettings.getExternalProjectPath());
-
-              ExternalProjectsManager.getInstance(project).forgetExternalProjectData(
-                myExternalSystemId, projectSettings.getExternalProjectPath());
-            }
+            finishImport(project, externalProjectNode, isFromUI, modules, modelsProvider, projectSettings);
           }
         });
       }
+      else finishImport(project, externalProjectNode, isFromUI, modules, modelsProvider, projectSettings);
     }
     return modules;
+  }
+
+  protected void finishImport(final Project project,
+                              DataNode<ProjectData> externalProjectNode,
+                              boolean isFromUI,
+                              final List<Module> modules,
+                              IdeModifiableModelsProvider modelsProvider, final ExternalProjectSettings projectSettings) {
+    myProjectDataManager.importData(externalProjectNode, project, modelsProvider, true);
+    myExternalProjectNode = null;
+
+    // resolve dependencies
+    final Runnable resolveDependenciesTask = new Runnable() {
+      @Override
+      public void run() {
+        ExternalSystemUtil.refreshProject(
+          project, myExternalSystemId, projectSettings.getExternalProjectPath(), false,
+          ProgressExecutionMode.IN_BACKGROUND_ASYNC);
+      }
+    };
+    if (!isFromUI) {
+      resolveDependenciesTask.run();
+    }
+    else {
+      // execute when current dialog is closed
+      ExternalSystemUtil.invokeLater(project, ModalityState.NON_MODAL, new Runnable() {
+        @Override
+        public void run() {
+          final Module[] committedModules = ModuleManager.getInstance(project).getModules();
+          if (ContainerUtil.list(committedModules).containsAll(modules)) {
+            resolveDependenciesTask.run();
+          }
+          else {
+            ExternalSystemApiUtil.getLocalSettings(project, myExternalSystemId).forgetExternalProjects(
+              Collections.singleton(projectSettings.getExternalProjectPath()));
+            ExternalSystemApiUtil.getSettings(project, myExternalSystemId).unlinkExternalProject(
+              projectSettings.getExternalProjectPath());
+
+            ExternalProjectsManager.getInstance(project).forgetExternalProjectData(
+              myExternalSystemId, projectSettings.getExternalProjectPath());
+          }
+        }
+      });
+    }
   }
 
   @NotNull

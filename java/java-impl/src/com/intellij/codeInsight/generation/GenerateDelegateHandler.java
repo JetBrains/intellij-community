@@ -115,7 +115,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
 
     PsiModifierList modifierList = null;
 
-    if (method.getReturnType() != PsiType.VOID) {
+    if (!PsiType.VOID.equals(method.getReturnType())) {
       call.append("return ");
     }
 

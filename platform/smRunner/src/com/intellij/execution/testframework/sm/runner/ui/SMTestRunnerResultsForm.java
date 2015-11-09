@@ -20,6 +20,7 @@ import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.TestHistoryConfiguration;
@@ -47,8 +48,10 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
+import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -197,6 +200,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       @Override
       public void pass(AbstractTestProxy testProxy) {
         if (testProxy == null) return;
+        final AbstractTestProxy selectedProxy = testProxy;
         //drill to the first leaf
         while (!testProxy.isLeaf()) {
           final List<? extends AbstractTestProxy> children = testProxy.getChildren();
@@ -213,6 +217,14 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         //pretend the selection on the first leaf
         //so if test would be run, tracking would be restarted 
         myLastSelected = testProxy;
+
+        //ensure scroll to source on explicit selection only
+        if (ScrollToTestSourceAction.isScrollEnabled(SMTestRunnerResultsForm.this)) {
+          final Navigatable descriptor = TestsUIUtil.getOpenFileDescriptor(selectedProxy, SMTestRunnerResultsForm.this);
+          if (descriptor != null) {
+            OpenSourceUtil.navigate(false, descriptor);
+          }
+        }
       }
     });
 

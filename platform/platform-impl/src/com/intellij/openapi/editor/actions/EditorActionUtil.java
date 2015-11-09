@@ -451,12 +451,14 @@ public class EditorActionUtil {
     int logLineEndOffset = document.getLineEndOffset(logLine);
     LogicalPosition logLineStart = editor.offsetToLogicalPosition(logLineStartOffset);
     VisualPosition visLineStart = editor.logicalToVisualPosition(logLineStart);
+    boolean newRendering = editor instanceof EditorImpl && ((EditorImpl)editor).myUseNewRendering;
 
     boolean softWrapIntroducedLine = visLineStart.line != visualLineNumber;
     if (!softWrapIntroducedLine) {
       int offset = findFirstNonSpaceOffsetInRange(document.getCharsSequence(), logLineStartOffset, logLineEndOffset);
       if (offset >= 0) {
-        return EditorUtil.calcColumnNumber(editor, document.getCharsSequence(), logLineStartOffset, offset);
+        return newRendering ? editor.offsetToVisualPosition(offset).column : 
+               EditorUtil.calcColumnNumber(editor, document.getCharsSequence(), logLineStartOffset, offset);
       }
       else {
         return -1;
@@ -491,6 +493,7 @@ public class EditorActionUtil {
 
         int end = findFirstNonSpaceOffsetInRange(softWrapText, j, softWrapTextLength);
         if (end >= 0) {
+          assert !newRendering : "Unexpected soft wrap text";
           // Non space symbol is contained at soft wrap text after offset that corresponds to the target visual line start.
           if (nextSoftWrapLineFeedOffset < 0 || end < nextSoftWrapLineFeedOffset) {
             return EditorUtil.calcColumnNumber(editor, softWrapText, j, end);
@@ -507,7 +510,8 @@ public class EditorActionUtil {
       }
       int end = findFirstNonSpaceOffsetInRange(document.getCharsSequence(), softWrap.getStart(), logLineEndOffset);
       if (end >= 0) {
-        return EditorUtil.calcColumnNumber(editor, document.getCharsSequence(), softWrap.getStart(), end);
+        return newRendering ? editor.offsetToVisualPosition(end).column : 
+               EditorUtil.calcColumnNumber(editor, document.getCharsSequence(), softWrap.getStart(), end);
       }
       else {
         return -1;

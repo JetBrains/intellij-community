@@ -27,6 +27,7 @@ import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
@@ -343,7 +344,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     final DaemonProgressIndicator progress = createUpdateProgress();
     myPassExecutorService.submitPasses(map, progress);
     try {
-      while (progress.isRunning()) {
+      long start = System.currentTimeMillis();
+      while (progress.isRunning() && System.currentTimeMillis() < start + 5*60*1000) {
         wrap(new ThrowableRunnable() {
           @Override
           public void run() throws Throwable {
@@ -357,6 +359,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
             if (savedException != null) throw savedException;
           }
         });
+      }
+      if (progress.isRunning()) {
+        throw new RuntimeException("Highlighting still running after "+(System.currentTimeMillis()-start)/1000+" seconds.\n"+ ThreadDumper.dumpThreadsToString());
       }
 
       final HighlightingSessionImpl session =

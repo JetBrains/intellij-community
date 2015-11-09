@@ -321,7 +321,7 @@ public class PsiMethodReferenceUtil {
         returnType = ((PsiMethod)resolve).getReturnType();
       }
       PsiType methodReturnType = subst.substitute(returnType);
-      if (interfaceReturnType != null && interfaceReturnType != PsiType.VOID) {
+      if (interfaceReturnType != null && !PsiType.VOID.equals(interfaceReturnType)) {
         if (methodReturnType == null) {
           methodReturnType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(containingClass, subst);
         }

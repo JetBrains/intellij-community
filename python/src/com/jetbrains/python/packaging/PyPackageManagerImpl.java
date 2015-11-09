@@ -276,8 +276,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       }
     }
     try {
-      final String output = getHelperResult(PACKAGING_TOOL, Arrays.asList("list"), false, false, null);
-      final List<PyPackage> packages = parsePackagingToolOutput(output);
+      final List<PyPackage> packages = getPackages();
       synchronized (myCacheLock) {
         myPackagesCache = packages;
         return new ArrayList<PyPackage>(myPackagesCache);
@@ -289,6 +288,12 @@ public class PyPackageManagerImpl extends PyPackageManager {
       }
       throw e;
     }
+  }
+
+  @NotNull
+  protected List<PyPackage> getPackages() throws ExecutionException {
+    final String output = getHelperResult(PACKAGING_TOOL, Arrays.asList("list"), false, false, null);
+    return parsePackagingToolOutput(output);
   }
 
   @Nullable

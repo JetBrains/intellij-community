@@ -1475,7 +1475,7 @@ public class PyUtil {
       final PsiDocumentManager manager = PsiDocumentManager.getInstance(statementList.getProject());
       final Document document = manager.getDocument(statementList.getContainingFile());
       if (document != null) {
-        final PsiElement container = statementList.getParent();
+        final PyStatementListContainer container = (PyStatementListContainer)statementList.getParent();
         manager.doPostponedOperationsAndUnblockDocument(document);
         final String indentation = "\n" + PyIndentUtil.getElementIndent(statementList);
         // If statement list was empty initially, we need to add some anchor statement ("pass"), so that preceding new line was not
@@ -1483,7 +1483,7 @@ public class PyUtil {
         final String text = statementList.getStatements().length == 0 ? indentation + PyNames.PASS : indentation;
         document.insertString(statementList.getTextRange().getStartOffset(), text);
         manager.commitDocument(document);
-        statementList = ((PyStatementListContainer)container).getStatementList();
+        statementList = container.getStatementList();
       }
     }
     final PsiElement firstChild = statementList.getFirstChild();

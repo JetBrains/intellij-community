@@ -60,7 +60,7 @@ public class PythonAtTestConfigurationProducer extends
   }
 
   private static boolean hasTestFunction(@NotNull final PyClass pyClass) {
-    PyFunction[] methods = pyClass.getMethods(false);
+    PyFunction[] methods = pyClass.getMethods();
     for (PyFunction function : methods) {
       PyDecoratorList decorators = function.getDecoratorList();
       if (decorators == null) continue;

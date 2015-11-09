@@ -406,7 +406,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
       if (typeParameterList != null) {
         createTypeParamsListComment(builder, project, commenter, typeParameterList);
       }
-      if (psiMethod.getReturnType() != null && psiMethod.getReturnType() != PsiType.VOID) {
+      if (psiMethod.getReturnType() != null && !PsiType.VOID.equals(psiMethod.getReturnType())) {
         builder.append(CodeDocumentationUtil.createDocCommentLine(RETURN_TAG, project, commenter));
         builder.append(LINE_SEPARATOR);
       }

@@ -22,10 +22,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.ExpressionConverter;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.impl.ExpressionConverter;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterData;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterMethodUsagesProcessor;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterUtil;
@@ -278,7 +278,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
 
     final String typeText =
-      forcedType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || forcedType == PsiType.NULL || forcedType == PsiType.VOID
+      forcedType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || forcedType == PsiType.NULL || PsiType.VOID.equals(forcedType)
       ? null
       : forcedType.getCanonicalText();
 

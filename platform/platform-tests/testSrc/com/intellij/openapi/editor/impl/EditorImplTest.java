@@ -199,4 +199,11 @@ public class EditorImplTest extends AbstractEditorTest {
     myEditor.getSettings().setAdditionalLinesCount(0);
     assertEquals(new Dimension(50, 30), myEditor.getContentComponent().getPreferredSize());
   }
+  
+  public void testCollapsingRegionContainingSoftWrap() throws Exception {
+    initText("abcdef abcdef");
+    configureSoftWraps(10);
+    addCollapsedFoldRegion(0, 13, "...");
+    assertEquals(new VisualPosition(0, 3), myEditor.offsetToVisualPosition(13));
+  }
 }

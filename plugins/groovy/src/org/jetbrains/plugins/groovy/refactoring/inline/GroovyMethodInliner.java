@@ -257,7 +257,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       }
 
       // Process method return statements
-      if (returnCount > 1 && PsiType.VOID != methodType && !isTailMethodCall) {
+      if (returnCount > 1 && !PsiType.VOID.equals(methodType) && !isTailMethodCall) {
         PsiType type = methodType != null && methodType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ? null : methodType;
         GrVariableDeclaration resultDecl = factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, "", type, resultName);
         GrStatement statement = ((GrStatementOwner) owner).addStatementBefore(resultDecl, anchor);
@@ -421,7 +421,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       if (statements[0] instanceof GrExpression) return (GrExpression) statements[0];
       if (statements[0] instanceof GrReturnStatement) {
         GrExpression value = ((GrReturnStatement) statements[0]).getReturnValue();
-        if (value == null && PsiUtil.getSmartReturnType(method) != PsiType.VOID) {
+        if (value == null && !PsiType.VOID.equals(PsiUtil.getSmartReturnType(method))) {
           return GroovyPsiElementFactory.getInstance(method.getProject()).createExpressionFromText("null");
         }
         return value;

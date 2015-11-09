@@ -58,7 +58,7 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection
           modifierList.setModifierProperty(PsiModifier.STATIC, true);
         }
 
-        if (method.getReturnType() != PsiType.VOID) {
+        if (!PsiType.VOID.equals(method.getReturnType())) {
           ChangeSignatureProcessor csp =
             new ChangeSignatureProcessor(project, method, false, PsiModifier.PUBLIC, method.getName(), PsiType.VOID,
                                          new ParameterInfoImpl[0]);

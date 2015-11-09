@@ -247,6 +247,12 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
+  public void testJavadocOfDeleted() {
+    doTest(null, new ParameterInfoImpl[]{
+      new ParameterInfoImpl(0, "role", PsiType.INT),
+    }, false);
+  }
+
   public void testCovariantReturnType() {
     doTest(CommonClassNames.JAVA_LANG_RUNNABLE, new ParameterInfoImpl[0], false);
   }

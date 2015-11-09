@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.FunctionParameter;
 import com.jetbrains.python.nameResolver.FQNamesProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,7 +75,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * Returns the argument if one is present in the list.
    *
    * @param parameter parameter
-   * @param argClass argument expected type
+   * @param argClass  argument expected type
    * @return the argument or null
    */
   @Nullable
@@ -85,6 +86,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
 
   /**
    * TODO: Copy/Paste with {@link PyArgumentList#addArgument(PyExpression)}
+   *
    * @param expression
    */
   void addArgument(PyExpression expression);
@@ -110,7 +112,6 @@ public interface PyCallExpression extends PyCallSiteExpression {
   PyCallable resolveCalleeFunction(PyResolveContext resolveContext);
 
   /**
-   *
    * @param resolveContext the reference resolve context
    * @param implicitOffset known from the context implicit offset
    */
@@ -133,9 +134,13 @@ public interface PyCallExpression extends PyCallSiteExpression {
 
   /**
    * Checks if the qualified name of the callee matches any of the specified names provided by provider.
-   * @see com.jetbrains.python.nameResolver
+   * May be <strong>heavy</strong>.
+   * Use {@link com.jetbrains.python.nameResolver.NameResolverTools#isCalleeShortCut(PyCallExpression, FQNamesProvider, TypeEvalContext)}
+   * if you can.
+   *
    * @param name providers that provides one or more names to check
    * @return true if matches, false otherwise
+   * @see com.jetbrains.python.nameResolver
    */
   boolean isCallee(@NotNull FQNamesProvider... name);
 
@@ -243,8 +248,8 @@ public interface PyCallExpression extends PyCallSiteExpression {
 
     /**
      * @return number of implicitly passed positional parameters; 0 means no parameters are passed implicitly.
-     *         Note that a <tt>*args</tt> is never marked as passed implicitly.
-     *         E.g. for a function like <tt>foo(a, b, *args)</tt> always holds <tt>getImplicitOffset() < 2</tt>.
+     * Note that a <tt>*args</tt> is never marked as passed implicitly.
+     * E.g. for a function like <tt>foo(a, b, *args)</tt> always holds <tt>getImplicitOffset() < 2</tt>.
      */
     public int getImplicitOffset() {
       return myImplicitOffset;
