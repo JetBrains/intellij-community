@@ -92,7 +92,7 @@ public class ExtensionPointLocator {
     return GlobalSearchScope.filesScope(project, candidates);
   }
 
-  public static boolean isImplementedEp(@NotNull PsiClass psiClass) {
+  public static boolean isRegisteredExtension(@NotNull PsiClass psiClass) {
     String name = psiClass.getQualifiedName();
     if (name == null) return false;
 
