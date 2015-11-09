@@ -246,11 +246,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public static GeneralCommandLine createPythonCommandLine(Project project, PythonRunParams config) {
     GeneralCommandLine commandLine = generalCommandLine();
 
+    commandLine.withCharset(EncodingProjectManager.getInstance(project).getDefaultCharset());
+    
     createStandardGroups(commandLine);
     
     initEnvironment(project, commandLine, config);
-
-    commandLine.withCharset(EncodingProjectManager.getInstance(project).getDefaultCharset());
 
     setRunnerPath(project, commandLine, config);
 
