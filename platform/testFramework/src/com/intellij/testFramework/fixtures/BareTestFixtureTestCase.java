@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework.fixtures;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
@@ -42,5 +43,10 @@ public abstract class BareTestFixtureTestCase {
   @NotNull
   protected final String getTestName(boolean lowercaseFirstLetter) {
     return PlatformTestUtil.getTestName(myNameRule.getMethodName(), lowercaseFirstLetter);
+  }
+
+  @NotNull
+  public final Disposable getTestRootDisposable() {
+    return myFixture.getTestRootDisposable();
   }
 }
