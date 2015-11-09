@@ -27,9 +27,6 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Function;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.PyFunctionType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +65,7 @@ public final class NameResolverTools {
 
   /**
    * Checks if FQ element name is one of provided names. May be <strong>heavy</strong>.
-   * It is always better to use less accurate but lighter {@link #isCalleeShortCut(PyCallExpression, FQNamesProvider, TypeEvalContext)}
+   * It is always better to use less accurate but lighter {@link #isCalleeShortCut(PyCallExpression, FQNamesProvider)}
    *
    * @param element        element to check
    * @param namesProviders some enum that has one or more names
@@ -113,28 +110,18 @@ public final class NameResolverTools {
    *
    * @param call expr
    * @param function   names to check
-   * @param context
    * @return true if callee is correct
    */
   public static boolean isCalleeShortCut(@NotNull final PyCallExpression call,
-                                         @NotNull final FQNamesProvider function,
-                                         @NotNull final TypeEvalContext context) {
+                                         @NotNull final FQNamesProvider function) {
     final PyExpression callee = call.getCallee();
     if (callee == null) {
       return false;
     }
 
-    final PyType calleeType = context.getType(callee);
-    if (!(calleeType instanceof PyFunctionType)) {
-      return false;
-    }
-    final PyCallable callable = ((PyFunctionType)calleeType).getCallable();
-    final String callableName = callable.getName();
-    if (callableName == null) {
-      return false;
-    }
+    final String callableName = callee.getName();
 
-    final Set<String> possibleNames = new HashSet<String>();
+    final Collection<String> possibleNames = new LinkedList<String>();
     for (final String lastComponent : getLastComponents(function)) {
       possibleNames.add(lastComponent);
     }

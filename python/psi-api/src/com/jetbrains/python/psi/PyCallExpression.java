@@ -19,7 +19,6 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.FunctionParameter;
 import com.jetbrains.python.nameResolver.FQNamesProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,7 +134,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
   /**
    * Checks if the qualified name of the callee matches any of the specified names provided by provider.
    * May be <strong>heavy</strong>.
-   * Use {@link com.jetbrains.python.nameResolver.NameResolverTools#isCalleeShortCut(PyCallExpression, FQNamesProvider, TypeEvalContext)}
+   * Use {@link com.jetbrains.python.nameResolver.NameResolverTools#isCalleeShortCut(PyCallExpression, FQNamesProvider)}
    * if you can.
    *
    * @param name providers that provides one or more names to check
