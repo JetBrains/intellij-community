@@ -182,12 +182,13 @@ public class InferenceSession {
   private static boolean isPertinentToApplicability(PsiExpression expr, PsiMethod method, PsiType expectedReturnType) {
     if (expr instanceof PsiLambdaExpression && ((PsiLambdaExpression)expr).hasFormalParameterTypes() ||
         expr instanceof PsiMethodReferenceExpression && ((PsiMethodReferenceExpression)expr).isExact()) {
-      if (method != null && method.getTypeParameters().length > 0) {
+      if (method != null) {
         final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expr.getParent());
         PsiType paramType = null;
         if (parent instanceof PsiExpressionList) {
           final PsiElement gParent = parent.getParent();
-          if (gParent instanceof PsiCallExpression && ((PsiCallExpression)gParent).getTypeArgumentList().getTypeParameterElements().length == 0) {
+          PsiTypeParameterListOwner owner = getTypeParameterOwner(method, gParent);
+          if (owner != null) {
             final int idx = LambdaUtil.getLambdaIdx(((PsiExpressionList)parent), expr);
             final PsiParameter[] parameters = method.getParameterList().getParameters();
             if (idx > parameters.length - 1) {
@@ -197,7 +198,7 @@ public class InferenceSession {
             else {
               paramType = parameters[idx].getType();
             }
-            if (isTypeParameterType(method, paramType)) return false;
+            if (isTypeParameterType(owner, paramType)) return false;
           }
         }
         else if (expectedReturnType != null && parent instanceof PsiLambdaExpression) {
@@ -231,7 +232,30 @@ public class InferenceSession {
     return true;
   }
 
-  private static boolean isTypeParameterType(PsiMethod method, PsiType paramType) {
+  private static PsiTypeParameterListOwner getTypeParameterOwner(@NotNull PsiMethod method, PsiElement gParent) {
+    PsiTypeParameterListOwner owner = null;
+    if (method.getTypeParameters().length > 0 && gParent instanceof PsiCallExpression && ((PsiCallExpression)gParent).getTypeArgumentList().getTypeParameterElements().length == 0) {
+      owner = method;
+    }
+    else if (method.isConstructor() && gParent instanceof PsiNewExpression) {
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null && containingClass.hasTypeParameters()) {
+        final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)gParent).getClassOrAnonymousClassReference();
+        if (classReference != null) {
+          final PsiReferenceParameterList parameterList = classReference.getParameterList();
+          if (parameterList != null) {
+            final PsiTypeElement[] typeElements = parameterList.getTypeParameterElements();
+            if (typeElements.length == 1 && typeElements[0].getType() instanceof PsiDiamondType) {
+              owner = containingClass;
+            }
+          }
+        }
+      }
+    }
+    return owner;
+  }
+
+  private static boolean isTypeParameterType(PsiTypeParameterListOwner method, PsiType paramType) {
     final PsiClass psiClass = PsiUtil.resolveClassInType(paramType); //accept ellipsis here
     if (psiClass instanceof PsiTypeParameter && ((PsiTypeParameter)psiClass).getOwner() == method) return true;
     return false;
