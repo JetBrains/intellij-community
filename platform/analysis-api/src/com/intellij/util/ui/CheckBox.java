@@ -26,6 +26,9 @@ import javax.swing.event.ChangeListener;
 
 public class CheckBox extends JCheckBox {
 
+  /**
+   * @param property field must be non-private (or ensure that it won't be scrambled in other means)
+   */
     public CheckBox(@NotNull String label,
                     @NotNull InspectionProfileEntry owner,
                     @NonNls String property) {
