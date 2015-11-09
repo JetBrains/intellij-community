@@ -740,7 +740,8 @@ public class DiffUtil {
       return TextDiffType.INSERTED;
     }
     else {
-      throw new IllegalArgumentException();
+      LOG.error("DiffFragment should not be empty");
+      return TextDiffType.MODIFIED;
     }
   }
 
