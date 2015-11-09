@@ -157,7 +157,7 @@
       <reference ref="ShelvedChanges.Diff"/>
       <reference ref="ChangesView.CreatePatchFromChanges"/>
       <action id="ShelvedChanges.ShowHideDeleted" class="com.intellij.openapi.vcs.changes.shelf.ShowHideRecycledAction"
-              icon="AllIcons.Nodes.Pointcut" description="Show/Hide Already Unshelved"/>
+              icon="AllIcons.Nodes.DisabledPointcut" description="Show/Hide Already Unshelved"/>
     </group>
 
     <group id="ShelvedChangesToolbarGear" popup="true" icon="AllIcons.General.SecondaryGroup">

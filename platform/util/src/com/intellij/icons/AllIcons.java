@@ -884,6 +884,7 @@ public class AllIcons {
     public static final Icon PluginRestart = IconLoader.getIcon("/nodes/pluginRestart.png"); // 16x16
     public static final Icon PluginUpdate = IconLoader.getIcon("/nodes/pluginUpdate.png"); // 16x16
     public static final Icon Pointcut = IconLoader.getIcon("/nodes/pointcut.png"); // 16x16
+    public static final Icon DisabledPointcut = IconLoader.getIcon("/nodes/disabledPointcut.png"); // 16x16
     public static final Icon PpFile = IconLoader.getIcon("/nodes/ppFile.png"); // 16x16
     public static final Icon PpInvalid = IconLoader.getIcon("/nodes/ppInvalid.png"); // 16x16
     public static final Icon PpJar = IconLoader.getIcon("/nodes/ppJar.png"); // 16x16
