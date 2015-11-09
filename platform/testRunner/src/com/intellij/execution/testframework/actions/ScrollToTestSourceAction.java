@@ -18,7 +18,6 @@ package com.intellij.execution.testframework.actions;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
-import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.ToggleBooleanProperty;
 
 public class ScrollToTestSourceAction extends ToggleBooleanProperty.Disablable {
@@ -30,9 +29,7 @@ public class ScrollToTestSourceAction extends ToggleBooleanProperty.Disablable {
   }
 
   protected boolean isEnabled() {
-    final AbstractProperty.AbstractPropertyContainer properties = getProperties();
-    final TestFrameworkRunningModel model = myModel;
-    return isEnabled(model);
+    return myModel != null;
   }
 
   @Override
@@ -40,13 +37,9 @@ public class ScrollToTestSourceAction extends ToggleBooleanProperty.Disablable {
     return true;
   }
 
-  private static boolean isEnabled(final TestFrameworkRunningModel model) {
-    return model != null && !model.isRunning();
-  }
-
   public static boolean isScrollEnabled(final TestFrameworkRunningModel model) {
     final TestConsoleProperties properties = model.getProperties();
-    return isEnabled(model) && TestConsoleProperties.SCROLL_TO_SOURCE.value(properties);
+    return TestConsoleProperties.SCROLL_TO_SOURCE.value(properties);
   }
 
   public void setModel(final TestFrameworkRunningModel model) {
