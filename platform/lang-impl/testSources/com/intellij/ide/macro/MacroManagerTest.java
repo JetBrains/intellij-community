@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
@@ -37,7 +38,7 @@ public class MacroManagerTest extends CodeInsightFixtureTestCase {
 
   public DataContext getContext(VirtualFile file) {
     Project project = myFixture.getProject();
-    Map<String, Object> dataId2data = new THashMap<String, Object>();
+    Map<String, Object> dataId2data = new THashMap<>();
     dataId2data.put(CommonDataKeys.PROJECT.getName(), project);
     dataId2data.put(CommonDataKeys.VIRTUAL_FILE.getName(), file);
     dataId2data.put(PlatformDataKeys.PROJECT_FILE_DIRECTORY.getName(), project.getBaseDir());
@@ -50,13 +51,28 @@ public class MacroManagerTest extends CodeInsightFixtureTestCase {
       "ans: $FileParentDir(bar)$ ",
       "ans: " + myFixture.getTempDirPath() + File.separator + "foo "
     );
-  }
-
-  public void testFileDirPathFromParentMacro() throws Throwable {
     doTest(
-      "foo/bar/baz/test.txt",
+      "foo/bar/baz/test2.txt",
       "ans: $FileDirPathFromParent(bar)$ ",
       "ans: baz/ "
     );
+    doTest(
+      "foo/bar/baz/test3.txt",
+      "ans: $FileDirPathFromParent(foo/bar)$ ",
+      "ans: baz/ "
+    );
+    doTest(
+      "foo/bar/baz/test4.txt",
+      "ans: $FileDirPathFromParent(foo/bar/baz/)$ ",
+      "ans:  "
+    );
+  }
+
+  public void testFileDirPathFromParentMacro_NoParentFound() throws Throwable {
+    PsiFile file = myFixture.addFileToProject("foo/bar/baz/test.txt", "");
+    String args = "ans: $FileDirPathFromParent(qqq/)$ ";
+    String actual = MacroManager.getInstance().expandMacrosInString(args, false, getContext(file.getVirtualFile()));
+    String expected = "ans: " + StringUtil.trimEnd(file.getVirtualFile().getParent().getPath(), "/") + "/ ";
+    assertEquals(expected, actual);
   }
 }
