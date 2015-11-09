@@ -15,15 +15,18 @@
  */
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorSettings;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -61,7 +64,6 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.EditorAdapter;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
@@ -88,7 +90,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final MappingsToRoots myMappingsToRoots;
 
   private ContentManager myContentManager;
-  private EditorAdapter myEditorAdapter;
+  private ConsoleView myConsole;
 
   private final VcsInitialization myInitialization;
 
@@ -199,7 +201,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public void disposeComponent() {
-    releaseEditor();
+    releaseConsole();
     myMappings.disposeMe();
     myConnect.disconnect();
     Disposer.dispose(myAnnotationLocalChangesListener);
@@ -234,7 +236,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public void projectClosed() {
-    releaseEditor();
+    releaseConsole();
   }
 
   @Override
@@ -397,7 +399,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         }
         else {
           getOrCreateConsoleContent(contentManager);
-          myEditorAdapter.appendString(message, attributes);
+          printToConsole(message, attributes);
         }
       }
     }, ModalityState.defaultModalityState());
@@ -407,37 +409,35 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     final String displayName = VcsBundle.message("vcs.console.toolwindow.display.name");
     Content content = contentManager.findContent(displayName);
     if (content == null) {
-      releaseEditor();
-      final EditorFactory editorFactory = EditorFactory.getInstance();
-      final Editor editor = editorFactory.createViewer(editorFactory.createDocument(""), myProject);
-      EditorSettings editorSettings = editor.getSettings();
-      editorSettings.setLineMarkerAreaShown(false);
-      editorSettings.setIndentGuidesShown(false);
-      editorSettings.setLineNumbersShown(false);
-      editorSettings.setFoldingOutlineShown(false);
+      releaseConsole();
 
-      ((EditorEx)editor).getScrollPane().setBorder(null);
-      myEditorAdapter = new EditorAdapter(editor, myProject, false);
-      final JPanel panel = new JPanel(new BorderLayout());
-      panel.add(editor.getComponent(), BorderLayout.CENTER);
+      myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(myProject).getConsole();
+
+      JPanel panel = new JPanel(new BorderLayout());
+      panel.add(myConsole.getComponent(), BorderLayout.CENTER);
+
+      ActionToolbar toolbar = ActionManager.getInstance()
+        .createActionToolbar(ActionPlaces.UNKNOWN, new DefaultActionGroup(myConsole.createConsoleActions()), false);
+      panel.add(toolbar.getComponent(), BorderLayout.WEST);
 
       content = ContentFactory.SERVICE.getInstance().createContent(panel, displayName, true);
       contentManager.addContent(content);
 
       for (Pair<String, TextAttributes> pair : myPendingOutput) {
-        myEditorAdapter.appendString(pair.first, pair.second);
+        printToConsole(pair.first, pair.second);
       }
       myPendingOutput.clear();
     }
     return content;
   }
 
-  private void releaseEditor() {
-    if (myEditorAdapter != null) {
-      final Editor editor = myEditorAdapter.getEditor();
-      if (!editor.isDisposed()) {
-        EditorFactory.getInstance().releaseEditor(editor);
-      }
+  private void printToConsole(@NotNull String message, @Nullable TextAttributes attributes) {
+    myConsole.print(message + "\n", new ConsoleViewContentType("", attributes));
+  }
+
+  private void releaseConsole() {
+    if (myConsole != null) {
+      Disposer.dispose(myConsole);
     }
   }
 
