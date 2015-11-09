@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.newProject.actions;
 
+import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,7 +31,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
-import com.intellij.platform.NewDirectoryProjectAction;
 import com.intellij.util.Function;
 import com.intellij.util.NullableConsumer;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
@@ -97,8 +97,8 @@ public class GenerateProjectCallback implements NullableConsumer<ProjectSettings
   private static Project generateProject(@NotNull final Project project,
                                          @NotNull final ProjectSettingsStepBase settings) {
     final DirectoryProjectGenerator generator = settings.getProjectGenerator();
-    return NewDirectoryProjectAction.doGenerateProject(project, settings.getProjectLocation(), generator,
-                                                       new Function<VirtualFile, Object>() {
+    return AbstractNewProjectStep.doGenerateProject(project, settings.getProjectLocation(), generator,
+                                                    new Function<VirtualFile, Object>() {
                                                          @Override
                                                          public Object fun(VirtualFile file) {
                                                            return computeProjectSettings(generator, (ProjectSpecificSettingsStep)settings);
