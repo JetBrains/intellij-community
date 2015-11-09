@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -153,6 +154,18 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
                     new Segment(10, 11, breakpointColor),
                     new Segment(11, 16, DEFAULT_BACKGROUND),
                     new Segment(16, 21, DEFAULT_BACKGROUND));
+  }
+  
+  public void testBoldDefaultFont() {
+    init("abc");
+    myFixture.getEditor().getColorsScheme().setAttributes(HighlighterColors.TEXT, 
+                                                          new TextAttributes(Color.black, Color.white, null, null, Font.BOLD));
+    IterationState it = new IterationState((EditorEx)myFixture.getEditor(), 0, 3, false);
+    assertFalse(it.atEnd());
+    assertEquals(0, it.getStartOffset());
+    assertEquals(3, it.getEndOffset());
+    TextAttributes attributes = it.getMergedAttributes();
+    assertEquals(Font.BOLD, attributes.getFontType());
   }
 
   private void verifySplitting(boolean checkForegroundColor, @NotNull Segment... expectedSegments) {

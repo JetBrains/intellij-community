@@ -17,10 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -112,6 +109,7 @@ public final class IterationState {
   private final TextAttributes myCaretRowAttributes;
   private final Color myDefaultBackground;
   private final Color myDefaultForeground;
+  private final int myDefaultFontType;
   private final int myCaretRowStart;
   private final int myCaretRowEnd;
   private final List<TextAttributes> myCachedAttributesList = new ArrayList<TextAttributes>(5);
@@ -173,6 +171,8 @@ public final class IterationState {
     myCaretRowAttributes = editor.isRendererMode() ? null : caretModel.getTextAttributes();
     myDefaultBackground = editor.getColorsScheme().getDefaultBackground();
     myDefaultForeground = editor.getColorsScheme().getDefaultForeground();
+    TextAttributes defaultAttributes = editor.getColorsScheme().getAttributes(HighlighterColors.TEXT);
+    myDefaultFontType = defaultAttributes == null ? Font.PLAIN : defaultAttributes.getFontType();
 
     myCaretRowStart = caretModel.getVisualLineStart();
     myCaretRowEnd = caretModel.getVisualLineEnd();
@@ -526,6 +526,7 @@ public final class IterationState {
     if (fore == null) fore = myDefaultForeground;
     if (back == null) back = myDefaultBackground;
     if (effectType == null) effectType = EffectType.BOXED;
+    if (fontType == Font.PLAIN) fontType = myDefaultFontType;
 
     myMergedAttributes.setAttributes(fore, back, effect, null, effectType, fontType);
 

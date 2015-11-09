@@ -119,6 +119,7 @@ public class IterationState {
   private final TextAttributes myCaretRowAttributes;
   private final Color myDefaultBackground;
   private final Color myDefaultForeground;
+  private final int myDefaultFontType;
   private final int myCaretRowStart;
   private final int myCaretRowEnd;
   private final boolean myCaretRowStartsWithSoftWrap;
@@ -170,6 +171,8 @@ public class IterationState {
     myCaretRowAttributes = editor.isRendererMode() ? null : caretModel.getTextAttributes();
     myDefaultBackground = editor.getColorsScheme().getDefaultBackground();
     myDefaultForeground = editor.getColorsScheme().getDefaultForeground();
+    TextAttributes defaultAttributes = editor.getColorsScheme().getAttributes(HighlighterColors.TEXT);
+    myDefaultFontType = defaultAttributes == null ? Font.PLAIN : defaultAttributes.getFontType();
 
     myCaretRowStart = useCaretAndSelection ? caretModel.getVisualLineStart() : -1;
     int visualLineEnd = caretModel.getVisualLineEnd();
@@ -570,6 +573,7 @@ public class IterationState {
     if (fore == null) fore = myDefaultForeground;
     if (back == null) back = myDefaultBackground;
     if (effectType == null) effectType = EffectType.BOXED;
+    if (fontType == Font.PLAIN) fontType = myDefaultFontType;
 
     myMergedAttributes.setAttributes(fore, back, effect, null, effectType, fontType);
 
