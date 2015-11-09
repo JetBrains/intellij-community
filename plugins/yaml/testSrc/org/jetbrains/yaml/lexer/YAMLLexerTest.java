@@ -138,6 +138,10 @@ public class YAMLLexerTest extends LexerTestCase {
     doTest();
   }
 
+  public void testRuby17389() throws Throwable {
+    doTest();
+  }
+
   private void doTest() {
     doFileTest("yml");
   }

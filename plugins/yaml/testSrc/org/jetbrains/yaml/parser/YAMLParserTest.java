@@ -126,4 +126,10 @@ public class YAMLParserTest extends ParsingTestCase {
                "with_items:\n" +
                "  - \"id_rsa.pub\"\n");
   }
+
+  public void testRuby17389() throws Throwable {
+    doCodeTest("---\n" +
+               "foo: {}\n" +
+               "bar: \"baz\"");
+  }
 }

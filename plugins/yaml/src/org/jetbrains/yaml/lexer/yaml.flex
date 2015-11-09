@@ -177,10 +177,6 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
 "-" / ({WHITE_SPACE} | {EOL})   {   yyBegin(VALUE_OR_KEY);
                                     return SEQUENCE_MARKER; }
 
-. {
-  yyBegin(VALUE);
-  return TEXT;
-}
 }
 
 
@@ -245,6 +241,13 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
 
 <VALUE, VALUE_OR_KEY>{
 .                               {   return TEXT; }
+}
+
+<YYINITIAL, BRACES> {
+. {
+  yyBegin(VALUE);
+  return TEXT;
+}
 }
 
 <INDENT_VALUE> {
