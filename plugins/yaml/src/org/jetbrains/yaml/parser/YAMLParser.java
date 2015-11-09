@@ -41,7 +41,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
 
   private void parseDocument() {
     final PsiBuilder.Marker marker = mark();
-    if (myBuilder.getTokenType() == DOCUMENT_MARKER){
+    if (myBuilder.getTokenType() == DOCUMENT_MARKER) {
       advanceLexer();
     }
     parseStatements(0);
@@ -62,25 +62,26 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
   }
 
   private void parseSingleStatement(int indent) {
-    if (eof()){
+    if (eof()) {
       return;
     }
     final IElementType tokenType = getTokenType();
-    if (tokenType == LBRACE){
+    if (tokenType == LBRACE) {
       parseHash();
-    } else
-    if (tokenType == LBRACKET){
+    }
+    else if (tokenType == LBRACKET) {
       parseArray();
-    } else
-    if (tokenType == SEQUENCE_MARKER){
+    }
+    else if (tokenType == SEQUENCE_MARKER) {
       parseSequence();
-    } else
-    if (tokenType == SCALAR_KEY) {
+    }
+    else if (tokenType == SCALAR_KEY) {
       parseScalarKeyValue(indent);
-    } else
-    if (YAMLElementTypes.SCALAR_VALUES.contains(getTokenType())){
+    }
+    else if (YAMLElementTypes.SCALAR_VALUES.contains(getTokenType())) {
       parseScalarValue();
-    } else {
+    }
+    else {
       advanceLexer();
     }
   }
@@ -88,9 +89,10 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
   private void parseScalarValue() {
     final IElementType tokenType = getTokenType();
     assert YAMLElementTypes.SCALAR_VALUES.contains(tokenType) : "Scalar value expected!";
-    if (tokenType == SCALAR_LIST || tokenType == SCALAR_TEXT){
+    if (tokenType == SCALAR_LIST || tokenType == SCALAR_TEXT) {
       parseMultiLineScalar(tokenType);
-    } else {
+    }
+    else {
       advanceLexer();
     }
   }
@@ -98,7 +100,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
   private void parseMultiLineScalar(final IElementType tokenType) {
     final PsiBuilder.Marker marker = mark();
     IElementType type = getTokenType();
-    while (type == tokenType || type == INDENT || type == EOL){
+    while (type == tokenType || type == INDENT || type == EOL) {
       advanceLexer();
       type = getTokenType();
     }
@@ -112,13 +114,15 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     eolSeen = false;
     advanceLexer();
     passJunk();
-    if (YAMLElementTypes.SCALAR_VALUES.contains(getTokenType())){
+    if (YAMLElementTypes.SCALAR_VALUES.contains(getTokenType())) {
       parseScalarValue();
-    } else {
+    }
+    else {
       final PsiBuilder.Marker valueMarker = mark();
       if (!eolSeen) {
         parseSingleStatement(myIndent);
-      } else {
+      }
+      else {
         while (!eof() && (isJunk() || (myIndent > indent) || isSequenceStart(indent))) {
           parseStatements(myIndent);
         }
@@ -143,8 +147,8 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
   private void parseHash() {
     final PsiBuilder.Marker marker = mark();
     advanceLexer();
-    while (!eof()){
-      if (getTokenType() == RBRACE){
+    while (!eof()) {
+      if (getTokenType() == RBRACE) {
         advanceLexer();
         break;
       }
@@ -157,8 +161,8 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
   private void parseArray() {
     final PsiBuilder.Marker marker = mark();
     advanceLexer();
-    while (!eof()){
-      if (getTokenType() == RBRACKET){
+    while (!eof()) {
+      if (getTokenType() == RBRACKET) {
         advanceLexer();
         break;
       }
@@ -177,40 +181,41 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     return eof() ? null : myBuilder.getTokenType();
   }
 
-  private void dropEolMarker(){
-    if (myAfterLastEolMarker != null){
+  private void dropEolMarker() {
+    if (myAfterLastEolMarker != null) {
       myAfterLastEolMarker.drop();
       myAfterLastEolMarker = null;
     }
   }
 
   private void rollBackToEol() {
-    if (eolSeen && myAfterLastEolMarker != null){
+    if (eolSeen && myAfterLastEolMarker != null) {
       eolSeen = false;
       myAfterLastEolMarker.rollbackTo();
       myAfterLastEolMarker = null;
     }
   }
 
-  private PsiBuilder.Marker mark(){
+  private PsiBuilder.Marker mark() {
     dropEolMarker();
     return myBuilder.mark();
   }
 
   private void advanceLexer() {
-    if (myBuilder.eof()){
+    if (myBuilder.eof()) {
       return;
     }
     final IElementType type = myBuilder.getTokenType();
     eolSeen = eolSeen || type == EOL;
-    if (type == EOL){
+    if (type == EOL) {
       // Drop and create new eolMarker
       myAfterLastEolMarker = mark();
       myIndent = 0;
-    } else
-    if (type == INDENT){
+    }
+    else if (type == INDENT) {
       myIndent = myBuilder.getTokenText().length();
-    } else {
+    }
+    else {
       // Drop Eol Marker if other token seen
       dropEolMarker();
     }
@@ -218,12 +223,12 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
   }
 
   private void passJunk() {
-    while (!eof() && isJunk()){
+    while (!eof() && isJunk()) {
       advanceLexer();
     }
   }
 
-  private boolean isJunk(){
+  private boolean isJunk() {
     final IElementType type = getTokenType();
     return type == INDENT || type == EOL;
   }
