@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,12 @@ import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.PatternCondition;
-import com.intellij.patterns.PsiJavaElementPattern;
-import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.PsiElementPattern;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -48,14 +49,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TestNGReferenceContributor extends PsiReferenceContributor {
-  private static PsiJavaElementPattern.Capture<PsiLiteralExpression> getElementPattern(String annotationParamName) {
-    return PsiJavaPatterns.literalExpression().
-      annotationParam(annotationParamName, PsiJavaPatterns.psiAnnotation().with(new PatternCondition<PsiAnnotation>("isTestNGAnnotation") {
-        @Override
-        public boolean accepts(@NotNull PsiAnnotation annotation, ProcessingContext context) {
-          return TestNGUtil.isTestNGAnnotation(annotation);
-        }
-      }));
+  private static PsiElementPattern.Capture<PsiLiteral> getElementPattern(String annotation) {
+    return PlatformPatterns.psiElement(PsiLiteral.class).and(new FilterPattern(new TestAnnotationFilter(annotation)));
   }
 
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
@@ -172,6 +167,29 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
         return list.toArray();
       }
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    }
+  }
+
+  private static class TestAnnotationFilter implements ElementFilter {
+
+    private final String myParameterName;
+
+    public TestAnnotationFilter(@NotNull @NonNls String parameterName) {
+      myParameterName = parameterName;
+    }
+
+    public boolean isAcceptable(Object element, PsiElement context) {
+      PsiNameValuePair pair = PsiTreeUtil.getParentOfType(context, PsiNameValuePair.class);
+      if (null == pair) return false;
+      if (!myParameterName.equals(pair.getName())) return false;
+      PsiAnnotation annotation = PsiTreeUtil.getParentOfType(pair, PsiAnnotation.class);
+      if (annotation == null) return false;
+      if (!TestNGUtil.isTestNGAnnotation(annotation)) return false;
+      return true;
+    }
+
+    public boolean isClassAcceptable(Class hintClass) {
+      return PsiLiteral.class.isAssignableFrom(hintClass);
     }
   }
 }
