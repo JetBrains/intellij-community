@@ -83,7 +83,9 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
       syncPaths(toImport, library, modelsProvider);
       return;
     }
-    importLibrary(libraryName, libraryFiles, modelsProvider);
+    library = modelsProvider.createLibrary(libraryName);
+    final Library.ModifiableModel libraryModel = modelsProvider.getModifiableLibraryModel(library);
+    registerPaths(toImport.isUnresolved(), libraryFiles, libraryModel, libraryName);
   }
 
   @NotNull
@@ -99,23 +101,15 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
     return result;
   }
 
-  private void importLibrary(@NotNull final String libraryName,
-                             @NotNull final Map<OrderRootType, Collection<File>> libraryFiles,
-                             @NotNull final IdeModifiableModelsProvider modelsProvider) {
-    final Library library = modelsProvider.createLibrary(libraryName);
-    final Library.ModifiableModel libraryModel = modelsProvider.getModifiableLibraryModel(library);
-    registerPaths(libraryFiles, libraryModel, libraryName);
-  }
-
-  @SuppressWarnings("MethodMayBeStatic")
-  public void registerPaths(@NotNull Map<OrderRootType, Collection<File>> libraryFiles,
+  static void registerPaths(boolean unresolved,
+                            @NotNull Map<OrderRootType, Collection<File>> libraryFiles,
                             @NotNull Library.ModifiableModel model,
                             @NotNull String libraryName) {
     for (Map.Entry<OrderRootType, Collection<File>> entry : libraryFiles.entrySet()) {
       for (File file : entry.getValue()) {
-        VirtualFile virtualFile = ExternalSystemUtil.refreshAndFindFileByIoFile(file);
+        VirtualFile virtualFile = unresolved ? null : ExternalSystemUtil.refreshAndFindFileByIoFile(file);
         if (virtualFile == null) {
-          if (ExternalSystemConstants.VERBOSE_PROCESSING && entry.getKey() == OrderRootType.CLASSES) {
+          if (!unresolved && ExternalSystemConstants.VERBOSE_PROCESSING && entry.getKey() == OrderRootType.CLASSES) {
             LOG.warn(
               String.format("Can't find %s of the library '%s' at path '%s'", entry.getKey(), libraryName, file.getAbsolutePath())
             );
@@ -228,7 +222,7 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
     for (Map.Entry<OrderRootType, Set<String>> entry : toAdd.entrySet()) {
       Map<OrderRootType, Collection<File>> roots = ContainerUtilRt.newHashMap();
       roots.put(entry.getKey(), ContainerUtil.map(entry.getValue(), PATH_TO_FILE));
-      registerPaths(roots, libraryModel, externalLibrary.getInternalName());
+      registerPaths(externalLibrary.isUnresolved(), roots, libraryModel, externalLibrary.getInternalName());
     }
   }
 
