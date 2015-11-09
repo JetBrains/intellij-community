@@ -80,9 +80,11 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   @NonNls private static final String ELEMENT_CHANGELIST = "changelist";
   @NonNls private static final String ELEMENT_RECYCLED_CHANGELIST = "recycled_changelist";
   @NonNls private static final String DEFAULT_PATCH_NAME = "shelved";
+  @NonNls private static final String REMOVE_FILES_FROM_SHELF_STRATEGY = "remove_strategy";
 
   @NotNull private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
   @NotNull private final SchemesManager<ShelvedChangeList, ShelvedChangeList> mySchemeManager;
+  private boolean myRemoveFilesFromShelf;
 
   public static ShelveChangesManager getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ShelveChangesManager.class);
@@ -175,12 +177,9 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     final String showRecycled = element.getAttributeValue(ATTRIBUTE_SHOW_RECYCLED);
-    if (showRecycled != null) {
-      myShowRecycled = Boolean.parseBoolean(showRecycled);
-    }
-    else {
-      myShowRecycled = true;
-    }
+    myShowRecycled = showRecycled == null || Boolean.parseBoolean(showRecycled);
+    String removeFilesStrategy = JDOMExternalizerUtil.readField(element, REMOVE_FILES_FROM_SHELF_STRATEGY);
+    myRemoveFilesFromShelf = removeFilesStrategy != null && Boolean.parseBoolean(removeFilesStrategy);
     migrateOldShelfInfo(element, true);
     migrateOldShelfInfo(element, false);
   }
@@ -253,6 +252,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     element.setAttribute(ATTRIBUTE_SHOW_RECYCLED, Boolean.toString(myShowRecycled));
+    JDOMExternalizerUtil.writeField(element, REMOVE_FILES_FROM_SHELF_STRATEGY, Boolean.toString(isRemoveFilesFromShelf()));
   }
 
   public List<ShelvedChangeList> getShelvedChangeLists() {
@@ -598,6 +598,14 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
       }
     }
     return textFilePatches;
+  }
+
+  public void setRemoveFilesFromShelf(boolean removeFilesFromShelf) {
+    myRemoveFilesFromShelf = removeFilesFromShelf;
+  }
+
+  public boolean isRemoveFilesFromShelf() {
+    return myRemoveFilesFromShelf;
   }
 
   private class BinaryPatchApplier implements CustomBinaryPatchApplier<ShelvedBinaryFilePatch> {

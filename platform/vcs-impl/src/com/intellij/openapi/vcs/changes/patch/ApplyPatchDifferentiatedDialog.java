@@ -88,7 +88,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   @Nullable private final Collection<Change> myPreselectedChanges;
 
   private JComponent myCenterPanel;
-  private final Project myProject;
+  protected final Project myProject;
 
   private final AtomicReference<FilePresentation> myRecentPathFileChange;
   private final ApplyPatchDifferentiatedDialog.MyUpdater myUpdater;

@@ -61,11 +61,12 @@ public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
     applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
     final Collection<PatchApplier> appliers = getPatchAppliers(patchGroups, localList, commitContext);
     executeAndApplyAdditionalInfo(localList, additionalInfo, commitContext, appliers);
-    removeAppliedAndSaveRemained(appliers, commitContext);
+    removeAppliedAndSaveRemainedIfNeeded(appliers, commitContext);
   }
 
-  private void removeAppliedAndSaveRemained(@NotNull Collection<PatchApplier> appliers, @NotNull CommitContext commitContext) {
+  private void removeAppliedAndSaveRemainedIfNeeded(@NotNull Collection<PatchApplier> appliers, @NotNull CommitContext commitContext) {
     ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(myProject);
+    if (!shelveChangesManager.isRemoveFilesFromShelf()) return;
     try {
       List<FilePatch> textPatches =
         ContainerUtil.<FilePatch>newArrayList(ShelveChangesManager.loadPatches(myProject, myCurrentShelveChangeList.PATH, commitContext));

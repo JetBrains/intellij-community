@@ -24,18 +24,22 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.patch.ApplyPatchDefaultExecutor;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDifferentiatedDialog;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchExecutor;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchMode;
+import com.intellij.openapi.vcs.changes.patch.UnshelvePatchDefaultExecutor;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
@@ -72,12 +76,7 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
         }
       });
     final ApplyPatchDifferentiatedDialog dialog =
-      new ApplyPatchDifferentiatedDialog(project, new ApplyPatchDefaultExecutor(project), Collections.<ApplyPatchExecutor>emptyList(),
-                                         ApplyPatchMode.UNSHELVE, virtualFile, null,
-                                         getPredefinedChangeList(changeList.DESCRIPTION, ChangeListManager.getInstance(project)),
-                                         binaryShelvedPatches,
-                                         hasNotAllSelectedChanges(project, changeList, preselectedChanges) ?
-                                         newArrayList(preselectedChanges) : null, changeList.DESCRIPTION);
+      new MyUnshelveDialog(project, virtualFile, changeList, binaryShelvedPatches, preselectedChanges);
     dialog.setHelpId("reference.dialogs.vcs.unshelve");
     dialog.show();
   }
@@ -92,5 +91,36 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final ShelvedChangeList[] changes = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
     e.getPresentation().setEnabled(project != null && changes != null && changes.length == 1);
+  }
+
+  private static class MyUnshelveDialog extends ApplyPatchDifferentiatedDialog {
+
+    public MyUnshelveDialog(@NotNull Project project,
+                            @NotNull VirtualFile patchFile,
+                            @NotNull ShelvedChangeList changeList,
+                            @NotNull List<ShelvedBinaryFilePatch> binaryShelvedPatches,
+                            @Nullable Change[] preselectedChanges) {
+      super(project, new UnshelvePatchDefaultExecutor(project, changeList, binaryShelvedPatches),
+            Collections.<ApplyPatchExecutor>emptyList(), ApplyPatchMode.UNSHELVE,
+            patchFile, null, getPredefinedChangeList(changeList.DESCRIPTION, ChangeListManager.getInstance(project)), binaryShelvedPatches,
+            hasNotAllSelectedChanges(project, changeList, preselectedChanges) ? newArrayList(preselectedChanges) : null,
+            changeList.DESCRIPTION);
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createSouthPanel() {
+      JComponent southPanel = ObjectUtils.assertNotNull(super.createSouthPanel());
+      final JCheckBox removeOptionCheckBox = new JCheckBox("Remove successfully applied files from shelf");
+      final ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(myProject);
+      removeOptionCheckBox.setSelected(shelveChangesManager.isRemoveFilesFromShelf());
+      removeOptionCheckBox.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          shelveChangesManager.setRemoveFilesFromShelf(removeOptionCheckBox.isSelected());
+        }
+      });
+      return addDoNotShowCheckBox(southPanel, removeOptionCheckBox);
+    }
   }
 }
