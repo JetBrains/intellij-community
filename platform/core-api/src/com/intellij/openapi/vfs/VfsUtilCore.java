@@ -584,11 +584,18 @@ public class VfsUtilCore {
     }
 
     if (file == null) {
-      if (base == null) return StandardFileSystems.local().findFileByPath(uri);
-      if (!base.isDirectory()) base = base.getParent();
-      if (base == null) return StandardFileSystems.local().findFileByPath(uri);
-      file = VirtualFileManager.getInstance().findFileByUrl(base.getUrl() + "/" + uri);
-      if (file == null) return null;
+      if (base != null && !base.isDirectory()) {
+        base = base.getParent();
+      }
+      if (base == null) {
+        file = StandardFileSystems.local().findFileByPath(uri);
+        if (file == null) {
+          file = VirtualFileManager.getInstance().findFileByUrl(uri);
+        }
+      }
+      else {
+        file = VirtualFileManager.getInstance().findFileByUrl(base.getUrl() + "/" + uri);
+      }
     }
 
     return file;

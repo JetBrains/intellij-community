@@ -58,6 +58,11 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
   private int myMaxLineWithExtensionWidth;
   private int myWidestLineWithExtension;
   
+  private int myDocumentChangeStartOffset;
+  private int myDocumentChangeEndOffset;
+  private int myFoldingChangeStartOffset = Integer.MAX_VALUE;
+  private int myFoldingChangeEndOffset = Integer.MIN_VALUE;
+  
   private final List<TextRange> myDeferredRanges = new ArrayList<TextRange>();
   
   private final SoftWrapAwareDocumentParsingListenerAdapter mySoftWrapChangeListener = new SoftWrapAwareDocumentParsingListenerAdapter() {
@@ -88,31 +93,34 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
 
   @Override
   public void beforeDocumentChange(DocumentEvent event) {
+    if (myDocument.isInBulkUpdate()) return;
+    myDocumentChangeStartOffset = event.getOffset();
+    myDocumentChangeEndOffset = event.getOffset() + event.getNewLength();
   }
 
   @Override
   public void documentChanged(DocumentEvent event) {
-    invalidateRange(event.getOffset(), event.getOffset() + event.getNewLength());
+    if (myDocument.isInBulkUpdate()) return;
+    doInvalidateRange(myDocumentChangeStartOffset, myDocumentChangeEndOffset);
   }
-  
-  private int foldingChangeStartOffset = Integer.MAX_VALUE;
-  private int foldingChangeEndOffset = Integer.MIN_VALUE;
   
   @Override
   public void onFoldRegionStateChange(@NotNull FoldRegion region) {
+    if (myDocument.isInBulkUpdate()) return;
     if (region.isValid()) {
-      foldingChangeStartOffset = Math.min(foldingChangeStartOffset, region.getStartOffset());
-      foldingChangeEndOffset = Math.max(foldingChangeEndOffset, region.getEndOffset());
+      myFoldingChangeStartOffset = Math.min(myFoldingChangeStartOffset, region.getStartOffset());
+      myFoldingChangeEndOffset = Math.max(myFoldingChangeEndOffset, region.getEndOffset());
     }
   }
 
   @Override
   public void onFoldProcessingEnd() {
-    if (foldingChangeStartOffset <= foldingChangeEndOffset) {
-      invalidateRange(foldingChangeStartOffset, foldingChangeEndOffset);
+    if (myDocument.isInBulkUpdate()) return;
+    if (myFoldingChangeStartOffset <= myFoldingChangeEndOffset) {
+      doInvalidateRange(myFoldingChangeStartOffset, myFoldingChangeEndOffset);
     }
-    foldingChangeStartOffset = Integer.MAX_VALUE;
-    foldingChangeEndOffset = Integer.MIN_VALUE;
+    myFoldingChangeStartOffset = Integer.MAX_VALUE;
+    myFoldingChangeEndOffset = Integer.MIN_VALUE;
 
     for (TextRange range : myDeferredRanges) {
       onTextLayoutPerformed(range.getStartOffset(), range.getEndOffset());
@@ -121,7 +129,21 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
   }
 
   private void onSoftWrapRecalculationEnd(IncrementalCacheUpdateEvent event) {
-    invalidateRange(event.getStartOffset(), event.getActualEndOffset());
+    if (myDocument.isInBulkUpdate()) return;
+    boolean invalidate = true;
+    if (myEditor.getFoldingModel().isInBatchFoldingOperation()) {
+      myFoldingChangeStartOffset = Math.min(myFoldingChangeStartOffset, event.getStartOffset());
+      myFoldingChangeEndOffset = Math.max(myFoldingChangeEndOffset, event.getActualEndOffset());
+      invalidate = false;
+    }
+    if (myDocument.isInEventsHandling()) {
+      myDocumentChangeStartOffset = Math.min(myDocumentChangeStartOffset, event.getStartOffset());
+      myDocumentChangeEndOffset = Math.max(myDocumentChangeEndOffset, event.getActualEndOffset());
+      invalidate = false;
+    }
+    if (invalidate) {
+      doInvalidateRange(event.getStartOffset(), event.getActualEndOffset());
+    }
   }
 
   Dimension getPreferredSize() {
@@ -149,6 +171,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
 
   private int getPreferredWidth() {
     if (myWidthInPixels < 0) {
+      assert !myDocument.isInBulkUpdate();
       myWidthInPixels = calculatePreferredWidth();
     }
     validateMaxLineWithExtension();
@@ -193,10 +216,22 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
   }
 
   void reset() {
-    invalidateRange(0, myDocument.getTextLength());
+    assert !myDocument.isInBulkUpdate();
+    doInvalidateRange(0, myDocument.getTextLength());
   }
 
   void invalidateRange(int startOffset, int endOffset) {
+    if (myDocument.isInBulkUpdate()) return;
+    if (myDocument.isInEventsHandling()) {
+      myDocumentChangeStartOffset = Math.min(myDocumentChangeStartOffset, startOffset);
+      myDocumentChangeEndOffset = Math.max(myDocumentChangeEndOffset, endOffset);
+    }
+    else {
+      doInvalidateRange(startOffset, endOffset);
+    }
+  }
+  
+  private void doInvalidateRange(int startOffset, int endOffset) {
     myWidthInPixels = -1;
     int startVisualLine = myView.offsetToVisualLine(startOffset, false);
     int endVisualLine = myView.offsetToVisualLine(endOffset, true);
@@ -223,6 +258,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
   }
 
   void textLayoutPerformed(int startOffset, int endOffset) {
+    if (myDocument.isInBulkUpdate()) return;
     if (myEditor.getFoldingModel().isInBatchFoldingOperation()) {
       myDeferredRanges.add(new TextRange(startOffset, endOffset));
     }

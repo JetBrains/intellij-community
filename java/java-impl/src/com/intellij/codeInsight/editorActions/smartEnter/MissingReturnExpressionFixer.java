@@ -55,7 +55,7 @@ public class MissingReturnExpressionFixer implements Fixer {
     PsiElement parent = PsiTreeUtil.getParentOfType(psiElement, PsiClassInitializer.class, PsiMethod.class);
     if (parent instanceof PsiMethod) {
       final PsiType returnType = ((PsiMethod)parent).getReturnType();
-      if (returnType != null && returnType != PsiType.VOID) {
+      if (returnType != null && !PsiType.VOID.equals(returnType)) {
         final int startOffset = retStatement.getTextRange().getStartOffset();
         if (returnValue != null) {
           editor.getDocument().insertString(startOffset + "return".length(), ";");
@@ -84,7 +84,7 @@ public class MissingReturnExpressionFixer implements Fixer {
     if (!(prev instanceof PsiJavaToken)) {
       int offset = returnStatement.getTextRange().getEndOffset();
       final PsiMethod method = PsiTreeUtil.getParentOfType(returnStatement, PsiMethod.class, true, PsiLambdaExpression.class);
-      if (method != null && method.getReturnType() == PsiType.VOID) {
+      if (method != null && PsiType.VOID.equals(method.getReturnType())) {
         offset = returnStatement.getTextRange().getStartOffset() + "return".length();
       } 
       editor.getDocument().insertString(offset, ";");
@@ -101,7 +101,7 @@ public class MissingReturnExpressionFixer implements Fixer {
     editor.getDocument().insertString(offset, ";");
     if (prevToken.getTokenType() == JavaTokenType.RETURN_KEYWORD) {
       final PsiMethod method = PsiTreeUtil.getParentOfType(returnStatement, PsiMethod.class);
-      if (method != null && method.getReturnType() != PsiType.VOID) {
+      if (method != null && !PsiType.VOID.equals(method.getReturnType())) {
         editor.getCaretModel().moveToOffset(offset);
         processor.setSkipEnter(true);
       }

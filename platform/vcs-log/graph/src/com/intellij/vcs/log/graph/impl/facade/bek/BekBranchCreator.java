@@ -79,7 +79,7 @@ class BekBranchCreator {
             // almost ok node, except (may be) up nodes
             boolean hasUndoneUpNodes = false;
             for (int upNode : getUpNodes(myPermanentGraph, downNode)) {
-              if (!myDoneNodes.get(upNode) && myGraphLayout.getLayoutIndex(upNode) <= currentLayout) {
+              if (!myDoneNodes.get(upNode) && myGraphLayout.getLayoutIndex(upNode) <= myGraphLayout.getLayoutIndex(downNode)) {
                 hasUndoneUpNodes = true;
                 break;
               }

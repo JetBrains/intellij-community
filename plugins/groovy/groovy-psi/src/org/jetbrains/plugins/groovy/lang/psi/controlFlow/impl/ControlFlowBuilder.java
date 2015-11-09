@@ -956,8 +956,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (type == null) return false;
 
     if (type instanceof PsiPrimitiveType) {
-      if (type == PsiType.BOOLEAN) return sections.length == 2;
-      if (type == PsiType.BYTE || type == PsiType.CHAR) return sections.length == 128;
+      if (PsiType.BOOLEAN.equals(type)) return sections.length == 2;
+      if (PsiType.BYTE.equals(type) || PsiType.CHAR.equals(type)) return sections.length == 128;
       return false;
     }
 

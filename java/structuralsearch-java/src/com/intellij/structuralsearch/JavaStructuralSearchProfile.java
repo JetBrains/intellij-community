@@ -32,6 +32,7 @@ import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -382,7 +383,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       private void checkModifier(final String name) {
         if (!MatchOptions.INSTANCE_MODIFIER_NAME.equals(name) &&
             !PsiModifier.PACKAGE_LOCAL.equals(name) &&
-            Arrays.binarySearch(JavaMatchingVisitor.MODIFIERS, name) < 0
+            ArrayUtil.find(JavaMatchingVisitor.MODIFIERS, name) < 0
           ) {
           throw new MalformedPatternException(SSRBundle.message("invalid.modifier.type",name));
         }
@@ -530,7 +531,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         handleMethodParameter(buf, info, matchMap);
         replacementString = buf.toString();
       }
-      else if (match.getAllSons().size() > 0 && !match.isScopeMatch()) {
+      else if (match.hasSons() && !match.isScopeMatch()) {
         // compound matches
         StringBuilder buf = new StringBuilder();
         MatchResult r = null;
@@ -550,7 +551,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
               }
             }
             else if (info.isStatementContext()) {
-              final PsiElement previousElement = previous.getMatchRef().getElement();
+              final PsiElement previousElement = previous.getMatch();
 
               if (!(previousElement instanceof PsiComment) &&
                   ( buf.charAt(buf.length() - 1) != '}' ||
@@ -720,15 +721,15 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     }
   }
 
-  private static void appendParameter(final StringBuilder buf, final MatchResult _matchResult) {
-    for(Iterator<MatchResult> j = _matchResult.getAllSons().iterator();j.hasNext();) {
-      buf.append(j.next().getMatchImage()).append(' ').append(j.next().getMatchImage());
-    }
+  private static void appendParameter(final StringBuilder buf, final MatchResult matchResult) {
+    final List<MatchResult> sons = matchResult.getAllSons();
+    assert sons.size() == 1;
+    buf.append(sons.get(0).getMatchImage()).append(' ').append(matchResult.getMatchImage());
   }
 
   private static void removeExtraSemicolonForSingleVarInstanceInMultipleMatch(final ParameterInfo info, MatchResult r, StringBuilder buf) {
     if (info.isStatementContext()) {
-      final PsiElement element = r.getMatchRef().getElement();
+      final PsiElement element = r.getMatch();
 
       // remove extra ;
       if (buf.charAt(buf.length()-1)==';' &&

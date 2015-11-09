@@ -16,6 +16,8 @@
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorStressTest;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.util.registry.Registry;
@@ -42,6 +44,8 @@ public class SoftWrapStressTest extends EditorStressTest {
 
   @Override
   protected void checkConsistency(Editor editor) {
+    DocumentEx document = ((EditorEx)editor).getDocument();
+    if (document.isInBulkUpdate()) return;
     Set<Integer> softWrapOffsets = checkSoftWraps(editor);
     List<CacheEntry> cache = ((SoftWrapModelImpl)editor.getSoftWrapModel()).getDataMapper().getCache();
     CacheEntry prevEntry = null;

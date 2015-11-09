@@ -20,7 +20,10 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +71,7 @@ public class StaticInitializerReferencesSubClassInspection extends BaseJavaBatch
         if (element instanceof PsiClass || element instanceof PsiReferenceParameterList || element instanceof PsiTypeElement) return;
 
         PsiClass targetClass = extractClass(element);
-        if (targetClass != null && !(targetClass instanceof PsiAnonymousClass) && targetClass.isInheritor(baseClass, true)) {
+        if (targetClass != null && targetClass.isInheritor(baseClass, true) && !hasSingleInitializationPlace(targetClass)) {
           PsiElement problemElement = calcProblemElement(element);
           if (problemElement != null) {
             result.set(Pair.create(problemElement, targetClass));
@@ -79,6 +82,23 @@ public class StaticInitializerReferencesSubClassInspection extends BaseJavaBatch
       }
     });
     return result.get();
+  }
+
+  private static boolean hasSingleInitializationPlace(@NotNull PsiClass targetClass) {
+    if (targetClass instanceof PsiAnonymousClass) return true;
+    if (!targetClass.hasModifierProperty(PsiModifier.PRIVATE)) return false;
+
+    PsiFile file = targetClass.getContainingFile();
+    if (file == null) return false;
+
+    LocalSearchScope scope = new LocalSearchScope(file);
+    return ReferencesSearch.search(targetClass, scope).forEach(new Processor<PsiReference>() {
+      int count = 0;
+      @Override
+      public boolean process(PsiReference reference) {
+        return ++count < 2;
+      }
+    });
   }
 
   @Nullable

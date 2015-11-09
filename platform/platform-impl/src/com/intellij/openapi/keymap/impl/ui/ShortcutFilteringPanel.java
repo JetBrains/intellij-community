@@ -40,7 +40,7 @@ import javax.swing.event.ChangeListener;
  */
 final class ShortcutFilteringPanel extends JPanel {
   final KeyboardShortcutPanel myKeyboardPanel = new KeyboardShortcutPanel(new VerticalLayout(JBUI.scale(2)));
-  final MouseShortcutPanel myMousePanel = new MouseShortcutPanel();
+  final MouseShortcutPanel myMousePanel = new MouseShortcutPanel(true);
 
   private Shortcut myShortcut;
   private JBPopup myPopup;

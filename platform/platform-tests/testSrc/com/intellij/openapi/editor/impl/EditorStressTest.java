@@ -15,11 +15,11 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.SoftWrapModelEx;
+import com.intellij.util.DocumentUtil;
 
 import java.util.Arrays;
 import java.util.List;
@@ -37,7 +37,8 @@ public class EditorStressTest extends AbstractEditorTest {
                                                                          new AddFoldRegion(),
                                                                          new RemoveFoldRegion(),
                                                                          new CollapseFoldRegion(),
-                                                                         new ExpandFoldRegion());
+                                                                         new ExpandFoldRegion(),
+                                                                         new ChangeBulkModeState());
 
   private final Random myRandom = new Random() {{
     //noinspection ConstantConditions
@@ -67,6 +68,26 @@ public class EditorStressTest extends AbstractEditorTest {
   }
 
   protected void checkConsistency(Editor editor) {
+    checkSoftWrapPositions(editor);
+  }
+
+  private static void checkSoftWrapPositions(Editor editor) {
+    DocumentEx document = ((EditorEx)editor).getDocument();
+    if (document.isInBulkUpdate()) return;
+    FoldingModel foldingModel = editor.getFoldingModel();
+    List<? extends SoftWrap> softWraps = ((SoftWrapModelEx)editor.getSoftWrapModel()).getRegisteredSoftWraps();
+    int lastSoftWrapOffset = -1;
+    for (SoftWrap wrap : softWraps) {
+      int softWrapOffset = wrap.getStart();
+      assertTrue("Soft wraps are not ordered", softWrapOffset > lastSoftWrapOffset);
+      FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(softWrapOffset);
+      assertTrue("Soft wrap is inside fold region", foldRegion == null || foldRegion.getStartOffset() == softWrapOffset);
+      assertFalse("Soft wrap before line break", softWrapOffset == DocumentUtil.getLineEndOffset(softWrapOffset, document) &&
+                                                 foldRegion == null);
+      assertFalse("Soft wrap after line break", softWrapOffset == DocumentUtil.getLineStartOffset(softWrapOffset, document) && 
+                                                !foldingModel.isOffsetCollapsed(softWrapOffset - 1));
+      lastSoftWrapOffset = softWrapOffset;
+    }
   }
 
   interface Action {
@@ -116,7 +137,8 @@ public class EditorStressTest extends AbstractEditorTest {
   private static class AddFoldRegion implements Action {
     @Override
     public void perform(final Editor editor, Random random) {
-      Document document = editor.getDocument();
+      DocumentEx document = ((EditorEx)editor).getDocument();
+      if (document.isInBulkUpdate()) return;
       int textLength = document.getTextLength();
       if (textLength <= 0) return;
       final int startOffset = random.nextInt(textLength + 1);
@@ -132,6 +154,8 @@ public class EditorStressTest extends AbstractEditorTest {
   private static class RemoveFoldRegion implements Action {
     @Override
     public void perform(final Editor editor, Random random) {
+      DocumentEx document = ((EditorEx)editor).getDocument();
+      if (document.isInBulkUpdate()) return;
       final FoldingModel foldingModel = editor.getFoldingModel();
       FoldRegion[] foldRegions = foldingModel.getAllFoldRegions();
       if (foldRegions.length == 0) return;
@@ -143,6 +167,8 @@ public class EditorStressTest extends AbstractEditorTest {
   private static class CollapseFoldRegion implements Action {
     @Override
     public void perform(final Editor editor, Random random) {
+      DocumentEx document = ((EditorEx)editor).getDocument();
+      if (document.isInBulkUpdate()) return;
       final FoldingModel foldingModel = editor.getFoldingModel();
       FoldRegion[] foldRegions = foldingModel.getAllFoldRegions();
       if (foldRegions.length == 0) return;
@@ -154,11 +180,21 @@ public class EditorStressTest extends AbstractEditorTest {
   private static class ExpandFoldRegion implements Action {
     @Override
     public void perform(final Editor editor, Random random) {
+      DocumentEx document = ((EditorEx)editor).getDocument();
+      if (document.isInBulkUpdate()) return;
       final FoldingModel foldingModel = editor.getFoldingModel();
       FoldRegion[] foldRegions = foldingModel.getAllFoldRegions();
       if (foldRegions.length == 0) return;
       final FoldRegion region = foldRegions[random.nextInt(foldRegions.length)];
       foldingModel.runBatchFoldingOperation(() -> region.setExpanded(true));
+    }
+  }
+  
+  private static class ChangeBulkModeState implements Action {
+    @Override
+    public void perform(Editor editor, Random random) {
+      DocumentEx document = ((EditorEx)editor).getDocument();
+      document.setInBulkUpdate(!document.isInBulkUpdate());
     }
   }
 }

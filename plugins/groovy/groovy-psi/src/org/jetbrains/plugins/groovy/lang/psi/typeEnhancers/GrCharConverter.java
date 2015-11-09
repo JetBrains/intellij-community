@@ -42,14 +42,14 @@ public class GrCharConverter extends GrTypeConverter {
                                           @NotNull PsiType rType,
                                           @NotNull GroovyPsiElement context,
                                           @NotNull ApplicableTo currentPosition) {
-    if (PsiType.CHAR != TypesUtil.unboxPrimitiveTypeWrapper(lType)) return null;
-    if (PsiType.CHAR == TypesUtil.unboxPrimitiveTypeWrapper(rType)) return ConversionResult.OK;
+    if (!PsiType.CHAR.equals(TypesUtil.unboxPrimitiveTypeWrapper(lType))) return null;
+    if (PsiType.CHAR.equals(TypesUtil.unboxPrimitiveTypeWrapper(rType))) return ConversionResult.OK;
 
     // can cast and assign numeric types to char
     if (TypesUtil.isNumericType(rType)) {
       if (rType instanceof PsiPrimitiveType ||
           currentPosition != ApplicableTo.EXPLICIT_CAST && TypesUtil.unboxPrimitiveTypeWrapper(rType) instanceof PsiPrimitiveType) {
-        return PsiType.CHAR == lType ? ConversionResult.OK : ConversionResult.ERROR;
+        return PsiType.CHAR.equals(lType) ? ConversionResult.OK : ConversionResult.ERROR;
       }
       else {
         // BigDecimal && BigInteger
@@ -76,7 +76,7 @@ public class GrCharConverter extends GrTypeConverter {
       }
     }
 
-    if (PsiType.BOOLEAN == TypesUtil.unboxPrimitiveTypeWrapper(rType)) {
+    if (PsiType.BOOLEAN.equals(TypesUtil.unboxPrimitiveTypeWrapper(rType))) {
       switch (currentPosition) {
         case EXPLICIT_CAST:
           return ConversionResult.ERROR;

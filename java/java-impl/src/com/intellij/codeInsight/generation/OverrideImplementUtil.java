@@ -337,7 +337,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
   @NotNull
   public static String callSuper(PsiMethod superMethod, PsiMethod overriding) {
     @NonNls StringBuilder buffer = new StringBuilder();
-    if (!superMethod.isConstructor() && superMethod.getReturnType() != PsiType.VOID) {
+    if (!superMethod.isConstructor() && !PsiType.VOID.equals(superMethod.getReturnType())) {
       buffer.append("return ");
     }
     buffer.append("super");

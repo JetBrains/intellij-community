@@ -15,10 +15,10 @@
  */
 package com.intellij.psi.util;
 
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.psi.*;
 import com.intellij.codeInsight.runner.JavaMainMethodProvider;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Condition;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -59,7 +59,7 @@ public class PsiMethodUtil {
 
   public static boolean isMainMethod(final PsiMethod method) {
     if (method == null || method.getContainingClass() == null) return false;
-    if (PsiType.VOID != method.getReturnType()) return false;
+    if (!PsiType.VOID.equals(method.getReturnType())) return false;
     if (!method.hasModifierProperty(PsiModifier.STATIC)) return false;
     if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return false;
     final PsiParameter[] parameters = method.getParameterList().getParameters();

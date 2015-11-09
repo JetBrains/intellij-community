@@ -219,10 +219,6 @@ public class MatcherImpl {
     }
   }
 
-  Project getProject() {
-    return project;
-  }
-
   /**
    * Finds the matches of given pattern starting from given tree element.
    * @throws MalformedPatternException

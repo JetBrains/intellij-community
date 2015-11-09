@@ -205,7 +205,7 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     configureByFile(testName + ".py");
     final String fullPath = getTestDataPath() + testName + ".txt";
     final PyClass pyClass = ((PyFile) myFile).getTopLevelClasses().get(0);
-    final ControlFlow flow = ControlFlowCache.getControlFlow(pyClass.getMethods(false)[0]);
+    final ControlFlow flow = ControlFlowCache.getControlFlow(pyClass.getMethods()[0]);
     check(fullPath, flow);
   }
 
@@ -214,7 +214,7 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     configureByFile(testName + ".py");
     final String fullPath = getTestDataPath() + testName + ".txt";
     final PyClass pyClass = ((PyFile) myFile).getTopLevelClasses().get(0);
-    final ControlFlow flow = ControlFlowCache.getControlFlow(pyClass.getMethods(false)[0]);
+    final ControlFlow flow = ControlFlowCache.getControlFlow(pyClass.getMethods()[0]);
     check(fullPath, flow);
   }
 

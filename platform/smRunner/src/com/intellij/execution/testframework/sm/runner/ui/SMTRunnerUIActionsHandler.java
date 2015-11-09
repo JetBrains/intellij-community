@@ -15,16 +15,10 @@
  */
 package com.intellij.execution.testframework.sm.runner.ui;
 
-import com.intellij.execution.testframework.*;
-import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
-import com.intellij.execution.testframework.sm.SMRunnerUtil;
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.ProxyFilters;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.pom.Navigatable;
-import com.intellij.util.OpenSourceUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -66,21 +60,5 @@ public class SMTRunnerUIActionsHandler extends TestResultsViewer.SMEventsAdapter
         sender.selectAndNotify(firstDefect);
       }
     }
-  }
-
-  public void onSelected(@Nullable final SMTestProxy selectedTestProxy,
-                         @NotNull final TestResultsViewer viewer,
-                         @NotNull final TestFrameworkRunningModel model) {
-    //TODO: tests o "onSelected"
-    SMRunnerUtil.runInEventDispatchThread(new Runnable() {
-      public void run() {
-        if (ScrollToTestSourceAction.isScrollEnabled(model)) {
-          final Navigatable descriptor = TestsUIUtil.getOpenFileDescriptor(selectedTestProxy, model);
-          if (descriptor != null) {
-            OpenSourceUtil.navigate(false, descriptor);
-          }
-        }
-      }
-    }, ModalityState.NON_MODAL);
   }
 }
