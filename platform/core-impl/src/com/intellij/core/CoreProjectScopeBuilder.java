@@ -96,7 +96,10 @@ public class CoreProjectScopeBuilder extends ProjectScopeBuilder {
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return myFileIndexFacade.isInContent(file);
+      return myFileIndexFacade.isInContent(file) &&
+             // skip libraries that can be under our project content (IDEA-147584)
+             !myFileIndexFacade.isInLibraryClasses(file) &&
+             !myFileIndexFacade.isInLibrarySource(file);
     }
 
     @Override
