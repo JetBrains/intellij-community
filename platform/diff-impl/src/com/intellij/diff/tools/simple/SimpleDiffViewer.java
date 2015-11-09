@@ -211,7 +211,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       }
 
       boolean isEqualContents = (lineFragments == null || lineFragments.isEmpty()) &&
-                                StringUtil.equals(document1.getCharsSequence(), document2.getCharsSequence());
+                                StringUtil.equals(texts[0], texts[1]);
 
       return apply(new CompareData(lineFragments, isEqualContents));
     }
