@@ -77,7 +77,7 @@ public class Main {
       System.exit(NO_GRAPHICS);
     }
 
-    if (args.length == 0) {
+    if (args.length == 0 || (args.length == 1 && "nosplash".equals(args[0]))) {
       try {
         installPatch();
       }
@@ -193,6 +193,8 @@ public class Main {
     String platform = System.getProperty(PLATFORM_PREFIX_PROPERTY, "idea");
     String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase(Locale.US);
     String tempDir = System.getProperty("java.io.tmpdir");
+    File patch = new File(tempDir, patchFileName);
+    if (!patch.exists()) return;
 
     // always delete previous patch copy
     File patchCopy = new File(tempDir, patchFileName + "_copy");
@@ -202,9 +204,6 @@ public class Main {
     if (!FileUtilRt.delete(patchCopy) || !FileUtilRt.delete(log4jCopy) || !FileUtilRt.delete(jnaUtilsCopy) || !FileUtilRt.delete(jnaCopy)) {
       throw new IOException("Cannot delete temporary files in " + tempDir);
     }
-
-    File patch = new File(tempDir, patchFileName);
-    if (!patch.exists()) return;
 
     File log4j = new File(PathManager.getLibPath(), "log4j.jar");
     if (!log4j.exists()) throw new IOException("Log4J is missing: " + log4j);
