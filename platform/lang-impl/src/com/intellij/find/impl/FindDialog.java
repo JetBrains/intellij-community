@@ -80,6 +80,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -315,23 +316,40 @@ public class FindDialog extends DialogWrapper {
       myComboBoxListeners.put(etf, listener);
     }
     else {
-      editorComponent.addKeyListener(
-        new KeyAdapter() {
+      if (editorComponent instanceof JTextComponent) {
+        final javax.swing.text.Document document = ((JTextComponent)editorComponent).getDocument();
+        final com.intellij.ui.DocumentAdapter documentAdapter = new com.intellij.ui.DocumentAdapter() {
           @Override
-          public void keyReleased(KeyEvent e) {
+          protected void textChanged(javax.swing.event.DocumentEvent e) {
             handleComboBoxValueChanged(comboBox);
           }
-        }
-      );
-      Disposer.register(myDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          final KeyListener[] listeners = editorComponent.getKeyListeners();
-          for (KeyListener listener : listeners) {
-            editorComponent.removeKeyListener(listener);
+        };
+        document.addDocumentListener(documentAdapter);
+        Disposer.register(myDisposable, new Disposable() {
+          @Override
+          public void dispose() {
+            document.removeDocumentListener(documentAdapter);
           }
-        }
-      });
+        });
+      } else {
+        editorComponent.addKeyListener(
+          new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+              handleComboBoxValueChanged(comboBox);
+            }
+          }
+        );
+        Disposer.register(myDisposable, new Disposable() {
+          @Override
+          public void dispose() {
+            final KeyListener[] listeners = editorComponent.getKeyListeners();
+            for (KeyListener listener : listeners) {
+              editorComponent.removeKeyListener(listener);
+            }
+          }
+        });
+      }
     }
 
     if (!myModel.isReplaceState()) {
@@ -402,13 +420,6 @@ public class FindDialog extends DialogWrapper {
   }
 
   private void handleComboBoxValueChanged(@NotNull ComboBox comboBox) {
-    Object item = comboBox.getEditor().getItem();
-    if (item != null && !item.equals(comboBox.getSelectedItem())){
-      int caretPosition = getCaretPosition(comboBox);
-      comboBox.setSelectedItem(item);
-      setCaretPosition(comboBox, caretPosition);
-    }
-
     if (comboBox != myReplaceComboBox) scheduleResultsUpdate();
     validateFindButton();
   }
