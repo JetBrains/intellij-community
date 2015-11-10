@@ -113,8 +113,8 @@ public class GradleResourceFilteringTest extends GradleCompilingTestCase {
       "  filter (ExpandProperties, project: ant.project)\n" +
       "}"
     );
-    assertModules("project", "project_main", "project_test");
-    compileModules("project_main");
+    assertModules("project");
+    compileModules("project");
 
     assertCopied("build/resources/main/dir/file.txt", "some text myPropValue another text");
   }
