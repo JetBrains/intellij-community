@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.codeInsight.lookup.impl.PrefixChangeListener
 import com.intellij.openapi.components.AbstractProjectComponent
 import com.intellij.openapi.project.Project
 import java.beans.PropertyChangeListener
@@ -13,7 +14,9 @@ class CompletionStatsRetriever(project: Project): AbstractProjectComponent(proje
     private val lookupTrackerInitializer = PropertyChangeListener {
         val lookup = it.newValue
         if (lookup is LookupImpl) {
-            lookup.addLookupListener(TrackingLookupListener())
+            val trackingListener = TrackingListener(lookup)
+            lookup.addLookupListener(trackingListener)
+            lookup.setPrefixChangeListener(trackingListener)
         }
     }
 
@@ -29,14 +32,17 @@ class CompletionStatsRetriever(project: Project): AbstractProjectComponent(proje
     
 }
 
-class TrackingLookupListener : LookupListener {
-    private var previous: LookupElement? = null 
+class TrackingListener(private val lookup: LookupImpl) : LookupListener, PrefixChangeListener {
+    private var previous: LookupElement? = null
+    private var ignoreItemChangedEvent = false
     
     override fun lookupCanceled(event: LookupEvent) = trackCancelled()
 
     override fun itemSelected(event: LookupEvent) = trackSelectedItem(event.item!!)
 
     override fun currentItemChanged(event: LookupEvent) {
+        if (ignoreItemChangedEvent) return
+        
         val current = event.item
         if (previous == current) return
         if (previous == null) {
@@ -59,8 +65,30 @@ class TrackingLookupListener : LookupListener {
         previous = current
     }
 
+    override fun beforeAppend(c: Char) {
+        ignoreItemChangedEvent = true
+    }
+    
+    override fun afterAppend(c: Char) {
+        ignoreItemChangedEvent = false
+        println("Appened: $c")
+    }
+
+    override fun beforeTruncate() {
+        ignoreItemChangedEvent = true
+    }
+
+    override fun afterTruncate() {
+        ignoreItemChangedEvent = false
+        println("Truncated")
+    }
+
     private fun sessionStarted() {
         println("Started")
+    }
+    
+    private fun sessionFinished() {
+        println("Finished")
     }
 
     private fun trackUpPressed() {
@@ -81,8 +109,5 @@ class TrackingLookupListener : LookupListener {
         sessionFinished()
     }
 
-    private fun sessionFinished() {
-        println("Finished")
-    }
 
 }
