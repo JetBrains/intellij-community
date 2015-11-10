@@ -564,7 +564,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
                                                    patches, targetChangeList, binaryPatchApplier, commitContext, reverse, leftConflictTitle,
                                                    rightConflictTitle);
         patchApplier.setIsSystemOperation(systemOperation);
-        if (isRemoveFilesFromShelf()) {
+        if (isRemoveFilesFromShelf() || systemOperation) {
           remainingPatches.addAll(patchApplier.getRemainingPatches());
           if (remainingPatches.isEmpty() && remainingBinaries.isEmpty()) {
             recycleChangeList(changeList);
