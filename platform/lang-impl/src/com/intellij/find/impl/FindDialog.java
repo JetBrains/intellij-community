@@ -113,6 +113,7 @@ public class FindDialog extends DialogWrapper {
   private StateRestoringCheckBox myCbWithSubdirectories;
   private JCheckBox myCbToOpenInNewTab;
   private FindModel myModel;
+  private FindModel myPreviousModel;
   private Consumer<FindModel> myOkHandler;
   private FixedSizeButton mySelectDirectoryButton;
   private StateRestoringCheckBox myUseFileFilter;
@@ -446,6 +447,20 @@ public class FindDialog extends DialogWrapper {
         }
       };
 
+      // Use previously shown usage files as hint for faster search and better usage preview performance if pattern length increased
+      final LinkedHashSet<VirtualFile> filesToScanInitially = new LinkedHashSet<VirtualFile>();
+
+      if (myPreviousModel != null && myPreviousModel.getStringToFind().length() < findModel.getStringToFind().length()) {
+        final DefaultTableModel previousModel = (DefaultTableModel)myResultsPreviewTable.getModel();
+        for (int i = 0, len = previousModel.getRowCount(); i < len; ++i) {
+          final UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)previousModel.getValueAt(i, 0);
+          final VirtualFile file = usage.getFile();
+          if (file != null) filesToScanInitially.add(file);
+        }
+      }
+
+      myPreviousModel = findModel;
+
       model.addColumn("Usages");
 
       myResultsPreviewTable.setModel(model);
@@ -504,7 +519,7 @@ public class FindDialog extends DialogWrapper {
               }, state);
               return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
             }
-          }, processPresentation);
+          }, processPresentation, filesToScanInitially);
           boolean succeeded = !progressIndicatorWhenSearchStarted.isCanceled();
           if (succeeded) {
             ApplicationManager.getApplication().invokeLater(new Runnable() {

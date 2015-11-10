@@ -87,11 +87,13 @@ class FindInProjectTask {
   private final ProgressIndicator myProgress;
   @Nullable private final Module myModule;
   private final Set<VirtualFile> myLargeFiles = ContainerUtil.newTroveSet();
+  private final Set<VirtualFile> myFilesToScanInitially;
   private boolean myWarningShown;
 
-  FindInProjectTask(@NotNull final FindModel findModel, @NotNull final Project project) {
+  FindInProjectTask(@NotNull final FindModel findModel, @NotNull final Project project, @NotNull Set<VirtualFile> filesToScanInitially) {
     myFindModel = findModel;
     myProject = project;
+    myFilesToScanInitially = filesToScanInitially;
     myDirectory = FindInProjectUtil.getDirectory(findModel);
     myPsiManager = PsiManager.getInstance(project);
 
@@ -448,6 +450,7 @@ class FindInProjectTask {
     final GlobalSearchScope scope = toGlobal(FindInProjectUtil.getScopeFromModel(myProject, myFindModel));
 
     final Set<VirtualFile> resultFiles = new LinkedHashSet<VirtualFile>();
+    resultFiles.addAll(myFilesToScanInitially);
 
     if (TrigramIndex.ENABLED) {
       final Set<Integer> keys = ContainerUtil.newTroveSet();

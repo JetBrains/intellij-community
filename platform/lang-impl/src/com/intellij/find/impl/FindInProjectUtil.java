@@ -64,10 +64,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class FindInProjectUtil {
@@ -194,7 +191,15 @@ public class FindInProjectUtil {
                                 @NotNull final Project project,
                                 @NotNull final Processor<UsageInfo> consumer,
                                 @NotNull FindUsagesProcessPresentation processPresentation) {
-    new FindInProjectTask(findModel, project).findUsages(consumer, processPresentation);
+    findUsages(findModel, project, consumer, processPresentation, Collections.<VirtualFile>emptySet());
+  }
+
+  public static void findUsages(@NotNull FindModel findModel,
+                                @NotNull final Project project,
+                                @NotNull final Processor<UsageInfo> consumer,
+                                @NotNull FindUsagesProcessPresentation processPresentation,
+                                Set<VirtualFile> filesToStart) {
+    new FindInProjectTask(findModel, project, filesToStart).findUsages(consumer, processPresentation);
   }
 
   // returns number of hits
