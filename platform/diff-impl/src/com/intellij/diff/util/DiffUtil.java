@@ -350,6 +350,7 @@ public class DiffUtil {
 
   @NotNull
   public static List<JComponent> createSimpleTitles(@NotNull ContentDiffRequest request) {
+    List<DiffContent> contents = request.getContents();
     List<String> titles = request.getContentTitles();
 
     if (!ContainerUtil.exists(titles, Condition.NOT_NULL)) {
@@ -357,8 +358,10 @@ public class DiffUtil {
     }
 
     List<JComponent> components = new ArrayList<JComponent>(titles.size());
-    for (String title : titles) {
-      components.add(createTitle(StringUtil.notNullize(title)));
+    for (int i = 0; i < contents.size(); i++) {
+      JComponent title = createTitle(StringUtil.notNullize(titles.get(i)));
+      title = createTitleWithNotifications(title, contents.get(i));
+      components.add(title);
     }
 
     return components;
@@ -394,10 +397,24 @@ public class DiffUtil {
     }
 
     for (int i = 0; i < contents.size(); i++) {
-      result.add(createTitle(StringUtil.notNullize(titles.get(i)), contents.get(i), equalCharsets, equalSeparators, editors.get(i)));
+      JComponent title = createTitle(StringUtil.notNullize(titles.get(i)), contents.get(i), equalCharsets, equalSeparators, editors.get(i));
+      title = createTitleWithNotifications(title, contents.get(i));
+      result.add(title);
     }
 
     return result;
+  }
+
+  @Nullable
+  private static JComponent createTitleWithNotifications(@Nullable JComponent title,
+                                                         @NotNull DiffContent content) {
+    List<JComponent> notifications = getCustomNotifications(content);
+    if (notifications.isEmpty()) return title;
+
+    List<JComponent> components = new ArrayList<JComponent>();
+    if (title != null) components.add(title);
+    components.addAll(notifications);
+    return createStackedComponents(components, TITLE_GAP);
   }
 
   private static boolean isEqualElements(@NotNull List elements) {
@@ -1062,6 +1079,11 @@ public class DiffUtil {
     List<JComponent> requestComponents = request.getUserData(DiffUserDataKeys.NOTIFICATIONS);
     List<JComponent> contextComponents = context.getUserData(DiffUserDataKeys.NOTIFICATIONS);
     return ContainerUtil.concat(ContainerUtil.notNullize(contextComponents), ContainerUtil.notNullize(requestComponents));
+  }
+
+  @NotNull
+  public static List<JComponent> getCustomNotifications(@NotNull DiffContent content) {
+    return ContainerUtil.notNullize(content.getUserData(DiffUserDataKeys.NOTIFICATIONS));
   }
 
   //
