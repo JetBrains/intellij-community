@@ -2,6 +2,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -53,7 +54,7 @@ class AnnotatePreviousRevisionAction extends AnnotateRevisionAction {
   @Nullable
   @Override
   protected VcsFileRevision getFileRevision(@NotNull AnActionEvent e) {
-    if (getCurrentLine() == -1) {
+    if (getCurrentLine() == UpToDateLineNumberProvider.ABSENT_LINE_NUMBER) {
       return myLastRevision;
     }
     return super.getFileRevision(e);
