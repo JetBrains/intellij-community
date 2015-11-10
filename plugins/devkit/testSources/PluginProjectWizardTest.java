@@ -22,7 +22,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectWizard.NewProjectWizardTestCase;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
@@ -35,8 +34,7 @@ public class PluginProjectWizardTest extends NewProjectWizardTestCase {
   public void testPluginProject() throws Exception {
     createSdk("devkit", IdeaJdk.getInstance());
     Project project = createProjectFromTemplate(PluginModuleType.getInstance().getName(), null, null);
-    VirtualFile baseDir = project.getBaseDir();
-    VirtualFile virtualFile = VfsUtilCore.findRelativeFile("resources/META-INF/plugin.xml", baseDir);
+    VirtualFile virtualFile = project.getBaseDir().findFileByRelativePath("resources/META-INF/plugin.xml");
     assertNotNull(virtualFile);
 
     RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
