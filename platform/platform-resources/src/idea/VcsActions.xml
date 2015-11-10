@@ -136,7 +136,6 @@
     </group>
 
     <group id="ShelvedChangesPopupMenu">
-      <action id="ShelvedChanges.Unshelve" class="com.intellij.openapi.vcs.changes.shelf.UnshelveChangesAction"/>
       <action id="ShelveChanges.UnshelveWithDialog" class="com.intellij.openapi.vcs.changes.shelf.UnshelveWithDialogAction"
               text="Unshelve..." description="Correct paths where to apply patches and unshelve"/>
       <action id="ShelvedChanges.Restore" class="com.intellij.openapi.vcs.changes.shelf.RestoreShelvedChange"/>
@@ -161,7 +160,6 @@
     </group>
 
     <group id="ShelvedChangesToolbarGear" popup="true" icon="AllIcons.General.SecondaryGroup">
-      <reference ref="ShelvedChanges.Unshelve"/>
       <reference ref="ShelveChanges.UnshelveWithDialog"/>
       <reference ref="ShelvedChanges.Restore"/>
       <reference ref="ShelvedChanges.ImportPatches"/>
@@ -287,7 +285,6 @@
 
     <group id="Shelve.KeymapGroup" text="Shelve">
       <reference ref="ChangesView.Shelve"/>
-      <reference ref="ShelvedChanges.Unshelve"/>
       <reference ref="ShelveChanges.UnshelveWithDialog"/>
       <reference ref="ShelvedChanges.Restore"/>
       <reference ref="ShelvedChanges.ImportPatches"/>
