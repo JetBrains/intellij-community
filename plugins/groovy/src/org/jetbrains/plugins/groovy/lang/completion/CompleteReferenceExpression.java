@@ -300,15 +300,16 @@ public class CompleteReferenceExpression {
       }
       getVariantsFromQualifierType(TypesUtil.getJavaLangObject(qualifier), project);
     }
-    else if (qualifierType instanceof GrTraitType) {
-      PsiType[] conjuncts = ((GrTraitType)qualifierType).getConjuncts();
-      for (int i = conjuncts.length - 1; i >= 0; i--) {
-        getVariantsFromQualifierType(conjuncts[i], project);
-      }
-    }
     else if (qualifierType instanceof PsiIntersectionType) {
       for (PsiType conjunct : ((PsiIntersectionType)qualifierType).getConjuncts()) {
         getVariantsFromQualifierType(conjunct, project);
+      }
+    }
+    else if (qualifierType instanceof GrTraitType) {
+      // Process trait type conjuncts in reversed order because last applied trait matters.
+      PsiType[] conjuncts = ((GrTraitType)qualifierType).getConjuncts();
+      for (int i = conjuncts.length - 1; i >= 0; i--) {
+        getVariantsFromQualifierType(conjuncts[i], project);
       }
     }
     else {
