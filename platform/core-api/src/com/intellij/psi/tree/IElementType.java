@@ -137,6 +137,11 @@ public class IElementType {
     return myIndex;
   }
 
+  @Override
+  public int hashCode() {
+    return myIndex;
+  }
+
   public String toString() {
     return myDebugName;
   }
