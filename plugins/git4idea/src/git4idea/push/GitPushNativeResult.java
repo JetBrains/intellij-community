@@ -40,6 +40,10 @@ class GitPushNativeResult {
   private final String mySourceRef;
   @Nullable private final String myRange;
 
+  GitPushNativeResult(@NotNull Type type, String sourceRef) {
+    this(type, sourceRef, null);
+  }
+
   GitPushNativeResult(@NotNull Type type, String sourceRef, @Nullable String range) {
     myType = type;
     mySourceRef = sourceRef;
