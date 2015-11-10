@@ -336,6 +336,21 @@ public final class IconLoader {
     };
   }
 
+  /**
+   * Gets a snapshot of the icon, immune to changes made by these calls:
+   * {@link IconLoader#setScale(float)}, {@link IconLoader#setFilter(ImageFilter)}, {@link IconLoader#setUseDarkIcons(boolean)}
+   *
+   * @param icon the source icon
+   * @return the icon snapshot
+   */
+  @NotNull
+  public static Icon getIconSnapshot(@NotNull Icon icon) {
+    if (icon instanceof CachedImageIcon) {
+      return ((CachedImageIcon)icon).getRealIcon();
+    }
+    return icon;
+  }
+
   private static final class CachedImageIcon implements ScalableIcon {
     private Object myRealIcon;
     @NotNull

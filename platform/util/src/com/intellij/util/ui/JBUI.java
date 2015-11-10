@@ -16,6 +16,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.SystemProperties;
@@ -43,6 +44,7 @@ public class JBUI {
       return 1.0f;
     }
 
+    // On Linux: rely on DPI
     if (SystemInfo.isLinux) {
       final int dpi = getSystemDPI();
       if (dpi < 120) return 1f;
@@ -53,11 +55,16 @@ public class JBUI {
     }
 
     int size = -1;
-    try {
-      if (SystemInfo.isWindows) {
-        size = (Integer)Toolkit.getDefaultToolkit().getDesktopProperty("win.system.font.height");
+
+    // On Windows: rely on default system font
+    if (SystemInfo.isWindows) {
+      Pair<String, Integer> fdata = UIUtil.getSystemFontData();
+      if (fdata == null) {
+        UIUtil.initDefaultLAF();
+        fdata = UIUtil.getSystemFontData();
+
+        if (fdata != null) size = fdata.getSecond();
       }
-    } catch (Exception e) {//
     }
     if (size == -1) {
       size = Fonts.label().getSize();

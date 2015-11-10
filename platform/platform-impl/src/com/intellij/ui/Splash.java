@@ -69,7 +69,7 @@ public class Splash extends JDialog implements StartupProgress {
     setFocusableWindowState(false);
 
     Icon originalImage = IconLoader.getIcon(imageName);
-    myImage = new SplashImage(originalImage, textColor);
+    myImage = new SplashImage(IconLoader.getIconSnapshot(originalImage), textColor);
     myLabel = new JLabel(myImage) {
       @Override
       protected void paintComponent(Graphics g) {
@@ -146,8 +146,8 @@ public class Splash extends JDialog implements StartupProgress {
     g.setColor(color);
     g.fillRect(getProgressX(), getProgressY(), width, getProgressHeight());
     if (myProgressTail != null) {
-      myProgressTail.paintIcon(this, g, (int)(width - (myProgressTail.getIconWidth() / JBUI.scale(1f) / 2f * JBUI.scale(1f))),
-                               (int)(getProgressY() - (myProgressTail.getIconHeight() - getProgressHeight()) / JBUI.scale(1f) / 2f * JBUI.scale(1f))); //I'll buy you a beer if you understand this line without playing with it
+      myProgressTail.paintIcon(this, g, (int)(width - (myProgressTail.getIconWidth() / uiScale(1f) / 2f * uiScale(1f))),
+                               (int)(getProgressY() - (myProgressTail.getIconHeight() - getProgressHeight()) / uiScale(1f) / 2f * uiScale(1f))); //I'll buy you a beer if you understand this line without playing with it
     }
     myProgressLastPosition = progressWidth;
   }
@@ -157,15 +157,15 @@ public class Splash extends JDialog implements StartupProgress {
   }
 
   private int getProgressHeight() {
-    return (int)JBUI.scale((float)myProgressHeight);
+    return (int)uiScale((float)myProgressHeight);
   }
 
   private int getProgressX() {
-    return (int)JBUI.scale((float)myProgressX);
+    return (int)uiScale((float)myProgressX);
   }
 
   private int getProgressY() {
-    return (int)JBUI.scale((float)myProgressY);
+    return (int)uiScale((float)myProgressY);
   }
 
   public static boolean showLicenseeInfo(Graphics g, int x, int y, final int height, final Color textColor) {
@@ -173,12 +173,12 @@ public class Splash extends JDialog implements StartupProgress {
       final LicensingFacade provider = LicensingFacade.getInstance();
       if (provider != null) {
         UIUtil.applyRenderingHints(g);
-        g.setFont(new Font(UIUtil.ARIAL_FONT_NAME, Font.BOLD, JBUI.scale(Registry.is("ide.new.about") ? 12 : SystemInfo.isUnix ? 10 : 11)));
+        g.setFont(new Font(UIUtil.ARIAL_FONT_NAME, Font.BOLD, uiScale(Registry.is("ide.new.about") ? 12 : SystemInfo.isUnix ? 10 : 11)));
 
         g.setColor(textColor);
         final String licensedToMessage = provider.getLicensedToMessage();
         final List<String> licenseRestrictionsMessages = provider.getLicenseRestrictionsMessages();
-        int offsetX = JBUI.scale(15);
+        int offsetX = uiScale(15);
         if (Registry.is("ide.new.about")) {
           ApplicationInfoEx infoEx = ApplicationInfoEx.getInstanceEx();
           if (infoEx instanceof ApplicationInfoImpl) {
@@ -188,15 +188,19 @@ public class Splash extends JDialog implements StartupProgress {
           }
         }
         int offsetY = Registry.is("ide.new.about") ? 85 : 30;
-        g.drawString(licensedToMessage, x + offsetX, y + height - JBUI.scale(offsetY));
+        g.drawString(licensedToMessage, x + offsetX, y + height - uiScale(offsetY));
         if (licenseRestrictionsMessages.size() > 0) {
-          g.drawString(licenseRestrictionsMessages.get(0), x + offsetX, y + height - JBUI.scale(offsetY - 16));
+          g.drawString(licenseRestrictionsMessages.get(0), x + offsetX, y + height - uiScale(offsetY - 16));
         }
       }
       return true;
     }
     return false;
   }
+
+  private static float JBUI_INIT_SCALE = JBUI.scale(1f);
+  private static float uiScale(float f) { return f * JBUI_INIT_SCALE; }
+  private static int uiScale(int i) { return (int)(i * JBUI_INIT_SCALE); }
 
   private final class SplashImage implements Icon {
     private final Icon myIcon;
