@@ -873,4 +873,8 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testExceptionCollectionWithLambda() throws Exception {
     doTest();
   }
+
+  public void testUncheckedWarningsWhenInferredTypeLeadsToRawRoGenericAssignment() throws Exception {
+    doTest(true);
+  }
 }
