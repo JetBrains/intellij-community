@@ -205,10 +205,11 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
 
 <VALUE, VALUE_OR_KEY>{
 
-">"/ ({WHITE_SPACE} | {EOL})      {   yyBegin(INDENT_VALUE);
+">"("-"|"+")? / ({WHITE_SPACE} | {EOL})      {
+                                    yyBegin(INDENT_VALUE);
                                     valueIndent = currentLineIndent;
                                     valueTokenType = SCALAR_TEXT;
-                                    yypushback(1);
+                                    yypushback(yylength());
                                 }
 
 ({C_NS_TAG_PROPERTY} {WHITE_SPACE}+)? ("|"("-"|"+")?) / ({WHITE_SPACE} | {EOL})
