@@ -85,10 +85,10 @@ KEY =                           [^,\n\-\ {}\[\]#]!(!([^\n{}>:,]*)|{LINE}{WHITE_S
 INJECTION =                     ("{{" {ID} "}"{0,2}) | ("%{" [^}\n]* "}"?)
 
 ESCAPE_SEQUENCE=                \\[^\n]
-DSTRING_SINGLE_LINE=            \"([^\\\"\n]|{ESCAPE_SEQUENCE})*?\"?
-DSTRING=                        \"([^\\\"]|{ESCAPE_SEQUENCE})*?\"?
-STRING_SINGLE_LINE=             '([^'\n]|'')*?'?
-STRING=                         '([^']|'')*?'?
+DSTRING_SINGLE_LINE=            \"([^\\\"\n]|{ESCAPE_SEQUENCE})*\"
+DSTRING=                        \"([^\\\"]|{ESCAPE_SEQUENCE})*\"
+STRING_SINGLE_LINE=             '([^'\n]|'')*'
+STRING=                         '([^']|'')*'
 NS_HEX_DIGIT = [[:digit:]a-fA-F]
 NS_WORD_CHAR = [:digit:] | "-" | [a-zA-Z]
 NS_URI_CHAR =  “%” {NS_HEX_DIGIT} {NS_HEX_DIGIT} | {NS_WORD_CHAR} | [#;\/?:@&=+$,_.!~*'()\[\]]
