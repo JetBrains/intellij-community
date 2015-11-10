@@ -79,7 +79,7 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
     List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
     if (node instanceof CoverageListNode) {
       final Object val = node.getValue();
-      if (val instanceof PsiFile) return Collections.emptyList();
+      if (val instanceof PsiFile || val == null) return Collections.emptyList();
       final PsiDirectory psiDirectory = (PsiDirectory)val;
       final PsiDirectory[] subdirectories = ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory[]>() {
         @Override
