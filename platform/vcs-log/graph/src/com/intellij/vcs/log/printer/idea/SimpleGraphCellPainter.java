@@ -47,8 +47,14 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     return ROW_HEIGHT;
   }
 
-  private int getDashLength() {
-    return getRowHeight() / 4 + 2;
+  private float[] getDashLength(int edgeLength) {
+    int space = getRowHeight() / 4 - 1;
+    int dash = getRowHeight() / 4 + 1;
+    int count = edgeLength / (2 * (dash + space));
+    assert count != 0;
+    int dashApprox = (edgeLength / 2 - count * space) / count;
+
+    return new float[]{2 * dashApprox, 2 * space};
   }
 
   @NotNull
@@ -62,16 +68,18 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   }
 
   @NotNull
-  private Stroke getDashedStroke() {
-    return new BasicStroke(PrintParameters.getLineThickness(getRowHeight()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{getDashLength()}, 0);
+  private Stroke getDashedStroke(float[] dash) {
+    return new BasicStroke(PrintParameters.getLineThickness(getRowHeight()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, dash,
+                           dash[0] / 2);
   }
 
   @NotNull
-  private Stroke getSelectedDashedStroke() {
-    return new BasicStroke(PrintParameters.getSelectedLineThickness(getRowHeight()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{getDashLength()}, 0);
+  private Stroke getSelectedDashedStroke(float[] dash) {
+    return new BasicStroke(PrintParameters.getSelectedLineThickness(getRowHeight()), BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, dash,
+                           dash[0] / 2);
   }
 
-  private void paintUpLine(int from, int to, Color color, boolean hasArrow) {
+  private void paintUpLine(int from, int to, Color color, boolean hasArrow, boolean isUsual, boolean isSelected) {
     // paint vertical lines normal size
     // paint non-vertical lines twice the size to make them dock with each other well
     int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
@@ -79,36 +87,49 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
       int x = nodeWidth * from + nodeWidth / 2;
       int y1 = getRowHeight() / 2 - 1;
       int y2 = 0;
-      paintLine(color, hasArrow, x, y1, x, y2, x, y2);
+      paintLine(color, hasArrow, x, y1, x, y2, x, y2, isUsual, isSelected);
     }
     else {
       int x1 = nodeWidth * from + nodeWidth / 2;
       int y1 = getRowHeight() / 2;
       int x2 = nodeWidth * to + nodeWidth / 2;
       int y2 = -getRowHeight() / 2;
-      paintLine(color, hasArrow, x1, y1, x2, y2, (x1 + x2) / 2, (y1 + y2) / 2);
+      paintLine(color, hasArrow, x1, y1, x2, y2, (x1 + x2) / 2, (y1 + y2) / 2, isUsual, isSelected);
     }
   }
 
-  private void paintDownLine(int from, int to, Color color, boolean hasArrow) {
+  private void paintDownLine(int from, int to, Color color, boolean hasArrow, boolean isUsual, boolean isSelected) {
     int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
     if (from == to) {
       int y2 = getRowHeight() - 1;
       int y1 = getRowHeight() / 2;
       int x = nodeWidth * from + nodeWidth / 2;
-      paintLine(color, hasArrow, x, y1, x, y2, x, y2);
+      paintLine(color, hasArrow, x, y1, x, y2, x, y2, isUsual, isSelected);
     }
     else {
       int x1 = nodeWidth * from + nodeWidth / 2;
       int y1 = getRowHeight() / 2;
       int x2 = nodeWidth * to + nodeWidth / 2;
       int y2 = getRowHeight() + getRowHeight() / 2;
-      paintLine(color, hasArrow, x1, y1, x2, y2, (x1 + x2) / 2, (y1 + y2) / 2);
+      paintLine(color, hasArrow, x1, y1, x2, y2, (x1 + x2) / 2, (y1 + y2) / 2, isUsual, isSelected);
     }
   }
 
-  private void paintLine(Color color, boolean hasArrow, int x1, int y1, int x2, int y2, int startArrowX, int startArrowY) {
+  private void paintLine(Color color,
+                         boolean hasArrow,
+                         int x1,
+                         int y1,
+                         int x2,
+                         int y2,
+                         int startArrowX,
+                         int startArrowY,
+                         boolean isUsual,
+                         boolean isSelected) {
     g2.setColor(color);
+
+    int length = (x1 == x2) ? getRowHeight() : (int)Math.ceil(Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2)));
+    setStroke(isUsual || hasArrow, isSelected, length);
+
     g2.drawLine(x1, y1, x2, y2);
     if (hasArrow) {
       Pair<Integer, Integer> rotate1 =
@@ -151,7 +172,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     g2.fill(circle);
   }
 
-  private void setStroke(boolean usual, boolean select) {
+  private void setStroke(boolean usual, boolean select, int edgeLength) {
     if (usual) {
       if (select) {
         g2.setStroke(getSelectedStroke());
@@ -162,10 +183,10 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     }
     else {
       if (select) {
-        g2.setStroke(getSelectedDashedStroke());
+        g2.setStroke(getSelectedDashedStroke(getDashLength(edgeLength)));
       }
       else {
-        g2.setStroke(getDashedStroke());
+        g2.setStroke(getDashedStroke(getDashLength(edgeLength)));
       }
     }
   }
@@ -190,15 +211,14 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
       if (printElement instanceof EdgePrintElement) {
 
         EdgePrintElement edgePrintElement = (EdgePrintElement)printElement;
-        boolean isUsual = isUsual(edgePrintElement);
         Color usualColor = getColor(edgePrintElement);
 
         if (printElement.isSelected()) {
-          printEdge(MARK_COLOR, true, isUsual, edgePrintElement);
-          printEdge(usualColor, false, isUsual, edgePrintElement);
+          printEdge(MARK_COLOR, true, edgePrintElement);
+          printEdge(usualColor, false, edgePrintElement);
         }
         else {
-          printEdge(usualColor, false, isUsual, edgePrintElement);
+          printEdge(usualColor, false, edgePrintElement);
         }
 
       }
@@ -216,17 +236,16 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     }
   }
 
-  private void printEdge(Color color, boolean isSelected, boolean isUsual, EdgePrintElement edgePrintElement) {
+  private void printEdge(Color color, boolean isSelected, EdgePrintElement edgePrintElement) {
     int from = edgePrintElement.getPositionInCurrentRow();
     int to = edgePrintElement.getPositionInOtherRow();
-
-    setStroke(isUsual || edgePrintElement.hasArrow(), isSelected);
+    boolean isUsual = isUsual(edgePrintElement);
 
     if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
-      paintDownLine(from, to, color, edgePrintElement.hasArrow());
+      paintDownLine(from, to, color, edgePrintElement.hasArrow(), isUsual, isSelected);
     }
     else {
-      paintUpLine(from, to, color, edgePrintElement.hasArrow());
+      paintUpLine(from, to, color, edgePrintElement.hasArrow(), isUsual, isSelected);
     }
   }
 
