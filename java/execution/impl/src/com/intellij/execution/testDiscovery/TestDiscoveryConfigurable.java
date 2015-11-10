@@ -16,6 +16,7 @@
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.application.options.ModulesComboBox;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.MethodBrowser;
 import com.intellij.execution.ui.*;
 import com.intellij.ide.util.ClassFilter;
@@ -61,7 +62,7 @@ public class TestDiscoveryConfigurable<T extends TestDiscoveryConfiguration> ext
   private JComponent anchor;
 
   public TestDiscoveryConfigurable(final Project project) {
-    myModule.setText("Use classpath of");
+    myModule.setText(ExecutionBundle.message("application.configuration.use.classpath.and.jdk.of.module.label"));
     myModule.setLabelLocation(BorderLayout.WEST);
     myModule.setComponent(new ModulesComboBox());
     myModuleSelector = new ConfigurationModuleSelector(project, getModulesComponent());
