@@ -74,13 +74,13 @@ public class PyTestCreator implements TestCreator {
                 fileName = fileName + "." + PythonFileType.INSTANCE.getDefaultExtension();
 
               StringBuilder fileText = new StringBuilder();
-              fileText.append("class ").append(dialog.getClassName()).append("(TestCase):\n  ");
+              fileText.append("class ").append(dialog.getClassName()).append("(TestCase):\n\t");
               List<String> methods = dialog.getMethods();
               if (methods.size() == 0)
                 fileText.append("pass\n");
 
               for (String method : methods) {
-                fileText.append("def ").append(method).append("(self):\n    self.fail()\n\n  ");
+                fileText.append("def ").append(method).append("(self):\n    self.fail()\n\n\t");
               }
 
               PsiFile psiFile = PyUtil.getOrCreateFile(
@@ -89,10 +89,10 @@ public class PyTestCreator implements TestCreator {
                                                              null);
 
               PyElement createdClass = PyElementGenerator.getInstance(project).createFromText(
-                LanguageLevel.forElement(psiFile), PyClass.class,
-                                                           fileText.toString());
+                LanguageLevel.forElement(psiFile), PyClass.class, fileText.toString());
               createdClass = (PyElement)psiFile.addAfter(createdClass, psiFile.getLastChild());
 
+              PostprocessReformattingAspect.getInstance(project).doPostponedFormatting(psiFile.getViewProvider());
               CodeStyleManager.getInstance(project).reformat(psiFile);
               createdClass.navigate(false);
               return psiFile;
