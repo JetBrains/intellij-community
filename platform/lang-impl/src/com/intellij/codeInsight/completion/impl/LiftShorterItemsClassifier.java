@@ -19,6 +19,8 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.*;
 import gnu.trove.THashSet;
@@ -39,20 +41,18 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   private final MultiMap<String, LookupElement> myElements = createMultiMap(false);
   private final MultiMap<LookupElement, LookupElement> myToLift = createMultiMap(true);
   private final MultiMap<LookupElement, LookupElement> myReversedToLift = createMultiMap(true);
-  private final String myName;
   private final LiftingCondition myCondition;
   private final boolean myLiftBefore;
   private int myCount = 0;
 
   public LiftShorterItemsClassifier(String name, Classifier<LookupElement> next, LiftingCondition condition, boolean liftBefore) {
-    super(next);
-    myName = name;
+    super(next, name);
     myCondition = condition;
     myLiftBefore = liftBefore;
   }
 
   @Override
-  public void addElement(LookupElement added, ProcessingContext context) {
+  public void addElement(@NotNull LookupElement added, @NotNull ProcessingContext context) {
     myCount++;
 
     for (String string : CompletionUtil.iterateLookupStrings(added)) {
@@ -96,8 +96,9 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
     }
   }
 
+  @NotNull
   @Override
-  public Iterable<LookupElement> classify(Iterable<LookupElement> source, ProcessingContext context) {
+  public Iterable<LookupElement> classify(@NotNull Iterable<LookupElement> source, @NotNull ProcessingContext context) {
     return liftShorterElements(source, null, context);
   }
 
@@ -113,25 +114,21 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
     return new LiftingIterable(srcSet, context, source, lifted);
   }
 
+  @NotNull
   @Override
-  public void describeItems(LinkedHashMap<LookupElement, StringBuilder> map, ProcessingContext context) {
+  public List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<LookupElement> items, @NotNull ProcessingContext context) {
     final THashSet<LookupElement> lifted = newIdentityTroveSet();
-    liftShorterElements(new ArrayList<LookupElement>(map.keySet()), lifted, context);
-    if (!lifted.isEmpty()) {
-      for (LookupElement element : map.keySet()) {
-        final StringBuilder builder = map.get(element);
-        if (builder.length() > 0) {
-          builder.append(", ");
-        }
-
-        builder.append(myName).append("=").append(lifted.contains(element));
+    liftShorterElements(ContainerUtil.newArrayList(items), lifted, context);
+    return ContainerUtil.map(items, new Function<LookupElement, Pair<LookupElement, Object>>() {
+      @Override
+      public Pair<LookupElement, Object> fun(LookupElement element) {
+        return new Pair<LookupElement, Object>(element, lifted.contains(element));
       }
-    }
-    super.describeItems(map, context);
+    });
   }
 
   @Override
-  public void removeElement(LookupElement element, ProcessingContext context) {
+  public void removeElement(@NotNull LookupElement element, @NotNull ProcessingContext context) {
     for (String s : CompletionUtil.iterateLookupStrings(element)) {
       myElements.remove(s, element);
       if (myElements.get(s).isEmpty()) {

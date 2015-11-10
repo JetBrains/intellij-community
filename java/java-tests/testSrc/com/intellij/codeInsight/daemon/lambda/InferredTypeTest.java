@@ -75,6 +75,17 @@ public class InferredTypeTest extends LightCodeInsightFixtureTestCase {
     assertTrue(ensureNotCached.getCanonicalText(), ensureNotCached.equalsToText("java.util.List<java.lang.Integer>"));
   }
 
+  public void testAnnotatedVoidReturnType() throws Exception {
+    myFixture.addClass("@java.lang.annotation.Target(value={java.lang.annotation.ElementType.TYPE_USE}) @interface D {}");
+    final PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("R.java", "public interface R {@D void run();}");
+    final PsiClass psiClass = file.getClasses()[0];
+    final PsiMethod method = psiClass.getMethods()[0];
+    //noinspection UsePrimitiveTypes
+    assertFalse(PsiType.VOID == method.getReturnType());
+    myFixture.configureByText("a.java", "class A {{R r = () -> {};}} ");
+    myFixture.checkHighlighting(false, false, false);
+  }
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {

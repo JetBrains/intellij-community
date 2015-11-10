@@ -217,7 +217,7 @@ public class GroovyPropertyUtils {
     if (method.getName().startsWith(IS_PREFIX) && !PsiType.BOOLEAN.equals(method.getReturnType())) {
       return false;
     }
-    if (method.getReturnType() == PsiType.VOID) return false;
+    if (PsiType.VOID.equals(method.getReturnType())) return false;
     if (propertyName == null) return true;
 
     final String byGetter = getPropertyNameByGetter(method);

@@ -1,4 +1,5 @@
 import com.google.common.base.Optional;
+import java.util.Collections;
 
 class A {
 

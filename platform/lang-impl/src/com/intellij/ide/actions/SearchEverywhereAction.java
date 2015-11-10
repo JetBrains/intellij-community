@@ -49,6 +49,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguagePsiElementExternalizer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -1106,23 +1107,29 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       Matcher matcher = NameUtil.buildMatcher(pattern, 0, true, true);
       if (isMoreItem(index)) {
         cmp = More.get(isSelected);
-      } else if (value instanceof VirtualFile
-                 && myProject != null
-                 && ((((VirtualFile)value).isDirectory() && (file = PsiManager.getInstance(myProject).findDirectory((VirtualFile)value)) != null )
-                     || (file = PsiManager.getInstance(myProject).findFile((VirtualFile)value)) != null)) {
-        myFileRenderer.setPatternMatcher(matcher);
-        cmp = myFileRenderer.getListCellRendererComponent(list, file, index, isSelected, cellHasFocus);
-      } else if (value instanceof PsiElement) {
-        myFileRenderer.setPatternMatcher(matcher);
-        cmp = myFileRenderer.getListCellRendererComponent(list, value, index, isSelected, isSelected);
-      } else if (value instanceof GotoActionModel.ActionWrapper) {
-        cmp = myActionsRenderer.getListCellRendererComponent(list, new GotoActionModel.MatchedValue(((GotoActionModel.ActionWrapper)value), pattern), index, isSelected, isSelected);
       } else {
-        cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
-        final JPanel p = new JPanel(new BorderLayout());
-        p.setBackground(UIUtil.getListBackground(isSelected));
-        p.add(cmp, BorderLayout.CENTER);
-        cmp = p;
+        cmp = SearchEverywhereClassifier.EP_Manager.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      }
+
+      if (cmp == null) {
+        if (value instanceof VirtualFile
+            && myProject != null
+            && ((((VirtualFile)value).isDirectory() && (file = PsiManager.getInstance(myProject).findDirectory((VirtualFile)value)) != null)
+                || (file = PsiManager.getInstance(myProject).findFile((VirtualFile)value)) != null)) {
+          myFileRenderer.setPatternMatcher(matcher);
+          cmp = myFileRenderer.getListCellRendererComponent(list, file, index, isSelected, cellHasFocus);
+        } else if (value instanceof PsiElement) {
+          myFileRenderer.setPatternMatcher(matcher);
+          cmp = myFileRenderer.getListCellRendererComponent(list, value, index, isSelected, isSelected);
+        } else if (value instanceof GotoActionModel.ActionWrapper) {
+          cmp = myActionsRenderer.getListCellRendererComponent(list, new GotoActionModel.MatchedValue(((GotoActionModel.ActionWrapper)value), pattern), index, isSelected, isSelected);
+        } else {
+          cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
+          final JPanel p = new JPanel(new BorderLayout());
+          p.setBackground(UIUtil.getListBackground(isSelected));
+          p.add(cmp, BorderLayout.CENTER);
+          cmp = p;
+        }
       }
       if (myLocationString != null || value instanceof BooleanOptionDescription) {
         final JPanel panel = new JPanel(new BorderLayout());
@@ -1737,12 +1744,19 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                               myProgressIndicator, new Processor<Object>() {
           @Override
           public boolean process(Object o) {
-            if (isSymbol(o)) {
-              final PsiElement element = (PsiElement)o;
-              final PsiFile file = element.getContainingFile();
-              if (!myListModel.contains(o) && !symbols.contains(o) &&
-                  //some elements are non-physical like DB columns
-                  (file == null || (file.getVirtualFile() != null && (includeLibs || scope.accept(file.getVirtualFile()))))) {
+            if (SearchEverywhereClassifier.EP_Manager.isSymbol(o) && !myListModel.contains(o) && !symbols.contains(o)) {
+              PsiElement element = null;
+              if (o instanceof PsiElement) {
+                element = (PsiElement)o;
+              }
+              else if (o instanceof PsiElementNavigationItem) {
+                element = ((PsiElementNavigationItem)o).getTargetElement();
+              }
+              VirtualFile virtualFile = SearchEverywhereClassifier.EP_Manager.getVirtualFile(o);
+              //some elements are non-physical like DB columns
+              boolean isElementWithoutFile = element != null && element.getContainingFile() == null;
+              boolean isFileInScope = virtualFile != null && (includeLibs || scope.accept(virtualFile));
+              if (isElementWithoutFile || isFileInScope) {
                 symbols.add(o);
               }
             }
@@ -1758,16 +1772,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       return symbols;
     }
 
-    protected boolean isSymbol(Object o) {
-      if (o instanceof PsiElement) {
-        final PsiElement e = (PsiElement)o;
-        //todo[kb] need a better way to avoid mixing java classes with symbols. Same to other languages where
-        //todo[kb] symbol provider returns classes. We need kind of suppressor API & EP here.
-        return !e.getLanguage().is(Language.findLanguageByID("JAVA")) || !(e.getParent() instanceof PsiFile);
-      }
-      return false;
-    }
-
     private SearchResult getClasses(String pattern, boolean includeLibs, final int max, ChooseByNamePopup chooseByNamePopup) {
       final SearchResult classes = new SearchResult();
       if (chooseByNamePopup == null || shouldSkipPattern(pattern)) {
@@ -1777,17 +1781,25 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                                                       myProgressIndicator, new Processor<Object>() {
           @Override
           public boolean process(Object o) {
-            if (o instanceof PsiElement && !myListModel.contains(o) && !classes.contains(o)) {
+            if (SearchEverywhereClassifier.EP_Manager.isClass(o) && !myListModel.contains(o) && !classes.contains(o)) {
               if (classes.size() == max) {
                 classes.needMore = true;
                 return false;
               }
+
+              PsiElement element = null;
+              if (o instanceof PsiElement) {
+                element = (PsiElement)o;
+              }
+              else if (o instanceof PsiElementNavigationItem) {
+                element = ((PsiElementNavigationItem)o).getTargetElement();
+              }
               classes.add(o);
-              if (o instanceof PsiNamedElement) {
-                final String name = ((PsiNamedElement)o).getName();
-                final PsiFile file = ((PsiNamedElement)o).getContainingFile();
-                if (file != null) {
-                  final VirtualFile virtualFile = file.getVirtualFile();
+
+              if (element instanceof PsiNamedElement) {
+                final String name = ((PsiNamedElement)element).getName();
+                VirtualFile virtualFile = SearchEverywhereClassifier.EP_Manager.getVirtualFile(o);
+                if (virtualFile != null) {
                   if (StringUtil.equals(name, virtualFile.getNameWithoutExtension())) {
                     myAlreadyAddedFiles.add(virtualFile);
                   }

@@ -253,23 +253,37 @@ public class EditorView implements TextDrawingCallback, Disposable {
    * if approximation will in fact be used during width calculation.
    */
   int getMaxWidthInLineRange(int startVisualLine, int endVisualLine, @Nullable Runnable quickEvaluationListener) {
+    myEditor.getSoftWrapModel().prepareToMapping();
     int maxWidth = 0;
     endVisualLine = Math.min(endVisualLine, myEditor.getVisibleLineCount() - 1);
     for (int i = startVisualLine; i <= endVisualLine; i++) {
-      int startOffset = myMapper.visualLineToOffset(i);
-      float x = 0;
-      int maxOffset = 0;
-      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(this, startOffset, false, 
-                                                                                              quickEvaluationListener)) {
-        x = fragment.getEndX();
-        maxOffset = Math.max(maxOffset, fragment.getMaxOffset());
-      }
-      if (myEditor.getSoftWrapModel().getSoftWrap(maxOffset) != null) {
-        x += myEditor.getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
-      }
-      maxWidth = Math.max(maxWidth, (int) x);
+      int width = getVisualLineWidth(i, quickEvaluationListener);
+      maxWidth = Math.max(maxWidth, width);
     }
     return maxWidth;
+  }
+
+  private int getVisualLineWidth(int visualLine, @Nullable Runnable quickEvaluationListener) {
+    FoldRegion[] topLevelRegions = myEditor.getFoldingModel().fetchTopLevel();
+    if (quickEvaluationListener != null && 
+        (topLevelRegions == null || topLevelRegions.length == 0) && myEditor.getSoftWrapModel().getRegisteredSoftWraps().isEmpty() &&
+        !myTextLayoutCache.hasCachedLayoutFor(visualLine)) {
+      // fast path - speeds up editor opening
+      quickEvaluationListener.run();
+      return myMapper.offsetToLogicalPosition(myDocument.getLineEndOffset(visualLine)).column * getMaxCharWidth();
+    }
+    int startOffset = myMapper.visualLineToOffset(visualLine);
+    float x = 0;
+    int maxOffset = 0;
+    for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(this, startOffset, false,
+                                                                                            quickEvaluationListener)) {
+      x = fragment.getEndX();
+      maxOffset = Math.max(maxOffset, fragment.getMaxOffset());
+    }
+    if (myEditor.getSoftWrapModel().getSoftWrap(maxOffset) != null) {
+      x += myEditor.getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
+    }
+    return (int)x;
   }
 
   public void reinitSettings() {

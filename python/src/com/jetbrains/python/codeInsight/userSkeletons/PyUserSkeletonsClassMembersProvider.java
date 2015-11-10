@@ -39,7 +39,7 @@ import java.util.List;
 public class PyUserSkeletonsClassMembersProvider extends PyClassMembersProviderBase implements PyOverridingAncestorsClassMembersProvider {
   @NotNull
   @Override
-  public Collection<PyCustomMember> getMembers(@NotNull PyClassType classType, PsiElement location) {
+  public Collection<PyCustomMember> getMembers(@NotNull PyClassType classType, PsiElement location, TypeEvalContext typeEvalContext) {
     final PyClass cls = classType.getPyClass();
     final PyClass skeleton = PyUserSkeletonsUtil.getUserSkeleton(cls);
     if (skeleton != null) {
@@ -52,7 +52,7 @@ public class PyUserSkeletonsClassMembersProvider extends PyClassMembersProviderB
   @Override
   public PsiElement resolveMember(@NotNull PyClassType classType, @NotNull String name, PsiElement location, TypeEvalContext context) {
     final PyClass cls = classType.getPyClass();
-    final PyClass skeleton = PyUserSkeletonsUtil.getUserSkeleton(cls);
+    final PyClass skeleton = PyUserSkeletonsUtil.getUserSkeletonWithContext(cls, context);
     if (skeleton != null) {
       return findClassMember(skeleton, name, classType.isDefinition());
     }
@@ -60,7 +60,7 @@ public class PyUserSkeletonsClassMembersProvider extends PyClassMembersProviderB
   }
 
   public static PsiElement findClassMember(@NotNull PyClass cls, @NotNull String name, boolean isDefinition) {
-    final PyFunction function = cls.findMethodByName(name, false);
+    final PyFunction function = cls.findMethodByName(name, false, null);
     if (function != null) {
       final PyUtil.MethodFlags methodFlags = PyUtil.MethodFlags.of(function);
       final boolean instanceMethod = methodFlags == null || methodFlags.isInstanceMethod();
@@ -74,7 +74,7 @@ public class PyUserSkeletonsClassMembersProvider extends PyClassMembersProviderB
         return instanceAttribute;
       }
     }
-    final PyTargetExpression classAttribute = cls.findClassAttribute(name, false);
+    final PyTargetExpression classAttribute = cls.findClassAttribute(name, false, null);
     if (classAttribute != null) {
       return classAttribute;
     }
@@ -83,7 +83,7 @@ public class PyUserSkeletonsClassMembersProvider extends PyClassMembersProviderB
 
   public static Collection<PyCustomMember> getClassMembers(@NotNull PyClass cls, boolean isDefinition) {
     final List<PyCustomMember> result = new ArrayList<PyCustomMember>();
-    for (PyFunction function : cls.getMethods(false)) {
+    for (PyFunction function : cls.getMethods()) {
       final String name = function.getName();
       final PyUtil.MethodFlags methodFlags = PyUtil.MethodFlags.of(function);
       final boolean instanceMethod = methodFlags == null || methodFlags.isInstanceMethod();

@@ -208,7 +208,7 @@ public class IoTestUtil {
   private static int runCommand(final ProcessBuilder command) throws IOException, InterruptedException {
     command.redirectErrorStream(true);
     final Process process = command.start();
-    new Thread(new Runnable() {
+    Thread thread = new Thread(new Runnable() {
       @Override
       public void run() {
         try {
@@ -228,8 +228,11 @@ public class IoTestUtil {
           throw new RuntimeException(e);
         }
       }
-    },"io test").start();
-    return process.waitFor();
+    }, "io test");
+    thread.start();
+    int ret = process.waitFor();
+    thread.join();
+    return ret;
   }
 
   public static void assertTimestampsEqual(final long expected, final long actual) {

@@ -146,13 +146,13 @@ public class AddFieldQuickFix implements LocalQuickFix {
   @Nullable
   public static PsiElement addFieldToInit(Project project, PyClass cls, String itemName, Function<String, PyStatement> callback) {
     if (cls != null && itemName != null) {
-      PyFunction init = cls.findMethodByName(PyNames.INIT, false);
+      PyFunction init = cls.findMethodByName(PyNames.INIT, false, null);
       if (init != null) {
         return appendToMethod(init, callback);
       }
       else { // no init! boldly copy ancestor's.
         for (PyClass ancestor : cls.getAncestorClasses(null)) {
-          init = ancestor.findMethodByName(PyNames.INIT, false);
+          init = ancestor.findMethodByName(PyNames.INIT, false, null);
           if (init != null) break;
         }
         PyFunction newInit = createInitMethod(project, cls, init);
@@ -163,7 +163,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
         appendToMethod(newInit, callback);
 
         PsiElement addAnchor = null;
-        PyFunction[] meths = cls.getMethods(false);
+        PyFunction[] meths = cls.getMethods();
         if (meths.length > 0) addAnchor = meths[0].getPrevSibling();
         PyStatementList clsContent = cls.getStatementList();
         newInit = (PyFunction) clsContent.addAfter(newInit, addAnchor);

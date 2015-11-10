@@ -251,6 +251,8 @@ public class PerformanceWatcher implements ApplicationComponent {
       return null;
     }
 
+    checkMemoryUsage(file);
+
     try {
       OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file));
       try {
@@ -270,6 +272,17 @@ public class PerformanceWatcher implements ApplicationComponent {
     }
     catch (IOException ignored) { }
     return file;
+  }
+
+  private static void checkMemoryUsage(File file) {
+    final Runtime rt = Runtime.getRuntime();
+    final long allocatedMem = rt.totalMemory();
+    final long unusedMem = rt.freeMemory();
+    if (unusedMem < allocatedMem / 5) {
+      LOG.info("High memory usage (free " + (unusedMem / 1024 / 1024) +
+               " of " + (allocatedMem / 1024 / 1024) +
+               " MB) while dumping threads to " + file);
+    }
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")

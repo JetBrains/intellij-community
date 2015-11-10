@@ -16,6 +16,7 @@
 package com.jetbrains.python.codeInsight.override;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
@@ -41,8 +42,8 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyClassLikeType;
-import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyNoneType;
+import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,7 +115,7 @@ public class PyOverrideImplementUtil {
       if (name == null || PyUtil.isClassPrivateName(name)) {
         continue;
       }
-      if (pyClass.findMethodByName(name, false) == null) {
+      if (pyClass.findMethodByName(name, false, null) == null) {
         final PyMethodMember member = new PyMethodMember(function);
         elements.add(member);
       }
@@ -244,7 +245,7 @@ public class PyOverrideImplementUtil {
       if (!PyNames.INIT.equals(baseFunction.getName()) && context.getReturnType(baseFunction) != PyNoneType.INSTANCE || overridingNew) {
         statementBody.append("return ");
       }
-      if (baseClass.isNewStyleClass(null)) {
+      if (baseClass.isNewStyleClass(context)) {
         statementBody.append(PyNames.SUPER);
         statementBody.append("(");
         final LanguageLevel langLevel = ((PyFile)pyClass.getContainingFile()).getLanguageLevel();
@@ -316,25 +317,22 @@ public class PyOverrideImplementUtil {
     return toClass.getName();
   }
 
+  /**
+   * Returns all super functions available through MRO.
+   */
   @NotNull
-  public static Collection<PyFunction> getAllSuperFunctions(@NotNull PyClass pyClass, @NotNull TypeEvalContext context) {
-
-    // This is a legacy approach. Should be removed soon since type-based members should be enough
-    final Map<String, PyFunction> superFunctions = new HashMap<String, PyFunction>();
-    for (PyFunction function : pyClass.getMethods(true)) {
-      if (!superFunctions.containsKey(function.getName())) {
-        superFunctions.put(function.getName(), function);
+  public static List<PyFunction> getAllSuperFunctions(@NotNull PyClass pyClass, @NotNull TypeEvalContext context) {
+    final Map<String, PyFunction> functions = Maps.newLinkedHashMap();
+    for (final PyClassLikeType type : pyClass.getAncestorTypes(context)) {
+      if (type != null) {
+        for (PyFunction function : PyTypeUtil.getMembersOfType(type, PyFunction.class, false, context)) {
+          final String name = function.getName();
+          if (name != null && !functions.containsKey(name)) {
+            functions.put(name, function);
+          }
+        }
       }
     }
-
-
-
-    final Set<PyFunction> functions = new HashSet<PyFunction>(superFunctions.values());
-    final PyClassLikeType type = PyUtil.as(context.getType(pyClass), PyClassLikeType.class);
-
-    if (type != null) {
-      functions.addAll(PyTypeUtil.getMembersOfType(type, PyFunction.class, context));
-    }
-    return functions;
+    return Lists.newArrayList(functions.values());
   }
 }

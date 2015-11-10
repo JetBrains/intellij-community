@@ -54,7 +54,7 @@ public class PyMethodNavigationOffsetProvider implements MethodNavigationOffsetP
       array.add(psiElement);
     }
     else if (psiElement instanceof PyClass) {
-      Collections.addAll(array, ((PyClass)psiElement).getMethods(false));
+      Collections.addAll(array, ((PyClass)psiElement).getMethods());
     }
   }
 }

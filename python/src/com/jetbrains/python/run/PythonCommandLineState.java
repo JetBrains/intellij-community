@@ -16,6 +16,7 @@
 package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
@@ -51,7 +52,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.remote.RemoteProcessControl;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
@@ -246,11 +246,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public static GeneralCommandLine createPythonCommandLine(Project project, PythonRunParams config) {
     GeneralCommandLine commandLine = generalCommandLine();
 
+    commandLine.withCharset(EncodingProjectManager.getInstance(project).getDefaultCharset());
+    
     createStandardGroups(commandLine);
     
     initEnvironment(project, commandLine, config);
-
-    commandLine.withCharset(EncodingProjectManager.getInstance(project).getDefaultCharset());
 
     setRunnerPath(project, commandLine, config);
 
@@ -278,15 +278,13 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   protected static void initEnvironment(Project project, GeneralCommandLine commandLine, PythonRunParams myConfig) {
-    Map<String, String> env = myConfig.getEnvs();
-    if (env == null) {
-      env = new HashMap<String, String>();
-    }
-    else {
-      env = new HashMap<String, String>(env);
-    }
+    Map<String, String> env = Maps.newHashMap();
 
     setupEncodingEnvs(env, commandLine.getCharset());
+
+    if (myConfig.getEnvs() != null) {
+      env.putAll(myConfig.getEnvs());
+    }
 
     addCommonEnvironmentVariables(env);
 

@@ -160,22 +160,21 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
     @Override
     public void visitPyTargetExpression(PyTargetExpression node) {
-      checkSlots(node);
+      checkSlotsAndProperties(node);
     }
 
-    private void checkSlots(PyQualifiedExpression node) {
+    private void checkSlotsAndProperties(PyQualifiedExpression node) {
       final PyExpression qualifier = node.getQualifier();
       if (qualifier != null) {
         final PyType type = myTypeEvalContext.getType(qualifier);
         if (type instanceof PyClassType) {
           final PyClass pyClass = ((PyClassType)type).getPyClass();
-          if (pyClass.isNewStyleClass(null)) {
+          if (pyClass.isNewStyleClass(myTypeEvalContext)) {
             if (pyClass.getOwnSlots() == null) {
               return;
             }
-            final List<String> slots = pyClass.getSlots(null);
             final String attrName = node.getReferencedName();
-            if (slots != null && !slots.contains(attrName) && !slots.contains(PyNames.DICT)) {
+            if (!canHaveAttribute(pyClass, attrName)) {
               for (PyClass ancestor : pyClass.getAncestorClasses(myTypeEvalContext)) {
                 if (ancestor == null) {
                   return;
@@ -183,8 +182,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                 if (PyNames.OBJECT.equals(ancestor.getName())) {
                   break;
                 }
-                final List<String> ancestorSlots = ancestor.getSlots(null);
-                if (ancestorSlots == null || ancestorSlots.contains(attrName) || ancestorSlots.contains(PyNames.DICT)) {
+                if (canHaveAttribute(pyClass, attrName)) {
                   return;
                 }
               }
@@ -195,6 +193,15 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           }
         }
       }
+    }
+
+    private boolean canHaveAttribute(@NotNull PyClass cls, @Nullable String attrName) {
+      final List<String> slots = cls.getSlots(myTypeEvalContext);
+      // Class instance can contain attributes with arbitrary names
+      if (slots == null || slots.contains(PyNames.DICT)) {
+        return true;
+      }
+      return slots.contains(attrName) || cls.getProperties().containsKey(attrName);
     }
 
     @Override
@@ -779,7 +786,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (isDecoratedAsDynamic(cls, true)) {
           return true;
         }
-        if (hasUnresolvedDynamicMember((PyClassType)type, reference, name)) return true;
+        if (hasUnresolvedDynamicMember((PyClassType)type, reference, name, myTypeEvalContext)) return true;
       }
       if (type instanceof PyFunctionTypeImpl) {
         final PyCallable callable = ((PyFunctionTypeImpl)type).getCallable();
@@ -797,9 +804,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
     private static boolean hasUnresolvedDynamicMember(@NotNull final PyClassType type,
                                                       PsiReference reference,
-                                                      @NotNull final String name) {
+                                                      @NotNull final String name, TypeEvalContext typeEvalContext) {
       for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
-        final Collection<PyCustomMember> resolveResult = provider.getMembers(type, reference.getElement());
+        final Collection<PyCustomMember> resolveResult = provider.getMembers(type, reference.getElement(), typeEvalContext);
         for (PyCustomMember member : resolveResult) {
           if (member.getName().equals(name)) return true;
         }
@@ -888,7 +895,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             }
           }
         }
-        for (PyFunction method : containedClass.getMethods(false)) {
+        for (PyFunction method : containedClass.getMethods()) {
           if (expr.getText().equals(method.getName())) {
             actions.add(new UnresolvedReferenceAddSelfQuickFix(expr, qualifier));
           }
@@ -942,7 +949,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       // if we're in a class context and the class defines a variable with the same name, offer auto-import only as quickfix,
       // not as popup
       PyClass containingClass = PsiTreeUtil.getParentOfType(node, PyClass.class);
-      if (containingClass != null && (containingClass.findMethodByName(importFix.getNameToImport(), true) != null ||
+      if (containingClass != null && (containingClass.findMethodByName(importFix.getNameToImport(), true, null) != null ||
                                       containingClass.findInstanceAttribute(importFix.getNameToImport(), true) != null)) {
         return true;
       }

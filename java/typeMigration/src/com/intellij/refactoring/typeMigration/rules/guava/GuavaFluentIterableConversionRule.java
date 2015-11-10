@@ -29,7 +29,6 @@ import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -91,8 +90,6 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
   }
 
   static {
-    DESCRIPTORS_MAP.put("of", new TypeConversionDescriptorFactory("FluentIterable.of($arr$)", "java.util.Arrays.stream($arr$)", false, true, true));
-
     DESCRIPTORS_MAP.put("isEmpty", new TypeConversionDescriptorFactory("$q$.isEmpty()", "$q$.findAny().isPresent()", false));
     DESCRIPTORS_MAP.put("skip", new TypeConversionDescriptorFactory("$q$.skip($p$)", "$q$.skip($p$)", false, true, true));
     DESCRIPTORS_MAP.put("limit", new TypeConversionDescriptorFactory("$q$.limit($p$)", "$q$.limit($p$)", false, true, true));
@@ -137,15 +134,26 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     TypeConversionDescriptor descriptorBase = null;
     PsiType conversionType = null;
     boolean needSpecifyType = true;
-    if (methodName.equals("from")) {
-      descriptorBase = new TypeConversionDescriptor("FluentIterable.from($it$)", null) {
+    if (methodName.equals("of")) {
+      descriptorBase = new TypeConversionDescriptor(null, "java.util.Arrays.stream($arr$)") {
         @Override
         public PsiExpression replace(PsiExpression expression) {
+          setStringToReplace((((PsiMethodCallExpression)expression).getMethodExpression().getQualifierExpression() != null
+                              ? "FluentIterable." : "") + "of($arr$)");
+          return super.replace(expression);
+        }
+      };
+    } else if (methodName.equals("from")) {
+      descriptorBase = new TypeConversionDescriptor(null, null) {
+        @Override
+        public PsiExpression replace(PsiExpression expression) {
+          final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
           PsiExpression argument =
-            PseudoLambdaReplaceTemplate.replaceTypeParameters(((PsiMethodCallExpression)expression).getArgumentList().getExpressions()[0]);
+            PseudoLambdaReplaceTemplate.replaceTypeParameters(methodCall.getArgumentList().getExpressions()[0]);
           if (argument == null) {
             return expression;
           }
+          setStringToReplace((methodCall.getMethodExpression().getQualifierExpression() != null ? "FluentIterable." : "") + "from($it$)");
           boolean isCollection =
             InheritanceUtil.isInheritor(PsiTypesUtil.getPsiClass(argument.getType()), CommonClassNames.JAVA_UTIL_COLLECTION);
           setReplaceByString(isCollection ? "$it$.stream()" : "java.util.stream.StreamSupport.stream($it$.spliterator(), false)");
@@ -212,7 +220,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
         final TypeConversionDescriptor descriptor = base.create();
         needSpecifyType = base.isChainedMethod();
         if (needSpecifyType && !base.isFluentIterableReturnType()) {
-          conversionType = getTypeParametersAsText(GuavaOptionalConversionRule.JAVA_OPTIONAL, context.getType(), context);
+          conversionType = addTypeParameters(GuavaOptionalConversionRule.JAVA_OPTIONAL, context.getType(), context);
         }
         descriptorBase = descriptor;
       }
@@ -220,7 +228,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     if (descriptorBase != null) {
       if (needSpecifyType) {
         if (conversionType == null) {
-          conversionType = getTypeParametersAsText(StreamApiConstants.JAVA_UTIL_STREAM_STREAM, context.getType(), context);
+          conversionType = addTypeParameters(StreamApiConstants.JAVA_UTIL_STREAM_STREAM, context.getType(), context);
         }
         descriptorBase.withConversionType(conversionType);
       }
@@ -230,7 +238,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
   }
 
   @NotNull
-  private static PsiType getTypeParametersAsText(String baseClassQualifiedName, PsiType type, PsiElement context) {
+  private static PsiType addTypeParameters(String baseClassQualifiedName, PsiType type, PsiElement context) {
     String parameterText = "";
     if (type != null) {
       final String canonicalText = type.getCanonicalText(false);
@@ -295,6 +303,10 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
         if (aClass == null || !FLUENT_ITERABLE.equals(aClass.getQualifiedName())) {
           return null;
         }
+        break;
+      }
+      else if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).resolve() instanceof PsiVariable) {
+        labeler.migrateExpressionType(qualifier, addTypeParameters(StreamApiConstants.JAVA_UTIL_STREAM_STREAM, to, qualifier), qualifier.getParent(), false, false);
         break;
       }
       else {

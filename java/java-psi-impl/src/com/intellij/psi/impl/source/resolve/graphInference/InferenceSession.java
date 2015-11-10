@@ -182,12 +182,13 @@ public class InferenceSession {
   private static boolean isPertinentToApplicability(PsiExpression expr, PsiMethod method, PsiType expectedReturnType) {
     if (expr instanceof PsiLambdaExpression && ((PsiLambdaExpression)expr).hasFormalParameterTypes() ||
         expr instanceof PsiMethodReferenceExpression && ((PsiMethodReferenceExpression)expr).isExact()) {
-      if (method != null && method.getTypeParameters().length > 0) {
+      if (method != null) {
         final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expr.getParent());
         PsiType paramType = null;
         if (parent instanceof PsiExpressionList) {
           final PsiElement gParent = parent.getParent();
-          if (gParent instanceof PsiCallExpression && ((PsiCallExpression)gParent).getTypeArgumentList().getTypeParameterElements().length == 0) {
+          PsiTypeParameterListOwner owner = getTypeParameterOwner(method, gParent);
+          if (owner != null) {
             final int idx = LambdaUtil.getLambdaIdx(((PsiExpressionList)parent), expr);
             final PsiParameter[] parameters = method.getParameterList().getParameters();
             if (idx > parameters.length - 1) {
@@ -197,7 +198,7 @@ public class InferenceSession {
             else {
               paramType = parameters[idx].getType();
             }
-            if (isTypeParameterType(method, paramType)) return false;
+            if (isTypeParameterType(owner, paramType)) return false;
           }
         }
         else if (expectedReturnType != null && parent instanceof PsiLambdaExpression) {
@@ -231,7 +232,30 @@ public class InferenceSession {
     return true;
   }
 
-  private static boolean isTypeParameterType(PsiMethod method, PsiType paramType) {
+  private static PsiTypeParameterListOwner getTypeParameterOwner(@NotNull PsiMethod method, PsiElement gParent) {
+    PsiTypeParameterListOwner owner = null;
+    if (method.getTypeParameters().length > 0 && gParent instanceof PsiCallExpression && ((PsiCallExpression)gParent).getTypeArgumentList().getTypeParameterElements().length == 0) {
+      owner = method;
+    }
+    else if (method.isConstructor() && gParent instanceof PsiNewExpression) {
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null && containingClass.hasTypeParameters()) {
+        final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)gParent).getClassOrAnonymousClassReference();
+        if (classReference != null) {
+          final PsiReferenceParameterList parameterList = classReference.getParameterList();
+          if (parameterList != null) {
+            final PsiTypeElement[] typeElements = parameterList.getTypeParameterElements();
+            if (typeElements.length == 1 && typeElements[0].getType() instanceof PsiDiamondType) {
+              owner = containingClass;
+            }
+          }
+        }
+      }
+    }
+    return owner;
+  }
+
+  private static boolean isTypeParameterType(PsiTypeParameterListOwner method, PsiType paramType) {
     final PsiClass psiClass = PsiUtil.resolveClassInType(paramType); //accept ellipsis here
     if (psiClass instanceof PsiTypeParameter && ((PsiTypeParameter)psiClass).getOwner() == method) return true;
     return false;
@@ -1491,7 +1515,7 @@ public class InferenceSession {
       final PsiType sReturnType = sSubstitutor.substitute(sInterfaceMethod.getReturnType());
       final PsiType tReturnType = tSubstitutor.substitute(tInterfaceMethod.getReturnType());
 
-      if (tReturnType == PsiType.VOID) {
+      if (PsiType.VOID.equals(tReturnType)) {
         return true;
       }
 
@@ -1507,8 +1531,8 @@ public class InferenceSession {
           return false;
         }
       } else {
-        final boolean sPrimitive = sReturnType instanceof PsiPrimitiveType && sReturnType != PsiType.VOID;
-        final boolean tPrimitive = tReturnType instanceof PsiPrimitiveType && tReturnType != PsiType.VOID;
+        final boolean sPrimitive = sReturnType instanceof PsiPrimitiveType && !PsiType.VOID.equals(sReturnType);
+        final boolean tPrimitive = tReturnType instanceof PsiPrimitiveType && !PsiType.VOID.equals(tReturnType);
         if (sPrimitive ^ tPrimitive) {
           for (PsiExpression returnExpression : returnExpressions) {
             if (!PsiPolyExpressionUtil.isPolyExpression(returnExpression)) {
@@ -1557,19 +1581,19 @@ public class InferenceSession {
       }
       final PsiType sReturnType = sSubstitutor.substitute(sInterfaceMethod.getReturnType());
       final PsiType tReturnType = tSubstitutor.substitute(tInterfaceMethod.getReturnType());
-      if (tReturnType == PsiType.VOID) {
+      if (PsiType.VOID.equals(tReturnType)) {
         return true;
       }
 
-      final boolean sPrimitive = sReturnType instanceof PsiPrimitiveType && sReturnType != PsiType.VOID;
-      final boolean tPrimitive = tReturnType instanceof PsiPrimitiveType && tReturnType != PsiType.VOID;
+      final boolean sPrimitive = sReturnType instanceof PsiPrimitiveType && !PsiType.VOID.equals(sReturnType);
+      final boolean tPrimitive = tReturnType instanceof PsiPrimitiveType && !PsiType.VOID.equals(tReturnType);
 
       if (sPrimitive ^ tPrimitive) {
         final PsiMember member = ((PsiMethodReferenceExpression)arg).getPotentiallyApplicableMember();
         LOG.assertTrue(member != null, arg);
         if (member instanceof PsiMethod) {
           final PsiType methodReturnType = ((PsiMethod)member).getReturnType();
-          if (sPrimitive && methodReturnType instanceof PsiPrimitiveType && methodReturnType != PsiType.VOID ||
+          if (sPrimitive && methodReturnType instanceof PsiPrimitiveType && !PsiType.VOID.equals(methodReturnType) ||
               tPrimitive && methodReturnType instanceof PsiClassType) {
             return true;
           }

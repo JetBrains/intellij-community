@@ -104,8 +104,8 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       } else {
         return false;
       }
-      if (returnType != PsiType.VOID && returnType != null) {
-        if (applicableMethodReturnType == PsiType.VOID) {
+      if (!PsiType.VOID.equals(returnType) && returnType != null) {
+        if (PsiType.VOID.equals(applicableMethodReturnType)) {
           return false;
         }
 

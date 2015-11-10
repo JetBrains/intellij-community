@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -46,7 +47,7 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
     DEFAULT_BACKGROUND = colorsScheme.getDefaultBackground();
     CARET_ROW_BACKGROUND = colorsScheme.getColor(EditorColors.CARET_ROW_COLOR);
     SELECTION_BACKGROUND = colorsScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR);
-    assertEquals(3, new HashSet<Color>(Arrays.asList(DEFAULT_BACKGROUND, CARET_ROW_BACKGROUND, SELECTION_BACKGROUND)).size());
+    assertEquals(3, new HashSet<>(Arrays.asList(DEFAULT_BACKGROUND, CARET_ROW_BACKGROUND, SELECTION_BACKGROUND)).size());
   }
 
   public void testBlockSelection() {
@@ -154,11 +155,23 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
                     new Segment(11, 16, DEFAULT_BACKGROUND),
                     new Segment(16, 21, DEFAULT_BACKGROUND));
   }
+  
+  public void testBoldDefaultFont() {
+    init("abc");
+    myFixture.getEditor().getColorsScheme().setAttributes(HighlighterColors.TEXT, 
+                                                          new TextAttributes(Color.black, Color.white, null, null, Font.BOLD));
+    IterationState it = new IterationState((EditorEx)myFixture.getEditor(), 0, 3, false);
+    assertFalse(it.atEnd());
+    assertEquals(0, it.getStartOffset());
+    assertEquals(3, it.getEndOffset());
+    TextAttributes attributes = it.getMergedAttributes();
+    assertEquals(Font.BOLD, attributes.getFontType());
+  }
 
   private void verifySplitting(boolean checkForegroundColor, @NotNull Segment... expectedSegments) {
     EditorEx editor = (EditorEx)myFixture.getEditor();
     IterationState iterationState = new IterationState(editor, 0, editor.getDocument().getTextLength(), true);
-    List<Segment> actualSegments = new ArrayList<Segment>();
+    List<Segment> actualSegments = new ArrayList<>();
     do {
       Segment segment = new Segment(iterationState.getStartOffset(),
                                     iterationState.getEndOffset(),
@@ -203,8 +216,8 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
     private final int start;
     private final int end;
     private final Color color;
-    private final List<Integer> pastLineEndSegmentWidths = new ArrayList<Integer>();
-    private final List<Color> pastLineEndSegmentColors = new ArrayList<Color>();
+    private final List<Integer> pastLineEndSegmentWidths = new ArrayList<>();
+    private final List<Color> pastLineEndSegmentColors = new ArrayList<>();
 
     private Segment(int start, int end, Color color) {
       this.start = start;

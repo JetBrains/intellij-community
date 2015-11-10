@@ -1152,6 +1152,60 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     );
   }
 
+  public void testScriptSearch() {
+    final String source = "package a;" +
+                          "class BX extends java.util.List {" +
+                          "  private static final java.util.List VALUE = new BX();" +
+                          "}" +
+                          "class CX extends java.util.List {" +
+                          "  private static final String S = \"\";" +
+                          "}";
+    // find static final fields whose type is a proper ancestor of the class declaring their fields
+    assertEquals("all variables accessible from script", 1,
+                 findMatchesCount(source,
+                                  "[script(\""                                                         +
+                                  "import com.intellij.psi.util.InheritanceUtil\n"                     +
+                                  "import com.intellij.psi.util.PsiTreeUtil\n"                         +
+                                  "import com.intellij.psi.PsiClass\n"                                 +
+                                  "init != null &&"                                                    + // redundant reference to '_init
+                                  "InheritanceUtil.isInheritor(\n"                                     +
+                                  "        PsiTreeUtil.getParentOfType(variable, PsiClass.class),\n"   + // reference to 'variable
+                                  "        true, \n"                                                   +
+                                  "        Type.type.canonicalText\n"                                  + // reference to '_Type
+                                  ")\n\")]"                                                            +
+                                  "static final '_Type 'variable = '_init;"));
+
+    final String source2 = "class A {" +
+                           "  String s = new String();" +
+                           "  int m() {" +
+                           "    int i = 2+1;" +
+                           "    return i;" +
+                           "  }" +
+                           "}";
+    assertEquals("type of variables in script are as expected", 1,
+                 findMatchesCount(source2,
+                                  "[script(\"" +
+                                  "import com.intellij.psi.*\n" +
+                                  "a instanceof PsiClass &&" +
+                                  "b instanceof PsiTypeElement &&" +
+                                  "c instanceof PsiField &&" +
+                                  "d instanceof PsiNewExpression &&" +
+                                  "e instanceof PsiTypeElement &&" +
+                                  "f instanceof PsiMethod &&" +
+                                  "g instanceof PsiTypeElement &&" +
+                                  "h instanceof PsiLocalVariable &&" +
+                                  "i instanceof PsiPolyadicExpression &&" +
+                                  "j instanceof PsiReferenceExpression" +
+                                  "\n\")]" +
+                                  "class '_a {" +
+                                  "  '_b '_c = '_d;" +
+                                  "  '_e '_f() {" +
+                                  "    '_g '_h = '_i" +
+                                  "    return '_j;" +
+                                  "  }" +
+                                  "}"));
+  }
+
   public void testCheckScriptValidation() {
     final String s1 = "";
     final String s2 = "'_b:[script( \"^^^\" )]";

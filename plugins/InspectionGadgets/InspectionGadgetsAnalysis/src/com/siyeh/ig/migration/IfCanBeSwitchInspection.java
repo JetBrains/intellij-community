@@ -43,7 +43,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.Document;
 import java.awt.*;
-import java.lang.String;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -62,7 +61,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
   @SuppressWarnings({"PublicField"})
   public boolean suggestEnumSwitches = false;
 
-  private boolean onlySuggestNullSafe = true;
+  protected boolean onlySuggestNullSafe = true;
 
   @Override
   public boolean isEnabledByDefault() {

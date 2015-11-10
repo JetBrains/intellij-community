@@ -133,6 +133,11 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
     return result;
   }
 
+  boolean hasCachedLayoutFor(int line) {
+    LineLayout layout = myLines.get(line);
+    return layout != null && layout != myBidiNotRequiredMarker;
+  }
+
   @NotNull
   private LineLayout createLineLayout(int line, boolean skipBidiLayout) {
     int lineStart = myDocument.getLineStartOffset(line);

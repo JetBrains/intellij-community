@@ -201,7 +201,7 @@ public class PyExtractMethodUtil {
       scope.add(owner);
       final PyClass containingClass = ((PyFunction)owner).getContainingClass();
       if (containingClass != null) {
-        for (PyFunction function : containingClass.getMethods(false)) {
+        for (PyFunction function : containingClass.getMethods()) {
           if (!function.equals(owner) && !function.equals(generatedMethod)) {
             scope.add(function);
           }
@@ -687,7 +687,7 @@ public class PyExtractMethodUtil {
           ScopeOwner owner = parent;
           while (owner != null) {
             if (owner instanceof PyClass) {
-              if (((PyClass)owner).findMethodByName(s, true) != null) {
+              if (((PyClass)owner).findMethodByName(s, true, null) != null) {
                 return false;
               }
             }

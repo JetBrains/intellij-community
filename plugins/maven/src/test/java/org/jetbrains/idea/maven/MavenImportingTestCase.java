@@ -371,7 +371,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     return getRootManager(moduleName).getContentEntries();
   }
 
-  private ModuleRootManager getRootManager(String module) {
+  public ModuleRootManager getRootManager(String module) {
     return ModuleRootManager.getInstance(getModule(module));
   }
 

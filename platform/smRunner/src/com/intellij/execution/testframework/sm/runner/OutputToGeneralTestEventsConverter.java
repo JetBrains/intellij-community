@@ -326,6 +326,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     @NonNls private static final String ATTR_KEY_TEST_ERROR = "error";
     @NonNls private static final String ATTR_KEY_TEST_COUNT = "count";
     @NonNls private static final String ATTR_KEY_TEST_DURATION = "duration";
+    @NonNls private static final String ATTR_KEY_TEST_OUTPUT_FILE = "outputFile";
     @NonNls private static final String ATTR_KEY_LOCATION_URL = "locationHint";
     @NonNls private static final String ATTR_KEY_LOCATION_URL_OLD = "location";
     @NonNls private static final String ATTR_KEY_STACKTRACE_DETAILS = "details";
@@ -409,7 +410,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
         duration = convertToLong(durationStr, testFinished);
       }
 
-      TestFinishedEvent testFinishedEvent = new TestFinishedEvent(testFinished, duration);
+      TestFinishedEvent testFinishedEvent = new TestFinishedEvent(testFinished, duration, 
+                                                                  testFinished.getAttributes().get(ATTR_KEY_TEST_OUTPUT_FILE));
       fireOnTestFinished(testFinishedEvent);
     }
 

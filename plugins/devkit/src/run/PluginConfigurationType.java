@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,11 +41,14 @@ public class PluginConfigurationType implements ConfigurationType {
 
   public PluginConfigurationType() {
     myFactory = new ConfigurationFactory(this) {
-      public RunConfiguration createTemplateConfiguration(Project project) {
-        final PluginRunConfiguration runConfiguration = new PluginRunConfiguration(project, this, "");
+      @NotNull
+      @Override
+      public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+        PluginRunConfiguration runConfiguration = new PluginRunConfiguration(project, this, "");
         if (runConfiguration.VM_PARAMETERS == null) {
           runConfiguration.VM_PARAMETERS = getVmParameters();
-        } else {
+        }
+        else {
           runConfiguration.VM_PARAMETERS += getVmParameters();
         }
         return runConfiguration;
@@ -61,11 +64,11 @@ public class PluginConfigurationType implements ConfigurationType {
         return true;
       }
 
+      @Override
       public RunConfiguration createConfiguration(String name, RunConfiguration template) {
-        final PluginRunConfiguration pluginRunConfiguration = (PluginRunConfiguration)template;
+        PluginRunConfiguration pluginRunConfiguration = (PluginRunConfiguration)template;
         if (pluginRunConfiguration.getModule() == null) {
-          final Collection<Module> modules = ModuleUtil
-            .getModulesOfType(pluginRunConfiguration.getProject(), PluginModuleType.getInstance());
+          Collection<Module> modules = ModuleUtil.getModulesOfType(pluginRunConfiguration.getProject(), PluginModuleType.getInstance());
           pluginRunConfiguration.setModule(ContainerUtil.getFirstItem(modules));
         }
         return super.createConfiguration(name, pluginRunConfiguration);
@@ -73,23 +76,28 @@ public class PluginConfigurationType implements ConfigurationType {
     };
   }
 
+  @Override
   public String getDisplayName() {
     return DevKitBundle.message("run.configuration.title");
   }
 
+  @Override
   public String getConfigurationTypeDescription() {
     return DevKitBundle.message("run.configuration.type.description");
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.Nodes.Plugin;
   }
 
+  @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[] {myFactory};
   }
 
   @NotNull
+  @Override
   public String getId() {
     return "#org.jetbrains.idea.devkit.run.PluginConfigurationType";
   }
@@ -99,12 +107,12 @@ public class PluginConfigurationType implements ConfigurationType {
     if (myVmParameters == null) {
       String vmOptions;
       try {
-        vmOptions = FileUtil.loadFile(new File(PathManager.getBinPath(), "idea.plugins.vmoptions")).replaceAll("\\s+", " ");
+        vmOptions = FileUtil.loadFile(new File(PathManager.getBinPath(), "idea.plugins.vmoptions"));
       }
       catch (IOException e) {
         vmOptions = VMOptions.read();
       }
-      myVmParameters = vmOptions != null ? vmOptions.trim() : "";
+      myVmParameters = vmOptions != null ? vmOptions.replaceAll("\\s+", " ").trim() : "";
     }
 
     return myVmParameters;

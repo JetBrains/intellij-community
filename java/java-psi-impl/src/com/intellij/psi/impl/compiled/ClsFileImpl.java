@@ -362,6 +362,22 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     return mirrorTreeElement.getPsi();
   }
 
+  @Override
+  public String getText() {
+    VirtualFile file = getVirtualFile();
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    assert document != null : file.getUrl();
+    return document.getText();
+  }
+
+  @Override
+  public int getTextLength() {
+    VirtualFile file = getVirtualFile();
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    assert document != null : file.getUrl();
+    return document.getTextLength();
+  }
+
   private static Exception wrapException(InvalidMirrorException e, VirtualFile file) {
     ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.find(file);
     if (decompiler instanceof ClassFileDecompilers.Light) {

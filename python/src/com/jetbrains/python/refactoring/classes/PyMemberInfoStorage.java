@@ -52,7 +52,7 @@ public class PyMemberInfoStorage extends AbstractMemberInfoStorage<PyElement, Py
 
   private void buildSubClassesMapImpl(PyClass aClass, HashSet<PyClass> visited) {
     visited.add(aClass);
-    for (PyClass clazz : aClass.getSuperClasses()) {
+    for (PyClass clazz : aClass.getSuperClasses(null)) {
       getSubclasses(clazz).add(aClass);
       if (!visited.contains(clazz)) {
         buildSubClassesMapImpl(clazz, visited);

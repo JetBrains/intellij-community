@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  This file is used only when IDEA is started from IDEA. searchableOptions.xml packaged in the product installation is produced during
+  build by traverseUI command (see com.intellij.ide.ui.search.TraverseUIStarter for details).
+-->
 <options>
   <configurable id="reference.settings.ide.settings.file-colors" configurable_name="File Colors">
     <option name="" hit="" />

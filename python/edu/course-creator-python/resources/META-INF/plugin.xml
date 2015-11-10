@@ -2,7 +2,7 @@
   <id>com.jetbrains.edu.coursecreator.python</id>
   <name>Course Creator for PyCharm Edu</name>
   <version>2.0</version>
-
+  <idea-version since-build="143.403"/>
   <description><![CDATA[
       Plugin allows you to create new course for PyCharm <Edu></Edu>.
     ]]></description>
@@ -22,6 +22,8 @@
   <depends>com.intellij.modules.platform</depends>
   <depends>com.intellij.modules.python</depends>
   <depends>com.jetbrains.edu.coursecreator</depends>
+  <depends>com.jetbrains.edu.core</depends>
+  <depends>com.jetbrains.python.edu.core</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <directoryProjectGenerator implementation="com.jetbrains.edu.coursecreator.PyCCProjectGenerator"/>

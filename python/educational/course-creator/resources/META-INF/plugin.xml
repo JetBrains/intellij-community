@@ -2,7 +2,7 @@
   <id>com.jetbrains.edu.coursecreator</id>
   <name>Course Creator Plugin</name>
   <version>2.0</version>
-
+  <idea-version since-build="143.403"/>
   <description><![CDATA[
       Language independent part for creating courses.
     ]]></description>
@@ -19,6 +19,8 @@
   <depends>com.intellij.modules.lang</depends>
   -->
   <depends>com.intellij.modules.platform</depends>
+  <depends>com.jetbrains.edu.core</depends>
+  <depends>com.jetbrains.edu.interactivelearning</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.jetbrains.edu.coursecreator.CCProjectService"/>

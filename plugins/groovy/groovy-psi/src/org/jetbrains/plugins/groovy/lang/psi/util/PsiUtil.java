@@ -1182,7 +1182,7 @@ public class PsiUtil {
       if (controlFlowOwnerParent instanceof GrMethod && ((GrMethod)controlFlowOwnerParent).isConstructor()) {
         return false;
       }
-      else if (controlFlowOwnerParent instanceof PsiMethod && ((PsiMethod)controlFlowOwnerParent).getReturnType() == PsiType.VOID) {
+      else if (controlFlowOwnerParent instanceof PsiMethod && PsiType.VOID.equals(((PsiMethod)controlFlowOwnerParent).getReturnType())) {
         return false;
       }
     }

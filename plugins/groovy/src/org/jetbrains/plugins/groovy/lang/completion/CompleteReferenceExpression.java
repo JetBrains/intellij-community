@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -290,7 +290,7 @@ public class CompleteReferenceExpression {
     Project project = qualifier.getProject();
     final PsiType qualifierType = TypesUtil.boxPrimitiveType(qualifier.getType(), qualifier.getManager(), qualifier.getResolveScope());
     final ResolveState state = ResolveState.initial();
-    if (qualifierType == null || qualifierType == PsiType.VOID) {
+    if (qualifierType == null || PsiType.VOID.equals(qualifierType)) {
       if (qualifier instanceof GrReferenceExpression) {
         PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
         if (resolved instanceof PsiPackage || resolved instanceof PsiVariable) {
@@ -300,22 +300,15 @@ public class CompleteReferenceExpression {
       }
       getVariantsFromQualifierType(TypesUtil.getJavaLangObject(qualifier), project);
     }
+    else if (qualifierType instanceof GrTraitType) {
+      PsiType[] conjuncts = ((GrTraitType)qualifierType).getConjuncts();
+      for (int i = conjuncts.length - 1; i >= 0; i--) {
+        getVariantsFromQualifierType(conjuncts[i], project);
+      }
+    }
     else if (qualifierType instanceof PsiIntersectionType) {
       for (PsiType conjunct : ((PsiIntersectionType)qualifierType).getConjuncts()) {
         getVariantsFromQualifierType(conjunct, project);
-      }
-    }
-    else if (qualifierType instanceof GrTraitType) {
-      GrTypeDefinition definition = ((GrTraitType)qualifierType).getMockTypeDefinition();
-      if (definition != null) {
-        PsiClassType classType = JavaPsiFacade.getElementFactory(project).createType(definition);
-        getVariantsFromQualifierType(classType, project);
-      }
-      else {
-        getVariantsFromQualifierType(((GrTraitType)qualifierType).getExprType(), project);
-        for (PsiClassType traitType : ((GrTraitType)qualifierType).getTraitTypes()) {
-          getVariantsFromQualifierType(traitType, project);
-        }
       }
     }
     else {

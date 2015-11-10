@@ -15,54 +15,107 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author yole
  */
 public class SelectGroupingAction extends LabeledComboBoxAction {
-  private final Project myProject;
-  private final CommittedChangesTreeBrowser myBrowser;
 
-  public SelectGroupingAction(Project project, final CommittedChangesTreeBrowser browser) {
+  @NotNull private final Project myProject;
+  @NotNull private final CommittedChangesTreeBrowser myBrowser;
+
+  public SelectGroupingAction(@NotNull Project project, @NotNull CommittedChangesTreeBrowser browser) {
     super(VcsBundle.message("committed.changes.group.title"));
     myProject = project;
     myBrowser = browser;
-    getComboBox().setPrototypeDisplayValue("Date+");
   }
 
-  protected void selectionChanged(Object selection) {
-    myBrowser.setGroupingStrategy((ChangeListGroupingStrategy)selection);
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setText(myBrowser.getGroupingStrategy().toString());
   }
 
-  protected ComboBoxModel createModel() {
-    DefaultComboBoxModel model =
-      new DefaultComboBoxModel(new Object[]{new DateChangeListGroupingStrategy(), ChangeListGroupingStrategy.USER});
-    final AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss();
-    for (AbstractVcs vcs : vcss) {
-      final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
+  @NotNull
+  @Override
+  protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+    return new DefaultActionGroup(
+      ContainerUtil.map(collectStrategies(), new NotNullFunction<ChangeListGroupingStrategy, DumbAwareAction>() {
+        @NotNull
+        @Override
+        public DumbAwareAction fun(@NotNull ChangeListGroupingStrategy strategy) {
+          return new SetGroupingAction(strategy);
+        }
+      }));
+  }
+
+  @NotNull
+  @Override
+  protected Condition<AnAction> getPreselectCondition() {
+    return new Condition<AnAction>() {
+      @Override
+      public boolean value(AnAction action) {
+        return ((SetGroupingAction)action).myStrategy.equals(myBrowser.getGroupingStrategy());
+      }
+    };
+  }
+
+  @NotNull
+  private List<ChangeListGroupingStrategy> collectStrategies() {
+    List<ChangeListGroupingStrategy> result = ContainerUtil.newArrayList();
+
+    result.add(new DateChangeListGroupingStrategy());
+    result.add(ChangeListGroupingStrategy.USER);
+
+    for (AbstractVcs vcs : ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss()) {
+      CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
+
       if (provider != null) {
         for (ChangeListColumn column : provider.getColumns()) {
           if (ChangeListColumn.isCustom(column) && column.getComparator() != null) {
-            model.addElement(new CustomChangeListColumnGroupingStrategy(column));
+            result.add(new CustomChangeListColumnGroupingStrategy(column));
           }
         }
       }
     }
-    return model;
+
+    return result;
   }
 
-  private static class CustomChangeListColumnGroupingStrategy
-    implements ChangeListGroupingStrategy {
+  private class SetGroupingAction extends DumbAwareAction {
 
-    private final ChangeListColumn<CommittedChangeList> myColumn;
+    @NotNull private final ChangeListGroupingStrategy myStrategy;
 
-    private CustomChangeListColumnGroupingStrategy(ChangeListColumn column) {
+    private SetGroupingAction(@NotNull ChangeListGroupingStrategy strategy) {
+      super(strategy.toString());
+      myStrategy = strategy;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myBrowser.setGroupingStrategy(myStrategy);
+    }
+  }
+
+  private static class CustomChangeListColumnGroupingStrategy implements ChangeListGroupingStrategy {
+
+    @NotNull private final ChangeListColumn<CommittedChangeList> myColumn;
+
+    private CustomChangeListColumnGroupingStrategy(@NotNull ChangeListColumn column) {
       // The column is coming from a call to CommittedChangesProvider::getColumns(), which is typed as
       //  simply "ChangeListColumn[]" without any additional type info. Inspecting the implementations
       //  of that method shows that all the ChangeListColumn's that are returned are actually
@@ -81,7 +134,7 @@ public class SelectGroupingAction extends LabeledComboBoxAction {
     }
 
     @Override
-    public String getGroupName(CommittedChangeList changeList) {
+    public String getGroupName(@NotNull CommittedChangeList changeList) {
       return changeList.getBranch();
     }
 

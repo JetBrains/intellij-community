@@ -31,6 +31,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -136,10 +137,10 @@ public class ManagePackagesDialog extends DialogWrapper {
       .disableRemoveAction()
       .addExtraAction(reloadButton)
       .createPanel();
-    packagesPanel.setPreferredSize(new Dimension(400, -1));
-    packagesPanel.setMinimumSize(new Dimension(100, -1));
+    packagesPanel.setPreferredSize(new Dimension(JBUI.scale(400), -1));
+    packagesPanel.setMinimumSize(new Dimension(JBUI.scale(100), -1));
     myPackages.setFixedCellWidth(0);
-    myPackages.setFixedCellHeight(22);
+    myPackages.setFixedCellHeight(JBUI.scale(22));
     myPackages.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     mySplitPane.setLeftComponent(packagesPanel);
 
@@ -187,6 +188,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     else {
       myInstallToUser.setVisible(false);
     }
+    myMainPanel.setPreferredSize(new Dimension(JBUI.scale(900), JBUI.scale(700)));
   }
 
   public void selectPackage(@NotNull InstalledPackage pkg) {

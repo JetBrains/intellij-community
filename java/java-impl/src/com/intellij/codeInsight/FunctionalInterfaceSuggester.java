@@ -123,7 +123,7 @@ public class FunctionalInterfaceSuggester {
             return null;
           }
           
-          if (returnType == PsiType.VOID && interfaceMethodReturnType != PsiType.VOID) {
+          if (PsiType.VOID.equals(returnType) && !PsiType.VOID.equals(interfaceMethodReturnType)) {
             return null;
           }
 

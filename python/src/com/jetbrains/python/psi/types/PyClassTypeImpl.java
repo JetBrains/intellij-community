@@ -312,7 +312,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       return true;
     }
     final PyClass cls = getPyClass();
-    if (PyABCUtil.isSubclass(cls, PyNames.CALLABLE)) {
+    if (PyABCUtil.isSubclass(cls, PyNames.CALLABLE, null)) {
       return true;
     }
     return false;
@@ -444,7 +444,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
     // from providers
     for (final PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
-      for (final PyCustomMember member : provider.getMembers(this, location)) {
+      for (final PyCustomMember member : provider.getMembers(this, location, typeEvalContext)) {
         final String name = member.getName();
         if (!namesAlready.contains(name)) {
           ret.add(PyCustomMemberUtils.toLookUpElement(member, getName()));
@@ -452,7 +452,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       }
     }
 
-    if (!myClass.isNewStyleClass(null)) {
+    if (!myClass.isNewStyleClass(typeEvalContext)) {
       final PyBuiltinCache cache = PyBuiltinCache.getInstance(myClass);
       final PyClassType classobjType = cache.getOldstyleClassobjType();
       if (classobjType != null) {
@@ -460,7 +460,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       }
     }
 
-    if (isDefinition() && myClass.isNewStyleClass(null)) {
+    if (isDefinition() && myClass.isNewStyleClass(typeEvalContext)) {
       final PyClassLikeType typeType = getMetaClassType(typeEvalContext, true);
       if (typeType != null) {
         Collections.addAll(ret, typeType.getCompletionVariants(prefix, location, context));
@@ -510,7 +510,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     // We are here because of completion (see call stack), so we use code complete here
     final TypeEvalContext context =
       (expressionHook != null ? TypeEvalContext.codeCompletion(myClass.getProject(), myClass.getContainingFile()) : null);
-    List<String> slots = myClass.isNewStyleClass(null) ? myClass.getSlots(
+    List<String> slots = myClass.isNewStyleClass(context) ? myClass.getSlots(
       context) : null;
     if (slots != null) {
       processor.setAllowedNames(slots);

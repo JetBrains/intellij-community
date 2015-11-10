@@ -62,11 +62,11 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     final StringBuilder superCall = new StringBuilder();
     final PyClass klass = problemFunction.getContainingClass();
     if (klass == null) return;
-    final PyClass[] superClasses = klass.getSuperClasses();
+    final PyClass[] superClasses = klass.getSuperClasses(null);
     if (superClasses.length == 0) return;
 
     final PyClass superClass = superClasses[0];
-    final PyFunction superInit = superClass.findMethodByName(PyNames.INIT, true);
+    final PyFunction superInit = superClass.findMethodByName(PyNames.INIT, true, null);
     if (superInit == null) return;
 
     final ParametersInfo origInfo = new ParametersInfo(problemFunction.getParameterList());

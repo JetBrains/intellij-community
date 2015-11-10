@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class EmptyClassInspectionBase extends BaseInspection {
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreClassWithParameterization = false;
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreThrowables = true;
 
   @Override
@@ -76,6 +76,7 @@ public class EmptyClassInspectionBase extends BaseInspection {
 
     @Override
     public void visitFile(PsiFile file) {
+      super.visitFile(file);
       if (!(file instanceof PsiJavaFile)) {
         return;
       }
@@ -92,12 +93,19 @@ public class EmptyClassInspectionBase extends BaseInspection {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      //don't call super, to prevent drilldown
+      super.visitClass(aClass);
       if (FileTypeUtils.isInServerPageFile(aClass.getContainingFile())) {
         return;
       }
       if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
         return;
+      }
+      if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        for (PsiClass superClass : aClass.getSupers()) {
+          if (superClass.isInterface() || superClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            return;
+          }
+        }
       }
       if (aClass instanceof PsiTypeParameter) {
         return;

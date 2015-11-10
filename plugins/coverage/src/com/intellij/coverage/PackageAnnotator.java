@@ -332,21 +332,21 @@ public class PackageAnnotator {
           PackageCoverageInfo coverageInfoForClass = null;
           String classCoverageKey = classFqVMName.replace('/', '.');
           boolean ignoreClass = false;
+          boolean keepWithoutSource = false;
           for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
             if (extension.ignoreCoverageForClass(suitesBundle, child)) {
               ignoreClass = true;
               break;
             }
             if (extension.keepCoverageInfoForClassWithoutSource(suitesBundle, child)) {
-              coverageInfoForClass = classWithoutSourceCoverageInfo;
-              break;
+              keepWithoutSource = true;
             }
           }
           if (ignoreClass) {
             continue;
           }
 
-          if (coverageInfoForClass == null && isInSource != null && isInSource.booleanValue()) {
+          if (isInSource != null && isInSource.booleanValue()) {
             for (DirCoverageInfo dirCoverageInfo : dirs) {
               if (dirCoverageInfo.sourceRoot != null && VfsUtil.isAncestor(dirCoverageInfo.sourceRoot, containingFileRef.get(), false)) {
                 coverageInfoForClass = dirCoverageInfo;
@@ -354,6 +354,9 @@ public class PackageAnnotator {
                 break;
               }
             }
+          }
+          if (coverageInfoForClass == null && keepWithoutSource) {
+            coverageInfoForClass = classWithoutSourceCoverageInfo;
           }
           if (coverageInfoForClass != null) {
             collectClassCoverageInformation(child, psiClassRef.get(), coverageInfoForClass, projectInfo, toplevelClassCoverage,

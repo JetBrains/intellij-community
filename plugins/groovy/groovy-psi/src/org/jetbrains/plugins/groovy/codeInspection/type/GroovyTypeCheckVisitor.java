@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -696,7 +695,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
                                     @NotNull PsiElement elementToHighlight) {
     if (getTupleInitializer(expression) != null) return;
     final PsiType returnType = PsiImplUtil.inferReturnType(expression);
-    if (returnType == null || returnType == PsiType.VOID) return;
+    if (returnType == null || PsiType.VOID.equals(returnType)) return;
     processAssignment(returnType, expression, elementToHighlight, "cannot.return.type", context, ApplicableTo.RETURN_VALUE);
   }
 

@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -116,12 +117,33 @@ public class DirectoryNode extends PackageDependenciesNode {
   public void fillFiles(Set<PsiFile> set, boolean recursively) {
     super.fillFiles(set, recursively);
     int count = getChildCount();
+    Boolean isRoot = null;
     for (int i = 0; i < count; i++) {
       PackageDependenciesNode child = (PackageDependenciesNode)getChildAt(i);
       if (child instanceof FileNode || recursively) {
         child.fillFiles(set, true);
       }
+      else if (child instanceof DirectoryNode) {
+        if (isRoot == null) {
+          isRoot = isContentOrSourceRoot();
+        }
+        if (isRoot) {
+          child.fillFiles(set, false);
+        }
+      }
     }
+  }
+
+  public boolean isContentOrSourceRoot() {
+    if (myVDirectory != null) {
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+      final VirtualFile contentRoot = fileIndex.getContentRootForFile(myVDirectory);
+      final VirtualFile sourceRoot = fileIndex.getSourceRootForFile(myVDirectory);
+      if (myVDirectory.equals(contentRoot) || myVDirectory.equals(sourceRoot)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public String toString() {
@@ -203,8 +225,9 @@ public class DirectoryNode extends PackageDependenciesNode {
 
   @Override
   public Icon getIcon() {
-    if (myDirectory != null) {
-      return new DirectoryIconProvider().getIcon(myDirectory, 0);
+    if (myVDirectory != null) {
+      final VirtualFile jarRoot = JarFileSystem.getInstance().getRootByEntry(myVDirectory);
+      return myVDirectory.equals(jarRoot) ? PlatformIcons.JAR_ICON : DirectoryIconProvider.getDirectoryIcon(myVDirectory, myProject);
     }
     return PlatformIcons.PACKAGE_ICON;
   }

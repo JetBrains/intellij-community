@@ -28,6 +28,7 @@ import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,14 +41,18 @@ public class KeywordArgumentCompletionUtil {
     if (callExpr != null) {
       PyExpression callee = callExpr.getCallee();
       if (callee instanceof PyReferenceExpression && element.getParent() == callExpr.getArgumentList()) {
-        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
-        final QualifiedResolveResult result = ((PyReferenceExpression)callee).followAssignmentsChain(resolveContext);
-        PsiElement def = result.getElement();
+
+        PsiElement def = getElementByType(context, callee);
+        if (def == null) {
+          def = getElementByChain(context, (PyReferenceExpression)callee);
+        }
+
+
         if (def instanceof PyCallable) {
           addKeywordArgumentVariants((PyCallable)def, callExpr, ret);
         }
         else if (def instanceof PyClass) {
-          PyFunction init = ((PyClass)def).findMethodByName(PyNames.INIT, true);  // search in superclasses
+          PyFunction init = ((PyClass)def).findMethodByName(PyNames.INIT, true, null);  // search in superclasses
           if (init != null) {
             addKeywordArgumentVariants(init, callExpr, ret);
           }
@@ -59,6 +64,24 @@ public class KeywordArgumentCompletionUtil {
         }
       }
     }
+  }
+
+  @Nullable
+  private static PyElement getElementByType(@NotNull final TypeEvalContext context, @NotNull final PyExpression callee) {
+    final PyType pyType = context.getType(callee);
+    if (pyType instanceof PyFunctionType) {
+      return ((PyFunctionType)pyType).getCallable();
+    }
+    if (pyType instanceof PyClassType) {
+      return ((PyClassType)pyType).getPyClass();
+    }
+    return null;
+  }
+
+  private static PsiElement getElementByChain(@NotNull TypeEvalContext context, PyReferenceExpression callee) {
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+    final QualifiedResolveResult result = callee.followAssignmentsChain(resolveContext);
+    return result.getElement();
   }
 
   private static void fetchCallablesFromUnion(@NotNull final List<LookupElement> ret,

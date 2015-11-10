@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -22,7 +23,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -83,7 +83,9 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
       syncPaths(toImport, library, modelsProvider);
       return;
     }
-    importLibrary(libraryName, libraryFiles, modelsProvider);
+    library = modelsProvider.createLibrary(libraryName);
+    final Library.ModifiableModel libraryModel = modelsProvider.getModifiableLibraryModel(library);
+    registerPaths(toImport.isUnresolved(), libraryFiles, libraryModel, libraryName);
   }
 
   @NotNull
@@ -99,24 +101,15 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
     return result;
   }
 
-  private void importLibrary(@NotNull final String libraryName,
-                             @NotNull final Map<OrderRootType, Collection<File>> libraryFiles,
-                             @NotNull final IdeModifiableModelsProvider modelsProvider) {
-    final Library library = modelsProvider.createLibrary(libraryName);
-    final Library.ModifiableModel libraryModel = modelsProvider.getModifiableLibraryModel(library);
-    registerPaths(libraryFiles, libraryModel, libraryName);
-  }
-
-  @SuppressWarnings("MethodMayBeStatic")
-  public void registerPaths(@NotNull Map<OrderRootType, Collection<File>> libraryFiles,
+  static void registerPaths(boolean unresolved,
+                            @NotNull Map<OrderRootType, Collection<File>> libraryFiles,
                             @NotNull Library.ModifiableModel model,
-                            @NotNull String libraryName)
-  {
+                            @NotNull String libraryName) {
     for (Map.Entry<OrderRootType, Collection<File>> entry : libraryFiles.entrySet()) {
       for (File file : entry.getValue()) {
-        VirtualFile virtualFile = ExternalSystemUtil.refreshAndFindFileByIoFile(file);
+        VirtualFile virtualFile = unresolved ? null : ExternalSystemUtil.refreshAndFindFileByIoFile(file);
         if (virtualFile == null) {
-          if (ExternalSystemConstants.VERBOSE_PROCESSING && entry.getKey() == OrderRootType.CLASSES) {
+          if (!unresolved && ExternalSystemConstants.VERBOSE_PROCESSING && entry.getKey() == OrderRootType.CLASSES) {
             LOG.warn(
               String.format("Can't find %s of the library '%s' at path '%s'", entry.getKey(), libraryName, file.getAbsolutePath())
             );
@@ -166,6 +159,11 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
                           @NotNull IdeModifiableModelsProvider modelsProvider) {
 
     if (projectData == null) return;
+
+    // do not cleanup orphan project libraries if import runs from Project Structure Dialog
+    // since libraries order entries cannot be imported for modules in that case
+    // and hence #isOrphanProjectLibrary() method will work incorrectly
+    if (modelsProvider instanceof IdeUIModifiableModelsProvider) return;
 
     final List<Library> orphanIdeLibraries = ContainerUtil.newSmartList();
     final LibraryTable.ModifiableModel librariesModel = modelsProvider.getModifiableProjectLibrariesModel();
@@ -224,7 +222,7 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
     for (Map.Entry<OrderRootType, Set<String>> entry : toAdd.entrySet()) {
       Map<OrderRootType, Collection<File>> roots = ContainerUtilRt.newHashMap();
       roots.put(entry.getKey(), ContainerUtil.map(entry.getValue(), PATH_TO_FILE));
-      registerPaths(roots, libraryModel, externalLibrary.getInternalName());
+      registerPaths(externalLibrary.isUnresolved(), roots, libraryModel, externalLibrary.getInternalName());
     }
   }
 

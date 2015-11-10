@@ -130,9 +130,9 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     getCondaOutput("remove", arguments);
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public List<PyPackage> getPackages(boolean cachedOnly) throws ExecutionException {
+  protected List<PyPackage> getPackages() throws ExecutionException {
     final ProcessOutput output = getCondaOutput("list", Lists.newArrayList("-e"));
     return parseCondaToolOutput(output.getStdout());
   }

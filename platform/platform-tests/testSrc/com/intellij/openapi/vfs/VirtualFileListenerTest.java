@@ -18,34 +18,42 @@ package com.intellij.openapi.vfs;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Ref;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
+import com.intellij.testFramework.rules.TempDirectory;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.io.IOException;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author nik
  */
-public class VirtualFileListenerTest extends PlatformTestCase {
+public class VirtualFileListenerTest extends BareTestFixtureTestCase {
+  @Rule public TempDirectory myTempDir = new TempDirectory();
+
+  @Test
   public void testFireEvent() throws IOException {
-    final VirtualFile dir = getVirtualFile(createTempDir("vDir"));
+    VirtualFile dir = LocalFileSystem.getInstance().findFileByIoFile(myTempDir.newFolder("vDir"));
     assertNotNull(dir);
     dir.getChildren();
-    final Ref<Boolean> eventFired = Ref.create(false);
+
+    Ref<Boolean> eventFired = Ref.create(false);
+
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
         eventFired.set(true);
       }
-    }, myTestRootDisposable);
+    }, getTestRootDisposable());
+
     new WriteAction() {
-      protected void run(@NotNull final Result result) {
-        try {
-          dir.createChildData(this, "x.txt");
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+      @Override
+      protected void run(@NotNull Result result) throws IOException {
+        dir.createChildData(this, "x.txt");
       }
     }.execute();
 

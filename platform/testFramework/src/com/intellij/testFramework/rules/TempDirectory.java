@@ -16,6 +16,7 @@
 package com.intellij.testFramework.rules;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.UsefulTestCase;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -44,7 +45,7 @@ public class TempDirectory extends TemporaryFolder {
       throw new IllegalStateException("apply() was not called");
     }
 
-    @SuppressWarnings("SSBasedInspection") File dir = File.createTempFile("junit_" + myName + "_", "");
+    @SuppressWarnings("SSBasedInspection") File dir = File.createTempFile(UsefulTestCase.TEMP_DIR_MARKER + myName + "_", "");
     assertTrue("Cannot delete: " + dir.getPath(), dir.delete() || !dir.exists());
     assertTrue("Cannot create: " + dir.getPath(), dir.mkdir() || dir.isDirectory());
     myRoot = dir.getCanonicalFile();

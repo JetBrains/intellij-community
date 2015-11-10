@@ -49,7 +49,7 @@ public class DomExtensionImpl implements DomExtension {
   private boolean mySoft;
   private int myCount = 1;
   private Map myUserMap;
-  private CustomDomChildrenDescription.TagNameDescriptor myTagNameDescriptor = CustomDomChildrenDescription.TagNameDescriptor.EMPTY;
+  private CustomDomChildrenDescription.TagNameDescriptor myTagNameDescriptor = CustomDomChildrenDescription.AttributeDescriptor.EMPTY;
   private CustomDomChildrenDescription.AttributeDescriptor myAttributesDescriptor;
 
   public DomExtensionImpl(final Type type, final XmlName xmlName) {

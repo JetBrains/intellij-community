@@ -2,6 +2,6 @@
 
 class AClass
 {
-    final AClass f = <caret><selection>null</selection>;
+    final AClass f = null<caret>;
 }
 

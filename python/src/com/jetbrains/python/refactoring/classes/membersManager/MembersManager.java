@@ -302,7 +302,7 @@ public abstract class MembersManager<T extends PyElement> implements Function<T,
       while (classesIterator.hasNext()) {
         final PyClass memberClass = classesIterator.next();
         if (memberClass.equals(destinationClass) ||
-            ArrayUtil.contains(memberClass, destinationClass.getSuperClasses())) { // IF still would be available
+            ArrayUtil.contains(memberClass, destinationClass.getSuperClasses(null))) { // IF still would be available
           classesIterator.remove();
         }
       }

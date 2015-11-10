@@ -18,6 +18,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,10 +30,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.QualifiedName;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.PyElementTypes;
@@ -66,6 +64,9 @@ import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsMo
  * Implements PyFunction.
  */
 public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements PyFunction {
+
+  private static final Key<CachedValue<List<PyAssignmentStatement>>>
+    ATTRIBUTES_KEY = Key.create("attributes");
 
   public PyFunctionImpl(ASTNode astNode) {
     super(astNode);
@@ -732,8 +733,28 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @NotNull
   @Override
   public List<PyAssignmentStatement> findAttributes() {
+    /**
+     * TODO: This method if insanely heavy since it unstubs foreign files.
+     * Need to save stubs and use them somehow.
+     *
+     */
+    return CachedValuesManager.getManager(getProject()).getCachedValue(this, ATTRIBUTES_KEY, new CachedValueProvider<List<PyAssignmentStatement>>() {
+      @Nullable
+      @Override
+      public Result<List<PyAssignmentStatement>> compute() {
+        final List<PyAssignmentStatement> result = findAttributesStatic(PyFunctionImpl.this);
+        return Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
+      }
+    }, false);
+  }
+
+  /**
+   * @param self should be this
+   */
+  @NotNull
+  private static List<PyAssignmentStatement> findAttributesStatic(@NotNull final PsiElement self) {
     final List<PyAssignmentStatement> result = new ArrayList<PyAssignmentStatement>();
-    for (final PyAssignmentStatement statement : new PsiQuery(this).siblings(PyAssignmentStatement.class).getElements()) {
+    for (final PyAssignmentStatement statement : new PsiQuery(self).siblings(PyAssignmentStatement.class).getElements()) {
       for (final PyQualifiedExpression targetExpression : new PsiQuery(statement.getTargets()).filter(PyQualifiedExpression.class)
         .getElements()) {
         final PyExpression qualifier = targetExpression.getQualifier();
@@ -744,7 +765,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         if (qualifierReference == null) {
           continue;
         }
-        if (qualifierReference.isReferenceTo(this)) {
+        if (qualifierReference.isReferenceTo(self)) {
           result.add(statement);
         }
       }

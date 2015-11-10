@@ -122,7 +122,15 @@ public abstract class LookupArranger {
     return myMatchingItems;
   }
 
-  public Map<LookupElement,StringBuilder> getRelevanceStrings() {
+  /**
+   * @param items the items to give relevance weight for
+   * @param hideSingleValued whether criteria that gave same values for all items should be skipped
+   * @return for each item, an (ordered) map of criteria used for lookup relevance sorting
+   * along with the objects representing the weights in these criteria
+   */
+  @NotNull
+  public Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<LookupElement> items,
+                                                                               boolean hideSingleValued) {
     return Collections.emptyMap();
   }
 

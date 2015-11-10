@@ -17,6 +17,7 @@ package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.IncorrectOperationException;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -216,11 +217,10 @@ public class DisposerTest extends TestCase {
   }
 
   private class MyDisposable implements Disposable {
-
-    private boolean myDisposed = false;
+    private boolean myDisposed;
     protected String myName;
 
-    public MyDisposable(@NonNls String aName) {
+    MyDisposable(@NonNls String aName) {
       myName = aName;
     }
 
@@ -252,7 +252,7 @@ public class DisposerTest extends TestCase {
   }
 
   private class SelDisposable extends MyDisposable {
-    public SelDisposable(@NonNls String aName) {
+    private SelDisposable(@NonNls String aName) {
       super(aName);
     }
 
@@ -275,5 +275,41 @@ public class DisposerTest extends TestCase {
     }
 
     return result.toString();
+  }
+
+  public void testIncest() {
+    Disposable parent = newDisposable("parent");
+    Disposable child = newDisposable("child");
+    Disposer.register(parent, child);
+
+    Disposable grand = newDisposable("grand");
+    Disposer.register(child, grand);
+
+    try {
+      Disposer.register(grand, parent);
+      fail("must not allow");
+    }
+    catch (IncorrectOperationException e) {
+      assertEquals("'grand' was already added as a child of 'parent'", e.getMessage());
+    }
+    finally {
+      Disposer.dispose(grand);
+      Disposer.dispose(child);
+      Disposer.dispose(parent);
+    }
+  }
+
+  private static Disposable newDisposable(final String name) {
+    return new Disposable() {
+      @Override
+      public void dispose() {
+
+      }
+
+      @Override
+      public String toString() {
+        return name;
+      }
+    };
   }
 }

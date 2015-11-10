@@ -37,6 +37,8 @@ public interface RecentTestRunner {
   void run(Location location);
 
   Location getLocation(String url);
+
+  boolean isSuite(String url);
 }
 
 class RecentTestRunnerImpl implements RecentTestRunner {
@@ -73,6 +75,12 @@ class RecentTestRunnerImpl implements RecentTestRunner {
     }
 
     return null;
+  }
+
+  @Override
+  public boolean isSuite(String url) {
+    String protocol = VirtualFileManager.extractProtocol(url);
+    return JavaTestLocator.SUITE_PROTOCOL.equals(protocol);
   }
 
   public void run(final Location location) {

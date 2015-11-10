@@ -549,7 +549,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     @NonNls final StringBuffer buffer = new StringBuffer();
     buffer.append("{\n");
 
-    if (methodToAdd.getReturnType() != PsiType.VOID) {
+    if (!PsiType.VOID.equals(methodToAdd.getReturnType())) {
       buffer.append("return ");
     }
 

@@ -155,7 +155,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
         return;
       }
 
-      final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(myProject, mySystemOperation);
+      final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(myProject);
       final ApplyPatchStatus applyStatus = getApplyPatchStatus(trigger);
       myStatus = ApplyPatchStatus.SUCCESS.equals(patchStatus) ? applyStatus :
                  ApplyPatchStatus.and(patchStatus, applyStatus);
@@ -240,7 +240,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
       result = ApplyPatchStatus.and(result, patchApplier.nonWriteActionPreCheck());
       if (ApplyPatchStatus.FAILURE.equals(result)) return result;
     }
-    final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(project, false);
+    final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(project);
     final Ref<ApplyPatchStatus> refStatus = new Ref<ApplyPatchStatus>(null);
     try {
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {

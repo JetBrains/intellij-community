@@ -65,7 +65,7 @@ public class PySuperArgumentsInspection extends PyInspection {
               PyClass firstClass = findClassOf(arguments[0]);
               PyClass secondClass = findClassOf(arguments[1]);
               if (firstClass != null && secondClass != null) {
-                if (!secondClass.isSubclass(firstClass)) {
+                if (!secondClass.isSubclass(firstClass, null)) {
                   registerProblem(
                     node.getArgumentList(),
                     PyBundle.message("INSP.$0.is.not.superclass.of.$1",

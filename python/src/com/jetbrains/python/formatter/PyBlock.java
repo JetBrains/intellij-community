@@ -77,7 +77,6 @@ public class PyBlock implements ASTBlock {
                                                                          PyElementTypes.CALL_EXPRESSION,
                                                                          PyElementTypes.FROM_IMPORT_STATEMENT);
 
-  private static final boolean DUMP_FORMATTING_BLOCKS = false;
   public static final Key<Boolean> IMPORT_GROUP_BEGIN = Key.create("com.jetbrains.python.formatter.importGroupBegin");
 
   private final PyBlock myParent;
@@ -93,12 +92,12 @@ public class PyBlock implements ASTBlock {
   private final Wrap myDictWrapping;
   private final boolean myEmptySequence;
 
-  public PyBlock(final PyBlock parent,
-                 final ASTNode node,
-                 final Alignment alignment,
-                 final Indent indent,
-                 final Wrap wrap,
-                 final PyBlockContext context) {
+  public PyBlock(@Nullable PyBlock parent, 
+                 @NotNull ASTNode node, 
+                 @Nullable Alignment alignment, 
+                 @NotNull Indent indent, 
+                 @Nullable Wrap wrap, 
+                 @NotNull PyBlockContext context) {
     myParent = parent;
     myAlignment = alignment;
     myIndent = indent;
@@ -117,11 +116,13 @@ public class PyBlock implements ASTBlock {
     }
   }
 
+  @Override
   @NotNull
   public ASTNode getNode() {
     return myNode;
   }
 
+  @Override
   @NotNull
   public TextRange getTextRange() {
     return myNode.getTextRange();
@@ -134,14 +135,12 @@ public class PyBlock implements ASTBlock {
     return myChildAlignment;
   }
 
+  @Override
   @NotNull
   public List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
       mySubBlockByNode = buildSubBlocks();
       mySubBlocks = new ArrayList<PyBlock>(mySubBlockByNode.values());
-      if (DUMP_FORMATTING_BLOCKS) {
-        dumpSubBlocks();
-      }
     }
     return Collections.<Block>unmodifiableList(mySubBlocks);
   }
@@ -174,7 +173,8 @@ public class PyBlock implements ASTBlock {
     return Collections.unmodifiableMap(blocks);
   }
 
-  private PyBlock buildSubBlock(ASTNode child) {
+  @NotNull
+  private PyBlock buildSubBlock(@NotNull ASTNode child) {
     final IElementType parentType = myNode.getElementType();
 
     final ASTNode grandParentNode = myNode.getTreeParent();
@@ -248,7 +248,7 @@ public class PyBlock implements ASTBlock {
       }
     }
 
-    PyCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(child.getPsi().getProject()).getCustomSettings(PyCodeStyleSettings.class);
+    final PyCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(child.getPsi().getProject()).getCustomSettings(PyCodeStyleSettings.class);
     if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION || parentType == PyElementTypes.LIST_COMP_EXPRESSION) {
       if (childType == PyTokenTypes.RBRACKET || childType == PyTokenTypes.LBRACKET) {
         childIndent = Indent.getNoneIndent();
@@ -323,13 +323,8 @@ public class PyBlock implements ASTBlock {
       if (childType == PyTokenTypes.RPAR) {
         childIndent = Indent.getNoneIndent();
       }
-      else {
-        if (parentType == PyElementTypes.PARAMETER_LIST || argumentMayHaveSameIndentAsFollowingStatementList()) {
-          childIndent = Indent.getContinuationIndent();
-        }
-        else {
-          childIndent = Indent.getNormalIndent();
-        }
+      else if (childType != PyTokenTypes.LPAR){
+        childIndent = Indent.getContinuationIndent();
       }
     }
     else if (parentType == PyElementTypes.SUBSCRIPTION_EXPRESSION) {
@@ -426,16 +421,6 @@ public class PyBlock implements ASTBlock {
     return node.getPsi() instanceof PySequenceExpression && ((PySequenceExpression)node.getPsi()).isEmpty();
   }
 
-  private boolean argumentMayHaveSameIndentAsFollowingStatementList() {
-    // This check is supposed to prevent PEP8's error: Continuation line with the same indent as next logical line
-    final PsiElement header = getControlStatementHeader(myNode);
-    if (header instanceof PyStatementListContainer) {
-      final PyStatementList statementList = ((PyStatementListContainer)header).getStatementList();
-      return PyUtil.onSameLine(header, myNode.getPsi()) && !PyUtil.onSameLine(header, statementList);
-    }
-    return false;
-  }
-
   // Check https://www.python.org/dev/peps/pep-0008/#indentation
   private static boolean hasHangingIndent(@NotNull PsiElement elem) {
     if (elem instanceof PyCallExpression) {
@@ -518,7 +503,7 @@ public class PyBlock implements ASTBlock {
     return type != PyElementTypes.BINARY_EXPRESSION;
   }
 
-  private static Alignment getAlignmentOfChild(PyBlock b, int childNum) {
+  private static Alignment getAlignmentOfChild(@NotNull PyBlock b, int childNum) {
     if (b.getSubBlocks().size() > childNum) {
       final ChildAttributes attributes = b.getChildAttributes(childNum);
       return attributes.getAlignment();
@@ -526,7 +511,7 @@ public class PyBlock implements ASTBlock {
     return null;
   }
 
-  private static boolean isIndentNext(ASTNode child) {
+  private static boolean isIndentNext(@NotNull ASTNode child) {
     final PsiElement psi = PsiTreeUtil.getParentOfType(child.getPsi(), PyStatement.class);
 
     return psi instanceof PyIfStatement ||
@@ -540,7 +525,7 @@ public class PyBlock implements ASTBlock {
            psi instanceof PyWhileStatement;
   }
 
-  private static boolean isSubscriptionOperand(ASTNode child) {
+  private static boolean isSubscriptionOperand(@NotNull ASTNode child) {
     return child.getTreeParent().getElementType() == PyElementTypes.SUBSCRIPTION_EXPRESSION &&
            child.getPsi() == ((PySubscriptionExpression)child.getTreeParent().getPsi()).getOperand();
   }
@@ -562,7 +547,7 @@ public class PyBlock implements ASTBlock {
     return null;
   }
 
-  private boolean isSliceOperand(ASTNode child) {
+  private boolean isSliceOperand(@NotNull ASTNode child) {
     if (myNode.getPsi() instanceof PySliceExpression) {
       final PySliceExpression sliceExpression = (PySliceExpression)myNode.getPsi();
       final PyExpression operand = sliceExpression.getOperand();
@@ -571,7 +556,7 @@ public class PyBlock implements ASTBlock {
     return false;
   }
 
-  private static boolean isAfterStatementList(ASTNode child) {
+  private static boolean isAfterStatementList(@NotNull ASTNode child) {
     final PsiElement prev = child.getPsi().getPrevSibling();
     if (!(prev instanceof PyStatement)) {
       return false;
@@ -580,7 +565,7 @@ public class PyBlock implements ASTBlock {
     return lastChild.getParent() instanceof PyStatementList;
   }
 
-  private boolean needListAlignment(ASTNode child) {
+  private boolean needListAlignment(@NotNull ASTNode child) {
     final IElementType childType = child.getElementType();
     if (PyTokenTypes.OPEN_BRACES.contains(childType)) {
       return false;
@@ -616,7 +601,7 @@ public class PyBlock implements ASTBlock {
   }
 
   @Nullable
-  private static ASTNode findPrevNonSpaceNode(ASTNode node) {
+  private static ASTNode findPrevNonSpaceNode(@NotNull ASTNode node) {
     do {
       node = node.getTreePrev();
     }
@@ -671,37 +656,28 @@ public class PyBlock implements ASTBlock {
     return false;
   }
 
-  private void dumpSubBlocks() {
-    System.out.println("Subblocks of " + myNode.getPsi() + ":");
-    for (Block block : mySubBlocks) {
-      if (block instanceof PyBlock) {
-        System.out.println("  " + ((PyBlock)block).getNode().getPsi().toString() + " " + block.getTextRange().getStartOffset() + ":" + block
-          .getTextRange().getLength());
-      }
-      else {
-        System.out.println("  <unknown block>");
-      }
-    }
-  }
-
+  @Override
   @Nullable
   public Wrap getWrap() {
     return myWrap;
   }
 
+  @Override
   @Nullable
   public Indent getIndent() {
     assert myIndent != null;
     return myIndent;
   }
 
+  @Override
   @Nullable
   public Alignment getAlignment() {
     return myAlignment;
   }
 
+  @Override
   @Nullable
-  public Spacing getSpacing(Block child1, @NotNull Block child2) {
+  public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
     if (child1 instanceof ASTBlock && child2 instanceof ASTBlock) {
       final ASTNode node1 = ((ASTBlock)child1).getNode();
       ASTNode node2 = ((ASTBlock)child2).getNode();
@@ -764,7 +740,8 @@ public class PyBlock implements ASTBlock {
     return myContext.getSpacingBuilder().getSpacing(this, child1, child2);
   }
 
-  private Spacing getBlankLinesForOption(final int option) {
+  @NotNull
+  private Spacing getBlankLinesForOption(int option) {
     final int blankLines = option + 1;
     return Spacing.createSpacing(0, 0, blankLines,
                                  myContext.getSettings().KEEP_LINE_BREAKS,
@@ -781,6 +758,7 @@ public class PyBlock implements ASTBlock {
     return false;
   }
 
+  @Override
   @NotNull
   public ChildAttributes getChildAttributes(int newChildIndex) {
     int statementListsBelow = 0;
@@ -812,8 +790,8 @@ public class PyBlock implements ASTBlock {
       // but I don't quite understand why it is necessary and why the formatter
       // doesn't request childAttributes from the correct block
       while (lastChild != null) {
-        final IElementType last_type = lastChild.getElementType();
-        if (last_type == PyElementTypes.STATEMENT_LIST && hasLineBreaksBeforeInSameParent(lastChild, 1)) {
+        final IElementType lastType = lastChild.getElementType();
+        if (lastType == PyElementTypes.STATEMENT_LIST && hasLineBreaksBeforeInSameParent(lastChild, 1)) {
           if (dedentAfterLastStatement((PyStatementList)lastChild.getPsi())) {
             break;
           }
@@ -856,7 +834,7 @@ public class PyBlock implements ASTBlock {
     return new ChildAttributes(childIndent, childAlignment);
   }
 
-  private static boolean dedentAfterLastStatement(PyStatementList statementList) {
+  private static boolean dedentAfterLastStatement(@NotNull PyStatementList statementList) {
     final PyStatement[] statements = statementList.getStatements();
     if (statements.length == 0) {
       return false;
@@ -885,6 +863,7 @@ public class PyBlock implements ASTBlock {
     return null;
   }
 
+  @NotNull
   private Indent getChildIndent(int newChildIndex) {
     final ASTNode afterNode = getAfterNode(newChildIndex);
     final ASTNode lastChild = getLastNonSpaceChild(myNode, false);
@@ -930,12 +909,12 @@ public class PyBlock implements ASTBlock {
           final PsiDocumentManager docMgr = PsiDocumentManager.getInstance(exprItem.getProject());
           final Document doc = docMgr.getDocument(exprItem.getContainingFile());
           if (doc != null) {
-            int line_num = doc.getLineNumber(exprItem.getTextOffset());
-            final int item_col = exprItem.getTextOffset() - doc.getLineStartOffset(line_num);
-            final PsiElement here_elt = getNode().getPsi();
-            line_num = doc.getLineNumber(here_elt.getTextOffset());
-            final int node_col = here_elt.getTextOffset() - doc.getLineStartOffset(line_num);
-            final int padding = item_col - node_col;
+            int lineNum = doc.getLineNumber(exprItem.getTextOffset());
+            final int itemCol = exprItem.getTextOffset() - doc.getLineStartOffset(lineNum);
+            final PsiElement hereElt = getNode().getPsi();
+            lineNum = doc.getLineNumber(hereElt.getTextOffset());
+            final int nodeCol = hereElt.getTextOffset() - doc.getLineStartOffset(lineNum);
+            final int padding = itemCol - nodeCol;
             if (padding > 0) { // negative is a syntax error,  but possible
               return Indent.getSpaceIndent(padding);
             }
@@ -984,7 +963,7 @@ public class PyBlock implements ASTBlock {
     return getSubBlockByIndex(prevIndex).getNode();
   }
 
-  private static ASTNode getLastNonSpaceChild(ASTNode node, boolean acceptError) {
+  private static ASTNode getLastNonSpaceChild(@NotNull ASTNode node, boolean acceptError) {
     ASTNode lastChild = node.getLastChildNode();
     while (lastChild != null &&
            (lastChild.getElementType() == TokenType.WHITE_SPACE || (!acceptError && lastChild.getPsi() instanceof PsiErrorElement))) {
@@ -993,6 +972,7 @@ public class PyBlock implements ASTBlock {
     return lastChild;
   }
 
+  @Override
   public boolean isIncomplete() {
     // if there's something following us, we're not incomplete
     if (!PsiTreeUtil.hasErrorElements(myNode.getPsi())) {
@@ -1034,7 +1014,7 @@ public class PyBlock implements ASTBlock {
     return false;
   }
 
-  private static boolean isIncompleteCall(ASTNode node) {
+  private static boolean isIncompleteCall(@NotNull ASTNode node) {
     if (node.getElementType() == PyElementTypes.CALL_EXPRESSION) {
       final PyCallExpression callExpression = (PyCallExpression)node.getPsi();
       final PyArgumentList argumentList = callExpression.getArgumentList();
@@ -1045,6 +1025,7 @@ public class PyBlock implements ASTBlock {
     return false;
   }
 
+  @Override
   public boolean isLeaf() {
     return myNode.getFirstChildNode() == null;
   }

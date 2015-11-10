@@ -366,7 +366,7 @@ public class PyCallExpressionHelper {
         PyClass resolvedParent = PsiTreeUtil.getStubOrPsiParentOfType(resolved, PyClass.class);
         if (resolvedParent != null) {
           final PyClass qualifierClass = ((PyClassType)qualifierType).getPyClass();
-          if ((qualifierClass.isSubclass(resolvedParent) || resolvedParent.isSubclass(qualifierClass))) {
+          if ((qualifierClass.isSubclass(resolvedParent, null) || resolvedParent.isSubclass(qualifierClass, null))) {
             return true;
           }
         }
@@ -551,7 +551,7 @@ public class PyCallExpressionHelper {
         return Ref.create(t);
       }
       if (cls != null && t == null) {
-        final PyFunction newMethod = cls.findMethodByName(PyNames.NEW, true);
+        final PyFunction newMethod = cls.findMethodByName(PyNames.NEW, true, null);
         if (newMethod != null && !PyBuiltinCache.getInstance(call).isBuiltin(newMethod)) {
           return Ref.create(PyUnionType.createWeakType(new PyClassTypeImpl(cls, false)));
         }
@@ -599,7 +599,7 @@ public class PyCallExpressionHelper {
                   }
                 }
                 PsiElement possible_class = firstArgRef.getReference().resolve();
-                if (possible_class instanceof PyClass && ((PyClass)possible_class).isNewStyleClass(null)) {
+                if (possible_class instanceof PyClass && ((PyClass)possible_class).isNewStyleClass(context)) {
                   final PyClass first_class = (PyClass)possible_class;
                   return new Maybe<PyType>(getSuperCallTypeForArguments(context, first_class, args[1]));
                 }
@@ -608,7 +608,7 @@ public class PyCallExpressionHelper {
             else if ((call.getContainingFile() instanceof PyFile) &&
                      ((PyFile)call.getContainingFile()).getLanguageLevel().isPy3K() &&
                      (containingClass != null)) {
-              return new Maybe<PyType>(getSuperClassUnionType(containingClass));
+              return new Maybe<PyType>(getSuperClassUnionType(containingClass, context));
             }
           }
         }
@@ -626,9 +626,9 @@ public class PyCallExpressionHelper {
         // imitate isinstance(second_arg, possible_class)
         PyClass secondClass = ((PyClassType)second_type).getPyClass();
         if (CompletionUtil.getOriginalOrSelf(firstClass) == secondClass) {
-          return getSuperClassUnionType(firstClass);
+          return getSuperClassUnionType(firstClass,context);
         }
-        if (secondClass.isSubclass(firstClass)) {
+        if (secondClass.isSubclass(firstClass, context)) {
           final Iterator<PyClass> iterator = firstClass.getAncestorClasses(context).iterator();
           if (iterator.hasNext()) {
             return new PyClassTypeImpl(iterator.next(), false); // super(Foo, self) has type of Foo, modulo __get__()
@@ -640,11 +640,11 @@ public class PyCallExpressionHelper {
   }
 
   @Nullable
-  private static PyType getSuperClassUnionType(@NotNull PyClass pyClass) {
+  private static PyType getSuperClassUnionType(@NotNull PyClass pyClass, TypeEvalContext context) {
     // TODO: this is closer to being correct than simply taking first superclass type but still not entirely correct;
     // super can also delegate to sibling types
     // TODO handle __mro__ here
-    final PyClass[] supers = pyClass.getSuperClasses();
+    final PyClass[] supers = pyClass.getSuperClasses(context);
     if (supers.length > 0) {
       if (supers.length == 1) {
         return new PyClassTypeImpl(supers[0], false);

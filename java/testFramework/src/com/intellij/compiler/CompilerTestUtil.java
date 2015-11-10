@@ -16,7 +16,6 @@
 package com.intellij.compiler;
 
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -34,6 +33,7 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
@@ -44,6 +44,7 @@ public class CompilerTestUtil {
   private CompilerTestUtil() {
   }
 
+  @TestOnly
   public static void setupJavacForTests(Project project) {
     CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
     compilerConfiguration.setDefaultCompiler(compilerConfiguration.getJavacCompiler());
@@ -55,6 +56,7 @@ public class CompilerTestUtil {
   public static void scanSourceRootsToRecompile(Project project) {
   }
 
+  @TestOnly
   public static void saveApplicationSettings() {
     EdtTestUtil.runInEdtAndWait(new Runnable() {
       @Override
@@ -65,6 +67,7 @@ public class CompilerTestUtil {
     });
   }
 
+  @TestOnly
   public static void saveApplicationComponent(final Object appComponent) {
     EdtTestUtil.runInEdtAndWait(new Runnable() {
       @Override
@@ -79,6 +82,7 @@ public class CompilerTestUtil {
     ServiceKt.getStateStore(ApplicationManager.getApplication()).saveApplicationComponent(appComponent);
   }
 
+  @TestOnly
   public static void enableExternalCompiler() {
     final JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
     new WriteAction() {
@@ -89,30 +93,30 @@ public class CompilerTestUtil {
     }.execute();
   }
 
+  @TestOnly
   public static void disableExternalCompiler(@NotNull  final Project project) {
     EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
       @Override
       public void run() throws Throwable {
-        JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
-        AccessToken token = WriteAction.start();
-        try {
-          Sdk internalJdk = table.getInternalJdk();
-          List<Module> modulesToRestore = new SmartList<Module>();
-          for (Module module : ModuleManager.getInstance(project).getModules()) {
-            Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-            if (sdk != null && sdk.equals(internalJdk)) {
-              modulesToRestore.add(module);
+        final JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            Sdk internalJdk = table.getInternalJdk();
+            List<Module> modulesToRestore = new SmartList<Module>();
+            for (Module module : ModuleManager.getInstance(project).getModules()) {
+              Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+              if (sdk != null && sdk.equals(internalJdk)) {
+                modulesToRestore.add(module);
+              }
             }
+            table.removeJdk(internalJdk);
+            for (Module module : modulesToRestore) {
+              ModuleRootModificationUtil.setModuleSdk(module, internalJdk);
+            }
+            BuildManager.getInstance().clearState(project);
           }
-          table.removeJdk(internalJdk);
-          for (Module module : modulesToRestore) {
-            ModuleRootModificationUtil.setModuleSdk(module, internalJdk);
-          }
-          BuildManager.getInstance().clearState(project);
-        }
-        finally {
-          token.finish();
-        }
+        });
       }
     });
   }

@@ -58,7 +58,7 @@ public class GroovyStdTypeCalculators {
         @Override
         public PsiType compute() {
           PsiType returnType = finalClosure.getReturnType();
-          if (returnType == PsiType.VOID) return null;
+          if (PsiType.VOID.equals(returnType)) return null;
           return returnType;
         }
       });

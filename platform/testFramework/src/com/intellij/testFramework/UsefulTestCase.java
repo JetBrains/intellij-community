@@ -127,6 +127,8 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  private boolean oldDisposerDebug;
+
   protected boolean shouldContainTempFiles() {
     return true;
   }
@@ -142,11 +144,15 @@ public abstract class UsefulTestCase extends TestCase {
       myTempDir = new File(ORIGINAL_TEMP_DIR, TEMP_DIR_MARKER + testName).getPath();
       FileUtil.resetCanonicalTempPathCache(myTempDir);
     }
-    ApplicationInfoImpl.setInPerformanceTest(isPerformanceTest());
+    boolean isPerformanceTest = isPerformanceTest();
+    ApplicationInfoImpl.setInPerformanceTest(isPerformanceTest);
+    // turn off Disposer debugging for performance tests
+    oldDisposerDebug = Disposer.setDebugMode(Disposer.isDebugMode() && !isPerformanceTest);
   }
 
   @Override
   protected void tearDown() throws Exception {
+    Disposer.setDebugMode(oldDisposerDebug);
     try {
       Disposer.dispose(myTestRootDisposable);
       cleanupSwingDataStructures();

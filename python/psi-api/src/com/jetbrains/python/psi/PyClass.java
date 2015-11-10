@@ -77,9 +77,10 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    *
    * @see #getSuperClassTypes(TypeEvalContext) for the full list of super classes.
    * @see #getAncestorTypes(TypeEvalContext) for the full list of ancestors.
+   * @param context
    */
   @NotNull
-  PyClass[] getSuperClasses();
+  PyClass[] getSuperClasses(@Nullable  TypeEvalContext context);
 
   /**
    * Returns a PSI element for the super classes list.
@@ -98,15 +99,14 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   PyExpression[] getSuperClassExpressions();
 
   /**
-   * Collects methods defined in the class and its ancestors if necessary.
+   * Collects methods defined in the class.
    * <p/>
-   * This method does not access AST if underlying PSI is stub based and {@code inherited} parameter is false.
+   * This method does not access AST if underlying PSI is stub based.
    *
-   * @param inherited return inherited (parent) methods as well
    * @return class methods
    */
   @NotNull
-  PyFunction[] getMethods(boolean inherited);
+  PyFunction[] getMethods();
 
   /**
    * Get class properties.
@@ -121,10 +121,11 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    *
    * @param name      what to look for
    * @param inherited true: search in superclasses; false: only look for methods defined in this class.
+   * @param context
    * @return
    */
   @Nullable
-  PyFunction findMethodByName(@Nullable @NonNls final String name, boolean inherited);
+  PyFunction findMethodByName(@Nullable @NonNls final String name, boolean inherited, TypeEvalContext context);
 
   /**
    * Finds either __init__ or __new__, whichever is defined for given class.
@@ -193,7 +194,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   List<PyTargetExpression> getClassAttributesInherited(@NotNull TypeEvalContext context);
 
   @Nullable
-  PyTargetExpression findClassAttribute(@NotNull String name, boolean inherited);
+  PyTargetExpression findClassAttribute(@NotNull String name, boolean inherited, TypeEvalContext context);
 
   /**
    * Effectively collects assignments to attributes of {@code self} in {@code __init__}, {@code __new__} and
@@ -240,9 +241,9 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    * @param parent
    * @return True iff this and parent are the same or parent is one of our superclasses.
    */
-  boolean isSubclass(PyClass parent);
+  boolean isSubclass(PyClass parent, @Nullable  TypeEvalContext context);
 
-  boolean isSubclass(@NotNull String superClassQName);
+  boolean isSubclass(@NotNull String superClassQName, @Nullable TypeEvalContext context);
 
   /**
    * Returns the aggregated list of names defined in __slots__ attributes of the class and its ancestors.

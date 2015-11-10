@@ -25,6 +25,7 @@ import com.intellij.vcs.log.graph.api.elements.GraphNodeType;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekChecker;
 import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap;
+import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,9 +40,9 @@ public class BekBaseController extends CascadeController {
   public BekBaseController(@NotNull PermanentGraphInfo permanentGraphInfo, @NotNull BekIntMap bekIntMap) {
     super(null, permanentGraphInfo);
     myBekIntMap = bekIntMap;
-    myBekGraph = new BekLinearGraph();
+    myBekGraph = new BekLinearGraph(myBekIntMap, myPermanentGraphInfo.getPermanentLinearGraph());
 
-    assert BekChecker.checkLinearGraph(myBekGraph); // todo drop later
+    BekChecker.checkLinearGraph(myBekGraph);
   }
 
   @NotNull
@@ -85,16 +86,18 @@ public class BekBaseController extends CascadeController {
     return myBekGraph;
   }
 
-  private class BekLinearGraph implements LinearGraph {
-    @NotNull private final LinearGraph myPermanentGraph;
+  public static class BekLinearGraph implements LinearGraph {
+    @NotNull private final LinearGraph myLinearGraph;
+    @NotNull private final BekIntMap myBekIntMap;
 
-    private BekLinearGraph() {
-      myPermanentGraph = myPermanentGraphInfo.getPermanentLinearGraph();
+    public BekLinearGraph(@NotNull BekIntMap bekIntMap, @NotNull LinearGraph linearGraph) {
+      myLinearGraph = linearGraph;
+      myBekIntMap = bekIntMap;
     }
 
     @Override
     public int nodesCount() {
-      return myPermanentGraph.nodesCount();
+      return myLinearGraph.nodesCount();
     }
 
     @Nullable
@@ -107,7 +110,7 @@ public class BekBaseController extends CascadeController {
     @NotNull
     @Override
     public List<GraphEdge> getAdjacentEdges(int nodeIndex, @NotNull EdgeFilter filter) {
-      return map(myPermanentGraph.getAdjacentEdges(myBekIntMap.getUsualIndex(nodeIndex), filter), new Function<GraphEdge, GraphEdge>() {
+      return map(myLinearGraph.getAdjacentEdges(myBekIntMap.getUsualIndex(nodeIndex), filter), new Function<GraphEdge, GraphEdge>() {
         @Override
         public GraphEdge fun(GraphEdge edge) {
           return new GraphEdge(getNodeIndex(edge.getUpNodeIndex()), getNodeIndex(edge.getDownNodeIndex()), edge.getTargetId(),

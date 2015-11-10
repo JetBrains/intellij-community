@@ -37,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeElement {
+  private static final Class[] INTERMEDIATES = {PsiComment.class, PsiWhiteSpace.class, PsiAnnotation.class, PsiTypeParameterList.class};
+
   @SuppressWarnings({"UnusedDeclaration"})
   public PsiTypeElementImpl() {
     this(JavaElementType.TYPE);
@@ -69,7 +71,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   }
 
   private PsiType calculateType() {
-    final PsiType inferredType = PsiAugmentProvider.getInferredType(this);
+    PsiType inferredType = PsiAugmentProvider.getInferredType(this);
     if (inferredType != null) {
       return inferredType;
     }
@@ -153,16 +155,13 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     return type == null ? PsiType.NULL : type;
   }
 
-  private void addTypeUseAnnotations(List<PsiAnnotation> list) {
+  private void addTypeUseAnnotations(List<PsiAnnotation> annotations) {
     PsiElement parent = this;
     while (parent instanceof PsiTypeElement) {
-      PsiElement left = PsiTreeUtil.skipSiblingsBackward(parent, PsiComment.class, PsiWhiteSpace.class, PsiAnnotation.class);
+      PsiElement left = PsiTreeUtil.skipSiblingsBackward(parent, INTERMEDIATES);
 
       if (left instanceof PsiModifierList) {
-        List<PsiAnnotation> annotations = PsiImplUtil.getTypeUseAnnotations((PsiModifierList)left);
-        if (annotations != null && !annotations.isEmpty()) {
-          list.addAll(annotations);
-        }
+        PsiImplUtil.collectTypeUseAnnotations((PsiModifierList)left, annotations);
         break;
       }
 

@@ -110,6 +110,7 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
     final AbstractTestProxy currentProxyOrRoot = getCurrentProxyOrRoot();
     CompositePrintable.invokeInAlarm(clearRunnable);
     currentProxyOrRoot.printOn(this);
+    currentProxyOrRoot.printFromFrameworkOutputFile(this);
     CompositePrintable.invokeInAlarm(scrollRunnable);
   }
 

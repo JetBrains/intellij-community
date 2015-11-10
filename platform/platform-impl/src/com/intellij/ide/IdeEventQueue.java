@@ -483,15 +483,19 @@ public class IdeEventQueue extends EventQueue {
               modifiers |= InputEvent.ALT_MASK;
             }
 
+            int oldKeyCode = ke.getKeyCode();
+
             //noinspection MagicConstant
-            e = new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), modifiers,
-                             ke.getKeyCode(), ke.getKeyChar(), ke.getKeyLocation());
+            ke = new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), modifiers,
+                             KeyEvent.VK_UNDEFINED, ke.getKeyChar(), KeyEvent.KEY_LOCATION_UNKNOWN);
+
+            ke.setKeyCode(oldKeyCode);
           }
         }
       }
     }
 
-    return e;
+    return ke;
   }
 
   private static AWTEvent mapEvent(AWTEvent e) {

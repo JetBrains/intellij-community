@@ -33,10 +33,10 @@ import java.util.Date;
 import java.util.Map;
 
 public class ShowRecentTests extends AnAction {
-  private static final int TEST_LIMIT = 20;
+  private static final int TEST_LIMIT = Integer.MAX_VALUE;
   
   private static Date getSinceDate() {
-    return new Date(System.currentTimeMillis() - 2 * Time.HOUR);
+    return new Date(System.currentTimeMillis() - Time.DAY);
   }
   
   @Override

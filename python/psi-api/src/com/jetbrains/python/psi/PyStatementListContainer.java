@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Ilya.Kazakevich
  */
-public interface PyStatementListContainer {
+public interface PyStatementListContainer extends PyElement {
   @NotNull
   PyStatementList getStatementList();
 }

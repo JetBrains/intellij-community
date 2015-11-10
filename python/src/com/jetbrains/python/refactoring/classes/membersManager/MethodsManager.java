@@ -59,7 +59,7 @@ class MethodsManager extends MembersManager<PyFunction> {
 
   @Override
   public boolean hasConflict(@NotNull final PyFunction member, @NotNull final PyClass aClass) {
-    return NamePredicate.hasElementWithSameName(member, Arrays.asList(aClass.getMethods(false)));
+    return NamePredicate.hasElementWithSameName(member, Arrays.asList(aClass.getMethods()));
   }
 
   @NotNull
@@ -79,7 +79,7 @@ class MethodsManager extends MembersManager<PyFunction> {
   @NotNull
   @Override
   protected List<? extends PyElement> getMembersCouldBeMoved(@NotNull final PyClass pyClass) {
-    return FluentIterable.from(Arrays.asList(pyClass.getMethods(false))).filter(new NamelessFilter<PyFunction>()).filter(NO_PROPERTIES).toList();
+    return FluentIterable.from(Arrays.asList(pyClass.getMethods())).filter(new NamelessFilter<PyFunction>()).filter(NO_PROPERTIES).toList();
   }
 
   @Override
@@ -222,8 +222,8 @@ class MethodsManager extends MembersManager<PyFunction> {
   private static Boolean isOverrides(final PyFunction pyFunction) {
     final PyClass clazz = PyUtil.getContainingClassOrSelf(pyFunction);
     assert clazz != null : "Refactoring called on function, not method: " + pyFunction;
-    for (final PyClass parentClass : clazz.getSuperClasses()) {
-      final PyFunction parentMethod = parentClass.findMethodByName(pyFunction.getName(), true);
+    for (final PyClass parentClass : clazz.getSuperClasses(null)) {
+      final PyFunction parentMethod = parentClass.findMethodByName(pyFunction.getName(), true, null);
       if (parentMethod != null) {
         return true;
       }
