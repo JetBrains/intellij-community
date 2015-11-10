@@ -166,14 +166,15 @@ public class GrReferenceResolveRunner {
                             ? ((PsiDisjunctionType)originalQualifierType).getLeastUpperBound()
                             : originalQualifierType;
 
-    if (qualifierType instanceof GrTraitType) {
-      return processTraitType((GrTraitType)qualifierType, state);
-    }
-    else if (qualifierType instanceof PsiIntersectionType) {
+    if (qualifierType instanceof PsiIntersectionType) {
       for (PsiType conjunct : ((PsiIntersectionType)qualifierType).getConjuncts()) {
         if (!processQualifierType(conjunct, state)) return false;
       }
       return true;
+    }
+
+    if (qualifierType instanceof GrTraitType) {
+      return processTraitType((GrTraitType)qualifierType, state);
     }
 
     if (qualifierType instanceof PsiClassType) {
@@ -204,6 +205,9 @@ public class GrReferenceResolveRunner {
     return true;
   }
 
+  /**
+   * Process trait type conjuncts in reversed order because last applied trait matters.
+   */
   private boolean processTraitType(@NotNull GrTraitType traitType, @NotNull ResolveState state) {
     final PsiType[] conjuncts = traitType.getConjuncts();
     for (int i = conjuncts.length - 1; i >= 0; i--) {
