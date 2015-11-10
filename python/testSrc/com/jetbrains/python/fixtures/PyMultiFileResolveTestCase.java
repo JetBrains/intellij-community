@@ -20,9 +20,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonTestUtil;
 import junit.framework.Assert;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author yole
@@ -36,7 +42,7 @@ public abstract class PyMultiFileResolveTestCase extends PyResolveTestCase {
   }
 
   protected PsiElement doResolve(PsiFile psiFile) {
-    final PsiPolyVariantReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
+    final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
     final PsiManagerImpl psiManager = (PsiManagerImpl)myFixture.getPsiManager();
     psiManager.setAssertOnFileLoadingFilter(new VirtualFileFilter() {
       @Override
@@ -45,12 +51,16 @@ public abstract class PyMultiFileResolveTestCase extends PyResolveTestCase {
         return fileType == PythonFileType.INSTANCE;
       }
     }, myTestRootDisposable);
-    final ResolveResult[] resolveResults = ref.multiResolve(false);
-    psiManager.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
-    if (resolveResults.length == 0) {
-      return null;
+    final PsiElement result;
+    if (ref instanceof PsiPolyVariantReference) {
+      final ResolveResult[] resolveResults = ((PsiPolyVariantReference)ref).multiResolve(false);
+      result = resolveResults.length == 0 || !resolveResults[0].isValidResult() ? null : resolveResults[0].getElement();
     }
-    return resolveResults[0].isValidResult() ? resolveResults[0].getElement() : null;
+    else {
+      result = ref.resolve();
+    }
+    psiManager.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
+    return result;
   }
 
 
@@ -79,9 +89,18 @@ public abstract class PyMultiFileResolveTestCase extends PyResolveTestCase {
     return doResolve(prepareFile());
   }
 
-  protected ResolveResult[] doMultiResolve() {
-    PsiFile psiFile = prepareFile();
-    final PsiPolyVariantReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
-    return ref.multiResolve(false);
+  @NotNull
+  protected List<PsiElement> doMultiResolve() {
+    final PsiFile psiFile = prepareFile();
+    final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
+    if (ref instanceof PsiPolyVariantReference) {
+      return ContainerUtil.map(((PsiPolyVariantReference)ref).multiResolve(false), new Function<ResolveResult, PsiElement>() {
+        @Override
+        public PsiElement fun(ResolveResult result) {
+          return result.getElement();
+        }
+      });
+    }
+    return Collections.singletonList(ref.resolve());
   }
 }
