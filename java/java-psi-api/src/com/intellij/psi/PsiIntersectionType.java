@@ -32,7 +32,7 @@ import java.util.*;
 public class PsiIntersectionType extends PsiType.Stub {
   private final PsiType[] myConjuncts;
 
-  protected PsiIntersectionType(@NotNull PsiType[] conjuncts) {
+  private PsiIntersectionType(@NotNull PsiType[] conjuncts) {
     super(PsiAnnotation.EMPTY_ARRAY);
     myConjuncts = conjuncts;
   }
@@ -67,7 +67,7 @@ public class PsiIntersectionType extends PsiType.Stub {
     }
   }
 
-  protected static Set<PsiType> flatten(PsiType[] conjuncts, Set<PsiType> types) {
+  public static Set<PsiType> flatten(PsiType[] conjuncts, Set<PsiType> types) {
     for (PsiType conjunct : conjuncts) {
       if (conjunct instanceof PsiIntersectionType) {
         PsiIntersectionType type = (PsiIntersectionType)conjunct;
