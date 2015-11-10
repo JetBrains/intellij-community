@@ -127,7 +127,7 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
     checkDisposed();
     LineLayout result = myLines.get(line);
     if (result == null || result == myBidiNotRequiredMarker) {
-      result = createLineLayout(line, result == myBidiNotRequiredMarker);
+      result = new LineLayout(myView, line, result == myBidiNotRequiredMarker);
       myLines.set(line, result);
     }
     return result;
@@ -136,13 +136,6 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   boolean hasCachedLayoutFor(int line) {
     LineLayout layout = myLines.get(line);
     return layout != null && layout != myBidiNotRequiredMarker;
-  }
-
-  @NotNull
-  private LineLayout createLineLayout(int line, boolean skipBidiLayout) {
-    int lineStart = myDocument.getLineStartOffset(line);
-    int lineEnd = myDocument.getLineEndOffset(line);
-    return new LineLayout(myView, lineStart, lineEnd, skipBidiLayout);
   }
 
   private int getChunkCacheSizeLimit() {

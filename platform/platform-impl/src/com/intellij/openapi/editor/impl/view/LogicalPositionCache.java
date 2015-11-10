@@ -83,6 +83,12 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable {
     LineData lineData = getLineInfo(line);
     return new LogicalPosition(line, lineData.offsetToLogicalColumn(myDocument, line, myTabSize, offset));
   }
+  
+  synchronized int offsetToLogicalColumn(int line, int intraLineOffset) {
+    if (line < 0 || line >= myDocument.getLineCount()) return 0;
+    LineData lineData = getLineInfo(line);
+    return lineData.offsetToLogicalColumn(myDocument, line, myTabSize, myDocument.getLineStartOffset(line) + intraLineOffset);
+  }
 
   synchronized int logicalPositionToOffset(@NotNull LogicalPosition pos) {
     int line = pos.line;

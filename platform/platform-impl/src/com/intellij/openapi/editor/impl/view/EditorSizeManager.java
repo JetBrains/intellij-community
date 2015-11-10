@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.mapping.IncrementalCacheUpdateEvent;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentParsingListenerAdapter;
 import com.intellij.openapi.project.Project;
@@ -34,6 +35,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -195,26 +197,56 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
   }
 
   private int calculatePreferredWidth() {
-    int lineCount = myLineWidths.size();
+    assert myLineWidths.size() == myEditor.getVisibleLineCount();
+    VisualLinesIterator iterator = new VisualLinesIterator(myView, 0);
     int maxWidth = 0;
-    for (int i = 0; i < lineCount; i++) {
-      int width = myLineWidths.get(i);
+    while (!iterator.atEnd()) {
+      int visualLine = iterator.getVisualLine();
+      int width = myLineWidths.get(visualLine);
       if (width == UNKNOWN_WIDTH) {
         final Ref<Boolean> approximateValue = new Ref<Boolean>(Boolean.FALSE);
-        width = myView.getMaxWidthInLineRange(i, i, new Runnable() {
+        width = getVisualLineWidth(iterator, new Runnable() {
           @Override
           public void run() {
             approximateValue.set(Boolean.TRUE);
           }
         });
         if (approximateValue.get()) width = -width;
-        myLineWidths.set(i, width);
+        myLineWidths.set(visualLine, width);
       }
       maxWidth = Math.max(maxWidth, Math.abs(width));
+      iterator.advance();
     }
     return maxWidth;
   }
-
+  
+  int getVisualLineWidth(VisualLinesIterator visualLinesIterator, @Nullable Runnable quickEvaluationListener) {
+    assert !visualLinesIterator.atEnd();
+    int visualLine = visualLinesIterator.getVisualLine();
+    FoldRegion[] topLevelRegions = myEditor.getFoldingModel().fetchTopLevel();
+    if (quickEvaluationListener != null &&
+        (topLevelRegions == null || topLevelRegions.length == 0) && myEditor.getSoftWrapModel().getRegisteredSoftWraps().isEmpty() &&
+        !myView.getTextLayoutCache().hasCachedLayoutFor(visualLine)) {
+      // fast path - speeds up editor opening
+      quickEvaluationListener.run();
+      return myView.getLogicalPositionCache().offsetToLogicalColumn(visualLine, 
+                                                                    myDocument.getLineEndOffset(visualLine) - 
+                                                                    myDocument.getLineStartOffset(visualLine)) * 
+             myView.getMaxCharWidth();
+    }
+    float x = 0;
+    int maxOffset = visualLinesIterator.getVisualLineStartOffset();
+    for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visualLinesIterator,
+                                                                                            quickEvaluationListener)) {
+      x = fragment.getEndX();
+      maxOffset = Math.max(maxOffset, fragment.getMaxOffset());
+    }
+    if (myEditor.getSoftWrapModel().getSoftWrap(maxOffset) != null) {
+      x += myEditor.getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
+    }
+    return (int)x;
+  }
+  
   void reset() {
     assert !myDocument.isInBulkUpdate();
     doInvalidateRange(0, myDocument.getTextLength());
