@@ -1,113 +1,49 @@
 package com.stats.completion
 
-import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupEvent
-import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.codeInsight.lookup.impl.PrefixChangeListener
-import com.intellij.openapi.components.AbstractProjectComponent
-import com.intellij.openapi.project.Project
-import java.beans.PropertyChangeListener
+import com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.AnActionListener
+import com.intellij.openapi.components.ApplicationComponent
 
-class CompletionStatsRetriever(project: Project): AbstractProjectComponent(project) {
-    private val lookupTrackerInitializer = PropertyChangeListener {
-        val lookup = it.newValue
-        if (lookup is LookupImpl) {
-            val trackingListener = TrackingListener(lookup)
-            lookup.addLookupListener(trackingListener)
-            lookup.setPrefixChangeListener(trackingListener)
+
+class CompletionPopupActionsTracker : AnActionListener {
+    
+    private val down = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
+    private val up = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)
+    private val backspace = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_BACKSPACE)
+    
+    private fun obtainLookup(dataContext: DataContext) = LookupManager.getActiveLookup(CommonDataKeys.EDITOR.getData(dataContext)) as LookupImpl?
+
+    override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+        val lookup = obtainLookup(dataContext) ?: return
+        when (action) {
+            down -> println("Down")
+            up -> println("Up")
+            backspace -> println("Backspace")
+            is ChooseItemAction -> println("Item chosen") 
         }
     }
 
-    override fun projectOpened() {
-        val manager = LookupManager.getInstance(myProject)
-        manager.addPropertyChangeListener(lookupTrackerInitializer)
+    override fun beforeEditorTyping(c: Char, dataContext: DataContext) {
+        val lookup = obtainLookup(dataContext) ?: return
+        println("Typed $c")
     }
-    
-    override fun projectClosed() {
-        val manager = LookupManager.getInstance(myProject)
-        manager.removePropertyChangeListener(lookupTrackerInitializer)
+
+    override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+        val lookup = obtainLookup(dataContext) ?: return
     }
-    
 }
 
-class TrackingListener(private val lookup: LookupImpl) : LookupListener, PrefixChangeListener {
-    private var previous: LookupElement? = null
-    private var ignoreItemChangedEvent = false
-    
-    override fun lookupCanceled(event: LookupEvent) = trackCancelled()
+class CompletionStatsRetriever: ApplicationComponent.Adapter() {
+    private val trackingListener = CompletionPopupActionsTracker()
 
-    override fun itemSelected(event: LookupEvent) = trackSelectedItem(event.item!!)
-
-    override fun currentItemChanged(event: LookupEvent) {
-        if (ignoreItemChangedEvent) return
-        
-        val current = event.item
-        if (previous == current) return
-        if (previous == null) {
-            sessionStarted()
-            previous = current
-            return
-        }
-        
-        val items = event.lookup.items
-        val previousIndex = items.indexOf(previous)
-        val currentIndex = items.indexOf(current)
-
-        if (currentIndex > previousIndex) {
-            trackDownPressed()
-        }
-        else {
-            trackUpPressed()
-        }
-        
-        previous = current
-    }
-
-    override fun beforeAppend(c: Char) {
-        ignoreItemChangedEvent = true
+    override fun initComponent() {
+        ActionManager.getInstance().addAnActionListener(trackingListener)
     }
     
-    override fun afterAppend(c: Char) {
-        ignoreItemChangedEvent = false
-        println("Appened: $c")
+    override fun disposeComponent() {
+        ActionManager.getInstance().removeAnActionListener(trackingListener)
     }
-
-    override fun beforeTruncate() {
-        ignoreItemChangedEvent = true
-    }
-
-    override fun afterTruncate() {
-        ignoreItemChangedEvent = false
-        println("Truncated")
-    }
-
-    private fun sessionStarted() {
-        println("Started")
-    }
-    
-    private fun sessionFinished() {
-        println("Finished")
-    }
-
-    private fun trackUpPressed() {
-        println("UP PRESSED")
-    }
-
-    private fun trackDownPressed() {
-        println("DOWN PRESSED")
-    }
-    
-    private fun trackCancelled() {
-        println("CANCELLED")
-        sessionFinished()
-    }
-
-    private fun trackSelectedItem(item: LookupElement) {
-        println("SELECTED ${item.lookupString}")
-        sessionFinished()
-    }
-
-
 }
