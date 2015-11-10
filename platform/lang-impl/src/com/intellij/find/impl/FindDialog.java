@@ -905,7 +905,7 @@ public class FindDialog extends DialogWrapper {
 
       else {
         try {
-          FindInProjectUtil.createFileMaskRegExp(mask);   // verify that the regexp compiles
+          FindInProjectUtil.createFileMaskCondition(mask);   // verify that the regexp compiles
         }
         catch (PatternSyntaxException ex) {
           return new ValidationInfo(FindBundle.message("find.filter.invalid.file.mask.error", mask), myFileFilter);
@@ -1510,7 +1510,7 @@ public class FindDialog extends DialogWrapper {
   private String getFileTypeMask() {
     String mask = null;
     if (myUseFileFilter !=null && myUseFileFilter.isSelected()) {
-      mask = (String)myFileFilter.getSelectedItem();
+      mask = (String)myFileFilter.getEditor().getItem();
     }
     return mask;
   }
