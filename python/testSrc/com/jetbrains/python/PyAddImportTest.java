@@ -16,7 +16,7 @@
 package com.jetbrains.python;
 
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
@@ -164,7 +164,7 @@ public class PyAddImportTest extends PyTestCase {
     WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
       @Override
       public void run() {
-        final PsiPolyVariantReference reference = PyResolveTestCase.findReferenceByMarker(myFixture.getFile());
+        final PsiReference reference = PyResolveTestCase.findReferenceByMarker(myFixture.getFile());
         if (qualifier != null) {
           AddImportHelper.addLocalFromImportStatement(reference.getElement(), qualifier, name);
         }

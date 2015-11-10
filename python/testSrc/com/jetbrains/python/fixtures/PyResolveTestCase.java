@@ -131,9 +131,8 @@ public abstract class PyResolveTestCase extends PyTestCase {
   }
 
   @NotNull
-  public static PsiPolyVariantReference findReferenceByMarker(PsiFile psiFile) {
-    int offset = findMarkerOffset(psiFile);
-    final PsiPolyVariantReference ref = (PsiPolyVariantReference)psiFile.findReferenceAt(offset);
+  public static PsiReference findReferenceByMarker(PsiFile psiFile) {
+    final PsiReference ref = psiFile.findReferenceAt(findMarkerOffset(psiFile));
     assertNotNull("<ref> in test file not found", ref);
     return ref;
   }
