@@ -16,6 +16,7 @@
 package com.intellij.diagnostic;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -38,6 +39,13 @@ public class ThreadDumper {
     StringWriter writer = new StringWriter();
     dumpThreadsToFile(ManagementFactory.getThreadMXBean(), writer);
     return writer.toString();
+  }
+
+  @NotNull
+  public static ThreadDump getThreadDumpInfo(@NotNull final ThreadMXBean threadMXBean) {
+    StringWriter writer = new StringWriter();
+    StackTraceElement[] edtStack = dumpThreadsToFile(threadMXBean, writer);
+    return new ThreadDump(writer.toString(), edtStack);
   }
 
   @Nullable
