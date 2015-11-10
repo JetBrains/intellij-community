@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.regex.Pattern;
 
 public abstract class VcsTaskHandler {
 
@@ -93,7 +92,7 @@ public abstract class VcsTaskHandler {
    * @return true if valid
    */
   public boolean isBranchNameValid(@NotNull String branchName) {
-    return !Pattern.compile(DEFAULT_PROHIBITED_SYMBOLS).matcher(branchName).find();
+    return !branchName.contains(DEFAULT_PROHIBITED_SYMBOLS);
   }
 
   /**
