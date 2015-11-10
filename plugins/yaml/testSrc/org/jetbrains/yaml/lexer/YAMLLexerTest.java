@@ -150,6 +150,14 @@ public class YAMLLexerTest extends LexerTestCase {
     doTest();
   }
 
+  public void testMultilineDoubleQuotedKey() {
+    doTest();
+  }
+
+  public void testMultilineSingleQuotedKey() {
+    doTest();
+  }
+
   private void doTest() {
     doFileTest("yml");
   }

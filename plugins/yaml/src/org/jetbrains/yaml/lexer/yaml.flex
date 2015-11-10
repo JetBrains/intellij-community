@@ -85,8 +85,10 @@ KEY =                           [^,\n\-\ {}\[\]#]!(!([^\n{}>:,]*)|{LINE}{WHITE_S
 INJECTION =                     ("{{" {ID} "}"{0,2}) | ("%{" [^}\n]* "}"?)
 
 ESCAPE_SEQUENCE=                \\[^\n]
+DSTRING_SINGLE_LINE=            \"([^\\\"\n]|{ESCAPE_SEQUENCE})*?\"?
 DSTRING=                        \"([^\\\"]|{ESCAPE_SEQUENCE})*?\"?
-STRING=                         '([^']|(''))*?'?
+STRING_SINGLE_LINE=             '([^'\n]|'')*?'?
+STRING=                         '([^']|'')*?'?
 NS_HEX_DIGIT = [[:digit:]a-fA-F]
 NS_WORD_CHAR = [:digit:] | "-" | [a-zA-Z]
 NS_URI_CHAR =  “%” {NS_HEX_DIGIT} {NS_HEX_DIGIT} | {NS_WORD_CHAR} | [#;\/?:@&=+$,_.!~*'()\[\]]
@@ -154,11 +156,11 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
 <YYINITIAL, BRACES, VALUE_OR_KEY> {
 
 
-{STRING} ":" {
+{STRING_SINGLE_LINE} ":" {
   return SCALAR_KEY;
 }
 
-{DSTRING} ":" {
+{DSTRING_SINGLE_LINE} ":" {
   return SCALAR_KEY;
 }
 
