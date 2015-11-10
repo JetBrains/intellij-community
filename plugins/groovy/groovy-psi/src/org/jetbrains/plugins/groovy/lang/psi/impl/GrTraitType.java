@@ -118,7 +118,7 @@ public class GrTraitType extends PsiType {
 
   // todo move this method to org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrSafeCastExpressionImpl
   @Nullable
-  public static PsiType createTraitClassType(@NotNull GrSafeCastExpression safeCastExpression) {
+  public static PsiType createTraitType(@NotNull GrSafeCastExpression safeCastExpression) {
     GrExpression operand = safeCastExpression.getOperand();
     PsiType exprType = operand.getType();
     if (!(exprType instanceof PsiClassType) && !(exprType instanceof GrTraitType)) return null;
@@ -128,21 +128,21 @@ public class GrTraitType extends PsiType {
     PsiType type = typeElement.getType();
     if (!GrTraitUtil.isTrait(PsiTypesUtil.getPsiClass(type))) return null;
 
-    return createTraitClassType(exprType, ContainerUtil.newSmartList(type));
+    return createTraitType(exprType, ContainerUtil.newSmartList(type));
   }
 
   @NotNull
-  public static PsiType createTraitClassType(@NotNull PsiType type, @NotNull List<PsiType> traits) {
-    return createTraitClassType(ContainerUtil.prepend(traits, type instanceof GrTraitType ? ((GrTraitType)type).myDelegate : type));
+  public static PsiType createTraitType(@NotNull PsiType type, @NotNull List<PsiType> traits) {
+    return createTraitType(ContainerUtil.prepend(traits, type instanceof GrTraitType ? ((GrTraitType)type).myDelegate : type));
   }
 
   @NotNull
-  public static PsiType createTraitClassType(@NotNull List<PsiType> types) {
-    return createTraitClassType(types.toArray(PsiType.createArray(types.size())));
+  public static PsiType createTraitType(@NotNull List<PsiType> types) {
+    return createTraitType(types.toArray(PsiType.createArray(types.size())));
   }
 
   @NotNull
-  public static PsiType createTraitClassType(@NotNull PsiType[] types) {
+  public static PsiType createTraitType(@NotNull PsiType[] types) {
     final Set<PsiType> flattened = PsiIntersectionType.flatten(types, new LinkedHashSet<PsiType>() {
       @Override
       public boolean add(PsiType type) {
