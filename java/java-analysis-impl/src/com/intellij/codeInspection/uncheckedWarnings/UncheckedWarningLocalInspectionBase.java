@@ -25,6 +25,8 @@ import com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.java.LanguageLevel;
@@ -229,7 +231,7 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
       super.visitMethodReferenceExpression(expression);
       if (IGNORE_UNCHECKED_CALL) return;
       final JavaResolveResult result = expression.advancedResolve(false);
-      final String description = getUncheckedCallDescription(result);
+      final String description = getUncheckedCallDescription(expression, result);
       if (description != null) {
         final PsiElement referenceNameElement = expression.getReferenceNameElement();
         registerProblem(description, expression, referenceNameElement != null ? referenceNameElement : expression, myGenerifyFixes);
@@ -240,7 +242,7 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
     public void visitCallExpression(PsiCallExpression callExpression) {
       super.visitCallExpression(callExpression);
       final JavaResolveResult result = callExpression.resolveMethodGenerics();
-      final String description = getUncheckedCallDescription(result);
+      final String description = getUncheckedCallDescription(callExpression, result);
       if (description != null) {
         if (IGNORE_UNCHECKED_CALL) return;
         final PsiExpression element = callExpression instanceof PsiMethodCallExpression
@@ -421,12 +423,27 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
 
 
     @Nullable
-    private String getUncheckedCallDescription(JavaResolveResult resolveResult) {
+    private String getUncheckedCallDescription(PsiElement place, JavaResolveResult resolveResult) {
       final PsiElement element = resolveResult.getElement();
       if (!(element instanceof PsiMethod)) return null;
       final PsiMethod method = (PsiMethod)element;
       final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-      if (!PsiUtil.isRawSubstitutor(method, substitutor)) return null;
+      if (!PsiUtil.isRawSubstitutor(method, substitutor)) {
+        if (JavaVersionService.getInstance().isAtLeast(place, JavaSdkVersion.JDK_1_8)) {
+          for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(method)) {
+            final PsiClassType[] extendsListTypes = parameter.getExtendsListTypes();
+            if (extendsListTypes.length > 0) {
+              final PsiType subst = substitutor.substitute(parameter);
+              for (PsiClassType classType : extendsListTypes) {
+                if (JavaGenericsUtil.isRawToGeneric(substitutor.substitute(classType), subst)) {
+                  return JavaErrorMessages.message("generics.unchecked.call", JavaHighlightUtil.formatMethod(method));
+                }
+              }
+            }
+          }
+        }
+        return null;
+      }
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       for (final PsiParameter parameter : parameters) {
         final PsiType parameterType = parameter.getType();
