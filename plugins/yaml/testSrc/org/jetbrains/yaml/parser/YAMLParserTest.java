@@ -132,4 +132,27 @@ public class YAMLParserTest extends ParsingTestCase {
                "foo: {}\n" +
                "bar: \"baz\"");
   }
+
+  public void testHonestMultiline() throws Throwable {
+    doCodeTest("---\n" +
+               "foo: >\n" +
+               "  first text line\n" +
+               "  second text line\n" +
+               "\n" +
+               "  baz: clazz\n" +
+               "  - this is text\n" +
+               "  - but looks like a list\n" +
+               "  - indent tells.\n" +
+               "bar: zoo");
+  }
+
+  public void testEmptyMultiline() throws Throwable {
+    doCodeTest("---\n" +
+               "foo: >\n" +
+               "bar:\n" +
+               "  abc: def\n" +
+               "  ghi: >\n" +
+               "  jkl: mno\n" +
+               "baz: qwe");
+  }
 }

@@ -142,6 +142,10 @@ public class YAMLLexerTest extends LexerTestCase {
     doTest();
   }
 
+  public void testEmptyMultiline() throws Throwable {
+    doTest();
+  }
+
   private void doTest() {
     doFileTest("yml");
   }

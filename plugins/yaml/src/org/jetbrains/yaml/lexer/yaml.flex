@@ -23,8 +23,8 @@ import org.jetbrains.yaml.YAMLTokenTypes;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 %{
-  private int valueIndent = 0;
-  private boolean afterEOL = false;
+  private int currentLineIndent = 0;
+  private int valueIndent = -1;
   private int braceCount = 0;
   private IElementType valueTokenType = null;
   private int previousState = YYINITIAL;
@@ -41,6 +41,16 @@ import org.jetbrains.yaml.YAMLTokenTypes;
   private char getCharAfter(final int offset) {
     final int loc = getTokenEnd()  + offset;
     return 0 <= loc && loc < zzBuffer.length() ? zzBuffer.charAt(loc) : (char) -1;
+  }
+
+  private IElementType getWhitespaceTypeAndUpdateIndent() {
+    if (isAfterEol()) {
+      currentLineIndent = yylength();
+      return INDENT;
+    }
+    else {
+      return WHITESPACE;
+    }
   }
 
   private boolean isAfterEol() {
@@ -108,6 +118,7 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
 {EOL}                           {   if (braceCount == 0) {
                                       yyBegin(YYINITIAL);
                                     }
+                                    currentLineIndent = 0;
                                     return EOL;
                                 }
 "["                             {   braceCount++;
@@ -164,7 +175,7 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
 
 <YYINITIAL, BRACES, VALUE, VALUE_OR_KEY> {
 
-{WHITE_SPACE}                   { return isAfterEol() ? INDENT : WHITESPACE; }
+{WHITE_SPACE}                   { return getWhitespaceTypeAndUpdateIndent(); }
 
 }
 
@@ -195,16 +206,14 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
 <VALUE, VALUE_OR_KEY>{
 
 ">"/ ({WHITE_SPACE} | {EOL})      {   yyBegin(INDENT_VALUE);
-                                    valueIndent = 0; // initialization
-                                    afterEOL = false;
+                                    valueIndent = currentLineIndent;
                                     valueTokenType = SCALAR_TEXT;
                                     yypushback(1);
                                 }
 
 ({C_NS_TAG_PROPERTY} {WHITE_SPACE}+)? ("|"("-"|"+")?) / ({WHITE_SPACE} | {EOL})
                                 {   yyBegin(INDENT_VALUE);
-                                    valueIndent = 0; // initialization
-                                    afterEOL = false;
+                                    valueIndent = currentLineIndent;
                                     valueTokenType = SCALAR_LIST;
                                     yypushback(yylength());
                                 }
@@ -251,42 +260,27 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
 }
 
 <INDENT_VALUE> {
-{WHITE_SPACE}                           {   afterEOL = false;
-                                            //System.out.println("Matched WHITESPACE:" + yytext());
-                                            final int matched = yylength();
-                                            if (valueIndent < 0){
-                                                valueIndent = matched;
-                                                //System.out.println("Indent selected:" + valueIndent);
-                                            }
-                                            else if (valueIndent > matched) {
-                                                yyBegin(YYINITIAL);
-                                            }
-                                            return isAfterEol() ? INDENT : WHITESPACE;
+{WHITE_SPACE}? {EOL}                    {
+                                            currentLineIndent = 0;
+                                            return EOL;
                                         }
-[^ \n\t] {LINE}?                        {   if (afterEOL){
+{WHITE_SPACE}                           {   IElementType type = getWhitespaceTypeAndUpdateIndent();
+                                            if (currentLineIndent <= valueIndent) {
+                                              yyBegin(YYINITIAL);
+                                            }
+                                            return type;
+                                        }
+[^ \n\t] {LINE}?                        {   if (isAfterEol()){
                                                 yypushback(yylength());
                                                 yyBegin(YYINITIAL);
 
                                             } else {
-                                                afterEOL = false;
-                                                if (valueIndent < 0) {
-                                                    //System.out.println("Matched TEXT:" + yytext());
-                                                    yyBegin(VALUE);
-                                                    return TEXT;
-                                                }
-                                                //System.out.println("Matched ValueContext:" + yytext());
+                                                //if (valueIndent < 0) {
+                                                //    yyBegin(VALUE);
+                                                //    return TEXT;
+                                                //}
                                                 return valueTokenType;
                                             }
-                                        }
-{EOL}                                   {   afterEOL = true;
-                                            //System.out.println("Matched EOL:");
-                                            if (valueIndent < 0) {
-                                                yyBegin(YYINITIAL);
-                                            }
-                                            else if (valueIndent == 0) {
-                                                valueIndent --;
-                                            }
-                                            return EOL;
                                         }
 }
 
