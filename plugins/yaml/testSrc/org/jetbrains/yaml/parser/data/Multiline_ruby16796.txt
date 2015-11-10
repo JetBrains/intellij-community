@@ -4,10 +4,11 @@ YAML file
       PsiElement(scalar key)('code:')
       PsiElement(Eol)('\n')
       PsiElement(indent)('  ')
-      PsiElement(text)('src="keys/{{item}}"')
-    PsiElement(Eol)('\n')
-    PsiElement(indent)('  ')
-    PsiElement(text)('mode=0600')
+      YAML plain scalar text
+        PsiElement(text)('src="keys/{{item}}"')
+        PsiElement(Eol)('\n')
+        PsiElement(indent)('  ')
+        PsiElement(text)('mode=0600')
     PsiElement(Eol)('\n')
     YAML key value
       PsiElement(scalar key)('with_items:')

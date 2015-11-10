@@ -79,18 +79,21 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       parseScalarKeyValue(indent);
     }
     else if (YAMLElementTypes.SCALAR_VALUES.contains(getTokenType())) {
-      parseScalarValue();
+      parseScalarValue(indent);
     }
     else {
       advanceLexer();
     }
   }
 
-  private void parseScalarValue() {
+  private void parseScalarValue(int indent) {
     final IElementType tokenType = getTokenType();
     assert YAMLElementTypes.SCALAR_VALUES.contains(tokenType) : "Scalar value expected!";
     if (tokenType == SCALAR_LIST || tokenType == SCALAR_TEXT) {
       parseMultiLineScalar(tokenType);
+    }
+    else if (tokenType == TEXT) {
+      parseMultiLinePlainScalar(indent);
     }
     else {
       advanceLexer();
@@ -108,6 +111,40 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     marker.done(tokenType == SCALAR_LIST ? YAMLElementTypes.SCALAR_LIST_VALUE : YAMLElementTypes.SCALAR_TEXT_VALUE);
   }
 
+  private void parseMultiLinePlainScalar(final int indent) {
+    final PsiBuilder.Marker marker = mark();
+    PsiBuilder.Marker lastTextEnd = null;
+    boolean isMultiLine = false;
+
+    IElementType type = getTokenType();
+    while (type == TEXT || type == INDENT || type == EOL) {
+      advanceLexer();
+
+
+      if (type == TEXT) {
+        if (lastTextEnd != null && myIndent < indent) {
+          break;
+        }
+        if (lastTextEnd != null) {
+          isMultiLine = true;
+          lastTextEnd.drop();
+        }
+        lastTextEnd = mark();
+      }
+      type = getTokenType();
+    }
+
+    rollBackToEol();
+    assert lastTextEnd != null;
+    lastTextEnd.rollbackTo();
+    if (isMultiLine) {
+      marker.done(YAMLElementTypes.SCALAR_PLAIN_VALUE);
+    }
+    else {
+      marker.drop();
+    }
+  }
+
   private void parseScalarKeyValue(int indent) {
     final PsiBuilder.Marker marker = mark();
     assert getTokenType() == SCALAR_KEY : "Expected scalar key";
@@ -115,7 +152,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     advanceLexer();
     passJunk();
     if (YAMLElementTypes.SCALAR_VALUES.contains(getTokenType())) {
-      parseScalarValue();
+      parseScalarValue(indent);
     }
     else {
       final PsiBuilder.Marker valueMarker = mark();
@@ -213,13 +250,17 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       myIndent = 0;
     }
     else if (type == INDENT) {
-      myIndent = myBuilder.rawTokenTypeStart(1) - myBuilder.getCurrentOffset();
+      myIndent = getCurrentTokenLength();
     }
     else {
       // Drop Eol Marker if other token seen
       dropEolMarker();
     }
     myBuilder.advanceLexer();
+  }
+
+  private int getCurrentTokenLength() {
+    return myBuilder.rawTokenTypeStart(1) - myBuilder.getCurrentOffset();
   }
 
   private void passJunk() {

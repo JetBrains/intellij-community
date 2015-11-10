@@ -44,7 +44,9 @@ public class YAMLFoldingBuilder implements FoldingBuilder, DumbAware {
           node.getTreeParent().getChildren(TokenSet.create(YAMLElementTypes.DOCUMENT)).length > 1){
         descriptors.add(new FoldingDescriptor(node, nodeTextRange));
       }
-      if (type == YAMLElementTypes.SCALAR_TEXT_VALUE || type == YAMLElementTypes.SCALAR_LIST_VALUE) {
+      if (type == YAMLElementTypes.SCALAR_TEXT_VALUE
+          || type == YAMLElementTypes.SCALAR_LIST_VALUE
+          || type == YAMLElementTypes.SCALAR_PLAIN_VALUE) {
         descriptors.add(new FoldingDescriptor(node, nodeTextRange));
       }
     }

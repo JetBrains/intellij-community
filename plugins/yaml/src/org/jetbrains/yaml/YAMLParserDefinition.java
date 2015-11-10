@@ -79,6 +79,9 @@ public class YAMLParserDefinition implements ParserDefinition, YAMLElementTypes 
     if (type == SCALAR_TEXT_VALUE) {
       return new YAMLScalarTextImpl(node);
     }
+    if (type == SCALAR_PLAIN_VALUE) {
+      return new YAMLPlainTextImpl(node);
+    }
     return new YAMLPsiElementImpl(node);
   }
 

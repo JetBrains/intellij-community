@@ -18,6 +18,7 @@ public interface YAMLElementTypes {
   YAMLElementType COMPOUND_VALUE = new YAMLElementType("Compound value");
   YAMLElementType SCALAR_LIST_VALUE = new YAMLElementType("Scalar list value");
   YAMLElementType SCALAR_TEXT_VALUE = new YAMLElementType("Scalar text value");
+  YAMLElementType SCALAR_PLAIN_VALUE = new YAMLElementType("Scalar plain style");
 
   TokenSet SCALAR_VALUES = TokenSet.create(
     YAMLTokenTypes.SCALAR_TEXT,
