@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,7 +129,7 @@ public class ParameterHidingMemberVariableInspectionBase extends BaseInspection 
         }
       }
       final PsiClass aClass = checkFieldName(variable, method);
-      if (aClass ==  null) {
+      if (aClass == null) {
         return;
       }
       registerVariableError(variable, aClass);
@@ -143,17 +143,13 @@ public class ParameterHidingMemberVariableInspectionBase extends BaseInspection 
       }
       PsiClass aClass = ClassUtils.getContainingClass(method);
       while (aClass != null) {
-        PsiField field = aClass.findFieldByName(variableName, true);
-        if (field != null) {
-          if (m_ignoreStaticMethodParametersHidingInstanceFields && !field.hasModifierProperty(PsiModifier.STATIC) &&
-              method.hasModifierProperty(PsiModifier.STATIC)) {
-            continue;
-          }
-          if (!m_ignoreInvisibleFields || ClassUtils.isFieldVisible(field, aClass)) {
-            return aClass;
-          }
+        final PsiField field = aClass.findFieldByName(variableName, true);
+        if (field != null &&
+            (!m_ignoreStaticMethodParametersHidingInstanceFields ||
+             field.hasModifierProperty(PsiModifier.STATIC) || !method.hasModifierProperty(PsiModifier.STATIC)) &&
+            (!m_ignoreInvisibleFields || ClassUtils.isFieldVisible(field, aClass))) {
+          return aClass;
         }
-
         aClass = ClassUtils.getContainingClass(aClass);
       }
       return null;
