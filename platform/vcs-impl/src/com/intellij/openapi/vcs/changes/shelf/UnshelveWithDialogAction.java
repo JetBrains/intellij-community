@@ -95,7 +95,14 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     final ChangeListChooser chooser =
       new ChangeListChooser(project, changeListManager.getChangeListsCopy(), changeListManager.getDefaultChangeList(),
-                            VcsBundle.message("unshelve.changelist.chooser.title"), defaultName);
+                            VcsBundle.message("unshelve.changelist.chooser.title"), defaultName) {
+        @Nullable
+        @Override
+        protected JComponent createSouthPanel() {
+          return addDoNotShowCheckBox(ObjectUtils.assertNotNull(super.createSouthPanel()), createRemoveFilesStrategyCheckbox(project));
+        }
+      };
+
     if (!chooser.showAndGet()) return;
 
     //todo accept empty collections as a nullable to avoid ugly checks and reassignments
@@ -140,17 +147,21 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
     @Nullable
     @Override
     protected JComponent createSouthPanel() {
-      JComponent southPanel = ObjectUtils.assertNotNull(super.createSouthPanel());
-      final JCheckBox removeOptionCheckBox = new JCheckBox("Remove successfully applied files from shelf");
-      final ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(myProject);
-      removeOptionCheckBox.setSelected(shelveChangesManager.isRemoveFilesFromShelf());
-      removeOptionCheckBox.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          shelveChangesManager.setRemoveFilesFromShelf(removeOptionCheckBox.isSelected());
-        }
-      });
-      return addDoNotShowCheckBox(southPanel, removeOptionCheckBox);
+      return addDoNotShowCheckBox(ObjectUtils.assertNotNull(super.createSouthPanel()), createRemoveFilesStrategyCheckbox(myProject));
     }
+  }
+
+  @NotNull
+  private static JCheckBox createRemoveFilesStrategyCheckbox(@NotNull Project project) {
+    final JCheckBox removeOptionCheckBox = new JCheckBox("Remove successfully applied files from shelf");
+    final ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(project);
+    removeOptionCheckBox.setSelected(shelveChangesManager.isRemoveFilesFromShelf());
+    removeOptionCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        shelveChangesManager.setRemoveFilesFromShelf(removeOptionCheckBox.isSelected());
+      }
+    });
+    return removeOptionCheckBox;
   }
 }
