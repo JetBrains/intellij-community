@@ -56,6 +56,30 @@ interface CompletionPopupListener {
     }
 }
 
+class CompletionPopupActionsTracker : AnActionListener.Adapter() {
+    
+    private val down = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
+    private val up = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)
+    private val backspace = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_BACKSPACE)
+    
+    var popupListener: CompletionPopupListener = CompletionPopupListener.Adapter()
+    
+    private fun obtainLookup(dataContext: DataContext) = LookupManager.getActiveLookup(CommonDataKeys.EDITOR.getData(dataContext)) as LookupImpl?
+
+    override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+        obtainLookup(dataContext) ?: return
+        when (action) {
+            down -> popupListener.downPressed()
+            up -> popupListener.upPressed()
+            backspace -> popupListener.backSpacePressed()
+        }
+    }
+
+    override fun beforeEditorTyping(c: Char, dataContext: DataContext) {
+        obtainLookup(dataContext) ?: return
+        popupListener.typed(c)
+    }
+}
 
 class TrackingLookupListener(private val completionTracker: CompletionPopupActionsTracker): CompletionPopupListener, LookupAdapter() {
     private var completionPopupShown = false
@@ -67,7 +91,7 @@ class TrackingLookupListener(private val completionTracker: CompletionPopupActio
     override fun currentItemChanged(event: LookupEvent) {
         if (!completionPopupShown) {
             completionTracker.popupListener = this
-            completionPopupShown
+            completionPopupShown = true
         }
     }
 
@@ -91,29 +115,4 @@ class TrackingLookupListener(private val completionTracker: CompletionPopupActio
         println("Typed $c")
     }
     
-}
-
-class CompletionPopupActionsTracker : AnActionListener.Adapter() {
-    
-    private val down = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
-    private val up = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)
-    private val backspace = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_BACKSPACE)
-    
-    var popupListener: CompletionPopupListener = CompletionPopupListener.Adapter()
-    
-    private fun obtainLookup(dataContext: DataContext) = LookupManager.getActiveLookup(CommonDataKeys.EDITOR.getData(dataContext)) as LookupImpl?
-
-    override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
-        val lookup = obtainLookup(dataContext) ?: return
-        when (action) {
-            down -> popupListener.downPressed()
-            up -> popupListener.upPressed()
-            backspace -> popupListener.backSpacePressed()
-        }
-    }
-
-    override fun beforeEditorTyping(c: Char, dataContext: DataContext) {
-        val lookup = obtainLookup(dataContext) ?: return
-        popupListener.typed(c)
-    }
 }
