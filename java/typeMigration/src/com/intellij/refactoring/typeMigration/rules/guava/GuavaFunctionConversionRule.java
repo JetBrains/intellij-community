@@ -29,6 +29,7 @@ import java.util.Map;
  */
 public class GuavaFunctionConversionRule extends BaseGuavaTypeConversionRule {
   public static final String JAVA_UTIL_FUNCTION_FUNCTION = "java.util.function.Function";
+  public static final String GUAVA_FUNCTION = "com.google.common.base.Function";
 
   @Override
   protected void fillSimpleDescriptors(Map<String, TypeConversionDescriptorBase> descriptorsMap) {
@@ -45,7 +46,7 @@ public class GuavaFunctionConversionRule extends BaseGuavaTypeConversionRule {
   @NotNull
   @Override
   public String ruleFromClass() {
-    return "com.google.common.base.Function";
+    return GUAVA_FUNCTION;
   }
 
   @NotNull

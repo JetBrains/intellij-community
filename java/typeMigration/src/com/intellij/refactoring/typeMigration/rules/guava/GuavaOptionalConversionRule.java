@@ -43,46 +43,62 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
                                                                  @NotNull String methodName,
                                                                  PsiExpression context,
                                                                  TypeMigrationLabeler labeler) {
-    if ("or".equals(methodName)) {
-      PsiMethodCallExpression methodCallExpression = null;
-      if (context instanceof PsiMethodCallExpression) {
+    if (!(context instanceof PsiMethodCallExpression)) {
+      if ("or".equals(methodName)) {
+        PsiMethodCallExpression methodCallExpression = null;
+        if (context instanceof PsiMethodCallExpression) {
+          final PsiClass aClass = getParameterClass(method);
+          if (aClass != null) {
+            final String qName = aClass.getQualifiedName();
+            String pattern =
+              GUAVA_OPTIONAL.equals(qName) ? "java.util.Optional.ofNullable($expr$.get())" : "java.util.Optional.ofNullable($expr$)";
+            return new TypeConversionDescriptor("$expr$", pattern);
+          }
+          return null;
+        }
+        else if (context.getParent() instanceof PsiMethodCallExpression) {
+          methodCallExpression = (PsiMethodCallExpression)context.getParent();
+        }
+        if (methodCallExpression == null) {
+          return null;
+        }
         final PsiClass aClass = getParameterClass(method);
         if (aClass != null) {
           final String qName = aClass.getQualifiedName();
-          String pattern =
-            GUAVA_OPTIONAL.equals(qName) ? "java.util.Optional.ofNullable($expr$.get())" : "java.util.Optional.ofNullable($expr$)";
-          return new TypeConversionDescriptor("$expr$", pattern);
+          if (GUAVA_OPTIONAL.equals(qName)) {
+            TypeConversionDescriptor descriptor =
+              new TypeConversionDescriptor("$val$.or($other$)", "java.util.Optional.ofNullable($val$.orElseGet($other$::get))");
+            if (to != null) {
+              descriptor.withConversionType(to);
+            }
+            return descriptor;
+          }
+          return GuavaSupplierConversionRule.GUAVA_SUPPLIER.equals(qName)
+                 ? new LambdaParametersTypeConversionDescriptor("$val$.or($other$)", "$val$.orElseGet($other$)")
+                 : new TypeConversionDescriptor("$val$.or($other$)", "$val$.orElse($other$)");
         }
         return null;
       }
-      else if (context.getParent() instanceof PsiMethodCallExpression) {
-        methodCallExpression = (PsiMethodCallExpression)context.getParent();
-      }
-      if (methodCallExpression == null) {
-        return null;
-      }
-      final PsiClass aClass = getParameterClass(method);
-      if (aClass != null) {
-        final String qName = aClass.getQualifiedName();
-        if (GUAVA_OPTIONAL.equals(qName)) {
-          TypeConversionDescriptor descriptor =
-            new TypeConversionDescriptor("$val$.or($other$)", "java.util.Optional.ofNullable($val$.orElseGet($other$::get))");
-          if (to != null) {
-            descriptor.withConversionType(to);
-          }
+      else if ("transform".equals(methodName)) {
+        final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)(context instanceof PsiMethodCallExpression ? context : context.getParent());
+        final PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
+        if (arguments.length != 1) {
+          return null;
+        }
+        final PsiExpression functionArgument = arguments[0];
+        final TypeConversionDescriptor descriptor = new LambdaParametersTypeConversionDescriptor("$val$.transform($fun$)", "$val$.map($fun$)");
+        final PsiType typeParameter = GuavaConversionUtil.getFunctionReturnType(functionArgument);
+        if (typeParameter == null) {
           return descriptor;
         }
-        return GuavaSupplierConversionRule.GUAVA_SUPPLIER.equals(qName)
-               ? new LambdaParametersTypeConversionDescriptor("$val$.or($other$)", "$val$.orElseGet($other$)")
-               : new TypeConversionDescriptor("$val$.or($other$)", "$val$.orElse($other$)");
+        final String rawOptionalType = JAVA_OPTIONAL + "<" + typeParameter.getCanonicalText(false) + ">";
+        return descriptor.withConversionType(JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(rawOptionalType, context));
       }
-      return null;
-    }
-    if (!(context instanceof PsiMethodCallExpression)) {
       return null;
     }
     final PsiClass aClass = method.getContainingClass();
-    if (aClass == null || !GuavaFluentIterableConversionRule.FLUENT_ITERABLE.equals(aClass.getQualifiedName())) {
+    if (aClass == null || !(GuavaFluentIterableConversionRule.FLUENT_ITERABLE.equals(aClass.getQualifiedName()) ||
+                            GUAVA_OPTIONAL.equals(aClass.getQualifiedName()))) {
       return null;
     }
     return GuavaFluentIterableConversionRule.buildCompoundDescriptor((PsiMethodCallExpression) context, to, labeler);
@@ -132,7 +148,6 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
     descriptorsMap.put("orNull", new TypeConversionDescriptor("$val$.orNull()", "$val$.orElse(null)"));
     descriptorsMap.put("asSet", new TypeConversionDescriptor("$val$.asSet()",
                                                              "$val$.isPresent() ? java.util.Collections.singleton($val$.get()) : java.util.Collections.emptySet()"));
-    descriptorsMap.put("transform", new TypeConversionDescriptor("$val$.transform($fun$)", "$val$.map($fun$)"));
   }
 
   @NotNull
