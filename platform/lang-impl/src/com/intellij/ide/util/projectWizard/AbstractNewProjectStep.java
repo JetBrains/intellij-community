@@ -62,8 +62,8 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
     protected abstract DirectoryProjectGenerator createEmptyProjectGenerator();
 
     @NotNull
-    protected abstract ProjectSettingsStepBase createProjectSpecificSettingsStep(DirectoryProjectGenerator emptyProjectGenerator,
-                                                                                 NullableConsumer<ProjectSettingsStepBase> callback);
+    protected abstract ProjectSettingsStepBase createProjectSpecificSettingsStep(@NotNull DirectoryProjectGenerator emptyProjectGenerator,
+                                                                                 @NotNull NullableConsumer<ProjectSettingsStepBase> callback);
 
 
     @NotNull
@@ -72,7 +72,7 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
     }
 
     @NotNull
-    public AnAction[] getActions(DirectoryProjectGenerator generator, NullableConsumer<ProjectSettingsStepBase> callback) {
+    public AnAction[] getActions(@NotNull DirectoryProjectGenerator generator, @NotNull NullableConsumer<ProjectSettingsStepBase> callback) {
       if (shouldIgnore(generator)) {
         return AnAction.EMPTY_ARRAY;
       }
@@ -85,16 +85,16 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
       return projectSpecificAction.getChildren(null);
     }
 
-    protected boolean shouldIgnore(DirectoryProjectGenerator generator) {
+    protected boolean shouldIgnore(@NotNull DirectoryProjectGenerator generator) {
       return false;
     }
 
     @NotNull
-    public AnAction[] getExtraActions(NullableConsumer<ProjectSettingsStepBase> callback) {
+    public AnAction[] getExtraActions(@NotNull NullableConsumer<ProjectSettingsStepBase> callback) {
       return AnAction.EMPTY_ARRAY;
     }
 
-    public void setUpBasicAction(ProjectSpecificAction projectSpecificAction, @NotNull DirectoryProjectGenerator[] generators) {
+    public void setUpBasicAction(@NotNull ProjectSpecificAction projectSpecificAction, @NotNull DirectoryProjectGenerator[] generators) {
     }
   }
 
@@ -115,6 +115,6 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
     }
 
     @Nullable
-    abstract protected Object getProjectSettings(DirectoryProjectGenerator generator);
+    abstract protected Object getProjectSettings(@NotNull DirectoryProjectGenerator generator);
   }
 }
