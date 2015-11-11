@@ -61,7 +61,7 @@ public class EditorImplTest extends AbstractEditorTest {
                           "\t}\n" +
                           "}</selection>");
     CodeFoldingManager.getInstance(ourProject).buildInitialFoldings(myEditor);
-    EditorTestUtil.configureSoftWraps(myEditor, 232, 7); // wrap after 32 characters
+    configureSoftWraps(32);
 
     // verify initial state
     assertEquals(4, EditorUtil.getTabSize(myEditor));
