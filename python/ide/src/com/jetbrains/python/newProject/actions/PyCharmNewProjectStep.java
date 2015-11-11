@@ -57,8 +57,8 @@ public class PyCharmNewProjectStep extends AbstractNewProjectStep {
 
     @NotNull
     @Override
-    protected ProjectSettingsStepBase createProjectSpecificSettingsStep(DirectoryProjectGenerator emptyProjectGenerator,
-                                                                        NullableConsumer<ProjectSettingsStepBase> callback) {
+    protected ProjectSettingsStepBase createProjectSpecificSettingsStep(@NotNull DirectoryProjectGenerator emptyProjectGenerator,
+                                                                        @NotNull NullableConsumer<ProjectSettingsStepBase> callback) {
       return new ProjectSpecificSettingsStep(emptyProjectGenerator, callback);
     }
 
@@ -79,7 +79,7 @@ public class PyCharmNewProjectStep extends AbstractNewProjectStep {
     }
 
     @Override
-    public void setUpBasicAction(ProjectSpecificAction projectSpecificAction, @NotNull DirectoryProjectGenerator[] generators) {
+    public void setUpBasicAction(@NotNull ProjectSpecificAction projectSpecificAction, @NotNull DirectoryProjectGenerator[] generators) {
       if (generators.length == 0) {
         projectSpecificAction.setPopup(false);
       }
@@ -87,7 +87,7 @@ public class PyCharmNewProjectStep extends AbstractNewProjectStep {
 
     @NotNull
     @Override
-    public AnAction[] getActions(DirectoryProjectGenerator generator, NullableConsumer<ProjectSettingsStepBase> callback) {
+    public AnAction[] getActions(@NotNull DirectoryProjectGenerator generator, @NotNull NullableConsumer<ProjectSettingsStepBase> callback) {
       if (generator instanceof PythonProjectGenerator) {
         ProjectSpecificAction group =
           new ProjectSpecificAction(generator, new ProjectSpecificSettingsStep(generator, new PythonGenerateProjectCallback()));
@@ -101,7 +101,7 @@ public class PyCharmNewProjectStep extends AbstractNewProjectStep {
 
     @NotNull
     @Override
-    public AnAction[] getExtraActions(NullableConsumer<ProjectSettingsStepBase> callback) {
+    public AnAction[] getExtraActions(@NotNull NullableConsumer<ProjectSettingsStepBase> callback) {
       if (!pluginSpecificGenerators.isEmpty()) {
         PluginSpecificProjectsStep step = new PluginSpecificProjectsStep(callback, pluginSpecificGenerators);
         return step.getChildren(null);
