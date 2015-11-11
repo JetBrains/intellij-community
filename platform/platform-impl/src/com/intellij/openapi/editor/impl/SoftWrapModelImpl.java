@@ -185,6 +185,9 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
       myApplianceManager.reset();
       myDeferredFoldRegions.clear();
       myStorage.removeAll();
+      if (myEditor.myUseNewRendering) {
+        myEditor.myView.reinitSettings();
+      }
       myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     }
   }
