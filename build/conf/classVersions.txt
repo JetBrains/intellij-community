@@ -31,11 +31,13 @@
 1.6 =>
 
 1.3 => lib/idea_rt.jar
+1.4 => lib/forms_rt.jar
 
 1.7 => lib/optimizedFileManager.jar
 
 1.5 => plugins/Groovy/lib/groovy_rt.jar
+1.5 => plugins/Groovy/lib/groovy-rt-constants.jar
+1.5 => plugins/coverage/lib/coverage_rt.jar
 1.5 => lib/annotations.jar
 1.8 => redist/annotations-java8.jar
-
 1.3 => plugins/junit/lib/junit-rt.jar
