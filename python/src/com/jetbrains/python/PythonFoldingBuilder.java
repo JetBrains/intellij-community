@@ -26,10 +26,7 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFileElementType;
-import com.jetbrains.python.psi.PyImportStatementBase;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +72,9 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
 
   private static void foldStatementList(ASTNode node, List<FoldingDescriptor> descriptors) {
     IElementType elType = node.getTreeParent().getElementType();
-    if (elType == PyElementTypes.FUNCTION_DECLARATION || elType == PyElementTypes.CLASS_DECLARATION) {
+    if (elType == PyElementTypes.FUNCTION_DECLARATION
+        || elType == PyElementTypes.CLASS_DECLARATION
+        || ifFoldBlocks(node, elType)) {
       ASTNode colon = node.getTreeParent().findChildByType(PyTokenTypes.COLON);
       if (colon != null && colon.getStartOffset() + 1 < node.getTextRange().getEndOffset() - 1) {
         final CharSequence chars = node.getChars();
@@ -93,6 +92,18 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
         }
       }
     }
+  }
+
+  private static boolean ifFoldBlocks(ASTNode statementList, IElementType parentType) {
+    if (!PyElementTypes.PARTS.contains(parentType)) {
+      return false;
+    }
+    PsiElement element = statementList.getPsi();
+    if (element instanceof PyStatementList) {
+      PyStatementList statements = (PyStatementList)element;
+      return statements.getStatements().length > 1;
+    }
+    return false;
   }
 
   private static void foldDocString(ASTNode node, List<FoldingDescriptor> descriptors) {

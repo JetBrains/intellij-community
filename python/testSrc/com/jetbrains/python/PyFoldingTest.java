@@ -40,4 +40,8 @@ public class PyFoldingTest extends PyTestCase {
   public void testImportBlock() {
     doTest();
   }
+
+  public void testBlocksFolding() {
+    doTest();
+  }
 }
