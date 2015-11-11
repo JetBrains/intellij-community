@@ -209,7 +209,7 @@ public class EditorView implements TextDrawingCallback, Disposable {
     myPrefixText = prefixText;
     synchronized (myLock) {
       myPrefixLayout = prefixText == null || prefixText.isEmpty() ? null :
-                       new LineLayout(this, prefixText, attributes.getFontType());
+                       LineLayout.create(this, prefixText, attributes.getFontType());
     }
     myPrefixAttributes = attributes;
     mySizeManager.invalidateRange(0, 0);
@@ -442,7 +442,7 @@ public class EditorView implements TextDrawingCallback, Disposable {
     LineLayout layout = foldRegion.getUserData(FOLD_REGION_TEXT_LAYOUT);
     if (layout == null) {
       TextAttributes placeholderAttributes = myEditor.getFoldingModel().getPlaceholderAttributes();
-      layout = new LineLayout(this, foldRegion.getPlaceholderText(), 
+      layout = LineLayout.create(this, foldRegion.getPlaceholderText(), 
                               placeholderAttributes == null ? Font.PLAIN : placeholderAttributes.getFontType());
       foldRegion.putUserData(FOLD_REGION_TEXT_LAYOUT, layout);
     }

@@ -465,7 +465,7 @@ class EditorPainter implements TextDrawingCallback {
       Collection<LineExtensionInfo> extensions = painter.getLineExtensions(project, virtualFile, line);
       if (extensions != null) {
         for (LineExtensionInfo info : extensions) {
-          LineLayout layout = new LineLayout(myView, info.getText(), info.getFontType());
+          LineLayout layout = LineLayout.create(myView, info.getText(), info.getFontType());
           g.setColor(info.getColor());
           x = paintLineLayoutWithEffect(g, layout, x, y, info.getEffectColor(), info.getEffectType());
           int currentLineWidth = (int)x;
