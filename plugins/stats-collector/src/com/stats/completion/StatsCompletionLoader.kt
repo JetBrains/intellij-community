@@ -1,5 +1,6 @@
 package com.stats.completion
 
+import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupAdapter
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupManager
@@ -7,6 +8,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.components.AbstractProjectComponent
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import java.beans.PropertyChangeListener
 
@@ -56,6 +58,7 @@ interface CompletionPopupListener {
     }
 }
 
+
 class CompletionPopupActionsTracker : AnActionListener.Adapter() {
     
     private val down = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
@@ -81,21 +84,35 @@ class CompletionPopupActionsTracker : AnActionListener.Adapter() {
     }
 }
 
+
 class TrackingLookupListener(private val completionTracker: CompletionPopupActionsTracker): CompletionPopupListener, LookupAdapter() {
-    private var completionPopupShown = false
+    private var completionStarted = false
+    private val eventsStorage = ServiceManager.getService(EventsStorage::class.java)
     
     override fun lookupCanceled(event: LookupEvent) {
-        println("Cancelled")
-    }
+        val lookup = event.lookup as LookupImpl
+        val items = lookup.items
+        val prefix = lookup.additionalPrefix
 
-    override fun currentItemChanged(event: LookupEvent) {
-        if (!completionPopupShown) {
-            completionTracker.popupListener = this
-            completionPopupShown = true
+        if (items.firstOrNull()?.lookupString?.equals(prefix) ?: false) {
+            eventsStorage.itemTyped()
         }
     }
 
+    override fun currentItemChanged(event: LookupEvent) {
+        if (!completionStarted) {
+            completionTracker.popupListener = this
+            completionStarted = true
+            completionListShown(event.lookup)
+        }
+    }
+
+    private fun completionListShown(lookup: Lookup) {
+        println("Completion list shown ${lookup.items.size}")
+    }
+
     override fun itemSelected(event: LookupEvent) {
+        eventsStorage.itemSelected()
         println("Item selected")
     }
     
