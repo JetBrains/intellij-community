@@ -63,9 +63,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     final ChangeListManagerEx manager = (ChangeListManagerEx) ChangeListManager.getInstance(project);
 
     if (changes.isEmpty()) {
-      String operationName = UIUtil.removeMnemonic(RollbackUtil.getRollbackOperationName(project));
-      Messages.showWarningDialog(project, VcsBundle.message("commit.dialog.no.changes.detected.text"),
-                                 VcsBundle.message("changes.action.rollback.nothing", operationName));
+      showNoChangesDialog(project);
       return;
     }
 
@@ -74,6 +72,23 @@ public class RollbackChangesDialog extends DialogWrapper {
     lists.addAll(manager.getInvolvedListsFilterChanges(changes, validChanges));
 
     new RollbackChangesDialog(project, ContainerUtil.newArrayList(lists), validChanges, refreshSynchronously, afterVcsRefreshInAwt).show();
+  }
+
+  public static void rollbackChanges(final Project project, final LocalChangeList changeList) {
+    List<Change> changes = new ArrayList<Change>(changeList.getChanges());
+
+    if (changes.isEmpty()) {
+      showNoChangesDialog(project);
+      return;
+    }
+
+    new RollbackChangesDialog(project, Collections.singletonList(changeList), Collections.<Change>emptyList(), true, null).show();
+  }
+
+  private static void showNoChangesDialog(Project project) {
+    String operationName = UIUtil.removeMnemonic(RollbackUtil.getRollbackOperationName(project));
+    Messages.showWarningDialog(project, VcsBundle.message("commit.dialog.no.changes.detected.text"),
+                               VcsBundle.message("changes.action.rollback.nothing", operationName));
   }
 
   public RollbackChangesDialog(final Project project,
