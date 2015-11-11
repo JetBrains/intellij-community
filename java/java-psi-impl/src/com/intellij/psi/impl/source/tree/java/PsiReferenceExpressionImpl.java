@@ -15,11 +15,13 @@
  */
 package com.intellij.psi.impl.source.tree.java;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -47,6 +49,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -486,17 +489,37 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     PsiScopesUtil.resolveAndWalk(filterProcessor, this, null, true);
   }
 
-  public static boolean seemsScrambled(PsiClass aClass) {
-    if (!(aClass instanceof PsiCompiledElement)) {
-      return false;
-    }
+  public static boolean seemsScrambled(@Nullable PsiClass aClass) {
+    return aClass instanceof PsiCompiledElement && seemsScrambledByStructure(aClass);
+  }
 
+  @VisibleForTesting
+  public static boolean seemsScrambledByStructure(@NotNull PsiClass aClass) {
     PsiClass containingClass = aClass.getContainingClass();
-    if (containingClass != null && !seemsScrambled(containingClass)) {
+    if (containingClass != null && !seemsScrambledByStructure(containingClass)) {
       return false;
     }
 
-    final String name = aClass.getName();
+    if (seemsScrambled(aClass.getName())) {
+      List<PsiMethod> methods = ContainerUtil.filter(aClass.getMethods(), new Condition<PsiMethod>() {
+        @Override
+        public boolean value(PsiMethod method) {
+          return !method.hasModifierProperty(PsiModifier.PRIVATE);
+        }
+      });
+
+      return !methods.isEmpty() && ContainerUtil.and(methods, new Condition<PsiMethod>() {
+        @Override
+        public boolean value(PsiMethod method) {
+          return seemsScrambled(method.getName());
+        }
+      });
+    }
+
+    return false;
+  }
+
+  private static boolean seemsScrambled(String name) {
     return name != null && !name.isEmpty() && name.length() <= 2;
   }
 
