@@ -18,17 +18,16 @@ package com.intellij.openapi.command;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -76,22 +75,14 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     final RunResult<T> result = new RunResult<T>(this);
 
     try {
-      if (application.isDispatchThread()) {
-        performWriteCommandAction(result);
-      }
-      else {
-        EdtInvocationManager.getInstance().invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            performWriteCommandAction(result);
-          }
-        });
-      }
+      application.invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          performWriteCommandAction(result);
+        }
+      }, ModalityState.defaultModalityState());
     }
-    catch (InvocationTargetException e) {
-      throw new RuntimeException(e.getCause()); // save both stacktraces: current & EDT
-    }
-    catch (InterruptedException ignored) { }
+    catch (ProcessCanceledException ignored) { }
     return result;
   }
 

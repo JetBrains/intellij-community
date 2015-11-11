@@ -91,8 +91,7 @@ public class LeakHunter {
   }
 
   private static boolean isTrivial(@NotNull Class<?> type) {
-    return type.isPrimitive() || type == String.class || type == Class.class || type == Object.class ||
-        type.isArray() && isTrivial(type.getComponentType());
+    return type.isPrimitive() || type == String.class || type == Class.class || type.isArray() && isTrivial(type.getComponentType());
   }
 
   private static class BackLink {

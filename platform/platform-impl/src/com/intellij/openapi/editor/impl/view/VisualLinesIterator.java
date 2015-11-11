@@ -65,31 +65,29 @@ class VisualLinesIterator {
   void advance() {
     checkEnd();
     int nextWrapOffset = getNextSoftWrapOffset();
-    int nextLineStart = getNextNotFoldedLineStartOffset();
-    myOffset = Math.min(nextWrapOffset, nextLineStart);
+    myOffset = getNextVisualLineStartOffset(nextWrapOffset);
     if (myOffset == Integer.MAX_VALUE) {
       myOffset = -1;
     }
     else if (myOffset == nextWrapOffset) {
       mySoftWrap++;
     }
-    else {
-      myLogicalLine++;
-    }
     myVisualLine++;
+    while (myFoldRegion < myFoldRegions.length && myFoldRegions[myFoldRegion].getStartOffset() < myOffset) myFoldRegion++;
   }
 
   private int getNextSoftWrapOffset() {
     return mySoftWrap < mySoftWraps.size() ? mySoftWraps.get(mySoftWrap).getStart() : Integer.MAX_VALUE;
   }
 
-  private int getNextNotFoldedLineStartOffset() {
+  private int getNextVisualLineStartOffset(int nextWrapOffset) {
     while (myLogicalLine < myDocument.getLineCount()) {
       int lineStartOffset = myDocument.getLineStartOffset(myLogicalLine);
-      if (!isCollapsed(lineStartOffset)) return lineStartOffset;
+      if (lineStartOffset > nextWrapOffset) return nextWrapOffset;
       myLogicalLine++;
+      if (!isCollapsed(lineStartOffset)) return lineStartOffset;
     }
-    return Integer.MAX_VALUE;
+    return nextWrapOffset;
   }
   
   private boolean isCollapsed(int offset) {

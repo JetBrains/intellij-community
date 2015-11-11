@@ -53,6 +53,7 @@ public class PerformanceWatcher implements ApplicationComponent {
   private int myUnresponsiveDuration;
   private File myCurHangLogDir;
   private List<StackTraceElement> myStacktraceCommonPart;
+  private IdePerformanceListener myPublisher;
 
   private volatile ApdexData mySwingApdex = ApdexData.EMPTY;
   private volatile ApdexData myGeneralApdex = ApdexData.EMPTY;
@@ -79,6 +80,8 @@ public class PerformanceWatcher implements ApplicationComponent {
     myThreadMXBean = ManagementFactory.getThreadMXBean();
 
     if (!shouldWatch()) return;
+
+    myPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(IdePerformanceListener.TOPIC);
 
     final String threshold = System.getProperty("performance.watcher.threshold");
     if (threshold != null) {
@@ -152,7 +155,9 @@ public class PerformanceWatcher implements ApplicationComponent {
     if (!shouldWatch()) return;
     myShutdownSemaphore.release();
     try {
-      myThread.join();
+      if(myThread != null) {
+        myThread.join();
+      }
     }
     catch (InterruptedException e) {
       // ignore
@@ -206,6 +211,7 @@ public class PerformanceWatcher implements ApplicationComponent {
   private void edtFrozen() {
     myUnresponsiveDuration += UNRESPONSIVE_INTERVAL_SECONDS;
     if (myUnresponsiveDuration >= UNRESPONSIVE_THRESHOLD_SECONDS) {
+      myPublisher.uiFreezeStarted();
       if (myCurHangLogDir == mySessionLogDir) {
         //System.out.println("EDT is not responding at " + myPrintDateFormat.format(new Date()));
         myCurHangLogDir = new File(mySessionLogDir, myDateFormat.format(new Date()));
@@ -220,6 +226,7 @@ public class PerformanceWatcher implements ApplicationComponent {
       if (myCurHangLogDir != mySessionLogDir && myCurHangLogDir.exists()) {
         //noinspection ResultOfMethodCallIgnored
         myCurHangLogDir.renameTo(new File(mySessionLogDir, getLogDirForHang()));
+        myPublisher.uiFreezeFinished(myUnresponsiveDuration);
       }
       myUnresponsiveDuration = 0;
       myCurHangLogDir = mySessionLogDir;
@@ -253,10 +260,12 @@ public class PerformanceWatcher implements ApplicationComponent {
 
     checkMemoryUsage(file);
 
+    ThreadDump threadDump = ThreadDumper.getThreadDumpInfo(myThreadMXBean);
     try {
       OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file));
       try {
-        StackTraceElement[] edtStack = ThreadDumper.dumpThreadsToFile(myThreadMXBean, writer);
+        writer.write(threadDump.getRawDump());
+        StackTraceElement[] edtStack = threadDump.getEDTStackTrace();
         if (edtStack != null) {
           if (myStacktraceCommonPart == null) {
             myStacktraceCommonPart = ContainerUtil.newArrayList(edtStack);
@@ -265,12 +274,15 @@ public class PerformanceWatcher implements ApplicationComponent {
             updateStacktraceCommonPart(edtStack);
           }
         }
-      }
-      finally {
+      } finally {
         writer.close();
       }
+
+      myPublisher.dumpedThreads(file, threadDump);
     }
-    catch (IOException ignored) { }
+    catch (IOException ignored) {
+      LOG.error("failed to write thread dump file");
+    }
     return file;
   }
 

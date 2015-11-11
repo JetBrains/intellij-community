@@ -20,10 +20,13 @@ import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.actions.ExecutorProvider;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunDialog;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -147,6 +150,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   public static final int MAX_TOP_HIT = 15;
   private static final int POPUP_MAX_WIDTH = 600;
   private static final Logger LOG = Logger.getInstance("#" + SearchEverywhereAction.class.getName());
+  private static final Executor RUN_EXECUTOR = DefaultRunExecutor.getRunExecutorInstance();
+  private static final Executor DEBUG_EXECUTOR = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
 
   private SearchEverywhereAction.MyListRenderer myRenderer;
   MySearchTextField myPopupField;
@@ -488,9 +493,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     final DataManager dataManager = DataManager.getInstance();
     if (dataManager == null) return;
     final Project project = CommonDataKeys.PROJECT.getData(dataManager.getDataContext(getField().getTextEditor()));
-    final Executor executor = ourShiftIsPressed.get()
-                              ? DefaultRunExecutor.getRunExecutorInstance()
-                              : ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
     assert project != null;
     final SearchListModel model = getModel();
     if (isMoreItem(index)) {
@@ -576,7 +578,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             }
 
             if (isRunConfiguration(value)) {
-              ((ChooseRunConfigurationPopup.ItemWrapper)value).perform(project, executor, dataManager.getDataContext(c));
+              ChooseRunConfigurationPopup.ItemWrapper itemWrapper = (ChooseRunConfigurationPopup.ItemWrapper)value;
+              RunnerAndConfigurationSettings settings = ObjectUtils.tryCast(itemWrapper.getValue(), RunnerAndConfigurationSettings.class);
+              if (settings != null) {
+                Executor executor = findExecutor(settings);
+                if (executor != null) {
+                  itemWrapper.perform(project, executor, dataManager.getDataContext(c));
+                }
+              }
             } else {
               GotoActionAction.openOptionOrPerformAction(value, pattern, project, c, event);
               if (isToolWindowAction(value)) return;
@@ -900,9 +909,18 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     storage.setValues(SE_HISTORY_KEY, newValues);
   }
 
-  public Executor getExecutor() {
-    return ourShiftIsPressed.get() ? DefaultRunExecutor.getRunExecutorInstance()
-                                   : ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
+  @Nullable
+  public Executor findExecutor(@NotNull RunnerAndConfigurationSettings settings) {
+    Executor executor = ourShiftIsPressed.get() ? RUN_EXECUTOR : DEBUG_EXECUTOR;
+    RunConfiguration runConf = settings.getConfiguration();
+    if (executor == null || runConf == null) {
+      return null;
+    }
+    ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), runConf);
+    if (runner == null) {
+      executor = RUN_EXECUTOR == executor ? DEBUG_EXECUTOR : RUN_EXECUTOR;
+    }
+    return executor;
   }
 
   private void registerDataProvider(JPanel panel, final Project project) {
@@ -923,7 +941,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                   return new Navigatable() {
                     @Override
                     public void navigate(boolean requestFocus) {
-                      RunDialog.editConfiguration(project, (RunnerAndConfigurationSettings)config, "Edit Configuration", getExecutor());
+                      Executor executor = findExecutor((RunnerAndConfigurationSettings)config);
+                      RunDialog.editConfiguration(project, (RunnerAndConfigurationSettings)config, "Edit Configuration", executor);
                     }
 
                     @Override
@@ -1188,8 +1207,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             final ChooseRunConfigurationPopup.ItemWrapper wrapper = (ChooseRunConfigurationPopup.ItemWrapper)value;
             append(wrapper.getText());
             setIcon(wrapper.getIcon());
-            setLocationString(ourShiftIsPressed.get() ? "Run" : "Debug");
-            myLocationIcon = ourShiftIsPressed.get() ? AllIcons.Toolwindows.ToolWindowRun : AllIcons.Toolwindows.ToolWindowDebugger;
+            RunnerAndConfigurationSettings settings = ObjectUtils.tryCast(wrapper.getValue(), RunnerAndConfigurationSettings.class);
+            if (settings != null) {
+              Executor executor = findExecutor(settings);
+              if (executor != null) {
+                setLocationString(executor.getId());
+                myLocationIcon = executor.getToolWindowIcon();
+              }
+            }
           }
           else if (isVirtualFile(value)) {
             final VirtualFile file = (VirtualFile)value;

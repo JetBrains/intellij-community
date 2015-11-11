@@ -4,17 +4,17 @@ public class ParameterHidingMemberVariable
 {
     private int bar = -1;
 
-    public ParameterHidingMemberVariable(int bar)
+    public ParameterHidingMemberVariable(int <warning descr="Parameter 'bar' hides field in class 'ParameterHidingMemberVariable'">bar</warning>)
     {
         this.bar = bar;
     }
 
-    public void setBar(int bar)
+    public void setBar(int <warning descr="Parameter 'bar' hides field in class 'ParameterHidingMemberVariable'">bar</warning>)
     {
         this.bar = bar;
     }
 
-    public void foo(Object bar)
+    public void foo(Object <warning descr="Parameter 'bar' hides field in class 'ParameterHidingMemberVariable'">bar</warning>)
     {
         System.out.println("bar" + bar);
     }
@@ -24,10 +24,14 @@ public class ParameterHidingMemberVariable
     @Override
     public String toString() {
         new Object() {
-            public void foo(final String x) {
+            public void foo(final String <warning descr="Parameter 'x' hides field in class 'ParameterHidingMemberVariable'">x</warning>) {
                 System.out.println(x);
             }
         };
         return x+super.toString();
-  }
+    }
+
+    public static void setBar2(int bar) {
+        System.out.println(bar);
+    }
 }

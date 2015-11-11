@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -63,7 +64,15 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
                                      final boolean collectLineInfo, final boolean isSampling, @Nullable String sourceMapPath) {
     StringBuilder argument = new StringBuilder("-javaagent:");
     final String agentPath = PathUtil.getJarPathForClass(ProjectData.class);
-    final String parentPath = handleSpacesInPath(agentPath);
+    final String parentPath = handleSpacesInPath(agentPath, new FileFilter() {
+      @Override
+      public boolean accept(File file) {
+        final String fileName = file.getName();
+        return fileName.startsWith("coverage-") ||
+               fileName.startsWith("asm-all") ||
+               fileName.startsWith("trove4j");
+      }
+    });
     argument.append(parentPath).append(File.separator).append(new File(agentPath).getName());
     argument.append("=");
     try {

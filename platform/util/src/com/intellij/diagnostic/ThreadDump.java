@@ -13,23 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.visibility;
+package com.intellij.diagnostic;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ParameterHidingMemberVariableInspectionTest extends LightInspectionTestCase {
+/**
+ * Represents thread dump of the IDE captured by its performance diagnostic tool.
+ */
+public class ThreadDump {
+  private String myRawDump;
+  private StackTraceElement[] myEdtStack;
 
-  public void testParameterHidingMemberVariable() {
-    doTest();
+  ThreadDump(@NotNull String rawDump, @Nullable StackTraceElement[] edtStack) {
+    this.myRawDump = rawDump;
+    this.myEdtStack = edtStack;
   }
 
+  /**
+   * @return full thread dump as a string
+   */
+  @NotNull
+  public String getRawDump() {
+    return myRawDump;
+  }
+
+  /**
+   * @return state of the AWT thread from the dump
+   */
   @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    final ParameterHidingMemberVariableInspection inspection = new ParameterHidingMemberVariableInspection();
-    inspection.m_ignoreStaticMethodParametersHidingInstanceFields = true;
-    return inspection;
+  public StackTraceElement[] getEDTStackTrace() {
+    return myEdtStack;
   }
+
 }
