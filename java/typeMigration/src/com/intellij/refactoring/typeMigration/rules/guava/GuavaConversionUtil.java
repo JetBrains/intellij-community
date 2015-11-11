@@ -28,6 +28,9 @@ public class GuavaConversionUtil {
 
   @Nullable
   public static PsiType getFunctionReturnType(PsiExpression functionExpression) {
+    if (functionExpression instanceof PsiFunctionalExpression) {
+      return LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)functionExpression);
+    }
     PsiType currentType = functionExpression.getType();
     if (currentType == null) return null;
 
