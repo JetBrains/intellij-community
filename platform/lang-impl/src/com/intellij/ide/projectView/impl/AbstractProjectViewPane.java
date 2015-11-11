@@ -124,6 +124,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       }
     };
     WolfTheProblemSolver.getInstance(project).addProblemListener(problemListener, this);
+    Disposer.register(project, this);
   }
 
   protected final void fireTreeChangeListener() {
