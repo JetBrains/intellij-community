@@ -34,7 +34,7 @@ public interface IdePerformanceListener {
   void uiFreezeStarted();
 
   /**
-   * Invoked after the UI hsa become responsive again following a {@link #uiFreezeStarted()} event.
+   * Invoked after the UI has become responsive again following a {@link #uiFreezeStarted()} event.
    * @param lengthInSeconds approximate length in seconds of the interval that the IDE was unresponsive
    */
   void uiFreezeFinished(int lengthInSeconds);
