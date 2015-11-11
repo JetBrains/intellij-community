@@ -51,7 +51,10 @@ import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 /**
  * @author mike
@@ -1091,6 +1094,16 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     assertValidMarker(marker1, 4, 6);
     assertValidMarker(marker2, 5, 7);
+  }
+
+  public void testMoveText2() throws Exception {
+    RangeMarkerEx marker1 = createMarker(StringUtil.repeat(" ",100), 0, 0);
+    DocumentEx document = (DocumentEx)marker1.getDocument();
+    RangeMarker marker2 = document.createRangeMarker(49, 49);
+
+    document.moveText(0, 1, 49);
+    marker1.dispose();
+    marker2.dispose();
   }
 
   public void testMoveTextToTheBeginningRetargetsMarkers() throws Exception {
