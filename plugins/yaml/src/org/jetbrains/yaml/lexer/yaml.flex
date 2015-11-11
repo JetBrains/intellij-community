@@ -28,7 +28,18 @@ import org.jetbrains.yaml.YAMLTokenTypes;
   private int braceCount = 0;
   private IElementType valueTokenType = null;
   private int previousState = YYINITIAL;
-    
+
+  public boolean isCleanState() {
+    return yystate() == YYINITIAL
+      && currentLineIndent == 0
+      && braceCount == 0;
+  }
+
+  public void cleanMyState() {
+    currentLineIndent = 0;
+    braceCount = 0;
+  }
+
   private char previousChar() {
     return getChar(-1);
   }
@@ -212,6 +223,7 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
                                     valueIndent = currentLineIndent;
                                     valueTokenType = SCALAR_TEXT;
                                     yypushback(yylength());
+                                    break;
                                 }
 
 ({C_NS_TAG_PROPERTY} {WHITE_SPACE}+)? ("|"("-"|"+")?) / ({WHITE_SPACE} | {EOL})
@@ -219,6 +231,7 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
                                     valueIndent = currentLineIndent;
                                     valueTokenType = SCALAR_LIST;
                                     yypushback(yylength());
+                                    break;
                                 }
 
 ({INJECTION} | [^ :\t\n,{\[|>]) ({INJECTION} | [^:\n#,}\]])* ({INJECTION} | [^ :\t\n#,}\]])
@@ -276,7 +289,7 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
 [^ \n\t] {LINE}?                        {   if (isAfterEol()){
                                                 yypushback(yylength());
                                                 yyBegin(YYINITIAL);
-
+                                                break;
                                             } else {
                                                 //if (valueIndent < 0) {
                                                 //    yyBegin(VALUE);
