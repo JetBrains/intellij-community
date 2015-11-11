@@ -26,6 +26,7 @@ import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
 import com.intellij.vcs.log.graph.impl.print.elements.EdgePrintElementImpl;
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
 import com.intellij.vcs.log.graph.impl.print.elements.SimplePrintElementImpl;
+import com.intellij.vcs.log.graph.impl.print.elements.TerminalEdgePrintElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -77,9 +78,10 @@ public abstract class AbstractPrintElementGenerator implements PrintElementGener
     }
 
     for (SimpleRowElement arrow : arrows.values()) {
-      result.add(new EdgePrintElementImpl(rowIndex, arrow.myPosition, arrow.myPosition,
-                                          arrow.myType == RowElementType.UP_ARROW ? EdgePrintElement.Type.UP : EdgePrintElement.Type.DOWN,
-                                          (GraphEdge)arrow.myElement, true, myPrintElementManager));
+      result.add(new TerminalEdgePrintElement(rowIndex, arrow.myPosition, arrow.myType == RowElementType.UP_ARROW
+                                                                          ? EdgePrintElement.Type.UP
+                                                                          : EdgePrintElement.Type.DOWN, (GraphEdge)arrow.myElement,
+                                              myPrintElementManager));
     }
 
     for (SimpleRowElement rowElement : getSimpleRowElements(rowIndex)) {

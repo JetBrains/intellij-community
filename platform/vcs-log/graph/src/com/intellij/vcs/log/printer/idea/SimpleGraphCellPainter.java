@@ -20,6 +20,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.graph.EdgePrintElement;
 import com.intellij.vcs.log.graph.NodePrintElement;
 import com.intellij.vcs.log.graph.PrintElement;
+import com.intellij.vcs.log.graph.impl.print.elements.TerminalEdgePrintElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,17 +80,18 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
                            dash[0] / 2);
   }
 
-  private void paintUpLine(int from, int to, Color color, boolean hasArrow, boolean isUsual, boolean isSelected) {
+  private void paintUpLine(int from, int to, Color color, boolean hasArrow, boolean isUsual, boolean isSelected, boolean isTerminal) {
     // paint vertical lines normal size
     // paint non-vertical lines twice the size to make them dock with each other well
     int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
     if (from == to) {
       int x = nodeWidth * from + nodeWidth / 2;
       int y1 = getRowHeight() / 2 - 1;
-      int y2 = 0;
+      int y2 = isTerminal ? PrintParameters.getCircleRadius(getRowHeight()) / 2 + 1 : 0;
       paintLine(color, hasArrow, x, y1, x, y2, x, y2, isUsual, isSelected);
     }
     else {
+      assert !isTerminal;
       int x1 = nodeWidth * from + nodeWidth / 2;
       int y1 = getRowHeight() / 2;
       int x2 = nodeWidth * to + nodeWidth / 2;
@@ -98,15 +100,16 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     }
   }
 
-  private void paintDownLine(int from, int to, Color color, boolean hasArrow, boolean isUsual, boolean isSelected) {
+  private void paintDownLine(int from, int to, Color color, boolean hasArrow, boolean isUsual, boolean isSelected, boolean isTerminal) {
     int nodeWidth = PrintParameters.getNodeWidth(getRowHeight());
     if (from == to) {
-      int y2 = getRowHeight() - 1;
+      int y2 = getRowHeight() - 1 - (isTerminal ? PrintParameters.getCircleRadius(getRowHeight()) / 2 + 1 : 0);
       int y1 = getRowHeight() / 2;
       int x = nodeWidth * from + nodeWidth / 2;
       paintLine(color, hasArrow, x, y1, x, y2, x, y2, isUsual, isSelected);
     }
     else {
+      assert !isTerminal;
       int x1 = nodeWidth * from + nodeWidth / 2;
       int y1 = getRowHeight() / 2;
       int x2 = nodeWidth * to + nodeWidth / 2;
@@ -207,7 +210,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     this.g2 = g2;
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-    for (final PrintElement printElement : printElements) {
+    for (PrintElement printElement : printElements) {
       if (printElement instanceof EdgePrintElement) {
 
         EdgePrintElement edgePrintElement = (EdgePrintElement)printElement;
@@ -220,7 +223,6 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
         else {
           printEdge(usualColor, false, edgePrintElement);
         }
-
       }
 
       if (printElement instanceof NodePrintElement) {
@@ -242,10 +244,11 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     boolean isUsual = isUsual(edgePrintElement);
 
     if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
-      paintDownLine(from, to, color, edgePrintElement.hasArrow(), isUsual, isSelected);
+      paintDownLine(from, to, color, edgePrintElement.hasArrow(), isUsual, isSelected,
+                    edgePrintElement instanceof TerminalEdgePrintElement);
     }
     else {
-      paintUpLine(from, to, color, edgePrintElement.hasArrow(), isUsual, isSelected);
+      paintUpLine(from, to, color, edgePrintElement.hasArrow(), isUsual, isSelected, edgePrintElement instanceof TerminalEdgePrintElement);
     }
   }
 
