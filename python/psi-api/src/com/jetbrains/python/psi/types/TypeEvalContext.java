@@ -259,4 +259,19 @@ public class TypeEvalContext {
   TypeEvalConstraints getConstraints() {
     return myConstraints;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    TypeEvalContext context = (TypeEvalContext)o;
+
+    return myConstraints.equals(context.myConstraints);
+  }
+
+  @Override
+  public int hashCode() {
+    return myConstraints.hashCode();
+  }
 }
