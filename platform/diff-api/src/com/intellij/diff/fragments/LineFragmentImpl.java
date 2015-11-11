@@ -15,12 +15,15 @@
  */
 package com.intellij.diff.fragments;
 
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public class LineFragmentImpl implements LineFragment {
+  private static final Logger LOG = Logger.getInstance(LineFragmentImpl.class);
+
   private final int myStartLine1;
   private final int myEndLine1;
   private final int myStartLine2;
@@ -59,6 +62,19 @@ public class LineFragmentImpl implements LineFragment {
     myEndOffset2 = endOffset2;
 
     myInnerFragments = dropWholeChangedFragments(innerFragments, endOffset1 - startOffset1, endOffset2 - startOffset2);
+
+    if (myStartLine1 == myEndLine1 &&
+        myStartLine2 == myEndLine2 &&
+        myStartOffset1 == myEndOffset1 &&
+        myStartOffset2 == myEndOffset2) {
+      LOG.error("LineFragmentImpl should not be empty: " + toString());
+    }
+    if (myStartLine1 > myEndLine1 ||
+        myStartLine2 > myEndLine2 ||
+        myStartOffset1 > myEndOffset1 ||
+        myStartOffset2 > myEndOffset2) {
+      LOG.error("LineFragmentImpl is invalid: " + toString());
+    }
   }
 
   @Override

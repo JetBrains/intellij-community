@@ -265,9 +265,9 @@ public class InferenceIncorporationPhase {
    */
   private void upDown(List<PsiType> eqBounds, List<PsiType> upperBounds, PsiSubstitutor substitutor) {
     for (PsiType upperBound : upperBounds) {
-      if (upperBound == null) continue;
+      if (upperBound == null || PsiType.NULL.equals(upperBound)) continue;
       for (PsiType eqBound : eqBounds) {
-        if (eqBound == null) continue;
+        if (eqBound == null || PsiType.NULL.equals(eqBound)) continue;
         addConstraint(new StrictSubtypingConstraint(substitutor.substitute(upperBound), substitutor.substitute(eqBound)));
       }
     }
@@ -301,7 +301,7 @@ public class InferenceIncorporationPhase {
         if (!(sType instanceof PsiWildcardType) && !(tType instanceof PsiWildcardType) && sType != null && tType != null) {
           addConstraint(new TypeEqualityConstraint(sType, tType));
         }
-        return true;
+        return false;
       }
     }) != null;
   }

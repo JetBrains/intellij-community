@@ -67,7 +67,14 @@ public class DottedFilterEdgesGenerator {
   // update specified range
   private void update() {
     downWalk();
+    cleanup();
     upWalk();
+  }
+
+  private void cleanup() {
+    for (int currentNodeIndex = myUpIndex; currentNodeIndex <= myDownIndex; currentNodeIndex++) {
+      myNumbers.setNumber(currentNodeIndex, Integer.MAX_VALUE);
+    }
   }
 
   private boolean hasDottedEdges(int nodeIndex, boolean isUp) {

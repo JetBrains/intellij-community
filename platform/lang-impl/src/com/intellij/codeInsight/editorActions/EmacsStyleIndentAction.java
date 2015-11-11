@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,16 +73,18 @@ public class EmacsStyleIndentAction extends BaseCodeInsightAction implements Dum
       }
 
       final Document document = editor.getDocument();
-      final int startOffset = editor.getCaretModel().getOffset();
-      final int line = editor.offsetToLogicalPosition(startOffset).line;
-      final int lineStart = document.getLineStartOffset(line);
+      int startLine = document.getLineNumber(editor.getSelectionModel().getSelectionStart());
+      int endLine = document.getLineNumber(editor.getSelectionModel().getSelectionEnd());
       try{
-        final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-        final int newPos = codeStyleManager.adjustLineIndent(file, lineStart);
-        if (editor.getCaretModel().getOffset() < newPos) {
-          editor.getCaretModel().moveToOffset(newPos);
-          editor.getSelectionModel().removeSelection();
-          editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        for (int line = startLine; line <= endLine; line++) {
+          final int lineStart = document.getLineStartOffset(line);
+          final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+          final int newPos = codeStyleManager.adjustLineIndent(file, lineStart);
+          if (startLine == endLine && editor.getCaretModel().getOffset() < newPos) {
+            editor.getCaretModel().moveToOffset(newPos);
+            editor.getSelectionModel().removeSelection();
+            editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+          }
         }
       }
       catch(IncorrectOperationException e){

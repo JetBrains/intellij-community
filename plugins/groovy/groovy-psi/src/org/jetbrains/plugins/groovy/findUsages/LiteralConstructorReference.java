@@ -77,7 +77,7 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
     if (conversionType == null) return null;
     if (listOrMap.isEmpty()) {
       PsiType unboxed = TypesUtil.unboxPrimitiveTypeWrapper(conversionType);
-      if (PsiType.BOOLEAN == unboxed || PsiType.CHAR == unboxed) {
+      if (PsiType.BOOLEAN.equals(unboxed) || PsiType.CHAR.equals(unboxed)) {
         return null;
       }
     }

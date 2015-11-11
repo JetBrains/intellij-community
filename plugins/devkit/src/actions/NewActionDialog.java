@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -78,7 +77,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
   private Project myProject;
   private ButtonGroup myAnchorButtonGroup;
 
-  public  NewActionDialog(PsiClass actionClass) {
+  public NewActionDialog(@NotNull PsiClass actionClass) {
     this(actionClass.getProject());
 
     myActionNameEdit.setText(actionClass.getQualifiedName());
@@ -89,18 +88,18 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     }
   }
 
-  protected NewActionDialog(final Project project) {
+  protected NewActionDialog(Project project) {
     super(project, false);
     myProject = project;
     init();
     setTitle(DevKitBundle.message("new.action.dialog.title"));
     final ActionManager actionManager = ActionManager.getInstance();
-    final String[] actionIds = actionManager.getActionIds("");
+    String[] actionIds = actionManager.getActionIds("");
     Arrays.sort(actionIds);
-    final List<ActionGroup> actionGroups = new ArrayList<ActionGroup>();
+    List<ActionGroup> actionGroups = new ArrayList<ActionGroup>();
     for(String actionId: actionIds) {
       if (actionManager.isGroup(actionId)) {
-        final AnAction anAction = actionManager.getAction(actionId);
+        AnAction anAction = actionManager.getAction(actionId);
         if (anAction instanceof DefaultActionGroup) {
           actionGroups.add((ActionGroup) anAction);
         }
@@ -115,7 +114,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
           myActionList.setListData(ArrayUtil.EMPTY_OBJECT_ARRAY);
         }
         else {
-          final AnAction[] actions = group.getChildren(null);
+          AnAction[] actions = group.getChildren(null);
           // filter out actions that don't have IDs - they can't be used for anchoring in plugin.xml
           List<AnAction> realActions = new ArrayList<AnAction>();
           for(AnAction action: actions) {
@@ -128,7 +127,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
       }
     });
     new ListSpeedSearch(myGroupList, new Function<Object, String>() {
-      public String fun(final Object o) {
+      public String fun(Object o) {
         return ActionManager.getInstance().getId((AnAction) o);
       }
     });
@@ -140,7 +139,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
       }
     });
 
-    final MyDocumentListener listener = new MyDocumentListener();
+    MyDocumentListener listener = new MyDocumentListener();
     myActionIdEdit.getDocument().addDocumentListener(listener);
     myActionNameEdit.getDocument().addDocumentListener(listener);
     myActionTextEdit.getDocument().addDocumentListener(listener);
@@ -158,8 +157,8 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     myFirstKeystrokeEdit.getDocument().addDocumentListener(listener);
     myClearFirstKeystroke.setText(null);
 
-    final Icon icon = AllIcons.Actions.Cancel;
-    final Dimension size = new Dimension(icon.getIconWidth(), icon.getIconHeight());
+    Icon icon = AllIcons.Actions.Cancel;
+    Dimension size = new Dimension(icon.getIconWidth(), icon.getIconHeight());
     myClearFirstKeystroke.setIcon(icon);
     myClearFirstKeystroke.setPreferredSize(size);
     myClearFirstKeystroke.setMaximumSize(size);
@@ -266,7 +265,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       AnAction group = (AnAction) value;
       append(ActionManager.getInstance().getId(group), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      final String text = group.getTemplatePresentation().getText();
+      String text = group.getTemplatePresentation().getText();
       if (text != null) {
         append(" (" + text + ")", SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }

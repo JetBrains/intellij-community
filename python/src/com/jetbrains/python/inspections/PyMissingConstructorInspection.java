@@ -64,7 +64,7 @@ public class PyMissingConstructorInspection extends PyInspection {
         return;
 
       if (!superHasConstructor(node)) return;
-      PyFunction initMethod = node.findMethodByName(INIT, false);
+      PyFunction initMethod = node.findMethodByName(INIT, false, null);
       if (initMethod != null) {
         if (isExceptionClass(node, myTypeEvalContext) || hasConstructorCall(node, initMethod)) {
           return;
@@ -81,7 +81,7 @@ public class PyMissingConstructorInspection extends PyInspection {
       final String className = cls.getName();
       for (PyClass c : cls.getAncestorClasses(myTypeEvalContext)) {
         final String name = c.getName();
-        if (!PyUtil.isObjectClass(c) && !Comparing.equal(className, name) && c.findMethodByName(INIT, false) != null) {
+        if (!PyUtil.isObjectClass(c) && !Comparing.equal(className, name) && c.findMethodByName(INIT, false, null) != null) {
           return true;
         }
       }

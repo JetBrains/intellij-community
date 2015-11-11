@@ -70,7 +70,7 @@ public class PyStubsTest extends PyTestCase {
       assertEquals("staticField", attrs.get(0).getName());
       assertTrue(attrs.get(0).getAssignedQName().matches("deco"));
 
-      final PyFunction[] methods = pyClass.getMethods(false);
+      final PyFunction[] methods = pyClass.getMethods();
       assertEquals(2, methods.length);
       assertEquals("__init__", methods [0].getName());
       assertEquals("fooFunction", methods [1].getName());
@@ -117,7 +117,7 @@ public class PyStubsTest extends PyTestCase {
       Property prop = pyClass.findProperty("value", true, null);
       Maybe<PyCallable> maybe_function = prop.getGetter();
       assertTrue(maybe_function.isDefined());
-      assertEquals(pyClass.getMethods(false)[0], maybe_function.value());
+      assertEquals(pyClass.getMethods()[0], maybe_function.value());
 
       Property setvalueProp = pyClass.findProperty("setvalue", true, null);
       Maybe<PyCallable> setter = setvalueProp.getSetter();
@@ -130,10 +130,10 @@ public class PyStubsTest extends PyTestCase {
       prop = pyClass.findProperty("x", true, null);
       maybe_function = prop.getGetter();
       assertTrue(maybe_function.isDefined());
-      assertEquals(pyClass.getMethods(false)[0], maybe_function.value());
+      assertEquals(pyClass.getMethods()[0], maybe_function.value());
       maybe_function = prop.getSetter();
       assertTrue(maybe_function.isDefined());
-      assertEquals(pyClass.getMethods(false)[1], maybe_function.value());
+      assertEquals(pyClass.getMethods()[1], maybe_function.value());
 
       // ...and the juice:
       assertNotParsed(file);
@@ -332,7 +332,7 @@ public class PyStubsTest extends PyTestCase {
   public void testWrappedStaticMethod() {
     final PyFileImpl file = (PyFileImpl) getTestFile();
     final PyClass pyClass = file.getTopLevelClasses().get(0);
-    final PyFunction[] methods = pyClass.getMethods(false);
+    final PyFunction[] methods = pyClass.getMethods();
     assertEquals(1, methods.length);
     final PyFunction.Modifier modifier = methods[0].getModifier();
     assertEquals(PyFunction.Modifier.STATICMETHOD, modifier);
@@ -399,7 +399,7 @@ public class PyStubsTest extends PyTestCase {
     final PyFile file = getTestFile();
     final PyClass c = file.findTopLevelClass("C");
     assertNotNull(c);
-    final PyTargetExpression foo = c.findClassAttribute("foo", false);
+    final PyTargetExpression foo = c.findClassAttribute("foo", false, null);
     final String docString = foo.getDocStringValue();
     assertEquals("Foo docstring.", docString);
   }

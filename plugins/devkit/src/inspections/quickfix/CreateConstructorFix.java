@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,22 +17,17 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
-/**
- * @author swr
- */
-public class CreateConstructorFix extends BaseFix {
+import static org.jetbrains.idea.devkit.util.PsiUtil.createPointer;
 
-  public CreateConstructorFix(PsiClass checkedClass, boolean onTheFly) {
-    super(checkedClass, onTheFly);
+public class CreateConstructorFix extends BaseFix {
+  public CreateConstructorFix(@NotNull PsiClass aClass, boolean isOnTheFly) {
+    super(createPointer(aClass), isOnTheFly);
   }
 
   @NotNull
@@ -46,12 +41,14 @@ public class CreateConstructorFix extends BaseFix {
   }
 
   protected void doFix(Project project, ProblemDescriptor descriptor, boolean external) throws IncorrectOperationException {
-    final PsiClass clazz = (PsiClass)myElement;
+    PsiElement element = myPointer.getElement();
+    if (!(element instanceof PsiClass)) return;
+    PsiClass clazz = (PsiClass)element;
 
     PsiMethod ctor = JavaPsiFacade.getInstance(clazz.getProject()).getElementFactory().createConstructor();
     PsiUtil.setModifierProperty(ctor, PsiModifier.PUBLIC, true);
 
-    final PsiMethod[] constructors = clazz.getConstructors();
+    PsiMethod[] constructors = clazz.getConstructors();
     if (constructors.length > 0) {
       ctor = (PsiMethod)clazz.addBefore(ctor, constructors[0]);
     } else {

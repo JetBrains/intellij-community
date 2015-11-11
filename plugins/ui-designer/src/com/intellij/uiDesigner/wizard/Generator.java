@@ -25,7 +25,6 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -587,7 +586,7 @@ public final class Generator {
     outer: for (int i = 0; i < allGetDataMethods.length; i++) {
       final PsiMethod _getMethod = allGetDataMethods[i];
 
-      if (_getMethod.getReturnType() != PsiType.VOID) {
+      if (!PsiType.VOID.equals(_getMethod.getReturnType())) {
         continue;
       }
 
@@ -602,7 +601,7 @@ public final class Generator {
       }
 
       for (final PsiMethod _setMethod : allSetDataMethods) {
-        if (_setMethod.getReturnType() != PsiType.VOID) {
+        if (!PsiType.VOID.equals(_setMethod.getReturnType())) {
           continue;
         }
 

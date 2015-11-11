@@ -134,7 +134,7 @@ public class PyDocumentationBuilder {
       final FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/python_keywords/" + name));
       try {
         final String text = FileUtil.loadTextAndClose(reader);
-        myEpilog.addItem(text);
+        myEpilog.addItem(StringUtil.convertLineSeparators(text, "\n"));
       }
       catch (IOException ignored) {
       }
@@ -359,7 +359,7 @@ public class PyDocumentationBuilder {
         isFromClass = true;
       }
       else {
-        inherited = ancestor.findMethodByName(methodName, false);
+        inherited = ancestor.findMethodByName(methodName, false, null);
       }
       if (inherited != null) {
         docstringElement = inherited.getDocStringExpression();
@@ -403,7 +403,7 @@ public class PyDocumentationBuilder {
     final PyClassType objectType = PyBuiltinCache.getInstance(fun).getObjectType(); // old- and new-style classes share the __xxx__ stuff
     if (objectType != null) {
       final PyClass objectClass = objectType.getPyClass();
-      final PyFunction predefinedMethod = objectClass.findMethodByName(mothodName, false);
+      final PyFunction predefinedMethod = objectClass.findMethodByName(mothodName, false, null);
       if (predefinedMethod != null) {
         final PyStringLiteralExpression predefinedDocstring = predefinedMethod.getDocStringExpression();
         final String predefinedDoc = predefinedDocstring != null ? predefinedDocstring.getStringValue() : null;

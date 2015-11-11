@@ -107,12 +107,12 @@ public class PluginConfigurationType implements ConfigurationType {
     if (myVmParameters == null) {
       String vmOptions;
       try {
-        vmOptions = FileUtil.loadFile(new File(PathManager.getBinPath(), "idea.plugins.vmoptions")).replaceAll("\\s+", " ");
+        vmOptions = FileUtil.loadFile(new File(PathManager.getBinPath(), "idea.plugins.vmoptions"));
       }
       catch (IOException e) {
         vmOptions = VMOptions.read();
       }
-      myVmParameters = vmOptions != null ? vmOptions.trim() : "";
+      myVmParameters = vmOptions != null ? vmOptions.replaceAll("\\s+", " ").trim() : "";
     }
 
     return myVmParameters;

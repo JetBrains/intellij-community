@@ -203,6 +203,11 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     return PathManagerEx.getTestDataPath();
   }
 
+  @NotNull
+  public final String getTestName() {
+    return getTestName(myLowercaseFirstLetter);
+  }
+
   protected boolean includeRanges() {
     return false;
   }
@@ -216,7 +221,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   }
 
   protected void doTest(boolean checkResult) {
-    String name = getTestName(myLowercaseFirstLetter);
+    String name = getTestName();
     try {
       String text = loadFile(name + "." + myFileExt);
       myFile = createPsiFile(name, text);
@@ -239,7 +244,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   }
 
   protected void doTest(String suffix) throws IOException {
-    String name = getTestName(myLowercaseFirstLetter);
+    String name = getTestName();
     String text = loadFile(name + "." + myFileExt);
     myFile = createPsiFile(name, text);
     ensureParsed(myFile);
@@ -248,7 +253,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   }
 
   protected void doCodeTest(String code) throws IOException {
-    String name = getTestName(myLowercaseFirstLetter);
+    String name = getTestName();
     myFile = createPsiFile("a", code);
     ensureParsed(myFile);
     assertEquals(code, myFile.getText());
@@ -295,7 +300,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   }
 
   protected void checkResult(String actual) throws IOException {
-    String name = getTestName(myLowercaseFirstLetter);
+    String name = getTestName();
     doCheckResult(myFullDataPath, myFilePrefix + name + ".txt", actual);
   }
 

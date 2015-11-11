@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,22 +51,22 @@ public class GrWithTraitTypeCalculator extends GrCallExpressionTypeCalculator {
     if (originalObject == null) return null;
 
     PsiType invokedType = originalObject.getType();
-    if (!(invokedType instanceof PsiClassType)) return null;
+    if (!(invokedType instanceof PsiClassType) && !(invokedType instanceof GrTraitType)) return null;
 
     PsiClass containingClass = resolvedMethod.getContainingClass();
     if (containingClass == null || !GroovyCommonClassNames.DEFAULT_GROOVY_METHODS.equals(containingClass.getQualifiedName())) return null;
 
-    List<PsiClassType> traits = ContainerUtil.newArrayList();
+    List<PsiType> traits = ContainerUtil.newArrayList();
     GrExpression[] args = callExpression.getArgumentList().getExpressionArguments();
     for (GrExpression arg : args) {
       PsiType type = arg.getType();
       PsiType classItem = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_LANG_CLASS, 0, false);
       PsiClass psiClass = PsiTypesUtil.getPsiClass(classItem);
       if (GrTraitUtil.isTrait(psiClass)) {
-        traits.add((PsiClassType)classItem);
+        traits.add(classItem);
       }
     }
 
-    return GrTraitType.createTraitClassType(callExpression, (PsiClassType)invokedType, traits, callExpression.getResolveScope());
+    return GrTraitType.createTraitType(invokedType, traits);
   }
 }

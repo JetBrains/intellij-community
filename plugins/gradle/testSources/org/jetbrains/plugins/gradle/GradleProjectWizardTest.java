@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,12 +62,12 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
     assertEquals(projectName, module.getName());
 
     VirtualFile root = ProjectRootManager.getInstance(project).getContentRoots()[0];
-    VirtualFile settingsScript = VfsUtilCore.findRelativeFile("settings.gradle", root);
+    VirtualFile settingsScript = root.findChild("settings.gradle");
     assertNotNull(settingsScript);
     assertEquals(String.format("rootProject.name = '%s'\n\n", projectName),
                  StringUtil.convertLineSeparators(VfsUtilCore.loadText(settingsScript)));
 
-    VirtualFile buildScript = VfsUtilCore.findRelativeFile("build.gradle", root);
+    VirtualFile buildScript = root.findChild("build.gradle");
     assertNotNull(buildScript);
     assertEquals("group '" + projectName + "'\n" +
                  "version '1.0-SNAPSHOT'\n" +

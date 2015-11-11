@@ -446,6 +446,14 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIDEA147511() throws Exception {
+    doTest();
+  }
+
+  public void testRawInferredTypeCheck() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

@@ -218,8 +218,9 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
                                                           @NotNull final Module module) {
     final Library.ModifiableModel libraryModel = modelsProvider.getModifiableLibraryModel(library);
     final String libraryName = libraryDependencyData.getInternalName();
-    Map<OrderRootType, Collection<File>> files = myLibraryManager.prepareLibraryFiles(libraryDependencyData.getTarget());
-    myLibraryManager.registerPaths(files, libraryModel, libraryName);
+    final LibraryData libraryDependencyDataTarget = libraryDependencyData.getTarget();
+    Map<OrderRootType, Collection<File>> files = myLibraryManager.prepareLibraryFiles(libraryDependencyDataTarget);
+    LibraryDataService.registerPaths(libraryDependencyDataTarget.isUnresolved(), files, libraryModel, libraryName);
     LibraryOrderEntry orderEntry = findLibraryOrderEntry(moduleRootModel, library, libraryDependencyData.getScope());
 
     assert orderEntry != null;

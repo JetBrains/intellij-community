@@ -15,12 +15,12 @@
  */
 package com.intellij.psi.impl.source.javadoc;
 
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.javadoc.JavadocTagInfo;
 import com.intellij.psi.javadoc.PsiDocTagValue;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
 import com.intellij.util.ArrayUtil;
 
 /**
@@ -53,7 +53,7 @@ class ReturnDocTagInfo implements JavadocTagInfo {
     PsiMethod method = (PsiMethod)element;
     final PsiType type = method.getReturnType();
     if (type == null) return false;
-    return type != PsiType.VOID;
+    return !PsiType.VOID.equals(type);
   }
 
   @Override

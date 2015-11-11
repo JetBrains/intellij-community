@@ -221,19 +221,26 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
   public static void processInheritors(final CompletionParameters parameters,
                                        final Collection<PsiClassType> expectedClassTypes,
                                        final PrefixMatcher matcher, final Consumer<PsiType> consumer) {
+    processInheritors(parameters.getOriginalFile(), parameters.getPosition(), expectedClassTypes, matcher, consumer);
+  }
+
+  public static void processInheritors(final PsiFile file,
+                                       final PsiElement context,
+                                       final Collection<PsiClassType> expectedClassTypes,
+                                       final PrefixMatcher matcher, final Consumer<PsiType> consumer) {
     //quick
-    if (!processMostProbableInheritors(parameters, expectedClassTypes, consumer)) return;
+    if (!processMostProbableInheritors(file, context, expectedClassTypes, consumer)) return;
 
     //long
     for (final PsiClassType type : expectedClassTypes) {
-      CodeInsightUtil.processSubTypes(type, parameters.getPosition(), false, matcher, consumer);
+      CodeInsightUtil.processSubTypes(type, context, false, matcher, consumer);
     }
   }
 
-  private static boolean processMostProbableInheritors(CompletionParameters parameters,
+  private static boolean processMostProbableInheritors(PsiFile contextFile,
+                                                       PsiElement context,
                                                        Collection<PsiClassType> expectedClassTypes,
                                                        Consumer<PsiType> consumer) {
-    PsiFile file = parameters.getOriginalFile();
     for (final PsiClassType type : expectedClassTypes) {
       consumer.consume(type);
 
@@ -243,15 +250,15 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
 
       final PsiSubstitutor baseSubstitutor = baseResult.getSubstitutor();
 
-      final Processor<PsiClass> processor = CodeInsightUtil.createInheritorsProcessor(parameters.getPosition(), type, 0, false,
+      final Processor<PsiClass> processor = CodeInsightUtil.createInheritorsProcessor(context, type, 0, false,
                                                                                       consumer, baseClass, baseSubstitutor);
       final StatisticsInfo[] stats = StatisticsManager.getInstance().getAllValues(JavaStatisticsManager.getAfterNewKey(type));
       for (final StatisticsInfo statisticsInfo : stats) {
         final String value = statisticsInfo.getValue();
         if (value.startsWith(JavaStatisticsManager.CLASS_PREFIX)) {
           final String qname = value.substring(JavaStatisticsManager.CLASS_PREFIX.length());
-          final PsiClass psiClass = JavaPsiFacade.getInstance(file.getProject()).findClass(qname, file.getResolveScope());
-          if (psiClass != null && !PsiTreeUtil.isAncestor(file, psiClass, true) && !processor.process(psiClass)) break;
+          final PsiClass psiClass = JavaPsiFacade.getInstance(contextFile.getProject()).findClass(qname, contextFile.getResolveScope());
+          if (psiClass != null && !PsiTreeUtil.isAncestor(contextFile, psiClass, true) && !processor.process(psiClass)) break;
         }
       }
     }

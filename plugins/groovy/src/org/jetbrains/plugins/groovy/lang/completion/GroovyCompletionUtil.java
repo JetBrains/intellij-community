@@ -325,7 +325,7 @@ public class GroovyCompletionUtil {
   private static boolean getterMatches(PrefixMatcher matcher, PsiMethod element, String importedName) {
     return GroovyPropertyUtils.isSimplePropertyGetter(element) &&
            (matcher.prefixMatches(GroovyPropertyUtils.getGetterNameNonBoolean(importedName)) ||
-            element.getReturnType() == PsiType.BOOLEAN && matcher.prefixMatches(GroovyPropertyUtils.getGetterNameBoolean(importedName)));
+            PsiType.BOOLEAN.equals(element.getReturnType()) && matcher.prefixMatches(GroovyPropertyUtils.getGetterNameBoolean(importedName)));
   }
 
   public static LookupElement createClassLookupItem(PsiClass psiClass) {

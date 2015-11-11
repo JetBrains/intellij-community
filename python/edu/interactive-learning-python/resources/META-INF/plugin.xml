@@ -18,9 +18,12 @@
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.python</depends>
   <depends>com.jetbrains.edu.interactivelearning</depends>
+  <depends>com.jetbrains.edu.core</depends>
+  <depends>com.jetbrains.python.edu.core</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <directoryProjectGenerator implementation="com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator"/>
+    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.edu.PyExecuteFileLineMarkerProvider"/>
   </extensions>
   <extensions defaultExtensionNs="Pythonid">
     <inspectionExtension implementation="com.jetbrains.edu.learning.highlighting.PyStudyInspectionExtension"/>

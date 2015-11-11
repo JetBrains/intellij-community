@@ -60,10 +60,10 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
   @NotNull
   protected ActionGroup createRecentItemsActionGroup() {
     DefaultActionGroup group = new DefaultActionGroup();
-    List<List<String>> recentlyFilteredUsers = getRecentValuesFromSettings();
-    if (!recentlyFilteredUsers.isEmpty()) {
+    List<List<String>> recentlyFiltered = getRecentValuesFromSettings();
+    if (!recentlyFiltered.isEmpty()) {
       group.addSeparator("Recent");
-      for (List<String> recentGroup : recentlyFilteredUsers) {
+      for (List<String> recentGroup : recentlyFiltered) {
         if (!recentGroup.isEmpty()) {
           group.add(new PredefinedValueAction(recentGroup));
         }
@@ -103,9 +103,9 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
     return false;
   }
 
-  private class PredefinedValueAction extends DumbAwareAction {
+  protected class PredefinedValueAction extends DumbAwareAction {
 
-    @NotNull private final Collection<String> myValues;
+    @NotNull protected final Collection<String> myValues;
 
     public PredefinedValueAction(@NotNull Collection<String> values) {
       super(null, tooltip(values), null);

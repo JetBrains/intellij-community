@@ -67,7 +67,7 @@ public class PsiIntersectionType extends PsiType.Stub {
     }
   }
 
-  private static Set<PsiType> flatten(PsiType[] conjuncts, Set<PsiType> types) {
+  public static Set<PsiType> flatten(PsiType[] conjuncts, Set<PsiType> types) {
     for (PsiType conjunct : conjuncts) {
       if (conjunct instanceof PsiIntersectionType) {
         PsiIntersectionType type = (PsiIntersectionType)conjunct;

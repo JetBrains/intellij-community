@@ -1341,7 +1341,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         assert containingClass != null : method;
         typeParameters = ArrayUtil.mergeArrays(typeParameters, containingClass.getTypeParameters());
       }
-      myHolder.add(GenericsHighlightUtil.checkInferredTypeArguments(typeParameters, expression, result.getSubstitutor()));
+      myHolder.add(GenericsHighlightUtil.checkInferredTypeArguments(typeParameters, expression, result.getSubstitutor(), true));
     }
 
     if (!myHolder.hasErrorResults()) {

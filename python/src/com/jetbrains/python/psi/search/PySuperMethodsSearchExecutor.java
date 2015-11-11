@@ -44,7 +44,7 @@ public class PySuperMethodsSearchExecutor implements QueryExecutor<PsiElement, P
         if (!queryParameters.isDeepSearch()) {
           boolean isAlreadyFound = false;
           for (PyClass alreadyFound : foundMethodContainingClasses) {
-            if (alreadyFound.isSubclass(superClass)) {
+            if (alreadyFound.isSubclass(superClass, null)) {
               isAlreadyFound = true;
             }
           }
@@ -52,7 +52,7 @@ public class PySuperMethodsSearchExecutor implements QueryExecutor<PsiElement, P
             continue;
           }
         }
-        PyFunction superMethod = superClass.findMethodByName(name, false);
+        PyFunction superMethod = superClass.findMethodByName(name, false, null);
         if (superMethod != null) {
           final Property property = func.getProperty();
           final Property superProperty = superMethod.getProperty();
@@ -68,7 +68,7 @@ public class PySuperMethodsSearchExecutor implements QueryExecutor<PsiElement, P
           // If super method still not found and we have context, we may use it to find method
           final PyClassLikeType classLikeType = PyUtil.as(context.getType(superClass), PyClassLikeType.class);
           if (classLikeType != null) {
-            for (final PyFunction function : PyTypeUtil.getMembersOfType(classLikeType, PyFunction.class, context)) {
+            for (final PyFunction function : PyTypeUtil.getMembersOfType(classLikeType, PyFunction.class, true, context)) {
               final String elemName = function.getName();
               if (elemName != null && elemName.equals(func.getName())) {
                 consumer.process(function);

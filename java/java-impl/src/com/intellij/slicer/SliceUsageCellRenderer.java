@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usages.TextChunk;
 import com.intellij.util.FontUtil;
@@ -56,7 +57,7 @@ public class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
       TextChunk textChunk = text[i];
       SimpleTextAttributes attributes = textChunk.getSimpleAttributesIgnoreBackground();
       if (isForcedLeaf) {
-        attributes = attributes.derive(attributes.getStyle(), Color.LIGHT_GRAY, attributes.getBgColor(), attributes.getWaveColor());
+        attributes = attributes.derive(attributes.getStyle(), JBColor.LIGHT_GRAY, attributes.getBgColor(), attributes.getWaveColor());
       }
       boolean inUsage = (attributes.getFontStyle() & Font.BOLD) != 0;
       if (isInsideContainer && inUsage) {
@@ -66,7 +67,7 @@ public class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
         //setPaintFocusBorder(true);
       }
       append(textChunk.getText(), attributes);
-      if(i == 0){
+      if (i == 0) {
         append(FontUtil.spaceAndThinSpace());
       }
     }

@@ -67,7 +67,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 @SuppressWarnings("InnerClassMayBeStatic")
@@ -81,7 +80,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull private final DiffSettings mySettings;
   @NotNull private final List<DiffTool> myAvailableTools;
-  @NotNull private final LinkedList<DiffTool> myToolOrder;
+  @NotNull private final List<DiffTool> myToolOrder;
 
   @NotNull private final OpenInEditorAction myOpenInEditorAction;
   @Nullable private DefaultActionGroup myPopupActionGroup;
@@ -114,7 +113,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     mySettings = DiffSettingsHolder.getInstance().getSettings(myContext.getUserData(DiffUserDataKeys.PLACE));
 
     myAvailableTools = DiffManagerEx.getInstance().getDiffTools();
-    myToolOrder = new LinkedList<DiffTool>(getToolOrderFromSettings(myAvailableTools));
+    myToolOrder = new ArrayList<DiffTool>(getToolOrderFromSettings(myAvailableTools));
 
     // UI
 
@@ -175,30 +174,22 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull
   private FrameDiffTool getFittedTool() {
-    List<FrameDiffTool> tools = new ArrayList<FrameDiffTool>();
-    for (DiffTool tool : myToolOrder) {
-      try {
-        if (tool instanceof FrameDiffTool && tool.canShow(myContext, myActiveRequest)) {
-          tools.add((FrameDiffTool)tool);
-        }
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
-    }
-
-    tools = DiffUtil.filterSuppressedTools(tools);
-
+    List<FrameDiffTool> tools = filterFittedTools(myToolOrder);
     return tools.isEmpty() ? ErrorDiffTool.INSTANCE : tools.get(0);
   }
 
   @NotNull
   private List<FrameDiffTool> getAvailableFittedTools() {
-    List<FrameDiffTool> tools = new ArrayList<FrameDiffTool>();
-    for (DiffTool tool : myAvailableTools) {
+    return filterFittedTools(myAvailableTools);
+  }
+
+  @NotNull
+  private List<FrameDiffTool> filterFittedTools(@NotNull List<DiffTool> tools) {
+    List<FrameDiffTool> result = new ArrayList<FrameDiffTool>();
+    for (DiffTool tool : tools) {
       try {
         if (tool instanceof FrameDiffTool && tool.canShow(myContext, myActiveRequest)) {
-          tools.add((FrameDiffTool)tool);
+          result.add((FrameDiffTool)tool);
         }
       }
       catch (Throwable e) {
@@ -206,7 +197,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       }
     }
 
-    return DiffUtil.filterSuppressedTools(tools);
+    return DiffUtil.filterSuppressedTools(result);
   }
 
   private void moveToolOnTop(@NotNull DiffTool tool) {

@@ -216,7 +216,7 @@ public class PyTypeChecker {
   public static Set<String> getClassTypeAttributes(@NotNull PyClassType type, boolean inherited, @NotNull TypeEvalContext context) {
     final Set<String> attributes = getClassAttributes(type.getPyClass(), inherited, type.isDefinition(), context);
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
-      final Collection<PyCustomMember> members = provider.getMembers(type, null);
+      final Collection<PyCustomMember> members = provider.getMembers(type, null, context);
       for (PyCustomMember member : members) {
         attributes.add(member.getName());
       }
@@ -230,7 +230,7 @@ public class PyTypeChecker {
                                                 boolean isDefinition,
                                                 @NotNull TypeEvalContext context) {
     final Set<String> attributes = new HashSet<String>();
-    for (PyFunction function : cls.getMethods(false)) {
+    for (PyFunction function : cls.getMethods()) {
       attributes.add(function.getName());
     }
     for (PyTargetExpression instanceAttribute : cls.getInstanceAttributes()) {
@@ -455,7 +455,7 @@ public class PyTypeChecker {
   }
 
   private static boolean matchClasses(@Nullable PyClass superClass, @Nullable PyClass subClass, @NotNull TypeEvalContext context) {
-    if (superClass == null || subClass == null || subClass.isSubclass(superClass) || PyABCUtil.isSubclass(subClass, superClass)) {
+    if (superClass == null || subClass == null || subClass.isSubclass(superClass, null) || PyABCUtil.isSubclass(subClass, superClass)) {
       return true;
     }
     else if (PyUtil.hasUnresolvedAncestors(subClass, context)) {

@@ -35,8 +35,8 @@ public abstract class UndoManager {
     return ApplicationManager.getApplication().getComponent(UndoManager.class);
   }
 
-  public abstract void undoableActionPerformed(UndoableAction action);
-  public abstract void nonundoableActionPerformed(DocumentReference ref, boolean isGlobal);
+  public abstract void undoableActionPerformed(@NotNull UndoableAction action);
+  public abstract void nonundoableActionPerformed(@NotNull DocumentReference ref, boolean isGlobal);
 
   public abstract boolean isUndoInProgress();
   public abstract boolean isRedoInProgress();
@@ -46,6 +46,8 @@ public abstract class UndoManager {
   public abstract boolean isUndoAvailable(@Nullable FileEditor editor);
   public abstract boolean isRedoAvailable(@Nullable FileEditor editor);
 
+  @NotNull
   public abstract Pair<String, String> getUndoActionNameAndDescription(FileEditor editor);
+  @NotNull
   public abstract Pair<String, String> getRedoActionNameAndDescription(FileEditor editor);
 }

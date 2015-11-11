@@ -382,6 +382,12 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     LocalTaskImpl strange = new LocalTaskImpl("1", "very long and strange summary");
     assertEquals("very-long", myTaskManager.suggestBranchName(strange));
+
+    myTaskManager.getState().branchNameFormat = "{id} {summary}";
+
+    LocalTaskImpl withIllegalSymbolsInIssue = new LocalTaskImpl("1", "contains Illegal$Symbols");
+    withIllegalSymbolsInIssue.setIssue(true);
+    assertEquals("1-contains-Illegal$Symbols", myTaskManager.suggestBranchName(withIllegalSymbolsInIssue));
   }
 
   private TestRepository myRepository;

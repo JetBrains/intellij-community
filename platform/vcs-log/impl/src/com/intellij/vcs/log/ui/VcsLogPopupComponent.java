@@ -146,10 +146,15 @@ public abstract class VcsLogPopupComponent extends JPanel {
   }
 
   private void showPopupMenu() {
-    ListPopup popup = JBPopupFactory.getInstance()
-      .createActionGroupPopup(null, createActionGroup(), DataManager.getInstance().getDataContext(this),
-                              JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
+    ListPopup popup = createPopupMenu();
     popup.showUnderneathOf(this);
+  }
+
+  @NotNull
+  protected ListPopup createPopupMenu() {
+    return JBPopupFactory.getInstance().
+      createActionGroupPopup(null, createActionGroup(), DataManager.getInstance().getDataContext(this),
+                             JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
   }
 
   private static Border createFocusedBorder() {

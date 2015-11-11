@@ -15,7 +15,11 @@
  */
 package com.intellij.testFramework.fixtures;
 
+import com.intellij.openapi.Disposable;
+
 /**
  * A fixture which provides only {@link com.intellij.openapi.application.Application application} and app-level components.
  */
-public interface BareTestFixture extends IdeaTestFixture { }
+public interface BareTestFixture extends IdeaTestFixture {
+  Disposable getTestRootDisposable();
+}

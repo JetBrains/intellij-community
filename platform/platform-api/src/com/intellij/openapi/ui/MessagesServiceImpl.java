@@ -673,23 +673,7 @@ public class MessagesServiceImpl implements MessagesService {
       }
       if (myMessage != null) {
         final JTextPane messageComponent = createMessageComponent(myMessage);
-
-        final Dimension screenSize = messageComponent.getToolkit().getScreenSize();
-        final Dimension textSize = messageComponent.getPreferredSize();
-        if (myMessage.length() > 100) {
-          final JScrollPane pane = ScrollPaneFactory.createScrollPane(messageComponent);
-          pane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-          pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-          pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-          final int scrollSize = (int)new JScrollBar(Adjustable.VERTICAL).getPreferredSize().getWidth();
-          final Dimension preferredSize = new Dimension(Math.min(textSize.width, screenSize.width / 2) + scrollSize,
-                                                        Math.min(textSize.height, screenSize.height / 3) + scrollSize);
-          pane.setPreferredSize(preferredSize);
-          panel.add(pane, BorderLayout.CENTER);
-        }
-        else {
-          panel.add(messageComponent, BorderLayout.CENTER);
-        }
+        panel.add(Messages.wrapToScrollPaneIfNeeded(messageComponent, 50, 10), BorderLayout.CENTER);
       }
       return panel;
     }

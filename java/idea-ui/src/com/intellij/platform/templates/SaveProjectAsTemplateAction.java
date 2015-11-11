@@ -109,7 +109,8 @@ public class SaveProjectAsTemplateAction extends AnAction {
   }
 
   public static VirtualFile getDescriptionFile(Project project, String path) {
-    return VfsUtilCore.findRelativeFile(path, project.getBaseDir());
+    VirtualFile baseDir = project.getBaseDir();
+    return baseDir != null ? baseDir.findFileByRelativePath(path) : null;
   }
 
   public static void saveProject(final Project project,

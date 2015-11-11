@@ -60,7 +60,7 @@ public class KeyboardInternationalizationNotificationManager {
       KeyboardSettingsExternalizable.getDisplayLanguageNameForComponent(recentFocusedWindow) + " language." +
       "You can change this option in the settings of " + productName + " <a href='settings'>more...</a></html>";
 
-    String title = "Enable smart keyboard internalization for " + productName + ".";
+    String title = "Enable smart keyboard internationalization for " + productName + ".";
 
     return new Notification(groupDisplayId, title,
                             text,

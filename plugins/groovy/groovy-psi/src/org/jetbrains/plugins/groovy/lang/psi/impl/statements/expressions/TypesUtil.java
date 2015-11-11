@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -310,9 +310,8 @@ public class TypesUtil {
     }
 
     if (rType instanceof GrTraitType) {
-      if (isAssignableWithoutConversions(lType, ((GrTraitType)rType).getExprType(), context)) return true;
-      for (PsiClassType trait : ((GrTraitType)rType).getTraitTypes()) {
-        if (isAssignableWithoutConversions(lType, trait, context)) return true;
+      for (PsiType type : ((GrTraitType)rType).getConjuncts()) {
+        if (isAssignableWithoutConversions(lType, type, context)) return true;
       }
       return false;
     }
@@ -441,7 +440,7 @@ public class TypesUtil {
                                          @NotNull PsiManager manager,
                                          @NotNull GlobalSearchScope resolveScope,
                                          boolean boxVoid) {
-    if (result instanceof PsiPrimitiveType && (boxVoid || result != PsiType.VOID)) {
+    if (result instanceof PsiPrimitiveType && (boxVoid || !PsiType.VOID.equals(result))) {
       PsiPrimitiveType primitive = (PsiPrimitiveType)result;
       String boxedTypeName = primitive.getBoxedTypeName();
       if (boxedTypeName != null) {

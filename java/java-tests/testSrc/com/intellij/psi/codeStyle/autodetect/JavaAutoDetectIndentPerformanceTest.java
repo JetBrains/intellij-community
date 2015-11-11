@@ -36,30 +36,13 @@ public class JavaAutoDetectIndentPerformanceTest extends AbstractIndentAutoDetec
   @NotNull
   @Override
   protected String getFileNameWithExtension() {
-    return getTestName(true) + ".java";
+    return "bigFile.java";
   }
 
-  public void testBigFile() {
-    Ref<IndentOptions> ref = checkPerformanceRelativelyToFileRead();
-    //to ensure if worked as expected
-    Assert.assertEquals("Detect indent mismatch", 2, ref.get().INDENT_SIZE);
-
-    PlatformTestUtil
-      .startPerformanceTest("Detecting indent on hot file", 30, AbstractIndentAutoDetectionTest::detectIndentOptions)
-      .cpuBound()
-      .assertTiming();
-  }
-
-  private static long trackTime(Runnable runnable) {
-    long startTime = System.currentTimeMillis();
-    runnable.run();
-    return System.currentTimeMillis() - startTime;
-  }
-  
-  private Ref<IndentOptions> checkPerformanceRelativelyToFileRead() {
+  public void testBigColdFile() {
     Ref<IndentOptions> ref = Ref.create();
     long fileLoadTime = trackTime(() -> configureByFile(getFileNameWithExtension()));
-    
+
     long detectingTime = trackTime(() -> ref.set(detectIndentOptions()));
     double ratio = (double)detectingTime / fileLoadTime;
     if (ratio > 0.2) {
@@ -70,7 +53,23 @@ public class JavaAutoDetectIndentPerformanceTest extends AbstractIndentAutoDetec
       System.out.println(msg);
     }
     
-    return ref;
+    //to ensure it worked as expected
+    Assert.assertEquals("Detect indent mismatch", 2, ref.get().INDENT_SIZE);
   }
   
+  public void testBigHotFile() {
+    configureByFile(getFileNameWithExtension());
+    AbstractIndentAutoDetectionTest.detectIndentOptions();
+    
+    PlatformTestUtil
+      .startPerformanceTest("Detecting indent on hot file", 40, AbstractIndentAutoDetectionTest::detectIndentOptions)
+      .cpuBound()
+      .assertTiming();
+  }
+
+  private static long trackTime(Runnable runnable) {
+    long startTime = System.currentTimeMillis();
+    runnable.run();
+    return System.currentTimeMillis() - startTime;
+  }
 }

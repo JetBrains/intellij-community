@@ -20,6 +20,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.util.ui.JBUI;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
@@ -72,6 +73,8 @@ public class PyManagePackagesDialog extends DialogWrapper {
     });
 
     init();
+    myMainPanel.setPreferredSize(new Dimension(JBUI.scale(900), JBUI.scale(700)));
+    myMainPanel.setMinimumSize(new Dimension(JBUI.scale(900), JBUI.scale(700)));
   }
 
   @Override

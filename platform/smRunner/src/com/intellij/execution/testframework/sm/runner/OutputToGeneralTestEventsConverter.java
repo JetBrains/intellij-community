@@ -410,8 +410,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
         duration = convertToLong(durationStr, testFinished);
       }
 
-      TestFinishedEvent testFinishedEvent = new TestFinishedEvent(testFinished, duration);
-      testFinishedEvent.setOutputFile(testFinished.getAttributes().get(ATTR_KEY_TEST_OUTPUT_FILE));
+      TestFinishedEvent testFinishedEvent = new TestFinishedEvent(testFinished, duration, 
+                                                                  testFinished.getAttributes().get(ATTR_KEY_TEST_OUTPUT_FILE));
       fireOnTestFinished(testFinishedEvent);
     }
 

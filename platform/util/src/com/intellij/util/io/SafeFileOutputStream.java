@@ -45,11 +45,11 @@ public class SafeFileOutputStream extends OutputStream {
     myTargetFile = target;
     myPreserveAttributes = preserveAttributes;
     myBackupFile = new File(myTargetFile.getParentFile(), myTargetFile.getName() + EXTENSION_BAK);
-    //noinspection IOResourceOpenedButNotSafelyClosed
     myBackupStream = new FileOutputStream(myBackupFile);
   }
 
   @Override
+  @SuppressWarnings("Duplicates")
   public void write(byte[] b) throws IOException {
     try {
       myBackupStream.write(b);
@@ -62,6 +62,7 @@ public class SafeFileOutputStream extends OutputStream {
   }
 
   @Override
+  @SuppressWarnings("Duplicates")
   public void write(int b) throws IOException {
     try {
       myBackupStream.write(b);
@@ -74,6 +75,7 @@ public class SafeFileOutputStream extends OutputStream {
   }
 
   @Override
+  @SuppressWarnings("Duplicates")
   public void write(byte[] b, int off, int len) throws IOException {
     try {
       myBackupStream.write(b, off, len);

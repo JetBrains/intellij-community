@@ -37,6 +37,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -343,10 +344,12 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     LOG.assertTrue(initializer != null);
     final PsiType type = psiVariable.getType();
     final PsiType initializerType = initializer.getType();
-    if (initializerType != null && !TypeConversionUtil.isAssignable(type, initializerType)) {
+    if (initializerType != null && 
+        !TypeConversionUtil.isAssignable(type, initializerType) &&
+        !PsiTypesUtil.hasUnresolvedComponents(type)) {
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
       final PsiExpression castExpr =
-        elementFactory.createExpressionFromText("(" + psiVariable.getType().getCanonicalText() + ")" + initializer.getText(), psiVariable);
+        elementFactory.createExpressionFromText("(" + type.getCanonicalText() + ")" + initializer.getText(), psiVariable);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(initializer.replace(castExpr));
     }
   }

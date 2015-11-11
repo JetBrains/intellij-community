@@ -997,18 +997,19 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return StringUtil.shortenTextWithEllipsis(name, 100, 0);
   }
 
-  public String suggestBranchName(Task task) {
-    if (task.isIssue()) {
-      return TaskUtil.formatTask(task, myConfig.branchNameFormat).replace(' ', '-');
-    }
-    else {
-      String summary = task.getSummary();
-      List<String> words = StringUtil.getWordsIn(summary);
-      String[] strings = ArrayUtil.toStringArray(words);
-      return StringUtil.join(strings, 0, Math.min(2, strings.length), "-");
-    }
+  @NotNull
+  public String suggestBranchName(@NotNull Task task) {
+    String name = constructDefaultBranchName(task);
+    if (task.isIssue()) return name.replace(' ', '-');
+    List<String> words = StringUtil.getWordsIn(name);
+    String[] strings = ArrayUtil.toStringArray(words);
+    return StringUtil.join(strings, 0, Math.min(2, strings.length), "-");
   }
 
+  @NotNull
+  public String constructDefaultBranchName(@NotNull Task task) {
+    return task.isIssue() ? TaskUtil.formatTask(task, myConfig.branchNameFormat) : task.getSummary();
+  }
 
   @TestOnly
   public ChangeListAdapter getChangeListListener() {

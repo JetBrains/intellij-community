@@ -92,9 +92,9 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       // reference signatures
       PyClass objectClass = builtins.getClass("object");
       if (objectClass != null) {
-        final PyFunction methodRepr = objectClass.findMethodByName("__repr__", false);
+        final PyFunction methodRepr = objectClass.findMethodByName("__repr__", false, null);
         if (methodRepr != null) myOneParamFunction = methodRepr;
-        final PyFunction methodDelattr = objectClass.findMethodByName("__delattr__", false);
+        final PyFunction methodDelattr = objectClass.findMethodByName("__delattr__", false, null);
         if (methodDelattr != null) myTwoParamFunction = methodDelattr;
       }
     }
@@ -290,7 +290,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
     private void checkForSelf(PyParameterList paramList) {
       PyParameter[] parameters = paramList.getParameters();
       final PyClass cls = PsiTreeUtil.getParentOfType(paramList, PyClass.class);
-      if (cls != null && cls.isSubclass("type")) return;
+      if (cls != null && cls.isSubclass("type", null)) return;
       if (parameters.length > 0 && !PyNames.CANONICAL_SELF.equals(parameters[0].getName())) {
         registerProblem(
           parameters[0], PyBundle.message("INSP.accessor.first.param.is.$0", PyNames.CANONICAL_SELF), ProblemHighlightType.WEAK_WARNING,

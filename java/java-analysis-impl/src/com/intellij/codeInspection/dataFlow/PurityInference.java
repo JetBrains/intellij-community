@@ -36,7 +36,7 @@ public class PurityInference {
 
   public static boolean inferPurity(@NotNull final PsiMethod method) {
     if (!InferenceFromSourceUtil.shouldInferFromSource(method) ||
-        method.getReturnType() == PsiType.VOID ||
+        PsiType.VOID.equals(method.getReturnType()) ||
         method.getBody() == null ||
         method.isConstructor() || 
         PropertyUtil.isSimpleGetter(method)) {

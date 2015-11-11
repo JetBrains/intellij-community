@@ -85,12 +85,6 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       return THROWABLES_FILTER;
     }
     
-    //throws list
-    PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-    if (method != null && PsiTreeUtil.isAncestor(method.getThrowsList(), element, true)) {
-      return THROWABLES_FILTER;
-    }
-
     //new xxx.yyy
     if (psiElement().afterLeaf(psiElement().withText(".")).withSuperParent(2, psiElement(PsiNewExpression.class)).accepts(element)) {
       if (((PsiNewExpression)element.getParent().getParent()).getClassReference() == element.getParent()) {
@@ -107,6 +101,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     return null;
   }
 
+  private static boolean isInsideThrowsList(PsiElement element) {
+    PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+    return method != null && PsiTreeUtil.isAncestor(method.getThrowsList(), element, true);
+  }
 
 
   public JavaSmartCompletionContributor() {
@@ -128,11 +126,18 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           PsiTreeUtil.findElementOfClassAtOffset(element.getContainingFile(), parameters.getOffset(), PsiJavaCodeReferenceElement.class, false);
         if (reference != null) {
           ElementFilter filter = getClassReferenceFilter(element);
+          boolean completeConstructor = filter != null;
+          if (filter == null && isInsideThrowsList(element)) {
+            filter = THROWABLES_FILTER;
+          }
           if (filter != null) {
             final List<ExpectedTypeInfo> infos = Arrays.asList(getExpectedTypes(parameters));
-            for (final LookupElement item : completeReference(element, reference, filter, true, false, parameters, result.getPrefixMatcher())) {
+            for (LookupElement item : completeReference(element, reference, filter, true, false, parameters, result.getPrefixMatcher())) {
               if (item.getObject() instanceof PsiClass) {
-                result.addElement(decorate(LookupElementDecorator.withInsertHandler(item, ConstructorInsertHandler.SMART_INSTANCE), infos));
+                if (completeConstructor) {
+                  item = LookupElementDecorator.withInsertHandler(item, ConstructorInsertHandler.SMART_INSTANCE);
+                }
+                result.addElement(decorate(item, infos));
               }
             }
           }

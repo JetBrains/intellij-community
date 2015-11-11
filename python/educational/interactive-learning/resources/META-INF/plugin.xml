@@ -20,6 +20,7 @@
        on how to target different products -->
 
   <depends>com.intellij.modules.lang</depends>
+  <depends>com.jetbrains.edu.core</depends>
 
   <project-components>
     <component>

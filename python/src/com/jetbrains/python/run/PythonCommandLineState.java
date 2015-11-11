@@ -16,6 +16,7 @@
 package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
@@ -51,7 +52,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.remote.RemoteProcessControl;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.containers.HashMap;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
@@ -63,6 +64,7 @@ import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -233,7 +235,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   public GeneralCommandLine generateCommandLine() {
-    GeneralCommandLine commandLine = createPythonCommandLine(myConfig.getProject(), myConfig);
+    GeneralCommandLine commandLine = createPythonCommandLine(myConfig.getProject(), myConfig, isDebug());
 
     buildCommandLineParameters(commandLine);
 
@@ -243,12 +245,14 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   @NotNull
-  public static GeneralCommandLine createPythonCommandLine(Project project, PythonRunParams config) {
+  public static GeneralCommandLine createPythonCommandLine(Project project, PythonRunParams config, boolean isDebug) {
     GeneralCommandLine commandLine = generalCommandLine();
+
+    commandLine.withCharset(EncodingProjectManager.getInstance(project).getDefaultCharset());
 
     createStandardGroups(commandLine);
     
-    initEnvironment(project, commandLine, config);
+    initEnvironment(project, commandLine, config, isDebug);
 
     commandLine.withCharset(EncodingProjectManager.getInstance(project).getDefaultCharset());
 
@@ -277,16 +281,14 @@ public abstract class PythonCommandLineState extends CommandLineState {
     params.addParamsGroup(GROUP_SCRIPT);
   }
 
-  protected static void initEnvironment(Project project, GeneralCommandLine commandLine, PythonRunParams myConfig) {
-    Map<String, String> env = myConfig.getEnvs();
-    if (env == null) {
-      env = new HashMap<String, String>();
-    }
-    else {
-      env = new HashMap<String, String>(env);
-    }
+  protected static void initEnvironment(Project project, GeneralCommandLine commandLine, PythonRunParams myConfig, boolean isDebug) {
+    Map<String, String> env = Maps.newHashMap();
 
     setupEncodingEnvs(env, commandLine.getCharset());
+
+    if (myConfig.getEnvs() != null) {
+      env.putAll(myConfig.getEnvs());
+    }
 
     addCommonEnvironmentVariables(env);
 
@@ -294,7 +296,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     commandLine.getEnvironment().putAll(env);
     commandLine.withParentEnvironmentType(myConfig.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
 
-    buildPythonPath(project, commandLine, myConfig);
+    buildPythonPath(project, commandLine, myConfig, isDebug);
   }
 
   protected static void addCommonEnvironmentVariables(Map<String, String> env) {
@@ -309,11 +311,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
     PythonSdkFlavor.setupEncodingEnvs(envs, charset);
   }
 
-  private static void buildPythonPath(Project project, GeneralCommandLine commandLine, PythonRunParams config) {
+  private static void buildPythonPath(Project project, GeneralCommandLine commandLine, PythonRunParams config, boolean isDebug) {
     Sdk pythonSdk = PythonSdkType.findSdkByPath(config.getSdkHome());
     if (pythonSdk != null) {
       List<String> pathList = Lists.newArrayList(getAddedPaths(pythonSdk));
-      pathList.addAll(collectPythonPath(project, config));
+      pathList.addAll(collectPythonPath(project, config, isDebug));
       initPythonPath(commandLine, config.isPassParentEnvs(), pathList, config.getSdkHome());
     }
   }
@@ -367,10 +369,18 @@ public abstract class PythonCommandLineState extends CommandLineState {
     }
   }
 
-  protected static Collection<String> collectPythonPath(Project project, PythonRunParams config) {
+  protected static Collection<String> collectPythonPath(Project project, PythonRunParams config, boolean isDebug) {
     final Module module = getModule(project, config);
+    final HashSet<String> pythonPath =
+      Sets.newHashSet(collectPythonPath(module, config.shouldAddContentRoots(), config.shouldAddSourceRoots()));
 
-    return Sets.newHashSet(collectPythonPath(module, config.shouldAddContentRoots(), config.shouldAddSourceRoots()));
+    if (isDebug && PythonSdkFlavor.getFlavor(config.getSdkHome()) instanceof JythonSdkFlavor) {
+      //that fixes Jython problem changing sys.argv on execfile, see PY-8164
+      pythonPath.add(PythonHelpersLocator.getHelperPath("pycharm"));
+      pythonPath.add(PythonHelpersLocator.getHelperPath("pydev"));
+    }
+
+    return pythonPath;
   }
 
   @Nullable

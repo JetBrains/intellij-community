@@ -247,7 +247,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       final PyType exprType = context.getType(expression);
       if (exprType instanceof PyClassType) {
         final PyClass cls = ((PyClassType)exprType).getPyClass();
-        final PyFunction enter = cls.findMethodByName(PyNames.ENTER, true);
+        final PyFunction enter = cls.findMethodByName(PyNames.ENTER, true, null);
         if (enter != null) {
           final PyType enterType = enter.getCallType(expression, Collections.<PyExpression, PyNamedParameter>emptyMap(), context);
           if (enterType != null) {

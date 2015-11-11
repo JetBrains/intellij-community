@@ -404,7 +404,7 @@ public class PyStringFormatInspection extends PyInspection {
         else {
           final PyClassType type = as(myTypeEvalContext.getType(rightExpression), PyClassType.class);
           if (type != null) {
-            if (myUsedMappingKeys.size() > 0 && !PyABCUtil.isSubclass(type.getPyClass(), PyNames.MAPPING)) {
+            if (myUsedMappingKeys.size() > 0 && !PyABCUtil.isSubclass(type.getPyClass(), PyNames.MAPPING, null)) {
               registerProblem(rightExpression, PyBundle.message("INSP.format.requires.mapping"));
               return;
             }

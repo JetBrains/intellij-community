@@ -85,8 +85,6 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.openapi.wm.impl.FloatingDecorator.DIVIDER_WIDTH;
-
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
@@ -975,7 +973,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     deactivateToolWindowImpl(id, true, commandList);
 
-    if (hideSide && !info.isFloating()) {
+    if (hideSide && !info.isFloating() && !info.isWindowed()) {
       final List<String> ids = myLayout.getVisibleIdsOn(info.getAnchor(), this);
       for (String each : ids) {
         myActiveStack.remove(each, true);
@@ -2091,7 +2089,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     private final FloatingDecorator myFloatingDecorator;
 
     /**
-     * Creates floating decorator for specified floating decorator.
+     * Creates floating decorator for specified internal decorator.
      */
     private AddFloatingDecoratorCmd(final InternalDecorator decorator, final WindowInfoImpl info) {
       super(CommandProcessor.getInstance(myProject));
@@ -2163,16 +2161,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     private final WindowedDecorator myWindowedDecorator;
 
     /**
-     * Creates floating decorator for specified floating decorator.
+     * Creates windowed decorator for specified internal decorator.
      */
     private AddWindowedDecoratorCmd(final InternalDecorator decorator, final WindowInfoImpl info) {
       super(CommandProcessor.getInstance(myProject));
       myWindowedDecorator = new WindowedDecorator(myProject, info.copy(), decorator);
       Window window = myWindowedDecorator.getFrame();
       final Rectangle bounds = info.getFloatingBounds();
-      if (bounds != null) {
-        bounds.setBounds(bounds.x + DIVIDER_WIDTH, bounds.y + DIVIDER_WIDTH, bounds.width - 2 * DIVIDER_WIDTH, bounds.height - 2 * DIVIDER_WIDTH);
-      }
       if (bounds != null &&
           bounds.width > 0 &&
           bounds.height > 0 &&
@@ -2230,10 +2225,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       myWindowedDecorator = getWindowedDecorator(info.getId());
       myId2WindowedDecorator.remove(info.getId());
 
-      JRootPane rootPane = ((RootPaneContainer)myWindowedDecorator.getFrame()).getRootPane();
-      Rectangle bounds = rootPane.getBounds();
-      Point location = rootPane.getLocationOnScreen();
-      bounds.setBounds(location.x - DIVIDER_WIDTH, location.y - DIVIDER_WIDTH, bounds.width + 2 * DIVIDER_WIDTH, bounds.height + 2 * DIVIDER_WIDTH);
+      Window frame = myWindowedDecorator.getFrame();
+      if (!frame.isShowing()) return;
+      Rectangle bounds = frame.getBounds();
+      bounds.setLocation(frame.getLocationOnScreen());
       info.setFloatingBounds(bounds);
     }
 

@@ -91,7 +91,7 @@ public class PyAbstractClassInspection extends PyInspection {
           return true;
         }
       }
-      for (PyFunction method : pyClass.getMethods(false)) {
+      for (PyFunction method : pyClass.getMethods()) {
         if (PyUtil.isDecoratedAsAbstract(method)) {
           return true;
         }
@@ -102,8 +102,8 @@ public class PyAbstractClassInspection extends PyInspection {
     private static boolean isAbstractMethodForClass(@NotNull PyFunction method, @NotNull PyClass cls) {
       final String methodName = method.getName();
       if (methodName == null ||
-          cls.findMethodByName(methodName, false) != null ||
-          cls.findClassAttribute(methodName, false) != null) {
+          cls.findMethodByName(methodName, false, null) != null ||
+          cls.findClassAttribute(methodName, false, null) != null) {
         return false;
       }
       return PyUtil.isDecoratedAsAbstract(method) || PyOverrideImplementUtil.raisesNotImplementedError(method);

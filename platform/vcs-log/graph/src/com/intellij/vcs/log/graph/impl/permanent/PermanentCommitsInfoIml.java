@@ -178,7 +178,7 @@ public class PermanentCommitsInfoIml<CommitId> implements PermanentCommitsInfo<C
     if (reportNotFound) {
       Collection<CommitId> unmatchedIds = ContainerUtil.subtract(commitIds, matchedIds);
       if (!unmatchedIds.isEmpty()) {
-        LOG.error("Unmatched commit ids " + unmatchedIds);
+        LOG.warn("Unmatched commit ids " + unmatchedIds);
       }
     }
     for (Map.Entry<Integer, CommitId> entry : myNotLoadCommits.entrySet()) {

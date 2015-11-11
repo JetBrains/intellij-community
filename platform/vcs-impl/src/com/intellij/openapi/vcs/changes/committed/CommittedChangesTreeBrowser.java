@@ -79,7 +79,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private final RepositoryChangesBrowser myDetailsView;
   private List<CommittedChangeList> myChangeLists;
   private List<CommittedChangeList> mySelectedChangeLists;
-  private ChangeListGroupingStrategy myGroupingStrategy = new DateChangeListGroupingStrategy();
+  @NotNull private ChangeListGroupingStrategy myGroupingStrategy = new DateChangeListGroupingStrategy();
   private final CompositeChangeListFilteringStrategy myFilteringStrategy = new CompositeChangeListFilteringStrategy();
   private final JPanel myLeftPanel;
   private final FilterChangeListener myFilterChangeListener = new FilterChangeListener();
@@ -249,9 +249,14 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myChangesTree.setSelectionPaths(paths);
   }
 
-  public void setGroupingStrategy(ChangeListGroupingStrategy strategy) {
+  public void setGroupingStrategy(@NotNull ChangeListGroupingStrategy strategy) {
     myGroupingStrategy = strategy;
     updateModel();
+  }
+
+  @NotNull
+  public ChangeListGroupingStrategy getGroupingStrategy() {
+    return myGroupingStrategy;
   }
 
   private void updateBySelectionChange() {

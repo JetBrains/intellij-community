@@ -18,7 +18,6 @@ package com.intellij.packageDependencies;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -30,7 +29,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
@@ -149,5 +147,9 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
     for ( final PsiFile psiFile : excluded ) {
       dependencies.remove(psiFile);
     }
+  }
+
+  public AnalysisScope getForwardScope() {
+    return myForwardScope;
   }
 }

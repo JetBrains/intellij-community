@@ -59,7 +59,7 @@ public class PyClassInheritorsSearchExecutor implements QueryExecutor<PyClass, P
       final Collection<PyClass> candidates = StubIndex.getElements(PySuperClassIndex.KEY, superClassName, project,
                                                                    ProjectScope.getAllScope(project), PyClass.class);
       for (PyClass candidate : candidates) {
-        final PyClass[] classes = candidate.getSuperClasses();
+        final PyClass[] classes = candidate.getSuperClasses(null);
         for (PyClass superClassCandidate : classes) {
           if (superClassCandidate.isEquivalentTo(superClass)) {
             if (!consumer.process(candidate)) {

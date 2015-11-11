@@ -517,18 +517,16 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     PsiType varType = var.getVariableType();
     if (!(varType instanceof PsiPrimitiveType)) return null;
     
-    if (varType == PsiType.FLOAT || varType == PsiType.DOUBLE) return null;
+    if (PsiType.FLOAT.equals(varType) || PsiType.DOUBLE.equals(varType)) return null;
 
-    double minValue = varType == PsiType.BYTE ? Byte.MIN_VALUE :
-                      varType == PsiType.SHORT ? Short.MIN_VALUE :
-                      varType == PsiType.INT ? Integer.MIN_VALUE :
-                      varType == PsiType.CHAR ? Character.MIN_VALUE :
-                      Long.MIN_VALUE;
-    double maxValue = varType == PsiType.BYTE ? Byte.MAX_VALUE :
-                      varType == PsiType.SHORT ? Short.MAX_VALUE :
-                      varType == PsiType.INT ? Integer.MAX_VALUE :
-                      varType == PsiType.CHAR ? Character.MAX_VALUE :
-                      Long.MAX_VALUE;
+    double minValue = PsiType.BYTE.equals(varType) ? Byte.MIN_VALUE : PsiType.SHORT.equals(varType)
+                                                                 ? Short.MIN_VALUE : PsiType.INT.equals(varType)
+                                                                   ? Integer.MIN_VALUE : PsiType.CHAR.equals(varType) ? Character.MIN_VALUE :
+                                                                                         Long.MIN_VALUE;
+    double maxValue = PsiType.BYTE.equals(varType) ? Byte.MAX_VALUE : PsiType.SHORT.equals(varType)
+                                                                 ? Short.MAX_VALUE : PsiType.INT.equals(varType)
+                                                                   ? Integer.MAX_VALUE : PsiType.CHAR.equals(varType) ? Character.MAX_VALUE :
+                                                                                         Long.MAX_VALUE;
 
     return checkComparisonWithKnownRange(instruction, runner, memState, opSign, comparedWith, minValue, maxValue);
   }

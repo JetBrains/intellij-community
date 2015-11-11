@@ -44,7 +44,7 @@ public class PySuperTypesHierarchyTreeStructure extends HierarchyTreeStructure {
       final PsiElement element = pyDescriptor.getPsiElement();
       if (element instanceof PyClass) {
         final PyClass cls = (PyClass)element;
-        final PyClass[] superClasses = cls.getSuperClasses();
+        final PyClass[] superClasses = cls.getSuperClasses(null);
         for (PyClass superClass : superClasses) {
           res.add(new PyHierarchyNodeDescriptor(descriptor, superClass, false));
         }

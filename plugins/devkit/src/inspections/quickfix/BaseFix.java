@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,43 +24,42 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
-/**
- * @author swr
- */
 abstract class BaseFix implements LocalQuickFix {
-  protected final PsiElement myElement;
+  protected final SmartPsiElementPointer<? extends PsiElement> myPointer;
   protected final boolean myOnTheFly;
 
-  protected BaseFix(PsiElement element, boolean onTheFly) {
-    myElement = element;
+  protected BaseFix(@NotNull SmartPsiElementPointer<? extends PsiElement> pointer, boolean onTheFly) {
+    myPointer = pointer;
     myOnTheFly = onTheFly;
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     // can happen during batch-inspection if resolution has already been applied
     // to plugin.xml or java class
-    if (!myElement.isValid()) return;
+    PsiElement element = myPointer.getElement();
+    if (element == null || !element.isValid()) return;
 
-    final boolean external = descriptor.getPsiElement().getContainingFile() != myElement.getContainingFile();
+    boolean external = descriptor.getPsiElement().getContainingFile() != element.getContainingFile();
     if (external) {
-      final PsiClass clazz = PsiTreeUtil.getParentOfType(myElement, PsiClass.class, false);
-      final ReadonlyStatusHandler readonlyStatusHandler = ReadonlyStatusHandler.getInstance(project);
-      final VirtualFile[] files = new VirtualFile[]{myElement.getContainingFile().getVirtualFile()};
-      final ReadonlyStatusHandler.OperationStatus status = readonlyStatusHandler.ensureFilesWritable(files);
+      PsiClass clazz = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
+      ReadonlyStatusHandler readonlyStatusHandler = ReadonlyStatusHandler.getInstance(project);
+      VirtualFile[] files = new VirtualFile[]{element.getContainingFile().getVirtualFile()};
+      ReadonlyStatusHandler.OperationStatus status = readonlyStatusHandler.ensureFilesWritable(files);
 
       if (status.hasReadonlyFiles()) {
-        final String className = clazz != null ? clazz.getQualifiedName() : myElement.getContainingFile().getName();
+        String className = clazz != null ? clazz.getQualifiedName() : element.getContainingFile().getName();
 
         Messages.showMessageDialog(project,
-                DevKitBundle.message("inspections.registration.problems.quickfix.read-only",
-                        className),
-                getName(),
-                Messages.getErrorIcon());
+                                   DevKitBundle.message("inspections.registration.problems.quickfix.read-only",
+                                                        className),
+                                   getName(),
+                                   Messages.getErrorIcon());
         return;
       }
     }

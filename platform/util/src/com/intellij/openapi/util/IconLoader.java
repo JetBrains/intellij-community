@@ -15,11 +15,8 @@
  */
 package com.intellij.openapi.util;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
@@ -57,7 +54,7 @@ public final class IconLoader {
   private static ImageFilter IMAGE_FILTER;
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private static final ConcurrentMap<URL, CachedUrlIcon> ourIconsCache = ContainerUtil.newConcurrentMap(100, 0.9f, 2);
+  private static final ConcurrentMap<URL, CachedImageIcon> ourIconsCache = ContainerUtil.newConcurrentMap(100, 0.9f, 2);
 
   /**
    * This cache contains mapping between icons and disabled icons.
@@ -234,9 +231,9 @@ public final class IconLoader {
     if (url == null) {
       return null;
     }
-    CachedUrlIcon icon = ourIconsCache.get(url);
+    CachedImageIcon icon = ourIconsCache.get(url);
     if (icon == null) {
-      icon = new CachedUrlIcon(url);
+      icon = new CachedImageIcon(url);
       if (useCache) {
         icon = ConcurrencyUtil.cacheOrGet(ourIconsCache, url, icon);
       }
@@ -317,7 +314,22 @@ public final class IconLoader {
     return new TransparentIcon(icon, alpha);
   }
 
-  public static final class CachedUrlIcon implements ScalableIcon {
+  /**
+   * Gets a snapshot of the icon, immune to changes made by these calls:
+   * {@link IconLoader#setScale(float)}, {@link IconLoader#setFilter(ImageFilter)}, {@link IconLoader#setUseDarkIcons(boolean)}
+   *
+   * @param icon the source icon
+   * @return the icon snapshot
+   */
+  @NotNull
+  public static Icon getIconSnapshot(@NotNull Icon icon) {
+    if (icon instanceof CachedImageIcon) {
+      return ((CachedImageIcon)icon).getRealIcon();
+    }
+    return icon;
+  }
+
+  public static final class CachedImageIcon implements ScalableIcon {
     private Object myRealIcon;
     @NotNull
     private final URL myUrl;
@@ -325,7 +337,7 @@ public final class IconLoader {
     private float scale;
     private ImageFilter filter;
     private HashMap<Float, Icon> scaledIcons;
-    public CachedUrlIcon(@NotNull URL url) {
+    public CachedImageIcon(@NotNull URL url) {
       myUrl = url;
       dark = USE_DARK_ICONS;
       scale = SCALE;

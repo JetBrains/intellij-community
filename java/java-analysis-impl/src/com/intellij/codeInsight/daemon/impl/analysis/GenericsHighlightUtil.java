@@ -71,7 +71,14 @@ public class GenericsHighlightUtil {
   static HighlightInfo checkInferredTypeArguments(PsiTypeParameter[] typeParameters,
                                                   PsiElement call,
                                                   PsiSubstitutor substitutor) {
-    final Pair<PsiTypeParameter, PsiType> inferredTypeArgument = GenericsUtil.findTypeParameterWithBoundError(typeParameters, substitutor, call, false);
+    return checkInferredTypeArguments(typeParameters, call, substitutor, false);
+  }
+
+  @Nullable
+  static HighlightInfo checkInferredTypeArguments(PsiTypeParameter[] typeParameters,
+                                                  PsiElement call,
+                                                  PsiSubstitutor substitutor, boolean allowUncheckedConversion) {
+    final Pair<PsiTypeParameter, PsiType> inferredTypeArgument = GenericsUtil.findTypeParameterWithBoundError(typeParameters, substitutor, call, allowUncheckedConversion);
     if (inferredTypeArgument != null) {
       final PsiType extendsType = inferredTypeArgument.second;
       final PsiTypeParameter typeParameter = inferredTypeArgument.first;

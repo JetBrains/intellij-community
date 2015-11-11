@@ -40,7 +40,7 @@ public class CompositePrintable implements Printable, Disposable {
   protected int myExceptionMark;
   private int myCurrentSize = 0;
   private String myOutputFile = null;
-  private String myInputFile;
+  private String myFrameworkOutputFile;
   private static final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   public void flush() {
@@ -135,15 +135,15 @@ public class CompositePrintable implements Printable, Disposable {
     myOutputFile = outputFile;
   }
   
-  public void setInputFilePath(String inputFilePath) {
-    myInputFile = inputFilePath;
+  public void setFrameworkOutputFile(String frameworkOutputFile) {
+    myFrameworkOutputFile = frameworkOutputFile;
   }
 
-  public void printFromInputFile(final Printer console) {
-    if (myInputFile != null) {
+  public void printFromFrameworkOutputFile(final Printer console) {
+    if (myFrameworkOutputFile != null) {
       final Runnable runnable = new Runnable() {
         public void run() {
-          final File inputFile = new File(myInputFile);
+          final File inputFile = new File(myFrameworkOutputFile);
           if (inputFile.exists()) {
             try {
               final String fileText = FileUtil.loadFile(inputFile);

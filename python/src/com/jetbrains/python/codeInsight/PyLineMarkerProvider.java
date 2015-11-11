@@ -92,7 +92,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
             builder.append("Has overridden methods");
             return false;
           }
-          if (pyClass.findMethodByName(pyFunction.getName(), false) != null) {
+          if (pyClass.findMethodByName(pyFunction.getName(), false, null) != null) {
             builder.append("<br>&nbsp;&nbsp;").append(pyClass.getName());
           }
           return true;
@@ -126,7 +126,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
       PyClass containingClass = PsiTreeUtil.getParentOfType(elt, PyClass.class);
       if (containingClass != null && elt instanceof PyTargetExpression) {
         for (PyClass ancestor : containingClass.getAncestorClasses(null)) {
-          final PyTargetExpression attribute = ancestor.findClassAttribute(((PyTargetExpression)elt).getReferencedName(), false);
+          final PyTargetExpression attribute = ancestor.findClassAttribute(((PyTargetExpression)elt).getReferencedName(), false, null);
           if (attribute != null) {
             result.add(attribute);
           }
@@ -180,7 +180,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     if (PyNames.INIT.equals(function.getName())) {
       return null;
     }
-    final TypeEvalContext context = TypeEvalContext.codeAnalysis(element.getProject(), null);
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(element.getProject(), (function != null ? function.getContainingFile() : null));
     final PsiElement superMethod = PySuperMethodsSearch.search(function, context).findFirst();
     if (superMethod != null) {
       PyClass superClass = null;
@@ -206,7 +206,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     if (containingClass == null) return null;
     for (PyClass ancestor : containingClass
       .getAncestorClasses(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()))) {
-      final PyTargetExpression ancestorAttr = ancestor.findClassAttribute(name, false);
+      final PyTargetExpression ancestorAttr = ancestor.findClassAttribute(name, false, null);
       if (ancestorAttr != null) {
         return new LineMarkerInfo<PsiElement>(element, element.getTextRange().getStartOffset(),
                                               AllIcons.Gutter.OverridingMethod, Pass.UPDATE_ALL,
@@ -254,7 +254,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
         public boolean process(final PyClass inheritor) {
           for (Iterator<PyFunction> it = candidates.get(pyClass).iterator(); it.hasNext(); ) {
             PyFunction func = it.next();
-            if (inheritor.findMethodByName(func.getName(), false) != null) {
+            if (inheritor.findMethodByName(func.getName(), false, null) != null) {
               overridden.add(func);
               it.remove();
             }

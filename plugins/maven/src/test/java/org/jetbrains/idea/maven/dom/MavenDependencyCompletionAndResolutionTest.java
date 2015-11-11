@@ -120,7 +120,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertCompletionVariants(myProjectPom);
+    assertCompletionVariants(myProjectPom, "RELEASE", "LATEST");
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -134,7 +134,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertCompletionVariants(myProjectPom);
+    assertCompletionVariants(myProjectPom, "RELEASE", "LATEST");
   }
 
   public void testDoNotCompleteVersionIfNoGroupIdAndArtifactId() throws Exception {

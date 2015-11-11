@@ -125,7 +125,7 @@ public abstract class PyPsiPath {
         return ((PyFile) parent).findTopLevelFunction(myFunctionName);
       }
       if (parent instanceof PyClass) {
-        return ((PyClass) parent).findMethodByName(myFunctionName, false);
+        return ((PyClass) parent).findMethodByName(myFunctionName, false, null);
       }
       for (PsiElement element : parent.getChildren()) {
         if (element instanceof PyFunction && myFunctionName.equals(((PyFunction)element).getName())) {
@@ -189,7 +189,7 @@ public abstract class PyPsiPath {
       if (!(parent instanceof PyClass)) {
         return null;
       }
-      return ((PyClass)parent).findClassAttribute(myAttributeName, true);
+      return ((PyClass)parent).findClassAttribute(myAttributeName, true, null);
     }
   }
 

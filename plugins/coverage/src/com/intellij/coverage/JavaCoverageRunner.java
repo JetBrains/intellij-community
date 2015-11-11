@@ -53,6 +53,10 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
   }
 
   protected static String handleSpacesInPath(String agentPath) {
+    return handleSpacesInPath(agentPath, null);
+  }
+
+  protected static String handleSpacesInPath(String agentPath, FileFilter filter) {
     final String userDefined = System.getProperty(COVERAGE_AGENT_PATH);
     if (userDefined != null && new File(userDefined).exists()) {
       agentPath = userDefined;
@@ -78,15 +82,7 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
 
       try {
         LOG.info("Coverage jars were copied to " + dir.getPath());
-        FileUtil.copyDir(new File(agentPath), dir, new FileFilter() {
-          @Override
-          public boolean accept(File file) {
-            final String fileName = file.getName();
-            return fileName.startsWith("coverage-") || 
-                   fileName.startsWith("asm-all") ||
-                   fileName.startsWith("trove4j");
-          }
-        });
+        FileUtil.copyDir(new File(agentPath), dir, filter);
         return dir.getPath();
       }
       catch (IOException e) {

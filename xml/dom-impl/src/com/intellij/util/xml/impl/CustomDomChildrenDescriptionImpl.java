@@ -39,7 +39,7 @@ public class CustomDomChildrenDescriptionImpl extends AbstractDomChildDescriptio
 
   public CustomDomChildrenDescriptionImpl(@NotNull final JavaMethod getter) {
     this(getter, DomReflectionUtil.extractCollectionElementType(getter.getGenericReturnType()),
-         TagNameDescriptor.EMPTY, TagNameDescriptor.EMPTY);
+         AttributeDescriptor.EMPTY, AttributeDescriptor.EMPTY);
   }
 
   public CustomDomChildrenDescriptionImpl(DomExtensionImpl custom) {

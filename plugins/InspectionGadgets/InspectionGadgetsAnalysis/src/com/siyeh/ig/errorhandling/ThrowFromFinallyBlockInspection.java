@@ -15,13 +15,22 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
 
 public class ThrowFromFinallyBlockInspection extends BaseInspection {
 
@@ -40,8 +49,13 @@ public class ThrowFromFinallyBlockInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "throw.from.finally.block.problem.descriptor");
+    if (infos.length == 0) {
+      return InspectionGadgetsBundle.message("throw.from.finally.block.problem.descriptor");
+    }
+    else {
+      final PsiClassType type = (PsiClassType)infos[0];
+      return InspectionGadgetsBundle.message("possible.throw.from.finally.block.problem.descriptor", type.getPresentableText());
+    }
   }
 
   @Override
@@ -52,13 +66,36 @@ public class ThrowFromFinallyBlockInspection extends BaseInspection {
   private static class ThrowFromFinallyBlockVisitor extends BaseInspectionVisitor {
 
     @Override
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      final List<PsiClassType> exceptions = ExceptionUtil.getThrownExceptions(expression);
+      if (exceptions.isEmpty()) {
+        return;
+      }
+      for (PsiClassType exception : exceptions) {
+        final PsiCodeBlock finallyBlock = getContainingFinallyBlock(expression, exception);
+        if (finallyBlock != null && isHidingOfPreviousException(finallyBlock, expression)) {
+          registerMethodCallError(expression, exception);
+          return;
+        }
+      }
+    }
+
+    @Override
     public void visitThrowStatement(PsiThrowStatement statement) {
       super.visitThrowStatement(statement);
-      final PsiCodeBlock finallyBlock = getContainingFinallyBlock(statement);
+      final PsiExpression exception = ParenthesesUtils.stripParentheses(statement.getException());
+      if (exception == null) {
+        return;
+      }
+      final PsiType type = exception.getType();
+      if (type == null) {
+        return;
+      }
+      final PsiCodeBlock finallyBlock = getContainingFinallyBlock(statement, type);
       if (finallyBlock == null) {
         return;
       }
-      final PsiExpression exception = ParenthesesUtils.stripParentheses(statement.getException());
       if (exception instanceof PsiReferenceExpression) {
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)exception;
         final PsiElement target = referenceExpression.resolve();
@@ -67,14 +104,61 @@ public class ThrowFromFinallyBlockInspection extends BaseInspection {
           return;
         }
       }
-      registerStatementError(statement);
+      if (isHidingOfPreviousException(finallyBlock, statement)) {
+        registerStatementError(statement);
+      }
+    }
+
+    private static boolean isHidingOfPreviousException(PsiCodeBlock finallyBlock, PsiElement throwElement) {
+      final PsiElement parent = finallyBlock.getParent();
+      if (!(parent instanceof PsiTryStatement)) {
+        // never reached
+        return false;
+      }
+      final PsiTryStatement tryStatement = (PsiTryStatement)parent;
+      final PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
+      if (catchBlocks.length == 0) {
+        return true;
+      }
+      final PsiIfStatement ifStatement = getParentOfType(throwElement, PsiIfStatement.class, finallyBlock);
+      if (ifStatement == null) {
+        return true;
+      }
+      final boolean inThenBranch = PsiTreeUtil.isAncestor(ifStatement.getThenBranch(), throwElement, false);
+      final boolean inElseBranch = PsiTreeUtil.isAncestor(ifStatement.getElseBranch(), throwElement, false);
+      if (!inThenBranch && !inElseBranch) {
+        return true;
+      }
+      final PsiExpression condition = ifStatement.getCondition();
+      final PsiVariable variable = ExpressionUtils.getVariableFromNullComparison(condition, inThenBranch);
+      if (variable == null) {
+        return true;
+      }
+      boolean assigned = true;
+      for (PsiCodeBlock catchBlock : catchBlocks) {
+        assigned &= VariableAccessUtils.variableIsAssigned(variable, catchBlock);
+      }
+      return !assigned;
+    }
+
+    @Nullable
+    public static <T extends PsiElement> T getParentOfType(@Nullable PsiElement element,
+                                                           @NotNull Class<T> aClass,
+                                                           @NotNull PsiElement stopAt) {
+      if (element == null || element instanceof PsiFile) return null;
+      element = element.getParent();
+
+      while (element != null && !aClass.isInstance(element)) {
+        if (element == stopAt || element instanceof PsiFile) return null;
+        element = element.getParent();
+      }
+      //noinspection unchecked
+      return (T)element;
     }
   }
 
-  private static PsiCodeBlock getContainingFinallyBlock(@NotNull PsiThrowStatement throwStatement) {
-    final PsiExpression exception = throwStatement.getException();
-    final PsiType type = exception != null ? exception.getType() : null;
-    PsiElement currentElement = throwStatement;
+  private static PsiCodeBlock getContainingFinallyBlock(@NotNull PsiElement element, @NotNull PsiType thrownType) {
+    PsiElement currentElement = element;
     while (true) {
       final PsiTryStatement tryStatement = PsiTreeUtil
         .getParentOfType(currentElement, PsiTryStatement.class, true, PsiClass.class, PsiLambdaExpression.class);
@@ -85,7 +169,7 @@ public class ThrowFromFinallyBlockInspection extends BaseInspection {
       if (PsiTreeUtil.isAncestor(finallyBlock, currentElement, true)) {
         return finallyBlock;
       }
-      if (type != null && isCaught(tryStatement, type)) {
+      if (PsiTreeUtil.isAncestor(tryStatement.getTryBlock(), currentElement, true) && isCaught(tryStatement, thrownType)) {
         return null;
       }
       currentElement = tryStatement;

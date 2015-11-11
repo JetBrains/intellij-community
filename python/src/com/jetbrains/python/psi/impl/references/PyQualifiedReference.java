@@ -505,7 +505,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
     if (aClass == null || bClass == null) {
       return false;
     }
-    return bClass.isSubclass(aClass);
+    return bClass.isSubclass(aClass, null);
   }
 
   private static boolean isLocalScope(PsiElement element) {

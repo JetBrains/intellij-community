@@ -71,20 +71,20 @@ public class PyStructuredDocstringFormatter {
     final DocStringFormat format = DocStringUtil.guessDocStringFormat(preparedDocstring, element);
     if (format == DocStringFormat.GOOGLE) {
       formatter = PythonHelper.GOOGLE_FORMATTER;
-      structuredDocString = DocStringUtil.parseDocString(DocStringFormat.GOOGLE, preparedDocstring);
+      structuredDocString = DocStringUtil.parseDocStringContent(DocStringFormat.GOOGLE, preparedDocstring);
     }
     else if (format == DocStringFormat.NUMPY) {
       formatter = PythonHelper.NUMPY_FORMATTER;
-      structuredDocString = DocStringUtil.parseDocString(DocStringFormat.NUMPY, preparedDocstring);
+      structuredDocString = DocStringUtil.parseDocStringContent(DocStringFormat.NUMPY, preparedDocstring);
     }
     else if (format == DocStringFormat.EPYTEXT) {
       formatter = PythonHelper.EPYDOC_FORMATTER;
-      structuredDocString = DocStringUtil.parseDocString(DocStringFormat.EPYTEXT, preparedDocstring);
+      structuredDocString = DocStringUtil.parseDocStringContent(DocStringFormat.EPYTEXT, preparedDocstring);
       result.add(formatStructuredDocString(structuredDocString));
     }
     else if (format == DocStringFormat.REST) {
       formatter = PythonHelper.REST_FORMATTER;
-      structuredDocString = DocStringUtil.parseDocString(DocStringFormat.REST, preparedDocstring);
+      structuredDocString = DocStringUtil.parseDocStringContent(DocStringFormat.REST, preparedDocstring);
     }
 
     else {

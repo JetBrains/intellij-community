@@ -311,6 +311,22 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void testAcceptFirstPairOfCommonSupertypesDuringUpUpIncorporation() throws Exception {
+    doTest();
+  }
+
+  public void testDiamondWithExactMethodReferenceInside() throws Exception {
+    doTest();
+  }
+
+  public void testRecursiveCallsWithNestedInference() throws Exception {
+    doTest();
+  }
+
+  public void testIncorporationWithRawSubstitutors() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }

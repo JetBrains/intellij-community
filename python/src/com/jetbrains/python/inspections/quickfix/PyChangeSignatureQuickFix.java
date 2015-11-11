@@ -61,7 +61,7 @@ public class PyChangeSignatureQuickFix implements LocalQuickFix {
     final String complementaryName = PyNames.NEW.equals(functionName) ? PyNames.INIT : PyNames.NEW;
     final TypeEvalContext context = TypeEvalContext.userInitiated(project, descriptor.getEndElement().getContainingFile());
     final PyFunction complementaryMethod = myOverridenMethod ? (PyFunction)PySuperMethodsSearch.search(function, context).findFirst()
-                                                             : cls.findMethodByName(complementaryName, true);
+                                                             : cls.findMethodByName(complementaryName, true, null);
 
     assert complementaryMethod != null;
     final PyMethodDescriptor methodDescriptor = new PyMethodDescriptor(function) {

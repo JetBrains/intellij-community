@@ -420,7 +420,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
     GeneralCommandLine cmd =
       PythonCommandLineState.createPythonCommandLine(getProject(), new PythonConsoleRunParams(settings, workingDir, sdk,
-                                                                                              environmentVariables));
+                                                                                              environmentVariables), false);
     cmd.withWorkDirectory(getWorkingDir());
 
     ParamsGroup group = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);

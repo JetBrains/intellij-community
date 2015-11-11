@@ -28,6 +28,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
@@ -151,11 +152,15 @@ public class LaterInvocator {
 
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
+    final Ref<Throwable> exception = Ref.create();
     Runnable runnable1 = new Runnable() {
       @Override
       public void run() {
         try {
           runnable.run();
+        }
+        catch (Throwable e) {
+          exception.set(e);
         }
         finally {
           semaphore.up();
@@ -170,6 +175,9 @@ public class LaterInvocator {
     };
     invokeLater(runnable1, modalityState);
     semaphore.waitFor();
+    if (!exception.isNull()) {
+      throw new RuntimeException(exception.get());
+    }
   }
 
   public static void enterModal(@NotNull Object modalEntity) {
