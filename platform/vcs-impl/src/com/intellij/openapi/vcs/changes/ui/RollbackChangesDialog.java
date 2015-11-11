@@ -121,19 +121,19 @@ public class RollbackChangesDialog extends DialogWrapper {
             setErrorText(null);
           }
 
-          boolean hasNewFiles = ContainerUtil.find(selected, new Condition<Change>() {
+          boolean hasNewFiles = ContainerUtil.exists(selected, new Condition<Change>() {
             @Override
             public boolean value(Change change) {
               return change.getType() == Change.Type.NEW;
             }
-          }) != null;
+          });
           myDeleteLocallyAddedFiles.setEnabled(hasNewFiles);
         }
       }
     };
     myBrowser = new MultipleChangeListBrowser(project, changeLists, changes, getDisposable(), null, true, true, myListChangeListener, myListChangeListener);
 
-    myOperationName = operationNameByChanges(project, changes);
+    myOperationName = operationNameByChanges(project, myBrowser.getAllChanges());
     setOKButtonText(myOperationName);
 
     myOperationName = UIUtil.removeMnemonic(myOperationName);
