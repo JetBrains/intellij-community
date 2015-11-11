@@ -22,6 +22,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.pom.Navigatable;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -81,6 +82,20 @@ public class ShowImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     }.performForContext(DataManager.getInstance().getDataContext());
     return ref.get();
   }
-  
-  
+
+  public void testEnumValuesNavigation() throws Exception {
+    final PsiFile file = myFixture.addFileToProject("Foo.java", "public class Foo {" +
+                                                                "  public enum E {;}" +
+                                                                "  void foo() {" +
+                                                                "    for (E e : E.va<caret>lues()){}" +
+                                                                "  }" +
+                                                                "}");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+    final PsiElement element = TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+    assertNotNull(element);
+    assertInstanceOf(element, PsiMethod.class);
+    assertTrue(((Navigatable)element).canNavigate());
+    ((Navigatable)element).navigate(true);
+    assertEquals(32, myFixture.getCaretOffset());
+  }
 }

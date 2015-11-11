@@ -233,7 +233,12 @@ public class ClassInnerStuffCache {
   private PsiMethod getSyntheticMethod(String text) {
     PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
     PsiMethod method = factory.createMethodFromText(text, myClass);
-    return new LightMethod(myClass.getManager(), method, myClass);
+    return new LightMethod(myClass.getManager(), method, myClass) {
+      @Override
+      public int getTextOffset() {
+        return myClass.getTextOffset();
+      }
+    };
   }
 
   public void dropCaches() {
