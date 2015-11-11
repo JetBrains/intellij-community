@@ -32,10 +32,11 @@
     <!-- Add your actions here -->
   </actions>
 
-  <application-components>
+  <project-components>
     <component>
-      <implementation-class>com.stats.completion.CompletionStatsRetriever</implementation-class>
+      <implementation-class>com.stats.completion.CompletionTrackerInitializer</implementation-class>
+      <skipForDefaultProject/>
     </component>
-  </application-components>
+  </project-components>
 
 </idea-plugin>
