@@ -154,8 +154,14 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     def ideaOutDir = ideaPluginModule?.outputDir
     def ideaTestOutDir = ideaPluginModule?.testOutputDir
     def generatedSourceDirs = ideaPluginModule?.hasProperty("generatedSourceDirs") ? ideaPluginModule?.generatedSourceDirs: null;
-    def ideaSourceDirs = ideaPluginModule.sourceDirs;
-    def ideaTestSourceDirs = ideaPluginModule.testSourceDirs;
+    def ideaSourceDirs = ideaPluginModule?.sourceDirs;
+    def ideaTestSourceDirs = ideaPluginModule?.testSourceDirs;
+    def downloadJavadoc = false
+    def downloadSources = true
+    if(ideaPluginModule) {
+      downloadJavadoc = ideaPluginModule.downloadJavadoc
+      downloadSources = ideaPluginModule.downloadSources
+    }
 
     def projectSourceCompatibility
     def projectTargetCompatibility
@@ -260,7 +266,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         }
       }
 
-      def dependencies = new DependencyResolverImpl(project, isPreview).resolveDependencies(sourceSet)
+      def dependencies = new DependencyResolverImpl(project, isPreview, downloadJavadoc, downloadSources).resolveDependencies(sourceSet)
       externalSourceSet.dependencies.addAll(dependencies)
 
       externalSourceSet.sources = sources
