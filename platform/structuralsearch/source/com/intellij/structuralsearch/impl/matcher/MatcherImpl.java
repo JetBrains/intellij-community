@@ -158,27 +158,10 @@ public class MatcherImpl {
 
     matchContext.setSink(
       new DuplicateFilteringResultSink(
-        new MatchResultSink() {
+        new DefaultMatchResultSink() {
           @Override
           public void newMatch(MatchResult result) {
             processor.process(result, configuration);
-          }
-
-          @Override
-          public void processFile(PsiFile element) {
-          }
-
-          @Override
-          public void setMatchingProcess(MatchingProcess matchingProcess) {
-          }
-
-          @Override
-          public void matchingFinished() {
-          }
-
-          @Override
-          public ProgressIndicator getProgressIndicator() {
-            return null;
           }
         }
       )
