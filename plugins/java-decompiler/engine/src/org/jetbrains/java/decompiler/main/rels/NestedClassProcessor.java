@@ -65,9 +65,9 @@ public class NestedClassProcessor {
 
     int nameless = 0, synthetics = 0;
     for (ClassNode child : node.nested) {
+      StructClass cl = child.classStruct;
       // ensure not-empty class name
       if ((child.type == ClassNode.CLASS_LOCAL || child.type == ClassNode.CLASS_MEMBER) && child.simpleName == null) {
-        StructClass cl = child.classStruct;
         if ((child.access & CodeConstants.ACC_SYNTHETIC) != 0 || cl.isSynthetic()) {
           child.simpleName = "SyntheticClass_" + (++synthetics);
         }
@@ -76,6 +76,9 @@ public class NestedClassProcessor {
           DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
           child.simpleName = "NamelessClass_" + (++nameless);
         }
+        child.namelessConstructorStub = !cl.hasModifier(CodeConstants.ACC_STATIC) && cl.getMethods().size() + cl.getFields().size() == 0;
+      }
+      else if (child.type == ClassNode.CLASS_ANONYMOUS && (child.access & CodeConstants.ACC_SYNTHETIC) != 0 || cl.isSynthetic()) {
         child.namelessConstructorStub = !cl.hasModifier(CodeConstants.ACC_STATIC) && cl.getMethods().size() + cl.getFields().size() == 0;
       }
     }
@@ -180,10 +183,14 @@ public class NestedClassProcessor {
     List<ClassNode> copy = new ArrayList<ClassNode>(node.nested);
 
     for (ClassNode child : copy) {
+      if (child.classStruct.hasModifier(CodeConstants.ACC_SYNTHETIC)) {
+        continue;
+      }
+
       if ((child.type == ClassNode.CLASS_LOCAL || child.type == ClassNode.CLASS_ANONYMOUS) && child.enclosingMethod == null) {
         Set<String> setEnclosing = child.enclosingClasses;
 
-        if (setEnclosing.size() == 1) {
+        if (!setEnclosing.isEmpty()) {
           StructEnclosingMethodAttribute attr =
             (StructEnclosingMethodAttribute)child.classStruct.getAttributes().getWithKey("EnclosingMethod");
           if (attr != null &&
@@ -199,17 +206,12 @@ public class NestedClassProcessor {
         child.parent = null;
         setEnclosing.remove(node.classStruct.qualifiedName);
 
-        boolean hasEnclosing = !setEnclosing.isEmpty();
-        if (hasEnclosing) {
-          hasEnclosing = insertNestedClass(root, child);
-        }
+        boolean hasEnclosing = !setEnclosing.isEmpty() && insertNestedClass(root, child);
 
         if (!hasEnclosing) {
           if (child.type == ClassNode.CLASS_ANONYMOUS) {
-            if (!child.classStruct.hasModifier(CodeConstants.ACC_SYNTHETIC)) {
-              String message = "Unreferenced anonymous class " + child.classStruct.qualifiedName + "!";
-              DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
-            }
+            String message = "Unreferenced anonymous class " + child.classStruct.qualifiedName + "!";
+            DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
           }
           else if (child.type == ClassNode.CLASS_LOCAL) {
             String message = "Unreferenced local class " + child.classStruct.qualifiedName + "!";
@@ -251,6 +253,10 @@ public class NestedClassProcessor {
     int clTypes = 0;
 
     for (ClassNode nd : node.nested) {
+      if (nd.classStruct.hasModifier(CodeConstants.ACC_SYNTHETIC)) {
+        continue;
+      }
+
       if (nd.type != ClassNode.CLASS_LAMBDA &&
           (nd.access & CodeConstants.ACC_STATIC) == 0 &&
           (nd.access & CodeConstants.ACC_INTERFACE) == 0) {
@@ -258,10 +264,8 @@ public class NestedClassProcessor {
 
         Map<String, List<VarFieldPair>> mask = getMaskLocalVars(nd.getWrapper());
         if (mask.isEmpty()) {
-          if (!nd.classStruct.hasModifier(CodeConstants.ACC_SYNTHETIC)) {
-            String message = "Nested class " + nd.classStruct.qualifiedName + " has no constructor!";
-            DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
-          }
+          String message = "Nested class " + nd.classStruct.qualifiedName + " has no constructor!";
+          DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
         }
         else {
           mapVarMasks.put(nd.classStruct.qualifiedName, mask);
