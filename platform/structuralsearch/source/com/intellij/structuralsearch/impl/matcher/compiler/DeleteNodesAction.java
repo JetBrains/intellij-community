@@ -18,7 +18,7 @@ class DeleteNodesAction implements Runnable {
     elements = _elements;
   }
 
-  private void delete(PsiElement first, PsiElement last) throws Exception {
+  private void delete(PsiElement first, PsiElement last) {
     if (last==first) {
       first.delete();
     } else {
@@ -50,8 +50,6 @@ class DeleteNodesAction implements Runnable {
       if (first!=null) {
         delete(first,last);
       }
-    } catch(Throwable ex) {
-      ex.printStackTrace();
     } finally {
       elements.clear();
     }
