@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.moduleDependencies;
 
 import com.intellij.CommonBundle;
@@ -23,39 +22,41 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.ContextHelpAction;
-import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.NavigatableWithText;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.text.JTextComponent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -65,417 +66,331 @@ import java.util.*;
 import java.util.List;
 
 /**
- * User: anna
- * Date: Feb 10, 2005
+ * @author anna
+ * @since Feb 10, 2005
  */
-public class ModulesDependenciesPanel extends JPanel implements ModuleRootListener, Disposable {
-  @NonNls private static final String DIRECTION = "FORWARD_ANALIZER";
-  private Content myContent;
+public class ModulesDependenciesPanel extends JPanel implements Disposable {
+  private static final String HELP_ID = "module.dependencies.tool.window";
+
+  private static final Comparator<DefaultMutableTreeNode> NODE_COMPARATOR = new Comparator<DefaultMutableTreeNode>() {
+    @Override
+    public int compare(DefaultMutableTreeNode o1, DefaultMutableTreeNode o2) {
+      if (!(o1.getUserObject() instanceof MyUserObject)) return 1;
+      if (!(o2.getUserObject() instanceof MyUserObject)) return -1;
+      return (o1.getUserObject().toString().compareToIgnoreCase(o2.getUserObject().toString()));
+    }
+  };
+
+  private static final ColoredTreeCellRenderer NODE_RENDERER = new ColoredTreeCellRenderer() {
+    @Override
+    public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+      Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
+      if (userObject instanceof MyUserObject) {
+        MyUserObject node = (MyUserObject)userObject;
+        setIcon(ModuleType.get(node.myModule).getIcon());
+        append(node.myModule.getName(), node.myInCycle ? SimpleTextAttributes.ERROR_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
+      else if (userObject != null) {
+        append(userObject.toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      }
+    }
+  };
+
   private final Project myProject;
-  private Tree myLeftTree;
-  private DefaultTreeModel myLeftTreeModel;
-
-  private final Tree myRightTree;
-  private final DefaultTreeModel myRightTreeModel;
-
-  private Graph<Module> myModulesGraph;
   private final Module[] myModules;
+  private final DependenciesAnalyzeManager.State myState;
 
-  private final JTextField myPathField = new JTextField();
-
+  private final Tree myLeftTree;
+  private final Tree myRightTree;
   private final Splitter mySplitter;
-  @NonNls private static final String ourHelpID = "module.dependencies.tool.window";
+  private final JTextComponent myPathField;
 
-  public ModulesDependenciesPanel(final Project project, final Module[] modules) {
+  private Content myContent;
+  private Graph<Module> myModuleGraph;
+  private final Map<Module, Boolean> myCycleMap = ContainerUtil.newHashMap();
+
+  public ModulesDependenciesPanel(@NotNull Project project, @Nullable Module[] modules) {
     super(new BorderLayout());
+
     myProject = project;
-    myModules = modules;
+    myModules = modules != null ? modules : ModuleManager.getInstance(project).getModules();
+    myState = DependenciesAnalyzeManager.getInstance(project).getState();
+    updateModuleGraph();
 
-    //noinspection HardCodedStringLiteral
-    myRightTreeModel = new DefaultTreeModel(new DefaultMutableTreeNode("Root"));
-    myRightTree = new Tree(myRightTreeModel);
-    initTree(myRightTree, true);
+    myLeftTree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode("Root")));
+    installLeftTreeListeners();
+    installTreeActions(myLeftTree, false);
 
-    initLeftTree();
+    myRightTree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode("Root")));
+    installTreeActions(myRightTree, true);
 
     mySplitter = new Splitter();
     mySplitter.setFirstComponent(new MyTreePanel(myLeftTree, myProject));
     mySplitter.setSecondComponent(new MyTreePanel(myRightTree, myProject));
-
-    setSplitterProportion();
     add(mySplitter, BorderLayout.CENTER);
+
+    myPathField = new JTextField();
+    myPathField.setEditable(false);
     add(createNorthPanel(), BorderLayout.NORTH);
 
-    project.getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, this);
-  }
-
-  private void setSplitterProportion() {
-    if (mySplitter == null){
-      return;
-    }
-    myModulesGraph = buildGraph();
-    DFSTBuilder<Module> builder = new DFSTBuilder<Module>(myModulesGraph);
-    if (builder.isAcyclic()){
-      mySplitter.setProportion(1.f);
-    } else {
-      mySplitter.setProportion(0.5f);
-    }
-  }
-
-  @Override
-  public void dispose() {
-  }
-
-  public ModulesDependenciesPanel(final Project project) {
-    this(project, ModuleManager.getInstance(project).getModules());
-  }
-
-  private JComponent createNorthPanel(){
-    DefaultActionGroup group = new DefaultActionGroup();
-
-    group.add(new AnAction(CommonBundle.message("action.close"), AnalysisScopeBundle.message("action.close.modules.dependencies.description"),
-                           AllIcons.Actions.Cancel){
+    project.getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
-        DependenciesAnalyzeManager.getInstance(myProject).closeContent(myContent);
+      public void rootsChanged(ModuleRootEvent event) {
+        updateModuleGraph();
+        updateSplitterProportion();
+        updateLeftTree();
       }
     });
 
-    appendDependenciesAction(group);
-
-    group.add(new ToggleAction(AnalysisScopeBundle.message("action.module.dependencies.direction"), "", isForwardDirection() ? AllIcons.Actions.SortAsc
-                                                                                                                             : AllIcons.Actions.SortDesc){
-      @Override
-      public boolean isSelected(AnActionEvent e) {
-        return isForwardDirection();
-      }
-
-      @Override
-      public void setSelected(AnActionEvent e, boolean state) {
-        PropertiesComponent.getInstance(myProject).setValue(DIRECTION, String.valueOf(state));
-        initLeftTreeModel();
-      }
-
-      @Override
-      public void update(final AnActionEvent e) {
-        e.getPresentation().setIcon(isForwardDirection() ? AllIcons.Actions.SortAsc : AllIcons.Actions.SortDesc);
-      }
-    });
-
-    group.add(new ContextHelpAction(ourHelpID));
-
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(toolbar.getComponent(), BorderLayout.NORTH);
-    panel.add(myPathField, BorderLayout.SOUTH);
-    myPathField.setEditable(false);
-    return panel;
+    updateSplitterProportion();
+    updateLeftTree();
   }
 
-  private boolean isForwardDirection() {
-    final String value = PropertiesComponent.getInstance(myProject).getValue(DIRECTION);
-    return value == null || Boolean.parseBoolean(value);
+  private void updateModuleGraph() {
+    myModuleGraph = ModuleManager.getInstance(myProject).moduleGraph(myState.includeTests);
+    myCycleMap.clear();
   }
 
-  private static void appendDependenciesAction(final DefaultActionGroup group) {
-    final AnAction analyzeDepsAction = ActionManager.getInstance().getAction(IdeActions.ACTION_ANALYZE_DEPENDENCIES);
-    group.add(new AnAction(analyzeDepsAction.getTemplatePresentation().getText(),
-                           analyzeDepsAction.getTemplatePresentation().getDescription(),
-                           AllIcons.Toolwindows.ToolWindowInspection){
-
+  private Iterable<Module> getModuleDependencies(Module module) {
+    final Iterator<Module> iterator = myState.forwardDirection ? myModuleGraph.getIn(module) : myModuleGraph.getOut(module);
+    return new Iterable<Module>() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
-        analyzeDepsAction.actionPerformed(e);
+      public Iterator<Module> iterator() {
+        return iterator;
       }
-
-
-      @Override
-      public void update(AnActionEvent e) {
-        analyzeDepsAction.update(e);
-      }
-    });
+    };
   }
 
-  private void buildRightTree(Module module){
-    final DefaultMutableTreeNode root = (DefaultMutableTreeNode)myRightTreeModel.getRoot();
-    root.removeAllChildren();
-    final Set<List<Module>> cycles = GraphAlgorithms.getInstance().findCycles(myModulesGraph, module);
-    int index = 1;
-    for (List<Module> modules : cycles) {
-      final DefaultMutableTreeNode cycle = new DefaultMutableTreeNode(
-        AnalysisScopeBundle.message("module.dependencies.cycle.node.text", Integer.toString(index++).toUpperCase()));
-      root.add(cycle);
-      cycle.add(new DefaultMutableTreeNode(new MyUserObject(false, module)));
-      for (Module moduleInCycle : modules) {
-        cycle.add(new DefaultMutableTreeNode(new MyUserObject(false, moduleInCycle)));
-      }
-    }
-    ((DefaultTreeModel)myRightTree.getModel()).reload();
-    TreeUtil.expandAll(myRightTree);
-  }
-
-  private void initLeftTreeModel(){
-    final DefaultMutableTreeNode root = (DefaultMutableTreeNode)myLeftTreeModel.getRoot();
-    root.removeAllChildren();
-    myModulesGraph = buildGraph();
-    setSplitterProportion();
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-        final Map<Module, Boolean> inCycle = new HashMap<Module, Boolean>();
-        for (Module module : myModules) {
-          if (progressIndicator != null) {
-            if (progressIndicator.isCanceled()) return;
-            progressIndicator.setText(AnalysisScopeBundle.message("update.module.tree.progress.text", module.getName()));
-          }
-          if (!module.isDisposed()) {
-            Boolean isInCycle = inCycle.get(module);
-            if (isInCycle == null) {
-              isInCycle = !GraphAlgorithms.getInstance().findCycles(myModulesGraph, module).isEmpty();
-              inCycle.put(module, isInCycle);
-            }
-            final DefaultMutableTreeNode moduleNode = new DefaultMutableTreeNode(new MyUserObject(isInCycle.booleanValue(), module));
-            root.add(moduleNode);
-            final Iterator<Module> out = myModulesGraph.getOut(module);
-            while (out.hasNext()) {
-              moduleNode.add(new DefaultMutableTreeNode(new MyUserObject(false, out.next())));
-            }
-          }
+  private boolean isInCycle(Module module) {
+    Boolean inCycle = myCycleMap.get(module);
+    if (inCycle == null) {
+      Set<List<Module>> cycles = GraphAlgorithms.getInstance().findCycles(myModuleGraph, module);
+      inCycle = !cycles.isEmpty();
+      myCycleMap.put(module, inCycle);
+      for (List<Module> cycle : cycles) {
+        for (Module moduleInCycle : cycle) {
+          myCycleMap.put(moduleInCycle, true);
         }
       }
-    }, AnalysisScopeBundle.message("update.module.tree.progress.title"), true, myProject);
-    sortSubTree(root);
-    myLeftTreeModel.reload();
+    }
+    return inCycle;
   }
 
-  private static void sortSubTree(final DefaultMutableTreeNode root) {
-    TreeUtil.sort(root, new Comparator() {
-      @Override
-      public int compare(final Object o1, final Object o2) {
-        DefaultMutableTreeNode node1 = (DefaultMutableTreeNode)o1;
-        DefaultMutableTreeNode node2 = (DefaultMutableTreeNode)o2;
-        if (!(node1.getUserObject() instanceof MyUserObject)){
-          return 1;
-        }
-        else if (!(node2.getUserObject() instanceof MyUserObject)){
-          return -1;
-        }
-        return (node1.getUserObject().toString().compareToIgnoreCase(node2.getUserObject().toString()));
-      }
-    });
-  }
-
-  private void selectCycleUpward(final DefaultMutableTreeNode selection){
-    ArrayList<DefaultMutableTreeNode> selectionNodes = new ArrayList<DefaultMutableTreeNode>();
-    selectionNodes.add(selection);
-    DefaultMutableTreeNode current = (DefaultMutableTreeNode)selection.getParent();
-    boolean flag = false;
-    while (current != null && current.getUserObject() != null){
-      if (current.getUserObject().equals(selection.getUserObject())){
-        flag = true;
-        selectionNodes.add(current);
-        break;
-      }
-      selectionNodes.add(current);
-      current = (DefaultMutableTreeNode)current.getParent();
-    }
-    if (flag){
-      for (DefaultMutableTreeNode node : selectionNodes) {
-        ((MyUserObject)node.getUserObject()).setInCycle(true);
-      }
-    }
-    if (current != null) current = (DefaultMutableTreeNode)current.getParent();
-    while (current != null) {
-      final Object userObject = current.getUserObject();
-      if (userObject instanceof MyUserObject) {
-        ((MyUserObject)userObject).setInCycle(false);
-      }
-      current = (DefaultMutableTreeNode)current.getParent();
-    }
-    myLeftTree.repaint();
-  }
-
-  private void initLeftTree(){
-    //noinspection HardCodedStringLiteral
-    final DefaultMutableTreeNode root = new DefaultMutableTreeNode("Root");
-    myLeftTreeModel = new DefaultTreeModel(root);
-    initLeftTreeModel();
-    myLeftTree = new Tree(myLeftTreeModel);
-    initTree(myLeftTree, false);
-
+  private void installLeftTreeListeners() {
     myLeftTree.addTreeExpansionListener(new TreeExpansionListener() {
       @Override
-      public void treeCollapsed(TreeExpansionEvent event) {
-      }
+      public void treeCollapsed(TreeExpansionEvent event) { }
 
       @Override
       public void treeExpanded(TreeExpansionEvent event) {
-        final DefaultMutableTreeNode expandedNode = (DefaultMutableTreeNode)event.getPath().getLastPathComponent();
-        for(int i = 0; i < expandedNode.getChildCount(); i++){
+        DefaultMutableTreeNode expandedNode = (DefaultMutableTreeNode)event.getPath().getLastPathComponent();
+        for (int i = 0; i < expandedNode.getChildCount(); i++) {
           DefaultMutableTreeNode child = (DefaultMutableTreeNode)expandedNode.getChildAt(i);
-          if (child.getChildCount() == 0){
-            Module module = ((MyUserObject)child.getUserObject()).getModule();
-            final Iterator<Module> out = myModulesGraph.getOut(module);
-            while (out.hasNext()) {
-              final Module nextModule = out.next();
-              child.add(new DefaultMutableTreeNode(new MyUserObject(false, nextModule)));
+          if (child.getChildCount() == 0 && !isLooped(event.getPath(), child)) {
+            Module module = ((MyUserObject)child.getUserObject()).myModule;
+            for (Module dependency : getModuleDependencies(module)) {
+              child.add(new DefaultMutableTreeNode(new MyUserObject(isInCycle(dependency), dependency)));
             }
-            sortSubTree(child);
+            TreeUtil.sort(child, NODE_COMPARATOR);
           }
         }
+      }
+
+      private boolean isLooped(TreePath path, DefaultMutableTreeNode child) {
+        for (Object o : path.getPath()) {
+          DefaultMutableTreeNode node = (DefaultMutableTreeNode)o;
+          if (node != child && Comparing.equal(node.getUserObject(), child.getUserObject())) {
+            return true;
+          }
+        }
+        return false;
       }
     });
 
     myLeftTree.addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        final TreePath selectionPath = myLeftTree.getSelectionPath();
+        TreePath selectionPath = myLeftTree.getSelectionPath();
         if (selectionPath != null) {
-
           myPathField.setText(StringUtil.join(selectionPath.getPath(), new Function<Object, String>() {
             @Override
             public String fun(Object o) {
-              final Object userObject = ((DefaultMutableTreeNode)o).getUserObject();
-              if (userObject instanceof MyUserObject) {
-                return ((MyUserObject)userObject).getModule().getName();
-              }
-              return "";
+              Object userObject = ((DefaultMutableTreeNode)o).getUserObject();
+              return userObject instanceof MyUserObject ? ((MyUserObject)userObject).myModule.getName() : "";
             }
-          }, ":"));
+          }, " : "));
 
-          final DefaultMutableTreeNode selection = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
-          if (selection != null){
-            TreeUtil.traverseDepth(selection, new TreeUtil.Traverse() {
-              @Override
-              public boolean accept(Object node) {
-                DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
-                if (treeNode.getUserObject() instanceof MyUserObject){
-                  ((MyUserObject)treeNode.getUserObject()).setInCycle(false);
-                }
-                return true;
-              }
-            });
-            selectCycleUpward(selection);
-            buildRightTree(((MyUserObject)selection.getUserObject()).getModule());
+          DefaultMutableTreeNode selection = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
+          if (selection != null) {
+            updateRightTree(((MyUserObject)selection.getUserObject()).myModule);
           }
         }
       }
     });
-    TreeUtil.selectFirstNode(myLeftTree);
   }
 
-  private static ActionGroup createTreePopupActions(final boolean isRightTree, final Tree tree) {
-    DefaultActionGroup group = new DefaultActionGroup();
-    final TreeExpander treeExpander = new TreeExpander() {
-      @Override
-      public void expandAll() {
-        TreeUtil.expandAll(tree);
-      }
-
-      @Override
-      public boolean canExpand() {
-        return isRightTree;
-      }
-
-      @Override
-      public void collapseAll() {
-        TreeUtil.collapseAll(tree, 3);
-      }
-
-      @Override
-      public boolean canCollapse() {
-        return true;
-      }
-    };
-
-    final CommonActionsManager actionManager = CommonActionsManager.getInstance();
-    if (isRightTree){
-      group.add(actionManager.createExpandAllAction(treeExpander, tree));
-    }
-    group.add(actionManager.createCollapseAllAction(treeExpander, tree));
-    final ActionManager globalActionManager = ActionManager.getInstance();
-    group.add(globalActionManager.getAction(IdeActions.ACTION_EDIT_SOURCE));
-    group.add(Separator.getInstance());
-    group.add(globalActionManager.getAction(IdeActions.ACTION_ANALYZE_DEPENDENCIES));
-    group.add(globalActionManager.getAction(IdeActions.ACTION_ANALYZE_BACK_DEPENDENCIES));
-    group.add(globalActionManager.getAction(IdeActions.ACTION_ANALYZE_CYCLIC_DEPENDENCIES));
-    return group;
-  }
-
-  private static void initTree(Tree tree, boolean isRightTree) {
+  private static void installTreeActions(Tree tree, boolean enableExpandAll) {
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-    tree.setCellRenderer(new MyTreeCellRenderer());
+    tree.setCellRenderer(NODE_RENDERER);
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(tree);
 
     TreeUtil.installActions(tree);
+
     new TreeSpeedSearch(tree, new Convertor<TreePath, String>() {
       @Override
       public String convert(TreePath o) {
         return o.getLastPathComponent().toString();
       }
     }, true);
-    PopupHandler.installUnknownPopupHandler(tree, createTreePopupActions(isRightTree, tree), ActionManager.getInstance());
+
+    DefaultActionGroup group = new DefaultActionGroup();
+    CommonActionsManager commonActionManager = CommonActionsManager.getInstance();
+    ActionManager globalActionManager = ActionManager.getInstance();
+
+    TreeExpander treeExpander = new MyTreeExpander(tree, enableExpandAll);
+    group.add(commonActionManager.createExpandAllAction(treeExpander, tree));
+    group.add(commonActionManager.createCollapseAllAction(treeExpander, tree));
+    group.add(globalActionManager.getAction(IdeActions.ACTION_EDIT_SOURCE));
+    group.add(Separator.getInstance());
+    group.add(globalActionManager.getAction(IdeActions.ACTION_ANALYZE_DEPENDENCIES));
+    group.add(globalActionManager.getAction(IdeActions.ACTION_ANALYZE_BACK_DEPENDENCIES));
+    group.add(globalActionManager.getAction(IdeActions.ACTION_ANALYZE_CYCLIC_DEPENDENCIES));
+    group.add(globalActionManager.getAction(IdeActions.ACTION_ANALYZE_MODULE_DEPENDENCIES));
+
+    PopupHandler.installUnknownPopupHandler(tree, group, ActionManager.getInstance());
   }
 
-
-  private Graph<Module> buildGraph() {
-    final Graph<Module> graph = ModuleManager.getInstance(myProject).moduleGraph();
-    if (isForwardDirection()) {
-      return graph;
-    }
-    else {
-      return GraphAlgorithms.getInstance().invertEdgeDirections(graph);
-    }
+  private void updateSplitterProportion() {
+    DFSTBuilder<Module> builder = new DFSTBuilder<Module>(myModuleGraph);
+    mySplitter.setProportion(builder.isAcyclic() ? 1.0f : 0.6f);
   }
 
-  public void setContent(final Content content) {
+  private JComponent createNorthPanel() {
+    DefaultActionGroup group = new DefaultActionGroup();
+
+    group.add(new AnAction(CommonBundle.message("action.close"), null, AllIcons.Actions.Cancel) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        DependenciesAnalyzeManager.getInstance(myProject).closeContent(myContent);
+      }
+    });
+
+    final AnAction analyzeDepsAction = ActionManager.getInstance().getAction(IdeActions.ACTION_ANALYZE_DEPENDENCIES);
+    group.add(new AnAction(analyzeDepsAction.getTemplatePresentation().getText(), null, AllIcons.Toolwindows.ToolWindowInspection) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        analyzeDepsAction.actionPerformed(e);
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        analyzeDepsAction.update(e);
+      }
+    });
+
+    group.add(new ToggleAction(AnalysisScopeBundle.message("action.module.dependencies.direction")) {
+      @Override
+      public boolean isSelected(AnActionEvent e) {
+        return !myState.forwardDirection;
+      }
+
+      @Override
+      public void setSelected(AnActionEvent e, boolean state) {
+        myState.forwardDirection = !state;
+        updateLeftTree();
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setIcon(myState.forwardDirection ? AllIcons.Hierarchy.Subtypes : AllIcons.Hierarchy.Supertypes);
+        super.update(e);
+      }
+    });
+
+    group.add(new ToggleAction(AnalysisScopeBundle.message("action.module.dependencies.tests"), null, AllIcons.Modules.TestSourceFolder) {
+      @Override
+      public boolean isSelected(AnActionEvent e) {
+        return myState.includeTests;
+      }
+
+      @Override
+      public void setSelected(AnActionEvent e, boolean state) {
+        myState.includeTests = state;
+        updateModuleGraph();
+        updateLeftTree();
+      }
+    });
+
+    group.add(new ContextHelpAction(HELP_ID));
+
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(toolbar.getComponent(), BorderLayout.WEST);
+    panel.add(myPathField, BorderLayout.CENTER);
+    return panel;
+  }
+
+  private void updateLeftTree() {
+    final DefaultMutableTreeNode root = (DefaultMutableTreeNode)myLeftTree.getModel().getRoot();
+    root.removeAllChildren();
+
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
+      public void run() {
+        for (Module module : myModules) {
+          if (module.isDisposed()) continue;
+          ProgressManager.progress(AnalysisScopeBundle.message("update.module.tree.progress.text", module.getName()));
+
+          DefaultMutableTreeNode moduleNode = new DefaultMutableTreeNode(new MyUserObject(isInCycle(module), module));
+          root.add(moduleNode);
+          for (Module dependency : getModuleDependencies(module)) {
+            moduleNode.add(new DefaultMutableTreeNode(new MyUserObject(isInCycle(dependency), dependency)));
+          }
+        }
+      }
+    }, AnalysisScopeBundle.message("update.module.tree.progress.title"), true, myProject);
+
+    TreeUtil.sort(root, NODE_COMPARATOR);
+    ((DefaultTreeModel)myLeftTree.getModel()).reload();
+    TreeUtil.selectFirstNode(myLeftTree);
+  }
+
+  private void updateRightTree(Module module) {
+    DefaultMutableTreeNode root = (DefaultMutableTreeNode)myRightTree.getModel().getRoot();
+    root.removeAllChildren();
+
+    Set<List<Module>> cycles = GraphAlgorithms.getInstance().findCycles(myModuleGraph, module);
+    int index = 1;
+    for (List<Module> modules : cycles) {
+      DefaultMutableTreeNode cycle = new DefaultMutableTreeNode(AnalysisScopeBundle.message("module.dependencies.cycle.node.text", index++));
+      root.add(cycle);
+      cycle.add(new DefaultMutableTreeNode(new MyUserObject(false, module)));
+      for (Module moduleInCycle : modules) {
+        cycle.add(new DefaultMutableTreeNode(new MyUserObject(false, moduleInCycle)));
+      }
+    }
+
+    ((DefaultTreeModel)myRightTree.getModel()).reload();
+    TreeUtil.expandAll(myRightTree);
+  }
+
+  public void setContent(Content content) {
     myContent = content;
   }
 
   @Override
-  public void beforeRootsChange(ModuleRootEvent event) {
-  }
+  public void dispose() { }
 
-  @Override
-  public void rootsChanged(ModuleRootEvent event) {
-    initLeftTreeModel();
-    TreeUtil.selectFirstNode(myLeftTree);
-  }
 
-  private static class MyUserObject implements NavigatableWithText{
-    private boolean myInCycle;
+  private static class MyUserObject implements NavigatableWithText {
     private final Module myModule;
+    private final boolean myInCycle;
 
-    public MyUserObject(final boolean inCycle, final Module module) {
+    public MyUserObject(boolean inCycle, Module module) {
       myInCycle = inCycle;
       myModule = module;
-    }
-
-    public boolean isInCycle() {
-      return myInCycle;
-    }
-
-    public void setInCycle(final boolean inCycle) {
-      myInCycle = inCycle;
-    }
-
-    public Module getModule() {
-      return myModule;
-    }
-
-    public boolean equals(Object object) {
-      return object instanceof MyUserObject && myModule.equals(((MyUserObject)object).getModule());
-    }
-
-    public int hashCode() {
-      return myModule.hashCode();
-    }
-
-    public String toString() {
-      return myModule.getName();
     }
 
     @Override
@@ -485,7 +400,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
 
     @Override
     public boolean canNavigate() {
-      return myModule != null && !myModule.isDisposed();
+      return !myModule.isDisposed();
     }
 
     @Override
@@ -495,14 +410,30 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
 
     @Override
     public String getNavigateActionText(boolean focusEditor) {
-      return "Open Module Settings";
+      return ActionsBundle.message("action.ModuleSettings.navigate");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      return o == this || o instanceof MyUserObject && myModule.equals(((MyUserObject)o).myModule);
+    }
+
+    @Override
+    public int hashCode() {
+      return myModule.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return myModule.getName();
     }
   }
 
-  private static class MyTreePanel extends JPanel implements DataProvider{
+  private static class MyTreePanel extends JPanel implements DataProvider {
     private final Tree myTree;
     private final Project myProject;
-    public MyTreePanel(final Tree tree, Project project) {
+
+    public MyTreePanel(Tree tree, Project project) {
       super(new BorderLayout());
       myTree = tree;
       myProject = project;
@@ -511,26 +442,26 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
 
     @Override
     public Object getData(String dataId) {
-      if (CommonDataKeys.PROJECT.is(dataId)){
+      if (CommonDataKeys.PROJECT.is(dataId)) {
         return myProject;
       }
-      if (LangDataKeys.MODULE_CONTEXT.is(dataId)){
-        final TreePath selectionPath = myTree.getLeadSelectionPath();
-        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode){
+      if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
+        TreePath selectionPath = myTree.getLeadSelectionPath();
+        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode) {
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
-          if (node.getUserObject() instanceof MyUserObject){
-            return ((MyUserObject)node.getUserObject()).getModule();
+          if (node.getUserObject() instanceof MyUserObject) {
+            return ((MyUserObject)node.getUserObject()).myModule;
           }
         }
       }
       if (PlatformDataKeys.HELP_ID.is(dataId)) {
-        return ourHelpID;
+        return HELP_ID;
       }
       if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-        final TreePath selectionPath = myTree.getLeadSelectionPath();
-        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode){
+        TreePath selectionPath = myTree.getLeadSelectionPath();
+        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode) {
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
-          if (node.getUserObject() instanceof MyUserObject){
+          if (node.getUserObject() instanceof MyUserObject) {
             return node.getUserObject();
           }
         }
@@ -538,32 +469,34 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
       return null;
     }
   }
-   private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+
+  private static class MyTreeExpander implements TreeExpander {
+    private final Tree myTree;
+    private final boolean myEnableExpandAll;
+
+    public MyTreeExpander(Tree tree, boolean enableExpandAll) {
+      myTree = tree;
+      myEnableExpandAll = enableExpandAll;
+    }
+
     @Override
-    public void customizeCellRenderer(
-    JTree tree,
-    Object value,
-    boolean selected,
-    boolean expanded,
-    boolean leaf,
-    int row,
-    boolean hasFocus
-  ){
-      final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-      if (!(userObject instanceof MyUserObject)){
-        if (userObject != null){
-          append(userObject.toString(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-        }
-        return;
-      }
-      MyUserObject node = (MyUserObject)userObject;
-      Module module = node.getModule();
-      setIcon(ModuleType.get(module).getIcon());
-      if (node.isInCycle()){
-        append(module.getName(), SimpleTextAttributes.ERROR_ATTRIBUTES);
-      } else {
-        append(module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      }
+    public void expandAll() {
+      TreeUtil.expandAll(myTree);
+    }
+
+    @Override
+    public boolean canExpand() {
+      return myEnableExpandAll;
+    }
+
+    @Override
+    public void collapseAll() {
+      TreeUtil.collapseAll(myTree, 3);
+    }
+
+    @Override
+    public boolean canCollapse() {
+      return true;
     }
   }
 }
