@@ -59,8 +59,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class NativeFileWatcherImpl extends PluggableFileWatcher {
   private static final Logger LOG = Logger.getInstance(NativeFileWatcherImpl.class);
 
-  private static final String PROPERTY_WATCHER_DISABLED = "idea.filewatcher.disabled";
-  private static final String PROPERTY_WATCHER_EXECUTABLE_PATH = "idea.filewatcher.executable.path";
   private static final String ROOTS_COMMAND = "ROOTS";
   private static final String EXIT_COMMAND = "EXIT";
   private static final int MAX_PROCESS_LAUNCH_ATTEMPT_COUNT = 10;
@@ -78,13 +76,74 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   private final String[] myLastChangedPaths = new String[2];
   private int myLastChangedPathIndex;
 
+  protected interface WatcherSettingsProvider {
+    boolean isWatcherDisabled();
+    @Nullable
+    File getWatcherExecutablePath();
+  }
+
+  protected static final class NativeWatcherSettingsProvider implements WatcherSettingsProvider {
+    private static final String PROPERTY_WATCHER_DISABLED = "idea.filewatcher.disabled";
+    private static final String PROPERTY_WATCHER_EXECUTABLE_PATH = "idea.filewatcher.executable.path";
+
+    @Override
+    public boolean isWatcherDisabled() {
+      return Boolean.parseBoolean(System.getProperty(PROPERTY_WATCHER_DISABLED));
+    }
+
+    @Nullable
+    @Override
+    public File getWatcherExecutablePath() {
+      String execPath = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
+      if (execPath != null) return new File(execPath);
+
+      String[] names = null;
+      String prefix = null;
+      if (SystemInfo.isWindows) {
+        names = SystemInfo.is64Bit ? new String[]{"fsnotifier64.exe", "fsnotifier.exe"} : new String[]{"fsnotifier.exe"};
+        prefix = "win";
+      }
+      else if (SystemInfo.isMac) {
+        names = new String[]{"fsnotifier"};
+        prefix = "mac";
+      }
+      else if (SystemInfo.isLinux) {
+        String arch = "arm".equals(SystemInfo.OS_ARCH) ? "-arm" : "ppc".equals(SystemInfo.OS_ARCH) ? "-ppc" : "";
+        String bits = SystemInfo.is64Bit ? "64" : "";
+        names = new String[]{"fsnotifier" + arch + bits};
+        prefix = "linux";
+      }
+      if (names == null) return null;
+
+      String[] dirs = {PathManager.getBinPath(), PathManager.getHomePath() + "/community/bin/" + prefix, PathManager.getBinPath() + '/' + prefix};
+      for (String dir : dirs) {
+        for (String name : names) {
+          File candidate = new File(dir, name);
+          if (candidate.exists()) return candidate;
+        }
+      }
+
+      return null;
+    }
+  }
+
+  @NotNull private final WatcherSettingsProvider myWatcherSettingsProvider;
+
+  public NativeFileWatcherImpl() {
+    this(new NativeWatcherSettingsProvider());
+  }
+
+  protected NativeFileWatcherImpl(@NotNull WatcherSettingsProvider watcherSettingsProvider) {
+    this.myWatcherSettingsProvider = watcherSettingsProvider;
+  }
+
   @Override
   public void initialize(@NotNull ManagingFS managingFS, @NotNull FileWatcherNotificationSink notificationSink) {
     myManagingFS = managingFS;
     myNotificationSink = notificationSink;
 
-    boolean disabled = Boolean.parseBoolean(System.getProperty(PROPERTY_WATCHER_DISABLED));
-    myExecutable = getExecutable();
+    boolean disabled = myWatcherSettingsProvider.isWatcherDisabled();
+    myExecutable = myWatcherSettingsProvider.getWatcherExecutablePath();
 
     if (disabled) {
       LOG.info("Native file watcher is disabled");
@@ -134,41 +193,6 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   }
 
   /* internal stuff */
-
-  @Nullable
-  private static File getExecutable() {
-    String execPath = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
-    if (execPath != null) return new File(execPath);
-
-    String[] names = null;
-    String prefix = null;
-    if (SystemInfo.isWindows) {
-      names = SystemInfo.is64Bit ? new String[]{"fsnotifier64.exe", "fsnotifier.exe"} : new String[]{"fsnotifier.exe"};
-      prefix = "win";
-    }
-    else if (SystemInfo.isMac) {
-      names = new String[]{"fsnotifier"};
-      prefix = "mac";
-    }
-    else if (SystemInfo.isLinux) {
-      String arch = "arm".equals(SystemInfo.OS_ARCH) ? "-arm" : "ppc".equals(SystemInfo.OS_ARCH) ? "-ppc" : "";
-      String bits = SystemInfo.is64Bit ? "64" : "";
-      names = new String[]{"fsnotifier" + arch + bits};
-      prefix = "linux";
-    }
-    if (names == null) return null;
-
-    String[] dirs = {PathManager.getBinPath(), PathManager.getHomePath() + "/community/bin/" + prefix, PathManager.getBinPath() + '/' + prefix};
-    for (String dir : dirs) {
-      for (String name : names) {
-        File candidate = new File(dir, name);
-        if (candidate.exists()) return candidate;
-      }
-    }
-
-    return null;
-  }
-
   private void notifyOnFailure(String cause, @Nullable NotificationListener listener) {
     myNotificationSink.notifyUserOnFailure(cause, listener);
   }
