@@ -1136,7 +1136,7 @@ public class TextMergeTool implements MergeTool {
 
           String title = e.getPresentation().getText() + " in merge";
 
-          executeMergeCommand(title, true, selectedChanges, new Runnable() {
+          executeMergeCommand(title, selectedChanges.size() > 1, selectedChanges, new Runnable() {
             @Override
             public void run() {
               apply(side, selectedChanges);
