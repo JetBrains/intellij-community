@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -39,7 +40,7 @@ class ContractChecker extends DataFlowRunner {
   private final Set<PsiElement> myNonViolations = ContainerUtil.newHashSet();
   private final Set<PsiElement> myFailures = ContainerUtil.newHashSet();
 
-  ContractChecker(PsiMethod method, MethodContract contract, final boolean onTheFly) {
+  private ContractChecker(PsiMethod method, MethodContract contract, final boolean onTheFly) {
     myMethod = method;
     myContract = contract;
     myOnTheFly = onTheFly;
@@ -77,8 +78,9 @@ class ContractChecker extends DataFlowRunner {
     return super.shouldCheckTimeLimit();
   }
 
+  @NotNull
   @Override
-  protected DfaInstructionState[] acceptInstruction(InstructionVisitor visitor, DfaInstructionState instructionState) {
+  protected DfaInstructionState[] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
     DfaMemoryState memState = instructionState.getMemoryState();
     if (memState.isEphemeral()) {
       return DfaInstructionState.EMPTY_ARRAY;
