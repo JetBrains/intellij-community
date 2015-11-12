@@ -41,7 +41,6 @@ import com.theoryinpractice.testng.util.TestNGUtil;
 import java.util.List;
 
 public abstract class AbstractTestNGInClassConfigurationProducer extends TestNGConfigurationProducer {
-  private PsiElement myPsiElement = null;
 
   protected AbstractTestNGInClassConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);
@@ -52,24 +51,25 @@ public abstract class AbstractTestNGInClassConfigurationProducer extends TestNGC
   }
 
   @Override
-  public void onFirstRun(ConfigurationFromContext configuration, ConfigurationContext fromContext, Runnable performRunnable) {
-    if (myPsiElement instanceof PsiMethod || myPsiElement instanceof PsiClass) {
+  public void onFirstRun(final ConfigurationFromContext configuration, final ConfigurationContext fromContext, Runnable performRunnable) {
+    final PsiElement psiElement = configuration.getSourceElement();
+    if (psiElement instanceof PsiMethod || psiElement instanceof PsiClass) {
 
       final PsiMethod psiMethod;
       final PsiClass containingClass;
 
-      if (myPsiElement instanceof PsiMethod) {
-        psiMethod = (PsiMethod)myPsiElement;
+      if (psiElement instanceof PsiMethod) {
+        psiMethod = (PsiMethod)psiElement;
         containingClass = psiMethod.getContainingClass();
       } else {
         psiMethod = null;
-        containingClass = (PsiClass)myPsiElement;
+        containingClass = (PsiClass)psiElement;
       }
 
       final InheritorChooser inheritorChooser = new InheritorChooser() {
         @Override
         protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
-          ((TestNGConfiguration)context.getConfiguration().getConfiguration()).bePatternConfiguration(classes, method);
+          ((TestNGConfiguration)configuration.getConfiguration()).bePatternConfiguration(classes, method);
           super.runForClasses(classes, method, context, performRunnable);
         }
 
@@ -78,12 +78,12 @@ public abstract class AbstractTestNGInClassConfigurationProducer extends TestNGC
                                    PsiMethod psiMethod,
                                    ConfigurationContext context,
                                    Runnable performRunnable) {
-          if (myPsiElement instanceof PsiMethod) {
+          if (psiElement instanceof PsiMethod) {
             final Project project = psiMethod.getProject();
             final MethodLocation methodLocation = new MethodLocation(project, psiMethod, PsiLocation.fromPsiElement(aClass));
-            ((TestNGConfiguration)context.getConfiguration().getConfiguration()).setMethodConfiguration(methodLocation);
+            ((TestNGConfiguration)configuration.getConfiguration()).setMethodConfiguration(methodLocation);
           } else {
-            ((TestNGConfiguration)context.getConfiguration().getConfiguration()).setClassConfiguration(aClass);
+            ((TestNGConfiguration)configuration.getConfiguration()).setClassConfiguration(aClass);
           }
           super.runForClass(aClass, psiMethod, context, performRunnable);
         }
@@ -133,7 +133,7 @@ public abstract class AbstractTestNGInClassConfigurationProducer extends TestNGC
     }
     if (!isTestNGClass(psiClass)) return false;
 
-    myPsiElement = psiClass;
+    PsiElement psiElement = psiClass;
     final Project project = context.getProject();
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
     setupConfigurationModule(context, configuration);
@@ -144,14 +144,14 @@ public abstract class AbstractTestNGInClassConfigurationProducer extends TestNGC
     while (method != null) {
       if (TestNGUtil.hasTest(method)) {
         configuration.setMethodConfiguration(PsiLocation.fromPsiElement(project, method));
-        myPsiElement = method;
+        psiElement = method;
       }
       method = PsiTreeUtil.getParentOfType(method, PsiMethod.class);
     }
 
     configuration.restoreOriginalModule(originalModule);
     settings.setName(configuration.getName());
-    sourceElement.set(myPsiElement);
+    sourceElement.set(psiElement);
     return true;
   }
 }
