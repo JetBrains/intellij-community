@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,23 +17,14 @@ package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.IntArrayList;
-import gnu.trove.THashMap;
 import gnu.trove.TIntObjectHashMap;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author cdr
@@ -89,4 +80,5 @@ public class SliceBackwardTest extends SliceTestCase {
   public void testVarArgsPartial() throws Exception { doTest();}
 
   public void testListTrackToArray() throws Exception { doTest();}
+  public void testTryCatchFinally() throws Exception { doTest();}
 }
