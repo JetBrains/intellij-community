@@ -65,6 +65,19 @@ public abstract class ThreesideDiffChangeBase {
     return myType.isChange(side);
   }
 
+  public boolean isChange(@NotNull ThreeSide side) {
+    switch (side) {
+      case LEFT:
+        return isChange(Side.LEFT);
+      case BASE:
+        return true;
+      case RIGHT:
+        return isChange(Side.RIGHT);
+      default:
+        throw new IllegalArgumentException(side.toString());
+    }
+  }
+
   //
   // Type
   //
