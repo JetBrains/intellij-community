@@ -8,7 +8,6 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.components.AbstractProjectComponent
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import java.beans.PropertyChangeListener
 
@@ -19,7 +18,8 @@ class CompletionTrackerInitializer(project: Project): AbstractProjectComponent(p
     private val lookupTrackerInitializer = PropertyChangeListener {
         val lookup = it.newValue
         if (lookup is LookupImpl) {
-            lookup.addLookupListener(TrackingLookupListener(lookupPopupActionTracker))
+            val logger = CompletionLoggerProvider.getInstance().newCompletionLogger()
+            lookup.addLookupListener(TrackingLookupListener(lookupPopupActionTracker, logger))
         }
     }
 
@@ -85,9 +85,10 @@ class CompletionPopupActionsTracker : AnActionListener.Adapter() {
 }
 
 
-class TrackingLookupListener(private val completionTracker: CompletionPopupActionsTracker): CompletionPopupListener, LookupAdapter() {
+class TrackingLookupListener(private val completionTracker: CompletionPopupActionsTracker, 
+                             private val logger: CompletionLogger) : CompletionPopupListener, LookupAdapter() {
+    
     private var completionStarted = false
-    private val eventsStorage = ServiceManager.getService(EventLogger::class.java)
     
     override fun lookupCanceled(event: LookupEvent) {
         val lookup = event.lookup as LookupImpl
@@ -95,7 +96,7 @@ class TrackingLookupListener(private val completionTracker: CompletionPopupActio
         val prefix = lookup.additionalPrefix
 
         if (items.firstOrNull()?.lookupString?.equals(prefix) ?: false) {
-            eventsStorage.itemTyped()
+            logger.itemSelectedByTyping()
         }
     }
 
@@ -112,24 +113,23 @@ class TrackingLookupListener(private val completionTracker: CompletionPopupActio
     }
 
     override fun itemSelected(event: LookupEvent) {
-        eventsStorage.itemSelected()
-        println("Item selected")
+        logger.itemSelectedCompletionFinished()
     }
     
     override fun downPressed() {
-        println("Down pressed")
+        logger.downPressed()
     }
 
     override fun upPressed() {
-        println("Up pressed")
+        logger.upPressed()
     }
 
     override fun backSpacePressed() {
-        println("Backspace pressed")
+        logger.backspacePressed()
     }
 
     override fun typed(c: Char) {
-        println("Typed $c")
+        logger.charTyped(c)
     }
     
 }
