@@ -12,13 +12,13 @@ import java.beans.PropertyChangeListener
 
 
 class CompletionTrackerInitializer(project: Project): AbstractProjectComponent(project) {
-    private val lookupPopupActionTracker = CompletionPopupActionsTracker()
+    private val lookupPopupActionTracker = LookupActionsListener()
     
     private val lookupTrackerInitializer = PropertyChangeListener {
         val lookup = it.newValue
         if (lookup is LookupImpl) {
             val logger = CompletionLoggerProvider.getInstance().newCompletionLogger()
-            lookup.addLookupListener(TrackingLookupListener(lookupPopupActionTracker, logger))
+            lookup.addLookupListener(CompletionActionsTracker(lookupPopupActionTracker, logger))
         }
     }
 
@@ -58,7 +58,7 @@ interface CompletionPopupListener {
 }
 
 
-class CompletionPopupActionsTracker : AnActionListener.Adapter() {
+class LookupActionsListener : AnActionListener.Adapter() {
     
     private val down = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
     private val up = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)
@@ -84,8 +84,8 @@ class CompletionPopupActionsTracker : AnActionListener.Adapter() {
 }
 
 
-class TrackingLookupListener(private val completionTracker: CompletionPopupActionsTracker, 
-                             private val logger: CompletionLogger) : CompletionPopupListener, LookupAdapter() {
+class CompletionActionsTracker(private val completionListener: LookupActionsListener,
+                               private val logger: CompletionLogger) : CompletionPopupListener, LookupAdapter() {
     
     override fun lookupCanceled(event: LookupEvent) {
         val lookup = event.lookup as LookupImpl
@@ -101,8 +101,8 @@ class TrackingLookupListener(private val completionTracker: CompletionPopupActio
     }
 
     override fun currentItemChanged(event: LookupEvent) {
-        if (completionTracker.popupListener != this) {
-            completionTracker.popupListener = this
+        if (completionListener.popupListener != this) {
+            completionListener.popupListener = this
             logger.completionStarted()
         }
     }
