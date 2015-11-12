@@ -166,9 +166,9 @@ public class FindInProjectUtil {
     for(String mask:masks) {
       mask = mask.trim();
       if (StringUtil.startsWith(mask, "!")) {
-        negativePattern += "(" + PatternUtil.convertToRegex(mask.substring(1)) + ")";
+        negativePattern += (negativePattern.isEmpty() ? "" : "|") + "(" + PatternUtil.convertToRegex(mask.substring(1)) + ")";
       } else {
-        pattern += "(" + PatternUtil.convertToRegex(mask) + ")";
+        pattern += (pattern.isEmpty() ? "" : "|") + "(" + PatternUtil.convertToRegex(mask) + ")";
       }
     }
 
