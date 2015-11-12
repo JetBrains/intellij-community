@@ -364,7 +364,8 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     @Override
     public boolean process(VirtualFile file, Collection<JavaFunctionalExpressionIndex.IndexHolder> holders) {
       for (JavaFunctionalExpressionIndex.IndexHolder holder : holders) {
-        if (holder.getLambdaParamsNumber() == myExpectedFunExprParamsCount) {
+        final int lambdaParamsNumber = holder.getLambdaParamsNumber();
+        if (lambdaParamsNumber == myExpectedFunExprParamsCount || lambdaParamsNumber == -1) {
           final boolean suitableParamNumbers;
           if (myVarArgs) {
             suitableParamNumbers = holder.getMethodArgsLength() >= myParametersCount - 1;
