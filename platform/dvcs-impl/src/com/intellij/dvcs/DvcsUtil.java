@@ -42,6 +42,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
@@ -75,6 +77,40 @@ public class DvcsUtil {
   private static final int IO_RETRIES = 3; // number of retries before fail if an IOException happens during file read.
   private static final int SHORT_HASH_LENGTH = 8;
   private static final int LONG_HASH_LENGTH = 40;
+
+  /**
+   * Comparator for virtual files by name
+   */
+  public static final Comparator<VirtualFile> VIRTUAL_FILE_PRESENTATION_COMPARATOR = new Comparator<VirtualFile>() {
+    public int compare(final VirtualFile o1, final VirtualFile o2) {
+      if (o1 == null && o2 == null) {
+        return 0;
+      }
+      if (o1 == null) {
+        return -1;
+      }
+      if (o2 == null) {
+        return 1;
+      }
+      return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
+    }
+  };
+
+  @NotNull
+  public static List<VirtualFile> sortVirtualFilesByPresentation(@NotNull Collection<VirtualFile> virtualFiles) {
+    return ContainerUtil.sorted(virtualFiles, VIRTUAL_FILE_PRESENTATION_COMPARATOR);
+  }
+
+  @NotNull
+  public static List<VirtualFile> findVirtualFilesWithRefresh(@NotNull List<File> files) {
+    RefreshVFsSynchronously.refreshFiles(files);
+    return ContainerUtil.mapNotNull(files, new Function<File, VirtualFile>() {
+      @Override
+      public VirtualFile fun(File file) {
+        return VfsUtil.findFileByIoFile(file, false);
+      }
+    });
+  }
 
   /**
    * @deprecated use {@link VcsImplUtil#getShortVcsRootName}

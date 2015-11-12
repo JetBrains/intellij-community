@@ -232,7 +232,7 @@ public class HgRegularUpdater implements HgUpdater {
     //noinspection ConstantConditions
     while (result.getExitValue() == 1) {    //if result == null isAbort will be true;
       resolvePossibleConflicts(updatedFiles);
-      if (!HgConflictResolver.findConflicts(project, repoRoot).isEmpty()) {
+      if (HgConflictResolver.hasConflicts(project, repoRoot)) {
         break;
       }
       result = rebaseCommand.continueRebase();

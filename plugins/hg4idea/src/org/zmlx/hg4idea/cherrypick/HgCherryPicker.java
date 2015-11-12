@@ -80,7 +80,7 @@ public class HgCherryPicker extends VcsCherryPicker {
     VirtualFile root = repository.getRoot();
     HgGraftCommand command = new HgGraftCommand(project, repository);
     HgCommandResult result = command.startGrafting(hashes);
-    boolean hasConflicts = !HgConflictResolver.findConflicts(project, root).isEmpty();
+    boolean hasConflicts = HgConflictResolver.hasConflicts(project, root);
     if (!hasConflicts && HgErrorUtil.isCommandExecutionFailed(result)) {
       new HgCommandResultNotifier(project).notifyError(result, "Hg Error", "Couldn't  graft.");
       return;
@@ -88,10 +88,10 @@ public class HgCherryPicker extends VcsCherryPicker {
     final UpdatedFiles updatedFiles = UpdatedFiles.create();
     while (hasConflicts) {
       new HgConflictResolver(project, updatedFiles).resolve(root);
-      hasConflicts = !HgConflictResolver.findConflicts(project, root).isEmpty();
+      hasConflicts = HgConflictResolver.hasConflicts(project, root);
       if (!hasConflicts) {
         result = command.continueGrafting();
-        hasConflicts = !HgConflictResolver.findConflicts(project, root).isEmpty();
+        hasConflicts = HgConflictResolver.hasConflicts(project, root);
       }
       else {
         new HgCommandResultNotifier(project).notifyError(result, "Hg Error", "Couldn't continue grafting");
