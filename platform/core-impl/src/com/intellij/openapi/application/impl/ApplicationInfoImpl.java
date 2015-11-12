@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
@@ -68,6 +69,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private int myProgressHeight = 2;
   private int myProgressX = 1;
   private int myProgressY = 350;
+  private int myLicenseOffsetY = Registry.is("ide.new.about") ? 85 : 30;
   private String mySplashImageUrl = null;
   private String myAboutImageUrl = null;
   private Color mySplashTextColor = new Color(0, 35, 135);  // idea blue
@@ -139,6 +141,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_PROGRESS_HEIGHT = "progressHeight";
   private static final String ATTRIBUTE_PROGRESS_X = "progressX";
   private static final String ATTRIBUTE_PROGRESS_Y = "progressY";
+  private static final String ATTRIBUTE_LICENSE_TEXT_OFFSET_Y = "licenseOffsetY";
   private static final String ATTRIBUTE_PROGRESS_TAIL_ICON = "progressTailIcon";
   private static final String ELEMENT_ABOUT = "about";
   private static final String ELEMENT_ICON = "icon";
@@ -342,6 +345,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   public int getProgressY() {
     return myProgressY;
+  }
+
+  public int getLicenseOffsetY() {
+    return myLicenseOffsetY;
   }
 
   public int getProgressX() {
@@ -651,6 +658,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_Y);
       if (v != null) {
         myProgressY = Integer.parseInt(v);
+      }
+
+      v = logoElement.getAttributeValue(ATTRIBUTE_LICENSE_TEXT_OFFSET_Y);
+      if (v != null) {
+        myLicenseOffsetY = Integer.parseInt(v);
       }
     }
 
