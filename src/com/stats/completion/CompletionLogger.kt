@@ -1,6 +1,5 @@
 package com.stats.completion
 
-import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
@@ -22,13 +21,11 @@ abstract class CompletionLoggerProvider {
 
 }
 
-class CompletionFileLoggerProvider : CompletionLoggerProvider() {
+class CompletionFileLoggerProvider(val filePathProvider: FilePathProvider) : CompletionLoggerProvider() {
     
     val writer: PrintWriter by lazy {
-        val id = PluginManager.getPluginByClassName(CompletionLoggerProvider::class.java.name)
-        val descriptor = PluginManager.getPlugin(id)
-        val path = descriptor!!.path.absolutePath
-        val bufferedWriter = Files.newBufferedWriter(File(path, "completion_stats.txt").toPath())
+        val path = filePathProvider.statsFilePath
+        val bufferedWriter = Files.newBufferedWriter(File(path).toPath())
         PrintWriter(bufferedWriter)
     }
     

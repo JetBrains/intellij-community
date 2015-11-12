@@ -27,6 +27,10 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.stats.completion.CompletionLoggerProvider" serviceImplementation="com.stats.completion.CompletionFileLoggerProvider">
     </applicationService>
+    <applicationService serviceInterface="com.stats.completion.UrlProvider" serviceImplementation="com.stats.completion.InternalUrlProvider">
+    </applicationService>
+    <applicationService serviceInterface="com.stats.completion.FilePathProvider" serviceImplementation="com.stats.completion.PluginDirectoryFilePathProvider">
+    </applicationService>
   </extensions>
 
   <actions>
@@ -39,5 +43,11 @@
       <skipForDefaultProject/>
     </component>
   </project-components>
+  
+  <application-components>
+    <component>
+      <implementation-class>com.stats.completion.DataSender</implementation-class>
+    </component>
+  </application-components>
 
 </idea-plugin>
