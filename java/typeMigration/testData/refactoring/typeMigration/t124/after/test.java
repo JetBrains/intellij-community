@@ -1,5 +1,5 @@
 class Test {
-  public Integer meth(Integer p) {
+  public <U> Integer meth(Integer p) {
     return p;
   }
 }
