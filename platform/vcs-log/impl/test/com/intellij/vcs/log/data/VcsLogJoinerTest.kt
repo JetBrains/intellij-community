@@ -56,7 +56,7 @@ class VcsLogJoinerTest {
 
     fun newRefs(f: StringArrayBuilder.() -> Unit) {newRefs = build(f)}
 
-    fun expected(f: StringArrayBuilder.() -> Unit) {expected = build(f).join(separator = "\n")}
+    fun expected(f: StringArrayBuilder.() -> Unit) {expected = build(f).joinToString(separator = "\n")}
 
     fun run() {
       val vcsFullLog = TimedCommitParser.log(fullLog!!)
@@ -65,7 +65,7 @@ class VcsLogJoinerTest {
       val vcsNewRefs = newRefs!!.map { HashImpl.build(it) }
 
       val result = VcsLogJoiner<Hash, TimedVcsCommit>().addCommits(vcsFullLog, vcsOldRefs, vcsRecentCommits, vcsNewRefs).getFirst()!!
-      val actual = result.map { it.getId().asString() }.join(separator = "\n")
+      val actual = result.map { it.getId().asString() }.joinToString(separator = "\n")
       assertEquals(expected, actual)
     }
   }
