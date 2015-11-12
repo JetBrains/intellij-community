@@ -63,9 +63,19 @@ public class Disposer {
 
   @NotNull
   public static Disposable newDisposable() {
+    return newDisposable(null);
+  }
+
+  @NotNull
+  public static Disposable newDisposable(@Nullable final String debugName) {
     return new Disposable() {
       @Override
       public void dispose() {
+      }
+
+      @Override
+      public String toString() {
+        return debugName == null ? super.toString() : debugName;
       }
     };
   }
