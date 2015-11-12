@@ -7,8 +7,9 @@ import org.mockito.Mockito.*
 import org.picocontainer.MutablePicoContainer
 
 class CompletionTypingTest : LightFixtureCompletionTestCase() {
-    lateinit var realStorage: EventLogger
-    lateinit var mockStorage: EventLogger
+    lateinit var mockLogger: CompletionLogger
+    lateinit var realLoggerProvider: CompletionLoggerProvider
+    lateinit var mockLoggerProvider: CompletionLoggerProvider
     lateinit var container: MutablePicoContainer
     
     val text = """
@@ -21,23 +22,25 @@ class Test {
     }
 }
 """
-
+    
     override fun setUp() {
         super.setUp()
         container = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
-        mockStorage = mock(EventLogger::class.java)
+        mockLoggerProvider = mock(CompletionLoggerProvider::class.java)
+        mockLogger = mock(CompletionLogger::class.java)
+        `when`(mockLoggerProvider.newCompletionLogger()).thenReturn(mockLogger)
         
-        val name = EventLogger::class.java.name
-        realStorage = container.getComponentInstance(name) as EventLogger
+        val name = CompletionLoggerProvider::class.java.name
+        realLoggerProvider = container.getComponentInstance(name) as CompletionLoggerProvider
         
         container.unregisterComponent(name)
-        container.registerComponentInstance(name, mockStorage)
+        container.registerComponentInstance(name, mockLoggerProvider)
     }
 
     override fun tearDown() {
-        val name = EventLogger::class.java.name
+        val name = CompletionLoggerProvider::class.java.name
         container.unregisterComponent(name)
-        container.registerComponentInstance(name, realStorage)
+        container.registerComponentInstance(name, realLoggerProvider)
         super.tearDown()
     }
     
@@ -46,7 +49,7 @@ class Test {
         myFixture.configureByText(JavaFileType.INSTANCE, text)
         myFixture.completeBasic()
         myFixture.type("run(")
-        verify(mockStorage, times(1)).itemSelected()
+        verify(mockLogger, times(1)).itemSelectedCompletionFinished()
     }
     
     
