@@ -21,7 +21,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
+import com.jetbrains.python.formatter.PyBlock;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +46,7 @@ public class MoveFromFutureImportQuickFix implements LocalQuickFix {
     PsiElement problemElement = descriptor.getPsiElement();
     PsiFile psiFile = problemElement.getContainingFile();
     if (psiFile instanceof PyFile) {
+      problemElement.putCopyableUserData(PyBlock.IMPORT_GROUP_BEGIN, true);
       PyFile file = (PyFile)psiFile;
       PyStringLiteralExpression docString = DocStringUtil.findDocStringExpression(file);
       if (docString != null) {
