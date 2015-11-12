@@ -196,6 +196,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
   //
 
   @NotNull
+  @Override
   public MergeRequest createMergeRequest(@Nullable Project project,
                                          @Nullable FileType fileType,
                                          @NotNull Document outputDocument,

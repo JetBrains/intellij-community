@@ -187,11 +187,23 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testOptionalTransform() {
-    doTest();;
+    doTest();
   }
 
   public void testOptionalTransform2() {
-    doTest();;
+    doTest();
+  }
+
+  public void testRemoveMethodReference() {
+    doTest();
+  }
+
+  public void testSimplifyOptionalComposition() {
+    doTest();
+  }
+
+  public void testMigrateArrays() {
+    doTest();
   }
 
   private void doTestNoQuickFixes(final Class<? extends IntentionAction>... quickFixesClasses) {

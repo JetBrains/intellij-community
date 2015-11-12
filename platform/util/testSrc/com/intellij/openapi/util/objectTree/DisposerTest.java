@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NonNls;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.util.Disposer.newDisposable;
+
 public class DisposerTest extends TestCase {
 
   private MyDisposable myRoot;
@@ -299,17 +301,4 @@ public class DisposerTest extends TestCase {
     }
   }
 
-  private static Disposable newDisposable(final String name) {
-    return new Disposable() {
-      @Override
-      public void dispose() {
-
-      }
-
-      @Override
-      public String toString() {
-        return name;
-      }
-    };
-  }
 }

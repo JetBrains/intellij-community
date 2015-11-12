@@ -30,6 +30,7 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
     myProject = project;
   }
 
+  @Override
   public OpenFileDescriptor getOpenFileDescriptor(int offset) {
     if (myProject == null || getHighlightFile() == null) return null;
     return new OpenFileDescriptor(myProject, getHighlightFile(), offset);

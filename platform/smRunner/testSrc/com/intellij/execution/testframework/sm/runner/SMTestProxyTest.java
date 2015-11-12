@@ -80,6 +80,18 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertFalse(mySuite.isLeaf());
   }
 
+  public void testAppendedChildToTestShouldMakeItSuite() throws Exception {
+    mySuite = createTestProxy("unroll spock test");
+    assertFalse(mySuite.isSuite());
+    assertFalse(mySuite.isDefect());
+    mySuite.addChild(mySimpleTest);
+    assertTrue(mySuite.isSuite());
+    assertFalse(mySuite.isDefect());
+    mySimpleTest.setTestFailed("failed message", null, false);
+    assertTrue(mySimpleTest.isDefect());
+    assertTrue(mySuite.isDefect());
+  }
+
   public void testIsRoot() {
     final SMTestProxy rootTest = createTestProxy("root");
     assertTrue(rootTest.getParent() == null);

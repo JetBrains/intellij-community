@@ -1,7 +1,5 @@
 import com.google.common.base.Function;
 
-import static com.google.common.collect.FluentIterable.from
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;

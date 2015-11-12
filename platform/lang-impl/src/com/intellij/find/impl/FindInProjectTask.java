@@ -38,7 +38,6 @@ import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
@@ -68,7 +67,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.regex.Pattern;
 
 /**
  * @author peter
@@ -87,11 +85,13 @@ class FindInProjectTask {
   private final ProgressIndicator myProgress;
   @Nullable private final Module myModule;
   private final Set<VirtualFile> myLargeFiles = ContainerUtil.newTroveSet();
+  private final Set<VirtualFile> myFilesToScanInitially;
   private boolean myWarningShown;
 
-  FindInProjectTask(@NotNull final FindModel findModel, @NotNull final Project project) {
+  FindInProjectTask(@NotNull final FindModel findModel, @NotNull final Project project, @NotNull Set<VirtualFile> filesToScanInitially) {
     myFindModel = findModel;
     myProject = project;
+    myFilesToScanInitially = filesToScanInitially;
     myDirectory = FindInProjectUtil.getDirectory(findModel);
     myPsiManager = PsiManager.getInstance(project);
 
@@ -105,13 +105,12 @@ class FindInProjectTask {
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     myFileIndex = myModule == null ? myProjectFileIndex : ModuleRootManager.getInstance(myModule).getFileIndex();
 
-    final String filter = findModel.getFileFilter();
-    final Pattern pattern = FindInProjectUtil.createFileMaskRegExp(filter);
+    final Condition<String> patternCondition = FindInProjectUtil.createFileMaskCondition(findModel.getFileFilter());
 
-    myFileMask = pattern == null ? Conditions.<VirtualFile>alwaysTrue() : new Condition<VirtualFile>() {
+    myFileMask = new Condition<VirtualFile>() {
       @Override
       public boolean value(VirtualFile file) {
-        return file != null && pattern.matcher(file.getName()).matches();
+        return file != null && patternCondition.value(file.getName());
       }
     };
 
@@ -441,13 +440,23 @@ class FindInProjectTask {
   @NotNull
   private Set<VirtualFile> getFilesForFastWordSearch() {
     String stringToFind = myFindModel.getStringToFind();
-    if (stringToFind.isEmpty() || DumbService.getInstance(myProject).isDumb() || myFindModel.isRegularExpressions()) {
+
+    if (myFindModel.isRegularExpressions()) {
+      stringToFind = FindInProjectUtil.buildStringToFindForIndicesFromRegExp(stringToFind);
+    }
+
+    if (stringToFind.isEmpty() || DumbService.getInstance(myProject).isDumb()) {
       return Collections.emptySet();
     }
 
-    final GlobalSearchScope scope = toGlobal(FindInProjectUtil.getScopeFromModel(myProject, myFindModel));
-
     final Set<VirtualFile> resultFiles = new LinkedHashSet<VirtualFile>();
+    for(VirtualFile file:myFilesToScanInitially) {
+      if (myFileMask.value(file)) {
+        resultFiles.add(file);
+      }
+    }
+
+    final GlobalSearchScope scope = toGlobal(FindInProjectUtil.getScopeFromModel(myProject, myFindModel));
 
     if (TrigramIndex.ENABLED) {
       final Set<Integer> keys = ContainerUtil.newTroveSet();

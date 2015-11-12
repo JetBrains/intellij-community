@@ -73,6 +73,7 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
     return createImpl(text, type, null, null, respectLineSeparators, true);
   }
 
+  @Override
   @NotNull
   public DocumentContent create(@NotNull String text, @Nullable VirtualFile highlightFile) {
     return createImpl(text, highlightFile != null ? highlightFile.getFileType() : null, highlightFile, null, true, true);

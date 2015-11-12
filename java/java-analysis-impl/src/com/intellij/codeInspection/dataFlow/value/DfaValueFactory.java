@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,8 @@ public class DfaValueFactory {
     return myUnknownMembersAreNullable;
   }
 
-  public DfaValue createTypeValue(@Nullable PsiType type, Nullness nullability) {
+  @NotNull
+  public DfaValue createTypeValue(@Nullable PsiType type, @NotNull Nullness nullability) {
     type = TypeConversionUtil.erasure(type);
     if (type == null) return DfaUnknownValue.getInstance();
     return getTypeFactory().createTypeValue(internType(type), nullability);

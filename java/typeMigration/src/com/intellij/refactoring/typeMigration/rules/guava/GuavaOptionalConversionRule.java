@@ -32,6 +32,7 @@ import java.util.Map;
 public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
   private final static Logger LOG = Logger.getInstance(GuavaOptionalConversionRule.class);
 
+  public final static String OPTIONAL_CONVERTOR_PATTERN = "Optional.fromNullable($o$.orElse(null))";
   public final static String GUAVA_OPTIONAL = "com.google.common.base.Optional";
   public final static String JAVA_OPTIONAL = "java.util.Optional";
 
@@ -46,17 +47,7 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
     if (!(context instanceof PsiMethodCallExpression)) {
       if ("or".equals(methodName)) {
         PsiMethodCallExpression methodCallExpression = null;
-        if (context instanceof PsiMethodCallExpression) {
-          final PsiClass aClass = getParameterClass(method);
-          if (aClass != null) {
-            final String qName = aClass.getQualifiedName();
-            String pattern =
-              GUAVA_OPTIONAL.equals(qName) ? "java.util.Optional.ofNullable($expr$.get())" : "java.util.Optional.ofNullable($expr$)";
-            return new TypeConversionDescriptor("$expr$", pattern);
-          }
-          return null;
-        }
-        else if (context.getParent() instanceof PsiMethodCallExpression) {
+        if (context.getParent() instanceof PsiMethodCallExpression) {
           methodCallExpression = (PsiMethodCallExpression)context.getParent();
         }
         if (methodCallExpression == null) {
@@ -67,7 +58,15 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
           final String qName = aClass.getQualifiedName();
           if (GUAVA_OPTIONAL.equals(qName)) {
             TypeConversionDescriptor descriptor =
-              new TypeConversionDescriptor("$val$.or($other$)", "java.util.Optional.ofNullable($val$.orElseGet($other$::get))");
+              new TypeConversionDescriptor(null, "java.util.Optional.ofNullable($val$.orElseGet($o$::get))") {
+                @Override
+                public PsiExpression replace(PsiExpression expression) {
+                  setStringToReplace("$val$.or(" +
+                                     GuavaOptionalConversionUtil.simplifyParameterPattern((PsiMethodCallExpression)expression)
+                                     + ")");
+                  return super.replace(expression);
+                }
+              };
             if (to != null) {
               descriptor.withConversionType(to);
             }
@@ -80,7 +79,7 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
         return null;
       }
       else if ("transform".equals(methodName)) {
-        final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)(context instanceof PsiMethodCallExpression ? context : context.getParent());
+        final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)(context.getParent());
         final PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
         if (arguments.length != 1) {
           return null;
@@ -104,10 +103,20 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
     return GuavaFluentIterableConversionRule.buildCompoundDescriptor((PsiMethodCallExpression) context, to, labeler);
   }
 
+  @Override
+  protected boolean isValidMethodQualifierToConvert(PsiClass aClass) {
+    return super.isValidMethodQualifierToConvert(aClass) ||
+           (aClass != null && GuavaFluentIterableConversionRule.FLUENT_ITERABLE.equals(aClass.getQualifiedName()));
+  }
+
   @Nullable
   @Override
   protected TypeConversionDescriptorBase findConversionForVariableReference(@NotNull PsiReferenceExpression referenceExpression,
-                                                                            @NotNull PsiVariable psiVariable) {
+                                                                            @NotNull PsiVariable psiVariable,
+                                                                            @Nullable PsiExpression context) {
+    if (GuavaOptionalConversionUtil.isOptionalOrContext(context)) {
+      return new TypeConversionDescriptor("$o$", "com.google.common.base." + OPTIONAL_CONVERTOR_PATTERN);
+    }
     return new TypeConversionDescriptor("$o$", "$o$::get");
   }
 

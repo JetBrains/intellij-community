@@ -46,6 +46,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -988,11 +989,12 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
   public void testRangeMarkersAreWeakReferenced_NoVerify() throws Exception {
     final Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
+    Set<RangeMarker> markers = ContainerUtil.newHashSet();
     for (int i = 0; i < 10; i++) {
-      document.createRangeMarker(0, document.getTextLength());
+      markers.add(document.createRangeMarker(0, document.getTextLength()));
     }
 
-    LeakHunter.checkLeak(document, RangeMarker.class);
+    LeakHunter.checkLeak(document, RangeMarker.class, markers::contains);
   }
 
   public void testRangeMarkersAreLazyCreated() throws Exception {
@@ -1089,6 +1091,16 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     assertValidMarker(marker1, 4, 6);
     assertValidMarker(marker2, 5, 7);
+  }
+
+  public void testMoveText2() throws Exception {
+    RangeMarkerEx marker1 = createMarker(StringUtil.repeat(" ",100), 0, 0);
+    DocumentEx document = (DocumentEx)marker1.getDocument();
+    RangeMarker marker2 = document.createRangeMarker(49, 49);
+
+    document.moveText(0, 1, 49);
+    marker1.dispose();
+    marker2.dispose();
   }
 
   public void testMoveTextToTheBeginningRetargetsMarkers() throws Exception {

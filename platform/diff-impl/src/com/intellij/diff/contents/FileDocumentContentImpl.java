@@ -51,6 +51,7 @@ public class FileDocumentContentImpl extends DocumentContentImpl implements File
   }
 
   @NotNull
+  @Override
   public VirtualFile getFile() {
     return myFile;
   }

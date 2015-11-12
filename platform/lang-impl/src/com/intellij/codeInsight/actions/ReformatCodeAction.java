@@ -29,6 +29,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -43,7 +45,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
-import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class ReformatCodeAction extends AnAction implements DumbAware {
@@ -242,24 +243,21 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     if (fileTypeMask == null)
       return;
 
-    final Pattern pattern = getFileTypeMaskPattern(fileTypeMask);
-    if (pattern != null) {
-      processor.addFileFilter(new VirtualFileFilter() {
+    final Condition<String> patternCondition = getFileTypeMaskPattern(fileTypeMask);
+    processor.addFileFilter(new VirtualFileFilter() {
         @Override
         public boolean accept(@NotNull VirtualFile file) {
-          return pattern.matcher(file.getName()).matches();
+          return patternCondition.value(file.getName());
         }
       });
-    }
   }
 
-  @Nullable
-  private static Pattern getFileTypeMaskPattern(@Nullable String mask) {
+  private static Condition<String> getFileTypeMaskPattern(@Nullable String mask) {
     try {
-      return FindInProjectUtil.createFileMaskRegExp(mask);
+      return FindInProjectUtil.createFileMaskCondition(mask);
     } catch (PatternSyntaxException e) {
       LOG.info("Error while processing file mask: ", e);
-      return null;
+      return Conditions.alwaysTrue();
     }
   }
 

@@ -110,6 +110,12 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     DESCRIPTORS_MAP.put("toSortedSet", new TypeConversionDescriptorFactory("$it$.toSortedSet($c$)", "$it$.sorted($c$).collect(java.util.stream.Collectors.toSet())", false));
   }
 
+  @Override
+  protected boolean isValidMethodQualifierToConvert(PsiClass aClass) {
+    return super.isValidMethodQualifierToConvert(aClass) ||
+           (aClass != null && GuavaOptionalConversionRule.GUAVA_OPTIONAL.equals(aClass.getQualifiedName()));
+  }
+
   @Nullable
   @Override
   protected TypeConversionDescriptorBase findConversionForMethod(@NotNull PsiType from,

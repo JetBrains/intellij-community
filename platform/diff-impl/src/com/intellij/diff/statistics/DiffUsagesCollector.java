@@ -34,6 +34,7 @@ public class DiffUsagesCollector extends UsagesCollector {
   public static final GroupDescriptor ID = GroupDescriptor.create("Diff");
 
   @NotNull
+  @Override
   public GroupDescriptor getGroupId() {
     return ID;
   }

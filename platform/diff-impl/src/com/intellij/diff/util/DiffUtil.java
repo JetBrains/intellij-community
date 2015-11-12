@@ -861,6 +861,7 @@ public class DiffUtil {
       myUnderBulkUpdate = underBulkUpdate;
     }
 
+    @Override
     @CalledInAwt
     public final void run() {
       if (!makeWritable(myProject, myDocument)) {
@@ -870,6 +871,7 @@ public class DiffUtil {
       }
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
             @Override

@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
@@ -234,11 +234,12 @@ public class LeakHunter {
     }
     PersistentEnumeratorBase.clearCacheForTests();
     walkObjects(suspectClass, roots, new Processor<BackLink>() {
+      @SuppressWarnings("UseOfSystemOutOrSystemErr")
       @Override
       public boolean process(BackLink backLink) {
-        UserDataHolder leaked = (UserDataHolder)backLink.value;
-        if (((UserDataHolderBase)leaked).replace(REPORTED_LEAKED, null, Boolean.TRUE) &&
-            (isReallyLeak == null || isReallyLeak.process((T)leaked))) {
+        //noinspection unchecked
+        T leaked = (T)backLink.value;
+        if (markLeaked(leaked) && (isReallyLeak == null || isReallyLeak.process(leaked))) {
           String place = leaked instanceof Project ? PlatformTestCase.getCreationPlace((Project)leaked) : "";
           System.out.println("Leaked object found:" + leaked +
                              "; hash: " + System.identityHashCode(leaked) + "; place: " + place);
@@ -258,6 +259,10 @@ public class LeakHunter {
           throw new AssertionError();
         }
         return true;
+      }
+
+      private boolean markLeaked(T leaked) {
+        return !(leaked instanceof UserDataHolderEx) || ((UserDataHolderEx)leaked).replace(REPORTED_LEAKED, null, Boolean.TRUE);
       }
     });
   }

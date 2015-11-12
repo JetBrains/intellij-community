@@ -105,7 +105,7 @@ public class HgMergeCommand {
     final HgMergeCommand hgMergeCommand = new HgMergeCommand(project, repository);
     hgMergeCommand.setRevision(branchName);//there is no difference between branch or revision or bookmark as parameter to merge,
     // we need just a string
-    new Task.Backgroundable(project, "Merging changes...") {
+    new Task.Backgroundable(project, "Merging Changes...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {

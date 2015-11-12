@@ -212,6 +212,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     };
   }
 
+  @Override
   protected void destroyChangedBlocks() {
     super.destroyChangedBlocks();
     for (SimpleThreesideDiffChange change : myDiffChanges) {
@@ -281,6 +282,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   //
 
   @NotNull
+  @Override
   public List<SimpleThreesideDiffChange> getChanges() {
     return myDiffChanges;
   }

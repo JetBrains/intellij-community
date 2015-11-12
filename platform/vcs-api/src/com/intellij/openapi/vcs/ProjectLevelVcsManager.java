@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -170,7 +171,10 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract boolean hasAnyMappings();
 
+  @Deprecated
   public abstract void addMessageToConsoleWindow(String message, TextAttributes attributes);
+
+  public abstract void addMessageToConsoleWindow(@Nullable String message, @NotNull ConsoleViewContentType contentType);
 
   @NotNull
   public abstract VcsShowSettingOption getStandardOption(@NotNull VcsConfiguration.StandardOption option,

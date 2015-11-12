@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.typeMigration.ui.FailedConversionsDialog;
@@ -36,11 +37,13 @@ import com.intellij.usageView.UsageViewManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
@@ -59,10 +62,19 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
     myRules = rules;
   }
 
+
   public static void runHighlightingTypeMigration(final Project project,
-                                                  final Editor editor,
-                                                  final TypeMigrationRules rules,
-                                                  final PsiElement root) {
+                                                          final Editor editor,
+                                                          final TypeMigrationRules rules,
+                                                          final PsiElement root) {
+    runHighlightingTypeMigration(project, editor, rules, root, false);
+  }
+
+  public static void runHighlightingTypeMigration(final Project project,
+                                                          final Editor editor,
+                                                          final TypeMigrationRules rules,
+                                                          final PsiElement root,
+                                                          final boolean optimizeImports) {
     final PsiFile containingFile = root.getContainingFile();
     final TypeMigrationProcessor processor = new TypeMigrationProcessor(project, root, rules) {
       @Override
@@ -88,6 +100,20 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
               RefactoringUtil.highlightAllOccurrences(project, PsiUtilCore.toPsiElementArray(result), editor);
             }
           });
+        }
+        if (optimizeImports) {
+          final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(myProject);
+          final Set<PsiFile> affectedFiles = new THashSet<PsiFile>();
+          for (UsageInfo usage : usages) {
+            final PsiFile usageFile = usage.getFile();
+            if (usageFile != null) {
+              affectedFiles.add(usageFile);
+            }
+          }
+          for (PsiFile file : affectedFiles) {
+            javaCodeStyleManager.optimizeImports(file);
+            javaCodeStyleManager.shortenClassReferences(file);
+          }
         }
       }
     };

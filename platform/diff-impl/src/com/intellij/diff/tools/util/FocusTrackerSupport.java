@@ -70,6 +70,7 @@ public class FocusTrackerSupport<T> {
         mySide = side;
       }
 
+      @Override
       public void focusGained(FocusEvent e) {
         myCurrentSide = mySide;
       }
@@ -116,6 +117,7 @@ public class FocusTrackerSupport<T> {
         mySide = side;
       }
 
+      @Override
       public void focusGained(FocusEvent e) {
         myCurrentSide = mySide;
       }

@@ -17,7 +17,6 @@ package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
@@ -27,8 +26,6 @@ import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -59,7 +56,8 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
 
   @Nullable
   protected TypeConversionDescriptorBase findConversionForVariableReference(@NotNull PsiReferenceExpression referenceExpression,
-                                                                            @NotNull PsiVariable psiVariable) {
+                                                                            @NotNull PsiVariable psiVariable,
+                                                                            @Nullable PsiExpression context) {
     return null;
   }
 
@@ -82,6 +80,8 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
     if (member instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)member;
       final String methodName = method.getName();
+      final PsiClass aClass = method.getContainingClass();
+      if (!isValidMethodQualifierToConvert(aClass)) return null;
       final TypeConversionDescriptorBase descriptor = mySimpleDescriptors.getValue().get(methodName);
       if (descriptor != null) {
         return descriptor;
@@ -101,16 +101,20 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
     else if (context instanceof PsiReferenceExpression) {
       final PsiElement resolvedElement = ((PsiReferenceExpression)context).resolve();
       if (resolvedElement instanceof PsiVariable) {
-        return findConversionForVariableReference((PsiReferenceExpression)context, (PsiVariable)resolvedElement);
+        return findConversionForVariableReference((PsiReferenceExpression)context, (PsiVariable)resolvedElement, context);
       }
     }
     return null;
   }
 
-  public static boolean canConvert(@Nullable PsiType from,
-                                   @Nullable  PsiType to,
-                                   @NotNull String fromClassName,
-                                   @NotNull String toClassName) {
+  protected boolean isValidMethodQualifierToConvert(PsiClass aClass) {
+    return aClass != null && ruleFromClass().equals(aClass.getQualifiedName());
+  }
+
+  static boolean canConvert(@Nullable PsiType from,
+                            @Nullable PsiType to,
+                            @NotNull String fromClassName,
+                            @NotNull String toClassName) {
     if (!(from instanceof PsiClassType)) {
       return false;
     }

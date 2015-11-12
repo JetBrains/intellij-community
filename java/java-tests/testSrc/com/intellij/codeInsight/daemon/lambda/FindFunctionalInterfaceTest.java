@@ -70,6 +70,14 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
   }
 
   public void testClassFromJdk() {
+    doTestIndexSearch("(e) -> true");
+  }
+
+  public void testClassFromJdkMethodRef() {
+    doTestIndexSearch("this::bar");
+  }
+
+  public void doTestIndexSearch(String expected) {
     myFixture.configureByFile(getTestName(false) + ".java");
 
     for (int i = 0; i < JavaFunctionalExpressionSearcher.SMART_SEARCH_THRESHOLD + 5; i++) {
@@ -79,7 +87,7 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
     PsiClass predicate = JavaPsiFacade.getInstance(getProject()).findClass(Predicate.class.getName(), GlobalSearchScope.allScope(getProject()));
     assert predicate != null;
     final PsiFunctionalExpression next = assertOneElement(FunctionalExpressionSearch.search(predicate).findAll());
-    assertEquals("(e) -> true", next.getText());
+    assertEquals(expected, next.getText());
   }
 
   @Override

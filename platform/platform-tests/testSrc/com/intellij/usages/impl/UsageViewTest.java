@@ -50,7 +50,7 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
     FileDocumentManager.getInstance().saveAllDocuments();
     UIUtil.dispatchAllInvocationEvents();
 
-    LeakHunter.checkLeak(usageView, PsiFileImpl.class);
+    LeakHunter.checkLeak(usageView, PsiFileImpl.class, PsiFileImpl::isPhysical);
     LeakHunter.checkLeak(usageView, Document.class);
   }
 

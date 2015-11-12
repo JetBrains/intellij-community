@@ -107,6 +107,7 @@ public class DiffManagerImpl extends DiffManagerEx {
     return result;
   }
 
+  @Override
   @CalledInAwt
   public void showMerge(@Nullable Project project, @NotNull MergeRequest request) {
     if (ExternalMergeTool.isDefault()) {
@@ -117,6 +118,7 @@ public class DiffManagerImpl extends DiffManagerEx {
     showMergeBuiltin(project, request);
   }
 
+  @Override
   @CalledInAwt
   public void showMergeBuiltin(@Nullable Project project, @NotNull MergeRequest request) {
     new MergeWindow(project, request).show();

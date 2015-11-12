@@ -45,6 +45,7 @@ public abstract class DiffGutterRenderer extends GutterIconRenderer {
     return myTooltip;
   }
 
+  @Override
   public boolean isNavigateAction() {
     return true;
   }

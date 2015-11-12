@@ -68,6 +68,7 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
     updateRequest(true, false, null);
   }
 
+  @Override
   @CalledInAwt
   public void updateRequest(final boolean force, @Nullable final ScrollToPolicy scrollToChangePolicy) {
     updateRequest(force, true, scrollToChangePolicy);

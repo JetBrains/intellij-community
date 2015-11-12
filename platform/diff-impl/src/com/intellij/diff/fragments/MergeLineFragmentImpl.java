@@ -72,10 +72,12 @@ public class MergeLineFragmentImpl implements MergeLineFragment {
          fragments);
   }
 
+  @Override
   public int getStartLine(@NotNull ThreeSide side) {
     return side.select(myStartLine1, myStartLine2, myStartLine3);
   }
 
+  @Override
   public int getEndLine(@NotNull ThreeSide side) {
     return side.select(myEndLine1, myEndLine2, myEndLine3);
   }

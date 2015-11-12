@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
@@ -31,33 +30,31 @@ import java.util.Set;
 /**
  * @author Gregory.Shrago
  */
-public class ValuableDataFlowRunner extends DataFlowRunner {
-
-  protected ValuableDataFlowRunner(PsiElement block) {
-    super();
-  }
-
+class ValuableDataFlowRunner extends DataFlowRunner {
+  @NotNull
   @Override
   protected DfaMemoryState createMemoryState() {
     return new MyDfaMemoryState(getFactory());
   }
 
   static class MyDfaMemoryState extends DfaMemoryStateImpl {
-    private MyDfaMemoryState(final DfaValueFactory factory) {
+    private MyDfaMemoryState(@NotNull DfaValueFactory factory) {
       super(factory);
     }
 
-    MyDfaMemoryState(DfaMemoryStateImpl toCopy) {
+    private MyDfaMemoryState(@NotNull DfaMemoryStateImpl toCopy) {
       super(toCopy);
     }
 
+    @NotNull
     @Override
     public DfaMemoryStateImpl createCopy() {
       return new MyDfaMemoryState(this);
     }
 
+    @NotNull
     @Override
-    protected DfaVariableState createVariableState(DfaVariableValue var) {
+    protected DfaVariableState createVariableState(@NotNull DfaVariableValue var) {
       return new ValuableDfaVariableState(var);
     }
 
@@ -68,35 +65,38 @@ public class ValuableDataFlowRunner extends DataFlowRunner {
   }
 
   static class ValuableDfaVariableState extends DfaVariableState {
-    final DfaValue myValue;
+    private final DfaValue myValue;
     @NotNull final FList<PsiExpression> myConcatenation;
 
-    private ValuableDfaVariableState(final DfaVariableValue psiVariable) {
+    private ValuableDfaVariableState(@NotNull DfaVariableValue psiVariable) {
       super(psiVariable);
       myValue = null;
       myConcatenation = FList.emptyList();
     }
 
     private ValuableDfaVariableState(Set<DfaPsiType> instanceofValues,
-                             Set<DfaPsiType> notInstanceofValues,
-                             Nullness nullability, DfaValue value, @NotNull FList<PsiExpression> concatenation) {
+                                     Set<DfaPsiType> notInstanceofValues,
+                                     Nullness nullability, DfaValue value,
+                                     @NotNull FList<PsiExpression> concatenation) {
       super(instanceofValues, notInstanceofValues, nullability);
       myValue = value;
       myConcatenation = concatenation;
     }
 
+    @NotNull
     @Override
-    protected DfaVariableState createCopy(Set<DfaPsiType> instanceofValues, Set<DfaPsiType> notInstanceofValues, Nullness nullability) {
+    protected DfaVariableState createCopy(@NotNull Set<DfaPsiType> instanceofValues, @NotNull Set<DfaPsiType> notInstanceofValues, @NotNull Nullness nullability) {
       return new ValuableDfaVariableState(instanceofValues, notInstanceofValues, nullability, myValue, myConcatenation);
     }
 
+    @NotNull
     @Override
     public DfaVariableState withValue(@Nullable final DfaValue value) {
       if (value == myValue) return this;
       return new ValuableDfaVariableState(myInstanceofValues, myNotInstanceofValues, myNullability, value, myConcatenation);
     }
 
-    public ValuableDfaVariableState withExpression(@NotNull final FList<PsiExpression> concatenation) {
+    ValuableDfaVariableState withExpression(@NotNull final FList<PsiExpression> concatenation) {
       if (concatenation == myConcatenation) return this;
       return new ValuableDfaVariableState(myInstanceofValues, myNotInstanceofValues, myNullability, myValue, concatenation);
     }

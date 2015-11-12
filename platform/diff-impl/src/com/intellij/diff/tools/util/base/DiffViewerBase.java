@@ -60,6 +60,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   }
 
   @NotNull
+  @Override
   public final FrameDiffTool.ToolbarComponents init() {
     processContextHints();
     onInit();
