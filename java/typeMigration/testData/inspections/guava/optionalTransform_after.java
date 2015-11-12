@@ -3,7 +3,7 @@ import com.google.common.base.Function;
 import java.util.Optional;
 
 class A {
-  public java.util.Optional<String> transform(Optional<Integer> p1) {
+  public Optional<String> transform(Optional<Integer> p1) {
     return p1.map(new MyFunction()::apply);
   }
 

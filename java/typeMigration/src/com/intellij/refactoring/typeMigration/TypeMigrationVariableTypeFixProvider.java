@@ -31,7 +31,15 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
   }
 
   @NotNull
-  public static VariableTypeFix createTypeMigrationFix(@NotNull final PsiVariable variable, @NotNull final PsiType toReturn) {
+  public static VariableTypeFix createTypeMigrationFix(@NotNull final PsiVariable variable,
+                                                       @NotNull final PsiType toReturn) {
+    return createTypeMigrationFix(variable, toReturn, false);
+  }
+
+  @NotNull
+  public static VariableTypeFix createTypeMigrationFix(@NotNull final PsiVariable variable,
+                                                       @NotNull final PsiType toReturn,
+                                                       final boolean optimizeImports) {
     return new VariableTypeFix(variable, toReturn) {
       @NotNull
       @Override
@@ -45,7 +53,7 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
                          @Nullable("is null when called from inspection") Editor editor,
                          @NotNull PsiElement startElement,
                          @NotNull PsiElement endElement) {
-        runTypeMigrationOnVariable((PsiVariable)startElement, getReturnType(), editor);
+        runTypeMigrationOnVariable((PsiVariable)startElement, getReturnType(), editor, optimizeImports);
       }
 
       @Override
@@ -57,7 +65,8 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
 
   public static void runTypeMigrationOnVariable(@NotNull PsiVariable variable,
                                                 @NotNull PsiType targetType,
-                                                @Nullable("is null when called from inspection") Editor editor) {
+                                                @Nullable("is null when called from inspection") Editor editor,
+                                                boolean optimizeImports) {
     Project project = variable.getProject();
     if (!FileModificationService.getInstance().prepareFileForWrite(variable.getContainingFile())) return;
     try {
@@ -65,7 +74,7 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
       final TypeMigrationRules rules = new TypeMigrationRules(TypeMigrationLabeler.getElementType(variable));
       rules.setMigrationRootType(targetType);
       rules.setBoundScope(GlobalSearchScope.projectScope(project));
-      TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, variable);
+      TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, variable, optimizeImports);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(variable);
       UndoUtil.markPsiFileForUndo(variable.getContainingFile());
     }

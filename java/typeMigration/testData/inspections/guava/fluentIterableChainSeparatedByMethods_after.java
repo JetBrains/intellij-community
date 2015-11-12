@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public class Main {
@@ -6,7 +7,7 @@ public class Main {
     return new ArrayList<String>().stream().map(s -> s + s);
   }
 
-  java.util.Optional<String> m2() {
+  Optional<String> m2() {
     return m1().filter(s -> s.indexOf('s') == 123).findFirst();
   }
 

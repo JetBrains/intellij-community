@@ -122,7 +122,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
         if (targetType != null) {
           holder.registerProblem(variable,
                                  PROBLEM_DESCRIPTION_FOR_VARIABLE,
-                                 TypeMigrationVariableTypeFixProvider.createTypeMigrationFix(variable, targetType));
+                                 TypeMigrationVariableTypeFixProvider.createTypeMigrationFix(variable, targetType, true));
         }
       }
 
@@ -349,7 +349,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
         final TypeMigrationRules rules = new TypeMigrationRules(TypeMigrationLabeler.getElementType(method));
         rules.setMigrationRootType(myTargetType);
         rules.setBoundScope(method.getUseScope());
-        TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, method);
+        TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, method, true);
         UndoUtil.markPsiFileForUndo(file);
       }
       catch (IncorrectOperationException e) {
