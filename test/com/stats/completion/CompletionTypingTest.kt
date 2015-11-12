@@ -19,7 +19,7 @@ class Test {
         Runnable r = new Runnable() {
             public void run() {}
         };
-        r.<caret>
+        r<caret>
     }
 }
 """
@@ -41,7 +41,6 @@ class Test {
         
         myFixture.addClass(runnable)
         myFixture.configureByText(JavaFileType.INSTANCE, text)
-        myFixture.completeBasic()
     }
 
     override fun tearDown() {
@@ -52,11 +51,18 @@ class Test {
     }
     
     fun `test item selected on just typing`() {
+        myFixture.type('.')
+        myFixture.completeBasic()
+        
         myFixture.type("run(")
+        //todo in the real world it works another way
         verify(mockLogger, times(1)).itemSelectedCompletionFinished()
     }
     
     fun `test typing`() {
+        myFixture.type('.')
+        myFixture.completeBasic()
+
         myFixture.type('r')
         myFixture.type('u')
         verify(mockLogger).charTyped('r')
@@ -64,34 +70,60 @@ class Test {
     }
     
     fun `test up buttons`() {
+        myFixture.type('.')
+        myFixture.completeBasic()
+        
         myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)
         verify(mockLogger).upPressed()
     }
     
     fun `test down button`() {
+        myFixture.type('.')
+        myFixture.completeBasic()
+
         myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
         verify(mockLogger).downPressed()
     }
     
     fun `test completion started`() {
-        //setUp -> completeBasic()
+        myFixture.type('.')
+        myFixture.completeBasic()
+
         verify(mockLogger).completionStarted()
     }
     
     fun `test backspace`() {
+        myFixture.type('.')
+        myFixture.completeBasic()
+        
         myFixture.type('\b')
         verify(mockLogger).backspacePressed()
     }
     
     fun `test enter`() {
+        myFixture.type('.')
+        myFixture.completeBasic()
+        
         myFixture.type('r')
         myFixture.type('\n')
         verify(mockLogger).itemSelectedCompletionFinished()
     }
     
     fun `test completion cancelled`() {
+        myFixture.type('.')
+        myFixture.completeBasic()
+
         lookup.hide()
         verify(mockLogger).completionCancelled()
+    }
+    
+    fun `test if typed prefix is correct completion variant, pressing dot will select it`() {
+        myFixture.completeBasic()
+        myFixture.type('.')
+        
+        verify(mockLogger, times(1)).completionStarted()
+        //todo in the real world it works another way
+        verify(mockLogger, times(1)).itemSelectedCompletionFinished()
     }
     
 }

@@ -70,7 +70,8 @@ class CompletionFileLogger(private val installationUID: String,
                            private val writer: PrintWriter) : CompletionLogger() {
     
     private fun println(line: String) {
-        writer.println(line)
+//        writer.println(line)
+        System.out.println(line)
     }
     
     override fun completionStarted() {
