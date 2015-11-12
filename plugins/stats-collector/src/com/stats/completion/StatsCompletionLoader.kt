@@ -28,6 +28,7 @@ class CompletionTrackerInitializer(project: Project): AbstractProjectComponent(p
 
     override fun disposeComponent() {
         ActionManager.getInstance().removeAnActionListener(lookupPopupActionTracker)
+        CompletionLoggerProvider.getInstance().dispose()
     }
 
     override fun projectOpened() {
