@@ -153,7 +153,7 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
 
   @NotNull
   private static JCheckBox createRemoveFilesStrategyCheckbox(@NotNull Project project) {
-    final JCheckBox removeOptionCheckBox = new JCheckBox("Remove successfully applied files from shelf");
+    final JCheckBox removeOptionCheckBox = new JCheckBox("Remove successfully applied files from the shelf");
     final ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(project);
     removeOptionCheckBox.setSelected(shelveChangesManager.isRemoveFilesFromShelf());
     removeOptionCheckBox.addActionListener(new ActionListener() {

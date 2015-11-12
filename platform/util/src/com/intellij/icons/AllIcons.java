@@ -809,6 +809,7 @@ public class AllIcons {
     public static final Icon DataView = IconLoader.getIcon("/nodes/dataView.png"); // 16x16
     public static final Icon Deploy = IconLoader.getIcon("/nodes/deploy.png"); // 16x16
     public static final Icon Desktop = IconLoader.getIcon("/nodes/desktop.png"); // 16x16
+    public static final Icon DisabledPointcut = IconLoader.getIcon("/nodes/disabledPointcut.png"); // 16x16
     public static final Icon Ejb = IconLoader.getIcon("/nodes/ejb.png"); // 16x16
     public static final Icon EjbBusinessMethod = IconLoader.getIcon("/nodes/ejbBusinessMethod.png"); // 16x16
     public static final Icon EjbCmpField = IconLoader.getIcon("/nodes/ejbCmpField.png"); // 16x16
@@ -884,7 +885,6 @@ public class AllIcons {
     public static final Icon PluginRestart = IconLoader.getIcon("/nodes/pluginRestart.png"); // 16x16
     public static final Icon PluginUpdate = IconLoader.getIcon("/nodes/pluginUpdate.png"); // 16x16
     public static final Icon Pointcut = IconLoader.getIcon("/nodes/pointcut.png"); // 16x16
-    public static final Icon DisabledPointcut = IconLoader.getIcon("/nodes/disabledPointcut.png"); // 16x16
     public static final Icon PpFile = IconLoader.getIcon("/nodes/ppFile.png"); // 16x16
     public static final Icon PpInvalid = IconLoader.getIcon("/nodes/ppInvalid.png"); // 16x16
     public static final Icon PpJar = IconLoader.getIcon("/nodes/ppJar.png"); // 16x16
