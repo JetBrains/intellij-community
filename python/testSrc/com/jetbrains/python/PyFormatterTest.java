@@ -648,4 +648,9 @@ public class PyFormatterTest extends PyTestCase {
   public void testAlignmentOfEmptyCollectionLiterals() {
     doTest();
   }
+
+  // PY-17593
+  public void testBlanksBetweenImportsPreservedWithoutOptimizeImports() {
+    doTest();
+  }
 }
