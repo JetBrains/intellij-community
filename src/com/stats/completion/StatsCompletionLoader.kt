@@ -1,6 +1,5 @@
 package com.stats.completion
 
-import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupAdapter
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupManager
@@ -88,8 +87,6 @@ class CompletionPopupActionsTracker : AnActionListener.Adapter() {
 class TrackingLookupListener(private val completionTracker: CompletionPopupActionsTracker, 
                              private val logger: CompletionLogger) : CompletionPopupListener, LookupAdapter() {
     
-    private var completionStarted = false
-    
     override fun lookupCanceled(event: LookupEvent) {
         val lookup = event.lookup as LookupImpl
         val items = lookup.items
@@ -101,17 +98,12 @@ class TrackingLookupListener(private val completionTracker: CompletionPopupActio
     }
 
     override fun currentItemChanged(event: LookupEvent) {
-        if (!completionStarted) {
+        if (completionTracker.popupListener != this) {
             completionTracker.popupListener = this
-            completionStarted = true
-            completionListShown(event.lookup)
+            logger.completionStarted()
         }
     }
-
-    private fun completionListShown(lookup: Lookup) {
-        println("Completion list shown ${lookup.items.size}")
-    }
-
+    
     override fun itemSelected(event: LookupEvent) {
         logger.itemSelectedCompletionFinished()
     }
