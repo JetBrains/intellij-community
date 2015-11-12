@@ -177,6 +177,7 @@ public class RngParser {
         public ParsedPattern parseInclude(String uri, SchemaBuilder schemaBuilder, IncludedGrammar g, String inheritedNs)
                 throws BuildException, IllegalSchemaException
         {
+          ProgressManager.checkCanceled();
           return super.parseInclude(resolveURI(virtualFile, uri), schemaBuilder, g, inheritedNs);
         }
       };
