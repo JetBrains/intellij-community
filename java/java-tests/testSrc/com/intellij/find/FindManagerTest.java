@@ -35,6 +35,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -74,6 +75,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+
+import static com.intellij.find.impl.FindInProjectUtil.createFileMaskCondition;
 
 /**
  * @author MYakovlev
@@ -840,6 +843,16 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setCustomScope(GlobalSearchScopesCore.filterScope(myProject, new NamedScope.UnnamedScope(compile)));
     findModel.setCustomScope(true);
     assertSize(0, findUsages(findModel));
+  }
+
+  public void testCreateFileMaskCondition() {
+    final Condition<String> condition = createFileMaskCondition("*.java, *.js, !Foo.java, !*.min.js");
+    assertTrue(condition.value("Bar.java"));
+    assertTrue(!condition.value("Bar.javac"));
+    assertTrue(!condition.value("Foo.java"));
+    assertTrue(!condition.value("Foo.jav"));
+    assertTrue(!condition.value("Foo.min.js"));
+    assertTrue(condition.value("Foo.js"));
   }
 
   public void testRegExpSearchDoesCheckCancelled() throws InterruptedException {
