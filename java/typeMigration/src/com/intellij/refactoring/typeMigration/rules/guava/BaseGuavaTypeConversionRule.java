@@ -17,7 +17,6 @@ package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
@@ -27,8 +26,6 @@ import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -59,7 +56,8 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
 
   @Nullable
   protected TypeConversionDescriptorBase findConversionForVariableReference(@NotNull PsiReferenceExpression referenceExpression,
-                                                                            @NotNull PsiVariable psiVariable) {
+                                                                            @NotNull PsiVariable psiVariable,
+                                                                            @Nullable PsiExpression context) {
     return null;
   }
 
@@ -101,7 +99,7 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
     else if (context instanceof PsiReferenceExpression) {
       final PsiElement resolvedElement = ((PsiReferenceExpression)context).resolve();
       if (resolvedElement instanceof PsiVariable) {
-        return findConversionForVariableReference((PsiReferenceExpression)context, (PsiVariable)resolvedElement);
+        return findConversionForVariableReference((PsiReferenceExpression)context, (PsiVariable)resolvedElement, context);
       }
     }
     return null;

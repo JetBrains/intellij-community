@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.typeMigration.rules.guava;
 
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiVariable;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
@@ -39,7 +40,7 @@ public class GuavaSupplierConversionRule extends BaseGuavaTypeConversionRule {
   @Nullable
   @Override
   protected TypeConversionDescriptorBase findConversionForVariableReference(@NotNull PsiReferenceExpression referenceExpression,
-                                                                            @NotNull PsiVariable psiVariable) {
+                                                                            @NotNull PsiVariable psiVariable, PsiExpression context) {
     return new TypeConversionDescriptor("$f$", "$f$::get");
   }
 
