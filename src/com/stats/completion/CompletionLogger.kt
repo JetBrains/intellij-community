@@ -1,6 +1,9 @@
 package com.stats.completion
 
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.updateSettings.impl.UpdateChecker
+import java.util.*
 
 
 abstract class CompletionLoggerProvider {
@@ -14,7 +17,11 @@ abstract class CompletionLoggerProvider {
 }
 
 class CompletionLoggerProviderImpl : CompletionLoggerProvider() {
-    override fun newCompletionLogger() = CompletionLoggerImpl()    
+    override fun newCompletionLogger(): CompletionLogger {
+        val installationUID = UpdateChecker.getInstallationUID(PropertiesComponent.getInstance())
+        val completionUID = UUID.randomUUID().toString()
+        return CompletionLoggerImpl(installationUID, completionUID)  
+    }     
 }
 
 
@@ -38,7 +45,7 @@ abstract class CompletionLogger {
     
 }
 
-class CompletionLoggerImpl : CompletionLogger() {
+class CompletionLoggerImpl(private val installationUID: String, private val completionUID: String) : CompletionLogger() {
     
     override fun completionStarted() {
         println("completion started")
