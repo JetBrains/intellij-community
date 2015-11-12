@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -388,7 +389,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     if (sb != null) {
       sb.repaint();
 
-      if (!myMouseOverScrollbar && !sb.getValueIsAdjusting()) {
+      if (!myMouseOverScrollbar && !sb.getValueIsAdjusting() && !ApplicationManager.getApplication().isUnitTestMode()) {
         myMacScrollbarFadeTimer.addRequest(new Runnable() {
           @Override
           public void run() {
