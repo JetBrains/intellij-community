@@ -155,4 +155,14 @@ public class YAMLParserTest extends ParsingTestCase {
                "  jkl: mno\n" +
                "baz: qwe");
   }
+
+  public void testIncompleteKey() throws Throwable {
+    doCodeTest("logging:\n" +
+               "  config: bla\n" +
+               "  index");
+  }
+
+  public void testSpec2_27() throws Throwable {
+    doTest(true);
+  }
 }

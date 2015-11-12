@@ -122,7 +122,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
 
 
       if (type == TEXT) {
-        if (lastTextEnd != null && myIndent < indent) {
+        if (lastTextEnd != null && myIndent <= indent) {
           break;
         }
         if (lastTextEnd != null) {
