@@ -7,8 +7,8 @@ import org.mockito.Mockito.*
 import org.picocontainer.MutablePicoContainer
 
 class CompletionTypingTest : LightFixtureCompletionTestCase() {
-    lateinit var realStorage: EventsStorage
-    lateinit var mockStorage: EventsStorage
+    lateinit var realStorage: EventLogger
+    lateinit var mockStorage: EventLogger
     lateinit var container: MutablePicoContainer
     
     val text = """
@@ -25,17 +25,17 @@ class Test {
     override fun setUp() {
         super.setUp()
         container = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
-        mockStorage = mock(EventsStorage::class.java)
+        mockStorage = mock(EventLogger::class.java)
         
-        val name = EventsStorage::class.java.name
-        realStorage = container.getComponentInstance(name) as EventsStorage
+        val name = EventLogger::class.java.name
+        realStorage = container.getComponentInstance(name) as EventLogger
         
         container.unregisterComponent(name)
         container.registerComponentInstance(name, mockStorage)
     }
 
     override fun tearDown() {
-        val name = EventsStorage::class.java.name
+        val name = EventLogger::class.java.name
         container.unregisterComponent(name)
         container.registerComponentInstance(name, realStorage)
         super.tearDown()
