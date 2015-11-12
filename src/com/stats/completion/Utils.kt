@@ -12,7 +12,7 @@ abstract class FilePathProvider {
 }
 
 class InternalUrlProvider: UrlProvider() {
-    override val statsServerPostUrl = "localhost:8080"
+    override val statsServerPostUrl = "http://localhost:8080"
 }
 
 class PluginDirectoryFilePathProvider: FilePathProvider() {
