@@ -177,16 +177,19 @@ public class FunctionalInterfaceParameterizationUtil {
       for (int i = 0; i < parameters.length; i++) {
         PsiType paramType = parameters[i];
         if (paramType instanceof PsiWildcardType) {
-          final PsiType bound = GenericsUtil.eliminateWildcards(((PsiWildcardType)paramType).getBound(), false, false);
+          for (PsiClassType paramBound : typeParameters[i].getExtendsListTypes()) {
+            if (PsiPolyExpressionUtil.mentionsTypeParameters(paramBound, typeParametersSet)) {
+              return null;
+            }
+          }
+          final PsiType bound = ((PsiWildcardType)paramType).getBound();
           if (((PsiWildcardType)paramType).isSuper()) {
             newParameters[i] = bound;
           }
           else {
             newParameters[i] = bound != null ? bound : PsiType.getJavaLangObject(psiClass.getManager(), psiClassType.getResolveScope());
             for (PsiClassType paramBound : typeParameters[i].getExtendsListTypes()) {
-              if (!PsiPolyExpressionUtil.mentionsTypeParameters(paramBound, typeParametersSet)) {
-                newParameters[i] = GenericsUtil.getGreatestLowerBound(newParameters[i], paramBound);
-              }
+              newParameters[i] = GenericsUtil.getGreatestLowerBound(newParameters[i], paramBound);
             }
           }
         } else {
