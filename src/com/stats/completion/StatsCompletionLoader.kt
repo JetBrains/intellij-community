@@ -87,7 +87,7 @@ class CompletionPopupActionsTracker : AnActionListener.Adapter() {
 
 class TrackingLookupListener(private val completionTracker: CompletionPopupActionsTracker): CompletionPopupListener, LookupAdapter() {
     private var completionStarted = false
-    private val eventsStorage = ServiceManager.getService(EventsStorage::class.java)
+    private val eventsStorage = ServiceManager.getService(EventLogger::class.java)
     
     override fun lookupCanceled(event: LookupEvent) {
         val lookup = event.lookup as LookupImpl

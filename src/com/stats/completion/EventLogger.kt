@@ -1,6 +1,6 @@
 package com.stats.completion
 
-abstract class EventsStorage {
+abstract class EventLogger {
 
     abstract fun completionStarted()
     
@@ -12,7 +12,7 @@ abstract class EventsStorage {
     
 }
 
-class EventsStorageImpl : EventsStorage() {
+class EventLoggerImpl : EventLogger() {
 
     override fun completionStarted() = Unit
 

@@ -25,7 +25,7 @@
   -->
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.stats.completion.EventsStorage" serviceImplementation="com.stats.completion.EventsStorageImpl">
+    <applicationService serviceInterface="com.stats.completion.EventLogger" serviceImplementation="com.stats.completion.EventLoggerImpl">
     </applicationService>
   </extensions>
 
