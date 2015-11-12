@@ -17,6 +17,7 @@ package git4idea;
 
 import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -72,23 +73,7 @@ import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
  * Git utility/helper methods
  */
 public class GitUtil {
-  /**
-   * Comparator for virtual files by name
-   */
-  public static final Comparator<VirtualFile> VIRTUAL_FILE_COMPARATOR = new Comparator<VirtualFile>() {
-    public int compare(final VirtualFile o1, final VirtualFile o2) {
-      if (o1 == null && o2 == null) {
-        return 0;
-      }
-      if (o1 == null) {
-        return -1;
-      }
-      if (o2 == null) {
-        return 1;
-      }
-      return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
-    }
-  };
+
   public static final String DOT_GIT = ".git";
 
   public static final String ORIGIN_HEAD = "origin/HEAD";
@@ -418,12 +403,11 @@ public class GitUtil {
     if (contentRoots == null || contentRoots.length == 0) {
       throw new VcsException(GitBundle.getString("repository.action.missing.roots.unconfigured.message"));
     }
-    final List<VirtualFile> roots = new ArrayList<VirtualFile>(gitRootsForPaths(Arrays.asList(contentRoots)));
-    if (roots.size() == 0) {
+    final List<VirtualFile> sortedRoots = DvcsUtil.sortVirtualFilesByPresentation(gitRootsForPaths(Arrays.asList(contentRoots)));
+    if (sortedRoots.size() == 0) {
       throw new VcsException(GitBundle.getString("repository.action.missing.roots.misconfigured"));
     }
-    Collections.sort(roots, VIRTUAL_FILE_COMPARATOR);
-    return roots;
+    return sortedRoots;
   }
 
 
