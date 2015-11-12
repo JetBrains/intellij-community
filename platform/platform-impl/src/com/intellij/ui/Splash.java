@@ -182,7 +182,7 @@ public class Splash extends JDialog implements StartupProgress {
         if (Registry.is("ide.new.about")) {
           ApplicationInfoEx infoEx = ApplicationInfoEx.getInstanceEx();
           if (infoEx instanceof ApplicationInfoImpl) {
-            offsetX = ((ApplicationInfoImpl)infoEx).getProgressX();
+            offsetX = Math.max(offsetX, ((ApplicationInfoImpl)infoEx).getProgressX());
           } else {
             return false;
           }
