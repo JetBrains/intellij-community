@@ -331,7 +331,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
             final List<PsiElement> elements = new ArrayList<PsiElement>();
             elements.addAll(classesToSearch);
             elements.addAll(supers);
-            elements.addAll(FunctionalExpressionSearch.search((PsiMethod)element).findAll());
+            elements.addAll(FunctionalExpressionSearch.search(memberClass[0]).findAll());
 
             return new Result<SearchScope>(new LocalSearchScope(PsiUtilCore.toPsiElementArray(elements)), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
           }
