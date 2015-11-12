@@ -1637,6 +1637,9 @@
 
 
     <group id="GroovyGenerateGroup1">
+      <action id="org.jetbrains.plugins.groovy.actions.generate.tostring.GroovyGenerateToStringAction"
+              class="org.jetbrains.plugins.groovy.actions.generate.tostring.GroovyGenerateToStringAction"
+              text="to_String()" description="Generate toString() method"/>
       <action id="org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorAction"
               class="org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorAction"
               text="Constructor" description="Generates constructor"/>
