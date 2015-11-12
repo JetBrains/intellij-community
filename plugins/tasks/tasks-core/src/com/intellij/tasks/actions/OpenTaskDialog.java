@@ -259,8 +259,10 @@ public class OpenTaskDialog extends DialogWrapper {
       if (branchName.isEmpty()) {
         return new ValidationInfo("Branch name should not be empty", myBranchName);
       }
-      else if (myVcsTaskHandler != null && !myVcsTaskHandler.isBranchNameValid(branchName)){
-        return new ValidationInfo("Branch name is not valid; check your vcs branch name restrictions.");
+      else if (myVcsTaskHandler != null) {
+        return myVcsTaskHandler.isBranchNameValid(branchName)
+               ? null
+               : new ValidationInfo("Branch name is not valid; check your vcs branch name restrictions.");
       }
       else if (branchName.contains(" ")) {
         return new ValidationInfo("Branch name should not contain spaces");
