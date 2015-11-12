@@ -97,7 +97,7 @@ INJECTION =                     ("{{" {ID} "}"{0,2}) | ("%{" [^}\n]* "}"?)
 
 ESCAPE_SEQUENCE=                \\[^\n]
 DSTRING_SINGLE_LINE=            \"([^\\\"\n]|{ESCAPE_SEQUENCE})*\"
-DSTRING=                        \"([^\\\"]|{ESCAPE_SEQUENCE})*\"
+DSTRING=                        \"([^\\\"]|{ESCAPE_SEQUENCE}|\\\n)*\"
 STRING_SINGLE_LINE=             '([^'\n]|'')*'
 STRING=                         '([^']|'')*'
 NS_HEX_DIGIT = [[:digit:]a-fA-F]

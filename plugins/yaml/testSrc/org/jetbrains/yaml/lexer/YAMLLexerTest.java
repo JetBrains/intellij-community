@@ -158,6 +158,10 @@ public class YAMLLexerTest extends LexerTestCase {
     doTest();
   }
 
+  public void testMultilineDqLiteralWithEscapedNewlines() {
+    doTest();
+  }
+
   private void doTest() {
     doFileTest("yml");
   }
