@@ -80,6 +80,8 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
     if (member instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)member;
       final String methodName = method.getName();
+      final PsiClass aClass = method.getContainingClass();
+      if (!isValidMethodQualifierToConvert(aClass)) return null;
       final TypeConversionDescriptorBase descriptor = mySimpleDescriptors.getValue().get(methodName);
       if (descriptor != null) {
         return descriptor;
@@ -105,10 +107,14 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
     return null;
   }
 
-  public static boolean canConvert(@Nullable PsiType from,
-                                   @Nullable  PsiType to,
-                                   @NotNull String fromClassName,
-                                   @NotNull String toClassName) {
+  protected boolean isValidMethodQualifierToConvert(PsiClass aClass) {
+    return aClass != null && ruleFromClass().equals(aClass.getQualifiedName());
+  }
+
+  static boolean canConvert(@Nullable PsiType from,
+                            @Nullable PsiType to,
+                            @NotNull String fromClassName,
+                            @NotNull String toClassName) {
     if (!(from instanceof PsiClassType)) {
       return false;
     }

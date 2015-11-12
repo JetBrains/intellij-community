@@ -103,6 +103,12 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
     return GuavaFluentIterableConversionRule.buildCompoundDescriptor((PsiMethodCallExpression) context, to, labeler);
   }
 
+  @Override
+  protected boolean isValidMethodQualifierToConvert(PsiClass aClass) {
+    return super.isValidMethodQualifierToConvert(aClass) ||
+           (aClass != null && GuavaFluentIterableConversionRule.FLUENT_ITERABLE.equals(aClass.getQualifiedName()));
+  }
+
   @Nullable
   @Override
   protected TypeConversionDescriptorBase findConversionForVariableReference(@NotNull PsiReferenceExpression referenceExpression,
