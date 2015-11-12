@@ -153,8 +153,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
     assert !myDisposed;
     dropCaches();
 
-    List<VirtualFilePointer> thatList = ((VirtualFilePointerContainerImpl)that).myList;
-    for (final VirtualFilePointer pointer : thatList) {
+    for (final VirtualFilePointer pointer : that.getList()) {
       myList.add(duplicate(pointer));
     }
   }
