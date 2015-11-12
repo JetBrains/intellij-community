@@ -214,4 +214,13 @@ public class EditorImplTest extends AbstractEditorTest {
     myEditor.getSettings().setUseSoftWraps(false);
     assertEquals(new Dimension(70, 10), myEditor.getContentComponent().getPreferredSize());
   }
+  
+  public void testUpdatingCaretPositionAfterBulkMode() throws Exception {
+    initText("a<caret>bc");
+    DocumentEx document = (DocumentEx)myEditor.getDocument();
+    document.setInBulkUpdate(true);
+    document.insertString(0, "\n "); // we're changing number of visual lines, and invalidating text layout for caret line
+    document.setInBulkUpdate(false);
+    checkResultByText("\n a<caret>bc");
+  }
 }

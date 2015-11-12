@@ -1848,16 +1848,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void bulkUpdateFinished() {
     myFoldingModel.onBulkDocumentUpdateFinished();
     mySoftWrapModel.onBulkDocumentUpdateFinished();
+    if (myUseNewRendering) {
+      myView.reset();
+    }
     myCaretModel.onBulkDocumentUpdateFinished();
 
     clearTextWidthCache();
 
     setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
 
-    if (myUseNewRendering) {
-      myView.reset();
-    }
-    else {
+    if (!myUseNewRendering) {
       mySizeContainer.reset();
     }
     validateSize();
