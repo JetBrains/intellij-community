@@ -57,5 +57,6 @@ public class VcsWaitForUpdateForTest extends Svn17TestCase {
     }
 
     assert Boolean.TRUE.equals(done.get());
+    thread.join();
   }
 }

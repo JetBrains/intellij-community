@@ -86,6 +86,8 @@ public abstract class MavenIndicesStressTest extends MavenIndicesTestCase implem
     t2.join(100);
 
     indices.close();
+    t1.join();
+    t2.join();
   }
 
   public void test2() throws Exception {
@@ -130,6 +132,8 @@ public abstract class MavenIndicesStressTest extends MavenIndicesTestCase implem
 
     indices1.close();
     indices2.close();
+    t1.join();
+    t2.join();
   }
 
   private static Thread createThread(final MavenIndex index, final AtomicInteger finishedCount) {

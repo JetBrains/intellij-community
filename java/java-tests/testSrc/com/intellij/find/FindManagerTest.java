@@ -99,7 +99,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     super.tearDown();
   }
 
-  public void testFindString() {
+  public void testFindString() throws InterruptedException {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
 
     String text = "public static class MyClass{\n/*done*/\npublic static void main(){}}";
@@ -149,7 +149,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setProjectScope(true);
 
     final FindResult[] findResultArr = new FindResult[1];
-    findInNewThread(findModel, myFindManager, text, 0, findResultArr);
+    Thread thread = findInNewThread(findModel, myFindManager, text, 0, findResultArr);
     new WaitFor(30 *1000){
       @Override
       protected boolean condition() {
@@ -158,6 +158,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     }.assertCompleted();
 
     assertFalse(findResultArr[0].isStringFound());
+    thread.join();
   }
 
   private static Thread findInNewThread(final FindModel model,
