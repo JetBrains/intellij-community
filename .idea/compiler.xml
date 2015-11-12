@@ -31,20 +31,8 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="gradle-jps-plugin" target="1.6" />
-      <module name="intellilang-jps-plugin" target="1.6" />
       <module name="java-runtime" target="1.1" />
-      <module name="javaFX-jps-plugin" target="1.6" />
-      <module name="jps-builders" target="1.6" />
-      <module name="jps-launcher" target="1.6" />
-      <module name="jps-model-api" target="1.6" />
-      <module name="jps-model-impl" target="1.6" />
-      <module name="jps-model-serialization" target="1.6" />
-      <module name="jps-standalone-builder" target="1.6" />
       <module name="junit_rt" target="1.1" />
-      <module name="maven-jps-plugin" target="1.6" />
-      <module name="ui-designer-jps-plugin" target="1.6" />
-      <module name="util-rt" target="1.6" />
     </bytecodeTargetLevel>
   </component>
   <component name="EclipseCompilerSettings">
