@@ -18,6 +18,7 @@ package org.intellij.plugins.relaxNG.validation;
 
 import com.intellij.javaee.UriUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -166,6 +167,7 @@ public class RngParser {
         public ParsedPattern parseInclude(String uri, SchemaBuilder schemaBuilder, IncludedGrammar g, String inheritedNs)
                 throws BuildException, IllegalSchemaException
         {
+          ProgressManager.checkCanceled();
           return super.parseInclude(resolveURI(virtualFile, uri), schemaBuilder, g, inheritedNs);
         }
       };
