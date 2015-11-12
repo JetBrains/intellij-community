@@ -40,20 +40,36 @@ abstract class CompletionLogger {
 
 class CompletionLoggerImpl : CompletionLogger() {
     
-    override fun completionStarted() = Unit
+    override fun completionStarted() {
+        println("completion started")
+    }
 
-    override fun downPressed() = Unit
+    override fun downPressed() {
+        println("down pressed")
+    }
 
-    override fun upPressed() = Unit
+    override fun upPressed() {
+        println("up pressed")
+    }
 
-    override fun backspacePressed() = Unit
+    override fun backspacePressed() {
+        println("backspace pressed")
+    }
 
-    override fun itemSelectedCompletionFinished() = Unit
+    override fun itemSelectedCompletionFinished() {
+        println("item selected completion finished")
+    }
 
-    override fun charTyped(c: Char) = Unit
+    override fun charTyped(c: Char) {
+        println("char typed")
+    }
 
-    override fun completionCancelled() = Unit
+    override fun completionCancelled() {
+        println("completion cancelled")
+    }
 
-    override fun itemSelectedByTyping() = Unit
+    override fun itemSelectedByTyping() {
+        println("item selected by typing")
+    }
     
 }
