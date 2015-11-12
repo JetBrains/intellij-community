@@ -469,10 +469,6 @@ public class FindDialog extends DialogWrapper {
         myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
         myContent.setTitleAt(RESULTS_PREVIEW_TAB_INDEX, PREVIEW_TITLE);
         return;
-      } else if (findModel.isRegularExpressions()) {
-        myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.canNotPreviewRegExpSearch"));
-        myContent.setTitleAt(RESULTS_PREVIEW_TAB_INDEX, PREVIEW_TITLE);
-        return;
       }
 
       myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(new UsageTableCellRenderer());

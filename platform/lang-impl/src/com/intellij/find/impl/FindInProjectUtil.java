@@ -397,6 +397,10 @@ public class FindInProjectUtil {
     return processPresentation;
   }
 
+  public static @NotNull String buildStringToFindForIndicesFromRegExp(@NotNull String stringToFind) {
+    return "";
+  }
+
   public static class StringUsageTarget implements ConfigurableUsageTarget, ItemPresentation, TypeSafeDataProvider {
     @NotNull protected final Project myProject;
     @NotNull protected final FindModel myFindModel;

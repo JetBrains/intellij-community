@@ -440,11 +440,14 @@ class FindInProjectTask {
   @NotNull
   private Set<VirtualFile> getFilesForFastWordSearch() {
     String stringToFind = myFindModel.getStringToFind();
-    if (stringToFind.isEmpty() || DumbService.getInstance(myProject).isDumb() || myFindModel.isRegularExpressions()) {
-      return Collections.emptySet();
+
+    if (myFindModel.isRegularExpressions()) {
+      stringToFind = FindInProjectUtil.buildStringToFindForIndicesFromRegExp(stringToFind);
     }
 
-    final GlobalSearchScope scope = toGlobal(FindInProjectUtil.getScopeFromModel(myProject, myFindModel));
+    if (stringToFind.isEmpty() || DumbService.getInstance(myProject).isDumb()) {
+      return Collections.emptySet();
+    }
 
     final Set<VirtualFile> resultFiles = new LinkedHashSet<VirtualFile>();
     for(VirtualFile file:myFilesToScanInitially) {
@@ -452,6 +455,8 @@ class FindInProjectTask {
         resultFiles.add(file);
       }
     }
+
+    final GlobalSearchScope scope = toGlobal(FindInProjectUtil.getScopeFromModel(myProject, myFindModel));
 
     if (TrigramIndex.ENABLED) {
       final Set<Integer> keys = ContainerUtil.newTroveSet();
