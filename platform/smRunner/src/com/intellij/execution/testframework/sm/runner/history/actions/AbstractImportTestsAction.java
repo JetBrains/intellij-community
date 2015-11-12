@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -125,7 +126,12 @@ public abstract class AbstractImportTestsAction extends AnAction {
   public static void adjustHistory(Project project) {
     int historySize = getHistorySize();
 
-    final File[] files = TestStateStorage.getTestHistoryRoot(project).listFiles();
+    final File[] files = TestStateStorage.getTestHistoryRoot(project).listFiles(new FilenameFilter() {
+      @Override
+      public boolean accept(File dir, String name) {
+        return name.endsWith(".xml");
+      }
+    });
     if (files != null && files.length >= historySize + 1) {
       Arrays.sort(files, new Comparator<File>() {
         @Override
