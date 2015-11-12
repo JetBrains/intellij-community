@@ -112,10 +112,12 @@ public class DiffSettingsHolder implements PersistentStateComponent<DiffSettings
   private State myState = new State();
 
   @NotNull
+  @Override
   public State getState() {
     return myState;
   }
 
+  @Override
   public void loadState(State state) {
     myState = state;
   }

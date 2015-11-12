@@ -178,8 +178,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     myDocument.addDocumentListener(new MyOnesideDocumentListener());
   }
 
-  @CalledInAwt
   @NotNull
+  @Override
+  @CalledInAwt
   public List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<AnAction>();
 
@@ -196,8 +197,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     return group;
   }
 
-  @CalledInAwt
   @NotNull
+  @Override
+  @CalledInAwt
   public List<AnAction> createPopupActions() {
     List<AnAction> group = new ArrayList<AnAction>();
 

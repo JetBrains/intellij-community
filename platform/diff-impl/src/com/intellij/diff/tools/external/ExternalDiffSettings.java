@@ -35,10 +35,12 @@ import org.jetbrains.annotations.Nullable;
 public class ExternalDiffSettings implements PersistentStateComponent<ExternalDiffSettings.State> {
   private State myState = new State();
 
+  @Override
   public State getState() {
     return myState;
   }
 
+  @Override
   public void loadState(State state) {
     myState = state;
   }

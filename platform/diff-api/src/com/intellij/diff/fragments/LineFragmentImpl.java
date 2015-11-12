@@ -118,6 +118,7 @@ public class LineFragmentImpl implements LineFragment {
   }
 
   @Nullable
+  @Override
   public List<DiffFragment> getInnerFragments() {
     return myInnerFragments;
   }

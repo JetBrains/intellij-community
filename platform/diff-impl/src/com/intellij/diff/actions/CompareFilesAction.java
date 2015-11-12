@@ -70,6 +70,7 @@ public class CompareFilesAction extends BaseShowDiffAction {
     e.getPresentation().setText(text);
   }
 
+  @Override
   protected boolean isAvailable(@NotNull AnActionEvent e) {
     DiffRequest request = e.getData(DIFF_REQUEST);
     if (request != null) {

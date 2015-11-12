@@ -194,10 +194,12 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
   private State myState = new State();
 
   @NotNull
+  @Override
   public State getState() {
     return myState;
   }
 
+  @Override
   public void loadState(State state) {
     myState = state;
   }

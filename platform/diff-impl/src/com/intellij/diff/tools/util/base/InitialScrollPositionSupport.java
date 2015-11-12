@@ -192,9 +192,6 @@ public class InitialScrollPositionSupport {
 
     @CalledInAwt
     protected abstract boolean doScrollToLine();
-
-    @NotNull
-    protected abstract List<? extends Editor> getEditors();
   }
 
   @NotNull
