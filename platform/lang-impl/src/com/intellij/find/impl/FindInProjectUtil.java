@@ -57,6 +57,7 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.Function;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -397,8 +398,37 @@ public class FindInProjectUtil {
     return processPresentation;
   }
 
-  public static @NotNull String buildStringToFindForIndicesFromRegExp(@NotNull String stringToFind) {
-    return "";
+  private static List<PsiElement> getTopLevelRegExpChars(String regExpText, Project project) {
+    @SuppressWarnings("deprecation") PsiFile file = PsiFileFactory.getInstance(project).createFileFromText("A.regexp", regExpText);
+    List<PsiElement> result = null;
+    final PsiElement[] children = file.getChildren();
+
+    for (PsiElement child:children) {
+      PsiElement[] grandChildren = child.getChildren();
+      if (grandChildren.length != 1) return Collections.emptyList(); // a | b, more than one branch, can not predict in current way
+
+      for(PsiElement grandGrandChild:grandChildren[0].getChildren()) {
+        if (result == null) result = new ArrayList<PsiElement>();
+        result.add(grandGrandChild);
+      }
+    }
+    return result != null ? result : Collections.<PsiElement>emptyList();
+  }
+
+  public static @NotNull String buildStringToFindForIndicesFromRegExp(@NotNull String stringToFind, Project project) {
+    if (!SystemProperties.getBooleanProperty("idea.regexp.search.uses.indices", true)) return "";
+
+    final List<PsiElement> topLevelRegExpChars = getTopLevelRegExpChars("a", project);
+    if (topLevelRegExpChars.size() != 1) return "";
+
+    // leave only top level regExpChars
+    return StringUtil.join(getTopLevelRegExpChars(stringToFind, project), new Function<PsiElement, String>() {
+      final Class regExpCharPsiClass = topLevelRegExpChars.get(0).getClass();
+      @Override
+      public String fun(PsiElement element) {
+        return regExpCharPsiClass.isInstance(element) ? element.getText() : " ";
+      }
+    }, "");
   }
 
   public static class StringUsageTarget implements ConfigurableUsageTarget, ItemPresentation, TypeSafeDataProvider {

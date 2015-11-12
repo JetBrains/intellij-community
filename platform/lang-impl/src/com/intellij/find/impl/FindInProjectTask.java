@@ -87,6 +87,7 @@ class FindInProjectTask {
   private final Set<VirtualFile> myLargeFiles = ContainerUtil.newTroveSet();
   private final Set<VirtualFile> myFilesToScanInitially;
   private boolean myWarningShown;
+  private final String myStringToFindInIndices;
 
   FindInProjectTask(@NotNull final FindModel findModel, @NotNull final Project project, @NotNull Set<VirtualFile> filesToScanInitially) {
     myFindModel = findModel;
@@ -116,6 +117,14 @@ class FindInProjectTask {
 
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     myProgress = progress != null ? progress : new EmptyProgressIndicator();
+
+    String stringToFind = myFindModel.getStringToFind();
+
+    if (myFindModel.isRegularExpressions()) {
+      stringToFind = FindInProjectUtil.buildStringToFindForIndicesFromRegExp(stringToFind, myProject);
+    }
+
+    myStringToFindInIndices = stringToFind;
   }
 
   public void findUsages(@NotNull final Processor<UsageInfo> consumer, @NotNull final FindUsagesProcessPresentation processPresentation) {
@@ -271,7 +280,7 @@ class FindInProjectTask {
     final GlobalSearchScope globalCustomScope = customScope == null ? null : toGlobal(customScope);
 
     final ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(myProject);
-    final boolean hasTrigrams = hasTrigrams(myFindModel.getStringToFind());
+    final boolean hasTrigrams = hasTrigrams(myStringToFindInIndices);
 
     class EnumContentIterator implements ContentIterator {
       private final Set<VirtualFile> myFiles = new LinkedHashSet<VirtualFile>();
@@ -410,12 +419,10 @@ class FindInProjectTask {
   private boolean canRelyOnIndices() {
     if (DumbService.isDumb(myProject)) return false;
 
-    if (myFindModel.isRegularExpressions()) return false;
-
     // a local scope may be over a non-indexed file
     if (myFindModel.getCustomScope() instanceof LocalSearchScope) return false;
 
-    String text = myFindModel.getStringToFind();
+    String text = myStringToFindInIndices;
     if (StringUtil.isEmptyOrSpaces(text)) return false;
 
     if (hasTrigrams(text)) return true;
@@ -439,11 +446,7 @@ class FindInProjectTask {
 
   @NotNull
   private Set<VirtualFile> getFilesForFastWordSearch() {
-    String stringToFind = myFindModel.getStringToFind();
-
-    if (myFindModel.isRegularExpressions()) {
-      stringToFind = FindInProjectUtil.buildStringToFindForIndicesFromRegExp(stringToFind);
-    }
+    String stringToFind = myStringToFindInIndices;
 
     if (stringToFind.isEmpty() || DumbService.getInstance(myProject).isDumb()) {
       return Collections.emptySet();

@@ -76,6 +76,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
+import static com.intellij.find.impl.FindInProjectUtil.buildStringToFindForIndicesFromRegExp;
 import static com.intellij.find.impl.FindInProjectUtil.createFileMaskCondition;
 
 /**
@@ -843,6 +844,12 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setCustomScope(GlobalSearchScopesCore.filterScope(myProject, new NamedScope.UnnamedScope(compile)));
     findModel.setCustomScope(true);
     assertSize(0, findUsages(findModel));
+  }
+
+  public void testRegexReplacementStringForIndices() {
+    assertEquals("public static   MyType my   = 1;", buildStringToFindForIndicesFromRegExp("public static (@A)? MyType my\\w+?  = 1;", myProject));
+    assertEquals(" Foo ", buildStringToFindForIndicesFromRegExp("\\bFoo\\b", myProject));
+    assertEquals("", buildStringToFindForIndicesFromRegExp("foo|bar", myProject));
   }
 
   public void testCreateFileMaskCondition() {
