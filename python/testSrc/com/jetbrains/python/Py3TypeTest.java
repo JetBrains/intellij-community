@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -164,13 +166,17 @@ public class Py3TypeTest extends PyTestCase {
       }
     });
   }
-  
-  
 
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
-    final TypeEvalContext context = TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()).withTracing();
+    final Project project = expr.getProject();
+    final PsiFile containingFile = expr.getContainingFile();
+    assertType(expectedType, expr, TypeEvalContext.codeAnalysis(project, containingFile));
+    assertType(expectedType, expr, TypeEvalContext.userInitiated(project, containingFile));
+  }
+
+  private static void assertType(String expectedType, PyExpression expr, TypeEvalContext context) {
     final PyType actual = context.getType(expr);
     final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
     assertEquals(expectedType, actualType);
