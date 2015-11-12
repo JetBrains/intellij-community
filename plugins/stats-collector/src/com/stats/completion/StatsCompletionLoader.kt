@@ -95,6 +95,9 @@ class TrackingLookupListener(private val completionTracker: CompletionPopupActio
         if (items.firstOrNull()?.lookupString?.equals(prefix) ?: false) {
             logger.itemSelectedByTyping()
         }
+        else {
+            logger.completionCancelled()
+        }
     }
 
     override fun currentItemChanged(event: LookupEvent) {
