@@ -192,6 +192,15 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
 
     if (PsiTreeUtil.getParentOfType(element, PsiClassObjectAccessExpression.class) != null) return UsageType.CLASS_CLASS_OBJECT_ACCESS;
 
+    final PsiMethodReferenceExpression methodReferenceExpression = PsiTreeUtil.getParentOfType(element, PsiMethodReferenceExpression.class);
+    if (methodReferenceExpression != null && methodReferenceExpression.isConstructor()) {
+      final PsiElement qualifier = methodReferenceExpression.getQualifier();
+      if (qualifier instanceof PsiTypeElement && ((PsiTypeElement)qualifier).getType() instanceof PsiArrayType) {
+        return UsageType.CLASS_NEW_ARRAY;
+      }
+      return UsageType.CLASS_NEW_OPERATOR;
+    }
+
     if (element instanceof PsiReferenceExpression) {
       PsiReferenceExpression expression = (PsiReferenceExpression)element;
       if (expression.resolve() instanceof PsiClass) {

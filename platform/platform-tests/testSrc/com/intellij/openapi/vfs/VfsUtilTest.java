@@ -86,11 +86,6 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFindRelativeFile() throws Exception {
-    VirtualFile root = VirtualFileManager.getInstance().findFileByUrl("temp:///");
-    assertNotNull(root);
-    VirtualFile file = VfsUtilCore.findRelativeFile(root.getUrl(), null);
-    assertEquals(root, file);
-
     File ioTestDataDir = new File(PathManagerEx.getTestDataPath());
     VirtualFile testDataDir = LocalFileSystem.getInstance().findFileByIoFile(ioTestDataDir);
     assertNotNull(testDataDir);

@@ -110,7 +110,7 @@ public class TestGraphBuilder : BaseTestGraphBuilder {
 
           if (edgeType.isNormalEdge()) {
             val anotherNodeIndex = simpleEdge.toIndex
-            assert(anotherNodeIndex != null, "Graph is incorrect. Node ${node.nodeId} has ${edgeType} edge to not existed node: ${simpleEdge.toNode}")
+            assert(anotherNodeIndex != null) { "Graph is incorrect. Node ${node.nodeId} has ${edgeType} edge to not existed node: ${simpleEdge.toNode}" }
 
             val graphEdge = GraphEdge.createNormalEdge(anotherNodeIndex!!, nodeIndex, edgeType)
             edges.putValue(nodeIndex, graphEdge)

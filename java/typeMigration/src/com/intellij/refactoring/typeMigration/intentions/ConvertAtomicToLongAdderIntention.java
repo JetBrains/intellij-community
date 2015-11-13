@@ -18,9 +18,7 @@ package com.intellij.refactoring.typeMigration.intentions;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationVariableTypeFixProvider;
@@ -43,7 +41,7 @@ public class ConvertAtomicToLongAdderIntention extends PsiElementBaseIntentionAc
     if (variable != null) {
       final PsiType longAdder =
         JavaPsiFacade.getElementFactory(project).createTypeFromText(LongAdderConversionRule.JAVA_UTIL_CONCURRENT_ATOMIC_LONG_ADDER, element);
-      TypeMigrationVariableTypeFixProvider.runTypeMigrationOnVariable(variable, longAdder, null);
+      TypeMigrationVariableTypeFixProvider.runTypeMigrationOnVariable(variable, longAdder, null, false);
     }
   }
 

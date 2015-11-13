@@ -67,6 +67,6 @@ public class GrWithTraitTypeCalculator extends GrCallExpressionTypeCalculator {
       }
     }
 
-    return GrTraitType.createTraitClassType(invokedType, traits);
+    return GrTraitType.createTraitType(invokedType, traits);
   }
 }

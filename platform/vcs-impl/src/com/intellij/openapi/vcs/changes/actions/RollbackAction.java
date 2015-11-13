@@ -138,8 +138,8 @@ public class RollbackAction extends AnAction implements DumbAware {
       RollbackChangesDialog.rollbackChanges(project, changes);
     }
     else if (!hasChanges) {
-      List<Change> changelistChanges = getCurrentChangelistChanges(project);
-      RollbackChangesDialog.rollbackChanges(project, changelistChanges);
+      LocalChangeList currentChangeList = ChangeListManager.getInstance(project).getDefaultChangeList();
+      RollbackChangesDialog.rollbackChanges(project, currentChangeList);
     }
   }
 
@@ -161,16 +161,6 @@ public class RollbackAction extends AnAction implements DumbAware {
     }
     if (changes != null && changes.length > 0) {
       return ContainerUtil.newArrayList(changes);
-    }
-    return Collections.emptyList();
-  }
-
-  @NotNull
-  private static List<Change> getCurrentChangelistChanges(final Project project) {
-    final ChangeListManager clManager = ChangeListManager.getInstance(project);
-    ChangeList list = clManager.getDefaultChangeList();
-    if (list != null) {
-      return ContainerUtil.newArrayList(list.getChanges());
     }
     return Collections.emptyList();
   }

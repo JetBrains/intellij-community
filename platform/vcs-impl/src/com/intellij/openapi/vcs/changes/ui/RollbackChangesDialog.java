@@ -21,6 +21,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
@@ -47,7 +48,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   private final Runnable myAfterVcsRefreshInAwt;
   private final MultipleChangeListBrowser myBrowser;
   private final boolean myInvokedFromModalContext;
-  @Nullable private JCheckBox myDeleteLocallyAddedFiles;
+  private final JCheckBox myDeleteLocallyAddedFiles;
   private final ChangeInfoCalculator myInfoCalculator;
   private final CommitLegendPanel myCommitLegendPanel;
   private Runnable myListChangeListener;
@@ -62,9 +63,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     final ChangeListManagerEx manager = (ChangeListManagerEx) ChangeListManager.getInstance(project);
 
     if (changes.isEmpty()) {
-      String operationName = UIUtil.removeMnemonic(RollbackUtil.getRollbackOperationName(project));
-      Messages.showWarningDialog(project, VcsBundle.message("commit.dialog.no.changes.detected.text"),
-                                 VcsBundle.message("changes.action.rollback.nothing", operationName));
+      showNoChangesDialog(project);
       return;
     }
 
@@ -73,6 +72,23 @@ public class RollbackChangesDialog extends DialogWrapper {
     lists.addAll(manager.getInvolvedListsFilterChanges(changes, validChanges));
 
     new RollbackChangesDialog(project, ContainerUtil.newArrayList(lists), validChanges, refreshSynchronously, afterVcsRefreshInAwt).show();
+  }
+
+  public static void rollbackChanges(final Project project, final LocalChangeList changeList) {
+    List<Change> changes = new ArrayList<Change>(changeList.getChanges());
+
+    if (changes.isEmpty()) {
+      showNoChangesDialog(project);
+      return;
+    }
+
+    new RollbackChangesDialog(project, Collections.singletonList(changeList), Collections.<Change>emptyList(), true, null).show();
+  }
+
+  private static void showNoChangesDialog(Project project) {
+    String operationName = UIUtil.removeMnemonic(RollbackUtil.getRollbackOperationName(project));
+    Messages.showWarningDialog(project, VcsBundle.message("commit.dialog.no.changes.detected.text"),
+                               VcsBundle.message("changes.action.rollback.nothing", operationName));
   }
 
   public RollbackChangesDialog(final Project project,
@@ -104,12 +120,20 @@ public class RollbackChangesDialog extends DialogWrapper {
           else {
             setErrorText(null);
           }
+
+          boolean hasNewFiles = ContainerUtil.exists(selected, new Condition<Change>() {
+            @Override
+            public boolean value(Change change) {
+              return change.getType() == Change.Type.NEW;
+            }
+          });
+          myDeleteLocallyAddedFiles.setEnabled(hasNewFiles);
         }
       }
     };
     myBrowser = new MultipleChangeListBrowser(project, changeLists, changes, getDisposable(), null, true, true, myListChangeListener, myListChangeListener);
 
-    myOperationName = operationNameByChanges(project, changes);
+    myOperationName = operationNameByChanges(project, myBrowser.getAllChanges());
     setOKButtonText(myOperationName);
 
     myOperationName = UIUtil.removeMnemonic(myOperationName);
@@ -117,20 +141,14 @@ public class RollbackChangesDialog extends DialogWrapper {
     setCancelButtonText(CommonBundle.getCloseButtonText());
     myBrowser.setToggleActionTitle("&Include in " + myOperationName.toLowerCase());
 
-    for (Change c : changes) {
-      if (c.getType() == Change.Type.NEW) {
-        myDeleteLocallyAddedFiles = new JCheckBox(VcsBundle.message("changes.checkbox.delete.locally.added.files"));
-        myDeleteLocallyAddedFiles.setSelected(PropertiesComponent.getInstance().isTrueValue(DELETE_LOCALLY_ADDED_FILES_KEY));
-        myDeleteLocallyAddedFiles.addActionListener(new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            final boolean value = myDeleteLocallyAddedFiles.isSelected();
-            PropertiesComponent.getInstance().setValue(DELETE_LOCALLY_ADDED_FILES_KEY, String.valueOf(value));
-          }
-        });
-        break;
+    myDeleteLocallyAddedFiles = new JCheckBox(VcsBundle.message("changes.checkbox.delete.locally.added.files"));
+    myDeleteLocallyAddedFiles.setSelected(PropertiesComponent.getInstance().isTrueValue(DELETE_LOCALLY_ADDED_FILES_KEY));
+    myDeleteLocallyAddedFiles.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        PropertiesComponent.getInstance().setValue(DELETE_LOCALLY_ADDED_FILES_KEY, myDeleteLocallyAddedFiles.isSelected());
       }
-    }
+    });
 
     init();
     myListChangeListener.run();
@@ -159,7 +177,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   protected void doOKAction() {
     super.doOKAction();
     RollbackWorker worker = new RollbackWorker(myProject, myOperationName, myInvokedFromModalContext);
-    worker.doRollback(myBrowser.getChangesIncludedInAllLists(), myDeleteLocallyAddedFiles != null && myDeleteLocallyAddedFiles.isSelected(),
+    worker.doRollback(myBrowser.getChangesIncludedInAllLists(), myDeleteLocallyAddedFiles.isSelected(),
                       myAfterVcsRefreshInAwt, null);
   }
 
@@ -178,7 +196,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     border.add(myBrowser, BorderLayout.CENTER);
     gb.fill = GridBagConstraints.BOTH;
     gb.weighty = 1;
-    ++ gb.gridy;
+    ++gb.gridy;
     panel.add(border, gb);
 
     final JComponent commitLegendPanel = myCommitLegendPanel.getComponent();
@@ -186,15 +204,11 @@ public class RollbackChangesDialog extends DialogWrapper {
     gb.fill = GridBagConstraints.NONE;
     gb.weightx = 0;
     gb.weighty = 0;
-    ++ gb.gridy;
+    ++gb.gridy;
     panel.add(commitLegendPanel, gb);
 
-    if (myDeleteLocallyAddedFiles != null) {
-      ++ gb.gridy;
-      panel.add(new JSeparator(), gb);
-      ++ gb.gridy;
-      panel.add(myDeleteLocallyAddedFiles, gb);
-    }
+    ++gb.gridy;
+    panel.add(myDeleteLocallyAddedFiles, gb);
 
     return panel;
   }

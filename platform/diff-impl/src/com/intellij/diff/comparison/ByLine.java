@@ -448,6 +448,7 @@ public class ByLine {
     }
 
     @NotNull
+    @Override
     public CharSequence getContent() {
       return getOriginalText().subSequence(getOffset1(), getOffset2() - (myNewline ? 1 : 0));
     }

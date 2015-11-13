@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.io.MappingFailedException;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
@@ -107,11 +108,18 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     }
   }
 
+  @Nullable
   private static MemoryKind getOOMErrorKind(Throwable t) {
+    String message = t.getMessage();
+    if (message == null) return null;
+
     if (t instanceof OutOfMemoryError) {
-      return t.getMessage() != null && t.getMessage().contains("PermGen") ? MemoryKind.PERM_GEN : MemoryKind.HEAP;
+      if (message.contains("unable to create new native thread")) {
+        return null;
+      }
+      return message.contains("PermGen") ? MemoryKind.PERM_GEN : MemoryKind.HEAP;
     }
-    if (t instanceof VirtualMachineError && t.getMessage() != null && t.getMessage().contains("CodeCache")) {
+    if (t instanceof VirtualMachineError && message.contains("CodeCache")) {
       return MemoryKind.CODE_CACHE;
     }
     return null;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,21 @@
  */
 package com.siyeh.ig.visibility;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class ParameterHidingMemberVariableInspectionTest extends IGInspectionTestCase {
+public class ParameterHidingMemberVariableInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/visibility/parameter_hiding_member_variable", new ParameterHidingMemberVariableInspection());
+  public void testParameterHidingMemberVariable() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    final ParameterHidingMemberVariableInspection inspection = new ParameterHidingMemberVariableInspection();
+    inspection.m_ignoreStaticMethodParametersHidingInstanceFields = true;
+    return inspection;
   }
 }

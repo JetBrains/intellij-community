@@ -1,4 +1,5 @@
 Types:
+PsiMethod:meth : java.util.List<java.lang.Integer>
 PsiParameter:p : java.lang.Integer
 PsiReferenceExpression:p : java.lang.Integer
 

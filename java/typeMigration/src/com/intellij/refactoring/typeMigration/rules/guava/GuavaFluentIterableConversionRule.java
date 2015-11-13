@@ -110,6 +110,12 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     DESCRIPTORS_MAP.put("toSortedSet", new TypeConversionDescriptorFactory("$it$.toSortedSet($c$)", "$it$.sorted($c$).collect(java.util.stream.Collectors.toSet())", false));
   }
 
+  @Override
+  protected boolean isValidMethodQualifierToConvert(PsiClass aClass) {
+    return super.isValidMethodQualifierToConvert(aClass) ||
+           (aClass != null && GuavaOptionalConversionRule.GUAVA_OPTIONAL.equals(aClass.getQualifiedName()));
+  }
+
   @Nullable
   @Override
   protected TypeConversionDescriptorBase findConversionForMethod(@NotNull PsiType from,
@@ -220,7 +226,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
         final TypeConversionDescriptor descriptor = base.create();
         needSpecifyType = base.isChainedMethod();
         if (needSpecifyType && !base.isFluentIterableReturnType()) {
-          conversionType = addTypeParameters(GuavaOptionalConversionRule.JAVA_OPTIONAL, context.getType(), context);
+          conversionType = GuavaConversionUtil.addTypeParameters(GuavaOptionalConversionRule.JAVA_OPTIONAL, context.getType(), context);
         }
         descriptorBase = descriptor;
       }
@@ -228,26 +234,13 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     if (descriptorBase != null) {
       if (needSpecifyType) {
         if (conversionType == null) {
-          conversionType = addTypeParameters(StreamApiConstants.JAVA_UTIL_STREAM_STREAM, context.getType(), context);
+          conversionType = GuavaConversionUtil.addTypeParameters(StreamApiConstants.JAVA_UTIL_STREAM_STREAM, context.getType(), context);
         }
         descriptorBase.withConversionType(conversionType);
       }
       return descriptorBase;
     }
     return null;
-  }
-
-  @NotNull
-  private static PsiType addTypeParameters(String baseClassQualifiedName, PsiType type, PsiElement context) {
-    String parameterText = "";
-    if (type != null) {
-      final String canonicalText = type.getCanonicalText(false);
-      if (canonicalText.contains("<")) {
-        parameterText = canonicalText.substring(canonicalText.indexOf('<'));
-      }
-    }
-
-    return JavaPsiFacade.getElementFactory(context.getProject()).createTypeFromText(baseClassQualifiedName + parameterText, context);
   }
 
   @Nullable
@@ -306,7 +299,15 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
         break;
       }
       else if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).resolve() instanceof PsiVariable) {
-        labeler.migrateExpressionType(qualifier, addTypeParameters(StreamApiConstants.JAVA_UTIL_STREAM_STREAM, to, qualifier), qualifier.getParent(), false, false);
+        final PsiClass toClass = PsiTypesUtil.getPsiClass(to);
+        if (toClass != null && (StreamApiConstants.JAVA_UTIL_STREAM_STREAM.equals(toClass.getQualifiedName()) ||
+                                GuavaOptionalConversionRule.JAVA_OPTIONAL.equals(toClass.getQualifiedName()))) {
+          labeler.migrateExpressionType(qualifier,
+                                        GuavaConversionUtil.addTypeParameters(toClass.getQualifiedName(), qualifier.getType(), qualifier),
+                                        qualifier.getParent(),
+                                        false,
+                                        false);
+        }
         break;
       }
       else {

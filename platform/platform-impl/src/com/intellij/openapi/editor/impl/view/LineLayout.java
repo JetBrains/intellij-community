@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.bidi.BidiRegionsSeparator;
 import com.intellij.openapi.editor.bidi.LanguageBidiRegionsSeparator;
 import com.intellij.openapi.editor.colors.FontPreferences;
@@ -38,43 +39,47 @@ import java.util.List;
  * TextFragments within BidiRun are grouped into Chunks for performance reasons, glyph layout is performed per-Chunk, and only 
  * for required Chunks.
  */
-class LineLayout {
-  private final BidiRun[] myBidiRunsInLogicalOrder;
-  private final BidiRun[] myBidiRunsInVisualOrder;
-  private final float myWidth;
+abstract class LineLayout {
+  private LineLayout() {}
   
   /**
    * Creates a layout for a fragment of text from editor.
    */
-  LineLayout(@NotNull EditorView view, int startOffset, int endOffset, boolean skipBidiLayout) {
-    this(createFragments(view, startOffset, endOffset, skipBidiLayout), false);
+  @NotNull
+  static LineLayout create(@NotNull EditorView view, int line, boolean skipBidiLayout) {
+    List<BidiRun> runs = createFragments(view, line, skipBidiLayout);
+    return createLayout(runs);
   }
 
   /**
    * Creates a layout for an arbitrary piece of text (using a common font style).
    */
-  LineLayout(@NotNull EditorView view, @NotNull CharSequence text, @JdkConstants.FontStyle int fontStyle) {
-    this(createFragments(view, text, fontStyle), true);
+  @NotNull
+  static LineLayout create(@NotNull EditorView view, @NotNull CharSequence text, @JdkConstants.FontStyle int fontStyle) {
+    List<BidiRun> runs = createFragments(view, text, fontStyle);
+    LineLayout delegate = createLayout(runs);
+    return new WithSize(delegate);
   }
   
-  private LineLayout(@NotNull List<BidiRun> runs, boolean calculateWidth) {
-    myBidiRunsInLogicalOrder = runs.toArray(new BidiRun[runs.size()]);
-    myBidiRunsInVisualOrder = myBidiRunsInLogicalOrder.clone();
+  private static LineLayout createLayout(@NotNull List<BidiRun> runs) {
+    if (runs.isEmpty()) return new Simple(null);
+    if (runs.size() == 1) {
+      BidiRun run = runs.get(0);
+      if (run.level == 0 && run.getChunkCount() == 1) {
+        Chunk chunk = run.chunks == null ? new Chunk(0, run.endOffset) : run.chunks[0];
+        return new Simple(chunk);
+      }
+    }
+    return new Complex(runs.toArray(new BidiRun[runs.size()]));
+  }
 
-    reorderRunsVisually(myBidiRunsInVisualOrder);
-    
-    myWidth = calculateWidth ? calculateWidth() : -1;
-  }
-  
   // runs are supposed to be in logical order initially
   private static void reorderRunsVisually(BidiRun[] bidiRuns) {
-    if (bidiRuns.length > 1) {
-      byte[] levels = new byte[bidiRuns.length];
-      for (int i = 0; i < bidiRuns.length; i++) {
-        levels[i] = bidiRuns[i].level;
-      }
-      Bidi.reorderVisually(levels, 0, bidiRuns, 0, levels.length);
+    byte[] levels = new byte[bidiRuns.length];
+    for (int i = 0; i < bidiRuns.length; i++) {
+      levels[i] = bidiRuns[i].level;
     }
+    Bidi.reorderVisually(levels, 0, bidiRuns, 0, levels.length);
   }
 
   static boolean isBidiLayoutRequired(@NotNull CharSequence text) {
@@ -82,11 +87,14 @@ class LineLayout {
     return Bidi.requiresBidi(chars, 0, chars.length);
   }
   
-  private static List<BidiRun> createFragments(@NotNull EditorView view, int lineStartOffset, int lineEndOffset, boolean skipBidiLayout) {
+  private static List<BidiRun> createFragments(@NotNull EditorView view, int line, boolean skipBidiLayout) {
+    EditorImpl editor = view.getEditor();
+    Document document = editor.getDocument();
+    int lineStartOffset = document.getLineStartOffset(line);
+    int lineEndOffset = document.getLineEndOffset(line);
     if (lineEndOffset <= lineStartOffset) return Collections.emptyList();
     if (skipBidiLayout) return Collections.singletonList(new BidiRun(lineEndOffset - lineStartOffset));
-    EditorImpl editor = view.getEditor();
-    CharSequence text = editor.getDocument().getImmutableCharSequence().subSequence(lineStartOffset, lineEndOffset);
+    CharSequence text = document.getImmutableCharSequence().subSequence(lineStartOffset, lineEndOffset);
     char[] chars = CharArrayUtil.fromSequence(text);
     return createRuns(editor, chars, lineStartOffset);
   }
@@ -214,24 +222,11 @@ class LineLayout {
     }
   }
   
-  private float calculateWidth() {
-    float x = 0;
-    for (VisualFragment fragment : getFragmentsInVisualOrder(x)) {
-      x = fragment.getEndX();
-    }
-    return x;
-  }
-  
-  float getWidth() {
-    if (myWidth < 0) throw new RuntimeException("This LineLayout instance doesn't have precalculated width");
-    return myWidth;
-  }
-
   Iterable<VisualFragment> getFragmentsInVisualOrder(final float startX) {
     return new Iterable<VisualFragment>() {
       @Override
       public Iterator<VisualFragment> iterator() {
-        return new VisualOrderIterator(null, 0, startX, 0, 0, 0, myBidiRunsInVisualOrder);
+        return new VisualOrderIterator(null, 0, startX, 0, 0, 0, getRunsInVisualOrder());
       }
     };
   }
@@ -240,8 +235,8 @@ class LineLayout {
    * If <code>quickEvaluationListener</code> is provided, quick approximate iteration becomes enabled, listener will be invoked
    * if approximation will in fact be used during width calculation.
    */
-  Iterable<VisualFragment> getFragmentsInVisualOrder(@NotNull final EditorView view,
-                                                     final int lineStartOffset,
+  Iterator<VisualFragment> getFragmentsInVisualOrder(@NotNull final EditorView view,
+                                                     final int line,
                                                      final float startX,
                                                      final int startVisualColumn,
                                                      final int startOffset,
@@ -254,61 +249,189 @@ class LineLayout {
     }
     else {
       List<BidiRun> runList = new ArrayList<BidiRun>();
-      for (BidiRun run : myBidiRunsInLogicalOrder) {
+      for (BidiRun run : getRunsInLogicalOrder()) {
         if (run.endOffset <= startOffset) continue;
         if (run.startOffset >= endOffset) break;
-        runList.add(run.subRun(view, lineStartOffset, startOffset, endOffset, quickEvaluationListener));
+        runList.add(run.subRun(view, line, startOffset, endOffset, quickEvaluationListener));
       }
       runs = runList.toArray(new BidiRun[runList.size()]);
-      reorderRunsVisually(runs);
-    }
-    final int startLogicalColumn = view.offsetToLogicalPosition(lineStartOffset + startOffset).column;
-    return new Iterable<VisualFragment>() {
-      @Override
-      public Iterator<VisualFragment> iterator() {
-        return new VisualOrderIterator(view, lineStartOffset, startX, startVisualColumn, startLogicalColumn, startOffset, runs);
+      if (runs.length > 1) {
+        reorderRunsVisually(runs);
       }
-    };
+    }
+    final int startLogicalColumn = view.getLogicalPositionCache().offsetToLogicalColumn(line, startOffset);
+    return new VisualOrderIterator(view, line, startX, startVisualColumn, startLogicalColumn, startOffset, runs);
   }
 
-  boolean isLtr() {
-    return myBidiRunsInLogicalOrder.length == 0 || myBidiRunsInLogicalOrder.length == 1 && !myBidiRunsInLogicalOrder[0].isRtl();
+  float getWidth() {
+    throw new RuntimeException("This LineLayout instance doesn't have precalculated width");
+  }
+
+  abstract boolean isLtr();
+  
+  abstract boolean isRtlLocation(int offset, boolean leanForward);
+
+  abstract int findNearestDirectionBoundary(int offset, boolean lookForward);
+  
+  abstract BidiRun[] getRunsInLogicalOrder();
+
+  abstract BidiRun[] getRunsInVisualOrder();
+  
+  private static class Simple extends LineLayout {
+    private final Chunk myChunk;
+
+    private Simple(Chunk chunk) {
+      myChunk = chunk;
+    }
+
+    @Override
+    boolean isLtr() {
+      return true;
+    }
+    
+    @Override
+    boolean isRtlLocation(int offset, boolean leanForward) {
+      return false;
+    }
+
+    @Override
+    int findNearestDirectionBoundary(int offset, boolean lookForward) {
+      return -1;
+    }
+
+    @Override
+    BidiRun[] getRunsInLogicalOrder() {
+      return createRuns();
+    }
+
+    @Override
+    BidiRun[] getRunsInVisualOrder() {
+      return createRuns();
+    }
+    
+    private BidiRun[] createRuns() {
+      if (myChunk == null) return new BidiRun[0];
+      BidiRun run = new BidiRun(myChunk.endOffset);
+      run.chunks = new Chunk[] {myChunk};
+      return new BidiRun[] {run};
+    }
   }
   
-  boolean isRtlLocation(int offset, boolean leanForward) {
-    if (offset == 0 && !leanForward) return false;
-    for (BidiRun run : myBidiRunsInLogicalOrder) {
-      if (offset < run.endOffset || offset == run.endOffset && !leanForward) return run.isRtl();
-    }
-    return false;
-  }
+  private static class Complex extends LineLayout {
+    private final BidiRun[] myBidiRunsInLogicalOrder;
+    private final BidiRun[] myBidiRunsInVisualOrder;
 
-  int findNearestDirectionBoundary(int offset, boolean lookForward) {
-    if (lookForward) {
-      byte originLevel = -1;
+    private Complex(BidiRun[] bidiRunsInLogicalOrder) {
+      myBidiRunsInLogicalOrder = bidiRunsInLogicalOrder;
+      if (bidiRunsInLogicalOrder.length > 1) {
+        myBidiRunsInVisualOrder = myBidiRunsInLogicalOrder.clone();
+        reorderRunsVisually(myBidiRunsInVisualOrder);
+      }
+      else {
+        myBidiRunsInVisualOrder = bidiRunsInLogicalOrder;
+      }
+    }
+
+    @Override
+    boolean isLtr() {
+      return myBidiRunsInLogicalOrder.length == 0 || myBidiRunsInLogicalOrder.length == 1 && !myBidiRunsInLogicalOrder[0].isRtl();
+    }
+
+    @Override
+    boolean isRtlLocation(int offset, boolean leanForward) {
+      if (offset == 0 && !leanForward) return false;
       for (BidiRun run : myBidiRunsInLogicalOrder) {
-        if (originLevel >= 0) {
-          if (run.level != originLevel) return run.startOffset;
-        }
-        else if (run.endOffset > offset) {
-          originLevel = run.level;
-        }
+        if (offset < run.endOffset || offset == run.endOffset && !leanForward) return run.isRtl();
       }
-      return originLevel > 0 ? myBidiRunsInLogicalOrder[myBidiRunsInLogicalOrder.length - 1].endOffset : -1;
+      return false;
     }
-    else {
-      byte originLevel = -1;
-      for (int i = myBidiRunsInLogicalOrder.length - 1; i >= 0; i--) {
-        BidiRun run = myBidiRunsInLogicalOrder[i];
-        if (originLevel >= 0) {
-          if (run.level != originLevel) return run.endOffset;
+    
+    @Override
+    int findNearestDirectionBoundary(int offset, boolean lookForward) {
+      if (lookForward) {
+        byte originLevel = -1;
+        for (BidiRun run : myBidiRunsInLogicalOrder) {
+          if (originLevel >= 0) {
+            if (run.level != originLevel) return run.startOffset;
+          }
+          else if (run.endOffset > offset) {
+            originLevel = run.level;
+          }
         }
-        else if (run.startOffset < offset) {
-          originLevel = run.level;
-
-        }
+        return originLevel > 0 ? myBidiRunsInLogicalOrder[myBidiRunsInLogicalOrder.length - 1].endOffset : -1;
       }
-      return originLevel > 0 ? 0 : -1;
+      else {
+        byte originLevel = -1;
+        for (int i = myBidiRunsInLogicalOrder.length - 1; i >= 0; i--) {
+          BidiRun run = myBidiRunsInLogicalOrder[i];
+          if (originLevel >= 0) {
+            if (run.level != originLevel) return run.endOffset;
+          }
+          else if (run.startOffset < offset) {
+            originLevel = run.level;
+
+          }
+        }
+        return originLevel > 0 ? 0 : -1;
+      }
+    }
+
+    @Override
+    BidiRun[] getRunsInLogicalOrder() {
+      return myBidiRunsInLogicalOrder;
+    }
+
+    @Override
+    BidiRun[] getRunsInVisualOrder() {
+      return myBidiRunsInVisualOrder;
+    }
+  }
+  
+  private static class WithSize extends LineLayout {
+    private final LineLayout myDelegate;
+    private final float myWidth;
+    
+    private WithSize(@NotNull LineLayout delegate) {
+      myDelegate = delegate;
+      myWidth = calculateWidth();
+    }
+
+    private float calculateWidth() {
+      float x = 0;
+      for (VisualFragment fragment : getFragmentsInVisualOrder(x)) {
+        x = fragment.getEndX();
+      }
+      return x;
+    }
+
+    @Override
+    float getWidth() {
+      return myWidth;
+    }
+
+    @Override
+    boolean isLtr() {
+      return myDelegate.isLtr();
+    }
+
+    @Override
+    boolean isRtlLocation(int offset, boolean leanForward) {
+      return myDelegate.isRtlLocation(offset, leanForward);
+    }
+
+    @Override
+    int findNearestDirectionBoundary(int offset, boolean lookForward) {
+      return myDelegate.findNearestDirectionBoundary(offset, lookForward);
+    }
+
+    @Override
+    BidiRun[] getRunsInLogicalOrder() {
+      return myDelegate.getRunsInLogicalOrder();
+    }
+
+    @Override
+    BidiRun[] getRunsInVisualOrder() {
+      return myDelegate.getRunsInVisualOrder();
     }
   }
 
@@ -336,7 +459,7 @@ class LineLayout {
     
     private Chunk[] getChunks() {
       if (chunks == null) {
-        int chunkCount = (endOffset - startOffset + CHUNK_CHARACTERS - 1) / CHUNK_CHARACTERS;
+        int chunkCount = getChunkCount();
         chunks = new Chunk[chunkCount];
         for (int i = 0; i < chunkCount; i++) {
           int from = startOffset + i * CHUNK_CHARACTERS;
@@ -348,7 +471,11 @@ class LineLayout {
       return chunks;
     }
 
-    private BidiRun subRun(@NotNull EditorView view, int lineStartOffset, int targetStartOffset, int targetEndOffset, 
+    private int getChunkCount() {
+      return (endOffset - startOffset + CHUNK_CHARACTERS - 1) / CHUNK_CHARACTERS;
+    }
+
+    private BidiRun subRun(@NotNull EditorView view, int line, int targetStartOffset, int targetEndOffset, 
                            @Nullable Runnable quickEvaluationListener) {
       assert targetStartOffset < endOffset;
       assert targetEndOffset > startOffset;
@@ -359,7 +486,7 @@ class LineLayout {
       for (Chunk chunk : getChunks()) {
         if (chunk.endOffset <= start) continue;
         if (chunk.startOffset >= end) break;
-        subChunks.add(chunk.subChunk(view, this, lineStartOffset, start, end, quickEvaluationListener));
+        subChunks.add(chunk.subChunk(view, this, line, start, end, quickEvaluationListener));
       }
       subRun.chunks = subChunks.toArray(new Chunk[subChunks.size()]);
       return subRun;
@@ -376,11 +503,12 @@ class LineLayout {
       this.endOffset = endOffset;
     }
 
-    private void ensureLayout(@NotNull EditorView view, BidiRun run, int lineStartOffset) {
+    private void ensureLayout(@NotNull EditorView view, BidiRun run, int line) {
       if (isReal()) {
         view.getTextLayoutCache().onChunkAccess(this);
       }
       if (!fragments.isEmpty()) return;
+      int lineStartOffset = view.getEditor().getDocument().getLineStartOffset(line);
       int start = lineStartOffset + startOffset;
       int end = lineStartOffset + endOffset;
       IterationState it = new IterationState(view.getEditor(), start, end, false, false, false, false);
@@ -395,7 +523,7 @@ class LineLayout {
       assert !fragments.isEmpty();
     }
     
-    private Chunk subChunk(EditorView view, BidiRun run, int lineStartOffset, int targetStartOffset, int targetEndOffset,
+    private Chunk subChunk(EditorView view, BidiRun run, int line, int targetStartOffset, int targetEndOffset,
                            @Nullable Runnable quickEvaluationListener) {
       assert targetStartOffset < endOffset;
       assert targetEndOffset > startOffset;
@@ -403,12 +531,12 @@ class LineLayout {
       int end = Math.min(endOffset, targetEndOffset);
       if (quickEvaluationListener != null && fragments.isEmpty()) {
         quickEvaluationListener.run();
-        return new ApproximationChunk(view, lineStartOffset, start, end);
+        return new ApproximationChunk(view, line, start, end);
       }
       if (start == startOffset && end == this.endOffset) {
         return this;
       }
-      ensureLayout(view, run, lineStartOffset);
+      ensureLayout(view, run, line);
       Chunk chunk = new Chunk(start, end);
       int offset = startOffset;
       for (LineFragment fragment : fragments) {
@@ -432,10 +560,10 @@ class LineLayout {
   }
   
   private static class ApproximationChunk extends Chunk {
-    private ApproximationChunk(@NotNull EditorView view, int lineStartOffset, int start, int end) {
+    private ApproximationChunk(@NotNull EditorView view, int line, int start, int end) {
       super(start, end);
-      int startColumn = view.offsetToLogicalPosition(lineStartOffset + start).column;
-      int endColumn = view.offsetToLogicalPosition(lineStartOffset + end).column;
+      int startColumn = view.getLogicalPositionCache().offsetToLogicalColumn(line, start);
+      int endColumn = view.getLogicalPositionCache().offsetToLogicalColumn(line, end);
       fragments.add(new ApproximationFragment(end - start, endColumn - startColumn, view.getMaxCharWidth()));
     }
 
@@ -447,7 +575,7 @@ class LineLayout {
 
   private static class VisualOrderIterator implements Iterator<VisualFragment> {
     private final EditorView myView;
-    private final int myLineStartOffset;
+    private final int myLine;
     private final BidiRun[] myRuns;
     private int myRunIndex = 0;
     private int myChunkIndex = 0;
@@ -455,10 +583,10 @@ class LineLayout {
     private int myOffsetInsideRun = 0;
     private VisualFragment myFragment = new VisualFragment();
 
-    private VisualOrderIterator(EditorView view, int lineStartOffset, 
+    private VisualOrderIterator(EditorView view, int line, 
                                 float startX, int startVisualColumn, int startLogicalColumn, int startOffset, BidiRun[] runsInVisualOrder) {
       myView = view;
-      myLineStartOffset = lineStartOffset;
+      myLine = line;
       myRuns = runsInVisualOrder;
       myFragment.startX = startX;
       myFragment.startVisualColumn = startVisualColumn;
@@ -474,7 +602,7 @@ class LineLayout {
       if (myChunkIndex >= chunks.length) return false;
       Chunk chunk = chunks[run.isRtl() ? chunks.length - 1 - myChunkIndex : myChunkIndex];
       if (myView != null) {
-        chunk.ensureLayout(myView, run, myLineStartOffset);
+        chunk.ensureLayout(myView, run, myLine);
       }
       return myFragmentIndex < chunk.fragments.size();
     }

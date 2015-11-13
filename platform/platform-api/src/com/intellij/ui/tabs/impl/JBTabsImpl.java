@@ -427,6 +427,7 @@ public class JBTabsImpl extends JComponent
   public void dispose() {
     myDisposed = true;
     mySelectedInfo = null;
+    myDeferredFocusRequest = null;
     resetTabsCache();
     myAttractions.clear();
     myVisibleInfos.clear();

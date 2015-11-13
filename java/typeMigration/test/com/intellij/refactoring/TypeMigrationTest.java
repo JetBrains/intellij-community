@@ -866,6 +866,12 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                            myFactory.createTypeFromText("java.lang.Integer", null));
   }
 
+  public void testT140() {
+    doTestFirstParamType("meth",
+                         myFactory.createTypeFromText("java.util.List<U>", null),
+                         myFactory.createTypeFromText("java.util.Set<U>", null));
+  }
+
   private void doTestForeachParameter(final PsiType rootType, final PsiType migrationType) {
     start(new RulesProvider() {
       @Override

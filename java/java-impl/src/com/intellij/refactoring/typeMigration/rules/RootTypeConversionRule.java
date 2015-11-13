@@ -15,11 +15,13 @@
  */
 package com.intellij.refactoring.typeMigration.rules;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author anna
@@ -47,6 +49,24 @@ public class RootTypeConversionRule extends TypeConversionRule {
         }
         if (replacer != null && TypeConversionUtil.areTypesConvertible(method.getReturnType(), replacer.getReturnType())) {
           final PsiElement parent = context.getParent();
+          if (context instanceof PsiMethodReferenceExpression) {
+            final PsiType functionalInterfaceType = ((PsiMethodReferenceExpression)context).getFunctionalInterfaceType();
+            if (Comparing.equal(functionalInterfaceType, to) && method.isEquivalentTo(LambdaUtil.getFunctionalInterfaceMethod(from))) {
+              return new TypeConversionDescriptorBase() {
+                @Override
+                public PsiExpression replace(PsiExpression expression) throws IncorrectOperationException {
+                  final PsiMethodReferenceExpression methodReferenceExpression = (PsiMethodReferenceExpression)expression;
+                  final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
+                  if (qualifierExpression != null) {
+                    return (PsiExpression)expression.replace(qualifierExpression);
+                  }
+                  else {
+                    return expression;
+                  }
+                }
+              };
+            }
+          }
           if (context instanceof PsiReferenceExpression && parent instanceof PsiMethodCallExpression) {
             final JavaResolveResult resolveResult = ((PsiReferenceExpression)context).advancedResolve(false);
             final PsiSubstitutor aSubst;

@@ -15,9 +15,7 @@
  */
 package com.intellij.psi.impl.file.impl;
 
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -193,9 +191,7 @@ public class PsiEventsTest extends PsiTestCase {
           return directory.getVirtualFile().equals(myPrjDir1);
         }
       };
-      LeakHunter.checkLeak(ApplicationManager.getApplication(), PsiDirectory.class, isReallyLeak);
-      LeakHunter.checkLeak(IdeEventQueue.getInstance(), PsiDirectory.class, isReallyLeak);
-      LeakHunter.checkLeak(LaterInvocator.getLaterInvocatorQueue(), PsiDirectory.class, isReallyLeak);
+      LeakHunter.checkLeak(LeakHunter.allRoots(), PsiDirectory.class, isReallyLeak);
 
       String dumpPath = FileUtil.createTempFile(
         new File(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))), "testRenameFileWithoutDir", ".hprof",
@@ -792,7 +788,7 @@ public class PsiEventsTest extends PsiTestCase {
     assertTrue(documentManager.isCommitted(document));
   }
 
-  private void checkCommitted(boolean shouldBeCommitted, PsiTreeChangeEvent event) {
+  private static void checkCommitted(boolean shouldBeCommitted, PsiTreeChangeEvent event) {
     PsiFile file = event.getFile();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
     Document document = documentManager.getDocument(file);

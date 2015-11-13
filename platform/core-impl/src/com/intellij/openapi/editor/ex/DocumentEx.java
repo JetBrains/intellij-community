@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public interface DocumentEx extends Document {
   void replaceText(@NotNull CharSequence chars, long newModificationStamp);
 
   /**
-   * Moves text from the <code>[src start; src end)</code> range to the <code>dstOffset</code> offset.
+   * Moves text from the <code>[srcStart; srcEnd)</code> range to the <code>dstOffset</code> offset.
    * <p/>
    * The benefit to use this method over usual {@link #deleteString(int, int)} and {@link #replaceString(int, int, CharSequence)}
    * is that {@link #createRangeMarker(int, int, boolean) range markers} from the <code>[srcStart; srcEnd)</code> range have

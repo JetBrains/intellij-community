@@ -29,7 +29,10 @@ try:
 except ImportError:
     # Versions of IPython [0.11,1.0) had an extra hierarchy level
     from IPython.frontend.terminal.interactiveshell import TerminalInteractiveShell
-from IPython.utils.traitlets import CBool, Unicode
+try:
+    from traitlets import CBool, Unicode
+except ImportError:
+    from IPython.utils.traitlets import CBool, Unicode
 from IPython.core import release
 
 from pydev_imports import xmlrpclib

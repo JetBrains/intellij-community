@@ -21,6 +21,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.RefsModel;
@@ -58,16 +59,19 @@ public class GitLogBranchOperationsActionGroup extends ActionGroup implements Du
       return AnAction.EMPTY_ARRAY;
     }
 
-    List<VcsFullCommitDetails> details = log.getSelectedDetails();
+    List<Hash> details = log.getSelectedCommits();
     if (details.size() != 1) return AnAction.EMPTY_ARRAY;
 
-    VcsFullCommitDetails commitDetails = details.get(0);
-    GitRepositoryManager repositoryManager = ServiceManager.getService(project, GitRepositoryManager.class);
-    final GitRepository root = repositoryManager.getRepositoryForRoot(commitDetails.getRoot());
-    if (root == null) return AnAction.EMPTY_ARRAY;
+    Hash hash = details.get(0);
 
     VcsLogDataPack dataPack = logUI.getDataPack();
-    Collection<VcsRef> allVcsRefs = ((RefsModel)dataPack.getRefs()).refsToCommit(commitDetails.getId());
+    Collection<VcsRef> allVcsRefs = ((RefsModel)dataPack.getRefs()).refsToCommit(hash);
+    if (allVcsRefs.isEmpty()) return AnAction.EMPTY_ARRAY;
+
+    VirtualFile rootFile = ContainerUtil.getFirstItem(allVcsRefs).getRoot();
+    GitRepositoryManager repositoryManager = ServiceManager.getService(project, GitRepositoryManager.class);
+    final GitRepository root = repositoryManager.getRepositoryForRoot(rootFile);
+    if (root == null) return AnAction.EMPTY_ARRAY;
 
     List<VcsRef> vcsRefs = ContainerUtil.filter(allVcsRefs, new Condition<VcsRef>() {
       @Override
@@ -128,7 +132,8 @@ public class GitLogBranchOperationsActionGroup extends ActionGroup implements Du
     }
 
     String text = showBranchesPopup ? ref.getName() : "Branch '" + ref.getName() + "'";
-    ActionGroup group = new DefaultActionGroup(text, actions);
+    ActionGroup group = new DefaultActionGroup(actions);
+    group.getTemplatePresentation().setText(text, false);
     group.setPopup(true);
     return group;
   }

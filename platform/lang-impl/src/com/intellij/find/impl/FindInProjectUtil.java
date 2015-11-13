@@ -41,9 +41,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
@@ -59,16 +57,15 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.Function;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class FindInProjectUtil {
   private static final int USAGES_PER_READ_ACTION = 100;
@@ -156,7 +153,42 @@ public class FindInProjectUtil {
 
   }
 
+  /* filter can have form "*.js, !*_min.js", latter means except matched by *_min.js */
+  @NotNull
+  public static Condition<String> createFileMaskCondition(@Nullable String filter) throws PatternSyntaxException {
+    if (filter == null) {
+      return Conditions.alwaysTrue();
+    }
 
+    String pattern = "";
+    String negativePattern = "";
+    final List<String> masks = StringUtil.split(filter, ",");
+
+    for(String mask:masks) {
+      mask = mask.trim();
+      if (StringUtil.startsWith(mask, "!")) {
+        negativePattern += (negativePattern.isEmpty() ? "" : "|") + "(" + PatternUtil.convertToRegex(mask.substring(1)) + ")";
+      } else {
+        pattern += (pattern.isEmpty() ? "" : "|") + "(" + PatternUtil.convertToRegex(mask) + ")";
+      }
+    }
+
+    final String finalPattern = pattern;
+    final String finalNegativePattern = negativePattern;
+
+    return new Condition<String>() {
+      final Pattern regExp = Pattern.compile(finalPattern, Pattern.CASE_INSENSITIVE);
+      final Pattern negativeRegExp = StringUtil.isEmpty(finalNegativePattern) ? null : Pattern.compile(finalNegativePattern, Pattern.CASE_INSENSITIVE);
+      @Override
+      public boolean value(String input) {
+        return regExp.matcher(input).matches() && (negativeRegExp == null || !negativeRegExp.matcher(input).matches());
+      }
+    };
+  }
+
+  /**
+   * @deprecated to be removed in IDEA 16
+   */
   @Nullable
   public static Pattern createFileMaskRegExp(@Nullable String filter) {
     if (filter == null) {
@@ -194,7 +226,15 @@ public class FindInProjectUtil {
                                 @NotNull final Project project,
                                 @NotNull final Processor<UsageInfo> consumer,
                                 @NotNull FindUsagesProcessPresentation processPresentation) {
-    new FindInProjectTask(findModel, project).findUsages(consumer, processPresentation);
+    findUsages(findModel, project, consumer, processPresentation, Collections.<VirtualFile>emptySet());
+  }
+
+  public static void findUsages(@NotNull FindModel findModel,
+                                @NotNull final Project project,
+                                @NotNull final Processor<UsageInfo> consumer,
+                                @NotNull FindUsagesProcessPresentation processPresentation,
+                                Set<VirtualFile> filesToStart) {
+    new FindInProjectTask(findModel, project, filesToStart).findUsages(consumer, processPresentation);
   }
 
   // returns number of hits
@@ -356,6 +396,39 @@ public class FindInProjectUtil {
       }
     );
     return processPresentation;
+  }
+
+  private static List<PsiElement> getTopLevelRegExpChars(String regExpText, Project project) {
+    @SuppressWarnings("deprecation") PsiFile file = PsiFileFactory.getInstance(project).createFileFromText("A.regexp", regExpText);
+    List<PsiElement> result = null;
+    final PsiElement[] children = file.getChildren();
+
+    for (PsiElement child:children) {
+      PsiElement[] grandChildren = child.getChildren();
+      if (grandChildren.length != 1) return Collections.emptyList(); // a | b, more than one branch, can not predict in current way
+
+      for(PsiElement grandGrandChild:grandChildren[0].getChildren()) {
+        if (result == null) result = new ArrayList<PsiElement>();
+        result.add(grandGrandChild);
+      }
+    }
+    return result != null ? result : Collections.<PsiElement>emptyList();
+  }
+
+  public static @NotNull String buildStringToFindForIndicesFromRegExp(@NotNull String stringToFind, Project project) {
+    if (!SystemProperties.getBooleanProperty("idea.regexp.search.uses.indices", true)) return "";
+
+    final List<PsiElement> topLevelRegExpChars = getTopLevelRegExpChars("a", project);
+    if (topLevelRegExpChars.size() != 1) return "";
+
+    // leave only top level regExpChars
+    return StringUtil.join(getTopLevelRegExpChars(stringToFind, project), new Function<PsiElement, String>() {
+      final Class regExpCharPsiClass = topLevelRegExpChars.get(0).getClass();
+      @Override
+      public String fun(PsiElement element) {
+        return regExpCharPsiClass.isInstance(element) ? element.getText() : " ";
+      }
+    }, "");
   }
 
   public static class StringUsageTarget implements ConfigurableUsageTarget, ItemPresentation, TypeSafeDataProvider {

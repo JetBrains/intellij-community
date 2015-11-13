@@ -80,6 +80,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -112,6 +113,7 @@ public class FindDialog extends DialogWrapper {
   private StateRestoringCheckBox myCbWithSubdirectories;
   private JCheckBox myCbToOpenInNewTab;
   private FindModel myModel;
+  private FindModel myPreviousModel;
   private Consumer<FindModel> myOkHandler;
   private FixedSizeButton mySelectDirectoryButton;
   private StateRestoringCheckBox myUseFileFilter;
@@ -315,23 +317,40 @@ public class FindDialog extends DialogWrapper {
       myComboBoxListeners.put(etf, listener);
     }
     else {
-      editorComponent.addKeyListener(
-        new KeyAdapter() {
+      if (editorComponent instanceof JTextComponent) {
+        final javax.swing.text.Document document = ((JTextComponent)editorComponent).getDocument();
+        final com.intellij.ui.DocumentAdapter documentAdapter = new com.intellij.ui.DocumentAdapter() {
           @Override
-          public void keyReleased(KeyEvent e) {
+          protected void textChanged(javax.swing.event.DocumentEvent e) {
             handleComboBoxValueChanged(comboBox);
           }
-        }
-      );
-      Disposer.register(myDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          final KeyListener[] listeners = editorComponent.getKeyListeners();
-          for (KeyListener listener : listeners) {
-            editorComponent.removeKeyListener(listener);
+        };
+        document.addDocumentListener(documentAdapter);
+        Disposer.register(myDisposable, new Disposable() {
+          @Override
+          public void dispose() {
+            document.removeDocumentListener(documentAdapter);
           }
-        }
-      });
+        });
+      } else {
+        editorComponent.addKeyListener(
+          new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+              handleComboBoxValueChanged(comboBox);
+            }
+          }
+        );
+        Disposer.register(myDisposable, new Disposable() {
+          @Override
+          public void dispose() {
+            final KeyListener[] listeners = editorComponent.getKeyListeners();
+            for (KeyListener listener : listeners) {
+              editorComponent.removeKeyListener(listener);
+            }
+          }
+        });
+      }
     }
 
     if (!myModel.isReplaceState()) {
@@ -402,13 +421,6 @@ public class FindDialog extends DialogWrapper {
   }
 
   private void handleComboBoxValueChanged(@NotNull ComboBox comboBox) {
-    Object item = comboBox.getEditor().getItem();
-    if (item != null && !item.equals(comboBox.getSelectedItem())){
-      int caretPosition = getCaretPosition(comboBox);
-      comboBox.setSelectedItem(item);
-      setCaretPosition(comboBox, caretPosition);
-    }
-
     if (comboBox != myReplaceComboBox) scheduleResultsUpdate();
     validateFindButton();
   }
@@ -435,16 +447,26 @@ public class FindDialog extends DialogWrapper {
         }
       };
 
+      // Use previously shown usage files as hint for faster search and better usage preview performance if pattern length increased
+      final LinkedHashSet<VirtualFile> filesToScanInitially = new LinkedHashSet<VirtualFile>();
+
+      if (myPreviousModel != null && myPreviousModel.getStringToFind().length() < findModel.getStringToFind().length()) {
+        final DefaultTableModel previousModel = (DefaultTableModel)myResultsPreviewTable.getModel();
+        for (int i = 0, len = previousModel.getRowCount(); i < len; ++i) {
+          final UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)previousModel.getValueAt(i, 0);
+          final VirtualFile file = usage.getFile();
+          if (file != null) filesToScanInitially.add(file);
+        }
+      }
+
+      myPreviousModel = findModel;
+
       model.addColumn("Usages");
 
       myResultsPreviewTable.setModel(model);
 
       if (result != null) {
         myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
-        myContent.setTitleAt(RESULTS_PREVIEW_TAB_INDEX, PREVIEW_TITLE);
-        return;
-      } else if (findModel.isRegularExpressions()) {
-        myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.canNotPreviewRegExpSearch"));
         myContent.setTitleAt(RESULTS_PREVIEW_TAB_INDEX, PREVIEW_TITLE);
         return;
       }
@@ -493,7 +515,7 @@ public class FindDialog extends DialogWrapper {
               }, state);
               return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
             }
-          }, processPresentation);
+          }, processPresentation, filesToScanInitially);
           boolean succeeded = !progressIndicatorWhenSearchStarted.isCanceled();
           if (succeeded) {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -879,7 +901,7 @@ public class FindDialog extends DialogWrapper {
 
       else {
         try {
-          FindInProjectUtil.createFileMaskRegExp(mask);   // verify that the regexp compiles
+          FindInProjectUtil.createFileMaskCondition(mask);   // verify that the regexp compiles
         }
         catch (PatternSyntaxException ex) {
           return new ValidationInfo(FindBundle.message("find.filter.invalid.file.mask.error", mask), myFileFilter);
@@ -1484,7 +1506,7 @@ public class FindDialog extends DialogWrapper {
   private String getFileTypeMask() {
     String mask = null;
     if (myUseFileFilter !=null && myUseFileFilter.isSelected()) {
-      mask = (String)myFileFilter.getSelectedItem();
+      mask = (String)myFileFilter.getEditor().getItem();
     }
     return mask;
   }

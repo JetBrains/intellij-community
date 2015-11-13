@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Optional;
 
 public class Main8 {
 
@@ -6,7 +7,7 @@ public class Main8 {
     String value = getOptional().orElse(null);
   }
 
-  java.util.Optional<String> getOptional() {
+  Optional<String> getOptional() {
     return new ArrayList<String>().stream().map(x -> x + x).filter(String::isEmpty).findFirst();
   }
 }

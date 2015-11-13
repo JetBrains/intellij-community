@@ -38,8 +38,11 @@ public class PyTemplatesUtil {
     String templateBinding = null;
     @NonNls String language = templatesPanel.getTemplateLanguage();
     if (language != null) {
-      if (language.equals(TemplatesService.JINJA2)) language = "jinja";
-      templateBinding = prefix + language.toLowerCase();
+      String postfix = language.toLowerCase();
+      if (language.equals(TemplatesService.JINJA2)) {
+        postfix = "jinja";
+      }
+      templateBinding = prefix + postfix;
     }
     final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
     if (templateBinding != null) {

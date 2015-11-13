@@ -67,7 +67,7 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
           return JavaPsiFacade.getElementFactory(cast.getProject()).createType(resolved, substitutor);
         }
 
-        PsiType traitClassType = GrTraitType.createTraitClassType(cast);
+        PsiType traitClassType = GrTraitType.createTraitType(cast);
         if (traitClassType != null) {
           return traitClassType;
         }

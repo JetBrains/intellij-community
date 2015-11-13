@@ -167,7 +167,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @Override
   public void executeNonCancelableSection(@NotNull Runnable runnable) {
-    executeProcessUnderProgress(runnable, new NonCancelableIndicator());
+    executeProcessUnderProgress(runnable, NonCancelableIndicator.INSTANCE);
   }
 
   @Override

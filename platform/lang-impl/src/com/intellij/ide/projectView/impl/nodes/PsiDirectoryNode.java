@@ -24,6 +24,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
@@ -241,10 +242,10 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
 
     if (file != null && project != null) {
       if (ProjectRootsUtil.isModuleContentRoot(file, project) || ProjectRootsUtil.isModuleSourceRoot(file, project)) {
-        return "Open Module Settings";
+        return ActionsBundle.message("action.ModuleSettings.navigate");
       }
       if (ProjectRootsUtil.isLibraryRoot(file, project)) {
-        return "Open Library Settings";
+        return ActionsBundle.message("action.LibrarySettings.navigate");
       }
     }
 

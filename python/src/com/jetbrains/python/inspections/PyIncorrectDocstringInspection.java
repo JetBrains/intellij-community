@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 /**
  * @author Mikhail Golubev
  * @author Alexey.Ivanov
@@ -88,7 +90,8 @@ public class PyIncorrectDocstringInspection extends PyBaseDocstringInspection {
     final List<PyNamedParameter> missing = new ArrayList<PyNamedParameter>();
     final List<String> docStringParameters = docString.getParameters();
     for (PyParameter p : realParams) {
-      if (p.isSelf() || !(p instanceof PyNamedParameter)) {
+      final PyNamedParameter named = as(p, PyNamedParameter.class);
+      if (p.isSelf() || named == null || named.isPositionalContainer() || named.isKeywordContainer()) {
         continue;
       }
       if (!docStringParameters.contains(p.getName())) {

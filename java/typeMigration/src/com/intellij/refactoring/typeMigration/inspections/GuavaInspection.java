@@ -118,11 +118,11 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
       public void visitVariable(PsiVariable variable) {
         if (!checkVariables) return;
         final PsiType type = variable.getType();
-        final PsiClassType targetType = getConversionClassType(type);
+        PsiType targetType = getConversionClassType(type);
         if (targetType != null) {
           holder.registerProblem(variable,
                                  PROBLEM_DESCRIPTION_FOR_VARIABLE,
-                                 TypeMigrationVariableTypeFixProvider.createTypeMigrationFix(variable, targetType));
+                                 TypeMigrationVariableTypeFixProvider.createTypeMigrationFix(variable, targetType, true));
         }
       }
 
@@ -130,7 +130,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
       public void visitMethod(PsiMethod method) {
         super.visitMethod(method);
         if (!checkReturnTypes) return;
-        final PsiClassType targetType = getConversionClassType(method.getReturnType());
+        final PsiType targetType = getConversionClassType(method.getReturnType());
         if (targetType != null) {
           final PsiTypeElement typeElement = method.getReturnTypeElement();
           if (typeElement != null) {
@@ -172,15 +172,18 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
         holder.registerProblem(chain, PROBLEM_DESCRIPTION_FOR_METHOD_CHAIN, new MigrateFluentIterableChainQuickFix(chain, initialType, targetType));
       }
 
-      private PsiClassType getConversionClassType(PsiType initialType) {
-        if (initialType instanceof PsiClassType) {
-          final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)initialType).resolveGenerics();
+      private PsiType getConversionClassType(PsiType initialType) {
+        if (initialType == null) return null;
+        final PsiType type = initialType.getDeepComponentType();
+        if (type instanceof PsiClassType) {
+          final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
           final PsiClass psiClass = resolveResult.getElement();
           if (psiClass != null) {
             final String qName = psiClass.getQualifiedName();
             final PsiClass targetClass = myGuavaClassConversions.getValue().get(qName);
             if (targetClass != null) {
-              return addTypeParameters(initialType, resolveResult, targetClass);
+              final PsiClassType createdType = addTypeParameters(type, resolveResult, targetClass);
+              return initialType instanceof PsiArrayType ? new PsiArrayType(createdType) : createdType;
             }
           }
         }
@@ -220,6 +223,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
         }
       }
 
+      @NotNull
       private PsiClassType addTypeParameters(PsiType currentType, PsiClassType.ClassResolveResult currentTypeResolveResult, PsiClass targetClass) {
         final Map<PsiTypeParameter, PsiType> substitutionMap = currentTypeResolveResult.getSubstitutor().getSubstitutionMap();
         final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(holder.getProject());
@@ -330,9 +334,9 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
 
   public static class MigrateMethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
-    private final PsiClassType myTargetType;
+    private final PsiType myTargetType;
 
-    private MigrateMethodReturnTypeFix(@NotNull PsiMethod method, PsiClassType targetType) {
+    private MigrateMethodReturnTypeFix(@NotNull PsiMethod method, PsiType targetType) {
       super(method);
       myTargetType = targetType;
     }
@@ -349,7 +353,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
         final TypeMigrationRules rules = new TypeMigrationRules(TypeMigrationLabeler.getElementType(method));
         rules.setMigrationRootType(myTargetType);
         rules.setBoundScope(method.getUseScope());
-        TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, method);
+        TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, method, true);
         UndoUtil.markPsiFileForUndo(file);
       }
       catch (IncorrectOperationException e) {

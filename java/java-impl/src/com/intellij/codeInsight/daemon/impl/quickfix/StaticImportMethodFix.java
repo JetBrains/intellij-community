@@ -44,6 +44,8 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.LinkedMultiMap;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -164,25 +166,28 @@ public class StaticImportMethodFix implements IntentionAction {
     final List<PsiMethod> applicableList = new ArrayList<PsiMethod>();
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
 
-    final Map<PsiClass, PsiMethod> deprecated = new LinkedHashMap<PsiClass, PsiMethod>();
-    final Map<PsiClass, PsiMethod> suggestions = new LinkedHashMap<PsiClass, PsiMethod>();
+    final MultiMap<PsiClass, PsiMethod> deprecated = new LinkedMultiMap<PsiClass, PsiMethod>();
+    final MultiMap<PsiClass, PsiMethod> suggestions = new LinkedMultiMap<PsiClass, PsiMethod>();
     class RegisterMethodsProcessor {
-      private void registerMethod(PsiClass containingClass, PsiMethod method) {
+      private void registerMethod(PsiClass containingClass, Collection<PsiMethod> methods) {
         final Boolean alreadyMentioned = possibleClasses.get(containingClass);
         if (alreadyMentioned == Boolean.TRUE) return;
         if (alreadyMentioned == null) {
-          list.add(method);
+          list.addAll(methods);
           possibleClasses.put(containingClass, false);
         }
-        PsiSubstitutor substitutorForMethod = resolveHelper
-          .inferTypeArguments(method.getTypeParameters(), method.getParameterList().getParameters(),
-                              argumentList.getExpressions(),
-                              PsiSubstitutor.EMPTY, element.getParent(), DefaultParameterTypeInferencePolicy.INSTANCE);
-        if (PsiUtil.isApplicable(method, substitutorForMethod, argumentList)) {
-          final PsiType returnType = substitutorForMethod.substitute(method.getReturnType());
-          if (expectedType == null || returnType == null || TypeConversionUtil.isAssignable(expectedType, returnType)) {
-            applicableList.add(method);
-            possibleClasses.put(containingClass, true);
+        for (PsiMethod method : methods) {
+          PsiSubstitutor substitutorForMethod = resolveHelper
+            .inferTypeArguments(method.getTypeParameters(), method.getParameterList().getParameters(),
+                                argumentList.getExpressions(),
+                                PsiSubstitutor.EMPTY, element.getParent(), DefaultParameterTypeInferencePolicy.INSTANCE);
+          if (PsiUtil.isApplicable(method, substitutorForMethod, argumentList)) {
+            final PsiType returnType = substitutorForMethod.substitute(method.getReturnType());
+            if (expectedType == null || returnType == null || TypeConversionUtil.isAssignable(expectedType, returnType)) {
+              applicableList.add(method);
+              possibleClasses.put(containingClass, true);
+              break;
+            }
           }
         }
       }
@@ -202,10 +207,10 @@ public class StaticImportMethodFix implements IntentionAction {
             && !((PsiJavaFile)file).getPackageName().isEmpty()
             && PsiUtil.isAccessible(file.getProject(), method, element, containingClass)) {
           if (isEffectivelyDeprecated(method)) {
-            deprecated.put(containingClass, method);
+            deprecated.putValue(containingClass, method);
             return processCondition();
           }
-          suggestions.put(containingClass, method);
+          suggestions.putValue(containingClass, method);
         }
         return processCondition();
       }
@@ -229,11 +234,11 @@ public class StaticImportMethodFix implements IntentionAction {
       }
     });
 
-    for (Map.Entry<PsiClass, PsiMethod> methodEntry : suggestions.entrySet()) {
+    for (Map.Entry<PsiClass, Collection<PsiMethod>> methodEntry : suggestions.entrySet()) {
       registrar.registerMethod(methodEntry.getKey(), methodEntry.getValue());
     }
     
-    for (Map.Entry<PsiClass, PsiMethod> deprecatedMethod : deprecated.entrySet()) {
+    for (Map.Entry<PsiClass, Collection<PsiMethod>> deprecatedMethod : deprecated.entrySet()) {
       registrar.registerMethod(deprecatedMethod.getKey(), deprecatedMethod.getValue());
     }
 

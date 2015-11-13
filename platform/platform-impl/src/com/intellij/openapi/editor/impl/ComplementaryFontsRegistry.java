@@ -28,6 +28,7 @@ import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.util.*;
@@ -283,5 +284,10 @@ public class ComplementaryFontsRegistry {
 
       return ourSharedDefaultFont;
     }
+  }
+  
+  @TestOnly
+  public static void resetCaches() {
+    ourUsedFonts.clear();
   }
 }

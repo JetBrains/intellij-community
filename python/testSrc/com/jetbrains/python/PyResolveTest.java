@@ -528,6 +528,16 @@ public class PyResolveTest extends PyResolveTestCase {
     });
   }
 
+  // PY-16906
+  public void testGoogleDocstringModuleAttribute() {
+    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
+      @Override
+      public void run() {
+        assertResolvesTo(PyTargetExpression.class, "module_level_variable1");
+      }
+    });
+  }
+
   // PY-7541
   public void testLoopToUpperReassignment() {
     final PsiReference ref = findReferenceByMarker();

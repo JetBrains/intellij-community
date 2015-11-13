@@ -55,7 +55,7 @@ public class SMTestProxy extends AbstractTestProxy {
   private static final Logger LOG = Logger.getInstance(SMTestProxy.class.getName());
 
   private final String myName;
-  private final boolean myIsSuite;
+  private boolean myIsSuite;
   private final String myLocationUrl;
   private final boolean myPreservePresentableName;
 
@@ -253,6 +253,11 @@ public class SMTestProxy extends AbstractTestProxy {
     child.setPrinter(myPrinter);
     if (myPreferredPrinter != null && child.myPreferredPrinter == null) {
       child.setPreferredPrinter(myPreferredPrinter);
+    }
+
+    if (!myIsSuite) {
+      myIsSuite = true;
+      setStarted();
     }
   }
 

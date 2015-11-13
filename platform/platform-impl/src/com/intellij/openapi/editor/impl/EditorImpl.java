@@ -790,7 +790,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFoldingModel.rebuild();
 
     if (softWrapsUsedBefore ^ mySoftWrapModel.isSoftWrappingEnabled()) {
-      mySizeContainer.reset();
+      if (!myUseNewRendering) {
+        mySizeContainer.reset();
+      }
       validateSize();
     }
 
@@ -1846,16 +1848,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void bulkUpdateFinished() {
     myFoldingModel.onBulkDocumentUpdateFinished();
     mySoftWrapModel.onBulkDocumentUpdateFinished();
+    if (myUseNewRendering) {
+      myView.reset();
+    }
     myCaretModel.onBulkDocumentUpdateFinished();
 
     clearTextWidthCache();
 
     setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
 
-    if (myUseNewRendering) {
-      myView.reset();
-    }
-    else {
+    if (!myUseNewRendering) {
       mySizeContainer.reset();
     }
     validateSize();
@@ -3767,7 +3769,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public int getPreferredHeight() {
-    if (ourIsUnitTestMode && getUserData(DO_DOCUMENT_UPDATE_TEST) == null) {
+    if (ourIsUnitTestMode && !myUseNewRendering && getUserData(DO_DOCUMENT_UPDATE_TEST) == null) {
       return 1;
     }
 

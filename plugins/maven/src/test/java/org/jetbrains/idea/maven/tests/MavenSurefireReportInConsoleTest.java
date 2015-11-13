@@ -19,6 +19,7 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.maven.project.MavenTestConsoleFilter;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.util.Collections;
 import java.util.List;
@@ -34,6 +35,12 @@ public class MavenSurefireReportInConsoleTest extends LightCodeInsightFixtureTes
   protected void setUp() throws Exception {
     super.setUp();
     myFilter = new MavenTestConsoleFilter();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    MavenServerManager.getInstance().shutdown(true);
+    super.tearDown();
   }
 
   private List<String> passLine(String line) {

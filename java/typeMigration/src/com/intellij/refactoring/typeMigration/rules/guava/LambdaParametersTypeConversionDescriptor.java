@@ -17,7 +17,10 @@ package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import org.jetbrains.annotations.NonNls;
 
@@ -74,6 +77,17 @@ public class LambdaParametersTypeConversionDescriptor extends TypeConversionDesc
     }
     else if (!(expression instanceof PsiFunctionalExpression)) {
       return addApplyReference(expression);
+    }
+    else if (expression instanceof PsiMethodReferenceExpression) {
+      final PsiElement qualifier = ((PsiMethodReferenceExpression)expression).getQualifier();
+      PsiType qualifierType;
+      if (qualifier instanceof PsiExpression && (qualifierType = ((PsiExpression)qualifier).getType()) != null) {
+        final PsiClass qualifierClass = PsiTypesUtil.getPsiClass(qualifierType);
+        if (qualifierClass != null && (Comparing.equal(qualifierClass.getQualifiedName(), GuavaFunctionConversionRule.JAVA_UTIL_FUNCTION_FUNCTION) ||
+            Comparing.equal(qualifierClass.getQualifiedName(), GuavaOptionalConversionRule.JAVA_OPTIONAL) ||
+            Comparing.equal(qualifierClass.getQualifiedName(), GuavaSupplierConversionRule.JAVA_SUPPLIER)))
+        return (PsiExpression)expression.replace(qualifier);
+      }
     }
     return expression;
   }

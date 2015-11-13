@@ -57,10 +57,21 @@ class DependencyResolverImpl implements DependencyResolver {
   @NotNull
   private final Project myProject
   private final boolean myIsPreview
+  private final boolean myDownloadJavadoc
+  private final boolean myDownloadSources
 
   DependencyResolverImpl(@NotNull Project project, boolean isPreview) {
     myProject = project
-    myIsPreview = isPreview;
+    myIsPreview = isPreview
+    myDownloadJavadoc = false
+    myDownloadSources = false
+  }
+
+  DependencyResolverImpl(@NotNull Project project, boolean isPreview, boolean downloadJavadoc, boolean downloadSources) {
+    myProject = project
+    myIsPreview = isPreview
+    myDownloadJavadoc = downloadJavadoc
+    myDownloadSources = downloadSources
   }
 
   @Override
@@ -102,14 +113,14 @@ class DependencyResolverImpl implements DependencyResolver {
         }
       }
       if (jvmLibrary != null) {
+        Class[] artifactTypes = ([myDownloadSources?SourcesArtifact:null, myDownloadJavadoc?JavadocArtifact:null] - null) as Class[];
         Set<ResolvedArtifact> resolvedArtifacts = configuration.resolvedConfiguration.lenientConfiguration.getArtifacts(Specs.SATISFIES_ALL)
 
         Multimap<ModuleVersionIdentifier, ResolvedArtifact> artifactMap = ArrayListMultimap.create()
         resolvedArtifacts.each { artifactMap.put(it.moduleVersion.id, it) }
         Set<ComponentArtifactsResult> componentResults = myProject.dependencies.createArtifactResolutionQuery()
           .forComponents(resolvedArtifacts.collect { toComponentIdentifier(it.moduleVersion.id) })
-        //.withArtifacts(JvmLibrary, SourcesArtifact, JavadocArtifact)
-          .withArtifacts(jvmLibrary, SourcesArtifact)
+          .withArtifacts(jvmLibrary, artifactTypes)
           .execute()
           .getResolvedComponents()
 

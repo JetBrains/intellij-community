@@ -216,10 +216,12 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     }
   }
 
+  @Override
   public int getStartLine(@NotNull ThreeSide side) {
     return side.select(myStartLines);
   }
 
+  @Override
   public int getEndLine(@NotNull ThreeSide side) {
     return side.select(myEndLines);
   }

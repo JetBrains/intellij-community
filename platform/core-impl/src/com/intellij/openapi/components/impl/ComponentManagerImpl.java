@@ -157,6 +157,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
         LOG.error(e);
       }
     }
+    myBaseComponents.clear();
 
     myComponentConfigCount = -1;
   }
@@ -313,6 +314,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
 
     myPicoContainer = null;
+    //noinspection SynchronizeOnThis
+    synchronized (this) {
+      myNameToComponent.clear();
+    }
   }
 
   @Override

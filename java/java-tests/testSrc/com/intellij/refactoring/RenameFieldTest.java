@@ -64,6 +64,10 @@ public class RenameFieldTest extends LightRefactoringTestCase {
     doTest("utm", "java");
   }
 
+  public void testOverridingSetterParameterRenamed() throws Exception {
+    doTest("bar", "java");
+  }
+
   public void testHidesOuter() throws Exception {
     doTest("x", "java");
   }

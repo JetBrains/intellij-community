@@ -54,6 +54,7 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
   protected void setUp() throws Exception {
     super.setUp();
     FontLayoutService.setInstance(new MockFontLayoutService(10, 10, 2)); // char width matches the one in EditorTestUtil.configureSoftWraps
+    ComplementaryFontsRegistry.resetCaches(); // to reset cached char widths
   }
 
   @Override

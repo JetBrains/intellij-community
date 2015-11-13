@@ -410,6 +410,7 @@ public class TextDiffViewerUtil {
       }
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
       if (myDuringUpdate) return;
 

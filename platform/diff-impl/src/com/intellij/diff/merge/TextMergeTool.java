@@ -460,7 +460,9 @@ public class TextMergeTool implements MergeTool {
         };
       }
 
+      @Override
       protected void destroyChangedBlocks() {
+        super.destroyChangedBlocks();
         for (TextMergeChange change : myAllMergeChanges) {
           change.destroy();
         }
@@ -747,11 +749,13 @@ public class TextMergeTool implements MergeTool {
       //
 
       @NotNull
+      @Override
       public List<TextMergeChange> getAllChanges() {
         return myAllMergeChanges;
       }
 
       @NotNull
+      @Override
       public List<TextMergeChange> getChanges() {
         return ContainerUtil.filter(myAllMergeChanges, new Condition<TextMergeChange>() {
           @Override
@@ -1136,7 +1140,7 @@ public class TextMergeTool implements MergeTool {
 
           String title = e.getPresentation().getText() + " in merge";
 
-          executeMergeCommand(title, true, selectedChanges, new Runnable() {
+          executeMergeCommand(title, selectedChanges.size() > 1, selectedChanges, new Runnable() {
             @Override
             public void run() {
               apply(side, selectedChanges);
@@ -1252,6 +1256,7 @@ public class TextMergeTool implements MergeTool {
           super(text, description, icon);
         }
 
+        @Override
         public void actionPerformed(AnActionEvent e) {
           executeMergeCommand("Apply Non Conflicted Changes", true, null, new Runnable() {
             @Override
@@ -1284,6 +1289,7 @@ public class TextMergeTool implements MergeTool {
           }
         }
 
+        @Override
         public void update(AnActionEvent e) {
           e.getPresentation().setEnabled(getFirstUnresolvedChange(false, null) != null);
         }
@@ -1311,6 +1317,7 @@ public class TextMergeTool implements MergeTool {
           }
         }
 
+        @Override
         public void update(AnActionEvent e) {
           e.getPresentation().setEnabled(getFirstUnresolvedChange(false, mySide) != null);
         }

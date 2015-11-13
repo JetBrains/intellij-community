@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
  */
 package com.intellij.vcs.log.data
 
-import org.junit.Test
-import java.util.ArrayList
-import com.intellij.vcs.log.TimedCommitParser
-import com.intellij.util.ArrayUtil
-import com.intellij.vcs.log.impl.HashImpl
-import com.intellij.vcs.log.TimedVcsCommit
 import com.intellij.vcs.log.Hash
-import org.junit.Assert.*
+import com.intellij.vcs.log.TimedCommitParser
+import com.intellij.vcs.log.TimedVcsCommit
+import com.intellij.vcs.log.impl.HashImpl
+import org.junit.Assert.assertEquals
+import org.junit.Assert.fail
+import org.junit.Test
+import java.util.*
 
 
 class VcsLogJoinerTest {
@@ -56,7 +56,7 @@ class VcsLogJoinerTest {
 
     fun newRefs(f: StringArrayBuilder.() -> Unit) {newRefs = build(f)}
 
-    fun expected(f: StringArrayBuilder.() -> Unit) {expected = build(f).join(separator = "\n")}
+    fun expected(f: StringArrayBuilder.() -> Unit) {expected = build(f).joinToString(separator = "\n")}
 
     fun run() {
       val vcsFullLog = TimedCommitParser.log(fullLog!!)
@@ -65,7 +65,7 @@ class VcsLogJoinerTest {
       val vcsNewRefs = newRefs!!.map { HashImpl.build(it) }
 
       val result = VcsLogJoiner<Hash, TimedVcsCommit>().addCommits(vcsFullLog, vcsOldRefs, vcsRecentCommits, vcsNewRefs).getFirst()!!
-      val actual = result.map { it.getId().asString() }.join(separator = "\n")
+      val actual = result.map { it.getId().asString() }.joinToString(separator = "\n")
       assertEquals(expected, actual)
     }
   }

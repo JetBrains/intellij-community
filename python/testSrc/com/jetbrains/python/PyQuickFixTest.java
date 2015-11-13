@@ -519,26 +519,6 @@ public class PyQuickFixTest extends PyTestCase {
     });
   }
 
-  // PY-16761
-  public void testGoogleDocStringAddPositionalVararg() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.add.$0", "args"), true, true);
-      }
-    });
-  }
-
-  // PY-16761
-  public void testGoogleDocStringAddKeywordVararg() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PyIncorrectDocstringInspection.class, PyBundle.message("QFIX.docstring.add.$0", "kwargs"), true, true);
-      }
-    });
-  }
-
   // PY-16908
   public void testNumpyDocStringRemoveFirstOfCombinedParams() {
     runWithDocStringFormat(DocStringFormat.NUMPY, new Runnable() {

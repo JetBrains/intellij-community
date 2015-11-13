@@ -323,6 +323,18 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void testIncorporationWithRawSubstitutors() throws Exception {
+    doTest();
+  }
+
+  public void testIncorporationOfBoundsAsTypeArguments() throws Exception {
+    doTest();
+  }
+
+  public void testEliminateIntersectionTypeWildcardElimination() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }

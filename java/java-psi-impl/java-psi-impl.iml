@@ -12,5 +12,6 @@
     <orderEntry type="module" module-name="core-impl" exported="" />
     <orderEntry type="module" module-name="resources-en" />
     <orderEntry type="library" name="asm5" level="project" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>

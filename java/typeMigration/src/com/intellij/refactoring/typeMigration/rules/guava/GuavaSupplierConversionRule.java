@@ -15,9 +15,13 @@
  */
 package com.intellij.refactoring.typeMigration.rules.guava;
 
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiVariable;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -26,10 +30,18 @@ import java.util.Map;
  */
 public class GuavaSupplierConversionRule extends BaseGuavaTypeConversionRule {
   public final static String GUAVA_SUPPLIER = "com.google.common.base.Supplier";
+  public static final String JAVA_SUPPLIER = "java.util.function.Supplier";
 
   @Override
   protected void fillSimpleDescriptors(Map<String, TypeConversionDescriptorBase> descriptorsMap) {
     descriptorsMap.put("get", new TypeConversionDescriptor("$val$.get()", "$val$.get()"));
+  }
+
+  @Nullable
+  @Override
+  protected TypeConversionDescriptorBase findConversionForVariableReference(@NotNull PsiReferenceExpression referenceExpression,
+                                                                            @NotNull PsiVariable psiVariable, PsiExpression context) {
+    return new TypeConversionDescriptor("$f$", "$f$::get");
   }
 
   @NotNull
@@ -41,6 +53,6 @@ public class GuavaSupplierConversionRule extends BaseGuavaTypeConversionRule {
   @NotNull
   @Override
   public String ruleToClass() {
-    return "java.util.function.Supplier";
+    return JAVA_SUPPLIER;
   }
 }

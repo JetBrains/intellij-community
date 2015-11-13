@@ -465,7 +465,7 @@ class EditorPainter implements TextDrawingCallback {
       Collection<LineExtensionInfo> extensions = painter.getLineExtensions(project, virtualFile, line);
       if (extensions != null) {
         for (LineExtensionInfo info : extensions) {
-          LineLayout layout = new LineLayout(myView, info.getText(), info.getFontType());
+          LineLayout layout = LineLayout.create(myView, info.getText(), info.getFontType());
           g.setColor(info.getColor());
           x = paintLineLayoutWithEffect(g, layout, x, y, info.getEffectColor(), info.getEffectType());
           int currentLineWidth = (int)x;
@@ -589,7 +589,7 @@ class EditorPainter implements TextDrawingCallback {
       TFloatArrayList trailingRanges = adjustedLogicalRangeToVisualRanges(
         myView.visualPositionToOffset(new VisualPosition(endPosition.line, 0)), endOffset);
       if (!leadingRanges.isEmpty() && !trailingRanges.isEmpty()) {
-        int maxWidth = Math.max(myView.getMaxWidthInLineRange(startPosition.line, endPosition.line - 1, null) - 1,
+        int maxWidth = Math.max(myView.getMaxWidthInLineRange(startPosition.line, endPosition.line - 1) - 1,
                                 (int)trailingRanges.get(trailingRanges.size() - 1));
         boolean containsInnerLines = endPosition.line > startPosition.line + 1;
         int leadingTopY = myView.visualLineToY(startPosition.line);
@@ -695,7 +695,7 @@ class EditorPainter implements TextDrawingCallback {
       result.add(0);
     }
     else {
-      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, startOffset, false, null)) {
+      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, startOffset, false)) {
         int minOffset = fragment.getMinOffset();
         int maxOffset = fragment.getMaxOffset();
         if (startOffset == endOffset) {
@@ -777,7 +777,7 @@ class EditorPainter implements TextDrawingCallback {
           int targetVisualColumn = caret.getVisualPosition().column;
           for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView,
                                                                                                   caret.getVisualLineStart(), 
-                                                                                                  false, null)) {
+                                                                                                  false)) {
             int startVisualColumn = fragment.getStartVisualColumn();
             int endVisualColumn = fragment.getEndVisualColumn();
             if (startVisualColumn < targetVisualColumn && endVisualColumn > targetVisualColumn ||
@@ -815,7 +815,7 @@ class EditorPainter implements TextDrawingCallback {
     int prevEndOffset = -1;
     boolean firstFragment = true;
     int maxColumn = 0;
-    for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, offset, false, null)) {
+    for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, offset, false)) {
       int fragmentStartOffset = fragment.getStartOffset();
       int start = fragmentStartOffset;
       int end = fragment.getEndOffset();
