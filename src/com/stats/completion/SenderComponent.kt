@@ -3,6 +3,7 @@ package com.stats.completion
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ApplicationComponent
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import org.apache.http.HttpStatus
 import org.apache.http.client.fluent.Form
@@ -16,45 +17,65 @@ class SenderComponent(val sender: StatisticSender) : ApplicationComponent.Adapte
     override fun initComponent() {
         if (ApplicationManager.getApplication().isUnitTestMode) return
         ApplicationManager.getApplication().executeOnPooledThread {
-            sender.sendStatsData()
+            val uid = UpdateChecker.getInstallationUID(PropertiesComponent.getInstance())
+            sender.sendStatsData(uid)
         }
     }
 }
 
-class StatisticSender(val urlProvider: UrlProvider, val pathProvider: FilePathProvider) {
+class StatisticSender(val urlProvider: UrlProvider, val pathProvider: FilePathProvider, val requestService: RequestService) {
+    private val LOG = Logger.getInstance(StatisticSender::class.java)
 
-    public fun sendStatsData() {
+    fun sendStatsData(uid: String) {
         try {
             val path = pathProvider.statsFilePath
             val file = File(path)
             if (file.exists()) {
-                sendStatsFile(file, onSuccess = Runnable {
+                sendStatsFile(uid, file, onSuccess = Runnable {
                     file.delete()
                 })
             }
         } catch (e: IOException) {
-            println(e)
+            LOG.error(e)
         }
     }
 
-    private fun sendStatsFile(file: File, onSuccess: Runnable) {
+    private fun sendStatsFile(uid: String, file: File, onSuccess: Runnable) {
         val url = urlProvider.statsServerPostUrl
         val reader = Files.newBufferedReader(file.toPath())
         val text = reader.readText()
         reader.close()
-        sendContent(url, text, onSuccess)
+        sendContent(uid, url, text, onSuccess)
     }
 
-    fun sendContent(url: String, content: String, okAction: Runnable) {
-        val form = Form.form().add("content", content)
-                .add("uid", UpdateChecker.getInstallationUID(PropertiesComponent.getInstance()))
-                .build()
-
-        val response = Request.Post(url).bodyForm(form).execute()
-        val httpResponse = response.returnResponse()
-        if (httpResponse.statusLine.statusCode == HttpStatus.SC_OK) {
+    private fun sendContent(uid: String, url: String, content: String, okAction: Runnable) {
+        val map = mapOf(Pair("uid", uid), Pair("content", content))
+        val data = requestService.post(url, map)
+        if (data.code == HttpStatus.SC_OK) {
             okAction.run()
         }
     }
     
 }
+
+
+abstract class RequestService {
+    abstract fun post(url: String, params: Map<String, String>): ResponseData
+}
+
+class SimpleRequestService: RequestService() {
+
+    override fun post(url: String, params: Map<String, String>): ResponseData {
+        val form = Form.form()
+        params.forEach {
+            form.add(it.key, it.value)
+        }
+        val response = Request.Post(url).bodyForm(form.build()).execute()
+        val httpResponse = response.returnResponse()
+        return ResponseData(httpResponse.statusLine.statusCode)
+    }
+
+}
+
+
+data class ResponseData(val code: Int)

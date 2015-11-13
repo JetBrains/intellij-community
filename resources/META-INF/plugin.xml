@@ -33,6 +33,8 @@
     </applicationService>
     <applicationService serviceInterface="com.stats.completion.StatisticSender" serviceImplementation="com.stats.completion.StatisticSender">
     </applicationService>
+    <applicationService serviceInterface="com.stats.completion.RequestService" serviceImplementation="com.stats.completion.SimpleRequestService">
+    </applicationService>
   </extensions>
 
   <actions>
