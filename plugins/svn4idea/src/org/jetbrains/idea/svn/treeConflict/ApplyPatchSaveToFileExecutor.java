@@ -41,6 +41,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -72,10 +74,10 @@ public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<TextFile
   }
 
   @Override
-  public void apply(MultiMap<VirtualFile, TextFilePatchInProgress> patchGroups,
-                    LocalChangeList localList,
-                    String fileName,
-                    TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+  public void apply(@NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroups,
+                    @Nullable LocalChangeList localList,
+                    @Nullable String fileName,
+                    @Nullable TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
     final FileSaverDialog dialog = FileChooserFactory.getInstance().createSaveFileDialog(
       new FileSaverDescriptor("Save Patch to", ""), myProject);
     final VirtualFile baseDir = myProject.getBaseDir();

@@ -135,8 +135,7 @@
       <reference ref="ChangesView.Ignore"/>
     </group>
 
-    <group id="ShelvedChangesPopupMenu">
-      <action id="ShelvedChanges.Unshelve" class="com.intellij.openapi.vcs.changes.shelf.UnshelveChangesAction"/>
+    <group id="ShelvedChangesPopupMenu" popup="true">
       <action id="ShelveChanges.UnshelveWithDialog" class="com.intellij.openapi.vcs.changes.shelf.UnshelveWithDialogAction"
               text="Unshelve..." description="Correct paths where to apply patches and unshelve"/>
       <action id="ShelvedChanges.Restore" class="com.intellij.openapi.vcs.changes.shelf.RestoreShelvedChange"/>
@@ -150,17 +149,18 @@
               use-shortcut-of="RenameElement"/>
       <reference ref="$Delete"/>
       <separator/>
-      <action id="ShelvedChanges.ShowHideDeleted" class="com.intellij.openapi.vcs.changes.shelf.ShowHideRecycledAction" />
+      <action id="ShelvedChanges.ShowHideDeleted" class="com.intellij.openapi.vcs.changes.shelf.ShowHideRecycledAction"
+              description="Show/Hide Already Unshelved"/>
       <action id="ShelvedChanges.DeleteDeleted" class="com.intellij.openapi.vcs.changes.shelf.DeleteAlreadyUnshelvedAction"/>
     </group>
 
     <group id="ShelvedChangesToolbar">
       <reference ref="ShelvedChanges.Diff"/>
       <reference ref="ChangesView.CreatePatchFromChanges"/>
+      <reference ref="ShelvedChanges.ShowHideDeleted" />
     </group>
 
     <group id="ShelvedChangesToolbarGear" popup="true" icon="AllIcons.General.SecondaryGroup">
-      <reference ref="ShelvedChanges.Unshelve"/>
       <reference ref="ShelveChanges.UnshelveWithDialog"/>
       <reference ref="ShelvedChanges.Restore"/>
       <reference ref="ShelvedChanges.ImportPatches"/>
@@ -168,7 +168,6 @@
       <reference ref="ShelvedChanges.Rename" />
       <reference ref="$Delete" />
       <separator/>
-      <reference ref="ShelvedChanges.ShowHideDeleted" />
       <reference ref="ShelvedChanges.DeleteDeleted" />
     </group>
 
@@ -287,7 +286,6 @@
 
     <group id="Shelve.KeymapGroup" text="Shelve">
       <reference ref="ChangesView.Shelve"/>
-      <reference ref="ShelvedChanges.Unshelve"/>
       <reference ref="ShelveChanges.UnshelveWithDialog"/>
       <reference ref="ShelvedChanges.Restore"/>
       <reference ref="ShelvedChanges.ImportPatches"/>
