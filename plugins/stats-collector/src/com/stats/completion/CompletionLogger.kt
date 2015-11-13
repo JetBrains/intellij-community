@@ -6,6 +6,7 @@ import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import java.io.File
 import java.io.PrintWriter
 import java.nio.file.Files
+import java.nio.file.StandardOpenOption
 import java.util.*
 
 
@@ -22,15 +23,18 @@ abstract class CompletionLoggerProvider {
 }
 
 class CompletionFileLoggerProvider(val filePathProvider: FilePathProvider) : CompletionLoggerProvider() {
-    
+    var initialized = false
     val writer: PrintWriter by lazy {
         val path = filePathProvider.statsFilePath
-        val bufferedWriter = Files.newBufferedWriter(File(path).toPath())
+        val bufferedWriter = Files.newBufferedWriter(File(path).toPath(), StandardOpenOption.APPEND)
+        initialized = true
         PrintWriter(bufferedWriter)
     }
     
     override fun dispose() {
-        writer.close()
+        if (initialized) {
+            writer.close()
+        }
     }
     
     override fun newCompletionLogger(): CompletionLogger {
@@ -67,8 +71,8 @@ class CompletionFileLogger(private val installationUID: String,
                            private val writer: PrintWriter) : CompletionLogger() {
     
     private fun println(line: String) {
-//        writer.println(line)
-        System.out.println(line)
+        writer.println(line)
+//        System.out.println(line)
     }
     
     override fun completionStarted() {
