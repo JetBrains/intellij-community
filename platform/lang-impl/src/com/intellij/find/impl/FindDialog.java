@@ -333,23 +333,7 @@ public class FindDialog extends DialogWrapper {
           }
         });
       } else {
-        editorComponent.addKeyListener(
-          new KeyAdapter() {
-            @Override
-            public void keyReleased(KeyEvent e) {
-              handleComboBoxValueChanged(comboBox);
-            }
-          }
-        );
-        Disposer.register(myDisposable, new Disposable() {
-          @Override
-          public void dispose() {
-            final KeyListener[] listeners = editorComponent.getKeyListeners();
-            for (KeyListener listener : listeners) {
-              editorComponent.removeKeyListener(listener);
-            }
-          }
-        });
+        assert false;
       }
     }
 
@@ -421,6 +405,11 @@ public class FindDialog extends DialogWrapper {
   }
 
   private void handleComboBoxValueChanged(@NotNull ComboBox comboBox) {
+    Object item = comboBox.getEditor().getItem();
+    if (item != null && !item.equals(comboBox.getSelectedItem())){
+      comboBox.setSelectedItem(item);
+    }
+
     if (comboBox != myReplaceComboBox) scheduleResultsUpdate();
     validateFindButton();
   }
@@ -572,23 +561,6 @@ public class FindDialog extends DialogWrapper {
     myModel = model;
     updateReplaceVisibility();
     updateTitle();
-  }
-
-  private static int getCaretPosition(@NotNull JComboBox comboBox) {
-    Component editorComponent = comboBox.getEditor().getEditorComponent();
-    if (editorComponent instanceof JTextField){
-      JTextField textField = (JTextField)editorComponent;
-      return textField.getCaretPosition();
-    }
-    return 0;
-  }
-
-  private static void setCaretPosition(@NotNull JComboBox comboBox, int position) {
-    Component editorComponent = comboBox.getEditor().getEditorComponent();
-    if (editorComponent instanceof JTextField){
-      JTextField textField = (JTextField)editorComponent;
-      textField.setCaretPosition(position);
-    }
   }
 
   private void validateFindButton() {
@@ -1506,7 +1478,7 @@ public class FindDialog extends DialogWrapper {
   private String getFileTypeMask() {
     String mask = null;
     if (myUseFileFilter !=null && myUseFileFilter.isSelected()) {
-      mask = (String)myFileFilter.getEditor().getItem();
+      mask = (String)myFileFilter.getSelectedItem();
     }
     return mask;
   }

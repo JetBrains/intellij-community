@@ -26,31 +26,28 @@ public class PositionUtil {
     return (float)Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
   }
 
-  public static boolean overUpEdge(int upPosition, int downPosition, int x, int y, int rowHeight) {
-    float thick = THICK_LINE;
-    int x1 = WIDTH_NODE * downPosition + WIDTH_NODE / 2;
+  public static boolean overUpEdge(int upPosition, int downPosition, int x, int y, int rowHeight, int nodeWidth, float lineThickness) {
+    int x1 = nodeWidth * downPosition + nodeWidth / 2;
     int y1 = rowHeight / 2;
-    int x2 = WIDTH_NODE * upPosition + WIDTH_NODE / 2;
+    int x2 = nodeWidth * upPosition + nodeWidth / 2;
     int y2 = -rowHeight / 2;
     //return true;
-    return (distance(x1, y1, x, y) + distance(x2, y2, x, y) < distance(x1, y1, x2, y2) + thick);
+    return (distance(x1, y1, x, y) + distance(x2, y2, x, y) < distance(x1, y1, x2, y2) + lineThickness);
   }
 
-  public static boolean overDownEdge(int upPosition, int downPosition, int x, int y, int rowHeight) {
-    float thick = THICK_LINE;
-    int x1 = WIDTH_NODE * upPosition + WIDTH_NODE / 2;
+  public static boolean overDownEdge(int upPosition, int downPosition, int x, int y, int rowHeight, int nodeWidth, float lineThickness) {
+    int x1 = nodeWidth * upPosition + nodeWidth / 2;
     int y1 = rowHeight / 2;
-    int x2 = WIDTH_NODE * downPosition + WIDTH_NODE / 2;
+    int x2 = nodeWidth * downPosition + nodeWidth / 2;
     int y2 = rowHeight + rowHeight / 2;
-    return distance(x1, y1, x, y) + distance(x2, y2, x, y) < distance(x1, y1, x2, y2) + thick;
+    return distance(x1, y1, x, y) + distance(x2, y2, x, y) < distance(x1, y1, x2, y2) + lineThickness;
   }
 
-  public static boolean overNode(int position, int x, int y, int rowHeight) {
-    int r = CIRCLE_RADIUS;
-    int x0 = WIDTH_NODE * position + WIDTH_NODE / 2;
+  public static boolean overNode(int position, int x, int y, int rowHeight, int nodeWidth, int circleRadius) {
+    int x0 = nodeWidth * position + nodeWidth / 2;
     int y0 = rowHeight / 2;
 
-    return distance(x0, y0, x, y) <= r;
+    return distance(x0, y0, x, y) <= circleRadius;
   }
 
   public static int getYInsideRow(@NotNull Point point, int rowHeight) {

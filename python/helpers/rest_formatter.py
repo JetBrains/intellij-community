@@ -125,10 +125,17 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
                 index = rawsource.index("param ")
                 if not child.children:
                     continue
+                param_name = rawsource[index + 6:]
+                param_type = None
+                parts = param_name.rsplit(None, 1)
+                if len(parts) == 2:
+                    param_type, param_name = parts
                 # Strip leading escaped asterisks for vararg parameters in Google code style docstrings
-                trimmed_name = re.sub(r'\\\*', '*', rawsource[index + 6:])
-                child.children[0] = Text(trimmed_name)
-                fields[trimmed_name] = n
+                param_name = re.sub(r'\\\*', '*', param_name)
+                child.children[0] = Text(param_name)
+                fields[param_name] = n
+                if param_type:
+                    n.type = param_type
             if rawsource == "return":
                 fields["return"] = n
 

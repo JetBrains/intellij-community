@@ -372,7 +372,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
       Element element = new SAXBuilder(false).build(stream).getRootElement();
       final boolean timeTrackingAvailable = element.getName().equals("version") && VersionComparatorUtil.compare(element.getChildText("version"), "4.1") >= 0;
       if (!timeTrackingAvailable) {
-        throw new Exception("This version of Youtrack the time tracking is not supported");
+        throw new Exception("Time tracking is not supported in this version of Youtrack");
       }
     }
     finally {

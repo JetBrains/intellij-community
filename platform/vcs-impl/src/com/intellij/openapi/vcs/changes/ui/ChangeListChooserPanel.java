@@ -143,8 +143,10 @@ public class ChangeListChooserPanel extends JPanel {
         return null;
       }
     }
+    final boolean existingSelected = myRbExisting.isSelected();
+    VcsConfiguration.getInstance(myProject).PRESELECT_EXISTING_CHANGELIST = existingSelected;
 
-    if (myRbExisting.isSelected()) {
+    if (existingSelected) {
       return (LocalChangeList)myExistingListsCombo.getSelectedItem();
     }
     else {
@@ -166,9 +168,8 @@ public class ChangeListChooserPanel extends JPanel {
     else {
       myExistingListsCombo.setSelectedItem(defaultSelection);
     }
-
-
-    if (defaultSelection != null) {
+    //if defaultSelection was predefined as null then it means we could not use existing is this context
+    if (defaultSelection != null && VcsConfiguration.getInstance(myProject).PRESELECT_EXISTING_CHANGELIST) {
       myRbExisting.setSelected(true);
     }
     else {

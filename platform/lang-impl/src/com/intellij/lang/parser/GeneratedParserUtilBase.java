@@ -248,6 +248,14 @@ public class GeneratedParserUtilBase {
     return false;
   }
 
+  public static boolean nextTokenIsSmart(PsiBuilder builder, IElementType token) {
+    return nextTokenIsFast(builder, token) || ErrorState.get(builder).completionState != null;
+  }
+
+  public static boolean nextTokenIsSmart(PsiBuilder builder, IElementType... tokens) {
+    return nextTokenIsFast(builder, tokens) || ErrorState.get(builder).completionState != null;
+  }
+
   public static boolean nextTokenIs(PsiBuilder builder, String frameName, IElementType... tokens) {
     ErrorState state = ErrorState.get(builder);
     if (state.completionState != null) return true;

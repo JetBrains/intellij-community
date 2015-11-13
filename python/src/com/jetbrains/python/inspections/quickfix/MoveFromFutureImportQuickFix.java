@@ -21,37 +21,33 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.documentation.docstrings.DocStringUtil;
+import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyFromImportStatement;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Alexey.Ivanov
  */
 public class MoveFromFutureImportQuickFix implements LocalQuickFix {
+  @Override
   @NotNull
   public String getName() {
     return PyBundle.message("QFIX.move.from.future.import");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getName();
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement problemElement = descriptor.getPsiElement();
-    PsiFile psiFile = problemElement.getContainingFile();
+    final PsiElement problemElement = descriptor.getPsiElement();
+    final PsiFile psiFile = problemElement.getContainingFile();
     if (psiFile instanceof PyFile) {
-      PyFile file = (PyFile)psiFile;
-      PyStringLiteralExpression docString = DocStringUtil.findDocStringExpression(file);
-      if (docString != null) {
-        file.addAfter(problemElement, docString.getParent() /* PyExpressionStatement */);
-      }
-      else {
-        file.addBefore(problemElement, file.getStatements().get(0));
-      }
+      AddImportHelper.addFromImportStatement(psiFile, (PyFromImportStatement)problemElement, AddImportHelper.ImportPriority.FUTURE, null);
       problemElement.delete();
     }
   }

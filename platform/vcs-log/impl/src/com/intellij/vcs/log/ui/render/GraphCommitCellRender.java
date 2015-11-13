@@ -118,11 +118,11 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
     }
     maxIndex++;
     final BufferedImage image =
-      UIUtil.createImage(PrintParameters.WIDTH_NODE * (maxIndex + 4), myGraphTable.getRowHeight(), BufferedImage.TYPE_INT_ARGB);
+      UIUtil.createImage(PrintParameters.getNodeWidth(myGraphTable.getRowHeight()) * (maxIndex + 4), myGraphTable.getRowHeight(), BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2 = image.createGraphics();
     myPainter.draw(g2, printElements);
 
-    final int width = maxIndex * PrintParameters.WIDTH_NODE;
+    final int width = maxIndex * PrintParameters.getNodeWidth(myGraphTable.getRowHeight());
     return new PaintInfo(image, width);
   }
 

@@ -82,7 +82,8 @@ public class LoadProjectTest extends PlatformTestCase {
     ProjectManagerEx.getInstanceEx().closeAndDispose(getProject());
 
     LeakHunter.checkLeak(ApplicationManager.getApplication(), PsiFileImpl.class,
-                         psiFile -> psiFile.getViewProvider().getVirtualFile().getFileSystem() instanceof LocalFileSystem);
+                         psiFile -> psiFile.getViewProvider().getVirtualFile().getFileSystem() instanceof LocalFileSystem &&
+                                    psiFile.getProject() == getProject());
   }
 
   @Override

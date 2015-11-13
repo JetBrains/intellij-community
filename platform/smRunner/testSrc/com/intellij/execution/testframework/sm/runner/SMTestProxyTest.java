@@ -84,9 +84,10 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     mySuite = createTestProxy("unroll spock test");
     assertFalse(mySuite.isSuite());
     assertFalse(mySuite.isDefect());
-    mySuite.addChild(mySimpleTest);
+    mySuite.setSuiteStarted();
     assertTrue(mySuite.isSuite());
     assertFalse(mySuite.isDefect());
+    mySuite.addChild(mySimpleTest);
     mySimpleTest.setTestFailed("failed message", null, false);
     assertTrue(mySimpleTest.isDefect());
     assertTrue(mySuite.isDefect());

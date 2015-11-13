@@ -277,7 +277,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         mySuitesStack.pushSuite(newSuite);
 
         //Progress started
-        newSuite.setStarted();
+        newSuite.setSuiteStarted();
 
         //fire event
         fireOnSuiteStarted(newSuite);

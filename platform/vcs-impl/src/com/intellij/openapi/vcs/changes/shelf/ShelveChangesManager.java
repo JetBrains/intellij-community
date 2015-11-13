@@ -80,9 +80,11 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   @NonNls private static final String ELEMENT_CHANGELIST = "changelist";
   @NonNls private static final String ELEMENT_RECYCLED_CHANGELIST = "recycled_changelist";
   @NonNls private static final String DEFAULT_PATCH_NAME = "shelved";
+  @NonNls private static final String REMOVE_FILES_FROM_SHELF_STRATEGY = "remove_strategy";
 
   @NotNull private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
   @NotNull private final SchemesManager<ShelvedChangeList, ShelvedChangeList> mySchemeManager;
+  private boolean myRemoveFilesFromShelf;
 
   public static ShelveChangesManager getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ShelveChangesManager.class);
@@ -175,12 +177,9 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     final String showRecycled = element.getAttributeValue(ATTRIBUTE_SHOW_RECYCLED);
-    if (showRecycled != null) {
-      myShowRecycled = Boolean.parseBoolean(showRecycled);
-    }
-    else {
-      myShowRecycled = true;
-    }
+    myShowRecycled = showRecycled == null || Boolean.parseBoolean(showRecycled);
+    String removeFilesStrategy = JDOMExternalizerUtil.readField(element, REMOVE_FILES_FROM_SHELF_STRATEGY);
+    myRemoveFilesFromShelf = removeFilesStrategy != null && Boolean.parseBoolean(removeFilesStrategy);
     migrateOldShelfInfo(element, true);
     migrateOldShelfInfo(element, false);
   }
@@ -253,6 +252,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     element.setAttribute(ATTRIBUTE_SHOW_RECYCLED, Boolean.toString(myShowRecycled));
+    JDOMExternalizerUtil.writeField(element, REMOVE_FILES_FROM_SHELF_STRATEGY, Boolean.toString(isRemoveFilesFromShelf()));
   }
 
   public List<ShelvedChangeList> getShelvedChangeLists() {
@@ -564,14 +564,14 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
                                                    patches, targetChangeList, binaryPatchApplier, commitContext, reverse, leftConflictTitle,
                                                    rightConflictTitle);
         patchApplier.setIsSystemOperation(systemOperation);
-
-        remainingPatches.addAll(patchApplier.getRemainingPatches());
-
-        if (remainingPatches.isEmpty() && remainingBinaries.isEmpty()) {
-          recycleChangeList(changeList);
-        }
-        else {
-          saveRemainingPatches(changeList, remainingPatches, remainingBinaries, commitContext);
+        if (isRemoveFilesFromShelf() || systemOperation) {
+          remainingPatches.addAll(patchApplier.getRemainingPatches());
+          if (remainingPatches.isEmpty() && remainingBinaries.isEmpty()) {
+            recycleChangeList(changeList);
+          }
+          else {
+            saveRemainingPatches(changeList, remainingPatches, remainingBinaries, commitContext);
+          }
         }
 
         patchApplier.execute(showSuccessNotification, systemOperation);
@@ -598,6 +598,14 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
       }
     }
     return textFilePatches;
+  }
+
+  public void setRemoveFilesFromShelf(boolean removeFilesFromShelf) {
+    myRemoveFilesFromShelf = removeFilesFromShelf;
+  }
+
+  public boolean isRemoveFilesFromShelf() {
+    return myRemoveFilesFromShelf;
   }
 
   private class BinaryPatchApplier implements CustomBinaryPatchApplier<ShelvedBinaryFilePatch> {
@@ -697,7 +705,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     }
   }
 
-  void saveRemainingPatches(final ShelvedChangeList changeList, final List<FilePatch> remainingPatches,
+  public void saveRemainingPatches(final ShelvedChangeList changeList, final List<FilePatch> remainingPatches,
                             final List<ShelvedBinaryFile> remainingBinaries, CommitContext commitContext) {
     final File newPatchDir = generateUniqueSchemePatchDir(changeList.DESCRIPTION, true);
     final File newPath = getPatchFileInConfigDir(newPatchDir);
@@ -790,7 +798,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     }
   }
 
-  private void recycleChangeList(@NotNull final ShelvedChangeList changeList) {
+  public void recycleChangeList(@NotNull final ShelvedChangeList changeList) {
     recycleChangeList(changeList, null);
     notifyStateChanged();
   }
@@ -835,49 +843,6 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
       null);
     ApplyPatchDefaultExecutor.applyAdditionalInfoBefore(project, additionalInfo, commitContext);
     return textFilePatches;
-  }
-
-  public static class ShelvedBinaryFilePatch extends FilePatch {
-    private final ShelvedBinaryFile myShelvedBinaryFile;
-
-    public ShelvedBinaryFilePatch(final ShelvedBinaryFile shelvedBinaryFile) {
-      myShelvedBinaryFile = shelvedBinaryFile;
-      setBeforeName(myShelvedBinaryFile.BEFORE_PATH);
-      setAfterName(myShelvedBinaryFile.AFTER_PATH);
-    }
-
-    public static ShelvedBinaryFilePatch patchCopy(@NotNull final ShelvedBinaryFilePatch patch) {
-      return new ShelvedBinaryFilePatch(patch.getShelvedBinaryFile());
-    }
-
-    @Override
-    public String getBeforeFileName() {
-      return getFileName(myShelvedBinaryFile.BEFORE_PATH);
-    }
-
-    @Override
-    public String getAfterFileName() {
-      return getFileName(myShelvedBinaryFile.AFTER_PATH);
-    }
-
-    @Nullable
-    private static String getFileName(String filePath) {
-      return filePath != null ? PathUtil.getFileName(filePath) : null;
-    }
-
-    @Override
-    public boolean isNewFile() {
-      return myShelvedBinaryFile.BEFORE_PATH == null;
-    }
-
-    @Override
-    public boolean isDeletedFile() {
-      return myShelvedBinaryFile.AFTER_PATH == null;
-    }
-
-    public ShelvedBinaryFile getShelvedBinaryFile() {
-      return myShelvedBinaryFile;
-    }
   }
 
   public boolean isShowRecycled() {

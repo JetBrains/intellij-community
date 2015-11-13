@@ -742,11 +742,7 @@ public class FindManagerImpl extends FindManager {
     Pattern pattern = model.compileRegExp();
     return pattern == null ?
            null :
-           pattern.matcher(
-             text instanceof StringUtil.BombedCharSequence ?
-               text :
-               StringPattern.newBombedCharSequence(text)
-           );
+           pattern.matcher( StringPattern.newBombedCharSequence(text) );
   }
 
   @Override
@@ -958,6 +954,7 @@ public class FindManagerImpl extends FindManager {
     if (fileEditor instanceof TextEditor) {
       TextEditor textEditor = (TextEditor)fileEditor;
       Editor editor = textEditor.getEditor();
+      editor.getCaretModel().removeSecondaryCarets();
       if (tryToFindNextUsageViaEditorSearchComponent(editor, direction)) {
         return true;
       }

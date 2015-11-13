@@ -98,6 +98,8 @@ public abstract class QuickFixFactory {
 
   @NotNull public abstract IntentionAction createAddExceptionToThrowsFix(@NotNull PsiElement element);
 
+  @NotNull public abstract IntentionAction createAddExceptionFromFieldInitializerToConstructorThrowsFix(@NotNull PsiElement element);
+
   @NotNull public abstract IntentionAction createSurroundWithTryCatchFix(@NotNull PsiElement element);
 
   @NotNull public abstract IntentionAction createGeneralizeCatchFix(@NotNull PsiElement element, @NotNull PsiClassType type);

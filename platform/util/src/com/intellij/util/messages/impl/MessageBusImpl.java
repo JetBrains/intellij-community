@@ -47,7 +47,7 @@ public class MessageBusImpl implements MessageBus {
       return ContainerUtil.compareLexicographically(bus1.myOrderRef.get(), bus2.myOrderRef.get());
     }
   };
-  private final ThreadLocal<Queue<DeliveryJob>> myMessageQueue = createThreadLocalQueue();
+  @SuppressWarnings("SSBasedInspection") private final ThreadLocal<Queue<DeliveryJob>> myMessageQueue = createThreadLocalQueue();
 
   /**
    * Root's order is empty
@@ -75,11 +75,13 @@ public class MessageBusImpl implements MessageBus {
   private MessageBusImpl myParentBus;
 
   //is used for debugging purposes
-  private final Object myOwner;
+  private final String myOwner;
   private boolean myDisposed;
+  private final Disposable myConnectionDisposable;
 
   public MessageBusImpl(@NotNull Object owner, @NotNull MessageBus parentBus) {
     myOwner = owner.toString() + " of " + owner.getClass();
+    myConnectionDisposable = Disposer.newDisposable(myOwner);
     myParentBus = (MessageBusImpl)parentBus;
     myParentBus.onChildBusCreated(this);
     LOG.assertTrue(myParentBus.myChildBuses.contains(this));
@@ -88,6 +90,7 @@ public class MessageBusImpl implements MessageBus {
 
   private MessageBusImpl(Object owner) {
     myOwner = owner.toString() + " of " + owner.getClass();
+    myConnectionDisposable = Disposer.newDisposable(myOwner);
     myOrderRef.set(Collections.<Integer>emptyList());
   }
 
@@ -197,14 +200,14 @@ public class MessageBusImpl implements MessageBus {
   @Override
   @NotNull
   public MessageBusConnection connect() {
-    checkNotDisposed();
-    return new MessageBusConnectionImpl(this);
+    return connect(myConnectionDisposable);
   }
 
   @Override
   @NotNull
   public MessageBusConnection connect(@NotNull Disposable parentDisposable) {
-    final MessageBusConnection connection = connect();
+    checkNotDisposed();
+    final MessageBusConnection connection = new MessageBusConnectionImpl(this);
     Disposer.register(parentDisposable, connection);
     return connection;
   }
@@ -254,6 +257,7 @@ public class MessageBusImpl implements MessageBus {
   @Override
   public void dispose() {
     checkNotDisposed();
+    Disposer.dispose(myConnectionDisposable);
     Queue<DeliveryJob> jobs = myMessageQueue.get();
     if (!jobs.isEmpty()) {
       LOG.error("Not delivered events in the queue: " + jobs);

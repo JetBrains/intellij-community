@@ -95,7 +95,7 @@ internal class FieldProcessor(private val reader: InterfaceReader, typeClass: Cl
       override fun writeMethodImplementationJava(scope: ClassScope, method: Method, out: TextOutput) {
         out.append("override fun ")
 
-        val isEscapeName = method.name == "object"
+        val isEscapeName = method.name == "object" || method.name == "fun"
         if (isEscapeName) {
           out.append('`')
         }

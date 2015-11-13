@@ -20,7 +20,7 @@ internal fun InterfaceReader(protocolInterfaces: List<Class<*>>): InterfaceReade
   return InterfaceReader(map)
 }
 
-private val LONG_PARSER = PrimitiveValueReader("Long", "-1")
+private val LONG_PARSER = PrimitiveValueReader("Long", "-1L")
 
 private val INTEGER_PARSER = PrimitiveValueReader("Int", "-1")
 

@@ -311,7 +311,7 @@ public class AddImportHelper {
   }
 
   /**
-   * Adds a new {@link PyFromImportStatement} statement below other top-level imports or as specified by anchor.
+   * Adds a new {@link PyFromImportStatement} statement within other top-level imports or as specified by anchor.
    *
    * @param file   where to operate
    * @param from   import source (reference after {@code from} keyword)
@@ -330,18 +330,37 @@ public class AddImportHelper {
                                             @Nullable PsiElement anchor) {
     final PyElementGenerator generator = PyElementGenerator.getInstance(file.getProject());
     final LanguageLevel languageLevel = LanguageLevel.forElement(file);
-    final PyFromImportStatement nodeToInsert = generator.createFromImportStatement(languageLevel, from, name, asName);
+    final PyFromImportStatement newImport = generator.createFromImportStatement(languageLevel, from, name, asName);
+    addFromImportStatement(file, newImport, priority, anchor);
+  }
+
+  /**
+   * Adds a new {@link PyFromImportStatement} statement within other top-level imports or as specified by anchor.
+   *
+   * @param file      where to operate
+   * @param newImport new "from import" statement to insert. It may be generated, because it won't be used for resolving anyway. 
+   *                  You might want to use overloaded version of this method to generate such statement automatically.
+   * @param anchor    place where the imported name was used. It will be used to determine proper block where new import should be inserted,
+   *                  e.g. inside conditional block or try/except statement. Also if anchor is another import statement, new import statement
+   *                  will be inserted right after it.
+   * @see #addFromImportStatement(PsiFile, String, String, String, ImportPriority, PsiElement)
+   * @see #addFromImportStatement
+   */
+  public static void addFromImportStatement(@NotNull PsiFile file,
+                                            @NotNull PyFromImportStatement newImport,
+                                            @Nullable ImportPriority priority,
+                                            @Nullable PsiElement anchor) {
     try {
-      final PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(anchor, PyImportStatementBase.class, false);
+      final PyImportStatementBase parentImport = PsiTreeUtil.getParentOfType(anchor, PyImportStatementBase.class, false);
       final PsiElement insertParent;
-      if (importStatement != null && importStatement.getContainingFile() == file) {
-        insertParent = importStatement.getParent();
+      if (parentImport != null && parentImport.getContainingFile() == file) {
+        insertParent = parentImport.getParent();
       }
       else {
         insertParent = file;
       }
       if (InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
-        final PsiElement element = insertParent.addBefore(nodeToInsert, getInsertPosition(insertParent, nodeToInsert, priority));
+        final PsiElement element = insertParent.addBefore(newImport, getInsertPosition(insertParent, newImport, priority));
         PsiElement whitespace = element.getNextSibling();
         if (!(whitespace instanceof PsiWhiteSpace)) {
           whitespace = PsiParserFacade.SERVICE.getInstance(file.getProject()).createWhiteSpaceFromText("  >>> ");
@@ -350,10 +369,10 @@ public class AddImportHelper {
       }
       else {
         if (anchor instanceof PyImportStatementBase) {
-          insertParent.addAfter(nodeToInsert, anchor);
+          insertParent.addAfter(newImport, anchor);
         }
         else {
-          insertParent.addBefore(nodeToInsert, getInsertPosition(insertParent, nodeToInsert, priority));
+          insertParent.addBefore(newImport, getInsertPosition(insertParent, newImport, priority));
         }
       }
     }
