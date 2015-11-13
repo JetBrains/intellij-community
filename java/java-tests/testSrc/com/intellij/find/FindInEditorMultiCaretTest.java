@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,6 +135,18 @@ public class FindInEditorMultiCaretTest extends LightPlatformCodeInsightFixtureT
                       "<selection>abc<caret></selection>\n" +
                       "abc");
   }
+  
+  public void testFindNextRetainsOnlyOneCaretIfNotUsedAsMoveToNextOccurrence() throws Exception {
+    init("<caret>To be or not to be?");
+    initFind();
+    setTextToFind("be");
+    checkResultByText("To <selection>be<caret></selection> or not to be?");
+    closeFind();
+    new EditorMouseFixture((EditorImpl)myFixture.getEditor()).alt().shift().clickAt(0, 8); // adding second caret
+    checkResultByText("To <selection>be<caret></selection> or<caret> not to be?");
+    nextOccurrenceFromEditor();
+    checkResultByText("To be or not to <selection>be<caret></selection>?");
+  }
 
   private void setTextToFind(String text) {
     EditorSearchSession editorSearchSession = getEditorSearchComponent();
@@ -198,7 +210,7 @@ public class FindInEditorMultiCaretTest extends LightPlatformCodeInsightFixtureT
   }
 
   private void initFind() {
-    myFixture.performEditorAction("Find");
+    myFixture.performEditorAction(IdeActions.ACTION_FIND);
   }
 
   private EditorSearchSession getEditorSearchComponent() {
