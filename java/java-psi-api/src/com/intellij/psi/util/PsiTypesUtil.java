@@ -224,6 +224,12 @@ public class PsiTypesUtil {
           return ((PsiArrayType)type).getComponentType();
         }
       }
+      else if (gParent instanceof PsiVariable) {
+        final PsiType type = ((PsiVariable)gParent).getType();
+        if (type instanceof PsiArrayType) {
+          return ((PsiArrayType)type).getComponentType();
+        }
+      }
       else if (gParent instanceof PsiArrayInitializerExpression) {
         final PsiType expectedTypeByParent = getExpectedTypeByParent((PsiExpression)parent);
         return expectedTypeByParent != null && expectedTypeByParent instanceof PsiArrayType
