@@ -57,11 +57,11 @@ class CachedValueChecker {
   }
 
   @Nullable
-  private static BackLink findReferencedPsi(@NotNull Object o,
-                                            @Nullable final UserDataHolder toIgnore,
-                                            final int depth,
-                                            @NotNull final Set<Object> visited,
-                                            @Nullable final BackLink backLink) {
+  private static synchronized BackLink findReferencedPsi(@NotNull Object o,
+                                                         @Nullable final UserDataHolder toIgnore,
+                                                         final int depth,
+                                                         @NotNull final Set<Object> visited,
+                                                         @Nullable final BackLink backLink) {
     if (depth == 0 || o == toIgnore || !visited.add(o)) return null;
     if (o instanceof Project || o instanceof Module || o instanceof Application) return null;
     if (o instanceof PsiElement) {
