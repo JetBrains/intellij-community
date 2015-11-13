@@ -25,6 +25,15 @@ class FileLoggerTest : PlatformTestCase() {
         
         UsefulTestCase.assertEquals(firstLength * 2, secondLength)
     }
+    
+    fun `test file is created if it doesn't exist`() {
+        val path = "x.txt"
+        val mockPathProvider = mock(FilePathProvider::class.java)
+        `when`(mockPathProvider.statsFilePath).thenReturn(path)
+        performLogging(mockPathProvider)
+        var text = File(path).readText()
+        UsefulTestCase.assertTrue(text.length > 0)
+    }
 
     private fun performLogging(pathProvider: FilePathProvider): CompletionLogger {
         var loggerProvider = CompletionFileLoggerProvider(pathProvider)

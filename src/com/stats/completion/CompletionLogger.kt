@@ -26,7 +26,11 @@ class CompletionFileLoggerProvider(val filePathProvider: FilePathProvider) : Com
     var initialized = false
     val writer: PrintWriter by lazy {
         val path = filePathProvider.statsFilePath
-        val bufferedWriter = Files.newBufferedWriter(File(path).toPath(), StandardOpenOption.APPEND)
+        val file = File(path)
+        if (!file.exists()) {
+            file.createNewFile()
+        }
+        val bufferedWriter = Files.newBufferedWriter(file.toPath(), StandardOpenOption.APPEND)
         initialized = true
         PrintWriter(bufferedWriter)
     }
