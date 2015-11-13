@@ -1,8 +1,7 @@
 package org.jetbrains.protocolReader
 
 import gnu.trove.THashMap
-import java.io.File
-import java.nio.file.FileSystems
+import java.nio.file.Paths
 import java.util.*
 
 class GenerateConfiguration<ROOT>(val packageName: String, val className: String, readerRootClass: Class<ROOT>, protocolInterfaces: List<Class<*>>, basePackagesMap: Map<Class<*>, String>? = null) {
@@ -13,7 +12,7 @@ class GenerateConfiguration<ROOT>(val packageName: String, val className: String
 }
 
 fun generate(args: Array<String>, configuration: GenerateConfiguration<*>) {
-  val fileUpdater = FileUpdater(FileSystems.getDefault().getPath(parseArgs(args), configuration.packageName.replace('.', File.separatorChar), "${configuration.className}.kt"))
+  val fileUpdater = FileUpdater(Paths.get(parseArgs(args), "${configuration.className}.kt"))
   generate(configuration, fileUpdater.builder)
   fileUpdater.update()
 }
