@@ -67,6 +67,7 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
+import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
@@ -4353,7 +4354,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           return;
         }
       }
-      myEditorComponent.setCursor(UIUtil.getTextCursor(getBackgroundColor()));
+      if (!IdeGlassPaneImpl.hasPreProcessedCursor(myEditorComponent)) {
+        myEditorComponent.setCursor(UIUtil.getTextCursor(getBackgroundColor()));
+      }
     }
   }
 

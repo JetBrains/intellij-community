@@ -356,7 +356,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
             getRootPane().setCursor(cursor);
           }
         }
-        else {
+        else if (!e.isConsumed()) {
           cursor = Cursor.getDefaultCursor();
           JRootPane rootPane = getRootPane();
           if (rootPane != null) {
