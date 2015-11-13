@@ -20,10 +20,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class ShowHideRecycledAction extends ToggleAction {
+public class ShowHideRecycledAction extends ToggleAction implements DumbAware {
 
   @Override
   public void update(@NotNull final AnActionEvent e) {
