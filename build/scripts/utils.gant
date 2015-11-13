@@ -325,8 +325,7 @@ binding.setVariable("copyAndPatchFiles", { Closure files, String target, Map arg
 
 binding.setVariable("wireBuildDate", { String buildNumber, String appInfoFile ->
   ant.tstamp()
-  patchFiles([appInfoFile], ["BUILD_NUMBER": buildNumber, "BUILD_DATE": DSTAMP,
-          "PACKAGE_CODE": buildNumber.substring(0, buildNumber.indexOf('-'))])
+  patchFiles([appInfoFile], ["BUILD_NUMBER": buildNumber, "BUILD_DATE": DSTAMP])
 })
 
 binding.setVariable("commonJvmArgsForTests", {
