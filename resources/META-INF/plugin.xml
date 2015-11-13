@@ -31,6 +31,8 @@
     </applicationService>
     <applicationService serviceInterface="com.stats.completion.FilePathProvider" serviceImplementation="com.stats.completion.PluginDirectoryFilePathProvider">
     </applicationService>
+    <applicationService serviceInterface="com.stats.completion.StatisticSender" serviceImplementation="com.stats.completion.StatisticSender">
+    </applicationService>
   </extensions>
 
   <actions>

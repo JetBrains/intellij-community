@@ -12,17 +12,18 @@ import java.io.IOException
 import java.nio.file.Files
 
 
-class SenderComponent(val urlProvider: UrlProvider, val pathProvider: FilePathProvider) : ApplicationComponent.Adapter() {
-
+class SenderComponent(val sender: StatisticSender) : ApplicationComponent.Adapter() {
     override fun initComponent() {
         if (ApplicationManager.getApplication().isUnitTestMode) return
-        
         ApplicationManager.getApplication().executeOnPooledThread {
-            sendStatsData()
+            sender.sendStatsData()
         }
     }
+}
 
-    private fun sendStatsData() {
+class StatisticSender(val urlProvider: UrlProvider, val pathProvider: FilePathProvider) {
+
+    public fun sendStatsData() {
         try {
             val path = pathProvider.statsFilePath
             val file = File(path)
