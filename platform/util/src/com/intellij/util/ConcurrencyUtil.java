@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package com.intellij.util;
 
+import com.intellij.diagnostic.ThreadDumper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -134,5 +136,22 @@ public class ConcurrencyUtil {
         return new Thread(r, name);
       }
     };
+  }
+
+  @TestOnly
+  /**
+   * Awaits for all tasks in the {@code executor} to finish for the specified {@code timeout}
+   */
+  public static void awaitQuiescence(@NotNull ThreadPoolExecutor executor, long timeout, @NotNull TimeUnit unit) {
+    long deadline = System.currentTimeMillis() + unit.toMillis(timeout);
+    executor.setKeepAliveTime(1, TimeUnit.NANOSECONDS); // no need for zombies in tests
+    while (executor.getPoolSize() != 0 && System.currentTimeMillis() < deadline) {
+      executor.setCorePoolSize(0); // interrupt idle workers
+      TimeoutUtil.sleep(1);
+    }
+    if (executor.getPoolSize() != 0) {
+      String dump = ThreadDumper.dumpThreadsToString();
+      System.err.println(dump);
+    }
   }
 }
