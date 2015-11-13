@@ -222,6 +222,12 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
+  public IntentionAction createAddExceptionFromFieldInitializerToConstructorThrowsFix(@NotNull PsiElement element) {
+    return new AddExceptionFromFieldInitializerToConstructorThrowsFix(element);
+  }
+
+  @NotNull
+  @Override
   public IntentionAction createSurroundWithTryCatchFix(@NotNull PsiElement element) {
     return new SurroundWithTryCatchFix(element);
   }
