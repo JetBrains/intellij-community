@@ -38,9 +38,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.*;
@@ -324,7 +324,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           else {
             if (!LambdaUtil.isLambdaFullyInferred(expression, functionalInterfaceType) && !expression.hasFormalParameterTypes()) {
               final PsiCallExpression callExpression = PsiTreeUtil.getParentOfType(expression, PsiCallExpression.class);
-              String description = callExpression != null ? InferenceSession.getInferenceErrorMessage(callExpression) : null;
+              String description;
+              if (callExpression != null) {
+                final JavaResolveResult result = callExpression.resolveMethodGenerics();
+                description = result instanceof MethodCandidateInfo ? ((MethodCandidateInfo)result).getInferenceErrorMessage() : null;
+              }
+              else {
+                description = null;
+              }
               if (description == null) {
                 description = "Cyclic inference";
               }
