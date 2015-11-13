@@ -27,7 +27,7 @@ import java.nio.charset.Charset;
  * @author traff
  */
 public class PythonProcessHandler extends KillableColoredProcessHandler {
-  public static final boolean SOFT_KILL_ON_WIN = Registry.get("kill.windows.processes.softly").asBoolean();
+  public static final boolean SOFT_KILL_ON_WIN = Registry.is("kill.windows.processes.softly", false);
 
   public PythonProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     this(commandLine, SOFT_KILL_ON_WIN);
