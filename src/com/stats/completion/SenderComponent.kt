@@ -12,36 +12,36 @@ import java.io.IOException
 import java.nio.file.Files
 
 
-class DataSender(val urlProvider: UrlProvider, val pathProvider: FilePathProvider) : ApplicationComponent.Adapter() {
+class SenderComponent(val urlProvider: UrlProvider, val pathProvider: FilePathProvider) : ApplicationComponent.Adapter() {
 
     override fun initComponent() {
         if (ApplicationManager.getApplication().isUnitTestMode) return
         
         ApplicationManager.getApplication().executeOnPooledThread {
-            try {
-                val path = pathProvider.statsFilePath
-                val file = File(path)
-                if (file.exists()) {
-                    sendStatsFile(path)
-                }
-            } catch (e: IOException) {
-                println(e)
-            }
+            sendStatsData()
         }
     }
 
-    private fun sendStatsFile(path: String) {
-        val url = urlProvider.statsServerPostUrl
-        val reader = Files.newBufferedReader(File(path).toPath())
-        val text = reader.readText()
-
-        sendContent(url, text, okAction = Runnable {
-            try {
-                reader.close()
-            } finally {
-                File(path).delete()
+    private fun sendStatsData() {
+        try {
+            val path = pathProvider.statsFilePath
+            val file = File(path)
+            if (file.exists()) {
+                sendStatsFile(file, onSuccess = Runnable {
+                    file.delete()
+                })
             }
-        })
+        } catch (e: IOException) {
+            println(e)
+        }
+    }
+
+    private fun sendStatsFile(file: File, onSuccess: Runnable) {
+        val url = urlProvider.statsServerPostUrl
+        val reader = Files.newBufferedReader(file.toPath())
+        val text = reader.readText()
+        reader.close()
+        sendContent(url, text, onSuccess)
     }
 
     fun sendContent(url: String, content: String, okAction: Runnable) {
@@ -55,6 +55,5 @@ class DataSender(val urlProvider: UrlProvider, val pathProvider: FilePathProvide
             okAction.run()
         }
     }
-
-
+    
 }

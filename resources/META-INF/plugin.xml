@@ -46,7 +46,7 @@
   
   <application-components>
     <component>
-      <implementation-class>com.stats.completion.DataSender</implementation-class>
+      <implementation-class>com.stats.completion.SenderComponent</implementation-class>
     </component>
   </application-components>
 
