@@ -26,13 +26,17 @@ import com.intellij.util.io.BaseInputStreamReader;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
-import java.util.concurrent.*;
+import java.util.concurrent.Future;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import static com.intellij.util.io.BaseDataReader.AdaptiveSleepingPolicy;
 
@@ -241,17 +245,30 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   }
 
   public static class ExecutorServiceHolder {
-    private static final ExecutorService ourThreadExecutorsService = createServiceImpl();
-
-    private static ThreadPoolExecutor createServiceImpl() {
-      ThreadFactory factory = ConcurrencyUtil.newNamedThreadFactory("OSProcessHandler pooled thread");
-      return new ThreadPoolExecutor(0, Integer.MAX_VALUE, 5, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), factory);
-    }
+    private static final ThreadPoolExecutor ourThreadExecutorsService =
+      new ThreadPoolExecutor(0, Integer.MAX_VALUE, 1, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
+                             ConcurrencyUtil.newNamedThreadFactory("OSProcessHandler pooled thread"));
 
     @NotNull
+    @Deprecated
+    /**
+     * todo remove in IDEA16
+     * @deprecated use {@link BaseOSProcessHandler#submit(Runnable)} instead.
+     */
     public static Future<?> submit(@NotNull Runnable task) {
-      return ourThreadExecutorsService.submit(task);
+      return BaseOSProcessHandler.submit(task);
     }
+  }
+
+  @NotNull
+  public static Future<?> submit(@NotNull Runnable task) {
+    return ExecutorServiceHolder.ourThreadExecutorsService.submit(task);
+  }
+
+  @TestOnly
+  public static void awaitQuiescence(long timeout, @NotNull TimeUnit unit) {
+    ThreadPoolExecutor executor = ExecutorServiceHolder.ourThreadExecutorsService;
+    ConcurrencyUtil.awaitQuiescence(executor, timeout, unit);
   }
 
   private class SimpleOutputReader extends BaseOutputReader {
@@ -273,5 +290,10 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     protected void onTextAvailable(@NotNull String text) {
       notifyTextAvailable(text, myProcessOutputType);
     }
+  }
+
+  @Override
+  public String toString() {
+    return myCommandLine;
   }
 }
