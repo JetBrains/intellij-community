@@ -74,41 +74,84 @@ class CompletionFileLogger(private val installationUID: String,
                            private val completionUID: String,
                            private val writer: PrintWriter) : CompletionLogger() {
     
-    private fun println(line: String) {
-        writer.println(line)
-//        System.out.println(line)
+    private fun log(statInfoBuilder: StatInfoBuilder) {
+        System.out.println(statInfoBuilder.message())
     }
     
     override fun completionStarted() {
-        println("completion started")
+        val builder = messageBuilder(Action.COMPLETION_STARTED)
+        log(builder)
     }
 
     override fun downPressed() {
-        println("down pressed")
+        val builder = messageBuilder(Action.DOWN)
+        log(builder)
     }
 
     override fun upPressed() {
-        println("up pressed")
+        val builder = messageBuilder(Action.UP)
+        log(builder)
     }
 
     override fun backspacePressed() {
-        println("backspace pressed")
+        val builder = messageBuilder(Action.BACKSPACE)
+        log(builder)
     }
 
     override fun itemSelectedCompletionFinished() {
-        println("item selected completion finished")
+        val builder = messageBuilder(Action.EXPLICIT_SELECT)
+        log(builder)
     }
 
     override fun charTyped(c: Char) {
-        println("char typed")
+        val builder = messageBuilder(Action.TYPE)
+        log(builder)
     }
 
     override fun completionCancelled() {
-        println("completion cancelled")
+        val builder = messageBuilder(Action.COMPLETION_CANCELED)
+        log(builder)
     }
 
     override fun itemSelectedByTyping() {
-        println("item selected by typing")
+        val builder = messageBuilder(Action.TYPED_SELECT)
+        log(builder)
     }
     
+    private fun messageBuilder(action: Action): StatInfoBuilder {
+        return StatInfoBuilder(installationUID, completionUID, action)
+    }
+    
+}
+
+
+
+class StatInfoBuilder(val installationUID: String, val completionUID: String, val action: Action) {
+    private val timestamp = System.currentTimeMillis()
+    
+    fun message(): String {
+        val builder = StringBuilder()
+        builder.append(installationUID)
+                .append(' ')
+                .append(completionUID)
+                .append(' ')
+                .append(timestamp)
+                .append(' ')
+                .append(action)
+        
+        return builder.toString()
+    }
+    
+}
+
+
+enum class Action {
+    COMPLETION_STARTED,
+    TYPE,
+    BACKSPACE,
+    UP,
+    DOWN,
+    COMPLETION_CANCELED,
+    EXPLICIT_SELECT,
+    TYPED_SELECT
 }
