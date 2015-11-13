@@ -45,10 +45,10 @@ class StatisticSender(val urlProvider: UrlProvider, val pathProvider: FilePathPr
         val reader = Files.newBufferedReader(file.toPath())
         val text = reader.readText()
         reader.close()
-        sendContent(uid, url, text, onSuccess)
+        sendContent(url, uid, text, onSuccess)
     }
 
-    private fun sendContent(uid: String, url: String, content: String, okAction: Runnable) {
+    private fun sendContent(url: String, uid: String, content: String, okAction: Runnable) {
         val map = mapOf(Pair("uid", uid), Pair("content", content))
         val data = requestService.post(url, map)
         if (data.code == HttpStatus.SC_OK) {
