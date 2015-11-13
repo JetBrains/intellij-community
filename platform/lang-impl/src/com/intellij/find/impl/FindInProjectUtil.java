@@ -42,6 +42,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
@@ -57,7 +58,6 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.Function;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -233,7 +233,7 @@ public class FindInProjectUtil {
                                 @NotNull final Project project,
                                 @NotNull final Processor<UsageInfo> consumer,
                                 @NotNull FindUsagesProcessPresentation processPresentation,
-                                Set<VirtualFile> filesToStart) {
+                                @NotNull Set<VirtualFile> filesToStart) {
     new FindInProjectTask(findModel, project, filesToStart).findUsages(consumer, processPresentation);
   }
 
@@ -415,8 +415,8 @@ public class FindInProjectUtil {
     return result != null ? result : Collections.<PsiElement>emptyList();
   }
 
-  public static @NotNull String buildStringToFindForIndicesFromRegExp(@NotNull String stringToFind, Project project) {
-    if (!SystemProperties.getBooleanProperty("idea.regexp.search.uses.indices", true)) return "";
+  public static @NotNull String buildStringToFindForIndicesFromRegExp(@NotNull String stringToFind, @NotNull Project project) {
+    if (!Registry.is("idea.regexp.search.uses.indices")) return "";
 
     final List<PsiElement> topLevelRegExpChars = getTopLevelRegExpChars("a", project);
     if (topLevelRegExpChars.size() != 1) return "";
