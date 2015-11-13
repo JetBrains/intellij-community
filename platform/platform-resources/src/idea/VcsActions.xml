@@ -135,7 +135,7 @@
       <reference ref="ChangesView.Ignore"/>
     </group>
 
-    <group id="ShelvedChangesPopupMenu">
+    <group id="ShelvedChangesPopupMenu" popup="true">
       <action id="ShelveChanges.UnshelveWithDialog" class="com.intellij.openapi.vcs.changes.shelf.UnshelveWithDialogAction"
               text="Unshelve..." description="Correct paths where to apply patches and unshelve"/>
       <action id="ShelvedChanges.Restore" class="com.intellij.openapi.vcs.changes.shelf.RestoreShelvedChange"/>
@@ -150,7 +150,7 @@
       <reference ref="$Delete"/>
       <separator/>
       <action id="ShelvedChanges.ShowHideDeleted" class="com.intellij.openapi.vcs.changes.shelf.ShowHideRecycledAction"
-              icon="AllIcons.Nodes.DisabledPointcut" description="Show/Hide Already Unshelved"/>
+              description="Show/Hide Already Unshelved"/>
       <action id="ShelvedChanges.DeleteDeleted" class="com.intellij.openapi.vcs.changes.shelf.DeleteAlreadyUnshelvedAction"/>
     </group>
 

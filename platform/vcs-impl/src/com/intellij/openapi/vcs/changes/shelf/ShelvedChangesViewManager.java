@@ -88,6 +88,7 @@ import static com.intellij.util.FontUtil.spaceAndThinSpace;
 public class ShelvedChangesViewManager implements ProjectComponent {
 
   private static final Logger LOG = Logger.getInstance(ShelvedChangesViewManager.class);
+  @NonNls static final String SHELF_CONTEXT_MENU = "Vcs.Shelf.ContextMenu";
 
   private final ChangesViewContentManager myContentManager;
   private final ShelveChangesManager myShelveChangesManager;
@@ -138,7 +139,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     final EditSourceAction editSourceAction = new EditSourceAction();
     editSourceAction.registerCustomShortcutSet(editSourceAction.getShortcutSet(), myTree);
 
-    PopupHandler.installPopupHandler(myTree, "ShelvedChangesPopupMenu", ActionPlaces.UNKNOWN);
+    PopupHandler.installPopupHandler(myTree, "ShelvedChangesPopupMenu", SHELF_CONTEXT_MENU);
 
     new DoubleClickListener() {
       @Override

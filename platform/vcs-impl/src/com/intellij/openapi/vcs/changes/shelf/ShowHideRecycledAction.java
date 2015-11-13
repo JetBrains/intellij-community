@@ -15,16 +15,18 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public class ShowHideRecycledAction extends ToggleAction {
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final Presentation presentation = e.getPresentation();
@@ -32,6 +34,7 @@ public class ShowHideRecycledAction extends ToggleAction {
     if (project != null) {
       presentation.setText(ShelveChangesManager.getInstance(project).isShowRecycled() ?
                            "Hide Already Unshelved" : "Show Already Unshelved");
+      presentation.setIcon(ShelvedChangesViewManager.SHELF_CONTEXT_MENU.equals(e.getPlace()) ? null : AllIcons.Nodes.DisabledPointcut);
     }
   }
 
