@@ -954,6 +954,7 @@ public class FindManagerImpl extends FindManager {
     if (fileEditor instanceof TextEditor) {
       TextEditor textEditor = (TextEditor)fileEditor;
       Editor editor = textEditor.getEditor();
+      editor.getCaretModel().removeSecondaryCarets();
       if (tryToFindNextUsageViaEditorSearchComponent(editor, direction)) {
         return true;
       }
