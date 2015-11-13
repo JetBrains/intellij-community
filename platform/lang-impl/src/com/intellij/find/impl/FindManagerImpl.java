@@ -742,11 +742,7 @@ public class FindManagerImpl extends FindManager {
     Pattern pattern = model.compileRegExp();
     return pattern == null ?
            null :
-           pattern.matcher(
-             text instanceof StringUtil.BombedCharSequence ?
-               text :
-               StringPattern.newBombedCharSequence(text)
-           );
+           pattern.matcher( StringPattern.newBombedCharSequence(text) );
   }
 
   @Override
