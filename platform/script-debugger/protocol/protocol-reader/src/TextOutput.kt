@@ -12,12 +12,12 @@ class TextOutput(public val out: StringBuilder) {
 
   fun indentIn(): TextOutput {
     ++identLevel
-    if (identLevel >= indents.size()) {
+    if (identLevel >= indents.size) {
       // Cache a new level of indentation string.
       val newIndentLevel = CharArray(identLevel * indentGranularity)
       Arrays.fill(newIndentLevel, ' ')
-      val newIndents = arrayOfNulls<CharArray>(indents.size() + 1)
-      System.arraycopy(indents, 0, newIndents, 0, indents.size())
+      val newIndents = arrayOfNulls<CharArray>(indents.size + 1)
+      System.arraycopy(indents, 0, newIndents, 0, indents.size)
       newIndents[identLevel] = newIndentLevel
       indents = newIndents as Array<CharArray>
     }
@@ -72,7 +72,7 @@ class TextOutput(public val out: StringBuilder) {
 
   public fun append(s: CharSequence, start: Int): TextOutput {
     maybeIndent()
-    out.append(s, start, s.length())
+    out.append(s, start, s.length)
     return this
   }
 
@@ -103,8 +103,6 @@ class TextOutput(public val out: StringBuilder) {
   fun comma() = append(',').space()
 
   fun space() = append(' ')
-
-  fun semi() = append(';')
 
   fun doc(description: String?): TextOutput {
     if (description == null) {
