@@ -63,9 +63,10 @@ public abstract class Eclipse2ModulesTest extends IdeaTestCase {
   protected void doTest(@NotNull String workspaceRoot, @NotNull String projectRoot) throws Exception {
     VirtualFile baseDir = getProject().getBaseDir();
     assert baseDir != null;
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(baseDir.getPath() + "/" + workspaceRoot + "/" + myDependantModulePath);
+    final String path = baseDir.getPath() + "/" + workspaceRoot + "/" + myDependantModulePath;
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     if (file == null) {
-      throw new AssertionError("File not found");
+      throw new AssertionError("File " + path + " not found");
     }
 
     PsiTestUtil.addContentRoot(getModule(), file);
