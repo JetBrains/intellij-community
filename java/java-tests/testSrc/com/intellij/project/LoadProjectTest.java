@@ -34,7 +34,6 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
-import com.intellij.util.Processor;
 
 public class LoadProjectTest extends PlatformTestCase {
   @Override
@@ -82,12 +81,8 @@ public class LoadProjectTest extends PlatformTestCase {
     FileEditorManager.getInstance(getProject()).closeFile(b);
     ProjectManagerEx.getInstanceEx().closeAndDispose(getProject());
 
-    LeakHunter.checkLeak(ApplicationManager.getApplication(), PsiFileImpl.class, new Processor<PsiFileImpl>() {
-      @Override
-      public boolean process(PsiFileImpl psiFile) {
-        return  psiFile.getViewProvider().getVirtualFile().getFileSystem() instanceof LocalFileSystem;
-      }
-    });
+    LeakHunter.checkLeak(ApplicationManager.getApplication(), PsiFileImpl.class,
+                         psiFile -> psiFile.getViewProvider().getVirtualFile().getFileSystem() instanceof LocalFileSystem);
   }
 
   @Override

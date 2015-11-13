@@ -15,10 +15,12 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderEx;
@@ -88,7 +90,7 @@ public class LeakHunter {
         return !project.isDefault() && !((ProjectImpl)project).isLight();
       }
     };
-    Collection<Object> roots = new ArrayList<Object>(Arrays.asList(ApplicationManager.getApplication(), Extensions.getRootArea()));
+    Collection<Object> roots = new ArrayList<Object>(allRoots());
     ClassLoader classLoader = LeakHunter.class.getClassLoader();
     Vector<Class> allLoadedClasses = ReflectionUtil.getField(classLoader.getClass(), classLoader, Vector.class, "classes");
     roots.addAll(allLoadedClasses); // inspect static fields of all loaded classes
@@ -141,5 +143,10 @@ public class LeakHunter {
   @TestOnly
   public static <T> void checkLeak(@NotNull Object root, @NotNull Class<T> suspectClass, @Nullable final Processor<? super T> isReallyLeak) throws AssertionError {
     checkLeak(Collections.singletonList(root), suspectClass, isReallyLeak);
+  }
+
+  @NotNull
+  public static List<Object> allRoots() {
+    return Arrays.asList(ApplicationManager.getApplication(), Disposer.getTree(), IdeEventQueue.getInstance(), LaterInvocator.getLaterInvocatorQueue());
   }
 }
