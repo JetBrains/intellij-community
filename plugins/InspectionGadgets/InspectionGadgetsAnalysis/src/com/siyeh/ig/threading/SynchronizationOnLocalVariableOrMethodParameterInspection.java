@@ -105,7 +105,7 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
       }
       final PsiElement statementScope = getScope(statement);
       final PsiElement targetScope = getScope(target);
-      if (statementScope != targetScope) {
+      if (statementScope != targetScope || isEscaping((PsiVariable)target)) {
         return;
       }
       registerError(referenceExpression, Boolean.valueOf(localVariable));
@@ -131,6 +131,62 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
       }
       final PsiClass containingClass = method.getContainingClass();
       return containingClass != null && "java.util.Collections".equals(containingClass.getQualifiedName());
+    }
+  }
+
+  private static boolean isEscaping(PsiVariable variable) {
+    final PsiElement scope;
+    if (variable instanceof PsiParameter) {
+      final PsiParameter parameter = (PsiParameter)variable;
+      scope = parameter.getDeclarationScope();
+    }
+    else if (variable instanceof PsiLocalVariable) {
+      scope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+    }
+    else {
+      throw new AssertionError();
+    }
+    if (scope == null) {
+      // incomplete code
+      return true;
+    }
+    final EscapeVisitor visitor = new EscapeVisitor(variable, scope);
+    scope.accept(visitor);
+    return visitor.isEscaping();
+  }
+
+  private static class EscapeVisitor extends JavaRecursiveElementWalkingVisitor {
+
+    private final PsiVariable myVariable;
+    private final PsiElement myContext;
+    private boolean escaping = false;
+
+    public EscapeVisitor(@NotNull PsiVariable variable, @NotNull PsiElement context) {
+      myVariable = variable;
+      myContext = context;
+    }
+
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      if (escaping) {
+        return;
+      }
+      super.visitReferenceExpression(expression);
+      final PsiElement target = expression.resolve();
+      if (!myVariable.equals(target)) {
+        return;
+      }
+      final PsiElement context = PsiTreeUtil.getParentOfType(expression, PsiMember.class, PsiLambdaExpression.class);
+      if (context != null && PsiTreeUtil.isAncestor(myContext, context, true)) {
+        // strictly speaking a value can also escape via method call or return statement, but
+        // since it is difficult to guarantee synchronization and thus correctness on accessing such values,
+        // we want to warn on those cases and don't detect them here.
+        escaping = true;
+      }
+    }
+
+    public boolean isEscaping() {
+      return escaping;
     }
   }
 }
