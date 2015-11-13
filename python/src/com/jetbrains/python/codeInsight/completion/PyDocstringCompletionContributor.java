@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.documentation.docstrings.DocStringParameterReference;
@@ -78,7 +79,19 @@ public class PyDocstringCompletionContributor extends CompletionContributor {
           }
         }
       }
-      else if (reference instanceof DocStringParameterReference) {
+      // For reST declaration like ":param foo: int" "foo" is PsiMultiReference that combines DocStringParameterReference and DocStringTypeReference
+      else if (reference instanceof PsiMultiReference) {
+        for (PsiReference innerReference : ((PsiMultiReference)reference).getReferences()) {
+          addVariantsFromDocstringReference(innerReference, result);
+        }
+      }
+      else {
+        addVariantsFromDocstringReference(reference, result);
+      }
+    }
+
+    private static void addVariantsFromDocstringReference(@NotNull PsiReference reference, @NotNull CompletionResultSet result) {
+      if (reference instanceof DocStringParameterReference) {
         for (PyNamedParameter param : ((DocStringParameterReference)reference).collectParameterVariants()) {
           result.addElement(LookupElementBuilder.createWithIcon(param));
         }
