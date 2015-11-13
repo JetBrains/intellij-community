@@ -16,6 +16,7 @@
 package com.intellij.concurrency;
 
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -23,15 +24,15 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.ui.UIUtil;
 
+import javax.swing.*;
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -442,6 +443,52 @@ public class JobUtilTest extends PlatformTestCase {
       job.cancel();
       job.waitForCompletion(100000);
       assertTrue(finished.get());
+    }
+  }
+
+  public void testDaemonDoesNotPauseWhenEventDispatcherHasEventsInTheQueue() throws Throwable {
+    assertTrue(SwingUtilities.isEventDispatchThread());
+
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    final AtomicInteger jobsStarted = new AtomicInteger();
+    final int N_EVENTS = 50;
+    final int N_JOBS = 10000 * JobSchedulerImpl.CORES_COUNT;
+    ProgressIndicator indicator = new DaemonProgressIndicator();
+
+    Job<Void> job = JobLauncher.getInstance().submitToJobThread(
+      () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(N_JOBS, null), indicator, false, o -> {
+        jobsStarted.incrementAndGet();
+        TimeoutUtil.sleep(10);
+        return true;
+      }), null);
+
+    for (int i = 0; i < N_EVENTS; i++) {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(() -> {
+        int jobs0 = jobsStarted.get();
+        long start = System.currentTimeMillis();
+        while (jobsStarted.get() < jobs0 + JobSchedulerImpl.CORES_COUNT && jobsStarted.get() < N_JOBS) {
+          if (System.currentTimeMillis() > start + 10000) {
+            System.err.println(ThreadDumper.dumpThreadsToString());
+            fail();
+            break;
+          }
+        }
+        //int jobs1 = jobsStarted.get();
+        //System.out.println("jobs0 = "+jobs0+"; jobs1 = "+jobs1);
+      });
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    indicator.cancel();
+    job.cancel();
+    while (!job.isDone()) {
+      try {
+        job.waitForCompletion(1000);
+        UIUtil.dispatchAllInvocationEvents();
+        break;
+      }
+      catch (TimeoutException ignored) {
+      }
     }
   }
 }
