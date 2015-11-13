@@ -83,7 +83,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     myManagingFS = managingFS;
     myNotificationSink = notificationSink;
 
-    boolean disabled = Boolean.parseBoolean(System.getProperty(PROPERTY_WATCHER_DISABLED));
+    boolean disabled = isDisabled();
     myExecutable = getExecutable();
 
     if (disabled) {
@@ -133,10 +133,18 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     setWatchRoots(recursive, flat, false);
   }
 
-  /* internal stuff */
+  /**
+   * Subclasses should override this method if they want to use custom logic to disable their file watcher.
+   */
+  protected boolean isDisabled() {
+    return Boolean.parseBoolean(System.getProperty(PROPERTY_WATCHER_DISABLED));
+  }
 
+  /**
+   * Subclasses should override this method to provide a custom binary to run.
+   */
   @Nullable
-  private static File getExecutable() {
+  protected File getExecutable() {
     String execPath = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
     if (execPath != null) return new File(execPath);
 
@@ -168,6 +176,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
     return null;
   }
+
+  /* internal stuff */
 
   private void notifyOnFailure(String cause, @Nullable NotificationListener listener) {
     myNotificationSink.notifyUserOnFailure(cause, listener);
