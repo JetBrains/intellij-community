@@ -10,7 +10,7 @@ internal class ExistingSubtypeAspect(private val jsonSuperClass: TypeRef<*>) {
   }
 
   fun writeGetSuperMethodJava(out: TextOutput) {
-    out.newLine().append("override fun getSuper() = ").append(BASE_VALUE_PREFIX)
+    out.newLine().append("override fun getBase() = ").append(BASE_VALUE_PREFIX)
   }
 
   fun writeSuperFieldJava(out: TextOutput) {
