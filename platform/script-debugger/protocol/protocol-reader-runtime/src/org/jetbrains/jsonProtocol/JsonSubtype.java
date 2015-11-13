@@ -6,9 +6,9 @@ package org.jetbrains.jsonProtocol;
 
 /**
  * A base interface for JSON subtype interface. This inheritance serves 2 purposes:
- * it declares base type (visible to human and to interface analyzer) and adds {@link #getSuper()}
+ * it declares base type (visible to human and to interface analyzer) and adds {@link #getBase()}
  * getter that may be directly used in programs.
  */
 public interface JsonSubtype<BASE> {
-  BASE getSuper();
+  BASE getBase();
 }
