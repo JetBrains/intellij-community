@@ -133,12 +133,16 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     setWatchRoots(recursive, flat, false);
   }
 
-  /* helper methods subclasses can override to launch custom binary */
-
+  /**
+   * Subclasses should override this method if they want to use custom logic to disable their file watcher.
+   */
   protected boolean isDisabled() {
     return Boolean.parseBoolean(System.getProperty(PROPERTY_WATCHER_DISABLED));
   }
 
+  /**
+   * Subclasses should override this method to provide a custom binary to run.
+   */
   @Nullable
   protected File getExecutable() {
     String execPath = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
