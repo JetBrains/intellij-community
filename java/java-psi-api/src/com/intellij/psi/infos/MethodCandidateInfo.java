@@ -45,6 +45,8 @@ public class MethodCandidateInfo extends CandidateInfo{
   private final PsiType[] myArgumentTypes;
   private final PsiType[] myTypeArguments;
   private PsiSubstitutor myCalcedSubstitutor; // benign race
+
+  private String myInferenceError;
   private final LanguageLevel myLanguageLevel;
 
   public MethodCandidateInfo(@NotNull PsiElement candidate,
@@ -351,6 +353,14 @@ public class MethodCandidateInfo extends CandidateInfo{
   @Override
   public int hashCode() {
     return 31 * super.hashCode() + (isVarargs() ? 1 : 0);
+  }
+
+  public void setInferenceError(String inferenceError) {
+    myInferenceError = inferenceError;
+  }
+
+  public String getInferenceErrorMessage() {
+    return myInferenceError;
   }
 
   public static class CurrentCandidateProperties {
