@@ -46,6 +46,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
@@ -104,6 +105,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
           for (ProjectManagerListener listener : getListeners(project)) {
             listener.projectClosed(project);
           }
+          ZipHandler.clearFileAccessorCache();
         }
 
         @Override
