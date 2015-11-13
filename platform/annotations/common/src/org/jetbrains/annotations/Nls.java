@@ -24,6 +24,7 @@ import java.lang.annotation.*;
  * detecting strings which should be reported as requiring localization.
  *
  * @author mike
+ * @see NonNls
  */
 @Documented
 @Retention(RetentionPolicy.CLASS)
