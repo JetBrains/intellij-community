@@ -84,7 +84,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     myNotificationSink = notificationSink;
 
     boolean disabled = isDisabled();
-    myExecutable = getWatcherExecutable();
+    myExecutable = getExecutable();
 
     if (disabled) {
       LOG.info("Native file watcher is disabled");
@@ -140,14 +140,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   }
 
   @Nullable
-  protected File getWatcherExecutable() {
-    return getExecutable();
-  }
-
-  /* internal stuff */
-
-  @Nullable
-  private static File getExecutable() {
+  protected File getExecutable() {
     String execPath = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
     if (execPath != null) return new File(execPath);
 
@@ -179,6 +172,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
     return null;
   }
+
+  /* internal stuff */
 
   private void notifyOnFailure(String cause, @Nullable NotificationListener listener) {
     myNotificationSink.notifyUserOnFailure(cause, listener);
