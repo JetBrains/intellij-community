@@ -111,7 +111,7 @@ public abstract class XFetchValueActionBase extends AnAction {
     return new ValueCollector(XDebuggerTree.getTree(e.getDataContext()));
   }
 
-  protected class ValueCollector {
+  public class ValueCollector {
     private final List<String> values = new SmartList<String>();
     private final IntIntHashMap indents = new IntIntHashMap();
     private final XDebuggerTree myTree;
