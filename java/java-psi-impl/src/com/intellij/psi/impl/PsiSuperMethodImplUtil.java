@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.source.HierarchicalMethodSignatureImpl;
 import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -391,7 +392,7 @@ public class PsiSuperMethodImplUtil {
           result = new HierarchicalMethodSignatureImpl((MethodSignatureBackedByPsiMethod)method.getSignature(PsiSubstitutor.EMPTY));
         }
 
-        if (!method.isPhysical() && !(method instanceof SyntheticElement)) {
+        if (!method.isPhysical() && !(method instanceof SyntheticElement) && !(method instanceof LightElement)) {
           return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, method);
         }
         return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
