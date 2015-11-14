@@ -556,6 +556,11 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
     findModel.setWholeWordsOnly(true);
     assertSize(2, findUsages(findModel));
+
+    findModel.setWholeWordsOnly(false);
+    findModel.setRegularExpressions(true);
+    findModel.setStringToFind("Ta(rgetWord)");
+    assertSize(2, findUsages(findModel));
   }
 
   public void testLocalScopeSearchPerformance() throws Exception {
