@@ -52,21 +52,21 @@ class CompletionFileLoggerProvider(val filePathProvider: FilePathProvider) : Com
 
 abstract class CompletionLogger {
     
-    abstract fun completionStarted()
+    abstract fun completionStarted(items: List<LookupStringWithRelevance>)
     
-    abstract fun downPressed()
+    abstract fun downPressed(pos: Int, itemName: String)
     
-    abstract fun upPressed()
+    abstract fun upPressed(pos: Int, itemName: String)
     
     abstract fun backspacePressed()
     
-    abstract fun itemSelectedCompletionFinished()
+    abstract fun itemSelectedCompletionFinished(pos: Int, itemName: String)
     
-    abstract fun charTyped(c: Char)
+    abstract fun charTyped(c: Char, items: List<LookupStringWithRelevance>)
     
     abstract fun completionCancelled()
     
-    abstract fun itemSelectedByTyping()
+    abstract fun itemSelectedByTyping(itemName: String)
     
 }
 
@@ -78,18 +78,50 @@ class CompletionFileLogger(private val installationUID: String,
         System.out.println(statInfoBuilder.message())
     }
     
-    override fun completionStarted() {
+    private val itemsToId: MutableMap<String, Int> = hashMapOf()
+    
+    override fun completionStarted(items: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.COMPLETION_STARTED)
+        builder.nextToken(convertCompletionList(items))
         log(builder)
     }
+    
+    fun convertCompletionList(items: List<LookupStringWithRelevance>): String {
+        items.forEach {
+            val lookupString = it.item
+            var id = itemsToId[lookupString]
+            if (id == null) {
+                itemsToId[lookupString] = itemsToId.size
+            }
+        }
+        
+        val builder = StringBuilder()
+        with(builder, {
+            items.forEach {
+                append("ID(")
+                append(itemsToId[it.item])
+                append(") ")
+                append(it.toData())
+            }
+        })
+        
+        return builder.toString()
+    }
+    
 
-    override fun downPressed() {
+    override fun downPressed(pos: Int, itemName: String) {
         val builder = messageBuilder(Action.DOWN)
+        builder.nextWrappedToken("POS", pos)
+        builder.nextWrappedToken("LEN", itemName.length)
+        builder.nextWrappedToken("ID", itemsToId[itemName]!!)
         log(builder)
     }
 
-    override fun upPressed() {
+    override fun upPressed(pos: Int, itemName: String) {
         val builder = messageBuilder(Action.UP)
+        builder.nextWrappedToken("POS", pos)
+        builder.nextWrappedToken("LEN", itemName.length)
+        builder.nextWrappedToken("ID", itemsToId[itemName]!!)
         log(builder)
     }
 
@@ -98,13 +130,17 @@ class CompletionFileLogger(private val installationUID: String,
         log(builder)
     }
 
-    override fun itemSelectedCompletionFinished() {
+    override fun itemSelectedCompletionFinished(pos: Int, itemName: String) {
         val builder = messageBuilder(Action.EXPLICIT_SELECT)
+        builder.nextWrappedToken("POS", pos)
+        builder.nextWrappedToken("LEN", itemName.length)
+        builder.nextWrappedToken("ID", itemsToId[itemName]!!)
         log(builder)
     }
 
-    override fun charTyped(c: Char) {
+    override fun charTyped(c: Char, items: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.TYPE)
+        builder.nextToken(convertCompletionList(items))
         log(builder)
     }
 
@@ -113,8 +149,10 @@ class CompletionFileLogger(private val installationUID: String,
         log(builder)
     }
 
-    override fun itemSelectedByTyping() {
+    override fun itemSelectedByTyping(itemName: String) {
         val builder = messageBuilder(Action.TYPED_SELECT)
+        builder.nextWrappedToken("PREF_LEN", itemName.length)
+        builder.nextWrappedToken("ID", itemsToId[itemName]!!)
         log(builder)
     }
     
@@ -128,20 +166,31 @@ class CompletionFileLogger(private val installationUID: String,
 
 class StatInfoBuilder(val installationUID: String, val completionUID: String, val action: Action) {
     private val timestamp = System.currentTimeMillis()
+    private val builder = StringBuilder()
     
-    fun message(): String {
-        val builder = StringBuilder()
+    init {
         builder.append(installationUID)
-                .append(' ')
-                .append(completionUID)
-                .append(' ')
-                .append(timestamp)
+//                .append(' ')
+//                .append(completionUID)
+//                .append(' ')
+//                .append(timestamp)
                 .append(' ')
                 .append(action)
-        
-        return builder.toString()
+    }
+
+    fun nextToken(any: Any) {
+        builder.append(' ').append(any)
     }
     
+    fun nextWrappedToken(info: String, any: Any) {
+        builder.append(' ')
+                .append(info)
+                .append('(').append(any).append(')')
+    }
+
+    
+    fun message() = builder.toString()
+
 }
 
 

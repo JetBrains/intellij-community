@@ -1,5 +1,6 @@
 package com.stats.completion
 
+import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupAdapter
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupManager
@@ -8,6 +9,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.components.AbstractProjectComponent
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Pair
 import java.beans.PropertyChangeListener
 
 
@@ -45,16 +47,16 @@ class CompletionTrackerInitializer(project: Project): AbstractProjectComponent(p
 
 
 interface CompletionPopupListener {
-    fun downPressed()
-    fun upPressed()
-    fun backSpacePressed()
-    fun typed(c: Char)
+    fun downPressed(lookup: Lookup)
+    fun upPressed(lookup: Lookup)
+    fun backSpacePressed(lookup: Lookup)
+    fun typed(c: Char, lookup: Lookup)
     
     class Adapter: CompletionPopupListener {
-        override fun downPressed() = Unit
-        override fun upPressed() = Unit
-        override fun backSpacePressed() = Unit
-        override fun typed(c: Char) = Unit
+        override fun downPressed(lookup: Lookup) = Unit
+        override fun upPressed(lookup: Lookup) = Unit
+        override fun backSpacePressed(lookup: Lookup) = Unit
+        override fun typed(c: Char, lookup: Lookup) = Unit
     }
 }
 
@@ -69,18 +71,41 @@ class LookupActionsListener : AnActionListener.Adapter() {
     
     private fun obtainLookup(dataContext: DataContext) = LookupManager.getActiveLookup(CommonDataKeys.EDITOR.getData(dataContext)) as LookupImpl?
 
-    override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
-        obtainLookup(dataContext) ?: return
+    override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+        val lookup = obtainLookup(dataContext) ?: return
         when (action) {
-            down -> popupListener.downPressed()
-            up -> popupListener.upPressed()
-            backspace -> popupListener.backSpacePressed()
+            down -> popupListener.downPressed(lookup)
+            up -> popupListener.upPressed(lookup)
+            backspace -> popupListener.backSpacePressed(lookup)
         }
     }
 
     override fun beforeEditorTyping(c: Char, dataContext: DataContext) {
-        obtainLookup(dataContext) ?: return
-        popupListener.typed(c)
+        val lookup = obtainLookup(dataContext) ?: return
+        popupListener.typed(c, lookup)
+    }
+}
+
+class LookupStringWithRelevance(val item: String, val relevance: List<Pair<String, Any>>) {
+
+    fun toData(): String {
+        val builder = StringBuilder()
+        with(builder, {
+            append("LEN(")
+            append(item.length)
+            append(")")
+            if (relevance.isNotEmpty()) {
+                append(" RELEVANCE[")
+                relevance.forEach {
+                    append(it.first)
+                    append('(')
+                    append(it.second)
+                    append(") ")
+                }
+                append("]")
+            }
+        })
+        return builder.toString()
     }
 }
 
@@ -94,7 +119,7 @@ class CompletionActionsTracker(private val completionListener: LookupActionsList
         val prefix = lookup.additionalPrefix
 
         if (items.firstOrNull()?.lookupString?.equals(prefix) ?: false) {
-            logger.itemSelectedByTyping()
+            logger.itemSelectedByTyping(prefix)
         }
         else {
             logger.completionCancelled()
@@ -104,28 +129,45 @@ class CompletionActionsTracker(private val completionListener: LookupActionsList
     override fun currentItemChanged(event: LookupEvent) {
         if (completionListener.popupListener != this) {
             completionListener.popupListener = this
-            logger.completionStarted()
+            val lookup = event.lookup as LookupImpl
+            logger.completionStarted(lookup.toElementWithRelevanceList())
+        }
+    }
+
+    fun LookupImpl.toElementWithRelevanceList(): List<LookupStringWithRelevance> {
+        val items = items
+        val relevanceMap = getRelevanceObjects(items, false)
+        return items.map {
+            val relevance: List<Pair<String, Any>>? = relevanceMap[it]
+            LookupStringWithRelevance(it.lookupString, relevance ?: emptyList())
         }
     }
     
     override fun itemSelected(event: LookupEvent) {
-        logger.itemSelectedCompletionFinished()
-    }
-    
-    override fun downPressed() {
-        logger.downPressed()
+        val currentItem = event.lookup.currentItem
+        val index = event.lookup.items.indexOf(currentItem)
+        logger.itemSelectedCompletionFinished(index, currentItem!!.lookupString)
     }
 
-    override fun upPressed() {
-        logger.upPressed()
+    override fun downPressed(lookup: Lookup) {
+        val current = lookup.currentItem
+        val index = lookup.items.indexOf(current)
+        logger.downPressed(index, current!!.lookupString)
     }
 
-    override fun backSpacePressed() {
+    override fun upPressed(lookup: Lookup) {
+        val current = lookup.currentItem
+        val index = lookup.items.indexOf(current)
+        logger.upPressed(index, current!!.lookupString)
+    }
+
+    override fun backSpacePressed(lookup: Lookup) {
         logger.backspacePressed()
     }
 
-    override fun typed(c: Char) {
-        logger.charTyped(c)
+    override fun typed(c: Char, lookup: Lookup) {
+        val lookupImpl = lookup as LookupImpl
+        logger.charTyped(c, lookupImpl.toElementWithRelevanceList())
     }
     
 }
