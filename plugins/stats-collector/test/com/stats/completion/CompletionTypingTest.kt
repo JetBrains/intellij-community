@@ -98,7 +98,7 @@ class Test {
         myFixture.completeBasic()
         
         myFixture.type('\b')
-        verify(mockLogger).backspacePressed()
+        verify(mockLogger).backspacePressed(0, "", emptyList())
     }
     
     fun `test enter`() {

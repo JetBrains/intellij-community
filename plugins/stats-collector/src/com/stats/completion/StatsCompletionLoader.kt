@@ -130,11 +130,11 @@ class CompletionActionsTracker(private val completionListener: LookupActionsList
         if (completionListener.popupListener != this) {
             completionListener.popupListener = this
             val lookup = event.lookup as LookupImpl
-            logger.completionStarted(lookup.toElementWithRelevanceList())
+            logger.completionStarted(lookup.toRelevanceDataList())
         }
     }
 
-    fun LookupImpl.toElementWithRelevanceList(): List<LookupStringWithRelevance> {
+    fun LookupImpl.toRelevanceDataList(): List<LookupStringWithRelevance> {
         val items = items
         val relevanceMap = getRelevanceObjects(items, false)
         return items.map {
@@ -162,12 +162,15 @@ class CompletionActionsTracker(private val completionListener: LookupActionsList
     }
 
     override fun backSpacePressed(lookup: Lookup) {
-        logger.backspacePressed()
+        val lookupImpl = lookup as LookupImpl
+        val current = lookup.currentItem
+        val index = lookup.items.indexOf(current)
+        logger.backspacePressed(index, current!!.lookupString, lookupImpl.toRelevanceDataList())
     }
 
     override fun typed(c: Char, lookup: Lookup) {
         val lookupImpl = lookup as LookupImpl
-        logger.charTyped(c, lookupImpl.toElementWithRelevanceList())
+        logger.charTyped(c, lookupImpl.toRelevanceDataList())
     }
     
 }

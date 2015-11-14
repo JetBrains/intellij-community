@@ -58,7 +58,7 @@ abstract class CompletionLogger {
     
     abstract fun upPressed(pos: Int, itemName: String)
     
-    abstract fun backspacePressed()
+    abstract fun backspacePressed(pos: Int, itemName: String, toRelevanceDataList: List<LookupStringWithRelevance>)
     
     abstract fun itemSelectedCompletionFinished(pos: Int, itemName: String)
     
@@ -97,12 +97,15 @@ class CompletionFileLogger(private val installationUID: String,
         
         val builder = StringBuilder()
         with(builder, {
+            append("{")
             items.forEach {
                 append("ID(")
                 append(itemsToId[it.item])
                 append(") ")
                 append(it.toData())
+                append(", ")
             }
+            append("}")
         })
         
         return builder.toString()
@@ -125,8 +128,12 @@ class CompletionFileLogger(private val installationUID: String,
         log(builder)
     }
 
-    override fun backspacePressed() {
+    override fun backspacePressed(pos: Int, itemName: String, toRelevanceDataList: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.BACKSPACE)
+        builder.nextWrappedToken("POS", pos)
+        builder.nextWrappedToken("LEN", itemName.length)
+        builder.nextWrappedToken("ID", itemsToId[itemName]!!)
+        builder.nextToken(convertCompletionList(toRelevanceDataList))
         log(builder)
     }
 
