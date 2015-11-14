@@ -17,14 +17,12 @@ package com.jetbrains.python.formatter;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.PythonLanguage;
@@ -74,7 +72,6 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
   }
 
   protected SpacingBuilder createSpacingBuilder(CodeStyleSettings settings) {
-    final IFileElementType file = LanguageParserDefinitions.INSTANCE.forLanguage(PythonLanguage.getInstance()).getFileNodeType();
     final PyCodeStyleSettings pySettings = settings.getCustomSettings(PyCodeStyleSettings.class);
 
     final CommonCodeStyleSettings commonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
@@ -85,9 +82,10 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       .between(STATEMENT_OR_DECLARATION, FUNCTION_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_METHOD)
       .after(FUNCTION_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_METHOD)
       .after(CLASS_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_CLASS)
-      // Remove excess blank lines between imports, because ImportOptimizer gets rid of them anyway.
+      // Remove excess blank lines between imports (at most one is allowed). 
+      // Note that ImportOptimizer gets rid of them anyway.
       // Empty lines between import groups are handles in PyBlock#getSpacing
-      .between(IMPORT_STATEMENTS, IMPORT_STATEMENTS).spacing(0, Integer.MAX_VALUE, 1, false, 0)
+      .between(IMPORT_STATEMENTS, IMPORT_STATEMENTS).spacing(0, Integer.MAX_VALUE, 1, false, 1)
       .between(STATEMENT_OR_DECLARATION, STATEMENT_OR_DECLARATION).spacing(0, Integer.MAX_VALUE, 1, false, 1)
 
       .between(COLON, STATEMENT_LIST).spacing(1, Integer.MAX_VALUE, 0, true, 0)

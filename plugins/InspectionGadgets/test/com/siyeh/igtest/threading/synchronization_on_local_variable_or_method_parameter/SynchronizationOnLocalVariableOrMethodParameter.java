@@ -37,7 +37,7 @@ class SynchronizationOnLocalVariableOrMethodParameter {
   void bar2() {
     Object lock = new Object();
     synchronized (((<warning descr="Synchronization on local variable 'lock'">lock</warning>))) {
-
+      System.out.println(lock);
     }
   }
 
@@ -48,5 +48,21 @@ class SynchronizationOnLocalVariableOrMethodParameter {
         // ...
       }
     }
+  }
+
+  void concurrent() {
+    final Object o = new Object();
+    synchronized (o) {
+      System.out.println(o.toString());
+    }
+    new Thread() {
+      public void run() {
+        for (int i = 0; i < 10000000; i++) {
+          synchronized (o) {
+            System.out.println(o.toString());
+          }
+        }
+      }
+    }.start();
   }
 }

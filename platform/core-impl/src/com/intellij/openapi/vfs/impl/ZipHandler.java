@@ -214,8 +214,7 @@ public class ZipHandler extends ArchiveHandler {
     return ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 
-  // used in Kotlin
-  @SuppressWarnings("unused")
+  // also used in Kotlin
   public static void clearFileAccessorCache() {
     ourZipFileFileAccessorCache.clear();
   }

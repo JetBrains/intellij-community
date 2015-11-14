@@ -39,8 +39,7 @@ import java.util.Set;
  */
 class CachedValueChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.CachedValueChecker");
-  private static final boolean DO_CHECKS = ApplicationManager.getApplication().isUnitTestMode() ||
-                                           ApplicationManager.getApplication().isInternal();
+  private static final boolean DO_CHECKS = ApplicationManager.getApplication().isUnitTestMode();
   private static final Set<String> ourCheckedKeys = ContainerUtil.newConcurrentSet();
 
   static void checkProvider(@NotNull final CachedValueProvider provider,
@@ -58,11 +57,11 @@ class CachedValueChecker {
   }
 
   @Nullable
-  private static BackLink findReferencedPsi(@NotNull Object o,
-                                            @Nullable final UserDataHolder toIgnore,
-                                            final int depth,
-                                            @NotNull final Set<Object> visited,
-                                            @Nullable final BackLink backLink) {
+  private static synchronized BackLink findReferencedPsi(@NotNull Object o,
+                                                         @Nullable final UserDataHolder toIgnore,
+                                                         final int depth,
+                                                         @NotNull final Set<Object> visited,
+                                                         @Nullable final BackLink backLink) {
     if (depth == 0 || o == toIgnore || !visited.add(o)) return null;
     if (o instanceof Project || o instanceof Module || o instanceof Application) return null;
     if (o instanceof PsiElement) {

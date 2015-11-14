@@ -173,6 +173,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
       }
 
       private PsiType getConversionClassType(PsiType initialType) {
+        if (initialType == null) return null;
         final PsiType type = initialType.getDeepComponentType();
         if (type instanceof PsiClassType) {
           final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();

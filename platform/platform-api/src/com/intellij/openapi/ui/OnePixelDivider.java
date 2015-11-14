@@ -214,6 +214,7 @@ public class OnePixelDivider extends Divider {
           mySplitter.setProportion(proportion);
         }
       }
+      e.consume();
     }
   }
 

@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -114,11 +115,7 @@ public class EPathUtil {
       url = EPathCommonUtil.pathToUrl(path);
     }
     else {
-      final String relativePath = new File(rootPath, path).getPath(); //inside current project
-      final File file = new File(relativePath);
-      if (file.exists()) {
-        url = EPathCommonUtil.pathToUrl(relativePath);
-      } else if (path.startsWith("/")) { //relative to other project
+      if (path.startsWith("/")) { //relative to other project
         final String moduleName = EPathCommonUtil.getRelativeModuleName(path);
         final String relativeToRootPath = EPathCommonUtil.getRelativeToModulePath(path);
 
@@ -128,6 +125,13 @@ public class EPathUtil {
         }
         else if (currentRoots != null) {
           url = EPathCommonUtil.expandEclipseRelative2ContentRoots(currentRoots, moduleName, relativeToRootPath);
+        }
+      }
+      else {
+        final String relativePath = new File(rootPath, path).getPath(); //inside current project
+        final File file = new File(relativePath);
+        if (file.exists()) {
+          url = EPathCommonUtil.pathToUrl(relativePath);
         }
       }
     }
@@ -169,7 +173,8 @@ public class EPathUtil {
     final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
     for (VirtualFile otherRoot : contentRoots) {
       if (VfsUtilCore.isAncestor(otherRoot, file, false)) {
-        return "/" + module.getName() + "/" + VfsUtilCore.getRelativePath(file, otherRoot, '/');
+        final String relativePath = VfsUtilCore.getRelativePath(file, otherRoot, '/');
+        return "/" + module.getName() + (StringUtil.isEmptyOrSpaces(relativePath) ? "" : "/" + relativePath);
       }
     }
     return null;

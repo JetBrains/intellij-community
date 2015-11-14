@@ -29,11 +29,10 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
-import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
+import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -353,9 +352,8 @@ public class PathsVerifier<BinaryType extends FilePatch> {
       final ApplyFilePatchBase<BinaryType> applyBinaryPatch = (ApplyFilePatchBase<BinaryType>)((patch instanceof BinaryFilePatch)
                                                                                                ? ApplyFilePatchFactory
                                                                                                  .create((BinaryFilePatch)patch)
-                                                                                               :
-                                                                                               ApplyFilePatchFactory.create(
-                                                                                                 (ShelveChangesManager.ShelvedBinaryFilePatch)patch));
+                                                                                               : ApplyFilePatchFactory
+                                                                                                 .create((ShelvedBinaryFilePatch)patch));
       myBinaryPatches.add(Pair.create(file, applyBinaryPatch));
     }
     myWritableFiles.add(file);

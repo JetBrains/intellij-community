@@ -110,15 +110,9 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
     }
 
     assertTrue("Timed out", reads.await(5, TimeUnit.MINUTES));
-    ContainerUtil.process(threads, thread -> {
-      try {
-        thread.join();
-        return true;
-      }
-      catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
-    });
+    for (Thread thread : threads) {
+      thread.join();
+    }
   }
 
   private static void mark(final String s) {

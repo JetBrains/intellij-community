@@ -108,6 +108,8 @@ public class SvnLockingTest extends TestCase {
 
       thread1.interrupt();
       thread2.interrupt();
+      thread1.join();
+      thread2.join();
     }
   }
 
@@ -138,6 +140,8 @@ public class SvnLockingTest extends TestCase {
 
       thread1.interrupt();
       thread2.interrupt();
+      thread1.join();
+      thread2.join();
     }
   }
 
@@ -225,6 +229,9 @@ public class SvnLockingTest extends TestCase {
       thread1.interrupt();
       thread2.interrupt();
       threadRead.interrupt();
+      thread1.join();
+      thread2.join();
+      threadRead.join();
     }
   }
 

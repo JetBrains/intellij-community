@@ -254,11 +254,6 @@ public class SMTestProxy extends AbstractTestProxy {
     if (myPreferredPrinter != null && child.myPreferredPrinter == null) {
       child.setPreferredPrinter(myPreferredPrinter);
     }
-
-    if (!myIsSuite) {
-      myIsSuite = true;
-      setStarted();
-    }
   }
 
   @Nullable
@@ -351,6 +346,13 @@ public class SMTestProxy extends AbstractTestProxy {
 
   public void setStarted() {
     myState = !myIsSuite ? TestInProgressState.TEST : new SuiteInProgressState(this);
+  }
+
+  public void setSuiteStarted() {
+    myState = new SuiteInProgressState(this);
+    if (!myIsSuite) {
+      myIsSuite = true;
+    }
   }
 
   /**

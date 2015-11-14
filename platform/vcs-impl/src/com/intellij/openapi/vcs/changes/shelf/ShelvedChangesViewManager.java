@@ -23,6 +23,7 @@
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.CommonBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.actions.EditSourceAction;
@@ -87,6 +88,7 @@ import static com.intellij.util.FontUtil.spaceAndThinSpace;
 public class ShelvedChangesViewManager implements ProjectComponent {
 
   private static final Logger LOG = Logger.getInstance(ShelvedChangesViewManager.class);
+  @NonNls static final String SHELF_CONTEXT_MENU = "Vcs.Shelf.ContextMenu";
 
   private final ChangesViewContentManager myContentManager;
   private final ShelveChangesManager myShelveChangesManager;
@@ -137,7 +139,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     final EditSourceAction editSourceAction = new EditSourceAction();
     editSourceAction.registerCustomShortcutSet(editSourceAction.getShortcutSet(), myTree);
 
-    PopupHandler.installPopupHandler(myTree, "ShelvedChangesPopupMenu", ActionPlaces.UNKNOWN);
+    PopupHandler.installPopupHandler(myTree, "ShelvedChangesPopupMenu", SHELF_CONTEXT_MENU);
 
     new DoubleClickListener() {
       @Override
@@ -248,10 +250,9 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     final List<ShelvedChangeList> changeLists = new ArrayList<ShelvedChangeList>(myShelveChangesManager.getShelvedChangeLists());
     Collections.sort(changeLists, ChangelistComparator.getInstance());
     if (myShelveChangesManager.isShowRecycled()) {
-      ArrayList<ShelvedChangeList> recycled =
-              new ArrayList<ShelvedChangeList>(myShelveChangesManager.getRecycledShelvedChangeLists());
-      Collections.sort(recycled, ChangelistComparator.getInstance());
+      ArrayList<ShelvedChangeList> recycled = new ArrayList<ShelvedChangeList>(myShelveChangesManager.getRecycledShelvedChangeLists());
       changeLists.addAll(recycled);
+      Collections.sort(changeLists, ChangelistComparator.getInstance());
     }
     myMoveRenameInfo.clear();
 
@@ -462,6 +463,8 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private static class ShelfTreeCellRenderer extends ColoredTreeCellRenderer {
     private final IssueLinkRenderer myIssueLinkRenderer;
     private final Map<Couple<String>, String> myMoveRenameInfo;
+    private static final Icon PatchIcon = StdFileTypes.PATCH.getIcon();
+    private static final Icon DisabledPatchIcon = AllIcons.Nodes.DisabledPointcut;
 
     public ShelfTreeCellRenderer(Project project, final Map<Couple<String>, String> moveRenameInfo) {
       myMoveRenameInfo = moveRenameInfo;
@@ -475,8 +478,11 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         ShelvedChangeList changeListData = (ShelvedChangeList) nodeValue;
         if (changeListData.isRecycled()) {
           myIssueLinkRenderer.appendTextWithLinks(changeListData.DESCRIPTION, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
-        } else {
+          setIcon(DisabledPatchIcon);
+        }
+        else {
           myIssueLinkRenderer.appendTextWithLinks(changeListData.DESCRIPTION);
+          setIcon(PatchIcon);
         }
         int count = node.getChildCount();
         String numFilesText = spaceAndThinSpace() + count + " " + StringUtil.pluralize("file", count) + ",";
@@ -484,7 +490,6 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         
         String date = DateFormatUtil.formatPrettyDateTime(changeListData.DATE);
         append(" " + date, SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        setIcon(StdFileTypes.PATCH.getIcon());
       }
       else if (nodeValue instanceof ShelvedChange) {
         ShelvedChange change = (ShelvedChange) nodeValue;
