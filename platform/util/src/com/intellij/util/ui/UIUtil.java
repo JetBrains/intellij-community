@@ -1633,8 +1633,8 @@ public class UIUtil {
         g.setColor(new Color(100, 150, 230, toolWindow ? 50 : 30));
         g.fillRect(x, 0, width, height);
       }
-      g.setColor(Gray.x00.withAlpha(toolWindow ? 90 : 50));
-      if (drawTopLine && !(SystemInfo.isMac && isUnderIntelliJLaF())) g.drawLine(x, 0, width, 0);
+      g.setColor(SystemInfo.isMac && isUnderIntelliJLaF() ? Gray.xC9 : Gray.x00.withAlpha(toolWindow ? 90 : 50));
+      if (drawTopLine) g.drawLine(x, 0, width, 0);
       if (drawBottomLine) g.drawLine(x, height - (isRetina() ? 1 : 2), width, height - (isRetina() ? 1 : 2));
 
       if (SystemInfo.isMac && isUnderIntelliJLaF()) {
