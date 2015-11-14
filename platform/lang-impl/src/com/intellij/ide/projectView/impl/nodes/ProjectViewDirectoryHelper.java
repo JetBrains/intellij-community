@@ -37,7 +37,6 @@ import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -46,6 +45,8 @@ import com.intellij.util.FontUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 
 import java.util.*;
 
@@ -81,17 +82,18 @@ public class ProjectViewDirectoryHelper {
     final VirtualFile directory = psiDirectory.getVirtualFile();
 
     if (ProjectRootsUtil.isLibraryRoot(directory, psiDirectory.getProject())) {
-      result.append(ProjectBundle.message("module.paths.root.node", "library"));
+      result.append(ProjectBundle.message("module.paths.root.node", "library").toLowerCase(Locale.getDefault()));
     }
     else if (includeRootType) {
       SourceFolder sourceRoot = ProjectRootsUtil.getModuleSourceRoot(psiDirectory.getVirtualFile(), psiDirectory.getProject());
       if (sourceRoot != null) {
         ModuleSourceRootEditHandler<?> handler = ModuleSourceRootEditHandler.getEditHandler(sourceRoot.getRootType());
         if (handler != null) {
-          String rootType = handler.getRootTypeName().toLowerCase(Locale.getDefault());
-          String unpluralized = StringUtil.unpluralize(rootType);
-          if (unpluralized != null) rootType = unpluralized;
-          result.append(ProjectBundle.message("module.paths.root.node", rootType));
+          JavaSourceRootProperties properties = sourceRoot.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES);
+          if (properties != null && properties.isForGeneratedSources()) {
+            result.append("generated ");
+          }
+          result.append(handler.getFullRootTypeName().toLowerCase(Locale.getDefault()));
         }
       }
     }

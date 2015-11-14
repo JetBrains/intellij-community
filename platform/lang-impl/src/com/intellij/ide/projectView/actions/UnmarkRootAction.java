@@ -59,7 +59,7 @@ public class UnmarkRootAction extends MarkRootActionBase {
       if (selectedRootHandlers.size() == 1) {
         ModuleSourceRootEditHandler<?> handler = selectedRootHandlers.iterator().next();
         return LangBundle.message("mark.as.unmark", 
-                                  handler.getRootTypeName() + " " + StringUtil.pluralize("Root", selection.mySelectedRoots.size()));
+                                  StringUtil.pluralize(handler.getFullRootTypeName(), selection.mySelectedRoots.size()));
       }
       else {
         return LangBundle.message("mark.as.unmark.several");
