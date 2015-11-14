@@ -75,7 +75,9 @@ class CompletionFileLogger(private val installationUID: String,
                            private val writer: PrintWriter) : CompletionLogger() {
     
     private fun log(statInfoBuilder: StatInfoBuilder) {
-        System.out.println(statInfoBuilder.message())
+        val msg = statInfoBuilder.message()
+        println(msg)
+        writer.println(msg)
     }
     
     private val itemsToId: MutableMap<String, Int> = hashMapOf()
@@ -177,10 +179,10 @@ class StatInfoBuilder(val installationUID: String, val completionUID: String, va
     
     init {
         builder.append(installationUID)
-//                .append(' ')
-//                .append(completionUID)
-//                .append(' ')
-//                .append(timestamp)
+                .append(' ')
+                .append(completionUID)
+                .append(' ')
+                .append(timestamp)
                 .append(' ')
                 .append(action)
     }
