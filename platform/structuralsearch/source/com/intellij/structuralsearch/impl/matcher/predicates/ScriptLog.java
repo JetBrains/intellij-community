@@ -25,12 +25,11 @@ import com.intellij.structuralsearch.SSRBundle;
  */
 public class ScriptLog {
 
-  private final NotificationGroup myEventLog;
+  private static final NotificationGroup myEventLog = NotificationGroup.logOnlyGroup(SSRBundle.message("structural.search.title"));
   private final Project myProject;
 
   public ScriptLog(Project project) {
     myProject = project;
-    myEventLog = NotificationGroup.logOnlyGroup(SSRBundle.message("structural.search.title"));
   }
 
   public void info(Object message) {
