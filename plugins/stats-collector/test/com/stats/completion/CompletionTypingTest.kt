@@ -4,6 +4,7 @@ import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
+import org.mockito.Matchers
 import org.mockito.Mockito.*
 import org.picocontainer.MutablePicoContainer
 
@@ -56,7 +57,7 @@ class Test {
         
         myFixture.type("run(")
         //todo in the real world it works another way
-        verify(mockLogger, times(1)).itemSelectedCompletionFinished()
+        verify(mockLogger, times(1)).itemSelectedCompletionFinished(Matchers.anyInt(), Matchers.anyString())
     }
     
     fun `test typing`() {
@@ -65,8 +66,8 @@ class Test {
 
         myFixture.type('r')
         myFixture.type('u')
-        verify(mockLogger).charTyped('r')
-        verify(mockLogger).charTyped('u')
+        verify(mockLogger).charTyped('r', emptyList())
+        verify(mockLogger).charTyped('u', emptyList())
     }
     
     fun `test up buttons`() {
@@ -74,7 +75,7 @@ class Test {
         myFixture.completeBasic()
         
         myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)
-        verify(mockLogger).upPressed()
+        verify(mockLogger).upPressed(Matchers.anyInt(), Matchers.anyString())
     }
     
     fun `test down button`() {
@@ -82,14 +83,14 @@ class Test {
         myFixture.completeBasic()
 
         myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
-        verify(mockLogger).downPressed()
+        verify(mockLogger).downPressed(Matchers.anyInt(), Matchers.anyString())
     }
     
     fun `test completion started`() {
         myFixture.type('.')
         myFixture.completeBasic()
 
-        verify(mockLogger).completionStarted()
+        verify(mockLogger).completionStarted(emptyList())
     }
     
     fun `test backspace`() {
@@ -106,7 +107,7 @@ class Test {
         
         myFixture.type('r')
         myFixture.type('\n')
-        verify(mockLogger).itemSelectedCompletionFinished()
+        verify(mockLogger).itemSelectedCompletionFinished(Matchers.anyInt(), Matchers.anyString())
     }
     
     fun `test completion cancelled`() {
@@ -121,9 +122,9 @@ class Test {
         myFixture.completeBasic()
         myFixture.type('.')
         
-        verify(mockLogger, times(1)).completionStarted()
+        verify(mockLogger, times(1)).completionStarted(emptyList())
         //todo in the real world it works another way
-        verify(mockLogger, times(1)).itemSelectedCompletionFinished()
+        verify(mockLogger, times(1)).itemSelectedCompletionFinished(Matchers.anyInt(), Matchers.anyString())
     }
     
 }

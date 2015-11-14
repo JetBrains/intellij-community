@@ -38,11 +38,11 @@ class FileLoggerTest : PlatformTestCase() {
     private fun performLogging(pathProvider: FilePathProvider): CompletionLogger {
         var loggerProvider = CompletionFileLoggerProvider(pathProvider)
         var logger = loggerProvider.newCompletionLogger()
-        logger.completionStarted()
-        logger.charTyped('a')
-        logger.charTyped('b')
-        logger.charTyped('c')
-        logger.itemSelectedCompletionFinished()
+        logger.completionStarted(emptyList())
+        logger.charTyped('a', emptyList())
+        logger.charTyped('b', emptyList())
+        logger.charTyped('c', emptyList())
+        logger.itemSelectedCompletionFinished(0, "")
         loggerProvider.dispose()
         return logger
     }
