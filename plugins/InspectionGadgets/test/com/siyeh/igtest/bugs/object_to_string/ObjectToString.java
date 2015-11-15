@@ -17,10 +17,10 @@ class ObjectToString<E>
     class N {}
 
     void foo(N n) {
-        n.toString();
+        <warning descr="Call to default 'toString()' on 'n'">n</warning>.toString();
     }
 
     String bar(N n) {
-        return "n: " + n  + "a";
+        return "n: " + <warning descr="Call to default 'toString()' on 'n'">n</warning>  + "a";
     }
 }
