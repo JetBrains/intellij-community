@@ -34,7 +34,6 @@ import java.util.Collection;
 public class SimpleGraphCellPainter implements GraphCellPainter {
 
   private static final Color MARK_COLOR = JBColor.BLACK;
-  private static final int ROW_HEIGHT = 24;
   private static final double ARROW_ANGLE_COS2 = 0.7;
   private static final double ARROW_LENGTH = 0.3;
   private Graphics2D g2;
@@ -45,7 +44,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   }
 
   protected int getRowHeight() {
-    return ROW_HEIGHT;
+    return PrintParameters.ROW_HEIGHT;
   }
 
   private float[] getDashLength(int edgeLength) {
