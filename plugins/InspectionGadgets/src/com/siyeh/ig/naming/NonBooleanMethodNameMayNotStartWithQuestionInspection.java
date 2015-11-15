@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,20 @@ package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.ui.CheckBox;
 import com.intellij.util.ui.FormBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.ui.UiUtils;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends NonBooleanMethodNameMayNotStartWithQuestionInspectionBase {
-  public NonBooleanMethodNameMayNotStartWithQuestionInspection() {
-  }
 
   @Override
   public JComponent createOptionsPanel() {
@@ -48,8 +49,14 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends NonBo
     return panel;
   }
 
+  @NotNull
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new RenameFix();
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+    final PsiElement context = (PsiElement)infos[0];
+    final InspectionGadgetsFix suppressFix = SuppressForTestsScopeFix.build(this, context);
+    if (suppressFix == null) {
+      return new InspectionGadgetsFix[] {new RenameFix()};
+    }
+    return new InspectionGadgetsFix[] {new RenameFix(), suppressFix};
   }
 }

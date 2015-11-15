@@ -120,7 +120,7 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspectionBase extends B
       else if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
         return;
       }
-      registerMethodError(method);
+      registerMethodError(method, method);
     }
   }
 }
