@@ -26,7 +26,6 @@ import java.util.Collection;
 
 /**
  * Provides custom titles and messages used in MultipleFileMergeDialog and DiffTool invoked from it.
- * @author Kirill Likhodedov
  */
 public class MergeDialogCustomizer {
 
@@ -34,7 +33,7 @@ public class MergeDialogCustomizer {
    * @param files files that have conflicted changes and are shown in the dialog.
    * @return description that is shows above the list of conflicted files. Null (which is equivalent to empty) by default.
    */
-  public @Nullable String getMultipleFileMergeDescription(Collection<VirtualFile> files) {
+  @Nullable public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
     return null;
   }
 
@@ -42,7 +41,7 @@ public class MergeDialogCustomizer {
    * @param file file that is merged.
    * @return title of the merge dialog invoked for a 3-way merge of a file.
    */
-  public @Nullable String getMergeWindowTitle(VirtualFile file) {
+  @Nullable public String getMergeWindowTitle(@NotNull VirtualFile file) {
     return VcsBundle.message("multiple.file.merge.request.title", FileUtil.toSystemDependentName(file.getPresentableUrl()));
   }
 
@@ -50,7 +49,7 @@ public class MergeDialogCustomizer {
    * @param file file that is merged.
    * @return title that is shown above the left panel in the 3-way merge dialog. "Local changes" by default.
    */
-  public @Nullable String getLeftPanelTitle(VirtualFile file) {
+  @Nullable public String getLeftPanelTitle(@NotNull VirtualFile file) {
     return VcsBundle.message("merge.version.title.local.changes");
   }
 
@@ -58,18 +57,18 @@ public class MergeDialogCustomizer {
    * @param file file that is merged.
    * @return title that is shown above the center panel in the 3-way merge dialog. "Merge result" by default.
    */
-  public @Nullable String getCenterPanelTitle(VirtualFile file) {
+  @Nullable public String getCenterPanelTitle(@NotNull VirtualFile file) {
     return VcsBundle.message("merge.version.title.merge.result");
   }
 
   /**
-   * @param file file that is merged.
-   * @param lastRevisionNumber
+   * @param file           file that is being merged.
+   * @param revisionNumber revision number of the file at the right, can be null if unknown.
    * @return title that is shown above the right panel in the 3-way merge dialog. "Changes from server" with the revision number by default.
    */
-  public @Nullable String getRightPanelTitle(VirtualFile file, VcsRevisionNumber lastRevisionNumber) {
-    if (lastRevisionNumber != null) {
-      return VcsBundle.message("merge.version.title.last.version.number", lastRevisionNumber.asString());
+  @Nullable public String getRightPanelTitle(@NotNull VirtualFile file, @Nullable VcsRevisionNumber revisionNumber) {
+    if (revisionNumber != null) {
+      return VcsBundle.message("merge.version.title.last.version.number", revisionNumber.asString());
     } else {
       return VcsBundle.message("merge.version.title.last.version");
     }
@@ -77,11 +76,9 @@ public class MergeDialogCustomizer {
 
   /**
    * @return The title of multiple files merge dialog.
-   * Don't mix with {@link #getMergeWindowTitle(com.intellij.openapi.vfs.VirtualFile)} which is the title of a 3-way merge dialog
-   * displayed for a single file.
+   * Don't mix with {@link #getMergeWindowTitle(VirtualFile)} which is the title of a 3-way merge dialog displayed for a single file.
    */
-  public @NotNull String getMultipleFileDialogTitle() {
+  @NotNull public String getMultipleFileDialogTitle() {
     return VcsBundle.message("multiple.file.merge.title");
   }
-
 }
