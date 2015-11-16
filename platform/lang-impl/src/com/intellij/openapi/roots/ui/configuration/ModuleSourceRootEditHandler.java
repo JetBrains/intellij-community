@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
@@ -59,10 +58,7 @@ public abstract class ModuleSourceRootEditHandler<P extends JpsElement> {
 
   @NotNull
   public String getFullRootTypeName() {
-    String rootType = getRootTypeName();
-    String unpluralized = StringUtil.unpluralize(rootType);
-    if (unpluralized != null) rootType = unpluralized;
-    return ProjectBundle.message("module.paths.root.node", rootType);
+    return ProjectBundle.message("module.paths.root.node", getRootTypeName());
   }
 
   @NotNull
