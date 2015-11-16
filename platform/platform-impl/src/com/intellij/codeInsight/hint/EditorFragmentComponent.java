@@ -59,8 +59,8 @@ public class EditorFragmentComponent extends JPanel {
   private void doInit(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
     Document doc = editor.getDocument();
     final int endOffset = endLine < doc.getLineCount() ? doc.getLineEndOffset(endLine) : doc.getTextLength();
-    int widthAdjustment = editor instanceof EditorImpl && ((EditorImpl)editor).myUseNewRendering ? 
-                          EditorUtil.getSpaceWidth(Font.PLAIN, editor) : 0;
+    boolean newRendering = editor instanceof EditorImpl && ((EditorImpl)editor).myUseNewRendering;
+    int widthAdjustment = newRendering ? EditorUtil.getSpaceWidth(Font.PLAIN, editor) : 0;
     final int textImageWidth = Math.min(
       editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset) + widthAdjustment, 
       ScreenUtil.getScreenRectangle(1, 1).width
@@ -80,7 +80,7 @@ public class EditorFragmentComponent extends JPanel {
     final int textImageHeight = y2 - y1 == 0 ? editor.getLineHeight() : y2 - y1;
     LOG.assertTrue(textImageHeight > 0, "Height: " + textImageHeight + "; startLine:" + startLine + "; endLine:" + endLine + "; p1:" + p1 + "; p2:" + p2);
 
-    int savedScrollOffset = editor.getScrollingModel().getHorizontalScrollOffset();
+    int savedScrollOffset = newRendering ? 0 : editor.getScrollingModel().getHorizontalScrollOffset();
     if (savedScrollOffset > 0) {
       editor.getScrollingModel().scrollHorizontally(0);
     }

@@ -245,6 +245,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
 
   public Dimension getPreferredSize() {
     assertIsDispatchThread();
+    assert !myEditor.isPurePaintingMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return mySizeManager.getPreferredSize();
   }
