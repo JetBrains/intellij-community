@@ -478,7 +478,7 @@ public class ControlFlowUtils {
     return getOnlyChildOfType(codeBlock, PsiStatement.class);
   }
 
-  private static <T extends PsiElement> T getOnlyChildOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
+  static <T extends PsiElement> T getOnlyChildOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
     if (element == null) return null;
     T result = null;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {

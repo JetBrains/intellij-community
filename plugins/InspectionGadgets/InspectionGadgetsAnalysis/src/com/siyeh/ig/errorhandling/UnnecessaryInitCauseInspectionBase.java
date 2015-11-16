@@ -16,7 +16,9 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -60,13 +62,7 @@ public class UnnecessaryInitCauseInspectionBase extends BaseInspection {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
-      if (!ExpressionUtils.hasExpressionCount(argumentList, 1)) {
-        return;
-      }
-      final PsiExpression argument = ExpressionUtils.getFirstExpressionInList(argumentList);
-      if (argument == null) {
-        return;
-      }
+      final PsiExpression argument = ExpressionUtils.getOnlyExpressionInList(argumentList);
       if (!TypeUtils.expressionHasTypeOrSubtype(argument, CommonClassNames.JAVA_LANG_THROWABLE)) {
         return;
       }
@@ -140,10 +136,25 @@ public class UnnecessaryInitCauseInspectionBase extends BaseInspection {
       }
       final PsiVariable variable = (PsiVariable)target;
       final PsiExpression initializer = variable.getInitializer();
-      if (!(initializer instanceof PsiNewExpression)) {
+      if ((initializer instanceof PsiNewExpression)) {
+        return (PsiNewExpression)initializer;
+      }
+      final PsiCodeBlock block = PsiTreeUtil.getParentOfType(target, PsiCodeBlock.class);
+      final PsiElement[] defs = DefUseUtil.getDefs(block, variable, expression);
+      if (defs.length != 1) {
         return null;
       }
-      return (PsiNewExpression)initializer;
+      final PsiElement def = defs[0];
+      if (!(def instanceof PsiReferenceExpression) || !(def.getParent() instanceof PsiAssignmentExpression)) {
+        return null;
+      }
+      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)def.getParent();
+      if (assignmentExpression.getOperationTokenType() != JavaTokenType.EQ) return null;
+      final PsiExpression rhs = ParenthesesUtils.stripParentheses(assignmentExpression.getRExpression());
+      if (!(rhs instanceof PsiNewExpression)) {
+        return null;
+      }
+      return (PsiNewExpression)rhs;
     }
     return null;
   }
