@@ -14,6 +14,11 @@ class CastToConcreteClass {
     }
   }
 
+  @Override
+  public CastToConcreteClass clone() throws CloneNotSupportedException {
+    return (CastToConcreteClass) super.clone();
+  }
+
   void foo(Object o) {
     CastToConcreteClass c = (<warning descr="Cast to concrete class 'CastToConcreteClass'">CastToConcreteClass</warning>)o;
     CastToConcreteClass c2 = CastToConcreteClass.class.<warning descr="Cast to concrete class 'CastToConcreteClass'">cast</warning>(o);
