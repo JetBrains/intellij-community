@@ -46,10 +46,6 @@ public interface IComponentStore {
   class SaveCancelledException extends RuntimeException {
     public SaveCancelledException() {
     }
-
-    public SaveCancelledException(final String s) {
-      super(s);
-    }
   }
 
   void save(@NotNull List<Pair<StateStorage.SaveSession, VirtualFile>> readonlyFiles);
