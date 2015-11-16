@@ -2,6 +2,7 @@ package org.jetbrains.plugins.ipnb.psi;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.console.parsing.PyConsoleParsingContext;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
@@ -21,7 +22,7 @@ public class IpnbPyParsingContext extends PyConsoleParsingContext {
                               LanguageLevel languageLevel,
                               StatementParsing.FUTURE futureFlag, boolean startSymbol, PythonConsoleData data) {
     super(builder, languageLevel, futureFlag, data, startSymbol);
-    myStatementParser = new IpnbPyStatementParsing(this, futureFlag, startSymbol, data);
+    myStatementParser = new IpnbPyStatementParsing(this, futureFlag);
     myExpressionParser = new IpnbPyExpressionParsing(this);
     myFunctionParser = new IpnbPyFunctionParsing(this);
   }
@@ -66,10 +67,10 @@ public class IpnbPyParsingContext extends PyConsoleParsingContext {
     }
   }
 
-  private static class IpnbPyStatementParsing extends ConsoleStatementParsing {
+  private static class IpnbPyStatementParsing extends StatementParsing {
 
-    protected IpnbPyStatementParsing(ParsingContext context, @Nullable FUTURE futureFlag, boolean startSymbol, PythonConsoleData data) {
-      super(context, futureFlag, startSymbol, data);
+    protected IpnbPyStatementParsing(ParsingContext context, @Nullable FUTURE futureFlag) {
+      super(context, futureFlag);
     }
 
     @Override
@@ -77,6 +78,17 @@ public class IpnbPyParsingContext extends PyConsoleParsingContext {
       return IpnbPyTokenTypes.IPNB_REFERENCE;
     }
 
+    @Override
+    public void parseStatement() {
+      if (myBuilder.getTokenType() == PyTokenTypes.PERC) {
+        PsiBuilder.Marker ipythonCommand = myBuilder.mark();
+        while (myBuilder.getTokenType() != PyTokenTypes.STATEMENT_BREAK) {
+          myBuilder.advanceLexer();
+        }
+        ipythonCommand.done(PyElementTypes.EMPTY_EXPRESSION);
+      }
+      super.parseStatement();
+    }
   }
 
   private static class IpnbPyFunctionParsing extends FunctionParsing {
