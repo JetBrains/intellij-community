@@ -135,6 +135,7 @@ public class BuildManager implements Disposable {
   private static final String COMPILER_PROCESS_JDK_PROPERTY = "compiler.process.jdk";
   public static final String SYSTEM_ROOT = "compile-server";
   public static final String TEMP_DIR_NAME = "_temp_";
+  private static final String JAVA_EXT_DIRS_PROPERTY = "java.ext.dirs";
   // do not make static in order not to access application on class load
   private final boolean IS_UNIT_TEST_MODE;
   private static final String IWS_EXTENSION = ".iws";
@@ -1161,6 +1162,10 @@ public class BuildManager implements Disposable {
     for (BuildProcessParametersProvider provider : project.getExtensions(BuildProcessParametersProvider.EP_NAME)) {
       final List<String> args = provider.getVMArguments();
       cmdLine.addParameters(args);
+    }
+
+    if (!cmdLine.getParametersList().hasProperty(JAVA_EXT_DIRS_PROPERTY)) {
+      cmdLine.getParametersList().addProperty(JAVA_EXT_DIRS_PROPERTY, "\"\"");
     }
 
     @SuppressWarnings("UnnecessaryFullyQualifiedName")
