@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.EditorLinePainter;
 import com.intellij.openapi.editor.FoldRegion;
@@ -45,7 +48,9 @@ import java.util.List;
 /**
  * Calculates width (in pixels) of editor contents.
  */
-class EditorSizeManager implements PrioritizedDocumentListener, Disposable, FoldingListener {
+class EditorSizeManager implements PrioritizedDocumentListener, Disposable, FoldingListener, Dumpable {
+  private static final Logger LOG = Logger.getInstance(EditorSizeManager.class);
+  
   private static final int UNKNOWN_WIDTH = Integer.MAX_VALUE;
   
   private final EditorView myView;
@@ -197,6 +202,10 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
   }
 
   private int calculatePreferredWidth() {
+    if (myLineWidths.size() != myEditor.getVisibleLineCount()) {
+      LOG.error("Inconsistent state", new Attachment("editor.txt", myEditor.dumpState()));
+      reset();
+    }
     assert myLineWidths.size() == myEditor.getVisibleLineCount();
     VisualLinesIterator iterator = new VisualLinesIterator(myView, 0);
     int maxWidth = 0;
@@ -323,5 +332,11 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
       myEditor.setPurePaintingMode(purePaintingMode);
       myEditor.getFoldingModel().setFoldingEnabled(foldingEnabled);
     }
+  }
+
+  @NotNull
+  @Override
+  public String dumpState() {
+    return "[line widths: " + myLineWidths + "]";
   }
 }
