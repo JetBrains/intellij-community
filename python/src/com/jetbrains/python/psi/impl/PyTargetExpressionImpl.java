@@ -27,6 +27,7 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
@@ -73,6 +74,10 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
 
   public PyTargetExpressionImpl(final PyTargetExpressionStub stub) {
     super(stub, PyElementTypes.TARGET_EXPRESSION);
+  }
+
+  public PyTargetExpressionImpl(final PyTargetExpressionStub stub, IStubElementType nodeType) {
+    super(stub, nodeType);
   }
 
   @Override
