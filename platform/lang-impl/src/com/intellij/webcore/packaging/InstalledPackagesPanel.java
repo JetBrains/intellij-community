@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,6 +39,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class InstalledPackagesPanel extends JPanel {
+  private static final Logger LOG = Logger.getInstance(InstalledPackagesPanel.class);
   private final AnActionButton myUpgradeButton;
   protected final AnActionButton myInstallButton;
   private final AnActionButton myUninstallButton;
@@ -418,7 +420,7 @@ public class InstalledPackagesPanel extends JPanel {
           packages = packageManagementService.getInstalledPackages();
         }
         catch (IOException e) {
-          // do nothing, we already have an empty list
+          LOG.warn(e.getMessage()); // do nothing, we already have an empty list
         }
         finally {
           final Collection<InstalledPackage> finalPackages = packages;
