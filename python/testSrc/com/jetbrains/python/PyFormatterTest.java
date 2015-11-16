@@ -612,6 +612,12 @@ public class PyFormatterTest extends PyTestCase {
     getPythonCodeStyleSettings().DICT_NEW_LINE_BEFORE_RIGHT_BRACE = true;
     doTest();
   }
+  
+  // PY-17674
+  public void testForceNewLineBeforeRightBraceInDictAfterColon() {
+    getPythonCodeStyleSettings().DICT_NEW_LINE_BEFORE_RIGHT_BRACE = true;
+    doTest();
+  }
 
   // PY-16393
   public void testHangingIndentDetectionIgnoresComments() {
