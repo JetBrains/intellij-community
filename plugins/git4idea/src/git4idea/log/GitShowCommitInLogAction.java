@@ -121,7 +121,7 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static VcsRevisionNumber getRevisionNumber(@NotNull AnActionEvent event) {
+  protected VcsRevisionNumber getRevisionNumber(@NotNull AnActionEvent event) {
     VcsRevisionNumber revision = event.getData(VcsDataKeys.VCS_REVISION_NUMBER);
     if (revision == null) {
       VcsFileRevision fileRevision = event.getData(VcsDataKeys.VCS_FILE_REVISION);
@@ -137,8 +137,7 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
     super.update(e);
     e.getPresentation().setEnabled(e.getProject() != null &&
                                    VcsLogContentProvider.findLogManager(e.getProject()) != null &&
-                                   (e.getData(VcsDataKeys.VCS_FILE_REVISION) != null ||
-                                    e.getData(VcsDataKeys.VCS_REVISION_NUMBER) != null));
+                                   getRevisionNumber(e) != null);
   }
 
   @Nullable

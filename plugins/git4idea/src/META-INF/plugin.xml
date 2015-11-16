@@ -137,6 +137,7 @@
     <vcsChangesViewRefresher implementation="git4idea.changes.GitChangesViewRefresher" />
     <pushSupport implementation="git4idea.push.GitPushSupport"/>
     <cherryPicker implementation="git4idea.cherrypick.GitCherryPicker"/>
+    <vcsAnnotationGutterActionProvider implementation="git4idea.actions.GitShowCommitInLogAnnotationGutterActionProvider" />
 
     <projectService serviceImplementation="git4idea.repo.GitRepositoryManager"/>
     <projectService
