@@ -60,7 +60,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   @NotNull
   @Override
   public PsiPolyVariantReference getReference() {
-    return getReference(PyResolveContext.defaultContext());
+    //noinspection InstanceofIncompatibleInterface
+    assert !(this instanceof StubBasedPsiElement);
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(getProject(), getContainingFile());
+    return getReference(PyResolveContext.defaultContext().withTypeEvalContext(context));
   }
 
   @NotNull
@@ -144,15 +147,14 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       for (ResolveResult target : targets) {
         PsiElement elt = target.getElement();
         if (elt instanceof PyTargetExpression) {
-          PsiElement assigned_from = null;
           final PyTargetExpression expr = (PyTargetExpression)elt;
           final TypeEvalContext context = resolveContext.getTypeEvalContext();
-          if (context.maySwitchToAST(expr) || expr.getStub() == null) {
+          final PsiElement assigned_from;
+          if (context.maySwitchToAST(expr)) {
             assigned_from = expr.findAssignedValue();
           }
-          // TODO: Maybe findAssignedValueByStub() should become a part of the PyTargetExpression interface
-          else if (elt instanceof PyTargetExpressionImpl) {
-            assigned_from = ((PyTargetExpressionImpl)elt).findAssignedValueByStub(context);
+          else {
+            assigned_from = expr.resolveAssignedValue(resolveContext);
           }
           if (assigned_from instanceof PyReferenceExpression) {
             if (visited.contains(assigned_from)) {

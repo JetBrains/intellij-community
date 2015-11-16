@@ -15,11 +15,9 @@
  */
 package com.jetbrains.python.psi;
 
-import com.intellij.psi.PsiNameIdentifierOwner;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,11 +34,26 @@ public interface PyTargetExpression extends PyQualifiedExpression, PsiNamedEleme
    * Find the value that maps to this target expression in an enclosing assignment expression.
    * Does not work with other expressions (e.g. if the target is in a 'for' loop).
    *
+   * Operates at the AST level.
+   *
    * @return the expression assigned to target via an enclosing assignment expression, or null.
    */
   @Nullable
   PyExpression findAssignedValue();
 
+  /**
+   * Resolves the value that maps to this target expression in an enclosing assignment expression.
+   *
+   * This method does not access AST if underlying PSI is stub based and the context doesn't allow switching to AST.
+   */
+  @Nullable
+  PsiElement resolveAssignedValue(@NotNull PyResolveContext resolveContext);
+
+  /**
+   * Returns the qualified name (if there is any) assigned to the expression.
+   *
+   * This method does not access AST if underlying PSI is stub based.
+   */
   @Nullable
   QualifiedName getAssignedQName();
 
