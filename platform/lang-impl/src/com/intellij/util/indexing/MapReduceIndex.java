@@ -202,7 +202,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     try {
       index.close();
     }
-    catch (IOException ignored) {
+    catch (Throwable ignored) {
     }
 
     IOUtil.deleteAllFilesStartingWith(baseFile);

@@ -505,16 +505,19 @@ public class PersistentHashMapValueStorage {
   }
 
   public void dispose() {
-    if (myCompressedAppendableFile != null) myCompressedAppendableFile.dispose();
-    if (mySize < 0) assert false; // volatile read
-    ourReadersCache.remove(myPath);
-    ourAppendersCache.remove(myPath);
+    try {
+      if (myCompressedAppendableFile != null) myCompressedAppendableFile.dispose();
+    } finally {
+      if (mySize < 0) assert false; // volatile read
+      ourReadersCache.remove(myPath);
+      ourAppendersCache.remove(myPath);
 
-    ourRandomAccessFileCache.remove(myPath);
+      ourRandomAccessFileCache.remove(myPath);
 
-    if (myCompactionModeReader != null) {
-      myCompactionModeReader.dispose();
-      myCompactionModeReader = null;
+      if (myCompactionModeReader != null) {
+        myCompactionModeReader.dispose();
+        myCompactionModeReader = null;
+      }
     }
   }
 
