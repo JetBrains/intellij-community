@@ -35,7 +35,7 @@ public class SelectRevisionInGitLogAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(SelectRevisionInGitLogAction.class);
 
   public SelectRevisionInGitLogAction() {
-    super(GitBundle.getString("vcs.history.action.gitlog"), GitBundle.getString("vcs.history.action.gitlog"), null);
+    super(GitBundle.getString("vcs.history.action.gitlog"));
   }
 
   @Override
