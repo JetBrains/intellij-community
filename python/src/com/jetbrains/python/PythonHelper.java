@@ -18,8 +18,11 @@ package com.jetbrains.python;
 import com.google.common.collect.Lists;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonEnvUtil;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -78,6 +81,9 @@ public enum PythonHelper implements HelperPackage {
 
   SPHINX_RUNNER("rest_runners/sphinx_runner.py");
 
+  public static final String PY3_HELPER_DEPENDENCIES_DIR = "py3only";
+  public static final String PY2_HELPER_DEPENDENCIES_DIR = "py2only";
+
   @NotNull
   private static PathHelperPackage findModule(String moduleEntryPoint, String path, boolean asModule) {
     if (getHelperFile(path + ".zip").isFile()) {
@@ -91,7 +97,7 @@ public enum PythonHelper implements HelperPackage {
     return new ModuleHelperPackage(moduleEntryPoint, path);
   }
 
-  private PathHelperPackage myModule;
+  private final PathHelperPackage myModule;
 
   PythonHelper(String pythonPath, String moduleName) {
     this(pythonPath, moduleName, false);
@@ -105,11 +111,6 @@ public enum PythonHelper implements HelperPackage {
     myModule = new ScriptPythonHelper(helperScript, getHelpersRoot());
   }
 
-
-  public String getPythonPath() {
-    return myModule.getPythonPath();
-  }
-
   public abstract static class PathHelperPackage implements HelperPackage {
     protected final File myPath;
 
@@ -119,7 +120,7 @@ public enum PythonHelper implements HelperPackage {
 
     @Override
     public void addToPythonPath(@NotNull Map<String, String> environment) {
-      PythonEnvUtil.addToPythonPath(environment, myPath.getAbsolutePath());
+      PythonEnvUtil.addToPythonPath(environment, getPythonPathEntry());
     }
 
     @Override
@@ -128,19 +129,33 @@ public enum PythonHelper implements HelperPackage {
       group.addParameter(asParamString());
     }
 
+    @NotNull
     @Override
     public String asParamString() {
       return FileUtil.toSystemDependentName(myPath.getAbsolutePath());
     }
 
+    @NotNull
     @Override
-    public GeneralCommandLine newCommandLine(String sdkPath, List<String> parameters) {
-      List<String> args = Lists.newArrayList();
+    public GeneralCommandLine newCommandLine(@NotNull String sdkPath, @NotNull List<String> parameters) {
+      final List<String> args = Lists.newArrayList();
       args.add(sdkPath);
       args.add(asParamString());
       args.addAll(parameters);
-      GeneralCommandLine cmd = new GeneralCommandLine(args);
+      final GeneralCommandLine cmd = new GeneralCommandLine(args);
       addToPythonPath(cmd.getEnvironment());
+      return cmd;
+    }
+
+    @NotNull
+    @Override
+    public GeneralCommandLine newCommandLine(@NotNull Sdk pythonSdk, @NotNull List<String> parameters) {
+      final String sdkHomePath = pythonSdk.getHomePath();
+      assert sdkHomePath != null;
+      final GeneralCommandLine cmd = newCommandLine(sdkHomePath, parameters);
+      final LanguageLevel version = PythonSdkType.getLanguageLevelForSdk(pythonSdk);
+      final String perVersionDependenciesDir = version.isPy3K() ? PY3_HELPER_DEPENDENCIES_DIR : PY2_HELPER_DEPENDENCIES_DIR;
+      PythonEnvUtil.addToPythonPath(cmd.getEnvironment(), FileUtil.join(getPythonPathEntry(), perVersionDependenciesDir));
       return cmd;
     }
   }
@@ -156,13 +171,15 @@ public enum PythonHelper implements HelperPackage {
       this.myModuleName = moduleName;
     }
 
+    @NotNull
     @Override
     public String asParamString() {
       return "-m" + myModuleName;
     }
 
+    @NotNull
     @Override
-    public String getPythonPath() {
+    public String getPythonPathEntry() {
       return FileUtil.toSystemDependentName(myPath.getAbsolutePath());
     }
   }
@@ -173,7 +190,7 @@ public enum PythonHelper implements HelperPackage {
    * with .pyc files
    */
   public static class ScriptPythonHelper extends PathHelperPackage {
-    private String myPythonPath;
+    private final String myPythonPath;
 
     public ScriptPythonHelper(String script, File pythonPath) {
       super(new File(pythonPath, script).getAbsolutePath());
@@ -183,15 +200,22 @@ public enum PythonHelper implements HelperPackage {
     @Override
     public void addToPythonPath(@NotNull Map<String, String> environment) {
       PythonEnvUtil.setPythonDontWriteBytecode(environment);
-      PythonEnvUtil.addToPythonPath(environment, myPythonPath);
+      super.addToPythonPath(environment);
     }
 
+    @NotNull
     @Override
-    public String getPythonPath() {
+    public String getPythonPathEntry() {
       return myPythonPath;
     }
   }
 
+  
+  @NotNull
+  @Override
+  public String getPythonPathEntry() {
+    return myModule.getPythonPathEntry();
+  }
 
   @Override
   public void addToPythonPath(@NotNull Map<String, String> environment) {
@@ -203,15 +227,22 @@ public enum PythonHelper implements HelperPackage {
     myModule.addToGroup(group, cmd);
   }
 
-
+  @NotNull
   @Override
   public String asParamString() {
     return myModule.asParamString();
   }
 
+  @NotNull
   @Override
-  public GeneralCommandLine newCommandLine(String sdkPath, List<String> parameters) {
+  public GeneralCommandLine newCommandLine(@NotNull String sdkPath, @NotNull List<String> parameters) {
     return myModule.newCommandLine(sdkPath, parameters);
+  }
+
+  @NotNull
+  @Override
+  public GeneralCommandLine newCommandLine(@NotNull Sdk pythonSdk, @NotNull List<String> parameters) {
+    return myModule.newCommandLine(pythonSdk, parameters);
   }
 
 }
