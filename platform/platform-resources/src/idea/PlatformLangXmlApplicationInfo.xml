@@ -5,7 +5,6 @@
   <logo url="/idea_community_logo.png" textcolor="FFFFFF"/>
   <about url="/idea_community_about.png"/>
   <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size12="/toolwindows/toolWindowProject.png"/>
-  <package code="__PACKAGE_CODE__"/>
   <names product="IDEA" fullname="IntelliJ IDEA"/>
 
   <welcome-screen logo-url="/Logo_welcomeScreen.png"/>
