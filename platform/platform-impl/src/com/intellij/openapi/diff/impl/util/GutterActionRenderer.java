@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,26 @@ public class GutterActionRenderer extends GutterIconRenderer implements DumbAwar
     myAction = action;
   }
 
+  @Override
   @NotNull
-  public Icon getIcon() { return myAction.getTemplatePresentation().getIcon(); }
-  public AnAction getClickAction() { return myAction; }
-  public String getTooltipText() { return myAction.getTemplatePresentation().getText(); }
-  public boolean isNavigateAction() { return true; }
+  public Icon getIcon() {
+    return myAction.getTemplatePresentation().getIcon();
+  }
+
+  @Override
+  public AnAction getClickAction() {
+    return myAction;
+  }
+
+  @Override
+  public String getTooltipText() {
+    return myAction.getTemplatePresentation().getText();
+  }
+
+  @Override
+  public boolean isNavigateAction() {
+    return true;
+  }
 
   @Override
   public boolean equals(Object o) {
