@@ -1,10 +1,24 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -23,15 +37,15 @@ public class IntroduceFieldInSameClassTest extends LightCodeInsightTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testInClassInitializer () throws Exception {
+  public void testInClassInitializer() {
     configureByFile("/refactoring/introduceField/before1.java");
     performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, true);
     checkResultByFile("/refactoring/introduceField/after1.java");
   }
 
-  public void testConflictingFieldInContainingClass () throws Exception {
+  public void testConflictingFieldInContainingClass() {
     configureByFile("/refactoring/introduceField/beforeConflictingFieldInContainingClass.java");
-    new MockIntroduceFieldHandler(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false){
+    new MockIntroduceFieldHandler(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false) {
       @Override
       protected String getNewName(Project project, PsiExpression expr, PsiType type) {
         return "aField";
@@ -40,9 +54,9 @@ public class IntroduceFieldInSameClassTest extends LightCodeInsightTestCase {
     checkResultByFile("/refactoring/introduceField/afterConflictingFieldInContainingClass.java");
   }
 
-  public void testConflictingFieldInContainingClassLocal () throws Exception {
+  public void testConflictingFieldInContainingClassLocal() {
     configureByFile("/refactoring/introduceField/beforeConflictingFieldInContainingClassLocal.java");
-    new MockIntroduceFieldHandler(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false){
+    new MockIntroduceFieldHandler(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false) {
       @Override
       protected String getNewName(Project project, PsiExpression expr, PsiType type) {
         return "aField";
@@ -56,109 +70,105 @@ public class IntroduceFieldInSameClassTest extends LightCodeInsightTestCase {
     checkResultByFile("/refactoring/introduceField/afterConflictingFieldInContainingClassLocal.java");
   }
 
-  public void testInElseClause() throws Exception {
+  public void testInElseClause() {
     configureByFile("/refactoring/introduceField/beforeElseClause.java");
     performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD, true);
     checkResultByFile("/refactoring/introduceField/afterElseClause.java");
   }
 
-  public void testOuterClass() throws Exception {
+  public void testOuterClass() {
     configureByFile("/refactoring/introduceField/beforeOuterClass.java");
     performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR, false);
     checkResultByFile("/refactoring/introduceField/afterOuterClass.java");
   }
 
-  public void testOnClassLevelNoDuplicates() throws Exception {
+  public void testOnClassLevelNoDuplicates() {
     configureByFile("/refactoring/introduceField/beforeOnClassLevelNoDuplicates.java");
     performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
     checkResultByFile("/refactoring/introduceField/afterOnClassLevelNoDuplicates.java");
   }
 
-  public void testOnClassLevelDuplicates() throws Exception {
+  public void testOnClassLevelDuplicates() {
     configureByFile("/refactoring/introduceField/beforeOnClassLevelDuplicates.java");
     performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
     checkResultByFile("/refactoring/introduceField/afterOnClassLevelDuplicates.java");
   }
 
-  public void testOnClassLevelDuplicates1() throws Exception {
+  public void testOnClassLevelDuplicates1() {
     configureByFile("/refactoring/introduceField/beforeOnClassLevelDuplicates1.java");
     performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
     checkResultByFile("/refactoring/introduceField/afterOnClassLevelDuplicates1.java");
   }
 
-  public void testOnClassLevelBinary() throws Exception {
+  public void testOnClassLevelBinary() {
     configureByFile("/refactoring/introduceField/beforeOnClassLevelBinary.java");
     performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
     checkResultByFile("/refactoring/introduceField/afterOnClassLevelBinary.java");
   }
+
   //multiple error elements on class level corresponding to the extracted fragment ------------------
-  public void testOnClassLevelNewExpression() throws Exception {
+  public void testOnClassLevelNewExpression() {
     configureByFile("/refactoring/introduceField/beforeOnClassLevelNewExpression.java");
     performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
     checkResultByFile("/refactoring/introduceField/afterOnClassLevelNewExpression.java");
   }
 
-  public void testOnClassLevelClassForName() throws Exception {
+  public void testOnClassLevelClassForName() {
     configureByFile("/refactoring/introduceField/beforeOnClassLevelClassForName.java");
     performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
     checkResultByFile("/refactoring/introduceField/afterOnClassLevelClassForName.java");
   }
   //-------------------------------------------------------------------------------------------------
 
-  public void testUnresolvedReferenceToLocalVar() throws Exception {
+  public void testUnresolvedReferenceToLocalVar() {
     configureByFile("/refactoring/introduceField/beforeUnresolvedReferenceToLocalVar.java");
     performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD, false);
     checkResultByFile("/refactoring/introduceField/afterUnresolvedReferenceToLocalVar.java");
   }
-  
-  private static void performRefactoring(final BaseExpressionToFieldHandler.InitializationPlace initializationPlace, final boolean declareStatic) {
-    new MockIntroduceFieldHandler(initializationPlace, declareStatic).invoke(getProject(), myEditor, myFile, null);
-  }
 
-  public void testForcedFieldType() throws Exception {
+  public void testForcedFieldType() {
     configureByFile("/refactoring/introduceField/beforeForcedFieldType.java");
-    new MockIntroduceFieldHandler(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD, false){
+    new MockIntroduceFieldHandler(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD, false) {
       @Override
       protected PsiType getFieldType(PsiType type) {
-        return PsiPrimitiveType.INT;
+        return PsiType.INT;
       }
     }.invoke(getProject(), myEditor, myFile, null);
     checkResultByFile("/refactoring/introduceField/afterForcedFieldType.java");
   }
 
-  public void testRejectIntroduceFieldFromExprInThisCall() throws Exception {
+  public void testRejectIntroduceFieldFromExprInThisCall() {
     configureByFile("/refactoring/introduceField/beforeRejectIntroduceFieldFromExprInThisCall.java");
     try {
       performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
       fail("Should not proceed");
     }
     catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
-      assertEquals("Cannot perform refactoring.\n" +
-                   "Invalid expression context.", e.getMessage());
+      assertEquals("Cannot perform refactoring.\nInvalid expression context.", e.getMessage());
     }
   }
 
-  public void testInConstructorEnclosingAnonymous() throws Exception {
+  public void testInConstructorEnclosingAnonymous() {
     configureByFile("/refactoring/introduceField/beforeEnclosingAnonymous.java");
     performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR, false);
     checkResultByFile("/refactoring/introduceField/afterEnclosingAnonymous.java");
   }
 
-  public void testLocalVarAnnotations() throws Exception {
+  public void testLocalVarAnnotations() {
     configureByFile("/refactoring/introduceField/beforeLocalVarAnnotations.java");
     performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
     checkResultByFile("/refactoring/introduceField/afterLocalVarAnnotations.java");
   }
 
-  public void testFromLambdaExpr() throws Exception {
+  public void testFromLambdaExpr() {
     configureByFile("/refactoring/introduceField/beforeFromLambdaExpr.java");
     performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
     checkResultByFile("/refactoring/introduceField/afterFromLambdaExpr.java");
   }
-  
-  public void testStaticFieldInInnerClass() throws Exception {
+
+  public void testStaticFieldInInnerClass() {
     configureByFile("/refactoring/introduceField/beforeStaticFieldInInnerClass.java");
-    new MockIntroduceFieldHandler(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD, false){
+    new MockIntroduceFieldHandler(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD, false) {
       @Override
       protected int getChosenClassIndex(List<PsiClass> classes) {
         return 0;
@@ -166,5 +176,8 @@ public class IntroduceFieldInSameClassTest extends LightCodeInsightTestCase {
     }.invoke(getProject(), myEditor, myFile, null);
     checkResultByFile("/refactoring/introduceField/afterStaticFieldInInnerClass.java");
   }
-  
+
+  private static void performRefactoring(BaseExpressionToFieldHandler.InitializationPlace initializationPlace, boolean declareStatic) {
+    new MockIntroduceFieldHandler(initializationPlace, declareStatic).invoke(getProject(), myEditor, myFile, null);
+  }
 }
