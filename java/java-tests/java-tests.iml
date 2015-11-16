@@ -39,7 +39,6 @@
     <orderEntry type="module" module-name="java-indexing-api" scope="TEST" />
     <orderEntry type="module" module-name="external-system-impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="junit_rt" scope="TEST" />
-    <orderEntry type="module" module-name="xml-psi-impl" scope="TEST" />
     <orderEntry type="module" module-name="properties-psi-api" scope="TEST" />
     <orderEntry type="module" module-name="java-decompiler-plugin" scope="TEST" />
     <orderEntry type="module" module-name="RegExpSupport" scope="TEST" />
@@ -50,5 +49,7 @@
     <orderEntry type="module" module-name="lang-tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
+    <orderEntry type="module" module-name="xml-analysis-impl" />
+    <orderEntry type="module" module-name="xml-psi-impl" />
   </component>
 </module>

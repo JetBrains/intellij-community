@@ -56,7 +56,7 @@ import java.util.*;
   storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")}
 )
 public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx implements PersistentStateComponent<Element> {
-  static final Logger LOG = Logger.getInstance(ExternalResourceManagerExImpl.class);
+  private static final Logger LOG = Logger.getInstance(ExternalResourceManagerExImpl.class);
 
   @NonNls public static final String J2EE_1_3 = "http://java.sun.com/dtd/";
   @NonNls public static final String J2EE_1_2 = "http://java.sun.com/j2ee/dtds/";
