@@ -20,12 +20,13 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeGenerator;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 
 public class GroovyTreeGenerator implements TreeGenerator {
   @Override
-  public TreeElement generateTreeFor(PsiElement original, CharTable table, PsiManager manager) {
+  public TreeElement generateTreeFor(@NotNull PsiElement original, @NotNull CharTable table, @NotNull PsiManager manager) {
 
     if (original instanceof GrModifierList) {
       final String text = original.getText();

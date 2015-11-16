@@ -3,7 +3,6 @@
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/idea_logo.png" textcolor="FFFFFF"/>
   <about url="/idea_about.png"/>
-  <package code="__PACKAGE_CODE__"/>
   <names product="IDEA" fullname="IntelliJ IDEA"/>
 
   <welcome-screen logo-url="/Logo_welcomeScreen.png"/>

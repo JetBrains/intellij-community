@@ -42,7 +42,11 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
     super(context, request);
     myDocumentListener = createDocumentListener();
     myFileListener = createFileListener(request);
+  }
 
+  @Override
+  protected void onInit() {
+    super.onInit();
     if (myFileListener != null) VirtualFileManager.getInstance().addVirtualFileListener(myFileListener);
 
     for (Document document : getDocuments()) {

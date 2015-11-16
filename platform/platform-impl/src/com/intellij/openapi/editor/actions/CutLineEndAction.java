@@ -24,8 +24,58 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.util.DocumentUtil;
+import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 public class CutLineEndAction extends TextComponentEditorAction {
   public CutLineEndAction() {
-    super(new CutLineActionHandler(false, true, true));
+    super(new Handler());
+  }
+
+  private static class Handler extends EditorWriteActionHandler {
+    private Handler() {
+      super(false);
+    }
+
+    @Override
+    public void executeWriteAction(final Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      if (caret == null && editor.getCaretModel().getCaretCount() > 1) {
+        editor.getCaretModel().runForEachCaret(new CaretAction() {
+          @Override
+          public void perform(Caret caret) {
+            caret.setSelection(caret.getOffset(), getEndOffset(caret));
+          }
+        });
+        // We don't support kill-ring operations for multiple carets currently
+        EditorCopyPasteHelper.getInstance().copySelectionToClipboard(editor);
+        EditorModificationUtil.deleteSelectedTextForAllCarets(editor);
+      }
+      else {
+        if (caret == null) {
+          caret = editor.getCaretModel().getCurrentCaret();
+        }
+        int startOffset = caret.getOffset();
+        int endOffset = getEndOffset(caret);
+        KillRingUtil.cut(editor, startOffset, endOffset);
+        // in case the caret was in the virtual space, we force it to go back to the real offset
+        caret.moveToOffset(startOffset);
+      }
+    }
+
+    private static int getEndOffset(@NotNull Caret caret) {
+      Document document = caret.getEditor().getDocument();
+      int startOffset = caret.getOffset();
+      int endOffset = DocumentUtil.getLineEndOffset(startOffset, document);
+      if (endOffset < document.getTextLength() &&
+          CharArrayUtil.isEmptyOrSpaces(document.getImmutableCharSequence(), startOffset, endOffset)) {
+        endOffset++;
+      }
+      return endOffset;
+    }
   }
 }
