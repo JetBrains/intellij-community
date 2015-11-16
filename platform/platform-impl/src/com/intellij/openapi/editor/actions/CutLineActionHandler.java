@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,10 @@ import org.jetbrains.annotations.Nullable;
 
 class CutLineActionHandler extends EditorWriteActionHandler {
   private final boolean myToLineStart;
-  private final boolean myIgnoreSelection;
-  private final boolean myCopyToClipboard;
 
-  CutLineActionHandler(boolean toLineStart, boolean ignoreSelection, boolean copyToClipboard) {
-    super(!copyToClipboard); // as CutLineEndAction interacts with clipboard, multi-caret support for it needs to be implemented explicitly (todo)
+  CutLineActionHandler(boolean toLineStart) {
+    super(true);
     myToLineStart = toLineStart;
-    myIgnoreSelection = ignoreSelection;
-    myCopyToClipboard = copyToClipboard;
   }
 
   @Override
@@ -42,7 +38,7 @@ class CutLineActionHandler extends EditorWriteActionHandler {
     if (caret == null) {
       caret = editor.getCaretModel().getCurrentCaret();
     }
-    if (!myIgnoreSelection && caret.hasSelection()) {
+    if (caret.hasSelection()) {
       delete(editor, caret, caret.getSelectionStart(), caret.getSelectionEnd());
       return;
     }
@@ -79,13 +75,8 @@ class CutLineActionHandler extends EditorWriteActionHandler {
     delete(editor, caret, start, end);
   }
 
-  private void delete(@NotNull Editor editor, @NotNull Caret caret, int start, int end) {
-    if (myCopyToClipboard) {
-      KillRingUtil.copyToKillRing(editor, start, end, true);
-    }
-    else {
-      CopyPasteManager.getInstance().stopKillRings();
-    }
+  private static void delete(@NotNull Editor editor, @NotNull Caret caret, int start, int end) {
+    CopyPasteManager.getInstance().stopKillRings();
     editor.getDocument().deleteString(start, end);
 
     // in case the caret was in the virtual space, we force it to go back to the real offset
