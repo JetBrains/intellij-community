@@ -21,6 +21,7 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 
 /**
  * Tests callee resolution in PyCallExpressionImpl.
@@ -32,7 +33,8 @@ public class PyResolveCalleeTest extends PyTestCase {
   private PyCallExpression.PyMarkedCallee resolveCallee() {
     PsiReference ref = myFixture.getReferenceAtCaretPosition("/resolve/callee/" + getTestName(false) + ".py");
     PyCallExpression call = PsiTreeUtil.getParentOfType(ref.getElement(), PyCallExpression.class);
-    return call.resolveCallee(PyResolveContext.defaultContext());
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+    return call.resolveCallee(PyResolveContext.noImplicits().withTypeEvalContext(context));
   }
 
   public void testInstanceCall() {
