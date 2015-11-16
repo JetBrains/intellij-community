@@ -18,7 +18,6 @@ package org.jetbrains.plugins.javaFX.fxml.descriptors;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -220,7 +219,7 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
       if (typeAttr != null) {
         final String rootClassName = typeAttr.getValue();
         final Project project = context.getProject();
-        final PsiClass rootClass = rootClassName != null ? JavaPsiFacade.getInstance(project).findClass(rootClassName, GlobalSearchScope.allScope(project)) : null;
+        final PsiClass rootClass = rootClassName != null ?JavaFxPsiUtil.findPsiClass(rootClassName, context) : null;
         if (rootClass != null) {
           return new JavaFxClassBackedElementDescriptor(getName(), rootClass);
         }
