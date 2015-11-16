@@ -44,9 +44,10 @@ public class PyDiffPreviewProvider extends DiffPreviewProvider {
                                                     "    # Left changes\n" +
                                                     "    pass\n" +
                                                     "\n" +
-                                                    "  def bar(self, a)\n" +
+                                                    "  def bar(self, a, b)\n" +
                                                     "\n" +
-                                                    "    print a";
+                                                    "    print a\n" +
+                                                    "    print b";
   @NonNls private static final String CENTER_TEXT = "class MyClass\n" +
                                                     "  value = 123\n" +
                                                     "\n" +
@@ -56,9 +57,10 @@ public class PyDiffPreviewProvider extends DiffPreviewProvider {
                                                     "  def removed_from_left(self):\n" +
                                                     "    bar('PyCharmRulezzz')\n" +
                                                     "\n" +
-                                                    "  def bar(self, a)\n" +
+                                                    "  def bar(self, a, b)\n" +
                                                     "\n" +
-                                                    "    print a";
+                                                    "    print a\n" +
+                                                    "    print b";
   @NonNls private static final String RIGHT_TEXT =  "class MyClass\n" +
                                                     "  value = -123\n" +
                                                     "\n" +
@@ -69,7 +71,8 @@ public class PyDiffPreviewProvider extends DiffPreviewProvider {
                                                     "  def removed_from_left(self):\n" +
                                                     "    bar('PyCharmRulezzz')\n" +
                                                     "\n" +
-                                                    "  def bar(self, a)\n" +
+                                                    "  def bar(self, a, b)\n" +
                                                     "    print a\n" +
-                                                    "\n";
+                                                    "\n" +
+                                                    "    print b";
 }
