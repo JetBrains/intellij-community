@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.util.InheritanceUtil;
@@ -76,10 +77,40 @@ public class UnnecessaryInitCauseInspectionBase extends BaseInspection {
       }
       final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
       final PsiNewExpression newExpression = findNewExpression(qualifier);
-      if (!isCauseConstructorAvailable(newExpression)) {
+      if (!isCauseConstructorAvailable(newExpression) || !canExpressionBeMovedBackwards(argument, newExpression)) {
         return;
       }
       registerMethodCallError(expression);
+    }
+
+    private static boolean canExpressionBeMovedBackwards(final PsiExpression cause, final PsiExpression newLocation) {
+      if (cause == null || newLocation == null) return false;
+      assert cause.getTextOffset() > newLocation.getTextOffset();
+      final PsiCodeBlock block = PsiTreeUtil.getParentOfType(cause, PsiCodeBlock.class);
+      final PsiCodeBlock newBlock = PsiTreeUtil.getParentOfType(newLocation, PsiCodeBlock.class);
+      if (block == null || newBlock == null || !PsiTreeUtil.isAncestor(block, newBlock, false)) return false;
+      final int offset = newLocation.getTextOffset();
+      final Ref<Boolean> result = new Ref<Boolean>(Boolean.TRUE);
+      cause.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitReferenceExpression(PsiReferenceExpression expression) {
+          if (!result.get().booleanValue()) {
+            return;
+          }
+          super.visitReferenceExpression(expression);
+          final PsiElement target = expression.resolve();
+          if (!(target instanceof PsiVariable)) {
+            return;
+          }
+          final PsiElement[] defs = DefUseUtil.getDefs(block, (PsiVariable)target, cause);
+          for (PsiElement def : defs) {
+            if (def.getTextOffset() > offset) {
+              result.set(Boolean.FALSE);
+            }
+          }
+        }
+      });
+      return result.get().booleanValue();
     }
 
     public static boolean isCauseConstructorAvailable(PsiNewExpression newExpression) {

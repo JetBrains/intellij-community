@@ -39,6 +39,19 @@ public class UnnecessaryInitCauseInspectionTest extends LightInspectionTestCase 
                  "}");
   }
 
+  public void testReassigned() {
+    doMemberTest("void foo() {\n" +
+                 "    try {\n" +
+                 "        new java.io.FileInputStream(\"asdf\");\n" +
+                 "    } catch (java.io.FileNotFoundException e) {\n" +
+                 "        RuntimeException exception = new RuntimeException();\n" +
+                 "        e = null;\n" +
+                 "        exception.initCause(e);\n" +
+                 "        throw exception;\n" +
+                 "    }\n" +
+                 "}");
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
