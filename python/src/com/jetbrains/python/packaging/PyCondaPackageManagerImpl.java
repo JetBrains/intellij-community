@@ -74,7 +74,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   }
 
   private ProcessOutput getCondaOutput(@NotNull final String command, List<String> arguments) throws ExecutionException {
-    final String condaExecutable = PyCondaPackageService.getCondaExecutable();
+    final String condaExecutable = PyCondaPackageService.getCondaExecutable(mySdk.getHomeDirectory());
     if (condaExecutable == null) throw new PyExecutionException("Cannot find conda", "Conda", Collections.<String>emptyList(), new ProcessOutput());
 
     final String path = getCondaDirectory();
@@ -166,14 +166,14 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     final String condaName = "conda-meta";
     final VirtualFile homeDirectory = sdk.getHomeDirectory();
     if (homeDirectory == null) return false;
-    final VirtualFile condaExecutable = SystemInfo.isWindows ? homeDirectory.getParent().findChild(condaName) :
+    final VirtualFile condaMeta = SystemInfo.isWindows ? homeDirectory.getParent().findChild(condaName) :
                                         homeDirectory.getParent().getParent().findChild(condaName);
-    return condaExecutable != null;
+    return condaMeta != null;
   }
 
   @NotNull
   public static String createVirtualEnv(@NotNull String destinationDir, String version) throws ExecutionException {
-    final String condaExecutable = PyCondaPackageService.getCondaExecutable();
+    final String condaExecutable = PyCondaPackageService.getSystemCondaExecutable();
     if (condaExecutable == null) throw new PyExecutionException("Cannot find conda", "Conda", Collections.<String>emptyList(), new ProcessOutput());
 
     final ArrayList<String> parameters = Lists.newArrayList(condaExecutable, "create", "-p", destinationDir,
