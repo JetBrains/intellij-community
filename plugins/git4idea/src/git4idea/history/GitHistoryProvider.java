@@ -38,7 +38,7 @@ import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
 import git4idea.config.GitExecutableValidator;
 import git4idea.history.browser.SHAHash;
-import git4idea.history.wholeTree.SelectRevisionInGitLogAction;
+import git4idea.log.GitShowCommitInLogAction;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +69,7 @@ public class GitHistoryProvider implements VcsHistoryProviderEx, VcsCacheableHis
     return new AnAction[] {
       ShowAllAffectedGenericAction.getInstance(),
       ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER),
-      new SelectRevisionInGitLogAction() };
+      new GitShowCommitInLogAction() };
   }
 
   public boolean isDateOmittable() {
