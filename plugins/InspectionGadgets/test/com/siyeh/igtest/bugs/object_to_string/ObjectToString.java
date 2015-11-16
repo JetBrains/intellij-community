@@ -1,5 +1,7 @@
 package com.siyeh.igtest.bugs.object_to_string;
 
+import java.io.*;
+
 class ObjectToString<E>
 {
     E item;
@@ -22,5 +24,9 @@ class ObjectToString<E>
 
     String bar(N n) {
         return "n: " + <warning descr="Call to default 'toString()' on 'n'">n</warning>  + "a";
+    }
+
+    void write(Writer writer) {
+        writer.toString();
     }
 }
