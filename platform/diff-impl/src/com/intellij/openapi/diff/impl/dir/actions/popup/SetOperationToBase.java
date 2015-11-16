@@ -17,11 +17,11 @@ package com.intellij.openapi.diff.impl.dir.actions.popup;
 
 import com.intellij.ide.diff.DirDiffElement;
 import com.intellij.ide.diff.DirDiffOperation;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.impl.dir.DirDiffElementImpl;
 import com.intellij.openapi.diff.impl.dir.DirDiffPanel;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
+import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +30,7 @@ import javax.swing.*;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class SetOperationToBase extends AnAction {
+public abstract class SetOperationToBase extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     DirDiffOperation operation = getOperation();
