@@ -623,18 +623,18 @@ public class GitCherryPicker extends VcsCherryPicker {
     }
 
     @Override
-    public String getMultipleFileMergeDescription(Collection<VirtualFile> files) {
+    public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
       return "<html>Conflicts during cherry-picking commit <code>" + myCommitHash + "</code> made by " + myCommitAuthor + "<br/>" +
              "<code>\"" + myCommitMessage + "\"</code></html>";
     }
 
     @Override
-    public String getLeftPanelTitle(VirtualFile file) {
+    public String getLeftPanelTitle(@NotNull VirtualFile file) {
       return "Local changes";
     }
 
     @Override
-    public String getRightPanelTitle(VirtualFile file, VcsRevisionNumber lastRevisionNumber) {
+    public String getRightPanelTitle(@NotNull VirtualFile file, VcsRevisionNumber revisionNumber) {
       return "<html>Changes from cherry-pick <code>" + myCommitHash + "</code>";
     }
   }

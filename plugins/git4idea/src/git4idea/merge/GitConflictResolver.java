@@ -74,7 +74,7 @@ public class GitConflictResolver {
     private String myErrorNotificationAdditionalDescription = "";
     private String myMergeDescription = "";
     private MergeDialogCustomizer myMergeDialogCustomizer = new MergeDialogCustomizer() {
-      @Override public String getMultipleFileMergeDescription(Collection<VirtualFile> files) {
+      @Override public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
         return myMergeDescription;
       }
     };

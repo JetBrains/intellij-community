@@ -45,6 +45,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.util.List;
@@ -228,5 +229,11 @@ public class DiffPreviewPanel implements PreviewPanel {
 
   @Override
   public void disposeUIResources() {
+  }
+
+  @NotNull
+  @TestOnly
+  public SimpleThreesideDiffViewer testGetViewer() {
+    return myViewer;
   }
 }

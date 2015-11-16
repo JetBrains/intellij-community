@@ -604,21 +604,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals(3, markers.size());
   }
 
-  
-  public void testClearingHighlightersOnType() throws Exception {
-    configureByFile(BASE_PATH + getTestName(false) + ".xml");
-
-    Collection<HighlightInfo> errors = highlightErrors();
-    assertEquals(1, errors.size());
-    assertEquals("Element dddddddddd is not allowed here", errors.iterator().next().getDescription());
-
-    commentLine();
-
-    List<HighlightInfo> afterTyping = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.ERROR, getProject());
-    HighlightInfo error = assertOneElement(afterTyping);
-    assertEquals("Element dddddddddd is not allowed here", error.getDescription());
-  }
-
   private static void commentLine() {
     WriteCommandAction.runWriteCommandAction(null, () -> {
       CommentByLineCommentAction action = new CommentByLineCommentAction();
@@ -628,7 +613,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   
   public void testChangeXmlIncludeLeadsToRehighlight() throws Exception {
-
     LanguageFilter[] extensions = ((CompositeLanguage)StdLanguages.XML).getLanguageExtensions();
     for (LanguageFilter extension : extensions) {
       ((CompositeLanguage)StdLanguages.XML).unregisterLanguageExtension(extension);

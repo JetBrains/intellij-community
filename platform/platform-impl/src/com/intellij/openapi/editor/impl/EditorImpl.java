@@ -3152,7 +3152,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
            + ", soft wraps data: " + getSoftWrapModel().dumpState()
            + "\n\nfolding data: " + getFoldingModel().dumpState()
            + (myDocument instanceof DocumentImpl ? "\n\ndocument info: " + ((DocumentImpl)myDocument).dumpState() : "")
-           + "\nfont preferences: " + myScheme.getFontPreferences();
+           + "\nfont preferences: " + myScheme.getFontPreferences()
+           + "\npure painting mode: " + myPurePaintingMode
+           + (myView == null ? "" : "\nview: " + myView.dumpState());
   }
 
   private class CachedFontContent {

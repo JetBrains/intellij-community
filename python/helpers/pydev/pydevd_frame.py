@@ -537,6 +537,8 @@ class PyDBFrame:
                             info.pydev_step_cmd = None
                             info.pydev_state = STATE_RUN
 
+            except KeyboardInterrupt:
+                raise
             except:
                 try:
                     traceback.print_exc()

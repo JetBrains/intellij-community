@@ -26,8 +26,10 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.HelperPackage;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.psi.PyIndentUtil;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -53,6 +55,10 @@ public class PyStructuredDocstringFormatter {
   private PyStructuredDocstringFormatter() {
   }
 
+  /**
+   * @param docstring docstring text without string literal prefix, without quotes and already escaped. 
+   *                  Supposedly result of {@link PyStringLiteralExpression#getStringValue()}.
+   */
   @Nullable
   public static List<String> formatDocstring(@NotNull final PsiElement element, @NotNull final String docstring) {
     Module module = ModuleUtilCore.findModuleForPsiElement(element);
@@ -106,8 +112,20 @@ public class PyStructuredDocstringFormatter {
   private static String runExternalTool(@NotNull final Module module,
                                         @NotNull final HelperPackage formatter,
                                         @NotNull final String docstring) {
-    final Sdk sdk = PythonSdkType.findPython2Sdk(module);
-    if (sdk == null) return null;
+    final Sdk sdk;
+    final String missingInterpreterMessage;
+    if (formatter == PythonHelper.EPYDOC_FORMATTER) {
+      sdk = PythonSdkType.findPython2Sdk(module);
+      missingInterpreterMessage = PyBundle.message("QDOC.epydoc.python2.sdk.not.found");
+    }
+    else {
+      sdk = PythonSdkType.findLocalCPython(module);
+      missingInterpreterMessage = PyBundle.message("QDOC.sdk.not.found");
+    }
+    if (sdk == null) {
+      LOG.warn("Python SDK for docstring formatter " + formatter +  " is not found");
+      return "<p color=\"red\">" + missingInterpreterMessage + "</p>";
+    }
 
     final String sdkHome = sdk.getHomePath();
     if (sdkHome == null) return null;
@@ -121,7 +139,7 @@ public class PyStructuredDocstringFormatter {
     final Map<String, String> env = new HashMap<String, String>();
     PythonEnvUtil.setPythonDontWriteBytecode(env);
 
-    final GeneralCommandLine commandLine = formatter.newCommandLine(sdkHome, Lists.<String>newArrayList());
+    final GeneralCommandLine commandLine = formatter.newCommandLine(sdk, Lists.<String>newArrayList());
     LOG.debug("Command for launching docstring formatter: " + commandLine.getCommandLineString());
     
     final ProcessOutput output = PySdkUtil.getProcessOutput(commandLine, new File(sdkHome).getParent(), env, 5000, data, false);

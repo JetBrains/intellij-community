@@ -94,6 +94,9 @@ def _excepthook(exctype, value, tb):
     if tb is None:  #sometimes it can be None, e.g. with GTK
         return
 
+    if exctype is KeyboardInterrupt:
+        return
+
     frames = []
     debugger = GetGlobalDebugger()
     user_frame = None

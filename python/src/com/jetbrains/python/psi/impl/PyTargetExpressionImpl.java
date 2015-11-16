@@ -144,17 +144,13 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         return type;
       }
       if (!context.maySwitchToAST(this)) {
-        final PsiElement value = getStub() != null ? findAssignedValueByStub(context) : findAssignedValue();
+        final PsiElement value = resolveAssignedValue(PyResolveContext.noImplicits().withTypeEvalContext(context));
         if (value instanceof PyTypedElement) {
           type = context.getType((PyTypedElement)value);
           if (type instanceof PyNoneType) {
             return null;
           }
-          if (type instanceof PyFunctionTypeImpl) {
-            return type;
-          }
-          // We are unsure about the type since it may be inferred from the stub based on incomplete information
-          return PyUnionType.createWeakType(type);
+          return type;
         }
         return null;
       }
@@ -476,6 +472,50 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   }
 
   @Nullable
+  @Override
+  public PsiElement resolveAssignedValue(@NotNull PyResolveContext resolveContext) {
+    final TypeEvalContext context = resolveContext.getTypeEvalContext();
+    if (context.maySwitchToAST(this)) {
+      final PyExpression value = findAssignedValue();
+      if (value != null) {
+        final List<PsiElement> results = PyUtil.multiResolveTopPriority(value, resolveContext);
+        return !results.isEmpty() ? results.get(0) : null;
+      }
+      return null;
+    }
+    else {
+      final QualifiedName qName = getAssignedQName();
+      if (qName != null) {
+        final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
+        if (owner instanceof PyTypedElement) {
+          final List<String> components = qName.getComponents();
+          if (!components.isEmpty()) {
+            PsiElement resolved = owner;
+            for (String component : components) {
+              if (!(resolved instanceof PyTypedElement)) {
+                return null;
+              }
+              final PyType qualifierType = context.getType((PyTypedElement)resolved);
+              if (qualifierType == null) {
+                return null;
+              }
+              final List<? extends RatedResolveResult> results = qualifierType.resolveMember(component, null, AccessDirection.READ,
+                                                                                             resolveContext);
+              if (results == null || results.isEmpty()) {
+                return null;
+              }
+              resolved = results.get(0).getElement();
+            }
+            return resolved;
+          }
+        }
+      }
+      return null;
+    }
+  }
+
+  @Nullable
+  @Override
   public PyExpression findAssignedValue() {
     if (isValid()) {
       PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(this, PyAssignmentStatement.class);
@@ -490,6 +530,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return null;
   }
 
+  @Nullable
+  @Override
   public QualifiedName getAssignedQName() {
     final PyTargetExpressionStub stub = getStub();
     if (stub != null) {
@@ -499,35 +541,6 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       return null;
     }
     return PyPsiUtils.asQualifiedName(findAssignedValue());
-  }
-
-  @Nullable
-  public PsiElement findAssignedValueByStub(@NotNull TypeEvalContext context) {
-    final PyTargetExpressionStub stub = getStub();
-    if (stub != null && stub.getInitializerType() == PyTargetExpressionStub.InitializerType.ReferenceExpression) {
-      final QualifiedName initializer = stub.getInitializer();
-      // TODO: Support qualified stub initializers
-      if (initializer != null && initializer.getComponentCount() == 1) {
-        final String name = initializer.getLastComponent();
-        if (name != null) {
-          final PsiElement parent = getParentByStub();
-          if (parent instanceof PyFile) {
-            return ((PyFile)parent).getElementNamed(name);
-          }
-          else if (parent instanceof PyClass) {
-            final PyType type = context.getType((PyClass)parent);
-            if (type != null) {
-              final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ,
-                                                                                    PyResolveContext.noImplicits());
-              if (results != null && !results.isEmpty()) {
-                return results.get(0).getElement();
-              }
-            }
-          }
-        }
-      }
-    }
-    return null;
   }
 
   @Override

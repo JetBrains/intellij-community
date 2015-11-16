@@ -148,17 +148,17 @@ public class DocStringUtil {
    */
   @NotNull
   public static DocStringFormat guessDocStringFormat(@NotNull String text) {
-    if (isLikeNumpyDocstring(text)) {
-      return DocStringFormat.NUMPY;
-    }
-    if (isLikeGoogleDocString(text)) {
-      return DocStringFormat.GOOGLE;
-    }
     if (isLikeEpydocDocString(text)) {
       return DocStringFormat.EPYTEXT;
     }
     if (isLikeSphinxDocString(text)) {
       return DocStringFormat.REST;
+    }
+    if (isLikeNumpyDocstring(text)) {
+      return DocStringFormat.NUMPY;
+    }
+    if (isLikeGoogleDocString(text)) {
+      return DocStringFormat.GOOGLE;
     }
     return DocStringFormat.PLAIN;
   }

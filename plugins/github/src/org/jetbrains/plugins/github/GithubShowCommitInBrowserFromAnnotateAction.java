@@ -51,8 +51,7 @@ public class GithubShowCommitInBrowserFromAnnotateAction extends GithubShowCommi
       e.getPresentation().setVisible(false);
       return;
     }
-    int corrected = eventData.getCorrectedLineNumber();
-    e.getPresentation().setEnabled(corrected >= 0 && myAnnotation.getLineRevisionNumber(corrected) != null);
+    e.getPresentation().setEnabled(myLineNumber >= 0 && myAnnotation.getLineRevisionNumber(myLineNumber) != null);
     e.getPresentation().setVisible(GithubUtil.isRepositoryOnGitHub(eventData.getRepository()));
   }
 
@@ -63,7 +62,7 @@ public class GithubShowCommitInBrowserFromAnnotateAction extends GithubShowCommi
       return;
     }
 
-    final VcsRevisionNumber revisionNumber = myAnnotation.getLineRevisionNumber(eventData.getCorrectedLineNumber());
+    final VcsRevisionNumber revisionNumber = myAnnotation.getLineRevisionNumber(myLineNumber);
     if (revisionNumber != null) {
       openInBrowser(eventData.getProject(), eventData.getRepository(), revisionNumber.asString());
     }
@@ -86,7 +85,7 @@ public class GithubShowCommitInBrowserFromAnnotateAction extends GithubShowCommi
       return null;
     }
 
-    return new EventData(project, repository, lineNumber);
+    return new EventData(project, repository);
   }
 
   @Override
@@ -97,12 +96,10 @@ public class GithubShowCommitInBrowserFromAnnotateAction extends GithubShowCommi
   private static class EventData {
     @NotNull private final Project myProject;
     @NotNull private final GitRepository myRepository;
-    private final int myCorrectedLineNumber;
 
-    private EventData(@NotNull Project project, @NotNull GitRepository repository, int correctedLineNumber) {
+    private EventData(@NotNull Project project, @NotNull GitRepository repository) {
       myProject = project;
       myRepository = repository;
-      myCorrectedLineNumber = correctedLineNumber;
     }
 
     @NotNull
@@ -114,10 +111,5 @@ public class GithubShowCommitInBrowserFromAnnotateAction extends GithubShowCommi
     public GitRepository getRepository() {
       return myRepository;
     }
-
-    private int getCorrectedLineNumber() {
-      return myCorrectedLineNumber;
-    }
   }
-
 }

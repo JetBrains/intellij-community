@@ -51,8 +51,9 @@ public class CompletionLookupArranger extends LookupArranger {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionLookupArranger");
   @Nullable private static StatisticsUpdate ourPendingUpdate;
   private static final Alarm ourStatsAlarm = new Alarm(ApplicationManager.getApplication());
-  private static final Key<String> PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
-  private static final Comparator<LookupElement> BY_PRESENTATION_COMPARATOR = new Comparator<LookupElement>() {
+  private static final Key<String> GLOBAL_PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
+  private final Key<String> PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
+  private final Comparator<LookupElement> BY_PRESENTATION_COMPARATOR = new Comparator<LookupElement>() {
     @Override
     public int compare(LookupElement o1, LookupElement o2) {
       String invariant = PRESENTATION_INVARIANT.get(o1);
@@ -152,6 +153,7 @@ public class CompletionLookupArranger extends LookupArranger {
 
     final String invariant = presentation.getItemText() + "\0###" + getTailTextOrSpace(presentation) + "###" + presentation.getTypeText();
     element.putUserData(PRESENTATION_INVARIANT, invariant);
+    element.putUserData(GLOBAL_PRESENTATION_INVARIANT, invariant);
 
     CompletionSorterImpl sorter = obtainSorter(element);
     Classifier<LookupElement> classifier = myClassifiers.get(sorter);
@@ -208,7 +210,7 @@ public class CompletionLookupArranger extends LookupArranger {
     return tailText == null || tailText.isEmpty() ? " " : tailText;
   }
 
-  private static List<LookupElement> sortByPresentation(Iterable<LookupElement> source, LookupImpl lookup) {
+  private List<LookupElement> sortByPresentation(Iterable<LookupElement> source, LookupImpl lookup) {
     ArrayList<LookupElement> startMatches = ContainerUtil.newArrayList();
     ArrayList<LookupElement> middleMatches = ContainerUtil.newArrayList();
     for (LookupElement element : source) {
@@ -369,7 +371,7 @@ public class CompletionLookupArranger extends LookupArranger {
     return new CompletionLookupArranger(myParameters, myProcess);
   }
 
-  private static int getItemToSelect(LookupImpl lookup, List<LookupElement> items, boolean onExplicitAction, @Nullable LookupElement mostRelevant) {
+  private int getItemToSelect(LookupImpl lookup, List<LookupElement> items, boolean onExplicitAction, @Nullable LookupElement mostRelevant) {
     if (items.isEmpty() || lookup.getFocusDegree() == LookupImpl.FocusDegree.UNFOCUSED) {
       return 0;
     }
@@ -391,7 +393,7 @@ public class CompletionLookupArranger extends LookupArranger {
 
       for (int i = 0; i < items.size(); i++) {
         String invariant = PRESENTATION_INVARIANT.get(items.get(i));
-        if (invariant != null && invariant.equals(PRESENTATION_INVARIANT.get(lastSelection))) {
+        if (invariant != null && invariant.equals(GLOBAL_PRESENTATION_INVARIANT.get(lastSelection))) {
           return i;
         }
       }
@@ -577,7 +579,7 @@ public class CompletionLookupArranger extends LookupArranger {
     }
   }
 
-  private static class AlphaClassifier extends Classifier<LookupElement> {
+  private class AlphaClassifier extends Classifier<LookupElement> {
     private final LookupImpl myLookup;
 
     private AlphaClassifier(LookupImpl lookup) {
