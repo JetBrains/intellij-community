@@ -65,6 +65,7 @@ public class InferenceSession {
   private final Set<InferenceVariable> myInferenceVariables = new LinkedHashSet<InferenceVariable>();
   private final List<ConstraintFormula> myConstraints = new ArrayList<ConstraintFormula>();
   private final Set<ConstraintFormula> myConstraintsCopy = new HashSet<ConstraintFormula>();
+  private final InferenceSessionContainer myInferenceSessionContainer = new InferenceSessionContainer();
 
   private PsiSubstitutor mySiteSubstitutor;
   private final PsiManager myManager;
@@ -79,12 +80,6 @@ public class InferenceSession {
   private final PsiElement myContext;
 
   private PsiSubstitutor myInferenceSubstitution = PsiSubstitutor.EMPTY;
-  private final Map<PsiElement, InferenceSession> myNestedSessions = new HashMap<PsiElement, InferenceSession>();
-  public void registerNestedSession(InferenceSession session) {
-    propagateVariables(session.getInferenceVariables());
-    myNestedSessions.put(session.getContext(), session);
-    myNestedSessions.putAll(session.myNestedSessions);
-  }
 
   public InferenceSession(PsiTypeParameter[] typeParams,
                           PsiType[] leftTypes, 
@@ -363,7 +358,7 @@ public class InferenceSession {
             }
           }
         }
-        final InferenceSession nestedCallSession = findNestedCallSession(arg);
+        final InferenceSession nestedCallSession = myInferenceSessionContainer.findNestedCallSession(arg, this);
         final PsiType parameterType =
           nestedCallSession.substituteWithInferenceVariables(getParameterType(parameters, i, siteSubstitutor, varargs));
         if (!isPertinentToApplicability(arg, parentMethod)) {
@@ -1210,7 +1205,7 @@ public class InferenceSession {
       final PsiExpression expression = ((ExpressionCompatibilityConstraint)formula).getExpression();
       final PsiCall callExpression = PsiTreeUtil.getParentOfType(expression, PsiCall.class, false);
       if (callExpression != null) {
-        final InferenceSession session = myNestedSessions.get(callExpression);
+        final InferenceSession session = myInferenceSessionContainer.findNestedCallSession(callExpression, null);
         if (session != null) {
           formula.apply(session.myInferenceSubstitution, true);
           collectVarsToResolve(varsToResolve, (InputOutputConstraintFormula)formula);
@@ -1682,12 +1677,8 @@ public class InferenceSession {
     return myInferenceSubstitution.substitute(type);
   }
 
-  public InferenceSession findNestedCallSession(PsiExpression arg) {
-    InferenceSession session = myNestedSessions.get(PsiTreeUtil.getParentOfType(arg, PsiCall.class));
-    if (session == null) {
-      session = this;
-    }
-    return session;
+  public InferenceSessionContainer getInferenceSessionContainer() {
+    return myInferenceSessionContainer;
   }
 
   public PsiType startWithFreshVars(PsiType type) {

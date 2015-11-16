@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 
 import java.util.List;
@@ -63,7 +62,7 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
         if (!myExpression.isValueCompatible()) {
           return false;
         }
-        InferenceSession callsession = session.findNestedCallSession(myExpression);
+        InferenceSession callsession = session.getInferenceSessionContainer().findNestedCallSession(myExpression, session);
         returnType = callsession.substituteWithInferenceVariables(substitutor.substitute(returnType));
         if (!callsession.isProperType(returnType)) {
           for (PsiExpression returnExpression : returnExpressions) {
