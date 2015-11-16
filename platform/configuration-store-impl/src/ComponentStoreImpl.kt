@@ -117,8 +117,21 @@ abstract class ComponentStoreImpl : IComponentStore {
     if (externalizationSession != null) {
       val names = ArrayUtilRt.toStringArray(components.keys)
       Arrays.sort(names)
+      val timeLogPrefix = "Saving"
+      var timeLog = if (LOG.isDebugEnabled) StringBuilder(timeLogPrefix) else null
       for (name in names) {
+        val start = if (timeLog == null) 0 else System.currentTimeMillis()
         commitComponent(externalizationSession, components.get(name)!!, name)
+        timeLog?.let {
+          val duration = System.currentTimeMillis() - start
+          if (duration > 10) {
+            it.append("\n").append(name).append(" took ").append(duration).append(" ms: ").append((duration / 60000)).append(" min ").append(((duration % 60000) / 1000)).append("sec")
+          }
+        }
+      }
+
+      if (timeLog != null && timeLog.length > timeLogPrefix.length) {
+        LOG.debug(timeLog.toString())
       }
     }
 
