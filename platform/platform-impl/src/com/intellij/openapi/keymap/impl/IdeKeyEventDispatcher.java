@@ -173,7 +173,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return false;
     }
     if (focusOwner instanceof JTextComponent && ((JTextComponent)focusOwner).isEditable()) {
-      if (e.getKeyChar() != KeyEvent.CHAR_UNDEFINED && e.getKeyChar() != KeyEvent.VK_ESCAPE) {
+      if (e.getKeyChar() != KeyEvent.CHAR_UNDEFINED && e.getKeyCode() != KeyEvent.VK_ESCAPE) {
         MacUIUtil.hideCursor();
       }
     }
