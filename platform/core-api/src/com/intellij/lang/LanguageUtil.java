@@ -44,7 +44,7 @@ public final class LanguageUtil {
   public static final Comparator<Language> LANGUAGE_COMPARATOR = new Comparator<Language>() {
     @Override
     public int compare(Language o1, Language o2) {
-      return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
+      return StringUtil.naturalCompare(o1.getDisplayName(), o2.getDisplayName());
     }
   };
 
