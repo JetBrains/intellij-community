@@ -17,12 +17,12 @@ package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import org.jdom.Element;
@@ -85,7 +85,7 @@ public class LargeFileEditorProvider implements FileEditorProvider, DumbAware {
     @Override
     public JComponent getComponent() {
       JLabel label = new JLabel(
-        "File " + myFile.getPath() + " is too large for " + ApplicationNamesInfo.getInstance().getFullProductName() + " editor");
+        "File " + myFile.getPath() + " is too large (" + StringUtil.formatFileSize(myFile.getLength()) + ")");
       label.setHorizontalAlignment(SwingConstants.CENTER);
       return label;
     }
