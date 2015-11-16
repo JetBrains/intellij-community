@@ -76,7 +76,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       settingsSavingComponents.add(component)
     }
 
-    @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
+    @Suppress("DEPRECATION")
     if (!(component is JDOMExternalizable || component is PersistentStateComponent<*>)) {
       return
     }
@@ -90,7 +90,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         initPersistentComponent(stateSpec, component as PersistentStateComponent<Any>, null, false)
       }
       else {
-        @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
+        @Suppress("DEPRECATION")
         initJdomExternalizable(component as JDOMExternalizable)
       }
     }
@@ -115,7 +115,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   override fun save(readonlyFiles: MutableList<JBPair<StateStorage.SaveSession, VirtualFile>>) {
     val externalizationSession = if (components.isEmpty()) null else storageManager.startExternalization()
     if (externalizationSession != null) {
-      val names = ArrayUtilRt.toStringArray(components.keySet())
+      val names = ArrayUtilRt.toStringArray(components.keys)
       Arrays.sort(names)
       for (name in names) {
         commitComponent(externalizationSession, components.get(name)!!, name)
@@ -178,7 +178,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   private fun commitComponent(session: ExternalizationSession, component: Any, componentName: String?) {
-    @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
+    @Suppress("DEPRECATION")
     if (component is PersistentStateComponent<*>) {
       val state = component.state
       if (state != null) {
@@ -199,7 +199,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     return errors
   }
 
-  private fun initJdomExternalizable(@Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE") component: JDOMExternalizable): String? {
+  private fun initJdomExternalizable(@Suppress("DEPRECATION") component: JDOMExternalizable): String? {
     val componentName = ComponentManagerImpl.getComponentName(component)
     doAddComponent(componentName, component)
 
@@ -307,7 +307,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   protected open fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<out Storage> {
     val storages = stateSpec.storages
-    if (storages.size() == 1 || component is StateStorageChooserEx) {
+    if (storages.size == 1 || component is StateStorageChooserEx) {
       return storages
     }
 
@@ -418,27 +418,25 @@ abstract class ComponentStoreImpl : IComponentStore {
   @TestOnly fun removeComponent(name: String) {
     components.remove(name)
   }
+}
 
-  companion object {
-    protected fun executeSave(session: SaveSession, readonlyFiles: MutableList<JBPair<SaveSession, VirtualFile>>, previousErrors: MutableList<Throwable>?): MutableList<Throwable>? {
-      var errors = previousErrors
-      try {
-        session.save()
-      }
-      catch (e: ReadOnlyModificationException) {
-        LOG.warn(e)
-        readonlyFiles.add(JBPair.create<SaveSession, VirtualFile>(e.session ?: session, e.file))
-      }
-      catch (e: Exception) {
-        if (errors == null) {
-          errors = SmartList<Throwable>()
-        }
-        errors.add(e)
-      }
-
-      return errors
-    }
+internal fun executeSave(session: SaveSession, readonlyFiles: MutableList<JBPair<SaveSession, VirtualFile>>, previousErrors: MutableList<Throwable>?): MutableList<Throwable>? {
+  var errors = previousErrors
+  try {
+    session.save()
   }
+  catch (e: ReadOnlyModificationException) {
+    LOG.warn(e)
+    readonlyFiles.add(JBPair.create<SaveSession, VirtualFile>(e.session ?: session, e.file))
+  }
+  catch (e: Exception) {
+    if (errors == null) {
+      errors = SmartList<Throwable>()
+    }
+    errors.add(e)
+  }
+
+  return errors
 }
 
 private fun findNonDeprecated(storages: Array<Storage>): Storage {
@@ -461,7 +459,7 @@ internal fun sortStoragesByDeprecated(storages: Array<Storage>): Array<out Stora
 
   if (!storages[0].deprecated) {
     var othersAreDeprecated = true
-    for (i in 1..storages.size() - 1) {
+    for (i in 1..storages.size - 1) {
       if (!storages[i].deprecated) {
         othersAreDeprecated = false
         break

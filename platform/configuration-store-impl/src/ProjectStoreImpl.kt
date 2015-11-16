@@ -224,7 +224,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
     val oldList = ArrayList(readonlyFiles)
     readonlyFiles.clear()
     for (entry in oldList) {
-      errors = ComponentStoreImpl.executeSave(entry.first, readonlyFiles, errors)
+      errors = executeSave(entry.first, readonlyFiles, errors)
     }
 
     if (errors != null) {
@@ -252,7 +252,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
         return result
       }
     }
-    return Array(result.size() + 1) { if (it == result.size()) DEFAULT_STORAGE_ANNOTATION else result[it] }
+    return Array(result.size + 1) { if (it == result.size) DEFAULT_STORAGE_ANNOTATION else result[it] }
   }
 
   companion object {
