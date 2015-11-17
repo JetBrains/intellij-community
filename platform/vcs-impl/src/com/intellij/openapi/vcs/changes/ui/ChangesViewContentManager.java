@@ -230,14 +230,20 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
     return null;
   }
   
-  public boolean isContentSelected(final Content content) {
-    return Comparing.equal(content, myContentManager.getSelectedContent());
+  public boolean isContentSelected(@NotNull String contentName) {
+    Content selectedContent = myContentManager.getSelectedContent();
+    if (selectedContent == null) return false;
+    return Comparing.equal(contentName, selectedContent.getTabName());
   }
 
-  public void selectContent(final String tabName) {
+  public void selectContent(@NotNull String tabName) {
+    selectContent(tabName, false);
+  }
+
+  public void selectContent(@NotNull String tabName, boolean requestFocus) {
     for(Content content: myContentManager.getContents()) {
       if (content.getDisplayName().equals(tabName)) {
-        myContentManager.setSelectedContent(content);
+        myContentManager.setSelectedContent(content, requestFocus);
         break;
       }
     }

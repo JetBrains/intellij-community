@@ -381,5 +381,11 @@
 
       <add-to-group group-id="Diff.KeymapGroup"/>
     </group>
+
+    <group id="Vcs.Show.Toolwindow.Tab">
+      <add-to-group group-id="VcsGeneral.KeymapGroup"/>
+      <action id="Vcs.Show.Local.Changes" class="com.intellij.vcs.VcsShowLocalChangesAction" text="Show Local Changes"/>
+      <action id="Vcs.Show.Shelf" class="com.intellij.vcs.VcsShowShelfAction" text="Show Shelf"/>
+    </group>
   </actions>
 </idea-plugin>
