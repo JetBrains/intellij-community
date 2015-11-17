@@ -21,4 +21,7 @@ AWSCloudFormation
 Dart
 IdeaVIM
 IDETalk
+Commander
+SourceSafe
+TFS
 ro.redeul.google.go
