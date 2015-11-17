@@ -256,19 +256,14 @@ public abstract class NullableNotNullManager implements PersistentStateComponent
     PsiElement declaration = element == null ? null : element.resolve();
     if (!(declaration instanceof PsiClass)) return false;
 
-    if (!AnnotationUtil.isAnnotated((PsiClass)declaration,
-                                     nullable ? JAVAX_ANNOTATION_NULLABLE : JAVAX_ANNOTATION_NONNULL,
-                                     false,
-                                     true)) {
-      return false;
-    }
+    String fqn = nullable ? JAVAX_ANNOTATION_NULLABLE : JAVAX_ANNOTATION_NONNULL;
+    if (!AnnotationUtil.isAnnotated((PsiClass)declaration, fqn, false, true)) return false;
 
     PsiAnnotation tqDefault = AnnotationUtil.findAnnotation((PsiClass)declaration, true, "javax.annotation.meta.TypeQualifierDefault");
     if (tqDefault == null) return false;
 
     Set<PsiAnnotation.TargetType> required = AnnotationTargetUtil.extractRequiredAnnotationTargets(tqDefault.findAttributeValue(null));
-    if (required == null) return false;
-    return required.isEmpty() || ContainerUtil.intersects(required, Arrays.asList(placeTargetTypes));
+    return required != null && (required.isEmpty() || ContainerUtil.intersects(required, Arrays.asList(placeTargetTypes)));
   }
 
   @NotNull

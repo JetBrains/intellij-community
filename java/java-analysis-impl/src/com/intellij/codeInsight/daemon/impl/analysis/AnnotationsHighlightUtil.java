@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -212,8 +213,8 @@ public class AnnotationsHighlightUtil {
 
       PsiClass container = getRepeatableContainer(metaAnno);
       if (container != null) {
-        PsiAnnotation.TargetType[] targets = PsiImplUtil.getTargetsForLocation(owner);
-        PsiAnnotation.TargetType applicable = PsiImplUtil.findApplicableTarget(container, targets);
+        PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(owner);
+        PsiAnnotation.TargetType applicable = AnnotationTargetUtil.findAnnotationTarget(container, targets);
         if (applicable == null) {
           String target = JavaErrorMessages.message("annotation.target." + targets[0]);
           String message = JavaErrorMessages.message("annotation.container.not.applicable", container.getName(), target);
@@ -323,7 +324,7 @@ public class AnnotationsHighlightUtil {
     if (type != null && type.accept(AnnotationReturnTypeVisitor.INSTANCE).booleanValue()) {
       return null;
     }
-    String description = JavaErrorMessages.message("annotation.invalid.annotation.member.type", type != null ? type.getPresentableText() : type);
+    String description = JavaErrorMessages.message("annotation.invalid.annotation.member.type", type != null ? type.getPresentableText() : null);
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
   }
 
@@ -344,7 +345,7 @@ public class AnnotationsHighlightUtil {
     if (nameRef == null) return null;
 
     PsiAnnotationOwner owner = annotation.getOwner();
-    PsiAnnotation.TargetType[] targets = PsiImplUtil.getTargetsForLocation(owner);
+    PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(owner);
     if (owner == null || targets.length == 0) {
       String message = JavaErrorMessages.message("annotation.not.allowed.here");
       return annotationError(annotation, message);
@@ -355,7 +356,7 @@ public class AnnotationsHighlightUtil {
       if (info != null) return info;
     }
 
-    PsiAnnotation.TargetType applicable = PsiImplUtil.findApplicableTarget(annotation, targets);
+    PsiAnnotation.TargetType applicable = AnnotationTargetUtil.findAnnotationTarget(annotation, targets);
     if (applicable == PsiAnnotation.TargetType.UNKNOWN) return null;
 
     if (applicable == null) {
@@ -673,9 +674,9 @@ public class AnnotationsHighlightUtil {
       }
     }
 
-    Set<PsiAnnotation.TargetType> repeatableTargets = PsiImplUtil.getAnnotationTargets((PsiClass)target);
+    Set<PsiAnnotation.TargetType> repeatableTargets = AnnotationTargetUtil.getAnnotationTargets((PsiClass)target);
     if (repeatableTargets != null) {
-      Set<PsiAnnotation.TargetType> containerTargets = PsiImplUtil.getAnnotationTargets(container);
+      Set<PsiAnnotation.TargetType> containerTargets = AnnotationTargetUtil.getAnnotationTargets(container);
       if (containerTargets != null && !repeatableTargets.containsAll(containerTargets)) {
         return JavaErrorMessages.message("annotation.container.wide.target", container.getQualifiedName());
       }
@@ -766,6 +767,7 @@ public class AnnotationsHighlightUtil {
         if (field instanceof PsiEnumConstant) {
           String name = ((PsiEnumConstant)field).getName();
           try {
+            //noinspection ConstantConditions
             return Enum.valueOf(RetentionPolicy.class, name);
           }
           catch (Exception e) {
