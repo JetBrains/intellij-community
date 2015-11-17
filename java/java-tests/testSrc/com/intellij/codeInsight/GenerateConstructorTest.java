@@ -15,21 +15,36 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.generation.ClassMember;
 import com.intellij.codeInsight.generation.GenerateConstructorHandler;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 /**
  * @author ven
  */
-public class GenerateConstructorTest extends LightCodeInsightTestCase {
+public class GenerateConstructorTest extends LightCodeInsightFixtureTestCase {
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
+  }
+
+  @Override
+  protected String getBasePath() {
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/generateConstructor";
+  }
+
   public void testAbstractClass() { doTest(); }
   public void testPackageLocalClass() { doTest(); }
   public void testPrivateClass() { doTest(); }
@@ -61,13 +76,21 @@ public class GenerateConstructorTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testTypeAnnotatedField() {
+    myFixture.addClass("package foo;\n\nimport java.lang.annotation.*;\n\n@Target(ElementType.TYPE_USE) public @interface TestNotNull { }");
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(getProject());
+    manager.setNotNulls("foo.TestNotNull");
+    Disposer.register(myTestRootDisposable, manager::setNotNulls);
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
 
   private void doTest(boolean preSelect) {
     String name = getTestName(false);
-    configureByFile("/codeInsight/generateConstructor/before" + name + ".java");
+    myFixture.configureByFile("before" + name + ".java");
     new GenerateConstructorHandler() {
       @Override
       protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmpty, boolean copyJavadoc, Project project, Editor editor) {
@@ -80,6 +103,6 @@ public class GenerateConstructorTest extends LightCodeInsightTestCase {
         }
       }
     }.invoke(getProject(), getEditor(), getFile());
-    checkResultByFile("/codeInsight/generateConstructor/after" + name + ".java");
+    myFixture.checkResultByFile("after" + name + ".java");
   }
 }

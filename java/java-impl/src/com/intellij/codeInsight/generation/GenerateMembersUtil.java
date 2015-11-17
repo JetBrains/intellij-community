@@ -17,6 +17,7 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
@@ -685,19 +686,9 @@ public class GenerateMembersUtil {
     }
     result = (PsiMethod)CodeStyleManager.getInstance(project).reformat(result);
 
-    PsiModifierListOwner listOwner = null;
-    if (isGetter) {
-      listOwner = result;
-    }
-    else {
-      final PsiParameter[] parameters = result.getParameterList().getParameters();
-      if (parameters.length == 1) {
-        listOwner = parameters[0];
-      }
-    }
-    if (listOwner != null) {
-      PropertyUtil.annotateWithNullableStuff(field, listOwner);
-    }
+    PsiModifierListOwner annotationTarget = isGetter ? result : result.getParameterList().getParameters()[0];
+    NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, annotationTarget);
+
     return generatePrototype(field, result);
   }
 
