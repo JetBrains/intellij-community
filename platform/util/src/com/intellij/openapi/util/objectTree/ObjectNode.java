@@ -52,7 +52,7 @@ final class ObjectNode<T> {
     myParent = parentNode;
     myObject = object;
 
-    myTrace = Disposer.isDebugMode() ? new Throwable() : null;
+    myTrace = Disposer.isDebugMode() ? ThrowableInterner.intern(new Throwable()) : null;
     myOwnModification = modification;
   }
 
