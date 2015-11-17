@@ -214,7 +214,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Override
   public Dimension getPreferredSize() {
     int w = getFoldingAreaOffset() + getFoldingAreaWidth();
-    if (w <= GAP_BETWEEN_AREAS) w = 0;
     return new Dimension(w, myEditor.getPreferredHeight());
   }
 
@@ -1116,9 +1115,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public int getFoldingAreaOffset() {
-    int res = getLineMarkerAreaOffset() + getLineMarkerAreaWidth();
-    // if there's only folding area visible - no need for the starting gap
-    return res > GAP_BETWEEN_AREAS ? res : 0;
+    return getLineMarkerAreaOffset() + getLineMarkerAreaWidth();
   }
 
   public int getFoldingAreaWidth() {
@@ -1216,8 +1213,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return null;
   }
 
-  public static int getLineNumberAreaOffset() {
-    return GAP_BETWEEN_AREAS;
+  public int getLineNumberAreaOffset() {
+    return getLineNumberAreaWidth() == 0 && getAnnotationsAreaWidthEx() == 0 && getLineMarkerAreaWidth() == 0 ? 0 : GAP_BETWEEN_AREAS;
   }
 
   @Override
