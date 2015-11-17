@@ -37,12 +37,13 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.security.CompositeX509TrustManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.net.ssl.CertificateUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.*;
 import java.io.*;
@@ -53,8 +54,12 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.*;
-import java.util.*;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.util.Calendar;
+import java.util.Map;
 
 /**
  * @author stathik
@@ -65,12 +70,12 @@ public class ITNProxy {
   private static final String NEW_THREAD_POST_URL = "https://ea-report.jetbrains.com/trackerRpc/idea/createScr";
   private static final String ENCODING = "UTF8";
 
-  public static void sendError(Project project,
+  public static void sendError(@Nullable Project project,
                                final String login,
                                final String password,
-                               final ErrorBean error,
-                               final Consumer<Integer> callback,
-                               final Consumer<Exception> errback) {
+                               @NotNull final ErrorBean error,
+                               @NotNull final Consumer<Integer> callback,
+                               @NotNull final Consumer<Exception> errback) {
     if (StringUtil.isEmpty(login)) {
       return;
     }
@@ -96,13 +101,14 @@ public class ITNProxy {
     }
   }
 
+  @NotNull
   public static String getBrowseUrl(int threadId) {
     return NEW_THREAD_VIEW_URL + threadId;
   }
 
   private static SSLContext ourSslContext;
 
-  private static int postNewThread(String login, String password, ErrorBean error) throws Exception {
+  private static int postNewThread(String login, String password, @NotNull ErrorBean error) throws Exception {
     if (ourSslContext == null) {
       ourSslContext = initContext();
     }
@@ -142,7 +148,8 @@ public class ITNProxy {
     }
   }
 
-  private static Multimap<String, String> createParameters(String login, String password, ErrorBean error) {
+  @NotNull
+  private static Multimap<String, String> createParameters(String login, String password, @NotNull ErrorBean error) {
     Multimap<String, String> params = ArrayListMultimap.create(40, 1);
 
     params.put("protocol.version", "1");
@@ -201,11 +208,12 @@ public class ITNProxy {
     return params;
   }
 
-  private static String format(Calendar calendar) {
+  @Nullable
+  private static String format(@Nullable Calendar calendar) {
     return calendar == null ?  null : Long.toString(calendar.getTime().getTime());
   }
 
-  private static byte[] join(Multimap<String, String> params) throws UnsupportedEncodingException {
+  private static byte[] join(@NotNull Multimap<String, String> params) throws UnsupportedEncodingException {
     StringBuilder builder = new StringBuilder();
     for (Map.Entry<String, String> param : params.entries()) {
       if (StringUtil.isEmpty(param.getKey())) {
@@ -221,7 +229,8 @@ public class ITNProxy {
     return builder.toString().getBytes(ENCODING);
   }
 
-  private static HttpURLConnection post(URL url, byte[] bytes) throws IOException {
+  @NotNull
+  private static HttpURLConnection post(@NotNull URL url, @NotNull byte[] bytes) throws IOException {
     HttpsURLConnection connection = (HttpsURLConnection)url.openConnection();
 
     connection.setSSLSocketFactory(ourSslContext.getSocketFactory());
@@ -266,7 +275,7 @@ public class ITNProxy {
 
   private static class EaHostnameVerifier implements HostnameVerifier {
     @Override
-    public boolean verify(String hostname, SSLSession session) {
+    public boolean verify(String hostname, @NotNull SSLSession session) {
       try {
         Certificate[] certificates = session.getPeerCertificates();
         if (certificates.length > 1) {
@@ -295,46 +304,6 @@ public class ITNProxy {
       catch (CertificateEncodingException ignored) { }
 
       return false;
-    }
-  }
-
-  private static class CompositeX509TrustManager implements X509TrustManager {
-    private final List<X509TrustManager> myManagers = ContainerUtil.newArrayList();
-
-    public CompositeX509TrustManager(TrustManager[]... managerSets) {
-      for (TrustManager[] set : managerSets) {
-        for (TrustManager manager : set) {
-          if (manager instanceof X509TrustManager) {
-            myManagers.add((X509TrustManager)manager);
-          }
-        }
-      }
-    }
-
-    @Override
-    public void checkClientTrusted(X509Certificate[] certificates, String s) throws CertificateException {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void checkServerTrusted(X509Certificate[] certificates, String s) throws CertificateException {
-      for (X509TrustManager manager : myManagers) {
-        try {
-          manager.checkServerTrusted(certificates, s);
-          return;
-        }
-        catch (CertificateException ignored) { }
-      }
-      throw new CertificateException("No trusting managers found for " + s);
-    }
-
-    @Override
-    public X509Certificate[] getAcceptedIssuers() {
-      List<X509Certificate> result = ContainerUtil.newArrayList();
-      for (X509TrustManager manager : myManagers) {
-        ContainerUtil.addAll(result, manager.getAcceptedIssuers());
-      }
-      return result.toArray(new X509Certificate[result.size()]);
     }
   }
 
