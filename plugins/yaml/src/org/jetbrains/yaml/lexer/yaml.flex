@@ -78,6 +78,35 @@ import org.jetbrains.yaml.YAMLTokenTypes;
     //System.out.println("yybegin(): " + newState);
     yybegin(newState);
   }
+
+  private boolean startsWith(CharSequence haystack, CharSequence needle) {
+    for (int i = Math.min(haystack.length(), needle.length()) - 1; i >= 0; i--) {
+      if (haystack.charAt(i) != needle.charAt(i)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private IElementType tokenOrForbidden(IElementType tokenType) {
+    if (!isAfterEol() || yylength() < 3) {
+      return tokenType;
+    }
+
+    if (startsWith(yytext(), "---")) {
+      braceCount = 0;
+      yyBegin(YYINITIAL);
+      yypushback(yylength() - 3);
+      return DOCUMENT_MARKER;
+    }
+    if (startsWith(yytext(), "...")) {
+      braceCount = 0;
+      yyBegin(YYINITIAL);
+      yypushback(yylength() - 3);
+      return DOCUMENT_END;
+    }
+    return tokenType;
+  }
 %}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////// REGEXPS DECLARATIONS //////////////////////////////////////////////////////////////////////////
@@ -85,6 +114,8 @@ import org.jetbrains.yaml.YAMLTokenTypes;
 
 // NB !(!a|b) is "a - b"
 // From the spec
+ANY_CHAR = [^\n] | "\n"
+
 NS_CHAR = [^\n\t\r\ ]
 NS_INDICATOR = [-?:,\[\]\{\}#&*!|>'\"%@`]
 
@@ -135,14 +166,14 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
 ///////////////////////////// STATES DECLARATIONS //////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-%xstate BRACES, VALUE, VALUE_OR_KEY, INDENT_VALUE
+%xstate BRACES, VALUE, VALUE_OR_KEY, VALUE_BRACE, INDENT_VALUE
 
 %%
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////// RULES declarations ////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-<YYINITIAL, BRACES, VALUE, VALUE_OR_KEY> {
+<YYINITIAL, BRACES, VALUE, VALUE_BRACE, VALUE_OR_KEY> {
 
 {COMMENT}                       {
                                   // YAML spec: when a comment follows another syntax element,
@@ -184,6 +215,10 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
 ":" / ({WHITE_SPACE} | {EOL})   {   return COLON; }
 "?"                             {   return QUESTION; }
 
+{C_NS_TAG_PROPERTY} / ({WHITE_SPACE} | {EOL}) {
+  return TAG;
+}
+
 }
 
 <YYINITIAL, BRACES, VALUE_OR_KEY> {
@@ -201,30 +236,21 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
 }
 
 <BRACES> {
-{KEY_flow} / ({WHITE_SPACE} | {EOL}) {   yyBegin( VALUE);
-                                         return SCALAR_KEY;
-                                     }
-{KEY_flow}                           {   if (zzMarkedPos == zzEndRead){
-                                           return SCALAR_KEY;
-                                         }
-                                         yyBegin(VALUE);
-                                         return TEXT;
-                                     }
+{KEY_flow} / !(!{ANY_CHAR}|{NS_PLAIN_SAFE_flow}) {
+  yyBegin(VALUE_BRACE);
+  return SCALAR_KEY;
+}
+
 }
 
 <YYINITIAL, VALUE_OR_KEY> {
-{KEY_block} / ({WHITE_SPACE} | {EOL}) {   yyBegin( VALUE);
-                                          return SCALAR_KEY;
-                                      }
-{KEY_block}                           {   if (zzMarkedPos == zzEndRead){
-                                            return SCALAR_KEY;
-                                          }
-                                          yyBegin(VALUE);
-                                          return TEXT;
-                                      }
+{KEY_block} / !(!{ANY_CHAR}|{NS_PLAIN_SAFE_block}) {
+  yyBegin(VALUE);
+  return SCALAR_KEY;
+}
 }
 
-<YYINITIAL, BRACES, VALUE, VALUE_OR_KEY> {
+<YYINITIAL, BRACES, VALUE, VALUE_BRACE, VALUE_OR_KEY> {
 
 {WHITE_SPACE}                   { return getWhitespaceTypeAndUpdateIndent(); }
 
@@ -232,9 +258,10 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
 
 <YYINITIAL, BRACES>{
 
-"---"                           {   braceCount = 0;
-                                    yyBegin(YYINITIAL);
-                                    return DOCUMENT_MARKER; }
+"---" |
+"..." {
+   return tokenOrForbidden(TEXT);
+}
 
 "-" / ({WHITE_SPACE} | {EOL})   {   yyBegin(VALUE_OR_KEY);
                                     return SEQUENCE_MARKER; }
@@ -242,19 +269,19 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
 }
 
 
-<BRACES, VALUE, VALUE_OR_KEY>{
+<BRACES, VALUE, VALUE_BRACE, VALUE_OR_KEY>{
 
-({C_NS_TAG_PROPERTY} {WHITE_SPACE}+)? {STRING} {
+{STRING} {
  return SCALAR_STRING;
 }
 
-({C_NS_TAG_PROPERTY} {WHITE_SPACE}+)? {DSTRING} {
+{DSTRING} {
  return SCALAR_DSTRING;
 }
 
 }
 
-<VALUE, VALUE_OR_KEY>{
+<VALUE, VALUE_BRACE, VALUE_OR_KEY>{
 
 ">"("-"|"+")? / ({WHITE_SPACE} | {EOL})      {
                                     yyBegin(INDENT_VALUE);
@@ -264,7 +291,7 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
                                     break;
                                 }
 
-({C_NS_TAG_PROPERTY} {WHITE_SPACE}+)? ("|"("-"|"+")?) / ({WHITE_SPACE} | {EOL})
+"|"("-"|"+")? / ({WHITE_SPACE} | {EOL})
                                 {   yyBegin(INDENT_VALUE);
                                     valueIndent = currentLineIndent;
                                     valueTokenType = SCALAR_LIST;
@@ -272,17 +299,21 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
                                     break;
                                 }
 
-({INJECTION} | [^ :\t\n,{\[|>]) ({INJECTION} | [^:\n#,}\]])* ({INJECTION} | [^ :\t\n#,}\]])
-                                {   if (braceCount <= 0) {
-                                      char c;
-                                      while ((c = getCharAfter(0)) == ' ' || c == ','){
-                                        zzMarkedPos++;
-                                      }
-                                    }
-                                    return TEXT; }
 }
 
-<YYINITIAL, BRACES, VALUE, VALUE_OR_KEY> {
+<VALUE, VALUE_OR_KEY> {
+  {INJECTION}? {NS_PLAIN_ONE_LINE_block} {
+    return tokenOrForbidden(TEXT);
+  }
+}
+
+<BRACES, VALUE_BRACE> {
+  {INJECTION}? {NS_PLAIN_ONE_LINE_flow} {
+    return tokenOrForbidden(TEXT);
+  }
+}
+
+<YYINITIAL, BRACES, VALUE, VALUE_BRACE, VALUE_OR_KEY> {
 "{"                             {   braceCount++;
                                     if (braceCount != 0 && yystate() != BRACES) {
                                       previousState = yystate();
@@ -302,7 +333,7 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
                                 }
 }
 
-<VALUE, VALUE_OR_KEY>{
+<VALUE, VALUE_BRACE, VALUE_OR_KEY>{
 .                               {   return TEXT; }
 }
 
@@ -329,12 +360,30 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
                                                 yyBegin(YYINITIAL);
                                                 break;
                                             } else {
-                                                //if (valueIndent < 0) {
-                                                //    yyBegin(VALUE);
-                                                //    return TEXT;
-                                                //}
                                                 return valueTokenType;
                                             }
                                         }
 }
 
+// Rules for matching EOLs
+<BRACES> {
+
+{KEY_flow} {
+  if (zzMarkedPos == zzEndRead){
+    return SCALAR_KEY;
+  }
+  yyBegin(VALUE);
+  return tokenOrForbidden(TEXT);
+}
+
+}
+
+<YYINITIAL, VALUE_OR_KEY> {
+{KEY_block} {
+  if (zzMarkedPos == zzEndRead){
+    return SCALAR_KEY;
+  }
+  yyBegin(VALUE);
+  return tokenOrForbidden(TEXT);
+}
+}

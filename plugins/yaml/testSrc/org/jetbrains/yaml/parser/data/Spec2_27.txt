@@ -2,7 +2,7 @@ YAML file
   YAML document
     PsiElement(---)('---')
     PsiWhiteSpace(' ')
-    PsiElement(text)('!<tag:clarkevans.com,2002:invoice>')
+    PsiElement(tag)('!<tag:clarkevans.com,2002:invoice>')
     PsiElement(Eol)('\n')
     YAML key value
       PsiElement(scalar key)('invoice:')

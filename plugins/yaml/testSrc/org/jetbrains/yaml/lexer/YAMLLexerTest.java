@@ -114,6 +114,10 @@ public class YAMLLexerTest extends LexerTestCase {
     doTest();
   }
 
+  public void testStringWithTag() {
+    doTest();
+  }
+
   public void testNested_seqs() {
     doTest();
   }
@@ -163,6 +167,22 @@ public class YAMLLexerTest extends LexerTestCase {
   }
 
   public void testMultilineDqLiteralWithEscapedNewlines() {
+    doTest();
+  }
+
+  public void testSmallExplicitDocument() {
+    doTest();
+  }
+
+  public void testSmallStream() {
+    doTest();
+  }
+
+  public void testVerbatimTags() {
+    doTest();
+  }
+
+  public void testTagShorthands() {
     doTest();
   }
 

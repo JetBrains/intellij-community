@@ -18,7 +18,10 @@ public interface YAMLTokenTypes {
   YAMLElementType QUESTION = new YAMLElementType("?");
 
   YAMLElementType DOCUMENT_MARKER = new YAMLElementType("---");
+  YAMLElementType DOCUMENT_END = new YAMLElementType("...");
   YAMLElementType SEQUENCE_MARKER = new YAMLElementType("-");
+
+  YAMLElementType TAG = new YAMLElementType("tag");
 
   YAMLElementType SCALAR_KEY = new YAMLElementType("scalar key");
   YAMLElementType TEXT = new YAMLElementType("text");
