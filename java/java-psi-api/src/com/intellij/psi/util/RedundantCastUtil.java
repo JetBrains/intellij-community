@@ -475,7 +475,7 @@ public class RedundantCastUtil {
           if (operandType != null && topCastType != null && TypeConversionUtil.areTypesConvertible(operandType, topCastType)) {
             addToResults((PsiTypeCastExpression)expr);
           }
-        } else if (PsiPrimitiveType.getUnboxedType(operandType) == topCastType) {
+        } else if (Comparing.equal(PsiPrimitiveType.getUnboxedType(operandType), topCastType)) {
           addToResults((PsiTypeCastExpression)expr);
         }
       }
