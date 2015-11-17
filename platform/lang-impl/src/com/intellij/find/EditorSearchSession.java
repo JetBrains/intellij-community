@@ -112,8 +112,8 @@ public class EditorSearchSession implements SearchSession,
                                 new ExcludeAction())
       .addExtraReplaceAction(new TogglePreserveCaseAction(),
                              new ToggleSelectionOnlyAction())
-      .addReplaceFieldActions(new PrevOccurrenceAction(),
-                              new NextOccurrenceAction())
+      .addReplaceFieldActions(new PrevOccurrenceAction(false),
+                              new NextOccurrenceAction(false))
       .withDataProvider(this)
       .withCloseAction(new Runnable() {
         @Override
