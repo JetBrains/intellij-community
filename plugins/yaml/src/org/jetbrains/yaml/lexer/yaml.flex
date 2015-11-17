@@ -88,7 +88,7 @@ import org.jetbrains.yaml.YAMLTokenTypes;
 NS_CHAR = [^\n\t\r\ ]
 NS_INDICATOR = [-?:,\[\]\{\}#&*!|>'\"%@`]
 
-NS_PLAIN_SAFE_flow  = [^\n\r\t\ :\[\]\{\}] // NS_CHAR - flow indicators
+NS_PLAIN_SAFE_flow  = [^\n\r\t\ ,\[\]\{\}] // NS_CHAR - flow indicators
 NS_PLAIN_SAFE_block = {NS_CHAR}
 
 NS_PLAIN_FIRST_flow  = !(!{NS_CHAR}|{NS_INDICATOR}) | [?:-] {NS_PLAIN_SAFE_flow}
@@ -97,8 +97,8 @@ NS_PLAIN_FIRST_block = !(!{NS_CHAR}|{NS_INDICATOR}) | [?:-] {NS_PLAIN_SAFE_block
 NS_PLAIN_CHAR_flow  = {NS_CHAR} "#" | !(!{NS_PLAIN_SAFE_flow}|[:#])  | ":" {NS_PLAIN_SAFE_flow}
 NS_PLAIN_CHAR_block = {NS_CHAR} "#" | !(!{NS_PLAIN_SAFE_block}|[:#]) | ":" {NS_PLAIN_SAFE_block}
 
-NB_NS_PLAIN_IN_LINE_flow  = ({WHITE_SPACE_CHAR}* {NS_PLAIN_CHAR_flow}*)*
-NB_NS_PLAIN_IN_LINE_block = ({WHITE_SPACE_CHAR}* {NS_PLAIN_CHAR_block}*)*
+NB_NS_PLAIN_IN_LINE_flow  = ({WHITE_SPACE_CHAR}* {NS_PLAIN_CHAR_flow})*
+NB_NS_PLAIN_IN_LINE_block = ({WHITE_SPACE_CHAR}* {NS_PLAIN_CHAR_block})*
 
 NS_PLAIN_ONE_LINE_flow  = {NS_PLAIN_FIRST_flow}  {NB_NS_PLAIN_IN_LINE_flow}
 NS_PLAIN_ONE_LINE_block = {NS_PLAIN_FIRST_block} {NB_NS_PLAIN_IN_LINE_block}
@@ -112,10 +112,9 @@ COMMENT =                       "#"{LINE}
 
 ID =                            [^\n\-\ {}\[\]#][^\n{}\[\]>:#]*
 
-KEY_flow = {NS_PLAIN_ONE_LINE_flow} ":"
-KEY_block = {NS_PLAIN_ONE_LINE_block} ":"
+KEY_flow = {NS_PLAIN_ONE_LINE_flow} {WHITE_SPACE_CHAR}* ":"
+KEY_block = {NS_PLAIN_ONE_LINE_block} {WHITE_SPACE_CHAR}* ":"
 
-//[^,\n\-\ {}\[\]#]!(!([^\n{}>:,]*)|{LINE}{WHITE_SPACE_CHAR}"#"{LINE})":"
 INJECTION =                     ("{{" {ID} "}"{0,2}) | ("%{" [^}\n]* "}"?)
 
 ESCAPE_SEQUENCE=                \\[^\n]
