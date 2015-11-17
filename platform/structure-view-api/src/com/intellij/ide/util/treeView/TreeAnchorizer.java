@@ -45,4 +45,5 @@ public class TreeAnchorizer {
     return anchor;
   }
 
+  public void freeAnchor(Object element) { }
 }
