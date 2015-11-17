@@ -59,6 +59,12 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
 
   //private final List<ApplierCompleter> children = new ArrayList<ApplierCompleter>();
 
+  @Override
+  public boolean cancel(boolean mayInterruptIfRunning) {
+    progressIndicator.cancel();
+    return super.cancel(mayInterruptIfRunning);
+  }
+
   ApplierCompleter(ApplierCompleter<T> parent,
                    boolean runInReadAction,
                    @NotNull ProgressIndicator progressIndicator,
