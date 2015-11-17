@@ -26,10 +26,15 @@ import org.jetbrains.jsonProtocol.Request
 import org.jetbrains.rpc.MessageProcessor
 import org.jetbrains.concurrency.Promise as OJCPromise
 
-open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: MessageProcessor, channel: Channel) : AttachStateManager {
+open class StandaloneVmHelper @JvmOverloads constructor(private val vm: Vm, private val messageProcessor: MessageProcessor, channel: Channel? = null) : AttachStateManager {
   private @Volatile var channel: Channel? = channel
 
   init {
+    channel?.let { setChannel(channel) }
+  }
+
+  fun setChannel(channel: Channel) {
+    this.channel = channel
     channel.closeFuture().addListener {
       // don't report in case of explicit detach()
       if (this.channel != null) {
