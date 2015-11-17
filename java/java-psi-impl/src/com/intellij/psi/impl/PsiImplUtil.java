@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -323,50 +323,26 @@ public class PsiImplUtil {
     return null;
   }
 
-  @Nullable
+  /** @deprecated use {@link AnnotationTargetUtil#findAnnotationTarget(PsiAnnotation, TargetType...)} (to be removed ion IDEA 17) */
+  @SuppressWarnings("unused")
   public static TargetType findApplicableTarget(@NotNull PsiAnnotation annotation, @NotNull TargetType... types) {
-    if (types.length != 0) {
-      PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
-      if (ref != null) {
-        PsiElement annotationType = ref.resolve();
-        if (annotationType instanceof PsiClass) {
-          return findApplicableTarget((PsiClass)annotationType, types);
-        }
-      }
-    }
-
-    return TargetType.UNKNOWN;
+    return AnnotationTargetUtil.findAnnotationTarget(annotation, types);
   }
 
-  @Nullable
+  /** @deprecated use {@link AnnotationTargetUtil#findAnnotationTarget(PsiClass, TargetType...)} (to be removed ion IDEA 17) */
+  @SuppressWarnings("unused")
   public static TargetType findApplicableTarget(@NotNull PsiClass annotationType, @NotNull TargetType... types) {
-    if (types.length != 0) {
-      Set<TargetType> targets = getAnnotationTargets(annotationType);
-      if (targets != null) {
-        for (TargetType type : types) {
-          if (type != TargetType.UNKNOWN && targets.contains(type)) {
-            return type;
-          }
-        }
-        return null;
-      }
-    }
-
-    return TargetType.UNKNOWN;
+    return AnnotationTargetUtil.findAnnotationTarget(annotationType, types);
   }
 
-  @Nullable
+  /** @deprecated use {@link AnnotationTargetUtil#getAnnotationTargets(PsiClass)} (to be removed ion IDEA 17) */
+  @SuppressWarnings("unused")
   public static Set<TargetType> getAnnotationTargets(@NotNull PsiClass annotationType) {
-    if (!annotationType.isAnnotationType()) return null;
-    PsiModifierList modifierList = annotationType.getModifierList();
-    if (modifierList == null) return null;
-    PsiAnnotation target = modifierList.findAnnotation(CommonClassNames.JAVA_LANG_ANNOTATION_TARGET);
-    if (target == null) return AnnotationTargetUtil.DEFAULT_TARGETS;  // if omitted it is applicable to all but Java 8 TYPE_USE/TYPE_PARAMETERS targets
-
-    return AnnotationTargetUtil.extractRequiredAnnotationTargets(target.findAttributeValue(null));
+    return AnnotationTargetUtil.getAnnotationTargets(annotationType);
   }
 
-  @NotNull
+  /** @deprecated use {@link AnnotationTargetUtil#getTargetsForLocation(PsiAnnotationOwner)} (to be removed ion IDEA 17) */
+  @SuppressWarnings("unused")
   public static TargetType[] getTargetsForLocation(@Nullable PsiAnnotationOwner owner) {
     return AnnotationTargetUtil.getTargetsForLocation(owner);
   }
@@ -657,13 +633,12 @@ public class PsiImplUtil {
   }
 
   public static boolean isTypeAnnotation(@Nullable PsiElement element) {
-    return element instanceof PsiAnnotation &&
-           findApplicableTarget((PsiAnnotation)element, TargetType.TYPE_USE) == TargetType.TYPE_USE;
+    return element instanceof PsiAnnotation && AnnotationTargetUtil.isTypeAnnotation((PsiAnnotation)element);
   }
 
   public static void collectTypeUseAnnotations(@NotNull PsiModifierList modifierList, @NotNull List<PsiAnnotation> annotations) {
     for (PsiAnnotation annotation : modifierList.getAnnotations()) {
-      if (isTypeAnnotation(annotation)) {
+      if (AnnotationTargetUtil.isTypeAnnotation(annotation)) {
         annotations.add(annotation);
       }
     }
@@ -690,7 +665,7 @@ public class PsiImplUtil {
     PsiElement left = PsiTreeUtil.skipSiblingsBackward(typeElement, PsiComment.class, PsiWhiteSpace.class, PsiTypeParameterList.class);
     if (left instanceof PsiModifierList) {
       for (PsiAnnotation annotation : ((PsiModifierList)left).getAnnotations()) {
-        if (isTypeAnnotation(annotation)) {
+        if (AnnotationTargetUtil.isTypeAnnotation(annotation)) {
           annotation.putUserData(TYPE_ANNO_MARK, Boolean.TRUE);
         }
       }
