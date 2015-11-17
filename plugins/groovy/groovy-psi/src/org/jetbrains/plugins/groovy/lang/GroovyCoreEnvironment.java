@@ -87,10 +87,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyClassFinder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.search.GrPrivateFieldScopeEnlarger;
 import org.jetbrains.plugins.groovy.lang.psi.impl.smartPointers.GrClassReferenceTypePointerFactory;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.DefaultCallExpressionTypeCalculator;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrDGMTypeCalculator;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrDescriptorReturnTypeCalculator;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrWithTraitTypeCalculator;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.*;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.*;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
@@ -201,6 +198,9 @@ public class GroovyCoreEnvironment {
       appEnvironment.addExtension(GrCallExpressionTypeCalculator.EP_NAME, new GrDescriptorReturnTypeCalculator());
       appEnvironment.addExtension(GrCallExpressionTypeCalculator.EP_NAME, new GrDGMTypeCalculator());
       appEnvironment.addExtension(GrCallExpressionTypeCalculator.EP_NAME, new GrWithTraitTypeCalculator());
+
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GrExpressionTypeCalculator.EP_NAME, GrExpressionTypeCalculator.class);
+      appEnvironment.addExtension(GrExpressionTypeCalculator.EP_NAME, new GrClosureDelegateTypeCalculator());
 
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GroovyClassDescriptor.EP_NAME,
                                                         GroovyClassDescriptor.class);

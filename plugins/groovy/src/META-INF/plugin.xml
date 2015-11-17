@@ -54,6 +54,9 @@
 
     <extensionPoint name="callExpressionTypeCalculator"
                     interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCallExpressionTypeCalculator"/>
+    <extensionPoint name="expressionTypeCalculator"
+                    interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrExpressionTypeCalculator"/>
+
     <extensionPoint name="classDescriptor" beanClass="org.jetbrains.plugins.groovy.extensions.GroovyClassDescriptor"/>
     <extensionPoint name="methodDescriptor" beanClass="org.jetbrains.plugins.groovy.extensions.GroovyMethodDescriptorExtension"/>
 
@@ -137,6 +140,8 @@
         implementation="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrDescriptorReturnTypeCalculator"/>
     <callExpressionTypeCalculator
         implementation="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrDGMTypeCalculator"/>
+    <expressionTypeCalculator
+        implementation="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrClosureDelegateTypeCalculator"/>
 
     <scriptTypeDetector implementation="org.jetbrains.plugins.groovy.gant.GantScriptTypeDetector"/>
 
