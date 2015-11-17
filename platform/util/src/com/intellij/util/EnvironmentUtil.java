@@ -157,8 +157,7 @@ public class EnvironmentUtil {
     File reader = FileUtil.findFirstThatExist(
       PathManager.getBinPath() + "/printenv.py",
       PathManager.getHomePath() + "/community/bin/mac/printenv.py",
-      PathManager.getHomePath() + "/bin/mac/printenv.py"
-    );
+      PathManager.getHomePath() + "/bin/mac/printenv.py");
     if (reader == null) {
       throw new Exception("bin:" + PathManager.getBinPath());
     }
@@ -168,10 +167,7 @@ public class EnvironmentUtil {
       String[] command = {shell, "-l", "-i", "-c", ("'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'")};
       LOG.info("loading shell env: " + StringUtil.join(command, " "));
 
-      ProcessBuilder processBuilder = new ProcessBuilder(command);
-      processBuilder.redirectErrorStream(true);
-      Process process = processBuilder.start();
-
+      Process process = new ProcessBuilder(command).redirectErrorStream(true).start();
       StreamGobbler gobbler = new StreamGobbler(process.getInputStream());
       int rv = waitAndTerminateAfter(process, SHELL_ENV_READING_TIMEOUT);
       gobbler.stop();
