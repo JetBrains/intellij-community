@@ -423,4 +423,11 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
   public void testConstantConditionsWithAssignmentsInside() { doTest(); }
   public void testIfConditionsWithAssignmentInside() { doTest(); }
+
+  public void testConstantArithmetic() {
+    final DataFlowInspection inspection = new DataFlowInspection();
+    inspection.REPORT_CONSTANT_REFERENCE_VALUES = true;
+    myFixture.enableInspections(inspection);
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
 }

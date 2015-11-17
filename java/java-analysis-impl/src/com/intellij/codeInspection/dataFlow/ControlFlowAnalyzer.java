@@ -1165,8 +1165,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void generateOther(PsiPolyadicExpression expression, IElementType op, PsiExpression[] operands, PsiType type) {
-    op = substituteBinaryOperation(op, type);
-
     PsiExpression lExpr = operands[0];
     lExpr.accept(this);
     PsiType lType = lExpr.getType();
@@ -1181,14 +1179,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       lExpr = rExpr;
       lType = rType;
     }
-  }
-
-  @Nullable
-  private static IElementType substituteBinaryOperation(IElementType op, PsiType type) {
-    if (JavaTokenType.PLUS == op && (type == null || !type.equalsToText(JAVA_LANG_STRING))) {
-      return null;
-    }
-    return op;
   }
 
   private void acceptBinaryRightOperand(@Nullable IElementType op, PsiType type,

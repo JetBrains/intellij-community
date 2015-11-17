@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -383,7 +384,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     final IElementType opSign = instruction.getOperationSign();
     if (opSign != null) {
-      DfaInstructionState[] states = handleConstantComparison(instruction, runner, memState, dfaRight, dfaLeft, opSign);
+      DfaInstructionState[] states = handleConstantBinOp(instruction, runner, memState, dfaRight, dfaLeft, opSign);
       if (states == null) {
         states = handleRelationBinop(instruction, runner, memState, dfaRight, dfaLeft);
       }
@@ -466,11 +467,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   @Nullable
-  private static DfaInstructionState[] handleConstantComparison(BinopInstruction instruction,
-                                                                DataFlowRunner runner,
-                                                                DfaMemoryState memState,
-                                                                DfaValue dfaRight,
-                                                                DfaValue dfaLeft, IElementType opSign) {
+  private static DfaInstructionState[] handleConstantBinOp(BinopInstruction instruction,
+                                                           DataFlowRunner runner,
+                                                           DfaMemoryState memState,
+                                                           DfaValue dfaRight,
+                                                           DfaValue dfaLeft, IElementType opSign) {
     if (dfaRight instanceof DfaConstValue && dfaLeft instanceof DfaVariableValue) {
       Object value = ((DfaConstValue)dfaRight).getValue();
       if (value instanceof Number) {
@@ -482,10 +483,19 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
     }
     if (dfaRight instanceof DfaVariableValue && dfaLeft instanceof DfaConstValue) {
-      return handleConstantComparison(instruction, runner, memState, dfaLeft, dfaRight, DfaRelationValue.getSymmetricOperation(opSign));
+      return handleConstantBinOp(instruction, runner, memState, dfaLeft, dfaRight, DfaRelationValue.getSymmetricOperation(opSign));
     }
 
     if (EQEQ != opSign && NE != opSign) {
+      Object value1 = getConstantValue(memState, dfaLeft);
+      Object value2 = getConstantValue(memState, dfaRight);
+      if (instruction.getPsiAnchor() instanceof PsiExpression && value1 != null && value2 != null) {
+        Object result = JavaConstantExpressionEvaluator.computeBinaryOperationResult(value1, value2, opSign, false);
+        if (result != null) {
+          memState.push(runner.getFactory().getConstFactory().createFromValue(result, ((PsiExpression)instruction.getPsiAnchor()).getType(), null));
+          return nextInstruction(instruction, runner, memState);
+        }
+      }
       return null;
     }
 
@@ -500,6 +510,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
 
     return null;
+  }
+
+  @Nullable
+  private static Object getConstantValue(DfaMemoryState memState, DfaValue val) {
+    if (val instanceof DfaVariableValue) val = memState.getConstantValue((DfaVariableValue)val);
+    return val instanceof DfaConstValue ? ((DfaConstValue)val).getValue() : null;
   }
 
   @Nullable

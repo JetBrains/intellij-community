@@ -132,7 +132,7 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
     }
   }
 
-  private Object compute(Object lOperandValue, Object rOperandValue, IElementType tokenType, PsiElement expression) {
+  Object compute(Object lOperandValue, Object rOperandValue, IElementType tokenType, PsiElement expression) {
     Object value = null;
     if (tokenType == JavaTokenType.PLUS) {
       if (lOperandValue instanceof String || rOperandValue instanceof String) {
