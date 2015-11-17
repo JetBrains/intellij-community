@@ -45,14 +45,13 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
   protected String buildErrorString(Object... infos) {
     final Integer argumentCount = (Integer)infos[0];
     final Integer placeholderCount = (Integer)infos[1];
-    final Object value = infos[2];
     if (argumentCount.intValue() > placeholderCount.intValue()) {
       return InspectionGadgetsBundle.message("placeholder.count.matches.argument.count.more.problem.descriptor",
-                                             argumentCount, placeholderCount, value);
+                                             argumentCount, placeholderCount);
     }
     else {
       return InspectionGadgetsBundle.message("placeholder.count.matches.argument.count.fewer.problem.descriptor",
-                                             argumentCount, placeholderCount, value);
+                                             argumentCount, placeholderCount);
     }
   }
 
@@ -96,8 +95,7 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       else {
         argumentCount = countArguments(arguments, 1);
       }
-      final Object value = ExpressionUtils.computeConstantExpression(logStringArgument);
-      final int placeholderCount = countPlaceholders(value);
+      final int placeholderCount = countPlaceholders(logStringArgument);
       if (placeholderCount < 0 || argumentCount < 0 || placeholderCount == argumentCount) {
         return;
       }
@@ -106,7 +104,7 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
         // the exception, then the stack trace won't be logged.
         return;
       }
-      registerError(logStringArgument, Integer.valueOf(argumentCount), Integer.valueOf(placeholderCount), value);
+      registerError(logStringArgument, Integer.valueOf(argumentCount), Integer.valueOf(placeholderCount));
     }
 
     private static boolean hasThrowableType(PsiExpression lastArgument) {
@@ -123,11 +121,53 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_THROWABLE);
     }
 
-    public static int countPlaceholders(Object value) {
-      if (!(value instanceof String)) {
-        return -1;
+    public static int countPlaceholders(PsiExpression expression) {
+      final Object value = ExpressionUtils.computeConstantExpression(expression);
+      if (value == null) {
+        final StringBuilder builder = new StringBuilder();
+        return buildString(expression, builder) ? countPlaceholders(builder.toString()) : -1;
       }
-      final String string = (String)value;
+      return value instanceof String ? countPlaceholders((String)value) : 0;
+    }
+
+    private static boolean buildString(PsiExpression expression, StringBuilder builder) {
+      if (expression instanceof PsiParenthesizedExpression) {
+        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+        return buildString(parenthesizedExpression.getExpression(), builder);
+      }
+      else if (expression instanceof PsiPolyadicExpression) {
+        if (!ExpressionUtils.hasStringType(expression)) {
+          return false;
+        }
+        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+        for (PsiExpression operand : polyadicExpression.getOperands()) {
+          if (!buildString(operand, builder)) {
+            return false;
+          }
+        }
+        return true;
+      }
+      else if (expression instanceof PsiLiteralExpression) {
+        if (ExpressionUtils.hasStringType(expression)) {
+          final PsiLiteralExpression literalExpression = (PsiLiteralExpression)expression;
+          builder.append(literalExpression.getValue());
+        }
+        return true;
+      }
+      else {
+        if (!ExpressionUtils.hasStringType(expression)) {
+          return true;
+        }
+        final Object value = ExpressionUtils.computeConstantExpression(expression);
+        if (value == null) {
+          return false;
+        }
+        builder.append(value);
+        return true;
+      }
+    }
+
+    private static int countPlaceholders(String string) {
       int count = 0;
       int index = string.indexOf("{}");
       while (index >= 0) {
