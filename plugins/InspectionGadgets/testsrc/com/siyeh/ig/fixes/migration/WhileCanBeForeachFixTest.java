@@ -30,6 +30,7 @@ public class WhileCanBeForeachFixTest extends IGQuickFixesTestCase {
   public void testThis() { doTest(); }
   public void testCast() { doTest(); }
   public void testNakedNext() { doTest(); }
+  public void testUnboundWildcard() { doTest(); }
 
   @Override
   protected String getRelativePath() {
