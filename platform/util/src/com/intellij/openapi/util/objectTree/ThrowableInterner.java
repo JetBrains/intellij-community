@@ -62,10 +62,10 @@ class ThrowableInterner {
       if (!Comparing.equal(o1.getClass(), o2.getClass())) return false;
       if (!Comparing.equal(o1.getMessage(), o2.getMessage())) return false;
       if (!equals(o1.getCause(), o2.getCause())) return false;
-      Object backtrace1 = getBacktrace(o1);
-      Object backtrace2 = getBacktrace(o2);
+      Object[] backtrace1 = getBacktrace(o1);
+      Object[] backtrace2 = getBacktrace(o2);
       if (backtrace1 != null && backtrace2 != null) {
-        return compareArrays(backtrace1, backtrace2);
+        return Arrays.deepEquals(backtrace1, backtrace2);
       }
       return Arrays.equals(o1.getStackTrace(), o2.getStackTrace());
     }
@@ -88,36 +88,6 @@ class ThrowableInterner {
     Object backtrace = AtomicFieldUpdater.getUnsafe().getObject(throwable, BACKTRACE_FIELD_OFFSET);
     // obsolete jdk
     return backtrace instanceof Object[] && ((Object[])backtrace).length == 5 ? (Object[])backtrace : null;
-  }
-
-  private static boolean compareArrays(Object a1, Object a2) {
-    if (a1 == a2) return true;
-    if (a1 == null || a2 == null) return false;
-    if (a1.equals(a2)) return true;
-    if (a1 instanceof int[]) {
-      return a2 instanceof int[] && Arrays.equals((int[])a1, (int[])a2);
-    }
-    if (a1 instanceof short[]) {
-      return a2 instanceof short[] && Arrays.equals((short[])a1, (short[])a2);
-    }
-    if (a1 instanceof Object[]) {
-      if (!(a2 instanceof Object[])) {
-        return false;
-      }
-      Object[] oa1 = (Object[])a1;
-      Object[] oa2 = (Object[])a2;
-
-      if (oa1.length != oa2.length) {
-        return false;
-      }
-      for (int i = 0; i < oa1.length; i++) {
-        Object o1 = oa1[i];
-        Object o2 = oa2[i];
-        if (!compareArrays(o1, o2)) return false;
-      }
-      return true;
-    }
-    return false;
   }
 
   @NotNull
