@@ -245,7 +245,9 @@ public final class ObjectTree<T> {
     for (ObjectTreeListener each : myListeners) {
       each.objectExecuted(object);
     }
-    myDisposedObjects.put(object, Disposer.isDebugMode() ? ThrowableInterner.intern(new Throwable()) : Boolean.TRUE);
+    synchronized (treeLock) {
+      myDisposedObjects.put(object, Disposer.isDebugMode() ? ThrowableInterner.intern(new Throwable()) : Boolean.TRUE);
+    }
   }
 
   int size() {
