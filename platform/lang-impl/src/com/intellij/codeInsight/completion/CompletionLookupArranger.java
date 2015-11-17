@@ -41,6 +41,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,7 +122,14 @@ public class CompletionLookupArranger extends LookupArranger {
       ProcessingContext context = createContext(false);
       Classifier<LookupElement> classifier = myClassifiers.get(sorter);
       while (classifier != null) {
-        List<Pair<LookupElement, Object>> pairs = classifier.getSortingWeights(thisSorterItems, context);
+        final THashSet<LookupElement> itemSet = ContainerUtil.newIdentityTroveSet(thisSorterItems);
+        List<LookupElement> unsortedItems = ContainerUtil.filter(myItems, new Condition<LookupElement>() {
+          @Override
+          public boolean value(LookupElement lookupElement) {
+            return itemSet.contains(lookupElement);
+          }
+        });
+        List<Pair<LookupElement, Object>> pairs = classifier.getSortingWeights(unsortedItems, context);
         if (!hideSingleValued || !haveSameWeights(pairs)) {
           for (Pair<LookupElement, Object> pair : pairs) {
             map.get(pair.first).add(Pair.create(classifier.getPresentableName(), pair.second));
