@@ -255,7 +255,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     setVariableState(var, getVariableState(var).withValue(value));
     if (value instanceof DfaTypeValue) {
-      setVariableState(var, getVariableState(var).withNullable(((DfaTypeValue)value).isNullable()));
+      setVariableState(var, getVariableState(var).withNullability(((DfaTypeValue)value).getNullness()));
       DfaRelationValue dfaInstanceof = myFactory.getRelationFactory().createRelation(var, value, JavaTokenType.INSTANCEOF_KEYWORD, false);
       if (((DfaTypeValue)value).isNotNull()) {
         applyCondition(dfaInstanceof);
