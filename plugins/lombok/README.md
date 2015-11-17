@@ -52,6 +52,8 @@ Installation
   
 Restart IDE.
 
+In your project: Click Preferences, "Build, Execution, Deployment", Compiler, Annotation Processors. Click Enable Annotation Processing
+
 IntelliJ and Eclipse compiler
 -----------------------------
 If you're using Eclipse compiler with lombok, try this setup:
