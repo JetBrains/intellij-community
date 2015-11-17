@@ -909,11 +909,32 @@ FunctionEnd
 ; custom uninstall functions
 ;------------------------------------------------------------------------------
 
-Function un.onInit
+Function un.getRegKey
+  ReadRegStr $R2 HKCU "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" ""
+  StrCpy $R2 "$R2\bin"
+user:
+  StrCmp $R2 $INSTDIR HKCU admin
+HKCU:
   StrCpy $baseRegKey "HKCU"
+  goto Done
+admin:
+  ReadRegStr $R2 HKLM "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" ""
+  StrCpy $R2 "$R2\bin"
+  StrCmp $R2 $INSTDIR HKLM cant_find_installation
+HKLM:
+  StrCpy $baseRegKey "HKLM"
+  goto Done
+cant_find_installation:
   ;admin perm. is required to uninstall?
   ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES
-  StrCmp $R0 $INSTDIR requred_admin_perm UAC_Done
+  StrCmp $R0 $INSTDIR HKLM HKCU
+Done:
+FunctionEnd
+
+
+Function un.onInit
+  Call un.getRegKey
+  StrCmp $baseRegKey "HKLM" requred_admin_perm UAC_Done
 
 requred_admin_perm:
   ;the user has admin rights?
@@ -1116,18 +1137,12 @@ skip_delete_settings:
   ${EndIf}
 
   ReadRegStr $R9 HKCU "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" "MenuFolder"
-  StrCmp $R9 "" "" clear_shortcuts
+  StrCmp $R9 "" "" shortcuts
   ReadRegStr $R9 HKLM "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" "MenuFolder"
-  StrCmp $R9 "" clear_registry
+  StrCmp $R9 "" registry
   StrCpy $5 "Software\${MANUFACTURER}"
-;  call un.winVersion
-; ${If} $0 == "1"
-;    StrCpy $5 "Software\Wow6432Node\${MANUFACTURER}"
-; ${EndIf}
-clear_shortcuts:
+shortcuts:
   ;the user has the admin rights
-;  UserInfo::GetAccountType
-;  Pop $R2
   IfFileExists "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk" keep_current_user
   SetShellVarContext all
 keep_current_user:
@@ -1141,18 +1156,8 @@ keep_current_user:
   Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
   Delete "$QUICKLAUNCH\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
 
-clear_registry:
+registry:
   StrCpy $5 "Software\${MANUFACTURER}"
-  call un.winVersion
-  ${If} $0 == "1"
-    StrCpy $5 "Software\Wow6432Node\${MANUFACTURER}"
-  ${EndIf}
-
-  StrCpy $0 $baseRegKey
-  StrCpy $1 "$5\${PRODUCT_REG_VER}"
-  StrCpy $2 "MenuFolder"
-  Call un.OMDeleteRegValue
-
   StrCmp "${ASSOCIATION}" "NoAssociation" finish_uninstall
   push "${ASSOCIATION}"
 loop:
@@ -1166,25 +1171,29 @@ loop:
 finish_uninstall:
   StrCpy $0 $baseRegKey
   StrCpy $1 "$5\${PRODUCT_REG_VER}"
-  StrCpy $2 "Build"
-  Call un.OMReadRegStr
+  StrCpy $4 0
+
+getValue:
+  Call un.OMEnumRegValue
+  IfErrors finish delValue
+delValue:
+  StrCpy $2 $3
+  Call un.OMDeleteRegValue
+  IfErrors 0 +2
+  IntOp $4 $4 + 1
+  goto getValue
+finish:
 
   StrCpy $1 "$5\${PRODUCT_REG_VER}"
-  Call un.OMDeleteRegKey
-
-  StrCpy $1 "$5\${MUI_PRODUCT}"
   Call un.OMDeleteRegKeyIfEmpty
-
   StrCpy $1 "$5"
   Call un.OMDeleteRegKeyIfEmpty
 
   StrCpy $0 "HKCR"
   StrCpy $1 "Applications\${PRODUCT_EXE_FILE}"
-  StrCpy $2 ""
   Call un.OMDeleteRegKey
   StrCpy $0 "HKCR"
   StrCpy $1 "${PRODUCT_PATHS_SELECTOR}"
-  StrCpy $2 ""
   Call un.OMDeleteRegKey
 
   StrCpy $0 "HKCR"
@@ -1196,7 +1205,9 @@ remove_IntelliJIdeaProjectFile:
   StrCpy $1 "IntelliJIdeaProjectFile"
   Call un.OMDeleteRegKey
 done:
-  DeleteRegKey SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}"
+  StrCpy $0 $baseRegKey
+  StrCpy $1 "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}"
+  Call un.OMDeleteRegKey
   ;do not show feedback web page checkbox for EAP builds.
   StrCmp "${PRODUCT_WITH_VER}" "${MUI_PRODUCT} ${VER_BUILD}" end_of_uninstall feedback_web_page
 feedback_web_page:
