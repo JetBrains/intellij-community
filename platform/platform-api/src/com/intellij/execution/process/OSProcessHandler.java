@@ -46,8 +46,16 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     this(process, commandLine, EncodingManager.getInstance().getDefaultCharset());
   }
 
+  @Deprecated
+  /**
+   * @deprecated Use {@link OSProcessHandler#OSProcessHandler(Process, String, Charset, String)} instead
+   */
   public OSProcessHandler(@NotNull Process process, @Nullable String commandLine, @Nullable Charset charset) {
     super(process, commandLine, charset);
+  }
+
+  public OSProcessHandler(@NotNull Process process, @Nullable String commandLine, @Nullable Charset charset, @NotNull String presentableName) {
+    super(process, commandLine, charset, presentableName);
   }
 
   @NotNull

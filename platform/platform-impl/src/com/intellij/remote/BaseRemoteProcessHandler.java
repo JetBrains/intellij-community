@@ -20,6 +20,7 @@ import com.intellij.execution.process.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +49,7 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends AbstractR
                                   @Nullable Charset charset) {
     myProcess = process;
     myCommandLine = commandLine;
-    myWaitFor = new ProcessWaitFor(process, this);
+    myWaitFor = new ProcessWaitFor(process, this, StringUtil.notNullize(commandLine));
     myCharset = charset;
   }
 
@@ -186,11 +187,12 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends AbstractR
       return application.executeOnPooledThread(task);
     }
 
-    return BaseOSProcessHandler.ExecutorServiceHolder.submit(task);
+    return BaseOSProcessHandler.submit(task);
   }
 
+  @NotNull
   @Override
-  public Future<?> executeTask(Runnable task) {
+  public Future<?> executeTask(@NotNull Runnable task) {
     return executeOnPooledThread(task);
   }
 

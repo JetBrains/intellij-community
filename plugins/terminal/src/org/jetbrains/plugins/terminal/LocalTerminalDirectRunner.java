@@ -111,7 +111,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @Override
   protected ProcessHandler createProcessHandler(final PtyProcess process) {
-    return new PtyProcessHandler(process);
+    return new PtyProcessHandler(process, getCommand()[0]);
   }
 
   @Override
@@ -160,9 +160,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     private final PtyProcess myProcess;
     private final ProcessWaitFor myWaitFor;
 
-    public PtyProcessHandler(PtyProcess process) {
+    public PtyProcessHandler(PtyProcess process, @NotNull String presentableName) {
       myProcess = process;
-      myWaitFor = new ProcessWaitFor(process, this);
+      myWaitFor = new ProcessWaitFor(process, this, presentableName);
     }
 
     @Override
@@ -213,8 +213,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       return myProcess.getOutputStream();
     }
 
+    @NotNull
     @Override
-    public Future<?> executeTask(Runnable task) {
+    public Future<?> executeTask(@NotNull Runnable task) {
       return executeOnPooledThread(task);
     }
 
@@ -225,7 +226,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         return application.executeOnPooledThread(task);
       }
 
-      return BaseOSProcessHandler.ExecutorServiceHolder.submit(task);
+      return BaseOSProcessHandler.submit(task);
     }
   }
 }

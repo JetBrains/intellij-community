@@ -1206,7 +1206,7 @@ public class BuildManager implements Disposable {
     
     final Process process = cmdLine.createProcess();
 
-    final OSProcessHandler processHandler = new OSProcessHandler(process, null, mySystemCharset) {
+    final OSProcessHandler processHandler = new OSProcessHandler(process, null, mySystemCharset, BuildMain.class.getName()+" external process") {
       @Override
       protected boolean shouldDestroyProcessRecursively() {
         return true;
@@ -1771,7 +1771,7 @@ public class BuildManager implements Disposable {
       return delegate;
     }
 
-    public synchronized boolean setDelegate(@NotNull TaskFuture<? extends T> delegate) {
+    private synchronized boolean setDelegate(@NotNull TaskFuture<? extends T> delegate) {
       if (myDelegate == null) {
         try {
           myDelegate = delegate;
