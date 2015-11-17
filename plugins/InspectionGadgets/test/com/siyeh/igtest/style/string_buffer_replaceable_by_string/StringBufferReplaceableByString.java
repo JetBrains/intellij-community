@@ -11,18 +11,18 @@ public class StringBufferReplaceableByString {
 
   public void foo1()
   {
-    final StringBuffer buffer = new StringBuffer().append('a');
+    final StringBuffer <warning descr="'StringBuffer buffer' can be replaced with 'String'">buffer</warning> = new StringBuffer().append('a');
     System.out.println(buffer.toString());
   }
 
   public void foo2()
   {
-    final StringBuffer buffer = new StringBuffer("foo").append("bar");
+    final StringBuffer <warning descr="'StringBuffer buffer' can be replaced with 'String'">buffer</warning> = new StringBuffer("foo").append("bar");
     System.out.println(buffer.toString());
   }
 
   public void bar(int i) {
-    System.out.println(new StringBuilder("asdf").append(i).toString());
+    System.out.println(new <warning descr="'StringBuilder' can be replaced with 'String'">StringBuilder</warning>("asdf").append(i).toString());
   }
 
   public void exceptions(String pcdata, int i) {
@@ -31,7 +31,7 @@ public class StringBufferReplaceableByString {
   }
 
   public void multiStatement() {
-    StringBuilder b = new StringBuilder();
+    StringBuilder <warning descr="'StringBuilder b' can be replaced with 'String'">b</warning> = new StringBuilder();
     b.append("eh");
     b.append(" yeah").append("thus...");
     System.out.println(b.toString());
@@ -47,7 +47,7 @@ public class StringBufferReplaceableByString {
     c.append(p);
     System.out.println(c.toString());
 
-    StringBuilder d = new StringBuilder();
+    StringBuilder <warning descr="'StringBuilder d' can be replaced with 'String'">d</warning> = new StringBuilder();
     d.append(p);
     System.out.println(d.toString());
   }
@@ -62,10 +62,10 @@ public class StringBufferReplaceableByString {
 
   String incomplete(char[] cs) {
     StringBuilder a = new StringBuilder();
-    a.append(cs, 1);
+    a.append<error descr="Cannot resolve method 'append(char[], int)'">(cs, 1)</error>;
     System.out.println(a.toString());
     StringBuilder b = new StringBuilder();
-    b.append()
+    b.append<error descr="Cannot resolve method 'append()'">()</error><EOLError descr="';' expected"></EOLError>
     return b.toString();
   }
 
@@ -93,7 +93,7 @@ public class StringBufferReplaceableByString {
     }
 
     void example2() {
-      final StringBuilder builder = new StringBuilder();
+      final StringBuilder <warning descr="'StringBuilder builder' can be replaced with 'String'">builder</warning> = new StringBuilder();
       builder.append(foo1());
       b(); // side effect, but has no effect on builder anymore
       bar(builder.toString());
@@ -115,7 +115,7 @@ public class StringBufferReplaceableByString {
   }
 
   void a(Repository repository, Integer workingCopyId) {
-    final StringBuilder builder = new StringBuilder();
+    final StringBuilder <warning descr="'StringBuilder builder' can be replaced with 'String'">builder</warning> = new StringBuilder();
     builder.append(executeAndDumpGetRequest("/repositories/" + toPathComponent(repository.name()) + "/workingCopies/" + toPathComponent(workingCopyId.toString()) + "/changes"));
     builder.append('\n');
     builder.append(executeAndDumpGetRequest("/repositories/" + toPathComponent(repository.name()) + "/workingCopies/" + toPathComponent(workingCopyId.toString()) + "/changes/_"));
@@ -131,7 +131,7 @@ public class StringBufferReplaceableByString {
   class TestDataFile { public TestDataFile(String s, String s1) { } }
 
   String methodCallArgumentToConstructor(String a, String b, String c) {
-    final StringBuilder builder = new StringBuilder(a.substring(1));
+    final StringBuilder <warning descr="'StringBuilder builder' can be replaced with 'String'">builder</warning> = new StringBuilder(a.substring(1));
     builder.append(b).append(' ');
     builder.append(c);
     return builder.toString();
