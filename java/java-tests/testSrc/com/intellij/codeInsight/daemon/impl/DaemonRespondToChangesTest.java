@@ -710,7 +710,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     type('X');
 
-    final int[] count = {0};
+    final Collection<RangeHighlighter> changed = new HashSet<>();
     MarkupModelEx modelEx = (MarkupModelEx)DocumentMarkupModel.forDocument(getDocument(getFile()), getProject(), true);
     modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
       @Override
@@ -731,14 +731,14 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       private void changed(@NotNull RangeHighlighterEx highlighter) {
         String text = highlighter.getDocument().getText().substring(highlighter.getStartOffset(), highlighter.getEndOffset());
         if (text.equals("X")) return; //non relevant
-        count[0]++;
+        changed.add(highlighter);
       }
     });
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     CodeInsightTestFixtureImpl.instantiateAndRun(myFile, myEditor, new int[]{Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS}, false);
 
-    assertEquals(0, count[0]);
+    assertEmpty(changed);
     lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
     assertEquals(5, lineMarkers.size());
   }
