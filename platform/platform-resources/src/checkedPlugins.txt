@@ -21,3 +21,4 @@ AWSCloudFormation
 Dart
 IdeaVIM
 IDETalk
+ro.redeul.google.go
