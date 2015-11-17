@@ -31,6 +31,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.psiutils.SwitchUtils.IfStatementBranch;
 import org.jdom.Element;
@@ -52,13 +53,13 @@ public class IfCanBeSwitchInspection extends BaseInspection {
 
   @NonNls private static final String ONLY_SAFE = "onlySuggestNullSafe";
   
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public int minimumBranches = 3;
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean suggestIntSwitches = false;
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean suggestEnumSwitches = false;
 
   protected boolean onlySuggestNullSafe = true;
@@ -104,7 +105,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
           minimumBranches =
             ((Number)valueField.getValue()).intValue();
         }
-        catch (ParseException e1) {
+        catch (ParseException ignore) {
           // No luck this time
         }
       }
@@ -191,7 +192,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       }
     }
     final PsiIfStatement statementToReplace = ifStatement;
-    final PsiExpression switchExpression = SwitchUtils.getSwitchExpression(ifStatement, 0, false);
+    final PsiExpression switchExpression = SwitchUtils.getSwitchExpression(ifStatement, 0, false, true);
     if (switchExpression == null) {
       return;
     }
@@ -325,10 +326,12 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       final PsiExpression argument = arguments[0];
+      final PsiExpression secondArgument = arguments.length > 1 ? arguments[1] : null;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+      final boolean stringType = ExpressionUtils.hasStringType(qualifierExpression);
       if (EquivalenceChecker.expressionsAreEquivalent(switchExpression, argument)) {
-        branch.addCaseExpression(qualifierExpression);
+        branch.addCaseExpression(stringType? qualifierExpression : secondArgument);
       }
       else {
         branch.addCaseExpression(argument);
@@ -457,7 +460,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     else if (element instanceof PsiBlockStatement || element instanceof PsiCodeBlock || element instanceof PsiIfStatement) {
       final PsiElement[] children = element.getChildren();
       for (final PsiElement child : children) {
-        appendElement(child, renameBreakElements, breakLabelString, switchStatementText);
+        appendElement(child, true, breakLabelString, switchStatementText);
       }
     }
     else {
@@ -517,7 +520,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       if (parent instanceof PsiIfStatement) {
         return;
       }
-      final PsiExpression switchExpression = SwitchUtils.getSwitchExpression(statement, minimumBranches, onlySuggestNullSafe);
+      final PsiExpression switchExpression = SwitchUtils.getSwitchExpression(statement, minimumBranches, onlySuggestNullSafe, false);
       if (switchExpression == null) {
         return;
       }
