@@ -155,7 +155,7 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightIns
            "  Logger LOG = LoggerFactory.getLogger(X.class);" +
            "  private static final String S = \"{}\";" +
            "  void m() {" +
-           "    LOG.info(/*Fewer arguments provided (0) than placeholders specified (2)*/S +\"{}\" + Integer.class/**/);" +
+           "    LOG.info(/*Fewer arguments provided (0) than placeholders specified (3)*/S +\"{}\" + (1 + 2) + '{' + '}' +Integer.class/**/);" +
            "  }" +
            "}");
   }

@@ -22,6 +22,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -131,13 +132,14 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
     }
 
     private static boolean buildString(PsiExpression expression, StringBuilder builder) {
+      final PsiType type = expression.getType();
       if (expression instanceof PsiParenthesizedExpression) {
         final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
         return buildString(parenthesizedExpression.getExpression(), builder);
       }
       else if (expression instanceof PsiPolyadicExpression) {
-        if (!ExpressionUtils.hasStringType(expression)) {
-          return false;
+        if (!TypeUtils.isJavaLangString(type) && !PsiType.CHAR.equals(type)) {
+          return true;
         }
         final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
         for (PsiExpression operand : polyadicExpression.getOperands()) {
@@ -148,14 +150,15 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
         return true;
       }
       else if (expression instanceof PsiLiteralExpression) {
-        if (ExpressionUtils.hasStringType(expression)) {
+        if (TypeUtils.isJavaLangString(type) || PsiType.CHAR.equals(type)) {
           final PsiLiteralExpression literalExpression = (PsiLiteralExpression)expression;
           builder.append(literalExpression.getValue());
         }
         return true;
       }
       else {
-        if (!ExpressionUtils.hasStringType(expression)) {
+        if (!TypeUtils.isJavaLangString(type) /*&& !PsiType.CHAR.equals(type)*/) {
+          // no one is crazy enough to add placeholders via char variables right?
           return true;
         }
         final Object value = ExpressionUtils.computeConstantExpression(expression);
