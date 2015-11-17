@@ -902,6 +902,22 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
+  public void testFormatString() {
+    doTest();
+  }
+
+  public void testFormatFuncArgument() {
+    doTest();
+  }
+
+  public void testFormatStringFromStarArg() {
+    doTest();
+  }
+
+  public void testFormatStringOutsideBraces() {
+    doTest();
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";
