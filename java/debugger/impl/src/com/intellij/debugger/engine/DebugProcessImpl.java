@@ -65,6 +65,7 @@ import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -1227,6 +1228,42 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
     }.start((EvaluationContextImpl)evaluationContext, internalEvaluate);
   }
+
+  static {
+    //noinspection ConstantConditions
+    assert Patches.USE_REFLECTION_TO_ACCESS_JDK8;
+  }
+
+  public Value invokeMethod(final EvaluationContext evaluationContext,
+                            final InterfaceType interfaceType,
+                            final Method method,
+                            final List args) throws EvaluateException {
+    final ThreadReference thread = getEvaluationThread(evaluationContext);
+    return new InvokeCommand<Value>(method, args) {
+      @Override
+      protected Value invokeMethod(int invokePolicy, Method method, List args) throws InvocationException,
+                                                                                      ClassNotLoadedException,
+                                                                                      IncompatibleThreadStateException,
+                                                                                      InvalidTypeException {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Invoke " + method.name());
+        }
+        //TODO: remove reflection after move to java 8 or 9, this API was introduced in 1.8.0_45
+        java.lang.reflect.Method invokeMethod =
+          ReflectionUtil.getMethod(InterfaceType.class, "invokeMethod", ThreadReference.class, Method.class, List.class, int.class);
+        if (invokeMethod == null) {
+          throw new IllegalStateException("Unable to evaluate static interface method, needs to run IDEA on java 1.8.0_45 at least");
+        }
+        try {
+          return (Value)invokeMethod.invoke(interfaceType, thread, method, args, invokePolicy);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }.start((EvaluationContextImpl)evaluationContext, false);
+  }
+
 
   @Override
   public ArrayReference newInstance(final ArrayType arrayType,
