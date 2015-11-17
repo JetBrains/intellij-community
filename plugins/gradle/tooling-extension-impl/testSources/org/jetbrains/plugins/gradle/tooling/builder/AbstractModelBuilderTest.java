@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.tooling.builder;
 
+import com.google.common.collect.Multimap;
 import org.jetbrains.plugins.gradle.model.ExternalProject;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -156,6 +157,7 @@ public abstract class AbstractModelBuilderTest {
       ProjectImportAction.class,
       // gradle-tooling-extension-impl jar
       ModelBuildScriptClasspathBuilderImpl.class,
+      Multimap.class,
       ShortTypeHandling.class
     );
 

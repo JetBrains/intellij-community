@@ -137,10 +137,42 @@ public abstract class NullableNotNullManager implements PersistentStateComponent
     return findNullabilityAnnotationWithDefault(owner, checkBases, false);
   }
 
+  @Nullable
+  public PsiAnnotation copyNotNullAnnotation(@NotNull PsiModifierListOwner original, @NotNull PsiModifierListOwner generated) {
+    return copyAnnotation(getNotNullAnnotation(original, false), generated);
+  }
+
+  @Nullable
+  public PsiAnnotation copyNullableOrNotNullAnnotation(@NotNull PsiModifierListOwner original, @NotNull PsiModifierListOwner generated) {
+    PsiAnnotation annotation = getNullableAnnotation(original, false);
+    if (annotation == null) annotation = getNotNullAnnotation(original, false);
+    return copyAnnotation(annotation, generated);
+  }
+
+  @Nullable
+  private PsiAnnotation copyAnnotation(PsiAnnotation annotation, PsiModifierListOwner target) {
+    // type annotations are part of target's type and should not to be copied explicitly to avoid duplication
+    if (annotation != null && !AnnotationTargetUtil.isTypeAnnotation(annotation)) {
+      String qualifiedName = checkContainer(annotation, false);
+      if (qualifiedName != null) {
+        PsiModifierList modifierList = target.getModifierList();
+        if (modifierList != null && modifierList.findAnnotation(qualifiedName) == null) {
+          return modifierList.addAnnotation(qualifiedName);
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /** @deprecated use {@link #copyNotNullAnnotation(PsiModifierListOwner, PsiModifierListOwner)} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
   public PsiAnnotation copyNotNullAnnotation(PsiModifierListOwner owner) {
     return copyAnnotation(owner, getNotNullAnnotation(owner, false));
   }
 
+  /** @deprecated use {@link #copyNullableOrNotNullAnnotation(PsiModifierListOwner, PsiModifierListOwner)} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
   public PsiAnnotation copyNullableAnnotation(PsiModifierListOwner owner) {
     return copyAnnotation(owner, getNullableAnnotation(owner, false));
   }
@@ -256,19 +288,14 @@ public abstract class NullableNotNullManager implements PersistentStateComponent
     PsiElement declaration = element == null ? null : element.resolve();
     if (!(declaration instanceof PsiClass)) return false;
 
-    if (!AnnotationUtil.isAnnotated((PsiClass)declaration,
-                                     nullable ? JAVAX_ANNOTATION_NULLABLE : JAVAX_ANNOTATION_NONNULL,
-                                     false,
-                                     true)) {
-      return false;
-    }
+    String fqn = nullable ? JAVAX_ANNOTATION_NULLABLE : JAVAX_ANNOTATION_NONNULL;
+    if (!AnnotationUtil.isAnnotated((PsiClass)declaration, fqn, false, true)) return false;
 
     PsiAnnotation tqDefault = AnnotationUtil.findAnnotation((PsiClass)declaration, true, "javax.annotation.meta.TypeQualifierDefault");
     if (tqDefault == null) return false;
 
     Set<PsiAnnotation.TargetType> required = AnnotationTargetUtil.extractRequiredAnnotationTargets(tqDefault.findAttributeValue(null));
-    if (required == null) return false;
-    return required.isEmpty() || ContainerUtil.intersects(required, Arrays.asList(placeTargetTypes));
+    return required != null && (required.isEmpty() || ContainerUtil.intersects(required, Arrays.asList(placeTargetTypes)));
   }
 
   @NotNull

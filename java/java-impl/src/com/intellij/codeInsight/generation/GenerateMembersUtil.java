@@ -15,7 +15,9 @@
  */
 package com.intellij.codeInsight.generation;
 
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,7 +33,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightTypeElement;
 import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl;
 import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
@@ -572,7 +573,7 @@ public class GenerateMembersUtil {
     if (sourceModifierList != null && targetModifierList != null) {
       JVMElementFactory factory = JVMElementFactories.requireFactory(targetParam.getLanguage(), targetParam.getProject());
       for (PsiAnnotation annotation : sourceModifierList.getAnnotations()) {
-        if (!PsiImplUtil.isTypeAnnotation(annotation)) {
+        if (!AnnotationTargetUtil.isTypeAnnotation(annotation)) {
           targetModifierList.add(factory.createAnnotationFromText(annotation.getText(), sourceParam));
         }
       }
@@ -685,19 +686,9 @@ public class GenerateMembersUtil {
     }
     result = (PsiMethod)CodeStyleManager.getInstance(project).reformat(result);
 
-    PsiModifierListOwner listOwner = null;
-    if (isGetter) {
-      listOwner = result;
-    }
-    else {
-      final PsiParameter[] parameters = result.getParameterList().getParameters();
-      if (parameters.length == 1) {
-        listOwner = parameters[0];
-      }
-    }
-    if (listOwner != null) {
-      PropertyUtil.annotateWithNullableStuff(field, listOwner);
-    }
+    PsiModifierListOwner annotationTarget = isGetter ? result : result.getParameterList().getParameters()[0];
+    NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, annotationTarget);
+
     return generatePrototype(field, result);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -554,35 +554,17 @@ public class GroovyPropertyUtils {
     }
   }
 
-  private static void annotateWithNullableStuff(final PsiModifierListOwner field, final PsiModifierListOwner listOwner)
-    throws IncorrectOperationException {
-    final NullableNotNullManager manager = NullableNotNullManager.getInstance(field.getProject());
-    final PsiAnnotation notNull = manager.copyNotNullAnnotation(field);
-    if (notNull != null) {
-      annotate(listOwner, notNull);
-    }
-    else {
-      final PsiAnnotation nullable = manager.copyNullableAnnotation(field);
-      if (nullable != null) {
-        annotate(listOwner, nullable);
-      }
-    }
+  @SuppressWarnings("MagicConstant")
+  private static void annotateWithNullableStuff(PsiModifierListOwner original,
+                                                PsiModifierListOwner generated) throws IncorrectOperationException {
+    NullableNotNullManager.getInstance(original.getProject()).copyNullableOrNotNullAnnotation(original, generated);
 
-    final PsiModifierList modifierList = listOwner.getModifierList();
-    if (modifierList.hasExplicitModifier(GrModifier.DEF)) {
+    PsiModifierList modifierList = generated.getModifierList();
+    if (modifierList != null && modifierList.hasExplicitModifier(GrModifier.DEF)) {
       LOG.assertTrue(modifierList instanceof GrModifierList);
       if (modifierList.getAnnotations().length > 0 || ((GrModifierList)modifierList).getModifiers().length > 1) {
-        ((GrModifierList)modifierList).setModifierProperty(GrModifier.DEF, false);
+        modifierList.setModifierProperty(GrModifier.DEF, false);
       }
     }
   }
-
-  private static void annotate(final PsiModifierListOwner listOwner, final PsiAnnotation annotation)
-    throws IncorrectOperationException {
-    final PsiModifierList modifierList = listOwner.getModifierList();
-    LOG.assertTrue(modifierList != null);
-    modifierList.addAnnotation(annotation.getQualifiedName());
-  }
-
-
 }

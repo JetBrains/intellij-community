@@ -275,13 +275,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       parmName = javaStyle.suggestUniqueVariableName(parmName, dummyConstructor, true);
       PsiParameter parm = factory.createParameter(parmName, field.getType(), aClass);
 
-      PsiAnnotation notNull = NullableNotNullManager.getInstance(project).copyNotNullAnnotation(field);
-      if (notNull != null) {
-        PsiModifierList modifierList = parm.getModifierList();
-        if (modifierList != null) {
-          modifierList.addAfter(notNull, null);
-        }
-      }
+      NullableNotNullManager.getInstance(project).copyNotNullAnnotation(field, parm);
 
       if (constructor.isVarArgs()) {
         final PsiParameterList parameterList = constructor.getParameterList();
