@@ -177,9 +177,16 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
 
   private static void install(File entryFile, boolean globalEntry) throws IOException, ExecutionException {
     if (globalEntry) {
-      String prompt = ApplicationBundle.message("desktop.entry.sudo.prompt");
-      exec(new GeneralCommandLine("xdg-desktop-menu", "install", "--mode", "system", entryFile.getAbsolutePath()), prompt);
-      exec(new GeneralCommandLine("xdg-desktop-menu", "forceupdate", "--mode", "system"), prompt);
+      File script = ExecUtil.createTempExecutableScript(
+        "create_desktop_entry_", ".sh",
+        "#!/bin/sh\n" +
+        "xdg-desktop-menu install --mode system '" + entryFile.getAbsolutePath() + "' && xdg-desktop-menu forceupdate --mode system\n");
+      try {
+        exec(new GeneralCommandLine(script.getPath()), ApplicationBundle.message("desktop.entry.sudo.prompt"));
+      }
+      finally {
+        FileUtil.delete(script);
+      }
     }
     else {
       exec(new GeneralCommandLine("xdg-desktop-menu", "install", "--mode", "user", entryFile.getAbsolutePath()), null);
