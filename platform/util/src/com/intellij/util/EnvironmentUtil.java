@@ -32,13 +32,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.File;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 import static java.util.Collections.unmodifiableMap;
 
@@ -171,7 +168,13 @@ public class EnvironmentUtil {
       LOG.info("loading shell env: " + StringUtil.join(command, " "));
 
       Process process = Runtime.getRuntime().exec(command);
+      StreamGobbler stdoutGobbler = new StreamGobbler(process.getInputStream(), "stdout");
+      stdoutGobbler.start();
+      StreamGobbler stderrGobbler = new StreamGobbler(process.getErrorStream(), "stderr");
+      stderrGobbler.start();
       int rv = waitAndTerminateAfter(process, SHELL_ENV_READING_TIMEOUT);
+      stdoutGobbler.logIfNotEmpty();
+      stderrGobbler.logIfNotEmpty();
 
       String lines = FileUtil.loadFile(envFile);
       if (rv != 0 || lines.isEmpty()) {
@@ -294,6 +297,70 @@ public class EnvironmentUtil {
     }
     catch (Exception e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  private static class StreamGobbler implements Runnable {
+    private final BufferedReader myReader;
+    private final String myStreamType;
+    private final StringBuffer myBuffer = new StringBuffer();
+    private final Semaphore myFinishSemaphore = new Semaphore(0);
+
+    public StreamGobbler(@NotNull InputStream stream, @NotNull String streamType) {
+      myReader = new BufferedReader(new InputStreamReader(stream));
+      myStreamType = streamType;
+    }
+
+    public void start() {
+      Thread thread = new Thread(this, "shell process " + myStreamType + " reader");
+      thread.start();
+    }
+
+    @Override
+    public void run() {
+      int ch;
+      try {
+        while ((ch = myReader.read()) != -1) {
+          myBuffer.append((char)ch);
+        }
+      }
+      catch (IOException e) {
+        LOG.warn("Error reading shell process " + myStreamType, e);
+      }
+      finally {
+        myFinishSemaphore.release(1);
+        close();
+      }
+    }
+
+    private void close() {
+      try {
+        myReader.close();
+      }
+      catch (IOException e) {
+        LOG.warn("Error closing shell process " + myStreamType, e);
+      }
+    }
+
+    @NotNull
+    private String getText() {
+      try {
+        if (!myFinishSemaphore.tryAcquire(1, 2, TimeUnit.SECONDS)) {
+          LOG.warn("closing shell process " + myStreamType + " forcibly");
+          close();
+        }
+      }
+      catch (InterruptedException e) {
+        LOG.info(e);
+      }
+      return myBuffer.toString();
+    }
+
+    public void logIfNotEmpty() {
+      String text = getText();
+      if (!text.isEmpty()) {
+        LOG.info("shell process " + myStreamType + ":" + StringUtil.trimEnd(text, '\n'));
+      }
     }
   }
 }
