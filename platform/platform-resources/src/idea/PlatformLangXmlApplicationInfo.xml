@@ -21,7 +21,4 @@
   <whatsnew url="https://www.jetbrains.com/idea/whatsnew/index.html"/>
   <keymap win="https://www.jetbrains.com/idea/docs/IntelliJIDEA9_ReferenceCard.pdf"
           mac="https://www.jetbrains.com/idea/docs/IntelliJIDEA9_ReferenceCard_Mac.pdf"/>
-
-  <plugins-page category="VCS Integration" title="Select VCS Integration Plugins"/>
-  <plugins-page title="Select Other Plugins"/>
 </component>
