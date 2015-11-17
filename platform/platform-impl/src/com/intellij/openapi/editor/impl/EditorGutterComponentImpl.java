@@ -1116,7 +1116,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public int getFoldingAreaOffset() {
-    return getLineMarkerAreaOffset() + getLineMarkerAreaWidth();
+    int res = getLineMarkerAreaOffset() + getLineMarkerAreaWidth();
+    // if there's only folding area visible - no need for the starting gap
+    return res > GAP_BETWEEN_AREAS ? res : 0;
   }
 
   public int getFoldingAreaWidth() {
