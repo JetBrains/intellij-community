@@ -26,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.concurrency.FixedFuture;
+import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -167,17 +168,17 @@ public class EnvironmentUtil {
       String[] command = {shell, "-l", "-i", "-c", ("'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'")};
       LOG.info("loading shell env: " + StringUtil.join(command, " "));
 
-      Process process = Runtime.getRuntime().exec(command);
-      StreamGobbler stdoutGobbler = new StreamGobbler(process.getInputStream(), "stdout");
-      stdoutGobbler.start();
-      StreamGobbler stderrGobbler = new StreamGobbler(process.getErrorStream(), "stderr");
-      stderrGobbler.start();
+      ProcessBuilder processBuilder = new ProcessBuilder(command);
+      processBuilder.redirectErrorStream(true);
+      Process process = processBuilder.start();
+
+      StreamGobbler gobbler = new StreamGobbler(process.getInputStream());
       int rv = waitAndTerminateAfter(process, SHELL_ENV_READING_TIMEOUT);
-      stdoutGobbler.logIfNotEmpty();
-      stderrGobbler.logIfNotEmpty();
+      gobbler.stop();
 
       String lines = FileUtil.loadFile(envFile);
       if (rv != 0 || lines.isEmpty()) {
+        LOG.info("shell process output: " + StringUtil.trimEnd(gobbler.getText(), '\n'));
         throw new Exception("rv:" + rv + " text:" + lines.length());
       }
       return parseEnv(lines);
@@ -300,67 +301,33 @@ public class EnvironmentUtil {
     }
   }
 
-  private static class StreamGobbler implements Runnable {
-    private final BufferedReader myReader;
-    private final String myStreamType;
-    private final StringBuffer myBuffer = new StringBuffer();
-    private final Semaphore myFinishSemaphore = new Semaphore(0);
+  private static class StreamGobbler extends BaseOutputReader {
 
-    public StreamGobbler(@NotNull InputStream stream, @NotNull String streamType) {
-      myReader = new BufferedReader(new InputStreamReader(stream));
-      myStreamType = streamType;
-    }
+    private final StringBuffer myBuffer;
 
-    public void start() {
-      Thread thread = new Thread(this, "shell process " + myStreamType + " reader");
-      thread.start();
-    }
-
-    @Override
-    public void run() {
-      int ch;
-      try {
-        while ((ch = myReader.read()) != -1) {
-          myBuffer.append((char)ch);
-        }
-      }
-      catch (IOException e) {
-        LOG.warn("Error reading shell process " + myStreamType, e);
-      }
-      finally {
-        myFinishSemaphore.release(1);
-        close();
-      }
-    }
-
-    private void close() {
-      try {
-        myReader.close();
-      }
-      catch (IOException e) {
-        LOG.warn("Error closing shell process " + myStreamType, e);
-      }
+    public StreamGobbler(@NotNull InputStream stream) {
+      super(stream, CharsetToolkit.getDefaultSystemCharset());
+      myBuffer = new StringBuffer();
+      start("stdout/stderr streams of shell env loading process");
     }
 
     @NotNull
-    private String getText() {
-      try {
-        if (!myFinishSemaphore.tryAcquire(1, 2, TimeUnit.SECONDS)) {
-          LOG.warn("closing shell process " + myStreamType + " forcibly");
-          close();
-        }
-      }
-      catch (InterruptedException e) {
-        LOG.info(e);
-      }
-      return myBuffer.toString();
+    @Override
+    protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
+      ExecutorService executor = ConcurrencyUtil.newSingleThreadExecutor("shell process streams gobbler");
+      Future<?> future = executor.submit(runnable);
+      executor.shutdown();
+      return future;
     }
 
-    public void logIfNotEmpty() {
-      String text = getText();
-      if (!text.isEmpty()) {
-        LOG.info("shell process " + myStreamType + ":" + StringUtil.trimEnd(text, '\n'));
-      }
+    @Override
+    protected void onTextAvailable(@NotNull String text) {
+      myBuffer.append(text);
+    }
+
+    @NotNull
+    public String getText() {
+      return myBuffer.toString();
     }
   }
 }
