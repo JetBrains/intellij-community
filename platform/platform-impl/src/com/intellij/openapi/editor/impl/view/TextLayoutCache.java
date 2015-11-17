@@ -159,6 +159,6 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   }
 
   private void checkDisposed() {
-    if (myLines == null) throw new IllegalStateException("Editor is already disposed");
+    if (myLines == null) myView.getEditor().throwDisposalError("Editor is already disposed");
   }
 }
