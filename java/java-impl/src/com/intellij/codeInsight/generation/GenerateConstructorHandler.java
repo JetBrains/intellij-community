@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -264,11 +264,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       parmName = javaStyle.suggestUniqueVariableName(parmName, dummyConstructor, true);
       PsiParameter parm = factory.createParameter(parmName, field.getType(), aClass);
 
-      final NullableNotNullManager nullableManager = NullableNotNullManager.getInstance(field.getProject());
-      final PsiAnnotation notNull = nullableManager.copyNotNullAnnotation(field);
-      if (notNull != null) {
-        parm.getModifierList().addAfter(notNull, null);
-      }
+      NullableNotNullManager.getInstance(field.getProject()).copyNotNullAnnotation(field, parm);
 
       if (constructor.isVarArgs()) {
         final PsiParameterList parameterList = constructor.getParameterList();

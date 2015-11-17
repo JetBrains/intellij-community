@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,17 +186,7 @@ public final class FieldFromParameterUtils {
     modifierList.setModifierProperty(PsiModifier.STATIC, isStatic);
     modifierList.setModifierProperty(PsiModifier.FINAL, isFinal);
 
-    final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
-    final PsiAnnotation nullable = manager.copyNullableAnnotation(parameter);
-    if (nullable != null) {
-      modifierList.addAfter(nullable, null);
-    }
-    else if (isFinal) {
-      final PsiAnnotation notNull = manager.copyNotNullAnnotation(parameter);
-      if (notNull != null) {
-        modifierList.addAfter(notNull, null);
-      }
-    }
+    NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(parameter, field);
 
     PsiCodeBlock methodBody = method.getBody();
     if (methodBody == null) return;

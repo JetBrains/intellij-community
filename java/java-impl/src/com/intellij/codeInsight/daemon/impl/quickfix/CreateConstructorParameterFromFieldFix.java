@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -342,7 +342,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
         if (parameter == null) {
           continue;
         }
-        notNull(field, parameter);
+        NullableNotNullManager.getInstance(field.getProject()).copyNotNullAnnotation(field, parameter);
         cleanupElements.add(parameter);
         final PsiElement assignmentStatement = AssignFieldFromParameterAction.addFieldAssignmentStatement(project, field, parameter, editor);
         if (assignmentStatement != null) {
@@ -353,13 +353,6 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       return created;
     } else {
       return true;
-    }
-  }
-
-  private static void notNull(PsiField field, PsiParameter parameter) {
-    final PsiAnnotation notNull = NullableNotNullManager.getInstance(field.getProject()).copyNotNullAnnotation(field);
-    if (notNull != null) {
-      parameter.getModifierList().addBefore(notNull, null);
     }
   }
 
