@@ -161,7 +161,7 @@ public class DebugReflectionUtil {
                      ? "FList (size="+((FList)backLink.value).size()+")" :
                      backLink.value instanceof Collection ? "Collection (size="+((Collection)backLink.value).size()+")" :
                      String.valueOf(backLink.value);
-          valueStr = StringUtil.trimLog(StringUtil.convertLineSeparators(valueStr, "//"), 100);
+          valueStr = StringUtil.first(StringUtil.convertLineSeparators(valueStr, "\\n"), 200, true);
         }
         catch (Throwable e) {
           valueStr = "(" + e.getMessage() + " while computing .toString())";
