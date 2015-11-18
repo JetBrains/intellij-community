@@ -1,11 +1,10 @@
 package org.jetbrains.protocolModelGenerator
 
-import gnu.trove.THashMap
 import org.jetbrains.jsonProtocol.ItemDescriptor
 import org.jetbrains.protocolReader.TextOutput
-import java.util.ArrayList
+import java.util.*
 
-abstract class ClassScope(val generator: DomainGenerator, val classContextNamespace: NamePath) {
+internal abstract class ClassScope(val generator: DomainGenerator, val classContextNamespace: NamePath) {
   private val additionalMemberTexts = ArrayList<TextOutConsumer>(2)
 
   fun addMember(out: TextOutConsumer) {

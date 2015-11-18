@@ -2,34 +2,32 @@ package org.jetbrains.protocolModelGenerator
 
 import org.jetbrains.jsonProtocol.ProtocolMetaModel
 
-interface StandaloneTypeBinding {
-  public fun getJavaType(): BoxableType
+internal interface StandaloneTypeBinding {
+  fun getJavaType(): BoxableType
 
-  public fun generate()
+  fun generate()
 
   /**
    * @return null if not direction-specific
    */
-  public fun getDirection(): TypeData.Direction?
+  fun getDirection(): TypeData.Direction?
 }
 
-interface Target {
-  public fun resolve(context: ResolveContext): BoxableType
+internal interface Target {
+  fun resolve(context: ResolveContext): BoxableType
 
-  public interface ResolveContext {
-    public fun generateNestedObject(shortName: String, description: String?, properties: List<ProtocolMetaModel.ObjectProperty>?): BoxableType
+  interface ResolveContext {
+    fun generateNestedObject(shortName: String, description: String?, properties: List<ProtocolMetaModel.ObjectProperty>?): BoxableType
   }
 }
 
-class PredefinedTarget(private val resolvedType: BoxableType) : Target {
-  override fun resolve(context: Target.ResolveContext): BoxableType {
-    return resolvedType
-  }
+internal class PredefinedTarget(private val resolvedType: BoxableType) : Target {
+  override fun resolve(context: Target.ResolveContext) = resolvedType
 
   companion object {
-    public val STRING: PredefinedTarget = PredefinedTarget(BoxableType.STRING)
-    public val INT: PredefinedTarget = PredefinedTarget(BoxableType.INT)
-    public val NUMBER: PredefinedTarget = PredefinedTarget(BoxableType.NUMBER)
-    public val MAP: PredefinedTarget = PredefinedTarget(BoxableType.MAP)
+    val STRING = PredefinedTarget(BoxableType.STRING)
+    val INT = PredefinedTarget(BoxableType.INT)
+    val NUMBER = PredefinedTarget(BoxableType.NUMBER)
+    val MAP = PredefinedTarget(BoxableType.MAP)
   }
 }

@@ -59,15 +59,13 @@ inline fun <T, SUB_RESULT> Promise<T>.thenAsync(node: Obsolescent, crossinline h
 })
 
 @Suppress("UNCHECKED_CAST")
-inline fun <T> Promise<T>.thenAsyncVoid(node: Obsolescent, crossinline handler: (T) -> Promise<*>) = then(object : ValueNodeAsyncFunction<T, Any?>(node) {
+inline fun <T> Promise<T>.thenAsyncAccept(node: Obsolescent, crossinline handler: (T) -> Promise<*>) = then(object : ValueNodeAsyncFunction<T, Any?>(node) {
   override fun `fun`(param: T) = handler(param) as Promise<Any?>
 })
 
-inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>) = then(object : AsyncFunction<T, Any?> {
-  override fun `fun`(param: T): Promise<Any?> {
-    @Suppress("UNCHECKED_CAST")
-    return handler(param) as Promise<Any?>
-  }
+inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>) = then(AsyncFunction<T, kotlin.Any?> { param ->
+  @Suppress("UNCHECKED_CAST")
+  (return@AsyncFunction handler(param) as Promise<Any?>)
 })
 
 

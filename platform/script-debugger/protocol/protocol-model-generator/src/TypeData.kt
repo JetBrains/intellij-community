@@ -1,9 +1,8 @@
 package org.jetbrains.protocolModelGenerator
 
 import org.jetbrains.jsonProtocol.ProtocolMetaModel
-import kotlin.properties.Delegates
 
-val ANY = object : StandaloneTypeBinding {
+internal val ANY = object : StandaloneTypeBinding {
   override fun getJavaType() = BoxableType.ANY_STRING
 
   override fun generate() {
@@ -12,32 +11,22 @@ val ANY = object : StandaloneTypeBinding {
   override fun getDirection() = null
 }
 
-class TypeData(private val name: String) {
-  val input: Input by Delegates.lazy {
-    Input()
-  }
+internal class TypeData(private val name: String) {
+  val input by lazy { Input() }
 
-  val output: Output by Delegates.lazy {
-    Output()
-  }
+  val output by lazy { Output() }
 
-  private var type: ProtocolMetaModel.StandaloneType? = null
+  internal var type: ProtocolMetaModel.StandaloneType? = null
+
   private var commonBinding: StandaloneTypeBinding? = null
 
-  fun setType(type: ProtocolMetaModel.StandaloneType) {
-    this.type = type
-  }
-
-  abstract class Direction {
-    companion object {
-      val INPUT = object : Direction() {
-        override fun get(typeData: TypeData) = typeData.input
-      }
-
-      val OUTPUT = object : Direction() {
-        override fun get(typeData: TypeData) = typeData.output
-      }
-    }
+  enum class Direction {
+    INPUT {
+      override fun get(typeData: TypeData)  = typeData.input
+    },
+    OUTPUT {
+      override fun get(typeData: TypeData) = typeData.output
+    };
 
     abstract fun get(typeData: TypeData): TypeRef
   }
@@ -52,10 +41,7 @@ class TypeData(private val name: String) {
       if (oneDirectionBinding != null) {
         return oneDirectionBinding!!.getJavaType()
       }
-      val binding = resolveImpl(domainGenerator)
-      if (binding == null) {
-        return null
-      }
+      val binding = resolveImpl(domainGenerator) ?: return null
 
       if (binding.getDirection() == null) {
         commonBinding = binding
@@ -75,16 +61,12 @@ class TypeData(private val name: String) {
       if (type == null) {
         if (name == "int") {
           return object : StandaloneTypeBinding {
-            override fun getJavaType(): BoxableType {
-              return BoxableType.INT
-            }
+            override fun getJavaType() = BoxableType.INT
 
             override fun generate() {
             }
 
-            override fun getDirection(): Direction? {
-              return null
-            }
+            override fun getDirection() = null
           }
         }
         else if (name == "any") {
@@ -102,16 +84,12 @@ class TypeData(private val name: String) {
       if (type == null) {
         if (name == "int") {
           return object : StandaloneTypeBinding {
-            override fun getJavaType(): BoxableType {
-              return BoxableType.INT
-            }
+            override fun getJavaType() = BoxableType.INT
 
             override fun generate() {
             }
 
-            override fun getDirection(): Direction? {
-              return null
-            }
+            override fun getDirection() = null
           }
         }
         else if (name == "any") {

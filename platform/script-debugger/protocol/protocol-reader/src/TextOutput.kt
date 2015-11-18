@@ -24,7 +24,7 @@ class TextOutput(public val out: StringBuilder) {
     return this
   }
 
-  public fun indentOut(): TextOutput {
+  fun indentOut(): TextOutput {
     --identLevel
     return this
   }
@@ -41,30 +41,30 @@ class TextOutput(public val out: StringBuilder) {
     return this
   }
 
-  public fun append(value: Boolean): TextOutput {
+  fun append(value: Boolean): TextOutput {
     maybeIndent()
     out.append(value)
     return this
   }
 
-  public fun append(value: Int): TextOutput {
+  fun append(value: Int): TextOutput {
     maybeIndent()
     out.append(value)
     return this
   }
 
-  public fun append(c: Char): TextOutput {
+  fun append(c: Char): TextOutput {
     maybeIndent()
     out.append(c)
     return this
   }
 
-  public fun append(s: CharArray) {
+  fun append(s: CharArray) {
     maybeIndent()
     out.append(s)
   }
 
-  public fun append(s: CharSequence): TextOutput {
+  fun append(s: CharSequence): TextOutput {
     maybeIndent()
     out.append(s)
     return this
@@ -81,14 +81,14 @@ class TextOutput(public val out: StringBuilder) {
     return this
   }
 
-  inline fun block(writer: () -> Unit): TextOutput {
-    openBlock()
+  inline fun block(addNewLine: Boolean = true, writer: () -> Unit): TextOutput {
+    openBlock(addNewLine)
     writer()
     closeBlock()
     return this
   }
 
-  public fun openBlock(addNewLine: Boolean) {
+  fun openBlock(addNewLine: Boolean) {
     space().append('{')
     if (addNewLine) {
       newLine()
@@ -119,4 +119,18 @@ class TextOutput(public val out: StringBuilder) {
       justNewLined = false
     }
   }
+
+  fun appendEscapedName(name: String): TextOutput {
+    val isEscapeName = name == "object" || name == "fun"
+    if (isEscapeName) {
+      out.append('`')
+    }
+    out.append(name)
+    if (isEscapeName) {
+      out.append('`')
+    }
+    return this
+  }
+
+
 }
