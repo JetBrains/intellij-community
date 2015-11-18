@@ -150,8 +150,15 @@ public class InferenceSessionContainer {
   @Nullable
   private static PsiCall treeWalkUp(PsiElement context) {
     PsiCall top = null;
-    PsiElement parent = PsiTreeUtil.getParentOfType(context, PsiExpressionList.class, PsiLambdaExpression.class, PsiCodeBlock.class);
+    PsiElement parent = PsiTreeUtil.getParentOfType(context, 
+                                                    PsiExpressionList.class, 
+                                                    PsiLambdaExpression.class, 
+                                                    PsiCodeBlock.class, 
+                                                    PsiCall.class);
     while (true) {
+      if (parent instanceof PsiCall) {
+        break;
+      }
       if (parent instanceof PsiCodeBlock && PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class) == null) {
         break;
       }
@@ -175,7 +182,7 @@ public class InferenceSessionContainer {
 
       top = psiCall;
       if (top instanceof PsiExpression && PsiPolyExpressionUtil.isPolyExpression((PsiExpression)top)) {
-        parent = PsiTreeUtil.getParentOfType(parent, PsiExpressionList.class, PsiLambdaExpression.class, PsiCodeBlock.class);
+        parent = PsiTreeUtil.getParentOfType(parent.getParent(), PsiExpressionList.class, PsiLambdaExpression.class, PsiCodeBlock.class);
       }
       else {
         break;
