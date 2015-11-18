@@ -324,7 +324,7 @@ public class DiffIterableUtil {
     @Override
     protected void addChange(int start1, int start2, int end1, int end2) {
       Range range = TrimUtil.expand(myObjects1, myObjects2, start1, start2, end1, end2);
-      super.addChange(range.start1, range.start2, range.end1, range.end2);
+      if (!range.isEmpty()) super.addChange(range.start1, range.start2, range.end1, range.end2);
     }
   }
 
