@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -30,7 +29,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
@@ -143,12 +141,5 @@ public class JavaConstantExpressionEvaluator extends JavaRecursiveElementWalking
   
   public static Object computeConstantExpression(@Nullable PsiExpression expression, boolean throwExceptionOnOverflow) {
     return computeConstantExpression(expression, null, throwExceptionOnOverflow);
-  }
-
-  @Nullable
-  public static Object computeBinaryOperationResult(@NotNull Object lOperandValue,
-                                                    @NotNull Object rOperandValue,
-                                                    @NotNull IElementType tokenType, boolean throwExceptionOnOverflow) {
-    return new ConstantExpressionVisitor(Collections.<PsiVariable>emptySet(), throwExceptionOnOverflow, null).compute(lOperandValue, rOperandValue, tokenType, null);
   }
 }
