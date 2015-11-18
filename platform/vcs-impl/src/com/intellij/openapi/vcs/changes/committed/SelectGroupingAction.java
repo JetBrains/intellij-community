@@ -82,7 +82,9 @@ public class SelectGroupingAction extends LabeledComboBoxAction {
 
     @Override
     public String getGroupName(CommittedChangeList changeList) {
-      return changeList.getBranch();
+      Object value = myColumn.getValue(changeList);
+
+      return value != null ? value.toString() : null;
     }
 
     @Override
