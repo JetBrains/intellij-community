@@ -15,6 +15,7 @@
  */
 package com.intellij.compiler.notNullVerification;
 
+import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.instrumentation.FailSafeMethodVisitor;
 import org.jetbrains.org.objectweb.asm.*;
 
@@ -55,7 +56,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
     myMethodParamNames = getAllParameterNames(reader);
   }
 
-  public static boolean processClassFile(final ClassReader reader, final ClassVisitor writer) {
+  public static boolean processClassFile(final FailSafeClassReader reader, final ClassVisitor writer) {
     final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer, reader);
     reader.accept(instrumenter, 0);
     return instrumenter.isModification();
@@ -124,7 +125,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
   @Override
   public MethodVisitor visitMethod(final int access, final String name, String desc, String signature, String[] exceptions) {
     if ((access & Opcodes.ACC_BRIDGE) != 0) {
-      return super.visitMethod(access, name, desc, signature, exceptions);
+      return new FailSafeMethodVisitor(Opcodes.ASM5, super.visitMethod(access, name, desc, signature, exceptions));
     }
 
     final Type[] args = Type.getArgumentTypes(desc);

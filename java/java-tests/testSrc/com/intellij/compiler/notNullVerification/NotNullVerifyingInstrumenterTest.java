@@ -16,19 +16,14 @@
 package com.intellij.compiler.notNullVerification;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.compiler.PsiClassWriter;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
 import java.io.File;
@@ -44,28 +39,6 @@ import java.util.List;
  * @author yole
  */
 public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
-  private boolean myJava6;
-  private IdeaProjectTestFixture myFixture;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    final JavaTestFixtureFactory fixtureFactory = JavaTestFixtureFactory.getFixtureFactory();
-    final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createLightFixtureBuilder();
-    myFixture = testFixtureBuilder.getFixture();
-    myFixture.setUp();
-    myJava6 = SystemInfo.isJavaVersionAtLeast("1.6");
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      myFixture.tearDown();
-    }
-    finally {
-      super.tearDown();
-    }
-  }
 
   public void testSimpleReturn() throws Exception {
     Class<?> testClass = prepareTest();
@@ -189,7 +162,12 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     }
   }
 
-  private static void verifyCallThrowsException(String expectedError, @Nullable Object instance, Member member, @Nullable Object... args) throws Exception {
+  public void testMalformedBytecode() throws Exception {
+    Class<?> testClass = prepareTest(false);
+    verifyCallThrowsException("Argument 0 for @NotNull parameter of MalformedBytecode$NullTest2.handle must not be null", null, testClass.getMethod("main"));
+  }
+
+  private static void verifyCallThrowsException(String expectedError, @Nullable Object instance, Member member, Object... args) throws Exception {
     String exceptionText = null;
     try {
       if (member instanceof Constructor) {
@@ -237,8 +215,8 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
         final String fileName = file.getName();
         byte[] content = FileUtil.loadFileBytes(file);
 
-        ClassReader reader = new ClassReader(content, 0, content.length);
-        ClassWriter writer = new PsiClassWriter(myFixture.getProject(), myJava6);
+        FailSafeClassReader reader = new FailSafeClassReader(content, 0, content.length);
+        ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         modified |= NotNullVerifyingInstrumenter.processClassFile(reader, writer);
 
         byte[] instrumented = writer.toByteArray();

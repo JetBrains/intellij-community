@@ -15,8 +15,10 @@
  */
 package org.jetbrains.jps.incremental.instrumentation;
 
+import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -38,6 +40,7 @@ import java.io.File;
  *         Date: 11/21/12
  */
 public class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.instrumentation.NotNullInstrumentingBuilder");
 
   public NotNullInstrumentingBuilder() {
   }
@@ -73,17 +76,15 @@ public class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
                                      ClassWriter writer,
                                      InstrumentationClassFinder finder) {
     try {
-      if (NotNullVerifyingInstrumenter.processClassFile(reader, writer)) {
+      if (NotNullVerifyingInstrumenter.processClassFile((FailSafeClassReader)reader, writer)) {
         return new BinaryContent(writer.toByteArray());
       }
     }
     catch (Throwable e) {
-      final StringBuilder msg = new StringBuilder();
-      msg.append("@NotNull instrumentation failed ");
+      LOG.error(e);
       final File sourceFile = compiledClass.getSourceFile();
-      msg.append(" for ").append(sourceFile.getName());
-      msg.append(": ").append(e.getMessage());
-      context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, msg.toString(), sourceFile.getPath()));
+      String msg = "Cannot instrument " + sourceFile.getName() + ": " + e.getMessage();
+      context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, msg, sourceFile.getPath()));
     }
     return null;
   }
