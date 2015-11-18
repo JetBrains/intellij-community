@@ -16,6 +16,8 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.diagnostic.IdeErrorsDialog
+import com.intellij.externalDependencies.DependencyOnPlugin
+import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.*
 import com.intellij.ide.util.PropertiesComponent
@@ -34,6 +36,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
@@ -81,11 +84,13 @@ object UpdateChecker {
   private val UPDATE_URL by lazy { ApplicationInfoEx.getInstanceEx().updateUrls.checkingUrl }
   private val PATCHES_URL by lazy { ApplicationInfoEx.getInstanceEx().updateUrls.patchesUrl }
 
+  val excludedFromUpdateCheckPlugins = hashSetOf<String>()
+
   private val updateUrl: String
     get() = System.getProperty("idea.updates.url") ?: UPDATE_URL
 
   private val patchesUrl: String
-    get() = System.getProperty("idea.patches.url") ?:PATCHES_URL
+    get() = System.getProperty("idea.patches.url") ?: PATCHES_URL
 
   /**
    * For scheduled update checks.
@@ -222,34 +227,9 @@ object UpdateChecker {
                                  indicator: ProgressIndicator?,
                                  incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
                                  buildNumber: BuildNumber?): Collection<PluginDownloader>? {
-    // collect installed plugins and plugins imported from a previous installation
-    val updateable = ContainerUtil.newTroveMap<PluginId, IdeaPluginDescriptor>()
+    val updateable = collectUpdateablePlugins()
 
-    for (descriptor in PluginManagerCore.getPlugins()) {
-      if (!descriptor.isBundled) {
-        updateable.put(descriptor.pluginId, descriptor)
-      }
-    }
-
-    val onceInstalled = File(PathManager.getConfigPath(), PluginManager.INSTALLED_TXT)
-    if (onceInstalled.isFile) {
-      try {
-        for (line in FileUtil.loadLines(onceInstalled)) {
-          val id = PluginId.getId(line.trim { it <= ' ' })
-          if (!updateable.containsKey(id)) {
-            updateable.put(id, null)
-          }
-        }
-      }
-      catch (e: IOException) {
-        LOG.error(onceInstalled.path, e)
-      }
-
-      //noinspection SSBasedInspection
-      onceInstalled.deleteOnExit()
-    }
-
-    if (updateable.isEmpty) return null
+    if (updateable.isEmpty()) return null
 
     // check custom repositories and the main one for updates
     val toUpdate = ContainerUtil.newTroveMap<PluginId, PluginDownloader>()
@@ -269,7 +249,7 @@ object UpdateChecker {
             val downloader = PluginDownloader.createDownloader(descriptor, host, buildNumber)
             downloader.setForceHttps(forceHttps)
             checkAndPrepareToInstall(downloader, state, toUpdate, incompatiblePlugins, indicator)
-            if (updateable.isEmpty) {
+            if (updateable.isEmpty()) {
               break@outer
             }
           }
@@ -289,6 +269,48 @@ object UpdateChecker {
 
     return if (toUpdate.isEmpty) null else toUpdate.values
   }
+
+  /**
+   * Returns a list of plugins which are currently installed or were installed in the previous installation from which
+   * we're importing the settings.
+   */
+  private fun collectUpdateablePlugins(): MutableMap<PluginId, IdeaPluginDescriptor> {
+    val updateable = ContainerUtil.newTroveMap<PluginId, IdeaPluginDescriptor>()
+
+    updateable += PluginManagerCore.getPlugins().filter { !it.isBundled }.toMapBy { it.pluginId }
+
+    val onceInstalled = File(PathManager.getConfigPath(), PluginManager.INSTALLED_TXT)
+    if (onceInstalled.isFile) {
+      try {
+        for (line in FileUtil.loadLines(onceInstalled)) {
+          val id = PluginId.getId(line.trim { it <= ' ' })
+          if (id !in updateable) {
+            updateable.put(id, null)
+          }
+        }
+      }
+      catch (e: IOException) {
+        LOG.error(onceInstalled.path, e)
+      }
+
+      //noinspection SSBasedInspection
+      onceInstalled.deleteOnExit()
+    }
+
+    for (excludedPluginId in excludedFromUpdateCheckPlugins) {
+      if (!isRequiredForAnyOpenProject(excludedPluginId)) {
+        updateable.remove(PluginId.getId(excludedPluginId))
+      }
+    }
+
+    return updateable
+  }
+
+  private fun isRequiredForAnyOpenProject(pluginId: String) =
+      ProjectManager.getInstance().openProjects.any { isRequiredForProject(it, pluginId) }
+
+  private fun isRequiredForProject(project: Project, pluginId: String) =
+      ExternalDependenciesManager.getInstance(project).getDependencies(DependencyOnPlugin::class.java).any { it.pluginId == pluginId }
 
   @Throws(IOException::class)
   @JvmStatic
@@ -327,7 +349,9 @@ object UpdateChecker {
     }
 
     //collect plugins which were not updated and would be incompatible with new version
-    if (incompatiblePlugins != null && installedPlugin != null && installedPlugin.isEnabled && !toUpdate.containsKey(installedPlugin.pluginId) && PluginManagerCore.isIncompatible(installedPlugin, downloader.buildNumber)) {
+    if (incompatiblePlugins != null && installedPlugin != null && installedPlugin.isEnabled &&
+        !toUpdate.containsKey(installedPlugin.pluginId) &&
+        PluginManagerCore.isIncompatible(installedPlugin, downloader.buildNumber)) {
       incompatiblePlugins.add(installedPlugin)
     }
   }
@@ -509,6 +533,7 @@ object UpdateChecker {
   }
 
   @JvmStatic
+  @Throws(IOException::class)
   fun installPlatformUpdate(patch: PatchInfo, toBuild: BuildNumber, forceHttps: Boolean) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously( {
       val indicator = ProgressManager.getInstance().progressIndicator
@@ -550,7 +575,7 @@ object UpdateChecker {
 
     val disabledToUpdate = disabledToUpdatePlugins
     for (downloader in downloaders) {
-      if (disabledToUpdate.contains(downloader.pluginId)) {
+      if (downloader.pluginId in disabledToUpdate) {
         continue
       }
       try {
