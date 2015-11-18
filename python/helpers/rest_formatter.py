@@ -141,6 +141,9 @@ class RestHTMLTranslator(HTMLTranslator):
     def depart_rubric(self, node):
         self.body.append('</h1>\n')
 
+    def visit_note(self, node):
+        self.body.append('<h1>Note</h1>\n')
+
     def visit_field_list(self, node):
         fields = {}
         for n in node.children:
