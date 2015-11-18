@@ -13,666 +13,615 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.updateSettings.impl;
+package com.intellij.openapi.updateSettings.impl
 
-import com.intellij.diagnostic.IdeErrorsDialog;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.*;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.*;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
-import com.intellij.openapi.diagnostic.LogUtil;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.HttpRequests;
-import com.intellij.util.io.URLUtil;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.util.XmlStringUtil;
-import org.apache.http.client.utils.URIBuilder;
-import org.jdom.JDOMException;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.event.HyperlinkEvent;
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.*;
+import com.intellij.diagnostic.IdeErrorsDialog
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.*
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.notification.NotificationDisplayType
+import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationListener
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.diagnostic.IdeaLoggingEvent
+import com.intellij.openapi.diagnostic.LogUtil
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
+import com.intellij.openapi.util.ActionCallback
+import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.PlatformUtils
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.io.HttpRequests
+import com.intellij.util.io.URLUtil
+import com.intellij.util.ui.UIUtil
+import com.intellij.xml.util.XmlStringUtil
+import org.apache.http.client.utils.URIBuilder
+import org.jdom.JDOMException
+import org.jetbrains.annotations.Contract
+import java.io.File
+import java.io.IOException
+import java.net.URISyntaxException
+import java.net.URL
+import java.util.*
 
 /**
- * See XML file by {@link ApplicationInfoEx#getUpdateUrls()} for reference.
- *
+ * See XML file by [ApplicationInfoEx.getUpdateUrls] for reference.
+
  * @author mike
+ * *
  * @since Oct 31, 2002
  */
-public final class UpdateChecker {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker");
+object UpdateChecker {
+  private val LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker")
 
-  public static final NotificationGroup NOTIFICATIONS =
-    new NotificationGroup(IdeBundle.message("update.notifications.group"), NotificationDisplayType.STICKY_BALLOON, true);
+  val NOTIFICATIONS = NotificationGroup(IdeBundle.message("update.notifications.group"), NotificationDisplayType.STICKY_BALLOON, true)
 
-  private static final String INSTALLATION_UID = "installation.uid";
-  private static final String DISABLED_UPDATE = "disabled_update.txt";
+  private val INSTALLATION_UID = "installation.uid"
+  private val DISABLED_UPDATE = "disabled_update.txt"
 
-  private static Set<String> ourDisabledToUpdatePlugins;
-  private static final Map<String, String> ourAdditionalRequestOptions = ContainerUtil.newHashMap();
-  private static final Map<String, PluginDownloader> ourUpdatedPlugins = ContainerUtil.newHashMap();
-  private static final Set<NotificationUniqueType> SHOWN_NOTIFICATION_TYPES = Collections.synchronizedSet(EnumSet.noneOf(NotificationUniqueType.class));
+  private var ourDisabledToUpdatePlugins: MutableSet<String>? = null
+  private val ourAdditionalRequestOptions = hashMapOf<String, String>()
+  private val ourUpdatedPlugins = hashMapOf<String, PluginDownloader>()
+  private val SHOWN_NOTIFICATION_TYPES = Collections.synchronizedSet(EnumSet.noneOf(NotificationUniqueType::class.java))
 
-  private static class Holder {
-    private static final String UPDATE_URL = ApplicationInfoEx.getInstanceEx().getUpdateUrls().getCheckingUrl();
-    private static final String PATCHES_URL = ApplicationInfoEx.getInstanceEx().getUpdateUrls().getPatchesUrl();
-  }
+  private val UPDATE_URL by lazy { ApplicationInfoEx.getInstanceEx().updateUrls.checkingUrl }
+  private val PATCHES_URL by lazy { ApplicationInfoEx.getInstanceEx().updateUrls.patchesUrl }
 
-  private UpdateChecker() { }
+  private val updateUrl: String
+    get() = System.getProperty("idea.updates.url") ?: UPDATE_URL
 
-  private static String getUpdateUrl() {
-    String url = System.getProperty("idea.updates.url");
-    return url != null ? url : Holder.UPDATE_URL;
-  }
-
-  private static String getPatchesUrl() {
-    String url = System.getProperty("idea.patches.url");
-    return url != null ? url : Holder.PATCHES_URL;
-  }
+  private val patchesUrl: String
+    get() = System.getProperty("idea.patches.url") ?:PATCHES_URL
 
   /**
    * For scheduled update checks.
    */
-  public static ActionCallback updateAndShowResult() {
-    final ActionCallback callback = new ActionCallback();
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        doUpdateAndShowResult(null, true, false, UpdateSettings.getInstance(), null, callback);
-      }
-    });
-    return callback;
+  @JvmStatic
+  fun updateAndShowResult(): ActionCallback {
+    val callback = ActionCallback()
+    ApplicationManager.getApplication().executeOnPooledThread { doUpdateAndShowResult(null, true, false, UpdateSettings.getInstance(), null, callback) }
+    return callback
   }
 
   /**
    * For manual update checks (Help | Check for Updates, Settings | Updates | Check Now)
    * (the latter action may pass customised update settings).
    */
-  public static void updateAndShowResult(@Nullable Project project, @Nullable UpdateSettings customSettings) {
-    final UpdateSettings settings = customSettings != null ? customSettings : UpdateSettings.getInstance();
-    final boolean fromSettings = customSettings != null;
+  @JvmStatic
+  fun updateAndShowResult(project: Project?, customSettings: UpdateSettings?) {
+    val settings = customSettings ?: UpdateSettings.getInstance()
+    val fromSettings = customSettings != null
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, IdeBundle.message("updates.checking.progress"), true) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        doUpdateAndShowResult(getProject(), fromSettings, true, settings, indicator, null);
+    ProgressManager.getInstance().run(object : Task.Backgroundable(project, IdeBundle.message("updates.checking.progress"), true) {
+      override fun run(indicator: ProgressIndicator) {
+        doUpdateAndShowResult(getProject(), fromSettings, true, settings, indicator, null)
       }
 
-      @Override
-      public boolean isConditionalModal() {
-        return fromSettings;
+      override fun isConditionalModal(): Boolean {
+        return fromSettings
       }
 
-      @Override
-      public boolean shouldStartInBackground() {
-        return !fromSettings;
+      override fun shouldStartInBackground(): Boolean {
+        return !fromSettings
       }
-    });
+    })
   }
 
-  private static void doUpdateAndShowResult(@Nullable final Project project,
-                                            final boolean fromSettings,
-                                            final boolean manualCheck,
-                                            @NotNull final UpdateSettings updateSettings,
-                                            @Nullable ProgressIndicator indicator,
-                                            @Nullable final ActionCallback callback) {
+  private fun doUpdateAndShowResult(project: Project?,
+                                    fromSettings: Boolean,
+                                    manualCheck: Boolean,
+                                    updateSettings: UpdateSettings,
+                                    indicator: ProgressIndicator?,
+                                    callback: ActionCallback?) {
     // check platform update
 
-    if (indicator != null) {
-      indicator.setText(IdeBundle.message("updates.checking.platform"));
-    }
+    indicator?.text = IdeBundle.message("updates.checking.platform")
 
-    final CheckForUpdateResult result = checkPlatformUpdate(updateSettings);
+    val result = checkPlatformUpdate(updateSettings)
 
-    if (manualCheck && result.getState() == UpdateStrategy.State.LOADED) {
-      UpdateSettings settings = UpdateSettings.getInstance();
-      settings.saveLastCheckedInfo();
-      settings.setKnownChannelIds(result.getAllChannelsIds());
+    if (manualCheck && result.state == UpdateStrategy.State.LOADED) {
+      val settings = UpdateSettings.getInstance()
+      settings.saveLastCheckedInfo()
+      settings.setKnownChannelIds(result.allChannelsIds)
     }
-    else if (result.getState() == UpdateStrategy.State.CONNECTION_ERROR) {
-      Exception e = result.getError();
-      if (e != null) LOG.debug(e);
-      String cause = e != null ? e.getMessage() : "internal error";
-      showErrorMessage(manualCheck, IdeBundle.message("updates.error.connection.failed", cause));
-      return;
+    else if (result.state == UpdateStrategy.State.CONNECTION_ERROR) {
+      val e = result.error
+      if (e != null) LOG.debug(e)
+      val cause = e?.message ?: "internal error"
+      showErrorMessage(manualCheck, IdeBundle.message("updates.error.connection.failed", cause))
+      return
     }
 
     // check plugins update (with regard to potential platform update)
 
-    if (indicator != null) {
-      indicator.setText(IdeBundle.message("updates.checking.plugins"));
-    }
+    indicator?.text = IdeBundle.message("updates.checking.plugins")
 
-    final Collection<PluginDownloader> updatedPlugins;
-    final Collection<IdeaPluginDescriptor> incompatiblePlugins;
+    val updatedPlugins: Collection<PluginDownloader>?
+    val incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?
 
-    if (newChannelReady(result.getChannelToPropose())) {
-      updatedPlugins = null;
-      incompatiblePlugins = null;
+    if (newChannelReady(result.channelToPropose)) {
+      updatedPlugins = null
+      incompatiblePlugins = null
     }
     else {
-      BuildNumber buildNumber = null;
+      val buildNumber: BuildNumber? = result.updatedChannel?.latestBuild?.apiVersion
 
-      UpdateChannel updatedChannel = result.getUpdatedChannel();
-      if (updatedChannel != null) {
-        BuildInfo latestBuild = updatedChannel.getLatestBuild();
-        if (latestBuild != null) {
-          buildNumber = latestBuild.getApiVersion();
-        }
-      }
-
-      incompatiblePlugins = buildNumber != null ? new HashSet<IdeaPluginDescriptor>() : null;
+      incompatiblePlugins = if (buildNumber != null) HashSet<IdeaPluginDescriptor>() else null
       try {
-        updatedPlugins = checkPluginsUpdate(updateSettings, indicator, incompatiblePlugins, buildNumber);
+        updatedPlugins = checkPluginsUpdate(updateSettings, indicator, incompatiblePlugins, buildNumber)
       }
-      catch (IOException e) {
-        showErrorMessage(manualCheck, IdeBundle.message("updates.error.connection.failed", e.getMessage()));
-        return;
+      catch (e: IOException) {
+        showErrorMessage(manualCheck, IdeBundle.message("updates.error.connection.failed", e.message))
+        return
       }
+
     }
 
     // show result
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        showUpdateResult(project, result, updateSettings, updatedPlugins, incompatiblePlugins, !fromSettings, manualCheck);
-        if (callback != null) {
-          callback.setDone();
-        }
-      }
-    }, fromSettings ? ModalityState.any() : ModalityState.NON_MODAL);
+    ApplicationManager.getApplication().invokeLater({
+      showUpdateResult(project, result, updateSettings, updatedPlugins, incompatiblePlugins, !fromSettings, manualCheck)
+      callback?.setDone()
+    }, if (fromSettings) ModalityState.any() else ModalityState.NON_MODAL)
   }
 
-  @NotNull
-  private static CheckForUpdateResult checkPlatformUpdate(@NotNull UpdateSettings settings) {
-    UpdatesInfo updateInfo;
+  private fun checkPlatformUpdate(settings: UpdateSettings): CheckForUpdateResult {
+    val updateInfo: UpdatesInfo?
     try {
-      URIBuilder uriBuilder = new URIBuilder(getUpdateUrl());
-      if (!URLUtil.FILE_PROTOCOL.equals(uriBuilder.getScheme())) {
-        prepareUpdateCheckArgs(uriBuilder);
+      val uriBuilder = URIBuilder(updateUrl)
+      if (URLUtil.FILE_PROTOCOL != uriBuilder.scheme) {
+        prepareUpdateCheckArgs(uriBuilder)
       }
-      String updateUrl = uriBuilder.build().toString();
-      LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl);
+      val updateUrl = uriBuilder.build().toString()
+      LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl)
 
-      updateInfo = HttpRequests.request(updateUrl).forceHttps(settings.canUseSecureConnection()).connect(new HttpRequests.RequestProcessor<UpdatesInfo>() {
-        @Override
-        public UpdatesInfo process(@NotNull HttpRequests.Request request) throws IOException {
-          try {
-            return new UpdatesInfo(JDOMUtil.load(request.getReader()));
-          }
-          catch (JDOMException e) {
-            // corrupted content, don't bother telling user
-            LOG.info(e);
-            return null;
-          }
+      updateInfo = HttpRequests.request(updateUrl).forceHttps(settings.canUseSecureConnection()).connect(HttpRequests.RequestProcessor<com.intellij.openapi.updateSettings.impl.UpdatesInfo> { request ->
+        try {
+          return@RequestProcessor UpdatesInfo(JDOMUtil.load(request.reader))
         }
-      });
+        catch (e: JDOMException) {
+          // corrupted content, don't bother telling user
+          LOG.info(e)
+          return@RequestProcessor null
+        }
+      })
     }
-    catch (URISyntaxException e) {
-      return new CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, e);
+    catch (e: URISyntaxException) {
+      return CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, e)
     }
-    catch (IOException e) {
-      return new CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, e);
-    }
-    if (updateInfo == null) {
-      return new CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null);
+    catch (e: IOException) {
+      return CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, e)
     }
 
-    ApplicationInfo appInfo = ApplicationInfo.getInstance();
-    int majorVersion = Integer.parseInt(appInfo.getMajorVersion());
-    UpdateStrategyCustomization customization = UpdateStrategyCustomization.getInstance();
-    UpdateStrategy strategy = new UpdateStrategy(majorVersion, appInfo.getBuild(), updateInfo, settings, customization);
-    return strategy.checkForUpdates();
+    if (updateInfo == null) {
+      return CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
+    }
+
+    val appInfo = ApplicationInfo.getInstance()
+    val majorVersion = Integer.parseInt(appInfo.majorVersion)
+    val customization = UpdateStrategyCustomization.getInstance()
+    val strategy = UpdateStrategy(majorVersion, appInfo.build, updateInfo, settings, customization)
+    return strategy.checkForUpdates()
   }
 
-  private static Collection<PluginDownloader> checkPluginsUpdate(@NotNull UpdateSettings updateSettings,
-                                                                 @Nullable ProgressIndicator indicator,
-                                                                 @Nullable Collection<IdeaPluginDescriptor> incompatiblePlugins,
-                                                                 @Nullable BuildNumber buildNumber) throws IOException {
+  private fun checkPluginsUpdate(updateSettings: UpdateSettings,
+                                 indicator: ProgressIndicator?,
+                                 incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
+                                 buildNumber: BuildNumber?): Collection<PluginDownloader>? {
     // collect installed plugins and plugins imported from a previous installation
-    Map<PluginId, IdeaPluginDescriptor> updateable = ContainerUtil.newTroveMap();
+    val updateable = ContainerUtil.newTroveMap<PluginId, IdeaPluginDescriptor>()
 
-    for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
-      if (!descriptor.isBundled()) {
-        updateable.put(descriptor.getPluginId(), descriptor);
+    for (descriptor in PluginManagerCore.getPlugins()) {
+      if (!descriptor.isBundled) {
+        updateable.put(descriptor.pluginId, descriptor)
       }
     }
 
-    File onceInstalled = new File(PathManager.getConfigPath(), PluginManager.INSTALLED_TXT);
-    if (onceInstalled.isFile()) {
+    val onceInstalled = File(PathManager.getConfigPath(), PluginManager.INSTALLED_TXT)
+    if (onceInstalled.isFile) {
       try {
-        for (String line : FileUtil.loadLines(onceInstalled)) {
-          PluginId id = PluginId.getId(line.trim());
+        for (line in FileUtil.loadLines(onceInstalled)) {
+          val id = PluginId.getId(line.trim { it <= ' ' })
           if (!updateable.containsKey(id)) {
-            updateable.put(id, null);
+            updateable.put(id, null)
           }
         }
       }
-      catch (IOException e) {
-        LOG.error(onceInstalled.getPath(), e);
+      catch (e: IOException) {
+        LOG.error(onceInstalled.path, e)
       }
 
       //noinspection SSBasedInspection
-      onceInstalled.deleteOnExit();
+      onceInstalled.deleteOnExit()
     }
 
-    if (updateable.isEmpty()) return null;
+    if (updateable.isEmpty) return null
 
     // check custom repositories and the main one for updates
-    Map<PluginId, PluginDownloader> toUpdate = ContainerUtil.newTroveMap();
+    val toUpdate = ContainerUtil.newTroveMap<PluginId, PluginDownloader>()
 
-    List<String> hosts = RepositoryHelper.getPluginHosts();
-    InstalledPluginsState state = InstalledPluginsState.getInstance();
+    val hosts = RepositoryHelper.getPluginHosts()
+    val state = InstalledPluginsState.getInstance()
 
-    outer:
-    for (String host : hosts) {
+    outer@ for (host in hosts) {
       try {
-        boolean forceHttps = host == null && updateSettings.canUseSecureConnection();
-        List<IdeaPluginDescriptor> list = RepositoryHelper.loadPlugins(host, buildNumber, forceHttps, indicator);
-        for (IdeaPluginDescriptor descriptor : list) {
-          PluginId id = descriptor.getPluginId();
+        val forceHttps = host == null && updateSettings.canUseSecureConnection()
+        val list = RepositoryHelper.loadPlugins(host, buildNumber, forceHttps, indicator)
+        for (descriptor in list) {
+          val id = descriptor.pluginId
           if (updateable.containsKey(id)) {
-            updateable.remove(id);
-            state.onDescriptorDownload(descriptor);
-            PluginDownloader downloader = PluginDownloader.createDownloader(descriptor, host, buildNumber);
-            downloader.setForceHttps(forceHttps);
-            checkAndPrepareToInstall(downloader, state, toUpdate, incompatiblePlugins, indicator);
-            if (updateable.isEmpty()) {
-              break outer;
+            updateable.remove(id)
+            state.onDescriptorDownload(descriptor)
+            val downloader = PluginDownloader.createDownloader(descriptor, host, buildNumber)
+            downloader.setForceHttps(forceHttps)
+            checkAndPrepareToInstall(downloader, state, toUpdate, incompatiblePlugins, indicator)
+            if (updateable.isEmpty) {
+              break@outer
             }
           }
         }
       }
-      catch (IOException e) {
-        LOG.debug(e);
+      catch (e: IOException) {
+        LOG.debug(e)
         if (host != null) {
-          LOG.info("failed to load plugin descriptions from " + host + ": " + e.getMessage());
+          LOG.info("failed to load plugin descriptions from " + host + ": " + e.message)
         }
         else {
-          throw e;
+          throw e
         }
       }
+
     }
 
-    return toUpdate.isEmpty() ? null : toUpdate.values();
+    return if (toUpdate.isEmpty) null else toUpdate.values
   }
 
-  public static void checkAndPrepareToInstall(PluginDownloader downloader,
-                                              InstalledPluginsState state,
-                                              Map<PluginId, PluginDownloader> toUpdate,
-                                              Collection<IdeaPluginDescriptor> incompatiblePlugins,
-                                              @Nullable ProgressIndicator indicator) throws IOException {
-    String pluginId = downloader.getPluginId();
-    if (PluginManagerCore.getDisabledPlugins().contains(pluginId)) return;
+  @Throws(IOException::class)
+  @JvmStatic
+  fun checkAndPrepareToInstall(downloader: PluginDownloader,
+                               state: InstalledPluginsState,
+                               toUpdate: MutableMap<PluginId, PluginDownloader>,
+                               incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
+                               indicator: ProgressIndicator?) {
+    var downloader = downloader
+    val pluginId = downloader.pluginId
+    if (PluginManagerCore.getDisabledPlugins().contains(pluginId)) return
 
-    String pluginVersion = downloader.getPluginVersion();
-    IdeaPluginDescriptor installedPlugin = PluginManager.getPlugin(PluginId.getId(pluginId));
-    if (installedPlugin == null ||
-        pluginVersion == null ||
-        PluginDownloader.compareVersionsSkipBrokenAndIncompatible(installedPlugin, pluginVersion) > 0) {
-      IdeaPluginDescriptor descriptor;
+    val pluginVersion = downloader.pluginVersion
+    val installedPlugin = PluginManager.getPlugin(PluginId.getId(pluginId))
+    if (installedPlugin == null || pluginVersion == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(installedPlugin, pluginVersion) > 0) {
+      var descriptor: IdeaPluginDescriptor?
 
-      PluginDownloader oldDownloader = ourUpdatedPlugins.get(pluginId);
-      if (oldDownloader == null || StringUtil.compareVersionNumbers(pluginVersion, oldDownloader.getPluginVersion()) > 0) {
-        descriptor = downloader.getDescriptor();
-        if (descriptor instanceof PluginNode && ((PluginNode)descriptor).isIncomplete()) {
-          if (downloader.prepareToInstall(indicator == null ? new EmptyProgressIndicator() : indicator)) {
-            descriptor = downloader.getDescriptor();
+      val oldDownloader = ourUpdatedPlugins[pluginId]
+      if (oldDownloader == null || StringUtil.compareVersionNumbers(pluginVersion, oldDownloader.pluginVersion) > 0) {
+        descriptor = downloader.descriptor
+        if (descriptor is PluginNode && descriptor.isIncomplete()) {
+          if (downloader.prepareToInstall(indicator ?: EmptyProgressIndicator())) {
+            descriptor = downloader.descriptor
           }
-          ourUpdatedPlugins.put(pluginId, downloader);
+          ourUpdatedPlugins.put(pluginId, downloader)
         }
       }
       else {
-        downloader = oldDownloader;
-        descriptor = oldDownloader.getDescriptor();
+        downloader = oldDownloader
+        descriptor = oldDownloader.descriptor
       }
 
-      if (descriptor != null &&
-          !PluginManagerCore.isIncompatible(descriptor, downloader.getBuildNumber()) &&
-          !state.wasUpdated(descriptor.getPluginId())) {
-        toUpdate.put(PluginId.getId(pluginId), downloader);
+      if (descriptor != null && PluginManagerCore.isCompatible(descriptor, downloader.buildNumber) && !state.wasUpdated(descriptor.pluginId)) {
+        toUpdate.put(PluginId.getId(pluginId), downloader)
       }
     }
 
     //collect plugins which were not updated and would be incompatible with new version
-    if (incompatiblePlugins != null &&
-        installedPlugin != null && installedPlugin.isEnabled() && !toUpdate.containsKey(installedPlugin.getPluginId()) &&
-        PluginManagerCore.isIncompatible(installedPlugin, downloader.getBuildNumber())) {
-      incompatiblePlugins.add(installedPlugin);
+    if (incompatiblePlugins != null && installedPlugin != null && installedPlugin.isEnabled && !toUpdate.containsKey(installedPlugin.pluginId) && PluginManagerCore.isIncompatible(installedPlugin, downloader.buildNumber)) {
+      incompatiblePlugins.add(installedPlugin)
     }
   }
 
-  private static void showErrorMessage(boolean showDialog, final String message) {
-    LOG.info(message);
+  private fun showErrorMessage(showDialog: Boolean, message: String) {
+    LOG.info(message)
     if (showDialog) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          Messages.showErrorDialog(message, IdeBundle.message("updates.error.connection.title"));
-        }
-      });
+      UIUtil.invokeLaterIfNeeded { Messages.showErrorDialog(message, IdeBundle.message("updates.error.connection.title")) }
     }
   }
 
   @Contract("null -> false")
-  private static boolean newChannelReady(@Nullable UpdateChannel channelToPropose) {
-    return channelToPropose != null && channelToPropose.getLatestBuild() != null;
+  private fun newChannelReady(channelToPropose: UpdateChannel?): Boolean {
+    return channelToPropose != null && channelToPropose.latestBuild != null
   }
 
-  private static void showUpdateResult(@Nullable final Project project,
-                                       final CheckForUpdateResult checkForUpdateResult,
-                                       final UpdateSettings updateSettings,
-                                       final Collection<PluginDownloader> updatedPlugins,
-                                       final Collection<IdeaPluginDescriptor> incompatiblePlugins,
-                                       final boolean enableLink,
-                                       final boolean alwaysShowResults) {
-    final UpdateChannel channelToPropose = checkForUpdateResult.getChannelToPropose();
-    final UpdateChannel updatedChannel = checkForUpdateResult.getUpdatedChannel();
+  private fun showUpdateResult(project: Project?,
+                               checkForUpdateResult: CheckForUpdateResult,
+                               updateSettings: UpdateSettings,
+                               updatedPlugins: Collection<PluginDownloader>?,
+                               incompatiblePlugins: Collection<IdeaPluginDescriptor>?,
+                               enableLink: Boolean,
+                               alwaysShowResults: Boolean) {
+    val channelToPropose = checkForUpdateResult.channelToPropose
+    val updatedChannel = checkForUpdateResult.updatedChannel
 
     if (updatedChannel != null) {
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          new UpdateInfoDialog(updatedChannel, enableLink, updateSettings.canUseSecureConnection(), updatedPlugins, incompatiblePlugins).show();
-        }
-      };
+      val runnable = {
+        UpdateInfoDialog(updatedChannel,
+                         enableLink,
+                         updateSettings.canUseSecureConnection(),
+                         updatedPlugins,
+                         incompatiblePlugins).show()
+      }
 
       if (alwaysShowResults) {
-        runnable.run();
+        runnable.invoke()
       }
       else {
-        String message = IdeBundle.message("updates.ready.message", ApplicationNamesInfo.getInstance().getFullProductName());
-        showNotification(project, message, runnable, NotificationUniqueType.UPDATE_IN_CHANNEL);
+        val message = IdeBundle.message("updates.ready.message", ApplicationNamesInfo.getInstance().fullProductName)
+        showNotification(project, message, runnable, NotificationUniqueType.UPDATE_IN_CHANNEL)
       }
     }
     else if (newChannelReady(channelToPropose)) {
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          NewChannelDialog dialog = new NewChannelDialog(channelToPropose);
-          dialog.show();
-          // once we informed that new product is available (when new channel was detected), remember the fact
-          if(dialog.getExitCode() == DialogWrapper.CANCEL_EXIT_CODE &&
-             checkForUpdateResult.getState() == UpdateStrategy.State.LOADED &&
-             !updateSettings.getKnownChannelsIds().contains(channelToPropose.getId())) {
-            List<String> newIds =  new ArrayList<String>(updateSettings.getKnownChannelsIds());
-            newIds.add(channelToPropose.getId());
-            updateSettings.setKnownChannelIds(newIds);
-          }
+      val runnable = {
+        val dialog = NewChannelDialog(channelToPropose!!)
+        dialog.show()
+        // once we informed that new product is available (when new channel was detected), remember the fact
+        if (dialog.exitCode == DialogWrapper.CANCEL_EXIT_CODE &&
+            checkForUpdateResult.state == UpdateStrategy.State.LOADED &&
+            !updateSettings.knownChannelsIds.contains(channelToPropose.getId())) {
+          val newIds = ArrayList(updateSettings.knownChannelsIds)
+          newIds.add(channelToPropose.getId())
+          updateSettings.setKnownChannelIds(newIds)
         }
-      };
+      }
 
       if (alwaysShowResults) {
-        runnable.run();
+        runnable.invoke()
       }
       else {
-        String message = IdeBundle.message("updates.new.version.available", ApplicationNamesInfo.getInstance().getFullProductName());
-        showNotification(project, message, runnable, NotificationUniqueType.NEW_CHANNEL);
+        val message = IdeBundle.message("updates.new.version.available", ApplicationNamesInfo.getInstance().fullProductName)
+        showNotification(project, message, runnable, NotificationUniqueType.NEW_CHANNEL)
       }
     }
     else if (updatedPlugins != null && !updatedPlugins.isEmpty()) {
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          new PluginUpdateInfoDialog(updatedPlugins, enableLink).show();
-        }
-      };
+      val runnable = { PluginUpdateInfoDialog(updatedPlugins, enableLink).show() }
 
       if (alwaysShowResults) {
-        runnable.run();
+        runnable.invoke()
       }
       else {
-        String plugins = StringUtil.join(updatedPlugins, new Function<PluginDownloader, String>() {
-          @Override
-          public String fun(PluginDownloader downloader) {
-            return downloader.getPluginName();
-          }
-        }, ", ");
-        String message = IdeBundle.message("updates.plugins.ready.message", updatedPlugins.size(), plugins);
-        showNotification(project, message, runnable, NotificationUniqueType.PLUGINS_UPDATE);
+        val plugins = updatedPlugins.joinToString { downloader -> downloader.pluginName }
+        val message = IdeBundle.message("updates.plugins.ready.message", updatedPlugins.size, plugins)
+        showNotification(project, message, runnable, NotificationUniqueType.PLUGINS_UPDATE)
       }
     }
     else if (alwaysShowResults) {
-      new NoUpdatesDialog(enableLink).show();
+      NoUpdatesDialog(enableLink).show()
     }
   }
 
-  private static void showNotification(@Nullable Project project,
-                                       String message,
-                                       @Nullable final Runnable runnable,
-                                       @Nullable final NotificationUniqueType notificationType) {
+  private fun showNotification(project: Project?,
+                               message: String,
+                               runnable: (() -> Unit)?,
+                               notificationType: NotificationUniqueType?) {
     if (notificationType != null) {
       if (!SHOWN_NOTIFICATION_TYPES.add(notificationType)) {
-        return;
+        return
       }
     }
 
-    NotificationListener listener = null;
+    var listener: NotificationListener? = null
     if (runnable != null) {
-      listener = new NotificationListener() {
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          notification.expire();
-          runnable.run();
-        }
-      };
-    }
-
-    String title = IdeBundle.message("update.notifications.title");
-    NOTIFICATIONS.createNotification(title, XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION, listener).whenExpired(new Runnable() {
-      @Override
-      public void run() {
-        SHOWN_NOTIFICATION_TYPES.remove(notificationType);
+      listener = NotificationListener { notification, event ->
+        notification.expire()
+        runnable.invoke()
       }
-    }).notify(project);
-  }
-
-  public static void addUpdateRequestParameter(@NotNull String name, @NotNull String value) {
-    ourAdditionalRequestOptions.put(name, value);
-  }
-
-  private static void prepareUpdateCheckArgs(URIBuilder uriBuilder) {
-    addUpdateRequestParameter("build", ApplicationInfo.getInstance().getBuild().asString());
-    addUpdateRequestParameter("uid", getInstallationUID(PropertiesComponent.getInstance()));
-    addUpdateRequestParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION);
-    if (ApplicationInfoEx.getInstanceEx().isEAP()) {
-      addUpdateRequestParameter("eap", "");
     }
 
-    for (String name : ourAdditionalRequestOptions.keySet()) {
-      String value = ourAdditionalRequestOptions.get(name);
-      uriBuilder.addParameter(name, StringUtil.isEmpty(value) ? null : value);
+    val title = IdeBundle.message("update.notifications.title")
+    NOTIFICATIONS.createNotification(title, XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION, listener)
+        .whenExpired { SHOWN_NOTIFICATION_TYPES.remove(notificationType) }
+        .notify(project)
+  }
+
+  @JvmStatic
+  fun addUpdateRequestParameter(name: String, value: String) {
+    ourAdditionalRequestOptions.put(name, value)
+  }
+
+  private fun prepareUpdateCheckArgs(uriBuilder: URIBuilder) {
+    addUpdateRequestParameter("build", ApplicationInfo.getInstance().build.asString())
+    addUpdateRequestParameter("uid", getInstallationUID(PropertiesComponent.getInstance()))
+    addUpdateRequestParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
+    if (ApplicationInfoEx.getInstanceEx().isEAP) {
+      addUpdateRequestParameter("eap", "")
+    }
+
+    for ((name, value) in ourAdditionalRequestOptions) {
+      uriBuilder.addParameter(name, if (StringUtil.isEmpty(value)) null else value)
     }
   }
 
-  public static String getInstallationUID(final PropertiesComponent propertiesComponent) {
+  @JvmStatic
+  fun getInstallationUID(propertiesComponent: PropertiesComponent): String {
     if (SystemInfo.isWindows) {
-      String uid = getInstallationUIDOnWindows(propertiesComponent);
+      val uid = getInstallationUIDOnWindows(propertiesComponent)
       if (uid != null) {
-        return uid;
+        return uid
       }
     }
 
-    String uid = propertiesComponent.getValue(INSTALLATION_UID);
+    var uid = propertiesComponent.getValue(INSTALLATION_UID)
     if (uid == null) {
-      uid = generateUUID();
-      propertiesComponent.setValue(INSTALLATION_UID, uid);
+      uid = generateUUID()
+      propertiesComponent.setValue(INSTALLATION_UID, uid)
     }
-    return uid;
+    return uid
   }
 
-  @Nullable
-  private static String getInstallationUIDOnWindows(PropertiesComponent propertiesComponent) {
-    String appdata = System.getenv("APPDATA");
+  private fun getInstallationUIDOnWindows(propertiesComponent: PropertiesComponent): String? {
+    val appdata = System.getenv("APPDATA")
     if (appdata != null) {
-      File jetBrainsDir = new File(appdata, "JetBrains");
+      val jetBrainsDir = File(appdata, "JetBrains")
       if (jetBrainsDir.exists() || jetBrainsDir.mkdirs()) {
-        File permanentIdFile = new File(jetBrainsDir, "PermanentUserId");
+        val permanentIdFile = File(jetBrainsDir, "PermanentUserId")
         try {
           if (permanentIdFile.exists()) {
-            return FileUtil.loadFile(permanentIdFile).trim();
+            return FileUtil.loadFile(permanentIdFile).trim { it <= ' ' }
           }
 
-          String uuid = propertiesComponent.getValue(INSTALLATION_UID);
+          var uuid = propertiesComponent.getValue(INSTALLATION_UID)
           if (uuid == null) {
-            uuid = generateUUID();
+            uuid = generateUUID()
           }
-          FileUtil.writeToFile(permanentIdFile, uuid);
-          return uuid;
+          FileUtil.writeToFile(permanentIdFile, uuid)
+          return uuid
         }
-        catch (IOException ignored) { }
+        catch (ignored: IOException) {
+        }
+
       }
     }
 
-    return null;
+    return null
   }
 
-  private static String generateUUID() {
+  private fun generateUUID(): String {
     try {
-      return UUID.randomUUID().toString();
+      return UUID.randomUUID().toString()
     }
-    catch (Exception ignored) { }
-    catch (InternalError ignored) { }
+    catch (ignored: Exception) {
+    }
+    catch (ignored: InternalError) {
+    }
 
-    return "";
+    return ""
   }
 
-  public static void installPlatformUpdate(final PatchInfo patch, final BuildNumber toBuild, final boolean forceHttps) throws IOException {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<Void, IOException>() {
-      @Override
-      public Void compute() throws IOException {
-        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        downloadAndInstallPatch(patch, toBuild, forceHttps, indicator);
-        return null;
-      }
-    }, IdeBundle.message("update.downloading.patch.progress.title"), true, null);
+  @JvmStatic
+  fun installPlatformUpdate(patch: PatchInfo, toBuild: BuildNumber, forceHttps: Boolean) {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously( {
+      val indicator = ProgressManager.getInstance().progressIndicator
+      downloadAndInstallPatch(patch, toBuild, forceHttps, indicator)
+    }, IdeBundle.message("update.downloading.patch.progress.title"), true, null)
   }
 
-  private static void downloadAndInstallPatch(PatchInfo patch, BuildNumber toBuild, boolean forceHttps, final ProgressIndicator indicator) throws IOException {
-    String productCode = ApplicationInfo.getInstance().getBuild().getProductCode();
-    String fromBuildNumber = patch.getFromBuild().asStringWithoutProductCode();
-    String toBuildNumber = toBuild.asStringWithoutProductCode();
+  private fun downloadAndInstallPatch(patch: PatchInfo, toBuild: BuildNumber, forceHttps: Boolean, indicator: ProgressIndicator) {
+    val productCode = ApplicationInfo.getInstance().build.productCode
+    val fromBuildNumber = patch.fromBuild.asStringWithoutProductCode()
+    val toBuildNumber = toBuild.asStringWithoutProductCode()
 
-    String bundledJdk = "";
-    String jdkRedist = System.getProperty("idea.java.redist");
+    var bundledJdk = ""
+    val jdkRedist = System.getProperty("idea.java.redist")
     if (jdkRedist != null && jdkRedist.lastIndexOf("jdk-bundled") >= 0) {
-      bundledJdk = "jdk-bundled".equals(jdkRedist) ? "-jdk-bundled" : "-custom-jdk-bundled";
+      bundledJdk = if ("jdk-bundled" == jdkRedist) "-jdk-bundled" else "-custom-jdk-bundled"
     }
 
-    String osSuffix = "-" + patch.getOSSuffix();
+    val osSuffix = "-" + patch.osSuffix
 
-    String fileName = productCode + "-" + fromBuildNumber + "-" + toBuildNumber + "-patch" + bundledJdk + osSuffix + ".jar";
+    val fileName = "$productCode-$fromBuildNumber-$toBuildNumber-patch$bundledJdk$osSuffix.jar"
 
-    String url = new URL(new URL(getPatchesUrl()), fileName).toString();
-    File tempFile = HttpRequests.request(url).gzip(false).forceHttps(forceHttps).connect(new HttpRequests.RequestProcessor<File>() {
-      @Override
-      public File process(@NotNull HttpRequests.Request request) throws IOException {
-        return request.saveToFile(FileUtil.createTempFile("ij.platform.", ".patch", true), indicator);
-      }
-    });
+    val url = URL(URL(patchesUrl), fileName).toString()
+    val tempFile = HttpRequests
+        .request(url)
+        .gzip(false)
+        .forceHttps(forceHttps)
+        .connect { request -> request.saveToFile(FileUtil.createTempFile("ij.platform.", ".patch", true), indicator) }
 
-    String patchFileName = ("jetbrains.patch.jar." + PlatformUtils.getPlatformPrefix()).toLowerCase(Locale.ENGLISH);
-    File patchFile = new File(FileUtil.getTempDirectory(), patchFileName);
-    FileUtil.copy(tempFile, patchFile);
-    FileUtil.delete(tempFile);
+    val patchFileName = ("jetbrains.patch.jar." + PlatformUtils.getPlatformPrefix()).toLowerCase(Locale.ENGLISH)
+    val patchFile = File(FileUtil.getTempDirectory(), patchFileName)
+    FileUtil.copy(tempFile, patchFile)
+    FileUtil.delete(tempFile)
   }
 
-  public static boolean installPluginUpdates(@NotNull Collection<PluginDownloader> downloaders, @NotNull ProgressIndicator indicator) {
-    boolean installed = false;
+  @JvmStatic
+  fun installPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): Boolean {
+    var installed = false
 
-    Set<String> disabledToUpdate = getDisabledToUpdatePlugins();
-    for (PluginDownloader downloader : downloaders) {
-      if (disabledToUpdate.contains(downloader.getPluginId())) {
-        continue;
+    val disabledToUpdate = disabledToUpdatePlugins
+    for (downloader in downloaders) {
+      if (disabledToUpdate.contains(downloader.pluginId)) {
+        continue
       }
       try {
         if (downloader.prepareToInstall(indicator)) {
-          IdeaPluginDescriptor descriptor = downloader.getDescriptor();
+          val descriptor = downloader.descriptor
           if (descriptor != null) {
-            downloader.install();
-            installed = true;
+            downloader.install()
+            installed = true
           }
         }
       }
-      catch (IOException e) {
-        LOG.info(e);
+      catch (e: IOException) {
+        LOG.info(e)
       }
+
     }
 
-    return installed;
+    return installed
   }
 
-  public static Set<String> getDisabledToUpdatePlugins() {
-    if (ourDisabledToUpdatePlugins == null) {
-      ourDisabledToUpdatePlugins = new TreeSet<String>();
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        try {
-          final File file = new File(PathManager.getConfigPath(), DISABLED_UPDATE);
-          if (file.isFile()) {
-            final String[] ids = FileUtil.loadFile(file).split("[\\s]");
-            for (String id : ids) {
-              if (id != null && id.trim().length() > 0) {
-                ourDisabledToUpdatePlugins.add(id.trim());
-              }
+  @JvmStatic
+  val disabledToUpdatePlugins: Set<String>
+    get() {
+      if (ourDisabledToUpdatePlugins == null) {
+        ourDisabledToUpdatePlugins = TreeSet<String>()
+        if (!ApplicationManager.getApplication().isUnitTestMode) {
+          try {
+            val file = File(PathManager.getConfigPath(), DISABLED_UPDATE)
+            if (file.isFile) {
+              FileUtil.loadFile(file)
+                  .split("[\\s]".toRegex())
+                  .map { it.trim() }
+                  .filterTo(ourDisabledToUpdatePlugins!!) { it.isNotEmpty() }
             }
           }
-        }
-        catch (IOException e) {
-          LOG.error(e);
+          catch (e: IOException) {
+            LOG.error(e)
+          }
+
         }
       }
+      return ourDisabledToUpdatePlugins!!
     }
-    return ourDisabledToUpdatePlugins;
-  }
 
-  public static void saveDisabledToUpdatePlugins() {
-    final File plugins = new File(PathManager.getConfigPath(), DISABLED_UPDATE);
+  @JvmStatic
+  fun saveDisabledToUpdatePlugins() {
+    val plugins = File(PathManager.getConfigPath(), DISABLED_UPDATE)
     try {
-      PluginManagerCore.savePluginsList(getDisabledToUpdatePlugins(), false, plugins);
+      PluginManagerCore.savePluginsList(disabledToUpdatePlugins, false, plugins)
     }
-    catch (IOException e) {
-      LOG.error(e);
+    catch (e: IOException) {
+      LOG.error(e)
     }
+
   }
 
-  private static boolean ourHasFailedPlugins = false;
-  public static void checkForUpdate(IdeaLoggingEvent event) {
-    if (!ourHasFailedPlugins && UpdateSettings.getInstance().isCheckNeeded()) {
-      final Throwable throwable = event.getThrowable();
-      final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(IdeErrorsDialog.findPluginId(throwable));
-      if (pluginDescriptor != null && !pluginDescriptor.isBundled()) {
-        ourHasFailedPlugins = true;
-        updateAndShowResult();
+  private var ourHasFailedPlugins = false
+
+  @JvmStatic
+  fun checkForUpdate(event: IdeaLoggingEvent) {
+    if (!ourHasFailedPlugins && UpdateSettings.getInstance().isCheckNeeded) {
+      val throwable = event.throwable
+      val pluginDescriptor = PluginManager.getPlugin(IdeErrorsDialog.findPluginId(throwable))
+      if (pluginDescriptor != null && !pluginDescriptor.isBundled) {
+        ourHasFailedPlugins = true
+        updateAndShowResult()
       }
     }
   }
 
-  private enum NotificationUniqueType {
+  private enum class NotificationUniqueType {
     NEW_CHANNEL, UPDATE_IN_CHANNEL, PLUGINS_UPDATE
   }
 }
