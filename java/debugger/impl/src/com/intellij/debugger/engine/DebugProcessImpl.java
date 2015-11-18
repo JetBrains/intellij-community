@@ -46,12 +46,14 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -1248,7 +1250,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         java.lang.reflect.Method invokeMethod =
           ReflectionUtil.getMethod(InterfaceType.class, "invokeMethod", ThreadReference.class, Method.class, List.class, int.class);
         if (invokeMethod == null) {
-          throw new IllegalStateException("Unable to evaluate static interface method, needs to run IDEA on java 1.8.0_45 at least");
+          throw new IllegalStateException("Interface method invocation is not supported in JVM " +
+                                          SystemInfo.JAVA_VERSION +
+                                          ". Use JVM 1.8.0_45 or higher to run " +
+                                          ApplicationNamesInfo.getInstance().getFullProductName());
         }
         try {
           return (Value)invokeMethod.invoke(interfaceType, thread, method, args, invokePolicy);
