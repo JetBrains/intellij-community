@@ -32,11 +32,15 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -122,19 +126,19 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     runReadWrites(readIterations, writeIterations, 1000);
   }
 
-  private static void runReadWrites(final int readIterations, final int writeIterations, int expectedMs) {
+  private static void runReadWrites(final int readIterations, final int writeIterations, int expectedMs) throws InterruptedException {
     final ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
     Disposable disposable = Disposer.newDisposable();
     application.disableEventsUntil(disposable);
+    List<Thread> threads = new ArrayList<>();
 
     try {
       final int numOfThreads = JobSchedulerImpl.CORES_COUNT;
       PlatformTestUtil.startPerformanceTest("lock performance", expectedMs, () -> {
         final CountDownLatch reads = new CountDownLatch(numOfThreads);
         for (int i = 0; i < numOfThreads; i++) {
-          final String name = "stress thread " + i;
-          new Thread(() -> {
-            System.out.println(name);
+          Thread thread = new Thread(() -> {
+            System.out.println(Thread.currentThread());
             for (int i1 = 0; i1 < readIterations; i1++) {
               application.runReadAction(() -> {
 
@@ -142,7 +146,9 @@ public class ApplicationImplTest extends LightPlatformTestCase {
             }
 
             reads.countDown();
-          }, name).start();
+          }, "stress thread " + i);
+          thread.start();
+          threads.add(thread);
         }
 
         if (writeIterations > 0) {
@@ -158,6 +164,9 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     }
     finally {
       Disposer.dispose(disposable);
+      for (Thread thread : threads) {
+        thread.join();
+      }
     }
   }
 
@@ -470,6 +479,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
   private volatile boolean tryingToStartWriteAction;
   private volatile boolean readStarted;
+  private volatile List<Thread> readThreads;
   public void testReadWontStartWhenWriteIsPending() throws Throwable {
     int N = 5;
     final AtomicBoolean[] anotherThreadStarted = new AtomicBoolean[N];
@@ -479,53 +489,55 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       anotherThreadStarted[i] = new AtomicBoolean();
     }
     final StringBuffer LOG = new StringBuffer();
-    new Thread(() -> {
+    Thread main = new Thread(() -> {
       try {
         ApplicationManager.getApplication().runReadAction((ThrowableComputable<Object, Throwable>)() -> {
           LOG.append("inside read action\n");
           readStarted = true;
-          while (!tryingToStartWriteAction && ok());
+          while (!tryingToStartWriteAction && ok()) ;
           TimeoutUtil.sleep(100);
 
-          for (int i = 0; i < anotherReadActionStarted.length; i++) {
-            final int finalI = i;
-            new Thread(() -> {
-              LOG.append("\nanother thread started " + finalI);
-              anotherThreadStarted[finalI].set(true);
-              ApplicationManager.getApplication().runReadAction(() -> {
-                LOG.append("\ninside another thread read action " + finalI);
-                anotherReadActionStarted[finalI].set(true);
-                try {
-                  Thread.sleep(100);
-                }
-                catch (InterruptedException e) {
-                  throw new RuntimeException(e);
-                }
-                anotherReadActionStarted[finalI].set(false);
-                LOG.append("\nfinished another thread read action " + finalI);
-              });
-              LOG.append("\nanother thread finished " + finalI);
-            }, "another read action " + i).start();
-          }
+          readThreads = ContainerUtil.map(anotherReadActionStarted, readActionStarted -> new Thread(() -> {
+            int finalI = ArrayUtil.indexOf(anotherReadActionStarted, readActionStarted);
+            LOG.append("\nanother thread started " + finalI);
+            anotherThreadStarted[finalI].set(true);
+            ApplicationManager.getApplication().runReadAction(() -> {
+              LOG.append("\ninside another thread read action " + finalI);
+              readActionStarted.set(true);
+              try {
+                Thread.sleep(100);
+              }
+              catch (InterruptedException e) {
+                throw new RuntimeException(e);
+              }
+              readActionStarted.set(false);
+              LOG.append("\nfinished another thread read action " + finalI);
+            });
+            LOG.append("\nanother thread finished " + finalI);
+          }, "another read action"));
+
+          readThreads.forEach(Thread::start);
 
           for (AtomicBoolean threadStarted : anotherThreadStarted) {
             while (!threadStarted.get() && ok()) ;
           }
           // now the other threads try to get read lock. we should not let them
-          for (int i=0; i<10; i++) {
+          for (int i = 0; i < 10; i++) {
             for (AtomicBoolean readStarted1 : anotherReadActionStarted) {
               assertThat(!readStarted1.get(), "must not start another read action while write is pending");
             }
             TimeoutUtil.sleep(20);
           }
           LOG.append("\nfinished read action");
+
           return null;
         });
       }
       catch (Throwable e) {
         exception = e;
       }
-    }, "read").start();
+    }, "read");
+    main.start();
 
 
     while (!readStarted && ok());
@@ -538,6 +550,11 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       }
       LOG.append("\nfinished write action");
     });
+    main.join();
+    for (Thread thread : readThreads) {
+      thread.join();
+    }
+
     if (exception != null) {
       System.err.println(LOG);
       throw exception;
