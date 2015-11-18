@@ -26,7 +26,7 @@ public class CustomizeIdeaWizardStepsProvider implements CustomizeIDEWizardSteps
     steps.add(new CustomizeUIThemeStepPanel());
 
     if (SystemInfo.isMac) {
-      steps.add(new CustomizeKeyboardSchemeStepPanel());
+      steps.add(new CustomizeMacKeyboardLayoutStep());
     }
 
     if (CustomizeDesktopEntryStep.isAvailable()) {

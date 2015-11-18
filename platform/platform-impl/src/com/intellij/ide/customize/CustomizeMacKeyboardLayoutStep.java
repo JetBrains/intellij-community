@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,11 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import javax.swing.*;
 import java.awt.*;
 
-public class CustomizeKeyboardSchemeStepPanel extends AbstractCustomizeWizardStep {
-
+public class CustomizeMacKeyboardLayoutStep extends AbstractCustomizeWizardStep {
   private final JPanel myMacPanel;
   private final JPanel myDefaultPanel;
 
-  public CustomizeKeyboardSchemeStepPanel() {//&#8997; alt
+  public CustomizeMacKeyboardLayoutStep() {//&#8997; alt
     setLayout(new GridLayout(1, 2, GAP, GAP));
     final JRadioButton macRadioButton =
       new JRadioButton("I've never used " + ApplicationNamesInfo.getInstance().getProductName());
