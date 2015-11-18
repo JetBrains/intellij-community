@@ -18,12 +18,17 @@ public class EmptyClassInspectionTest extends LightInspectionTestCase {
     doTest();
   }
 
+  public void testClassWithComments() {
+    doTest();
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
     final EmptyClassInspection inspection = new EmptyClassInspection();
     inspection.ignoreClassWithParameterization = true;
     inspection.ignoreThrowables = true;
+    inspection.commentsAreContent = true;
     return inspection;
   }
 }
