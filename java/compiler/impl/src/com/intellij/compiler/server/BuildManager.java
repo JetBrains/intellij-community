@@ -1318,6 +1318,7 @@ public class BuildManager implements Disposable {
 
   public void stopListening() {
     myChannelRegistrar.close();
+    myListenPort = -1;
   }
 
   private int startListening() throws Exception {
