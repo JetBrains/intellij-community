@@ -153,6 +153,8 @@
     <stacktrace.fold substring="at com.intellij.openapi.command.impl.CoreCommandProcessor.executeCommand("/>
     <stacktrace.fold substring="at com.intellij.testFramework.EdtTestUtil"/>
     <stacktrace.fold substring="at com.intellij.testFramework.UsefulTestCase"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.collectAndCheckHighlighting("/>
+    <stacktrace.fold substring="at com.intellij.testFramework.ExpectedHighlightingData"/>
 
     <codeInsight.lineMarkerProvider language="JAVA"
                                     implementationClass="org.jetbrains.idea.devkit.navigation.DescriptionTypeRelatedItemLineMarkerProvider"/>

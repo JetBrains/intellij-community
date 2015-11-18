@@ -1,10 +1,11 @@
-package com.intellij.openapi.util;
+package com.intellij.util;
 
+import com.intellij.openapi.util.Version;
 import junit.framework.TestCase;
 
 import java.util.regex.Pattern;
 
-public class VersionTest extends TestCase {
+public class VersionUtilTest extends TestCase {
   private static final Pattern[] VERSION_PATTERNS = {
     Pattern.compile("^GNU gdb ([\\d]+\\.[\\d]+\\.?[\\d]*)", Pattern.MULTILINE),
     Pattern.compile("^GNU gdb \\(GDB(?:;.*)?\\) ([\\d]+\\.[\\d]+(?:\\.[\\d]+)*).*", Pattern.MULTILINE),
@@ -31,7 +32,7 @@ public class VersionTest extends TestCase {
   public void testParseVersion() throws Exception {
     for (Object[] aTestData : testData) {
       String versionString = (String)aTestData[0];
-      assertEquals("For \"" + versionString + "\"", aTestData[1], Version.parseVersion(versionString, VERSION_PATTERNS));
+      assertEquals("For \"" + versionString + "\"", aTestData[1], VersionUtil.parseVersion(versionString, VERSION_PATTERNS));
     }
   }
 }

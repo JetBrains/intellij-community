@@ -22,6 +22,8 @@ import java.util.Collection;
 /**
  * @author max
  * @author Konstantin Bulenkov
+ *
+ * @see Functions for some common implementations
  */
 @SuppressWarnings({"unchecked"})
 public interface Function<Param, Result> {
@@ -69,12 +71,4 @@ public interface Function<Param, Result> {
     }
   }
 
-  class Predefined {
-    public static <I,O> Function<I, O> NULL() {
-      return NULL;
-    }
-    public static <I,O> Function<I, O> TO_STRING() {
-      return TO_STRING;
-    }
-  }
 }

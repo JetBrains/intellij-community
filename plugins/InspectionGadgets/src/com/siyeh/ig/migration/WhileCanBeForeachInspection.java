@@ -183,11 +183,10 @@ public class WhileCanBeForeachInspection extends WhileCanBeForeachInspectionBase
       final PsiClassType classType = (PsiClassType)type;
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass aClass = resolveResult.getElement();
-      final Project project = context.getProject();
-
       if (aClass == null) {
         return null;
       }
+      final Project project = context.getProject();
       final PsiClass iterableClass = JavaPsiFacade.getInstance(project).findClass(containerClassName, aClass.getResolveScope());
       if (iterableClass == null) {
         return null;
@@ -203,12 +202,8 @@ public class WhileCanBeForeachInspection extends WhileCanBeForeachInspectionBase
       }
       if (parameterType != null) {
         if (parameterType instanceof PsiWildcardType) {
-          if (((PsiWildcardType)parameterType).isExtends()) {
-            return ((PsiWildcardType)parameterType).getBound();
-          }
-          else {
-            return null;
-          }
+          final PsiWildcardType wildcardType = (PsiWildcardType)parameterType;
+          return wildcardType.isExtends() ? wildcardType.getBound() : TypeUtils.getObjectType(context);
         }
         return parameterType;
       }

@@ -104,7 +104,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -170,14 +169,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     finally {
       super.tearDown();
     }
-  }
-
-  // for saveSettings() to work
-  @Override
-  protected String getApplicationConfigDirPath() throws Exception {
-    File config = FileUtil.createTempDirectory("config", "", false);
-    myFilesToDelete.add(config);
-    return config.getPath();
   }
 
   @Override
