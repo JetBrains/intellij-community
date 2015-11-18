@@ -5,32 +5,44 @@ YAML file
     PsiElement(---)('---')
     PsiElement(Eol)('\n')
     YAML sequence
-      PsiElement(-)('-')
-      PsiWhiteSpace(' ')
-      PsiElement(text)('Mark McGwire')
-    PsiElement(Eol)('\n')
-    YAML sequence
-      PsiElement(-)('-')
-      PsiWhiteSpace(' ')
-      PsiElement(text)('Sammy Sosa')
-    PsiElement(Eol)('\n')
-    YAML sequence
-      PsiElement(-)('-')
-      PsiWhiteSpace(' ')
-      PsiElement(text)('Ken Griffey')
+      YAML sequence item
+        PsiElement(-)('-')
+        PsiWhiteSpace(' ')
+        YAML compound value
+          YAML plain scalar text
+            PsiElement(text)('Mark McGwire')
       PsiElement(Eol)('\n')
+      YAML sequence item
+        PsiElement(-)('-')
+        PsiWhiteSpace(' ')
+        YAML compound value
+          YAML plain scalar text
+            PsiElement(text)('Sammy Sosa')
       PsiElement(Eol)('\n')
-    PsiComment(comment)('# Team ranking')
-    PsiElement(Eol)('\n')
+      YAML sequence item
+        PsiElement(-)('-')
+        PsiWhiteSpace(' ')
+        YAML compound value
+          YAML plain scalar text
+            PsiElement(text)('Ken Griffey')
+          PsiElement(Eol)('\n')
+          PsiElement(Eol)('\n')
+  PsiComment(comment)('# Team ranking')
+  PsiElement(Eol)('\n')
   YAML document
     PsiElement(---)('---')
     PsiElement(Eol)('\n')
     YAML sequence
-      PsiElement(-)('-')
-      PsiWhiteSpace(' ')
-      PsiElement(text)('Chicago Cubs')
-    PsiElement(Eol)('\n')
-    YAML sequence
-      PsiElement(-)('-')
-      PsiWhiteSpace(' ')
-      PsiElement(text)('St Louis Cardinals')
+      YAML sequence item
+        PsiElement(-)('-')
+        PsiWhiteSpace(' ')
+        YAML compound value
+          YAML plain scalar text
+            PsiElement(text)('Chicago Cubs')
+      PsiElement(Eol)('\n')
+      YAML sequence item
+        PsiElement(-)('-')
+        PsiWhiteSpace(' ')
+        YAML compound value
+          YAML plain scalar text
+            PsiElement(text)('St Louis Cardinals')

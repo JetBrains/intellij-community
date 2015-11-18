@@ -4,6 +4,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.ParsingTestCase;
 import org.jetbrains.yaml.YAMLParserDefinition;
 
+import java.io.IOException;
+
 /**
  * @author oleg
  */
@@ -133,6 +135,15 @@ public class YAMLParserTest extends ParsingTestCase {
                "bar: \"baz\"");
   }
 
+  public void testRuby15345() throws IOException {
+    doCodeTest("- !qualified.class.name\n" +
+               "    propertyOne: bla bla\n" +
+               "    propertyWithOneSequence:\n" +
+               "        - first value\n" +
+               "    nextPropertyWithOneSequence:\n" +
+               "        - first value of another sequence");
+  }
+
   public void testHonestMultiline() throws Throwable {
     doCodeTest("---\n" +
                "foo: >\n" +
@@ -160,6 +171,10 @@ public class YAMLParserTest extends ParsingTestCase {
     doCodeTest("logging:\n" +
                "  config: bla\n" +
                "  index");
+  }
+
+  public void testStringWithTag() throws IOException {
+    doCodeTest("foo: ! \"tratata\"");
   }
 
   public void testSpec2_27() {

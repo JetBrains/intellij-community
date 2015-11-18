@@ -5,13 +5,10 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLTokenTypes;
-import org.jetbrains.yaml.psi.YAMLCompoundValue;
+import org.jetbrains.yaml.psi.YAMLValue;
 
-/**
- * @author oleg
- */
-public class YAMLCompoundValueImpl extends YAMLPsiElementImpl implements YAMLCompoundValue {
-  public YAMLCompoundValueImpl(@NotNull final ASTNode node) {
+public class YAMLValueImpl extends YAMLPsiElementImpl implements YAMLValue {
+  public YAMLValueImpl(@NotNull ASTNode node) {
     super(node);
   }
 
@@ -29,6 +26,6 @@ public class YAMLCompoundValueImpl extends YAMLPsiElementImpl implements YAMLCom
 
   @Override
   public String toString() {
-    return "YAML compound value";
+    return "YAML value";
   }
 }

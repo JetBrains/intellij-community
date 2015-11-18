@@ -1,17 +1,22 @@
 YAML file
   YAML document
-    YAML key value
-      PsiElement(scalar key)('key:')
-      PsiElement(Eol)('\n')
-      PsiElement(indent)('    ')
-      YAML compound value
-        YAML key value
-          PsiElement(scalar key)('one:')
-          PsiWhiteSpace(' ')
-          PsiElement(text)('1 text')
+    YAML mapping
+      YAML key value
+        PsiElement(scalar key)('key:')
         PsiElement(Eol)('\n')
         PsiElement(indent)('    ')
-        YAML key value
-          PsiElement(scalar key)('other:')
-          PsiWhiteSpace(' ')
-          PsiElement(text)('some {{count}} text')
+        YAML mapping
+          YAML key value
+            PsiElement(scalar key)('one:')
+            PsiWhiteSpace(' ')
+            YAML compound value
+              YAML plain scalar text
+                PsiElement(text)('1 text')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('    ')
+          YAML key value
+            PsiElement(scalar key)('other:')
+            PsiWhiteSpace(' ')
+            YAML compound value
+              YAML plain scalar text
+                PsiElement(text)('some {{count}} text')

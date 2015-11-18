@@ -1,43 +1,58 @@
 YAML file
   YAML document
     YAML sequence
-      PsiElement(-)('-')
+      YAML sequence item
+        PsiElement(-)('-')
+        PsiElement(Eol)('\n')
+        PsiElement(indent)('  ')
+        YAML mapping
+          YAML key value
+            PsiElement(scalar key)('name:')
+            PsiWhiteSpace(' ')
+            YAML compound value
+              YAML plain scalar text
+                PsiElement(text)('Mark McGwire')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('  ')
+          YAML key value
+            PsiElement(scalar key)('hr:')
+            PsiWhiteSpace('   ')
+            YAML compound value
+              YAML plain scalar text
+                PsiElement(text)('65')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('  ')
+          YAML key value
+            PsiElement(scalar key)('avg:')
+            PsiWhiteSpace('  ')
+            YAML compound value
+              YAML plain scalar text
+                PsiElement(text)('0.278')
       PsiElement(Eol)('\n')
-      PsiElement(indent)('  ')
-      YAML key value
-        PsiElement(scalar key)('name:')
-        PsiWhiteSpace(' ')
-        PsiElement(text)('Mark McGwire')
-      PsiElement(Eol)('\n')
-      PsiElement(indent)('  ')
-      YAML key value
-        PsiElement(scalar key)('hr:')
-        PsiWhiteSpace('   ')
-        PsiElement(text)('65')
-      PsiElement(Eol)('\n')
-      PsiElement(indent)('  ')
-      YAML key value
-        PsiElement(scalar key)('avg:')
-        PsiWhiteSpace('  ')
-        PsiElement(text)('0.278')
-    PsiElement(Eol)('\n')
-    YAML sequence
-      PsiElement(-)('-')
-      PsiElement(Eol)('\n')
-      PsiElement(indent)('  ')
-      YAML key value
-        PsiElement(scalar key)('name:')
-        PsiWhiteSpace(' ')
-        PsiElement(text)('Sammy Sosa')
-      PsiElement(Eol)('\n')
-      PsiElement(indent)('  ')
-      YAML key value
-        PsiElement(scalar key)('hr:')
-        PsiWhiteSpace('   ')
-        PsiElement(text)('63')
-      PsiElement(Eol)('\n')
-      PsiElement(indent)('  ')
-      YAML key value
-        PsiElement(scalar key)('avg:')
-        PsiWhiteSpace('  ')
-        PsiElement(text)('0.288')
+      YAML sequence item
+        PsiElement(-)('-')
+        PsiElement(Eol)('\n')
+        PsiElement(indent)('  ')
+        YAML mapping
+          YAML key value
+            PsiElement(scalar key)('name:')
+            PsiWhiteSpace(' ')
+            YAML compound value
+              YAML plain scalar text
+                PsiElement(text)('Sammy Sosa')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('  ')
+          YAML key value
+            PsiElement(scalar key)('hr:')
+            PsiWhiteSpace('   ')
+            YAML compound value
+              YAML plain scalar text
+                PsiElement(text)('63')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('  ')
+          YAML key value
+            PsiElement(scalar key)('avg:')
+            PsiWhiteSpace('  ')
+            YAML compound value
+              YAML plain scalar text
+                PsiElement(text)('0.288')

@@ -20,7 +20,6 @@ import java.util.List;
  * @author oleg
  */
 public class YAMLFoldingBuilder implements FoldingBuilder, DumbAware {
-  private static final TokenSet COMPOUND_VALUE = TokenSet.create(YAMLElementTypes.COMPOUND_VALUE);
 
   @NotNull
   public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode astNode, @NotNull Document document) {
@@ -34,9 +33,9 @@ public class YAMLFoldingBuilder implements FoldingBuilder, DumbAware {
     final TextRange nodeTextRange = node.getTextRange();
     if (!StringUtil.isEmptyOrSpaces(node.getText()) && nodeTextRange.getLength() >= 2) {
       if (type == YAMLElementTypes.KEY_VALUE_PAIR) {
-        final ASTNode[] children = node.getChildren(COMPOUND_VALUE);
+        final ASTNode valueNode = node.findChildByType(YAMLElementTypes.COMPOUND_VALUE);
         // We should ignore empty compound values
-        if (children.length > 0 && !StringUtil.isEmpty(children[0].getText().trim())){
+        if (valueNode != null && !StringUtil.isEmpty(valueNode.getText().trim())){
           descriptors.add(new FoldingDescriptor(node, nodeTextRange));
         }
       }

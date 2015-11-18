@@ -67,6 +67,12 @@ public class YAMLParserDefinition implements ParserDefinition, YAMLElementTypes 
     if (type == SEQUENCE) {
       return new YAMLSequenceImpl(node);
     }
+    if (type == MAPPING) {
+      return new YAMLMappingImpl(node);
+    }
+    if (type == SEQUENCE_ITEM) {
+      return new YAMLSequenceItemImpl(node);
+    }
     if (type == HASH) {
       return new YAMLHashImpl(node);
     }

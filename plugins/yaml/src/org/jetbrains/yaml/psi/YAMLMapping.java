@@ -4,7 +4,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public interface YAMLSequence extends YAMLCompoundValue {
+public interface YAMLMapping extends YAMLCompoundValue {
   @NotNull
-  List<YAMLSequenceItem> getItems();
+  List<YAMLKeyValue> getKeyValues();
 }

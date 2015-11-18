@@ -1,46 +1,59 @@
 YAML file
   YAML document
     YAML sequence
-      PsiElement(-)('-')
-      PsiWhiteSpace(' ')
-      YAML array
-        PsiElement([)('[')
-        PsiElement(text)('name')
-        PsiWhiteSpace('        ')
-        PsiElement(,)(',')
+      YAML sequence item
+        PsiElement(-)('-')
         PsiWhiteSpace(' ')
-        PsiElement(text)('hr')
-        PsiElement(,)(',')
+        YAML compound value
+          YAML array
+            PsiElement([)('[')
+            YAML plain scalar text
+              PsiElement(text)('name')
+            PsiWhiteSpace('        ')
+            PsiElement(,)(',')
+            PsiWhiteSpace(' ')
+            YAML plain scalar text
+              PsiElement(text)('hr')
+            PsiElement(,)(',')
+            PsiWhiteSpace(' ')
+            YAML plain scalar text
+              PsiElement(text)('avg')
+            PsiWhiteSpace('  ')
+            PsiElement(])(']')
+      PsiElement(Eol)('\n')
+      YAML sequence item
+        PsiElement(-)('-')
         PsiWhiteSpace(' ')
-        PsiElement(text)('avg')
-        PsiWhiteSpace('  ')
-        PsiElement(])(']')
-    PsiElement(Eol)('\n')
-    YAML sequence
-      PsiElement(-)('-')
-      PsiWhiteSpace(' ')
-      YAML array
-        PsiElement([)('[')
-        PsiElement(text)('Mark McGwire')
-        PsiElement(,)(',')
+        YAML compound value
+          YAML array
+            PsiElement([)('[')
+            YAML plain scalar text
+              PsiElement(text)('Mark McGwire')
+            PsiElement(,)(',')
+            PsiWhiteSpace(' ')
+            YAML plain scalar text
+              PsiElement(text)('65')
+            PsiElement(,)(',')
+            PsiWhiteSpace(' ')
+            YAML plain scalar text
+              PsiElement(text)('0.278')
+            PsiElement(])(']')
+      PsiElement(Eol)('\n')
+      YAML sequence item
+        PsiElement(-)('-')
         PsiWhiteSpace(' ')
-        PsiElement(text)('65')
-        PsiElement(,)(',')
-        PsiWhiteSpace(' ')
-        PsiElement(text)('0.278')
-        PsiElement(])(']')
-    PsiElement(Eol)('\n')
-    YAML sequence
-      PsiElement(-)('-')
-      PsiWhiteSpace(' ')
-      YAML array
-        PsiElement([)('[')
-        PsiElement(text)('Sammy Sosa')
-        PsiWhiteSpace('  ')
-        PsiElement(,)(',')
-        PsiWhiteSpace(' ')
-        PsiElement(text)('63')
-        PsiElement(,)(',')
-        PsiWhiteSpace(' ')
-        PsiElement(text)('0.288')
-        PsiElement(])(']')
+        YAML compound value
+          YAML array
+            PsiElement([)('[')
+            YAML plain scalar text
+              PsiElement(text)('Sammy Sosa')
+            PsiWhiteSpace('  ')
+            PsiElement(,)(',')
+            PsiWhiteSpace(' ')
+            YAML plain scalar text
+              PsiElement(text)('63')
+            PsiElement(,)(',')
+            PsiWhiteSpace(' ')
+            YAML plain scalar text
+              PsiElement(text)('0.288')
+            PsiElement(])(']')

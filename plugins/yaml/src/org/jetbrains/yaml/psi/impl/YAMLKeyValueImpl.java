@@ -12,13 +12,10 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.YAMLFileType;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.YAMLUtil;
-import org.jetbrains.yaml.psi.YAMLCompoundValue;
-import org.jetbrains.yaml.psi.YAMLFile;
-import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.*;
 
 import javax.swing.*;
 
@@ -50,12 +47,7 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
   }
 
   public PsiElement getValue() {
-    PsiElement element = getKey().getNextSibling();
-    while (element != null &&
-           !(element instanceof YAMLCompoundValue || YAMLElementTypes.SCALAR_VALUES.contains(element.getNode().getElementType()))){
-      element = element.getNextSibling();
-    }
-    return element;
+    return findChildByClass(YAMLCompoundValue.class);
   }
 
   public String getValueText() {
@@ -84,7 +76,11 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
                 (YAMLFile) PsiFileFactory.getInstance(getProject())
                   .createFileFromText("temp." + YAMLFileType.YML.getDefaultExtension(), YAMLFileType.YML,
                                       "foo: " + text, LocalTimeCounter.currentTime(), true);
-    final YAMLKeyValue topKeyValue = (YAMLKeyValue) yamlFile.getDocuments().get(0).getYAMLElements().get(0);
+    final YAMLDocument document = yamlFile.getDocuments().get(0);
+    final YAMLPsiElement element = document.getYAMLElements().get(0);
+    assert element instanceof YAMLMapping;
+
+    final YAMLKeyValue topKeyValue = ((YAMLMapping)element).getKeyValues().get(0);
     getValue().replace(topKeyValue.getValue());
   }
 

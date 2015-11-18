@@ -1,22 +1,25 @@
 YAML file
   YAML document
-    YAML key value
-      PsiElement(scalar key)('code:')
-      PsiElement(Eol)('\n')
-      PsiElement(indent)('  ')
-      YAML plain scalar text
-        PsiElement(text)('src="keys/{{item}}"')
+    YAML mapping
+      YAML key value
+        PsiElement(scalar key)('code:')
         PsiElement(Eol)('\n')
         PsiElement(indent)('  ')
-        PsiElement(text)('mode=0600')
-    PsiElement(Eol)('\n')
-    YAML key value
-      PsiElement(scalar key)('with_items:')
+        YAML compound value
+          YAML plain scalar text
+            PsiElement(text)('src="keys/{{item}}"')
+            PsiElement(Eol)('\n')
+            PsiElement(indent)('  ')
+            PsiElement(text)('mode=0600')
       PsiElement(Eol)('\n')
-      PsiElement(indent)('  ')
-      YAML compound value
+      YAML key value
+        PsiElement(scalar key)('with_items:')
+        PsiElement(Eol)('\n')
+        PsiElement(indent)('  ')
         YAML sequence
-          PsiElement(-)('-')
-          PsiWhiteSpace(' ')
-          PsiElement(scalar dstring)('"id_rsa.pub"')
-    PsiElement(Eol)('\n')
+          YAML sequence item
+            PsiElement(-)('-')
+            PsiWhiteSpace(' ')
+            YAML compound value
+              PsiElement(scalar dstring)('"id_rsa.pub"')
+  PsiElement(Eol)('\n')
