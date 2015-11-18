@@ -82,7 +82,7 @@ public class IdeEventQueue extends EventQueue {
 
   private final Alarm myIdleRequestsAlarm = new Alarm();
 
-  private final Alarm myIdleTimeCounterAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myIdleTimeCounterAlarm = new Alarm();
 
   private long myIdleTime;
 
@@ -973,8 +973,12 @@ public class IdeEventQueue extends EventQueue {
     public int getTimeout() {
       return myTimeout;
     }
-  }
 
+    @Override
+    public String toString() {
+      return "Fire idle request. delay: "+getTimeout()+"; runnable: "+myRunnable;
+    }
+  }
 
   private final class ExitSuspendModeRunnable implements Runnable {
 
