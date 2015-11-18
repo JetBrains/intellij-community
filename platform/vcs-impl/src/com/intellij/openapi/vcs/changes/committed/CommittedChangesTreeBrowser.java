@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsActions;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -195,7 +196,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     DefaultMutableTreeNode lastGroupNode = null;
     String lastGroupName = null;
     for(CommittedChangeList list: filteredChangeLists) {
-      String groupName = myGroupingStrategy.getGroupName(list);
+      String groupName = StringUtil.notNullize(myGroupingStrategy.getGroupName(list));
       if (!Comparing.equal(groupName, lastGroupName)) {
         lastGroupName = groupName;
         lastGroupNode = new DefaultMutableTreeNode(lastGroupName);
