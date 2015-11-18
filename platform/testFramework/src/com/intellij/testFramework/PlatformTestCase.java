@@ -124,14 +124,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     tempDir.refresh(false, true);
   }
 
-  @Nullable
-  protected String getApplicationConfigDirPath() throws Exception {
-    return null;
-  }
-
   protected void initApplication() throws Exception {
     boolean firstTime = ourApplication == null;
-    ourApplication = IdeaTestApplication.getInstance(getApplicationConfigDirPath());
+    ourApplication = IdeaTestApplication.getInstance(null);
     ourApplication.setDataProvider(this);
 
     if (firstTime) {
