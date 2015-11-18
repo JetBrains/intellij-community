@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,15 @@ package org.jetbrains.jps.builders
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.FileUtil.*
+import com.intellij.openapi.util.io.FileUtil.toCanonicalPath
+import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
+import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.ProjectPaths
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.incremental.ModuleBuildTarget
-import java.io.File
-import com.intellij.openapi.util.text.StringUtil
 import org.junit.Assert
+import java.io.File
 
 /**
  * @author nik
@@ -78,7 +79,7 @@ public class ModuleClasspathTest(): JpsBuildTestCase() {
   private fun assertClasspath(expected: List<String>, classpath: List<String>) {
     val basePath = FileUtil.toSystemIndependentName(File(getProjectPath()).getParentFile()!!.getAbsolutePath()) + "/"
     val actual = toSystemIndependentPaths(classpath).map { StringUtil.trimStart(it, basePath) }
-    Assert.assertEquals(expected.join("\n"), actual.join("\n"))
+    Assert.assertEquals(expected.joinToString("\n"), actual.joinToString("\n"))
   }
 
   private fun toSystemIndependentPaths(classpath: List<String>): List<String> {
