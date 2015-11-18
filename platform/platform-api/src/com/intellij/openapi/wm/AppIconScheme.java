@@ -25,7 +25,7 @@ public class AppIconScheme {
 
     static final Progress TESTS = new Progress() {
       public Color getOkColor() {
-        return JBColor.GREEN;
+        return new Color(46, 191, 38);
       }
 
       public Color getErrorColor() {
@@ -35,7 +35,7 @@ public class AppIconScheme {
 
     static final Progress BUILD = new Progress() {
       public Color getOkColor() {
-        return new Color(43, 104, 184);
+        return new Color(51, 153, 255);
       }
 
       public Color getErrorColor() {
@@ -45,7 +45,7 @@ public class AppIconScheme {
 
     static final Progress INDEXING = new Progress() {
       public Color getOkColor() {
-        return new Color(255, 153, 0);
+        return new Color(255, 170, 0);
       }
 
       public Color getErrorColor() {

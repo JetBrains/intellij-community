@@ -20,7 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 public abstract class GrExpressionTypeCalculator {
 
@@ -28,5 +28,5 @@ public abstract class GrExpressionTypeCalculator {
     ExtensionPointName.create("org.intellij.groovy.expressionTypeCalculator");
 
   @Nullable
-  public abstract PsiType calculateType(@NotNull GrReferenceExpression expression, @Nullable PsiElement resolved);
+  public abstract PsiType calculateType(@NotNull GrExpression expression, @Nullable PsiElement resolved);
 }

@@ -11,10 +11,10 @@ class ParserRootInterfaceItem(val domain: String, val name: String, private val 
   }
 
   fun writeCode(out: TextOutput) {
-    out.append("@org.jetbrains.jsonProtocol.JsonParseMethod").newLine()
-    out.append("public abstract ").append(fullName).space()
+    out.append("@JsonParseMethod").newLine()
+    out.append("fun ")
     appendReadMethodName(out)
-    out.append("(").append(JSON_READER_PARAMETER_DEF).append(")").semi().newLine()
+    out.append('(').append(JSON_READER_PARAMETER_DEF).append("): ").append(fullName).newLine()
   }
 
   fun appendReadMethodName(out: TextOutput) {

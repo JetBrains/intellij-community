@@ -432,7 +432,7 @@ public class Javac2 extends Javac {
         try {
           final FileInputStream inputStream = new FileInputStream(file);
           try {
-            ClassReader reader = new FailSafeClassReader(inputStream);
+            FailSafeClassReader reader = new FailSafeClassReader(inputStream);
 
             int version = getClassFileVersion(reader);
             

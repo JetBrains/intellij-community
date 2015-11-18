@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.psi.JavaTokenType.*;
 
 public class BinopInstruction extends BranchingInstruction {
-  private static final TokenSet ourSignificantOperations = TokenSet.create(EQEQ, NE, LT, GT, LE, GE, INSTANCEOF_KEYWORD, PLUS, MINUS, ASTERISK, DIV, PERC);
+  private static final TokenSet ourSignificantOperations = TokenSet.create(EQEQ, NE, LT, GT, LE, GE, INSTANCEOF_KEYWORD, PLUS);
   private final IElementType myOperationSign;
   private final Project myProject;
 

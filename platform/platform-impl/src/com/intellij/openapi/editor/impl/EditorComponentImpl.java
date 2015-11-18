@@ -64,7 +64,6 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     enableEvents(AWTEvent.KEY_EVENT_MASK | AWTEvent.INPUT_METHOD_EVENT_MASK);
     enableInputMethods(true);
     setFocusCycleRoot(true);
-    setFocusTraversalKeysEnabled(false);
     setOpaque(true);
 
     putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, new Magnificator() {
