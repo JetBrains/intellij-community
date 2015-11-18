@@ -689,7 +689,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals(0, count[0]);
   }
 
-  
   public void testLineMarkersReuse() throws Throwable {
     configureByFile(BASE_PATH + "LineMarkerChange.java");
 
@@ -701,28 +700,28 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     type('X');
 
-    final Collection<RangeHighlighter> changed = new HashSet<>();
+    final Collection<String> changed = new ArrayList<>();
     MarkupModelEx modelEx = (MarkupModelEx)DocumentMarkupModel.forDocument(getDocument(getFile()), getProject(), true);
     modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
-        changed(highlighter);
+        changed(highlighter, "after added");
       }
 
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        changed(highlighter);
+        changed(highlighter, "before removed");
       }
 
       @Override
       public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged) {
-        changed(highlighter);
+        changed(highlighter, "changed");
       }
 
-      private void changed(@NotNull RangeHighlighterEx highlighter) {
+      private void changed(@NotNull RangeHighlighterEx highlighter, String reason) {
         String text = highlighter.getDocument().getText().substring(highlighter.getStartOffset(), highlighter.getEndOffset());
         if (text.equals("X")) return; //non relevant
-        changed.add(highlighter);
+        changed.add(reason+": "+highlighter);
       }
     });
 
@@ -730,8 +729,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     CodeInsightTestFixtureImpl.instantiateAndRun(myFile, myEditor, new int[]{Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS}, false);
 
     assertEmpty(changed);
-    lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
-    assertEquals(5, lineMarkers.size());
+    List<LineMarkerInfo> lineMarkersAfter = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
+    assertEquals(lineMarkersAfter.size(), lineMarkers.size());
   }
 
   public void testLineMarkersClearWhenTypingAtTheEndOfPsiComment() throws Throwable {
