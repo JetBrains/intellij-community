@@ -130,14 +130,16 @@ class RestHTMLTranslator(HTMLTranslator):
         if tagname == 'th' and isinstance(node, field_name):
             attributes['valign'] = 'top'
 
-        # Render rubric start as HTML header
-        if tagname == 'p' and isinstance(node, rubric):
-            tagname = 'h1'
-
         # For headings, use class="heading"
         if re.match(r'^h\d+$', tagname):
             attributes['class'] = ' '.join([attributes.get('class', ''), 'heading']).strip()
         return HTMLTranslator.starttag(self, node, tagname, suffix, **attributes)
+
+    def visit_rubric(self, node):
+        self.body.append(self.starttag(node, 'h1', '', CLASS='rubric'))
+
+    def depart_rubric(self, node):
+        self.body.append('</h1>\n')
 
     def visit_field_list(self, node):
         fields = {}
