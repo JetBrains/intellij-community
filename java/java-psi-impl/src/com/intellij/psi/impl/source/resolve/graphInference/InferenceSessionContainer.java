@@ -149,6 +149,9 @@ public class InferenceSessionContainer {
 
   @Nullable
   private static PsiCall treeWalkUp(PsiElement context) {
+    if (context instanceof PsiExpression && !PsiPolyExpressionUtil.isPolyExpression((PsiExpression)context)) {
+      return null;
+    }
     PsiCall top = null;
     PsiElement parent = PsiTreeUtil.getParentOfType(context, 
                                                     PsiExpressionList.class, 
