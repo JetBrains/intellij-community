@@ -371,14 +371,20 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
   }
 
   fun `test trim changed blocks after second step correction`() {
-    // ??? is there are a case with a range trimmed to zero during second step correction ?
-
     lines() {
       ("====}_==== }_Y_====}" - "====}_Y_====}")
       default(del(1, 1, 1)) // result after second step correction
       ignore(mod(1, 1, 2, 1)) // result looks strange because of 'diff.unimportant.line.char.count'
       testDefault()
       testTrim()
+    }
+  }
+
+  fun `test second step correction processes all confusing lines`() {
+    lines {
+      ("====}_==== }_Y_==== }_====}" - "==== }_Y_==== }")
+      default(del(0, 0, 1), del(4, 3, 1))
+      testDefault()
     }
   }
 }
