@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,25 +17,25 @@ package com.intellij.ide.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
@@ -56,25 +56,27 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(@NotNull AnActionEvent e) {
-    boolean canCreateScript = isAvailable();
-    Presentation presentation = e.getPresentation();
-    presentation.setVisible(canCreateScript);
-    presentation.setEnabled(canCreateScript);
+  public void update(@NotNull AnActionEvent event) {
+    boolean enabled = isAvailable();
+    event.getPresentation().setEnabledAndVisible(enabled);
   }
 
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     if (!isAvailable()) return;
 
-    Project project = e.getProject();
-    CreateLauncherScriptDialog dialog = new CreateLauncherScriptDialog(project);
-    if (!dialog.showAndGet()) {
+    Project project = event.getProject();
+
+    String title = ApplicationBundle.message("launcher.script.title");
+    String prompt =
+      "<html>You can create a launcher script to enable opening files and projects in " +
+      ApplicationNamesInfo.getInstance().getProductName() + " from the command line.<br>" +
+      "Please specify the name of the script and the path where it should be created:</html>";
+    String path = Messages.showInputDialog(project, prompt, title, null, defaultScriptPath(), null);
+    if (path == null) {
       return;
     }
 
-    String path = dialog.myPathField.getText();
-    assert path != null;
     if (!path.startsWith("/")) {
       String home = System.getenv("HOME");
       if (home != null && new File(home).isDirectory()) {
@@ -87,29 +89,36 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
       }
     }
 
-    String name = dialog.myNameField.getText();
-    assert name != null;
-    File target = new File(path, name);
+    File target = new File(path);
     if (target.exists()) {
       String message = ApplicationBundle.message("launcher.script.overwrite", target);
-      String title = ApplicationBundle.message("launcher.script.title");
       if (Messages.showOkCancelDialog(project, message, title, Messages.getQuestionIcon()) != Messages.OK) {
         return;
       }
     }
 
-    createLauncherScript(project, target.getAbsolutePath());
+    try {
+      createLauncherScript(target.getAbsolutePath());
+    }
+    catch (Exception e) {
+      LOG.warn(e);
+      String message = ExceptionUtil.getNonEmptyMessage(e, "Internal error");
+      Notifications.Bus.notify(
+        new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Launcher Script Creation Failed", message, NotificationType.ERROR),
+        project);
+    }
   }
 
-  public static void createLauncherScript(Project project, String pathName) {
+  public static void createLauncherScript(@NotNull String pathName) throws Exception {
     if (!isAvailable()) return;
 
+    File scriptFile = createLauncherScriptFile();
     try {
-      File scriptFile = createLauncherScriptFile();
       File scriptTarget = new File(pathName);
 
       File scriptTargetDir = scriptTarget.getParentFile();
-      assert scriptTargetDir != null;
+      assert scriptTargetDir != null : "path: " + pathName;
+
       if (!(scriptTargetDir.exists() || scriptTargetDir.mkdirs()) || !scriptFile.renameTo(scriptTarget)) {
         String scriptTargetDirPath = scriptTargetDir.getCanonicalPath();
         // copy file and change ownership to root (UID 0 = root, GID 0 = root (wheel on Macs))
@@ -119,19 +128,19 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
           "install -g 0 -o 0 \"" + scriptFile.getCanonicalPath() + "\" \"" + pathName + "\"";
         File installationScript = ExecUtil.createTempExecutableScript("launcher_installer", ".sh", installationScriptSrc);
         String prompt = ApplicationBundle.message("launcher.script.sudo.prompt", scriptTargetDirPath);
-        ExecUtil.sudoAndGetOutput(new GeneralCommandLine(installationScript.getPath()), prompt);
+        ProcessOutput result = ExecUtil.sudoAndGetOutput(new GeneralCommandLine(installationScript.getPath()), prompt);
+        int exitCode = result.getExitCode();
+        if (exitCode != 0) {
+          String message = "Launcher script creation failed with " + exitCode;
+          String output = result.getStdout();
+          if (!StringUtil.isEmptyOrSpaces(output)) message += "\nOutput: " + output.trim();
+          throw new RuntimeException(message);
+        }
       }
     }
-    catch (Exception e) {
-      String message = e.getMessage();
-      if (!StringUtil.isEmptyOrSpaces(message)) {
-        LOG.warn(e);
-        Notifications.Bus.notify(
-          new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Failed to create launcher script", message, NotificationType.ERROR),
-          project);
-      }
-      else {
-        LOG.error(e);
+    finally {
+      if (scriptFile.exists()) {
+        FileUtil.delete(scriptFile);
       }
     }
   }
@@ -150,29 +159,9 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
     return ExecUtil.createTempExecutableScript("launcher", "", launcherContents);
   }
 
-  public static String defaultScriptName() {
+  public static String defaultScriptPath() {
     String scriptName = ApplicationNamesInfo.getInstance().getScriptName();
-    return StringUtil.isEmptyOrSpaces(scriptName) ? "idea" : scriptName;
-  }
-
-  public static class CreateLauncherScriptDialog extends DialogWrapper {
-    private JPanel myMainPanel;
-    private JTextField myNameField;
-    private JTextField myPathField;
-    private JLabel myTitle;
-
-    protected CreateLauncherScriptDialog(Project project) {
-      super(project);
-      init();
-      setTitle(ApplicationBundle.message("launcher.script.title"));
-      String productName = ApplicationNamesInfo.getInstance().getProductName();
-      myTitle.setText(myTitle.getText().replace("$APP_NAME$", productName));
-      myNameField.setText(defaultScriptName());
-    }
-
-    @Override
-    protected JComponent createCenterPanel() {
-      return myMainPanel;
-    }
+    if (StringUtil.isEmptyOrSpaces(scriptName)) scriptName = "idea";
+    return "/usr/local/bin/" + scriptName;
   }
 }

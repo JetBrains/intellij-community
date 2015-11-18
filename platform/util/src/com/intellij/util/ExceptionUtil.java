@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -163,5 +164,11 @@ public class ExceptionUtil {
       rethrowUnchecked(t);
       throw new RuntimeException(t);
     }
+  }
+
+  @NotNull
+  public static String getNonEmptyMessage(@NotNull Throwable t, @NotNull String defaultMessage) {
+    String message = t.getMessage();
+    return !StringUtil.isEmptyOrSpaces(message) ? message : defaultMessage;
   }
 }
