@@ -128,9 +128,8 @@ public class ScopeUtil {
 
   @Nullable
   public static ScopeOwner getDeclarationScopeOwner(PsiElement anchor, String name) {
-    PsiElement element = anchor;
     if (name != null) {
-      final ScopeOwner originalScopeOwner = getScopeOwner(element);
+      final ScopeOwner originalScopeOwner = getScopeOwner(anchor);
       ScopeOwner scopeOwner = originalScopeOwner;
       while (scopeOwner != null) {
         if (!(scopeOwner instanceof PyClass) || scopeOwner == originalScopeOwner) {
