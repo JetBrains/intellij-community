@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrDelegatesToUtil;
@@ -33,15 +34,15 @@ public class GrClosureDelegateTypeCalculator extends GrExpressionTypeCalculator 
 
   @Nullable
   @Override
-  public PsiType calculateType(@NotNull GrReferenceExpression expression, @Nullable PsiElement resolved) {
-    if (resolved instanceof PsiMethod) {
+  public PsiType calculateType(@NotNull GrExpression expression, @Nullable PsiElement resolved) {
+    if (expression instanceof GrReferenceExpression && resolved instanceof PsiMethod) {
       return calculateType(expression, (PsiMethod)resolved);
     }
     return null;
   }
 
   @Nullable
-  protected PsiType calculateType(@NotNull GrReferenceExpression expression, @NotNull PsiMethod method) {
+  protected PsiType calculateType(@NotNull GrExpression expression, @NotNull PsiMethod method) {
     if (!"getDelegate".equals(method.getName()) || method.getParameterList().getParametersCount() != 0) return null;
 
     final GrClosableBlock closure = PsiTreeUtil.getParentOfType(expression, GrClosableBlock.class);
