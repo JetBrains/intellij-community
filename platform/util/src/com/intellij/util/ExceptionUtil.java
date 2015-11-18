@@ -16,7 +16,6 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,8 +24,7 @@ import java.io.StringWriter;
 import java.util.Arrays;
 
 public class ExceptionUtil {
-  private ExceptionUtil() {
-  }
+  private ExceptionUtil() { }
 
   public static Throwable getRootCause(Throwable e) {
     while (true) {
@@ -39,7 +37,8 @@ public class ExceptionUtil {
     while (e != null && !klass.isInstance(e)) {
       e = e.getCause();
     }
-    return (T)e;
+    @SuppressWarnings("unchecked") T t = (T)e;
+    return t;
   }
 
   public static boolean causedBy(Throwable e, Class klass) {
@@ -68,9 +67,9 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  public static String getThrowableText(@NotNull Throwable aThrowable, @NonNls @NotNull final String stackFrameSkipPattern) {
-    @NonNls final String prefix = "\tat ";
-    @NonNls final String prefixProxy = prefix + "$Proxy";
+  public static String getThrowableText(@NotNull Throwable aThrowable, @NotNull String stackFrameSkipPattern) {
+    final String prefix = "\tat ";
+    final String prefixProxy = prefix + "$Proxy";
     final String prefixRemoteUtil = prefix + "com.intellij.execution.rmi.RemoteUtil";
     final String skipPattern = prefix + stackFrameSkipPattern;
 
@@ -121,8 +120,8 @@ public class ExceptionUtil {
   @Nullable
   public static String getMessage(@NotNull Throwable e) {
     String result = e.getMessage();
-    @NonNls final String exceptionPattern = "Exception: ";
-    @NonNls final String errorPattern = "Error: ";
+    String exceptionPattern = "Exception: ";
+    String errorPattern = "Error: ";
 
     while ((result == null || result.contains(exceptionPattern) || result.contains(errorPattern)) && e.getCause() != null) {
       e = e.getCause();
@@ -138,7 +137,7 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  private static String extractMessage(@NotNull String result, @NotNull final String errorPattern) {
+  private static String extractMessage(@NotNull String result, @NotNull String errorPattern) {
     if (result.lastIndexOf(errorPattern) >= 0) {
       result = result.substring(result.lastIndexOf(errorPattern) + errorPattern.length());
     }
