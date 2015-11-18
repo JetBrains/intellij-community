@@ -5,8 +5,24 @@ from docutils import nodes
 from docutils.core import publish_string
 from docutils.frontend import OptionParser
 from docutils.nodes import Text, field_body, field_name, rubric
+from docutils.parsers.rst import directives
+from docutils.parsers.rst.directives.admonitions import BaseAdmonition
 from docutils.writers.html4css1 import HTMLTranslator, Writer as HTMLWriter
 from docutils.writers import Writer
+
+
+# Copied from the Sphinx' sources. Docutils doesn't handle "seealso" directives by default.
+class seealso(nodes.Admonition, nodes.Element):
+    """Custom "see also" admonition."""
+
+
+class SeeAlso(BaseAdmonition):
+    """
+    An admonition mentioning things to look at as reference.
+    """
+    node_class = seealso
+
+directives.register_directive('seealso', SeeAlso)
 
 
 class RestHTMLTranslator(HTMLTranslator):
@@ -142,7 +158,16 @@ class RestHTMLTranslator(HTMLTranslator):
         self.body.append('</h1>\n')
 
     def visit_note(self, node):
-        self.body.append('<h1>Note</h1>\n')
+        self.body.append('<h1 class="heading">Note</h1>\n')
+
+    def depart_note(self, node):
+        pass
+
+    def visit_seealso(self, node):
+        self.body.append('<h1 class="heading">See Also</h1>\n')
+
+    def depart_seealso(self, node):
+        pass
 
     def visit_field_list(self, node):
         fields = {}
