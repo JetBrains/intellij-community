@@ -4230,6 +4230,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (logicalPosition.column > lineEndPosition.column) {
         visualPosition = logicalToVisualPosition(lineEndPosition.leanForward(true));
       }
+      else if (mySoftWrapModel.isInsideSoftWrap(visualPosition)) {
+        VisualPosition beforeSoftWrapPosition = myView.logicalToVisualPosition(logicalPosition, true);
+        if (visualPosition.line == beforeSoftWrapPosition.line) {
+          visualPosition = beforeSoftWrapPosition;
+        }
+        else {
+          visualPosition = myView.logicalToVisualPosition(logicalPosition, false);
+        }
+      }
     }
     return visualPosition;
   }
