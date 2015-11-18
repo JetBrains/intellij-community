@@ -8,7 +8,7 @@ import org.jetbrains.protocolReader.appendEnums
  * Member scope is used to generate additional types that are used only from method.
  * These types will be named after this method.
  */
-open class MemberScope(private val classScope: ClassScope, protected val memberName: String) : ResolveAndGenerateScope {
+internal open class MemberScope(private val classScope: ClassScope, protected val memberName: String) : ResolveAndGenerateScope {
   override fun <T : ItemDescriptor> resolveType(typedObject: T) = classScope.generator.generator.resolveType(typedObject, this)
 
   fun generateEnum(description: String?, enumConstants: List<String>): BoxableType {

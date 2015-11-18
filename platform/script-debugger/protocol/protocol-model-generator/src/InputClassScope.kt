@@ -3,11 +3,10 @@ package org.jetbrains.protocolModelGenerator
 import org.jetbrains.jsonProtocol.ItemDescriptor
 import org.jetbrains.jsonProtocol.ProtocolMetaModel
 import org.jetbrains.protocolReader.TextOutput
-import org.jetbrains.protocolReader.appendEnums
 
-class InputClassScope(generator: DomainGenerator, namePath: NamePath) : ClassScope(generator, namePath) {
+internal class InputClassScope(generator: DomainGenerator, namePath: NamePath) : ClassScope(generator, namePath) {
   fun generateDeclarationBody(out: TextOutput, list: List<ItemDescriptor.Named>) {
-    for (i in 0..list.size() - 1) {
+    for (i in 0..list.size - 1) {
       val named = list.get(i)
       if (named.description() != null) {
         out.doc(named.description())
@@ -15,10 +14,13 @@ class InputClassScope(generator: DomainGenerator, namePath: NamePath) : ClassSco
 
       val name = named.getName()
       val declarationName = generateMethodNameSubstitute(name, out)
-      val typeDescriptor = InputMemberScope(name).resolveType<ItemDescriptor.Named>(named)
+      val typeDescriptor = InputMemberScope(name).resolveType(named)
       typeDescriptor.writeAnnotations(out)
-      out.append(typeDescriptor.type.getShortText(classContextNamespace)).space().append(declarationName).append("();")
-      if (i != (list.size() - 1)) {
+      out.append("fun ").appendEscapedName(declarationName).append("(): ").append(typeDescriptor.type.getShortText(classContextNamespace))
+      if (typeDescriptor.isNullableType) {
+        out.append('?')
+      }
+      if (i != (list.size - 1)) {
         out.newLine().newLine()
       }
     }
@@ -31,29 +33,29 @@ class InputClassScope(generator: DomainGenerator, namePath: NamePath) : ClassSco
       val objectName = capitalizeFirstChar(memberName)
       addMember(object : TextOutConsumer {
         override fun append(out: TextOutput) {
-          out.newLine().doc(description)
+          out.newLine().newLine().doc(description)
           if (properties == null) {
-            out.append("@org.jetbrains.jsonProtocol.JsonType(allowsOtherProperties=true)").newLine()
-            out.append("public interface ").append(objectName).append(" extends org.jetbrains.jsonProtocol.JsonObjectBased").openBlock()
+            out.append("@JsonType(allowsOtherProperties=true)").newLine()
+            out.append("interface ").append(objectName).append(" : JsonObjectBased").openBlock()
           }
           else {
-            out.append("@org.jetbrains.jsonProtocol.JsonType").newLine()
-            out.append("public interface ").append(objectName).openBlock()
+            out.append("@JsonType").newLine()
+            out.append("interface ").append(objectName).openBlock()
             for (property in properties) {
               out.doc(property.description())
 
               val methodName = generateMethodNameSubstitute(property.getName(), out)
               val memberScope = InputMemberScope(property.getName())
-              val propertyTypeData = memberScope.resolveType<ProtocolMetaModel.ObjectProperty>(property)
+              val propertyTypeData = memberScope.resolveType(property)
               propertyTypeData.writeAnnotations(out)
 
-              out.append(propertyTypeData.type.getShortText(classContextNamespace) + ' ' + methodName + "();").newLine()
+              out.append("fun ").appendEscapedName(methodName).append("(): ").append(propertyTypeData.type.getShortText(classContextNamespace))
             }
           }
           out.closeBlock()
         }
       })
-      return StandaloneType(NamePath(objectName, classContextNamespace), "writeMessage")
+      return subMessageType(NamePath(objectName, classContextNamespace))
     }
   }
 }
