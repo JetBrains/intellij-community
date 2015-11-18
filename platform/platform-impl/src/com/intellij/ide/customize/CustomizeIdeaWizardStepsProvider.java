@@ -33,6 +33,10 @@ public class CustomizeIdeaWizardStepsProvider implements CustomizeIDEWizardSteps
       steps.add(new CustomizeDesktopEntryStep("/UbuntuDesktopEntry.png"));
     }
 
+    if (CustomizeLauncherScriptStep.isAvailable()) {
+      steps.add(new CustomizeLauncherScriptStep());
+    }
+
     PluginGroups groups = new PluginGroups();
     steps.add(new CustomizePluginsStepPanel(groups));
     steps.add(new CustomizeFeaturedPluginsStepPanel(groups));
