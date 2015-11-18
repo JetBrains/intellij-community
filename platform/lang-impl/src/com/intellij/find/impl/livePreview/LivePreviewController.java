@@ -95,6 +95,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
   };
 
   private void smartUpdate() {
+    if (myLivePreview == null) return;
     myLivePreview.inSmartUpdate();
     updateInBackground(mySearchResults.getFindModel(), false);
   }
