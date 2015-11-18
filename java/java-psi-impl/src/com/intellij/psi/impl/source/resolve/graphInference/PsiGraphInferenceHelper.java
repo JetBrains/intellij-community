@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,9 +39,22 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
                                                  @NotNull PsiSubstitutor partialSubstitutor,
                                                  @Nullable PsiElement parent,
                                                  @NotNull ParameterTypeInferencePolicy policy) {
-    final InferenceSession inferenceSession = new InferenceSession(new PsiTypeParameter[]{typeParameter}, partialSubstitutor, myManager, parent);
-    inferenceSession.initExpressionConstraints(parameters, arguments, parent, null);
-    return inferenceSession.infer(parameters, arguments, parent).substitute(typeParameter);
+    final PsiSubstitutor substitutor;
+    if (parent != null) {
+      substitutor = inferTypeArguments(new PsiTypeParameter[]{typeParameter}, 
+                                       parameters, 
+                                       arguments, 
+                                       partialSubstitutor, 
+                                       parent, 
+                                       policy, 
+                                       PsiUtil.getLanguageLevel(parent));
+    }
+    else {
+      final InferenceSession inferenceSession = new InferenceSession(new PsiTypeParameter[]{typeParameter}, partialSubstitutor, myManager, null);
+      inferenceSession.initExpressionConstraints(parameters, arguments, null, null);
+      substitutor = inferenceSession.infer();
+    }
+    return substitutor.substitute(typeParameter);
   }
 
   @NotNull
@@ -53,9 +67,8 @@ public class PsiGraphInferenceHelper implements PsiInferenceHelper {
                                            @NotNull ParameterTypeInferencePolicy policy,
                                            @NotNull LanguageLevel languageLevel) {
     if (typeParameters.length == 0) return partialSubstitutor;
-    final InferenceSession inferenceSession = new InferenceSession(typeParameters, partialSubstitutor, myManager, parent);
-    inferenceSession.initExpressionConstraints(parameters, arguments, parent, null);
-    return inferenceSession.infer(parameters, arguments, parent);
+
+    return InferenceSessionContainer.infer(typeParameters, parameters, arguments, partialSubstitutor, parent);
   }
 
   @NotNull

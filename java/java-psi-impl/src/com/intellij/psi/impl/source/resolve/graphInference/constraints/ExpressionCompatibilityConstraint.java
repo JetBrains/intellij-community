@@ -82,58 +82,13 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
     }
     
     if (myExpression instanceof PsiCall) {
-      final PsiExpressionList argumentList = ((PsiCall)myExpression).getArgumentList();
-      if (argumentList != null) {
-        final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(argumentList);
-        PsiType returnType = null;
-        PsiTypeParameter[] typeParams = null;
-        final JavaResolveResult resolveResult = candidateProperties != null ? null : InferenceSession.getResolveResult((PsiCall)myExpression);
-        PsiMethod method = null;
-        if (candidateProperties != null) {
-          method = candidateProperties.getMethod();
-        }
-        else {
-          final PsiElement element = resolveResult.getElement();
-          if (element instanceof PsiMethod) {
-            method = (PsiMethod)element;
-          }
-        }
-
-        if (method != null && !method.isConstructor()) {
-          returnType = method.getReturnType();
-          if (returnType != null) {
-            typeParams = method.getTypeParameters();
-          }
-        }
-        else if (resolveResult != null) {
-          final PsiClass psiClass = method != null ? method.getContainingClass() : (PsiClass)resolveResult.getElement();
-          if (psiClass != null) {
-            returnType = JavaPsiFacade.getElementFactory(argumentList.getProject()).createType(psiClass, PsiSubstitutor.EMPTY);
-            typeParams = psiClass.getTypeParameters();
-          }
-        }
-
-        if (typeParams != null) {
-          PsiSubstitutor siteSubstitutor = InferenceSession.chooseSiteSubstitutor(candidateProperties, resolveResult, method);
-          final InferenceSession callSession = new InferenceSession(typeParams, siteSubstitutor, myExpression.getManager(), myExpression);
-          callSession.propagateVariables(session.getInferenceVariables());
-          if (method != null) {
-            final PsiExpression[] args = argumentList.getExpressions();
-            final PsiParameter[] parameters = method.getParameterList().getParameters();
-            callSession.initExpressionConstraints(parameters, args, myExpression, method, InferenceSession
-              .chooseVarargsMode(candidateProperties, resolveResult));
-          }
-          final boolean accepted = callSession.repeatInferencePhases(true);
-          if (!accepted) {
-            return false;
-          }
-          callSession.registerReturnTypeConstraints(siteSubstitutor.substitute(returnType), myT);
-          if (callSession.repeatInferencePhases(true)) {
-            session.getInferenceSessionContainer().registerNestedSession(session, callSession);
-          } else {
-            return false;
-          }
-        }
+      final InferenceSession callSession = reduceExpressionCompatibilityConstraint(session, myExpression, myT);
+      if (callSession == null) {
+        return false;
+      }
+      if (callSession != session) {
+        session.getInferenceSessionContainer().registerNestedSession(callSession);
+        session.propagateVariables(callSession.getInferenceVariables());
       }
       return true;
     }
@@ -150,6 +105,57 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
     
     
     return true;
+  }
+
+  public static InferenceSession reduceExpressionCompatibilityConstraint(InferenceSession session,
+                                                                         PsiExpression expression,
+                                                                         PsiType targetType) {
+    final PsiExpressionList argumentList = ((PsiCall)expression).getArgumentList();
+    if (argumentList != null) {
+      final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(argumentList);
+      PsiType returnType = null;
+      PsiTypeParameter[] typeParams = null;
+      final JavaResolveResult resolveResult = candidateProperties != null ? null : InferenceSession.getResolveResult((PsiCall)expression);
+      final PsiMethod method = InferenceSession.getCalledMethod((PsiCall)expression);
+
+      if (method != null && !method.isConstructor()) {
+        returnType = method.getReturnType();
+        if (returnType != null) {
+          typeParams = method.getTypeParameters();
+        }
+      }
+      else if (resolveResult != null) {
+        final PsiClass psiClass = method != null ? method.getContainingClass() : (PsiClass)resolveResult.getElement();
+        if (psiClass != null) {
+          returnType = JavaPsiFacade.getElementFactory(argumentList.getProject()).createType(psiClass, PsiSubstitutor.EMPTY);
+          typeParams = psiClass.getTypeParameters();
+        }
+      }
+
+      if (typeParams != null) {
+        PsiSubstitutor siteSubstitutor = InferenceSession.chooseSiteSubstitutor(candidateProperties, resolveResult, method);
+        final InferenceSession callSession = new InferenceSession(typeParams, siteSubstitutor, expression.getManager(), expression);
+        callSession.propagateVariables(session.getInferenceVariables());
+        if (method != null) {
+          final PsiExpression[] args = argumentList.getExpressions();
+          final PsiParameter[] parameters = method.getParameterList().getParameters();
+          callSession.initExpressionConstraints(parameters, args, expression, method, InferenceSession
+            .chooseVarargsMode(candidateProperties, resolveResult));
+        }
+        final boolean accepted = callSession.repeatInferencePhases(true);
+        if (!accepted) {
+          return null;
+        }
+        callSession.registerReturnTypeConstraints(siteSubstitutor.substitute(returnType), targetType);
+        if (callSession.repeatInferencePhases(true)) {
+          return callSession;
+        }
+        else {
+          return null;
+        }
+      }
+    }
+    return session;
   }
 
   @Override

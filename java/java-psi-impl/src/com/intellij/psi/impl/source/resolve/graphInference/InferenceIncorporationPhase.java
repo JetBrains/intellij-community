@@ -339,4 +339,8 @@ public class InferenceIncorporationPhase {
       }
     }
   }
+
+  public List<Pair<PsiTypeParameter[], PsiClassType>> getCaptures() {
+    return myCaptures;
+  }
 }
