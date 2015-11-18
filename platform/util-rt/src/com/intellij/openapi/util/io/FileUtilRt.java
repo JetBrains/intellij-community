@@ -30,10 +30,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -400,7 +397,8 @@ public class FileUtilRt {
 
         boolean success = isDirectory ? f.mkdir() : f.createNewFile();
         if (!success) {
-          throw new IOException("Unable to create temporary file " + f);
+          throw new IOException("Unable to create temporary file " + f + "\nDirectory '" +f.getParentFile()+
+                                "' list: " + Arrays.toString(f.getParentFile().list()));
         }
 
         return normalizeFile(f);
