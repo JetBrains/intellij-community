@@ -89,7 +89,7 @@ public class LogFilesManager {
           }
         }
 
-        if (!myLogFiles.isEmpty()) {
+        if (!myLogFiles.isEmpty() && !myUpdateAlarm.isDisposed()) {
           myUpdateAlarm.request();
         }
       }
