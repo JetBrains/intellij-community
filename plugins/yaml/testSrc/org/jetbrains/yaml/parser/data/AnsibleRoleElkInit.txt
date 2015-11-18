@@ -1,0 +1,71 @@
+YAML file
+  YAML document
+    PsiElement(---)('---')
+    PsiElement(Eol)('\n')
+    YAML sequence
+      PsiElement(-)('-')
+      PsiWhiteSpace(' ')
+      YAML key value
+        PsiElement(scalar key)('name:')
+        PsiWhiteSpace(' ')
+        PsiElement(text)('Validate logstash_configs variable')
+      PsiElement(Eol)('\n')
+      PsiElement(indent)('  ')
+      YAML key value
+        PsiElement(scalar key)('assert:')
+        PsiElement(Eol)('\n')
+        PsiElement(indent)('    ')
+        YAML compound value
+          YAML key value
+            PsiElement(scalar key)('that:')
+            PsiElement(Eol)('\n')
+            PsiElement(indent)('    ')
+            YAML compound value
+              YAML sequence
+                PsiElement(-)('-')
+                PsiWhiteSpace(' ')
+                PsiElement(text)('logstash_configs != ''')
+    PsiElement(Eol)('\n')
+    YAML sequence
+      PsiElement(-)('-')
+      PsiWhiteSpace(' ')
+      YAML key value
+        PsiElement(scalar key)('stat:')
+        PsiWhiteSpace(' ')
+        PsiElement(text)('path={{ logstash_configs }}/config')
+      PsiElement(Eol)('\n')
+      PsiElement(indent)('  ')
+      YAML key value
+        PsiElement(scalar key)('delegate_to:')
+        PsiWhiteSpace(' ')
+        PsiElement(text)('127.0.0.1')
+      PsiElement(Eol)('\n')
+      PsiElement(indent)('  ')
+      YAML key value
+        PsiElement(scalar key)('register:')
+        PsiWhiteSpace(' ')
+        PsiElement(text)('p')
+    PsiElement(Eol)('\n')
+    YAML sequence
+      PsiElement(-)('-')
+      PsiWhiteSpace(' ')
+      YAML key value
+        PsiElement(scalar key)('name:')
+        PsiWhiteSpace(' ')
+        PsiElement(text)('Validate config subdirectory')
+      PsiElement(Eol)('\n')
+      PsiElement(indent)('  ')
+      YAML key value
+        PsiElement(scalar key)('assert:')
+        PsiElement(Eol)('\n')
+        PsiElement(indent)('    ')
+        YAML compound value
+          YAML key value
+            PsiElement(scalar key)('that:')
+            PsiElement(Eol)('\n')
+            PsiElement(indent)('    ')
+            YAML compound value
+              YAML sequence
+                PsiElement(-)('-')
+                PsiWhiteSpace(' ')
+                PsiElement(text)('p.stat.isdir is defined and p.stat.isdir')

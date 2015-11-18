@@ -162,7 +162,15 @@ public class YAMLParserTest extends ParsingTestCase {
                "  index");
   }
 
-  public void testSpec2_27() throws Throwable {
+  public void testSpec2_27() {
+    doTest(true);
+  }
+
+  public void testAnsibleRoleElkInit() {
+    doTest(true);
+  }
+
+  public void testAnsibleRoleElkMain() {
     doTest(true);
   }
 }
