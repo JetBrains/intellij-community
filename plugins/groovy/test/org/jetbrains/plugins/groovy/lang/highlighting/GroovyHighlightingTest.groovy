@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1002,14 +1002,160 @@ class Sub<W extends Window> extends Super<W> {
 ''')
   }
 
-  void testAnonymousBodyOnNewLine() {
-    testHighlighting('''\
-class Foo{}
-print new Foo()
+  void 'test anonymous body on new line within parenthesized expression'() {
+    testHighlighting '''\
+class Foo {
+  def i
+}
+
+def foo = new Foo()
 <error descr="Ambiguous code block">{
-  String toString() {'abc'}
 }</error>
-''')
+
+def bar = (new Foo()
+{
+})
+
+def baz
+baz = new Foo()
+<error descr="Ambiguous code block">{
+}</error>
+
+baz = (new Foo()
+{
+})
+
+(baz = new Foo()
+{
+})
+
+new Foo()
+<error descr="Ambiguous code block">{
+}</error>
+
+(new Foo()
+{
+})
+
+new Foo()
+<error descr="Ambiguous code block">{
+}</error> + 666
+
+(new Foo()
+{
+}) + 444
+
+1 + (new Foo()
+{
+} + 555)
+
+(1 + new Foo()
+{
+} + 112)
+
+new Foo()
+<error descr="Ambiguous code block">{
+}</error>.getI()
+
+(new Foo()
+{
+}).getI()
+
+(new Foo()
+{
+}.getI())
+
+def mm() {
+    new Foo()
+    <error descr="Ambiguous code block">{
+    }</error>
+}
+
+def mm2() {
+    (new Foo()
+    {
+    })
+}
+
+def mm3() {
+    return new Foo()
+    <error descr="Ambiguous code block">{
+    }</error>
+}
+
+def mm4() {
+    return (new Foo()
+    {
+    })
+}
+
+(new Foo()
+{
+    def foo() {
+        // still error
+        new Foo()
+        <error descr="Ambiguous code block">{
+        }</error>
+    }
+})
+'''
+  }
+
+  void 'test anonymous body on new line within argument list'() {
+    testHighlighting '''\
+class Foo {}
+
+def foo(param) {}
+
+foo(new Foo()
+{
+})
+
+def baz
+foo(baz = new Foo()
+{
+})
+
+foo(new Foo()
+{
+} + 666)
+
+foo(1 + new Foo()
+{
+})
+
+foo(1 + new Foo()
+{
+} + 666)
+
+foo(new Foo()
+{
+}.getI())
+
+foo(new Foo()
+{
+
+}.identity { it })
+
+foo new Foo()
+<error descr="Ambiguous code block">{
+
+}</error>
+
+foo 1 + (new Foo()
+{
+}) + 22
+
+foo(new Foo() {
+    def a() {
+        // still error
+        new Foo()
+        <error descr="Ambiguous code block">{
+
+        }</error>
+    }
+})
+'''
   }
 
   void testGenerics() {
