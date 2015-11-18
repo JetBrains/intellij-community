@@ -64,9 +64,7 @@ public class LineFragmentImpl implements LineFragment {
     myInnerFragments = dropWholeChangedFragments(innerFragments, endOffset1 - startOffset1, endOffset2 - startOffset2);
 
     if (myStartLine1 == myEndLine1 &&
-        myStartLine2 == myEndLine2 &&
-        myStartOffset1 == myEndOffset1 &&
-        myStartOffset2 == myEndOffset2) {
+        myStartLine2 == myEndLine2) {
       LOG.error("LineFragmentImpl should not be empty: " + toString());
     }
     if (myStartLine1 > myEndLine1 ||

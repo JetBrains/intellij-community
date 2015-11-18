@@ -46,18 +46,6 @@ class ChangedBlock {
     myLineFragment = lineFragment;
   }
 
-  @NotNull
-  public static ChangedBlock createInserted(int length, int lines) {
-    LineFragmentImpl lineFragment = new LineFragmentImpl(0, 0, 0, lines, 0, 0, 0, length);
-    return new ChangedBlock(0, 0, 0, length, 0, lines, lineFragment);
-  }
-
-  @NotNull
-  public static ChangedBlock createDeleted(int length, int lines) {
-    LineFragmentImpl lineFragment = new LineFragmentImpl(0, lines, 0, 0, 0, length, 0, 0);
-    return new ChangedBlock(0, length, 0, 0, 0, lines, lineFragment);
-  }
-
   public int getStartOffset1() {
     return myStartOffset1;
   }

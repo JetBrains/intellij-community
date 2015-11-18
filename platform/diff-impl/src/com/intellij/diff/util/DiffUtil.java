@@ -793,8 +793,8 @@ public class DiffUtil {
 
   @NotNull
   public static TextDiffType getLineDiffType(@NotNull LineFragment fragment) {
-    boolean left = fragment.getEndOffset1() != fragment.getStartOffset1() || fragment.getStartLine1() != fragment.getEndLine1();
-    boolean right = fragment.getEndOffset2() != fragment.getStartOffset2() || fragment.getStartLine2() != fragment.getEndLine2();
+    boolean left = fragment.getStartLine1() != fragment.getEndLine1();
+    boolean right = fragment.getStartLine2() != fragment.getEndLine2();
     return getType(left, right);
   }
 

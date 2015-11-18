@@ -62,6 +62,7 @@ import javax.swing.*;
 import java.util.*;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
+import static com.intellij.diff.util.DiffUtil.getLinesContent;
 
 public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   public static final Logger LOG = Logger.getInstance(UnifiedDiffViewer.class);
@@ -1182,9 +1183,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
       LineFragment lineFragment = change.getLineFragment();
 
-      int insertedStart = lineFragment.getStartOffset2();
-      int insertedEnd = lineFragment.getEndOffset2();
-      CharSequence insertedText = getContent(mySide).getDocument().getCharsSequence().subSequence(insertedStart, insertedEnd);
+      Document document = getContent(mySide).getDocument();
+      CharSequence insertedText = getLinesContent(document, lineFragment.getStartLine2(), lineFragment.getEndLine2());
 
       int lineNumber = lineFragment.getStartLine2();
 
