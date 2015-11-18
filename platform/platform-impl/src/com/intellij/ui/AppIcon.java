@@ -33,6 +33,8 @@ import org.apache.sanselan.Sanselan;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Area;
+import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -286,31 +288,38 @@ public abstract class AppIcon {
       if (Math.abs(myLastValue - value) < 0.02d) return true;
 
       try {
-        int progressHeight = (int)(myAppImage.getHeight() * 0.13);
-        int xInset = (int)(myAppImage.getWidth() * 0.05);
-        int yInset = (int)(myAppImage.getHeight() * 0.15);
+        double progressHeight = (myAppImage.getHeight() * 0.13);
+        double xInset = (myAppImage.getWidth() * 0.05);
+        double yInset = (myAppImage.getHeight() * 0.15);
 
-        final int width = myAppImage.getWidth() - xInset * 2;
-        final int y = myAppImage.getHeight() - progressHeight - yInset;
-        Shape rect = new RoundRectangle2D.Double(xInset, y, width, progressHeight, progressHeight, progressHeight);
-        Shape border =
-          new RoundRectangle2D.Double(xInset - 1, y - 1, width + 2, progressHeight + 2, (progressHeight + 2), (progressHeight + 2));
-        Shape progress = new RoundRectangle2D.Double(xInset + 1, y + 1, (width - 2) * value, progressHeight - 1, (progressHeight - 2),
-                                                     (progressHeight - 1));
+        final double width = myAppImage.getWidth() - xInset * 2;
+        final double y = myAppImage.getHeight() - progressHeight - yInset;
+
+        Area borderArea = new Area( new RoundRectangle2D.Double(
+          xInset - 1, y - 1, width + 2, progressHeight + 2,
+          (progressHeight + 2), (progressHeight + 2
+          )));
+
+        Area backgroundArea = new Area(new Rectangle2D.Double(xInset, y, width, progressHeight));
+
+        backgroundArea.intersect(borderArea);
+
+        Area progressArea = new Area(new Rectangle2D.Double(xInset + 1, y + 1,(width - 2) * value, progressHeight - 1));
+
+        progressArea.intersect(borderArea);
+
         AppImage appImg = createAppImage();
 
-        final Color brighter = Color.GRAY.brighter().brighter();
-        final Color backGround = new Color(brighter.getRed(), brighter.getGreen(), brighter.getBlue(), 85);
+        // white 80% transparent
+        final Color backGround = new Color(255, 255, 255, 217);
         appImg.myG2d.setColor(backGround);
-        appImg.myG2d.fill(rect);
+        appImg.myG2d.fill(backgroundArea);
         final Color color = isOk ? scheme.getOkColor() : scheme.getErrorColor();
-        final Paint paint = UIUtil.getGradientPaint(xInset + 1, y + 1, color.brighter(),
-                                                      xInset + 1, y + progressHeight - 1, color.darker().darker());
-        appImg.myG2d.setPaint(paint);
-        appImg.myG2d.fill(progress);
-        appImg.myG2d.setColor(Color.GRAY.darker().darker());
-        appImg.myG2d.draw(rect);
-        appImg.myG2d.draw(border);
+        appImg.myG2d.setColor(color);
+        appImg.myG2d.fill(progressArea);
+        appImg.myG2d.setColor(new Color(140, 139, 140));
+        appImg.myG2d.draw(backgroundArea);
+        appImg.myG2d.draw(borderArea);
 
         setDockIcon(appImg.myImg);
 
