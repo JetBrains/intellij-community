@@ -69,10 +69,4 @@ final class KeyboardShortcutDialog extends ShortcutDialog<KeyboardShortcut> {
   Collection<String> getConflicts(KeyboardShortcut shortcut, String actionId, Keymap keymap) {
     return keymap.getConflicts(actionId, shortcut).keySet();
   }
-
-  @Override
-  String getActionPath(String actionId) {
-    String actionPath = super.getActionPath(actionId);
-    return actionPath != null ? actionPath : actionId;
-  }
 }
