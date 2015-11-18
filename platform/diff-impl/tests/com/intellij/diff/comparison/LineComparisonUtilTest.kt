@@ -344,6 +344,13 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
       default(del(0, 0, 1), mod(2, 1, 1, 1))
       testAll()
     }
+
+    splitter() {
+      ("M===_X===_Y===" - " Y===_X===_N")
+      // TODO: default(mod(0, 0, 1, 1), mod(2, 2, 1, 1))
+      default(mod(0, 0, 1, 1), mod(1, 1, 1, 1), mod(2, 2, 1, 1))
+      testDefault()
+    }
   }
 
   fun `test bad cases caused by 'compareSmart' logic`() {

@@ -285,9 +285,12 @@ class ComparisonUtilAutoTest : DiffTestCase() {
   }
 
   private fun checkNonEqualsIfLongEnough(line1: CharSequence, line2: CharSequence, policy: ComparisonPolicy, allowNonSquashed: Boolean) {
-    // in non-squashed blocks non-trimmed elements are possible, if it's 'unimportant' lines
-    if (allowNonSquashed && countNonWhitespaceCharacters(line1) <= Registry.get("diff.unimportant.line.char.count").asInteger()) return
-    if (allowNonSquashed && countNonWhitespaceCharacters(line2) <= Registry.get("diff.unimportant.line.char.count").asInteger()) return
+    // in non-squashed blocks non-trimmed elements are possible
+    if (allowNonSquashed) {
+      if (policy != ComparisonPolicy.IGNORE_WHITESPACES) return
+      if (countNonWhitespaceCharacters(line1) <= Registry.get("diff.unimportant.line.char.count").asInteger()) return
+      if (countNonWhitespaceCharacters(line2) <= Registry.get("diff.unimportant.line.char.count").asInteger()) return
+    }
 
     assertFalse(MANAGER.isEquals(line1, line2, policy))
   }
