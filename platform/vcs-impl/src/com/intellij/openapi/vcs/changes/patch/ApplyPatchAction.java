@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 17.11.2006
- * Time: 17:08:11
- */
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.diff.DiffManager;
@@ -77,7 +71,7 @@ public class ApplyPatchAction extends DumbAwareAction {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (isProjectOrScopeView(e.getPlace())) {
       VirtualFile vFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
-      e.getPresentation().setEnabledAndVisible(project != null && vFile != null && vFile.getFileType() == StdFileTypes.PATCH);
+      e.getPresentation().setEnabledAndVisible(project != null && isPatchFile(vFile));
     }
     else {
       e.getPresentation().setVisible(true);
@@ -85,13 +79,21 @@ public class ApplyPatchAction extends DumbAwareAction {
     }
   }
 
+  private static boolean isPatchFile(@Nullable VirtualFile vFile) {
+    return vFile != null && vFile.getFileType() == StdFileTypes.PATCH;
+  }
+
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     if (ChangeListManager.getInstance(project).isFreezedWithNotification("Can not apply patch now")) return;
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    if (isProjectOrScopeView(e.getPlace())) {
-      VirtualFile vFile = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
+    VirtualFile vFile = null;
+    final String place = e.getPlace();
+    if (isProjectOrScopeView(place) || ActionPlaces.MAIN_MENU.equals(place)) {
+      vFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    }
+    if (isPatchFile(vFile)) {
       showApplyPatch(project, vFile);
     }
     else {
