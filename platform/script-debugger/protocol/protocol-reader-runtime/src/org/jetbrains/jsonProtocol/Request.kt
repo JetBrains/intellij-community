@@ -29,11 +29,3 @@ interface Request<RESULT>  {
 abstract class EventType<T, R : ResponseResultReader>(val methodName: String) {
   abstract fun read(protocolReader: R, reader: JsonReaderEx): T
 }
-
-@JsonType
-interface Event {
-  fun method(): String
-
-  @JsonOptionalField
-  fun params(): JsonReaderEx?
-}
