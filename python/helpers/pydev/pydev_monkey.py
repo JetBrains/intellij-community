@@ -51,8 +51,13 @@ def patch_args(args):
             return args
 
         i = 1
+        is_module = False
         while i < len(args):
-            if args[i].startswith('-'):
+            if args[i] == "-m":
+                is_module = True
+                i += 1
+                break
+            elif args[i].startswith('-'):
                 new_args.append(args[i])
             else:
                 break
@@ -68,6 +73,8 @@ def patch_args(args):
                 arg = x
             new_args.append(arg)
             if x == '--file':
+                if is_module:
+                    new_args.insert(-1, '--module')
                 break
 
         while i < len(args):
