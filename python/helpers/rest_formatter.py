@@ -289,7 +289,8 @@ def format_docstring(docstring):
     writer = _DocumentPseudoWriter()
     publish_string(docstring, writer=writer, settings_overrides={'report_level': 10000,
                                                                  'halt_level': 10000,
-                                                                 'warning_stream': None})
+                                                                 'warning_stream': None,
+                                                                 'docinfo_xform': False})
     document = writer.document
     document.settings.xml_declaration = None
     visitor = RestHTMLTranslator(document)
