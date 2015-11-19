@@ -23,19 +23,19 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
-import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DefaultProjectFactory
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.compiled.ClassFileDecompilers
 import com.intellij.psi.impl.compiled.ClsFileImpl
@@ -47,6 +47,8 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences
 import org.jetbrains.java.decompiler.main.extern.IResultSaver
 import java.io.File
 import java.util.*
+import java.util.concurrent.Callable
+import java.util.concurrent.Future
 import java.util.jar.Manifest
 
 class IdeaDecompiler : ClassFileDecompilers.Light() {
@@ -76,55 +78,61 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
   private val myLogger = lazy { IdeaLogger() }
   private val myOptions = lazy { getOptions() }
   private val myProgress = ContainerUtil.newConcurrentMap<VirtualFile, ProgressIndicator>()
-  private var myLegalNoticeAccepted = false
+  private val myFutures = ContainerUtil.newConcurrentMap<VirtualFile, Future<CharSequence>>()
+  @Volatile private var myLegalNoticeAccepted = false
 
   init {
-    val app = ApplicationManager.getApplication()
-    myLegalNoticeAccepted = app.isUnitTestMode || PropertiesComponent.getInstance().isValueSet(LEGAL_NOTICE_KEY)
+    myLegalNoticeAccepted = ApplicationManager.getApplication().isUnitTestMode || PropertiesComponent.getInstance().isValueSet(LEGAL_NOTICE_KEY)
     if (!myLegalNoticeAccepted) {
-      app.messageBus.connect(app).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerAdapter() {
-        override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-          if (file.fileType === StdFileTypes.CLASS) {
-            val editor = source.getSelectedEditor(file)
-            if (editor is TextEditor) {
-              val text = editor.editor.document.immutableCharSequence
-              if (StringUtil.startsWith(text, BANNER)) {
-                showLegalNotice(source.project, file)
-              }
-            }
-          }
-        }
-      })
+      intercept()
     }
   }
 
-  private fun showLegalNotice(project: Project, file: VirtualFile) {
-    if (!myLegalNoticeAccepted) {
-      ApplicationManager.getApplication().invokeLater({
-        if (!myLegalNoticeAccepted) {
-          object : LegalNoticeDialog(project) {
-            override fun accepted() {
+  private fun intercept() {
+    val app = ApplicationManager.getApplication()
+    val connection = app.messageBus.connect(app)
+    connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, object : FileEditorManagerListener.Before.Adapter() {
+      override fun beforeFileOpened(source: FileEditorManager, file: VirtualFile) {
+        if (!myLegalNoticeAccepted && file.fileType === StdFileTypes.CLASS && ClassFileDecompilers.find(file) === this@IdeaDecompiler) {
+          myFutures.put(file, app.executeOnPooledThread(Callable<CharSequence> { decompile(file) }))
+
+          val dialog = LegalNoticeDialog(source.project, file)
+          dialog.show()
+          when (dialog.exitCode) {
+            DialogWrapper.OK_EXIT_CODE -> {
               PropertiesComponent.getInstance().setValue(LEGAL_NOTICE_KEY, true)
               myLegalNoticeAccepted = true
+
+              app.invokeLater({
+                RefreshQueue.getInstance().processSingleEvent(
+                    VFileContentChangeEvent(this@IdeaDecompiler, file, file.modificationStamp, -1, false))
+              }, ModalityState.any())
+
+              connection.disconnect()
             }
 
-            override fun declined() {
+            LegalNoticeDialog.DECLINE_EXIT_CODE -> {
+              myFutures.remove(file)?.cancel(true)
               PluginManagerCore.disablePlugin("org.jetbrains.java.decompiler")
               ApplicationManagerEx.getApplicationEx().restart(true)
             }
 
-            override fun canceled() {
-              FileEditorManager.getInstance(project).closeFile(file)
+            LegalNoticeDialog.POSTPONE_EXIT_CODE -> {
+              myFutures.remove(file)?.cancel(true)
             }
-          }.show()
+          }
         }
-      }, ModalityState.NON_MODAL)
-    }
+      }
+    })
   }
 
   override fun accepts(file: VirtualFile): Boolean = true
 
-  override fun getText(file: VirtualFile): CharSequence {
+  override fun getText(file: VirtualFile): CharSequence =
+      if (myLegalNoticeAccepted) myFutures.remove(file)?.get() ?: decompile(file)
+      else ClsFileImpl.decompile(file)
+
+  private fun decompile(file: VirtualFile): CharSequence {
     if ("package-info.class" == file.name) {
       return ClsFileImpl.decompile(file)
     }
