@@ -142,7 +142,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
     }
     final FileBasedIndexImpl index = (FileBasedIndexImpl)i;
 
-    if (index.getChangedFileCount() + index.getNumberOfPendingInvalidations() < 20) {
+    if (index.getChangedFileCount() < 20) {
       return null;
     }
 
