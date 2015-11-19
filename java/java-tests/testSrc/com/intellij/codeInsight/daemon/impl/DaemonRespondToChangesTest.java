@@ -118,6 +118,7 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -705,23 +706,23 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
-        changed(highlighter, "after added");
+        changed(highlighter, ExceptionUtil.getThrowableText(new Throwable("after added")));
       }
 
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        changed(highlighter, "before removed");
+        changed(highlighter, ExceptionUtil.getThrowableText(new Throwable("before removed")));
       }
 
       @Override
       public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged) {
-        changed(highlighter, "changed");
+        changed(highlighter, ExceptionUtil.getThrowableText(new Throwable("changed")));
       }
 
       private void changed(@NotNull RangeHighlighterEx highlighter, String reason) {
         String text = highlighter.getDocument().getText().substring(highlighter.getStartOffset(), highlighter.getEndOffset());
         if (text.equals("X")) return; //non relevant
-        changed.add(reason+": "+highlighter);
+        changed.add(highlighter+": \n"+reason);
       }
     });
 
