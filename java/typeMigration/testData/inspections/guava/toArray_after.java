@@ -6,6 +6,6 @@ public class Main10 {
   void m() {
     Stream<String> it = new ArrayList<String>().stream();
 
-    String[] arr = it.map(s -> s + "asd").toArray(i -> new String[i]);
+    String[] arr = it.map(s -> s + "asd").toArray(String[]::new);
   }
 }

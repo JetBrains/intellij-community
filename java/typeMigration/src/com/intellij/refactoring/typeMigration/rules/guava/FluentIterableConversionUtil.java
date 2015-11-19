@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.typeMigration.rules.guava;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.codeInspection.java18StreamApi.StreamApiConstants;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,6 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -93,13 +95,29 @@ public class FluentIterableConversionUtil {
 
         @Override
         public PsiExpression replace(PsiExpression expression) throws IncorrectOperationException {
-          final UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
-          final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
-          final String name = codeStyleManager.suggestUniqueVariableName(
-            codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, PsiType.INT).names[0], expression, false);
-          final String chosenName = nameGenerator.generateUniqueName(name);
-          setReplaceByString("$q$.toArray(" + chosenName + " -> " + " new " + myType.getCanonicalText(false) + "[" + chosenName + "])");
-
+          if (!JavaGenericsUtil.isReifiableType(myType)) {
+            final UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
+            final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
+            final String name = codeStyleManager.suggestUniqueVariableName(
+              codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, PsiType.INT).names[0], expression, false);
+            final String chosenName = nameGenerator.generateUniqueName(name);
+            final PsiType arrayType;
+            if (myType instanceof PsiClassType) {
+              final PsiClass resolvedClass = ((PsiClassType)myType).resolve();
+              if (resolvedClass == null) return expression;
+              if (resolvedClass instanceof PsiTypeParameter) {
+                arrayType = PsiType.getJavaLangObject(expression.getManager(), expression.getResolveScope());
+              } else {
+                arrayType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(resolvedClass);
+              }
+            }  else {
+              return null;
+            }
+            setReplaceByString("$q$.toArray(" + chosenName + " -> " + "(" + myType.getCanonicalText(false) + "[]) new " +
+                               arrayType.getCanonicalText(false) + "[" + chosenName + "])");
+          } else {
+            setReplaceByString("$q$.toArray(" + myType.getCanonicalText(false) + "[]::new)");
+          }
           return super.replace(expression);
         }
       };
