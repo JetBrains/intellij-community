@@ -561,9 +561,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private void processRangeHighlighters(int startOffset, int endOffset, @NotNull RangeHighlighterProcessor processor) {
     Document document = myEditor.getDocument();
-    final MarkupModelEx docMarkup = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myEditor.getProject(), true);
     // we limit highlighters to process to between line starting at startOffset and line ending at endOffset
-    DisposableIterator<RangeHighlighterEx> docHighlighters = docMarkup.overlappingIterator(startOffset, endOffset);
+    DisposableIterator<RangeHighlighterEx> docHighlighters = myEditor.getFilteredDocumentMarkupModel().overlappingIterator(startOffset, endOffset);
     DisposableIterator<RangeHighlighterEx> editorHighlighters = myEditor.getMarkupModel().overlappingIterator(startOffset, endOffset);
 
     try {
@@ -614,9 +613,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         int endLineIndex = lowerHighlighter.getDocument().getLineNumber(endOffset);
         if (!isValidLine(document, endLineIndex)) continue;
 
-        if (lowerHighlighter.getEditorFilter().avaliableIn(myEditor)) {
-          processor.process(lowerHighlighter);
-        }
+        processor.process(lowerHighlighter);
       }
     }
     finally {

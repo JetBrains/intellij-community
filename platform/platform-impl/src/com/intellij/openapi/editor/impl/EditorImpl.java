@@ -191,6 +191,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myIsViewer;
   @NotNull private final SelectionModelImpl mySelectionModel;
   @NotNull private final EditorMarkupModelImpl myMarkupModel;
+  @NotNull private final MarkupModelEx myDocumentMarkupModel;
+
   @NotNull private final FoldingModelImpl myFoldingModel;
   @NotNull private final ScrollingModelImpl myScrollingModel;
   @NotNull private final CaretModelImpl myCaretModel;
@@ -341,8 +343,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       putUserData(FORCED_SOFT_WRAPS, Boolean.TRUE);
     }
 
+    MarkupModelEx documentMarkup = (MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, true);
+
     mySelectionModel = new SelectionModelImpl(this);
     myMarkupModel = new EditorMarkupModelImpl(this);
+    myDocumentMarkupModel = new EditorFilteringMarkupModelEx(this, documentMarkup);
     myFoldingModel = new FoldingModelImpl(this);
     myCaretModel = new CaretModelImpl(this);
     mySoftWrapModel = new SoftWrapModelImpl(this);
@@ -418,7 +423,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     };
 
-    ((MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, true)).addMarkupModelListener(myCaretModel, markupModelListener);
+    getFilteredDocumentMarkupModel().addMarkupModelListener(myCaretModel, markupModelListener);
     getMarkupModel().addMarkupModelListener(myCaretModel, markupModelListener);
 
     myDocument.addDocumentListener(myFoldingModel, myCaretModel);
@@ -720,6 +725,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull
   public MarkupModelEx getMarkupModel() {
     return myMarkupModel;
+  }
+
+  @Override
+  @NotNull
+  public MarkupModelEx getFilteredDocumentMarkupModel() {
+    return myDocumentMarkupModel;
   }
 
   @Override
@@ -2164,14 +2175,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       paintRightMargin(g, clip);
       paintCustomRenderers(g, clipStartOffset, clipEndOffset);
-      MarkupModelEx docMarkup = (MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, true);
-      paintLineMarkersSeparators(g, clip, docMarkup, clipStartOffset, clipEndOffset);
+      paintLineMarkersSeparators(g, clip, myDocumentMarkupModel, clipStartOffset, clipEndOffset);
       paintLineMarkersSeparators(g, clip, myMarkupModel, clipStartOffset, clipEndOffset);
       paintText(g, clip, clipStartPosition, clipStartOffset, clipEndOffset);
-      paintSegmentHighlightersBorderAndAfterEndOfLine(g, clip, clipStartOffset, clipEndOffset, docMarkup);
+      paintSegmentHighlightersBorderAndAfterEndOfLine(g, clip, clipStartOffset, clipEndOffset, myDocumentMarkupModel);
       BorderEffect borderEffect = new BorderEffect(this, g, clipStartOffset, clipEndOffset);
       borderEffect.paintHighlighters(getHighlighter());
-      borderEffect.paintHighlighters(docMarkup);
+      borderEffect.paintHighlighters(myDocumentMarkupModel);
       borderEffect.paintHighlighters(myMarkupModel);
 
       paintCaretCursor(g);
@@ -2187,8 +2197,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myMarkupModel.processRangeHighlightersOverlappingWith(clipStartOffset, clipEndOffset, new Processor<RangeHighlighterEx>() {
       @Override
       public boolean process(@NotNull RangeHighlighterEx highlighter) {
-        if (!highlighter.getEditorFilter().avaliableIn(EditorImpl.this)) return true;
-
         final CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
         if (customRenderer != null && clipStartOffset < highlighter.getEndOffset() && highlighter.getStartOffset() < clipEndOffset) {
           customRenderer.paint(EditorImpl.this, highlighter, g);
@@ -2355,8 +2363,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Processor<RangeHighlighterEx> paintProcessor = new Processor<RangeHighlighterEx>() {
       @Override
       public boolean process(@NotNull RangeHighlighterEx highlighter) {
-        if (!highlighter.getEditorFilter().avaliableIn(EditorImpl.this)) return true;
-
         paintSegmentHighlighterAfterEndOfLine(g, highlighter, startLine, endLine);
         return true;
       }
@@ -3286,8 +3292,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     markupModel.processRangeHighlightersOverlappingWith(clipStartOffset, clipEndOffset, new Processor<RangeHighlighterEx>() {
       @Override
       public boolean process(@NotNull RangeHighlighterEx lineMarker) {
-        if (!lineMarker.getEditorFilter().avaliableIn(EditorImpl.this)) return true;
-
         paintLineMarkerSeparator(lineMarker, clip, g);
         return true;
       }

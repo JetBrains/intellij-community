@@ -98,6 +98,11 @@ public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
     myDelegate.remove();
   }
 
+  public E peek() {
+    if (!hasNext()) throw new NoSuchElementException();
+    return (E)myCurrent;
+  }
+
   public static <T> Iterator<T> skipNulls(Iterator<T> iterator) {
     return create(iterator, NOT_NULL);
   }
