@@ -340,7 +340,7 @@ public class InferenceSession {
             collectAdditionalConstraints(parameters, args, properties.getMethod(), mySiteSubstitutor, additionalConstraints, properties.isVarargs());
           }
   
-          if (!additionalConstraints.isEmpty() && !proceedWithAdditionalConstraints(additionalConstraints, initialSubstitutor == null ? PsiSubstitutor.EMPTY : initialSubstitutor)) {
+          if (!additionalConstraints.isEmpty() && !proceedWithAdditionalConstraints(additionalConstraints)) {
             return prepareSubstitution().putAll(retrieveNonPrimitiveEqualsBounds(myInferenceVariables));
           }
         }
@@ -1211,13 +1211,13 @@ public class InferenceSession {
       }
   }
 
-  private boolean proceedWithAdditionalConstraints(Set<ConstraintFormula> additionalConstraints, PsiSubstitutor initialSubstitutor) {
+  private boolean proceedWithAdditionalConstraints(Set<ConstraintFormula> additionalConstraints) {
     //empty substitutor should be used to resolve input variables:
     //all types in additional constraints are already substituted during collecting phase, 
     //recursive site substitutors (T -> List<T>) would make additional constraints work with multiple times substituted types, which is incorrect.
     //at the same time, recursive substitutions should not appear during inference but appear rather on site,
     //so the problem should not influence consequence substitution of additional constraints
-    final PsiSubstitutor siteSubstitutor = initialSubstitutor;
+    final PsiSubstitutor siteSubstitutor = PsiSubstitutor.EMPTY;
 
     while (!additionalConstraints.isEmpty()) {
       //extract subset of constraints
