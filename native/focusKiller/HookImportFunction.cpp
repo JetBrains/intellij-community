@@ -180,7 +180,8 @@ BOOL HookImportFunctionsByName(HMODULE hModule, LPCSTR szImportMod, UINT uiCount
     // used so the lookup will be faster.  However, the size of
     // uiCount coming into this function should be rather small
     // but it is called for each function imported by szImportMod.
-    for (UINT i = 0; i<uiCount; i++)
+    UINT i;
+    for (i = 0; i<uiCount; i++)
     {
       if ((paHookArray[i].szFunc[0] == pByName->Name[0]) &&
         (strcmpi(paHookArray[i].szFunc, (char*)pByName->Name) == 0))
