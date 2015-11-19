@@ -74,6 +74,9 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
   }
 
   public void dispose() {
+    if (myMessagePool != null) {
+      myMessagePool.removeListener(this);
+    }
   }
 
   public void install(@NotNull StatusBar statusBar) {
