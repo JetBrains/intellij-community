@@ -135,6 +135,7 @@ public class PythonSdkType extends SdkType {
     return "reference.project.structure.sdk.python";
   }
 
+  @NotNull
   public Icon getIconForAddAction() {
     return PythonFileType.INSTANCE.getIcon();
   }
@@ -255,15 +256,15 @@ public class PythonSdkType extends SdkType {
   }
 
   public static boolean isDocker(@Nullable final Sdk sdk) {
-    return sdk != null && sdk.getSdkAdditionalData() instanceof  RemoteSdkAdditionalData &&
-           ((RemoteSdkAdditionalData) sdk.getSdkAdditionalData()).getRemoteConnectionType() == CredentialsType.DOCKER;
-
+    return sdk != null && sdk.getSdkAdditionalData() instanceof RemoteSdkAdditionalData &&
+           ((RemoteSdkAdditionalData)sdk.getSdkAdditionalData()).getRemoteConnectionType() == CredentialsType.DOCKER;
   }
 
   public static boolean isRemote(@Nullable String sdkPath) {
     return isRemote(findSdkByPath(sdkPath));
   }
 
+  @NotNull
   @Override
   public FileChooserDescriptor getHomeChooserDescriptor() {
     final boolean isWindows = SystemInfo.isWindows;
@@ -302,7 +303,9 @@ public class PythonSdkType extends SdkType {
     return true;
   }
 
-  public void showCustomCreateUI(SdkModel sdkModel, final JComponent parentComponent, final Consumer<Sdk> sdkCreatedCallback) {
+  public void showCustomCreateUI(@NotNull SdkModel sdkModel,
+                                 @NotNull final JComponent parentComponent,
+                                 @NotNull final Consumer<Sdk> sdkCreatedCallback) {
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
     final PointerInfo pointerInfo = MouseInfo.getPointerInfo();
     if (pointerInfo == null) return;
@@ -456,7 +459,8 @@ public class PythonSdkType extends SdkType {
   }
 
   @Nullable
-  public AdditionalDataConfigurable createAdditionalDataConfigurable(final SdkModel sdkModel, final SdkModificator sdkModificator) {
+  public AdditionalDataConfigurable createAdditionalDataConfigurable(@NotNull final SdkModel sdkModel,
+                                                                     @NotNull final SdkModificator sdkModificator) {
     return null;
   }
 
@@ -482,13 +486,14 @@ public class PythonSdkType extends SdkType {
     return path.contains(SKELETON_DIR_NAME);
   }
 
+  @NotNull
   @NonNls
   public String getPresentableName() {
     return "Python SDK";
   }
 
   @Override
-  public String sdkPath(VirtualFile homePath) {
+  public String sdkPath(@NotNull VirtualFile homePath) {
     String path = super.sdkPath(homePath);
     PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(path);
     if (flavor != null) {
@@ -520,14 +525,14 @@ public class PythonSdkType extends SdkType {
   }
 
   @Override
-  public boolean setupSdkPaths(Sdk sdk, SdkModel sdkModel) {
+  public boolean setupSdkPaths(@NotNull Sdk sdk, @NotNull SdkModel sdkModel) {
     return true;  // run setupSdkPaths only once (from PythonSdkDetailsStep). Skip this from showCustomCreateUI
   }
 
   public void setupSdkPaths(@NotNull final Sdk sdk,
-                                   @Nullable final Project project,
-                                   @Nullable final Component ownerComponent,
-                                   @NotNull final SdkModificator sdkModificator) {
+                            @Nullable final Project project,
+                            @Nullable final Component ownerComponent,
+                            @NotNull final SdkModificator sdkModificator) {
     scheduledToRefresh.add(sdk.getHomePath());
     doSetupSdkPaths(project, ownerComponent, PySdkUpdater.fromSdkModificator(sdk, sdkModificator));
   }
@@ -539,7 +544,8 @@ public class PythonSdkType extends SdkType {
       @Override
       public void run() {
         try {
-          final boolean success = doSetupSdkPaths(project, ownerComponent, PySdkUpdater.fromSdkPath(sdk.getHomePath()));
+          PySdkUpdater updater = PySdkUpdater.singletonJdkTableUpdater(sdk.getHomePath());
+          final boolean success = doSetupSdkPaths(project, ownerComponent, updater);
 
           if (!success) {
             Messages.showErrorDialog(
@@ -570,8 +576,8 @@ public class PythonSdkType extends SdkType {
   }
 
   private boolean doSetupSdkPaths(@Nullable final Project project,
-                                         @Nullable final Component ownerComponent,
-                                         @NotNull final PySdkUpdater sdkUpdater) {
+                                  @Nullable final Component ownerComponent,
+                                  @NotNull final PySdkUpdater sdkUpdater) {
     if (isRemote(sdkUpdater.getSdk()) && project == null && ownerComponent == null) {
       LOG.error("For refreshing skeletons of remote SDK, either project or owner component must be specified");
     }
@@ -613,6 +619,13 @@ public class PythonSdkType extends SdkType {
                 else if (!isInvalid(sdkUpdater.getSdk())) {
                   LOG.error(e);
                 }
+              } finally {
+                UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+                  @Override
+                  public void run() {
+                    sdkUpdater.commit();
+                  }
+                });
               }
             }
           });
@@ -842,7 +855,7 @@ public class PythonSdkType extends SdkType {
     // directory of the script itself - otherwise the dir in which we run the script (e.g. /usr/bin) will be added to SDK path
     GeneralCommandLine cmd = PythonHelper.SYSPATH.newCommandLine(binaryPath, Lists.<String>newArrayList());
     final ProcessOutput runResult = PySdkUtil.getProcessOutput(cmd, new File(binaryPath).getParent(),
-                                                                getVirtualEnvExtraEnv(binaryPath), MINUTE);
+                                                               getVirtualEnvExtraEnv(binaryPath), MINUTE);
     if (!runResult.checkSuccess(LOG)) {
       throw new InvalidSdkException(String.format("Failed to determine Python's sys.path value:\nSTDOUT: %s\nSTDERR: %s",
                                                   runResult.getStdout(),
@@ -947,7 +960,7 @@ public class PythonSdkType extends SdkType {
     return LanguageLevel.getDefault();
   }
 
-  public boolean isRootTypeApplicable(final OrderRootType type) {
+  public boolean isRootTypeApplicable(@NotNull final OrderRootType type) {
     return type == OrderRootType.CLASSES;
   }
 
