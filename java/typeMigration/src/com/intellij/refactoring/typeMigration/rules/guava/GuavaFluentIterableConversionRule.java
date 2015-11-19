@@ -326,11 +326,13 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
         break;
       }
       else if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).resolve() instanceof PsiVariable) {
-        final PsiClass toClass = PsiTypesUtil.getPsiClass(to);
-        if (toClass != null && (StreamApiConstants.JAVA_UTIL_STREAM_STREAM.equals(toClass.getQualifiedName()) ||
-                                GuavaOptionalConversionRule.JAVA_OPTIONAL.equals(toClass.getQualifiedName()))) {
+        final PsiClass qClass = PsiTypesUtil.getPsiClass(qualifier.getType());
+        final boolean isFluentIterable;
+        if (qClass != null && ((isFluentIterable = GuavaFluentIterableConversionRule.FLUENT_ITERABLE.equals(qClass.getQualifiedName())) ||
+                                GuavaOptionalConversionRule.GUAVA_OPTIONAL.equals(qClass.getQualifiedName()))) {
           labeler.migrateExpressionType(qualifier,
-                                        GuavaConversionUtil.addTypeParameters(toClass.getQualifiedName(), qualifier.getType(), qualifier),
+                                        GuavaConversionUtil.addTypeParameters(isFluentIterable ? StreamApiConstants.JAVA_UTIL_STREAM_STREAM :
+                                                                              GuavaOptionalConversionRule.JAVA_OPTIONAL, qualifier.getType(), qualifier),
                                         qualifier.getParent(),
                                         false,
                                         false);
