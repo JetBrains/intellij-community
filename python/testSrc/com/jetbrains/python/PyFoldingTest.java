@@ -44,4 +44,13 @@ public class PyFoldingTest extends PyTestCase {
   public void testBlocksFolding() {
     doTest();
   }
+
+  public void testLongStringsFolding() {
+    doTest();
+  }
+
+  public void testCollectionsFolding() {
+    doTest();
+  }
+
 }

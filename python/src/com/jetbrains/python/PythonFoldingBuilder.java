@@ -26,8 +26,10 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
+import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +40,16 @@ import java.util.List;
  */
 public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAware {
 
+  public static final TokenSet FOLDABLE_COLLECTIONS_LITERALS = TokenSet.create(
+                                                     PyElementTypes.SET_LITERAL_EXPRESSION,
+                                                     PyElementTypes.DICT_LITERAL_EXPRESSION,
+                                                     PyElementTypes.GENERATOR_EXPRESSION,
+                                                     PyElementTypes.SET_COMP_EXPRESSION,
+                                                     PyElementTypes.DICT_COMP_EXPRESSION,
+                                                     PyElementTypes.LIST_LITERAL_EXPRESSION,
+                                                     PyElementTypes.LIST_COMP_EXPRESSION,
+                                                     PyElementTypes.TUPLE_EXPRESSION);
+
   @Override
   protected void buildLanguageFoldRegions(@NotNull List<FoldingDescriptor> descriptors,
                                           @NotNull PsiElement root,
@@ -47,7 +59,8 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
   }
 
   private static void appendDescriptors(ASTNode node, List<FoldingDescriptor> descriptors) {
-    if (node.getElementType() instanceof PyFileElementType) {
+    IElementType elementType = node.getElementType();
+    if (elementType instanceof PyFileElementType) {
       final List<PyImportStatementBase> imports = ((PyFile)node.getPsi()).getImportBlock();
       if (imports.size() > 1) {
         final PyImportStatementBase firstImport = imports.get(0);
@@ -56,17 +69,27 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
                                                                          lastImport.getTextRange().getEndOffset())));
       }
     }
-    else if (node.getElementType() == PyElementTypes.STATEMENT_LIST) {
+    else if (elementType == PyElementTypes.STATEMENT_LIST) {
       foldStatementList(node, descriptors);
     }
-    else if (node.getElementType() == PyElementTypes.STRING_LITERAL_EXPRESSION) {
-      foldDocString(node, descriptors);
+    else if (elementType == PyElementTypes.STRING_LITERAL_EXPRESSION) {
+      foldLongStrings(node, descriptors);
     }
-
+    else if (FOLDABLE_COLLECTIONS_LITERALS.contains(elementType)) {
+      foldCollectionLiteral(node, descriptors);
+    }
     ASTNode child = node.getFirstChildNode();
     while (child != null) {
       appendDescriptors(child, descriptors);
       child = child.getTreeNext();
+    }
+  }
+
+  private static void foldCollectionLiteral(ASTNode node, List<FoldingDescriptor> descriptors) {
+    if (StringUtil.countNewLines(node.getChars()) > 0) {
+      TextRange range = node.getTextRange();
+      int delta = node.getElementType() == PyElementTypes.TUPLE_EXPRESSION ? 0 : 1;
+      descriptors.add(new FoldingDescriptor(node, TextRange.create(range.getStartOffset() + delta, range.getEndOffset() - delta)));
     }
   }
 
@@ -106,8 +129,11 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     return false;
   }
 
-  private static void foldDocString(ASTNode node, List<FoldingDescriptor> descriptors) {
-    if (getDocStringOwnerType(node) != null && StringUtil.countChars(node.getText(), '\n') > 1) {
+  private static void foldLongStrings(ASTNode node, List<FoldingDescriptor> descriptors) {
+    //don't want to fold docstrings like """\n string \n """
+    boolean shouldFoldDocString = getDocStringOwnerType(node) != null && StringUtil.countNewLines(node.getChars()) > 1;
+    boolean shouldFoldString = getDocStringOwnerType(node) == null && StringUtil.countNewLines(node.getChars()) > 0;
+    if (shouldFoldDocString || shouldFoldString) {
       descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
     }
   }
@@ -137,12 +163,33 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
       return "import ...";
     }
     if (node.getElementType() == PyElementTypes.STRING_LITERAL_EXPRESSION) {
-      final String stringValue = ((PyStringLiteralExpression)node.getPsi()).getStringValue().trim();
-      final String[] lines = LineTokenizer.tokenize(stringValue, true);
-      if (lines.length > 2 && lines[1].trim().length() == 0) {
-        return "\"\"\"" + lines [0].trim() + "...\"\"\"";
+      PyStringLiteralExpression stringLiteralExpression = (PyStringLiteralExpression)node.getPsi();
+      if (stringLiteralExpression.isDocString()) {
+        final String stringValue = stringLiteralExpression.getStringValue().trim();
+        final String[] lines = LineTokenizer.tokenize(stringValue, true);
+        if (lines.length > 2 && lines[1].trim().length() == 0) {
+          return "\"\"\"" + lines[0].trim() + "...\"\"\"";
+        }
+        return "\"\"\"...\"\"\"";
+      } else {
+        return getLanguagePlaceholderForString(stringLiteralExpression);
       }
-      return "\"\"\"...\"\"\"";
+    }
+    return "...";
+  }
+
+  private static String getLanguagePlaceholderForString(PyStringLiteralExpression stringLiteralExpression) {
+    String stringText = stringLiteralExpression.getText();
+    int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
+    stringText = stringText.substring(prefixLength);
+    if (stringText.startsWith("'''") && stringText.endsWith("'''")) {
+      return "'''...'''";
+    }
+    if (stringText.startsWith("'") && stringText.endsWith("'")) {
+        return "'...'";
+    }
+    if (stringText.startsWith("\"") && stringText.endsWith("\"")) {
+        return "\"...\"";
     }
     return "...";
   }
