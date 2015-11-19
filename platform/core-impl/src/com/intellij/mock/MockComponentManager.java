@@ -134,6 +134,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   @Override
   public void dispose() {
+    myMessageBus.dispose();
   }
 
   @NotNull
