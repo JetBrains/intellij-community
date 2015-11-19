@@ -70,15 +70,6 @@ public class Runner {
       initLogger();
       logger.info("destFolder: " + destFolder);
 
-      //remove this code after one EAP cycle
-      String osName = System.getProperty("os.name").toLowerCase(Locale.US);
-      logger.info("osName: " + osName);
-      if (osName.startsWith("mac") && destFolder.startsWith("\"") && destFolder.lastIndexOf("\"") == destFolder.length()-1) {
-        destFolder = destFolder.substring(1, destFolder.length()-1);
-        logger.info("removed quotes: " + destFolder);
-      }
-      //remove this code after one EAP cycle
-
       install(jarFile, destFolder);
     }
     else {
