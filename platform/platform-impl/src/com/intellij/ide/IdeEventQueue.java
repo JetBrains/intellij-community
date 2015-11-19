@@ -243,7 +243,12 @@ public class IdeEventQueue extends EventQueue {
       myIdleListeners.add(runnable);
       final MyFireIdleRequest request = new MyFireIdleRequest(runnable, timeout);
       myListener2Request.put(runnable, request);
-      myIdleRequestsAlarm.addRequest(request, timeout);
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          myIdleRequestsAlarm.addRequest(request, timeout);
+        }
+      });
     }
   }
 
