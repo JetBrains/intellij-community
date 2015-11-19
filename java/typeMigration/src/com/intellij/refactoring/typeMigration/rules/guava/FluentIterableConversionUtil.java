@@ -165,10 +165,11 @@ public class FluentIterableConversionUtil {
       if (argument != null && !(argument instanceof PsiFunctionalExpression)) {
         argument =
           (PsiExpression)argument.replace(javaPsiFacade.getElementFactory().createExpressionFromText("(" + argument.getText() + ")::apply", null));
+        ParenthesesUtils.removeParentheses(argument, false);
       }
 
       if (argument instanceof PsiMethodReferenceExpression) {
-        argument = ReplaceMethodRefWithLambdaIntention.convertMethodReferenceToLambda((PsiMethodReferenceExpression)argument);
+        argument = ReplaceMethodRefWithLambdaIntention.convertMethodReferenceToLambda((PsiMethodReferenceExpression)argument, true);
       }
       if (argument instanceof PsiLambdaExpression) {
         List<Pair<PsiExpression, Boolean>> iterableReturnValues = new SmartList<Pair<PsiExpression, Boolean>>();
