@@ -1214,7 +1214,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public int getLineNumberAreaOffset() {
-    return getLineNumberAreaWidth() == 0 && getAnnotationsAreaWidthEx() == 0 && getLineMarkerAreaWidth() == 0 ? 0 : GAP_BETWEEN_AREAS;
+    if (getLineNumberAreaWidth() == 0 && getAnnotationsAreaWidthEx() == 0 && getLineMarkerAreaWidth() == 0) {
+      return getFoldingAreaWidth() == 0 ? 0 : 1;
+    }
+    else {
+      return GAP_BETWEEN_AREAS;
+    }
   }
 
   @Override
