@@ -96,6 +96,16 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
     mySubstitutor = substitutor;
     assert substitutor.isValid();
   }
+  public PsiImmediateClassType(@NotNull PsiClass aClass,
+                               @NotNull PsiSubstitutor substitutor,
+                               @Nullable LanguageLevel level,
+                               @NotNull TypeAnnotationProvider annotations) {
+    super(level, annotations);
+    myClass = aClass;
+    myManager = aClass.getManager();
+    mySubstitutor = substitutor;
+    assert substitutor.isValid();
+  }
 
   @Override
   public PsiClass resolve() {
@@ -298,6 +308,6 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   @NotNull
   @Override
   public PsiClassType setLanguageLevel(@NotNull LanguageLevel level) {
-    return level.equals(myLanguageLevel) ? this : new PsiImmediateClassType(myClass, mySubstitutor, level, getAnnotations());
+    return level.equals(myLanguageLevel) ? this : new PsiImmediateClassType(myClass, mySubstitutor, level, getAnnotationProvider());
   }
 }

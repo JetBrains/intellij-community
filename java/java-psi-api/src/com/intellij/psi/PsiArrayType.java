@@ -39,6 +39,10 @@ public class PsiArrayType extends PsiType.Stub {
     super(annotations);
     myComponentType = componentType;
   }
+  public PsiArrayType(@NotNull PsiType componentType, @NotNull TypeAnnotationProvider annotations) {
+    super(annotations);
+    myComponentType = componentType;
+  }
 
   @NotNull
   @Override
@@ -114,7 +118,9 @@ public class PsiArrayType extends PsiType.Stub {
   }
 
   public boolean equals(Object obj) {
-    return obj != null && getClass().equals(obj.getClass()) && myComponentType.equals(((PsiArrayType)obj).getComponentType());
+    return obj instanceof PsiArrayType &&
+           (this instanceof PsiEllipsisType == obj instanceof PsiEllipsisType) &&
+           myComponentType.equals(((PsiArrayType)obj).getComponentType());
   }
 
   public int hashCode() {
