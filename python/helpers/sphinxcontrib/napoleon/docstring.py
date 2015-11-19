@@ -8,11 +8,10 @@ import collections
 import inspect
 import re
 import sys
+from six.moves import range
 
 from pockets import modify_iter
 from six import string_types
-from six.moves import range
-
 
 _directive_regex = re.compile(r'\.\. \S+::')
 _google_section_regex = re.compile(r'^(\s|\w)+:\s*$')
@@ -774,6 +773,12 @@ class NumpyDocstring(GoogleDocstring):
         _name, _type = _name.strip(), _type.strip()
         if prefer_type and not _type:
             _type, _name = _name, _type
+
+        if _name[:2] == '**':
+            _name = r'\*\*'+_name[2:]
+        elif _name[:1] == '*':
+            _name = r'\*'+_name[1:]
+
         indent = self._get_indent(line)
         _desc = self._dedent(self._consume_indented_block(indent + 1))
         _desc = self.__class__(_desc, self._config).lines()
