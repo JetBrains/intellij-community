@@ -19,7 +19,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -29,7 +33,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderAnnotationCo
 import java.util.Collection;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport.createBuildMethod;
-import static org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport.createFieldSetter;
 
 public class ExternalBuilderStrategySupport extends BuilderAnnotationContributor {
 
@@ -42,24 +45,42 @@ public class ExternalBuilderStrategySupport extends BuilderAnnotationContributor
 
   @NotNull
   public Members collect(@NotNull GrTypeDefinition builderClass) {
-    Pair<PsiAnnotation, GrTypeDefinition> definitionPair = getConstructedClass(builderClass);
+    Pair<PsiAnnotation, PsiClass> definitionPair = getConstructedClassPair(builderClass);
     if (definitionPair == null) return Members.EMPTY;
 
     final PsiAnnotation annotation = definitionPair.first;
-    final GrTypeDefinition typeDefinition = definitionPair.second;
+    final PsiClass constructedClass = definitionPair.second;
     final Members result = Members.create();
-    for (GrField field : typeDefinition.getCodeFields()) {
-      result.getMethods().add(createFieldSetter(builderClass, field, annotation));
+    if (constructedClass instanceof GrTypeDefinition) {
+      for (GrField field : ((GrTypeDefinition)constructedClass).getCodeFields()) {
+        result.getMethods().add(DefaultBuilderStrategySupport.createFieldSetter(builderClass, field, annotation));
+      }
     }
-    result.getMethods().add(createBuildMethod(annotation, createType(typeDefinition), builderClass));
+    else {
+      for (PsiMethod setter : PropertyUtil.getAllProperties(constructedClass, true, false).values()) {
+        final PsiMethod builderSetter = createFieldSetter(builderClass, setter, annotation);
+        if (builderSetter != null) result.getMethods().add(builderSetter);
+      }
+    }
+    result.getMethods().add(createBuildMethod(annotation, createType(constructedClass), builderClass));
     return result;
   }
 
-  private static Pair<PsiAnnotation, GrTypeDefinition> getConstructedClass(GrTypeDefinition builderClass) {
+  private static Pair<PsiAnnotation, PsiClass> getConstructedClassPair(GrTypeDefinition builderClass) {
     final PsiAnnotation annotation = PsiImplUtil.getAnnotation(builderClass, BUILDER_FQN);
     if (!isApplicable(annotation, EXTERNAL_STRATEGY_NAME)) return null;
     final PsiClass constructedClass = getClassAttributeValue(annotation, "forClass");
-    if (!(constructedClass instanceof GrTypeDefinition)) return null;
-    return Pair.create(annotation, (GrTypeDefinition)constructedClass);
+    if (constructedClass == null) return null;
+    return Pair.create(annotation, constructedClass);
+  }
+
+  @Nullable
+  public static LightMethodBuilder createFieldSetter(@NotNull PsiClass builderClass,
+                                                     @NotNull PsiMethod setter,
+                                                     @NotNull PsiAnnotation annotation) {
+    final String name = PropertyUtil.getPropertyNameBySetter(setter);
+    final PsiType type = PropertyUtil.getPropertyType(setter);
+    if (type == null) return null;
+    return DefaultBuilderStrategySupport.createFieldSetter(builderClass, name, type, annotation, setter);
   }
 }
