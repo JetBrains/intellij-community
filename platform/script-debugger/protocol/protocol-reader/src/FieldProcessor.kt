@@ -36,9 +36,7 @@ internal class FieldProcessor(private val reader: InterfaceReader, typeClass: Cl
       // use method from super if super located in the same package
       if (methodClass != typeClass) {
         val methodPackage = methodClass.`package`
-        // may be it will be useful later
-        // && !methodPackage.getName().equals("org.jetbrains.debugger.adapters")
-        if (methodPackage != classPackage) {
+        if (methodPackage != classPackage && !classPackage.name.startsWith("${methodPackage.name}.")) {
           continue
         }
       }
