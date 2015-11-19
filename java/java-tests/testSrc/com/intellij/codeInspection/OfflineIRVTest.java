@@ -60,7 +60,12 @@ public class OfflineIRVTest extends TestSourceBasedTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    HighlightDisplayKey.register(DefUseInspectionBase.SHORT_NAME);
+
+    HighlightDisplayKey key = HighlightDisplayKey.find(DefUseInspectionBase.SHORT_NAME);
+    if (key == null) {
+      HighlightDisplayKey.register(DefUseInspectionBase.SHORT_NAME);
+    }
+
     myToolWrapper = new LocalInspectionToolWrapper(new DefUseInspection());
     myView = ViewOfflineResultsAction.showOfflineView(getProject(), parse(), new InspectionProfileImpl("test") {
       @Override
