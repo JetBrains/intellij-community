@@ -1,114 +1,73 @@
-package org.jetbrains.debugger;
+package org.jetbrains.debugger
 
-import com.intellij.util.Consumer;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.resolvedPromise
+import java.util.concurrent.atomic.AtomicReference
 
-import java.util.concurrent.atomic.AtomicReference;
+abstract class SuspendContextManagerBase<T : SuspendContextBase<*, *>, CALL_FRAME : CallFrame> : SuspendContextManager<CALL_FRAME> {
+  val contextRef = AtomicReference<T>()
 
-public abstract class SuspendContextManagerBase<T extends SuspendContextBase, CALL_FRAME extends CallFrame> implements SuspendContextManager<CALL_FRAME> {
-  protected final AtomicReference<T> context = new AtomicReference<T>();
+  protected val suspendCallback = AtomicReference<AsyncPromise<Void>>()
 
-  protected final AtomicReference<AsyncPromise<Void>> suspendCallback = new AtomicReference<AsyncPromise<Void>>();
+  protected abstract val debugListener: DebugEventListener
 
-  public final void setContext(@NotNull T newContext) {
-    if (!context.compareAndSet(null, newContext)) {
-      throw new IllegalStateException("Attempt to set context, but current suspend context is already exists");
+  fun setContext(newContext: T) {
+    if (!contextRef.compareAndSet(null, newContext)) {
+      throw IllegalStateException("Attempt to set context, but current suspend context is already exists")
     }
   }
 
   // dismiss context on resumed
-  protected final void dismissContext() {
-    T context = getContext();
+  protected fun dismissContext() {
+    val context = contextRef.get()
     if (context != null) {
-      contextDismissed(context);
+      contextDismissed(context)
     }
   }
 
-  @NotNull
-  protected final Promise<Void> dismissContextOnDone(@NotNull Promise<Void> promise) {
-    final T context = getContextOrFail();
-    promise.done(new Consumer<Void>() {
-      @Override
-      public void consume(Void aVoid) {
-        contextDismissed(context);
-      }
-    });
-    return promise;
+  protected fun dismissContextOnDone(promise: Promise<*>): Promise<*> {
+    val context = contextOrFail
+    promise.done { contextDismissed(context) }
+    return promise
   }
 
-  protected abstract DebugEventListener getDebugListener();
-
-  public final void contextDismissed(@NotNull T context) {
-    if (!this.context.compareAndSet(context, null)) {
-      throw new IllegalStateException("Expected " + context + ", but another suspend context exists");
+  fun contextDismissed(context: T) {
+    if (!contextRef.compareAndSet(context, null)) {
+      throw IllegalStateException("Expected $context, but another suspend context exists")
     }
-    context.getValueManager().markObsolete();
-    getDebugListener().resumed();
+    context.valueManager.markObsolete()
+    debugListener.resumed()
   }
 
-  @Nullable
-  @Override
-  public final T getContext() {
-    return context.get();
-  }
+  override val context: SuspendContext?
+    get() = contextRef.get()
 
-  @NotNull
-  @Override
-  public T getContextOrFail() {
-    T context = getContext();
-    if (context == null) {
-      throw new IllegalStateException("No current suspend context");
-    }
-    return context;
-  }
+  override val contextOrFail: T
+    get() = contextRef.get() ?: throw IllegalStateException("No current suspend context")
 
-  @NotNull
-  @Override
-  public final Promise<?> suspend() {
-    Promise<Void> callback = suspendCallback.get();
+  override fun suspend(): Promise<*> {
+    val callback = suspendCallback.get()
     if (callback != null) {
-      return callback;
+      return callback
     }
-
-    if (context.get() != null) {
-      return Promise.DONE;
-    }
-    return doSuspend();
+    return if (context != null) resolvedPromise() else doSuspend()
   }
 
-  @NotNull
-  protected abstract Promise<?> doSuspend();
+  protected abstract fun doSuspend(): Promise<*>
 
-  @Override
-  public boolean isContextObsolete(@NotNull SuspendContext context) {
-    return this.context.get() != context;
+  override fun isContextObsolete(context: SuspendContext) = this.context !== context
+
+  override fun setOverlayMessage(message: String?) {
   }
 
-  @Override
-  public void setOverlayMessage(@Nullable String message) {
+  override fun restartFrame(callFrame: CALL_FRAME): Promise<Boolean> = restartFrame(callFrame, contextOrFail)
+
+  protected open fun restartFrame(callFrame: CALL_FRAME, currentContext: T): Promise<Boolean> {
+    return Promise.reject<Boolean>("Unsupported")
   }
 
-  @NotNull
-  @Override
-  public final Promise<Boolean> restartFrame(@NotNull CALL_FRAME callFrame) {
-    return restartFrame(callFrame, getContextOrFail());
-  }
+  override fun canRestartFrame(callFrame: CallFrame) = false
 
-  @NotNull
-  protected Promise<Boolean> restartFrame(@NotNull CALL_FRAME callFrame, @NotNull T currentContext) {
-    return Promise.reject("Unsupported");
-  }
-
-  @Override
-  public boolean canRestartFrame(@NotNull CallFrame callFrame) {
-    return false;
-  }
-
-  @Override
-  public boolean isRestartFrameSupported() {
-    return false;
-  }
+  override val isRestartFrameSupported = false
 }

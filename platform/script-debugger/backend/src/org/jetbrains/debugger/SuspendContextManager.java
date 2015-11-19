@@ -13,52 +13,68 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.debugger;
+package org.jetbrains.debugger
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promise
 
-public interface SuspendContextManager<CALL_FRAME extends CallFrame> {
+interface SuspendContextManager<CALL_FRAME : CallFrame> {
   /**
-   * Tries to suspend VM. If successful, {@link DebugEventListener#suspended(SuspendContext)} will be called.
+   * Tries to suspend VM. If successful, [DebugEventListener.suspended] will be called.
    */
-  @NotNull
-  Promise<?> suspend();
+  fun suspend(): Promise<*>
 
-  @Nullable
-  SuspendContext getContext();
+  val context: SuspendContext?
 
-  @NotNull
-  SuspendContext getContextOrFail();
+  val contextOrFail: SuspendContext
 
-  boolean isContextObsolete(@NotNull SuspendContext context);
+  fun isContextObsolete(context: SuspendContext): Boolean
 
-  void setOverlayMessage(@Nullable String message);
+  fun setOverlayMessage(message: String?)
 
   /**
    * Resumes the VM execution. This context becomes invalid until another context is supplied through the
-   * {@link DebugEventListener#suspended(SuspendContext)} event.
-   *  @param stepAction to perform
-   * @param stepCount steps to perform (not used if {@code stepAction == CONTINUE})
+   * [DebugEventListener.suspended] event.
+   * @param stepAction to perform
+   * *
+   * @param stepCount steps to perform (not used if `stepAction == CONTINUE`)
    */
-  @NotNull
-  Promise<?> continueVm(@NotNull StepAction stepAction, int stepCount);
+  fun continueVm(stepAction: StepAction, stepCount: Int): Promise<*>
 
-  boolean isRestartFrameSupported();
+  val isRestartFrameSupported: Boolean
 
   /**
    * Restarts a frame (all frames above are dropped from the stack, this frame is started over).
    * for success the boolean parameter
-   *     is true if VM has been resumed and is expected to get suspended again in a moment (with
-   *     a standard 'resumed' notification), and is false if call frames list is already updated
-   *     without VM state change (this case presently is never actually happening)
+   * is true if VM has been resumed and is expected to get suspended again in a moment (with
+   * a standard 'resumed' notification), and is false if call frames list is already updated
+   * without VM state change (this case presently is never actually happening)
    */
-  @NotNull
-  Promise<Boolean> restartFrame(@NotNull CALL_FRAME callFrame);
+  fun restartFrame(callFrame: CALL_FRAME): Promise<Boolean>
 
   /**
    * @return whether reset operation is supported for the particular callFrame
    */
-  boolean canRestartFrame(@NotNull CallFrame callFrame);
+  fun canRestartFrame(callFrame: CallFrame): Boolean
+}
+
+enum class StepAction {
+  /**
+   * Resume the JavaScript execution.
+   */
+  CONTINUE,
+
+  /**
+   * Step into the current statement.
+   */
+  IN,
+
+  /**
+   * Step over the current statement.
+   */
+  OVER,
+
+  /**
+   * Step out of the current function.
+   */
+  OUT
 }
