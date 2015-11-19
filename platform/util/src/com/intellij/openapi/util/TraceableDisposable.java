@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,13 +33,13 @@ public class TraceableDisposable {
   private final Throwable CREATE_TRACE;
   private Throwable KILL_TRACE;
 
-  public TraceableDisposable(@Nullable("null means do not trace") Throwable creation) {
-    CREATE_TRACE = creation;
+  public TraceableDisposable(boolean debug) {
+    CREATE_TRACE = debug ? ThrowableInterner.intern(new Throwable()) : null;
   }
 
   public void kill(@NonNls @Nullable String msg) {
     if (CREATE_TRACE != null) {
-      KILL_TRACE = new Throwable(msg);
+      KILL_TRACE = ThrowableInterner.intern(new Throwable(msg));
     }
   }
 

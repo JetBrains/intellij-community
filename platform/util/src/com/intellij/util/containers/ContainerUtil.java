@@ -2492,8 +2492,15 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <K,V> ConcurrentMap<K,V> createConcurrentWeakKeyWeakValueMap() {
+    return createConcurrentWeakKeyWeakValueMap(ContainerUtil.<K>canonicalStrategy());
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentWeakKeyWeakValueMap(@NotNull TObjectHashingStrategy<K> strategy) {
     //noinspection deprecation
-    return new ConcurrentWeakKeyWeakValueHashMap<K, V>(100, 0.75f, Runtime.getRuntime().availableProcessors(), ContainerUtil.<K>canonicalStrategy());
+    return new ConcurrentWeakKeyWeakValueHashMap<K, V>(100, 0.75f, Runtime.getRuntime().availableProcessors(),
+                                                       strategy);
   }
 
   @NotNull

@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
-import com.intellij.util.containers.Interner;
+import com.intellij.util.containers.WeakInterner;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,8 +37,8 @@ import java.util.Arrays;
  * The available method Throwable.getStackTrace() unfortunately can't be used for that because it's
  * 1) too slow and 2) explodes Throwable retained size by polluting Throwable.stackTrace fields.
  */
-class ThrowableInterner {
-  private static final Interner<Throwable> myTraceInterner = new Interner<Throwable>(new TObjectHashingStrategy<Throwable>() {
+public class ThrowableInterner {
+  private static final WeakInterner<Throwable> myTraceInterner = new WeakInterner<Throwable>(new TObjectHashingStrategy<Throwable>() {
     @Override
     public int computeHashCode(Throwable throwable) {
       String message = throwable.getMessage();
@@ -47,11 +47,10 @@ class ThrowableInterner {
       }
       Object[] backtrace = getBacktrace(throwable);
       if (backtrace != null) {
-        // 5 is there interesting stack trace elements start
         Object[] stack = (Object[])ContainerUtil.find(backtrace, FilteringIterator.instanceOf(Object[].class));
-        return ((Class)stack[5]).getName().hashCode();
+        return Arrays.hashCode(stack);
       }
-      return throwable.getStackTrace()[5].getClassName().hashCode();
+      return Arrays.hashCode(throwable.getStackTrace());
     }
 
     @Override
@@ -91,7 +90,7 @@ class ThrowableInterner {
   }
 
   @NotNull
-  static Throwable intern(@NotNull Throwable throwable) {
+  public static Throwable intern(@NotNull Throwable throwable) {
     return getBacktrace(throwable) == null ? throwable : myTraceInterner.intern(throwable);
   }
 }

@@ -142,7 +142,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final JScrollPane myScrollPane;
   @NotNull private final EditorComponentImpl myEditorComponent;
   @NotNull private final EditorGutterComponentImpl myGutterComponent;
-  private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(new Throwable());
+  private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(true);
   private int myLinePaintersWidth;
 
   static {
