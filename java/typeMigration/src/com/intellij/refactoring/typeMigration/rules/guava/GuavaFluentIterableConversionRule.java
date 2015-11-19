@@ -181,7 +181,6 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     }
     else if (methodName.equals("append")) {
       descriptorBase = createDescriptorForAppend(method, context);
-      needSpecifyType = true;
     }
     else if (methodName.equals("get")) {
       descriptorBase = new TypeConversionDescriptor("$it$.get($p$)", null) {
