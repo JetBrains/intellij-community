@@ -242,13 +242,11 @@ internal class DomainGenerator(val generator: Generator, val domain: ProtocolMet
     val fullName = generator.naming.eventData.getFullName(domainName, event.name()).getFullText()
     generateJsonProtocolInterface(className, event.description(), event.parameters(), object : TextOutConsumer {
       override fun append(out: TextOutput) {
-        out.newLine().append("companion object").block {
-          out.append("val TYPE = object : org.jetbrains.wip.protocol.WipEventType<").append(fullName).append(">")
-          out.append("(\"").append(domainName).append('.').append(event.name()).append("\")").block() {
-            out.append("override fun read(protocolReader: ")
-            out.append(generator.naming.inputPackage).append('.').append(READER_INTERFACE_NAME).append(", ").append(JSON_READER_PARAMETER_DEF).append(")")
-            out.append("= protocolReader.").append(generator.naming.eventData.getParseMethodName(domainName, event.name())).append("(reader)")
-          }
+        out.newLine().append("companion object TYPE : org.jetbrains.jsonProtocol.EventType<").append(fullName).append(", ").append(generator.naming.inputPackage).append('.').append(READER_INTERFACE_NAME).append('>')
+        out.append("(\"").append(domainName).append('.').append(event.name()).append("\")").block() {
+          out.append("override fun read(protocolReader: ")
+          out.append(generator.naming.inputPackage).append('.').append(READER_INTERFACE_NAME).append(", ").append(JSON_READER_PARAMETER_DEF).append(")")
+          out.append(" = protocolReader.").append(generator.naming.eventData.getParseMethodName(domainName, event.name())).append("(reader)")
         }
       }
     })
