@@ -169,14 +169,24 @@ public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor 
   }
 
   @NotNull
-  public static LightMethodBuilder createFieldSetter(@NotNull PsiClass builderClass, @NotNull GrVariable field, @NotNull PsiAnnotation annotation) {
-    final String name = field.getName();
+  public static LightMethodBuilder createFieldSetter(@NotNull PsiClass builderClass,
+                                                     @NotNull GrVariable field,
+                                                     @NotNull PsiAnnotation annotation) {
+    return createFieldSetter(builderClass, field.getName(), field.getType(), annotation, field);
+  }
+
+  @NotNull
+  public static LightMethodBuilder createFieldSetter(@NotNull PsiClass builderClass,
+                                                     @NotNull String name,
+                                                     @NotNull PsiType type,
+                                                     @NotNull PsiAnnotation annotation,
+                                                     @NotNull PsiElement navigationElement) {
     final LightMethodBuilder fieldSetter = new LightMethodBuilder(builderClass.getManager(), getFieldMethodName(annotation, name));
     fieldSetter.addModifier(PsiModifier.PUBLIC);
-    fieldSetter.addParameter(name, field.getType());
+    fieldSetter.addParameter(name, type);
     fieldSetter.setContainingClass(builderClass);
     fieldSetter.setMethodReturnType(JavaPsiFacade.getElementFactory(builderClass.getProject()).createType(builderClass));
-    fieldSetter.setNavigationElement(field);
+    fieldSetter.setNavigationElement(navigationElement);
     fieldSetter.setOriginInfo(ORIGIN_INFO);
     return fieldSetter;
   }
