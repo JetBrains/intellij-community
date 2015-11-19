@@ -17,6 +17,7 @@ package com.intellij.refactoring.typeMigration.rules;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
@@ -110,10 +111,39 @@ public class RootTypeConversionRule extends TypeConversionRule {
               }
             }
           }
-          return new TypeConversionDescriptorBase();
+          return new MyConversionDescriptor(replacer);
         }
       }
     }
     return null;
+  }
+
+  private static class MyConversionDescriptor extends TypeConversionDescriptorBase {
+    private final PsiMethod myReplacer;
+
+    private MyConversionDescriptor(PsiMethod replacer) {
+      myReplacer = replacer;
+    }
+
+    @Override
+    public PsiExpression replace(PsiExpression expression) throws IncorrectOperationException {
+      if (myReplacer.hasModifierProperty(PsiModifier.STATIC)) {
+        final PsiClass containingClass = myReplacer.getContainingClass();
+        if (containingClass != null && containingClass.getQualifiedName() != null) {
+          final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+          final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
+          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
+          if (qualifierExpression != null) {
+            qualifierExpression.replace(elementFactory.createExpressionFromText(containingClass.getQualifiedName(), expression));
+            return expression;
+          } else {
+            final PsiElement replacedExpression = expression.replace(
+              elementFactory.createExpressionFromText(containingClass.getQualifiedName() + "." + expression.getText(), expression));
+            return (PsiExpression)JavaCodeStyleManager.getInstance(expression.getProject()).shortenClassReferences(replacedExpression);
+          }
+        }
+      }
+      return expression;
+    }
   }
 }
