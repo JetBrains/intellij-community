@@ -807,7 +807,7 @@ public class BuildManager implements Disposable {
                   if (errorsOnLaunch != null && errorsOnLaunch.length() > 0) {
                     msg.append("\n").append(errorsOnLaunch);
                     if (StringUtil.contains(errorsOnLaunch, "java.lang.NoSuchMethodError")) {
-                      msg.append("\nThe error may be caused by JARs in Java Extensions directory which conficts with libraries used by the external build process.")
+                      msg.append("\nThe error may be caused by JARs in Java Extensions directory which conflicts with libraries used by the external build process.")
                          .append("\nTry adding -Djava.ext.dirs=\"\" argument to 'Build process VM options' in File | Settings | Build, Execution, Deployment | Compiler to fix the problem.");
                     }
                   }
