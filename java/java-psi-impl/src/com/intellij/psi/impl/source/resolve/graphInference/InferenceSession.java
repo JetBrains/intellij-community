@@ -340,7 +340,7 @@ public class InferenceSession {
             collectAdditionalConstraints(parameters, args, properties.getMethod(), mySiteSubstitutor, additionalConstraints, properties.isVarargs());
           }
   
-          if (!additionalConstraints.isEmpty() && !proceedWithAdditionalConstraints(additionalConstraints)) {
+          if (!additionalConstraints.isEmpty() && !proceedWithAdditionalConstraints(additionalConstraints, initialSubstitutor == null ? PsiSubstitutor.EMPTY : initialSubstitutor)) {
             return prepareSubstitution().putAll(retrieveNonPrimitiveEqualsBounds(myInferenceVariables));
           }
         }
@@ -379,6 +379,13 @@ public class InferenceSession {
       return prepareSubstitution();
     }
     finally {
+
+      for (ConstraintFormula formula : myConstraintsCopy) {
+        if (formula instanceof InputOutputConstraintFormula) {
+          LambdaUtil.getFunctionalTypeMap().remove(((InputOutputConstraintFormula)formula).getExpression());
+        }
+      }
+
       if (properties != null && myErrorMessages != null) {
         properties.getInfo().setInferenceError(StringUtil.join(myErrorMessages, "\n"));
       }
@@ -1204,13 +1211,13 @@ public class InferenceSession {
       }
   }
 
-  private boolean proceedWithAdditionalConstraints(Set<ConstraintFormula> additionalConstraints) {
+  private boolean proceedWithAdditionalConstraints(Set<ConstraintFormula> additionalConstraints, PsiSubstitutor initialSubstitutor) {
     //empty substitutor should be used to resolve input variables:
     //all types in additional constraints are already substituted during collecting phase, 
     //recursive site substitutors (T -> List<T>) would make additional constraints work with multiple times substituted types, which is incorrect.
     //at the same time, recursive substitutions should not appear during inference but appear rather on site,
     //so the problem should not influence consequence substitution of additional constraints
-    final PsiSubstitutor siteSubstitutor = PsiSubstitutor.EMPTY;
+    final PsiSubstitutor siteSubstitutor = initialSubstitutor;
 
     while (!additionalConstraints.isEmpty()) {
       //extract subset of constraints
@@ -1251,7 +1258,7 @@ public class InferenceSession {
       if (callExpression != null) {
         final InferenceSession session = myInferenceSessionContainer.findNestedCallSession(callExpression, null);
         if (session != null) {
-          formula.apply(session.myInferenceSubstitution, true);
+          formula.apply(session.myInferenceSubstitution, false);
           collectVarsToResolve(varsToResolve, (InputOutputConstraintFormula)formula);
         }
       }
@@ -1266,25 +1273,18 @@ public class InferenceSession {
       MethodCandidateInfo.updateSubstitutor(argumentList, substitutor);
     }
 
-    try {
-      formula.apply(substitutor, true);
+    formula.apply(substitutor, true);
 
-      myConstraints.add(formula);
-      if (!repeatInferencePhases(true)) {
-        return false;
-      }
-
-      if (formula instanceof ExpressionCompatibilityConstraint) {
-        PsiExpression expression = ((ExpressionCompatibilityConstraint)formula).getExpression();
-        if (expression instanceof PsiLambdaExpression) {
-          PsiType parameterType = ((ExpressionCompatibilityConstraint)formula).getT();
-          collectLambdaReturnExpression(additionalConstraints, (PsiLambdaExpression)expression, parameterType, !isProperType(parameterType));
-        }
-      }
+    addConstraint(formula);
+    if (!repeatInferencePhases(true)) {
+      return false;
     }
-    finally {
-      if (formula instanceof InputOutputConstraintFormula) {
-        LambdaUtil.getFunctionalTypeMap().remove(((InputOutputConstraintFormula)formula).getExpression());
+
+    if (formula instanceof ExpressionCompatibilityConstraint) {
+      PsiExpression expression = ((ExpressionCompatibilityConstraint)formula).getExpression();
+      if (expression instanceof PsiLambdaExpression) {
+        PsiType parameterType = ((ExpressionCompatibilityConstraint)formula).getT();
+        collectLambdaReturnExpression(additionalConstraints, (PsiLambdaExpression)expression, parameterType, !isProperType(parameterType));
       }
     }
     return true;

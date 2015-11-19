@@ -201,10 +201,7 @@ public class InferenceSessionContainer {
       return null;
     }
 
-    final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
-    if (properties != null) {
-      return null;
-    }
+    LOG.assertTrue(MethodCandidateInfo.getCurrentMethod(argumentList) == null);
     return top;
   }
 }
