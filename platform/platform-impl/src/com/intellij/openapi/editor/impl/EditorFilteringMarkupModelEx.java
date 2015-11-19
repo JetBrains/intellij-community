@@ -18,7 +18,6 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.MarkupIterator;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
@@ -38,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class EditorFilteringMarkupModelEx implements MarkupModelEx {
-  @NotNull private final EditorEx myEditor;
+  @NotNull private final EditorImpl myEditor;
   @NotNull private final MarkupModelEx myDelegate;
 
   private final Condition<RangeHighlighter> IS_AVAILABLE = new Condition<RangeHighlighter>() {
@@ -48,13 +47,18 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
     }
   };
 
-  public EditorFilteringMarkupModelEx(@NotNull EditorEx editor, @NotNull MarkupModelEx delegate) {
+  public EditorFilteringMarkupModelEx(@NotNull EditorImpl editor, @NotNull MarkupModelEx delegate) {
     myEditor = editor;
     myDelegate = delegate;
   }
 
+  @NotNull
+  public MarkupModelEx getDelegate() {
+    return myDelegate;
+  }
+
   private boolean isAvailable(@NotNull RangeHighlighter highlighter) {
-    return highlighter.getEditorFilter().avaliableIn(myEditor);
+    return highlighter.getEditorFilter().avaliableIn(myEditor) && myEditor.isHighlighterAvailable(highlighter);
   }
 
   @Override

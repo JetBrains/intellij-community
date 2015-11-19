@@ -191,7 +191,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myIsViewer;
   @NotNull private final SelectionModelImpl mySelectionModel;
   @NotNull private final EditorMarkupModelImpl myMarkupModel;
-  @NotNull private final MarkupModelEx myDocumentMarkupModel;
+  @NotNull private final EditorFilteringMarkupModelEx myDocumentMarkupModel;
+  @NotNull private final MarkupModelListener myMarkupModelListener;
 
   @NotNull private final FoldingModelImpl myFoldingModel;
   @NotNull private final ScrollingModelImpl myScrollingModel;
@@ -273,6 +274,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myIgnoreMouseEventsConsecutiveToInitial;
 
   private EditorDropHandler myDropHandler;
+
+  private Condition<RangeHighlighter> myHighlightingFilter;
 
   private char[] myPrefixText;
   private TextAttributes myPrefixAttributes;
@@ -362,7 +365,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myConnection.subscribe(DocumentBulkUpdateListener.TOPIC, new EditorDocumentBulkUpdateAdapter());
     }
 
-    MarkupModelListener markupModelListener = new MarkupModelListener() {
+    myMarkupModelListener = new MarkupModelListener() {
       private boolean areRenderersInvolved(@NotNull RangeHighlighterEx highlighter) {
         return highlighter.getCustomRenderer() != null ||
                highlighter.getGutterIconRenderer() != null ||
@@ -423,8 +426,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     };
 
-    getFilteredDocumentMarkupModel().addMarkupModelListener(myCaretModel, markupModelListener);
-    getMarkupModel().addMarkupModelListener(myCaretModel, markupModelListener);
+    getFilteredDocumentMarkupModel().addMarkupModelListener(myCaretModel, myMarkupModelListener);
+    getMarkupModel().addMarkupModelListener(myCaretModel, myMarkupModelListener);
 
     myDocument.addDocumentListener(myFoldingModel, myCaretModel);
     myDocument.addDocumentListener(myCaretModel, myCaretModel);
@@ -5482,6 +5485,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDropHandler = dropHandler;
   }
 
+  public void setHighlightingFilter(@Nullable Condition<RangeHighlighter> filter) {
+    if (myHighlightingFilter == filter) return;
+    Condition<RangeHighlighter> oldFilter = myHighlightingFilter;
+    myHighlightingFilter = filter;
+
+    for (RangeHighlighter highlighter : myDocumentMarkupModel.getDelegate().getAllHighlighters()) {
+      boolean oldAvailable = oldFilter == null || oldFilter.value(highlighter);
+      boolean newAvailable = filter == null || filter.value(highlighter);
+      if (oldAvailable != newAvailable) myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true);
+    }
+  }
+
+  public boolean isHighlighterAvailable(@NotNull RangeHighlighter highlighter) {
+    return myHighlightingFilter == null || myHighlightingFilter.value(highlighter);
+  }
 
   private static class MyInputMethodHandleSwingThreadWrapper implements InputMethodRequests {
     private final InputMethodRequests myDelegate;
