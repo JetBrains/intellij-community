@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,9 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -114,8 +113,14 @@ public class PsiMethodFavoriteNodeProvider extends FavoriteNodeProvider {
   @Override
   public String getElementUrl(final Object element) {
      if (element instanceof PsiMethod) {
-      PsiMethod aMethod = (PsiMethod)element;
-      return PsiFormatUtil.getExternalName(aMethod);
+       PsiMethod aMethod = (PsiMethod)element;
+       final DumbService dumbService = DumbService.getInstance(aMethod.getProject());
+       dumbService.setAlternativeResolveEnabled(true);
+       try {
+         return PsiFormatUtil.getExternalName(aMethod);
+       } finally {
+         dumbService.setAlternativeResolveEnabled(false);
+       }
     }
     return null;
   }
