@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -45,12 +46,21 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
 
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
-    if (session.isProperType(myS) && session.isProperType(myT)) {
+    final HashSet<InferenceVariable> dependencies = new HashSet<InferenceVariable>();
+    if (!session.collectDependencies(myS, dependencies) && !session.collectDependencies(myT, dependencies)) {
       if (myT == null) return myS == null || myS.equalsToText(CommonClassNames.JAVA_LANG_OBJECT); 
       if (myS == null) return true; 
       return TypeConversionUtil.isAssignable(myT, myS);
     }
 
+    final boolean reduceResult = nonProperReduce(session, constraints);
+    if (!reduceResult) {
+      session.registerIncompatibleErrorMessage(dependencies, myS.getPresentableText() + " conforms to " + myT.getPresentableText());
+    }
+    return reduceResult;
+  }
+
+  private boolean nonProperReduce(InferenceSession session, List<ConstraintFormula> constraints) {
     if (PsiType.NULL.equals(myT) || myT == null) return false;
     if (PsiType.NULL.equals(myS) || myS == null || myT.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return true;
 

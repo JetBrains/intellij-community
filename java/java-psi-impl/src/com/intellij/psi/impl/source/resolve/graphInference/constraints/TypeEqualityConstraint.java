@@ -109,6 +109,7 @@ public class TypeEqualityConstraint implements ConstraintFormula {
       return true;
     }
 
+    session.registerIncompatibleErrorMessage(session.getInferenceVariables(), myS.getPresentableText() + " conforms to " + myT.getPresentableText());
     return false;
   }
 

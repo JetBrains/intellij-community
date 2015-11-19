@@ -372,10 +372,7 @@ public class InferenceSession {
           }
           mySiteSubstitutor = mySiteSubstitutor.put(param, mapping);
         }
-      } else {
-        return prepareSubstitution();
       }
-
       return prepareSubstitution();
     }
     finally {
@@ -1111,14 +1108,28 @@ public class InferenceSession {
 
   private PsiType registerIncompatibleErrorMessage(InferenceVariable var, @NotNull String incompatibleBoundsMessage) {
     if (var.getCallContext() == myContext) {
-      if (myErrorMessages == null) {
-        myErrorMessages = new ArrayList<String>();
-      }
-      if (!myErrorMessages.contains(incompatibleBoundsMessage)) {
-        myErrorMessages.add(incompatibleBoundsMessage);
-      }
+      registerIncompatibleErrorMessage(incompatibleBoundsMessage);
     }
     return PsiType.NULL;
+  }
+
+  public void registerIncompatibleErrorMessage(Collection<InferenceVariable> variables, String incompatibleTypesMessage) {
+    final String variablesEnumeration = StringUtil.join(variables, new Function<InferenceVariable, String>() {
+      @Override
+      public String fun(InferenceVariable variable) {
+        return variable.getName();
+      }
+    }, ", ");
+    registerIncompatibleErrorMessage("no instance(s) of type variable(s) " + variablesEnumeration + " exist so that " + incompatibleTypesMessage);
+  }
+  
+  public void registerIncompatibleErrorMessage(@NotNull String incompatibleBoundsMessage) {
+    if (myErrorMessages == null) {
+      myErrorMessages = new ArrayList<String>();
+    }
+    if (!myErrorMessages.contains(incompatibleBoundsMessage)) {
+      myErrorMessages.add(incompatibleBoundsMessage);
+    }
   }
 
   private String incompatibleBoundsMessage(final InferenceVariable var,
@@ -1777,5 +1788,9 @@ public class InferenceSession {
 
   public void registerSiteSubstitutor(PsiSubstitutor substitutor) {
     mySiteSubstitutor = mySiteSubstitutor.putAll(substitutor);
+  }
+
+  public List<String> getIncompatibleErrorMessages() {
+    return myErrorMessages;
   }
 }

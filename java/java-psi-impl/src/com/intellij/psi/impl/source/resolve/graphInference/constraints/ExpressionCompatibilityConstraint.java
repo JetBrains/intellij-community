@@ -142,17 +142,26 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
           callSession.initExpressionConstraints(parameters, args, expression, method, InferenceSession
             .chooseVarargsMode(candidateProperties, resolveResult));
         }
-        final boolean accepted = callSession.repeatInferencePhases(true);
-        if (!accepted) {
-          return null;
-        }
-        callSession.registerReturnTypeConstraints(siteSubstitutor.substitute(returnType), targetType);
         if (callSession.repeatInferencePhases(true)) {
-          return callSession;
+
+          if (PsiType.VOID.equals(targetType)) {
+            return callSession;
+          }
+
+          callSession.registerReturnTypeConstraints(siteSubstitutor.substitute(returnType), targetType);
+          if (callSession.repeatInferencePhases(true)) {
+            return callSession;
+          }
         }
-        else {
-          return null;
+
+        //copy incompatible message if any
+        final List<String> messages = callSession.getIncompatibleErrorMessages();
+        if (messages != null) {
+          for (String message : messages) {
+            session.registerIncompatibleErrorMessage(message);
+          }
         }
+        return null;
       }
     }
     return session;

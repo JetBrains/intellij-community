@@ -103,6 +103,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         return key.getSubstitutor(false);
       }
     };
+
+    checkInvocationApplicabilityInference(conflicts, map);
+    if (conflicts.size() == 1) return conflicts.get(0);
+
     checkSameSignatures(conflicts, map);
     if (conflicts.size() == 1) return conflicts.get(0);
 
@@ -134,6 +138,20 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     Set<CandidateInfo> uniques = new THashSet<CandidateInfo>(conflicts);
     if (uniques.size() == 1) return uniques.iterator().next();
     return null;
+  }
+
+  private static void checkInvocationApplicabilityInference(@NotNull List<CandidateInfo> conflicts,
+                                                            FactoryMap<MethodCandidateInfo, PsiSubstitutor> map) {
+    for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext(); ) {
+      CandidateInfo conflict = iterator.next();
+      if (conflict instanceof MethodCandidateInfo) {
+        getSubstitutor((MethodCandidateInfo)conflict, map);
+        final String errorMessage = ((MethodCandidateInfo)conflict).getInferenceErrorMessage();
+        if (errorMessage != null) {
+          iterator.remove();
+        }
+      }
+    }
   }
 
   public void checkSpecifics(@NotNull List<CandidateInfo> conflicts,

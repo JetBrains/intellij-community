@@ -63,6 +63,14 @@ public class SubtypingConstraint implements ConstraintFormula {
 
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
+    final boolean reduceResult = doReduce(constraints);
+    if (!reduceResult) {
+      session.registerIncompatibleErrorMessage(session.getInferenceVariables(), myS.getPresentableText() + " can be converted to " + myT.getPresentableText());
+    }
+    return reduceResult;
+  }
+
+  private boolean doReduce(List<ConstraintFormula> constraints) {
     if (myT instanceof PsiWildcardType) {
       PsiType tBound = ((PsiWildcardType)myT).getBound();
       if (tBound == null) {
