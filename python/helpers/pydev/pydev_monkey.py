@@ -58,7 +58,7 @@ def patch_args(args):
                 break
             i += 1
 
-        if args[i].endswith('pydevd.py'): #no need to add pydevd twice
+        if i < len(args) and args[i].endswith('pydevd.py'): #no need to add pydevd twice
             return args
 
         for x in sys.original_argv:
