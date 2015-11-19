@@ -1478,7 +1478,7 @@ public class JavaDocInfoGenerator {
   private void generateLiteralValue(StringBuilder buffer, PsiDocTag tag) {
     StringBuilder tmpBuffer = new StringBuilder();
     for (PsiElement element : tag.getDataElements()) {
-      appendPlainText(element.getText(), tmpBuffer);
+      appendPlainText(StringUtil.escapeXml(element.getText()), tmpBuffer);
     }
     if ((mySdkVersion == null || mySdkVersion.isAtLeast(JavaSdkVersion.JDK_1_8)) && isInPre(tag)) {
       buffer.append(tmpBuffer);
@@ -1507,9 +1507,6 @@ public class JavaDocInfoGenerator {
   }
 
   private static void appendPlainText(@NonNls String text, final StringBuilder buffer) {
-    text = text.replaceAll("<", LT);
-    text = text.replaceAll(">", GT);
-
     buffer.append(StringUtil.replaceUnicodeEscapeSequences(text));
   }
 
