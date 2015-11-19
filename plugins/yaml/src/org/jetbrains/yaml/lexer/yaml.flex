@@ -281,22 +281,20 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
 
 }
 
-<VALUE, VALUE_BRACE, VALUE_OR_KEY>{
+<YYINITIAL, VALUE, VALUE_BRACE, VALUE_OR_KEY>{
 
 ">"("-"|"+")? / ({WHITE_SPACE} | {EOL})      {
                                     yyBegin(INDENT_VALUE);
                                     valueIndent = currentLineIndent;
                                     valueTokenType = SCALAR_TEXT;
-                                    yypushback(yylength());
-                                    break;
+                                    return valueTokenType;
                                 }
 
 "|"("-"|"+")? / ({WHITE_SPACE} | {EOL})
                                 {   yyBegin(INDENT_VALUE);
                                     valueIndent = currentLineIndent;
                                     valueTokenType = SCALAR_LIST;
-                                    yypushback(yylength());
-                                    break;
+                                    return valueTokenType;
                                 }
 
 }
@@ -344,9 +342,14 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
 }
 
 <INDENT_VALUE> {
-{WHITE_SPACE}? {EOL}                    {
-                                            currentLineIndent = 0;
-                                            return EOL;
+
+{EOL} {
+          currentLineIndent = 0;
+          return EOL;
+      }
+
+{WHITE_SPACE} / {EOL}                    {
+                                            return getWhitespaceTypeAndUpdateIndent();
                                         }
 {WHITE_SPACE}                           {   IElementType type = getWhitespaceTypeAndUpdateIndent();
                                             if (currentLineIndent <= valueIndent) {
@@ -354,7 +357,7 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
                                             }
                                             return type;
                                         }
-[^ \n\t] {LINE}?                        {   if (isAfterEol()){
+[^ \n\t] {LINE}?                        {   if (currentLineIndent <= valueIndent) {
                                                 yypushback(yylength());
                                                 yyBegin(YYINITIAL);
                                                 break;

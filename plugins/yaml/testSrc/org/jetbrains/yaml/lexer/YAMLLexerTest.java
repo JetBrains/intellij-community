@@ -190,6 +190,14 @@ public class YAMLLexerTest extends LexerTestCase {
     doTest();
   }
 
+  public void testOnlyScalars() {
+    doTest();
+  }
+
+  public void testOnlyScalarNoDocument() {
+    doTest();
+  }
+
   private void doTest() {
     doFileTest("yml");
   }

@@ -16,11 +16,11 @@ YAML file
         PsiElement(?)('?')
         PsiWhiteSpace(' ')
         YAML compound value
-          YAML plain scalar text
-            PsiElement(text)('|')
+          YAML scalar list
+            PsiElement(scalar list)('|')
             PsiElement(Eol)('\n')
             PsiElement(indent)('  ')
-            PsiElement(text)('block key')
+            PsiElement(scalar list)('block key')
         PsiElement(Eol)('\n')
         PsiElement(:)(':')
         PsiWhiteSpace(' ')
