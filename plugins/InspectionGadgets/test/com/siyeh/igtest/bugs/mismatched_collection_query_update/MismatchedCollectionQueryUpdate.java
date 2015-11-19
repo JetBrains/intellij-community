@@ -290,6 +290,12 @@ class CollectionsUser {
       //  ...
     }
   }
+
+  void merging() {
+    Map<String, String> map = new HashMap<>();
+    map.merge("key", "value", (i,j)->j);
+    map.forEach((k,v) -> System.out.println(k + " : " + v));
+  }
 }
 
 class SimpleAdd {
