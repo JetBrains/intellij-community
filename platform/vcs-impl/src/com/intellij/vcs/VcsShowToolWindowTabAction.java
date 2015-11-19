@@ -37,11 +37,12 @@ public abstract class VcsShowToolWindowTabAction extends DumbAwareAction {
     final ChangesViewContentManager changesViewContentManager = (ChangesViewContentManager)ChangesViewContentManager.getInstance(project);
     final String tabName = getTabName();
 
-    if (toolWindow.isActive() && changesViewContentManager.isContentSelected(tabName)) {
+    boolean contentAlreadySelected = changesViewContentManager.isContentSelected(tabName);
+    if (toolWindow.isActive() && contentAlreadySelected) {
         toolWindow.hide(null);
     }
     else {
-      toolWindow.activate(new Runnable() {
+      Runnable runnable = contentAlreadySelected ? null : new Runnable() {
         @Override
         public void run() {
           IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
@@ -51,7 +52,8 @@ public abstract class VcsShowToolWindowTabAction extends DumbAwareAction {
             }
           });
         }
-      }, true, true);
+      };
+      toolWindow.activate(runnable, true, true);
     }
   }
 
