@@ -23,7 +23,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.PsiSearchScopeUtil;
@@ -69,7 +68,7 @@ public class TypeMigrationLabeler {
   private final TypeMigrationRules myRules;
   private TypeEvaluator myTypeEvaluator;
   private final LinkedHashMap<PsiElement, Object> myConversions;
-  private final HashSet<Pair<PsiAnchor, PsiType>> myFailedConversions;
+  private final HashSet<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>> myFailedConversions;
   private LinkedList<Pair<TypeMigrationUsageInfo, PsiType>> myMigrationRoots;
   private final LinkedHashMap<TypeMigrationUsageInfo, PsiType> myNewExpressionTypeChange;
   private final LinkedHashMap<TypeMigrationUsageInfo, PsiClassType> myClassTypeArgumentsChange;
@@ -87,7 +86,7 @@ public class TypeMigrationLabeler {
     myRules = rules;
     
     myConversions = new LinkedHashMap<PsiElement, Object>();
-    myFailedConversions = new HashSet<Pair<PsiAnchor, PsiType>>();
+    myFailedConversions = new HashSet<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>>();
     myNewExpressionTypeChange = new LinkedHashMap<TypeMigrationUsageInfo, PsiType>();
     myClassTypeArgumentsChange = new LinkedHashMap<TypeMigrationUsageInfo, PsiClassType>();
   }
@@ -100,10 +99,10 @@ public class TypeMigrationLabeler {
     final String[] report = new String[myFailedConversions.size()];
     int j = 0;
 
-    for (final Pair<PsiAnchor, PsiType> p : myFailedConversions) {
-      final PsiElement element = p.getFirst().retrieve();
+    for (final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> p : myFailedConversions) {
+      final PsiExpression element = p.getFirst().getElement();
       LOG.assertTrue(element != null);
-      final PsiType type = ((PsiExpression)element).getType();
+      final PsiType type = element.getType();
       report[j++] = "Cannot convert type of expression <b>" + StringUtil.escapeXml(element.getText()) + "</b>" +
                     (type != null
                      ? " from <b>" + StringUtil.escapeXml(type.getCanonicalText()) + "</b>" +
@@ -117,8 +116,8 @@ public class TypeMigrationLabeler {
 
   public UsageInfo[] getFailedUsages() {
     final List<UsageInfo> usages = new ArrayList<UsageInfo>(myFailedConversions.size());
-    for (final Pair<PsiAnchor, PsiType> p : myFailedConversions) {
-      final PsiExpression expr = (PsiExpression)p.getFirst().retrieve();
+    for (final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> p : myFailedConversions) {
+      final PsiExpression expr = p.getFirst().getElement();
       if (expr != null) {
         usages.add(new UsageInfo(expr) {
           @Nullable
@@ -644,7 +643,7 @@ public class TypeMigrationLabeler {
 
   void markFailedConversion(final Pair<PsiType, PsiType> typePair, final PsiExpression expression) {
     LOG.assertTrue(typePair.getSecond() != null);
-    myFailedConversions.add(Pair.create(PsiAnchor.create(expression), typePair.getSecond()));
+    myFailedConversions.add(Pair.create(SmartPointerManager.getInstance(expression.getProject()).createSmartPsiElementPointer(expression), typePair.getSecond()));
   }
 
   void setConversionMapping(final PsiExpression expression, final Object obj) {
@@ -940,18 +939,19 @@ public class TypeMigrationLabeler {
 
     buffer.append("Fails:\n");
 
-    final ArrayList<Pair<PsiAnchor, PsiType>> failsList = new ArrayList<Pair<PsiAnchor, PsiType>>(myFailedConversions);
-    Collections.sort(failsList, new Comparator<Pair<PsiAnchor, PsiType>>() {
-      public int compare(final Pair<PsiAnchor, PsiType> o1, final Pair<PsiAnchor, PsiType> o2) {
-        final PsiElement element1 = o1.getFirst().retrieve();
-        final PsiElement element2 = o2.getFirst().retrieve();
+    final ArrayList<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>>
+      failsList = new ArrayList<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>>(myFailedConversions);
+    Collections.sort(failsList, new Comparator<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>>() {
+      public int compare(final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> o1, final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> o2) {
+        final PsiElement element1 = o1.getFirst().getElement();
+        final PsiElement element2 = o2.getFirst().getElement();
         if (element1 == null || element2 == null) return 0;
         return element1.getText().compareTo(element2.getText());
       }
     });
 
-    for (final Pair<PsiAnchor, PsiType> p : failsList) {
-      final PsiElement element = p.getFirst().retrieve();
+    for (final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> p : failsList) {
+      final PsiElement element = p.getFirst().getElement();
       if (element != null) {
         buffer.append(element.getText()).append("->").append(p.getSecond().getCanonicalText()).append("\n");
       }
