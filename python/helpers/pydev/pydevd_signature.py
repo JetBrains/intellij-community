@@ -50,7 +50,7 @@ class SignatureFactory(object):
                     tp = locals[name].__class__
                     class_name = tp.__name__
 
-                if tp.__module__ and tp.__module__ != '__main__':
+                if hasattr(tp, '__module__') and tp.__module__ and tp.__module__ != '__main__':
                     class_name = "%s.%s"%(tp.__module__, class_name)
 
                 res.add_arg(name, class_name)
