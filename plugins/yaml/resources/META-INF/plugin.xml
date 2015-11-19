@@ -1,4 +1,11 @@
 <idea-plugin version="2">
+  <name>YAML</name>
+  <id>org.jetbrains.plugins.yaml</id>
+  <vendor>JetBrains</vendor>
+  <description>YAML support</description>
+
+  <depends>com.intellij.modules.lang</depends>
+
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <!-- YAML -->
