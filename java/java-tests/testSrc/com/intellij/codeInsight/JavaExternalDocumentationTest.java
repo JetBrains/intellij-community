@@ -100,6 +100,10 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
   public void testLinkWithReference() throws Exception {
     doTest("class Foo { com.jetbrains.<caret>ClassWithRefLink field;}");
   }
+  
+  public void testLinkToPackageSummaryWithReference() throws Exception {
+    doTest("class Foo implements com.jetbrains.<caret>SimpleInterface {}");
+  }
 
   private void doTest(String text) throws Exception {
     String actualText = getDocumentationText(text);
