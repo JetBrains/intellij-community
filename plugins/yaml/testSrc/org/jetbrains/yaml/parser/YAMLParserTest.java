@@ -177,6 +177,10 @@ public class YAMLParserTest extends ParsingTestCase {
     doCodeTest("foo: ! \"tratata\"");
   }
 
+  public void testExplicitMaps() {
+    doTest(true);
+  }
+
   public void testSpec2_27() {
     doTest(true);
   }

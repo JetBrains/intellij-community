@@ -16,6 +16,8 @@ import org.jetbrains.yaml.YAMLTokenTypes;
  * @author oleg
  */
 public class YAMLParser implements PsiParser, YAMLTokenTypes {
+  public static final TokenSet HASH_STOP_TOKENS = TokenSet.create(RBRACE, COMMA);
+  public static final TokenSet ARRAY_STOP_TOKENS = TokenSet.create(RBRACKET, COMMA);
   private PsiBuilder myBuilder;
   private boolean eolSeen = false;
   private int myIndent;
@@ -138,8 +140,11 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     else if (tokenType == SEQUENCE_MARKER) {
       return parseSequenceItem(indent);
     }
+    else if (tokenType == QUESTION) {
+      return parseExplicitKeyValue(indent);
+    }
     else if (tokenType == SCALAR_KEY) {
-      return parseScalarKeyValue(indent);
+      return parseScalarKeyValue(indent, true);
     }
     else if (YAMLElementTypes.SCALAR_VALUES.contains(getTokenType())) {
       return parseScalarValue(indent);
@@ -209,7 +214,44 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
   }
 
   @NotNull
-  private IElementType parseScalarKeyValue(int indent) {
+  private IElementType parseExplicitKeyValue(int indent) {
+    assert getTokenType() == QUESTION;
+
+    final PsiBuilder.Marker marker = mark();
+    int indentAddition = getShorthandIndentAddition();
+    advanceLexer();
+
+    if (!myStopTokensStack.isEmpty() && myStopTokensStack.peek() == HASH_STOP_TOKENS // This means we're inside some hash
+        && getTokenType() == SCALAR_KEY) {
+      parseScalarKeyValue(indent, false);
+    }
+    else {
+      myStopTokensStack.add(TokenSet.create(COLON));
+      eolSeen = false;
+
+      passJunk();
+
+      parseStatements(indent + indentAddition, false);
+
+      myStopTokensStack.pop();
+
+      passJunk();
+      if (getTokenType() == COLON) {
+        indentAddition = getShorthandIndentAddition();
+        advanceLexer();
+
+        eolSeen = false;
+        parseStatements(indent + indentAddition, false);
+      }
+    }
+
+    marker.done(YAMLElementTypes.KEY_VALUE_PAIR);
+    return YAMLElementTypes.KEY_VALUE_PAIR;
+  }
+
+
+  @NotNull
+  private IElementType parseScalarKeyValue(int indent, boolean createNode) {
     final PsiBuilder.Marker marker = mark();
     assert getTokenType() == SCALAR_KEY : "Expected scalar key";
     eolSeen = false;
@@ -220,7 +262,12 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
 
     parseStatements(indent + indentAddition, false);
 
-    marker.done(YAMLElementTypes.KEY_VALUE_PAIR);
+    if (createNode) {
+      marker.done(YAMLElementTypes.KEY_VALUE_PAIR);
+    }
+    else {
+      marker.drop();
+    }
     return YAMLElementTypes.KEY_VALUE_PAIR;
   }
 
@@ -245,7 +292,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     final PsiBuilder.Marker marker = mark();
     assert getTokenType() == LBRACE;
     advanceLexer();
-    myStopTokensStack.add(TokenSet.create(RBRACE, COMMA));
+    myStopTokensStack.add(HASH_STOP_TOKENS);
 
     while (!eof()) {
       if (getTokenType() == RBRACE) {
@@ -266,7 +313,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     final PsiBuilder.Marker marker = mark();
     assert getTokenType() == LBRACKET;
     advanceLexer();
-    myStopTokensStack.add(TokenSet.create(RBRACKET, COMMA));
+    myStopTokensStack.add(ARRAY_STOP_TOKENS);
 
     while (!eof()) {
       if (getTokenType() == RBRACKET) {
