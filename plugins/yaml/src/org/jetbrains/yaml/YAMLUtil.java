@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.*;
 
@@ -259,4 +260,19 @@ public class YAMLUtil {
     return element;
   }
 
+  public static int getIndentInThisLine(@NotNull final PsiElement elementInLine) {
+    PsiElement currentElement = elementInLine;
+    while (currentElement != null) {
+      final IElementType type = currentElement.getNode().getElementType();
+      if (type == YAMLTokenTypes.EOL) {
+        return 0;
+      }
+      if (type == YAMLTokenTypes.INDENT) {
+        return currentElement.getTextLength();
+      }
+
+      currentElement = PsiTreeUtil.prevLeaf(currentElement);
+    }
+    return 0;
+  }
 }

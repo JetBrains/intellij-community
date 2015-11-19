@@ -12,6 +12,7 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLFileType;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.YAMLUtil;
@@ -32,45 +33,75 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
     return "YAML key value";
   }
 
+  @Nullable
   public PsiElement getKey() {
-    return findChildByType(YAMLTokenTypes.SCALAR_KEY);
+    final PsiElement result = findChildByType(YAMLTokenTypes.SCALAR_KEY);
+    if (result != null) {
+      return result;
+    }
+    if (isExplicit()) {
+      return findChildByClass(YAMLCompoundValue.class);
+    }
+    return null;
   }
 
+  @Nullable
   @Override
   public String getName() {
     return getKeyText();
   }
 
+  @NotNull
   public String getKeyText() {
-    final String text = getKey().getText();
+    final PsiElement keyElement = getKey();
+    if (keyElement == null) {
+      return "";
+    }
+
+    if (keyElement instanceof YAMLCompoundValue) {
+      return "";
+      //return ((YAMLCompoundValue)keyElement).getTextValue();
+    }
+
+    final String text = keyElement.getText();
     return text.substring(0, text.length()-1);
   }
 
-  public PsiElement getValue() {
-    return findChildByClass(YAMLCompoundValue.class);
+  @Nullable
+  public YAMLCompoundValue getValue() {
+    for (PsiElement child = getLastChild(); child != null; child = child.getPrevSibling()) {
+      if (child instanceof YAMLCompoundValue) {
+        return ((YAMLCompoundValue)child);
+      }
+    }
+    return null;
   }
 
+  @NotNull
   public String getValueText() {
-    final PsiElement value = getValue();
+    final YAMLCompoundValue value = getValue();
     if (value == null){
       return "";
     }
-    String text = value.getText();
-    if (text.startsWith("'") || text.startsWith("\"")){
-      text = text.substring(1);
-    }
-    if (text.endsWith("'") || text.endsWith("\"")){
-      text = text.substring(0, text.length() - 1);
-    }
-    if (text.startsWith("|")){
-      text = text.substring(1).replaceAll("\n[ \t]+", "; ");
-      if (text.length() >= 2) {
-        text = text.substring(2);
-      }
-    }
-    return text;
+    //return value.getTextValue();
+    return "";
+    //String text = value.getText();
+    //if (text.startsWith("'") || text.startsWith("\"")){
+    //  text = text.substring(1);
+    //}
+    //if (text.endsWith("'") || text.endsWith("\"")){
+    //  text = text.substring(0, text.length() - 1);
+    //}
+    //if (text.startsWith("|")){
+    //  text = text.substring(1).replaceAll("\n[ \t]+", "; ");
+    //  if (text.length() >= 2) {
+    //    text = text.substring(2);
+    //  }
+    //}
+    //return text;
   }
 
+  // TODO make it make it
   public void setValueText(final String text) {
     final YAMLFile yamlFile =
                 (YAMLFile) PsiFileFactory.getInstance(getProject())
@@ -110,6 +141,7 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
     return YAMLUtil.rename(this, newName);
   }
 
+  @NotNull
   public String getValueIndent() {
     final PsiElement value = getValue();
     if (value != null){
@@ -130,5 +162,10 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
   @NotNull
   public PsiReference[] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this);
+  }
+
+  private boolean isExplicit() {
+    final ASTNode child = getNode().getFirstChildNode();
+    return child != null && child.getElementType() == YAMLTokenTypes.QUESTION;
   }
 }
