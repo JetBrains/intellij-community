@@ -188,15 +188,11 @@ public class UpdateRequestsQueue {
     LOG.debug("invokeAfterUpdate for project: " + myProject.getName());
     final CallbackData data = CallbackData.create(afterUpdate, title, state, mode, myProject);
 
-    VcsDirtyScopeManagerProxy managerProxy = null;
     if (dirtyScopeManagerFiller != null) {
-      managerProxy  = new VcsDirtyScopeManagerProxy();
-      dirtyScopeManagerFiller.consume(managerProxy);
-    }
+      VcsDirtyScopeManagerProxy managerProxy = new VcsDirtyScopeManagerProxy();
 
-    // can ask stopped without a lock
-    if (! myStopped) {
-      if (managerProxy != null) {
+      dirtyScopeManagerFiller.consume(managerProxy);
+      if (!myProject.isDisposed()) {
         managerProxy.callRealManager(VcsDirtyScopeManager.getInstance(myProject));
       }
     }
