@@ -65,7 +65,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class IndexingStamp {
   private static final long INDEX_DATA_OUTDATED_STAMP = -2L;
 
-  private static final int VERSION = 14;
+  private static final int VERSION = 15;
   private static final ConcurrentMap<ID<?, ?>, Long> ourIndexIdToCreationStamp = ContainerUtil.newConcurrentMap();
   static final int INVALID_FILE_ID = 0;
   private static volatile long ourLastStamp; // ensure any file index stamp increases
