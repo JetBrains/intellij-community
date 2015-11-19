@@ -28,18 +28,19 @@ import org.jetbrains.annotations.Nullable;
  * Working with sdk instance instead of this class can be wrong, because an instance can become
  * obsolete being substituted in sdk table by a new one. Or already created sdk modificator can be committed,
  * discarding the changes that we doing with the sdk.
- *
- *
+ * <p/>
+ * <p/>
  * There are two ways of creation of the facade:
- *  1) by sdk path - in this case we'll get the current actual sdk instance
+ * 1) by sdk path - in this case we'll get the current actual sdk instance
  * from sdk table by that path, creating and committing SdkModificator on every change
- *  2) by sdkModificator - in that case we'll make changes to that modificator, but it is not committed,
- *  because it has been created outside of the updater.
- *
+ * 2) by sdkModificator - in that case we'll make changes to that modificator, but it is not committed,
+ * because it has been created outside of the updater.
  *
  * @author traff
  */
 public abstract class PySdkUpdater {
+  private static PySdkUpdater mySingletonUpdater = null;
+
   @NotNull
   public abstract Sdk getSdk();
 
@@ -63,12 +64,45 @@ public abstract class PySdkUpdater {
     });
   }
 
-  public static PySdkUpdater fromSdkPath(@Nullable String sdkPath) {
+  public abstract void commit();
+
+  public static synchronized PySdkUpdater fromSdkPath(@Nullable String sdkPath) {
+    checkSingleton();
     return new JdkTableUpdater(sdkPath);
   }
 
-  public static PySdkUpdater fromSdkModificator(@NotNull Sdk sdk, @NotNull SdkModificator sdkModificator) {
+  public static synchronized PySdkUpdater fromSdkModificator(@NotNull Sdk sdk, @NotNull SdkModificator sdkModificator) {
+    checkSingleton();
     return new SdkModificatorUpdater(sdk, sdkModificator);
+  }
+
+  public static synchronized PySdkUpdater singletonJdkTableUpdater(@NotNull String sdkPath) {
+    if (mySingletonUpdater == null) {
+      Sdk sdk = PythonSdkType.findSdkByPath(sdkPath);
+      if (sdk != null) {
+        mySingletonUpdater = new SingletonSdkModificatorUpdater(sdk, sdk.getSdkModificator());
+      } else {
+        throw new PySdkNotFoundException();
+      }
+    }
+    return mySingletonUpdater;
+  }
+
+
+  private static synchronized void checkSingleton() {
+    if (mySingletonUpdater != null) {
+      throw new IllegalStateException("unintentionally changing more then one sdkModificator at a time");
+    }
+  }
+
+  private static synchronized void checkNotDisposed() {
+    if (mySingletonUpdater == null) {
+      throw new IllegalStateException("sdk modificator is already committed, further changes will go nowhere");
+    }
+  }
+
+  private static synchronized void disposeSingleton() {
+    mySingletonUpdater = null;
   }
 
   @Nullable
@@ -100,6 +134,8 @@ public abstract class PySdkUpdater {
     }
 
     public void modifySdk(@NotNull SdkModificationProcessor processor) {
+      checkSingleton();
+      
       ApplicationManager.getApplication().assertIsDispatchThread();
 
       Sdk sdk = PythonSdkType.findSdkByPath(mySdkPath);
@@ -109,6 +145,11 @@ public abstract class PySdkUpdater {
         processor.process(sdk, modificator);
         modificator.commitChanges();
       }
+    }
+
+    @Override
+    public void commit() {
+      // all changes are already committed 
     }
   }
 
@@ -136,6 +177,30 @@ public abstract class PySdkUpdater {
     public void modifySdk(@NotNull SdkModificationProcessor processor) {
       processor.process(getSdk(), myModificator);
     }
+
+    @Override
+    public void commit() {
+      checkSingleton();
+      myModificator.commitChanges();
+    }
+  }
+
+  private static class SingletonSdkModificatorUpdater extends SdkModificatorUpdater {
+    public SingletonSdkModificatorUpdater(@NotNull Sdk sdk, @NotNull SdkModificator modificator) {
+      super(sdk, modificator);
+    }
+
+    @Override
+    public void modifySdk(@NotNull SdkModificationProcessor processor) {
+      checkNotDisposed();
+      super.modifySdk(processor);
+    }
+
+    @Override
+    public void commit() {
+      disposeSingleton();
+      super.commit();
+    }
   }
 
 
@@ -143,5 +208,6 @@ public abstract class PySdkUpdater {
     void process(@NotNull Sdk sdk, @NotNull SdkModificator sdkModificator);
   }
 
-  public class PySdkNotFoundException extends RuntimeException {}
+  public static class PySdkNotFoundException extends RuntimeException {
+  }
 }
