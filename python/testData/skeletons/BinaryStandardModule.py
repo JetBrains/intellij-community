@@ -1,5 +1,8 @@
 import binascii
+import datetime
 import <error descr="No module named nonexistent">nonexistent</error>
 
 
-print(binascii, nonexistent)
+print(binascii)
+print(datetime)
+print(nonexistent)
