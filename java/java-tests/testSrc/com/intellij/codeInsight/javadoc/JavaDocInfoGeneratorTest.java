@@ -145,6 +145,10 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     doTestField();
   }
 
+  public void testEscapingInLiteral() throws Exception {
+    doTestField();
+  }
+
   public void testCode() throws Exception {
     useJava8();
     doTestField();
