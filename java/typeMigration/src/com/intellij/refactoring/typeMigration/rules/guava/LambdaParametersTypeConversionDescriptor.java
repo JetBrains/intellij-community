@@ -85,7 +85,8 @@ public class LambdaParametersTypeConversionDescriptor extends TypeConversionDesc
         final PsiClass qualifierClass = PsiTypesUtil.getPsiClass(qualifierType);
         if (qualifierClass != null && (Comparing.equal(qualifierClass.getQualifiedName(), GuavaFunctionConversionRule.JAVA_UTIL_FUNCTION_FUNCTION) ||
             Comparing.equal(qualifierClass.getQualifiedName(), GuavaOptionalConversionRule.JAVA_OPTIONAL) ||
-            Comparing.equal(qualifierClass.getQualifiedName(), GuavaSupplierConversionRule.JAVA_SUPPLIER)))
+            Comparing.equal(qualifierClass.getQualifiedName(), GuavaSupplierConversionRule.JAVA_SUPPLIER) ||
+            Comparing.equal(qualifierClass.getQualifiedName(), GuavaPredicateConversionRule.JAVA_PREDICATE)))
         return (PsiExpression)expression.replace(qualifier);
       }
     }
