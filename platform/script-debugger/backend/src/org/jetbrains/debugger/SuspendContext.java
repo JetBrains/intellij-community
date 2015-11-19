@@ -1,47 +1,38 @@
-package org.jetbrains.debugger;
+package org.jetbrains.debugger
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.debugger.values.ValueManager;
-
-import java.util.List;
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.debugger.values.ValueManager
 
 /**
  * An object that matches the execution state of the VM while suspended
  */
-public interface SuspendContext {
-  @NotNull
-  SuspendState getState();
+interface SuspendContext {
+  val state: SuspendState
 
-  @Nullable("if no frames (paused by user)")
-  Script getScript();
+  val script: Script?
 
   /**
-   * @return the current exception state, or {@code null} if current state is
-   *         not {@code EXCEPTION}
-   * @see #getState()
+   * @return the current exception state, or `null` if current state is
+   * *         not `EXCEPTION`
+   * *
+   * @see .getState
    */
-  @Nullable
-  ExceptionData getExceptionData();
+  val exceptionData: ExceptionData?
+    get() = null
 
-  @Nullable
-  CallFrame getTopFrame();
+  val topFrame: CallFrame?
 
   /**
    * Call frames for the current suspended state (from the innermost (top) frame to the main (bottom) frame)
    */
-  @NotNull
-  Promise<CallFrame[]> getFrames();
+  val frames: Promise<Array<CallFrame>>
 
   /**
    * list of the breakpoints hit on VM suspension with which this
    * context is associated. An empty collection if the suspension was
    * not related to hitting breakpoints (e.g. a step end)
    */
-  @NotNull
-  List<Breakpoint> getBreakpointsHit();
+  val breakpointsHit: List<Breakpoint>
 
-  @NotNull
-  ValueManager getValueManager();
+  val valueManager: ValueManager<out Vm>
 }

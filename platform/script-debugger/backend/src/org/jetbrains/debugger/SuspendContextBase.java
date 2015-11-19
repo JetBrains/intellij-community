@@ -1,36 +1,14 @@
-package org.jetbrains.debugger;
+package org.jetbrains.debugger
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.debugger.values.ValueManager;
+import org.jetbrains.debugger.values.ValueManager
 
-public abstract class SuspendContextBase<VALUE_MANAGER extends ValueManager> implements SuspendContext {
-  protected ExceptionData exceptionData;
-  protected final boolean explicitPaused;
+abstract class SuspendContextBase<VM: Vm, VALUE_MANAGER : ValueManager<VM>>(override val valueManager: VALUE_MANAGER, protected val explicitPaused: Boolean) : SuspendContext {
+  override val state: SuspendState
+    get() = if (exceptionData == null) (if (explicitPaused) SuspendState.PAUSED else SuspendState.NORMAL) else SuspendState.EXCEPTION
 
-  protected final VALUE_MANAGER valueManager;
-
-  protected SuspendContextBase(VALUE_MANAGER manager, boolean explicitPaused) {
-    this.explicitPaused = explicitPaused;
-    valueManager = manager;
-  }
-
-  @NotNull
-  @Override
-  public SuspendState getState() {
-    return exceptionData == null ? (explicitPaused ? SuspendState.PAUSED : SuspendState.NORMAL) : SuspendState.EXCEPTION;
-  }
-
-  @NotNull
-  @Override
-  public final VALUE_MANAGER getValueManager() {
-    return valueManager;
-  }
-
-  @Nullable
-  @Override
-  public Script getScript() {
-    CallFrame topFrame = getTopFrame();
-    return topFrame == null ? null : valueManager.getVm().getScriptManager().getScript(topFrame);
-  }
+  override val script: Script?
+    get() {
+      val topFrame = topFrame
+      return if (topFrame == null) null else valueManager.vm.scriptManager.getScript(topFrame)
+    }
 }
