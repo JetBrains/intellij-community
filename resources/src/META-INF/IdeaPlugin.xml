@@ -1138,6 +1138,7 @@
     <stacktrace.fold substring="at java.awt.EventQueue.dispatchEventImpl("/>
     <stacktrace.fold substring="at java.security.AccessController.doPrivileged(Native Method)"/>
     <stacktrace.fold substring="at java.security.ProtectionDomain$1.doIntersectionPrivilege("/>
+    <stacktrace.fold substring="at java.security.ProtectionDomain$JavaSecurityAccessImpl.doIntersectionPrivilege("/>
     <stacktrace.fold substring="at com.jgoodies.binding.beans.ExtendedPropertyChangeSupport.firePropertyChange0("/>
     <stacktrace.fold substring="at javax.swing.plaf.basic.BasicComboPopup$Handler.mouseReleased("/>
     

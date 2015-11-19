@@ -118,6 +118,11 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  //needs Guava 18.0 as dependency
+  public void _testAppend() {
+    doTest();
+  }
+
   public void testChainContainsStopMethods() {
     doTestNoQuickFixes(GuavaInspection.MigrateFluentIterableChainQuickFix.class);
   }
@@ -131,6 +136,14 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testToArray() {
+    doTest();
+  }
+
+  public void testToArray2() {
+    doTest();
+  }
+
+  public void testToArray3() {
     doTest();
   }
 

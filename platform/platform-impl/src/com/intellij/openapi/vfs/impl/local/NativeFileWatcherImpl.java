@@ -204,7 +204,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     LOG.info("Starting file watcher: " + myExecutable);
     ProcessBuilder processBuilder = new ProcessBuilder(myExecutable.getAbsolutePath());
     Process process = processBuilder.start();
-    myProcessHandler = new MyProcessHandler(process);
+    myProcessHandler = new MyProcessHandler(process, myExecutable.getName());
     myProcessHandler.addProcessListener(new MyProcessAdapter());
     myProcessHandler.startNotify();
 
@@ -292,8 +292,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     private final BufferedWriter myWriter;
 
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-    private MyProcessHandler(@NotNull Process process) {
-      super(process, null, null);  // do not access EncodingManager here
+    private MyProcessHandler(@NotNull Process process, @NotNull String presentableName) {
+      super(process, null, null, presentableName);  // do not access EncodingManager here
       myWriter = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
     }
 

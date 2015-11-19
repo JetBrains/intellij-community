@@ -166,6 +166,16 @@ public abstract class PsiNameHelper {
 
   private static final Pattern WHITESPACE_PATTERN = Pattern.compile("(?:\\s)|(?:/\\*.*\\*/)|(?://[^\\n]*)");
   private static String removeWhitespace(@NotNull String referenceText) {
+    boolean needsChange = false;
+    for (int i = 0; i < referenceText.length(); i++) {
+      char c = referenceText.charAt(i);
+      if (c == '/' || Character.isWhitespace(c)) {
+        needsChange = true;
+        break;
+      }
+    }
+    if (!needsChange) return referenceText;
+
     return WHITESPACE_PATTERN.matcher(referenceText).replaceAll("");
   }
 

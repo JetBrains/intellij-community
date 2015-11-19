@@ -28,7 +28,7 @@ abstract class NoFormalParamTypeInferenceNeeded {
     zip(a -> zip(text ->  text));
     Integer zip = zip(a -> zip(<error descr="inference variable R has incompatible bounds:
  lower bounds: Object
-upper bounds: Object, R">text -> text</error>));
+upper bounds: Object, R, Integer">text -> text</error>));
   }
 
 }

@@ -72,6 +72,7 @@ final class KeyboardShortcutPanel extends ShortcutPanel<KeyboardShortcut> {
     addPropertyChangeListener("shortcut", myPropertyListener);
     myFirstStroke.addPropertyChangeListener("keyStroke", myPropertyListener);
     mySecondStroke.addPropertyChangeListener("keyStroke", myPropertyListener);
+    mySecondStroke.setEnabled(false);
     mySecondStrokeEnable.addItemListener(myItemListener);
   }
 

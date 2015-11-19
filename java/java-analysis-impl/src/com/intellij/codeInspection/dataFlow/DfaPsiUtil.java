@@ -66,7 +66,7 @@ public class DfaPsiUtil {
 
   @NotNull
   public static Nullness getElementNullability(@Nullable PsiType resultType, @Nullable PsiModifierListOwner owner) {
-    if (owner == null) {
+    if (owner == null || resultType instanceof PsiPrimitiveType) {
       return Nullness.UNKNOWN;
     }
 

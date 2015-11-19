@@ -10,7 +10,7 @@ class NachCollections<K,V> {
                       Collection<? super Map.Entry<K,V>> c2,
                       Consumer<Map.Entry<K, V>> a) {
     c1.forEach(consumer(a));
-    c2.forEach(consumer<error descr="'consumer(java.util.function.Consumer<java.util.Map.Entry<K1,V1>>)' in 'NachCollections' cannot be applied to '(java.util.function.Consumer<java.util.Map.Entry<K,V>>)'">(a)</error>);
+    c2.forEach<error descr="'forEach(java.util.function.Consumer<capture<? super java.util.Map.Entry<K,V>>>)' in 'java.lang.Iterable' cannot be applied to '(java.util.function.Consumer<java.util.Map.Entry<K,V>>)'">(consumer(a))</error>;
   }
 }
 

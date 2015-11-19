@@ -104,7 +104,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -170,14 +169,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     finally {
       super.tearDown();
     }
-  }
-
-  // for saveSettings() to work
-  @Override
-  protected String getApplicationConfigDirPath() throws Exception {
-    File config = FileUtil.createTempDirectory("config", "", false);
-    myFilesToDelete.add(config);
-    return config.getPath();
   }
 
   @Override
@@ -698,7 +689,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals(0, count[0]);
   }
 
-  
   public void testLineMarkersReuse() throws Throwable {
     configureByFile(BASE_PATH + "LineMarkerChange.java");
 
@@ -710,37 +700,37 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     type('X');
 
-    final int[] count = {0};
+    final Collection<String> changed = new ArrayList<>();
     MarkupModelEx modelEx = (MarkupModelEx)DocumentMarkupModel.forDocument(getDocument(getFile()), getProject(), true);
     modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
-        changed(highlighter);
+        changed(highlighter, "after added");
       }
 
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        changed(highlighter);
+        changed(highlighter, "before removed");
       }
 
       @Override
       public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged) {
-        changed(highlighter);
+        changed(highlighter, "changed");
       }
 
-      private void changed(@NotNull RangeHighlighterEx highlighter) {
+      private void changed(@NotNull RangeHighlighterEx highlighter, String reason) {
         String text = highlighter.getDocument().getText().substring(highlighter.getStartOffset(), highlighter.getEndOffset());
         if (text.equals("X")) return; //non relevant
-        count[0]++;
+        changed.add(reason+": "+highlighter);
       }
     });
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     CodeInsightTestFixtureImpl.instantiateAndRun(myFile, myEditor, new int[]{Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS}, false);
 
-    assertEquals(0, count[0]);
-    lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
-    assertEquals(5, lineMarkers.size());
+    assertEmpty(changed);
+    List<LineMarkerInfo> lineMarkersAfter = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
+    assertEquals(lineMarkersAfter.size(), lineMarkers.size());
   }
 
   public void testLineMarkersClearWhenTypingAtTheEndOfPsiComment() throws Throwable {

@@ -214,7 +214,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Override
   public Dimension getPreferredSize() {
     int w = getFoldingAreaOffset() + getFoldingAreaWidth();
-    if (w <= GAP_BETWEEN_AREAS) w = 0;
     return new Dimension(w, myEditor.getPreferredHeight());
   }
 
@@ -1120,8 +1119,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   public int getFoldingAreaWidth() {
-    int width = isFoldingOutlineShown() ? getFoldingAnchorWidth() + 2 : (isRealEditor() ? getFoldingAnchorWidth() : 0);
-    return JBUI.scale(width);
+    return isFoldingOutlineShown() ? getFoldingAnchorWidth() + JBUI.scale(2) :
+           (isRealEditor() ? getFoldingAnchorWidth() : 0);
   }
 
   public boolean isRealEditor() {
@@ -1214,8 +1213,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return null;
   }
 
-  public static int getLineNumberAreaOffset() {
-    return GAP_BETWEEN_AREAS;
+  public int getLineNumberAreaOffset() {
+    if (getLineNumberAreaWidth() == 0 && getAnnotationsAreaWidthEx() == 0 && getLineMarkerAreaWidth() == 0) {
+      return getFoldingAreaWidth() == 0 ? 0 : 1;
+    }
+    else {
+      return GAP_BETWEEN_AREAS;
+    }
   }
 
   @Override

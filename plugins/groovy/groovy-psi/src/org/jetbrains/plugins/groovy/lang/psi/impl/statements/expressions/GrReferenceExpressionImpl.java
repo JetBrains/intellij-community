@@ -58,6 +58,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrExpressionTypeCalculator;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
@@ -753,6 +754,13 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     @Override
     @Nullable
     public PsiType fun(GrReferenceExpressionImpl refExpr) {
+      final PsiElement resolved = refExpr.resolve();
+
+      for (GrExpressionTypeCalculator calculator : GrExpressionTypeCalculator.EP_NAME.getExtensions()) {
+        PsiType type = calculator.calculateType(refExpr, resolved);
+        if (type != null) return type;
+      }
+
       if (ResolveUtil.isClassReference(refExpr)) {
         GrExpression qualifier = refExpr.getQualifier();
         LOG.assertTrue(qualifier != null);
@@ -777,7 +785,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         }
       }
 
-      final PsiElement resolved = refExpr.resolve();
       final PsiType nominal = refExpr.getNominalType();
 
       Boolean reassigned = GrReassignedLocalVarsChecker.isReassignedVar(refExpr);

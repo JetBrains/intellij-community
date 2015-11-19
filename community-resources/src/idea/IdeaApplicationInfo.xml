@@ -26,8 +26,7 @@
   <third-party url="http://www.jetbrains.org/"/>
   <jetbrains-tv url="https://www.youtube.com/user/intellijideavideo"/>
 
-  <plugins-page category="VCS Integration" title="Select VCS Integration Plugins"/>
-  <plugins-page title="Select Other Plugins"/>
+  <customize-ide-wizard provider="com.intellij.ide.customize.CustomizeIdeaWizardStepsProvider"/>
 
   <statistics settings="https://www.jetbrains.com/idea/statistics/stat-assistant.xml" service="https://www.jetbrains.com/idea/statistics/index.jsp"/>
 </component>

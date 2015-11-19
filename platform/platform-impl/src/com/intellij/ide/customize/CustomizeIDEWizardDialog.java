@@ -16,10 +16,8 @@
 package com.intellij.ide.customize;
 
 import com.intellij.ide.startup.StartupActionScriptManager;
-import com.intellij.idea.Main;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.components.JBLabel;
@@ -45,7 +43,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   private final JButton myNextButton = new JButton("Next");
 
   private final JBCardLayout myCardLayout = new JBCardLayout();
-  protected final List<AbstractCustomizeWizardStep> mySteps = new ArrayList<AbstractCustomizeWizardStep>();
+  private final List<AbstractCustomizeWizardStep> mySteps = new ArrayList<AbstractCustomizeWizardStep>();
   private int myIndex = 0;
   private final JBLabel myNavigationLabel = new JBLabel();
   private final JBLabel myHeaderLabel = new JBLabel();
@@ -54,11 +52,16 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   private final JPanel myButtonWrapper = new JPanel(myButtonWrapperLayout);
   private JPanel myContentPanel;
 
-  public CustomizeIDEWizardDialog() {
+  public CustomizeIDEWizardDialog(@NotNull CustomizeIDEWizardStepsProvider stepsProvider) {
     super(null, true, true);
     setTitle("Customize " + ApplicationNamesInfo.getInstance().getProductName());
     getPeer().setAppIcons();
-    initSteps();
+
+    stepsProvider.initSteps(this, mySteps);
+    if (mySteps.isEmpty()) {
+      throw new IllegalArgumentException(stepsProvider + " provided no steps");
+    }
+
     mySkipButton.addActionListener(this);
     myBackButton.addActionListener(this);
     myNextButton.addActionListener(this);
@@ -71,44 +74,10 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     System.setProperty(StartupActionScriptManager.STARTUP_WIZARD_MODE, "true");
   }
 
-  public static void showCustomSteps(String stepsProviderName) {
-    final CustomizeIDEWizardStepsProvider provider;
-
-    try {
-      Class<?> providerClass = Class.forName(stepsProviderName);
-      provider = (CustomizeIDEWizardStepsProvider)providerClass.newInstance();
-    }
-    catch (Throwable e) {
-      Main.showMessage("Configuration Wizard Failed", e);
-      return;
-    }
-
-    new CustomizeIDEWizardDialog() {
-      @Override
-      protected void initSteps() {
-        provider.initSteps(this, mySteps);
-      }
-    }.show();
-  }
-
   @Override
   protected void dispose() {
     System.clearProperty(StartupActionScriptManager.STARTUP_WIZARD_MODE);
     super.dispose();
-  }
-
-  protected void initSteps() {
-    mySteps.add(new CustomizeUIThemeStepPanel());
-    if (SystemInfo.isMac) {
-      mySteps.add(new CustomizeKeyboardSchemeStepPanel());
-    }
-    if (CustomizeDesktopEntryStep.isAvailable()) {
-      mySteps.add(new CustomizeDesktopEntryStep("/UbuntuDesktopEntry.png"));
-    }
-
-    PluginGroups pluginGroups = new PluginGroups();
-    mySteps.add(new CustomizePluginsStepPanel(pluginGroups));
-    mySteps.add(new CustomizeFeaturedPluginsStepPanel(pluginGroups));
   }
 
   @Override

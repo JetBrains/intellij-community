@@ -199,13 +199,12 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
           result.append('\n'); // keep line break structure
         }
       }
-      else if (element instanceof PsiComment) {
+      else if (element instanceof PsiComment && result.length() != 0) {
         result.append(element.getText()); // keep comments
       }
       else if (element instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
         final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-
         final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
         final String referenceName = methodExpression.getReferenceName();
         if ("toString".equals(referenceName)) {
@@ -281,20 +280,37 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
     }
 
     private static void insertPlus(@NonNls StringBuilder result) {
-      if (result.charAt(result.length() - 1) == '\n') {
+      final int lastIndex = result.length() - 1;
+      if (result.charAt(lastIndex) == '\n') {
         int index = result.length() - 2;
         while (index > 0) {
-          final char c = result.charAt(index);
-          if (c == '/' && result.charAt(index - 1) == '/') { // special handling of end-of-line comment
-            result.insert(index - 1, "+ ");
-            return;
-          }
-          if (c == '\n') {
+          if (result.charAt(index) == '\n') {
             break;
           }
           index--;
         }
-        result.insert(result.length() - 1, '+');
+        boolean insideLiteral = false;
+        boolean escape = false;
+        while (index < lastIndex) {
+          final char c = result.charAt(index);
+          if (c == '"' && !escape) {
+            insideLiteral = !insideLiteral;
+          }
+          else if (c == '\\' && insideLiteral) {
+            escape = true;
+            index++;
+            continue;
+          }
+          else if (!insideLiteral && c == '/' && result.charAt(index + 1) == '/') {
+            if (index != 0) {
+              result.insert(index, "+ ");
+            }
+            return;
+          }
+          index++;
+          escape = false;
+        }
+        result.insert(lastIndex, '+');
       }
       else {
         result.append('+');

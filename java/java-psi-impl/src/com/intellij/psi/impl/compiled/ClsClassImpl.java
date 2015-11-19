@@ -18,7 +18,7 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -510,30 +510,34 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   @Override
   @NotNull
   public PsiElement getNavigationElement() {
-    if (!DumbService.isDumb(getProject())) {
-      for (ClsCustomNavigationPolicy customNavigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
+    for (ClsCustomNavigationPolicy customNavigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
+      try {
         PsiElement navigationElement = customNavigationPolicy.getNavigationElement(this);
         if (navigationElement != null) {
           return navigationElement;
         }
       }
+      catch (IndexNotReadyException ignored) { }
+    }
 
+    try {
       PsiClass aClass = getSourceMirrorClass();
 
       if (aClass != null) {
         return aClass.getNavigationElement();
       }
-    }
 
-    if ("package-info".equals(getName())) {
-      PsiElement parent = getParent();
-      if (parent instanceof ClsFileImpl) {
-        PsiElement sourceFile = parent.getNavigationElement();
-        if (sourceFile instanceof PsiJavaFile) {
-          return sourceFile;
+      if ("package-info".equals(getName())) {
+        PsiElement parent = getParent();
+        if (parent instanceof ClsFileImpl) {
+          PsiElement sourceFile = parent.getNavigationElement();
+          if (sourceFile instanceof PsiJavaFile) {
+            return sourceFile;
+          }
         }
       }
     }
+    catch (IndexNotReadyException ignore) { }
 
     return this;
   }

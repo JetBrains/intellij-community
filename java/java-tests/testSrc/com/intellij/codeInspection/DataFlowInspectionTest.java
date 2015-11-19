@@ -301,6 +301,8 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
   public void testAccessingSameArrayElements() { doTest(); }
 
+  public void testMethodParametersCanChangeNullability() { doTest(); }
+
   public void testParametersAreNonnullByDefault() {
     addJavaxNullabilityAnnotations(myFixture);
     addJavaxDefaultNullabilityAnnotations(myFixture);

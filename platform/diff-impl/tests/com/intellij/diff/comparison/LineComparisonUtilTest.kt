@@ -344,6 +344,13 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
       default(del(0, 0, 1), mod(2, 1, 1, 1))
       testAll()
     }
+
+    splitter() {
+      ("M===_X===_Y===" - " Y===_X===_N")
+      // TODO: default(mod(0, 0, 1, 1), mod(2, 2, 1, 1))
+      default(mod(0, 0, 1, 1), mod(1, 1, 1, 1), mod(2, 2, 1, 1))
+      testDefault()
+    }
   }
 
   fun `test bad cases caused by 'compareSmart' logic`() {
@@ -360,6 +367,24 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
       // TODO default(del(1, 1, 2), del(5, 3, 1))
       default(mod(1, 1, 5, 2))
       testAll()
+    }
+  }
+
+  fun `test trim changed blocks after second step correction`() {
+    lines() {
+      ("====}_==== }_Y_====}" - "====}_Y_====}")
+      default(del(1, 1, 1)) // result after second step correction
+      ignore(mod(1, 1, 2, 1)) // result looks strange because of 'diff.unimportant.line.char.count'
+      testDefault()
+      testTrim()
+    }
+  }
+
+  fun `test second step correction processes all confusing lines`() {
+    lines {
+      ("====}_==== }_Y_==== }_====}" - "==== }_Y_==== }")
+      default(del(0, 0, 1), del(4, 3, 1))
+      testDefault()
     }
   }
 }

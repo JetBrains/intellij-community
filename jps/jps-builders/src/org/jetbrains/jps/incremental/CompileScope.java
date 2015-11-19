@@ -47,7 +47,9 @@ public abstract class CompileScope {
   public abstract boolean isAffected(@NotNull BuildTarget<?> target);
 
   /**
-   * @return {@code true} if {@code target} as a whole is included into the scope, i.e. all its files are affected
+   * Returns {@code true} if {@code target} is included into the scope as a whole, in particular this means that all files from the target are affected.
+   * However this method may return {@code false} even if {@link #isAffected(BuildTarget, File)} is {@code true} for all files from the target
+   * (e.g. if 'Compile Files' action is invoked for all files from the target).
    */
   public abstract boolean isWholeTargetAffected(@NotNull BuildTarget<?> target);
 

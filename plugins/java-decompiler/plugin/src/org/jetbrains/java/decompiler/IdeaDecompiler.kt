@@ -133,13 +133,9 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
     if (indicator != null) myProgress.put(file, indicator)
 
     try {
-      val files = linkedMapOf(file.path to file)
       val mask = "${file.nameWithoutExtension}$"
-      file.parent.children.forEach { child ->
-        if (child.nameWithoutExtension.startsWith(mask) && child.fileType === StdFileTypes.CLASS) {
-          files.put(FileUtil.toSystemIndependentName(child.path), child)
-        }
-      }
+      val files = mapOf(file.path to file) +
+          file.parent.children.filter { it.nameWithoutExtension.startsWith(mask) && it.fileType === StdFileTypes.CLASS }.map { it.path to it }
 
       val options = HashMap(myOptions.value)
       if (Registry.`is`("decompiler.use.line.mapping")) {

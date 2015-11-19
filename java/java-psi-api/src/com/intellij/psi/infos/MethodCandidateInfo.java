@@ -363,6 +363,10 @@ public class MethodCandidateInfo extends CandidateInfo{
     return myInferenceError;
   }
 
+  public CurrentCandidateProperties createProperties() {
+    return new CurrentCandidateProperties(this, getSiteSubstitutor(), isVarargs(), false);
+  }
+
   public static class CurrentCandidateProperties {
     private final MethodCandidateInfo myMethod;
     private PsiSubstitutor mySubstitutor;

@@ -109,8 +109,8 @@ public class AnnotationProcessorProfileSerializer {
       addChild(element, "sourceOutputDir").setAttribute(NAME, FileUtil.toSystemIndependentName(srcDirName));
     }
     final String testSrcDirName = profile.getGeneratedSourcesDirectoryName(true);
-    if (!StringUtil.equals(ProcessorConfigProfile.DEFAULT_TESTS_DIR_NAME, FileUtil.toSystemIndependentName(testSrcDirName))) {
-      addChild(element, "sourceTestOutputDir").setAttribute(NAME, testSrcDirName);
+    if (!StringUtil.equals(ProcessorConfigProfile.DEFAULT_TESTS_DIR_NAME, testSrcDirName)) {
+      addChild(element, "sourceTestOutputDir").setAttribute(NAME, FileUtil.toSystemIndependentName(testSrcDirName));
     }
 
     if (profile.isOutputRelativeToContentRoot()) {

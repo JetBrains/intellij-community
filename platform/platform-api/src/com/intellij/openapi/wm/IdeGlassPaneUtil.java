@@ -71,7 +71,7 @@ public class IdeGlassPaneUtil {
   public static boolean canBePreprocessed(MouseEvent e) {
     Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
 
-    if (JBPopupFactory.getInstance().getParentBalloonFor(c) != null) {
+    if (JBPopupFactory.getInstance().getParentBalloonFor(c) != null && e.getID() != MouseEvent.MOUSE_DRAGGED) {
       return false;
     }
 

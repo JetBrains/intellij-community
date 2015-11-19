@@ -73,11 +73,13 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
           if (type instanceof PsiIntersectionType) {
             final PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
             for (PsiType conjunct : conjuncts) {
-              final PsiType lambdaParameterFromType = getLambdaParameterFromType(parameterIndex, lambdaExpression, conjunct);
-              if (lambdaParameterFromType != null) return lambdaParameterFromType;
+              final PsiType lambdaParameterFromType = getLambdaParameterFromType(parameterIndex, conjunct);
+              if (lambdaParameterFromType != null) {
+                return lambdaParameterFromType;
+              }
             }
           } else {
-            final PsiType lambdaParameterFromType = getLambdaParameterFromType(parameterIndex, lambdaExpression, type);
+            final PsiType lambdaParameterFromType = getLambdaParameterFromType(parameterIndex, type);
             if (lambdaParameterFromType != null) {
               return lambdaParameterFromType;
             }
@@ -88,17 +90,14 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     return new PsiLambdaParameterType(param);
   }
 
-  private static PsiType getLambdaParameterFromType(int parameterIndex, PsiLambdaExpression lambdaExpression, PsiType conjunct) {
+  private static PsiType getLambdaParameterFromType(int parameterIndex, PsiType conjunct) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(conjunct);
     if (resolveResult != null) {
       final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(conjunct);
       if (method != null) {
         final PsiParameter[] parameters = method.getParameterList().getParameters();
         if (parameterIndex < parameters.length) {
-          final PsiType psiType = LambdaUtil.getSubstitutor(method, resolveResult).substitute(parameters[parameterIndex].getType());
-          if (!LambdaUtil.dependsOnTypeParams(psiType, conjunct, lambdaExpression)) {
-            return psiType;
-          }
+          return LambdaUtil.getSubstitutor(method, resolveResult).substitute(parameters[parameterIndex].getType());
         }
       }
     }

@@ -303,6 +303,12 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     verifyJavaDoc(getTestClass());
   }
   
+  public void testHtmlLinkToPackageInfo() throws Exception {
+    PsiTestUtil.createTestProjectStructure(myProject, myModule,
+                                           getTestDataPath() + "/codeInsight/javadocIG/htmlLinkToPackageInfo", myFilesToDelete);
+    verifyJavadocFor("pack.A");
+  }
+  
   public void testMultipleSpacesInLiteral() throws Exception {
     useJava8();
     verifyJavaDoc(getTestClass());

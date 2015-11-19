@@ -117,8 +117,9 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
         if (key == null) continue;
         int index = insertionIndex(k);
         if (index < 0) {
+          throwObjectContractViolation(_set[-index - 1], o);
           // make 'key' alive till this point to not allow 'o.referent' to be gced
-          throwObjectContractViolation(_set[-index - 1], o + "; key: " + key);
+          if (key == _set) throw new AssertionError();
         }
         _set[index] = o;
         _values[index] = oldVals[i];

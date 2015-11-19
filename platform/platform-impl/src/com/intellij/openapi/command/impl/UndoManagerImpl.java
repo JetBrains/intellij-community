@@ -30,7 +30,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
@@ -325,11 +324,8 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     if (editor == null) {
       return null;
     }
-    if (editor instanceof TextEditor) {
-      Editor e = ((TextEditor)editor).getEditor();
-      if (e instanceof EditorImpl && ((EditorImpl)e).myUseNewRendering && e.isDisposed()) {
-        return null;
-      }
+    if (Registry.is("editor.new.rendering") && !editor.isValid()) {
+      return null;
     }
     return new EditorAndState(editor, editor.getState(FileEditorStateLevel.UNDO));
   }

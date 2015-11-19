@@ -16,6 +16,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,20 +31,37 @@ public abstract class BaseDataReader {
   private static final Logger LOG = Logger.getInstance(BaseDataReader.class);
 
   protected final SleepingPolicy mySleepingPolicy;
-  protected volatile boolean isStopped = false;
+  protected volatile boolean isStopped;
 
-  private Future<?> myFinishedFuture = null;
+  private Future<?> myFinishedFuture;
 
   public BaseDataReader(SleepingPolicy sleepingPolicy) {
     mySleepingPolicy = sleepingPolicy != null ? sleepingPolicy: SleepingPolicy.SIMPLE;
   }
 
+  @Deprecated
+  /**
+   * @deprecated use {@link BaseDataReader#start(String)} instead
+   */
   protected void start() {
+    start("");
+  }
+
+  protected void start(@NotNull final String presentableName) {
     if (myFinishedFuture == null) {
       myFinishedFuture = executeOnPooledThread(new Runnable() {
         @Override
         public void run() {
-          doRun();
+          String oldThreadName = Thread.currentThread().getName();
+          if (!StringUtil.isEmptyOrSpaces(presentableName)) {
+            Thread.currentThread().setName(StringUtil.first("BaseDataReader: "+presentableName, 120, true));
+          }
+          try {
+            doRun();
+          }
+          finally {
+            Thread.currentThread().setName(oldThreadName);
+          }
         }
       });
     }

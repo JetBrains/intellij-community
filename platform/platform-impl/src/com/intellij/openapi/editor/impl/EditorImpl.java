@@ -4230,6 +4230,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (logicalPosition.column > lineEndPosition.column) {
         visualPosition = logicalToVisualPosition(lineEndPosition.leanForward(true));
       }
+      else if (mySoftWrapModel.isInsideSoftWrap(visualPosition)) {
+        VisualPosition beforeSoftWrapPosition = myView.logicalToVisualPosition(logicalPosition, true);
+        if (visualPosition.line == beforeSoftWrapPosition.line) {
+          visualPosition = beforeSoftWrapPosition;
+        }
+        else {
+          visualPosition = myView.logicalToVisualPosition(logicalPosition, false);
+        }
+      }
     }
     return visualPosition;
   }
@@ -4316,10 +4325,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     };
   }
 
-  private boolean isInsideGutterOnlyFoldingArea(@NotNull MouseEvent e) {
+  private boolean isInsideGutterWhitespaceArea(@NotNull MouseEvent e) {
     EditorMouseEventArea area = getMouseEventArea(e);
     return area == EditorMouseEventArea.FOLDING_OUTLINE_AREA &&
-           myGutterComponent.convertX(e.getX()) <= myGutterComponent.getWhitespaceSeparatorOffset();
+           myGutterComponent.convertX(e.getX()) > myGutterComponent.getWhitespaceSeparatorOffset();
   }
 
   @Override
@@ -5954,10 +5963,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // Don't move caret on mouse press above gutter line markers area (a place where break points, 'override', 'implements' etc icons
       // are drawn) and annotations area. E.g. we don't want to change caret position if a user sets new break point (clicks
       // at 'line markers' area).
-      if (e.getSource() != myGutterComponent ||
-          (eventArea != EditorMouseEventArea.LINE_MARKERS_AREA &&
-          eventArea != EditorMouseEventArea.ANNOTATIONS_AREA &&
-          !isInsideGutterOnlyFoldingArea(e)))
+      if (eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA ||
+          eventArea == EditorMouseEventArea.EDITING_AREA ||
+          isInsideGutterWhitespaceArea(e))
       {
         VisualPosition visualPosition = myUseNewRendering ? getTargetPosition(x, y, true) : null;
         LogicalPosition pos = myUseNewRendering ? visualToLogicalPosition(visualPosition) : getLogicalPositionForScreenPos(x, y, true);

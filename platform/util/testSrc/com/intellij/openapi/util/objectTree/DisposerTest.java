@@ -27,7 +27,6 @@ import java.util.List;
 import static com.intellij.openapi.util.Disposer.newDisposable;
 
 public class DisposerTest extends TestCase {
-
   private MyDisposable myRoot;
 
   private MyDisposable myFolder1;
@@ -222,7 +221,7 @@ public class DisposerTest extends TestCase {
     private boolean myDisposed;
     protected String myName;
 
-    MyDisposable(@NonNls String aName) {
+    private MyDisposable(@NonNls String aName) {
       myName = aName;
     }
 
@@ -301,4 +300,28 @@ public class DisposerTest extends TestCase {
     }
   }
 
+
+  public void testMustNotRegisterWithAlreadyDisposed() {
+    Disposable disposable = Disposer.newDisposable();
+    Disposer.register(myRoot, disposable);
+
+    Disposer.dispose(disposable);
+
+    try {
+      Disposer.register(disposable, Disposer.newDisposable());
+      fail("Must not be able to register with already disposed parent");
+    }
+    catch (IncorrectOperationException ignored) {
+
+    }
+  }
+
+  public void testRegisterThenDisposeThenRegisterAgain() {
+    Disposable disposable = Disposer.newDisposable();
+    Disposer.register(myRoot, disposable);
+
+    Disposer.dispose(disposable);
+    Disposer.register(myRoot, disposable);
+    Disposer.register(disposable, Disposer.newDisposable());
+  }
 }

@@ -28,6 +28,9 @@
     <action class="com.intellij.vcs.log.ui.actions.VcsLogQuickSettingsActions" id="Vcs.Log.QuickSettings"
             icon="AllIcons.General.Gear" text="Quick Settings" description="Quick Settings" />
     <action class="com.intellij.vcs.log.ui.actions.IntelliSortChooserToggleAction" id="Vcs.Log.IntelliSortChooser"/>
+    <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log" text="Show VCS Log">
+      <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
+    </action>
 
     <group id="Vcs.Log.Toolbar">
       <reference id="Vcs.Log.GoToRef" />

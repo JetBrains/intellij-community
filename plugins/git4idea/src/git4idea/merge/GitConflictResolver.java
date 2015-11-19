@@ -26,8 +26,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
-import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -46,6 +44,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.util.*;
+
+import static com.intellij.dvcs.DvcsUtil.findVirtualFilesWithRefresh;
+import static com.intellij.dvcs.DvcsUtil.sortVirtualFilesByPresentation;
 
 /**
  *
@@ -106,7 +107,7 @@ public class GitConflictResolver {
       myMergeDialogCustomizer = mergeDialogCustomizer;
       return this;
     }
-    
+
   }
 
   public GitConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull GitPlatformFacade platformFacade,
@@ -323,13 +324,7 @@ public class GitConflictResolver {
           return new File(root.getPath(), path);
         }
       });
-      RefreshVFsSynchronously.refreshFiles(files);
-      return ContainerUtil.sorted(ContainerUtil.mapNotNull(files, new Function<File, VirtualFile>() {
-        @Override
-        public VirtualFile fun(File file) {
-          return VfsUtil.findFileByIoFile(file, false);
-        }
-      }), GitUtil.VIRTUAL_FILE_COMPARATOR);
+      return sortVirtualFilesByPresentation(findVirtualFilesWithRefresh(files));
     }
   }
 

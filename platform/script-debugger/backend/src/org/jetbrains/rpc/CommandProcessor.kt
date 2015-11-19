@@ -45,7 +45,7 @@ abstract class CommandProcessor<INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS_RESPO
   }
 }
 
-fun requestToByteBuf(message: Request<out Any>, isDebugEnabled: Boolean = LOG.isDebugEnabled): ByteBuf {
+fun requestToByteBuf(message: Request<*>, isDebugEnabled: Boolean = LOG.isDebugEnabled): ByteBuf {
   val content = message.buffer
   if (isDebugEnabled) {
     LOG.debug("OUT: ${content.toString(Charsets.UTF_8)}")

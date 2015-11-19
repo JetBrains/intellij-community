@@ -6,7 +6,7 @@ public class Bug
   {
     final I<CRN> f = null;
 
-    Bug.<String>create(fn<error descr="'fn(Bug.I<FN>)' in 'Bug' cannot be applied to '(Bug.I<CRN>)'">(f)</error>);
+    Bug.<String>create<error descr="'create(Bug.I<java.lang.String>)' in 'Bug' cannot be applied to '(Bug.I<CRN>)'">(fn(f))</error>;
 
     return create(fn(f));
 

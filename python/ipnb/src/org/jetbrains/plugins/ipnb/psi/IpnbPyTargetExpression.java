@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl;
+import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
@@ -13,6 +14,10 @@ public class IpnbPyTargetExpression extends PyTargetExpressionImpl {
 
   public IpnbPyTargetExpression(ASTNode astNode) {
     super(astNode);
+  }
+
+  public IpnbPyTargetExpression(final PyTargetExpressionStub stub) {
+    super(stub, IpnbPyTokenTypes.IPNB_TARGET);
   }
 
   @Override

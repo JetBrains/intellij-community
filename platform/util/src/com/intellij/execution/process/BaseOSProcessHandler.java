@@ -19,6 +19,7 @@ import com.intellij.execution.TaskExecutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.io.BaseDataReader;
@@ -46,13 +47,24 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   protected final Process myProcess;
   protected final String myCommandLine;
   protected final Charset myCharset;
+  @NotNull private final String myPresentableName;
   protected final ProcessWaitFor myWaitFor;
 
+  @Deprecated
+  /**
+   * todo remove in IDEA16
+   * @deprecated Use {@link BaseOSProcessHandler#BaseOSProcessHandler(Process, String, Charset, String)} instead
+   */
   public BaseOSProcessHandler(@NotNull Process process, @Nullable String commandLine, @Nullable Charset charset) {
+    this(process, commandLine, charset, StringUtil.notNullize(commandLine));
+  }
+
+  public BaseOSProcessHandler(@NotNull Process process, @Nullable String commandLine, @Nullable Charset charset, @NotNull String presentableName) {
     myProcess = process;
     myCommandLine = commandLine;
     myCharset = charset;
-    myWaitFor = new ProcessWaitFor(process, this);
+    myPresentableName = presentableName;
+    myWaitFor = new ProcessWaitFor(process, this, presentableName);
   }
 
   /**
@@ -147,13 +159,13 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   }
 
   @NotNull
-  protected BaseDataReader createErrorDataReader(BaseDataReader.SleepingPolicy sleepingPolicy) {
-    return new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR, sleepingPolicy);
+  protected BaseDataReader createErrorDataReader(@NotNull BaseDataReader.SleepingPolicy sleepingPolicy) {
+    return new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR, sleepingPolicy, "error stream of "+myPresentableName);
   }
 
   @NotNull
-  protected BaseDataReader createOutputDataReader(BaseDataReader.SleepingPolicy sleepingPolicy) {
-    return new SimpleOutputReader(createProcessOutReader(), ProcessOutputTypes.STDOUT, sleepingPolicy);
+  protected BaseDataReader createOutputDataReader(@NotNull BaseDataReader.SleepingPolicy sleepingPolicy) {
+    return new SimpleOutputReader(createProcessOutReader(), ProcessOutputTypes.STDOUT, sleepingPolicy, "output stream of "+myPresentableName);
   }
 
   protected void onOSProcessTerminated(final int exitCode) {
@@ -274,10 +286,10 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   private class SimpleOutputReader extends BaseOutputReader {
     private final Key myProcessOutputType;
 
-    private SimpleOutputReader(@NotNull Reader reader, @NotNull Key processOutputType, SleepingPolicy sleepingPolicy) {
+    private SimpleOutputReader(@NotNull Reader reader, @NotNull Key processOutputType, SleepingPolicy sleepingPolicy, @NotNull String presentableName) {
       super(reader, sleepingPolicy);
       myProcessOutputType = processOutputType;
-      start();
+      start(presentableName);
     }
 
     @NotNull

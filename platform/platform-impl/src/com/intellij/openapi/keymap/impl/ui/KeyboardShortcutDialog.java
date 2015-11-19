@@ -41,10 +41,10 @@ final class KeyboardShortcutDialog extends ShortcutDialog<KeyboardShortcut> {
     JPanel inner = new JPanel(new BorderLayout());
     inner.add(BorderLayout.CENTER, panel.mySecondStroke);
     inner.add(BorderLayout.WEST, panel.mySecondStrokeEnable);
+    inner.setBorder(JBUI.Borders.empty(5, 0, 0, 0));
     panel.add(BorderLayout.NORTH, panel.myFirstStroke);
     panel.add(BorderLayout.SOUTH, inner);
     panel.setBorder(JBUI.Borders.empty(0, 10));
-    panel.mySecondStrokeEnable.setSelected(true);
     panel.mySecondStrokeEnable.setText(KeyMapBundle.message("dialog.enable.second.stroke.checkbox"));
 
     init();
@@ -68,11 +68,5 @@ final class KeyboardShortcutDialog extends ShortcutDialog<KeyboardShortcut> {
   @Override
   Collection<String> getConflicts(KeyboardShortcut shortcut, String actionId, Keymap keymap) {
     return keymap.getConflicts(actionId, shortcut).keySet();
-  }
-
-  @Override
-  String getActionPath(String actionId) {
-    String actionPath = super.getActionPath(actionId);
-    return actionPath != null ? actionPath : actionId;
   }
 }

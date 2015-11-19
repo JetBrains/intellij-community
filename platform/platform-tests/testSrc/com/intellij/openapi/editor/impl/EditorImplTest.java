@@ -223,4 +223,11 @@ public class EditorImplTest extends AbstractEditorTest {
     document.setInBulkUpdate(false);
     checkResultByText("\n a<caret>bc");
   }
+  
+  public void testAllowCaretPositioningInsideSoftWrapOnlyIfVirtualSpaceIsEnabled() throws Exception {
+    initText("abcdef abcdef");
+    configureSoftWraps(10);
+    mouse().clickAt(0, 10);
+    assertEquals(new VisualPosition(0, 7), myEditor.getCaretModel().getVisualPosition());
+  }
 }
