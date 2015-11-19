@@ -320,9 +320,13 @@ public class JavaDocInfoGenerator {
 
       relativeLink = relativeLink.replace('/', '.');
 
-      String qualifiedTargetClassName = packageName.isEmpty() ? relativeLink : packageName + "." + relativeLink;
-      targetElement = JavaPsiFacade.getInstance(contextElement.getProject()).findClass(qualifiedTargetClassName, 
-                                                                                       contextElement.getResolveScope());
+      String qualifiedTargetName = packageName.isEmpty() ? relativeLink : packageName + "." + relativeLink;
+      int lastDotPosition = qualifiedTargetName.lastIndexOf('.');
+      String lastComponent = qualifiedTargetName.substring(lastDotPosition + 1);
+      JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(contextElement.getProject());
+      targetElement = "package-summary".equals(lastComponent)
+                      ? javaPsiFacade.findPackage(qualifiedTargetName.substring(0, lastDotPosition))
+                      : javaPsiFacade.findClass(qualifiedTargetName, contextElement.getResolveScope());
     }
     if (targetElement == null) return null;
     
@@ -334,7 +338,7 @@ public class JavaDocInfoGenerator {
       }
       else  {
         for (PsiField field : ((PsiClass)targetElement).getFields()) {
-          if (field.getName().equals(fragment)) {
+          if (fragment.equals(field.getName())) {
             rawFragment = fragment;
             fragment = null; // reference to a field
             break;
