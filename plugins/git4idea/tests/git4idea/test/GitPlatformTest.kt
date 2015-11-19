@@ -211,9 +211,9 @@ abstract class GitPlatformTest : PlatformTestCase() {
   }
 
   protected fun installHook(gitDir: File, hookName: String, hookContent: String) {
-    val preReceive = File(gitDir, "hooks/$hookName")
-    FileUtil.writeToFile(preReceive, hookContent)
-    preReceive.setExecutable(true, false)
+    val hookFile = File(gitDir, "hooks/$hookName")
+    FileUtil.writeToFile(hookFile, hookContent)
+    hookFile.setExecutable(true, false)
   }
 
   protected fun assertSuccessfulNotification(message: String) {
