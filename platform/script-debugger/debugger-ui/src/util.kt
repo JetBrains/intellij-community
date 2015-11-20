@@ -18,6 +18,7 @@ package com.intellij.xdebugger.util
 import com.intellij.xdebugger.XDebugSession
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.debugger.CallFrame
 import org.jetbrains.debugger.SuspendContext
 import org.jetbrains.debugger.Vm
 import org.jetbrains.rpc.LOG
@@ -26,11 +27,11 @@ import org.jetbrains.rpc.LOG
 fun XDebugSession.rejectedErrorReporter(description: String? = null): (Throwable) -> Unit = {
   Promise.logError(LOG, it)
   if (it != AsyncPromise.OBSOLETE_ERROR) {
-    reportError("${if (description == null) "" else description + ": "}${it.getMessage()}")
+    reportError("${if (description == null) "" else description + ": "}${it.message}")
   }
 }
 
-inline fun <T> contextDependentResultConsumer(context: SuspendContext, crossinline done: (result: T, vm: Vm) -> Unit) : (T) -> Unit {
+inline fun <T> contextDependentResultConsumer(context: SuspendContext<out CallFrame>, crossinline done: (result: T, vm: Vm) -> Unit) : (T) -> Unit {
   return {
     val vm = context.valueManager.vm
     if (vm.attachStateManager.isAttached() && !vm.suspendContextManager.isContextObsolete(context)) {

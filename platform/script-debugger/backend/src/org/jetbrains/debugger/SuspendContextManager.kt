@@ -23,11 +23,11 @@ interface SuspendContextManager<CALL_FRAME : CallFrame> {
    */
   fun suspend(): Promise<*>
 
-  val context: SuspendContext?
+  val context: SuspendContext<CALL_FRAME>?
 
-  val contextOrFail: SuspendContext
+  val contextOrFail: SuspendContext<CALL_FRAME>
 
-  fun isContextObsolete(context: SuspendContext): Boolean
+  fun isContextObsolete(context: SuspendContext<CALL_FRAME>): Boolean
 
   fun setOverlayMessage(message: String?)
 

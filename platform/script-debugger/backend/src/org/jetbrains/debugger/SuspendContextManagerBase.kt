@@ -1,11 +1,27 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.debugger
 
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.rejectedPromise
 import org.jetbrains.concurrency.resolvedPromise
 import java.util.concurrent.atomic.AtomicReference
 
-abstract class SuspendContextManagerBase<T : SuspendContextBase<*, *>, CALL_FRAME : CallFrame> : SuspendContextManager<CALL_FRAME> {
+abstract class SuspendContextManagerBase<T : SuspendContextBase<*, *, CALL_FRAME>, CALL_FRAME : CallFrame> : SuspendContextManager<CALL_FRAME> {
   val contextRef = AtomicReference<T>()
 
   protected val suspendCallback = AtomicReference<AsyncPromise<Void>>()
@@ -40,7 +56,7 @@ abstract class SuspendContextManagerBase<T : SuspendContextBase<*, *>, CALL_FRAM
     debugListener.resumed()
   }
 
-  override val context: SuspendContext?
+  override val context: SuspendContext<CALL_FRAME>?
     get() = contextRef.get()
 
   override val contextOrFail: T
@@ -56,16 +72,14 @@ abstract class SuspendContextManagerBase<T : SuspendContextBase<*, *>, CALL_FRAM
 
   protected abstract fun doSuspend(): Promise<*>
 
-  override fun isContextObsolete(context: SuspendContext) = this.context !== context
+  override fun isContextObsolete(context: SuspendContext<CALL_FRAME>) = this.context !== context
 
   override fun setOverlayMessage(message: String?) {
   }
 
   override fun restartFrame(callFrame: CALL_FRAME): Promise<Boolean> = restartFrame(callFrame, contextOrFail)
 
-  protected open fun restartFrame(callFrame: CALL_FRAME, currentContext: T): Promise<Boolean> {
-    return Promise.reject<Boolean>("Unsupported")
-  }
+  protected open fun restartFrame(callFrame: CALL_FRAME, currentContext: T) = rejectedPromise<Boolean>("Unsupported")
 
   override fun canRestartFrame(callFrame: CallFrame) = false
 

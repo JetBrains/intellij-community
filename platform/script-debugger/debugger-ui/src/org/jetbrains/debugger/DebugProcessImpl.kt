@@ -159,7 +159,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
     vm!!.suspendContextManager.setOverlayMessage("Paused in debugger")
   }
 
-  protected fun processBreakpoint(suspendContext: SuspendContext, breakpoint: XBreakpoint<*>, xSuspendContext: SuspendContextImpl) {
+  protected fun processBreakpoint(suspendContext: SuspendContext<*>, breakpoint: XBreakpoint<*>, xSuspendContext: SuspendContextImpl) {
     val condition = breakpoint.conditionExpression?.expression
     if (!processBreakpointConditionsAtIdeSide || condition == null) {
       processBreakpointLogExpressionAndSuspend(breakpoint, xSuspendContext, suspendContext)
@@ -178,7 +178,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
     }
   }
 
-  private fun processBreakpointLogExpressionAndSuspend(breakpoint: XBreakpoint<*>, xSuspendContext: SuspendContextImpl, suspendContext: SuspendContext) {
+  private fun processBreakpointLogExpressionAndSuspend(breakpoint: XBreakpoint<*>, xSuspendContext: SuspendContextImpl, suspendContext: SuspendContext<*>) {
     val logExpression = breakpoint.logExpressionObject?.expression
     if (logExpression == null) {
       breakpointReached(breakpoint, null, xSuspendContext)

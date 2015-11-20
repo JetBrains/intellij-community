@@ -20,15 +20,15 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.jsonProtocol.Request
 
 abstract class CommandSenderBase<SUCCESS_RESPONSE> {
-  protected abstract fun <RESULT : Any> doSend(message: Request<RESULT>, callback: RequestPromise<SUCCESS_RESPONSE, RESULT>)
+  protected abstract fun <RESULT> doSend(message: Request<RESULT>, callback: RequestPromise<SUCCESS_RESPONSE, RESULT>)
 
-  fun <RESULT : Any> send(message: Request<RESULT>): Promise<RESULT> {
+  fun <RESULT> send(message: Request<RESULT>): Promise<RESULT> {
     val callback = RequestPromise<SUCCESS_RESPONSE, RESULT>(message.methodName)
     doSend(message, callback)
     return callback
   }
 
-  protected class RequestPromise<SUCCESS_RESPONSE, RESULT : Any>(private val methodName: String?) : AsyncPromise<RESULT>(), RequestCallback<SUCCESS_RESPONSE> {
+  protected class RequestPromise<SUCCESS_RESPONSE, RESULT>(private val methodName: String?) : AsyncPromise<RESULT>(), RequestCallback<SUCCESS_RESPONSE> {
     @Suppress("BASE_WITH_NULLABLE_UPPER_BOUND")
     override fun onSuccess(response: SUCCESS_RESPONSE?, resultReader: ResultReader<SUCCESS_RESPONSE>?) {
       try {
