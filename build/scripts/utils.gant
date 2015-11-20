@@ -338,6 +338,7 @@ binding.setVariable("commonJvmArgsForTests", {
     "-ea",
     "-Dfile.encoding=UTF-8",
     "-Dio.netty.leakDetectionLevel=PARANOID",
+//    yjpOptions("junit", "64"), // uncomment to start tests with a profiling agent (e.g. in a personal build)
     "-server",
     "-Xbootclasspath/p:${projectBuilder.moduleOutput(findModule("boot"))}",
     "-XX:+HeapDumpOnOutOfMemoryError",
@@ -346,6 +347,8 @@ binding.setVariable("commonJvmArgsForTests", {
     "-Didea.system.path=${p("teamcity.build.tempDir")}/system",
     "-Xdebug",
     "-XX:ReservedCodeCacheSize=240m",
+    "-XX:SoftRefLRUPolicyMSPerMB=50",
+    "-XX:+UseConcMarkSweepGC",
     "-XX:-OmitStackTraceInFastThrow",
     jdwp
   ]
