@@ -321,11 +321,9 @@ public class JavaDocInfoGenerator {
       relativeLink = relativeLink.replace('/', '.');
 
       String qualifiedTargetName = packageName.isEmpty() ? relativeLink : packageName + "." + relativeLink;
-      int lastDotPosition = qualifiedTargetName.lastIndexOf('.');
-      String lastComponent = qualifiedTargetName.substring(lastDotPosition + 1);
       JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(contextElement.getProject());
-      targetElement = "package-summary".equals(lastComponent)
-                      ? javaPsiFacade.findPackage(qualifiedTargetName.substring(0, lastDotPosition))
+      targetElement = "package-summary".equals(StringUtil.getShortName(qualifiedTargetName))
+                      ? javaPsiFacade.findPackage(StringUtil.getPackageName(qualifiedTargetName))
                       : javaPsiFacade.findClass(qualifiedTargetName, contextElement.getResolveScope());
     }
     if (targetElement == null) return null;
