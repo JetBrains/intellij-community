@@ -108,6 +108,8 @@ public abstract class PySdkUpdater {
   @Nullable
   public abstract String getHomePath();
 
+  public abstract VirtualFile[] getRoots(OrderRootType rootType);
+
   private static class JdkTableUpdater extends PySdkUpdater {
     private final String mySdkPath;
 
@@ -131,6 +133,11 @@ public abstract class PySdkUpdater {
     @Override
     public String getHomePath() {
       return mySdkPath;
+    }
+
+    @Override
+    public VirtualFile[] getRoots(OrderRootType rootType) {
+      return getSdk().getRootProvider().getFiles(rootType);
     }
 
     public void modifySdk(@NotNull SdkModificationProcessor processor) {
@@ -172,6 +179,11 @@ public abstract class PySdkUpdater {
     @Override
     public String getHomePath() {
       return mySdk.getHomePath();
+    }
+
+    @Override
+    public VirtualFile[] getRoots(OrderRootType rootType) {
+      return myModificator.getRoots(rootType);
     }
 
     public void modifySdk(@NotNull SdkModificationProcessor processor) {
