@@ -19,6 +19,8 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -29,6 +31,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -44,7 +47,7 @@ class LineMarkersUtil {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     List<LineMarkerInfo> oldMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(document, project);
-    List<LineMarkerInfo> array = new ArrayList<LineMarkerInfo>(Math.max(markers.size(), oldMarkers.size()));
+    List<LineMarkerInfo> result = new ArrayList<LineMarkerInfo>(Math.max(markers.size(), oldMarkers.size()));
     MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, true);
     HighlightersRecycler toReuse = new HighlightersRecycler();
     for (LineMarkerInfo info : oldMarkers) {
@@ -57,11 +60,11 @@ class LineMarkersUtil {
         toReuse.recycleHighlighter(highlighter);
       }
       else {
-        array.add(info);
+        result.add(info);
       }
     }
 
-    for (LineMarkerInfo info : markers) {
+    for (final LineMarkerInfo info : markers) {
       PsiElement element = info.getElement();
       if (element == null) {
         continue;
@@ -77,25 +80,36 @@ class LineMarkersUtil {
       if (marker == null) {
         marker = markupModel.addRangeHighlighter(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX, null, HighlighterTargetArea.LINES_IN_RANGE);
       }
-      LineMarkerInfo.LineMarkerGutterIconRenderer renderer = (LineMarkerInfo.LineMarkerGutterIconRenderer)info.createGutterRenderer();
-      LineMarkerInfo.LineMarkerGutterIconRenderer oldRenderer = marker.getGutterIconRenderer() instanceof LineMarkerInfo.LineMarkerGutterIconRenderer ? (LineMarkerInfo.LineMarkerGutterIconRenderer)marker.getGutterIconRenderer() : null;
-      if (oldRenderer == null || renderer == null || !renderer.equals(oldRenderer)) {
-        marker.setGutterIconRenderer(renderer);
-      }
-      if (!Comparing.equal(marker.getLineSeparatorColor(), info.separatorColor)) {
-        marker.setLineSeparatorColor(info.separatorColor);
-      }
-      if (!Comparing.equal(marker.getLineSeparatorPlacement(), info.separatorPlacement)) {
-        marker.setLineSeparatorPlacement(info.separatorPlacement);
+      final LineMarkerInfo.LineMarkerGutterIconRenderer newRenderer = (LineMarkerInfo.LineMarkerGutterIconRenderer)info.createGutterRenderer();
+      final LineMarkerInfo.LineMarkerGutterIconRenderer oldRenderer = marker.getGutterIconRenderer() instanceof LineMarkerInfo.LineMarkerGutterIconRenderer ? (LineMarkerInfo.LineMarkerGutterIconRenderer)marker.getGutterIconRenderer() : null;
+      final boolean rendererChanged = oldRenderer == null || newRenderer == null || !newRenderer.equals(oldRenderer);
+      final boolean lineSeparatorColorChanged = !Comparing.equal(marker.getLineSeparatorColor(), info.separatorColor);
+      final boolean lineSeparatorPlacementChanged = !Comparing.equal(marker.getLineSeparatorPlacement(), info.separatorPlacement);
+
+      if (rendererChanged || lineSeparatorColorChanged || lineSeparatorPlacementChanged) {
+        ((MarkupModelEx)markupModel).changeAttributesInBatch((RangeHighlighterEx)marker, new Consumer<RangeHighlighterEx>() {
+          @Override
+          public void consume(RangeHighlighterEx markerEx) {
+            if (rendererChanged) {
+              markerEx.setGutterIconRenderer(newRenderer);
+            }
+            if (lineSeparatorColorChanged) {
+              markerEx.setLineSeparatorColor(info.separatorColor);
+            }
+            if (lineSeparatorPlacementChanged) {
+              markerEx.setLineSeparatorPlacement(info.separatorPlacement);
+            }
+          }
+        });
       }
       info.highlighter = marker;
-      array.add(info);
+      result.add(info);
     }
 
     for (RangeHighlighter highlighter : toReuse.forAllInGarbageBin()) {
       highlighter.dispose();
     }
 
-    DaemonCodeAnalyzerImpl.setLineMarkers(document, array, project);
+    DaemonCodeAnalyzerImpl.setLineMarkers(document, result, project);
   }
 }
