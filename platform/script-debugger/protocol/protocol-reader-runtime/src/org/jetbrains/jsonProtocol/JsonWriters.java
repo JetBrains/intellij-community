@@ -1,33 +1,21 @@
-package org.jetbrains.jsonProtocol;
+package org.jetbrains.jsonProtocol
 
-import com.google.gson.stream.JsonWriter;
-import org.jetbrains.annotations.NotNull;
+import com.google.gson.stream.JsonWriter
+import java.lang.reflect.Method
 
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.Collection;
+object JsonWriters {
+  val JSON_WRITE_DEFERRED_NAME: Method
 
-public final class JsonWriters {
-  public static final Method JSON_WRITE_DEFERRED_NAME;
-
-  static {
-    try {
-      JSON_WRITE_DEFERRED_NAME = JsonWriter.class.getDeclaredMethod("writeDeferredName");
-      JSON_WRITE_DEFERRED_NAME.setAccessible(true);
-    }
-    catch (NoSuchMethodException e) {
-      throw new RuntimeException(e);
-    }
+  init {
+      JSON_WRITE_DEFERRED_NAME = JsonWriter::class.java.getDeclaredMethod("writeDeferredName")
+      JSON_WRITE_DEFERRED_NAME.isAccessible = true
   }
 
-  private JsonWriters() {
-  }
-
-  public static void writeStringList(@NotNull JsonWriter writer, @NotNull String name, @NotNull Collection<String> value) throws IOException {
-    writer.name(name).beginArray();
-    for (String item : value) {
-      writer.value(item);
+  fun writeStringList(writer: JsonWriter, name: String, value: Collection<String>) {
+    writer.name(name).beginArray()
+    for (item in value) {
+      writer.value(item)
     }
-    writer.endArray();
+    writer.endArray()
   }
 }
