@@ -101,13 +101,6 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
 
     DESCRIPTORS_MAP.put("firstMatch", new TypeConversionDescriptorFactory("$it$.firstMatch($p$)", "$it$.filter($p$).findFirst()", true, true, false));
     DESCRIPTORS_MAP.put("size", new TypeConversionDescriptorFactory("$it$.size()", "(int) $it$.count()", false));
-
-    DESCRIPTORS_MAP.put("toMap", new TypeConversionDescriptorFactory("$it$.toMap($f$)",
-                                                              "$it$.collect(java.util.stream.Collectors.toMap(java.util.function.Function.identity(), $f$))", true));
-    DESCRIPTORS_MAP.put("toList", new TypeConversionDescriptorFactory("$it$.toList()", STREAM_COLLECT_TO_LIST, false));
-    DESCRIPTORS_MAP.put("toSet", new TypeConversionDescriptorFactory("$it$.toSet()", "$it$.collect(java.util.stream.Collectors.toSet())", false));
-    DESCRIPTORS_MAP.put("toSortedList", new TypeConversionDescriptorFactory("$it$.toSortedList($c$)", "$it$.sorted($c$).collect(java.util.stream.Collectors.toList())", false));
-    DESCRIPTORS_MAP.put("toSortedSet", new TypeConversionDescriptorFactory("$it$.toSortedSet($c$)", "$it$.sorted($c$).collect(java.util.stream.Collectors.toSet())", false));
   }
 
   @Override
@@ -233,6 +226,9 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
         }
         descriptorBase = descriptor;
       }
+    }
+    if (descriptorBase == null) {
+      return FluentIterableConversionUtil.createToCollectionDescriptor(methodName, context);
     }
     if (descriptorBase != null) {
       if (needSpecifyType) {
