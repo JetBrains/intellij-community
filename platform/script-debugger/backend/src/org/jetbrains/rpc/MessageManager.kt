@@ -40,7 +40,9 @@ class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS>(privat
 
     fun readIfHasSequence(incoming: INCOMING): INCOMING_WITH_SEQ?
 
-    fun getSequence(incomingWithSeq: INCOMING_WITH_SEQ): Int
+    fun getSequence(incomingWithSeq: INCOMING_WITH_SEQ): Int = throw AbstractMethodError()
+
+    fun getSequence(incomingWithSeq: INCOMING_WITH_SEQ, incoming: INCOMING) = getSequence(incomingWithSeq)
 
     fun acceptNonSequence(incoming: INCOMING)
 
@@ -91,7 +93,7 @@ class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS>(privat
       return
     }
 
-    val callback = getCallbackAndRemove(handler.getSequence(commandResponse))
+    val callback = getCallbackAndRemove(handler.getSequence(commandResponse, incomingParsed))
     if (rejectIfClosed(callback)) {
       return
     }
