@@ -20,16 +20,21 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.performance.CollectionsListSettings;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -40,6 +45,29 @@ import java.util.List;
 public class CollectionAddAllCanBeReplacedWithConstructorInspection extends BaseJavaBatchLocalInspectionTool {
   private final static Logger LOG = Logger.getInstance(CollectionAddAllCanBeReplacedWithConstructorInspection.class);
 
+  private final CollectionsListSettings mySettings = new CollectionsListSettings() {
+    @Override
+    protected Collection<String> createDefaultSettings() {
+      return DEFAULT_COLLECTION_LIST;
+    }
+  };
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    mySettings.writeSettings(node);
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return mySettings.createOptionsPanel();
+  }
+
+  @Override
+  public void readSettings(@NotNull Element node) throws InvalidDataException {
+    mySettings.readSettings(node);
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
@@ -49,7 +77,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
         final String methodName = expression.getMethodExpression().getReferenceName();
-        if ("addAll".equals(methodName)) {
+        if ("addAll".equals(methodName) || "putAll".equals(methodName)) {
           if (expression.getArgumentList().getExpressions().length != 1) {
             return;
           }
@@ -67,7 +95,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
             return;
           }
           final PsiClass variableClass = ((PsiClassType)variableType).resolve();
-          if (variableClass == null || !InheritanceUtil.isInheritor(variableClass, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+          if (variableClass == null) {
             return;
           }
           PsiNewExpression assignmentExpression;
@@ -90,7 +118,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
           final PsiMethod method = expression.resolveMethod();
           if (method != null) {
             //noinspection DialogTitleCapitalization
-            holder.registerProblem(expression, QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.description"),
+            holder.registerProblem(expression, QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.description", methodName),
                                    new ReplaceAddAllWithConstructorFix(assignmentExpression, expression));
           }
         }
@@ -98,7 +126,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
     };
   }
 
-  private static boolean checkLocalVariableAssignmentOrInitializer(PsiExpression initializer) {
+  private boolean checkLocalVariableAssignmentOrInitializer(PsiExpression initializer) {
     if (!(initializer instanceof PsiNewExpression)) {
       return false;
     }
@@ -108,14 +136,16 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
       return false;
     }
     final PsiClass initializerClass = (PsiClass)classReference.resolve();
-    if (initializerClass == null || !hasProperConstructor(initializerClass)) {
+    if (initializerClass == null ||
+        !mySettings.getCollectionClassesRequiringCapacity().contains(initializerClass.getQualifiedName()) ||
+        !hasProperConstructor(initializerClass)) {
       return false;
     }
     final PsiExpressionList argumentList = newExpression.getArgumentList();
     return argumentList != null && argumentList.getExpressions().length == 0;
   }
 
-  private static boolean hasProperConstructor(PsiClass psiClass) {
+  private boolean hasProperConstructor(PsiClass psiClass) {
     for (PsiMethod psiMethod : psiClass.getConstructors()) {
       PsiParameterList parameterList = psiMethod.getParameterList();
       if(parameterList.getParametersCount() == 1) {
@@ -123,7 +153,8 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
         PsiTypeElement typeElement = parameter.getTypeElement();
         if (typeElement != null) {
           PsiType type = typeElement.getType();
-          if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+          if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_COLLECTION) ||
+              InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
             return true;
           }
         }
@@ -132,7 +163,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
     return false;
   }
 
-  private static Pair<Boolean, PsiNewExpression> isProperAssignmentStatementFound(PsiLocalVariable localVariable, PsiMethodCallExpression addAllExpression) {
+  private Pair<Boolean, PsiNewExpression> isProperAssignmentStatementFound(PsiLocalVariable localVariable, PsiMethodCallExpression addAllExpression) {
     PsiStatement currentStatement = PsiTreeUtil.getParentOfType(addAllExpression, PsiStatement.class);
     final PsiStatement localVariableDefinitionStatement = PsiTreeUtil.getParentOfType(localVariable, PsiStatement.class);
     while (currentStatement != null) {
