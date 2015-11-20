@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.application;
 
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NamedJDOMExternalizable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
@@ -45,6 +48,7 @@ public class PathManager {
   public static final String PROPERTY_HOME_PATH = "idea.home.path";
   public static final String PROPERTY_CONFIG_PATH = "idea.config.path";
   public static final String PROPERTY_SYSTEM_PATH = "idea.system.path";
+  public static final String PROPERTY_SCRATCH_PATH = "idea.scratch.path";
   public static final String PROPERTY_PLUGINS_PATH = "idea.plugins.path";
   public static final String PROPERTY_LOG_PATH = "idea.log.path";
   public static final String PROPERTY_PATHS_SELECTOR = "idea.paths.selector";
@@ -66,6 +70,7 @@ public class PathManager {
   private static String ourHomePath;
   private static String ourConfigPath;
   private static String ourSystemPath;
+  private static String ourScratchPath;
   private static String ourPluginsPath;
   private static String ourLogPath;
 
@@ -166,6 +171,20 @@ public class PathManager {
     }
 
     return ourConfigPath;
+  }
+
+  @NotNull
+  public static String getScratchPath() {
+    if (ourScratchPath != null) return ourScratchPath;
+
+    if (System.getProperty(PROPERTY_SCRATCH_PATH) != null) {
+      ourScratchPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_SCRATCH_PATH)));
+    }
+    else {
+      ourScratchPath = getConfigPath();
+    }
+
+    return ourScratchPath;
   }
 
   @NotNull
