@@ -52,7 +52,7 @@ internal class ExecutionStackImpl(private val suspendContext: SuspendContext<out
 
             val frame = frames[i]
             // if script is null, it is native function (Object.forEach for example), so, skip it
-            val script = suspendContext.valueManager.vm.scriptManager.getScript(frame)
+            val script = viewSupport.vm?.scriptManager?.getScript(frame)
             if (script != null) {
               val sourceInfo = viewSupport.getSourceInfo(script, frame)
               val isInLibraryContent = sourceInfo != null && viewSupport.isInLibraryContent(sourceInfo, script)

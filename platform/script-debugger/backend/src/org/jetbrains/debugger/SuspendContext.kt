@@ -49,5 +49,5 @@ interface SuspendContext<CALL_FRAME : CallFrame> {
    */
   val breakpointsHit: List<Breakpoint>
 
-  val valueManager: ValueManager<out Vm>
+  val valueManager: ValueManager
 }

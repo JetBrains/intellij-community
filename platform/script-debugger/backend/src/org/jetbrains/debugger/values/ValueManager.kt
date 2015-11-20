@@ -29,9 +29,9 @@ import java.util.concurrent.atomic.AtomicInteger
 
  * Currently WIP implementation doesn't keep such map due to protocol issue. But V8 does.
  */
-abstract class ValueManager<VM : Vm> protected constructor(val vm: VM) : Obsolescent {
+abstract class ValueManager() : Obsolescent {
   private val cacheStamp = AtomicInteger()
-  @Volatile private var obsolete: Boolean = false
+  @Volatile private var obsolete = false
 
   open fun clearCaches() {
     cacheStamp.incrementAndGet()
@@ -39,7 +39,7 @@ abstract class ValueManager<VM : Vm> protected constructor(val vm: VM) : Obsoles
 
   fun getCacheStamp() = cacheStamp.get()
 
-  override fun isObsolete() = obsolete
+  override final fun isObsolete() = obsolete
 
   fun markObsolete() {
     obsolete = true
@@ -51,3 +51,5 @@ abstract class ValueManager<VM : Vm> protected constructor(val vm: VM) : Obsoles
     fun <T> reject() = OBSOLETE_CONTEXT_PROMISE as Promise<T>
   }
 }
+
+abstract class VmAwareValueManager<VM : Vm>(final val vm: VM) : ValueManager()

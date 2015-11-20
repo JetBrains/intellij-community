@@ -21,7 +21,6 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.EvaluateContext
 import org.jetbrains.debugger.Variable
 import org.jetbrains.debugger.VariablesHost
-import org.jetbrains.debugger.Vm
 
 /**
  * A compound value that has zero or more properties
@@ -33,7 +32,7 @@ interface ObjectValue : Value {
 
   fun getProperties(names: List<String>, evaluateContext: EvaluateContext, obsolescent: Obsolescent): Promise<List<Variable>>
 
-  val variablesHost: VariablesHost<ValueManager<Vm>>
+  val variablesHost: VariablesHost<ValueManager>
 
   /**
    * from (inclusive) to (exclusive) ranges of array elements or elements if less than bucketThreshold

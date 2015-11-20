@@ -16,14 +16,15 @@
 package org.jetbrains.debugger
 
 import org.jetbrains.debugger.values.ValueManager
+import org.jetbrains.debugger.values.VmAwareValueManager
 
-abstract class SuspendContextBase<VM: Vm, VALUE_MANAGER : ValueManager<VM>, F : CallFrame>(override val valueManager: VALUE_MANAGER, protected val explicitPaused: Boolean) : SuspendContext<F> {
+abstract class SuspendContextBase<VM: Vm, VALUE_MANAGER : ValueManager, F : CallFrame>(override final val valueManager: VALUE_MANAGER, protected val explicitPaused: Boolean) : SuspendContext<F> {
   override val state: SuspendState
     get() = if (exceptionData == null) (if (explicitPaused) SuspendState.PAUSED else SuspendState.NORMAL) else SuspendState.EXCEPTION
 
   override val script: Script?
     get() {
       val topFrame = topFrame
-      return if (topFrame == null) null else valueManager.vm.scriptManager.getScript(topFrame)
+      return if (topFrame == null || valueManager !is VmAwareValueManager<*>) null else valueManager.vm.scriptManager.getScript(topFrame)
     }
 }
