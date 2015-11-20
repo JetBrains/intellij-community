@@ -26,7 +26,7 @@ public interface DebugEventListener extends EventListener {
    * breakpoints or a step end). The {@code context} can be used to access the
    * current backtrace.
    */
-  void suspended(@NotNull SuspendContext context);
+  void suspended(@NotNull SuspendContext<?> context);
 
   /**
    * Reports the virtual machine has resumed. This can happen

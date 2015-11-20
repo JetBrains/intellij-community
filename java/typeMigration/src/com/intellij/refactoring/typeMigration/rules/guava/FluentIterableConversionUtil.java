@@ -20,18 +20,13 @@ import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.codeInspection.java18StreamApi.StreamApiConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
-import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.UniqueNameGenerator;
@@ -47,20 +42,6 @@ import java.util.List;
  */
 public class FluentIterableConversionUtil {
   private final static Logger LOG = Logger.getInstance(FluentIterableConversionUtil.class);
-
-  static class CopyIntoDescriptor extends TypeConversionDescriptor {
-    public CopyIntoDescriptor() {
-      super("$it$.copyInto($c$)", "$it$.forEach(($c$)::add)");
-    }
-
-    @Override
-    public PsiExpression replace(PsiExpression expression) {
-
-      //TODO check parenthesis
-
-      return super.replace(expression);
-    }
-  }
 
   @Nullable
   static TypeConversionDescriptor getToArrayDescriptor(PsiType initialType, PsiExpression expression) {
@@ -257,6 +238,39 @@ public class FluentIterableConversionUtil {
     }
   }
 
-
-
+  static TypeConversionDescriptor createToCollectionDescriptor(@Nullable String methodName,
+                                                               @NotNull PsiExpression context) {
+    final String findTemplate;
+    final String replaceTemplate;
+    final String returnType;
+    if ("toMap".equals(methodName)) {
+      final LambdaParametersTypeConversionDescriptor descriptor = new LambdaParametersTypeConversionDescriptor("$it$.toMap($f$)",
+                                                                                                               "$it$.collect(java.util.stream.Collectors.toMap(java.util.function.Function.identity(), $f$))");
+      return descriptor.withConversionType(GuavaConversionUtil.addTypeParameters(CommonClassNames.JAVA_UTIL_MAP, context.getType(), context));
+    }
+    else if ("toList".equals(methodName)) {
+      findTemplate = "$it$.toList()";
+      replaceTemplate = GuavaFluentIterableConversionRule.STREAM_COLLECT_TO_LIST;
+      returnType = CommonClassNames.JAVA_UTIL_LIST;
+    }
+    else if ("toSet".equals(methodName)) {
+      findTemplate = "$it$.toSet()";
+      replaceTemplate = "$it$.collect(java.util.stream.Collectors.toSet())";
+      returnType = CommonClassNames.JAVA_UTIL_SET;
+    }
+    else if ("toSortedList".equals(methodName)) {
+      findTemplate = "$it$.toSortedList($c$)";
+      replaceTemplate = "$it$.sorted($c$).collect(java.util.stream.Collectors.toList())";
+      returnType = CommonClassNames.JAVA_UTIL_LIST;
+    }
+    else if ("toSortedSet".equals(methodName)) {
+      findTemplate = "$it$.toSortedSet($c$)";
+      replaceTemplate = "$it$.collect(java.util.stream.Collectors.toCollection(java.util.TreeSet::new))";
+      returnType = CommonClassNames.JAVA_UTIL_SET;
+    } else {
+      return null;
+    }
+    final PsiType type = GuavaConversionUtil.addTypeParameters(returnType, context.getType(), context);
+    return new TypeConversionDescriptor(findTemplate, replaceTemplate).withConversionType(type);
+  }
 }

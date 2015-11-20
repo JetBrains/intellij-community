@@ -83,6 +83,7 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -720,14 +721,17 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       }
 
       private void changed(@NotNull RangeHighlighterEx highlighter, String reason) {
-        String text = highlighter.getDocument().getText().substring(highlighter.getStartOffset(), highlighter.getEndOffset());
-        if (text.equals("X")) return; //non relevant
+        if (highlighter.getTargetArea() != HighlighterTargetArea.LINES_IN_RANGE) return; // not line marker
+        List<LineMarkerInfo> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
+        if (ContainerUtil.find(lineMarkers, lm -> lm.highlighter == highlighter) == null) return; // not line marker
+
         changed.add(highlighter+": \n"+reason);
       }
     });
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    CodeInsightTestFixtureImpl.instantiateAndRun(myFile, myEditor, new int[]{Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS}, false);
+    List<HighlightInfo> infosAfter = CodeInsightTestFixtureImpl.instantiateAndRun(myFile, myEditor, new int[]{/*Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS*/}, false);
+    assertNotEmpty(filter(infosAfter, HighlightSeverity.ERROR));
 
     assertEmpty(changed);
     List<LineMarkerInfo> lineMarkersAfter = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());

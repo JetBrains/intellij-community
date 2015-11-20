@@ -15,37 +15,47 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import org.jetbrains.annotations.NonNls;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 public class CollectionsMustHaveInitialCapacityInspection
   extends BaseInspection {
 
-  @NonNls
-  private static final Set<String> collectionClassesRequiringCapacity = new HashSet<String>();
-  static {
-    collectionClassesRequiringCapacity.add("java.util.concurrent.ConcurrentHashMap");
-    collectionClassesRequiringCapacity.add("java.util.concurrent.PriorityBlockingQueue");
-    collectionClassesRequiringCapacity.add("java.util.ArrayDeque");
-    collectionClassesRequiringCapacity.add("java.util.ArrayList");
-    collectionClassesRequiringCapacity.add("java.util.BitSet");
-    collectionClassesRequiringCapacity.add("java.util.HashMap");
-    collectionClassesRequiringCapacity.add("java.util.Hashtable");
-    collectionClassesRequiringCapacity.add("java.util.HashSet");
-    collectionClassesRequiringCapacity.add("java.util.IdentityHashMap");
-    collectionClassesRequiringCapacity.add("java.util.LinkedHashMap");
-    collectionClassesRequiringCapacity.add("java.util.LinkedHashSet");
-    collectionClassesRequiringCapacity.add("java.util.PriorityQueue");
-    collectionClassesRequiringCapacity.add("java.util.Vector");
-    collectionClassesRequiringCapacity.add("java.util.WeakHashMap");
+  private final CollectionsListSettings mySettings = new CollectionsListSettings() {
+    @Override
+    protected Set<String> createDefaultSettings() {
+      final Set<String> classes = new TreeSet<String>(DEFAULT_COLLECTION_LIST);
+      classes.add("java.util.BitSet");
+      return classes;
+    }
+  };
+
+  @Override
+  public void readSettings(@NotNull Element node) throws InvalidDataException {
+    mySettings.readSettings(node);
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    mySettings.writeSettings(node);
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return mySettings.createOptionsPanel();
   }
 
   @Override
@@ -73,7 +83,7 @@ public class CollectionsMustHaveInitialCapacityInspection
     return new CollectionInitialCapacityVisitor();
   }
 
-  private static class CollectionInitialCapacityVisitor
+  private class CollectionInitialCapacityVisitor
     extends BaseInspectionVisitor {
 
     @Override
@@ -90,7 +100,7 @@ public class CollectionsMustHaveInitialCapacityInspection
       registerNewExpressionError(expression);
     }
 
-    public static boolean isCollectionWithInitialCapacity(@Nullable PsiType type) {
+    private boolean isCollectionWithInitialCapacity(@Nullable PsiType type) {
       if (!(type instanceof PsiClassType)) {
         return false;
       }
@@ -100,7 +110,7 @@ public class CollectionsMustHaveInitialCapacityInspection
         return false;
       }
       final String className = resolved.getQualifiedName();
-      return collectionClassesRequiringCapacity.contains(className);
+      return mySettings.getCollectionClassesRequiringCapacity().contains(className);
     }
   }
 }

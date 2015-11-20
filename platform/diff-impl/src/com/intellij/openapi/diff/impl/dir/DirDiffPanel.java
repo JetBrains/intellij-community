@@ -164,7 +164,6 @@ public class DirDiffPanel implements Disposable, DataProvider {
           return true;
         }
       }.installOn(myTable);
-
     }
     myTable.addKeyListener(new KeyAdapter() {
       @Override
@@ -211,7 +210,8 @@ public class DirDiffPanel implements Disposable, DataProvider {
       if (DirDiffTableModel.COLUMN_DATE.equals(name)) {
         column.setMaxWidth(JBUI.scale(90));
         column.setMinWidth(JBUI.scale(90));
-      } else if (DirDiffTableModel.COLUMN_SIZE.equals(name)) {
+      }
+      else if (DirDiffTableModel.COLUMN_SIZE.equals(name)) {
         column.setMaxWidth(JBUI.scale(120));
         column.setMinWidth(JBUI.scale(120));
       }
@@ -221,7 +221,8 @@ public class DirDiffPanel implements Disposable, DataProvider {
     final ActionToolbar toolbar = actionManager.createActionToolbar("DirDiff", actions, true);
     registerCustomShortcuts(actions, myTable);
     myToolBarPanel.add(toolbar.getComponent(), BorderLayout.CENTER);
-    final JBLabel label = new JBLabel("Use Space button or mouse click to change operation for the selected elements. Enter to perform.", SwingConstants.CENTER);
+    final JBLabel label = new JBLabel("Use Space button or mouse click to change operation for the selected elements." +
+                                      " Enter to perform.", SwingConstants.CENTER);
     label.setForeground(UIUtil.getInactiveTextColor());
     UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, label);
     DataManager.registerDataProvider(myFilesPanel, this);
@@ -317,15 +318,18 @@ public class DirDiffPanel implements Disposable, DataProvider {
               if (!StringUtil.equals(mySourceDirField.getText(), newElement.getPath())) {
                 myModel.setSourceDir(newElement);
                 mySourceDirField.setText(newElement.getPath());
-                myModel.clearWithMessage("Source or Target has been changed. Please run Refresh (" + KeymapUtil.getShortcutsText(
-                  RefreshDirDiffAction.REFRESH_SHORTCUT.getShortcuts()) + ")");
+                String shortcutsText = KeymapUtil.getShortcutsText(RefreshDirDiffAction.REFRESH_SHORTCUT.getShortcuts());
+                myModel.clearWithMessage("Source or Target has been changed." +
+                                         " Please run Refresh (" + shortcutsText + ")");
               }
             }
-          } catch (Exception e1) {//
+          }
+          catch (Exception ignored) {
           }
         }
       });
-    } else {
+    }
+    else {
       Dimension preferredSize = mySourceDirField.getPreferredSize();
       mySourceDirField.setButtonEnabled(false);
       mySourceDirField.getButton().setVisible(false);
@@ -345,11 +349,13 @@ public class DirDiffPanel implements Disposable, DataProvider {
               myModel.setTargetDir(newElement);
               myTargetDirField.setText(newElement.getPath());
             }
-          } catch (Exception e1) {//
+          }
+          catch (Exception ignored) {
           }
         }
       });
-    } else {
+    }
+    else {
       Dimension preferredSize = myTargetDirField.getPreferredSize();
       myTargetDirField.setButtonEnabled(false);
       myTargetDirField.getButton().setVisible(false);
@@ -398,25 +404,30 @@ public class DirDiffPanel implements Disposable, DataProvider {
       catch (FilesTooBigForDiffException e) {
         // todo KB: check
         myDiffPanelComponent = null;
-        myErrorLabel = new JLabel("Can not build diff for file " + element.getTarget().getPath() + ". File is too big and there are too many changes.");
+        myErrorLabel =
+          new JLabel("Can not build diff for file " + element.getTarget().getPath() + "." +
+                     " File is too big and there are too many changes.");
       }
       if (myDiffPanelComponent != null) {
         myDiffPanel.add(myDiffPanelComponent, BorderLayout.CENTER);
         myCurrentElement = element.getSource();
-      } else {
+      }
+      else {
         myDiffPanel.add(getErrorLabel(), BorderLayout.CENTER);
       }
-    } else {
-      final DiffElement object;
-      final DiffElement target;
+    }
+    else {
+      DiffElement object;
+      DiffElement target;
       if (element.getType() == DiffType.ERROR) {
         object = element.getSource() == null ? element.getTarget() : element.getSource();
         target = element.getSource() == null ? element.getSource() : element.getTarget();
-      } else {
+      }
+      else {
         object = element.isSource() ? element.getSource() : element.getTarget();
         target = element.isSource() ? element.getTarget() : element.getSource();
       }
-      myViewComponent = object.getViewComponent(project, target, myModel);
+      myViewComponent = object == null ? null : object.getViewComponent(project, target, myModel);
 
       if (myViewComponent != null) {
         myCurrentElement = object;
@@ -428,7 +439,8 @@ public class DirDiffPanel implements Disposable, DataProvider {
         else {
           DataManager.removeDataProvider(myDiffPanel);
         }
-      } else {
+      }
+      else {
         myDiffPanel.add(getErrorLabel(), BorderLayout.CENTER);
       }
     }
@@ -529,7 +541,8 @@ public class DirDiffPanel implements Disposable, DataProvider {
   }
 
   public void setupSplitter() {
-    mySplitPanel.setDividerLocation(Integer.valueOf(PropertiesComponent.getInstance().getInt(DIVIDER_PROPERTY, DIVIDER_PROPERTY_DEFAULT_VALUE)));
+    int value = PropertiesComponent.getInstance().getInt(DIVIDER_PROPERTY, DIVIDER_PROPERTY_DEFAULT_VALUE);
+    mySplitPanel.setDividerLocation(Integer.valueOf(value));
   }
 
   @Override

@@ -98,7 +98,7 @@ public class JavaResolveCache {
         type = psiClass == null
                ? type // for type with unresolved reference, leave it in the cache
                       // for clients still might be able to retrieve its getCanonicalText() from the reference text
-               : new PsiImmediateClassType(psiClass, result.getSubstitutor(), ((PsiClassReferenceType)type).getLanguageLevel(), type.getAnnotations());
+               : new PsiImmediateClassType(psiClass, result.getSubstitutor(), ((PsiClassReferenceType)type).getLanguageLevel(), type.getAnnotationProvider());
       }
     }
 

@@ -23,7 +23,7 @@ import org.jetbrains.concurrency.thenAsync
 import org.jetbrains.debugger.*
 import org.jetbrains.debugger.values.StringValue
 
-open class SuspendContextImpl(suspendContext: SuspendContext, debugProcess: DebuggerViewSupport, topFrameScript: Script?, topFrameSourceInfo: SourceInfo? = null) : XSuspendContext() {
+open class SuspendContextImpl(suspendContext: SuspendContext<out CallFrame>, debugProcess: DebuggerViewSupport, topFrameScript: Script?, topFrameSourceInfo: SourceInfo? = null) : XSuspendContext() {
   private val executionStack = ExecutionStackImpl(suspendContext, debugProcess, topFrameScript, topFrameSourceInfo)
 
   override fun getActiveExecutionStack() = executionStack

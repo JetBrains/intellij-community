@@ -152,7 +152,9 @@ public class EmptyStatementBodyInspection extends BaseInspection {
         return true;
       }
       else if (element instanceof PsiEmptyStatement) {
-        return !commentsAreContent || PsiTreeUtil.getChildOfType(element, PsiComment.class) == null;
+        return !commentsAreContent ||
+               PsiTreeUtil.getChildOfType(element, PsiComment.class) == null &&
+               !(PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class) instanceof PsiComment);
       }
       else if (element instanceof PsiWhiteSpace) {
         return true;

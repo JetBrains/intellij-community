@@ -48,6 +48,10 @@ public class PsiPrimitiveType extends PsiType.Stub {
     super(annotations);
     myName = name;
   }
+  public PsiPrimitiveType(@NonNls @NotNull String name, @NotNull TypeAnnotationProvider annotations) {
+    super(annotations);
+    myName = name;
+  }
 
   @NotNull
   @Override

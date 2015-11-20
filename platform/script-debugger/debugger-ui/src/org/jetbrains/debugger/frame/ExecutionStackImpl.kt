@@ -21,7 +21,7 @@ import com.intellij.xdebugger.settings.XDebuggerSettingsManager
 import org.jetbrains.debugger.*
 import java.util.*
 
-internal class ExecutionStackImpl(private val suspendContext: SuspendContext, private val viewSupport: DebuggerViewSupport, private val topFrameScript: Script?, private val topFrameSourceInfo: SourceInfo? = null) : XExecutionStack("") {
+internal class ExecutionStackImpl(private val suspendContext: SuspendContext<out CallFrame>, private val viewSupport: DebuggerViewSupport, private val topFrameScript: Script?, private val topFrameSourceInfo: SourceInfo? = null) : XExecutionStack("") {
   private var topCallFrameView: CallFrameView? = null
 
   override fun getTopFrame(): CallFrameView? {

@@ -38,12 +38,13 @@ public class EmptyStatementBody
     }
 
     void comments(boolean b) {
-      if (b); // comment
-      while (b) {
-        // comment
-      }
-      do {
-        ; // comment
-      } while (b);
+        if (b); // comment
+        while (b) {
+            // comment
+        }
+        do {
+            ; // comment
+        } while (b);
+        if (b) /*comment*/;
     }
 }

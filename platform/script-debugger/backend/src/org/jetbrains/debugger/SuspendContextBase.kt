@@ -15,15 +15,15 @@
  */
 package org.jetbrains.debugger
 
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.then
 import org.jetbrains.debugger.values.ValueManager
 
-abstract class EvaluateContextBase<VALUE_MANAGER : ValueManager<out Vm>>(val valueManager: VALUE_MANAGER) : EvaluateContext {
-  override fun withValueManager(objectGroup: String) = this
+abstract class SuspendContextBase<VM: Vm, VALUE_MANAGER : ValueManager<VM>, F : CallFrame>(override val valueManager: VALUE_MANAGER, protected val explicitPaused: Boolean) : SuspendContext<F> {
+  override val state: SuspendState
+    get() = if (exceptionData == null) (if (explicitPaused) SuspendState.PAUSED else SuspendState.NORMAL) else SuspendState.EXCEPTION
 
-  override fun releaseObjects() {
-  }
-
-  override fun refreshOnDone(promise: Promise<*>): Promise<*> = promise.then { valueManager.clearCaches() }
+  override val script: Script?
+    get() {
+      val topFrame = topFrame
+      return if (topFrame == null) null else valueManager.vm.scriptManager.getScript(topFrame)
+    }
 }

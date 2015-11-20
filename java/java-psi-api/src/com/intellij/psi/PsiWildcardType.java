@@ -45,7 +45,7 @@ public class PsiWildcardType extends PsiType.Stub {
     myBound = bound;
   }
 
-  private PsiWildcardType(@NotNull PsiWildcardType type, @NotNull PsiAnnotation[] annotations) {
+  private PsiWildcardType(@NotNull PsiWildcardType type, @NotNull TypeAnnotationProvider annotations) {
     super(annotations);
     myManager = type.myManager;
     myIsExtending = type.myIsExtending;
@@ -76,8 +76,19 @@ public class PsiWildcardType extends PsiType.Stub {
   }
 
   @NotNull
-  public PsiWildcardType annotate(@NotNull PsiAnnotation[] annotations) {
-    return annotations.length == 0 ? this : new PsiWildcardType(this, annotations);
+  public PsiWildcardType annotate(@NotNull final PsiAnnotation[] annotations) {
+    return annotations.length == 0 ? this : new PsiWildcardType(this, new TypeAnnotationProvider() {
+      @NotNull
+      @Override
+      public PsiAnnotation[] getAnnotations() {
+        return annotations;
+      }
+    });
+  }
+
+  @NotNull
+  public PsiWildcardType annotate(@NotNull final TypeAnnotationProvider annotations) {
+    return new PsiWildcardType(this, annotations);
   }
 
   @NotNull
