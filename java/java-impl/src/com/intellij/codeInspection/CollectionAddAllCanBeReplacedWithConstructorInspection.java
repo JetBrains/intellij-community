@@ -95,7 +95,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
           }
           PsiLocalVariable variable = (PsiLocalVariable)resolvedReference;
           final PsiType variableType = variable.getType();
-          if (!(variableType instanceof PsiClassType)) {
+          if (!(variableType instanceof PsiClassType) || statementHasSubsequentAddAll(parent, variable, methodName)) {
             return;
           }
           final PsiClass variableClass = ((PsiClassType)variableType).resolve();
@@ -128,6 +128,26 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
         }
       }
     };
+  }
+
+  private static boolean statementHasSubsequentAddAll(@NotNull PsiElement statement,
+                                                      @NotNull PsiLocalVariable referent,
+                                                      @NotNull String previousMethodName) {
+    final PsiElement sibling = PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
+    if (sibling instanceof PsiExpressionStatement) {
+      final PsiExpression siblingExpression = ((PsiExpressionStatement)sibling).getExpression();
+      if (siblingExpression instanceof PsiMethodCallExpression) {
+        final PsiMethodCallExpression siblingMethodCall = (PsiMethodCallExpression)siblingExpression;
+        final PsiExpression qualifier = siblingMethodCall.getMethodExpression().getQualifierExpression();
+        if (qualifier instanceof PsiReferenceExpression && referent.isEquivalentTo(((PsiReferenceExpression)qualifier).resolve())) {
+          final PsiMethod method = siblingMethodCall.resolveMethod();
+          if (method != null && method.getName().equals(previousMethodName)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   private boolean checkLocalVariableAssignmentOrInitializer(PsiExpression initializer) {
