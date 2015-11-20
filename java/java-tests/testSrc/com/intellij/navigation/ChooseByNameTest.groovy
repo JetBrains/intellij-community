@@ -323,9 +323,11 @@ class Intf {
       myPopup.close(false)
     }
 
-    def popup = myPopup = ChooseByNamePopup.createPopup(project, model, (PsiElement)context, "")
-    Disposer.register(testRootDisposable, { popup.close(false) } as Disposable)
-    popup
+    edt {
+      def popup = myPopup = ChooseByNamePopup.createPopup(project, model, (PsiElement)context, "")
+      Disposer.register(testRootDisposable, { popup.close(false) } as Disposable)
+    }
+    myPopup
   }
 
   @Override
