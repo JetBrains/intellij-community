@@ -122,7 +122,10 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
 
       if (expectedNonProperThrownTypes.isEmpty()) {
         for (PsiType thrownType : thrownTypes) {
-          if (!isAddressed(expectedThrownTypes, thrownType)) return false;
+          if (!isAddressed(expectedThrownTypes, thrownType)) {
+            session.registerIncompatibleErrorMessage("Unhandled exception: " + thrownType.getPresentableText());
+            return false;
+          }
         }
       } else {
         final ArrayList<PsiType> expectedProperTypes = new ArrayList<PsiType>(expectedThrownTypes);
