@@ -32,6 +32,7 @@ import com.intellij.openapi.keymap.KeyboardSettingsExternalizable;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ExpirableRunnable;
@@ -559,6 +560,10 @@ public class IdeEventQueue extends EventQueue {
       final MenuElement[] selectedPath = MenuSelectionManager.defaultManager().getSelectedPath();
       if (selectedPath.length > 0 && !(selectedPath[0] instanceof ComboPopup)) {
         ((MouseWheelEvent)e).consume();
+        Component component = selectedPath[0].getComponent();
+        if (component instanceof JBPopupMenu) {
+          ((JBPopupMenu)component).processMouseWheelEvent((MouseWheelEvent)e);
+        }
         return;
       }
     }
