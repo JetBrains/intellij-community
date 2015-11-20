@@ -22,10 +22,9 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.EvaluateContext
 import org.jetbrains.debugger.Variable
 import org.jetbrains.debugger.VariablesHost
-import org.jetbrains.debugger.Vm
 import java.util.*
 
-abstract class ObjectValueBase<VALUE_LOADER : ValueManager<out Vm>>(type: ValueType) : ValueBase(type), ObjectValue {
+abstract class ObjectValueBase<VALUE_LOADER : ValueManager>(type: ValueType) : ValueBase(type), ObjectValue {
   protected abstract val childrenManager: VariablesHost<VALUE_LOADER>
 
   override val properties: Promise<List<Variable>>
@@ -45,8 +44,8 @@ abstract class ObjectValueBase<VALUE_LOADER : ValueManager<out Vm>>(type: ValueT
   override fun getIndexedProperties(from: Int, to: Int, bucketThreshold: Int, consumer: IndexedVariablesConsumer, componentType: ValueType?): Promise<*> = Promise.REJECTED
 
   @Suppress("CAST_NEVER_SUCCEEDS")
-  override val variablesHost: VariablesHost<ValueManager<Vm>>
-    get() = childrenManager as VariablesHost<ValueManager<Vm>>
+  override val variablesHost: VariablesHost<ValueManager>
+    get() = childrenManager as VariablesHost<ValueManager>
 }
 
 fun getSpecifiedProperties(variables: List<Variable>, names: List<String>, evaluateContext: EvaluateContext): Promise<List<Variable>> {

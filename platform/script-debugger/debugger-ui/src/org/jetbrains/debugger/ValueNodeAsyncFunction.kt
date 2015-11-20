@@ -17,10 +17,11 @@ package org.jetbrains.debugger
 
 import com.intellij.util.Consumer
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.debugger.values.VmAwareValueManager
 
 abstract class ContextDependentAsyncResultConsumer<T>(private val context: SuspendContext<*>) : Consumer<T> {
   override final fun consume(result: T) {
-    val vm = context.valueManager.vm
+    val vm = (context.valueManager as VmAwareValueManager<*>).vm
     if (vm.attachStateManager.isAttached() && !vm.suspendContextManager.isContextObsolete(context)) {
       consume(result, vm)
     }
