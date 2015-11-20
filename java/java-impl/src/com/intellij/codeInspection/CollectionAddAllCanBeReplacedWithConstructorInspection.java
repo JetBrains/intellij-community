@@ -47,7 +47,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
 
   private final CollectionsListSettings mySettings = new CollectionsListSettings() {
     @Override
-    protected Collection<String> createDefaultSettings() {
+    protected Collection<String> getDefaultSettings() {
       return DEFAULT_COLLECTION_LIST;
     }
   };

@@ -18,21 +18,10 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.CommonClassNames;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.ToolbarDecorator;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SortedList;
-import com.intellij.util.ui.EditableModel;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -40,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.HashSet;
 
 /**
  * @author Dmitry Batkovich
@@ -67,12 +57,12 @@ public abstract class CollectionsListSettings {
   private final List<String> myCollectionClassesRequiringCapacity;
 
   public CollectionsListSettings() {
-    myCollectionClassesRequiringCapacity = new SmartList<String>(createDefaultSettings());
+    myCollectionClassesRequiringCapacity = new SmartList<String>(getDefaultSettings());
   }
 
   public void readSettings(@NotNull Element node) throws InvalidDataException {
     myCollectionClassesRequiringCapacity.clear();
-    myCollectionClassesRequiringCapacity.addAll(createDefaultSettings());
+    myCollectionClassesRequiringCapacity.addAll(getDefaultSettings());
     for (Element classElement : node.getChildren("cls")) {
       final String className = classElement.getText();
       if (classElement.getAttributeValue("remove", Boolean.FALSE.toString()).equals(Boolean.TRUE.toString())) {
@@ -85,11 +75,11 @@ public abstract class CollectionsListSettings {
   }
 
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    final Collection<String> defaultToRemoveSettings = createDefaultSettings();
+    final Collection<String> defaultToRemoveSettings = new HashSet<String>(getDefaultSettings());
     defaultToRemoveSettings.removeAll(myCollectionClassesRequiringCapacity);
 
     final Set<String> toAdd = new HashSet<String>(myCollectionClassesRequiringCapacity);
-    toAdd.removeAll(createDefaultSettings());
+    toAdd.removeAll(getDefaultSettings());
 
     for (String className : defaultToRemoveSettings) {
       node.addContent(new Element("cls").setText(className).setAttribute("remove", Boolean.TRUE.toString()));
@@ -99,7 +89,7 @@ public abstract class CollectionsListSettings {
     }
   }
 
-  protected abstract Collection<String> createDefaultSettings();
+  protected abstract Collection<String> getDefaultSettings();
 
   public Collection<String> getCollectionClassesRequiringCapacity() {
     return myCollectionClassesRequiringCapacity;

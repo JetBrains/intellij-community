@@ -35,7 +35,7 @@ public class CollectionsMustHaveInitialCapacityInspection
 
   private final CollectionsListSettings mySettings = new CollectionsListSettings() {
     @Override
-    protected Set<String> createDefaultSettings() {
+    protected Set<String> getDefaultSettings() {
       final Set<String> classes = new TreeSet<String>(DEFAULT_COLLECTION_LIST);
       classes.add("java.util.BitSet");
       return classes;
