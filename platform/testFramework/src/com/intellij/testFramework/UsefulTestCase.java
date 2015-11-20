@@ -152,13 +152,13 @@ public abstract class UsefulTestCase extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    Disposer.setDebugMode(oldDisposerDebug);
     try {
       Disposer.dispose(myTestRootDisposable);
       cleanupSwingDataStructures();
       cleanupDeleteOnExitHookList();
     }
     finally {
+      Disposer.setDebugMode(oldDisposerDebug);
       if (shouldContainTempFiles()) {
         FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
         if (hasTmpFilesToKeep()) {
