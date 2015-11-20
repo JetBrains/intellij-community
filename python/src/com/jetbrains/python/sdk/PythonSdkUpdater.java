@@ -164,7 +164,7 @@ public class PythonSdkUpdater implements StartupActivity {
         paths.add(mapping.getLocalRoot());
       }
 
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
         @Override
         public void run() {
           updateSdkPath(sdkUpdater, paths);
@@ -230,7 +230,7 @@ public class PythonSdkUpdater implements StartupActivity {
    * Removes duplicate roots that have been added as the result of a bug with *.egg handling.
    */
   private static boolean removeDuplicateClassRoots(@NotNull PySdkUpdater sdkUpdater) {
-    final List<VirtualFile> sourceRoots = Arrays.asList(sdkUpdater.getSdk().getRootProvider().getFiles(OrderRootType.CLASSES));
+    final List<VirtualFile> sourceRoots = Arrays.asList(sdkUpdater.getRoots(OrderRootType.CLASSES));
     final LinkedHashSet<VirtualFile> uniqueRoots = new LinkedHashSet<VirtualFile>(sourceRoots);
     if (uniqueRoots.size() != sourceRoots.size()) {
       sdkUpdater.removeRoots(OrderRootType.CLASSES);
@@ -246,7 +246,7 @@ public class PythonSdkUpdater implements StartupActivity {
    * Removes legacy SOURCES entries in Python SDK tables (PY-2891).
    */
   private static boolean removeSourceRoots(@NotNull PySdkUpdater sdkUpdater) {
-    final VirtualFile[] sourceRoots = sdkUpdater.getSdk().getRootProvider().getFiles(OrderRootType.SOURCES);
+    final VirtualFile[] sourceRoots = sdkUpdater.getRoots(OrderRootType.SOURCES);
     if (sourceRoots.length > 0) {
       sdkUpdater.removeRoots(OrderRootType.SOURCES);
       return true;
@@ -282,7 +282,7 @@ public class PythonSdkUpdater implements StartupActivity {
     if (skeletonsDir != null) {
       LOG.info(skeletonsTitle + " directory for SDK \"" + sdkUpdater.getSdk().getName() + "\" (" + sdkUpdater.getHomePath() + "): " +
                skeletonsDir.getPath());
-      final List<VirtualFile> sourceRoots = Arrays.asList(sdkUpdater.getSdk().getRootProvider().getFiles(OrderRootType.CLASSES));
+      final List<VirtualFile> sourceRoots = Arrays.asList(sdkUpdater.getRoots(OrderRootType.CLASSES));
       sdkUpdater.removeRoots(OrderRootType.CLASSES);
       for (final VirtualFile root : sourceRoots) {
         if (!root.getPath().contains(skeletonsDirPattern)) {
