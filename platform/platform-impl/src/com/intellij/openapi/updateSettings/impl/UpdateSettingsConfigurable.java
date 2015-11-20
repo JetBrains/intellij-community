@@ -20,11 +20,13 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.JBColor;
@@ -193,6 +195,8 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
       final ChannelStatus current = ChannelStatus.fromCode(mySettings.getUpdateChannelType());
       //noinspection unchecked
       myUpdateChannels.setModel(new CollectionComboBoxModel<ChannelStatus>(Arrays.asList(ChannelStatus.values()), current));
+      myUpdateChannels.setEnabled(
+        !ApplicationInfoEx.getInstanceEx().isEAP() || !UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds());
       myUpdateChannels.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
