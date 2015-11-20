@@ -82,7 +82,7 @@ private fun generate(configuration: GenerateConfiguration<*>, stringBuilder: Str
   out.newLine().append("import org.jetbrains.io.JsonReaderEx")
 
   out.newLine().newLine().append("import org.jetbrains.jsonProtocol.JsonReaders.*")
-  out.newLine().newLine().append("class ").append(configuration.className).space()
+  out.newLine().newLine().append("internal class ").append(configuration.className).space()
   out.append(':').space().append(configuration.root.type.canonicalName).append(if (configuration.root.type.isInterface) "" else "()").openBlock(false)
 
   val rootClassScope = fileScope.newClassScope()

@@ -17,6 +17,7 @@ package org.jetbrains.rpc
 
 import com.intellij.openapi.diagnostic.Logger
 import io.netty.buffer.ByteBuf
+import org.jetbrains.concurrency.Promise
 import org.jetbrains.jsonProtocol.Request
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -55,4 +56,12 @@ fun requestToByteBuf(message: Request<*>, isDebugEnabled: Boolean = LOG.isDebugE
 
 interface ResultReader<RESPONSE> {
   fun <RESULT> readResult(readMethodName: String, successResponse: RESPONSE): RESULT?
+}
+
+interface RequestCallback<SUCCESS_RESPONSE> {
+  fun onSuccess(response: SUCCESS_RESPONSE?, resultReader: ResultReader<SUCCESS_RESPONSE>?)
+
+  fun onError(error: Throwable)
+
+  fun onError(error: String) = onError(Promise.createError(error))
 }
