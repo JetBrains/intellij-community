@@ -16,8 +16,18 @@
 package org.jetbrains.rpc
 
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.jsonProtocol.Request
 import java.io.IOException
 import java.util.*
+
+interface MessageProcessor {
+  fun cancelWaitingRequests()
+
+  fun closed()
+
+  fun <RESULT> send(message: Request<RESULT>): Promise<RESULT>
+}
 
 class MessageManager<REQUEST, INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS>(private val handler: MessageManager.Handler<REQUEST, INCOMING, INCOMING_WITH_SEQ, SUCCESS>) : MessageManagerBase() {
   private val callbackMap = ContainerUtil.createConcurrentIntObjectMap<RequestCallback<SUCCESS>>()
