@@ -114,13 +114,8 @@ public class PsiMethodFavoriteNodeProvider extends FavoriteNodeProvider {
   public String getElementUrl(final Object element) {
      if (element instanceof PsiMethod) {
        PsiMethod aMethod = (PsiMethod)element;
-       final DumbService dumbService = DumbService.getInstance(aMethod.getProject());
-       dumbService.setAlternativeResolveEnabled(true);
-       try {
-         return PsiFormatUtil.getExternalName(aMethod);
-       } finally {
-         dumbService.setAlternativeResolveEnabled(false);
-       }
+       if (DumbService.isDumb(aMethod.getProject())) return null;
+       return PsiFormatUtil.getExternalName(aMethod);
     }
     return null;
   }
@@ -137,6 +132,7 @@ public class PsiMethodFavoriteNodeProvider extends FavoriteNodeProvider {
 
   @Override
   public Object[] createPathFromUrl(final Project project, final String url, final String moduleName) {
+    if (DumbService.isDumb(project)) return null;
     final PsiMethod method = RefMethodImpl.findPsiMethod(PsiManager.getInstance(project), url);
     if (method == null) return null;
     return new Object[]{method};
