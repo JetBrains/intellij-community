@@ -91,6 +91,13 @@ public abstract class RefactoringSupportProvider {
   public RefactoringActionHandler getIntroduceParameterHandler() { return null; }
 
   /**
+   * @return  handler for introducing functional parameters in this language
+   * @see com.intellij.refactoring.RefactoringActionHandler
+   */
+  @Nullable
+  public RefactoringActionHandler getIntroduceFunctionalParameterHandler() { return null; }
+
+  /**
    * @return  handler for pulling up members in this language
    * @see com.intellij.refactoring.RefactoringActionHandler
    */
