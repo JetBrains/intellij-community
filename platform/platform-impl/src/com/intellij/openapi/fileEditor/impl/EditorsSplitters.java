@@ -199,9 +199,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       return res;
     }
     else if (comp instanceof EditorWindow.TCompForTablessMode) {
-      final EditorWithProviderComposite composite = ((EditorWindow.TCompForTablessMode)comp).myEditor;
-      final Element res = new Element("leaf");
-      writeComposite(res, composite.getFile(), composite, false, composite);
+      EditorWithProviderComposite composite = ((EditorWindow.TCompForTablessMode)comp).myEditor;
+      Element res = new Element("leaf");
+      res.addContent(writeComposite(composite.getFile(), composite, false, composite));
       return res;
     }
     else {
@@ -212,28 +212,22 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   private void writeWindow(@NotNull Element res, @Nullable EditorWindow window) {
     if (window != null) {
-      final EditorWithProviderComposite[] composites = window.getEditors();
+      EditorWithProviderComposite[] composites = window.getEditors();
       for (int i = 0; i < composites.length; i++) {
-        final VirtualFile file = window.getFileAt(i);
-        final boolean isPinned = window.isFilePinned(file);
-        final EditorWithProviderComposite composite = composites[i];
-        final EditorWithProviderComposite selectedEditor = window.getSelectedEditor();
-
-        writeComposite(res, file, composite, isPinned, selectedEditor);
+        VirtualFile file = window.getFileAt(i);
+        res.addContent(writeComposite(file, composites[i], window.isFilePinned(file), window.getSelectedEditor()));
       }
     }
   }
 
-  private void writeComposite(final Element res, final VirtualFile file, final EditorWithProviderComposite composite,
-                              final boolean pinned,
-                              final EditorWithProviderComposite selectedEditor) {
-    final Element fileElement = new Element("file");
+  @NotNull
+  private Element writeComposite(VirtualFile file, EditorWithProviderComposite composite, boolean pinned, EditorWithProviderComposite selectedEditor) {
+    Element fileElement = new Element("file");
     fileElement.setAttribute("leaf-file-name", file.getName()); // TODO: all files
-    final HistoryEntry entry = composite.currentStateAsHistoryEntry();
-    entry.writeExternal(fileElement, getManager().getProject());
-    fileElement.setAttribute(PINNED,         Boolean.toString(pinned));
+    composite.currentStateAsHistoryEntry().writeExternal(fileElement, getManager().getProject());
+    fileElement.setAttribute(PINNED, Boolean.toString(pinned));
     fileElement.setAttribute(CURRENT_IN_TAB, Boolean.toString(composite.equals(selectedEditor)));
-    res.addContent(fileElement);
+    return fileElement;
   }
 
   public void openFiles() {
