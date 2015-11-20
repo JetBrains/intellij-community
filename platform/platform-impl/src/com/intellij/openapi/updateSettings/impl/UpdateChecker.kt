@@ -161,7 +161,7 @@ object UpdateChecker {
       incompatiblePlugins = null
     }
     else {
-      val buildNumber: BuildNumber? = result.updatedChannel?.latestBuild?.apiVersion
+      val buildNumber: BuildNumber? = result.updatedChannel?.getLatestBuild()?.apiVersion
 
       incompatiblePlugins = if (buildNumber != null) HashSet<IdeaPluginDescriptor>() else null
       try {
@@ -364,7 +364,7 @@ object UpdateChecker {
 
   @Contract("null -> false")
   private fun newChannelReady(channelToPropose: UpdateChannel?): Boolean {
-    return channelToPropose != null && channelToPropose.latestBuild != null
+    return channelToPropose?.getLatestBuild() != null
   }
 
   private fun showUpdateResult(project: Project?,
