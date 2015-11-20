@@ -178,7 +178,7 @@ public class HgHistoryUtil {
 
 
   @Nullable
-  private static HgCommandResult getLogResult(@NotNull final Project project,
+  public static HgCommandResult getLogResult(@NotNull final Project project,
                                               @NotNull final VirtualFile root, @NotNull HgVersion version, int limit,
                                               @NotNull List<String> parameters, @NotNull String template) {
     HgFile originalHgFile = getOriginalHgFile(project, root);
