@@ -23,7 +23,9 @@
             </build>
         </channel>
 
-        <channel id="IDEA10EAP" name="IntelliJ IDEA X EAP" status="eap" url="http://confluence.jetbrains.net/display/IDEADEV/IDEA+X+EAP">
+        <channel id="IDEA10EAP" name="IntelliJ IDEA X EAP" status="eap" licensing="eap"
+                 url="http://confluence.jetbrains.net/display/IDEADEV/IDEA+X+EAP"
+                 feedback="http://youtrack.jetbrains.net">
             <build number="98.520" version="10" releaseDate="20110403">
                 <message>IntelliJ IDEA X RC is available.
                     Please visit http://confluence.jetbrains.net/display/IDEADEV/IDEA+X+EAP to learn more and download it.
