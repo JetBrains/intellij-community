@@ -167,8 +167,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       LOG.assertTrue(comp instanceof JPanel);
       final JPanel panel = (JPanel)comp;
       if (panel.getComponentCount() != 0) {
-        final Element res = writePanel(panel);
-        element.addContent(res);
+        element.addContent(writePanel(panel));
       }
     }
   }
@@ -196,8 +195,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         res.setAttribute(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString(), String.valueOf(limit));
       }
 
-      final EditorWindow window = findWindowWith(comp);
-      writeWindow(res, window);
+      writeWindow(res, findWindowWith(comp));
       return res;
     }
     else if (comp instanceof EditorWindow.TCompForTablessMode) {
@@ -212,7 +210,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
   }
 
-  private void writeWindow(final Element res, final EditorWindow window) {
+  private void writeWindow(@NotNull Element res, @Nullable EditorWindow window) {
     if (window != null) {
       final EditorWithProviderComposite[] composites = window.getEditors();
       for (int i = 0; i < composites.length; i++) {
