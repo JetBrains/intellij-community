@@ -18,6 +18,10 @@ package org.jetbrains.jsonProtocol
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.io.JsonReaderEx
 
+abstract class EventType<T, R : ResponseResultReader>(val methodName: String) {
+  abstract fun read(protocolReader: R, reader: JsonReaderEx): T
+}
+
 class EventMap<R : ResponseResultReader>(private val protocolReader: R) {
   private val nameToHandler = ContainerUtil.newConcurrentMap<String, MutableList<(Any?) -> Unit>>()
   private val nameToType = ContainerUtil.newConcurrentMap<String, EventType<*, R>>()

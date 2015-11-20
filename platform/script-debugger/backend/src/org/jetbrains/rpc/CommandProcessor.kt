@@ -54,5 +54,5 @@ fun requestToByteBuf(message: Request<*>, isDebugEnabled: Boolean = LOG.isDebugE
 }
 
 interface ResultReader<RESPONSE> {
-  fun <RESULT> readResult(readMethodName: String, successResponse: RESPONSE): RESULT
+  fun <RESULT> readResult(readMethodName: String, successResponse: RESPONSE): RESULT?
 }

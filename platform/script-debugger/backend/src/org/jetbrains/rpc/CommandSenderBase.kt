@@ -29,7 +29,6 @@ abstract class CommandSenderBase<SUCCESS_RESPONSE> {
   }
 
   protected class RequestPromise<SUCCESS_RESPONSE, RESULT>(private val methodName: String?) : AsyncPromise<RESULT>(), RequestCallback<SUCCESS_RESPONSE> {
-    @Suppress("BASE_WITH_NULLABLE_UPPER_BOUND")
     override fun onSuccess(response: SUCCESS_RESPONSE?, resultReader: ResultReader<SUCCESS_RESPONSE>?) {
       try {
         if (resultReader == null || response == null) {
