@@ -153,7 +153,8 @@ public class CacheUpdateRunner {
   public static int indexingThreadCount() {
     int threadsCount = Registry.intValue("caches.indexerThreadsCount");
     if (threadsCount <= 0) {
-      threadsCount = Math.max(1, Math.min(PROC_COUNT - 1, 4));
+      int coresToLeaveForOtherActivity = ApplicationManager.getApplication().isUnitTestMode() ? 0 : 1;
+      threadsCount = Math.max(1, Math.min(PROC_COUNT - coresToLeaveForOtherActivity, 4));
     }
     return threadsCount;
   }
