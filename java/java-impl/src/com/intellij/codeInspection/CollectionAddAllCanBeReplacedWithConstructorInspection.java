@@ -20,10 +20,10 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.NullableFunction;
@@ -85,6 +85,10 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
           if (!(qualifierExpression instanceof PsiReferenceExpression)) {
             return;
           }
+          final PsiElement parent = expression.getParent();
+          if (!(parent instanceof PsiExpressionStatement)) {
+            return;
+          }
           final PsiElement resolvedReference = ((PsiReferenceExpression)qualifierExpression).resolve();
           if (!(resolvedReference instanceof PsiLocalVariable)) {
             return;
@@ -112,7 +116,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
           } else {
             return;
           }
-          if (!checkUsages(variable, expression, assignmentExpression)) {
+          if (!isAddAllReplaceable(expression, assignmentExpression) || !checkUsages(variable, expression, assignmentExpression)) {
             return;
           }
           final PsiMethod method = expression.resolveMethod();
@@ -181,6 +185,28 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
       }
     }
     return Pair.create(true, null);
+  }
+
+  private boolean isAddAllReplaceable(final PsiExpression addAllExpression, PsiNewExpression newExpression) {
+    final boolean[] isReplaceable = new boolean[]{true};
+    final PsiFile newExpressionContainingFile = newExpression.getContainingFile();
+    final TextRange newExpressionTextRange = newExpression.getTextRange();
+
+    addAllExpression.accept(new JavaRecursiveElementVisitor() {
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        final PsiElement resolved = expression.resolve();
+        if (resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) {
+          PsiVariable variable = (PsiVariable) resolved;
+          final LocalSearchScope useScope = (LocalSearchScope)variable.getUseScope();
+          if (!useScope.containsRange(newExpressionContainingFile, newExpressionTextRange)) {
+            isReplaceable[0] = false;
+          }
+        }
+      }
+    });
+
+    return isReplaceable[0];
   }
 
   private static class ReplaceAddAllWithConstructorFix implements LocalQuickFix {
