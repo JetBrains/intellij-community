@@ -98,9 +98,12 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
 
     DESCRIPTORS_MAP.put("allMatch", new TypeConversionDescriptorFactory("$it$.allMatch($c$)", "$it$." + StreamApiConstants.ALL_MATCH + "($c$)", true));
     DESCRIPTORS_MAP.put("anyMatch", new TypeConversionDescriptorFactory("$it$.anyMatch($c$)", "$it$." + StreamApiConstants.ANY_MATCH + "($c$)", true));
-
     DESCRIPTORS_MAP.put("firstMatch", new TypeConversionDescriptorFactory("$it$.firstMatch($p$)", "$it$.filter($p$).findFirst()", true, true, false));
     DESCRIPTORS_MAP.put("size", new TypeConversionDescriptorFactory("$it$.size()", "(int) $it$.count()", false));
+
+    DESCRIPTORS_MAP.put("copyInto", new TypeConversionDescriptorFactory("$it$.copyInto($c$)",
+                                                                        "$it$.collect(java.util.stream.Collectors.toCollection(() -> $c$))",
+                                                                        false));
   }
 
   @Override
@@ -166,10 +169,6 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
       descriptorBase = new FluentIterableConversionUtil.TransformAndConcatConversionRule();
     } else if (methodName.equals("toArray")) {
       descriptorBase = FluentIterableConversionUtil.getToArrayDescriptor(from, context);
-      needSpecifyType = false;
-    }
-    else if (methodName.equals("copyInto")) {
-      descriptorBase = new FluentIterableConversionUtil.CopyIntoDescriptor();
       needSpecifyType = false;
     }
     else if (methodName.equals("append")) {

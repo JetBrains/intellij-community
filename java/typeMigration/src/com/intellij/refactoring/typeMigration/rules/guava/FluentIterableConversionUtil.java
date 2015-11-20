@@ -43,20 +43,6 @@ import java.util.List;
 public class FluentIterableConversionUtil {
   private final static Logger LOG = Logger.getInstance(FluentIterableConversionUtil.class);
 
-  static class CopyIntoDescriptor extends TypeConversionDescriptor {
-    public CopyIntoDescriptor() {
-      super("$it$.copyInto($c$)", "$it$.forEach(($c$)::add)");
-    }
-
-    @Override
-    public PsiExpression replace(PsiExpression expression) {
-
-      //TODO check parenthesis
-
-      return super.replace(expression);
-    }
-  }
-
   @Nullable
   static TypeConversionDescriptor getToArrayDescriptor(PsiType initialType, PsiExpression expression) {
     if (!(initialType instanceof PsiClassType)) {
