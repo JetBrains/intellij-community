@@ -30,15 +30,38 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 
 /**
  * @author ignatov
  */
 public class JBPopupMenu extends JPopupMenu {
+  private MyLayout myLayout;
+
+  public JBPopupMenu() {
+    this(null);
+  }
+
+  public JBPopupMenu(String label) {
+    super(label);
+    enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_WHEEL_EVENT_MASK);
+    myLayout = new MyLayout(this);
+    setLayout(myLayout);
+  }
+
   @Override
-  public final void updateUI() {
-    super.updateUI();
-    setLayout(new MyLayout(this));
+  public void processMouseWheelEvent(MouseWheelEvent e) {
+    if (!isShowing()) return;
+
+    if (e.getComponent() != this) {
+      e = (MouseWheelEvent)SwingUtilities.convertMouseEvent(e.getComponent(), e, this);
+    }
+    Point p = e.getPoint();
+    SwingUtilities.convertPointToScreen(p, this);
+    Point tPoint = getLocationOnScreen();
+    if (p.x >= tPoint.x && p.x <= tPoint.x + getWidth() && p.y >= tPoint.y && p.y <= tPoint.y + getHeight()) {
+      myLayout.updateShift(e.getWheelRotation() * 10);
+    }
   }
 
   @Override
@@ -127,8 +150,12 @@ public class JBPopupMenu extends JPopupMenu {
       myTarget.dispatchEvent(
         new MouseEvent(myTarget, MouseEvent.MOUSE_ENTERED, System.currentTimeMillis(), 0, mouseLocation.x, mouseLocation.y, 0, false));
 
-      int newShift = myShift + 5 * myScrollDirection;
-      newShift = Math.max(0, Math.min(super.preferredLayoutSize(myTarget).height - getMaxHeight(), newShift));
+      updateShift(5 * myScrollDirection);
+    }
+
+    private void updateShift(int increment) {
+      int maxHeight = super.preferredLayoutSize(myTarget).height - getMaxHeight();
+      int newShift = Math.max(0, Math.min(maxHeight, myShift + increment));
       if (newShift != myShift) {
         myShift = newShift;
         myTarget.revalidate();
