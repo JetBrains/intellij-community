@@ -295,10 +295,12 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     UiNotifyConnector.doWhenFirstShown(editor.getContentComponent(), new Runnable() {
       public void run() {
         if (!editor.isDisposed()) {
+          editor.getScrollingModel().disableAnimation();
           if (verticalScrollProportion != -1) {
             EditorUtil.setVerticalScrollProportion(editor, verticalScrollProportion);
           }
           editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+          editor.getScrollingModel().enableAnimation();
         }
       }
     });
