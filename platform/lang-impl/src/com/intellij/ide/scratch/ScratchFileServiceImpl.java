@@ -153,7 +153,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
 
   @NotNull
   protected String getRootPath() {
-    return FileUtil.toSystemIndependentName(PathManager.getConfigPath());
+    return FileUtil.toSystemIndependentName(PathManager.getScratchPath());
   }
 
   @NotNull
