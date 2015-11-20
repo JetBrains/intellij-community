@@ -26,6 +26,6 @@ interface Request<RESULT>  {
   fun finalize(id: Int)
 }
 
-abstract class EventType<T, R : ResponseResultReader>(val methodName: String) {
-  abstract fun read(protocolReader: R, reader: JsonReaderEx): T
+interface ResponseResultReader {
+  fun readResult(methodName: String, reader: JsonReaderEx): Any?
 }
