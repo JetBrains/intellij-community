@@ -254,8 +254,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
     
     initEnvironment(project, commandLine, config, isDebug);
 
-    commandLine.withCharset(EncodingProjectManager.getInstance(project).getDefaultCharset());
-
     setRunnerPath(project, commandLine, config);
 
     return commandLine;

@@ -17,7 +17,9 @@ package com.intellij.execution.process;
 
 import com.intellij.execution.TaskExecutor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -33,11 +35,22 @@ public class ProcessWaitFor {
     myWaitForThreadFuture.cancel(true);
   }
 
+  @Deprecated
+  /**
+   * @deprecated use {@link ProcessWaitFor#ProcessWaitFor(Process, TaskExecutor, String)} instead
+   */
+  public ProcessWaitFor(@NotNull final Process process, @NotNull TaskExecutor executor) {
+    this(process, executor,"");
+  }
 
-  public ProcessWaitFor(final Process process, final TaskExecutor executor) {
+  public ProcessWaitFor(@NotNull final Process process, @NotNull TaskExecutor executor, @NotNull final String presentableName) {
     myWaitForThreadFuture = executor.executeTask(new Runnable() {
       @Override
       public void run() {
+        String oldThreadName = Thread.currentThread().getName();
+        if (!StringUtil.isEmptyOrSpaces(presentableName)) {
+          Thread.currentThread().setName(StringUtil.first("ProcessWaitFor: "+presentableName, 120, true));
+        }
         int exitCode = 0;
         try {
           while (true) {
@@ -56,6 +69,9 @@ public class ProcessWaitFor {
           }
           catch (InterruptedException e) {
             LOG.info(e);
+          }
+          finally {
+            Thread.currentThread().setName(oldThreadName);
           }
         }
       }

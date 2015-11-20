@@ -16,6 +16,7 @@
 package com.intellij.idea;
 
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
+import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startupWizard.StartupWizard;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -374,24 +375,27 @@ public class StartupUtil {
   static void runStartupWizard() {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
 
-    String stepsProvider = appInfo.getCustomizeIDEWizardStepsProvider();
-    if (stepsProvider != null) {
-      CustomizeIDEWizardDialog.showCustomSteps(stepsProvider);
-      PluginManagerCore.invalidatePlugins();
-      return;
-    }
+    String stepsProviderName = appInfo.getCustomizeIDEWizardStepsProvider();
+    if (stepsProviderName != null) {
+      CustomizeIDEWizardStepsProvider provider;
 
-    if (PlatformUtils.isIntelliJ()) {
-      new CustomizeIDEWizardDialog().show();
+      try {
+        Class<?> providerClass = Class.forName(stepsProviderName);
+        provider = (CustomizeIDEWizardStepsProvider)providerClass.newInstance();
+      }
+      catch (Throwable e) {
+        Main.showMessage("Configuration Wizard Failed", e);
+        return;
+      }
+
+      new CustomizeIDEWizardDialog(provider).show();
       PluginManagerCore.invalidatePlugins();
       return;
     }
 
     List<ApplicationInfoEx.PluginChooserPage> pages = appInfo.getPluginChooserPages();
     if (!pages.isEmpty()) {
-      StartupWizard startupWizard = new StartupWizard(pages);
-      startupWizard.setCancelText("Skip");
-      startupWizard.show();
+      new StartupWizard(pages).show();
       PluginManagerCore.invalidatePlugins();
     }
   }

@@ -1,4 +1,5 @@
 accessor
+agentmain
 aggregator
 ajax
 akka
@@ -242,6 +243,7 @@ iphone
 iphoneos
 isnan
 isnull
+jacoco
 javabean
 javabeans
 javac
@@ -431,6 +433,7 @@ postprocessor
 pragma
 prebuilt
 prefetch
+premain
 prepend
 prepended
 prepends

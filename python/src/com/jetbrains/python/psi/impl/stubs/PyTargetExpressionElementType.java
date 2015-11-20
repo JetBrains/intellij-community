@@ -47,6 +47,10 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     super("TARGET_EXPRESSION");
   }
 
+  public PyTargetExpressionElementType(String debugName) {
+    super(debugName);
+  }
+
   private CustomTargetExpressionStubType[] getCustomStubTypes() {
     if (myCustomStubTypes == null) {
       myCustomStubTypes = Extensions.getExtensions(CustomTargetExpressionStubType.EP_NAME);

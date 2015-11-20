@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,8 +78,8 @@ public class DomPatterns {
     return XmlPatterns.xmlTag().withLocalName(tagName).and(withDom(domPattern));
   }
 
-  public static XmlNamedElementPattern.XmlAttributePattern attributeWithDom(String tagName, ElementPattern<? extends DomElement> domPattern) {
-    return XmlPatterns.xmlAttribute().withLocalName(tagName).and(withDom(domPattern));
+  public static XmlNamedElementPattern.XmlAttributePattern attributeWithDom(String attributeName, ElementPattern<? extends DomElement> domPattern) {
+    return XmlPatterns.xmlAttribute().withLocalName(attributeName).and(withDom(domPattern));
   }
 
   public static PsiElementPattern.Capture<PomTargetPsiElement> domTargetElement(final ElementPattern<? extends DomElement> pattern) {

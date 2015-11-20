@@ -17,9 +17,11 @@ package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.WeakHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -35,6 +37,7 @@ public final class ObjectTree<T> {
   // identity used here to prevent problems with hashCode/equals overridden by not very bright minds
   private final Set<T> myRootObjects = ContainerUtil.newIdentityTroveSet(); // guarded by treeLock
   private final Map<T, ObjectNode<T>> myObject2NodeMap = ContainerUtil.newIdentityTroveMap(); // guarded by treeLock
+  private final Map<Object, Object> myDisposedObjects = new WeakHashMap<Object, Object>(100, 0.5f, ContainerUtil.identityStrategy()); // guarded by treeLock
 
   private final List<ObjectNode<T>> myExecutedNodes = new ArrayList<ObjectNode<T>>(); // guarded by myExecutedNodes
   private final List<T> myExecutedUnregisteredNodes = new ArrayList<T>(); // guarded by myExecutedUnregisteredNodes
@@ -58,6 +61,13 @@ public final class ObjectTree<T> {
 
   public final void register(@NotNull T parent, @NotNull T child) {
     synchronized (treeLock) {
+      Object wasDisposed = myDisposedObjects.get(parent);
+      if (wasDisposed != null) {
+        throw new IncorrectOperationException("Sorry but parent: " + parent + " has already been disposed " +
+                                              "(see the cause for stacktrace) so the child: "+child+" will never be disposed",
+                                   wasDisposed instanceof Throwable ? (Throwable)wasDisposed : null);
+      }
+      myDisposedObjects.remove(child); // if we dispose thing and then register it back it means it's not disposed anymore
       ObjectNode<T> parentNode = getNode(parent);
       if (parentNode == null) parentNode = createNodeFor(parent, null);
 
@@ -202,7 +212,7 @@ public final class ObjectTree<T> {
       }
     }
   }
-
+  
   @TestOnly
   public boolean isEmpty() {
     synchronized (treeLock) {
@@ -234,6 +244,9 @@ public final class ObjectTree<T> {
   void fireExecuted(@NotNull Object object) {
     for (ObjectTreeListener each : myListeners) {
       each.objectExecuted(object);
+    }
+    synchronized (treeLock) {
+      myDisposedObjects.put(object, Disposer.isDebugMode() ? ThrowableInterner.intern(new Throwable()) : Boolean.TRUE);
     }
   }
 

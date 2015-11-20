@@ -67,6 +67,7 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
+import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
@@ -3151,7 +3152,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
            + ", soft wraps data: " + getSoftWrapModel().dumpState()
            + "\n\nfolding data: " + getFoldingModel().dumpState()
            + (myDocument instanceof DocumentImpl ? "\n\ndocument info: " + ((DocumentImpl)myDocument).dumpState() : "")
-           + "\nfont preferences: " + myScheme.getFontPreferences();
+           + "\nfont preferences: " + myScheme.getFontPreferences()
+           + "\npure painting mode: " + myPurePaintingMode
+           + (myView == null ? "" : "\nview: " + myView.dumpState());
   }
 
   private class CachedFontContent {
@@ -4227,6 +4230,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (logicalPosition.column > lineEndPosition.column) {
         visualPosition = logicalToVisualPosition(lineEndPosition.leanForward(true));
       }
+      else if (mySoftWrapModel.isInsideSoftWrap(visualPosition)) {
+        VisualPosition beforeSoftWrapPosition = myView.logicalToVisualPosition(logicalPosition, true);
+        if (visualPosition.line == beforeSoftWrapPosition.line) {
+          visualPosition = beforeSoftWrapPosition;
+        }
+        else {
+          visualPosition = myView.logicalToVisualPosition(logicalPosition, false);
+        }
+      }
     }
     return visualPosition;
   }
@@ -4348,7 +4360,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           return;
         }
       }
-      myEditorComponent.setCursor(UIUtil.getTextCursor(getBackgroundColor()));
+      if (!IdeGlassPaneImpl.hasPreProcessedCursor(myEditorComponent)) {
+        myEditorComponent.setCursor(UIUtil.getTextCursor(getBackgroundColor()));
+      }
     }
   }
 

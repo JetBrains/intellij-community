@@ -58,7 +58,6 @@ public class InferenceSession {
     }
   };
 
-  private static final Key<List<String>> INFERENCE_FAILURE_MESSAGE = Key.create("FAILURE_MESSAGE");
   private static final String EQUALITY_CONSTRAINTS_PRESENTATION = "equality constraints";
   private static final String UPPER_BOUNDS_PRESENTATION = "upper bounds";
   private static final String LOWER_BOUNDS_PRESENTATION = "lower bounds";
@@ -66,10 +65,13 @@ public class InferenceSession {
   private final Set<InferenceVariable> myInferenceVariables = new LinkedHashSet<InferenceVariable>();
   private final List<ConstraintFormula> myConstraints = new ArrayList<ConstraintFormula>();
   private final Set<ConstraintFormula> myConstraintsCopy = new HashSet<ConstraintFormula>();
+  private final InferenceSessionContainer myInferenceSessionContainer = new InferenceSessionContainer();
 
   private PsiSubstitutor mySiteSubstitutor;
   private final PsiManager myManager;
   private int myConstraintIdx = 0;
+  
+  private List<String> myErrorMessages;
   
   private boolean myErased = false;
 
@@ -78,12 +80,6 @@ public class InferenceSession {
   private final PsiElement myContext;
 
   private PsiSubstitutor myInferenceSubstitution = PsiSubstitutor.EMPTY;
-  private final Map<PsiElement, InferenceSession> myNestedSessions = new HashMap<PsiElement, InferenceSession>();
-  public void registerNestedSession(InferenceSession session) {
-    propagateVariables(session.getInferenceVariables());
-    myNestedSessions.put(session.getContext(), session);
-    myNestedSessions.putAll(session.myNestedSessions);
-  }
 
   public InferenceSession(PsiTypeParameter[] typeParams,
                           PsiType[] leftTypes, 
@@ -287,56 +283,63 @@ public class InferenceSession {
                               @Nullable PsiExpression[] args,
                               @Nullable PsiElement parent) {
     final MethodCandidateInfo.CurrentCandidateProperties properties = getCurrentProperties(parent);
-    if (!repeatInferencePhases(true)) {
-      //inferred result would be checked as candidate won't be applicable
-      return resolveSubset(myInferenceVariables, mySiteSubstitutor);
-    }
-
-    if (properties != null && !properties.isApplicabilityCheck()) {
-      initReturnTypeConstraint(properties.getMethod(), (PsiCall)parent);
+    try {
       if (!repeatInferencePhases(true)) {
+        //inferred result would be checked as candidate won't be applicable
+        return resolveSubset(myInferenceVariables, mySiteSubstitutor);
+      }
+
+      if (properties != null && !properties.isApplicabilityCheck()) {
+        initReturnTypeConstraint(properties.getMethod(), (PsiCall)parent);
+        if (!repeatInferencePhases(true)) {
+          return prepareSubstitution();
+        }
+  
+        if (parameters != null && args != null) {
+          final Set<ConstraintFormula> additionalConstraints = new LinkedHashSet<ConstraintFormula>();
+          if (parameters.length > 0) {
+            collectAdditionalConstraints(parameters, args, properties.getMethod(), mySiteSubstitutor, additionalConstraints, properties.isVarargs());
+          }
+  
+          if (!additionalConstraints.isEmpty() && !proceedWithAdditionalConstraints(additionalConstraints)) {
+            return prepareSubstitution().putAll(retrieveNonPrimitiveEqualsBounds(myInferenceVariables));
+          }
+        }
+      }
+
+      final PsiSubstitutor substitutor = resolveBounds(myInferenceVariables, PsiSubstitutor.EMPTY);
+      if (substitutor != null) {
+        if (myContext != null) {
+          myContext.putUserData(ERASED, myErased);
+        }
+        final Map<PsiTypeParameter, PsiType> map = substitutor.getSubstitutionMap();
+        for (PsiTypeParameter parameter : map.keySet()) {
+          final PsiType mapping = map.get(parameter);
+          PsiTypeParameter param;
+          if (parameter instanceof InferenceVariable) {
+            ((InferenceVariable)parameter).setInstantiation(mapping);
+            if (((InferenceVariable)parameter).getCallContext() != myContext) {
+              //don't include in result substitutor foreign inference variables
+              continue;
+            }
+            param = ((InferenceVariable)parameter).getParameter();
+          }
+          else {
+            param = parameter;
+          }
+          mySiteSubstitutor = mySiteSubstitutor.put(param, mapping);
+        }
+      } else {
         return prepareSubstitution();
       }
 
-      if (parameters != null && args != null) {
-        final Set<ConstraintFormula> additionalConstraints = new LinkedHashSet<ConstraintFormula>();
-        if (parameters.length > 0) {
-          collectAdditionalConstraints(parameters, args, properties.getMethod(), mySiteSubstitutor, additionalConstraints, properties.isVarargs());
-        }
-
-        if (!additionalConstraints.isEmpty() && !proceedWithAdditionalConstraints(additionalConstraints)) {
-          return prepareSubstitution().putAll(retrieveNonPrimitiveEqualsBounds(myInferenceVariables));
-        }
-      }
-    }
-
-    final PsiSubstitutor substitutor = resolveBounds(myInferenceVariables, PsiSubstitutor.EMPTY);
-    if (substitutor != null) {
-      if (myContext != null) {
-        myContext.putUserData(ERASED, myErased);
-      }
-      final Map<PsiTypeParameter, PsiType> map = substitutor.getSubstitutionMap();
-      for (PsiTypeParameter parameter : map.keySet()) {
-        final PsiType mapping = map.get(parameter);
-        PsiTypeParameter param;
-        if (parameter instanceof InferenceVariable) {
-          ((InferenceVariable)parameter).setInstantiation(mapping);
-          if (((InferenceVariable)parameter).getCallContext() != myContext) {
-            //don't include in result substitutor foreign inference variables
-            continue;
-          }
-          param = ((InferenceVariable)parameter).getParameter();
-        }
-        else {
-          param = parameter;
-        }
-        mySiteSubstitutor = mySiteSubstitutor.put(param, mapping);
-      }
-    } else {
       return prepareSubstitution();
     }
-
-    return prepareSubstitution();
+    finally {
+      if (properties != null && myErrorMessages != null) {
+        properties.getInfo().setInferenceError(StringUtil.join(myErrorMessages, "\n"));
+      }
+    }
   }
 
   private void collectAdditionalConstraints(PsiParameter[] parameters,
@@ -355,7 +358,7 @@ public class InferenceSession {
             }
           }
         }
-        final InferenceSession nestedCallSession = findNestedCallSession(arg);
+        final InferenceSession nestedCallSession = myInferenceSessionContainer.findNestedCallSession(arg, this);
         final PsiType parameterType =
           nestedCallSession.substituteWithInferenceVariables(getParameterType(parameters, i, siteSubstitutor, varargs));
         if (!isPertinentToApplicability(arg, parentMethod)) {
@@ -1029,6 +1032,14 @@ public class InferenceSession {
       else {
         type = myErased ? null : upperBound;
       }
+
+      if (type instanceof PsiIntersectionType) {
+        final String conflictingConjunctsMessage = ((PsiIntersectionType)type).getConflictingConjunctsMessage();
+        if (conflictingConjunctsMessage != null) {
+          registerIncompatibleErrorMessage("Type parameter " + var.getName() + " has incompatible upper bounds: " + conflictingConjunctsMessage);
+          return PsiType.NULL;
+        }
+      }
     }
     else {
       for (PsiType upperType : var.getBounds(InferenceBound.UPPER)) {
@@ -1051,25 +1062,12 @@ public class InferenceSession {
   }
 
   private void registerIncompatibleErrorMessage(String value) {
-    if (myContext != null) {
-      List<String> errorMessage = myContext.getUserData(INFERENCE_FAILURE_MESSAGE);
-      if (errorMessage == null) {
-        errorMessage = Collections.synchronizedList(new ArrayList<String>());
-        myContext.putUserData(INFERENCE_FAILURE_MESSAGE, errorMessage);
-      }
-      if (!errorMessage.contains(value)) {
-        errorMessage.add(value);
-      }
+    if (myErrorMessages == null) {
+      myErrorMessages = new ArrayList<String>();
     }
-  }
-
-  @Nullable
-  public static String getInferenceErrorMessage(@NotNull PsiElement context) {
-    final List<String> errors = context.getUserData(INFERENCE_FAILURE_MESSAGE);
-    if (errors != null) {
-      return StringUtil.join(errors, "\n");
+    if (!myErrorMessages.contains(value)) {
+      myErrorMessages.add(value);
     }
-    return null;
   }
 
   private String incompatibleBoundsMessage(final InferenceVariable var,
@@ -1207,7 +1205,7 @@ public class InferenceSession {
       final PsiExpression expression = ((ExpressionCompatibilityConstraint)formula).getExpression();
       final PsiCall callExpression = PsiTreeUtil.getParentOfType(expression, PsiCall.class, false);
       if (callExpression != null) {
-        final InferenceSession session = myNestedSessions.get(callExpression);
+        final InferenceSession session = myInferenceSessionContainer.findNestedCallSession(callExpression, null);
         if (session != null) {
           formula.apply(session.myInferenceSubstitution, true);
           collectVarsToResolve(varsToResolve, (InputOutputConstraintFormula)formula);
@@ -1679,12 +1677,8 @@ public class InferenceSession {
     return myInferenceSubstitution.substitute(type);
   }
 
-  public InferenceSession findNestedCallSession(PsiExpression arg) {
-    InferenceSession session = myNestedSessions.get(PsiTreeUtil.getParentOfType(arg, PsiCall.class));
-    if (session == null) {
-      session = this;
-    }
-    return session;
+  public InferenceSessionContainer getInferenceSessionContainer() {
+    return myInferenceSessionContainer;
   }
 
   public PsiType startWithFreshVars(PsiType type) {

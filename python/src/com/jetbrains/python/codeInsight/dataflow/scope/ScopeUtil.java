@@ -20,6 +20,9 @@ import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -73,9 +76,14 @@ public class ScopeUtil {
    * Return the scope owner for the element.
    *
    * Scope owner is not always the first ScopeOwner parent of the element. Some elements are resolved in outer scopes.
+   *
+   * This method does not access AST if underlying PSI is stub based.
    */
   @Nullable
-  public static ScopeOwner getScopeOwner(@Nullable PsiElement element) {
+  public static ScopeOwner getScopeOwner(@Nullable final PsiElement element) {
+    if (element == null) {
+      return null;
+    }
     if (element instanceof StubBasedPsiElement) {
       final StubElement stub = ((StubBasedPsiElement)element).getStub();
       if (stub != null) {
@@ -90,6 +98,17 @@ public class ScopeUtil {
         return null;
       }
     }
+    return CachedValuesManager.getCachedValue(element, new CachedValueProvider<ScopeOwner>() {
+      @Nullable
+      @Override
+      public Result<ScopeOwner> compute() {
+        return Result.create(calculateScopeOwnerByAST(element), PsiModificationTracker.MODIFICATION_COUNT);
+      }
+    });
+  }
+
+  @Nullable
+  private static ScopeOwner calculateScopeOwnerByAST(@Nullable PsiElement element) {
     final ScopeOwner firstOwner = getParentOfType(element, ScopeOwner.class);
     if (firstOwner == null) {
       return null;
@@ -128,9 +147,8 @@ public class ScopeUtil {
 
   @Nullable
   public static ScopeOwner getDeclarationScopeOwner(PsiElement anchor, String name) {
-    PsiElement element = anchor;
     if (name != null) {
-      final ScopeOwner originalScopeOwner = getScopeOwner(element);
+      final ScopeOwner originalScopeOwner = getScopeOwner(anchor);
       ScopeOwner scopeOwner = originalScopeOwner;
       while (scopeOwner != null) {
         if (!(scopeOwner instanceof PyClass) || scopeOwner == originalScopeOwner) {

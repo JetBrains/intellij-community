@@ -23,9 +23,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -38,6 +36,10 @@ import org.jetbrains.lang.manifest.psi.HeaderValue;
 import org.jetbrains.lang.manifest.psi.HeaderValuePart;
 
 public class ClassReferenceParser extends StandardHeaderParser {
+  public static final String MAIN_CLASS = "Main-Class";
+  public static final String PREMAIN_CLASS = "Premain-Class";
+  public static final String AGENT_CLASS = "Agent-Class";
+
   public static final HeaderParser INSTANCE = new ClassReferenceParser();
 
   @NotNull
@@ -86,9 +88,33 @@ public class ClassReferenceParser extends StandardHeaderParser {
   }
 
   protected boolean checkClass(@NotNull HeaderValuePart valuePart, @NotNull PsiClass aClass, @NotNull AnnotationHolder holder) {
-    if (!PsiMethodUtil.hasMainMethod(aClass)) {
+    String header = ((Header)valuePart.getParent()).getName();
+
+    if (header.equals(MAIN_CLASS) && !PsiMethodUtil.hasMainMethod(aClass)) {
       holder.createErrorAnnotation(valuePart.getHighlightingRange(), ManifestBundle.message("header.main.class.invalid"));
       return true;
+    }
+
+    if (header.equals(PREMAIN_CLASS) && !hasInstrumenterMethod(aClass, "premain")) {
+      holder.createErrorAnnotation(valuePart.getHighlightingRange(), ManifestBundle.message("header.pre-main.class.invalid"));
+      return true;
+    }
+
+    if (header.equals(AGENT_CLASS) && !hasInstrumenterMethod(aClass, "agentmain")) {
+      holder.createErrorAnnotation(valuePart.getHighlightingRange(), ManifestBundle.message("header.agent.class.invalid"));
+      return true;
+    }
+
+    return false;
+  }
+
+  private static boolean hasInstrumenterMethod(PsiClass aClass, String methodName) {
+    for (PsiMethod method : aClass.findMethodsByName(methodName, false)) {
+      if (PsiType.VOID.equals(method.getReturnType()) &&
+          method.hasModifierProperty(PsiModifier.PUBLIC) &&
+          method.hasModifierProperty(PsiModifier.STATIC)) {
+        return true;
+      }
     }
 
     return false;

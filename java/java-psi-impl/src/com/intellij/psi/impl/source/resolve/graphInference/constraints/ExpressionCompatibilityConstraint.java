@@ -129,7 +129,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
           }
           callSession.registerReturnTypeConstraints(siteSubstitutor.substitute(returnType), myT);
           if (callSession.repeatInferencePhases(true)) {
-            session.registerNestedSession(callSession);
+            session.getInferenceSessionContainer().registerNestedSession(session, callSession);
           } else {
             return false;
           }

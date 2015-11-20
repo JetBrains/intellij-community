@@ -32,12 +32,12 @@ public class EdgeStorageTest : BaseTestGraphBuilder {
 
   fun create() = EdgeStorage()
 
-  fun Int.to(edge: SimpleEdge) = FullEdge(this, edge.toNode, edge.type)
-  fun Int.to(node: Int) = to(node.u)
+  infix fun Int.to(edge: SimpleEdge) = FullEdge(this, edge.toNode, edge.type)
+  infix fun Int.to(node: Int) = to(node.u)
 
   class FullEdge(val mainId: Int, val additionId: Int?, val edgeType: GraphEdgeType)
 
-  fun EdgeStorage.plus(edge: FullEdge): EdgeStorage {
+  operator fun EdgeStorage.plus(edge: FullEdge): EdgeStorage {
     createEdge(edge.mainId, edge.additionId ?: EdgeStorage.NULL_ID, edge.edgeType)
     return this
   }
@@ -47,7 +47,7 @@ public class EdgeStorageTest : BaseTestGraphBuilder {
     return this
   }
 
-  fun EdgeStorage.assert(s: String) = assertEquals(s, asString())
+  infix fun EdgeStorage.assert(s: String) = assertEquals(s, asString())
 
   fun EdgeStorage.asString(): String = getKnownIds().sortR().map {
     adapter.getAdjacentEdges(nodeIndexById(it), EdgeFilter.ALL).map { it.asString() }.joinToString(",")

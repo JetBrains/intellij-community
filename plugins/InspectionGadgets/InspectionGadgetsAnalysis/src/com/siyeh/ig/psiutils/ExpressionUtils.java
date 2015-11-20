@@ -72,6 +72,11 @@ public class ExpressionUtils {
     return PsiTreeUtil.getChildOfType(expressionList, PsiExpression.class);
   }
 
+  @Nullable
+  public static PsiExpression getOnlyExpressionInList(@Nullable PsiExpressionList expressionList) {
+    return ControlFlowUtils.getOnlyChildOfType(expressionList, PsiExpression.class);
+  }
+
   public static boolean isDeclaredConstant(PsiExpression expression) {
     PsiField field =
       PsiTreeUtil.getParentOfType(expression, PsiField.class);

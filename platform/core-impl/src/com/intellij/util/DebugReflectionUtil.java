@@ -127,7 +127,7 @@ public class DebugReflectionUtil {
     return true;
   }
 
-  private static boolean isLoadedAlready(Class root) {
+  private static boolean isLoadedAlready(@NotNull Class root) {
     if (Unsafe_shouldBeInitialized == null) return false;
     boolean isLoadedAlready = false;
     try {
@@ -140,7 +140,7 @@ public class DebugReflectionUtil {
   }
 
   public static class BackLink {
-    public final Object value;
+    @NotNull public final Object value;
     private final Field field;
     private final BackLink backLink;
 
@@ -158,15 +158,17 @@ public class DebugReflectionUtil {
         String valueStr;
         try {
           valueStr = backLink.value instanceof FList
-                     ? "FList" : backLink.value instanceof Collection ? "Collection" : String.valueOf(backLink.value);
-          valueStr = StringUtil.trimLog(StringUtil.convertLineSeparators(valueStr, "//"), 100);
+                     ? "FList (size="+((FList)backLink.value).size()+")" :
+                     backLink.value instanceof Collection ? "Collection (size="+((Collection)backLink.value).size()+")" :
+                     String.valueOf(backLink.value);
+          valueStr = StringUtil.first(StringUtil.convertLineSeparators(valueStr, "\\n"), 200, true);
         }
         catch (Throwable e) {
           valueStr = "(" + e.getMessage() + " while computing .toString())";
         }
         Field field = backLink.field;
-        String fieldStr = field == null ? "?" : field.getName() + " of " + field.getDeclaringClass();
-        result += "via " + fieldStr + "; Value: " + valueStr + " of " + backLink.value.getClass() + "\n";
+        String fieldName = field == null ? "?" : field.getDeclaringClass().getName()+"."+field.getName();
+        result += "via '" + fieldName + "'; Value: '" + valueStr + "' of " + backLink.value.getClass() + "\n";
         backLink = backLink.backLink;
       }
       return result;

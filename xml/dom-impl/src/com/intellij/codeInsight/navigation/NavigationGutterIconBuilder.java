@@ -40,6 +40,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -160,7 +161,7 @@ public class NavigationGutterIconBuilder<T> {
     return this;
   }
 
-  public NavigationGutterIconBuilder<T> setPopupTitle(@NotNull String popupTitle) {
+  public NavigationGutterIconBuilder<T> setPopupTitle(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String popupTitle) {
     myPopupTitle = popupTitle;
     return this;
   }

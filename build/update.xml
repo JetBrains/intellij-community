@@ -28,6 +28,7 @@
       <java classname="org.apache.tools.ant.Main" fork="true" failonerror="true" dir="${project.home}">
         <sysproperty key="workIdeaHome" value="${work.idea.home}"/>
         <sysproperty key="gant.script" value="${project.home}/build/scripts/download_kotlin.gant"/>
+        <sysproperty key="include.kotlin.jars.to.classpath" value="false"/>
         <classpath>
           <fileset dir="${project.home}/lib/ant/lib">
             <include name="*.jar"/>

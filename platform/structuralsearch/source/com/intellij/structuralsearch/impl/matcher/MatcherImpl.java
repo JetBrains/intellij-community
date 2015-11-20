@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.Computable;
@@ -47,7 +48,7 @@ public class MatcherImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.structuralsearch.impl.matcher.MatcherImpl");
   // project being worked on
   private final Project project;
-  private final PsiDocumentManager documentManager;
+  private final DumbService myDumbService;
 
   // context of matching
   private final MatchContext matchContext;
@@ -70,7 +71,7 @@ public class MatcherImpl {
       matchContext.setOptions(matchOptions);
       cacheCompiledPattern(matchOptions, PatternCompiler.compilePattern(project,matchOptions));
     }
-    documentManager = PsiDocumentManager.getInstance(this.project);
+    myDumbService = DumbService.getInstance(project);
   }
 
   static class LastMatchData {
@@ -523,7 +524,7 @@ public class MatcherImpl {
           matchContext.getSink().processFile((PsiFile)file);
         }
 
-        documentManager.commitAndRunReadAction(new Runnable() {
+        myDumbService.runReadActionInSmartMode(new Runnable() {
             @Override
             public void run() {
               if (!file.isValid()) return;

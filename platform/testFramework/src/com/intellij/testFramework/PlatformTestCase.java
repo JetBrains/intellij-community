@@ -22,10 +22,7 @@ import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
@@ -66,10 +63,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.util.PathUtilRt;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.SmartList;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.*;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.IndexedRootsProvider;
 import com.intellij.util.lang.CompoundRuntimeException;
@@ -130,14 +124,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     tempDir.refresh(false, true);
   }
 
-  @Nullable
-  protected String getApplicationConfigDirPath() throws Exception {
-    return null;
-  }
-
   protected void initApplication() throws Exception {
     boolean firstTime = ourApplication == null;
-    ourApplication = IdeaTestApplication.getInstance(getApplicationConfigDirPath());
+    ourApplication = IdeaTestApplication.getInstance(null);
     ourApplication.setDataProvider(this);
 
     if (firstTime) {
@@ -278,7 +267,16 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         leakers.append("\n");
       }
 
-      fail(leakers.toString());
+      String dumpPath = PathManager.getHomePath() + "/leakedProjects.hprof";
+      System.out.println("##teamcity[publishArtifacts 'leakedProjects.hprof']");
+      try {
+        FileUtil.delete(new File(dumpPath));
+        MemoryDumpHelper.captureMemoryDump(dumpPath);
+      }
+      catch (Exception ex) {
+        ex.printStackTrace();
+      }
+      fail(leakers+"\nPlease see '"+dumpPath+"' for a memory dump");
       return null;
     }
   }

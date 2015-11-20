@@ -60,17 +60,19 @@ public class PyRemoteLibrariesNode extends PsiDirectoryNode {
 
   @Nullable
   public static PyRemoteLibrariesNode create(@NotNull Project project, @NotNull Sdk sdk, ViewSettings settings) {
-    VirtualFile remoteLibrary = PySdkUtil.findAnyRemoteLibrary(sdk);
+    if (sdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataBase) {
+      VirtualFile remoteLibrary = PySdkUtil.findAnyRemoteLibrary(sdk);
 
-    if (remoteLibrary != null && remoteLibrary.getFileType() instanceof ArchiveFileType) {
-      remoteLibrary = JarFileSystem.getInstance().getLocalVirtualFileFor(remoteLibrary);
-    }
+      if (remoteLibrary != null && remoteLibrary.getFileType() instanceof ArchiveFileType) {
+        remoteLibrary = JarFileSystem.getInstance().getLocalVirtualFileFor(remoteLibrary);
+      }
 
-    if (remoteLibrary != null) {
-      final VirtualFile remoteLibraries = remoteLibrary.getParent();
+      if (remoteLibrary != null) {
+        final VirtualFile remoteLibraries = remoteLibrary.getParent();
 
-      final PsiDirectory remoteLibrariesDirectory = PsiManager.getInstance(project).findDirectory(remoteLibraries);
-      return new PyRemoteLibrariesNode(sdk, project, remoteLibrariesDirectory, settings);
+        final PsiDirectory remoteLibrariesDirectory = PsiManager.getInstance(project).findDirectory(remoteLibraries);
+        return new PyRemoteLibrariesNode(sdk, project, remoteLibrariesDirectory, settings);
+      }
     }
     return null;
   }

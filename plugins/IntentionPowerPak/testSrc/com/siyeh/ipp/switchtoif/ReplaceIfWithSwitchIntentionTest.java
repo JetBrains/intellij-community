@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,16 @@ public class ReplaceIfWithSwitchIntentionTest extends IPPTestCase {
   public void testComments() { doTest(); }
   public void testLong() { assertIntentionNotAvailable(); }
   public void testPolyadic() { doTest(); }
+  public void testStringEquality() { doTest(); }
+  public void testObjectsEquals() {
+    myFixture.addClass("package java.util;" +
+                       "public final class Objects {" +
+                       "    public static boolean equals(Object a, Object b) {\n" +
+                       "        return (a == b) || (a != null && a.equals(b));\n" +
+                       "    }" +
+                       "}");
+    doTest();
+  }
 
   @Override
   protected String getIntentionName() {

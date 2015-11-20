@@ -186,15 +186,15 @@ public class PsiTypesUtil {
   }
 
   @Nullable
-  public static PsiType getExpectedTypeByParent(PsiElement methodCall) {
-    final PsiElement parent = PsiUtil.skipParenthesizedExprUp(methodCall.getParent());
+  public static PsiType getExpectedTypeByParent(PsiElement element) {
+    final PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
     if (parent instanceof PsiVariable) {
-      if (PsiUtil.checkSameExpression(methodCall, ((PsiVariable)parent).getInitializer())) {
+      if (PsiUtil.checkSameExpression(element, ((PsiVariable)parent).getInitializer())) {
         return ((PsiVariable)parent).getType();
       }
     }
     else if (parent instanceof PsiAssignmentExpression) {
-      if (PsiUtil.checkSameExpression(methodCall, ((PsiAssignmentExpression)parent).getRExpression())) {
+      if (PsiUtil.checkSameExpression(element, ((PsiAssignmentExpression)parent).getRExpression())) {
         return ((PsiAssignmentExpression)parent).getLExpression().getType();
       }
     }
@@ -207,7 +207,7 @@ public class PsiTypesUtil {
         return ((PsiMethod)psiElement).getReturnType();
       }
     }
-    else if (PsiUtil.isCondition(methodCall, parent)) {
+    else if (PsiUtil.isCondition(element, parent)) {
       return PsiType.BOOLEAN.getBoxedType(parent);
     } 
     else if (parent instanceof PsiArrayInitializerExpression) {

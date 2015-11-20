@@ -115,6 +115,7 @@ public class CompilerTestUtil {
               ModuleRootModificationUtil.setModuleSdk(module, internalJdk);
             }
             BuildManager.getInstance().clearState(project);
+            BuildManager.getInstance().stopListening();
           }
         });
       }

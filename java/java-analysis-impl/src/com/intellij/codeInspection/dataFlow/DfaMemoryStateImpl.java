@@ -255,7 +255,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     setVariableState(var, getVariableState(var).withValue(value));
     if (value instanceof DfaTypeValue) {
-      setVariableState(var, getVariableState(var).withNullable(((DfaTypeValue)value).isNullable()));
+      setVariableState(var, getVariableState(var).withNullability(((DfaTypeValue)value).getNullness()));
       DfaRelationValue dfaInstanceof = myFactory.getRelationFactory().createRelation(var, value, JavaTokenType.INSTANCEOF_KEYWORD, false);
       if (((DfaTypeValue)value).isNotNull()) {
         applyCondition(dfaInstanceof);
@@ -848,12 +848,17 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     else { // Not Equals
       if (c1Index.equals(c2Index) || areCompatibleConstants(c1Index, c2Index)) return false;
+      if (isNull(dfaLeft) && isPrimitive(dfaRight) || isNull(dfaRight) && isPrimitive(dfaLeft)) return true;
       makeClassesDistinct(c1Index, c2Index);
       myCachedDistinctClassPairs = null;
       myCachedHash = null;
     }
 
     return true;
+  }
+
+  private static boolean isPrimitive(DfaValue value) {
+    return value instanceof DfaVariableValue && ((DfaVariableValue)value).getVariableType() instanceof PsiPrimitiveType;
   }
 
   private static boolean preserveConstantDistinction(final Object c1, final Object c2) {

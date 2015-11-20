@@ -19,6 +19,7 @@ import com.intellij.execution.TaskExecutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.io.BaseDataReader;
@@ -26,13 +27,17 @@ import com.intellij.util.io.BaseInputStreamReader;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
-import java.util.concurrent.*;
+import java.util.concurrent.Future;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import static com.intellij.util.io.BaseDataReader.AdaptiveSleepingPolicy;
 
@@ -42,13 +47,24 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   protected final Process myProcess;
   protected final String myCommandLine;
   protected final Charset myCharset;
+  @NotNull private final String myPresentableName;
   protected final ProcessWaitFor myWaitFor;
 
+  @Deprecated
+  /**
+   * todo remove in IDEA16
+   * @deprecated Use {@link BaseOSProcessHandler#BaseOSProcessHandler(Process, String, Charset, String)} instead
+   */
   public BaseOSProcessHandler(@NotNull Process process, @Nullable String commandLine, @Nullable Charset charset) {
+    this(process, commandLine, charset, StringUtil.notNullize(commandLine));
+  }
+
+  public BaseOSProcessHandler(@NotNull Process process, @Nullable String commandLine, @Nullable Charset charset, @NotNull String presentableName) {
     myProcess = process;
     myCommandLine = commandLine;
     myCharset = charset;
-    myWaitFor = new ProcessWaitFor(process, this);
+    myPresentableName = presentableName;
+    myWaitFor = new ProcessWaitFor(process, this, presentableName);
   }
 
   /**
@@ -143,13 +159,13 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   }
 
   @NotNull
-  protected BaseDataReader createErrorDataReader(BaseDataReader.SleepingPolicy sleepingPolicy) {
-    return new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR, sleepingPolicy);
+  protected BaseDataReader createErrorDataReader(@NotNull BaseDataReader.SleepingPolicy sleepingPolicy) {
+    return new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR, sleepingPolicy, "error stream of "+myPresentableName);
   }
 
   @NotNull
-  protected BaseDataReader createOutputDataReader(BaseDataReader.SleepingPolicy sleepingPolicy) {
-    return new SimpleOutputReader(createProcessOutReader(), ProcessOutputTypes.STDOUT, sleepingPolicy);
+  protected BaseDataReader createOutputDataReader(@NotNull BaseDataReader.SleepingPolicy sleepingPolicy) {
+    return new SimpleOutputReader(createProcessOutReader(), ProcessOutputTypes.STDOUT, sleepingPolicy, "output stream of "+myPresentableName);
   }
 
   protected void onOSProcessTerminated(final int exitCode) {
@@ -241,26 +257,39 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   }
 
   public static class ExecutorServiceHolder {
-    private static final ExecutorService ourThreadExecutorsService = createServiceImpl();
-
-    private static ThreadPoolExecutor createServiceImpl() {
-      ThreadFactory factory = ConcurrencyUtil.newNamedThreadFactory("OSProcessHandler pooled thread");
-      return new ThreadPoolExecutor(0, Integer.MAX_VALUE, 5, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), factory);
-    }
+    private static final ThreadPoolExecutor ourThreadExecutorsService =
+      new ThreadPoolExecutor(0, Integer.MAX_VALUE, 1, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
+                             ConcurrencyUtil.newNamedThreadFactory("OSProcessHandler pooled thread"));
 
     @NotNull
+    @Deprecated
+    /**
+     * todo remove in IDEA16
+     * @deprecated use {@link BaseOSProcessHandler#submit(Runnable)} instead.
+     */
     public static Future<?> submit(@NotNull Runnable task) {
-      return ourThreadExecutorsService.submit(task);
+      return BaseOSProcessHandler.submit(task);
     }
+  }
+
+  @NotNull
+  public static Future<?> submit(@NotNull Runnable task) {
+    return ExecutorServiceHolder.ourThreadExecutorsService.submit(task);
+  }
+
+  @TestOnly
+  public static void awaitQuiescence(long timeout, @NotNull TimeUnit unit) {
+    ThreadPoolExecutor executor = ExecutorServiceHolder.ourThreadExecutorsService;
+    ConcurrencyUtil.awaitQuiescence(executor, timeout, unit);
   }
 
   private class SimpleOutputReader extends BaseOutputReader {
     private final Key myProcessOutputType;
 
-    private SimpleOutputReader(@NotNull Reader reader, @NotNull Key processOutputType, SleepingPolicy sleepingPolicy) {
+    private SimpleOutputReader(@NotNull Reader reader, @NotNull Key processOutputType, SleepingPolicy sleepingPolicy, @NotNull String presentableName) {
       super(reader, sleepingPolicy);
       myProcessOutputType = processOutputType;
-      start();
+      start(presentableName);
     }
 
     @NotNull
@@ -273,5 +302,10 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     protected void onTextAvailable(@NotNull String text) {
       notifyTextAvailable(text, myProcessOutputType);
     }
+  }
+
+  @Override
+  public String toString() {
+    return myCommandLine;
   }
 }

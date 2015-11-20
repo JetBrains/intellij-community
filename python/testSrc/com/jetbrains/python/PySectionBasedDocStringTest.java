@@ -18,10 +18,7 @@ package com.jetbrains.python;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.documentation.docstrings.DocStringUtil;
-import com.jetbrains.python.documentation.docstrings.GoogleCodeStyleDocString;
-import com.jetbrains.python.documentation.docstrings.NumpyDocString;
-import com.jetbrains.python.documentation.docstrings.SectionBasedDocString;
+import com.jetbrains.python.documentation.docstrings.*;
 import com.jetbrains.python.documentation.docstrings.SectionBasedDocString.Section;
 import com.jetbrains.python.documentation.docstrings.SectionBasedDocString.SectionField;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -386,6 +383,23 @@ public class PySectionBasedDocStringTest extends PyTestCase {
     assertSize(2, params);
     assertEquals("Foo", params.get(0).getType());
     assertEquals("Bar", params.get(1).getType());
+  }
+
+  // PY-17657, PY-16303
+  public void testNotGoogleFormatIfDocstringContainTags() {
+    assertEquals(DocStringFormat.REST, DocStringUtil.guessDocStringFormat("\"\"\"\n" +
+                                                                          ":type sub_field: FieldDescriptor | () -> FieldDescriptor\n" +
+                                                                          ":param sub_field: The type of field in this collection\n" +
+                                                                          "    Tip: You can pass a ValueObject class here to ...\n" +
+                                                                          "    Example:\n" +
+                                                                          "        addresses = field.Collection(AddressObject)\n" +
+                                                                          "\"\"\""));
+    
+    assertEquals(DocStringFormat.REST, DocStringUtil.guessDocStringFormat("\"\"\"\n" +
+                                                                          "Args:\n" +
+                                                                          "    :param Tuple[int, int] name: Some description\n" +
+                                                                          "\"\"\""));
+    
   }
 
   @Override

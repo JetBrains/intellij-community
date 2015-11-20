@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -192,5 +193,23 @@ public class PsiIntersectionType extends PsiType.Stub {
       sb.append(myConjuncts[i].getPresentableText());
     }
     return sb.toString();
+  }
+
+  public String getConflictingConjunctsMessage() {
+    final PsiType[] conjuncts = getConjuncts();
+    for (int i = 0; i < conjuncts.length; i++) {
+      PsiClass conjunct = PsiUtil.resolveClassInClassTypeOnly(conjuncts[i]);
+      if (conjunct != null && !conjunct.isInterface()) {
+        for (int i1 = i + 1; i1 < conjuncts.length; i1++) {
+          PsiClass oppositeConjunct = PsiUtil.resolveClassInClassTypeOnly(conjuncts[i1]);
+          if (oppositeConjunct != null && !oppositeConjunct.isInterface()) {
+            if (!conjunct.isInheritor(oppositeConjunct, true) && !oppositeConjunct.isInheritor(conjunct, true)) {
+              return conjuncts[i].getPresentableText() + " and " + conjuncts[i1].getPresentableText();
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 }

@@ -68,7 +68,7 @@ public class CreateCondaEnvDialog extends AbstractCreateVirtualEnvDialog {
       return;
     }
     else {
-      final String conda = PyCondaPackageService.getCondaExecutable();
+      final String conda = PyCondaPackageService.getSystemCondaExecutable();
       if (conda != null) {
         final VirtualFile condaFile = LocalFileSystem.getInstance().findFileByPath(conda);
         if (condaFile != null) {

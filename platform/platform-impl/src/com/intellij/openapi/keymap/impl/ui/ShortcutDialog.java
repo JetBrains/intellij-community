@@ -53,7 +53,7 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
   private final SimpleColoredComponent myAction = new SimpleColoredComponent();
   private final JBPanel myConflictsContainer = new JBPanel(new VerticalLayout(0));
   private final JBPanel myConflictsPanel = new JBPanel(new BorderLayout())
-    .withBorder(JBUI.Borders.empty(5, 10, 0, 10))
+    .withBorder(JBUI.Borders.empty(10, 10, 0, 10))
     .withPreferredHeight(64)
     .withMinimumHeight(64);
 

@@ -92,17 +92,17 @@ public class GeneralCommandLine implements UserDataHolder {
   public enum ParentEnvironmentType {NONE, SYSTEM, CONSOLE}
 
   // todo revise usages, then set to ParentEnvironmentType.CONSOLE and inline
-  private static ParentEnvironmentType defaultParentEnvironmentType =
+  private static final ParentEnvironmentType defaultParentEnvironmentType =
     PlatformUtils.isAppCode() ? ParentEnvironmentType.SYSTEM : ParentEnvironmentType.CONSOLE;
 
-  private String myExePath = null;
-  private File myWorkDirectory = null;
+  private String myExePath;
+  private File myWorkDirectory;
   private final Map<String, String> myEnvParams = new MyTHashMap();
   private ParentEnvironmentType myParentEnvironmentType = defaultParentEnvironmentType;
   private final ParametersList myProgramParams = new ParametersList();
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
-  private boolean myRedirectErrorStream = false;
-  private Map<Object, Object> myUserData = null;
+  private boolean myRedirectErrorStream;
+  private Map<Object, Object> myUserData;
 
   public GeneralCommandLine() { }
 
@@ -120,6 +120,7 @@ public class GeneralCommandLine implements UserDataHolder {
     }
   }
 
+  @NotNull
   public String getExePath() {
     return myExePath;
   }
@@ -221,7 +222,7 @@ public class GeneralCommandLine implements UserDataHolder {
     }
   }
 
-  public void addParameters(String... parameters) {
+  public void addParameters(@NotNull String... parameters) {
     withParameters(parameters);
   }
 
@@ -245,6 +246,7 @@ public class GeneralCommandLine implements UserDataHolder {
     myProgramParams.add(parameter);
   }
 
+  @NotNull
   public ParametersList getParametersList() {
     return myProgramParams;
   }
@@ -284,6 +286,7 @@ public class GeneralCommandLine implements UserDataHolder {
    *
    * @return single-string representation of this command line.
    */
+  @NotNull
   public String getCommandLineString() {
     return getCommandLineString(null);
   }
@@ -295,10 +298,12 @@ public class GeneralCommandLine implements UserDataHolder {
    * @param exeName use this executable name instead of given by {@link #setExePath(String)}
    * @return single-string representation of this command line.
    */
+  @NotNull
   public String getCommandLineString(@Nullable String exeName) {
     return ParametersList.join(getCommandLineList(exeName));
   }
 
+  @NotNull
   public List<String> getCommandLineList(@Nullable String exeName) {
     List<String> commands = new ArrayList<String>();
     if (exeName != null) {
@@ -436,7 +441,7 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   private static class MyTHashMap extends THashMap<String, String> {
-    public MyTHashMap() {
+    private MyTHashMap() {
       super(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE : ContainerUtil.<String>canonicalStrategy());
     }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.FoldRegion;
@@ -44,7 +45,7 @@ import java.awt.image.BufferedImage;
  * 
  * Also contains a cache of several font-related quantities (line height, space width, etc).
  */
-public class EditorView implements TextDrawingCallback, Disposable {
+public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   private static Key<LineLayout> FOLD_REGION_TEXT_LAYOUT = Key.create("text.layout");
 
   private final EditorImpl myEditor;
@@ -244,6 +245,7 @@ public class EditorView implements TextDrawingCallback, Disposable {
 
   public Dimension getPreferredSize() {
     assertIsDispatchThread();
+    assert !myEditor.isPurePaintingMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return mySizeManager.getPreferredSize();
   }
@@ -466,5 +468,11 @@ public class EditorView implements TextDrawingCallback, Disposable {
   @Override
   public void drawChars(@NotNull Graphics g, @NotNull char[] data, int start, int end, int x, int y, Color color, FontInfo fontInfo) {
     myPainter.drawChars(g, data, start, end, x, y, color, fontInfo);
+  }
+
+  @NotNull
+  @Override
+  public String dumpState() {
+    return "[Size manager: " + mySizeManager.dumpState() + "]";
   }
 }

@@ -16,6 +16,7 @@
 package com.intellij.xml.impl.dom;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightingAwareElementDescriptor;
+import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -91,6 +92,7 @@ public class DomElementXmlDescriptor extends AbstractDomChildrenDescriptor imple
     return false;
   }
 
+  @Presentation(typeName = "Root tag")
   private static class MyRootDomChildrenDescription implements DomChildrenDescription {
     private final DomElement myDomElement;
 

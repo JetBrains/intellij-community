@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,6 +92,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotationCollector;
@@ -393,12 +394,25 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   @Override
   public void visitTypeDefinitionBody(GrTypeDefinitionBody typeDefinitionBody) {
     final PsiElement parent = typeDefinitionBody.getParent();
-    if (parent instanceof GrAnonymousClassDefinition) {
-      final PsiElement prev = typeDefinitionBody.getPrevSibling();
-      if (PsiUtil.isLineFeed(prev)) {
-        myHolder.createErrorAnnotation(typeDefinitionBody, GroovyBundle.message("ambiguous.code.block"));
-      }
+    if (!(parent instanceof GrAnonymousClassDefinition)) return;
+
+    final PsiElement prev = typeDefinitionBody.getPrevSibling();
+    if (!PsiUtil.isLineFeed(prev)) return;
+
+    final PsiElement newExpression = parent.getParent();
+    if (!(newExpression instanceof GrNewExpression)) return;
+
+    final GrStatementOwner statementOwner = PsiTreeUtil.getParentOfType(newExpression, GrStatementOwner.class);
+
+    final GrParenthesizedExpression parenthesizedExpression = PsiTreeUtil.getParentOfType(newExpression, GrParenthesizedExpression.class);
+    if (parenthesizedExpression != null && PsiTreeUtil.isAncestor(statementOwner, parenthesizedExpression, true)) return;
+
+    final GrArgumentList argumentList = PsiTreeUtil.getParentOfType(newExpression, GrArgumentList.class);
+    if (argumentList != null && !(argumentList instanceof GrCommandArgumentList)) {
+      if (PsiTreeUtil.isAncestor(statementOwner, argumentList, true)) return;
     }
+
+    myHolder.createErrorAnnotation(typeDefinitionBody, GroovyBundle.message("ambiguous.code.block"));
   }
 
   @Override

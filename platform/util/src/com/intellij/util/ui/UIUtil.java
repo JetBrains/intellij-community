@@ -1626,6 +1626,9 @@ public class UIUtil {
       g.setColor(getPanelBackground());
       g.fillRect(x, 0, width, height);
 
+      if (isRetina()) {
+        ((Graphics2D)g).setStroke(new BasicStroke(2f));
+      }
       ((Graphics2D)g).setPaint(getGradientPaint(0, 0, Gray.x00.withAlpha(5), 0, height, Gray.x00.withAlpha(20)));
       g.fillRect(x, 0, width, height);
 
@@ -1633,8 +1636,8 @@ public class UIUtil {
         g.setColor(new Color(100, 150, 230, toolWindow ? 50 : 30));
         g.fillRect(x, 0, width, height);
       }
-      g.setColor(Gray.x00.withAlpha(toolWindow ? 90 : 50));
-      if (drawTopLine && !(SystemInfo.isMac && isUnderIntelliJLaF())) g.drawLine(x, 0, width, 0);
+      g.setColor(SystemInfo.isMac && isUnderIntelliJLaF() ? Gray.xC9 : Gray.x00.withAlpha(toolWindow ? 90 : 50));
+      if (drawTopLine) g.drawLine(x, 0, width, 0);
       if (drawBottomLine) g.drawLine(x, height - (isRetina() ? 1 : 2), width, height - (isRetina() ? 1 : 2));
 
       if (SystemInfo.isMac && isUnderIntelliJLaF()) {
@@ -1643,7 +1646,7 @@ public class UIUtil {
         g.setColor(isUnderDarcula() ? Gray._255.withAlpha(30) : Gray.xFF.withAlpha(100));
       }
 
-      g.drawLine(x, drawTopLine ? 1 : 0, width, drawTopLine ? 1 : 0);
+      g.drawLine(x, 0, width, 0);
     } finally {
       config.restore();
     }
@@ -1728,7 +1731,7 @@ public class UIUtil {
         img = image;
       }
       newG.drawImage(img, 0, 0, observer);
-      newG.scale(1, 1);
+      //newG.scale(1, 1);
       newG.dispose();
     } else {
       g.drawImage(image, x, y, observer);
@@ -1744,7 +1747,7 @@ public class UIUtil {
         img = image;
       }
       newG.drawImage((BufferedImage)img, op, 0, 0);
-      newG.scale(1, 1);
+      //newG.scale(1, 1);
       newG.dispose();
     } else {
       ((Graphics2D)g).drawImage(image, op, x, y);

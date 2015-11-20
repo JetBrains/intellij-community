@@ -720,10 +720,17 @@ public class PyBlock implements ASTBlock {
 
       if (psi1 instanceof PyImportStatementBase) {
         if (psi2 instanceof PyImportStatementBase) {
-          if (psi2.getCopyableUserData(IMPORT_GROUP_BEGIN) != null) {
+          final Boolean leftImportIsGroupStart = psi1.getCopyableUserData(IMPORT_GROUP_BEGIN);
+          final Boolean rightImportIsGroupStart = psi2.getCopyableUserData(IMPORT_GROUP_BEGIN);
+          // Cleanup user data, it's no longer needed
+          psi1.putCopyableUserData(IMPORT_GROUP_BEGIN, null);
+          // Don't remove IMPORT_GROUP_BEGIN from the element psi2 yet, because spacing is constructed pairwise: 
+          // it might be needed on the next iteration.
+          //psi2.putCopyableUserData(IMPORT_GROUP_BEGIN, null);
+          if (rightImportIsGroupStart != null) {
             return Spacing.createSpacing(0, 0, 2, true, 1);
           }
-          else if (psi1.getCopyableUserData(IMPORT_GROUP_BEGIN) != null) {
+          else if (leftImportIsGroupStart != null) {
             // It's a trick to keep spacing consistent when new import statement is inserted
             // at the beginning of an import group, i.e. if there is a blank line before the next
             // import we want to save it, but remove line *after* inserted import.

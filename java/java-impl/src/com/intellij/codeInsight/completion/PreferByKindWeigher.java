@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -25,7 +26,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.MembersGetter;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
@@ -128,11 +128,11 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     if (psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class).accepts(position)) {
       final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(position, PsiAnnotation.class);
       assert annotation != null;
-      final PsiAnnotation.TargetType[] targets = PsiImplUtil.getTargetsForLocation(annotation.getOwner());
+      final PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(annotation.getOwner());
       return new Condition<PsiClass>() {
         @Override
         public boolean value(PsiClass psiClass) {
-          return psiClass.isAnnotationType() && PsiImplUtil.findApplicableTarget(psiClass, targets) != null;
+          return psiClass.isAnnotationType() && AnnotationTargetUtil.findAnnotationTarget(psiClass, targets) != null;
         }
       };
     }

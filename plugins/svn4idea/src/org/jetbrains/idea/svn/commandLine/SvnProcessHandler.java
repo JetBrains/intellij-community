@@ -61,7 +61,7 @@ public class SvnProcessHandler extends OSProcessHandler {
 
   @NotNull
   @Override
-  protected BaseDataReader createOutputDataReader(BaseDataReader.SleepingPolicy sleepingPolicy) {
+  protected BaseDataReader createOutputDataReader(@NotNull BaseDataReader.SleepingPolicy sleepingPolicy) {
     if (myForceBinary) {
       return new SimpleBinaryOutputReader(myProcess.getInputStream(), sleepingPolicy);
     }
@@ -69,8 +69,7 @@ public class SvnProcessHandler extends OSProcessHandler {
   }
 
   private class SimpleBinaryOutputReader extends BinaryOutputReader {
-
-    public SimpleBinaryOutputReader(@NotNull InputStream stream, SleepingPolicy sleepingPolicy) {
+    private SimpleBinaryOutputReader(@NotNull InputStream stream, @NotNull SleepingPolicy sleepingPolicy) {
       super(stream, sleepingPolicy);
       start();
     }

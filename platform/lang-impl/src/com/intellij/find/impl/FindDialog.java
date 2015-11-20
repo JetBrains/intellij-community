@@ -322,7 +322,7 @@ public class FindDialog extends DialogWrapper {
         final com.intellij.ui.DocumentAdapter documentAdapter = new com.intellij.ui.DocumentAdapter() {
           @Override
           protected void textChanged(javax.swing.event.DocumentEvent e) {
-            handleComboBoxValueChanged(comboBox);
+            handleAnyComboBoxValueChanged(comboBox);
           }
         };
         document.addDocumentListener(documentAdapter);
@@ -410,6 +410,10 @@ public class FindDialog extends DialogWrapper {
       comboBox.setSelectedItem(item);
     }
 
+    handleAnyComboBoxValueChanged(comboBox);
+  }
+
+  private void handleAnyComboBoxValueChanged(@NotNull ComboBox comboBox) {
     if (comboBox != myReplaceComboBox) scheduleResultsUpdate();
     validateFindButton();
   }
@@ -1360,7 +1364,7 @@ public class FindDialog extends DialogWrapper {
   }
 
   private String getDirectory() {
-    return (String)myDirectoryComboBox.getSelectedItem();
+    return (String)myDirectoryComboBox.getEditor().getItem();
   }
 
   private static void setStringsToComboBox(@NotNull String[] strings, @NotNull ComboBox combo, String selected) {
@@ -1478,7 +1482,7 @@ public class FindDialog extends DialogWrapper {
   private String getFileTypeMask() {
     String mask = null;
     if (myUseFileFilter !=null && myUseFileFilter.isSelected()) {
-      mask = (String)myFileFilter.getSelectedItem();
+      mask = (String)myFileFilter.getEditor().getItem();
     }
     return mask;
   }

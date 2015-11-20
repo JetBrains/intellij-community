@@ -117,7 +117,7 @@ public class HgMergeCommand {
             return;
           }
           new HgConflictResolver(project, updatedFiles).resolve(repositoryRoot);
-          if (HgConflictResolver.findConflicts(project, repositoryRoot).isEmpty() && onSuccessHandler != null) {
+          if (!HgConflictResolver.hasConflicts(project, repositoryRoot) && onSuccessHandler != null) {
             onSuccessHandler.run();    // for example commit changes
           }
         }

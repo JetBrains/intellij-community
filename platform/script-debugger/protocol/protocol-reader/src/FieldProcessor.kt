@@ -93,18 +93,7 @@ internal class FieldProcessor(private val reader: InterfaceReader, typeClass: Cl
     val effectiveFieldName = if (fieldTypeParser == VOID_PARSER) null else method.name
     return object : MethodHandler {
       override fun writeMethodImplementationJava(scope: ClassScope, method: Method, out: TextOutput) {
-        out.append("override fun ")
-
-        val isEscapeName = method.name == "object" || method.name == "fun"
-        if (isEscapeName) {
-          out.append('`')
-        }
-        out.append(method.name)
-        if (isEscapeName) {
-          out.append('`')
-        }
-
-        out.append("()")
+        out.append("override fun ").appendEscapedName(method.name).append("()")
         if (effectiveFieldName == null) {
           out.openBlock()
           out.closeBlock()

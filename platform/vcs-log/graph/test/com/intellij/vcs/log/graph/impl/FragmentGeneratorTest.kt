@@ -28,8 +28,8 @@ private val LinearGraph.lite: LiteLinearGraph get() = LinearGraphUtils.asLiteLin
 
 private fun LinearGraph.getMiddleNodes(upNode: Int, downNode: Int) = FragmentGenerator(lite) { false }.getMiddleNodes(upNode, downNode, false)
 
-private fun Collection<Int>.assert(s: String) = assertEquals(s, sorted().joinToString(","))
-private fun Int?.assert(i: Int?) = assertEquals(i, this)
+private infix fun Collection<Int>.assert(s: String) = assertEquals(s, sorted().joinToString(","))
+private infix fun Int?.assert(i: Int?) = assertEquals(i, this)
 
 private fun LinearGraph.redNodes(vararg redNode: Int = IntArray(0)): FragmentGenerator {
   val redNodes = redNode.toSet()
@@ -41,7 +41,7 @@ private fun LinearGraph.redNodes(vararg redNode: Int = IntArray(0)): FragmentGen
 
 private val Int?.s: String get() = if (this == null) "n" else toString()
 
-private fun FragmentGenerator.GreenFragment.assert(s: String)
+private infix fun FragmentGenerator.GreenFragment.assert(s: String)
     = assertEquals(s, "${getUpRedNode().s}|${getDownRedNode().s}|${getMiddleGreenNodes().sorted().joinToString(",")}")
 
 /*

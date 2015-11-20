@@ -28,7 +28,7 @@ import com.intellij.vcs.log.graph.parser.LinearGraphParser
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.util.Comparator
+import java.util.*
 
 public open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGenerator") {
 
@@ -40,13 +40,13 @@ public open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("eleme
 
     override fun getColorId(element: GraphElement): Int {
       if (element is GraphNode) {
-        return (element as GraphNode).getNodeIndex()
+        return element.getNodeIndex()
       }
 
       if (element is GraphEdge) {
-        val edge = element as GraphEdge
+        val edge = element
         val normalEdge = LinearGraphUtils.asNormalEdge(edge)
-        if (normalEdge != null) return normalEdge!!.first + normalEdge!!.second
+        if (normalEdge != null) return normalEdge.first + normalEdge.second
         return LinearGraphUtils.getNotNullNodeIndex(edge)
       }
 

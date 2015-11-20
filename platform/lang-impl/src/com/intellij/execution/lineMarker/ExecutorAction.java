@@ -37,7 +37,7 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class ExecutorAction extends AnAction {
-
+  @NotNull
   public static AnAction[] getActions(final int order) {
     return ContainerUtil.map2Array(ExecutorRegistry.getInstance().getRegisteredExecutors(), AnAction.class, new Function<Executor, AnAction>() {
       @Override
@@ -51,8 +51,8 @@ public class ExecutorAction extends AnAction {
   private final Executor myExecutor;
   private final int myOrder;
 
-  private ExecutorAction(AnAction origin,
-                         Executor executor,
+  private ExecutorAction(@NotNull AnAction origin,
+                         @NotNull Executor executor,
                          int order) {
     myOrigin = origin;
     myExecutor = executor;

@@ -15,6 +15,8 @@
  */
 package org.jetbrains.jps.builders;
 
+import com.intellij.openapi.util.io.FileUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.incremental.CompileScope;
 import org.jetbrains.jps.incremental.CompileScopeImpl;
@@ -82,7 +84,7 @@ public class CompileScopeTestBuilder {
   public CompileScopeTestBuilder file(BuildTarget<?> target, String path) {
     Set<File> files = myFiles.get(target);
     if (files == null) {
-      files = new LinkedHashSet<File>();
+      files = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
       myFiles.put(target, files);
     }
     files.add(new File(path));

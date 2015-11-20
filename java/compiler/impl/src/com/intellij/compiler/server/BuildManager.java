@@ -135,6 +135,7 @@ public class BuildManager implements Disposable {
   private static final String COMPILER_PROCESS_JDK_PROPERTY = "compiler.process.jdk";
   public static final String SYSTEM_ROOT = "compile-server";
   public static final String TEMP_DIR_NAME = "_temp_";
+  private static final String JAVA_EXT_DIRS_PROPERTY = "java.ext.dirs";
   // do not make static in order not to access application on class load
   private final boolean IS_UNIT_TEST_MODE;
   private static final String IWS_EXTENSION = ".iws";
@@ -1163,6 +1164,10 @@ public class BuildManager implements Disposable {
       cmdLine.addParameters(args);
     }
 
+    if (!cmdLine.getParametersList().hasProperty(JAVA_EXT_DIRS_PROPERTY)) {
+      cmdLine.getParametersList().addProperty(JAVA_EXT_DIRS_PROPERTY, "\"\"");
+    }
+
     @SuppressWarnings("UnnecessaryFullyQualifiedName")
     final Class<?> launcherClass = org.jetbrains.jps.cmdline.Launcher.class;
 
@@ -1201,7 +1206,7 @@ public class BuildManager implements Disposable {
     
     final Process process = cmdLine.createProcess();
 
-    final OSProcessHandler processHandler = new OSProcessHandler(process, null, mySystemCharset) {
+    final OSProcessHandler processHandler = new OSProcessHandler(process, null, mySystemCharset, BuildMain.class.getName()+" external process") {
       @Override
       protected boolean shouldDestroyProcessRecursively() {
         return true;
@@ -1313,6 +1318,7 @@ public class BuildManager implements Disposable {
 
   public void stopListening() {
     myChannelRegistrar.close();
+    myListenPort = -1;
   }
 
   private int startListening() throws Exception {
@@ -1766,7 +1772,7 @@ public class BuildManager implements Disposable {
       return delegate;
     }
 
-    public synchronized boolean setDelegate(@NotNull TaskFuture<? extends T> delegate) {
+    private synchronized boolean setDelegate(@NotNull TaskFuture<? extends T> delegate) {
       if (myDelegate == null) {
         try {
           myDelegate = delegate;

@@ -21,7 +21,7 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightIns
            "class X {" +
            "  void foo() {" +
            "    RuntimeException e = new RuntimeException();" +
-           "    LoggerFactory.getLogger(X.class).info(/*Fewer arguments provided (0) than placeholders specified (1) in 'this: {}'*/\"this: {}\"/**/, e);" +
+           "    LoggerFactory.getLogger(X.class).info(/*Fewer arguments provided (0) than placeholders specified (1)*/\"this: {}\"/**/, e);" +
            "  }" +
            "}");
   }
@@ -41,7 +41,7 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightIns
            "class X {" +
            "  void foo() {" +
            "    RuntimeException e = new RuntimeException();" +
-           "    LoggerFactory.getLogger(X.class).info(/*Fewer arguments provided (1) than placeholders specified (3) in '1: {} {} {}'*/\"1: {} {} {}\"/**/, 1, e);" +
+           "    LoggerFactory.getLogger(X.class).info(/*Fewer arguments provided (1) than placeholders specified (3)*/\"1: {} {} {}\"/**/, 1, e);" +
            "  }" +
            "}");
   }
@@ -62,7 +62,7 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightIns
            "class X {\n" +
            "  void foo() {\n" +
            "    Logger logger = LoggerFactory.getLogger(X.class);\n" +
-           "    logger.info(/*Fewer arguments provided (1) than placeholders specified (2) in 'string {}{}'*/\"string {}{}\"/**/, 1);\n" +
+           "    logger.info(/*Fewer arguments provided (1) than placeholders specified (2)*/\"string {}{}\"/**/, 1);\n" +
            "  }\n" +
            "}"
     );
@@ -73,7 +73,7 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightIns
            "class X {\n" +
            "  void foo() {\n" +
            "    Logger logger = LoggerFactory.getLogger(X.class);\n" +
-           "    logger.info(/*More arguments provided (1) than placeholders specified (0) in 'string'*/\"string\"/**/, 1);\n" +
+           "    logger.info(/*More arguments provided (1) than placeholders specified (0)*/\"string\"/**/, 1);\n" +
            "  }\n" +
            "}"
     );
@@ -144,7 +144,18 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightIns
            "  Logger LOG = LoggerFactory.getLogger(X.class);" +
            "  private static final String message = \"HELLO {}\";" +
            "  void m() {" +
-           "    LOG.info(/*Fewer arguments provided (0) than placeholders specified (1) in 'HELLO {}'*/message/**/);" +
+           "    LOG.info(/*Fewer arguments provided (0) than placeholders specified (1)*/message/**/);" +
+           "  }" +
+           "}");
+  }
+
+  public void testNonConstantString() {
+    doTest("import org.slf4j.*;" +
+           "class X {" +
+           "  Logger LOG = LoggerFactory.getLogger(X.class);" +
+           "  private static final String S = \"{}\";" +
+           "  void m() {" +
+           "    LOG.info(/*Fewer arguments provided (0) than placeholders specified (3)*/S +\"{}\" + (1 + 2) + '{' + '}' +Integer.class/**/);" +
            "  }" +
            "}");
   }

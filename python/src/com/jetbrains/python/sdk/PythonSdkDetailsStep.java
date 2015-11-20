@@ -106,7 +106,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
       options.add(REMOTE);
     }
     options.add(VIRTUALENV);
-    if (PyCondaPackageService.getCondaExecutable() != null) {
+    if (PyCondaPackageService.getSystemCondaExecutable() != null) {
       options.add(CONDA);
     }
 

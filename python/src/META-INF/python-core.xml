@@ -499,7 +499,7 @@
                          displayName="Console"/>
     <projectService serviceImplementation="com.jetbrains.python.console.PyConsoleOptions"/>
 
-    <projectConfigurable groupId="build" id="reference.idesettings.debugger.python" instance="com.jetbrains.python.debugger.PyDebuggerConfigurable"
+    <projectConfigurable groupId="build" groupWeight="119" id="reference.idesettings.debugger.python" instance="com.jetbrains.python.debugger.PyDebuggerConfigurable"
                          displayName="Python Debugger"/>
     <projectService serviceImplementation="com.jetbrains.python.debugger.PyDebuggerOptionsProvider"/>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,7 @@ public class CastToConcreteClassInspection extends BaseInspection {
   public boolean ignoreAbstractClasses = false;
 
   @SuppressWarnings("PublicField")
-  public boolean ignoreInEquals = true;
+  public boolean ignoreInEquals = true; // keep for compatibility
 
   @Override
   @NotNull
@@ -73,11 +74,9 @@ public class CastToConcreteClassInspection extends BaseInspection {
       if (!ConcreteClassUtil.typeIsConcreteClass(typeElement, ignoreAbstractClasses)) {
         return;
       }
-      if (ignoreInEquals) {
-        final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
-        if (MethodUtils.isEquals(method)) {
-          return;
-        }
+      final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
+      if (MethodUtils.isEquals(method) || CloneUtils.isClone(method)) {
+        return;
       }
       registerError(typeElement, typeElement.getType());
     }
@@ -116,11 +115,9 @@ public class CastToConcreteClassInspection extends BaseInspection {
       if (!ConcreteClassUtil.typeIsConcreteClass(parameter, ignoreAbstractClasses)) {
         return;
       }
-      if (ignoreInEquals) {
-        final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
-        if (MethodUtils.isEquals(method)) {
-          return;
-        }
+      final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
+      if (MethodUtils.isEquals(method) || CloneUtils.isClone(method)) {
+        return;
       }
       registerMethodCallError(expression, parameter);
     }

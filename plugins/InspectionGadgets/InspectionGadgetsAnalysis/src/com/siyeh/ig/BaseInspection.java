@@ -21,6 +21,8 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
@@ -38,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.Document;
+import java.lang.reflect.Field;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.List;
@@ -90,17 +93,28 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
     return InspectionGadgetsFix.EMPTY_ARRAY;
   }
 
-  protected void writeBooleanOption(@NotNull Element node, String property) {
-    writeBooleanOption(node, property, null);
-  }
-
-  protected void writeBooleanOption(@NotNull Element node, String property, @Nullable Boolean defaultValueToIgnore) {
+  protected void writeBooleanOption(@NotNull Element node, @NotNull @NonNls String property, boolean defaultValueToIgnore) {
     final Boolean value = ReflectionUtil.getField(this.getClass(), this, boolean.class, property);
     assert value != null;
-    if (defaultValueToIgnore != null && defaultValueToIgnore.equals(value)) {
+    if (defaultValueToIgnore == value.booleanValue()) {
       return;
     }
     node.addContent(new Element("option").setAttribute("name", property).setAttribute("value", value.toString()));
+  }
+
+  protected void defaultWriteSettings(@NotNull Element node, final String... excludedProperties) throws WriteExternalException {
+    DefaultJDOMExternalizer.writeExternal(this, node, new DefaultJDOMExternalizer.JDOMFilter() {
+      @Override
+      public boolean isAccept(@NotNull Field field) {
+        final String name = field.getName();
+        for (String property : excludedProperties) {
+          if (name.equals(property)) {
+            return false;
+          }
+        }
+        return true;
+      }
+    });
   }
 
   public abstract BaseInspectionVisitor buildVisitor();

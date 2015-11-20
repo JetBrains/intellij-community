@@ -10,7 +10,7 @@ val READER_NAME = "reader"
 val PENDING_INPUT_READER_NAME = "inputReader"
 
 val JSON_READER_CLASS_NAME = "JsonReaderEx"
-internal val JSON_READER_PARAMETER_DEF = "$READER_NAME: $JSON_READER_CLASS_NAME"
+val JSON_READER_PARAMETER_DEF = "$READER_NAME: $JSON_READER_CLASS_NAME"
 
 /**
  * Generate Java type name of the passed type. Type may be parameterized.

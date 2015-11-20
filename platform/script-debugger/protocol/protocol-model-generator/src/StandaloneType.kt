@@ -1,7 +1,7 @@
 package org.jetbrains.protocolModelGenerator
 
-class StandaloneType(private val namePath: NamePath, override val writeMethodName: String) : BoxableType() {
-  override fun getFullText() = namePath.getFullText()
+class StandaloneType(private val namePath: NamePath, override val writeMethodName: String, override val defaultValue: String? = "null") : BoxableType {
+  override val fullText = namePath.getFullText()
 
   override fun getShortText(contextNamespace: NamePath): String {
     val nameLength = namePath.getLength()
@@ -17,10 +17,7 @@ class StandaloneType(private val namePath: NamePath, override val writeMethodNam
 
   private fun subtractContextRecursively(namePos: NamePath?, count: Int, prefix: NamePath): StringBuilder? {
     if (count > 1) {
-      val result = subtractContextRecursively(namePos!!.parent, count - 1, prefix)
-      if (result == null) {
-        return null
-      }
+      val result = subtractContextRecursively(namePos!!.parent, count - 1, prefix) ?: return null
       result.append('.')
       result.append(namePos.lastComponent)
       return result
@@ -29,13 +26,13 @@ class StandaloneType(private val namePath: NamePath, override val writeMethodNam
       var namePos = namePos
       var prefix = prefix
       val nameComponent = namePos!!.lastComponent
-      namePos = namePos!!.parent
+      namePos = namePos.parent
       do {
         if (namePos!!.lastComponent != prefix.lastComponent) {
           return null
         }
 
-        namePos = namePos!!.parent
+        namePos = namePos.parent
         if (namePos == null) {
           break
         }

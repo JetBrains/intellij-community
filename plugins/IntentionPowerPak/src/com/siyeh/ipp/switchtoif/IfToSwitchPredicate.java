@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class IfToSwitchPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiJavaToken)) {
       return false;
@@ -41,6 +42,6 @@ class IfToSwitchPredicate implements PsiElementPredicate {
     if (ErrorUtil.containsError(statement)) {
       return false;
     }
-    return SwitchUtils.getSwitchExpression(statement, 0) != null;
+    return SwitchUtils.getSwitchExpression(statement, 0, false, true) != null;
   }
 }
