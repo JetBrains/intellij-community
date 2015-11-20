@@ -282,7 +282,7 @@ public class MarkerType {
 
     final PsiElementProcessor.CollectElementsWithLimit<PsiMethod> collectProcessor =
       new PsiElementProcessor.CollectElementsWithLimit<PsiMethod>(2, new THashSet<PsiMethod>());
-    final PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression> collectExprProcessor = 
+    final PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression> collectExprProcessor =
       new PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression>(2, new THashSet<PsiFunctionalExpression>());
     final boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
@@ -301,7 +301,9 @@ public class MarkerType {
           }
         }
       }
-    }, SEARCHING_FOR_OVERRIDING_METHODS, true, method.getProject(), (JComponent)e.getComponent())) {
+    }, SEARCHING_FOR_OVERRIDING_METHODS, true, method.getProject(), e.getComponent() instanceof JComponent
+                                                                    ? (JComponent)e.getComponent()
+                                                                    : null)) {
       return;
     }
 
