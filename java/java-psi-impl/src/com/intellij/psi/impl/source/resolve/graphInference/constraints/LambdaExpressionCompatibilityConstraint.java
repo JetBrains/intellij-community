@@ -3,7 +3,9 @@ package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 
 import java.util.List;
 
@@ -55,12 +57,14 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
     PsiType returnType = interfaceMethod.getReturnType();
     if (returnType != null) {
       final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(myExpression);
+      final PsiElement lambdaBody = myExpression.getBody();
       if (returnType.equals(PsiType.VOID)) {
-        if (!myExpression.isVoidCompatible()) {
+        if (!(lambdaBody instanceof PsiCodeBlock && myExpression.isVoidCompatible()) && !LambdaUtil.isExpressionStatementExpression(lambdaBody)) {
           return false;
         }
-      } else {
-        if (!myExpression.isValueCompatible()) {
+      }
+      else {
+        if (lambdaBody instanceof PsiCodeBlock && !myExpression.isValueCompatible()) {
           return false;
         }
         InferenceSession callsession = session.getInferenceSessionContainer().findNestedCallSession(myExpression, session);
@@ -68,6 +72,25 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
         if (!callsession.isProperType(returnType)) {
           for (PsiExpression returnExpression : returnExpressions) {
             constraints.add(new ExpressionCompatibilityConstraint(returnExpression, returnType));
+          }
+        }
+        else {
+          for (PsiExpression returnExpression : returnExpressions) {
+            if (!PsiPolyExpressionUtil.isPolyExpression(returnExpression)) {
+              if (!TypeConversionUtil.areTypesAssignmentCompatible(returnType, returnExpression)) {
+                final PsiType type = returnExpression.getType();
+                if (type != null) {
+                  session.registerIncompatibleErrorMessage("Bad return type in lambda expression: " + type.getPresentableText() + " cannot be converted to " + returnType.getPresentableText());
+                }
+                else {
+                  session.registerIncompatibleErrorMessage(returnExpression.getText() + " is not compatible with " + returnType.getPresentableText());
+                }
+                return false;
+              }
+            }
+            else {
+              //todo check compatibility
+            }
           }
         }
       }

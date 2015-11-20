@@ -112,13 +112,28 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
     return myPertinentApplicabilityLevel;
   }
-  
+
+  /**
+   * 15.12.2.2 Identify Matching Arity Methods Applicable by Strict Invocation
+   */
   public int getPertinentApplicabilityLevelInner() {
     if (myArgumentList == null || !PsiUtil.isLanguageLevel8OrHigher(myArgumentList)) {
       return getApplicabilityLevel();
     }
-    final PsiSubstitutor substitutor = getSubstitutor(false);
+
     final PsiMethod method = getElement();
+    
+    //If m is a generic method and the method invocation does not provide explicit type
+    //arguments, then the applicability of the method is inferred as specified in §18.5.1
+    if (myTypeArguments == null && method.hasTypeParameters() && !isRawSubstitution()) {
+      //already performed checks, so if inference failed, error message should be saved  
+      if (myInferenceError != null) {
+        return ApplicabilityLevel.NOT_APPLICABLE;
+      }
+      return isVarargs() ? ApplicabilityLevel.VARARGS : ApplicabilityLevel.FIXED_ARITY;
+    }
+
+    final PsiSubstitutor substitutor = getSubstitutor(false);
     @ApplicabilityLevelConstant int level = computeForOverloadedCandidate(new Computable<Integer>() {
       @Override
       public Integer compute() {
@@ -143,6 +158,54 @@ public class MethodCandidateInfo extends CandidateInfo{
       level = ApplicabilityLevel.NOT_APPLICABLE;
     }
     return level;
+  }
+
+  /**
+   * 15.12.2.1 Identify Potentially Applicable Methods
+   */
+  public boolean isPotentiallyCompatible() {
+    if (myArgumentList instanceof PsiExpressionList) {
+      final PsiMethod method = getElement();
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      final PsiExpression[] expressions = ((PsiExpressionList)myArgumentList).getExpressions();
+
+      for (int i = 0; i < expressions.length; i++) {
+        final PsiExpression expression = expressions[i];
+        PsiType formalParameterType = i < parameters.length ? parameters[i].getType() : parameters[parameters.length - 1].getType();
+
+        if (formalParameterType instanceof PsiEllipsisType && isVarargs()) {
+          formalParameterType = ((PsiEllipsisType)formalParameterType).getComponentType();
+        }
+
+        if (!isPotentialCompatible(expression, formalParameterType, method)) {
+          return false;
+        }
+      }
+      if (method.hasTypeParameters() && myTypeArguments != null) {
+        return method.getTypeParameters().length == myTypeArguments.length; //todo
+      }
+    }
+    return true;
+  }
+
+  private static boolean isPotentialCompatible(PsiExpression expression, PsiType formalType, PsiMethod method) {
+    if (expression instanceof PsiFunctionalExpression) {
+      final PsiClass targetTypeParameter = PsiUtil.resolveClassInClassTypeOnly(formalType);
+      if (targetTypeParameter instanceof PsiTypeParameter && method.equals(((PsiTypeParameter)targetTypeParameter).getOwner())) {
+        return true;
+      }
+      if (!((PsiFunctionalExpression)expression).isPotentiallyCompatible(formalType)) {
+        return false;
+      }
+    }
+    else if (expression instanceof PsiParenthesizedExpression) {
+      return isPotentialCompatible(((PsiParenthesizedExpression)expression).getExpression(), formalType, method);
+    }
+    else if (expression instanceof PsiConditionalExpression) {
+      return isPotentialCompatible(((PsiConditionalExpression)expression).getThenExpression(), formalType, method) &&
+             isPotentialCompatible(((PsiConditionalExpression)expression).getElseExpression(), formalType, method);
+    }
+    return true;
   }
 
   public PsiType[] getPertinentArgumentTypes() {
@@ -295,13 +358,8 @@ public class MethodCandidateInfo extends CandidateInfo{
     try {
       PsiTypeParameter[] typeParameters = method.getTypeParameters();
 
-      if (!method.hasModifierProperty(PsiModifier.STATIC)) {
-        final PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null && PsiUtil.isRawSubstitutor(containingClass, mySubstitutor)) {
-          Project project = containingClass.getProject();
-          JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
-          return javaPsiFacade.getElementFactory().createRawSubstitutor(mySubstitutor, typeParameters);
-        }
+      if (isRawSubstitution()) {
+        return JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createRawSubstitutor(mySubstitutor, typeParameters);
       }
 
       final PsiElement parent = getParent();
@@ -320,6 +378,17 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
   }
 
+  private boolean isRawSubstitution() {
+    final PsiMethod method = getElement();
+    if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null && PsiUtil.isRawSubstitutor(containingClass, mySubstitutor)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
   protected PsiElement getMarkerList() {
     return myArgumentList;
   }

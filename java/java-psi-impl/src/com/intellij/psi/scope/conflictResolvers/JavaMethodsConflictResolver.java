@@ -104,9 +104,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       }
     };
 
-    checkInvocationApplicabilityInference(conflicts, map);
-    if (conflicts.size() == 1) return conflicts.get(0);
-
     checkSameSignatures(conflicts, map);
     if (conflicts.size() == 1) return conflicts.get(0);
 
@@ -118,6 +115,11 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     
     checkStaticMethodsOfInterfaces(conflicts);
     if (conflicts.size() == 1) return conflicts.get(0);
+
+    if (atLeastOneMatch) {
+      checkPotentiallyCompatibleMethods(conflicts);
+      if (conflicts.size() == 1) return conflicts.get(0);
+    }
 
     final int applicabilityLevel = checkApplicability(conflicts);
     if (conflicts.size() == 1) return conflicts.get(0);
@@ -140,16 +142,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return null;
   }
 
-  private static void checkInvocationApplicabilityInference(@NotNull List<CandidateInfo> conflicts,
-                                                            FactoryMap<MethodCandidateInfo, PsiSubstitutor> map) {
+  private static void checkPotentiallyCompatibleMethods(@NotNull List<CandidateInfo> conflicts) {
     for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext(); ) {
       CandidateInfo conflict = iterator.next();
-      if (conflict instanceof MethodCandidateInfo) {
-        getSubstitutor((MethodCandidateInfo)conflict, map);
-        final String errorMessage = ((MethodCandidateInfo)conflict).getInferenceErrorMessage();
-        if (errorMessage != null) {
-          iterator.remove();
-        }
+      if (conflict instanceof MethodCandidateInfo && 
+          !((MethodCandidateInfo)conflict).isPotentiallyCompatible()) {
+        iterator.remove();
       }
     }
   }

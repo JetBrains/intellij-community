@@ -42,7 +42,12 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
     if (!PsiPolyExpressionUtil.isPolyExpression(myExpression)) {
       if (session.isProperType(myT)) {
-        return TypeConversionUtil.areTypesAssignmentCompatible(myT, myExpression);
+        final boolean assignmentCompatible = TypeConversionUtil.areTypesAssignmentCompatible(myT, myExpression);
+        if (!assignmentCompatible) {
+          final PsiType type = myExpression.getType();
+          session.registerIncompatibleErrorMessage((type != null ? type.getPresentableText() : myExpression.getText()) + " is not compatible with " + myT.getPresentableText());
+        }
+        return assignmentCompatible;
       }
     
       final PsiType exprType = myExpression.getType();

@@ -66,9 +66,9 @@ class Test2 {
     {
         bar(x -> x);
         bar1(x -> x);
-        bar2(1, x -> <error descr="Bad return type in lambda expression: List<Integer> cannot be converted to Integer">x</error>);
-        bar2("", x -> <error descr="Bad return type in lambda expression: List<String> cannot be converted to String">x</error>);
-        bar3(x -> <error descr="Bad return type in lambda expression: List<String> cannot be converted to String">x</error>, "");
+        bar2(1, <error descr="Bad return type in lambda expression: List<Integer> cannot be converted to Integer">x -> x</error>);
+        bar2("", <error descr="Bad return type in lambda expression: List<String> cannot be converted to String">x -> x</error>);
+        bar3(<error descr="Bad return type in lambda expression: List<String> cannot be converted to String">x -> x</error>, "");
     }
 }
 

@@ -1263,18 +1263,6 @@ public class InferenceSession {
                                        PsiSubstitutor siteSubstitutor,
                                        Set<InferenceVariable> varsToResolve,
                                        Set<ConstraintFormula> additionalConstraints) {
-    if (formula instanceof ExpressionCompatibilityConstraint) {
-      final PsiExpression expression = ((ExpressionCompatibilityConstraint)formula).getExpression();
-      final PsiCall callExpression = PsiTreeUtil.getParentOfType(expression, PsiCall.class, false);
-      if (callExpression != null) {
-        final InferenceSession session = myInferenceSessionContainer.findNestedCallSession(callExpression, null);
-        if (session != null) {
-          formula.apply(session.myInferenceSubstitution, false);
-          collectVarsToResolve(varsToResolve, (InputOutputConstraintFormula)formula);
-        }
-      }
-    }
-
     //resolve input variables
     PsiSubstitutor substitutor = resolveSubsetOrdered(varsToResolve, siteSubstitutor);
 
