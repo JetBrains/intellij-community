@@ -97,9 +97,14 @@ public class LightTreeUtil {
 
   @NotNull
   public static List<LighterASTNode> getChildrenOfType(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull TokenSet types) {
+    List<LighterASTNode> children = tree.getChildren(node);
+    return getChildrenOfType(children, types);
+  }
+
+  @NotNull
+  public static List<LighterASTNode> getChildrenOfType(List<LighterASTNode> children, @NotNull TokenSet types) {
     List<LighterASTNode> result = null;
 
-    List<LighterASTNode> children = tree.getChildren(node);
     for (int i = 0, size = children.size(); i < size; ++i) {
       LighterASTNode child = children.get(i);
       if (types.contains(child.getTokenType())) {
