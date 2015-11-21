@@ -161,13 +161,16 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   private <E extends PsiElement> void initPointer(@NotNull SmartPsiElementPointerImpl<E> pointer, @NotNull VirtualFile containingFile) {
     synchronized (lock) {
       pointer.incrementAndGetReferenceCount(1);
+      SmartPointerElementInfo info = pointer.getElementInfo();
+      if (!(info instanceof SelfElementInfo)) return;
+
       FilePointersList pointers = getPointers(containingFile);
       if (pointers == null) {
         pointers = new FilePointersList();
         containingFile.putUserData(POINTERS_KEY, pointers);
       }
       pointers.add(new PointerReference(pointer, containingFile, ourQueue, POINTERS_KEY));
-      if (pointer.getElementInfo() instanceof SelfElementInfo && ((SelfElementInfo)pointer.getElementInfo()).hasRange()) {
+      if (((SelfElementInfo)info).hasRange()) {
         pointers.markerCache.rangeChanged();
       }
     }
@@ -240,7 +243,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     if (list == null) return;
 
     for (SmartPsiElementPointerImpl pointer : list.getAlivePointers()) {
-      if (!(pointer instanceof SmartPsiFileRangePointerImpl) && pointer.getElementInfo() instanceof SelfElementInfo) {
+      if (!(pointer instanceof SmartPsiFileRangePointerImpl)) {
         updatePointerTarget(pointer, pointer.getPsiRange());
       }
     }

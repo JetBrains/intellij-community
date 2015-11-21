@@ -161,9 +161,9 @@ class MarkerCache {
       if (reference != null) {
         SmartPsiElementPointerImpl pointer = reference.get();
         if (pointer != null) {
-          SmartPointerElementInfo info = pointer.getElementInfo();
-          if (info instanceof SelfElementInfo && ((SelfElementInfo)info).hasRange()) {
-            infos.add((SelfElementInfo)info);
+          SelfElementInfo info = (SelfElementInfo)pointer.getElementInfo();
+          if (info.hasRange()) {
+            infos.add(info);
           }
         }
       }
