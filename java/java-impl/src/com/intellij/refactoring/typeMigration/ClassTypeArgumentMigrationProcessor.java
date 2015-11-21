@@ -88,9 +88,10 @@ public class ClassTypeArgumentMigrationProcessor {
       }
     });
 
-    final PsiClass resolvedClass = (PsiClass) referenceParameterList.getParent().getParent();
+    final PsiClass resolvedClass = (PsiClass)((PsiJavaCodeReferenceElement)referenceParameterList.getParent()).resolve();;
     LOG.assertTrue(resolvedClass != null);
     final Set<PsiClass> superClasses = new HashSet<PsiClass>();
+    superClasses.add(resolvedClass);
     InheritanceUtil.getSuperClasses(resolvedClass, superClasses, true);
     for (PsiClass superSuperClass : superClasses) {
       final TypeParameterSearcher parameterSearcher = new TypeParameterSearcher(superSuperClass.getTypeParameters());
@@ -129,36 +130,6 @@ public class ClassTypeArgumentMigrationProcessor {
 
       roots.put(element, Pair.create(myLabeler.markRootUsages(element, memberType, refs.toArray(new PsiReference[refs.size()])), memberType));
     }
-  }
-
-  private static PsiSubstitutor composeSubstitutor(final Project project, final PsiType migrationType, final Map<PsiClass, PsiTypeParameter[]> visibleTypeParams) {
-    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-    final PsiResolveHelper psiResolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
-    for (Map.Entry<PsiClass,PsiTypeParameter[]> entry : visibleTypeParams.entrySet()) {
-      final PsiClassType clearedOriginalType = JavaPsiFacade.getElementFactory(project).createType(entry.getKey(), PsiSubstitutor.EMPTY);
-      for (PsiTypeParameter parameter : entry.getValue()) {
-        substitutor = substitutor.put(parameter,
-                                      psiResolveHelper.getSubstitutionForTypeParameter(parameter, clearedOriginalType, migrationType, true, clearedOriginalType.getLanguageLevel()));
-      }
-    }
-    return substitutor;
-  }
-
-  private static Map<PsiClass, PsiTypeParameter[]> getTypeParametersHierarchy(final PsiReferenceParameterList referenceParameterList) {
-    final PsiElement parent = referenceParameterList.getParent();
-    LOG.assertTrue(parent instanceof PsiJavaCodeReferenceElement);
-    final PsiClass superClass = (PsiClass)((PsiJavaCodeReferenceElement)parent).resolve();
-    LOG.assertTrue(superClass != null);
-
-    final Map<PsiClass, PsiTypeParameter[]> visibleTypeParams = new HashMap<PsiClass, PsiTypeParameter[]>();
-    visibleTypeParams.put(superClass, superClass.getTypeParameters());
-
-    final HashSet<PsiClass> superClasses = new HashSet<PsiClass>();
-    InheritanceUtil.getSuperClasses(superClass, superClasses, true);
-    for (PsiClass superSuperClass : superClasses) {
-      visibleTypeParams.put(superSuperClass, superSuperClass.getTypeParameters());
-    }
-    return visibleTypeParams;
   }
 
   /**
