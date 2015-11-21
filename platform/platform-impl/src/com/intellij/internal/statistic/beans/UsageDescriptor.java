@@ -41,4 +41,9 @@ public class UsageDescriptor implements Comparable<UsageDescriptor> {
   public int compareTo(UsageDescriptor ud) {
     return getKey().compareTo(ud.myKey);
   }
+
+  @Override
+  public String toString() {
+    return myKey + "=" + myValue;
+  }
 }
