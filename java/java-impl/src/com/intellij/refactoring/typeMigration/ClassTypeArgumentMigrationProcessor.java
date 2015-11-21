@@ -24,6 +24,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
+import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.*;
@@ -41,7 +42,7 @@ public class ClassTypeArgumentMigrationProcessor {
     myLabeler = labeler;
   }
 
-  public void migrateClassTypeParameter(final PsiReferenceParameterList referenceParameterList, final PsiType migrationType) {
+  public void migrateClassTypeParameter(final PsiReferenceParameterList referenceParameterList, final PsiClassType migrationType) {
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(referenceParameterList, PsiClass.class);
     LOG.assertTrue(psiClass != null);
 
@@ -72,30 +73,45 @@ public class ClassTypeArgumentMigrationProcessor {
     }
   }
 
-  private void markTypeParameterUsages(final PsiClass psiClass, PsiType migrationType, PsiReferenceParameterList referenceParameterList,
+  private void markTypeParameterUsages(final PsiClass psiClass, PsiClassType migrationType, PsiReferenceParameterList referenceParameterList,
                                        final Map<PsiElement, Pair<PsiReference[], PsiType>> roots) {
 
-    final Map<PsiClass, PsiTypeParameter[]> visibleTypeParams = getTypeParametersHierarchy(referenceParameterList);
-    final PsiSubstitutor substitutor = composeSubstitutor(psiClass.getProject(), migrationType, visibleTypeParams);
-    for (Map.Entry<PsiClass, PsiTypeParameter[]> entry : visibleTypeParams.entrySet()) {
-      final TypeParameterSearcher parameterSearcher = new TypeParameterSearcher(entry.getValue());
-      entry.getKey().accept(new JavaRecursiveElementVisitor(){
+    final PsiSubstitutor[] fullHierarchySubstitutor = {migrationType.resolveGenerics().getSubstitutor()};
+    RefactoringHierarchyUtil.processSuperTypes(migrationType, new RefactoringHierarchyUtil.SuperTypeVisitor() {
+      @Override
+      public void visitType(PsiType aType) {
+        fullHierarchySubstitutor[0] = fullHierarchySubstitutor[0].putAll(((PsiClassType)aType).resolveGenerics().getSubstitutor());
+      }
+      @Override
+      public void visitClass(PsiClass aClass) {
+        //do nothing
+      }
+    });
+
+    final PsiClass resolvedClass = (PsiClass) referenceParameterList.getParent().getParent();
+    LOG.assertTrue(resolvedClass != null);
+    final Set<PsiClass> superClasses = new HashSet<PsiClass>();
+    InheritanceUtil.getSuperClasses(resolvedClass, superClasses, true);
+    for (PsiClass superSuperClass : superClasses) {
+      final TypeParameterSearcher parameterSearcher = new TypeParameterSearcher(superSuperClass.getTypeParameters());
+      superSuperClass.accept(new JavaRecursiveElementVisitor(){
         @Override
         public void visitMethod(final PsiMethod method) {
           super.visitMethod(method);
-          processMemberType(method, parameterSearcher, psiClass, substitutor, roots);
+          processMemberType(method, parameterSearcher, psiClass, fullHierarchySubstitutor[0], roots);
           for (PsiParameter parameter : method.getParameterList().getParameters()) {
-            processMemberType(parameter, parameterSearcher, psiClass, substitutor, roots);
+            processMemberType(parameter, parameterSearcher, psiClass, fullHierarchySubstitutor[0], roots);
           }
         }
 
         @Override
         public void visitField(final PsiField field) {
           super.visitField(field);
-          processMemberType(field, parameterSearcher, psiClass, substitutor, roots);
+          processMemberType(field, parameterSearcher, psiClass, fullHierarchySubstitutor[0], roots);
         }
       });
     }
+
   }
 
   private void processMemberType(final PsiElement element,
