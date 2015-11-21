@@ -21,12 +21,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -46,6 +44,40 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath() + "/java/typeMigration/testData";
+  }
+
+  protected void doTestAnonymousClassTypeParameters(@NotNull String assignmentVariableName,
+                                                    PsiType fromType,
+                                                    PsiType toType) {
+    doTestAnonymousClassTypeParameters(assignmentVariableName, "Test", fromType, toType);
+  }
+
+  protected void doTestAnonymousClassTypeParameters(@NotNull final String assignmentVariableName,
+                                                    final String className,
+                                                    final PsiType fromType,
+                                                    final PsiType toType) {
+    final RulesProvider provider = new RulesProvider() {
+      @Override
+      public TypeMigrationRules provide() throws Exception {
+        final TypeMigrationRules rules = new TypeMigrationRules(fromType);
+        rules.setMigrationRootType(toType);
+        return rules;
+      }
+
+      @Override
+      public PsiElement victims(PsiClass aClass) {
+        for (PsiLocalVariable variable : PsiTreeUtil.findChildrenOfType(aClass, PsiLocalVariable.class)) {
+          if (assignmentVariableName.equals(variable.getName())) {
+            final PsiAnonymousClass anonymousClass = PsiTreeUtil.findChildOfType(variable.getInitializer(), PsiAnonymousClass.class);
+            assertNotNull(anonymousClass);
+            return anonymousClass.getBaseClassReference().getParameterList();
+          }
+        }
+        throw new RuntimeException(String.format("Local variable '%s' isn't found in class '%s'", assignmentVariableName, className));
+      }
+    };
+
+    start(provider, className);
   }
 
   protected void doTestFieldType(@NonNls String fieldName, PsiType fromType, PsiType toType) {
