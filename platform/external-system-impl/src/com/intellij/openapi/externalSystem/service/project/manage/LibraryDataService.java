@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -237,7 +238,9 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
     RootPolicy<Boolean> visitor = new RootPolicy<Boolean>() {
       @Override
       public Boolean visitLibraryOrderEntry(LibraryOrderEntry ideDependency, Boolean value) {
-        return !ideDependency.isModuleLevel() && library == ideDependency.getLibrary();
+        return !ideDependency.isModuleLevel() &&
+               (library == ideDependency.getLibrary() ||
+                (ideDependency.getLibrary() == null && StringUtil.equals(library.getName(), ideDependency.getLibraryName())));
       }
     };
     for (Module module : modelsProvider.getModules()) {
