@@ -161,19 +161,15 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   private <E extends PsiElement> void initPointer(@NotNull SmartPsiElementPointerImpl<E> pointer, @NotNull VirtualFile containingFile) {
     synchronized (lock) {
       pointer.incrementAndGetReferenceCount(1);
-      getNotNullPointerList(containingFile).add(new PointerReference(pointer, containingFile, ourQueue, POINTERS_KEY));
-    }
-  }
-
-  @NotNull
-  private FilePointersList getNotNullPointerList(@NotNull VirtualFile containingFile) {
-    synchronized (lock) {
       FilePointersList pointers = getPointers(containingFile);
       if (pointers == null) {
-        pointers = new FilePointersList(containingFile);
+        pointers = new FilePointersList();
         containingFile.putUserData(POINTERS_KEY, pointers);
       }
-      return pointers;
+      pointers.add(new PointerReference(pointer, containingFile, ourQueue, POINTERS_KEY));
+      if (pointer.getElementInfo() instanceof SelfElementInfo && ((SelfElementInfo)pointer.getElementInfo()).hasRange()) {
+        pointers.markerCache.rangeChanged();
+      }
     }
   }
 
@@ -211,9 +207,10 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     return containingFile.getUserData(POINTERS_KEY);
   }
 
-  @NotNull
+  @Nullable
   MarkerCache getMarkerCache(@NotNull VirtualFile file) {
-    return getNotNullPointerList(file).markerCache;
+    FilePointersList pointers = getPointers(file);
+    return pointers == null ? null : pointers.markerCache;
   }
 
   @TestOnly
@@ -290,11 +287,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     private int nextAvailableIndex;
     private int size;
     private PointerReference[] references = new PointerReference[10];
-    private final MarkerCache markerCache;
-
-    FilePointersList(VirtualFile file) {
-      markerCache = new MarkerCache(this, file);
-    }
+    private final MarkerCache markerCache = new MarkerCache(this);
 
     private void add(@NotNull PointerReference reference) {
       if (nextAvailableIndex >= references.length || nextAvailableIndex > size*2) {  // overflow or too many dead refs

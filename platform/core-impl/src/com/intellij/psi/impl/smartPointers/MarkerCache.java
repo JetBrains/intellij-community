@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.event.RetargetRangeMarkers;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,12 +50,10 @@ class MarkerCache {
     }
   };
   private final SmartPointerManagerImpl.FilePointersList myPointers;
-  private final VirtualFile myVirtualFile;
   private volatile UpdatedRanges myUpdatedRanges;
 
-  MarkerCache(SmartPointerManagerImpl.FilePointersList pointers, VirtualFile virtualFile) {
+  MarkerCache(SmartPointerManagerImpl.FilePointersList pointers) {
     myPointers = pointers;
-    myVirtualFile = virtualFile;
   }
 
   private UpdatedRanges getUpdatedMarkers(@NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
@@ -185,10 +182,6 @@ class MarkerCache {
 
   void rangeChanged() {
     myUpdatedRanges = null;
-  }
-
-  VirtualFile getVirtualFile() {
-    return myVirtualFile;
   }
 
   private static class UpdatedRanges {
