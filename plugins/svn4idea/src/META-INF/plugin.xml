@@ -144,6 +144,9 @@
 
     <statistics.usagesCollector implementation="org.jetbrains.idea.svn.statistics.SvnWorkingCopyFormatUsagesCollector"/>
 
+    <changesViewContent tabName="Subversion Working Copies Information" className="org.jetbrains.idea.svn.WorkingCopiesContent"
+                        predicateClassName="org.jetbrains.idea.svn.WorkingCopiesContent$VisibilityPredicate"/>
+
     <openapi.vcs.changes.actions.diff.ChangeDiffViewerWrapperProvider
         implementation="org.jetbrains.idea.svn.difftool.SvnChangeDiffViewerProvider"/>
     <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider
