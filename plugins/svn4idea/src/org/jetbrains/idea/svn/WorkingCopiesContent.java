@@ -27,6 +27,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.dialogs.CopiesPanel;
 
 public class WorkingCopiesContent {
+
+  public static final String TAB_NAME = SvnBundle.message("dialog.show.svn.map.title");
+
   private final SvnVcs myVcs;
   private Content myShownContent;
 
@@ -39,7 +42,7 @@ public class WorkingCopiesContent {
     final ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
 
     final CopiesPanel copiesPanel = new CopiesPanel(myVcs.getProject());
-    myShownContent = contentFactory.createContent(copiesPanel.getComponent(), SvnBundle.message("dialog.show.svn.map.title"), true);
+    myShownContent = contentFactory.createContent(copiesPanel.getComponent(), TAB_NAME, true);
     myShownContent.setCloseable(false);
     cvcm.addContent(myShownContent);
     myShownContent.setPreferredFocusableComponent(copiesPanel.getPreferredFocusedComponent());
@@ -60,7 +63,7 @@ public class WorkingCopiesContent {
       if (window != null) {
         window.show(null);
         final ContentManager cm = window.getContentManager();
-        final Content content = cm.findContent(SvnBundle.message("dialog.show.svn.map.title"));
+        final Content content = cm.findContent(TAB_NAME);
         if (content != null) {
           cm.setSelectedContent(content, true);
         }

@@ -26,9 +26,18 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public abstract class VcsShowToolWindowTabAction extends DumbAwareAction {
+
+  protected VcsShowToolWindowTabAction() {
+  }
+
+  protected VcsShowToolWindowTabAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
+    super(text, description, icon);
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
