@@ -16,6 +16,8 @@
 package org.jetbrains.git4idea.ssh;
 
 import com.intellij.ide.XmlRpcServer;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtilRt;
 import gnu.trove.THashMap;
 import org.apache.commons.codec.DecoderException;
@@ -105,18 +107,25 @@ public abstract class GitXmlRpcHandlerService<T> {
   /**
    * Register handler. Note that handlers must be unregistered using {@link #unregisterHandler(int)}.
    *
-   * @param handler a handler to register
+   * @param handler          a handler to register
+   * @param parentDisposable a disposable to unregister the handler if it doesn't get unregistered manually
    * @return an identifier to pass to the environment variable
    */
-  public int registerHandler(@NotNull T handler) {
+  public int registerHandler(@NotNull T handler, @NotNull Disposable parentDisposable) {
     synchronized (HANDLERS_LOCK) {
       XmlRpcServer xmlRpcServer = XmlRpcServer.SERVICE.getInstance();
       if (!xmlRpcServer.hasHandler(myHandlerName)) {
         xmlRpcServer.addHandler(myHandlerName, createRpcRequestHandlerDelegate());
       }
 
-      int key = myNextHandlerKey;
+      final int key = myNextHandlerKey;
       handlers.put(key, handler);
+      Disposer.register(parentDisposable, new Disposable() {
+        @Override
+        public void dispose() {
+          handlers.remove(key);
+        }
+      });
       myNextHandlerKey++;
       return key;
     }
