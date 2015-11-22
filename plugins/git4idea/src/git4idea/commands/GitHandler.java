@@ -597,10 +597,10 @@ public abstract class GitHandler {
     if (myEnvironmentCleanedUp) {
       return;
     }
-    if (mySshHandler > 0) {
+    if (mySshHandler >= 0) {
       ServiceManager.getService(GitXmlRpcSshService.class).unregisterHandler(mySshHandler);
     }
-    if (myHttpHandler > 0) {
+    if (myHttpHandler >= 0) {
       ServiceManager.getService(GitHttpAuthService.class).unregisterHandler(myHttpHandler);
     }
     myEnvironmentCleanedUp = true;
