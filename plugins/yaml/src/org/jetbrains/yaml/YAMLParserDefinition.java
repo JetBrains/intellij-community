@@ -65,10 +65,10 @@ public class YAMLParserDefinition implements ParserDefinition, YAMLElementTypes 
       return new YAMLCompoundValueImpl(node);
     }
     if (type == SEQUENCE) {
-      return new YAMLSequenceImpl(node);
+      return new YAMLBlockSequenceImpl(node);
     }
     if (type == MAPPING) {
-      return new YAMLMappingImpl(node);
+      return new YAMLBlockMappingImpl(node);
     }
     if (type == SEQUENCE_ITEM) {
       return new YAMLSequenceItemImpl(node);

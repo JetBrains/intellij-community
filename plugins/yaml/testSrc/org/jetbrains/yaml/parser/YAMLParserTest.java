@@ -192,4 +192,20 @@ public class YAMLParserTest extends ParsingTestCase {
   public void testAnsibleRoleElkMain() {
     doTest(true);
   }
+  
+  public void testBlockMapping() {
+    doTest(true);
+  }
+  
+  public void testIncompleteKeyInHierarchy() {
+    doTest(true);
+  }
+  
+  public void testKeyValueWithEmptyLineAhead() {
+    doTest(true);
+  }
+  
+  public void testMultipleDocsWithMappings() {
+    doTest(true);
+  }
 }

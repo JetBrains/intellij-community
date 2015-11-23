@@ -6,9 +6,8 @@ YAML file
       YAML key value
         PsiElement(scalar key)('foo:')
         PsiWhiteSpace(' ')
-        YAML compound value
-          YAML scalar text
-            PsiElement(scalar text)('>')
+        YAML scalar text
+          PsiElement(scalar text)('>')
       PsiElement(Eol)('\n')
       YAML key value
         PsiElement(scalar key)('bar:')
@@ -18,29 +17,25 @@ YAML file
           YAML key value
             PsiElement(scalar key)('abc:')
             PsiWhiteSpace(' ')
-            YAML compound value
-              YAML plain scalar text
-                PsiElement(text)('def')
+            YAML plain scalar text
+              PsiElement(text)('def')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
             PsiElement(scalar key)('ghi:')
             PsiWhiteSpace(' ')
-            YAML compound value
-              YAML scalar text
-                PsiElement(scalar text)('>')
+            YAML scalar text
+              PsiElement(scalar text)('>')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
             PsiElement(scalar key)('jkl:')
             PsiWhiteSpace(' ')
-            YAML compound value
-              YAML plain scalar text
-                PsiElement(text)('mno')
+            YAML plain scalar text
+              PsiElement(text)('mno')
       PsiElement(Eol)('\n')
       YAML key value
         PsiElement(scalar key)('baz:')
         PsiWhiteSpace(' ')
-        YAML compound value
-          YAML plain scalar text
-            PsiElement(text)('qwe')
+        YAML plain scalar text
+          PsiElement(text)('qwe')

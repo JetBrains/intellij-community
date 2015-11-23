@@ -6,13 +6,12 @@ YAML file
       YAML key value
         PsiElement(scalar key)('foo:')
         PsiWhiteSpace(' ')
-        YAML compound value
-          YAML hash
-            PsiElement({)('{')
-            PsiElement(})('}')
+        YAML hash
+          PsiElement({)('{')
+          PsiElement(})('}')
       PsiElement(Eol)('\n')
       YAML key value
         PsiElement(scalar key)('bar:')
         PsiWhiteSpace(' ')
-        YAML compound value
+        YAML quoted text
           PsiElement(scalar dstring)('"baz"')

@@ -9,25 +9,22 @@ YAML file
           YAML key value
             PsiElement(scalar key)('name:')
             PsiWhiteSpace(' ')
-            YAML compound value
-              YAML plain scalar text
-                PsiElement(text)('Mark McGwire')
+            YAML plain scalar text
+              PsiElement(text)('Mark McGwire')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
             PsiElement(scalar key)('hr:')
             PsiWhiteSpace('   ')
-            YAML compound value
-              YAML plain scalar text
-                PsiElement(text)('65')
+            YAML plain scalar text
+              PsiElement(text)('65')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
             PsiElement(scalar key)('avg:')
             PsiWhiteSpace('  ')
-            YAML compound value
-              YAML plain scalar text
-                PsiElement(text)('0.278')
+            YAML plain scalar text
+              PsiElement(text)('0.278')
       PsiElement(Eol)('\n')
       YAML sequence item
         PsiElement(-)('-')
@@ -37,22 +34,19 @@ YAML file
           YAML key value
             PsiElement(scalar key)('name:')
             PsiWhiteSpace(' ')
-            YAML compound value
-              YAML plain scalar text
-                PsiElement(text)('Sammy Sosa')
+            YAML plain scalar text
+              PsiElement(text)('Sammy Sosa')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
             PsiElement(scalar key)('hr:')
             PsiWhiteSpace('   ')
-            YAML compound value
-              YAML plain scalar text
-                PsiElement(text)('63')
+            YAML plain scalar text
+              PsiElement(text)('63')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
             PsiElement(scalar key)('avg:')
             PsiWhiteSpace('  ')
-            YAML compound value
-              YAML plain scalar text
-                PsiElement(text)('0.288')
+            YAML plain scalar text
+              PsiElement(text)('0.288')

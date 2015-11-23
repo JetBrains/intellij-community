@@ -4,7 +4,7 @@ YAML file
       YAML key value
         PsiElement(scalar key)('foo:')
         PsiWhiteSpace(' ')
-        YAML compound value
+        YAML quoted text
           PsiElement(tag)('!')
           PsiWhiteSpace(' ')
           PsiElement(scalar dstring)('"tratata"')

@@ -8,17 +8,15 @@ YAML file
           YAML sequence item
             PsiElement(-)('-')
             PsiWhiteSpace(' ')
-            YAML compound value
-              YAML plain scalar text
-                PsiElement(text)('a')
+            YAML plain scalar text
+              PsiElement(text)('a')
           PsiElement(Eol)('\n')
           YAML sequence item
             PsiElement(-)('-')
             PsiWhiteSpace(' ')
-            YAML compound value
-              YAML plain scalar text
-                PsiElement(text)('b')
-              PsiElement(Eol)('\n')
+            YAML plain scalar text
+              PsiElement(text)('b')
+      PsiElement(Eol)('\n')
       PsiElement(Eol)('\n')
       YAML key value
         PsiElement(scalar key)('server:')
@@ -28,14 +26,12 @@ YAML file
           YAML sequence item
             PsiElement(-)('-')
             PsiWhiteSpace(' ')
-            YAML compound value
-              YAML plain scalar text
-                PsiElement(text)('a')
+            YAML plain scalar text
+              PsiElement(text)('a')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML sequence item
             PsiElement(-)('-')
             PsiWhiteSpace(' ')
-            YAML compound value
-              YAML plain scalar text
-                PsiElement(text)('b')
+            YAML plain scalar text
+              PsiElement(text)('b')

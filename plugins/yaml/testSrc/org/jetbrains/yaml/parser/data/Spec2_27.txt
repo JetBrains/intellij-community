@@ -8,21 +8,19 @@ YAML file
       YAML key value
         PsiElement(scalar key)('invoice:')
         PsiWhiteSpace(' ')
-        YAML compound value
-          YAML plain scalar text
-            PsiElement(text)('34843')
+        YAML plain scalar text
+          PsiElement(text)('34843')
       PsiElement(Eol)('\n')
       YAML key value
         PsiElement(scalar key)('date   :')
         PsiWhiteSpace(' ')
-        YAML compound value
-          YAML plain scalar text
-            PsiElement(text)('2001-01-23')
+        YAML plain scalar text
+          PsiElement(text)('2001-01-23')
       PsiElement(Eol)('\n')
       YAML key value
         PsiElement(scalar key)('bill-to:')
         PsiWhiteSpace(' ')
-        YAML compound value
+        YAML mapping
           YAML plain scalar text
             PsiElement(text)('&id001')
           PsiElement(Eol)('\n')
@@ -30,17 +28,15 @@ YAML file
           YAML key value
             PsiElement(scalar key)('given  :')
             PsiWhiteSpace(' ')
-            YAML compound value
-              YAML plain scalar text
-                PsiElement(text)('Chris')
+            YAML plain scalar text
+              PsiElement(text)('Chris')
           PsiElement(Eol)('\n')
           PsiElement(indent)('    ')
           YAML key value
             PsiElement(scalar key)('family :')
             PsiWhiteSpace(' ')
-            YAML compound value
-              YAML plain scalar text
-                PsiElement(text)('Dumars')
+            YAML plain scalar text
+              PsiElement(text)('Dumars')
           PsiElement(Eol)('\n')
           PsiElement(indent)('    ')
           YAML key value
@@ -51,46 +47,41 @@ YAML file
               YAML key value
                 PsiElement(scalar key)('lines:')
                 PsiWhiteSpace(' ')
-                YAML compound value
-                  YAML scalar list
-                    PsiElement(scalar list)('|')
-                    PsiElement(Eol)('\n')
-                    PsiElement(indent)('            ')
-                    PsiElement(scalar list)('458 Walkman Dr.')
-                    PsiElement(Eol)('\n')
-                    PsiElement(indent)('            ')
-                    PsiElement(scalar list)('Suite #292')
+                YAML scalar list
+                  PsiElement(scalar list)('|')
+                  PsiElement(Eol)('\n')
+                  PsiElement(indent)('            ')
+                  PsiElement(scalar list)('458 Walkman Dr.')
+                  PsiElement(Eol)('\n')
+                  PsiElement(indent)('            ')
+                  PsiElement(scalar list)('Suite #292')
               PsiElement(Eol)('\n')
               PsiElement(indent)('        ')
               YAML key value
                 PsiElement(scalar key)('city    :')
                 PsiWhiteSpace(' ')
-                YAML compound value
-                  YAML plain scalar text
-                    PsiElement(text)('Royal Oak')
+                YAML plain scalar text
+                  PsiElement(text)('Royal Oak')
               PsiElement(Eol)('\n')
               PsiElement(indent)('        ')
               YAML key value
                 PsiElement(scalar key)('state   :')
                 PsiWhiteSpace(' ')
-                YAML compound value
-                  YAML plain scalar text
-                    PsiElement(text)('MI')
+                YAML plain scalar text
+                  PsiElement(text)('MI')
               PsiElement(Eol)('\n')
               PsiElement(indent)('        ')
               YAML key value
                 PsiElement(scalar key)('postal  :')
                 PsiWhiteSpace(' ')
-                YAML compound value
-                  YAML plain scalar text
-                    PsiElement(text)('48046')
+                YAML plain scalar text
+                  PsiElement(text)('48046')
       PsiElement(Eol)('\n')
       YAML key value
         PsiElement(scalar key)('ship-to:')
         PsiWhiteSpace(' ')
-        YAML compound value
-          YAML plain scalar text
-            PsiElement(text)('*id001')
+        YAML plain scalar text
+          PsiElement(text)('*id001')
       PsiElement(Eol)('\n')
       YAML key value
         PsiElement(scalar key)('product:')
@@ -104,33 +95,29 @@ YAML file
               YAML key value
                 PsiElement(scalar key)('sku         :')
                 PsiWhiteSpace(' ')
-                YAML compound value
-                  YAML plain scalar text
-                    PsiElement(text)('BL394D')
+                YAML plain scalar text
+                  PsiElement(text)('BL394D')
               PsiElement(Eol)('\n')
               PsiElement(indent)('      ')
               YAML key value
                 PsiElement(scalar key)('quantity    :')
                 PsiWhiteSpace(' ')
-                YAML compound value
-                  YAML plain scalar text
-                    PsiElement(text)('4')
+                YAML plain scalar text
+                  PsiElement(text)('4')
               PsiElement(Eol)('\n')
               PsiElement(indent)('      ')
               YAML key value
                 PsiElement(scalar key)('description :')
                 PsiWhiteSpace(' ')
-                YAML compound value
-                  YAML plain scalar text
-                    PsiElement(text)('Basketball')
+                YAML plain scalar text
+                  PsiElement(text)('Basketball')
               PsiElement(Eol)('\n')
               PsiElement(indent)('      ')
               YAML key value
                 PsiElement(scalar key)('price       :')
                 PsiWhiteSpace(' ')
-                YAML compound value
-                  YAML plain scalar text
-                    PsiElement(text)('450.00')
+                YAML plain scalar text
+                  PsiElement(text)('450.00')
           PsiElement(Eol)('\n')
           PsiElement(indent)('    ')
           YAML sequence item
@@ -140,58 +127,51 @@ YAML file
               YAML key value
                 PsiElement(scalar key)('sku         :')
                 PsiWhiteSpace(' ')
-                YAML compound value
-                  YAML plain scalar text
-                    PsiElement(text)('BL4438H')
+                YAML plain scalar text
+                  PsiElement(text)('BL4438H')
               PsiElement(Eol)('\n')
               PsiElement(indent)('      ')
               YAML key value
                 PsiElement(scalar key)('quantity    :')
                 PsiWhiteSpace(' ')
-                YAML compound value
-                  YAML plain scalar text
-                    PsiElement(text)('1')
+                YAML plain scalar text
+                  PsiElement(text)('1')
               PsiElement(Eol)('\n')
               PsiElement(indent)('      ')
               YAML key value
                 PsiElement(scalar key)('description :')
                 PsiWhiteSpace(' ')
-                YAML compound value
-                  YAML plain scalar text
-                    PsiElement(text)('Super Hoop')
+                YAML plain scalar text
+                  PsiElement(text)('Super Hoop')
               PsiElement(Eol)('\n')
               PsiElement(indent)('      ')
               YAML key value
                 PsiElement(scalar key)('price       :')
                 PsiWhiteSpace(' ')
-                YAML compound value
-                  YAML plain scalar text
-                    PsiElement(text)('2392.00')
+                YAML plain scalar text
+                  PsiElement(text)('2392.00')
       PsiElement(Eol)('\n')
       YAML key value
         PsiElement(scalar key)('tax  :')
         PsiWhiteSpace(' ')
-        YAML compound value
-          YAML plain scalar text
-            PsiElement(text)('251.42')
+        YAML plain scalar text
+          PsiElement(text)('251.42')
       PsiElement(Eol)('\n')
       YAML key value
         PsiElement(scalar key)('total:')
         PsiWhiteSpace(' ')
-        YAML compound value
-          YAML plain scalar text
-            PsiElement(text)('4443.52')
+        YAML plain scalar text
+          PsiElement(text)('4443.52')
       PsiElement(Eol)('\n')
       YAML key value
         PsiElement(scalar key)('comments:')
         PsiElement(Eol)('\n')
         PsiElement(indent)('    ')
-        YAML compound value
-          YAML plain scalar text
-            PsiElement(text)('Late afternoon is best.')
-            PsiElement(Eol)('\n')
-            PsiElement(indent)('    ')
-            PsiElement(text)('Backup contact is Nancy')
-            PsiElement(Eol)('\n')
-            PsiElement(indent)('    ')
-            PsiElement(text)('Billsmer @ 338-4338.')
+        YAML plain scalar text
+          PsiElement(text)('Late afternoon is best.')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('    ')
+          PsiElement(text)('Backup contact is Nancy')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('    ')
+          PsiElement(text)('Billsmer @ 338-4338.')

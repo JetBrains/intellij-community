@@ -8,7 +8,7 @@ import org.jetbrains.yaml.psi.YAMLSequenceItem;
 
 import java.util.List;
 
-public class YAMLSequenceImpl extends YAMLCompoundValueImpl implements YAMLSequence {
+public abstract class YAMLSequenceImpl extends YAMLCompoundValueImpl implements YAMLSequence {
   public YAMLSequenceImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -17,6 +17,12 @@ public class YAMLSequenceImpl extends YAMLCompoundValueImpl implements YAMLSeque
   @Override
   public List<YAMLSequenceItem> getItems() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, YAMLSequenceItem.class);
+  }
+
+  @NotNull
+  @Override
+  public String getTextValue() {
+    return "<sequence:" + Integer.toHexString(getText().hashCode()) + ">";
   }
 
   @Override

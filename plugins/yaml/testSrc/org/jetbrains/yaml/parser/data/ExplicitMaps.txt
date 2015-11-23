@@ -6,21 +6,19 @@ YAML file
       YAML key value
         PsiElement(?)('?')
         PsiWhiteSpace(' ')
-        YAML compound value
-          YAML plain scalar text
-            PsiElement(text)('explicit key')
+        YAML plain scalar text
+          PsiElement(text)('explicit key')
         PsiWhiteSpace(' ')
         PsiComment(comment)('# Empty value')
         PsiElement(Eol)('\n')
       YAML key value
         PsiElement(?)('?')
         PsiWhiteSpace(' ')
-        YAML compound value
-          YAML scalar list
-            PsiElement(scalar list)('|')
-            PsiElement(Eol)('\n')
-            PsiElement(indent)('  ')
-            PsiElement(scalar list)('block key')
+        YAML scalar list
+          PsiElement(scalar list)('|')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('  ')
+          PsiElement(scalar list)('block key')
         PsiElement(Eol)('\n')
         PsiElement(:)(':')
         PsiWhiteSpace(' ')
@@ -28,9 +26,8 @@ YAML file
           YAML sequence item
             PsiElement(-)('-')
             PsiWhiteSpace(' ')
-            YAML compound value
-              YAML plain scalar text
-                PsiElement(text)('one')
+            YAML plain scalar text
+              PsiElement(text)('one')
           PsiWhiteSpace(' ')
           PsiComment(comment)('# Explicit compact')
           PsiElement(Eol)('\n')
@@ -38,76 +35,77 @@ YAML file
           YAML sequence item
             PsiElement(-)('-')
             PsiWhiteSpace(' ')
-            YAML compound value
-              YAML plain scalar text
-                PsiElement(text)('two')
-              PsiWhiteSpace(' ')
-              PsiComment(comment)('# block value')
-              PsiElement(Eol)('\n')
+            YAML plain scalar text
+              PsiElement(text)('two')
+  PsiWhiteSpace(' ')
+  PsiComment(comment)('# block value')
+  PsiElement(Eol)('\n')
   PsiElement(Eol)('\n')
   YAML document
     PsiElement(---)('---')
     PsiElement(Eol)('\n')
-    YAML compound value
+    YAML hash
       PsiElement(tag)('!!map')
       PsiWhiteSpace(' ')
-      YAML hash
-        PsiElement({)('{')
+      PsiElement({)('{')
+      PsiElement(Eol)('\n')
+      PsiElement(indent)('  ')
+      YAML key value
+        PsiElement(?)('?')
+        PsiWhiteSpace(' ')
+        YAML quoted text
+          PsiElement(tag)('!!str')
+          PsiWhiteSpace(' ')
+          PsiElement(scalar dstring)('"explicit key"')
         PsiElement(Eol)('\n')
         PsiElement(indent)('  ')
-        YAML key value
-          PsiElement(?)('?')
+        PsiElement(:)(':')
+        PsiWhiteSpace(' ')
+        YAML quoted text
+          PsiElement(tag)('!!str')
           PsiWhiteSpace(' ')
-          YAML compound value
-            PsiElement(tag)('!!str')
-            PsiWhiteSpace(' ')
-            PsiElement(scalar dstring)('"explicit key"')
-          PsiElement(Eol)('\n')
-          PsiElement(indent)('  ')
-          PsiElement(:)(':')
+          PsiElement(scalar dstring)('""')
+      PsiElement(,)(',')
+      PsiElement(Eol)('\n')
+      PsiElement(indent)('  ')
+      YAML key value
+        PsiElement(?)('?')
+        PsiWhiteSpace(' ')
+        YAML quoted text
+          PsiElement(tag)('!!str')
           PsiWhiteSpace(' ')
-          YAML compound value
-            PsiElement(tag)('!!str')
-            PsiWhiteSpace(' ')
-            PsiElement(scalar dstring)('""')
-        PsiElement(,)(',')
+          PsiElement(scalar dstring)('"block key\n"')
         PsiElement(Eol)('\n')
         PsiElement(indent)('  ')
-        YAML key value
-          PsiElement(?)('?')
+        PsiElement(:)(':')
+        PsiWhiteSpace(' ')
+        YAML array
+          PsiElement(tag)('!!seq')
           PsiWhiteSpace(' ')
-          YAML compound value
-            PsiElement(tag)('!!str')
-            PsiWhiteSpace(' ')
-            PsiElement(scalar dstring)('"block key\n"')
+          PsiElement([)('[')
           PsiElement(Eol)('\n')
-          PsiElement(indent)('  ')
-          PsiElement(:)(':')
-          PsiWhiteSpace(' ')
-          YAML compound value
-            PsiElement(tag)('!!seq')
-            PsiWhiteSpace(' ')
-            YAML array
-              PsiElement([)('[')
-              PsiElement(Eol)('\n')
-              PsiElement(indent)('    ')
+          PsiElement(indent)('    ')
+          YAML sequence item
+            YAML quoted text
               PsiElement(tag)('!!str')
               PsiWhiteSpace(' ')
               PsiElement(scalar dstring)('"one"')
-              PsiElement(,)(',')
-              PsiElement(Eol)('\n')
-              PsiElement(indent)('    ')
+          PsiElement(,)(',')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('    ')
+          YAML sequence item
+            YAML quoted text
               PsiElement(tag)('!!str')
               PsiWhiteSpace(' ')
               PsiElement(scalar dstring)('"two"')
-              PsiElement(,)(',')
-              PsiElement(Eol)('\n')
-              PsiElement(indent)('  ')
-              PsiElement(])(']')
-        PsiElement(,)(',')
-        PsiElement(Eol)('\n')
-        PsiElement(})('}')
+          PsiElement(,)(',')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('  ')
+          PsiElement(])(']')
+      PsiElement(,)(',')
       PsiElement(Eol)('\n')
+      PsiElement(})('}')
+  PsiElement(Eol)('\n')
   PsiElement(Eol)('\n')
   YAML document
     PsiElement(---)('---')
@@ -120,9 +118,8 @@ YAML file
           YAML key value
             PsiElement(scalar key)('sun:')
             PsiWhiteSpace(' ')
-            YAML compound value
-              YAML plain scalar text
-                PsiElement(text)('yellow↓')
+            YAML plain scalar text
+              PsiElement(text)('yellow↓')
       PsiElement(Eol)('\n')
       YAML sequence item
         PsiElement(-)('-')
@@ -135,9 +132,8 @@ YAML file
               YAML key value
                 PsiElement(scalar key)('earth:')
                 PsiWhiteSpace(' ')
-                YAML compound value
-                  YAML plain scalar text
-                    PsiElement(text)('blue↓')
+                YAML plain scalar text
+                  PsiElement(text)('blue↓')
             PsiElement(Eol)('\n')
             PsiElement(indent)('  ')
             PsiElement(:)(':')
@@ -146,39 +142,33 @@ YAML file
               YAML key value
                 PsiElement(scalar key)('moon:')
                 PsiWhiteSpace(' ')
-                YAML compound value
-                  YAML plain scalar text
-                    PsiElement(text)('white↓')
-                  PsiElement(Eol)('\n')
+                YAML plain scalar text
+                  PsiElement(text)('white↓')
+  PsiElement(Eol)('\n')
   PsiElement(Eol)('\n')
   YAML document
     PsiElement(---)('---')
     PsiElement(Eol)('\n')
-    YAML compound value
-      YAML hash
-        PsiElement({)('{')
+    YAML hash
+      PsiElement({)('{')
+      PsiElement(Eol)('\n')
+      YAML key value
+        PsiElement(?)('?')
+        PsiWhiteSpace(' ')
+        PsiElement(scalar key)('explicit:')
+        PsiWhiteSpace(' ')
+        YAML plain scalar text
+          PsiElement(text)('entry')
+      PsiElement(,)(',')
+      PsiElement(Eol)('\n')
+      YAML key value
+        PsiElement(scalar key)('implicit:')
+        PsiWhiteSpace(' ')
+        YAML plain scalar text
+          PsiElement(text)('entry')
+      PsiElement(,)(',')
+      PsiElement(Eol)('\n')
+      YAML key value
+        PsiElement(?)('?')
         PsiElement(Eol)('\n')
-        YAML key value
-          PsiElement(?)('?')
-          PsiWhiteSpace(' ')
-          PsiElement(scalar key)('explicit:')
-          PsiWhiteSpace(' ')
-          YAML compound value
-            YAML plain scalar text
-              PsiElement(text)('entry')
-        PsiElement(,)(',')
-        PsiElement(Eol)('\n')
-        YAML key value
-          PsiElement(scalar key)('implicit:')
-          PsiWhiteSpace(' ')
-          YAML compound value
-            YAML plain scalar text
-              PsiElement(text)('entry')
-        PsiElement(,)(',')
-        PsiElement(Eol)('\n')
-        YAML key value
-          PsiElement(?)('?')
-          PsiElement(Eol)('\n')
-          YAML compound value
-            <empty list>
-        PsiElement(})('}')
+      PsiElement(})('}')

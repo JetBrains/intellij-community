@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.psi.YAMLValue;
 
-public class YAMLValueImpl extends YAMLPsiElementImpl implements YAMLValue {
+abstract class YAMLValueImpl extends YAMLPsiElementImpl implements YAMLValue {
   public YAMLValueImpl(@NotNull ASTNode node) {
     super(node);
   }

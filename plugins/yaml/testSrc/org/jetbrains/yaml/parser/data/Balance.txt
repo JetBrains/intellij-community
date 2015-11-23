@@ -4,9 +4,8 @@ YAML file
       YAML key value
         PsiElement(scalar key)('runningTime:')
         PsiWhiteSpace(' ')
-        YAML compound value
-          YAML plain scalar text
-            PsiElement(text)('150000')
+        YAML plain scalar text
+          PsiElement(text)('150000')
       PsiElement(Eol)('\n')
       YAML key value
         PsiElement(scalar key)('scenarios:')
@@ -16,36 +15,32 @@ YAML file
           YAML key value
             PsiElement(scalar key)('voice_bundle_change:')
             PsiWhiteSpace(' ')
-            YAML compound value
-              YAML hash
-                PsiElement({)('{')
-                PsiElement(Eol)('\n')
-                PsiElement(indent)('        ')
-                YAML key value
-                  PsiElement(scalar key)('dataCycling:')
-                  PsiWhiteSpace(' ')
-                  YAML compound value
-                    YAML plain scalar text
-                      PsiElement(text)('true')
-                PsiElement(Eol)('\n')
-                PsiElement(indent)('    ')
-                PsiElement(})('}')
+            YAML hash
+              PsiElement({)('{')
+              PsiElement(Eol)('\n')
+              PsiElement(indent)('        ')
+              YAML key value
+                PsiElement(scalar key)('dataCycling:')
+                PsiWhiteSpace(' ')
+                YAML plain scalar text
+                  PsiElement(text)('true')
+              PsiElement(Eol)('\n')
+              PsiElement(indent)('    ')
+              PsiElement(})('}')
           PsiElement(Eol)('\n')
           PsiElement(indent)('    ')
           YAML key value
             PsiElement(scalar key)('smart_overview:')
             PsiWhiteSpace(' ')
-            YAML compound value
-              YAML hash
-                PsiElement({)('{')
-                PsiElement(Eol)('\n')
-                PsiElement(indent)('        ')
-                YAML key value
-                  PsiElement(scalar key)('dataCycling:')
-                  PsiWhiteSpace(' ')
-                  YAML compound value
-                    YAML plain scalar text
-                      PsiElement(text)('true')
-                PsiElement(Eol)('\n')
-                PsiElement(indent)('    ')
-                PsiElement(})('}')
+            YAML hash
+              PsiElement({)('{')
+              PsiElement(Eol)('\n')
+              PsiElement(indent)('        ')
+              YAML key value
+                PsiElement(scalar key)('dataCycling:')
+                PsiWhiteSpace(' ')
+                YAML plain scalar text
+                  PsiElement(text)('true')
+              PsiElement(Eol)('\n')
+              PsiElement(indent)('    ')
+              PsiElement(})('}')

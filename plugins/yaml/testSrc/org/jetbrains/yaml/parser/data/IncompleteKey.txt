@@ -9,9 +9,8 @@ YAML file
           YAML key value
             PsiElement(scalar key)('config:')
             PsiWhiteSpace(' ')
-            YAML compound value
-              YAML plain scalar text
-                PsiElement(text)('bla')
+            YAML plain scalar text
+              PsiElement(text)('bla')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML plain scalar text

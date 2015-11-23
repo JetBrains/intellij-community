@@ -11,9 +11,8 @@ YAML file
           YAML key value
             PsiElement(scalar key)('propertyOne:')
             PsiWhiteSpace(' ')
-            YAML compound value
-              YAML plain scalar text
-                PsiElement(text)('bla bla')
+            YAML plain scalar text
+              PsiElement(text)('bla bla')
           PsiElement(Eol)('\n')
           PsiElement(indent)('    ')
           YAML key value
@@ -24,9 +23,8 @@ YAML file
               YAML sequence item
                 PsiElement(-)('-')
                 PsiWhiteSpace(' ')
-                YAML compound value
-                  YAML plain scalar text
-                    PsiElement(text)('first value')
+                YAML plain scalar text
+                  PsiElement(text)('first value')
           PsiElement(Eol)('\n')
           PsiElement(indent)('    ')
           YAML key value
@@ -37,6 +35,5 @@ YAML file
               YAML sequence item
                 PsiElement(-)('-')
                 PsiWhiteSpace(' ')
-                YAML compound value
-                  YAML plain scalar text
-                    PsiElement(text)('first value of another sequence')
+                YAML plain scalar text
+                  PsiElement(text)('first value of another sequence')

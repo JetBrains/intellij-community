@@ -9,17 +9,15 @@ YAML file
           YAML sequence item
             PsiElement(-)('-')
             PsiWhiteSpace(' ')
-            YAML compound value
-              YAML plain scalar text
-                PsiElement(text)('Detroit Tigers')
+            YAML plain scalar text
+              PsiElement(text)('Detroit Tigers')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML sequence item
             PsiElement(-)('-')
             PsiWhiteSpace(' ')
-            YAML compound value
-              YAML plain scalar text
-                PsiElement(text)('Chicago cubs')
+            YAML plain scalar text
+              PsiElement(text)('Chicago cubs')
         PsiElement(Eol)('\n')
         PsiElement(:)(':')
         PsiElement(Eol)('\n')
@@ -28,44 +26,46 @@ YAML file
           YAML sequence item
             PsiElement(-)('-')
             PsiWhiteSpace(' ')
-            YAML compound value
-              YAML plain scalar text
-                PsiElement(text)('2001-07-23')
-              PsiElement(Eol)('\n')
+            YAML plain scalar text
+              PsiElement(text)('2001-07-23')
+      PsiElement(Eol)('\n')
       PsiElement(Eol)('\n')
       YAML key value
         PsiElement(?)('?')
         PsiWhiteSpace(' ')
-        YAML compound value
-          YAML array
-            PsiElement([)('[')
-            PsiWhiteSpace(' ')
+        YAML array
+          PsiElement([)('[')
+          PsiWhiteSpace(' ')
+          YAML sequence item
             YAML plain scalar text
               PsiElement(text)('New York Yankees')
-            PsiElement(,)(',')
-            PsiElement(Eol)('\n')
-            PsiElement(indent)('    ')
+          PsiElement(,)(',')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('    ')
+          YAML sequence item
             YAML plain scalar text
               PsiElement(text)('Atlanta Braves')
-            PsiWhiteSpace(' ')
-            PsiElement(])(']')
+          PsiWhiteSpace(' ')
+          PsiElement(])(']')
         PsiElement(Eol)('\n')
         PsiElement(:)(':')
         PsiWhiteSpace(' ')
-        YAML compound value
-          YAML array
-            PsiElement([)('[')
-            PsiWhiteSpace(' ')
+        YAML array
+          PsiElement([)('[')
+          PsiWhiteSpace(' ')
+          YAML sequence item
             YAML plain scalar text
               PsiElement(text)('2001-07-02')
-            PsiElement(,)(',')
-            PsiWhiteSpace(' ')
+          PsiElement(,)(',')
+          PsiWhiteSpace(' ')
+          YAML sequence item
             YAML plain scalar text
               PsiElement(text)('2001-08-12')
-            PsiElement(,)(',')
-            PsiElement(Eol)('\n')
-            PsiElement(indent)('    ')
+          PsiElement(,)(',')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('    ')
+          YAML sequence item
             YAML plain scalar text
               PsiElement(text)('2001-08-14')
-            PsiWhiteSpace(' ')
-            PsiElement(])(']')
+          PsiWhiteSpace(' ')
+          PsiElement(])(']')

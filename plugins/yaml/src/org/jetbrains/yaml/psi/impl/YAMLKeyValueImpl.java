@@ -2,6 +2,7 @@ package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiReference;
@@ -59,12 +60,11 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
     }
 
     if (keyElement instanceof YAMLCompoundValue) {
-      return "";
-      //return ((YAMLCompoundValue)keyElement).getTextValue();
+      return ((YAMLCompoundValue)keyElement).getTextValue();
     }
 
     final String text = keyElement.getText();
-    return text.substring(0, text.length()-1);
+    return StringUtil.unquoteString(text.substring(0, text.length() - 1));
   }
 
   @Nullable
@@ -83,22 +83,7 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
     if (value == null){
       return "";
     }
-    //return value.getTextValue();
-    return "";
-    //String text = value.getText();
-    //if (text.startsWith("'") || text.startsWith("\"")){
-    //  text = text.substring(1);
-    //}
-    //if (text.endsWith("'") || text.endsWith("\"")){
-    //  text = text.substring(0, text.length() - 1);
-    //}
-    //if (text.startsWith("|")){
-    //  text = text.substring(1).replaceAll("\n[ \t]+", "; ");
-    //  if (text.length() >= 2) {
-    //    text = text.substring(2);
-    //  }
-    //}
-    //return text;
+    return value.getTextValue();
   }
 
   // TODO make it make it
@@ -111,7 +96,7 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
     final YAMLPsiElement element = document.getYAMLElements().get(0);
     assert element instanceof YAMLMapping;
 
-    final YAMLKeyValue topKeyValue = ((YAMLMapping)element).getKeyValues().get(0);
+    final YAMLKeyValue topKeyValue = ((YAMLMapping)element).getKeyValues().iterator().next();
     getValue().replace(topKeyValue.getValue());
   }
 

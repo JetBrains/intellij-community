@@ -4,48 +4,42 @@ YAML file
       YAML key value
         PsiElement(scalar key)('Mark McGwire:')
         PsiWhiteSpace(' ')
-        YAML compound value
-          YAML hash
-            PsiElement({)('{')
-            YAML key value
-              PsiElement(scalar key)('hr:')
-              PsiWhiteSpace(' ')
-              YAML compound value
-                YAML plain scalar text
-                  PsiElement(text)('65')
-            PsiElement(,)(',')
+        YAML hash
+          PsiElement({)('{')
+          YAML key value
+            PsiElement(scalar key)('hr:')
             PsiWhiteSpace(' ')
-            YAML key value
-              PsiElement(scalar key)('avg:')
-              PsiWhiteSpace(' ')
-              YAML compound value
-                YAML plain scalar text
-                  PsiElement(text)('0.278')
-            PsiElement(})('}')
+            YAML plain scalar text
+              PsiElement(text)('65')
+          PsiElement(,)(',')
+          PsiWhiteSpace(' ')
+          YAML key value
+            PsiElement(scalar key)('avg:')
+            PsiWhiteSpace(' ')
+            YAML plain scalar text
+              PsiElement(text)('0.278')
+          PsiElement(})('}')
       PsiElement(Eol)('\n')
       YAML key value
         PsiElement(scalar key)('Sammy Sosa:')
         PsiWhiteSpace(' ')
-        YAML compound value
-          YAML hash
-            PsiElement({)('{')
-            PsiElement(Eol)('\n')
-            PsiElement(indent)('    ')
-            YAML key value
-              PsiElement(scalar key)('hr:')
-              PsiWhiteSpace(' ')
-              YAML compound value
-                YAML plain scalar text
-                  PsiElement(text)('63')
-            PsiElement(,)(',')
-            PsiElement(Eol)('\n')
-            PsiElement(indent)('    ')
-            YAML key value
-              PsiElement(scalar key)('avg:')
-              PsiWhiteSpace(' ')
-              YAML compound value
-                YAML plain scalar text
-                  PsiElement(text)('0.288')
-            PsiElement(Eol)('\n')
-            PsiElement(indent)('  ')
-            PsiElement(})('}')
+        YAML hash
+          PsiElement({)('{')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('    ')
+          YAML key value
+            PsiElement(scalar key)('hr:')
+            PsiWhiteSpace(' ')
+            YAML plain scalar text
+              PsiElement(text)('63')
+          PsiElement(,)(',')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('    ')
+          YAML key value
+            PsiElement(scalar key)('avg:')
+            PsiWhiteSpace(' ')
+            YAML plain scalar text
+              PsiElement(text)('0.288')
+          PsiElement(Eol)('\n')
+          PsiElement(indent)('  ')
+          PsiElement(})('}')
