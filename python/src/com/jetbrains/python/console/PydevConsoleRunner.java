@@ -28,12 +28,14 @@ import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.console.ProcessBackedConsoleExecuteActionHandler;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.*;
@@ -62,6 +64,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -76,6 +79,7 @@ import com.intellij.util.PathMappingSettings;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
+import com.intellij.util.ui.MessageCategory;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
@@ -101,6 +105,8 @@ import org.apache.xmlrpc.XmlRpcException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -108,6 +114,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.List;
 
 import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonIOEncoding;
 import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonUnbuffered;
@@ -378,15 +385,50 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
             try {
               initAndRun(myStatementsToExecute);
             }
-            catch (Exception e) {
+            catch (final Exception e) {
               LOG.warn("Error running console", e);
-              assert myProject != null;
-              ExecutionHelper.showErrors(myProject, Arrays.<Exception>asList(e), getTitle(), null);
+              UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+                @Override
+                public void run() {
+                  showErrorsInConsole(e);
+                }
+              });
             }
           }
         });
       }
     });
+  }
+
+  private void showErrorsInConsole(Exception e) {
+    final Executor defaultExecutor = DefaultRunExecutor.getRunExecutorInstance();
+
+    DefaultActionGroup actionGroup = new DefaultActionGroup(createRerunAction());
+    
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN,
+                                                                                        actionGroup, false);
+
+    // Runner creating
+    final JPanel panel = new JPanel(new BorderLayout());
+    panel.add(actionToolbar.getComponent(), BorderLayout.WEST);
+
+    NewErrorTreeViewPanel errorViewPanel = new NewErrorTreeViewPanel(getProject(), null, false, false, null);
+
+    String[] messages = StringUtil.isNotEmpty(e.getMessage()) ? StringUtil.splitByLines(e.getMessage()) : ArrayUtil.EMPTY_STRING_ARRAY;
+    if (messages.length == 0) {
+      messages = new String[]{"Unknown error"};
+    }
+    
+    errorViewPanel.addMessage(MessageCategory.ERROR, messages, null, -1, -1, null);
+    panel.add(errorViewPanel, BorderLayout.CENTER);
+
+
+    final RunContentDescriptor contentDescriptor =
+      new RunContentDescriptor(null, myProcessHandler, panel, "Error running console");
+    
+    actionGroup.add(createCloseAction(defaultExecutor, contentDescriptor));
+    
+    showConsole(defaultExecutor, contentDescriptor);
   }
 
   private static int[] findAvailablePorts(Project project, PyConsoleType consoleType) {
@@ -944,17 +986,19 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   }
 
   private void rerun() {
-    new Task.Backgroundable(getProject(), "Restarting console", true) {
+    new Task.Backgroundable(getProject(), "Restarting Console", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            closeCommunication();
-          }
-        });
+        if (myProcessHandler != null) {
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              closeCommunication();
+            }
+          });
 
-        myProcessHandler.waitFor();
+          myProcessHandler.waitFor();
+        }
 
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
