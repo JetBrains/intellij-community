@@ -87,7 +87,7 @@ class CaptureTest {
    }
 
    void foo (Class<? extends Emum<CaptureTest>> clazz) {
-     <error descr="Inferred type 'capture<? extends CaptureTest.Emum<CaptureTest>>' for type parameter 'T' is not within its bound; should extend 'CaptureTest.Emum<capture<? extends CaptureTest.Emum<CaptureTest>>>'">Emum.valueOf(clazz, "CCC")</error>;
+     <error descr="Inferred type 'java.lang.Object' for type parameter 'T' is not within its bound; should extend 'CaptureTest.Emum<java.lang.Object>'">Emum.valueOf(clazz, "CCC")</error>;
    }
 }
 
