@@ -1,46 +1,37 @@
-package org.jetbrains.debugger;
+package org.jetbrains.debugger
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promise
 
-import java.util.List;
-
-public interface CallFrame {
+interface CallFrame {
   /**
    * @return the scopes known in this frame
    */
-  @NotNull
-  List<Scope> getVariableScopes();
+  val variableScopes: List<Scope>
 
-  boolean hasOnlyGlobalScope();
+  val hasOnlyGlobalScope: Boolean
 
   /**
-   * @return the receiver variable known in this frame ("this" variable)
-   *
-   * Computed variable must be null if no receiver variable, call {@link com.intellij.openapi.util.AsyncResult#setDone(Object null)}
+   * receiver variable known in this frame ("this" variable)
+   * Computed variable must be null if no receiver variable
    */
-  @NotNull
-  Promise<Variable> getReceiverVariable();
+  val receiverVariable: Promise<Variable?>
 
-  int getLine();
+  val line: Int
 
-  int getColumn();
+  val column: Int
 
   /**
    * @return the name of the current function of this frame
    */
-  @Nullable
-  String getFunctionName();
+  val functionName: String?
 
   /**
    * @return context for evaluating expressions in scope of this frame
    */
-  @NotNull
-  EvaluateContext getEvaluateContext();
+  val evaluateContext: EvaluateContext
 
   /**
-   @see com.intellij.xdebugger.frame.XStackFrame#getEqualityObject()
+   * @see com.intellij.xdebugger.frame.XStackFrame.getEqualityObject
    */
-  Object getEqualityObject();
+  val equalityObject: Any
 }
