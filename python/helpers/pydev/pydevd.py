@@ -385,6 +385,7 @@ class PyDB:
         self.mpl_modules_for_patching = {}
 
         self._filename_to_not_in_scope = {}
+        self.first_breakpoint_reached = False
         
     def get_plugin_lazy_init(self):
         if self.plugin is None and SUPPORT_PLUGINS:

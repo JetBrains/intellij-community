@@ -716,7 +716,7 @@ public class TypeMigrationLabeler {
       final TypeMigrationUsageInfo info = new TypeMigrationUsageInfo(root);
       info.setOwnerRoot(oldRoot);
       myClassTypeArgumentsChange.put(info, (PsiClassType)migrationType);
-      new ClassTypeArgumentMigrationProcessor(this).migrateClassTypeParameter((PsiReferenceParameterList)root, migrationType);
+      new ClassTypeArgumentMigrationProcessor(this).migrateClassTypeParameter((PsiReferenceParameterList)root, (PsiClassType)migrationType);
     }
 
     final Set<PsiElement> processed = new HashSet<PsiElement>();

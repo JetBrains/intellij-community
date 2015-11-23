@@ -38,8 +38,8 @@ import java.util.List;
 public class SelfElementInfo extends SmartPointerElementInfo {
   private static final FileDocumentManager ourFileDocManager = FileDocumentManager.getInstance();
   protected volatile AnchorTypeInfo myType;
-  private final SmartPointerManagerImpl myManager;
-  protected final MarkerCache myMarkerCache;
+  protected final SmartPointerManagerImpl myManager;
+  private final VirtualFile myFile;
   private final boolean myForInjected;
   private int myStartOffset;
   private int myEndOffset;
@@ -53,9 +53,8 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     myType = info;
 
     myManager = (SmartPointerManagerImpl)SmartPointerManager.getInstance(project);
-    myMarkerCache = myManager.getMarkerCache(containingFile.getViewProvider().getVirtualFile());
+    myFile = containingFile.getViewProvider().getVirtualFile();
     setRange(range);
-    myMarkerCache.rangeChanged();
   }
 
   void setRange(@Nullable Segment range) {
@@ -256,7 +255,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   @Override
   @NotNull
   public final VirtualFile getVirtualFile() {
-    return myMarkerCache.getVirtualFile();
+    return myFile;
   }
 
   @Override
@@ -268,7 +267,10 @@ public class SelfElementInfo extends SmartPointerElementInfo {
         PsiDocumentManagerBase documentManager = myManager.getPsiDocumentManager();
         List<DocumentEvent> events = documentManager.getEventsSinceCommit(document);
         if (!events.isEmpty()) {
-          return myMarkerCache.getUpdatedRange(this, (FrozenDocument)documentManager.getLastCommittedDocument(document), events);
+          MarkerCache markerCache = myManager.getMarkerCache(getVirtualFile());
+          if (markerCache != null) {
+            return markerCache.getUpdatedRange(this, (FrozenDocument)documentManager.getLastCommittedDocument(document), events);
+          }
         }
       }
     }

@@ -872,6 +872,30 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                          myFactory.createTypeFromText("java.util.Set<U>", null));
   }
 
+  public void testT141() {
+    doTestFirstParamType("meth",
+                         myFactory.createTypeFromText("java.lang.Long", null),
+                         myFactory.createTypeFromText("java.lang.Integer", null));
+  }
+
+  public void testT142() {
+    doTestFirstParamType("meth",
+                         myFactory.createTypeFromText("java.lang.Long", null),
+                         myFactory.createTypeFromText("java.lang.String", null));
+  }
+
+  public void testT143() {
+    doTestAnonymousClassTypeParameters("n",
+                                       myFactory.createTypeFromText("Test.AnInterface<java.lang.String, java.lang.Void>", null),
+                                       myFactory.createTypeFromText("Test.AnInterface<java.lang.String, java.lang.Void>", null));
+  }
+
+  public void testT144() {
+    doTestAnonymousClassTypeParameters("n",
+                                       myFactory.createTypeFromText("Test.AnInterface2<java.lang.String, java.lang.Void>", null),
+                                       myFactory.createTypeFromText("Test.AnInterface2<java.lang.String, java.lang.Void>", null));
+  }
+
   private void doTestForeachParameter(final PsiType rootType, final PsiType migrationType) {
     start(new RulesProvider() {
       @Override

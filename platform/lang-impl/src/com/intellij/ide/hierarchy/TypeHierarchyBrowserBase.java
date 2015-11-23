@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,11 @@ import java.util.Map;
 
 public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
-  @SuppressWarnings({"UnresolvedPropertyKey"})
+  @SuppressWarnings("UnresolvedPropertyKey")
   public static final String TYPE_HIERARCHY_TYPE = IdeBundle.message("title.hierarchy.class");
-  @SuppressWarnings({"UnresolvedPropertyKey"})
+  @SuppressWarnings("UnresolvedPropertyKey")
   public static final String SUBTYPES_HIERARCHY_TYPE = IdeBundle.message("title.hierarchy.subtypes");
-  @SuppressWarnings({"UnresolvedPropertyKey"})
+  @SuppressWarnings("UnresolvedPropertyKey")
   public static final String SUPERTYPES_HIERARCHY_TYPE = IdeBundle.message("title.hierarchy.supertypes");
 
   private boolean myIsInterface;
@@ -44,7 +44,6 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   private final MyDeleteProvider myDeleteElementProvider = new MyDeleteProvider();
 
   public static final DataKey<TypeHierarchyBrowserBase> DATA_KEY = DataKey.create("com.intellij.ide.hierarchy.TypeHierarchyBrowserBase");
-  @Deprecated public static final String TYPE_HIERARCHY_BROWSER_DATA_KEY = DATA_KEY.getName();
 
   public TypeHierarchyBrowserBase(final Project project, final PsiElement element) {
     super(project, element);
@@ -167,7 +166,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   protected static class BaseOnThisTypeAction extends BaseOnThisElementAction {
 
     public BaseOnThisTypeAction() {
-      super("", IdeActions.ACTION_TYPE_HIERARCHY, DATA_KEY.getName());
+      super("", IdeActions.ACTION_TYPE_HIERARCHY, DATA_KEY.getName(), LanguageTypeHierarchy.INSTANCE);
     }
 
     @Override

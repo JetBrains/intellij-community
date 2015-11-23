@@ -456,7 +456,7 @@ public abstract class GitHandler {
     GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
     myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_ENV, service.getScriptPath().getPath());
     GitHttpAuthenticator httpAuthenticator = service.createAuthenticator(myProject, myCommand, ObjectUtils.assertNotNull(myUrls));
-    myHttpHandler = service.registerHandler(httpAuthenticator);
+    myHttpHandler = service.registerHandler(httpAuthenticator, myProject);
     myEnvironmentCleanedUp = false;
     myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, Integer.toString(myHttpHandler));
     int port = service.getXmlRcpPort();
@@ -468,7 +468,7 @@ public abstract class GitHandler {
   private void setupSshAuthenticator() throws IOException {
     GitXmlRpcSshService ssh = ServiceManager.getService(GitXmlRpcSshService.class);
     myEnv.put(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
-    mySshHandler = ssh.registerHandler(new GitSSHGUIHandler(myProject));
+    mySshHandler = ssh.registerHandler(new GitSSHGUIHandler(myProject), myProject);
     myEnvironmentCleanedUp = false;
     myEnv.put(GitSSHHandler.SSH_HANDLER_ENV, Integer.toString(mySshHandler));
     int port = ssh.getXmlRcpPort();
@@ -597,10 +597,10 @@ public abstract class GitHandler {
     if (myEnvironmentCleanedUp) {
       return;
     }
-    if (mySshHandler > 0) {
+    if (mySshHandler >= 0) {
       ServiceManager.getService(GitXmlRpcSshService.class).unregisterHandler(mySshHandler);
     }
-    if (myHttpHandler > 0) {
+    if (myHttpHandler >= 0) {
       ServiceManager.getService(GitHttpAuthService.class).unregisterHandler(myHttpHandler);
     }
     myEnvironmentCleanedUp = true;
