@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,11 @@ import com.intellij.ide.OccurenceNavigatorSupport;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
+import com.intellij.ide.hierarchy.actions.BrowseHierarchyActionBase;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.util.scopeChooser.EditScopesDialog;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -67,7 +69,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   @NonNls private static final String HELP_ID = "reference.toolWindows.hierarchy";
 
   protected final Hashtable<String, HierarchyTreeBuilder> myBuilders = new Hashtable<String, HierarchyTreeBuilder>();
-  protected final Hashtable<String, JTree> myType2TreeMap = new Hashtable<String, JTree>();
+  private final Hashtable<String, JTree> myType2TreeMap = new Hashtable<String, JTree>();
 
   private final RefreshAction myRefreshAction = new RefreshAction();
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
@@ -76,7 +78,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   private final JPanel myTreePanel;
   protected String myCurrentViewType;
 
-  private boolean myCachedIsValidBase = false;
+  private boolean myCachedIsValidBase;
 
   private final Map<String, OccurenceNavigator> myOccurrenceNavigators = new HashMap<String, OccurenceNavigator>();
 
@@ -115,7 +117,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   public static final String SCOPE_ALL = IdeBundle.message("hierarchy.scope.all");
   public static final String SCOPE_TEST = IdeBundle.message("hierarchy.scope.test");
   public static final String SCOPE_CLASS = IdeBundle.message("hierarchy.scope.this.class");
-  protected final Map<String, String> myType2ScopeMap = new HashMap<String, String>();
+  private final Map<String, String> myType2ScopeMap = new HashMap<String, String>();
 
   public HierarchyBrowserBaseEx(@NotNull Project project, @NotNull PsiElement element) {
     super(project);
@@ -447,7 +449,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     return myBuilders.get(myCurrentViewType);
   }
 
-  protected final boolean isValidBase() {
+  final boolean isValidBase() {
     if (PsiDocumentManager.getInstance(myProject).getUncommittedDocuments().length > 0) {
       return myCachedIsValidBase;
     }
@@ -463,7 +465,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     return myType2TreeMap.get(myCurrentViewType);
   }
 
-  public String getCurrentViewType() {
+  String getCurrentViewType() {
     return myCurrentViewType;
   }
 
@@ -486,7 +488,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     myBuilders.clear();
   }
 
-  protected void doRefresh(boolean currentBuilderOnly) {
+  void doRefresh(boolean currentBuilderOnly) {
     if (currentBuilderOnly) LOG.assertTrue(myCurrentViewType != null);
 
     if (!isValidBase()) return;
@@ -551,21 +553,26 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
 
     @Override
-    public final void update(final AnActionEvent event) {
+    public final void update(@NotNull final AnActionEvent event) {
       super.update(event);
       final Presentation presentation = event.getPresentation();
       presentation.setEnabled(isValidBase());
     }
   }
 
-  protected static class BaseOnThisElementAction extends AnAction {
+  static class BaseOnThisElementAction extends AnAction {
     private final String myActionId;
     private final String myBrowserDataKey;
+    @NotNull private final LanguageExtension<HierarchyProvider> myProviderLanguageExtension;
 
-    public BaseOnThisElementAction(String text, String actionId, String browserDataKey) {
+    BaseOnThisElementAction(@NotNull String text,
+                            @NotNull String actionId,
+                            @NotNull String browserDataKey,
+                            @NotNull LanguageExtension<HierarchyProvider> providerLanguageExtension) {
       super(text);
       myActionId = actionId;
       myBrowserDataKey = browserDataKey;
+      myProviderLanguageExtension = providerLanguageExtension;
     }
 
     @Override
@@ -579,12 +586,15 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
       final String currentViewType = browser.myCurrentViewType;
       Disposer.dispose(browser);
-      browser.setHierarchyBase(selectedElement);
-      browser.validate();
+      final HierarchyProvider provider = BrowseHierarchyActionBase.findProvider(myProviderLanguageExtension,
+                                                                                selectedElement,
+                                                                                selectedElement.getContainingFile(),
+                                                                                event.getDataContext());
+      final HierarchyBrowser newBrowser = BrowseHierarchyActionBase.createAndAddToPanel(selectedElement.getProject(), provider, selectedElement);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          browser.changeView(correctViewType(browser, currentViewType));
+          ((HierarchyBrowserBaseEx)newBrowser).changeView(correctViewType(browser, currentViewType));
         }
       });
     }
