@@ -164,9 +164,6 @@ class DependencyResolverImpl implements DependencyResolver {
     Multimap<ExternalDependencyId, ExternalDependency> resolvedMap = ArrayListMultimap.create()
     new DependencyTraverser(compileDependencies).each { resolvedMap.put(it.id, it) }
 
-    Multimap<ExternalDependencyId, ExternalDependency> toDelete = ArrayListMultimap.create()
-    new DependencyTraverser(runtimeDependencies).each { toDelete.put(it.id, it) }
-
     new DependencyTraverser(runtimeDependencies).each {
       Collection<ExternalDependency> dependencies = resolvedMap.get(it.id);
       if (dependencies && !dependencies.isEmpty()) {
@@ -180,15 +177,9 @@ class DependencyResolverImpl implements DependencyResolver {
       }
     }
 
-    toDelete = ArrayListMultimap.create()
-    new DependencyTraverser(runtimeDependencies).each { toDelete.put(it.id, it) }
-
     result.addAll(compileDependencies)
     result.addAll(runtimeDependencies)
     result.unique()
-
-    toDelete = ArrayListMultimap.create()
-    new DependencyTraverser(result).each { toDelete.put(it.id, it) }
 
     // merge file dependencies
     def jvmLanguages = ['Java', 'Groovy', 'Scala']
