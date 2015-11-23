@@ -189,7 +189,11 @@ internal class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>
             out.newLine()
           }
 
-          out.append('"').append(fieldLoader.jsonName).append('"').append(" -> ")
+          out.append('"')
+          if (fieldLoader.jsonName.first() == '$') {
+            out.append('\\')
+          }
+          out.append(fieldLoader.jsonName).append('"').append(" -> ")
 
           if (stopIfAllFieldsWereRead && !isTracedStop) {
             out.openBlock()

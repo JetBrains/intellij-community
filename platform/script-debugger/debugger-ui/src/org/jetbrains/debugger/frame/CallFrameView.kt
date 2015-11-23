@@ -80,7 +80,7 @@ class CallFrameView @JvmOverloads constructor(val callFrame: CallFrame,
     val textAttributes = if (isInLibraryContent) SimpleTextAttributes.GRAYED_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES
 
     val functionName = sourceInfo.functionName
-    if (functionName == null || (functionName.isEmpty() && callFrame.hasOnlyGlobalScope())) {
+    if (functionName == null || (functionName.isEmpty() && callFrame.hasOnlyGlobalScope)) {
       if (fileName.startsWith("index.")) {
         sourceInfo.file.parent?.let {
           component.append("${it.name}/", textAttributes)

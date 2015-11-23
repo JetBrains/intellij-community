@@ -86,26 +86,24 @@ class IcsManager(dir: File) {
 
   val repositoryService: RepositoryService = GitRepositoryService()
 
-  private val commitAlarm = SingleAlarm(object : Runnable {
-    override fun run() {
-      ProgressManager.getInstance().run(object : Task.Backgroundable(null, icsMessage("task.commit.title")) {
-        override fun run(indicator: ProgressIndicator) {
-          try {
-            repositoryManager.commit(indicator, fixStateIfCannotCommit = false)
-          }
-          catch (e: Throwable) {
-            LOG.error(e)
-          }
+  private val commitAlarm = SingleAlarm(Runnable {
+    ProgressManager.getInstance().run(object : Task.Backgroundable(null, icsMessage("task.commit.title")) {
+      override fun run(indicator: ProgressIndicator) {
+        try {
+          repositoryManager.commit(indicator, fixStateIfCannotCommit = false)
         }
-      })
-    }
+        catch (e: Throwable) {
+          LOG.error(e)
+        }
+      }
+    })
   }, settings.commitDelay)
 
   private @Volatile var autoCommitEnabled = true
 
   @Volatile var repositoryActive = false
 
-  val autoSyncManager = AutoSyncManager(this)
+  internal val autoSyncManager = AutoSyncManager(this)
   private val syncManager = SyncManager(this, autoSyncManager)
 
   private fun scheduleCommit() {

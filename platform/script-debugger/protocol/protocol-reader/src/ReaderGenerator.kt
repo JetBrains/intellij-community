@@ -25,7 +25,7 @@ private fun parseArgs(args: Array<String>): String {
 
   for (arg in args) {
     if (!arg.startsWith("--")) {
-      throw IllegalArgumentException("Unrecognized param: " + arg)
+      throw IllegalArgumentException("Unrecognized param: $arg")
     }
     val equalsPos = arg.indexOf('=', 2)
     val key: String
@@ -38,12 +38,12 @@ private fun parseArgs(args: Array<String>): String {
       key = arg.substring(2, equalsPos).trim()
       value = arg.substring(equalsPos + 1).trim()
     }
-    val paramListener = paramMap.get(key) ?: throw IllegalArgumentException("Unrecognized param name: " + key)
+    val paramListener = paramMap.get(key) ?: throw IllegalArgumentException("Unrecognized param name: $key")
     try {
       paramListener.value = value
     }
     catch (e: IllegalArgumentException) {
-      throw IllegalArgumentException("Failed to set value of " + key, e)
+      throw IllegalArgumentException("Failed to set value of $key", e)
     }
 
   }
@@ -86,7 +86,7 @@ private fun generate(configuration: GenerateConfiguration<*>, stringBuilder: Str
   out.append(':').space().append(configuration.root.type.canonicalName).append(if (configuration.root.type.isInterface) "" else "()").openBlock(false)
 
   val rootClassScope = fileScope.newClassScope()
-  configuration.root.writeStaticMethodJava(rootClassScope)
+  configuration.root.write(rootClassScope)
 
   for (typeWriter in configuration.typeToTypeHandler.values) {
     out.newLine()
@@ -106,7 +106,7 @@ private fun generate(configuration: GenerateConfiguration<*>, stringBuilder: Str
     val originName = typeWriter.typeClass.canonicalName
     out.newLine().append("private class ").append(TYPE_FACTORY_NAME_PREFIX).append(globalScope.getTypeImplShortName(typeWriter)).append(" : ObjectFactory<")
     out.append(originName).append(">()").openBlock()
-    out.append("override fun read(").append(JSON_READER_PARAMETER_DEF).append(") = ")
+    out.append("override fun read(").append(JSON_READER_PARAMETER_DEF).append("): ").append(originName).append(" = ")
     typeWriter.writeInstantiateCode(rootClassScope, out)
     out.append('(').append(READER_NAME).append(", null)")
     out.closeBlock()

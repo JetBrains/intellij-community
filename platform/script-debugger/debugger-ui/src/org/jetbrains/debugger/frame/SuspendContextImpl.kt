@@ -15,6 +15,7 @@
  */
 package org.jetbrains.debugger.frame
 
+import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XSuspendContext
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.rejectedPromise
@@ -26,7 +27,7 @@ import org.jetbrains.debugger.values.StringValue
 open class SuspendContextImpl(suspendContext: SuspendContext<out CallFrame>, debugProcess: DebuggerViewSupport, topFrameScript: Script?, topFrameSourceInfo: SourceInfo? = null) : XSuspendContext() {
   private val executionStack = ExecutionStackImpl(suspendContext, debugProcess, topFrameScript, topFrameSourceInfo)
 
-  override fun getActiveExecutionStack() = executionStack
+  override final fun getActiveExecutionStack(): XExecutionStack = executionStack
 
   fun evaluateExpression(expression: String): Promise<String> {
     val frame = executionStack.topFrame ?: return rejectedPromise("Top frame is null")

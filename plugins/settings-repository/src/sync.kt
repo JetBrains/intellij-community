@@ -35,7 +35,7 @@ import java.util.*
 
 private val LOG_1 = org.jetbrains.settingsRepository.LOG
 
-class SyncManager(private val icsManager: IcsManager, private val autoSyncManager: AutoSyncManager) {
+internal class SyncManager(private val icsManager: IcsManager, private val autoSyncManager: AutoSyncManager) {
   @Volatile var writeAndDeleteProhibited = false
     private set
 
@@ -157,29 +157,27 @@ internal fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateR
     return false
   }
 
-  return UIUtil.invokeAndWaitIfNeeded(object : Computable<Boolean> {
-    override fun compute(): Boolean {
-      val notReloadableComponents: Collection<String>
-      updateStateStorage(changedComponentNames, changed, false)
-      updateStateStorage(changedComponentNames, deleted, true)
+  return UIUtil.invokeAndWaitIfNeeded(Computable<kotlin.Boolean> {
+    val notReloadableComponents: Collection<String>
+    updateStateStorage(changedComponentNames, changed, false)
+    updateStateStorage(changedComponentNames, deleted, true)
 
-      if (changedComponentNames.isEmpty()) {
-        return false
-      }
-
-      notReloadableComponents = store.getNotReloadableComponents(changedComponentNames)
-
-      val changedStorageSet = THashSet<StateStorage>(changed)
-      changedStorageSet.addAll(deleted)
-      runBatchUpdate(messageBus) {
-        store.reinitComponents(changedComponentNames, changedStorageSet, notReloadableComponents)
-      }
-
-      if (notReloadableComponents.isEmpty()) {
-        return false
-      }
-      return askToRestart(store, notReloadableComponents, null, true)
+    if (changedComponentNames.isEmpty()) {
+      return@Computable false
     }
+
+    notReloadableComponents = store.getNotReloadableComponents(changedComponentNames)
+
+    val changedStorageSet = THashSet<StateStorage>(changed)
+    changedStorageSet.addAll(deleted)
+    runBatchUpdate(messageBus) {
+      store.reinitComponents(changedComponentNames, changedStorageSet, notReloadableComponents)
+    }
+
+    if (notReloadableComponents.isEmpty()) {
+      return@Computable false
+    }
+    askToRestart(store, notReloadableComponents, null, true)
   })!!
 }
 
@@ -200,6 +198,6 @@ enum class SyncType {
   OVERWRITE_REMOTE
 }
 
-class NoRemoteRepositoryException(cause: Throwable) : RuntimeException(cause.getMessage(), cause)
+class NoRemoteRepositoryException(cause: Throwable) : RuntimeException(cause.message, cause)
 
 class CannotResolveConflictInTestMode() : RuntimeException()

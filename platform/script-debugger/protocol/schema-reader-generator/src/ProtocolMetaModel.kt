@@ -14,11 +14,11 @@ val ANY_TYPE: String = "any"
 interface ItemDescriptor {
   fun description(): String?
 
-  fun type(): String
+  fun type(): String?
 
   fun getEnum(): List<String>?
 
-  fun items(): ProtocolMetaModel.ArrayItemType
+  fun items(): ProtocolMetaModel.ArrayItemType?
 
   interface Named : Referenceable {
     fun name(): String
@@ -30,7 +30,7 @@ interface ItemDescriptor {
   }
 
   interface Referenceable : ItemDescriptor {
-    fun ref(): String
+    fun ref(): String?
   }
 
   interface Type : ItemDescriptor {
@@ -46,106 +46,106 @@ interface ProtocolSchemaReader {
 /**
  * Defines schema of WIP metamodel defined in http://svn.webkit.org/repository/webkit/trunk/Source/WebCore/inspector/Inspector.json
  */
-public interface ProtocolMetaModel {
+interface ProtocolMetaModel {
   @JsonType
-  public interface Root {
+  interface Root {
     @JsonOptionalField
-    public fun version(): Version
+    fun version(): Version?
 
-    public fun domains(): List<Domain>
+    fun domains(): List<Domain>
   }
 
   @JsonType
-  public interface Version {
-    public fun major(): String
-    public fun minor(): String
+  interface Version {
+    fun major(): String
+    fun minor(): String
   }
 
   @JsonType
-  public interface Domain {
-    public fun domain(): String
+  interface Domain {
+    fun domain(): String
 
     @JsonOptionalField
-    public fun types(): List<StandaloneType>?
+    fun types(): List<StandaloneType>?
 
-    public fun commands(): List<Command>
-
-    @JsonOptionalField
-    public fun events(): List<Event>?
+    fun commands(): List<Command>
 
     @JsonOptionalField
-    public fun description(): String
+    fun events(): List<Event>?
 
     @JsonOptionalField
-    public fun hidden(): Boolean
+    fun description(): String?
+
+    @JsonOptionalField
+    fun hidden(): Boolean
   }
 
   @JsonType
-  public interface Command {
-    public fun name(): String
+  interface Command {
+    fun name(): String
 
     @JsonOptionalField
-    public fun parameters(): List<Parameter>?
+    fun parameters(): List<Parameter>?
 
     @JsonOptionalField
-    public fun returns(): List<Parameter>?
+    fun returns(): List<Parameter>?
 
     @JsonOptionalField
-    public fun description(): String
+    fun description(): String?
 
     @JsonOptionalField
-    public fun hidden(): Boolean
+    fun hidden(): Boolean
 
     @JsonOptionalField
-    public fun async(): Boolean
+    fun async(): Boolean
   }
 
   @JsonType
-  public interface Parameter : ItemDescriptor.Named {
+  interface Parameter : ItemDescriptor.Named {
     override fun name(): String
 
     @JsonOptionalField
-    override fun shortName(): String
+    override fun shortName(): String?
 
     @JsonOptionalField
-    override fun type(): String
+    override fun type(): String?
 
     @JsonOptionalField
-    override fun items(): ArrayItemType
+    override fun items(): ArrayItemType?
 
     @JsonField(name = "enum", optional = true)
-    override fun getEnum(): List<String>
+    override fun getEnum(): List<String>?
 
     @JsonField(name = "\$ref", optional = true)
-    override fun ref(): String
+    override fun ref(): String?
 
     @JsonOptionalField
     override fun optional(): Boolean
 
     @JsonOptionalField
-    override fun description(): String
+    override fun description(): String?
 
     @JsonOptionalField
     public fun hidden(): Boolean
   }
 
   @JsonType
-  public interface Event {
-    public fun name(): String
+  interface Event {
+    fun name(): String
 
     @JsonOptionalField
-    public fun parameters(): List<Parameter>
+    fun parameters(): List<Parameter>?
 
     @JsonOptionalField
-    public fun description(): String
+    fun description(): String?
 
     @JsonOptionalField
-    public fun hidden(): Boolean
+    fun hidden(): Boolean
   }
 
   @JsonType
-  public interface StandaloneType : ItemDescriptor.Type {
-    public fun id(): String
+  interface StandaloneType : ItemDescriptor.Type {
+    fun id(): String
 
     @JsonOptionalField
     override fun description(): String?
@@ -156,66 +156,66 @@ public interface ProtocolMetaModel {
     public fun hidden(): Boolean
 
     @JsonOptionalField
-    override fun properties(): List<ObjectProperty>
+    override fun properties(): List<ObjectProperty>?
 
     @JsonField(name = "enum", optional = true)
-    override fun getEnum(): List<String>
+    override fun getEnum(): List<String>?
 
     @JsonOptionalField
-    override fun items(): ArrayItemType
+    override fun items(): ArrayItemType?
   }
 
 
   @JsonType
-  public interface ArrayItemType : ItemDescriptor.Type, ItemDescriptor.Referenceable {
+  interface ArrayItemType : ItemDescriptor.Type, ItemDescriptor.Referenceable {
     @JsonOptionalField
-    override fun description(): String
+    override fun description(): String?
 
     @JsonOptionalField
     public fun optional(): Boolean
 
     @JsonOptionalField
-    override fun type(): String
+    override fun type(): String?
 
     @JsonOptionalField
-    override fun items(): ArrayItemType
+    override fun items(): ArrayItemType?
 
     @JsonField(name = "\$ref", optional = true)
-    override fun ref(): String
+    override fun ref(): String?
 
     @JsonField(name = "enum", optional = true)
-    override fun getEnum(): List<String>
+    override fun getEnum(): List<String>?
 
     @JsonOptionalField
-    override fun properties(): List<ObjectProperty>
+    override fun properties(): List<ObjectProperty>?
   }
 
   @JsonType
-  public interface ObjectProperty : ItemDescriptor.Named {
+  interface ObjectProperty : ItemDescriptor.Named {
     override fun name(): String
 
     @JsonOptionalField
-    override fun shortName(): String
+    override fun shortName(): String?
 
     @JsonOptionalField
-    override fun description(): String
+    override fun description(): String?
 
     @JsonOptionalField
     override fun optional(): Boolean
 
     @JsonOptionalField
-    override fun type(): String
+    override fun type(): String?
 
     @JsonOptionalField
-    override fun items(): ArrayItemType
+    override fun items(): ArrayItemType?
 
     @JsonField(name = "\$ref", optional = true)
-    override fun ref(): String
+    override fun ref(): String?
 
     @JsonField(name = "enum", optional = true)
-    override fun getEnum(): List<String>
+    override fun getEnum(): List<String>?
 
     @JsonOptionalField
-    public fun hidden(): Boolean
+    fun hidden(): Boolean
   }
 }
