@@ -114,13 +114,7 @@ public class VfsUtilCore {
   }
 
   public static boolean isAncestor(@NotNull File ancestor, @NotNull File file, boolean strict) {
-    File parent = strict ? file.getParentFile() : file;
-    while (parent != null) {
-      if (parent.equals(ancestor)) return true;
-      parent = parent.getParentFile();
-    }
-
-    return false;
+    return FileUtil.isAncestor(ancestor, file, strict);
   }
 
   @Nullable
