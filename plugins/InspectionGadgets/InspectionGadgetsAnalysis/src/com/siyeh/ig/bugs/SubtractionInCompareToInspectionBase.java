@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiSuperMethodUtil;
@@ -25,9 +27,35 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.MethodMatcher;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public class SubtractionInCompareToInspection extends BaseInspection {
+public class SubtractionInCompareToInspectionBase extends BaseInspection {
+
+  protected final MethodMatcher methodMatcher;
+
+  public SubtractionInCompareToInspectionBase() {
+    methodMatcher = new MethodMatcher()
+      .add(CommonClassNames.JAVA_UTIL_COLLECTION, "size")
+      .add(CommonClassNames.JAVA_UTIL_MAP, "size")
+      .add(CommonClassNames.JAVA_LANG_STRING, "length")
+      .add(CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER, "length")
+      .finishDefault();
+  }
+
+  @Override
+  public void readSettings(@NotNull Element node) throws InvalidDataException {
+    super.readSettings(node);
+    methodMatcher.readSettings(node);
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    super.writeSettings(node);
+    methodMatcher.writeSettings(node);
+  }
 
   @Override
   @NotNull
@@ -46,7 +74,7 @@ public class SubtractionInCompareToInspection extends BaseInspection {
     return new SubtractionInCompareToVisitor();
   }
 
-  private static class SubtractionInCompareToVisitor extends BaseInspectionVisitor {
+  private class SubtractionInCompareToVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitPolyadicExpression(PsiPolyadicExpression expression) {
@@ -55,7 +83,9 @@ public class SubtractionInCompareToInspection extends BaseInspection {
       if (!tokenType.equals(JavaTokenType.MINUS)) {
         return;
       }
-
+      if (isSafeSubtraction(expression)) {
+        return;
+      }
       final PsiLambdaExpression lambdaExpression =
         PsiTreeUtil.getParentOfType(expression, PsiLambdaExpression.class, true, PsiMember.class);
       if (lambdaExpression != null) {
@@ -84,6 +114,51 @@ public class SubtractionInCompareToInspection extends BaseInspection {
         return;
       }
       registerError(expression);
+    }
+
+    private boolean isSafeSubtraction(PsiPolyadicExpression polyadicExpression) {
+      final PsiType type = polyadicExpression.getType();
+      if (!(PsiType.INT).equals(type)) {
+        return false;
+      }
+      final PsiExpression[] operands = polyadicExpression.getOperands();
+      if (operands.length != 2) {
+        return false;
+      }
+      final PsiExpression lhs = operands[0];
+      final PsiExpression rhs = operands[1];
+      final PsiType lhsType = lhs.getType();
+      final PsiType rhsType = rhs.getType();
+      if (lhsType == null || rhsType == null) {
+        return false;
+      }
+      if ((PsiType.BYTE.equals(lhsType) || PsiType.SHORT.equals(lhsType) || PsiType.CHAR.equals(lhsType)) &&
+          (PsiType.BYTE.equals(rhsType) || PsiType.SHORT.equals(rhsType) || PsiType.CHAR.equals(rhsType))) {
+        return true;
+      }
+      return isSafeOperand(lhs) && isSafeOperand(rhs);
+    }
+
+    private boolean isSafeOperand(PsiExpression operand) {
+      operand = ParenthesesUtils.stripParentheses(operand);
+      if (operand instanceof PsiMethodCallExpression) {
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)operand;
+        return methodMatcher.matches(methodCallExpression);
+      }
+      else if (operand instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)operand;
+        final String name = referenceExpression.getReferenceName();
+        if (!"length".equals(name)) {
+          return false;
+        }
+        final PsiExpression qualifier = ParenthesesUtils.stripParentheses(referenceExpression.getQualifierExpression());
+        if (!(qualifier instanceof PsiReferenceExpression)) {
+          return false;
+        }
+        final PsiType type = qualifier.getType();
+        return type instanceof PsiArrayType;
+      }
+      return false;
     }
   }
 }
