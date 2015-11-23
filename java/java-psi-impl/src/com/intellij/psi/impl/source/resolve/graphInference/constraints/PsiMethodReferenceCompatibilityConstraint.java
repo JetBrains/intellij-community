@@ -57,6 +57,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
     final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(groundTargetType);
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(classResolveResult);
     if (interfaceMethod == null) {
+      session.registerIncompatibleErrorMessage("No valid function type can be found for " + myT.getPresentableText());
       return false;
     }
 
@@ -97,16 +98,20 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
           constraints.add(new TypeCompatibilityConstraint(session.substituteWithInferenceVariables(psiSubstitutor.substitute(parameters[i - 1].getType())),
                                                           signature.getParameterTypes()[i]));
         }
-      } else if (targetParameters.length == parameters.length) {
+      }
+      else if (targetParameters.length == parameters.length) {
         for (int i = 0; i < targetParameters.length; i++) {
           constraints.add(new TypeCompatibilityConstraint(session.substituteWithInferenceVariables(psiSubstitutor.substitute(parameters[i].getType())),
                                                           signature.getParameterTypes()[i]));
         }
-      } else {
+      }
+      else {
+        session.registerIncompatibleErrorMessage("Incompatible parameter types in method reference expression");
         return false;
       }
       if (!PsiType.VOID.equals(returnType) && returnType != null) {
         if (PsiType.VOID.equals(applicableMethodReturnType)) {
+          session.registerIncompatibleErrorMessage("Incompatible types: expected not void but compile-time declaration for the method reference has void return type");
           return false;
         }
 
@@ -129,6 +134,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
 
     for (PsiType paramType : signature.getParameterTypes()) {
       if (!session.isProperType(paramType)) {
+        //session.registerIncompatibleErrorMessage("Parameter type in not yet inferred: " + type.getPresentableText());
         return false;
       }
     }
@@ -146,6 +152,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
     }
     final PsiElement element = resolve.getElement();
     if (element == null) {
+      session.registerIncompatibleErrorMessage("No compile-time declaration for the method reference is found");
       return false;
     }
 
@@ -187,6 +194,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       }
 
       if (PsiType.VOID.equals(referencedMethodReturnType)) {
+        session.registerIncompatibleErrorMessage("Incompatible types: expected not void but compile-time declaration for the method reference has void return type");
         return false;
       }
  
