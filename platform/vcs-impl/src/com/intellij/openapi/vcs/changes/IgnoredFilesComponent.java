@@ -27,11 +27,17 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class IgnoredFilesComponent {
   private final Set<IgnoredFileBean> myFilesToIgnore;
   private final Map<String, IgnoredFileBean> myFilesMap;
   private final Set<String> myDirectoriesManuallyRemovedFromIgnored;
+  private final ReadWriteLock myLock = new ReentrantReadWriteLock();
+  private final Lock myReadLock = myLock.readLock();
+  private final Lock myWriteLock = myLock.writeLock();
 
   public IgnoredFilesComponent(final Project project, final boolean registerListener) {
     myFilesToIgnore = new LinkedHashSet<IgnoredFileBean>();
@@ -66,9 +72,13 @@ public class IgnoredFilesComponent {
   }
 
   public void add(final IgnoredFileBean... filesToIgnore) {
-    synchronized (myFilesToIgnore) {
+    myWriteLock.lock();
+    try {
       Collections.addAll(myFilesToIgnore, filesToIgnore);
       addIgnoredFiles(filesToIgnore);
+    }
+    finally {
+      myWriteLock.unlock();
     }
   }
 
@@ -82,7 +92,8 @@ public class IgnoredFilesComponent {
   }
 
   public void addIgnoredDirectoryImplicitly(@NotNull String path, @NotNull Project project) {
-    synchronized (myFilesToIgnore) {
+    myWriteLock.lock();
+    try {
       if (myDirectoriesManuallyRemovedFromIgnored.contains(path) || myDirectoriesManuallyRemovedFromIgnored.contains(path + "/")) {
         return;
       }
@@ -101,6 +112,9 @@ public class IgnoredFilesComponent {
       myFilesToIgnore.removeAll(toRemove);
       myFilesToIgnore.add(IgnoredBeanFactory.ignoreUnderDirectory(path, project));
     }
+    finally {
+      myWriteLock.unlock();
+    }
   }
 
   private void addIgnoredFiles(final IgnoredFileBean... filesToIgnore) {
@@ -117,43 +131,64 @@ public class IgnoredFilesComponent {
   }
 
   public void clear() {
-    synchronized (myFilesToIgnore) {
+    myWriteLock.lock();
+    try {
       myFilesToIgnore.clear();
       myFilesMap.clear();
+    }
+    finally {
+      myWriteLock.unlock();
     }
   }
 
   public boolean isEmpty() {
-    synchronized (myFilesToIgnore) {
+    myReadLock.lock();
+    try {
       return myFilesToIgnore.isEmpty();
+    }
+    finally {
+      myReadLock.unlock();
     }
   }
 
   public void set(final IgnoredFileBean... filesToIgnore) {
-    synchronized (myFilesToIgnore) {
+    myWriteLock.lock();
+    try {
       myFilesToIgnore.clear();
       Collections.addAll(myFilesToIgnore, filesToIgnore);
       myFilesMap.clear();
       addIgnoredFiles(filesToIgnore);
     }
+    finally {
+      myWriteLock.unlock();
+    }
   }
 
   public IgnoredFileBean[] getFilesToIgnore() {
-    synchronized (myFilesToIgnore) {
+    myReadLock.lock();
+    try {
       return myFilesToIgnore.toArray(new IgnoredFileBean[myFilesToIgnore.size()]);
+    }
+    finally {
+      myReadLock.unlock();
     }
   }
 
   private void resetCaches() {
-    synchronized (myFilesToIgnore) {
+    myWriteLock.lock();
+    try {
       for (IgnoredFileBean bean : myFilesToIgnore) {
         bean.resetCache();
       }
     }
+    finally {
+      myWriteLock.unlock();
+    }
   }
 
   public boolean isIgnoredFile(@NotNull VirtualFile file) {
-    synchronized (myFilesToIgnore) {
+    myReadLock.lock();
+    try {
       if (myFilesToIgnore.size() == 0) return false;
 
       final String path = FilePathsHelper.convertPath(file);
@@ -164,6 +199,9 @@ public class IgnoredFilesComponent {
         if (bean.matchesFile(file)) return true;
       }
       return false;
+    }
+    finally {
+      myReadLock.unlock();
     }
   }
 }

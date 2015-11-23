@@ -41,7 +41,7 @@ import static org.junit.Assert.assertNotNull;
 
 public class BaseOutputReaderTest {
   private static final String[] TEST_DATA = {"first\n", "incomplete", "-continuation\n", "last\n"};
-  private static final int TIMEOUT = 100;
+  private static final int TIMEOUT = 500;
 
   private static ThreadPoolExecutor ourExecutor;
 
@@ -50,7 +50,7 @@ public class BaseOutputReaderTest {
 
     public TestOutputReader(InputStream stream, SleepingPolicy sleepingPolicy) {
       super(stream, null, sleepingPolicy);
-      start();
+      start(BaseOutputReaderTest.class.getSimpleName());
     }
 
     @Override
@@ -71,14 +71,9 @@ public class BaseOutputReaderTest {
   }
 
   @AfterClass
-  public static void tearDown() {
+  public static void tearDown() throws InterruptedException {
     ourExecutor.shutdown();
-    try {
-      ourExecutor.awaitTermination(1000, TimeUnit.SECONDS);
-    }
-    catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
+    ourExecutor.awaitTermination(120, TimeUnit.SECONDS);
     ourExecutor = null;
   }
 

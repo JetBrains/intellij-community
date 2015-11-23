@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,12 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -45,7 +47,7 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.hierarchy.actions.BrowseHierarchyActionBase");
   private final LanguageExtension<HierarchyProvider> myExtension;
 
-  protected BrowseHierarchyActionBase(final LanguageExtension<HierarchyProvider> extension) {
+  protected BrowseHierarchyActionBase(@NotNull LanguageExtension<HierarchyProvider> extension) {
     myExtension = extension;
   }
 
@@ -61,6 +63,10 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
     if (provider == null) return;
     final PsiElement target = provider.getTarget(dataContext);
     if (target == null) return;
+    createAndAddToPanel(project, provider, target);
+  }
+
+  public static HierarchyBrowser createAndAddToPanel(@NotNull Project project, @NotNull final HierarchyProvider provider, @NotNull PsiElement target) {
     final HierarchyBrowser hierarchyBrowser = provider.createHierarchyBrowser(target);
 
     final Content content;
@@ -91,6 +97,7 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
       }
     };
     ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.HIERARCHY).activate(runnable);
+    return hierarchyBrowser;
   }
 
   @Override
@@ -125,9 +132,17 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
 
   @Nullable
   private HierarchyProvider getProvider(final AnActionEvent e) {
-    final HierarchyProvider provider = findBestHierarchyProvider(myExtension, e.getData(CommonDataKeys.PSI_ELEMENT), e.getDataContext());
+    return findProvider(myExtension, e.getData(CommonDataKeys.PSI_ELEMENT), e.getData(CommonDataKeys.PSI_FILE), e.getDataContext());
+  }
+
+  @Nullable
+  public static HierarchyProvider findProvider(@NotNull LanguageExtension<HierarchyProvider> extension,
+                                               @Nullable PsiElement psiElement,
+                                               @Nullable PsiFile psiFile,
+                                               @NotNull DataContext dataContext) {
+    final HierarchyProvider provider = findBestHierarchyProvider(extension, psiElement, dataContext);
     if (provider == null) {
-      return findBestHierarchyProvider(myExtension, e.getData(CommonDataKeys.PSI_FILE), e.getDataContext());
+      return findBestHierarchyProvider(extension, psiFile, dataContext);
     }
     return provider;
   }

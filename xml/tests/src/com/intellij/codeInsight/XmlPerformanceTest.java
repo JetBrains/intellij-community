@@ -27,7 +27,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -75,14 +74,11 @@ public class XmlPerformanceTest extends LightQuickFixTestCase {
     doHighlighting();
     myEditor.getSelectionModel().setSelection(0,myEditor.getDocument().getTextLength());
 
-    PlatformTestUtil.startPerformanceTest("Fix long indent/unindent "+time, time, new ThrowableRunnable() {
-      @Override
-      public void run() {
-        EditorActionManager.getInstance().getActionHandler("EditorIndentSelection").execute(myEditor, DataManager.getInstance().getDataContext());
+    PlatformTestUtil.startPerformanceTest("Fix long indent/unindent "+time, time, () -> {
+      EditorActionManager.getInstance().getActionHandler("EditorIndentSelection").execute(myEditor, DataManager.getInstance().getDataContext());
 
-        EditorActionManager.getInstance().getActionHandler("EditorUnindentSelection").execute(myEditor, DataManager.getInstance().getDataContext());
-      }
-    }).assertTiming();
+      EditorActionManager.getInstance().getActionHandler("EditorUnindentSelection").execute(myEditor, DataManager.getInstance().getDataContext());
+    }).cpuBound().assertTiming();
     final int startOffset = myEditor.getCaretModel().getOffset();
     myEditor.getSelectionModel().setSelection(startOffset,startOffset);
     checkResultByFile(getBasePath() + getTestName(false)+".xml");

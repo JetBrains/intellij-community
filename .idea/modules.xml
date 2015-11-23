@@ -165,7 +165,7 @@
       <module fileurl="file://$PROJECT_DIR$/java/manifest/manifest.iml" filepath="$PROJECT_DIR$/java/manifest/manifest.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/build-system/manifest-merger/manifest-merger.iml" filepath="$PROJECT_DIR$/android/tools-base/build-system/manifest-merger/manifest-merger.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven.iml" filepath="$PROJECT_DIR$/plugins/maven/maven.iml" group="plugins/maven" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/maven/artifact-resolver/common/maven-artifact-resolver-common.iml" filepath="$PROJECT_DIR$/plugins/maven/artifact-resolver/common/maven-artifact-resolver-common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/maven/artifact-resolver/common/maven-artifact-resolver-common.iml" filepath="$PROJECT_DIR$/plugins/maven/artifact-resolver/common/maven-artifact-resolver-common.iml" group="plugins/maven" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/artifact-resolver-m2/maven-artifact-resolver-m2.iml" filepath="$PROJECT_DIR$/plugins/maven/artifact-resolver-m2/maven-artifact-resolver-m2.iml" group="plugins/maven" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/artifact-resolver-m3/maven-artifact-resolver-m3.iml" filepath="$PROJECT_DIR$/plugins/maven/artifact-resolver-m3/maven-artifact-resolver-m3.iml" group="plugins/maven" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/artifact-resolver-m31/maven-artifact-resolver-m31.iml" filepath="$PROJECT_DIR$/plugins/maven/artifact-resolver-m31/maven-artifact-resolver-m31.iml" group="plugins/maven" />
@@ -193,6 +193,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/python-community.iml" filepath="$PROJECT_DIR$/python/python-community.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/build/python-community-build.iml" filepath="$PROJECT_DIR$/python/build/python-community-build.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/pluginSrc/python-community-plugin.iml" filepath="$PROJECT_DIR$/python/pluginSrc/python-community-plugin.iml" group="python" />
+      <module fileurl="file://$PROJECT_DIR$/python/python-community-plugin-resources.iml" filepath="$PROJECT_DIR$/python/python-community-plugin-resources.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/testSrc/python-community-tests.iml" filepath="$PROJECT_DIR$/python/testSrc/python-community-tests.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/edu/build/python-edu-build.iml" filepath="$PROJECT_DIR$/python/edu/build/python-edu-build.iml" group="python/educational" />
       <module fileurl="file://$PROJECT_DIR$/python/edu/python-educational.iml" filepath="$PROJECT_DIR$/python/edu/python-educational.iml" group="python/educational" />

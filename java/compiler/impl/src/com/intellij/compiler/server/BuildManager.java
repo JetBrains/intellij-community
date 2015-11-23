@@ -1315,9 +1315,10 @@ public class BuildManager implements Disposable {
     return 0;
   }
 
-  public void stopListening() {
-    myChannelRegistrar.close();
+  @NotNull
+  public Future<?> stopListening() {
     myListenPort = -1;
+    return myChannelRegistrar.close(true);
   }
 
   private int startListening() throws Exception {

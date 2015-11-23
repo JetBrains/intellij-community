@@ -25,7 +25,9 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -38,6 +40,7 @@ import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,12 +135,19 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
     return revision;
   }
 
+  @Nullable
+  protected VcsKey getVcsKey(@NotNull AnActionEvent event) {
+    return event.getData(VcsDataKeys.VCS);
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabled(e.getProject() != null &&
-                                   VcsLogContentProvider.findLogManager(e.getProject()) != null &&
-                                   getRevisionNumber(e) != null);
+    Project project = e.getProject();
+    e.getPresentation().setEnabledAndVisible(project != null &&
+                                             VcsLogContentProvider.findLogManager(project) != null &&
+                                             getRevisionNumber(e) != null &&
+                                             Comparing.equal(getVcsKey(e), GitVcs.getKey()));
   }
 
   @Nullable

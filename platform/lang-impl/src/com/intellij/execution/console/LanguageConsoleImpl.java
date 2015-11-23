@@ -252,7 +252,9 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        myConsoleEditor.setPrefixTextAndAttributes(prompt, myPromptAttributes.getAttributes());
+        if (!myConsoleEditor.isDisposed()) {
+          myConsoleEditor.setPrefixTextAndAttributes(prompt, myPromptAttributes.getAttributes());
+        }
       }
     });
   }
