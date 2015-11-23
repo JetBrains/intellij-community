@@ -25,6 +25,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.psi.*;
@@ -78,11 +79,42 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     else if (FOLDABLE_COLLECTIONS_LITERALS.contains(elementType)) {
       foldCollectionLiteral(node, descriptors);
     }
+    else if (elementType == PyTokenTypes.END_OF_LINE_COMMENT) {
+      foldSequentialComments(node, descriptors);
+    }
     ASTNode child = node.getFirstChildNode();
     while (child != null) {
       appendDescriptors(child, descriptors);
       child = child.getTreeNext();
     }
+  }
+
+  private static void foldSequentialComments(ASTNode node, List<FoldingDescriptor> descriptors) {
+    //need to skip previous comments in sequence
+    ASTNode curNode = node.getTreePrev();
+    while (curNode != null) {
+      if (curNode.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
+        return;
+      }
+      curNode = curNode.getPsi() instanceof PsiWhiteSpace ? curNode.getTreePrev() : null;
+    }
+
+    //fold sequence comments in one block
+    curNode = node.getTreeNext();
+    ASTNode lastCommentNode = node;
+    while (curNode != null) {
+      if (curNode.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
+        lastCommentNode = curNode;
+        curNode = curNode.getTreeNext();
+        continue;
+      }
+      curNode = curNode.getPsi() instanceof PsiWhiteSpace ? curNode.getTreeNext() : null;
+    }
+
+    if (lastCommentNode != node) {
+      descriptors.add(new FoldingDescriptor(node, TextRange.create(node.getStartOffset(), lastCommentNode.getTextRange().getEndOffset())));
+    }
+
   }
 
   private static void foldCollectionLiteral(ASTNode node, List<FoldingDescriptor> descriptors) {
