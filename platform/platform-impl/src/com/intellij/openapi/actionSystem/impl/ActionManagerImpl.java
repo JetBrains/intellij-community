@@ -23,14 +23,16 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationActivationListener;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -39,9 +41,9 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
@@ -70,7 +72,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.Future;
 
 public final class ActionManagerImpl extends ActionManagerEx implements Disposable {
   @NonNls public static final String ACTION_ELEMENT_NAME = "action";
@@ -133,7 +134,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private String myLastPreformedActionId;
   private String myPrevPerformedActionId;
   private long myLastTimeEditorWasTypedIn = 0;
-  private Runnable myPreloadActionsRunnable;
   private boolean myTransparentOnlyUpdate;
   private int myActionsPreloaded = 0;
 
@@ -1255,76 +1255,27 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  public Future<?> preloadActions() {
-    if (myPreloadActionsRunnable == null) {
-      myPreloadActionsRunnable = new Runnable() {
-        @Override
-        public void run() {
-          try {
-            SearchableOptionsRegistrar.getInstance(); // load inspection descriptions etc. to be used in Goto Action, Search Everywhere 
-            doPreloadActions();
-          } catch (RuntimeInterruptedException ignore) {
-          }
-        }
-      };
-      return ApplicationManager.getApplication().executeOnPooledThread(myPreloadActionsRunnable);
-    }
-    return null;
-  }
-
-  private void doPreloadActions() {
-    pausePreloading(5000); // wait for project initialization to complete
-    preloadActionGroup(IdeActions.GROUP_EDITOR_POPUP);
-    preloadActionGroup(IdeActions.GROUP_EDITOR_TAB_POPUP);
-    preloadActionGroup(IdeActions.GROUP_PROJECT_VIEW_POPUP);
-    preloadActionGroup(IdeActions.GROUP_MAIN_MENU);
-    preloadActionGroup(IdeActions.GROUP_NEW);
-    // TODO anything else?
-    LOG.debug("Actions preloading completed");
-  }
-
-  public void preloadActionGroup(final String groupId) {
-    final AnAction action = getAction(groupId);
-    if (action instanceof ActionGroup) {
-      preloadActionGroup((ActionGroup) action);
-    }
-  }
-
-  private void preloadActionGroup(final ActionGroup group) {
+  public void preloadActions(ProgressIndicator indicator) {
     final Application application = ApplicationManager.getApplication();
-    final AnAction[] children = application.runReadAction(new Computable<AnAction[]>() {
-      @Override
-      public AnAction[] compute() {
-        if (application.isDisposed()) {
-          return AnAction.EMPTY_ARRAY;
-        }
 
-        return group.getChildren(null);
-      }
-    });
-    for (AnAction action : children) {
+    for (String id : getActionIds()) {
+      indicator.checkCanceled();
+      if (application.isDisposed()) return;
+
+      final AnAction action = getAction(id);
       if (action instanceof PreloadableAction) {
         ((PreloadableAction)action).preload();
       }
       else if (action instanceof ActionGroup) {
-        preloadActionGroup((ActionGroup)action);
+        application.runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            if (!application.isDisposed()) {
+              ((ActionGroup)action).getChildren(null);
+            }
+          }
+        });
       }
-
-      myActionsPreloaded++;
-      if (myActionsPreloaded % 10 == 0) {
-        pausePreloading(300);
-      }
-    }
-  }
-
-  private static void pausePreloading(int millis) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-
-    try {
-      Thread.sleep(millis);
-    }
-    catch (InterruptedException ignored) {
-      throw new RuntimeInterruptedException(ignored);
     }
   }
 
