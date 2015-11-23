@@ -189,6 +189,10 @@ public class CodeStyleSchemesModel {
     myDispatcher.getMulticaster().schemeChanged(scheme);
   }
 
+  public void fireSchemeListChanged() {
+    myDispatcher.getMulticaster().schemeListChanged();
+  }
+
   public CodeStyleScheme getSelectedGlobalScheme() {
     return myGlobalSelected;
   }

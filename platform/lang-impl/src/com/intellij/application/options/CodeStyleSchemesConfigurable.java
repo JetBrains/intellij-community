@@ -276,7 +276,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
         @Override
         public void schemeChanged(final CodeStyleScheme scheme) {
-          reset();
+          if (scheme == myModel.getSelectedScheme()) myRootSchemesPanel.onSelectedSchemeChanged();
         }
       });
     }
