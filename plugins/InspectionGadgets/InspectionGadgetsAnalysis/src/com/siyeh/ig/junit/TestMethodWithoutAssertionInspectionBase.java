@@ -18,42 +18,30 @@ package com.siyeh.ig.junit;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.TestUtils;
+import com.siyeh.ig.psiutils.MethodMatcher;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
-
 public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
-  protected final List<String> methodNamePatterns = new ArrayList<String>();
-  protected final List<String> classNames = new ArrayList<String>();
-  /**
-   * @noinspection PublicField
-   */
-  @NonNls public String assertionMethods =
-    "org.junit.Assert,assert.*|fail.*," +
-    "junit.framework.Assert,assert.*|fail.*," +
-    "org.mockito.Mockito,verify.*," +
-    "org.mockito.InOrder,verify," +
-    "org.junit.rules.ExpectedException,expect.*," +
-    "org.hamcrest.MatcherAssert,assertThat";
-  @SuppressWarnings("PublicField")
-  public boolean assertKeywordIsAssertion;
-  private Map<String, Pattern> patternCache;
+
+  protected final MethodMatcher methodMatcher;
+  @SuppressWarnings("PublicField") public boolean assertKeywordIsAssertion;
 
   public TestMethodWithoutAssertionInspectionBase() {
-    parseString(assertionMethods, classNames, methodNamePatterns);
+    methodMatcher = new MethodMatcher(true, "assertionMethods")
+      .add("org.junit.Assert", "assert.*|fail.*")
+      .add("junit.framework.Assert", "assert.*|fail.*")
+      .add("org.mockito.Mockito", "verify.*")
+      .add("org.mockito.InOrder", "verify")
+      .add("org.junit.rules.ExpectedException", "expect.*")
+      .add("org.hamcrest.MatcherAssert", "assertThat")
+      .finishDefault();
   }
 
   @Override
@@ -77,12 +65,12 @@ public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
   @Override
   public void readSettings(@NotNull Element element) throws InvalidDataException {
     super.readSettings(element);
-    parseString(assertionMethods, classNames, methodNamePatterns);
+    methodMatcher.readSettings(element);
   }
 
   @Override
   public void writeSettings(@NotNull Element element) throws WriteExternalException {
-    assertionMethods = formatString(classNames, methodNamePatterns);
+    methodMatcher.writeSettings(element);
     super.writeSettings(element);
   }
 
@@ -91,32 +79,7 @@ public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
     return new TestMethodWithoutAssertionVisitor();
   }
 
-  private boolean methodNamesMatch(String methodName, String methodNamePattern) {
-    Pattern pattern;
-    if (patternCache != null) {
-      pattern = patternCache.get(methodNamePattern);
-    }
-    else {
-      patternCache = new HashMap<String, Pattern>(methodNamePatterns.size());
-      pattern = null;
-    }
-    if (pattern == null) {
-      try {
-        pattern = Pattern.compile(methodNamePattern);
-        patternCache.put(methodNamePattern, pattern);
-      }
-      catch (PatternSyntaxException ignore) {
-        return false;
-      }
-      catch (NullPointerException ignore) {
-        return false;
-      }
-    }
-    return pattern.matcher(methodName).matches();
-  }
-
-  private class TestMethodWithoutAssertionVisitor
-    extends BaseInspectionVisitor {
+  private class TestMethodWithoutAssertionVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
@@ -200,27 +163,8 @@ public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
         return;
       }
       super.visitMethodCallExpression(call);
-      final PsiReferenceExpression methodExpression = call.getMethodExpression();
-      @NonNls final String methodName = methodExpression.getReferenceName();
-      if (methodName == null) {
-        return;
-      }
-      final int methodNamesSize = methodNamePatterns.size();
-      for (int i = 0; i < methodNamesSize; i++) {
-        final String pattern = methodNamePatterns.get(i);
-        if (!methodNamesMatch(methodName, pattern)) {
-          continue;
-        }
-        final PsiMethod method = call.resolveMethod();
-        if (method == null || method.isConstructor()) {
-          continue;
-        }
-        final PsiClass aClass = method.getContainingClass();
-        if (!InheritanceUtil.isInheritor(aClass, classNames.get(i))) {
-          continue;
-        }
+      if (methodMatcher.matches(call)) {
         containsAssertion = true;
-        break;
       }
     }
 

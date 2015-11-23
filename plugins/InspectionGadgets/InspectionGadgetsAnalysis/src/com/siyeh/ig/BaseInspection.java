@@ -172,7 +172,7 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
     return valueField;
   }
 
-  protected static void parseString(String string, List<String>... outs) {
+  public static void parseString(String string, List<String>... outs) {
     final List<String> strings = StringUtil.split(string, ",");
     for (List<String> out : outs) {
       out.clear();
@@ -191,7 +191,7 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
     }
   }
 
-  protected static String formatString(List<String>... strings) {
+  public static String formatString(List<String>... strings) {
     final StringBuilder buffer = new StringBuilder();
     final int size = strings[0].size();
     if (size > 0) {
@@ -204,8 +204,7 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
     return buffer.toString();
   }
 
-  private static void formatString(List<String>[] strings, int index,
-                                   StringBuilder out) {
+  private static void formatString(List<String>[] strings, int index, StringBuilder out) {
     out.append(strings[0].get(index));
     for (int i = 1; i < strings.length; i++) {
       out.append(',');
