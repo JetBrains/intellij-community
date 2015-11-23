@@ -63,6 +63,10 @@ public class ExternalJavadocPresentationTest extends LightCodeInsightTestCase {
     doTest("SimpleInterface.html", "noMethodsOrFieldsInClass/SimpleInterface.html", "noMethodsOrFieldsInClass/expected.html");
   }
 
+  public void testPackageSummaryJava8() throws Exception {
+    doTest("package-summary.html", "packageSummaryJava8/package-summary.html", "packageSummaryJava8/expected.html");
+  }
+
   private void doTest(@NonNls String url, @NonNls String pageText, @NonNls String expected) throws Exception {
     doTest(url, pageText, expected, true);
   }
