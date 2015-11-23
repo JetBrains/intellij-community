@@ -128,6 +128,16 @@ class DependencyResolverImpl implements DependencyResolver {
         componentResults.each { componentResultsMap.put(it.id, it) }
 
         ResolutionResult resolutionResult = configuration.incoming.resolutionResult
+        def fileDeps = new LinkedHashSet<File>(configuration.incoming.files.files);
+        artifactMap
+        artifactMap.values().each {
+          fileDeps.remove(it.file)
+        }
+        fileDeps.each {
+          def fileCollectionDependency = new DefaultFileCollectionDependency([it])
+          fileCollectionDependency.scope = scope
+          result.add(fileCollectionDependency)
+        }
         result.addAll(transform(Lists.newArrayList(), resolutionResult.root.dependencies, artifactMap, componentResultsMap, scope))
       }
     }
