@@ -155,8 +155,7 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     }
     PsiElement element = statementList.getPsi();
     if (element instanceof PyStatementList) {
-      PyStatementList statements = (PyStatementList)element;
-      return statements.getStatements().length > 1;
+      return StringUtil.countNewLines(element.getText()) > 0;
     }
     return false;
   }

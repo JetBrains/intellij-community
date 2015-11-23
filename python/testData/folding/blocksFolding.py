@@ -28,10 +28,10 @@ while True:<fold text='...'>
 
 f = open('1.txt')
 ints = []
-try:
+try:<fold text='...'>
     for line in f:<fold text='...'>
         ints.append(int(line))
-        ints.append(int(line))</fold>
+        ints.append(int(line))</fold></fold>
 
 except ValueError:<fold text='...'>
     print('')
