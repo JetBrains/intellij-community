@@ -88,6 +88,26 @@ def patch_args(args):
                     new_args[indC + 1] = _get_python_c_args(host, port, indC, args)
                     return new_args
             else:
+                # Check for Python ZIP Applications and don't patch the args for them.
+                # Assumes the first non `-<flag>` argument is what we need to check.
+                # There's probably a better way to determine this but it works for most cases.
+                continue_next = False
+                for i in range(1, len(args)):
+                    if continue_next:
+                        continue_next = False
+                        continue
+
+                    arg = args[i]
+                    if arg.startswith('-'):
+                        # Skip the next arg too if this flag expects a value.
+                        continue_next = arg in ['-m', '-W', '-X']
+                        continue
+
+                    if arg.rsplit('.')[-1] in ['zip', 'pyz', 'pyzw']:
+                        log_debug('Executing a PyZip, returning')
+                        return args
+                    break
+
                 new_args.append(args[0])
         else:
             log_debug("Process is not python, returning.")
