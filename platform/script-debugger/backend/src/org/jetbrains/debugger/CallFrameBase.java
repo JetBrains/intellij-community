@@ -1,65 +1,24 @@
-package org.jetbrains.debugger;
+package org.jetbrains.debugger
 
-import com.intellij.openapi.util.NotNullLazyValue;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.NotNullLazyValue
 
-import java.util.List;
+const val RECEIVER_NAME = "this"
 
-public abstract class CallFrameBase implements CallFrame {
-  public static final String RECEIVER_NAME = "this";
+@Deprecated("")
+/**
+ * Use kotlin - base class is not required in this case (no boilerplate code)
+ */
+/**
+ * You must initialize [.scopes] or override [.getVariableScopes]
+ */
+abstract class CallFrameBase(override val functionName: String?, override val line: Int, override val column: Int, override val evaluateContext: EvaluateContext) : CallFrame {
+  protected var scopes: NotNullLazyValue<List<Scope>>? = null
 
-  private final String functionName;
-  private final int line;
-  private final int column;
+  override var hasOnlyGlobalScope: Boolean = false
+    protected set(value: Boolean) {
+      field = value
+    }
 
-  protected NotNullLazyValue<List<Scope>> scopes;
-
-  protected EvaluateContext evaluateContext;
-
-  protected boolean hasOnlyGlobalScope;
-
-  /**
-   * You must initialize {@link #scopes} or override {@link #getVariableScopes()}
-   */
-  protected CallFrameBase(@Nullable String functionName, int line, int column, @Nullable("init in your constructor") EvaluateContext evaluateContext) {
-    this.functionName = functionName;
-    this.line = line;
-    this.column = column;
-
-    this.evaluateContext = evaluateContext;
-  }
-
-  @Override
-  public final boolean hasOnlyGlobalScope() {
-    return hasOnlyGlobalScope;
-  }
-
-  @NotNull
-  @Override
-  public List<Scope> getVariableScopes() {
-    return scopes.getValue();
-  }
-
-  @Nullable
-  @Override
-  public String getFunctionName() {
-    return functionName;
-  }
-
-  @Override
-  public int getLine() {
-    return line;
-  }
-
-  @Override
-  public int getColumn() {
-    return column;
-  }
-
-  @NotNull
-  @Override
-  public final EvaluateContext getEvaluateContext() {
-    return evaluateContext;
-  }
+  override val variableScopes: List<Scope>
+    get() = scopes!!.value
 }
