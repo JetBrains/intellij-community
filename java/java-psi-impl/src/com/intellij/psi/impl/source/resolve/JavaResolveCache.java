@@ -30,6 +30,7 @@ import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
@@ -80,14 +81,20 @@ public class JavaResolveCache {
 
   @Nullable
   public <T extends PsiExpression> PsiType getType(@NotNull T expr, @NotNull Function<T, PsiType> f) {
-    final boolean isOverloadCheck = MethodCandidateInfo.isOverloadCheck();
-    PsiType type = isOverloadCheck ? null : myCalculatedTypes.get(expr);
+    PsiType type = myCalculatedTypes.get(expr);
     if (type == null) {
       final RecursionGuard.StackStamp dStackStamp = PsiDiamondType.ourDiamondGuard.markStack();
       type = f.fun(expr);
-      if (!dStackStamp.mayCacheNow() || isOverloadCheck) {
+      if (!dStackStamp.mayCacheNow()) {
         return type;
       }
+
+      //cache standalone expression types as they do not depend on the context
+      final boolean isOverloadCheck = MethodCandidateInfo.isOverloadCheck();
+      if (isOverloadCheck && PsiPolyExpressionUtil.isPolyExpression(expr)) {
+        return type;
+      }
+
       if (type == null) type = TypeConversionUtil.NULL_TYPE;
       myCalculatedTypes.put(expr, type);
 
