@@ -315,7 +315,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
 
     @Override
     public boolean startInWriteAction() {
-      return true;
+      return false;
     }
 
     @NotNull
@@ -376,7 +376,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
 
     @Override
     public boolean startInWriteAction() {
-      return true;
+      return false;
     }
   }
 }
