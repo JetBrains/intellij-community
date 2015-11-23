@@ -165,10 +165,21 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     else if (tokenType == TEXT) {
       return parseMultiLinePlainScalar(indent);
     }
+    else if (tokenType == SCALAR_DSTRING || tokenType == SCALAR_STRING) {
+      return parseQuotedString();
+    }
     else {
       advanceLexer();
       return null;
     }
+  }
+
+  @NotNull
+  private IElementType parseQuotedString() {
+    final PsiBuilder.Marker marker = mark();
+    advanceLexer();
+    marker.done(YAMLElementTypes.SCALAR_QUOTED_STRING);
+    return YAMLElementTypes.SCALAR_QUOTED_STRING;
   }
 
   @NotNull

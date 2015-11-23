@@ -198,6 +198,10 @@ public class YAMLLexerTest extends LexerTestCase {
     doTest();
   }
 
+  public void testSingleQuotedEscapes() {
+    doTest();
+  }
+
   private void doTest() {
     doFileTest("yml");
   }

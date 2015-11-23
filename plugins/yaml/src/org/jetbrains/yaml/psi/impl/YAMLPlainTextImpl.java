@@ -55,4 +55,8 @@ public class YAMLPlainTextImpl extends YAMLScalarImpl implements YAMLScalar {
   }
 
 
+  @Override
+  public boolean isMultiline() {
+    return getNode().findChildByType(YAMLTokenTypes.EOL) != null;
+  }
 }
