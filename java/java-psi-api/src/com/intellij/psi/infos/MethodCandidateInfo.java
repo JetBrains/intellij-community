@@ -208,14 +208,6 @@ public class MethodCandidateInfo extends CandidateInfo{
     return true;
   }
 
-  public PsiType[] getPertinentArgumentTypes() {
-    return computeForOverloadedCandidate(new Computable<PsiType[]>() {
-      public PsiType[] compute() {
-        return getArgumentTypes();
-      }
-    }, getSubstitutor(false));
-  }
-
   private <T> T computeForOverloadedCandidate(final Computable<T> computable, final PsiSubstitutor substitutor) {
     Map<PsiElement, CurrentCandidateProperties> map = CURRENT_CANDIDATE.get();
     if (map == null) {

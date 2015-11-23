@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
@@ -523,14 +524,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     NEITHER
   }
 
-  private static boolean isBoxingHappened(PsiType argType, PsiType parameterType, @NotNull LanguageLevel languageLevel) {
-    if (parameterType instanceof PsiClassType) {
-      parameterType = ((PsiClassType)parameterType).setLanguageLevel(languageLevel);
-    }
-
-    return argType != null && TypeConversionUtil.boxingConversionApplicable(parameterType, argType);
-  }
-
   private Specifics isMoreSpecific(@NotNull MethodCandidateInfo info1,
                                    @NotNull MethodCandidateInfo info2,
                                    @MethodCandidateInfo.ApplicabilityLevelConstant int applicabilityLevel,
@@ -579,31 +572,31 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
 
     boolean sameBoxing = true;
-    int[] boxingHappened = new int[2];
-    final PsiType[] argTypes1 = myActualParameterTypes != null ? myActualParameterTypes : info1.getPertinentArgumentTypes();
-    final PsiType[] argTypes2 = myActualParameterTypes != null ? myActualParameterTypes : info2.getPertinentArgumentTypes();
+    boolean[] boxingHappened = new boolean [2];
+
+    final PsiExpression[] args = myArgumentsList instanceof PsiExpressionList ? ((PsiExpressionList)myArgumentsList).getExpressions() : null;
+
     for (int i = 0; i < types1.length; i++) {
       ProgressManager.checkCanceled();
-      PsiType type1 = classSubstitutor1.substitute(types1[i]);
-      PsiType type2 = classSubstitutor2.substitute(types2[i]);
-      final PsiType argType1 = i < getActualParametersLength() ? argTypes1[i] : null;
-      final PsiType argType2 = i < getActualParametersLength() ? argTypes2[i] : null;
+      final PsiExpression arg = args != null && i < args.length ? args[i] : null;
+      final PsiType argType = myActualParameterTypes != null && i < getActualParametersLength() ? myActualParameterTypes[i] : null;
+      if (arg == null && argType == null) continue;
 
       boolean boxingInFirst = false;
-      if (isBoxingHappened(argType1, type1, languageLevel)) {
-        boxingHappened[0] += 1;
+      if (isBoxingUsed(classSubstitutor1.substitute(types1[i]), argType, arg)) {
+        boxingHappened[0] |= true;
         boxingInFirst = true;
       }
 
       boolean boxingInSecond = false;
-      if (isBoxingHappened(argType2, type2, languageLevel)) {
-        boxingHappened[1] += 1;
+      if (isBoxingUsed(classSubstitutor2.substitute(types2[i]), argType, arg)) {
+        boxingHappened[1] |= true;
         boxingInSecond = true;
       }
       sameBoxing &= boxingInFirst == boxingInSecond;
     }
-    if (boxingHappened[0] == 0 && boxingHappened[1] > 0) return Specifics.FIRST;
-    if (boxingHappened[0] > 0 && boxingHappened[1] == 0) return Specifics.SECOND;
+    if (!boxingHappened[0] && boxingHappened[1]) return Specifics.FIRST;
+    if (boxingHappened[0] && !boxingHappened[1]) return Specifics.SECOND;
 
     if (sameBoxing) {
       final PsiSubstitutor siteSubstitutor1 = info1.getSiteSubstitutor();
@@ -698,14 +691,21 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return Specifics.NEITHER;
   }
 
+  private static boolean isBoxingUsed(PsiType parameterType, @Nullable PsiType argType, PsiExpression arg) {
+    ProgressManager.checkCanceled();
+    final boolean isExpressionTypePrimitive = argType != null ? argType instanceof PsiPrimitiveType 
+                                                              : PsiPolyExpressionUtil.isExpressionOfPrimitiveType(arg);
+    return parameterType instanceof PsiPrimitiveType ^ isExpressionTypePrimitive;
+  }
+
   private static boolean isSubSignature(PsiMethod method1,
                                         PsiMethod method2,
                                         PsiSubstitutor classSubstitutor1,
                                         PsiSubstitutor classSubstitutor2,
-                                        int[] boxingHappened) {
+                                        boolean[] boxingHappened) {
     return MethodSignatureUtil.areErasedParametersEqual(method1.getSignature(PsiSubstitutor.EMPTY), method2.getSignature(PsiSubstitutor.EMPTY)) &&
            MethodSignatureUtil.isSubsignature(method1.getSignature(classSubstitutor1), method2.getSignature(classSubstitutor2)) ||
-           method1.hasModifierProperty(PsiModifier.STATIC) && method2.hasModifierProperty(PsiModifier.STATIC) && boxingHappened[0] == 0;
+           method1.hasModifierProperty(PsiModifier.STATIC) && method2.hasModifierProperty(PsiModifier.STATIC) && !boxingHappened[0];
   }
 
   private boolean isApplicableTo(@NotNull PsiType[] types2AtSite,
@@ -831,16 +831,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         }
       }
     }
-  }
-
-  @Nullable
-  private static PsiType getFunctionalType(int functionalTypeIdx, @NotNull CandidateInfo candidateInfo) {
-    final PsiMethod psiMethod = (PsiMethod)candidateInfo.getElement();
-    LOG.assertTrue(true);
-    final PsiParameter[] methodParameters = psiMethod.getParameterList().getParameters();
-    if (methodParameters.length == 0) return null;
-    final PsiParameter param = functionalTypeIdx < methodParameters.length ? methodParameters[functionalTypeIdx] : methodParameters[methodParameters.length - 1];
-    return ((MethodCandidateInfo)candidateInfo).getSiteSubstitutor().substitute(param.getType());
   }
 
   @NotNull

@@ -152,6 +152,29 @@ public class PsiPolyExpressionUtil {
            context instanceof PsiLambdaExpression;
   }
 
+  public static boolean isExpressionOfPrimitiveType(@Nullable PsiExpression arg) {
+    if (arg != null && !isPolyExpression(arg)) {
+      return arg.getType() instanceof PsiPrimitiveType;
+    }
+    else if (arg instanceof PsiNewExpression || arg instanceof PsiFunctionalExpression) {
+      return false;
+    }
+    else if (arg instanceof PsiParenthesizedExpression) {
+      return isExpressionOfPrimitiveType(((PsiParenthesizedExpression)arg).getExpression());
+    }
+    else if (arg instanceof PsiConditionalExpression) {
+      return isBooleanOrNumeric(arg) != null;
+    }
+    else if (arg instanceof PsiMethodCallExpression) {
+      final PsiMethod method = ((PsiMethodCallExpression)arg).resolveMethod();
+      return method != null && method.getReturnType() instanceof PsiPrimitiveType;
+    }
+    else {
+      assert false : arg;
+      return false;
+    }
+  }
+
   private enum ConditionalKind {
     BOOLEAN, NUMERIC
   }
