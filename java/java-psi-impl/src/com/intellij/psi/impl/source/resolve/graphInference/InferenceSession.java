@@ -355,7 +355,7 @@ public class InferenceSession {
       if (parameters != null && args != null) {
         final Set<ConstraintFormula> additionalConstraints = new LinkedHashSet<ConstraintFormula>();
         if (parameters.length > 0) {
-          collectAdditionalConstraints(parameters, args, properties.getMethod(), mySiteSubstitutor, additionalConstraints, properties.isVarargs());
+          collectAdditionalConstraints(parameters, args, properties.getMethod(), mySiteSubstitutor, additionalConstraints, properties.isVarargs(), initialSubstitutor);
         }
 
         if (!additionalConstraints.isEmpty() && !proceedWithAdditionalConstraints(additionalConstraints)) {
@@ -394,7 +394,8 @@ public class InferenceSession {
                                             PsiMethod parentMethod,
                                             PsiSubstitutor siteSubstitutor,
                                             Set<ConstraintFormula> additionalConstraints,
-                                            boolean varargs) {
+                                            boolean varargs,
+                                            PsiSubstitutor initialSubstitutor) {
     for (int i = 0; i < args.length; i++) {
       final PsiExpression arg = PsiUtil.skipParenthesizedExprDown(args[i]);
       if (arg != null) {
@@ -417,13 +418,14 @@ public class InferenceSession {
           //the set contains all constraint formulas that would appear in the set C when determining the poly expression's invocation type.
           final PsiMethod calledMethod = getCalledMethod((PsiCall)arg);
           if (calledMethod != null && PsiPolyExpressionUtil.isMethodCallPolyExpression(arg, calledMethod)) {
-            collectAdditionalConstraints(additionalConstraints, (PsiCall)arg);
+            collectAdditionalConstraints(additionalConstraints, (PsiCall)arg, initialSubstitutor);
           }
         }
         else if (arg instanceof PsiLambdaExpression &&
                  isPertinentToApplicability(arg, parentMethod)) {
-          collectLambdaReturnExpression(additionalConstraints, (PsiLambdaExpression)arg, parameterType, 
-                                        !isProperType(retrieveNonPrimitiveEqualsBounds(myInferenceVariables).substitute(parameterType)));
+          collectLambdaReturnExpression(additionalConstraints, (PsiLambdaExpression)arg, parameterType,
+                                        !isProperType(initialSubstitutor.substitute(parameterType)),
+                                        initialSubstitutor);
         }
       }
     }
@@ -450,13 +452,13 @@ public class InferenceSession {
 
   private void collectLambdaReturnExpression(Set<ConstraintFormula> additionalConstraints,
                                              PsiLambdaExpression lambdaExpression,
-                                             PsiType parameterType, 
-                                             boolean addConstraint) {
+                                             PsiType parameterType,
+                                             boolean addConstraint, PsiSubstitutor initialSubstitutor) {
     final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(parameterType);
     if (interfaceReturnType != null) {
       final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(lambdaExpression);
       for (PsiExpression returnExpression : returnExpressions) {
-        processReturnExpression(additionalConstraints, returnExpression, interfaceReturnType, addConstraint);
+        processReturnExpression(additionalConstraints, returnExpression, interfaceReturnType, addConstraint, initialSubstitutor);
       }
     }
   }
@@ -464,12 +466,13 @@ public class InferenceSession {
   private void processReturnExpression(Set<ConstraintFormula> additionalConstraints,
                                        PsiExpression returnExpression,
                                        PsiType functionalType,
-                                       boolean addConstraint) {
+                                       boolean addConstraint,
+                                       PsiSubstitutor initialSubstitutor) {
     if (returnExpression instanceof PsiCallExpression) {
       if (addConstraint) {
         final PsiMethod calledMethod = getCalledMethod((PsiCallExpression)returnExpression);
         if (calledMethod != null && PsiPolyExpressionUtil.isMethodCallPolyExpression(returnExpression, calledMethod)) {
-          collectAdditionalConstraints(additionalConstraints, (PsiCallExpression)returnExpression);
+          collectAdditionalConstraints(additionalConstraints, (PsiCallExpression)returnExpression, initialSubstitutor);
         }
       }
       else {
@@ -477,19 +480,20 @@ public class InferenceSession {
       }
     }
     else if (returnExpression instanceof PsiParenthesizedExpression) {
-      processReturnExpression(additionalConstraints, ((PsiParenthesizedExpression)returnExpression).getExpression(), functionalType, addConstraint);
+      processReturnExpression(additionalConstraints, ((PsiParenthesizedExpression)returnExpression).getExpression(), functionalType, addConstraint, initialSubstitutor);
     }
     else if (returnExpression instanceof PsiConditionalExpression) {
-      processReturnExpression(additionalConstraints, ((PsiConditionalExpression)returnExpression).getThenExpression(), functionalType, addConstraint);
-      processReturnExpression(additionalConstraints, ((PsiConditionalExpression)returnExpression).getElseExpression(), functionalType, addConstraint);
+      processReturnExpression(additionalConstraints, ((PsiConditionalExpression)returnExpression).getThenExpression(), functionalType, addConstraint, initialSubstitutor);
+      processReturnExpression(additionalConstraints, ((PsiConditionalExpression)returnExpression).getElseExpression(), functionalType, addConstraint, initialSubstitutor);
     }
     else if (returnExpression instanceof PsiLambdaExpression) {
-      collectLambdaReturnExpression(additionalConstraints, (PsiLambdaExpression)returnExpression, functionalType, myErased);
+      collectLambdaReturnExpression(additionalConstraints, (PsiLambdaExpression)returnExpression, functionalType, myErased, initialSubstitutor);
     }
   }
 
   private void collectAdditionalConstraints(final Set<ConstraintFormula> additionalConstraints,
-                                            final PsiCall callExpression) {
+                                            final PsiCall callExpression, 
+                                            PsiSubstitutor initialSubstitutor) {
     PsiExpressionList argumentList = callExpression.getArgumentList();
     if (argumentList != null) {
       MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
@@ -499,7 +503,7 @@ public class InferenceSession {
         final PsiExpression[] newArgs = argumentList.getExpressions();
         final PsiParameter[] newParams = method.getParameterList().getParameters();
         if (newParams.length > 0) {
-          collectAdditionalConstraints(newParams, newArgs, method, chooseSiteSubstitutor(properties, result, method), additionalConstraints, chooseVarargsMode(properties, result));
+          collectAdditionalConstraints(newParams, newArgs, method, chooseSiteSubstitutor(properties, result, method), additionalConstraints, chooseVarargsMode(properties, result), initialSubstitutor);
         }
       }
     }
@@ -1283,7 +1287,7 @@ public class InferenceSession {
       PsiExpression expression = ((ExpressionCompatibilityConstraint)formula).getExpression();
       if (expression instanceof PsiLambdaExpression) {
         PsiType parameterType = ((ExpressionCompatibilityConstraint)formula).getT();
-        collectLambdaReturnExpression(additionalConstraints, (PsiLambdaExpression)expression, parameterType, !isProperType(parameterType));
+        collectLambdaReturnExpression(additionalConstraints, (PsiLambdaExpression)expression, parameterType, !isProperType(parameterType), substitutor);
       }
     }
     return true;
