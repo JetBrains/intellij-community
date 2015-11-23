@@ -21,7 +21,7 @@ class MyTestDefaultConstructor {
    private static void <warning descr="Private method 'foo(MyTestDefaultConstructor.I3)' is never used">foo</warning>(I3 i) {System.out.println(i);}
 
    static {
-       foo<error descr="Ambiguous method call: both 'MyTestDefaultConstructor.foo(I1)' and 'MyTestDefaultConstructor.foo(I2)' match">(Foo::new)</error>;
+       foo<error descr="Cannot resolve method 'foo(<method reference>)'">(Foo::new)</error>;
    }
 }
 
@@ -49,7 +49,7 @@ class MyTestConstructor {
    private static void <warning descr="Private method 'foo(MyTestConstructor.I3)' is never used">foo</warning>(I3 i) {System.out.println(i);}
 
    static {
-       foo<error descr="Ambiguous method call: both 'MyTestConstructor.foo(I1)' and 'MyTestConstructor.foo(I2)' match">(Foo::new)</error>;
+       foo<error descr="Cannot resolve method 'foo(<method reference>)'">(Foo::new)</error>;
    }
 }
 

@@ -9,6 +9,6 @@ class Calls {
   void foo(Function<String, Optional> computable) {}
 
   {
-    ((x) -> a(b(c<error descr="'c(java.lang.Object)' in 'Calls' cannot be applied to '(<lambda parameter>)'">(x)</error>)));
+    ((x) -> a(b(c<error descr="'c(C)' in 'Calls' cannot be applied to '(<lambda parameter>)'">(x)</error>)));
   }
 }

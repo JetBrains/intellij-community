@@ -10,6 +10,6 @@ class Node<NodeTypeT extends NodeType> {
 
 class Main {
     public static void main(NodeProperty<NumberExpression, Integer> nval,  Node<? extends NodeType> expr) {
-        int val = expr.get<error descr="'get(NodeProperty<? super capture<? extends NodeType>,java.lang.Object>)' in 'Node' cannot be applied to '(NodeProperty<NumberExpression,java.lang.Integer>)'">(nval)</error>;
+        int val = expr.get<error descr="'get(NodeProperty<? super capture<? extends NodeType>,ValueT>)' in 'Node' cannot be applied to '(NodeProperty<NumberExpression,java.lang.Integer>)'">(nval)</error>;
     }
 }

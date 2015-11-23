@@ -296,7 +296,7 @@ public class InferenceSession {
                                                   @NotNull PsiExpression[] args,
                                                   @NotNull MethodCandidateInfo.CurrentCandidateProperties properties,
                                                   @NotNull PsiSubstitutor psiSubstitutor) {
-    return doInfer(parameters, args, myContext, properties, psiSubstitutor);
+    return performGuardedInference(parameters, args, myContext, properties, psiSubstitutor);
   }
 
   @NotNull
@@ -311,72 +311,20 @@ public class InferenceSession {
                               @Nullable PsiExpression[] args,
                               @Nullable PsiElement parent,
                               @Nullable MethodCandidateInfo.CurrentCandidateProperties properties) {
-    return doInfer(parameters, args, parent, properties, null);
+    return performGuardedInference(parameters, args, parent, properties, PsiSubstitutor.EMPTY);
   }
 
   @NotNull
-  private PsiSubstitutor doInfer(@Nullable PsiParameter[] parameters,
-                                 @Nullable PsiExpression[] args,
-                                 @Nullable PsiElement parent,
-                                 @Nullable MethodCandidateInfo.CurrentCandidateProperties properties,
-                                 PsiSubstitutor initialSubstitutor) {
+  private PsiSubstitutor performGuardedInference(@Nullable PsiParameter[] parameters,
+                                                 @Nullable PsiExpression[] args,
+                                                 @Nullable PsiElement parent,
+                                                 @Nullable MethodCandidateInfo.CurrentCandidateProperties properties,
+                                                 @NotNull PsiSubstitutor initialSubstitutor) {
     try {
-      if (initialSubstitutor == null && !repeatInferencePhases(true)) {
-        //inferred result would be checked as candidate won't be applicable
-        return resolveSubset(myInferenceVariables, mySiteSubstitutor);
-      }
-
-      if (properties != null && !properties.isApplicabilityCheck()) {
-        if (initialSubstitutor == null) {
-          initReturnTypeConstraint(properties.getMethod(), (PsiCall)parent);
-          if (!repeatInferencePhases(true)) {
-            return prepareSubstitution();
-          }
-        }
-
-        if (parameters != null && args != null) {
-          final Set<ConstraintFormula> additionalConstraints = new LinkedHashSet<ConstraintFormula>();
-          if (parameters.length > 0) {
-            collectAdditionalConstraints(parameters, args, properties.getMethod(), mySiteSubstitutor, additionalConstraints, properties.isVarargs());
-          }
-  
-          if (!additionalConstraints.isEmpty() && !proceedWithAdditionalConstraints(additionalConstraints)) {
-            return prepareSubstitution();
-          }
-        }
-      }
-
-      if (initialSubstitutor == null) {
-        initialSubstitutor = PsiSubstitutor.EMPTY;
-      }
-
-      final PsiSubstitutor substitutor = resolveBounds(myInferenceVariables, initialSubstitutor);
-      if (substitutor != null) {
-        if (myContext != null) {
-          myContext.putUserData(ERASED, myErased);
-        }
-        final Map<PsiTypeParameter, PsiType> map = substitutor.getSubstitutionMap();
-        for (PsiTypeParameter parameter : map.keySet()) {
-          final PsiType mapping = map.get(parameter);
-          PsiTypeParameter param;
-          if (parameter instanceof InferenceVariable) {
-            ((InferenceVariable)parameter).setInstantiation(mapping);
-            if (((InferenceVariable)parameter).getCallContext() != myContext) {
-              //don't include in result substitutor foreign inference variables
-              continue;
-            }
-            param = ((InferenceVariable)parameter).getParameter();
-          }
-          else {
-            param = parameter;
-          }
-          mySiteSubstitutor = mySiteSubstitutor.put(param, mapping);
-        }
-      }
+      doInfer(parameters, args, parent, properties, initialSubstitutor);
       return prepareSubstitution();
     }
     finally {
-
       for (ConstraintFormula formula : myConstraintsCopy) {
         if (formula instanceof InputOutputConstraintFormula) {
           LambdaUtil.getFunctionalTypeMap().remove(((InputOutputConstraintFormula)formula).getExpression());
@@ -385,6 +333,58 @@ public class InferenceSession {
 
       if (properties != null && myErrorMessages != null) {
         properties.getInfo().setInferenceError(StringUtil.join(myErrorMessages, "\n"));
+      }
+    }
+  }
+
+  private void doInfer(@Nullable PsiParameter[] parameters,
+                       @Nullable PsiExpression[] args,
+                       @Nullable PsiElement parent,
+                       @Nullable MethodCandidateInfo.CurrentCandidateProperties properties,
+                       @NotNull PsiSubstitutor initialSubstitutor) {
+    if (!repeatInferencePhases(true)) {
+      return;
+    }
+
+    if (properties != null && !properties.isApplicabilityCheck()) {
+      initReturnTypeConstraint(properties.getMethod(), (PsiCall)parent);
+      if (!repeatInferencePhases(true)) {
+        return;
+      }
+
+      if (parameters != null && args != null) {
+        final Set<ConstraintFormula> additionalConstraints = new LinkedHashSet<ConstraintFormula>();
+        if (parameters.length > 0) {
+          collectAdditionalConstraints(parameters, args, properties.getMethod(), mySiteSubstitutor, additionalConstraints, properties.isVarargs());
+        }
+
+        if (!additionalConstraints.isEmpty() && !proceedWithAdditionalConstraints(additionalConstraints)) {
+          return;
+        }
+      }
+    }
+
+    final PsiSubstitutor substitutor = resolveBounds(myInferenceVariables, initialSubstitutor);
+    if (substitutor != null) {
+      if (myContext != null) {
+        myContext.putUserData(ERASED, myErased);
+      }
+      final Map<PsiTypeParameter, PsiType> map = substitutor.getSubstitutionMap();
+      for (PsiTypeParameter parameter : map.keySet()) {
+        final PsiType mapping = map.get(parameter);
+        PsiTypeParameter param;
+        if (parameter instanceof InferenceVariable) {
+          ((InferenceVariable)parameter).setInstantiation(mapping);
+          if (((InferenceVariable)parameter).getCallContext() != myContext) {
+            //don't include in result substitutor foreign inference variables
+            continue;
+          }
+          param = ((InferenceVariable)parameter).getParameter();
+        }
+        else {
+          param = parameter;
+        }
+        mySiteSubstitutor = mySiteSubstitutor.put(param, mapping);
       }
     }
   }
