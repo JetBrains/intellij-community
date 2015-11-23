@@ -53,4 +53,8 @@ public class PyFoldingTest extends PyTestCase {
     doTest();
   }
 
+  public void testMultilineComments() {
+    doTest();
+  }
+
 }
