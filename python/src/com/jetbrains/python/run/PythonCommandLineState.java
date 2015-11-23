@@ -493,8 +493,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
       Module module = getModule(project, config);
 
       Sdk sdk = PythonSdkType.findPythonSdk(module);
-      if (sdk == null) return null;
-      sdkHome = sdk.getHomePath();
+      
+      if (sdk != null) {
+        sdkHome = sdk.getHomePath();
+      }
     }
 
     return sdkHome;
