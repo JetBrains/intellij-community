@@ -20,8 +20,8 @@ interface TextOutConsumer {
 
 internal class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Domain, val fileUpdater: FileUpdater) {
   fun registerTypes() {
-    if (domain.types() != null) {
-      for (type in domain.types()!!) {
+    domain.types()?.let {
+      for (type in it) {
         generator.typeMap.getTypeData(domain.domain(), type.id()).type = type
       }
     }

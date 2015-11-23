@@ -329,9 +329,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     return normalizeFileSpec(result)
   }
 
-  override fun startExternalization() = StateStorageManagerExternalizationSession(this)
-
-  private class StateStorageManagerExternalizationSession(private val storageManager: StateStorageManagerImpl) : StateStorageManager.ExternalizationSession {
+  override final fun startExternalization() = object : StateStorageManager.ExternalizationSession {
     private val sessions = LinkedHashMap<StateStorage, StateStorage.ExternalizationSession>()
 
     override fun setState(storageSpecs: Array<Storage>, component: Any, componentName: String, state: Any) {
@@ -342,12 +340,12 @@ open class StateStorageManagerImpl(private val rootTagName: String,
           continue
         }
 
-        getExternalizationSession(storageManager.getStateStorage(storageSpec))?.setState(component, componentName, if (storageSpec.deprecated || resolution == Resolution.CLEAR) Element("empty") else state)
+        getExternalizationSession(getStateStorage(storageSpec))?.setState(component, componentName, if (storageSpec.deprecated || resolution == Resolution.CLEAR) Element("empty") else state)
       }
     }
 
     override fun setStateInOldStorage(component: Any, componentName: String, state: Any) {
-      storageManager.getOldStorage(component, componentName, StateStorageOperation.WRITE)?.let {
+      getOldStorage(component, componentName, StateStorageOperation.WRITE)?.let {
         getExternalizationSession(it)?.setState(component, componentName, state)
       }
     }

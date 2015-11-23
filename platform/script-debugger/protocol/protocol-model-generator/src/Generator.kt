@@ -236,7 +236,7 @@ fun generateMethodNameSubstitute(originalName: String, out: TextOutput): String 
     return originalName
   }
   out.append("@org.jetbrains.jsonProtocol.JsonField(name = \"").append(originalName).append("\")").newLine()
-  return "get" + Character.toUpperCase(originalName.get(0)) + originalName.substring(1)
+  return "get${Character.toUpperCase(originalName.get(0))}${originalName.substring(1)}"
 }
 
 fun capitalizeFirstChar(s: String): String {
@@ -262,7 +262,7 @@ fun <R> switchByType(typedObject: ItemDescriptor, visitor: TypeVisitor<R>): R {
     }
     INTEGER_TYPE, "int" -> return visitor.visitInteger()
     NUMBER_TYPE -> return visitor.visitNumber()
-    ARRAY_TYPE -> return visitor.visitArray(typedObject.items())
+    ARRAY_TYPE -> return visitor.visitArray(typedObject.items()!!)
     OBJECT_TYPE -> {
       if (typedObject !is ItemDescriptor.Type) {
         return visitor.visitObject(null)

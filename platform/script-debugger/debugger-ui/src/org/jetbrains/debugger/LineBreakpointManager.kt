@@ -230,7 +230,7 @@ abstract class LineBreakpointManager(private val debugProcess: DebugProcessImpl<
       if (runToLocationBreakpoints.isEmpty) {
         return@clearRunToLocationBreakpoints
       }
-      var breakpoints = runToLocationBreakpoints.toArray<Breakpoint>(arrayOfNulls<Breakpoint>(runToLocationBreakpoints.size()))
+      var breakpoints = runToLocationBreakpoints.toArray<Breakpoint>(arrayOfNulls<Breakpoint>(runToLocationBreakpoints.size))
       runToLocationBreakpoints.clear()
       breakpoints
     }

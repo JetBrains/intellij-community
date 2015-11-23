@@ -22,7 +22,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
-import com.intellij.util.Consumer
 import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.XSourcePositionWrapper
@@ -304,11 +303,11 @@ class VariableView(name: String, private val variable: Variable, private val con
 
       override fun setValue(expression: String, callback: XValueModifier.XModificationCallback) {
         variable.valueModifier!!.setValue(variable, expression, evaluateContext)
-          .done(Consumer<Any?> {
+          .done {
             value = null
             callback.valueModified()
-          })
-          .rejected(createErrorMessageConsumer(callback))
+          }
+          .rejected { callback.errorOccurred(it.message!!) }
       }
     }
   }
@@ -400,7 +399,7 @@ class VariableView(name: String, private val variable: Variable, private val con
             callback.evaluated(value.valueString!!)
           }
         }
-        .rejected(createErrorMessageConsumer(callback))
+        .rejected { callback.errorOccurred(it.message!!) }
     }
   }
 
@@ -468,14 +467,6 @@ internal fun trimFunctionDescription(value: Value): String {
 
 private fun createNumberPresentation(value: String): XValuePresentation {
   return if (value == PrimitiveValue.NA_N_VALUE || value == PrimitiveValue.INFINITY_VALUE) XKeywordValuePresentation(value) else XNumericValuePresentation(value)
-}
-
-private fun createErrorMessageConsumer(callback: XValueCallback): Consumer<Throwable> {
-  return object : Consumer<Throwable> {
-    override fun consume(error: Throwable) {
-      callback.errorOccurred(error.message!!)
-    }
-  }
 }
 
 private val ARRAY_DESCRIPTION_PATTERN = Pattern.compile("^[a-zA-Z\\d]+\\[\\d+\\]$")

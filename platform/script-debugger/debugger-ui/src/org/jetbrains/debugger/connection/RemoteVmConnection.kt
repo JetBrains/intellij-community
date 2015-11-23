@@ -64,7 +64,7 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
             if (it !is ConnectException) {
               Promise.logError(LOG, it)
             }
-            setState(ConnectionStatus.CONNECTION_FAILED, it.getMessage())
+            setState(ConnectionStatus.CONNECTION_FAILED, it.message)
           }
           .processed { connectCancelHandler.set(null) }
 
