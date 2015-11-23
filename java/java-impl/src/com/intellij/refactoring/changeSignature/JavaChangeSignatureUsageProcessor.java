@@ -566,6 +566,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     if (!StdLanguages.JAVA.equals(changeInfo.getLanguage()) || !(changeInfo instanceof JavaChangeInfo)) return false;
     final PsiElement element = changeInfo.getMethod();
     LOG.assertTrue(element instanceof PsiMethod);
+    if (!JavaLanguage.INSTANCE.equals(element.getLanguage())) return false;
     if (changeInfo.isGenerateDelegate()) {
       generateDelegate((JavaChangeInfo)changeInfo);
     }
