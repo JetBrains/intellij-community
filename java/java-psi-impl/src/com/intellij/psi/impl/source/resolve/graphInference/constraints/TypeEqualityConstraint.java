@@ -68,13 +68,18 @@ public class TypeEqualityConstraint implements ConstraintFormula {
     }
 
     if (myT instanceof PsiWildcardType || myS instanceof PsiWildcardType) {
+      session.registerIncompatibleErrorMessage("Incompatible equality constraint: " + myT.getPresentableText() + " and " + myS.getPresentableText());
       return false;
     }
 
     if (session.isProperType(myT) && session.isProperType(myS)) {
       if (myT == null || myT == PsiType.NULL) return myS == null || myS == PsiType.NULL || myS.equalsToText(CommonClassNames.JAVA_LANG_OBJECT);
       if (myS == null || myS == PsiType.NULL) return true;
-      return Comparing.equal(myT, myS);
+      final boolean equal = Comparing.equal(myT, myS);
+      if (!equal) {
+        session.registerIncompatibleErrorMessage("Incompatible equality constraint: " + myT.getPresentableText() + " and " + myS.getPresentableText());
+      }
+      return equal;
     }
     InferenceVariable inferenceVariable = session.getInferenceVariable(myS);
     if (inferenceVariable != null) {
