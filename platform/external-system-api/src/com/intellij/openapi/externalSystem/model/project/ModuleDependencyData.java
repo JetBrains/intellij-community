@@ -2,6 +2,8 @@ package com.intellij.openapi.externalSystem.model.project;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 /**
  * @author Denis Zhdanov
  * @since 8/10/11 6:40 PM
@@ -10,6 +12,7 @@ public class ModuleDependencyData extends AbstractDependencyData<ModuleData> {
 
   private static final long serialVersionUID = 1L;
   private boolean myProductionOnTestDependency;
+  private Collection<String> myModuleDependencyArtifacts;
 
   public ModuleDependencyData(@NotNull ModuleData ownerModule, @NotNull ModuleData module) {
     super(ownerModule, module);
@@ -23,15 +26,31 @@ public class ModuleDependencyData extends AbstractDependencyData<ModuleData> {
     myProductionOnTestDependency = productionOnTestDependency;
   }
 
+  public Collection<String> getModuleDependencyArtifacts() {
+    return myModuleDependencyArtifacts;
+  }
+
+  public void setModuleDependencyArtifacts(Collection<String> moduleDependencyArtifacts) {
+    myModuleDependencyArtifacts = moduleDependencyArtifacts;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
     ModuleDependencyData that = (ModuleDependencyData)o;
-    return myProductionOnTestDependency == that.myProductionOnTestDependency;
+    if (myProductionOnTestDependency != that.myProductionOnTestDependency) return false;
+    if (myModuleDependencyArtifacts != null ? !myModuleDependencyArtifacts.equals(that.myModuleDependencyArtifacts)
+                                            : that.myModuleDependencyArtifacts != null) {
+      return false;
+    }
+    return true;
   }
 
   @Override
   public int hashCode() {
-    return 31 * super.hashCode() + (myProductionOnTestDependency ? 1 : 0);
+    int result = super.hashCode();
+    result = 31 * result + (myProductionOnTestDependency ? 1 : 0);
+    result = 31 * result + (myModuleDependencyArtifacts != null ? myModuleDependencyArtifacts.hashCode() : 0);
+    return result;
   }
 }

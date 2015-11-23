@@ -142,6 +142,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final List<String> commandLineArgs = ContainerUtil.newArrayList();
     final Set<Class> toolingExtensionClasses = ContainerUtil.newHashSet();
 
+    if(resolverCtx.isPreviewMode()){
+      commandLineArgs.add("-Didea.isPreviewMode=true");
+      final Set<Class> previewLightWeightToolingModels = ContainerUtil.<Class>set(ExternalProjectPreview.class);
+      projectImportAction.addExtraProjectModelClasses(previewLightWeightToolingModels);
+    }
+
     final GradleImportCustomizer importCustomizer = GradleImportCustomizer.get();
     for (GradleProjectResolverExtension resolverExtension = projectResolverChain;
          resolverExtension != null;
@@ -150,8 +156,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       resolverExtension.setProjectResolverContext(resolverCtx);
       // pre-import checks
       resolverExtension.preImportCheck();
-      // register classes of extra gradle project models required for extensions (e.g. com.android.builder.model.AndroidProject)
-      projectImportAction.addExtraProjectModelClasses(resolverExtension.getExtraProjectModelClasses());
+
+      if(!resolverCtx.isPreviewMode()){
+        // register classes of extra gradle project models required for extensions (e.g. com.android.builder.model.AndroidProject)
+        projectImportAction.addExtraProjectModelClasses(resolverExtension.getExtraProjectModelClasses());
+      }
 
       if (importCustomizer == null || importCustomizer.useExtraJvmArgs()) {
         // collect extra JVM arguments provided by gradle project resolver extensions
@@ -295,7 +304,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         }
       }
 
-      projectResolverChain.populateModuleExtraModels(ideaModule, moduleDataNode);
       projectResolverChain.populateModuleContentRoots(ideaModule, moduleDataNode);
       projectResolverChain.populateModuleCompileOutputSettings(ideaModule, moduleDataNode);
       if (!isBuildSrcProject) {
@@ -333,6 +341,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       final DataNode<ModuleData> moduleDataNode = pair.first;
       final IdeaModule ideaModule = pair.second;
       projectResolverChain.populateModuleDependencies(ideaModule, moduleDataNode, projectDataNode);
+      projectResolverChain.populateModuleExtraModels(ideaModule, moduleDataNode);
     }
     mergeSourceSetContentRoots(moduleMap, resolverCtx);
     mergeLibraryAndModuleDependencyData(projectDataNode, gradleHomeDir, gradleVersion);

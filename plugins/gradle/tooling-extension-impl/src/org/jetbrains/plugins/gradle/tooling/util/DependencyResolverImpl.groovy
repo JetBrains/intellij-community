@@ -565,8 +565,9 @@ class DependencyResolverImpl implements DependencyResolver {
             group: project.group,
             version: project.version,
             scope: scope,
-            projectPath: project.path
+            projectPath: project.path,
           )
+          projectDependency.projectDependencyArtifacts = it.projectConfiguration.allArtifacts.files.collect {it.path}
           result.add(projectDependency)
         }
         else if (it instanceof Dependency) {
@@ -639,6 +640,7 @@ class DependencyResolverImpl implements DependencyResolver {
               selectionReason: selectionReason,
               projectPath: componentSelector.projectPath
             )
+            dependency.projectDependencyArtifacts = artifactMap.get(componentResult.moduleVersion).collect {it.file.path}
             if (componentResult != dependencyResult.from) {
               dependency.dependencies.addAll(
                 transform(handledDependencyResults, componentResult.dependencies, artifactMap, componentResultsMap, scope)

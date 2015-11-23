@@ -68,10 +68,12 @@
           <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-scala-2.5.jar!/" />
           <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-language-scala-2.5.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/gradle-reporting-2.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-ear-2.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
           <root url="jar://$MODULE_DIR$/../lib/gradle-2.5-src.zip!/gradle-2.5/subprojects/tooling-api/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.5-src.zip!/gradle-2.5/subprojects/ear/src/main/groovy" />
         </SOURCES>
       </library>
     </orderEntry>
