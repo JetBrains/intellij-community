@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.util.text;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
@@ -27,7 +29,7 @@ public class StringTokenizer implements Enumeration<String> {
   private int maxPosition;
   private String str;
   private String delimiters;
-  private boolean retDelims;
+  private final boolean retDelims;
   private boolean delimsChanged;
 
   /**
@@ -49,13 +51,14 @@ public class StringTokenizer implements Enumeration<String> {
     char m = 0;
     for (int i = 0; i < delimiters.length(); i++) {
       char c = delimiters.charAt(i);
-      if (m < c)
+      if (m < c) {
         m = c;
+      }
     }
     maxDelimChar = m;
   }
 
-  public StringTokenizer(String str, String delim, boolean returnDelims) {
+  public StringTokenizer(@NotNull String str, @NotNull String delim, boolean returnDelims) {
     currentPosition = 0;
     newPosition = -1;
     delimsChanged = false;
@@ -66,23 +69,25 @@ public class StringTokenizer implements Enumeration<String> {
     setMaxDelimChar();
   }
 
-  public StringTokenizer(String str, String delim) {
+  public StringTokenizer(@NotNull String str, @NotNull String delim) {
     this(str, delim, false);
   }
 
-  public StringTokenizer(String str) {
+  public StringTokenizer(@NotNull String str) {
     this(str, " \t\n\r\f", false);
   }
 
   private int skipDelimiters(int startPos) {
-    if (delimiters == null)
+    if (delimiters == null) {
       throw new NullPointerException();
+    }
 
     int position = startPos;
     while (!retDelims && position < maxPosition) {
       char c = str.charAt(position);
-      if ((c > maxDelimChar) || (delimiters.indexOf(c) < 0))
+      if (c > maxDelimChar || delimiters.indexOf(c) < 0) {
         break;
+      }
       position++;
     }
     return position;
@@ -92,39 +97,44 @@ public class StringTokenizer implements Enumeration<String> {
     int position = startPos;
     while (position < maxPosition) {
       char c = str.charAt(position);
-      if ((c <= maxDelimChar) && (delimiters.indexOf(c) >= 0))
+      if (c <= maxDelimChar && delimiters.indexOf(c) >= 0) {
         break;
+      }
       position++;
     }
-    if (retDelims && (startPos == position)) {
+    if (retDelims && startPos == position) {
       char c = str.charAt(position);
-      if ((c <= maxDelimChar) && (delimiters.indexOf(c) >= 0))
+      if (c <= maxDelimChar && delimiters.indexOf(c) >= 0) {
         position++;
+      }
     }
     return position;
   }
 
   public boolean hasMoreTokens() {
     newPosition = skipDelimiters(currentPosition);
-    return (newPosition < maxPosition);
+    return newPosition < maxPosition;
   }
 
+  @NotNull
   public String nextToken() {
-    currentPosition = (newPosition >= 0 && !delimsChanged) ?
-        newPosition : skipDelimiters(currentPosition);
+    currentPosition = newPosition >= 0 && !delimsChanged ?
+                      newPosition : skipDelimiters(currentPosition);
 
     /* Reset these anyway */
     delimsChanged = false;
     newPosition = -1;
 
-    if (currentPosition >= maxPosition)
+    if (currentPosition >= maxPosition) {
       throw new NoSuchElementException();
+    }
     int start = currentPosition;
     currentPosition = scanToken(currentPosition);
     return str.substring(start, currentPosition);
   }
 
-  public String nextToken(String delim) {
+  @NotNull
+  public String nextToken(@NotNull String delim) {
     delimiters = delim;
 
     /* delimiter string specified, so set the appropriate flag. */
@@ -140,6 +150,7 @@ public class StringTokenizer implements Enumeration<String> {
   }
 
   @Override
+  @NotNull
   public String nextElement() {
     return nextToken();
   }
@@ -149,8 +160,9 @@ public class StringTokenizer implements Enumeration<String> {
     int currpos = currentPosition;
     while (currpos < maxPosition) {
       currpos = skipDelimiters(currpos);
-      if (currpos >= maxPosition)
+      if (currpos >= maxPosition) {
         break;
+      }
       currpos = scanToken(currpos);
       count++;
     }
@@ -160,7 +172,8 @@ public class StringTokenizer implements Enumeration<String> {
   public int getCurrentPosition() {
     return currentPosition;
   }
-  public void reset(String s) {
+
+  public void reset(@NotNull String s) {
     str = s;
     currentPosition = 0;
     newPosition = -1;
