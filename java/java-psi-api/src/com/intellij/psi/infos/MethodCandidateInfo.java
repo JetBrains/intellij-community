@@ -123,9 +123,7 @@ public class MethodCandidateInfo extends CandidateInfo{
 
     final PsiMethod method = getElement();
     
-    //If m is a generic method and the method invocation does not provide explicit type
-    //arguments, then the applicability of the method is inferred as specified in §18.5.1
-    if (myTypeArguments == null && method.hasTypeParameters() && !isRawSubstitution()) {
+    if (isToInferApplicability()) {
       //already performed checks, so if inference failed, error message should be saved  
       if (myInferenceError != null) {
         return ApplicabilityLevel.NOT_APPLICABLE;
@@ -158,6 +156,12 @@ public class MethodCandidateInfo extends CandidateInfo{
       level = ApplicabilityLevel.NOT_APPLICABLE;
     }
     return level;
+  }
+
+  //If m is a generic method and the method invocation does not provide explicit type
+  //arguments, then the applicability of the method is inferred as specified in §18.5.1
+  public boolean isToInferApplicability() {
+    return myTypeArguments == null && getElement().hasTypeParameters() && !isRawSubstitution();
   }
 
   /**
