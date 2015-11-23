@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,6 @@ import git4idea.GitBranch
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitUtil
-import git4idea.commands.GitCommandResult
-import git4idea.commands.GitImpl
-import git4idea.commands.GitLineHandlerListener
-import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.test.GitExecutor.cd
 import git4idea.test.GitExecutor.git
@@ -99,7 +95,7 @@ abstract class GitPushOperationBaseTest : GitPlatformTest() {
     })
   }
 
-  protected fun assertResult(type: GitPushRepoResult.Type, pushedCommits: Int, from: String, to: String,
+  internal fun assertResult(type: GitPushRepoResult.Type, pushedCommits: Int, from: String, to: String,
                              updateResult: GitUpdateResult?,
                              actualResult: GitPushRepoResult) {
     val message = "Result is incorrect: " + actualResult
