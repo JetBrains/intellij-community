@@ -30,7 +30,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -189,8 +188,8 @@ public final class FieldFromParameterUtils {
     PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
 
     PsiField field = factory.createField(fieldName, fieldType);
-    PsiModifierList modifierList = field.getModifierList();
 
+    PsiModifierList modifierList = field.getModifierList();
     if (modifierList == null) return;
     modifierList.setModifierProperty(PsiModifier.STATIC, isStatic);
     modifierList.setModifierProperty(PsiModifier.FINAL, isFinal);
@@ -207,7 +206,7 @@ public final class FieldFromParameterUtils {
 
     String stmtText = fieldName + " = " + parameter.getName() + ";";
     if (fieldName.equals(parameter.getName())) {
-      @NonNls String prefix = isStatic ? targetClass.getName() == null ? "" : targetClass.getName() + "." : "this.";
+      String prefix = isStatic ? targetClass.getName() == null ? "" : targetClass.getName() + "." : "this.";
       stmtText = prefix + stmtText;
     }
 
