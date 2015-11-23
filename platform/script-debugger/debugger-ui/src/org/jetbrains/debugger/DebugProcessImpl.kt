@@ -215,6 +215,10 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
 
   open fun getLocationsForBreakpoint(breakpoint: XLineBreakpoint<*>): List<Location> = throw UnsupportedOperationException()
 
+  // go debugger compatibility
+  @Deprecated("onlySourceMappedBreakpoints is not required anymore", replaceWith = ReplaceWith("getLocationsForBreakpoint(breakpoint)"))
+  open fun getLocationsForBreakpoint(breakpoint: XLineBreakpoint<*>, onlySourceMappedBreakpoints: Boolean): List<Location> = getLocationsForBreakpoint(breakpoint)
+
   override fun isLibraryFrameFilterSupported() = true
 }
 
