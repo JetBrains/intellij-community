@@ -15,13 +15,17 @@
  */
 package com.jetbrains.python.sdk;
 
+import com.google.common.collect.Maps;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 /**
  * This sdk updater class is a facade to Sdk to make changes in it in a reliable way.
@@ -39,7 +43,9 @@ import org.jetbrains.annotations.Nullable;
  * @author traff
  */
 public abstract class PySdkUpdater {
-  private static PySdkUpdater mySingletonUpdater = null;
+  private static final Logger LOG = Logger.getInstance("#" + PySdkUpdater.class.getName());
+  
+  private static Map<String, PySdkUpdater> mySdkUpdaters = Maps.newHashMap();
 
   @NotNull
   public abstract Sdk getSdk();
@@ -67,42 +73,42 @@ public abstract class PySdkUpdater {
   public abstract void commit();
 
   public static synchronized PySdkUpdater fromSdkPath(@Nullable String sdkPath) {
-    checkSingleton();
+    checkSingleton(sdkPath);
     return new JdkTableUpdater(sdkPath);
   }
 
   public static synchronized PySdkUpdater fromSdkModificator(@NotNull Sdk sdk, @NotNull SdkModificator sdkModificator) {
-    checkSingleton();
+    checkSingleton(sdk.getHomePath());
     return new SdkModificatorUpdater(sdk, sdkModificator);
   }
 
   public static synchronized PySdkUpdater singletonJdkTableUpdater(@NotNull String sdkPath) {
-    if (mySingletonUpdater == null) {
+    if (mySdkUpdaters.get(sdkPath) == null) {
       Sdk sdk = PythonSdkType.findSdkByPath(sdkPath);
       if (sdk != null) {
-        mySingletonUpdater = new SingletonSdkModificatorUpdater(sdk, sdk.getSdkModificator());
+        mySdkUpdaters.put(sdkPath, new SingletonSdkModificatorUpdater(sdk, sdk.getSdkModificator()));
       } else {
         throw new PySdkNotFoundException();
       }
     }
-    return mySingletonUpdater;
+    return mySdkUpdaters.get(sdkPath);
   }
 
 
-  private static synchronized void checkSingleton() {
-    if (mySingletonUpdater != null) {
-      throw new IllegalStateException("unintentionally changing more then one sdkModificator at a time");
+  private static synchronized void checkSingleton(String sdkPath) {
+    if (mySdkUpdaters.get(sdkPath) != null) {
+      LOG.error("Changing more then one sdkModificator at a time");
     }
   }
 
-  private static synchronized void checkNotDisposed() {
-    if (mySingletonUpdater == null) {
-      throw new IllegalStateException("sdk modificator is already committed, further changes will go nowhere");
+  private static synchronized void checkNotDisposed(String sdkPath) {
+    if (mySdkUpdaters.get(sdkPath) == null) {
+      LOG.error("sdk modificator is already committed, further changes will be discarded");
     }
   }
 
-  private static synchronized void disposeSingleton() {
-    mySingletonUpdater = null;
+  private static synchronized void disposeSingleton(String sdkPath) {
+    mySdkUpdaters.put(sdkPath, null);
   }
 
   @Nullable
@@ -141,7 +147,7 @@ public abstract class PySdkUpdater {
     }
 
     public void modifySdk(@NotNull SdkModificationProcessor processor) {
-      checkSingleton();
+      checkSingleton(mySdkPath);
       
       ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -192,7 +198,7 @@ public abstract class PySdkUpdater {
 
     @Override
     public void commit() {
-      checkSingleton();
+      checkSingleton(getHomePath());
       myModificator.commitChanges();
     }
   }
@@ -204,13 +210,13 @@ public abstract class PySdkUpdater {
 
     @Override
     public void modifySdk(@NotNull SdkModificationProcessor processor) {
-      checkNotDisposed();
+      checkNotDisposed(getHomePath());
       super.modifySdk(processor);
     }
 
     @Override
     public void commit() {
-      disposeSingleton();
+      disposeSingleton(getHomePath());
       super.commit();
     }
   }
