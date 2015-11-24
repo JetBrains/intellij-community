@@ -132,7 +132,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
   @Override
   @NotNull
-  public Map<String, Set<Hash>> getBranches() {
+  public Map<String, LinkedHashSet<Hash>> getBranches() {
     return myInfo.getBranches();
   }
 
