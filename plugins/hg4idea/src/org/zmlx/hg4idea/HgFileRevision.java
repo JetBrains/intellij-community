@@ -75,26 +75,32 @@ public class HgFileRevision implements VcsFileRevision {
     return myRevisionDate;
   }
 
+  @Nullable
   public String getAuthor() {
     return myAuthor;
   }
 
+  @Nullable
   public String getCommitMessage() {
     return myCommitMessage;
   }
 
+  @NotNull
   public Set<String> getModifiedFiles() {
     return myFilesModified;
   }
 
+  @NotNull
   public Set<String> getAddedFiles() {
     return myFilesAdded;
   }
 
+  @NotNull
   public Set<String> getDeletedFiles() {
     return myFilesDeleted;
   }
 
+  @NotNull
   public Map<String, String> getCopiedFiles() {
     return myFilesCopied;
   }
