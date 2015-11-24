@@ -16,6 +16,7 @@
 package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -32,9 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   public static final String PYTHON = "python";
@@ -145,7 +144,9 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   @Override
   protected List<PyPackage> getPackages() throws ExecutionException {
     final ProcessOutput output = getCondaOutput("list", Lists.newArrayList("-e"));
-    return parseCondaToolOutput(output.getStdout());
+    final Set<PyPackage> packages = Sets.newConcurrentHashSet(parseCondaToolOutput(output.getStdout()));
+    packages.addAll(super.getPackages());
+    return Lists.newArrayList(packages);
   }
 
   @NotNull
