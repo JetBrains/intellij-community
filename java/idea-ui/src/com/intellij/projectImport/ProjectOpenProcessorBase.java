@@ -162,7 +162,7 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
       }
 
       boolean shouldOpenExisting = false;
-      boolean importToProject = false;
+      boolean importToProject = true;
       if (projectFile.exists() || dotIdeaFile.exists()) {
         if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
           shouldOpenExisting = true;
