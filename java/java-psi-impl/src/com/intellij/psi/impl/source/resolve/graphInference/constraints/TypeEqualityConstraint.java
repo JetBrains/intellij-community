@@ -73,21 +73,23 @@ public class TypeEqualityConstraint implements ConstraintFormula {
     }
 
     if (session.isProperType(myT) && session.isProperType(myS)) {
-      if (myT == null || myT == PsiType.NULL) return myS == null || myS == PsiType.NULL || myS.equalsToText(CommonClassNames.JAVA_LANG_OBJECT);
-      if (myS == null || myS == PsiType.NULL) return true;
       final boolean equal = Comparing.equal(myT, myS);
       if (!equal) {
         session.registerIncompatibleErrorMessage("Incompatible equality constraint: " + myT.getPresentableText() + " and " + myS.getPresentableText());
       }
       return equal;
     }
+
+    if (myT == null || myT == PsiType.NULL) return false;
+    if (myS == null || myS == PsiType.NULL) return true; //todo raw type in StrictSubtypingConstraint.myS
+
     InferenceVariable inferenceVariable = session.getInferenceVariable(myS);
-    if (inferenceVariable != null) {
+    if (inferenceVariable != null && !(myT instanceof PsiPrimitiveType)) {
       inferenceVariable.addBound(myT, InferenceBound.EQ);
       return true;
     }
     inferenceVariable = session.getInferenceVariable(myT);
-    if (inferenceVariable != null) {
+    if (inferenceVariable != null && !(myS instanceof PsiPrimitiveType)) {
       inferenceVariable.addBound(myS, InferenceBound.EQ);
       return true;
     }

@@ -32,6 +32,6 @@ class ReturnTypeCompatibility {
     call((String i)->{ return i;});
     call(i->{ return i;});
     call(i->"");
-    call(<error descr="no instance(s) of type variable(s)  exist so that Integer conforms to int">(int i)->{ return i;}</error>);
+    call(<error descr="no instance(s) of type variable(s) P exist so that P conforms to int">(int i)->{ return i;}</error>);
   }
 }
