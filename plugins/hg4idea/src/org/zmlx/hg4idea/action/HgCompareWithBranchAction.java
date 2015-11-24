@@ -15,18 +15,22 @@
  */
 package org.zmlx.hg4idea.action;
 
+import com.google.common.collect.Iterables;
 import com.intellij.dvcs.actions.DvcsCompareWithBranchAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.history.CurrentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.HgFileRevision;
-import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.log.HgBaseLogParser;
 import org.zmlx.hg4idea.log.HgFileRevisionLogParser;
@@ -43,20 +47,51 @@ import java.util.*;
 public class HgCompareWithBranchAction extends DvcsCompareWithBranchAction<HgRepository> {
   @Override
   protected boolean noBranchesToCompare(@NotNull HgRepository repository) {
-    final Map<String, Set<Hash>> branches = repository.getBranches();
-    assert !branches.isEmpty();
-    String currentRevision = repository.getCurrentRevision();
-    assert currentRevision != null : "Compare With Branch couldn't be performed for newly created repository";
-    if (branches.keySet().size() > 1) return false;
-    String branchName = branches.keySet().iterator().next();
-    return branches.get(branchName).contains(HashImpl.build(repository.getCurrentRevision()));
+    final Map<String, LinkedHashSet<Hash>> branches = repository.getBranches();
+    if (branches.size() > 1) return false;
+    final Hash currentRevisionHash = getCurrentHash(repository);
+    final Collection<HgNameWithHashInfo> other_bookmarks = getOtherBookmarks(repository, currentRevisionHash);
+    if (!other_bookmarks.isEmpty()) return false;
+    // if only one heavy branch and no other bookmarks -> check that current revision is no "main" branch head
+    return getBranchMainHash(repository, repository.getCurrentBranch()).equals(currentRevisionHash);
   }
+
+  @NotNull
+  private static Hash getCurrentHash(@NotNull HgRepository repository) {
+    final String currentRevision = repository.getCurrentRevision();
+    assert currentRevision != null : "Compare With Branch couldn't be performed for newly created repository";
+    return HashImpl.build(repository.getCurrentRevision());
+  }
+
+  @NotNull
+  private static List<HgNameWithHashInfo> getOtherBookmarks(@NotNull HgRepository repository, @NotNull final Hash currentRevisionHash) {
+    return ContainerUtil.filter(repository.getBookmarks(),
+                                new Condition<HgNameWithHashInfo>() {
+                                  @Override
+                                  public boolean value(HgNameWithHashInfo info) {
+                                    return !info.getHash().equals(currentRevisionHash);
+                                  }
+                                });
+  }
+
+  @NotNull
+  private static Hash getBranchMainHash(@NotNull HgRepository repository, @NotNull String branchName) {
+    return ObjectUtils.assertNotNull(Iterables.getLast(repository.getBranches().get(branchName)));
+  }
+
 
   @NotNull
   @Override
   protected List<String> getBranchNamesExceptCurrent(@NotNull HgRepository repository) {
-    final Map<String, Set<Hash>> branches = repository.getBranches();
-    return new ArrayList<String>(branches.keySet());
+    final List<String> namesToCompare = new ArrayList<String>(repository.getBranches().keySet());
+    final String currentBranchName = repository.getCurrentBranchName();
+    assert currentBranchName != null;
+    Hash currentBranchHash = getBranchMainHash(repository, currentBranchName);
+    if (currentBranchHash.equals(getCurrentHash(repository))) {
+      namesToCompare.remove(currentBranchName);
+    }
+    namesToCompare.addAll(HgUtil.getNamesWithoutHashes(getOtherBookmarks(repository, currentBranchHash)));
+    return namesToCompare;
   }
 
   @NotNull
@@ -75,6 +110,7 @@ public class HgCompareWithBranchAction extends DvcsCompareWithBranchAction<HgRep
       LOG.error("Couldn't find repository for " + file.getName());
       return;
     }
+    final FilePath filePath = VcsUtil.getFilePath(file);
     final HgVcs hgVcs = HgVcs.getInstance(project);
     assert hgVcs != null;
     final HgVersion version = hgVcs.getVersion();
@@ -82,14 +118,16 @@ public class HgCompareWithBranchAction extends DvcsCompareWithBranchAction<HgRep
     final VirtualFile repositoryRoot = repository.getRoot();
     HgCommandResult result = HgHistoryUtil
       .getLogResult(project, repositoryRoot, version, 1, Arrays.asList("-r", branchToCompare), HgChangesetUtil.makeTemplate(templates));
-    List<HgFileRevision> hgRevisions = HgHistoryUtil
-      .getCommitRecords(project, result,
-                        new HgFileRevisionLogParser(project, HgHistoryUtil.getOriginalHgFile(project, repositoryRoot), version), true);
+    FilePath originalFileName = HgUtil.getOriginalFileName(filePath, ChangeListManager.getInstance(project));
+    final HgFile hgFile = new HgFile(repositoryRoot, originalFileName);
+    List<HgFileRevision> hgRevisions =
+      HgHistoryUtil.getCommitRecords(project, result, new HgFileRevisionLogParser(project, hgFile, version), true);
     if (hgRevisions.isEmpty()) {
       fileDoesntExistInBranchError(project, file, branchToCompare);
       return;
     }
-    CurrentRevision currentRevision = new CurrentRevision(file, HgRevisionNumber.getInstance("", head));
-    new HgDiffFromHistoryHandler(project).showDiffForTwo(project, VcsUtil.getFilePath(file), hgRevisions.get(0), currentRevision);
+    CurrentRevision currentRevision =
+      new CurrentRevision(file, HgRevisionNumber.getInstance(head, ObjectUtils.assertNotNull(repository.getCurrentRevision())));
+    new HgDiffFromHistoryHandler(project).showDiffForTwo(project, filePath, hgRevisions.get(0), currentRevision);
   }
 }
