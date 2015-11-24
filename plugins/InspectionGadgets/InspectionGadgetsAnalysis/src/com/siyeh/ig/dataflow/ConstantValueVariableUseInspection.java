@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -195,7 +196,7 @@ public class ConstantValueVariableUseInspection extends BaseInspection implement
     @NotNull
     private final PsiVariable variable;
     private boolean read = false;
-    private boolean written = false;
+    private boolean stop = false;
     private PsiReferenceExpression reference = null;
 
     VariableReadVisitor(@NotNull PsiVariable variable) {
@@ -204,7 +205,7 @@ public class ConstantValueVariableUseInspection extends BaseInspection implement
 
     @Override
     public void visitElement(@NotNull PsiElement element) {
-      if (read || written) {
+      if (read || stop) {
         return;
       }
       super.visitElement(element);
@@ -212,22 +213,33 @@ public class ConstantValueVariableUseInspection extends BaseInspection implement
 
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
-      if (read || written) {
+      if (read || stop) {
         return;
       }
       final PsiElement target = expression.resolve();
       if (variable.equals(target)) {
         if (PsiUtil.isAccessedForWriting(expression)) {
-          written  = true;
+          stop = true;
           return;
         }
         if (PsiUtil.isAccessedForReading(expression)) {
-          reference = expression;
-          read = true;
+          if (isInLoopCondition(expression)) {
+            stop = true;
+          }
+          else {
+            reference = expression;
+            read = true;
+          }
           return;
         }
       }
       super.visitReferenceExpression(expression);
+    }
+
+    private static boolean isInLoopCondition(PsiExpression expression) {
+      final PsiStatement statement =
+        PsiTreeUtil.getParentOfType(expression, PsiStatement.class, true, PsiMember.class, PsiLambdaExpression.class);
+      return statement instanceof PsiLoopStatement;
     }
 
     public boolean isRead() {
