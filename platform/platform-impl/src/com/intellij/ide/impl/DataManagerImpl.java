@@ -290,6 +290,15 @@ public class DataManagerImpl extends DataManager {
     myDataConstantToRuleMap.put(PlatformDataKeys.FILE_EDITOR.getName(), new FileEditorRule());
     myDataConstantToRuleMap.put(CommonDataKeys.NAVIGATABLE_ARRAY.getName(), new NavigatableArrayRule());
     myDataConstantToRuleMap.put(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.getName(), new InactiveEditorRule());
+
+    // pre-initialize some basic rules to prevent contention issues
+    getRuleFromMap(LangDataKeys.MODULE.getName());
+    getRuleFromMap(LangDataKeys.PSI_ELEMENT_ARRAY.getName());
+
+    getRuleFromMap(CommonDataKeys.PROJECT.getName());
+    getRuleFromMap(CommonDataKeys.EDITOR.getName());
+    getRuleFromMap(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName());
+    getRuleFromMap(CommonDataKeys.PSI_ELEMENT.getName());
   }
 
   @Override
