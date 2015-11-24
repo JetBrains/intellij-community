@@ -48,6 +48,9 @@ public abstract class BaseDataReader {
   }
 
   protected void start(@NotNull final String presentableName) {
+    if (StringUtil.isEmptyOrSpaces(presentableName)) {
+      LOG.warn(new Throwable("Must provide not-empty presentable name"));
+    }
     if (myFinishedFuture == null) {
       myFinishedFuture = executeOnPooledThread(new Runnable() {
         @Override
