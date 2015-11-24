@@ -246,9 +246,9 @@ public class TextMergeTool implements MergeTool {
         group.add(myEditorSettingsAction);
 
         group.add(Separator.getInstance());
-        group.add(new ShowLeftBasePartialDiffAction());
-        group.add(new ShowBaseRightPartialDiffAction());
-        group.add(new ShowLeftRightPartialDiffAction());
+        group.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_BASE));
+        group.add(new TextShowPartialDiffAction(PartialDiffMode.BASE_RIGHT));
+        group.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_RIGHT));
 
         group.add(Separator.getInstance());
         group.add(new ApplyNonConflictsAction());
