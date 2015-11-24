@@ -12,29 +12,29 @@ val UNKNOWN_TYPE: String = "unknown"
 val ANY_TYPE: String = "any"
 
 interface ItemDescriptor {
-  fun description(): String?
+  val description: String?
 
-  fun type(): String?
+  val type: String?
 
-  fun getEnum(): List<String>?
+  val enum: List<String>?
 
-  fun items(): ProtocolMetaModel.ArrayItemType?
+  val items: ProtocolMetaModel.ArrayItemType?
 
   interface Named : Referenceable {
     fun name(): String
 
-    @JsonOptionalField
-    fun shortName(): String?
+    val shortName: String?
 
-    fun optional(): Boolean
+    val optional: Boolean
   }
 
   interface Referenceable : ItemDescriptor {
-    fun ref(): String?
+    @ProtocolName("\$ref")
+    val ref: String?
   }
 
   interface Type : ItemDescriptor {
-    fun properties(): List<ProtocolMetaModel.ObjectProperty>?
+    val properties: List<ProtocolMetaModel.ObjectProperty>?
   }
 }
 
@@ -49,176 +49,77 @@ interface ProtocolSchemaReader {
 interface ProtocolMetaModel {
   @JsonType
   interface Root {
-    @JsonOptionalField
-    fun version(): Version?
+    val version: Version?
 
     fun domains(): List<Domain>
   }
 
-  @JsonType
   interface Version {
     fun major(): String
     fun minor(): String
   }
 
-  @JsonType
   interface Domain {
     fun domain(): String
 
-    @JsonOptionalField
-    fun types(): List<StandaloneType>?
+    val types: List<StandaloneType>?
 
     fun commands(): List<Command>
 
-    @JsonOptionalField
-    fun events(): List<Event>?
+    val events: List<Event>?
 
-    @JsonOptionalField
-    fun description(): String?
+    val description: String?
 
-    @JsonOptionalField
-    fun hidden(): Boolean
+    val hidden: Boolean
   }
 
-  @JsonType
   interface Command {
     fun name(): String
 
-    @JsonOptionalField
-    fun parameters(): List<Parameter>?
+    val parameters: List<Parameter>?
 
-    @JsonOptionalField
-    fun returns(): List<Parameter>?
+    val returns: List<Parameter>?
 
-    @JsonOptionalField
-    fun description(): String?
+    val description: String?
 
-    @JsonOptionalField
-    fun hidden(): Boolean
+    val hidden: Boolean
 
-    @JsonOptionalField
-    fun async(): Boolean
+    val async: Boolean
   }
 
-  @JsonType
   interface Parameter : ItemDescriptor.Named {
-    override fun name(): String
+    val hidden: Boolean
 
-    @JsonOptionalField
-    override fun shortName(): String?
-
-    @JsonOptionalField
-    override fun type(): String?
-
-    @JsonOptionalField
-    override fun items(): ArrayItemType?
-
-    @JsonField(name = "enum", optional = true)
-    override fun getEnum(): List<String>?
-
-    @JsonField(name = "\$ref", optional = true)
-    override fun ref(): String?
-
-    @JsonOptionalField
-    override fun optional(): Boolean
-
-    @JsonOptionalField
-    override fun description(): String?
-
-    @JsonOptionalField
-    public fun hidden(): Boolean
+    @JsonField(allowAnyPrimitiveValue = true)
+    val default: String?
   }
 
-  @JsonType
   interface Event {
     fun name(): String
 
-    @JsonOptionalField
-    fun parameters(): List<Parameter>?
+    val parameters: List<Parameter>?
 
-    @JsonOptionalField
-    fun description(): String?
+    val description: String?
 
-    @JsonOptionalField
-    fun hidden(): Boolean
+    val hidden: Boolean
 
-    @JsonOptionalField
-    fun optionalData(): Boolean
+    val optionalData: Boolean
   }
 
   @JsonType
   interface StandaloneType : ItemDescriptor.Type {
     fun id(): String
 
-    @JsonOptionalField
-    override fun description(): String?
-
-    override fun type(): String
-
-    @JsonOptionalField
-    public fun hidden(): Boolean
-
-    @JsonOptionalField
-    override fun properties(): List<ObjectProperty>?
-
-    @JsonField(name = "enum", optional = true)
-    override fun getEnum(): List<String>?
-
-    @JsonOptionalField
-    override fun items(): ArrayItemType?
+    val hidden: Boolean
   }
 
-
-  @JsonType
   interface ArrayItemType : ItemDescriptor.Type, ItemDescriptor.Referenceable {
-    @JsonOptionalField
-    override fun description(): String?
-
-    @JsonOptionalField
-    public fun optional(): Boolean
-
-    @JsonOptionalField
-    override fun type(): String?
-
-    @JsonOptionalField
-    override fun items(): ArrayItemType?
-
-    @JsonField(name = "\$ref", optional = true)
-    override fun ref(): String?
-
-    @JsonField(name = "enum", optional = true)
-    override fun getEnum(): List<String>?
-
-    @JsonOptionalField
-    override fun properties(): List<ObjectProperty>?
+    val optional: Boolean
   }
 
-  @JsonType
   interface ObjectProperty : ItemDescriptor.Named {
     override fun name(): String
 
-    @JsonOptionalField
-    override fun shortName(): String?
-
-    @JsonOptionalField
-    override fun description(): String?
-
-    @JsonOptionalField
-    override fun optional(): Boolean
-
-    @JsonOptionalField
-    override fun type(): String?
-
-    @JsonOptionalField
-    override fun items(): ArrayItemType?
-
-    @JsonField(name = "\$ref", optional = true)
-    override fun ref(): String?
-
-    @JsonField(name = "enum", optional = true)
-    override fun getEnum(): List<String>?
-
-    @JsonOptionalField
-    fun hidden(): Boolean
+    val hidden: Boolean
   }
 }

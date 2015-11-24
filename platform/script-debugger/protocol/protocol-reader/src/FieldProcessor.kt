@@ -1,14 +1,30 @@
 package org.jetbrains.protocolReader
 
+import com.intellij.openapi.util.text.StringUtil
 import gnu.trove.THashSet
 import org.jetbrains.jsonProtocol.JsonField
-import org.jetbrains.jsonProtocol.JsonOptionalField
 import org.jetbrains.jsonProtocol.JsonSubtypeCasting
+import org.jetbrains.jsonProtocol.Optional
+import org.jetbrains.jsonProtocol.ProtocolName
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.util.*
+import kotlin.reflect.KCallable
+import kotlin.reflect.KFunction
+import kotlin.reflect.KProperty
+import kotlin.reflect.jvm.javaGetter
+import kotlin.reflect.jvm.javaMethod
+import kotlin.reflect.jvm.javaType
 
-internal class FieldLoader(val name: String, val jsonName: String, val valueReader: ValueReader, val skipRead: Boolean)
+internal class FieldLoader(val name: String, val jsonName: String, val valueReader: ValueReader, val skipRead: Boolean, val asImpl: Boolean, val defaultValue: String?)
+
+internal fun TextOutput.appendName(loader: FieldLoader): TextOutput {
+  if (!loader.asImpl) {
+    append(FIELD_PREFIX)
+  }
+  append(loader.name)
+  return this
+}
 
 internal class FieldProcessor(private val reader: InterfaceReader, typeClass: Class<*>) {
   val fieldLoaders = ArrayList<FieldLoader>()
@@ -31,7 +47,18 @@ internal class FieldProcessor(private val reader: InterfaceReader, typeClass: Cl
     }
 
     val classPackage = typeClass.`package`
-    for (method in methods) {
+    val kClass = typeClass.kotlin
+    for (member in  kClass.members) {
+      val method = if (member is KProperty<*>) {
+        member.javaGetter!!
+      }
+      else if (member is KFunction<*>) {
+        member.javaMethod!!
+      }
+      else {
+        continue
+      }
+
       val methodClass = method.declaringClass
       // use method from super if super located in the same package
       if (methodClass != typeClass) {
@@ -49,7 +76,7 @@ internal class FieldProcessor(private val reader: InterfaceReader, typeClass: Cl
         val methodHandler: MethodHandler
         val jsonSubtypeCaseAnnotation = method.getAnnotation(JsonSubtypeCasting::class.java)
         if (jsonSubtypeCaseAnnotation == null) {
-          methodHandler = createMethodHandler(method, skippedNames.contains(method.name))
+          methodHandler = createMethodHandler(member, method, skippedNames.contains(method.name)) ?: continue
         }
         else {
           methodHandler = processManualSubtypeMethod(method, jsonSubtypeCaseAnnotation)
@@ -63,43 +90,64 @@ internal class FieldProcessor(private val reader: InterfaceReader, typeClass: Cl
     }
   }
 
-  private fun createMethodHandler(method: Method, skipRead: Boolean): MethodHandler {
-    var jsonName = method.name
-    val fieldAnnotation = method.getAnnotation<JsonField>(JsonField::class.java)
-    if (fieldAnnotation != null && !fieldAnnotation.name.isEmpty()) {
-      jsonName = fieldAnnotation.name
-    }
-
-    val genericReturnType = method.genericReturnType
-    val addNotNullAnnotation: Boolean
+  private fun createMethodHandler(member: KCallable<*>, method: Method, skipRead: Boolean): MethodHandler? {
+    var protocolName = member.annotation<ProtocolName>()?.name ?: member.name
+    val genericReturnType = member.returnType.javaType
+    val isNotNull: Boolean
     val isPrimitive = if (genericReturnType is Class<*>) genericReturnType.isPrimitive else genericReturnType !is ParameterizedType
-    if (isPrimitive) {
-      addNotNullAnnotation = false
-    }
-    else if (fieldAnnotation != null) {
-      addNotNullAnnotation = !fieldAnnotation.optional && !fieldAnnotation.allowAnyPrimitiveValue && !fieldAnnotation.allowAnyPrimitiveValueAndMap
+    val optionalAnnotation = member.annotation<Optional>()
+    if (isPrimitive || optionalAnnotation != null) {
+      isNotNull = false
     }
     else {
-      addNotNullAnnotation = method.getAnnotation<JsonOptionalField>(JsonOptionalField::class.java) == null
+      val fieldAnnotation = member.annotation<JsonField>()
+      if (fieldAnnotation == null) {
+        isNotNull = !member.returnType.isMarkedNullable
+      }
+      else {
+        isNotNull = !fieldAnnotation.allowAnyPrimitiveValue && !fieldAnnotation.allowAnyPrimitiveValueAndMap
+      }
     }
 
     val fieldTypeParser = reader.getFieldTypeParser(genericReturnType, false, method)
+    val isProperty = member is KProperty<*>
+    val isAsImpl = isProperty && !isNotNull
     if (fieldTypeParser != VOID_PARSER) {
-      fieldLoaders.add(FieldLoader(method.name, jsonName, fieldTypeParser, skipRead))
+      fieldLoaders.add(FieldLoader(member.name, protocolName, fieldTypeParser, skipRead, isAsImpl, StringUtil.nullize(optionalAnnotation?.default)))
     }
 
-    val effectiveFieldName = if (fieldTypeParser == VOID_PARSER) null else method.name
+    if (isAsImpl) {
+      return null
+    }
+
+    val effectiveFieldName = if (fieldTypeParser == VOID_PARSER) null else member.name
     return object : MethodHandler {
       override fun writeMethodImplementationJava(scope: ClassScope, method: Method, out: TextOutput) {
-        out.append("override fun ").appendEscapedName(method.name).append("()")
+        out.append("override ").append(if (isProperty) "val" else "fun")
+        out.append(" ").appendEscapedName(method.name)
+
+        if (isProperty) {
+          out.newLine()
+          out.indentIn()
+          out.append("get()")
+          // todo append type name
+        }
+        else {
+          out.append("()")
+        }
+
         if (effectiveFieldName == null) {
           out.openBlock()
           out.closeBlock()
         }
         else {
           out.append(" = ").append(FIELD_PREFIX).append(effectiveFieldName)
-          if (addNotNullAnnotation) {
+          if (isNotNull) {
             out.append("!!")
+          }
+
+          if (isProperty) {
+            out.indentOut()
           }
         }
       }
@@ -136,3 +184,5 @@ internal class FieldProcessor(private val reader: InterfaceReader, typeClass: Cl
     return binding
   }
 }
+
+internal inline fun <reified T : Annotation> KCallable<*>.annotation(): T? = annotations.firstOrNull() { it is T } as? T ?: (this as? KFunction<*>)?.javaMethod?.getAnnotation<T>(T::class.java)

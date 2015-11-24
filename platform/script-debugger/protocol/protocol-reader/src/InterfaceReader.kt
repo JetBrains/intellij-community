@@ -3,8 +3,8 @@ package org.jetbrains.protocolReader
 import gnu.trove.THashSet
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.jsonProtocol.JsonField
-import org.jetbrains.jsonProtocol.JsonOptionalField
 import org.jetbrains.jsonProtocol.JsonSubtype
+import org.jetbrains.jsonProtocol.Optional
 import org.jetbrains.jsonProtocol.StringIntPair
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
@@ -148,7 +148,7 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
             if (jsonField != null && jsonField.allowAnyPrimitiveValue) {
               return RAW_STRING_PARSER
             }
-            else if ((jsonField != null && jsonField.optional) || method.getAnnotation<JsonOptionalField>(JsonOptionalField::class.java) != null) {
+            else if (method.getAnnotation<Optional>(Optional::class.java) != null) {
               return NULLABLE_STRING_PARSER
             }
           }
@@ -204,14 +204,14 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
       }
       val param = interfaceGeneric.actualTypeArguments[0]
       if (param !is Class<*>) {
-        throw JsonProtocolModelParseException("Unexpected type of superclass " + param)
+        throw JsonProtocolModelParseException("Unexpected type of superclass $param")
       }
       if (result != null) {
-        throw JsonProtocolModelParseException("Already has superclass " + result.typeClass.name)
+        throw JsonProtocolModelParseException("Already has superclass ${result.typeClass.name}")
       }
       result = getTypeRef(param)
       if (result == null) {
-        throw JsonProtocolModelParseException("Unknown base class " + param.name)
+        throw JsonProtocolModelParseException("Unknown base class ${param.name}")
       }
     }
     return result
