@@ -554,11 +554,11 @@ public class InferenceSession {
            candidateProperties != null && candidateProperties.isVarargs();
   }
 
-  public PsiSubstitutor retrieveNonPrimitiveEqualsBounds(Collection<InferenceVariable> variables) {
+  public PsiSubstitutor getInstantiations(Collection<InferenceVariable> variables) {
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     for (InferenceVariable variable : variables) {
       final PsiType equalsBound = getEqualsBound(variable, substitutor);
-      if (!(equalsBound instanceof PsiPrimitiveType)) {
+      if (equalsBound != null && !PsiType.NULL.equals(equalsBound)) {
         substitutor = substitutor.put(variable, equalsBound);
       }
     }
