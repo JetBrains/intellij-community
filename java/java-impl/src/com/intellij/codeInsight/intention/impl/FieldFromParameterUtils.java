@@ -194,7 +194,10 @@ public final class FieldFromParameterUtils {
     modifierList.setModifierProperty(PsiModifier.STATIC, isStatic);
     modifierList.setModifierProperty(PsiModifier.FINAL, isFinal);
 
-    NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(parameter, field);
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
+    if (manager.copyNullableAnnotation(parameter, field) == null && isFinal) {
+      manager.copyNotNullAnnotation(parameter, field);
+    }
 
     PsiCodeBlock methodBody = method.getBody();
     if (methodBody == null) return;
