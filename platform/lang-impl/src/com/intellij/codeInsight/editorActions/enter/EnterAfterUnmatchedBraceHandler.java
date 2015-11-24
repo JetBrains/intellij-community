@@ -67,7 +67,7 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
       insertRBraces(file, editor,
                     caretOffset,
                     getRBraceOffset(file, editor, caretOffset),
-                    adjustRBraceCountForPosition(editor, caretOffset, maxRBraceCount));
+                    generateStringToInsert(editor, caretOffset, maxRBraceCount));
       return Result.DefaultForceIndent;
     }
     return Result.Continue;
@@ -110,7 +110,8 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
    * @param maxRBraceCount the maximum number of '}' for insert at position, it always positive
    * @return the string of '}' that has to be inserted by handler, it must have at least one '}'
    */
-  protected String adjustRBraceCountForPosition(@NotNull final Editor editor, int caretOffset, int maxRBraceCount) {
+  @NotNull
+  protected String generateStringToInsert(@NotNull final Editor editor, int caretOffset, int maxRBraceCount) {
     assert maxRBraceCount > 0;
 
     CharSequence text = editor.getDocument().getCharsSequence();
