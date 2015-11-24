@@ -31,6 +31,7 @@ import com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler;
 import com.intellij.refactoring.extractclass.ExtractClassHandler;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
+import com.intellij.refactoring.introduceParameter.IntroduceFunctionalParameterHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.refactoring.memberPullUp.JavaPullUpHandler;
@@ -83,6 +84,12 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
   @Override
   public RefactoringActionHandler getIntroduceParameterHandler() {
     return new IntroduceParameterHandler();
+  }
+
+  @Nullable
+  @Override
+  public RefactoringActionHandler getIntroduceFunctionalParameterHandler() {
+    return IntroduceFunctionalParameterHandler.INSTANCE;
   }
 
   @Override

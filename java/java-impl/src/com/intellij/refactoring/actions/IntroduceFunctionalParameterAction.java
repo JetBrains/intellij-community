@@ -25,24 +25,11 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
-import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class IntroduceFunctionalParameterAction extends BasePlatformRefactoringAction {
-  private static final String REFACTORING_NAME = RefactoringBundle.message("introduce.functional.parameter.title");
-
   @Override
   protected boolean isAvailableInEditorOnly() {
     return true;
@@ -55,34 +42,6 @@ public class IntroduceFunctionalParameterAction extends BasePlatformRefactoringA
 
   @Override
   protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider) {
-    return new IntroduceParameterHandler() {
-      @Override
-      public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
-        if (dataContext != null) {
-          final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
-          final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-          if (file != null && editor != null && !introduceStrategy(project, editor, file, elements)) {
-            showErrorMessage(project, editor);
-          }
-        }
-      }
-
-      @Override
-      public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
-        ExtractMethodHandler.selectAndPass(project, editor, file, new Pass<PsiElement[]>() {
-          @Override
-          public void pass(PsiElement[] elements) {
-            if (!introduceStrategy(project, editor, file, elements)) {
-              showErrorMessage(project, editor);
-            }
-          }
-        });
-      }
-
-      private void showErrorMessage(@NotNull Project project, Editor editor) {
-        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context", REFACTORING_NAME));
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INTRODUCE_PARAMETER);
-      }
-    };
+    return provider.getIntroduceFunctionalParameterHandler();
   }
 }
