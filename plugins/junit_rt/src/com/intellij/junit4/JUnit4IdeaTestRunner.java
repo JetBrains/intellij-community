@@ -36,91 +36,87 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
   private OutputObjectRegistry myRegistry;
 
   public int startRunnerWithArgs(String[] args, ArrayList listeners, String name, int count, boolean sendTree) {
-
-    final Request request = JUnit4TestRunnerUtil.buildRequest(args, name, sendTree);
-    if (request == null) return -1;
-    final Runner testRunner = request.getRunner();
-    Description description = null;
     try {
-      description = getDescription(request, testRunner);
-      if (description == null) {
-        return -1;
-      }
-
-      if (myTestsListener instanceof JUnit4TestListener) {
-        if (sendTree) {
-          ((JUnit4TestListener)myTestsListener).sendTree(description);
-        }
-        sendTree = false;
-      } else {
-        TreeSender.sendTree(this, description, sendTree);
-      }
-    }
-    catch (Exception e) {
-      //noinspection HardCodedStringLiteral
-      System.err.println("Internal Error occured.");
-      e.printStackTrace(System.err);
-    }
-
-    try {
-      long startTime = System.currentTimeMillis();
       Result result;
       if (count == 1) {
-        result = createRunner(listeners, description).run(testRunner);
+        result = startRunnerWithArgs(args, listeners, name, sendTree);
+        if (result == null) {
+          return -1;
+        }
       }
       else {
         if (count > 0) {
           boolean success = true;
           int i = 0;
           while (i++ < count) {
-            result = createRunner(listeners, description).run(testRunner);
+            result = startRunnerWithArgs(args, listeners, name, sendTree);
+            if (result == null) {
+              return -1;
+            }
+            sendTree = false;
             success &= result.wasSuccessful();
           }
-          long endTime = System.currentTimeMillis();
-          long runTime = endTime - startTime;
-          if (sendTree) new TimeSender(myRegistry).printHeader(runTime);
-
+          
           return success ? 0 : -1;
         }
         else {
           boolean success = true;
           while (true) {
-            result = createRunner(listeners, description).run(testRunner);
+            result = startRunnerWithArgs(args, listeners, name, sendTree);
+            if (result == null) {
+              return -1;
+            }
+            sendTree = false;
             success &= result.wasSuccessful();
             if (count == -2 && !success) {
-              long endTime = System.currentTimeMillis();
-              long runTime = endTime - startTime;
-              if (sendTree) new TimeSender(myRegistry).printHeader(runTime);
               return -1;
             }
           }
         }
       }
-      long endTime = System.currentTimeMillis();
-      long runTime = endTime - startTime;
-      if (sendTree) new TimeSender(myRegistry).printHeader(runTime);
-
       if (!result.wasSuccessful()) {
         return -1;
       }
       return 0;
     }
     catch (Exception e) {
+      //noinspection HardCodedStringLiteral
+      System.err.println("Internal Error occured.");
       e.printStackTrace(System.err);
       return -2;
     }
   }
+  
+  private Result startRunnerWithArgs(String[] args, ArrayList listeners, String name, boolean sendTree) throws
+                                                                                                        InstantiationException,
+                                                                                                        IllegalAccessException,
+                                                                                                        ClassNotFoundException,
+                                                                                                        NoSuchFieldException {
+    final Request request = JUnit4TestRunnerUtil.buildRequest(args, name, sendTree);
+    if (request == null) return null;
 
-  private JUnitCore createRunner(ArrayList listeners, final Description runnerDescription) throws InstantiationException, 
-                                                                                                  IllegalAccessException, 
-                                                                                                  ClassNotFoundException {
+    final Runner testRunner = request.getRunner();
+    Description description = getDescription(request, testRunner);
+    if (description == null) {
+      return null;
+    }
+
+    if (myTestsListener instanceof JUnit4TestListener) {
+      if (sendTree) {
+        ((JUnit4TestListener)myTestsListener).sendTree(description);
+      }
+    }
+    else {
+      TreeSender.sendTree(this, description, sendTree);
+    }
+
     final JUnitCore runner = new JUnitCore();
     runner.addListener(myTestsListener);
     for (Iterator iterator = listeners.iterator(); iterator.hasNext();) {
       final IDEAJUnitListener junitListener = (IDEAJUnitListener)Class.forName((String)iterator.next()).newInstance();
-      runner.addListener(new MyCustomRunListenerWrapper(junitListener, runnerDescription.getDisplayName()));
+      runner.addListener(new MyCustomRunListenerWrapper(junitListener, description.getDisplayName()));
     }
-    return runner;
+    return runner.run(testRunner);
   }
 
   private static Description getDescription(Request request, Runner testRunner) throws NoSuchFieldException, IllegalAccessException {
