@@ -572,6 +572,11 @@
 
     <lang.inspectionSuppressor language="Python" implementationClass="com.jetbrains.python.inspections.PyInspectionsSuppressor"/>
     <refactoring.invertBoolean implementation="com.jetbrains.python.refactoring.invertBoolean.PyInvertBooleanDelegate"/>
+
+    <!--folding-->
+    <codeFoldingOptionsProvider instance="com.jetbrains.python.PythonFoldingOptionsProvider"/>
+    <applicationService serviceInterface="com.jetbrains.python.PythonFoldingSettings"
+                        serviceImplementation="com.jetbrains.python.PythonFoldingSettings"/>
   </extensions>
 
   <extensionPoints>

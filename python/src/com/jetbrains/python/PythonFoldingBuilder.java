@@ -235,10 +235,19 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
         // method will be collapsed, no need to also collapse docstring
         return false;
       }
-      return CodeFoldingSettings.getInstance().COLLAPSE_DOC_COMMENTS;
+      if (getDocStringOwnerType(node) != null) {
+        return CodeFoldingSettings.getInstance().COLLAPSE_DOC_COMMENTS;
+      }
+      return PythonFoldingSettings.getInstance().isCollapseLongStrings();
+    }
+    if (node.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
+      return PythonFoldingSettings.getInstance().isCollapseSequentialComments();
     }
     if (node.getElementType() == PyElementTypes.STATEMENT_LIST && node.getTreeParent().getElementType() == PyElementTypes.FUNCTION_DECLARATION) {
       return CodeFoldingSettings.getInstance().COLLAPSE_METHODS;
+    }
+    if (FOLDABLE_COLLECTIONS_LITERALS.contains(node.getElementType())) {
+      return PythonFoldingSettings.getInstance().isCollapseLongCollections();
     }
     return false;
   }
