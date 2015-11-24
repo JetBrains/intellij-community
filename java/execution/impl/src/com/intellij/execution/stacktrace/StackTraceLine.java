@@ -64,7 +64,7 @@ public class StackTraceLine {
   public int getLineNumber() throws NumberFormatException {
     final int close = getCloseBracket();
     final int lineNumberStart = myLine.lastIndexOf(':') + 1;
-    if (close < 0 || lineNumberStart < 1) throw new NumberFormatException(myLine);
+    if (close < 0 || lineNumberStart < 1 || lineNumberStart >= close) throw new NumberFormatException(myLine);
     return Integer.parseInt(myLine.substring(lineNumberStart, close)) - 1;
   }
 
