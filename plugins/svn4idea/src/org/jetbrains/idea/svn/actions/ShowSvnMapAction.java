@@ -16,16 +16,10 @@
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.vcs.VcsShowToolWindowTabAction;
-import icons.SvnIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.WorkingCopiesContent;
 
 public class ShowSvnMapAction extends VcsShowToolWindowTabAction {
-
-  public ShowSvnMapAction() {
-    super(SvnBundle.message("action.show.svn.map.text"), SvnBundle.message("action.show.svn.map.description"), SvnIcons.ShowWorkingCopies);
-  }
 
   @NotNull
   @Override

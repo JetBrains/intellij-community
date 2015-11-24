@@ -111,6 +111,11 @@
     <action class="org.jetbrains.idea.svn.actions.CleanupProjectAction" id="Subversion.CleanupProject">
       <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Subversion.MergeFrom"/>
     </action>
+
+    <action id="Svn.Show.Working.Copies" class="org.jetbrains.idea.svn.actions.ShowSvnMapAction" text="Show Working Copies"
+            description="Shows working copies information: working copy formats and URLs" icon="SvnIcons.ShowWorkingCopies">
+      <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
