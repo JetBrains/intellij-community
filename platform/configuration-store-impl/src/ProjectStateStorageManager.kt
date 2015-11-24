@@ -27,13 +27,7 @@ class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor,
     val VERSION_OPTION = "version"
   }
 
-  override fun normalizeFileSpec(fileSpec: String): String {
-    var path = super.normalizeFileSpec(fileSpec)
-    if (path.startsWithMacro(StoragePathMacros.PROJECT_CONFIG_DIR)) {
-      return path.substring(StoragePathMacros.PROJECT_CONFIG_DIR.length + 1)
-    }
-    return path
-  }
+  override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), StoragePathMacros.PROJECT_CONFIG_DIR)
 
   override fun expandMacros(path: String): String {
     if (path[0] == '$') {
