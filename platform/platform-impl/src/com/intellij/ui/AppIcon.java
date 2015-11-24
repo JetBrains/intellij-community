@@ -477,7 +477,7 @@ public abstract class AppIcon {
         synchronized (Win7AppIcon.class) {
           if (myOkIcon == null) {
             try {
-              BufferedImage image = ImageIO.read(getClass().getResource("/mac/appIconOk512.png"));
+              BufferedImage image = ImageIO.read(getClass().getResource("/windows/appIconOk512.png"));
               ByteArrayOutputStream bytes = new ByteArrayOutputStream();
               Sanselan.writeImage(image, bytes, ImageFormat.IMAGE_FORMAT_ICO, new HashMap());
               myOkIcon = Win7TaskBar.createIcon(bytes.toByteArray());
