@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 /*******************************************************************************
  * Copyright (c) 2014 Brainwy Software Ltda.
  * All rights reserved. This program and the accompanying materials
@@ -8,7 +23,7 @@
  * Contributors:
  *     Fabio Zadrozny
  *******************************************************************************/
-package com.jetbrains.python.internal.win32;
+package com.intellij.execution.process;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,10 +34,6 @@ import java.util.List;
 
 import com.google.common.base.Joiner;
 import com.intellij.openapi.diagnostic.Logger;
-import com.jetbrains.python.internal.PyProcessInfo;
-import com.jetbrains.python.internal.IProcessList;
-import com.jetbrains.python.internal.PyProcessInfo;
-import com.jetbrains.python.internal.ProcessUtils;
 
 /*
  * This implementation uses the tasklist.exe from windows (must be on the path).
@@ -38,7 +49,7 @@ public class ProcessListWin32 implements IProcessList {
     myHelpersRoot = helpersRoot;
   }
 
-  public PyProcessInfo[] getProcessList() {
+  public ProcessInfo[] getProcessList() {
 
     try {
       return createFromWMIC();
@@ -49,7 +60,7 @@ public class ProcessListWin32 implements IProcessList {
 
     Process p = null;
     InputStream in = null;
-    PyProcessInfo[] procInfos = new PyProcessInfo[0];
+    ProcessInfo[] procInfos = new ProcessInfo[0];
 
     try {
 
@@ -80,11 +91,11 @@ public class ProcessListWin32 implements IProcessList {
     return procInfos;
   }
 
-  private PyProcessInfo[] createFromWMIC() throws Exception {
+  private ProcessInfo[] createFromWMIC() throws Exception {
     Process p = ProcessUtils.createProcess(new String[]{"wmic.exe", "path", "win32_process", "get",
                                              "Caption,Processid,Commandline"}, null,
                                            null);
-    List<PyProcessInfo> lst = new ArrayList<PyProcessInfo>();
+    List<ProcessInfo> lst = new ArrayList<ProcessInfo>();
     InputStream in = p.getInputStream();
     InputStreamReader reader = new InputStreamReader(in);
     try {
@@ -112,12 +123,12 @@ public class ProcessListWin32 implements IProcessList {
         String name = line.substring(0, commandLineI).trim();
         String commandLine = line.substring(commandLineI, processIdI).trim();
         String processId = line.substring(processIdI, line.length()).trim();
-        lst.add(new PyProcessInfo(Integer.parseInt(processId), name + "   " + commandLine));
+        lst.add(new ProcessInfo(Integer.parseInt(processId), name + "   " + commandLine));
       }
       if (lst.size() == 0) {
         throw new AssertionError("Error: no processes found");
       }
-      return lst.toArray(new PyProcessInfo[0]);
+      return lst.toArray(new ProcessInfo[0]);
     }
     catch (Exception e) {
       LOG.error(e);
@@ -128,10 +139,10 @@ public class ProcessListWin32 implements IProcessList {
     }
   }
 
-  public PyProcessInfo[] parseListTasks(InputStreamReader reader) {
+  public ProcessInfo[] parseListTasks(InputStreamReader reader) {
     BufferedReader br = new BufferedReader(reader);
     CSVReader csvReader = new CSVReader(br);
-    List<PyProcessInfo> processList = new ArrayList();
+    List<ProcessInfo> processList = new ArrayList();
     String[] next;
     do {
       try {
@@ -139,7 +150,7 @@ public class ProcessListWin32 implements IProcessList {
         if (next != null) {
           int pid = Integer.parseInt(next[1]);
           String name = Joiner.on(" - ").join(next[0], next[next.length - 1]);
-          processList.add(new PyProcessInfo(pid, name));
+          processList.add(new ProcessInfo(pid, name));
         }
       }
       catch (IOException e) {
@@ -148,6 +159,6 @@ public class ProcessListWin32 implements IProcessList {
     }
     while (next != null);
 
-    return processList.toArray(new PyProcessInfo[processList.size()]);
+    return processList.toArray(new ProcessInfo[processList.size()]);
   }
 }
