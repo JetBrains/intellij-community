@@ -210,14 +210,8 @@ public class UnnecessaryLocalVariableInspectionBase extends BaseInspection {
         return false;
       }
       final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)parent;
-      PsiStatement nextStatement = null;
-      final PsiStatement[] statements = containingScope.getStatements();
-      for (int i = 0; i < (statements.length - 1); i++) {
-        if (statements[i].equals(declarationStatement)) {
-          nextStatement = statements[i + 1];
-          break;
-        }
-      }
+      PsiElement next = PsiTreeUtil.skipSiblingsForward(declarationStatement, PsiWhiteSpace.class, PsiComment.class);
+      PsiStatement nextStatement = next instanceof PsiStatement ? (PsiStatement)next : null;
       if (!(nextStatement instanceof PsiReturnStatement)) {
         return false;
       }
