@@ -151,7 +151,7 @@ public class ConcurrencyUtil {
     }
     if (executor.getPoolSize() != 0) {
       String dump = ThreadDumper.dumpThreadsToString();
-      System.err.println(dump);
+      System.err.println("Executor "+executor+" is still active after "+unit.toSeconds(timeout)+" seconds:\n"+ dump);
     }
   }
 }
