@@ -70,6 +70,7 @@ import java.util.*
  */
 object UpdateChecker {
   private val LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker")
+  val NO_PLATFORM_UPDATE = "ide.no.platform.update"
 
   val NOTIFICATIONS = NotificationGroup(IdeBundle.message("update.notifications.group"), NotificationDisplayType.STICKY_BALLOON, true)
 
@@ -185,6 +186,10 @@ object UpdateChecker {
   }
 
   private fun checkPlatformUpdate(settings: UpdateSettings): CheckForUpdateResult {
+    if (System.getProperty(NO_PLATFORM_UPDATE, "false").toBoolean()) {
+      return CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
+    }
+
     val updateInfo: UpdatesInfo?
     try {
       val uriBuilder = URIBuilder(updateUrl)
