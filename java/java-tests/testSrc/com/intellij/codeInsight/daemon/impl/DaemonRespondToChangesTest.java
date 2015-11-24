@@ -1438,6 +1438,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testReactivityPerformance() throws Throwable {
+    List<Thread> watchers = new ArrayList<>();
     @NonNls String filePath = "/psi/resolve/Thinlet.java";
     configureByFile(filePath);
     type(' ');
@@ -1463,7 +1464,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         }
         final AtomicLong typingStart = new AtomicLong();
         final DaemonProgressIndicator progress = codeAnalyzer.getUpdateProgress();
-        new Thread("reactivity watcher") {
+        Thread watcher = new Thread("reactivity watcher") {
           @Override
           public void run() {
             while (true) {
@@ -1481,7 +1482,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
               long now = System.currentTimeMillis();
               if (now - start1 > 500) {
                 // too long, see WTF
-                PerformanceWatcher.dumpThreadsToConsole("Too long interrupt: " + (now - start1) + "; Progress canceled=" + progress.isCanceled() + "\n----------------------------");
+                PerformanceWatcher.dumpThreadsToConsole("Too long interrupt: " +
+                                                        (now - start1) +
+                                                        "; Progress canceled=" +
+                                                        progress.isCanceled() +
+                                                        "\n----------------------------");
                 System.out.println("----all threads---");
                 for (Thread thread : Thread.getAllStackTraces().keySet()) {
                   boolean canceled = CoreProgressManager.isCanceledThread(thread);
@@ -1494,7 +1499,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
               }
             }
           }
-        }.start();
+        };
+        watcher.start();
+        watchers.add(watcher);
         typingStart.set(System.currentTimeMillis());
         type(' ');
         typingStart.set(-1);
@@ -1523,6 +1530,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     long ave = ArrayUtil.averageAmongMedians(interruptTimes, 3);
     System.out.println("Average among the N/3 median times: " + ave + "ms");
     assertTrue(ave < 300);
+    for (Thread watcher : watchers) {
+      watcher.join();
+    }
   }
 
   public void testTypingLatencyPerformance() throws Throwable {

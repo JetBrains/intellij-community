@@ -901,6 +901,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     thread.join(500);
     assertNotNull(result.get());
     assertTrue(!result.get().isStringFound());
+    thread.join();
   }
 
   private void doTestRegexpReplace(String initialText, String searchString, String replaceString, String expectedResult) {
