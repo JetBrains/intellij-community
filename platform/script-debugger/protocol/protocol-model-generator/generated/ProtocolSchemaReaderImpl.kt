@@ -8,7 +8,7 @@ import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.jsonProtocol.JsonReaders.*
 
 internal class ProtocolSchemaReaderImpl : org.jetbrains.jsonProtocol.ProtocolSchemaReader {
-  override fun parseRoot(reader: org.jetbrains.io.JsonReaderEx): ProtocolMetaModel.Root = M0(reader,  null)
+  override fun parseRoot(reader: org.jetbrains.io.JsonReaderEx): org.jetbrains.jsonProtocol.ProtocolMetaModel.Root = M0(reader,  null)
 
   private class M0(reader: JsonReaderEx, preReadName: String?) : org.jetbrains.jsonProtocol.ProtocolMetaModel.Root {
     private var _domains: List<org.jetbrains.jsonProtocol.ProtocolMetaModel.Domain>? = null
@@ -219,6 +219,7 @@ internal class ProtocolSchemaReaderImpl : org.jetbrains.jsonProtocol.ProtocolSch
     private var _description: String? = null
     private var _hidden = false
     private var _name: String? = null
+    private var _optionalData = false
     private var _parameters: List<org.jetbrains.jsonProtocol.ProtocolMetaModel.Parameter>? = null
 
     init {
@@ -232,6 +233,7 @@ internal class ProtocolSchemaReaderImpl : org.jetbrains.jsonProtocol.ProtocolSch
           "description" -> _description = reader.nextNullableString()
           "hidden" -> _hidden = reader.nextBoolean()
           "name" -> _name = reader.nextString()
+          "optionalData" -> _optionalData = reader.nextBoolean()
           "parameters" -> _parameters = readObjectArray(reader, FM4())
           else -> reader.skipValue()
         }
@@ -247,9 +249,11 @@ internal class ProtocolSchemaReaderImpl : org.jetbrains.jsonProtocol.ProtocolSch
 
     override fun name() = _name!!
 
+    override fun optionalData() = _optionalData
+
     override fun parameters() = _parameters
 
-    override fun equals(other: Any?): Boolean = other is M5 && _hidden == other._hidden && _description == other._description && _name == other._name && _parameters == other._parameters
+    override fun equals(other: Any?): Boolean = other is M5 && _hidden == other._hidden && _optionalData == other._optionalData && _description == other._description && _name == other._name && _parameters == other._parameters
   }
 
   private class M6(reader: JsonReaderEx, preReadName: String?) : org.jetbrains.jsonProtocol.ProtocolMetaModel.StandaloneType {
@@ -408,26 +412,26 @@ internal class ProtocolSchemaReaderImpl : org.jetbrains.jsonProtocol.ProtocolSch
   }
 
   private class FM2 : ObjectFactory<org.jetbrains.jsonProtocol.ProtocolMetaModel.Domain>() {
-    override fun read(reader: JsonReaderEx) = M2(reader, null)
+    override fun read(reader: JsonReaderEx): org.jetbrains.jsonProtocol.ProtocolMetaModel.Domain = M2(reader, null)
   }
 
   private class FM3 : ObjectFactory<org.jetbrains.jsonProtocol.ProtocolMetaModel.Command>() {
-    override fun read(reader: JsonReaderEx) = M3(reader, null)
+    override fun read(reader: JsonReaderEx): org.jetbrains.jsonProtocol.ProtocolMetaModel.Command = M3(reader, null)
   }
 
   private class FM5 : ObjectFactory<org.jetbrains.jsonProtocol.ProtocolMetaModel.Event>() {
-    override fun read(reader: JsonReaderEx) = M5(reader, null)
+    override fun read(reader: JsonReaderEx): org.jetbrains.jsonProtocol.ProtocolMetaModel.Event = M5(reader, null)
   }
 
   private class FM6 : ObjectFactory<org.jetbrains.jsonProtocol.ProtocolMetaModel.StandaloneType>() {
-    override fun read(reader: JsonReaderEx) = M6(reader, null)
+    override fun read(reader: JsonReaderEx): org.jetbrains.jsonProtocol.ProtocolMetaModel.StandaloneType = M6(reader, null)
   }
 
   private class FM4 : ObjectFactory<org.jetbrains.jsonProtocol.ProtocolMetaModel.Parameter>() {
-    override fun read(reader: JsonReaderEx) = M4(reader, null)
+    override fun read(reader: JsonReaderEx): org.jetbrains.jsonProtocol.ProtocolMetaModel.Parameter = M4(reader, null)
   }
 
   private class FM8 : ObjectFactory<org.jetbrains.jsonProtocol.ProtocolMetaModel.ObjectProperty>() {
-    override fun read(reader: JsonReaderEx) = M8(reader, null)
+    override fun read(reader: JsonReaderEx): org.jetbrains.jsonProtocol.ProtocolMetaModel.ObjectProperty = M8(reader, null)
   }
 }

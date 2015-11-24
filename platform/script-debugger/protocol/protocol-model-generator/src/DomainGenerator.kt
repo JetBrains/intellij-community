@@ -242,7 +242,11 @@ internal class DomainGenerator(val generator: Generator, val domain: ProtocolMet
     val fullName = generator.naming.eventData.getFullName(domainName, event.name()).getFullText()
     generateJsonProtocolInterface(className, event.description(), event.parameters(), object : TextOutConsumer {
       override fun append(out: TextOutput) {
-        out.newLine().append("companion object TYPE : org.jetbrains.jsonProtocol.EventType<").append(fullName).append(", ").append(generator.naming.inputPackage).append('.').append(READER_INTERFACE_NAME).append('>')
+        out.newLine().append("companion object TYPE : org.jetbrains.jsonProtocol.EventType<").append(fullName)
+        if (event.optionalData() || event.parameters().isNullOrEmpty()) {
+          out.append('?')
+        }
+        out.append(", ").append(generator.naming.inputPackage).append('.').append(READER_INTERFACE_NAME).append('>')
         out.append("(\"")
         if (!domainName.isNullOrEmpty()) {
           out.append(domainName).append('.')

@@ -141,6 +141,9 @@ interface ProtocolMetaModel {
 
     @JsonOptionalField
     fun hidden(): Boolean
+
+    @JsonOptionalField
+    fun optionalData(): Boolean
   }
 
   @JsonType
