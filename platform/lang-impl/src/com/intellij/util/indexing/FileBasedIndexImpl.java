@@ -138,6 +138,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private volatile int myFilesModCount;
   private final AtomicInteger myUpdatingFiles = new AtomicInteger();
   private final Set<Project> myProjectsBeingUpdated = ContainerUtil.newConcurrentSet();
+  private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
 
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"}) private volatile boolean myInitialized;
     // need this variable for memory barrier
@@ -268,6 +269,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
     return true;
   }
+
+
 
   @Override
   public void requestReindex(@NotNull final VirtualFile file) {
@@ -961,11 +964,15 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
       ensureUpToDate(indexId, project, filter, restrictToFile);
 
+      myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(indexId);
+
       try {
         index.getReadLock().lock();
+        myAccessValidator.startedProcessingActivityForIndex(indexId);
         return computable.convert(index);
       }
       finally {
+        myAccessValidator.stoppedProcessingActivityForIndex(indexId);
         index.getReadLock().unlock();
       }
     }
