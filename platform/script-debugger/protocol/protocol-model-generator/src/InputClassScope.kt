@@ -8,8 +8,8 @@ internal class InputClassScope(generator: DomainGenerator, namePath: NamePath) :
   fun generateDeclarationBody(out: TextOutput, list: List<ItemDescriptor.Named>) {
     for (i in 0..list.size - 1) {
       val named = list.get(i)
-      if (named.description() != null) {
-        out.doc(named.description())
+      if (named.description != null) {
+        out.doc(named.description)
       }
 
       val name = named.getName()
@@ -31,30 +31,28 @@ internal class InputClassScope(generator: DomainGenerator, namePath: NamePath) :
   inner class InputMemberScope(memberName: String) : MemberScope(this@InputClassScope, memberName) {
     override fun generateNestedObject(description: String?, properties: List<ProtocolMetaModel.ObjectProperty>?): BoxableType {
       val objectName = capitalizeFirstChar(memberName)
-      addMember(object : TextOutConsumer {
-        override fun append(out: TextOutput) {
-          out.newLine().newLine().doc(description)
-          if (properties == null) {
-            out.append("@JsonType(allowsOtherProperties=true)").newLine()
-            out.append("interface ").append(objectName).append(" : JsonObjectBased").openBlock()
-          }
-          else {
-            out.append("@JsonType").newLine()
-            out.append("interface ").append(objectName).openBlock()
-            for (property in properties) {
-              out.doc(property.description())
-
-              val methodName = generateMethodNameSubstitute(property.getName(), out)
-              val memberScope = InputMemberScope(property.getName())
-              val propertyTypeData = memberScope.resolveType(property)
-              propertyTypeData.writeAnnotations(out)
-
-              out.append("fun ").appendEscapedName(methodName).append("(): ").append(propertyTypeData.type.getShortText(classContextNamespace))
-            }
-          }
-          out.closeBlock()
+      addMember { out ->
+        out.newLine().newLine().doc(description)
+        if (properties == null) {
+          out.append("@JsonType(allowsOtherProperties=true)").newLine()
+          out.append("interface ").append(objectName).append(" : JsonObjectBased").openBlock()
         }
-      })
+        else {
+          out.append("@JsonType").newLine()
+          out.append("interface ").append(objectName).openBlock()
+          for (property in properties) {
+            out.doc(property.description)
+
+            val methodName = generateMethodNameSubstitute(property.getName(), out)
+            val memberScope = InputMemberScope(property.getName())
+            val propertyTypeData = memberScope.resolveType(property)
+            propertyTypeData.writeAnnotations(out)
+
+            out.append("fun ").appendEscapedName(methodName).append("(): ").append(propertyTypeData.type.getShortText(classContextNamespace))
+          }
+        }
+        out.closeBlock()
+      }
       return subMessageType(NamePath(objectName, classContextNamespace))
     }
   }

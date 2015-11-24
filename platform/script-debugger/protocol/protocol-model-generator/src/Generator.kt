@@ -1,6 +1,7 @@
 package org.jetbrains.protocolModelGenerator
 
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.containers.isNullOrEmpty
 import gnu.trove.THashMap
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.jsonProtocol.*
@@ -125,34 +126,33 @@ internal class Generator(outputDir: String, private val rootPackage: String, req
     }
   }
 
-  fun resolveType(typedObject: ItemDescriptor, scope: ResolveAndGenerateScope): TypeDescriptor {
-    val optional = typedObject is ItemDescriptor.Named && typedObject.optional()
-    return switchByType(typedObject, object : TypeVisitor<TypeDescriptor> {
-      override fun visitRef(refName: String) = TypeDescriptor(resolveRefType(scope.getDomainName(), refName, scope.getTypeDirection()), optional)
+  fun resolveType(itemDescriptor: ItemDescriptor, scope: ResolveAndGenerateScope): TypeDescriptor {
+    return switchByType(itemDescriptor, object : TypeVisitor<TypeDescriptor> {
+      override fun visitRef(refName: String) = TypeDescriptor(resolveRefType(scope.getDomainName(), refName, scope.getTypeDirection()), itemDescriptor)
 
-      override fun visitBoolean() = TypeDescriptor(BoxableType.BOOLEAN, optional)
+      override fun visitBoolean() = TypeDescriptor(BoxableType.BOOLEAN, itemDescriptor)
 
       override fun visitEnum(enumConstants: List<String>): TypeDescriptor {
         assert(scope is MemberScope)
-        return TypeDescriptor((scope as MemberScope).generateEnum(typedObject.description(), enumConstants), optional)
+        return TypeDescriptor((scope as MemberScope).generateEnum(itemDescriptor.description, enumConstants), itemDescriptor)
       }
 
-      override fun visitString() = TypeDescriptor(BoxableType.STRING, optional)
+      override fun visitString() = TypeDescriptor(BoxableType.STRING, itemDescriptor)
 
-      override fun visitInteger() = TypeDescriptor(BoxableType.INT, optional)
+      override fun visitInteger() = TypeDescriptor(BoxableType.INT, itemDescriptor)
 
-      override fun visitNumber() = TypeDescriptor(BoxableType.NUMBER, optional)
+      override fun visitNumber() = TypeDescriptor(BoxableType.NUMBER, itemDescriptor)
 
-      override fun visitMap() = TypeDescriptor(BoxableType.MAP, optional)
+      override fun visitMap() = TypeDescriptor(BoxableType.MAP, itemDescriptor)
 
       override fun visitArray(items: ProtocolMetaModel.ArrayItemType): TypeDescriptor {
         val type = scope.resolveType(items).type
-        return TypeDescriptor(ListType(type), optional, false, type == BoxableType.ANY_STRING)
+        return TypeDescriptor(ListType(type), itemDescriptor, type == BoxableType.ANY_STRING)
       }
 
-      override fun visitObject(properties: List<ProtocolMetaModel.ObjectProperty>?) = TypeDescriptor(scope.generateNestedObject(typedObject.description(), properties), optional)
+      override fun visitObject(properties: List<ProtocolMetaModel.ObjectProperty>?) = TypeDescriptor(scope.generateNestedObject(itemDescriptor.description, properties), itemDescriptor)
 
-      override fun visitUnknown() = TypeDescriptor(BoxableType.STRING, optional, false, true)
+      override fun visitUnknown() = TypeDescriptor(BoxableType.STRING, itemDescriptor, true)
     })
   }
 
@@ -214,10 +214,6 @@ internal class Generator(outputDir: String, private val rootPackage: String, req
     }
     return typeMap.resolve(domainName, shortName, direction)!!
   }
-
-//  fun startJavaFile(nameScheme: ClassNameScheme, domain: ProtocolMetaModel.Domain, baseName: String): FileUpdater {
-//    return startJavaFile(nameScheme.getPackageNameVirtual(domain.domain()), nameScheme.getShortName(baseName) + ".java")
-//  }
 }
 
 val READER_INTERFACE_NAME = "ProtocolResponseReader"
@@ -228,56 +224,46 @@ private fun isDomainSkipped(domain: ProtocolMetaModel.Domain): Boolean {
   }
 
   // todo DOMDebugger
-  return domain.hidden() || domain.domain() == "DOMDebugger" || domain.domain() == "Timeline" || domain.domain() == "Input"
+  return domain.hidden || domain.domain() == "DOMDebugger" || domain.domain() == "Timeline" || domain.domain() == "Input"
 }
 
 fun generateMethodNameSubstitute(originalName: String, out: TextOutput): String {
   if (originalName != "this") {
     return originalName
   }
-  out.append("@org.jetbrains.jsonProtocol.JsonField(name = \"").append(originalName).append("\")").newLine()
+  out.append("@org.jetbrains.jsonProtocol.ProtocolName(\"").append(originalName).append("\")").newLine()
   return "get${Character.toUpperCase(originalName.get(0))}${originalName.substring(1)}"
 }
 
 fun capitalizeFirstChar(s: String): String {
-  if (!s.isEmpty() && Character.isLowerCase(s.get(0))) {
-    return Character.toUpperCase(s.get(0)) + s.substring(1)
+  if (!s.isEmpty() && s.get(0).isLowerCase()) {
+    return s.get(0).toUpperCase() + s.substring(1)
   }
   return s
 }
 
 fun <R> switchByType(typedObject: ItemDescriptor, visitor: TypeVisitor<R>): R {
-  val refName = if (typedObject is ItemDescriptor.Referenceable) typedObject.ref() else null
+  val refName = if (typedObject is ItemDescriptor.Referenceable) typedObject.ref else null
   if (refName != null) {
     return visitor.visitRef(refName)
   }
-  val typeName = typedObject.type()
-  when (typeName) {
-    BOOLEAN_TYPE -> return visitor.visitBoolean()
-    STRING_TYPE -> {
-      if (typedObject.getEnum() != null) {
-        return visitor.visitEnum(typedObject.getEnum()!!)
-      }
-      return visitor.visitString()
-    }
-    INTEGER_TYPE, "int" -> return visitor.visitInteger()
-    NUMBER_TYPE -> return visitor.visitNumber()
-    ARRAY_TYPE -> return visitor.visitArray(typedObject.items()!!)
+  val typeName = typedObject.type
+  return when (typeName) {
+    BOOLEAN_TYPE -> visitor.visitBoolean()
+    STRING_TYPE -> if (typedObject.enum == null) visitor.visitString() else visitor.visitEnum(typedObject.enum!!)
+    INTEGER_TYPE, "int" -> visitor.visitInteger()
+    NUMBER_TYPE -> visitor.visitNumber()
+    ARRAY_TYPE -> visitor.visitArray(typedObject.items!!)
     OBJECT_TYPE -> {
       if (typedObject !is ItemDescriptor.Type) {
-        return visitor.visitObject(null)
-      }
-
-      val properties = typedObject.properties()
-      if (properties == null || properties.isEmpty()) {
-        return visitor.visitMap()
+        visitor.visitObject(null)
       }
       else {
-        return visitor.visitObject(properties)
+        val properties = typedObject.properties
+        return if (properties.isNullOrEmpty()) visitor.visitMap() else visitor.visitObject(properties)
       }
     }
-    ANY_TYPE -> return visitor.visitUnknown()
-    UNKNOWN_TYPE -> return visitor.visitUnknown()
+    ANY_TYPE, UNKNOWN_TYPE -> return visitor.visitUnknown()
+    else -> throw RuntimeException("Unrecognized type $typeName")
   }
-  throw RuntimeException("Unrecognized type " + typeName)
 }

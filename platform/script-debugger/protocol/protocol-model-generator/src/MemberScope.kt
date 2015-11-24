@@ -1,7 +1,6 @@
 package org.jetbrains.protocolModelGenerator
 
 import org.jetbrains.jsonProtocol.ItemDescriptor
-import org.jetbrains.protocolReader.TextOutput
 import org.jetbrains.protocolReader.appendEnums
 
 /**
@@ -18,12 +17,10 @@ internal open class MemberScope(private val classScope: ClassScope, protected va
     if (type == null) {
       type = StandaloneType(namePath, "writeEnum")
       classScope.generator.generator.nestedTypeMap.put(namePath, type)
-      classScope.addMember(object : TextOutConsumer {
-        override fun append(out: TextOutput) {
-          out.newLine().doc(description)
-          appendEnums(enumConstants, enumName, classScope.typeDirection == TypeData.Direction.INPUT, out)
-        }
-      })
+      classScope.addMember { out ->
+        out.newLine().doc(description)
+        appendEnums(enumConstants, enumName, classScope.typeDirection == TypeData.Direction.INPUT, out)
+      }
     }
     return type
   }

@@ -4,7 +4,7 @@ import org.jetbrains.jsonProtocol.JsonObjectBased
 import java.lang.reflect.Method
 import java.util.*
 
-val FIELD_PREFIX: Char = '_'
+internal val FIELD_PREFIX: Char = '_'
 
 private fun assignField(out: TextOutput, fieldName: String) = out.append(FIELD_PREFIX).append(fieldName).append(" = ")
 
@@ -51,8 +51,13 @@ internal class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>
     }
 
     for (loader in fieldLoaders) {
-      out.append("private var ")
-      out.append(FIELD_PREFIX).append(loader.name)
+      if (loader.asImpl) {
+        out.append("override")
+      }
+      else {
+        out.append("private")
+      }
+      out.append(" var ").appendName(loader)
 
       fun addType() {
         out.append(": ")
@@ -61,7 +66,7 @@ internal class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>
       }
 
       if (loader.valueReader is PrimitiveValueReader) {
-        val defaultValue = loader.valueReader.defaultValue
+        val defaultValue = loader.defaultValue ?: loader.valueReader.defaultValue
         if (defaultValue != null) {
           out.append(" = ").append(defaultValue)
         }
@@ -142,7 +147,7 @@ internal class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>
 
     for (loader in fieldLoaders.sortedWith(comparator {f1, f2 -> fieldWeight((f1.valueReader)) - fieldWeight((f2.valueReader))})) {
       out.append(" && ")
-      out.append(FIELD_PREFIX).append(loader.name).append(" == ").append("other.").append(FIELD_PREFIX).append(loader.name)
+      out.appendName(loader).append(" == ").append("other.").appendName(loader)
     }
     out.newLine()
   }
@@ -203,7 +208,7 @@ internal class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>
           if (primitiveValueName != null) {
             out.append("if (reader.peek() == com.google.gson.stream.JsonToken.BEGIN_OBJECT)").openBlock()
           }
-          assignField(out, fieldLoader.name)
+          out.appendName(fieldLoader).append(" = ")
 
           fieldLoader.valueReader.writeReadCode(classScope, false, out)
 

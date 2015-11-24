@@ -1,14 +1,14 @@
 package org.jetbrains.protocolModelGenerator
 
+import com.intellij.util.SmartList
 import org.jetbrains.jsonProtocol.ItemDescriptor
 import org.jetbrains.protocolReader.TextOutput
-import java.util.*
 
 internal abstract class ClassScope(val generator: DomainGenerator, val classContextNamespace: NamePath) {
-  private val additionalMemberTexts = ArrayList<TextOutConsumer>(2)
+  private val additionalMemberTexts = SmartList<(out: TextOutput) -> Unit>()
 
-  fun addMember(out: TextOutConsumer) {
-    additionalMemberTexts.add(out)
+  fun addMember(appender: (out: TextOutput) -> Unit) {
+    additionalMemberTexts.add(appender)
   }
 
   fun writeAdditionalMembers(out: TextOutput) {
@@ -18,11 +18,11 @@ internal abstract class ClassScope(val generator: DomainGenerator, val classCont
 
     out.newLine()
     for (deferredWriter in additionalMemberTexts) {
-      deferredWriter.append(out)
+      deferredWriter(out)
     }
   }
 
   abstract val typeDirection: TypeData.Direction
 }
 
-fun ItemDescriptor.Named.getName() = shortName() ?: name()
+fun ItemDescriptor.Named.getName() = shortName ?: name()
