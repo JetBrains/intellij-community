@@ -17,9 +17,11 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.StrictSubtypingConstraint;
+import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompatibilityConstraint;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
@@ -275,6 +277,11 @@ public class InferenceIncorporationPhase {
         if (eqBound instanceof PsiCapturedWildcardType) {
           eqBound = ((PsiCapturedWildcardType)eqBound).getUpperBound();
         }
+
+        if (Registry.is("javac.unchecked.subtyping.during.incorporation", true) && TypeCompatibilityConstraint.isUncheckedConversion(upperBound, eqBound)) {
+          continue;
+        }
+
         addConstraint(new StrictSubtypingConstraint(upperBound, eqBound));
       }
     }
