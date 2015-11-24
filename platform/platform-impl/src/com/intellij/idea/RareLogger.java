@@ -133,6 +133,16 @@ public class RareLogger extends Logger {
   }
 
   @Override
+  public boolean isTraceEnabled() {
+    return myLogger.isTraceEnabled();
+  }
+
+  @Override
+  public void trace(String message) {
+    process(Level.TRACE, message, null);
+  }
+
+  @Override
   public void error(@NonNls String message, @Nullable Throwable t, @NotNull @NonNls String... details) {
     process(Level.ERROR, message, t, details);
   }

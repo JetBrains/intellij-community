@@ -52,6 +52,16 @@ public class Log4jBasedLogger extends Logger {
   }
 
   @Override
+  public boolean isTraceEnabled() {
+    return myLogger.isTraceEnabled();
+  }
+
+  @Override
+  public void trace(String message) {
+    myLogger.trace(message);
+  }
+
+  @Override
   public void info(@NonNls String message) {
     myLogger.info(message);
   }
