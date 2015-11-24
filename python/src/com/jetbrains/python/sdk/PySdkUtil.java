@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,8 +126,8 @@ public class PySdkUtil {
     final Map<String, String> env = extraEnv != null ? mergeEnvVariables(systemEnv, extraEnv) : systemEnv;
     try {
 
-      final Process process = cmd.withWorkDirectory(homePath).withEnvironment(env).createProcess();
-      final CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
+      GeneralCommandLine commandLine = cmd.withWorkDirectory(homePath).withEnvironment(env);
+      final CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);
       if (stdin != null) {
         final OutputStream processInput = processHandler.getProcessInput();
         assert processInput != null;

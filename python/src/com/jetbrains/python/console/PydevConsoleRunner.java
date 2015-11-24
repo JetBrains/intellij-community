@@ -328,6 +328,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     assert myPorts != null;
 
     myGeneralCommandLine = createCommandLine(mySdk, myEnvironmentVariables, getWorkingDir(), myPorts);
+    myCommandLine = myGeneralCommandLine.getCommandLineString();
 
     try {
       super.initAndRun();
@@ -374,6 +375,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     assert myPorts != null;
 
     myGeneralCommandLine = createCommandLine(mySdk, myEnvironmentVariables, getWorkingDir(), myPorts);
+    myCommandLine = myGeneralCommandLine.getCommandLineString();
 
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override

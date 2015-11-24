@@ -531,8 +531,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final int listenPort = findFreePort();
     server = new ExternalJavacManager(Utils.getSystemRoot()) {
       @Override
-      protected ExternalJavacProcessHandler createProcessHandler(Process process) {
-        return new ExternalJavacProcessHandler(process) {
+      protected ExternalJavacProcessHandler createProcessHandler(@NotNull Process process, @NotNull String commandLine) {
+        return new ExternalJavacProcessHandler(process, commandLine) {
           @Override
           @NotNull
           protected Future<?> executeOnPooledThread(@NotNull Runnable task) {

@@ -21,7 +21,6 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 import java.util.List;
@@ -39,11 +38,11 @@ public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscap
     super(commandLine);
   }
 
-  public ColoredProcessHandler(@NotNull Process process, @Nullable String commandLine) {
+  public ColoredProcessHandler(@NotNull Process process, @NotNull String commandLine) {
     super(process, commandLine);
   }
 
-  public ColoredProcessHandler(@NotNull Process process, @Nullable String commandLine, @NotNull Charset charset) {
+  public ColoredProcessHandler(@NotNull Process process, @NotNull String commandLine, @NotNull Charset charset) {
     super(process, commandLine, charset);
   }
 

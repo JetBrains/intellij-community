@@ -39,10 +39,18 @@ public class CapturingProcessHandler extends OSProcessHandler {
     addProcessListener(createProcessAdapter(myOutput));
   }
 
+  @Deprecated
+  /**
+   * @deprecated Use {@link CapturingProcessHandler#CapturingProcessHandler(Process, Charset, String)} instead
+   */
   public CapturingProcessHandler(@NotNull Process process) {
     this(process, null, "");
   }
 
+  @Deprecated
+  /**
+   * @deprecated Use {@link CapturingProcessHandler#CapturingProcessHandler(Process, Charset, String)} instead
+   */
   public CapturingProcessHandler(@NotNull Process process, @Nullable Charset charset) {
     this(process, charset, "");
   }

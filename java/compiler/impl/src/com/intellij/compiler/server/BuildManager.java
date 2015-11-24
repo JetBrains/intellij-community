@@ -1203,9 +1203,7 @@ public class BuildManager implements Disposable {
       LOG.error(e);
     }
     
-    final Process process = cmdLine.createProcess();
-
-    final OSProcessHandler processHandler = new OSProcessHandler(process, null, mySystemCharset, BuildMain.class.getName()+" external process") {
+    final OSProcessHandler processHandler = new OSProcessHandler(cmdLine) {
       @Override
       protected boolean shouldDestroyProcessRecursively() {
         return true;

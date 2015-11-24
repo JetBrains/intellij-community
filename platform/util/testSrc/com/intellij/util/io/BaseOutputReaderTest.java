@@ -15,6 +15,7 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
@@ -48,9 +49,9 @@ public class BaseOutputReaderTest {
   private static class TestOutputReader extends BaseOutputReader {
     private final List<String> myLines = Collections.synchronizedList(new ArrayList<String>());
 
-    public TestOutputReader(InputStream stream, SleepingPolicy sleepingPolicy) {
+    public TestOutputReader(InputStream stream, SleepingPolicy sleepingPolicy, String commandLine) {
       super(stream, null, sleepingPolicy);
-      start(BaseOutputReaderTest.class.getSimpleName());
+      start(CommandLineUtil.extractPresentableName(commandLine));
     }
 
     @Override
@@ -96,8 +97,9 @@ public class BaseOutputReaderTest {
     File dir = new File(url.toURI());
     for (int i = 0; i < StringUtil.countChars(className, '.') + 1; i++) dir = dir.getParentFile();
 
-    Process process = new ProcessBuilder(java, "-cp", dir.getPath(), className).redirectErrorStream(true).start();
-    TestOutputReader reader = new TestOutputReader(process.getInputStream(), policy);
+    String[] cmd = {java, "-cp", dir.getPath(), className};
+    Process process = new ProcessBuilder(cmd).redirectErrorStream(true).start();
+    TestOutputReader reader = new TestOutputReader(process.getInputStream(), policy, StringUtil.join(cmd, " "));
     process.waitFor();
     reader.stop();
     reader.waitFor();

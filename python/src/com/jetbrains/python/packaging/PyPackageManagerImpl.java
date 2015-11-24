@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -478,14 +478,11 @@ public class PyPackageManagerImpl extends PyPackageManager {
       final Map<String, String> environment = new HashMap<String, String>(System.getenv());
       PythonEnvUtil.setPythonUnbuffered(environment);
       PythonEnvUtil.setPythonDontWriteBytecode(environment);
-      final GeneralCommandLine commandLine = new GeneralCommandLine(cmdline).withWorkDirectory(workingDir).withEnvironment(environment);
+      GeneralCommandLine commandLine = new GeneralCommandLine(cmdline).withWorkDirectory(workingDir).withEnvironment(environment);
       if (useSudo) {
-        process = ExecUtil.sudo(commandLine, "Please enter your password to make changes in system packages: ");
+        commandLine = ExecUtil.sudoCommand(commandLine, "Please enter your password to make changes in system packages: ");
       }
-      else {
-        process = commandLine.createProcess();
-      }
-      final CapturingProcessHandler handler = new CapturingProcessHandler(process);
+      final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       final ProcessOutput result;
       if (showProgress && indicator != null) {

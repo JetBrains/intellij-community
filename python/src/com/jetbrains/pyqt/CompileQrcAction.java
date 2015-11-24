@@ -65,7 +65,7 @@ public class CompileQrcAction extends AnAction {
       cmdLine.addParameter(vFile.getPath());
     }
     try {
-      ProcessHandler process = new OSProcessHandler(cmdLine.createProcess(), cmdLine.getCommandLineString());
+      ProcessHandler process = new OSProcessHandler(cmdLine);
       ProcessTerminatedListener.attach(process);
       new RunContentExecutor(project, process)
         .withTitle("Compile .qrc")

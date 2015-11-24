@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.process;
 
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.TaskExecutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
@@ -47,24 +48,22 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   protected final Process myProcess;
   protected final String myCommandLine;
   protected final Charset myCharset;
-  @NotNull private final String myPresentableName;
+  @NotNull protected final String myPresentableName;
   protected final ProcessWaitFor myWaitFor;
 
-  @Deprecated
   /**
-   * todo remove in IDEA16
-   * @deprecated Use {@link BaseOSProcessHandler#BaseOSProcessHandler(Process, String, Charset, String)} instead
+   *
+   * @param commandLine must be not null (for correct thread attribution in the stacktrace)
    */
-  public BaseOSProcessHandler(@NotNull Process process, @Nullable String commandLine, @Nullable Charset charset) {
-    this(process, commandLine, charset, StringUtil.notNullize(commandLine));
-  }
-
-  public BaseOSProcessHandler(@NotNull Process process, @Nullable String commandLine, @Nullable Charset charset, @NotNull String presentableName) {
+  public BaseOSProcessHandler(@NotNull Process process, /*NotNull*/String commandLine, @Nullable Charset charset) {
     myProcess = process;
     myCommandLine = commandLine;
     myCharset = charset;
-    myPresentableName = presentableName;
-    myWaitFor = new ProcessWaitFor(process, this, presentableName);
+    if (StringUtil.isEmpty(commandLine)) {
+      LOG.warn(new IllegalArgumentException("Must specify non-empty 'commandLine' parameter"));
+    }
+    myPresentableName = CommandLineUtil.extractPresentableName(StringUtil.notNullize(commandLine));
+    myWaitFor = new ProcessWaitFor(process, this, myPresentableName);
   }
 
   /**
@@ -246,7 +245,7 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     return myProcess.getOutputStream();
   }
 
-  @Nullable
+  /*NotNull*/
   public String getCommandLine() {
     return myCommandLine;
   }

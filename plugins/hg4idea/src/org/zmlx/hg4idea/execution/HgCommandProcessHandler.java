@@ -51,7 +51,7 @@ class HgCommandProcessHandler extends OSProcessHandler {
   private class MyBinaryOutputReader extends BinaryOutputReader {
     private MyBinaryOutputReader(@NotNull InputStream stream, @NotNull BaseDataReader.SleepingPolicy simple) {
       super(stream, simple);
-      start();
+      start(myPresentableName);
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -255,11 +255,10 @@ public class MvcConsole implements Disposable {
     myConsole.print(commandLine.getCommandLineString(), ConsoleViewContentType.SYSTEM_OUTPUT);
     final OSProcessHandler handler;
     try {
-      Process process = commandLine.createProcess();
-      handler = new OSProcessHandler(process);
+      handler = new OSProcessHandler(commandLine);
 
       @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-      OutputStreamWriter writer = new OutputStreamWriter(process.getOutputStream());
+      OutputStreamWriter writer = new OutputStreamWriter(handler.getProcess().getOutputStream());
       for (String s : input) {
         writer.write(s);
       }

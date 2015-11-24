@@ -139,7 +139,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
           target, rmicPath, classpathString, options, entry.getValue()
         );
         final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(cmdLine));
-        final BaseOSProcessHandler handler = new BaseOSProcessHandler(process, null, null) {
+        final BaseOSProcessHandler handler = new BaseOSProcessHandler(process, StringUtil.join(cmdLine, " "), null) {
           @NotNull
           @Override
           protected Future<?> executeOnPooledThread(@NotNull Runnable task) {

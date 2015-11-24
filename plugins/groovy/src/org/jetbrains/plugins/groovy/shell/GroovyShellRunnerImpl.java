@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.shell;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.execution.console.LanguageConsoleView;
@@ -34,7 +35,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -57,6 +57,7 @@ public class GroovyShellRunnerImpl extends AbstractConsoleRunnerWithHistory<Lang
       doRunShell(myShellRunner, module);
     }
   };
+  private GeneralCommandLine myCommandLine;
 
   public GroovyShellRunnerImpl(@NotNull String consoleTitle,
                                @NotNull GroovyShellConfig shellRunner,
@@ -98,12 +99,13 @@ public class GroovyShellRunnerImpl extends AbstractConsoleRunnerWithHistory<Lang
     assert sdkType instanceof JavaSdkType;
     final String exePath = ((JavaSdkType)sdkType).getVMExecutablePath(sdk);
 
-    return JdkUtil.setupJVMCommandLine(exePath, javaParameters, true).createProcess();
+    myCommandLine = JdkUtil.setupJVMCommandLine(exePath, javaParameters, true);
+    return myCommandLine.createProcess();
   }
 
   @Override
   protected OSProcessHandler createProcessHandler(Process process) {
-    return new OSProcessHandler(process);
+    return new OSProcessHandler(process, myCommandLine.getCommandLineString());
   }
 
   @NotNull
