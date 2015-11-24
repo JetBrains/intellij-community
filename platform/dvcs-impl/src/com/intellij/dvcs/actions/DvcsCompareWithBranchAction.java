@@ -49,13 +49,16 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
     VirtualFile file = getAffectedFile(event);
     T repository = getRepositoryManager(project).getRepositoryForFile(file);
     assert repository != null;
-
+    if (repository.isFresh()) {
+      errorForFresh(repository);
+      return;
+    }
     String currentBranchName = repository.getCurrentBranchName();
     String head = currentBranchName;
     if (currentBranchName == null) {
       String currentRevision = repository.getCurrentRevision();
       if (currentRevision == null) {
-        LOG.error("Current revision is null for " + repository + ". Compare with branch shouldn't be available for fresh repository");
+        errorForFresh(repository);
         return;
       }
       head = DvcsUtil.getShortHash(currentRevision);
@@ -76,6 +79,10 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
       })
       .createPopup()
       .showInBestPositionFor(event.getDataContext());
+  }
+
+  private void errorForFresh(@NotNull T repository) {
+    LOG.error("Compare with branch shouldn't be available for fresh repository. Check " + repository.getPresentableUrl());
   }
 
   @NotNull
