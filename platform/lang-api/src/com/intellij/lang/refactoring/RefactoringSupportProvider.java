@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.refactoring;
 
+import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
@@ -89,6 +90,16 @@ public abstract class RefactoringSupportProvider {
    */
   @Nullable
   public RefactoringActionHandler getIntroduceParameterHandler() { return null; }
+
+  /**
+   * @return handler for introducing functional parameters/closures in this language
+   * @see ContextAwareActionHandler
+   * @see RefactoringActionHandler
+   */
+  @Nullable
+  public RefactoringActionHandler getIntroduceFunctionalParameterHandler() {
+    return null;
+  }
 
   /**
    * @return  handler for pulling up members in this language
