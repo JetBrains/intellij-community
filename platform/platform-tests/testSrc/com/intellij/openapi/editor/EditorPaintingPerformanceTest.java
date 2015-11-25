@@ -38,7 +38,7 @@ public class EditorPaintingPerformanceTest extends AbstractEditorTest {
     initText(StringUtil.repeat(LOREM_IPSUM + ' ', 15000));
     EditorTestUtil.configureSoftWraps(myEditor, EDITOR_WIDTH_PX, TEST_CHAR_WIDTH);
     
-    doTestScrollingPerformance("scrolling through long soft wrapped line", 1800);
+    doTestScrollingPerformance("scrolling through long soft wrapped line", 1600);
   }
 
   private static void doTestScrollingPerformance(String message, int expectedMs) {

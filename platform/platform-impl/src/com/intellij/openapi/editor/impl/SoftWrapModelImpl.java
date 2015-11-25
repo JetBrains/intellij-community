@@ -341,6 +341,17 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
     if (!isSoftWrappingEnabled()) {
       return 0;
     }
+    if (!myEditor.getSettings().isAllSoftWrapsShown()) {
+      int visualLine = y / lineHeight;
+      LogicalPosition position = myEditor.visualToLogicalPosition(new VisualPosition(visualLine, 0));
+      if (position.line != myEditor.getCaretModel().getLogicalPosition().line) {
+        return myPainter.getDrawingHorizontalOffset(g, drawingType, x, y, lineHeight);
+      }
+    }
+    return doPaint(g, drawingType, x, y, lineHeight);
+  }
+  
+  public int doPaint(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight) {
     return myPainter.paint(g, drawingType, x, y, lineHeight);
   }
 

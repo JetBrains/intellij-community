@@ -83,8 +83,8 @@ class EditorPainter implements TextDrawingCallback {
     
     int startLine = myView.yToVisualLine(Math.max(clip.y, 0));
     int endLine = myView.yToVisualLine(Math.max(clip.y + clip.height, 0));
-    int startOffset = myView.visualPositionToOffset(new VisualPosition(startLine, 0));
-    int endOffset = myView.visualPositionToOffset(new VisualPosition(endLine + 1, 0, true));
+    int startOffset = myView.visualLineToOffset(startLine);
+    int endOffset = myView.visualLineToOffset(endLine + 1);
     ClipDetector clipDetector = new ClipDetector(myEditor, clip);
     
     paintBackground(g, clip, startLine, endLine);
@@ -134,7 +134,11 @@ class EditorPainter implements TextDrawingCallback {
 
   private void paintBackground(Graphics2D g, Rectangle clip, int startVisualLine, int endVisualLine) {
     int lineCount = myEditor.getVisibleLineCount();
-    final Map<Integer, Couple<Integer>> virtualSelectionMap = createVirtualSelectionMap(startVisualLine, endVisualLine); 
+    
+    final Map<Integer, Couple<Integer>> virtualSelectionMap = createVirtualSelectionMap(startVisualLine, endVisualLine);
+    final VisualPosition primarySelectionStart = myEditor.getSelectionModel().getSelectionStartPosition();
+    final VisualPosition primarySelectionEnd = myEditor.getSelectionModel().getSelectionEndPosition();
+    
     VisualLinesIterator visLinesIterator = new VisualLinesIterator(myView, startVisualLine);
     while (!visLinesIterator.atEnd()) {
       int visualLine = visLinesIterator.getVisualLine();
@@ -149,7 +153,7 @@ class EditorPainter implements TextDrawingCallback {
         @Override
         public void paintBeforeLineStart(Graphics2D g, TextAttributes attributes, int columnEnd, float xEnd, int y) {
           paintBackground(g, attributes, 0, y, xEnd);
-          paintSelectionOnSecondSoftWrapLineIfNecessary(g, columnEnd, xEnd, y);
+          paintSelectionOnSecondSoftWrapLineIfNecessary(g, columnEnd, xEnd, y, primarySelectionStart, primarySelectionEnd);
         }
 
         @Override
@@ -167,7 +171,8 @@ class EditorPainter implements TextDrawingCallback {
             paintVirtualSelectionIfNecessary(g, virtualSelectionMap, columnStart, x, clip.x + clip.width, y);
           }
           else {
-            paintSelectionOnFirstSoftWrapLineIfNecessary(g, columnStart, x, clip.x + clip.width, y);
+            paintSelectionOnFirstSoftWrapLineIfNecessary(g, columnStart, x, clip.x + clip.width, y, 
+                                                         primarySelectionStart, primarySelectionEnd);
           }
         }
       });
@@ -207,9 +212,8 @@ class EditorPainter implements TextDrawingCallback {
     paintBackground(g, myEditor.getColorsScheme().getColor(EditorColors.SELECTION_BACKGROUND_COLOR), startX, y, endX - startX);
   }
 
-  private void paintSelectionOnSecondSoftWrapLineIfNecessary(Graphics2D g, int columnEnd, float xEnd, int y) {
-    VisualPosition selectionStartPosition = myEditor.getSelectionModel().getSelectionStartPosition();
-    VisualPosition selectionEndPosition = myEditor.getSelectionModel().getSelectionEndPosition();
+  private void paintSelectionOnSecondSoftWrapLineIfNecessary(Graphics2D g, int columnEnd, float xEnd, int y,
+                                                             VisualPosition selectionStartPosition, VisualPosition selectionEndPosition) {
     int visualLine = myView.yToVisualLine(y);
     
     if (selectionStartPosition.equals(selectionEndPosition) || 
@@ -227,9 +231,8 @@ class EditorPainter implements TextDrawingCallback {
     paintBackground(g, myEditor.getColorsScheme().getColor(EditorColors.SELECTION_BACKGROUND_COLOR), startX, y, endX - startX);
   }
 
-  private void paintSelectionOnFirstSoftWrapLineIfNecessary(Graphics2D g, int columnStart, float xStart, float xEnd, int y) {
-    VisualPosition selectionStartPosition = myEditor.getSelectionModel().getSelectionStartPosition();
-    VisualPosition selectionEndPosition = myEditor.getSelectionModel().getSelectionEndPosition();
+  private void paintSelectionOnFirstSoftWrapLineIfNecessary(Graphics2D g, int columnStart, float xStart, float xEnd, int y,
+                                                            VisualPosition selectionStartPosition, VisualPosition selectionEndPosition) {
     int visualLine = myView.yToVisualLine(y);
 
     if (selectionStartPosition.equals(selectionEndPosition) || 
@@ -323,6 +326,7 @@ class EditorPainter implements TextDrawingCallback {
   private void paintTextWithEffects(Graphics2D g, Rectangle clip, int startVisualLine, int endVisualLine) {
     final CharSequence text = myDocument.getImmutableCharSequence();
     final EditorImpl.LineWhitespacePaintingStrategy whitespacePaintingStrategy = myEditor.new LineWhitespacePaintingStrategy();
+    boolean paintAllSoftWraps = myEditor.getSettings().isAllSoftWrapsShown();
     int lineCount = myEditor.getVisibleLineCount();
     VisualLinesIterator visLinesIterator = new VisualLinesIterator(myView, startVisualLine);
     while (!visLinesIterator.atEnd()) {
@@ -337,15 +341,19 @@ class EditorPainter implements TextDrawingCallback {
       }
       if (visualLine >= lineCount) break;
       
+      final boolean paintSoftWraps = paintAllSoftWraps || 
+                                     myEditor.getCaretModel().getLogicalPosition().line == visLinesIterator.getStartLogicalLine();
       final int[] currentLogicalLine = new int[] {-1}; 
       
       paintLineFragments(g, clip, visLinesIterator, y, new LineFragmentPainter() {
         @Override
         public void paintBeforeLineStart(Graphics2D g, TextAttributes attributes, int columnEnd, float xEnd, int y) {
-          SoftWrapModelImpl softWrapModel = myEditor.getSoftWrapModel();
-          int symbolWidth = softWrapModel.getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
-          softWrapModel.paint(g, SoftWrapDrawingType.AFTER_SOFT_WRAP, 
-                              (int)xEnd - symbolWidth, y - myView.getAscent(), myView.getLineHeight());
+          if (paintSoftWraps) {
+            SoftWrapModelImpl softWrapModel = myEditor.getSoftWrapModel();
+            int symbolWidth = softWrapModel.getMinDrawingWidthInPixels(SoftWrapDrawingType.AFTER_SOFT_WRAP);
+            softWrapModel.doPaint(g, SoftWrapDrawingType.AFTER_SOFT_WRAP, 
+                                  (int)xEnd - symbolWidth, y - myView.getAscent(), myView.getLineHeight());
+          }
         }
 
         @Override
@@ -376,8 +384,9 @@ class EditorPainter implements TextDrawingCallback {
             int logicalLine = myDocument.getLineNumber(offset);
             paintLineExtensions(g, logicalLine, x, y);
           }
-          else {
-            softWrapModel.paint(g, SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED, (int)x, y - myView.getAscent(), myView.getLineHeight());
+          else if (paintSoftWraps) {
+            softWrapModel.doPaint(g, SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED, 
+                                  (int)x, y - myView.getAscent(), myView.getLineHeight());
           }
         }
       });
