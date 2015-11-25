@@ -37,6 +37,8 @@ public class HardcodedContracts {
 
     final int paramCount = method.getParameterList().getParametersCount();
     String className = owner.getQualifiedName();
+    if (className == null) return Collections.emptyList();
+
     String methodName = method.getName();
 
     if ("java.lang.System".equals(className)) {
@@ -76,6 +78,7 @@ public class HardcodedContracts {
              "org.junit.Assert".equals(className) ||
              "junit.framework.TestCase".equals(className) ||
              "com.google.common.truth.Truth".equals(className) ||
+             className.startsWith("org.assertj.core.api.") ||
              "org.testng.Assert".equals(className) ||
              "org.testng.AssertJUnit".equals(className)) {
       return handleTestFrameworks(paramCount, className, methodName, call);
