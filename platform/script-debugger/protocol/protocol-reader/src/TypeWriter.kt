@@ -4,7 +4,9 @@ import org.jetbrains.jsonProtocol.JsonObjectBased
 import java.lang.reflect.Method
 import java.util.*
 
-internal val FIELD_PREFIX: Char = '_'
+internal val FIELD_PREFIX = '_'
+
+internal val NAME_VAR_NAME = "_n"
 
 private fun assignField(out: TextOutput, fieldName: String) = out.append(FIELD_PREFIX).append(fieldName).append(" = ")
 
@@ -158,9 +160,9 @@ internal class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>
         out.append(READER_NAME).append(".skipValue()")
       }
       else {
-        out.append("var name = preReadName")
-        out.newLine().append("if (name == null && reader.hasNext() && reader.beginObject().hasNext())").block {
-          out.append("name = reader.nextName()")
+        out.append("var ").append(NAME_VAR_NAME).append(" = preReadName")
+        out.newLine().append("if (").append(NAME_VAR_NAME).append(" == null && reader.hasNext() && reader.beginObject().hasNext())").block {
+          out.append(NAME_VAR_NAME).append(" = reader.nextName()")
         }
         out.newLine()
 
@@ -182,8 +184,8 @@ internal class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>
       out.newLine().append("var i = 0")
     }
 
-    out.newLine().append("loop@ while (name != null)").block {
-      out.append("when (name)").block {
+    out.newLine().append("loop@ while (").append(NAME_VAR_NAME).append(" != null)").block {
+      (out + "when (" + NAME_VAR_NAME + ")").block {
         var isFirst = true
         for (fieldLoader in fieldLoaders) {
           if (fieldLoader.skipRead) {
@@ -219,7 +221,7 @@ internal class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>
             out.append("reader.peek()").newLine()
 
             assignField(out, primitiveValueName)
-            out.append("reader.nextString(true)")
+            out + "reader.nextString(true)"
           }
 
           if (stopIfAllFieldsWereRead && !isTracedStop) {
@@ -235,8 +237,8 @@ internal class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>
         if (isTracedStop) {
           out.block {
             out.append("reader.skipValue()")
-            out.newLine().append("name = reader.nextNameOrNull()")
-            out.newLine().append("continue@loop")
+            out.newLine() + NAME_VAR_NAME + " = reader.nextNameOrNull()"
+            out.newLine() + "continue@loop"
           }
         }
         else {
@@ -244,11 +246,11 @@ internal class TypeWriter<T>(val typeClass: Class<T>, jsonSuperClass: TypeRef<*>
         }
       }
 
-      out.newLine().append("name = reader.nextNameOrNull()")
+      out.newLine() + NAME_VAR_NAME + " = reader.nextNameOrNull()"
 
       if (isTracedStop) {
         out.newLine().newLine().append("if (i++ == ").append(fieldLoaders.size - 1).append(")").block {
-          out.append(READER_NAME).append(".skipValues()").newLine().append("break")
+          (out + READER_NAME + ".skipValues()").newLine() + "break"
         }
       }
     }

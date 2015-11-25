@@ -15,8 +15,10 @@
  */
 package org.jetbrains.debugger
 
+import com.intellij.util.Consumer
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.values.ValueManager
+import org.jetbrains.debugger.values.VmAwareValueManager
 
 /**
  * An object that matches the execution state of the VM while suspended
@@ -51,3 +53,23 @@ interface SuspendContext<CALL_FRAME : CallFrame> {
 
   val valueManager: ValueManager
 }
+
+abstract class ContextDependentAsyncResultConsumer<T>(private val context: SuspendContext<*>) : Consumer<T> {
+  override final fun consume(result: T) {
+    val vm = (context.valueManager as VmAwareValueManager<*>).vm
+    if (vm.attachStateManager.isAttached() && !vm.suspendContextManager.isContextObsolete(context)) {
+      consume(result, vm)
+    }
+  }
+
+  protected abstract fun consume(result: T, vm: Vm)
+}
+
+
+inline fun <T> Promise<T>.done(context: SuspendContext<*>, crossinline handler: (result: T) -> Unit) = done(object : ContextDependentAsyncResultConsumer<T>(context) {
+  override fun consume(result: T, vm: Vm) = handler(result)
+})
+
+inline fun Promise<*>.rejected(context: SuspendContext<*>, crossinline handler: (error: Throwable) -> Unit) = rejected(object : ContextDependentAsyncResultConsumer<Throwable>(context) {
+  override fun consume(result: Throwable, vm: Vm) = handler(result)
+})
