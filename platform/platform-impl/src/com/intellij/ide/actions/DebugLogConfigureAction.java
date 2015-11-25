@@ -18,7 +18,6 @@ package com.intellij.ide.actions;
 import com.intellij.diagnostic.DebugLogManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -28,6 +27,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +64,7 @@ public class DebugLogConfigureAction extends DumbAwareAction {
     @Nullable
     @Override
     protected JComponent createNorthPanel() {
-      return new JBLabel("Enable DEBUG level for log categories (one per line):");
+      return new JBLabel(XmlStringUtil.wrapInHtml("Enable DEBUG level for log categories (one per line).<br>Append '" + DebugLogManager.TRACE_SUFFIX + "' suffix to a category to enable TRACE level."));
     }
 
     @Nullable
