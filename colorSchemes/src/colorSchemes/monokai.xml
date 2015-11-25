@@ -1002,6 +1002,8 @@
         <option name="FOREGROUND" value="A6E22E" />
       </value>
     </option>
+    <option name="PHP_VAR" baseAttributes="DEFAULT_LOCAL_VARIABLE" />
+    <option name="PHP_PARAMETER" baseAttributes="DEFAULT_PARAMETER" />
     <option name="PUPPET_BAD_CHARACTER">
       <value>
         <option name="FOREGROUND" value="F8F8F0" />

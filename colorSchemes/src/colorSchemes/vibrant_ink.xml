@@ -1108,6 +1108,11 @@
         <option name="FOREGROUND" value="ff6600" />
       </value>
     </option>
+    <option name="PHP_PARAMETER">
+      <value>
+        <option name="FOREGROUND" value="ff6600" />
+      </value>
+    </option>
     <option name="PUPPET_BAD_CHARACTER">
       <value>
         <option name="BACKGROUND" value="6e3b3b" />
