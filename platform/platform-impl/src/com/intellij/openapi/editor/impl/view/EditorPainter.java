@@ -135,14 +135,17 @@ class EditorPainter implements TextDrawingCallback {
   private void paintBackground(Graphics2D g, Rectangle clip, int startVisualLine, int endVisualLine) {
     int lineCount = myEditor.getVisibleLineCount();
     final Map<Integer, Couple<Integer>> virtualSelectionMap = createVirtualSelectionMap(startVisualLine, endVisualLine); 
-    for (int visualLine = startVisualLine; visualLine <= endVisualLine; visualLine++) {
+    VisualLinesIterator visLinesIterator = new VisualLinesIterator(myView, startVisualLine);
+    while (!visLinesIterator.atEnd()) {
+      int visualLine = visLinesIterator.getVisualLine();
+      if (visualLine > endVisualLine) break;
       int y = myView.visualLineToY(visualLine);
       LineLayout prefixLayout = myView.getPrefixLayout();
       if (visualLine == 0 && prefixLayout != null) {
         paintBackground(g, myView.getPrefixAttributes(), 0, y, prefixLayout.getWidth());
       }
       if (visualLine >= lineCount) break;
-      paintLineFragments(g, clip, visualLine, y, new LineFragmentPainter() {
+      paintLineFragments(g, clip, visLinesIterator, y, new LineFragmentPainter() {
         @Override
         public void paintBeforeLineStart(Graphics2D g, TextAttributes attributes, int columnEnd, float xEnd, int y) {
           paintBackground(g, attributes, 0, y, xEnd);
@@ -168,6 +171,7 @@ class EditorPainter implements TextDrawingCallback {
           }
         }
       });
+      visLinesIterator.advance();
     }
   }
 
@@ -320,7 +324,10 @@ class EditorPainter implements TextDrawingCallback {
     final CharSequence text = myDocument.getImmutableCharSequence();
     final EditorImpl.LineWhitespacePaintingStrategy whitespacePaintingStrategy = myEditor.new LineWhitespacePaintingStrategy();
     int lineCount = myEditor.getVisibleLineCount();
-    for (int visualLine = startVisualLine; visualLine <= endVisualLine; visualLine++) {
+    VisualLinesIterator visLinesIterator = new VisualLinesIterator(myView, startVisualLine);
+    while (!visLinesIterator.atEnd()) {
+      int visualLine = visLinesIterator.getVisualLine();
+      if (visualLine > endVisualLine) break;
       int y = myView.visualLineToY(visualLine) + myView.getAscent();
       LineLayout prefixLayout = myView.getPrefixLayout();
       if (visualLine == 0 && prefixLayout != null) {
@@ -332,7 +339,7 @@ class EditorPainter implements TextDrawingCallback {
       
       final int[] currentLogicalLine = new int[] {-1}; 
       
-      paintLineFragments(g, clip, visualLine, y, new LineFragmentPainter() {
+      paintLineFragments(g, clip, visLinesIterator, y, new LineFragmentPainter() {
         @Override
         public void paintBeforeLineStart(Graphics2D g, TextAttributes attributes, int columnEnd, float xEnd, int y) {
           SoftWrapModelImpl softWrapModel = myEditor.getSoftWrapModel();
@@ -374,6 +381,7 @@ class EditorPainter implements TextDrawingCallback {
           }
         }
       });
+      visLinesIterator.advance();
     }
   }
 
@@ -807,15 +815,16 @@ class EditorPainter implements TextDrawingCallback {
     }
   }
   
-  private void paintLineFragments(Graphics2D g, Rectangle clip, int visualLine, int y, LineFragmentPainter painter) {
+  private void paintLineFragments(Graphics2D g, Rectangle clip, VisualLinesIterator visLineIterator, int y, LineFragmentPainter painter) {
+    int visualLine = visLineIterator.getVisualLine();
     float x = visualLine == 0 ? myView.getPrefixTextWidthInPixels() : 0;
-    int offset = myView.visualPositionToOffset(new VisualPosition(visualLine, 0));
-    int visualLineEndOffset = myView.visualPositionToOffset(new VisualPosition(visualLine, Integer.MAX_VALUE, true));
+    int offset = visLineIterator.getVisualLineStartOffset();
+    int visualLineEndOffset = visLineIterator.getVisualLineEndOffset();
     IterationState it = null;
     int prevEndOffset = -1;
     boolean firstFragment = true;
     int maxColumn = 0;
-    for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, offset, false)) {
+    for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visLineIterator, null)) {
       int fragmentStartOffset = fragment.getStartOffset();
       int start = fragmentStartOffset;
       int end = fragment.getEndOffset();
