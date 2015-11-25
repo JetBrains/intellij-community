@@ -145,6 +145,42 @@ public class ModuleScopesTest extends ModuleTestCase {
     assertTrue(deps.contains(file));
   }
 
+  public void testModuleContentWithDependenciesScopeRootOrdering() throws IOException {
+    Module m = createModule("m.iml", StdModuleTypes.JAVA);
+    Module a = createModule("a.iml", StdModuleTypes.JAVA);
+    Module b = createModule("b.iml", StdModuleTypes.JAVA);
+    Module c = createModule("c.iml", StdModuleTypes.JAVA);
+
+    ModuleRootModificationUtil.addDependency(b, m, DependencyScope.COMPILE, true);
+    ModuleRootModificationUtil.addDependency(a, b, DependencyScope.COMPILE, true);
+    ModuleRootModificationUtil.addDependency(a, m, DependencyScope.COMPILE, true);
+    ModuleRootModificationUtil.addDependency(c, a, DependencyScope.COMPILE, true);
+
+    VirtualFile mRoot = myFixture.findOrCreateDir("m");
+    PsiTestUtil.addSourceContentToRoots(m, mRoot);
+    VirtualFile aRoot = myFixture.findOrCreateDir("a");
+    PsiTestUtil.addSourceContentToRoots(a, aRoot);
+    VirtualFile bRoot = myFixture.findOrCreateDir("b");
+    PsiTestUtil.addSourceContentToRoots(b, bRoot);
+    VirtualFile cRoot = myFixture.findOrCreateDir("c");
+    PsiTestUtil.addSourceContentToRoots(c, cRoot);
+    VirtualFile file = cRoot.createChildData(this, "x.txt");
+
+    GlobalSearchScope deps = c.getModuleContentWithDependenciesScope();
+    assertTrue(deps.contains(file));
+
+    assertTrue(deps.compare(mRoot, aRoot) < 0);
+    assertTrue(deps.compare(mRoot, bRoot) < 0);
+    assertTrue(deps.compare(mRoot, cRoot) < 0);
+    assertTrue(deps.compare(bRoot, aRoot) < 0);
+    assertTrue(deps.compare(bRoot, cRoot) < 0);
+    assertTrue(deps.compare(aRoot, cRoot) < 0);
+    assertTrue(deps.compare(cRoot, mRoot) > 0);
+    assertTrue(deps.compare(cRoot, aRoot) > 0);
+    assertTrue(deps.compare(cRoot, bRoot) > 0);
+    assertEquals(0, deps.compare(cRoot, cRoot));
+  }
+
   public void testTestOnlyLibraryDependency() throws IOException {
     Module m = createModule("a.iml", StdModuleTypes.JAVA);
     addLibrary(m, DependencyScope.TEST);
