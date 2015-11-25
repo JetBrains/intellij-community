@@ -13,58 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.statistics;
+package com.intellij.diff.statistics
 
-import com.intellij.diff.impl.DiffSettingsHolder;
-import com.intellij.diff.tools.fragmented.UnifiedDiffTool;
-import com.intellij.diff.tools.simple.SimpleDiffTool;
-import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
-import com.intellij.diff.util.DiffPlaces;
-import com.intellij.internal.statistic.CollectUsagesException;
-import com.intellij.internal.statistic.UsagesCollector;
-import com.intellij.internal.statistic.beans.GroupDescriptor;
-import com.intellij.internal.statistic.beans.UsageDescriptor;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.diff.impl.DiffSettingsHolder
+import com.intellij.diff.tools.fragmented.UnifiedDiffTool
+import com.intellij.diff.tools.simple.SimpleDiffTool
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder
+import com.intellij.diff.util.DiffPlaces
+import com.intellij.internal.statistic.UsagesCollector
+import com.intellij.internal.statistic.beans.GroupDescriptor
+import com.intellij.internal.statistic.beans.UsageDescriptor
+import com.intellij.util.containers.ContainerUtil
 
-import java.util.List;
-import java.util.Set;
-
-public class DiffUsagesCollector extends UsagesCollector {
-  public static final GroupDescriptor ID = GroupDescriptor.create("Diff");
-
-  @NotNull
-  public GroupDescriptor getGroupId() {
-    return ID;
+class DiffUsagesCollector : UsagesCollector() {
+  companion object {
+    val ID = GroupDescriptor.create("Diff")
   }
 
-  @NotNull
-  @Override
-  public Set<UsageDescriptor> getUsages() throws CollectUsagesException {
-    Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
-
-    processUsages(DiffPlaces.DEFAULT, usages);
-    processUsages(DiffPlaces.CHANGES_VIEW, usages);
-    processUsages(DiffPlaces.COMMIT_DIALOG, usages);
-
-    DiffSettingsHolder.DiffSettings diffSettings = DiffSettingsHolder.getInstance().getSettings(null);
-    usages.add(new UsageDescriptor("diff.DiffSettings.Default.IterateNextFile", diffSettings.isGoToNextFileOnNextDifference() ? 1 : 0));
-
-    return usages;
+  override fun getGroupId(): GroupDescriptor {
+    return ID
   }
 
-  private static void processUsages(@NotNull String place, @NotNull Set<UsageDescriptor> usages) {
-    DiffSettingsHolder.DiffSettings diffSettings = DiffSettingsHolder.getInstance().getSettings(place);
-    TextDiffSettingsHolder.TextDiffSettings textSettings = TextDiffSettingsHolder.getInstance().getSettings(place);
+  override fun getUsages(): Set<UsageDescriptor> {
+    val usages = ContainerUtil.newHashSet<UsageDescriptor>()
 
-    usages.add(new UsageDescriptor("diff.TextDiffSettings.Default.IgnorePolicy." + textSettings.getIgnorePolicy().name(), 1));
-    usages.add(new UsageDescriptor("diff.TextDiffSettings.Default.HighlightPolicy." + textSettings.getHighlightPolicy().name(), 1));
-    usages.add(new UsageDescriptor("diff.TextDiffSettings.Default.ExpandByDefault", textSettings.isExpandByDefault() ? 1 : 0));
+    processUsages(DiffPlaces.DEFAULT, usages)
+    processUsages(DiffPlaces.CHANGES_VIEW, usages)
+    processUsages(DiffPlaces.COMMIT_DIALOG, usages)
 
-    List<String> toolOrder = diffSettings.getDiffToolsOrder();
-    int defaultToolIndex = ContainerUtil.indexOf(toolOrder, SimpleDiffTool.class.getCanonicalName());
-    int unifiedToolIndex = ContainerUtil.indexOf(toolOrder, UnifiedDiffTool.class.getCanonicalName());
-    boolean isUnifiedDefault = unifiedToolIndex != -1 && unifiedToolIndex < defaultToolIndex;
-    usages.add(new UsageDescriptor("diff.DiffSettings.Default.isUnifiedTool", isUnifiedDefault ? 1 : 0));
+    val diffSettings = DiffSettingsHolder.getInstance().getSettings(null)
+    usages.add(UsageDescriptor("diff.DiffSettings.Default.IterateNextFile", if (diffSettings.isGoToNextFileOnNextDifference) 1 else 0))
+
+    return usages
+  }
+
+  private fun processUsages(place: String, usages: MutableSet<UsageDescriptor>) {
+    val diffSettings = DiffSettingsHolder.getInstance().getSettings(place)
+    val textSettings = TextDiffSettingsHolder.getInstance().getSettings(place)
+
+    usages.add(UsageDescriptor("diff.TextDiffSettings.Default.IgnorePolicy." + textSettings.ignorePolicy.name, 1))
+    usages.add(UsageDescriptor("diff.TextDiffSettings.Default.HighlightPolicy." + textSettings.highlightPolicy.name, 1))
+    usages.add(UsageDescriptor("diff.TextDiffSettings.Default.ExpandByDefault", if (textSettings.isExpandByDefault) 1 else 0))
+
+    val toolOrder = diffSettings.diffToolsOrder
+    val defaultToolIndex = ContainerUtil.indexOf(toolOrder, SimpleDiffTool::class.java.canonicalName)
+    val unifiedToolIndex = ContainerUtil.indexOf(toolOrder, UnifiedDiffTool::class.java.canonicalName)
+    val isUnifiedDefault = unifiedToolIndex != -1 && unifiedToolIndex < defaultToolIndex
+    usages.add(UsageDescriptor("diff.DiffSettings.Default.isUnifiedTool", if (isUnifiedDefault) 1 else 0))
   }
 }
