@@ -57,7 +57,7 @@ import java.util.Locale;
 public class StartupUtil {
   public static final String NO_SPLASH = "nosplash";
 
-  private static SocketLock ourLock;
+  private static SocketLock ourSocketLock;
 
   private StartupUtil() { }
 
@@ -67,17 +67,19 @@ public class StartupUtil {
 
   public synchronized static void addExternalInstanceListener(@Nullable Consumer<List<String>> consumer) {
     // method called by app after startup
-    ourLock.setExternalInstanceListener(consumer);
+    if (ourSocketLock != null) {
+      ourSocketLock.setExternalInstanceListener(consumer);
+    }
   }
 
-  public synchronized static int getAcquiredPort() {
-    BuiltInServer server = ourLock.getServer();
+  public static int getAcquiredPort() {
+    BuiltInServer server = getServer();
     return server == null ? -1 : server.getPort();
   }
 
   @Nullable
   public synchronized static BuiltInServer getServer() {
-    return ourLock == null ? null : ourLock.getServer();
+    return ourSocketLock == null ? null : ourSocketLock.getServer();
   }
 
   interface AppStarter {
@@ -253,15 +255,15 @@ public class StartupUtil {
   }
 
   private synchronized static boolean lockSystemFolders(String[] args) {
-    if (ourLock != null) {
+    if (ourSocketLock != null) {
       throw new AssertionError();
     }
 
-    ourLock = new SocketLock(PathManager.getConfigPath(), PathManager.getSystemPath());
+    ourSocketLock = new SocketLock(PathManager.getConfigPath(), PathManager.getSystemPath());
 
     SocketLock.ActivateStatus status;
     try {
-      status = ourLock.lock(args);
+      status = ourSocketLock.lock(args);
     }
     catch (Exception e) {
       Main.showMessage("Cannot Lock System Folders", e);
@@ -270,9 +272,13 @@ public class StartupUtil {
 
     if (status == SocketLock.ActivateStatus.NO_INSTANCE) {
       ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
+        @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
         @Override
         public void run() {
-          ourLock.dispose();
+          synchronized (StartupUtil.class) {
+            ourSocketLock.dispose();
+            ourSocketLock = null;
+          }
         }
       });
       return true;
