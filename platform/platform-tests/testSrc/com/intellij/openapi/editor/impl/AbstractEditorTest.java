@@ -50,10 +50,14 @@ import static org.junit.Assert.assertArrayEquals;
  * @since 11/18/10 7:43 PM
  */
 public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCase {
+  public static final int TEST_CHAR_WIDTH = 10; // char width matches the one in EditorTestUtil.configureSoftWraps
+  public static final int TEST_LINE_HEIGHT = 10;
+  public static final int TEST_DESCENT = 2;
+  
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    FontLayoutService.setInstance(new MockFontLayoutService(10, 10, 2)); // char width matches the one in EditorTestUtil.configureSoftWraps
+    FontLayoutService.setInstance(new MockFontLayoutService(TEST_CHAR_WIDTH, TEST_LINE_HEIGHT, TEST_DESCENT));
     ComplementaryFontsRegistry.resetCaches(); // to reset cached char widths
   }
 
