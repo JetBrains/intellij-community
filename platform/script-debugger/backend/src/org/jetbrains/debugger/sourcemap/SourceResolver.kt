@@ -31,7 +31,7 @@ import com.intellij.util.text.CaseInsensitiveStringHashingStrategy
 import gnu.trove.TObjectIntHashMap
 import org.jetbrains.io.LocalFileFinder
 
-open class SourceResolver(private val rawSources: List<String>, trimFileScheme: Boolean, baseFileUrl: Url?, baseUrlIsFile: Boolean, private val sourceContents: List<String>?) {
+open class SourceResolver(private val rawSources: List<String>, trimFileScheme: Boolean, baseFileUrl: Url?, private val sourceContents: List<String>?, baseUrlIsFile: Boolean = true) {
   private val canonicalizedSourcesMap: ObjectIntHashMap<Url> = if (SystemInfo.isFileSystemCaseSensitive) ObjectIntHashMap(rawSources.size) else ObjectIntHashMap(rawSources.size, Urls.getCaseInsensitiveUrlHashingStrategy())
 
   internal val canonicalizedSources = Array(rawSources.size) { i ->
@@ -44,9 +44,6 @@ open class SourceResolver(private val rawSources: List<String>, trimFileScheme: 
   private var absoluteLocalPathToSourceIndex: TObjectIntHashMap<String>? = null
   // absoluteLocalPathToSourceIndex contains canonical paths too, but this map contains only used (specified in the source map) path
   private var sourceIndexToAbsoluteLocalPath: Array<String?>? = null
-
-  constructor(sourceUrls: List<String>, trimFileScheme: Boolean, baseFileUrl: Url?, sourceContents: List<String>?) : this(sourceUrls, trimFileScheme, baseFileUrl, true, sourceContents) {
-  }
 
   // see canonicalizeUri kotlin impl and https://trac.webkit.org/browser/trunk/Source/WebCore/inspector/front-end/ParsedURL.js completeURL
   protected open fun canonicalizeUrl(url: String, baseUrl: Url?, trimFileScheme: Boolean, sourceIndex: Int, baseUrlIsFile: Boolean): Url {
