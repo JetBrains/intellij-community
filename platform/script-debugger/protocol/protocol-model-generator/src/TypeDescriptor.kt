@@ -9,12 +9,8 @@ internal class TypeDescriptor(val type: BoxableType, val descriptor: ItemDescrip
 
   fun writeAnnotations(out: TextOutput) {
     val default = (descriptor as? ProtocolMetaModel.Parameter)?.default
-    if (optional || default != null) {
-      out.append("@Optional")
-      if (default != null) {
-        out.append("(\"").append(default).append("\")")
-      }
-      out.newLine()
+    if (default != null) {
+      out.append("@Optional").append("(\"").append(default).append("\")").newLine()
     }
 
     if (asRawString) {
@@ -27,5 +23,8 @@ internal class TypeDescriptor(val type: BoxableType, val descriptor: ItemDescrip
   }
 
   val isNullableType: Boolean
-    get() = type != BoxableType.BOOLEAN && type != BoxableType.INT && type != BoxableType.Companion.LONG && (optional || asRawString)
+    get() = !isPrimitive && (optional || asRawString)
+
+  val isPrimitive: Boolean
+    get() = type == BoxableType.BOOLEAN || type == BoxableType.INT || type == BoxableType.LONG || type == BoxableType.NUMBER
 }
