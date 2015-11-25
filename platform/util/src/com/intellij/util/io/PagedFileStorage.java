@@ -52,7 +52,7 @@ public class PagedFileStorage implements Forceable {
 
   static {
     final int lower = 100;
-    final int upper = SystemInfo.is64Bit && !PersistentEnumeratorDelegate.useBtree() ? 500 : 200;
+    final int upper = SystemInfo.is64Bit? 500 : 200;
 
     BUFFER_SIZE = Math.max(1, SystemProperties.getIntProperty("idea.paged.storage.page.size", 10)) * MB;
     final long max = VM.maxDirectMemory() - 2 * BUFFER_SIZE;
