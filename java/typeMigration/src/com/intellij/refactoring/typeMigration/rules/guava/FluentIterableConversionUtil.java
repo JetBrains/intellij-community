@@ -243,8 +243,8 @@ public class FluentIterableConversionUtil {
     final String findTemplate;
     final String replaceTemplate;
     final String returnType;
-    if ("toMap".equals(methodName)) {
-      final LambdaParametersTypeConversionDescriptor descriptor = new LambdaParametersTypeConversionDescriptor("$it$.toMap($f$)",
+    if ("toMap".equals(methodName) || "uniqueIndex".equals(methodName)) {
+      final LambdaParametersTypeConversionDescriptor descriptor = new LambdaParametersTypeConversionDescriptor("$it$.$methodName$($f$)",
                                                                                                                "$it$.collect(java.util.stream.Collectors.toMap(java.util.function.Function.identity(), $f$))");
       return descriptor.withConversionType(GuavaConversionUtil.addTypeParameters(CommonClassNames.JAVA_UTIL_MAP, context.getType(), context));
     }
