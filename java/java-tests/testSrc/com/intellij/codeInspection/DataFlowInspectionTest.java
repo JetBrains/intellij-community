@@ -395,6 +395,14 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
                        "public static <T> void assertThat(T actual, org.hamcrest.Matcher<? super T> matcher) {}\n" +
                        "public static <T> void assertThat(String msg, T actual, org.hamcrest.Matcher<? super T> matcher) {}\n" +
                        "}");
+
+    myFixture.addClass("package org.assertj.core.api; public class Assertions { " +
+                       "public static <T> AbstractObjectAssert<?, T> assertThat(Object actual) {}\n" +
+                       "}");
+    myFixture.addClass("package org.assertj.core.api; public class AbstractObjectAssert<S extends AbstractObjectAssert<S, A>, A> {" +
+                       "public S isNotNull() {}" +
+                       "}");
+
     myFixture.enableInspections(new DataFlowInspection());
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
