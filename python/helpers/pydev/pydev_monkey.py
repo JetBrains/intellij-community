@@ -356,6 +356,20 @@ _posixsubprocess.fork_exec(args, executable_list, close_fds, ... (13 more))
     return new_fork_exec
 
 
+def create_warn_fork_exec(original_name):
+    """
+    _posixsubprocess.fork_exec(args, executable_list, close_fds, ... (13 more))
+    """
+    def new_warn_fork_exec(*args):
+        try:
+            import _posixsubprocess
+            warn_multiproc()
+            return getattr(_posixsubprocess, original_name)(*args)
+        except:
+            pass
+    return new_warn_fork_exec
+
+
 def create_CreateProcess(original_name):
     """
 CreateProcess(*args, **kwargs)
@@ -467,7 +481,7 @@ def patch_new_process_functions_with_warning():
         monkey_patch_os('fork', create_warn_multiproc)
         try:
             import _posixsubprocess
-            monkey_patch_module(_posixsubprocess, 'fork_exec', create_warn_multiproc)
+            monkey_patch_module(_posixsubprocess, 'fork_exec', create_warn_fork_exec)
         except ImportError:
             pass
     else:
