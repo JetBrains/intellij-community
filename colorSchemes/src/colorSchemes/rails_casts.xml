@@ -1051,6 +1051,7 @@
     </option>
     <option name="PHP_EXEC_COMMAND_ID" baseAttributes="DEFAULT_STRING" />
     <option name="PHP_VAR" baseAttributes="DEFAULT_LOCAL_VARIABLE" />
+    <option name="PHP_PARAMETER" baseAttributes="DEFAULT_PARAMETER" />
     <option name="PUPPET_BAD_CHARACTER">
       <value>
         <option name="FOREGROUND" value="ffffff" />

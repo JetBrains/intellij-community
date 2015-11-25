@@ -914,6 +914,7 @@
       </value>
     </option>
     <option name="PHP_VAR" baseAttributes="DEFAULT_LOCAL_VARIABLE" />
+    <option name="PHP_PARAMETER" baseAttributes="DEFAULT_PARAMETER" />
     <option name="PUPPET_BAD_CHARACTER">
       <value>
         <option name="BACKGROUND" value="6e3b3b" />
