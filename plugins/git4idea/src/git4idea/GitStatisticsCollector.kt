@@ -16,27 +16,20 @@
 package git4idea
 
 import com.intellij.internal.statistic.AbstractApplicationUsagesCollector
-import com.intellij.internal.statistic.UsagesCollector
+import com.intellij.internal.statistic.UsageTrigger
 import com.intellij.internal.statistic.beans.GroupDescriptor
 import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.getBooleanUsage
 import com.intellij.internal.statistic.getCountingUsage
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.project.Project
 import git4idea.config.GitVcsSettings
-import gnu.trove.TObjectIntHashMap
 
 fun reportUsage(key: String) {
-  getUsagesCollector()?.reportUsage(key)
-}
-
-private fun getUsagesCollector() : GitStatisticsCollector? {
-  return Extensions.getExtensions(UsagesCollector.EP_NAME).find { it is GitStatisticsCollector } as GitStatisticsCollector?
+  UsageTrigger.trigger(key)
 }
 
 class GitStatisticsCollector : AbstractApplicationUsagesCollector() {
   private val ID = GroupDescriptor.create("Git")
-  private val reportedUsages = TObjectIntHashMap<String>()
 
   override fun getProjectUsages(project: Project): Set<UsageDescriptor> {
     val repositoryManager = GitUtil.getRepositoryManager(project)
@@ -63,16 +56,10 @@ class GitStatisticsCollector : AbstractApplicationUsagesCollector() {
       usages.add(getCountingUsage("data.remotes.in.project", repository.remotes.size, listOf(0, 1, 2, 5)))
     }
 
-    usages.addAll(reportedUsages.keys().map { UsageDescriptor(it as String, reportedUsages.get(it)) })
-
     return usages
   }
 
   override fun getGroupId(): GroupDescriptor {
     return ID
-  }
-
-  internal fun reportUsage(key: String) {
-    reportedUsages.increment(key)
   }
 }
