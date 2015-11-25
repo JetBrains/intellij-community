@@ -13,235 +13,198 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.debugger.sourcemap;
+package org.jetbrains.debugger.sourcemap
 
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Url;
-import com.intellij.util.UrlImpl;
-import com.intellij.util.Urls;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ObjectIntHashMap;
-import com.intellij.util.io.URLUtil;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
-import gnu.trove.TObjectIntHashMap;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.io.LocalFileFinder;
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.ArrayUtil
+import com.intellij.util.Url
+import com.intellij.util.UrlImpl
+import com.intellij.util.Urls
+import com.intellij.util.containers.ObjectIntHashMap
+import com.intellij.util.containers.isNullOrEmpty
+import com.intellij.util.io.URLUtil
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy
+import gnu.trove.TObjectIntHashMap
+import org.jetbrains.io.LocalFileFinder
 
-import java.util.List;
+open class SourceResolver(private val rawSources: List<String>, trimFileScheme: Boolean, baseFileUrl: Url?, baseUrlIsFile: Boolean, private val sourceContents: List<String>?) {
+  private val canonicalizedSourcesMap: ObjectIntHashMap<Url> = if (SystemInfo.isFileSystemCaseSensitive) ObjectIntHashMap(rawSources.size) else ObjectIntHashMap(rawSources.size, Urls.getCaseInsensitiveUrlHashingStrategy())
 
-public class SourceResolver {
-  private final List<String> rawSources;
-  @Nullable private final List<String> sourceContents;
+  internal val canonicalizedSources = Array(rawSources.size) { i ->
+    val rawSource = rawSources[i]
+    val url = canonicalizeUrl(rawSource, baseFileUrl, trimFileScheme, i, baseUrlIsFile)
+    canonicalizedSourcesMap.put(url, i)
+    url
+  }
 
-  final Url[] canonicalizedSources;
-  private final ObjectIntHashMap<Url> canonicalizedSourcesMap;
-
-  private TObjectIntHashMap<String> absoluteLocalPathToSourceIndex;
+  private var absoluteLocalPathToSourceIndex: TObjectIntHashMap<String>? = null
   // absoluteLocalPathToSourceIndex contains canonical paths too, but this map contains only used (specified in the source map) path
-  private String[] sourceIndexToAbsoluteLocalPath;
+  private var sourceIndexToAbsoluteLocalPath: Array<String?>? = null
 
-  public SourceResolver(@NotNull List<String> sourceUrls, boolean trimFileScheme, @Nullable Url baseFileUrl, @Nullable List<String> sourceContents) {
-    this(sourceUrls, trimFileScheme, baseFileUrl, true, sourceContents);
-  }
-
-  public SourceResolver(@NotNull List<String> sourceUrls, boolean trimFileScheme, @Nullable Url baseFileUrl, boolean baseUrlIsFile, @Nullable List<String> sourceContents) {
-    rawSources = sourceUrls;
-    this.sourceContents = sourceContents;
-    canonicalizedSources = new Url[sourceUrls.size()];
-    canonicalizedSourcesMap = SystemInfo.isFileSystemCaseSensitive
-                              ? new ObjectIntHashMap<Url>(canonicalizedSources.length)
-                              : new ObjectIntHashMap<Url>(canonicalizedSources.length, Urls.getCaseInsensitiveUrlHashingStrategy());
-    for (int i = 0; i < sourceUrls.size(); i++) {
-      String rawSource = sourceUrls.get(i);
-      Url url = canonicalizeUrl(rawSource, baseFileUrl, trimFileScheme, i, baseUrlIsFile);
-      canonicalizedSources[i] = url;
-      canonicalizedSourcesMap.put(url, i);
-    }
-  }
-
-  public static boolean isAbsolute(@NotNull String path) {
-    return !path.isEmpty() && (path.charAt(0) == '/' || (SystemInfo.isWindows && (path.length() > 2 && path.charAt(1) == ':')));
+  constructor(sourceUrls: List<String>, trimFileScheme: Boolean, baseFileUrl: Url?, sourceContents: List<String>?) : this(sourceUrls, trimFileScheme, baseFileUrl, true, sourceContents) {
   }
 
   // see canonicalizeUri kotlin impl and https://trac.webkit.org/browser/trunk/Source/WebCore/inspector/front-end/ParsedURL.js completeURL
-  protected Url canonicalizeUrl(@NotNull String url, @Nullable Url baseUrl, boolean trimFileScheme, int sourceIndex, boolean baseUrlIsFile) {
+  protected open fun canonicalizeUrl(url: String, baseUrl: Url?, trimFileScheme: Boolean, sourceIndex: Int, baseUrlIsFile: Boolean): Url {
     if (trimFileScheme && url.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
-      return Urls.newLocalFileUrl(FileUtil.toCanonicalPath(VfsUtilCore.toIdeaUrl(url, true).substring(StandardFileSystems.FILE_PROTOCOL_PREFIX.length()), '/'));
+      return Urls.newLocalFileUrl(FileUtil.toCanonicalPath(VfsUtilCore.toIdeaUrl(url, true).substring(StandardFileSystems.FILE_PROTOCOL_PREFIX.length), '/'))
     }
     else if (baseUrl == null || url.contains(URLUtil.SCHEME_SEPARATOR) || url.startsWith("data:") || url.startsWith("blob:") || url.startsWith("javascript:")) {
-      return Urls.parseEncoded(url);
+      return Urls.parseEncoded(url)!!
     }
 
-    String path = canonicalizePath(url, baseUrl, baseUrlIsFile);
-    if (baseUrl.getScheme() == null && baseUrl.isInLocalFileSystem()) {
-      return Urls.newLocalFileUrl(path);
+    val path = canonicalizePath(url, baseUrl, baseUrlIsFile)
+    if (baseUrl.scheme == null && baseUrl.isInLocalFileSystem) {
+      return Urls.newLocalFileUrl(path)
     }
 
     // browserify produces absolute path in the local filesystem
     if (isAbsolute(path)) {
-      VirtualFile file = LocalFileFinder.findFile(path);
+      val file = LocalFileFinder.findFile(path)
       if (file != null) {
         if (absoluteLocalPathToSourceIndex == null) {
           // must be linked, on iterate original path must be first
-          absoluteLocalPathToSourceIndex = createStringIntMap(rawSources.size());
-          sourceIndexToAbsoluteLocalPath = new String[rawSources.size()];
+          absoluteLocalPathToSourceIndex = createStringIntMap(rawSources.size)
+          sourceIndexToAbsoluteLocalPath = arrayOfNulls<String>(rawSources.size)
         }
-        absoluteLocalPathToSourceIndex.put(path, sourceIndex);
-        sourceIndexToAbsoluteLocalPath[sourceIndex] = path;
-        String canonicalPath = file.getCanonicalPath();
-        if (canonicalPath != null && !canonicalPath.equals(path)) {
-          absoluteLocalPathToSourceIndex.put(canonicalPath, sourceIndex);
+        absoluteLocalPathToSourceIndex!!.put(path, sourceIndex)
+        sourceIndexToAbsoluteLocalPath!![sourceIndex] = path
+        val canonicalPath = file.canonicalPath
+        if (canonicalPath != null && canonicalPath != path) {
+          absoluteLocalPathToSourceIndex!!.put(canonicalPath, sourceIndex)
         }
-        return Urls.newLocalFileUrl(path);
+        return Urls.newLocalFileUrl(path)
       }
     }
-    return new UrlImpl(baseUrl.getScheme(), baseUrl.getAuthority(), path, null);
+    return UrlImpl(baseUrl.scheme, baseUrl.authority, path, null)
   }
 
-  public static String canonicalizePath(@NotNull String url, @NotNull Url baseUrl, boolean baseUrlIsFile) {
-    String path = url;
-    if (url.charAt(0) != '/') {
-      String basePath = baseUrl.getPath();
-      if (baseUrlIsFile) {
-        int lastSlashIndex = basePath.lastIndexOf('/');
-        StringBuilder pathBuilder = new StringBuilder();
-        if (lastSlashIndex == -1) {
-          pathBuilder.append('/');
-        }
-        else {
-          pathBuilder.append(basePath, 0, lastSlashIndex + 1);
-        }
-        path = pathBuilder.append(url).toString();
-      }
-      else {
-        path = basePath + '/' + url;
-      }
-    }
-    path = FileUtil.toCanonicalPath(path, '/');
-    return path;
+  fun getSource(entry: MappingEntry): Url? {
+    val index = entry.source
+    return if (index < 0) null else canonicalizedSources[index]
   }
 
-  @NotNull
-  private static ObjectIntHashMap<String> createStringIntMap(int initialCapacity) {
-    if (initialCapacity == -1) {
-      initialCapacity = 4;
-    }
-    return SystemInfo.isFileSystemCaseSensitive
-           ? new ObjectIntHashMap<String>(initialCapacity)
-           : new ObjectIntHashMap<String>(initialCapacity, CaseInsensitiveStringHashingStrategy.INSTANCE);
-  }
-
-  @Nullable
-  public Url getSource(@NotNull MappingEntry entry) {
-    int index = entry.getSource();
-    return index < 0 ? null : canonicalizedSources[index];
-  }
-
-  @Nullable
-  public String getSourceContent(@NotNull MappingEntry entry) {
-    if (ContainerUtil.isEmpty(sourceContents)) {
-      return null;
+  fun getSourceContent(entry: MappingEntry): String? {
+    if (sourceContents.isNullOrEmpty()) {
+      return null
     }
 
-    int index = entry.getSource();
-    return index < 0 || index >= sourceContents.size() ? null : sourceContents.get(index);
+    val index = entry.source
+    return if (index < 0 || index >= sourceContents!!.size) null else sourceContents[index]
   }
 
-  @Nullable
-  public String getSourceContent(int sourceIndex) {
-    if (ContainerUtil.isEmpty(sourceContents)) {
-      return null;
+  fun getSourceContent(sourceIndex: Int): String? {
+    if (sourceContents.isNullOrEmpty()) {
+      return null
     }
-    return sourceIndex < 0 || sourceIndex >= sourceContents.size() ? null : sourceContents.get(sourceIndex);
+    return if (sourceIndex < 0 || sourceIndex >= sourceContents!!.size) null else sourceContents[sourceIndex]
   }
 
-  public int getSourceIndex(@NotNull Url url) {
-    return ArrayUtil.indexOf(canonicalizedSources, url);
+  fun getSourceIndex(url: Url) = ArrayUtil.indexOf(canonicalizedSources, url)
+
+  fun getRawSource(entry: MappingEntry): String? {
+    val index = entry.source
+    return if (index < 0) null else rawSources[index]
   }
 
-  @Nullable
-  public String getRawSource(@NotNull MappingEntry entry) {
-    int index = entry.getSource();
-    return index < 0 ? null : rawSources.get(index);
+  fun getLocalFilePath(entry: MappingEntry): String? {
+    val index = entry.source
+    return if (index < 0 || sourceIndexToAbsoluteLocalPath == null) null else sourceIndexToAbsoluteLocalPath!![index]
   }
 
-  @Nullable
-  public String getLocalFilePath(@NotNull MappingEntry entry) {
-    final int index = entry.getSource();
-    return index < 0 || sourceIndexToAbsoluteLocalPath == null ? null : sourceIndexToAbsoluteLocalPath[index];
+  interface Resolver {
+    fun resolve(sourceFile: VirtualFile?, map: ObjectIntHashMap<Url>): Int
   }
 
-  public interface Resolver {
-    int resolve(@Nullable VirtualFile sourceFile, @NotNull ObjectIntHashMap<Url> map);
+  fun findMappings(sourceFile: VirtualFile?, sourceMap: SourceMap, resolver: Resolver): MappingList? {
+    val index = resolver.resolve(sourceFile, canonicalizedSourcesMap)
+    return if (index < 0) null else sourceMap.sourceIndexToMappings[index]
   }
 
-  @Nullable
-  public MappingList findMappings(@Nullable VirtualFile sourceFile, @NotNull SourceMap sourceMap, @NotNull Resolver resolver) {
-    int index = resolver.resolve(sourceFile, canonicalizedSourcesMap);
-    return index < 0 ? null : sourceMap.sourceIndexToMappings[index];
-  }
-
-  @Nullable
-  public MappingList findMappings(@NotNull List<Url> sourceUrls, @NotNull SourceMap sourceMap, @Nullable VirtualFile sourceFile) {
-    for (Url sourceUrl : sourceUrls) {
-      int index = canonicalizedSourcesMap.get(sourceUrl);
+  fun findMappings(sourceUrls: List<Url>, sourceMap: SourceMap, sourceFile: VirtualFile?): MappingList? {
+    for (sourceUrl in sourceUrls) {
+      val index = canonicalizedSourcesMap.get(sourceUrl)
       if (index != -1) {
-        return sourceMap.sourceIndexToMappings[index];
+        return sourceMap.sourceIndexToMappings[index]
       }
     }
 
     if (sourceFile != null) {
-      MappingList mappings = findByFile(sourceMap, sourceFile);
+      val mappings = findByFile(sourceMap, sourceFile)
       if (mappings != null) {
-        return mappings;
+        return mappings
       }
     }
-
-    return null;
+    return null
   }
 
-  @Nullable
-  private static MappingList getMappingsBySource(@NotNull SourceMap sourceMap, int index) {
-    return index == -1 ? null : sourceMap.sourceIndexToMappings[index];
-  }
-
-  @Nullable
-  private MappingList findByFile(@NotNull SourceMap sourceMap, @NotNull VirtualFile sourceFile) {
-    MappingList mappings = null;
-    if (absoluteLocalPathToSourceIndex != null && sourceFile.isInLocalFileSystem()) {
-      mappings = getMappingsBySource(sourceMap, absoluteLocalPathToSourceIndex.get(sourceFile.getPath()));
+  private fun findByFile(sourceMap: SourceMap, sourceFile: VirtualFile): MappingList? {
+    var mappings: MappingList? = null
+    if (absoluteLocalPathToSourceIndex != null && sourceFile.isInLocalFileSystem) {
+      mappings = getMappingsBySource(sourceMap, absoluteLocalPathToSourceIndex!!.get(sourceFile.path))
       if (mappings == null) {
-        String sourceFileCanonicalPath = sourceFile.getCanonicalPath();
+        val sourceFileCanonicalPath = sourceFile.canonicalPath
         if (sourceFileCanonicalPath != null) {
-          mappings = getMappingsBySource(sourceMap, absoluteLocalPathToSourceIndex.get(sourceFileCanonicalPath));
+          mappings = getMappingsBySource(sourceMap, absoluteLocalPathToSourceIndex!!.get(sourceFileCanonicalPath))
         }
       }
     }
 
     if (mappings == null) {
-      int index = canonicalizedSourcesMap.get(Urls.newFromVirtualFile(sourceFile).trimParameters());
+      val index = canonicalizedSourcesMap.get(Urls.newFromVirtualFile(sourceFile).trimParameters())
       if (index != -1) {
-        return sourceMap.sourceIndexToMappings[index];
+        return sourceMap.sourceIndexToMappings[index]
       }
 
-      for (int i = 0; i < canonicalizedSources.length; i++) {
-        Url url = canonicalizedSources[i];
+      for (i in canonicalizedSources.indices) {
+        val url = canonicalizedSources[i]
         if (Urls.equalsIgnoreParameters(url, sourceFile)) {
-          return sourceMap.sourceIndexToMappings[i];
+          return sourceMap.sourceIndexToMappings[i]
         }
 
-        VirtualFile canonicalFile = sourceFile.getCanonicalFile();
-        if (canonicalFile != null && !canonicalFile.equals(sourceFile) && Urls.equalsIgnoreParameters(url, canonicalFile)) {
-          return sourceMap.sourceIndexToMappings[i];
+        val canonicalFile = sourceFile.canonicalFile
+        if (canonicalFile != null && canonicalFile != sourceFile && Urls.equalsIgnoreParameters(url, canonicalFile)) {
+          return sourceMap.sourceIndexToMappings[i]
         }
       }
     }
-    return mappings;
+    return mappings
+  }
+
+  companion object {
+    fun isAbsolute(path: String): Boolean {
+      return !path.isEmpty() && (path[0] == '/' || (SystemInfo.isWindows && (path.length > 2 && path[1] == ':')))
+    }
+
+    fun canonicalizePath(url: String, baseUrl: Url, baseUrlIsFile: Boolean): String {
+      var path = url
+      if (url[0] != '/') {
+        val basePath = baseUrl.path
+        if (baseUrlIsFile) {
+          val lastSlashIndex = basePath.lastIndexOf('/')
+          val pathBuilder = StringBuilder()
+          if (lastSlashIndex == -1) {
+            pathBuilder.append('/')
+          }
+          else {
+            pathBuilder.append(basePath, 0, lastSlashIndex + 1)
+          }
+          path = pathBuilder.append(url).toString()
+        }
+        else {
+          path = "$basePath/$url"
+        }
+      }
+      path = FileUtil.toCanonicalPath(path, '/')
+      return path
+    }
+
+    private fun getMappingsBySource(sourceMap: SourceMap, index: Int) = if (index == -1) null else sourceMap.sourceIndexToMappings[index]
   }
 }
+
+private fun createStringIntMap(initialCapacity: Int) = if (SystemInfo.isFileSystemCaseSensitive) ObjectIntHashMap<String>(initialCapacity) else ObjectIntHashMap(initialCapacity, CaseInsensitiveStringHashingStrategy.INSTANCE)
