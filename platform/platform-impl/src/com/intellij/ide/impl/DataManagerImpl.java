@@ -151,7 +151,9 @@ public class DataManagerImpl extends DataManager {
           rule = ruleEP.getInstance();
         }
       }
-      myDataConstantToRuleMap.putIfAbsent(dataId, rule);
+      if (rule != null) {
+        myDataConstantToRuleMap.putIfAbsent(dataId, rule);
+      }
     }
     return rule;
   }
