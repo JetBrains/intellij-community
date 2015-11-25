@@ -44,15 +44,15 @@ import java.util.List;
 public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
   private static final Logger LOG = Logger.getInstance(PyRemotePackageManagerImpl.class);
 
-  PyRemotePackageManagerImpl(@NotNull final String sdkHomePath) {
-    super(sdkHomePath);
+  PyRemotePackageManagerImpl(@NotNull final Sdk sdk) {
+    super(sdk);
   }
 
   @Nullable
   @Override
   protected String getHelperPath(String helper) throws ExecutionException {
     final Sdk sdk = getSdk();
-    if (sdk == null) throw new ExecutionException("Failed to find helpers for invalid interpreter \"" + mySdkHomePath + "\"");
+
     final SdkAdditionalData sdkData = sdk.getSdkAdditionalData();
     if (sdkData instanceof PyRemoteSdkAdditionalDataBase) {
       final PyRemoteSdkAdditionalDataBase remoteSdkData = (PyRemoteSdkAdditionalDataBase) sdkData;
@@ -89,8 +89,9 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
                                                  boolean askForSudo,
                                                  boolean showProgress, @Nullable final String workingDir) throws ExecutionException {
     final Sdk sdk = getSdk();
-    if (sdk == null) {
-      throw new ExecutionException("Cannot find Python interpreter \"" + mySdkHomePath + "\"");
+    final String homePath = sdk.getHomePath();
+    if (homePath == null) {
+      throw new ExecutionException("Cannot find Python interpreter for SDK " + sdk.getName());
     }
     final SdkAdditionalData sdkData = sdk.getSdkAdditionalData();
     if (sdkData instanceof PyRemoteSdkAdditionalDataBase) { //remote interpreter
@@ -120,8 +121,8 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
 
       if (manager != null) {
         final List<String> cmdline = new ArrayList<String>();
-        cmdline.add(mySdkHomePath);
-        cmdline.add(RemoteFile.detectSystemByPath(mySdkHomePath).createRemoteFile(helperPath).getPath());
+        cmdline.add(homePath);
+        cmdline.add(RemoteFile.detectSystemByPath(homePath).createRemoteFile(helperPath).getPath());
         cmdline.addAll(Collections2.transform(args, new Function<String, String>() {
           @Override
           public String apply(@Nullable String input) {
