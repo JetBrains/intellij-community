@@ -155,11 +155,6 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
   }
 
   @Override
-  public boolean isEnabledByDefault() {
-    return false;
-  }
-
-  @Override
   public void readSettings(@NotNull Element node) throws InvalidDataException {
     final Element element = node.getChild(EFFECTIVE_LL);
     if (element != null) {
