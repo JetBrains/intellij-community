@@ -38,8 +38,8 @@ import java.util.*;
 public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   public static final String PYTHON = "python";
 
-  PyCondaPackageManagerImpl(@NotNull final String sdkHomePath) {
-    super(sdkHomePath);
+  PyCondaPackageManagerImpl(@NotNull final Sdk sdk) {
+    super(sdk);
   }
 
   @Override
@@ -50,9 +50,6 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   @Override
   public boolean hasManagement(boolean cachedOnly) throws ExecutionException {
     final Sdk sdk = getSdk();
-    if (sdk == null) {
-      throw new ExecutionException("Failed to find interpreter \"" + mySdkHomePath + "\"");
-    }
     return isCondaVEnv(sdk);
   }
 
@@ -78,14 +75,12 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
 
   private ProcessOutput getCondaOutput(@NotNull final String command, List<String> arguments) throws ExecutionException {
     final Sdk sdk = getSdk();
-    if (sdk == null) {
-      throw new ExecutionException("Failed to find interpreter \"" + mySdkHomePath + "\"");
-    }
+
     final String condaExecutable = PyCondaPackageService.getCondaExecutable(sdk.getHomeDirectory());
     if (condaExecutable == null) throw new PyExecutionException("Cannot find conda", "Conda", Collections.<String>emptyList(), new ProcessOutput());
 
     final String path = getCondaDirectory();
-    if (path == null) throw new PyExecutionException("Empty conda name for \"" + mySdkHomePath + "\"", command, arguments);
+    if (path == null) throw new PyExecutionException("Empty conda name for " + sdk.getHomePath(), command, arguments);
 
     final ArrayList<String> parameters = Lists.newArrayList(condaExecutable, command, "-p", path);
     parameters.addAll(arguments);
@@ -115,11 +110,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
 
   @Nullable
   private String getCondaDirectory() {
-    final Sdk sdk = getSdk();
-    if (sdk == null) {
-      return null;
-    }
-    final VirtualFile homeDirectory = sdk.getHomeDirectory();
+    final VirtualFile homeDirectory = getSdk().getHomeDirectory();
     if (homeDirectory == null) return null;
     if (SystemInfo.isWindows) return homeDirectory.getParent().getPath();
     return homeDirectory.getParent().getParent().getPath();

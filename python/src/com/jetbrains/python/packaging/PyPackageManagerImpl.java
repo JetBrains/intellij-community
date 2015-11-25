@@ -85,7 +85,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   private List<PyPackage> myPackagesCache = null;
   private ExecutionException myExceptionCache = null;
 
-  protected final String mySdkHomePath;
+  @NotNull final private Sdk mySdk;
 
   @Override
   public void refresh() {
@@ -94,7 +94,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
       @Override
       public void run() {
         final Sdk sdk = getSdk();
-        if (sdk == null) return;
         application.runWriteAction(new Runnable() {
           @Override
           public void run() {
@@ -111,9 +110,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
   @Override
   public void installManagement() throws ExecutionException {
     final Sdk sdk = getSdk();
-    if (sdk == null) {
-      throw new ExecutionException("Cannot install management packages for invalid interpreter " + mySdkHomePath);
-    }
     final boolean pre26 = PythonSdkType.getLanguageLevelForSdk(sdk).isOlderThan(LanguageLevel.PYTHON26);
     if (!hasSetuptools(false)) {
       final String name = SETUPTOOLS + "-" + (pre26 ? SETUPTOOLS_PRE_26_VERSION : SETUPTOOLS_VERSION);
@@ -170,8 +166,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
     return findPackage(name, cachedOnly) != null;
   }
 
-  PyPackageManagerImpl(@NotNull final String sdkHomePath) {
-    mySdkHomePath = sdkHomePath;
+  PyPackageManagerImpl(@NotNull final Sdk sdk) {
+    mySdk = sdk;
     subscribeToLocalChanges();
   }
 
@@ -181,9 +177,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new MySdkRootWatcher());
   }
 
-  @Nullable
+  @NotNull
   public Sdk getSdk() {
-    return PythonSdkType.findSdkByPath(mySdkHomePath);
+    return mySdk;
   }
 
   @Override
@@ -334,8 +330,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws ExecutionException {
     final List<String> args = new ArrayList<String>();
     final Sdk sdk = getSdk();
-    if (sdk == null) throw new ExecutionException("Cannot create virtual env in \"" + destinationDir +
-                                                  "\". Invalid base interpreter " + mySdkHomePath);
     final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
     final boolean usePyVenv = languageLevel.isAtLeast(LanguageLevel.PYTHON33);
     if (usePyVenv) {
@@ -461,20 +455,23 @@ public class PyPackageManagerImpl extends PyPackageManager {
   @NotNull
   protected ProcessOutput getPythonProcessOutput(@NotNull String helperPath, @NotNull List<String> args, boolean askForSudo,
                                                  boolean showProgress, @Nullable String workingDir) throws ExecutionException {
+    final String homePath = getSdk().getHomePath();
+    if (homePath == null) {
+      throw new ExecutionException("Cannot find Python interpreter for SDK " + mySdk.getName());
+    }
     if (workingDir == null) {
-      workingDir = new File(mySdkHomePath).getParent();
+      workingDir = new File(homePath).getParent();
     }
     final List<String> cmdline = new ArrayList<String>();
-    cmdline.add(mySdkHomePath);
+    cmdline.add(homePath);
     cmdline.add(helperPath);
     cmdline.addAll(args);
     LOG.info("Running packaging tool: " + StringUtil.join(cmdline, " "));
 
-    final boolean canCreate = FileUtil.ensureCanCreateFile(new File(mySdkHomePath));
+    final boolean canCreate = FileUtil.ensureCanCreateFile(new File(homePath));
     final boolean useSudo = !canCreate && !SystemInfo.isWindows && askForSudo;
 
     try {
-      final Process process;
       final Map<String, String> environment = new HashMap<String, String>(System.getenv());
       PythonEnvUtil.setPythonUnbuffered(environment);
       PythonEnvUtil.setPythonDontWriteBytecode(environment);
@@ -556,9 +553,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
     @Override
     public void after(@NotNull List<? extends VFileEvent> events) {
       final Sdk sdk = getSdk();
-      if (sdk == null) {
-        return;
-      }
       final VirtualFile[] roots = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
       for (VFileEvent event : events) {
         final VirtualFile file = event.getFile();
