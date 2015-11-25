@@ -43,7 +43,6 @@ import java.util.List;
 
 public class SmartPointerManagerImpl extends SmartPointerManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl");
-  private static final Object lock = new Object();
   private static final ReferenceQueue<SmartPsiElementPointerImpl> ourQueue = new ReferenceQueue<SmartPsiElementPointerImpl>();
   @SuppressWarnings("unused") private static final LowMemoryWatcher ourWatcher = LowMemoryWatcher.register(new Runnable() {
     @Override
@@ -66,28 +65,22 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     while (true) {
       PointerReference reference = (PointerReference)ourQueue.poll();
       if (reference == null) break;
-      synchronized (lock) {
-        FilePointersList pointers = reference.file.getUserData(reference.key);
-        if (pointers != null) {
-          pointers.remove(reference);
-          if (pointers.isEmpty()) {
-            reference.file.putUserData(reference.key, null);
-          }
-        }
+
+      FilePointersList pointers = reference.file.getUserData(reference.key);
+      if (pointers != null) {
+        pointers.remove(reference);
       }
     }
   }
 
   public void fastenBelts(@NotNull VirtualFile file) {
     processQueue();
-    synchronized (lock) {
-      FilePointersList pointers = getPointers(file);
-      if (pointers != null && !pointers.isEmpty()) {
-        for (PointerReference ref : pointers.references) {
-          SmartPsiElementPointerImpl pointer = SoftReference.dereference(ref);
-          if (pointer != null) {
-            pointer.getElementInfo().fastenBelt();
-          }
+    FilePointersList pointers = getPointers(file);
+    if (pointers != null) {
+      for (Reference<SmartPsiElementPointerImpl> ref : pointers.getReferences()) {
+        SmartPsiElementPointerImpl pointer = SoftReference.dereference(ref);
+        if (pointer != null) {
+          pointer.getElementInfo().fastenBelt();
         }
       }
     }
@@ -110,18 +103,15 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     }
     processQueue();
     SmartPsiElementPointerImpl<E> pointer = getCachedPointer(element);
-    if (pointer == null) {
-      pointer = new SmartPsiElementPointerImpl<E>(myProject, element, containingFile);
-      if (containingFile != null) {
-        initPointer(pointer, containingFile.getViewProvider().getVirtualFile());
-      }
-      element.putUserData(CACHED_SMART_POINTER_KEY, new SoftReference<SmartPsiElementPointerImpl>(pointer));
+    if (pointer != null && pointer.incrementAndGetReferenceCount(1) > 0) {
+      return pointer;
     }
-    else {
-      synchronized (lock) {
-        ((SmartPsiElementPointerImpl)pointer).incrementAndGetReferenceCount(1);
-      }
+
+    pointer = new SmartPsiElementPointerImpl<E>(myProject, element, containingFile);
+    if (containingFile != null) {
+      trackPointer(pointer, containingFile.getViewProvider().getVirtualFile());
     }
+    element.putUserData(CACHED_SMART_POINTER_KEY, new SoftReference<SmartPsiElementPointerImpl>(pointer));
     return pointer;
   }
 
@@ -153,25 +143,25 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     }
     processQueue();
     SmartPsiFileRangePointerImpl pointer = new SmartPsiFileRangePointerImpl(file, ProperTextRange.create(range), forInjected);
-    initPointer(pointer, file.getViewProvider().getVirtualFile());
+    trackPointer(pointer, file.getViewProvider().getVirtualFile());
 
     return pointer;
   }
 
-  private <E extends PsiElement> void initPointer(@NotNull SmartPsiElementPointerImpl<E> pointer, @NotNull VirtualFile containingFile) {
-    synchronized (lock) {
-      pointer.incrementAndGetReferenceCount(1);
-      SmartPointerElementInfo info = pointer.getElementInfo();
-      if (!(info instanceof SelfElementInfo)) return;
+  private <E extends PsiElement> void trackPointer(@NotNull SmartPsiElementPointerImpl<E> pointer, @NotNull VirtualFile containingFile) {
+    SmartPointerElementInfo info = pointer.getElementInfo();
+    if (!(info instanceof SelfElementInfo)) return;
 
+    while (true) {
       FilePointersList pointers = getPointers(containingFile);
       if (pointers == null) {
-        pointers = new FilePointersList();
-        containingFile.putUserData(POINTERS_KEY, pointers);
+        pointers = containingFile.putUserDataIfAbsent(POINTERS_KEY, new FilePointersList());
       }
-      pointers.add(new PointerReference(pointer, containingFile, ourQueue, POINTERS_KEY));
-      if (((SelfElementInfo)info).hasRange()) {
-        pointers.markerCache.rangeChanged();
+      if (pointers.add(new PointerReference(pointer, containingFile, ourQueue, POINTERS_KEY))) {
+        if (((SelfElementInfo)info).hasRange()) {
+          pointers.markerCache.rangeChanged();
+        }
+        break;
       }
     }
   }
@@ -182,26 +172,21 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       return;
     }
     PsiFile containingFile = pointer.getContainingFile();
-    synchronized (lock) {
-      int refCount = ((SmartPsiElementPointerImpl)pointer).incrementAndGetReferenceCount(-1);
-      if (refCount == 0) {
-        PsiElement element = ((SmartPointerEx)pointer).getCachedElement();
-        if (element != null) {
-          element.putUserData(CACHED_SMART_POINTER_KEY, null);
-        }
-
-        SmartPointerElementInfo info = ((SmartPsiElementPointerImpl)pointer).getElementInfo();
-        info.cleanup();
-
-        if (containingFile == null) return;
-        VirtualFile vFile = containingFile.getViewProvider().getVirtualFile();
-        FilePointersList pointers = getPointers(vFile);
-        if (pointers == null) return;
-        pointers.remove(pointer);
-        if (pointers.isEmpty()) {
-          vFile.putUserData(POINTERS_KEY, null);
-        }
+    int refCount = ((SmartPsiElementPointerImpl)pointer).incrementAndGetReferenceCount(-1);
+    if (refCount == 0) {
+      PsiElement element = ((SmartPointerEx)pointer).getCachedElement();
+      if (element != null) {
+        element.putUserData(CACHED_SMART_POINTER_KEY, null);
       }
+
+      SmartPointerElementInfo info = ((SmartPsiElementPointerImpl)pointer).getElementInfo();
+      info.cleanup();
+
+      if (containingFile == null) return;
+      VirtualFile vFile = containingFile.getViewProvider().getVirtualFile();
+      FilePointersList pointers = getPointers(vFile);
+      if (pointers == null) return;
+      pointers.remove(pointer);
     }
   }
 
@@ -218,11 +203,9 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
 
   @TestOnly
   public int getPointersNumber(@NotNull PsiFile containingFile) {
-    synchronized (lock) {
-      VirtualFile file = containingFile.getViewProvider().getVirtualFile();
-      FilePointersList pointers = getPointers(file);
-      return pointers == null ? 0 : pointers.size;
-    }
+    VirtualFile file = containingFile.getViewProvider().getVirtualFile();
+    FilePointersList pointers = getPointers(file);
+    return pointers == null ? 0 : pointers.getSize();
   }
 
   @Override
@@ -292,7 +275,12 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     private PointerReference[] references = new PointerReference[10];
     private final MarkerCache markerCache = new MarkerCache(this);
 
-    private void add(@NotNull PointerReference reference) {
+    private synchronized boolean add(@NotNull PointerReference reference) {
+      if (reference.file.getUserData(reference.key) != this) {
+        // this pointer list has been removed by another thread; clients should get/create an up-to-date list and try adding to it
+        return false;
+      }
+
       if (nextAvailableIndex >= references.length || nextAvailableIndex > size*2) {  // overflow or too many dead refs
         int newCapacity = nextAvailableIndex >= references.length ? references.length * 3/2 +1 : size * 3/2+1;
         PointerReference[] newReferences = new PointerReference[newCapacity];
@@ -308,32 +296,31 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       }
       references[nextAvailableIndex++] = reference;
       size++;
+      return true;
     }
 
-    private void remove(@NotNull PointerReference reference) {
+    private synchronized void remove(@NotNull PointerReference reference) {
       int index = ArrayUtil.indexOf(references, reference);
       if (index != -1) {
-        references[index] = null;
-        size--;
+        removeReference(reference, index);
       }
     }
 
-    private boolean remove(@NotNull SmartPsiElementPointer smartPointer) {
-      boolean result = false;
+    private synchronized void remove(@NotNull SmartPsiElementPointer smartPointer) {
       for (int i = 0; i < references.length; i++) {
         PointerReference reference = references[i];
         if (reference != null && reference.get() == smartPointer) {
-          references[i] = null;
-          size--;
-          result = true;
-          break;
+          removeReference(reference, i);
+          return;
         }
       }
-      return result;
     }
 
-    private boolean isEmpty() {
-      return size == 0;
+    private void removeReference(@NotNull PointerReference reference, int index) {
+      references[index] = null;
+      if (--size == 0) {
+        reference.file.replace(reference.key, this, null);
+      }
     }
 
     Reference<SmartPsiElementPointerImpl>[] getReferences() {
