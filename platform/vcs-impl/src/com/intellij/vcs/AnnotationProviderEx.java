@@ -23,6 +23,12 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
 
 public interface AnnotationProviderEx extends AnnotationProvider {
+  /**
+   * Load annotations for a file
+   *
+   * @param revision - revision to load annotations for
+   * @param path     - file path in that revision
+   */
   @NotNull
   FileAnnotation annotate(@NotNull FilePath path, @NotNull VcsRevisionNumber revision) throws VcsException;
 }
