@@ -51,9 +51,8 @@ import static java.awt.event.KeyEvent.*;
  */
 public abstract class JBListTable {
   protected final JTable myInternalTable;
-  private final JBTable mainTable;
+  private final JBTable myMainTable;
   private final RowResizeAnimator myRowResizeAnimator;
-  private final Disposable myOnRemoveDisposable;
   private MouseEvent myMouseEvent;
   private MyCellEditor myCellEditor;
   private int myLastFocusedEditorComponentIdx = -1;
@@ -64,8 +63,6 @@ public abstract class JBListTable {
 
   public JBListTable(@NotNull final JTable t, @NotNull Disposable parent) {
     myInternalTable = t;
-    myOnRemoveDisposable = Disposer.newDisposable();
-    Disposer.register(parent, myOnRemoveDisposable);
     final JBListTableModel model = new JBListTableModel(t.getModel()) {
       @Override
       public JBTableRow getRow(int index) {
@@ -83,7 +80,7 @@ public abstract class JBListTable {
         super.addRow();
       }
     };
-    mainTable = new JBTable(model) {
+    myMainTable = new JBTable(model) {
       @Override
       public void editingStopped(ChangeEvent e) {
         super.editingStopped(e);
@@ -254,25 +251,22 @@ public abstract class JBListTable {
       @Override
       public void addNotify() {
         super.addNotify();
-        Disposer.register(myOnRemoveDisposable, myRowResizeAnimator);
       }
 
       @Override
       public void removeNotify() {
         super.removeNotify();
-        Disposer.dispose(myOnRemoveDisposable);
+        Disposer.dispose(myRowResizeAnimator);
       }
     };
-    mainTable.setStriped(true);
-    myRowResizeAnimator = new RowResizeAnimator(mainTable);
+    myMainTable.setTableHeader(null);
+    myMainTable.setStriped(true);
+    myRowResizeAnimator = new RowResizeAnimator(myMainTable);
+    Disposer.register(parent, myRowResizeAnimator);
   }
 
   public void stopEditing() {
-    TableUtil.stopEditing(mainTable);
-  }
-
-  public Disposable getOnRemoveDisposable() {
-    return myOnRemoveDisposable;
+    TableUtil.stopEditing(myMainTable);
   }
 
   private static void installPaddingAndBordersForEditors(JBTableRowEditor editor) {
@@ -284,7 +278,7 @@ public abstract class JBListTable {
   }
 
   public final JBTable getTable() {
-    return mainTable;
+    return myMainTable;
   }
 
   protected abstract JBTableRowRenderer getRowRenderer(int row);
