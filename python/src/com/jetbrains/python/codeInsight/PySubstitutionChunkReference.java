@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.psi.*;
@@ -27,11 +28,11 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PySubstitutionChunkReference extends PsiReferenceBase<StringLiteralExpression> implements PsiReferenceEx{
+public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiteralExpression> implements PsiReferenceEx{
   private final int myPosition;
   private final PyStringFormatParser.SubstitutionChunk myChunk;
 
-  public PySubstitutionChunkReference(StringLiteralExpression element, PyStringFormatParser.SubstitutionChunk chunk, final int position) {
+  public PySubstitutionChunkReference(PyStringLiteralExpression element, PyStringFormatParser.SubstitutionChunk chunk, final int position) {
     super(element, chunk.getTextRange().shiftRight(1));
     myChunk = chunk;
     myPosition = position;
@@ -83,6 +84,11 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<StringLiteral
       }
 
     return null;
+  }
+
+  @Override
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    return super.handleElementRename("{" +newElementName + "}");
   }
 
   private PsiElement resolvePercentString() {
