@@ -51,7 +51,7 @@ open class SourceResolver(private val rawSources: List<String>, trimFileScheme: 
       return Urls.newLocalFileUrl(FileUtil.toCanonicalPath(VfsUtilCore.toIdeaUrl(url, true).substring(StandardFileSystems.FILE_PROTOCOL_PREFIX.length), '/'))
     }
     else if (baseUrl == null || url.contains(URLUtil.SCHEME_SEPARATOR) || url.startsWith("data:") || url.startsWith("blob:") || url.startsWith("javascript:")) {
-      return Urls.parseEncoded(url)!!
+      return Urls.parseEncoded(url) ?: UrlImpl(url)
     }
 
     val path = canonicalizePath(url, baseUrl, baseUrlIsFile)

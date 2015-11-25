@@ -20,7 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Url
 
 // sources - is not originally specified, but canonicalized/normalized
-class SourceMap(val outFile: String?, val mappings: MappingList, internal val sourceIndexToMappings: Array<MappingList>, val sourceResolver: SourceResolver, val hasNameMappings: Boolean) {
+class SourceMap(val outFile: String?, val mappings: MappingList, internal val sourceIndexToMappings: Array<MappingList?>, val sourceResolver: SourceResolver, val hasNameMappings: Boolean) {
   val sources: Array<Url>
     get() = sourceResolver.canonicalizedSources
 
@@ -46,5 +46,5 @@ class SourceMap(val outFile: String?, val mappings: MappingList, internal val so
     return mappings != null && mappings.processMappingsInLine(sourceLine, mappingProcessor)
   }
 
-  fun getMappingsOrderedBySource(source: Int) = sourceIndexToMappings[source]
+  fun getMappingsOrderedBySource(source: Int) = sourceIndexToMappings[source]!!
 }
