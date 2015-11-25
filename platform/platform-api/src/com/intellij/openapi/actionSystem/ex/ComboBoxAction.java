@@ -152,6 +152,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setModel(new MyButtonModel());
       setHorizontalAlignment(LEFT);
       setFocusable(false);
+      putClientProperty("styleCombo", Boolean.TRUE);
       Insets margins = getMargin();
       setMargin(JBUI.insets(margins.top, 2, margins.bottom, 2));
       if (isSmallVariant()) {
@@ -501,6 +502,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       invalidate();
       repaint();
       setSize(getPreferredSize());
+      repaint();
     }
   }
 
