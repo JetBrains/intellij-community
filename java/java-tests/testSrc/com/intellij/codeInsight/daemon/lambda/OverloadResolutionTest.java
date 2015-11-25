@@ -171,6 +171,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testFunctionalInterfaceIncompatibilityBasedOnAbsenceOfVoidToTypeConvertion() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }
