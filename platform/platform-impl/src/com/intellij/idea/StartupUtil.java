@@ -369,6 +369,16 @@ public class StartupUtil {
     if (arguments != null) {
       log.info("JVM Args: " + StringUtil.join(arguments, " "));
     }
+
+    String extDirs = System.getProperty("java.ext.dirs");
+    if (extDirs != null) {
+      for (String dir : StringUtil.split(extDirs, File.pathSeparator)) {
+        String[] content = new File(dir).list();
+        if (content != null && content.length > 0) {
+          log.info("ext: " + dir + ": " + Arrays.toString(content));
+        }
+      }
+    }
   }
 
   static void runStartupWizard() {
