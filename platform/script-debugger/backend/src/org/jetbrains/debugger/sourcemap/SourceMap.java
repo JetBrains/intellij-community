@@ -13,89 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.debugger.sourcemap;
+package org.jetbrains.debugger.sourcemap
 
-import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Url;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.NullableLazyValue
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.Url
 
-import java.util.List;
+// sources - is not originally specified, but canonicalized/normalized
+class SourceMap(val outFile: String?, val mappings: MappingList, internal val sourceIndexToMappings: Array<MappingList>, val sourceResolver: SourceResolver, val hasNameMappings: Boolean) {
+  val sources: Array<Url>
+    get() = sourceResolver.canonicalizedSources
 
-public class SourceMap {
-  private final MappingList mappings;
-  final MappingList[] sourceIndexToMappings;
+  fun getSourceLineByRawLocation(rawLine: Int, rawColumn: Int) = mappings.get(rawLine, rawColumn)?.sourceLine ?: -1
 
-  private final String outFile;
-
-  private final SourceResolver sourceResolver;
-  private final boolean hasNameMappings;
-
-  // sources - is not originally specified, but canonicalized/normalized
-  public SourceMap(@Nullable String outFile,
-                   @NotNull MappingList mappings,
-                   @NotNull MappingList[] sourceIndexToMappings,
-                   @NotNull SourceResolver sourceResolver,
-                   boolean hasNameMappings) {
-    this.outFile = outFile;
-    this.mappings = mappings;
-    this.sourceIndexToMappings = sourceIndexToMappings;
-    this.sourceResolver = sourceResolver;
-    this.hasNameMappings = hasNameMappings;
-  }
-
-  public boolean hasNameMappings() {
-    return hasNameMappings;
-  }
-
-  @NotNull
-  public SourceResolver getSourceResolver() {
-    return sourceResolver;
-  }
-
-  @Nullable
-  public String getOutFile() {
-    return outFile;
-  }
-
-  public Url[] getSources() {
-    return sourceResolver.canonicalizedSources;
-  }
-
-  @NotNull
-  public MappingList getMappings() {
-    return mappings;
-  }
-
-  public int getSourceLineByRawLocation(int rawLine, int rawColumn) {
-    MappingEntry entry = getMappings().get(rawLine, rawColumn);
-    return entry == null ? -1: entry.getSourceLine();
-  }
-
-  @Nullable
-  public MappingList findMappingList(@NotNull List<Url> sourceUrls, @Nullable VirtualFile sourceFile, @Nullable NullableLazyValue<SourceResolver.Resolver> resolver) {
-    MappingList mappings = sourceResolver.findMappings(sourceUrls, this, sourceFile);
+  fun findMappingList(sourceUrls: List<Url>, sourceFile: VirtualFile?, resolver: NullableLazyValue<SourceResolver.Resolver>?): MappingList? {
+    var mappings = sourceResolver.findMappings(sourceUrls, this, sourceFile)
     if (mappings == null && resolver != null) {
-      SourceResolver.Resolver resolverValue = resolver.getValue();
+      val resolverValue = resolver.value
       if (resolverValue != null) {
-        mappings = sourceResolver.findMappings(sourceFile, this, resolverValue);
+        mappings = sourceResolver.findMappings(sourceFile, this, resolverValue)
       }
     }
-    return mappings;
+    return mappings
   }
 
-  public boolean processMappingsInLine(@NotNull List<Url> sourceUrls,
-                                       int sourceLine,
-                                       @NotNull MappingList.MappingsProcessorInLine mappingProcessor,
-                                       @Nullable VirtualFile sourceFile,
-                                       @Nullable NullableLazyValue<SourceResolver.Resolver> resolver) {
-    MappingList mappings = findMappingList(sourceUrls, sourceFile, resolver);
-    return mappings != null && mappings.processMappingsInLine(sourceLine, mappingProcessor);
+  fun processMappingsInLine(sourceUrls: List<Url>,
+                            sourceLine: Int,
+                            mappingProcessor: MappingList.MappingsProcessorInLine,
+                            sourceFile: VirtualFile?,
+                            resolver: NullableLazyValue<SourceResolver.Resolver>?): Boolean {
+    val mappings = findMappingList(sourceUrls, sourceFile, resolver)
+    return mappings != null && mappings.processMappingsInLine(sourceLine, mappingProcessor)
   }
 
-  @NotNull
-  public MappingList getMappingsOrderedBySource(int source) {
-    return sourceIndexToMappings[source];
-  }
+  fun getMappingsOrderedBySource(source: Int) = sourceIndexToMappings[source]
 }
