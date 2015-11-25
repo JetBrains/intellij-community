@@ -28,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil
 class DiffUsagesCollector : UsagesCollector() {
   companion object {
     val ID = GroupDescriptor.create("Diff")
+    val VERSION = 1
   }
 
   override fun getGroupId(): GroupDescriptor {
@@ -35,30 +36,44 @@ class DiffUsagesCollector : UsagesCollector() {
   }
 
   override fun getUsages(): Set<UsageDescriptor> {
-    val usages = ContainerUtil.newHashSet<UsageDescriptor>()
+    val usages: MutableMap<String, Int> = ContainerUtil.newHashMap()
+    usages["Total"] = 1
 
-    processUsages(DiffPlaces.DEFAULT, usages)
-    processUsages(DiffPlaces.CHANGES_VIEW, usages)
-    processUsages(DiffPlaces.COMMIT_DIALOG, usages)
+
+    listOf(DiffPlaces.DEFAULT, DiffPlaces.CHANGES_VIEW, DiffPlaces.COMMIT_DIALOG).forEach { place ->
+      val diffSettings = DiffSettingsHolder.getInstance().getSettings(place)
+      val textSettings = TextDiffSettingsHolder.getInstance().getSettings(place)
+
+      usages.increment("TextDiffSettings.IgnorePolicy", textSettings.ignorePolicy)
+      usages.increment("TextDiffSettings.HighlightPolicy", textSettings.highlightPolicy)
+      usages.increment("TextDiffSettings.ExpandByDefault", textSettings.isExpandByDefault)
+      usages.increment("DiffSettings.isUnifiedTool", isUnifiedToolDefault(diffSettings))
+    }
+
 
     val diffSettings = DiffSettingsHolder.getInstance().getSettings(null)
-    usages.add(UsageDescriptor("diff.DiffSettings.Default.IterateNextFile", if (diffSettings.isGoToNextFileOnNextDifference) 1 else 0))
+    usages.increment("DiffSettings.IterateNextFile", diffSettings.isGoToNextFileOnNextDifference)
 
-    return usages
+
+    return usages.map { it -> UsageDescriptor("diff.$VERSION.${it.key}", it.value) }.toSet()
   }
 
-  private fun processUsages(place: String, usages: MutableSet<UsageDescriptor>) {
-    val diffSettings = DiffSettingsHolder.getInstance().getSettings(place)
-    val textSettings = TextDiffSettingsHolder.getInstance().getSettings(place)
-
-    usages.add(UsageDescriptor("diff.TextDiffSettings.Default.IgnorePolicy." + textSettings.ignorePolicy.name, 1))
-    usages.add(UsageDescriptor("diff.TextDiffSettings.Default.HighlightPolicy." + textSettings.highlightPolicy.name, 1))
-    usages.add(UsageDescriptor("diff.TextDiffSettings.Default.ExpandByDefault", if (textSettings.isExpandByDefault) 1 else 0))
-
-    val toolOrder = diffSettings.diffToolsOrder
+  private fun isUnifiedToolDefault(settings: DiffSettingsHolder.DiffSettings): Boolean {
+    val toolOrder = settings.diffToolsOrder
     val defaultToolIndex = ContainerUtil.indexOf(toolOrder, SimpleDiffTool::class.java.canonicalName)
     val unifiedToolIndex = ContainerUtil.indexOf(toolOrder, UnifiedDiffTool::class.java.canonicalName)
-    val isUnifiedDefault = unifiedToolIndex != -1 && unifiedToolIndex < defaultToolIndex
-    usages.add(UsageDescriptor("diff.DiffSettings.Default.isUnifiedTool", if (isUnifiedDefault) 1 else 0))
+    return unifiedToolIndex != -1 && unifiedToolIndex < defaultToolIndex
+  }
+
+  private fun MutableMap<String, Int>.increment(key: String) {
+    put(key, (get(key) ?: 0) + 1)
+  }
+
+  private fun MutableMap<String, Int>.increment(prefix: String, suffix: Enum<*>) {
+    increment("$prefix.${suffix.name}")
+  }
+
+  private fun MutableMap<String, Int>.increment(key: String, condition: Boolean) {
+    if (condition) increment(key)
   }
 }
