@@ -20,7 +20,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.WaitFor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.THashSet;
@@ -110,7 +110,7 @@ public class ThreadTracker {
       Collection<Thread> after = new THashSet<Thread>(getThreads());
       after.removeAll(before);
 
-      for (Thread thread : after) {
+      for (final Thread thread : after) {
         if (thread == Thread.currentThread()) continue;
         ThreadGroup group = thread.getThreadGroup();
         if (group != null && "system".equals(group.getName()))continue;
@@ -126,8 +126,15 @@ public class ThreadTracker {
 
         if (!thread.isAlive()) continue;
         if (thread.getStackTrace().length == 0) {
-          TimeoutUtil.sleep(10000);
-          if (!thread.isAlive()) continue;
+          thread.interrupt();
+          if (new WaitFor(10000){
+            @Override
+            protected boolean condition() {
+              return !thread.isAlive();
+            }
+          }.isConditionRealized()) {
+            continue;
+          }
         }
 
         String trace = "Thread leaked: " + thread+"; " + thread.getState()+" ("+ thread.isAlive()+")\n--- its stacktrace:\n";
