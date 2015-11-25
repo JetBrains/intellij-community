@@ -427,6 +427,9 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     final JavaResolveResult resolveResult = methodCallExpression.resolveMethodGenerics();
     final PsiElement method = resolveResult.getElement();
     if (method instanceof PsiMethod) {
+      if (migrateEqualsMethod(methodCallExpression, (PsiMethod)method)) {
+        return;
+      }
       final PsiExpression[] psiExpressions = methodCallExpression.getArgumentList().getExpressions();
       final PsiParameter[] originalParams = ((PsiMethod)method).getParameterList().getParameters();
       final PsiSubstitutor evalSubstitutor = myTypeEvaluator.createMethodSubstitution(originalParams, psiExpressions, (PsiMethod)method, methodCallExpression);
@@ -455,6 +458,38 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         }
       }
     }
+  }
+
+  private boolean migrateEqualsMethod(PsiMethodCallExpression methodCallExpression, PsiMethod method) {
+    final PsiExpression qualifier = methodCallExpression.getMethodExpression().getQualifierExpression();
+    if (qualifier == null) {
+      return false;
+    }
+    final TypeView qualifierTypeView = new TypeView(qualifier);
+    if (!qualifierTypeView.isChanged()) {
+      return false;
+    }
+    if (method.getName().equals("equals") && method.getParameterList().getParametersCount() == 1) {
+      final PsiParameter parameter = method.getParameterList().getParameters()[0];
+      if (parameter.getType().equals(PsiType.getJavaLangObject(methodCallExpression.getManager(), methodCallExpression.getResolveScope()))) {
+        final PsiExpression[] expressions = methodCallExpression.getArgumentList().getExpressions();
+        if (expressions.length != 1) {
+          return false;
+        }
+        final TypeView argumentTypeView = new TypeView(expressions[0]);
+        final PsiType argumentType = argumentTypeView.getType();
+        if (!argumentTypeView.isChanged() && qualifierTypeView.getTypePair().getFirst().equals(argumentType)) {
+          final PsiType migrationType = qualifierTypeView.getType();
+          myLabeler.migrateExpressionType(expressions[0],
+                                          migrationType,
+                                          methodCallExpression,
+                                          TypeConversionUtil.isAssignable(migrationType, argumentType),
+                                          true);
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private void processVariable(final PsiVariable variable,
