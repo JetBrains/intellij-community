@@ -69,16 +69,10 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   public void testDoubleClear() throws Exception {
     ConsoleViewImpl console = myConsole;
     Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-    CountDownLatch latch = new CountDownLatch(3);
+    CountDownLatch latch = new CountDownLatch(1);
     alarm.addRequest(() -> {
       console.clear();
-      latch.countDown();
-    }, 0);
-    alarm.addRequest(() -> {
       console.clear();
-      latch.countDown();
-    }, 0);
-    alarm.addRequest(() -> {
       console.print("Test", ConsoleViewContentType.NORMAL_OUTPUT);
       latch.countDown();
     }, 0);
@@ -94,7 +88,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     ConsoleViewImpl console = myConsole;
     console.clear();
     EditorActionManager actionManager = EditorActionManager.getInstance();
-    final DataContext dataContext = DataManager.getInstance().getDataContext();
+    DataContext dataContext = DataManager.getInstance().getDataContext(console.getComponent());
     TypedAction action = actionManager.getTypedAction();
     action.actionPerformed(console.getEditor(), 'h', dataContext);
     assertEquals(1, console.getContentSize());
