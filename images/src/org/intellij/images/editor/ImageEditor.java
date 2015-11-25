@@ -18,7 +18,6 @@ package org.intellij.images.editor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileListener;
 import org.intellij.images.ui.ImageComponentDecorator;
 
 import javax.swing.*;
@@ -28,7 +27,8 @@ import javax.swing.*;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-public interface ImageEditor extends Disposable, VirtualFileListener, ImageComponentDecorator {
+public interface ImageEditor extends Disposable, ImageComponentDecorator {
+
     VirtualFile getFile();
 
     Project getProject();
