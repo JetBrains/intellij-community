@@ -19,6 +19,8 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.packaging.ui.PyCondaManagementService;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -47,17 +49,23 @@ public class PyPackageManagersImpl extends PyPackageManagers {
     PyPackageManagerImpl manager = myInstances.get(homePath);
     if (manager == null) {
       if (PythonSdkType.isRemote(sdk)) {
-        manager = new PyRemotePackageManagerImpl(homePath);
+        manager = new PyRemotePackageManagerImpl(sdk);
       }
       else if (PyCondaPackageManagerImpl.isCondaVEnv(sdk) && PyCondaPackageService.getCondaExecutable(sdk.getHomeDirectory()) != null) {
-        manager = new PyCondaPackageManagerImpl(homePath);
+        manager = new PyCondaPackageManagerImpl(sdk);
       }
       else {
-        manager = new PyPackageManagerImpl(homePath);
+        manager = new PyPackageManagerImpl(sdk);
       }
-      myInstances.put(homePath, manager);
+      if (sdkIsSetUp(sdk))
+        myInstances.put(homePath, manager);
     }
     return manager;
+  }
+
+  private static boolean sdkIsSetUp(@NotNull final Sdk sdk) {
+    final VirtualFile[] roots = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
+    return roots.length != 0;
   }
 
   public PyPackageManagementService getManagementService(Project project, Sdk sdk) {
@@ -65,6 +73,13 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       return new PyCondaManagementService(project, sdk);
     }
     return new PyPackageManagementService(project, sdk);
+  }
+
+  @Override
+  public void clearCache(@NotNull Sdk sdk) {
+    if (myInstances.containsKey(sdk.getHomePath())) {
+      myInstances.remove(sdk.getHomePath());
+    }
   }
 
   static class DummyPackageManager extends PyPackageManager {
@@ -142,5 +157,5 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       throw new ExecutionException(getErrorMessage());
     }
   }
-  
+
 }
