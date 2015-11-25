@@ -2300,8 +2300,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   protected void resetFields() {
-    if (myBalloon!= null) {
-      myBalloon.cancel();
+    if (myBalloon != null) {
+      final JBPopup balloonToBeCanceled = myBalloon;
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          balloonToBeCanceled.cancel();
+        }
+      });
       myBalloon = null;
     }
     myCurrentWorker.doWhenProcessed(new Runnable() {
