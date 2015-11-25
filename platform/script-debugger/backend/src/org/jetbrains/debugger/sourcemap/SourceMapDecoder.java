@@ -13,437 +13,325 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.debugger.sourcemap;
+package org.jetbrains.debugger.sourcemap
 
-import com.google.gson.stream.JsonToken;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.util.PathUtil;
-import com.intellij.util.SmartList;
-import com.intellij.util.UriUtil;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.io.JsonReaderEx;
+import com.google.gson.stream.JsonToken
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.util.PathUtil
+import com.intellij.util.SmartList
+import com.intellij.util.UriUtil
+import com.intellij.util.containers.isNullOrEmpty
+import org.jetbrains.debugger.sourcemap.Base64VLQ.CharIterator
+import org.jetbrains.io.JsonReaderEx
+import java.io.IOException
+import java.util.*
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+private val MAPPING_COMPARATOR_BY_SOURCE_POSITION = Comparator<MappingEntry> { o1, o2 ->
+  if (o1.sourceLine == o2.sourceLine) {
+    o1.sourceColumn - o2.sourceColumn
+  }
+  else {
+    o1.sourceLine - o2.sourceLine
+  }
+}
 
-import static org.jetbrains.debugger.sourcemap.Base64VLQ.CharIterator;
+val MAPPING_COMPARATOR_BY_GENERATED_POSITION: Comparator<MappingEntry> = Comparator { o1, o2 ->
+  if (o1.generatedLine == o2.generatedLine) {
+    o1.generatedColumn - o2.generatedColumn
+  }
+  else {
+    o1.generatedLine - o2.generatedLine
+  }
+}
+
+internal const val UNMAPPED = -1
 
 // https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit?hl=en_US
-public final class SourceMapDecoder {
-  public static final int UNMAPPED = -1;
-
-  private static final Comparator<MappingEntry> MAPPING_COMPARATOR_BY_SOURCE_POSITION = new Comparator<MappingEntry>() {
-    @Override
-    public int compare(@NotNull MappingEntry o1, @NotNull MappingEntry o2) {
-      if (o1.getSourceLine() == o2.getSourceLine()) {
-        return o1.getSourceColumn() - o2.getSourceColumn();
-      }
-      else {
-        return o1.getSourceLine() - o2.getSourceLine();
-      }
-    }
-  };
-
-  public static final Comparator<MappingEntry> MAPPING_COMPARATOR_BY_GENERATED_POSITION = new Comparator<MappingEntry>() {
-    @Override
-    public int compare(@NotNull MappingEntry o1, @NotNull MappingEntry o2) {
-      if (o1.getGeneratedLine() == o2.getGeneratedLine()) {
-        return o1.getGeneratedColumn() - o2.getGeneratedColumn();
-      }
-      else {
-        return o1.getGeneratedLine() - o2.getGeneratedLine();
-      }
-    }
-  };
-
-  public interface SourceResolverFactory {
-    @NotNull
-    SourceResolver create(@NotNull List<String> sourceUrls, @Nullable List<String> sourceContents);
+fun decodeSourceMap(`in`: CharSequence, sourceResolverFactory: (sourceUrls: List<String>, sourceContents: List<String>?) -> SourceResolver): SourceMap? {
+  if (`in`.isEmpty()) {
+    throw IOException("source map contents cannot be empty")
   }
 
-  @Nullable
-  public static SourceMap decode(@NotNull CharSequence in, @NotNull SourceResolverFactory sourceResolverFactory) throws IOException {
-    if (in.length() == 0) {
-      throw new IOException("source map contents cannot be empty");
-    }
+  val reader = JsonReaderEx(`in`)
+  reader.isLenient = true
+  return parseMap(reader, 0, 0, ArrayList<MappingEntry>(), sourceResolverFactory)
+}
 
-    JsonReaderEx reader = new JsonReaderEx(in);
-    reader.setLenient(true);
-    List<MappingEntry> mappings = new ArrayList<MappingEntry>();
-    return parseMap(reader, 0, 0, mappings, sourceResolverFactory);
-  }
-
-  @Nullable
-  private static SourceMap parseMap(@NotNull JsonReaderEx reader,
-                                    int line,
-                                    int column,
-                                    List<MappingEntry> mappings,
-                                    @NotNull SourceResolverFactory sourceResolverFactory) throws IOException {
-    reader.beginObject();
-    String sourceRoot = null;
-    JsonReaderEx sourcesReader = null;
-    List<String> names = null;
-    String encodedMappings = null;
-    String file = null;
-    int version = -1;
-    List<String> sourcesContent = null;
-    while (reader.hasNext()) {
-      String propertyName = reader.nextName();
-      if (propertyName.equals("sections")) {
-        throw new IOException("sections is not supported yet");
+private fun parseMap(reader: JsonReaderEx,
+                     line: Int,
+                     column: Int,
+                     mappings: MutableList<MappingEntry>,
+                     sourceResolverFactory: (sourceUrls: List<String>, sourceContents: List<String>?) -> SourceResolver): SourceMap? {
+  reader.beginObject()
+  var sourceRoot: String? = null
+  var sourcesReader: JsonReaderEx? = null
+  var names: List<String>? = null
+  var encodedMappings: String? = null
+  var file: String? = null
+  var version = -1
+  var sourcesContent: MutableList<String>? = null
+  while (reader.hasNext()) {
+    when (reader.nextName()) {
+      "sections" -> throw IOException("sections is not supported yet")
+      "version" -> {
+        version = reader.nextInt()
       }
-      else if (propertyName.equals("version")) {
-        version = reader.nextInt();
-      }
-      else if (propertyName.equals("sourceRoot")) {
-        sourceRoot = readSourcePath(reader);
+      "sourceRoot" -> {
+        sourceRoot = readSourcePath(reader)
         if (sourceRoot != null) {
-          sourceRoot = UriUtil.trimTrailingSlashes(sourceRoot);
+          sourceRoot = UriUtil.trimTrailingSlashes(sourceRoot)
         }
       }
-      else if (propertyName.equals("sources")) {
-        sourcesReader = reader.subReader();
-        reader.skipValue();
+      "sources" -> {
+        sourcesReader = reader.subReader()
+        reader.skipValue()
       }
-      else if (propertyName.equals("names")) {
-        reader.beginArray();
+      "names" -> {
+        reader.beginArray()
         if (reader.hasNext()) {
-          names = new ArrayList<String>();
+          names = ArrayList<String>()
           do {
             if (reader.peek() == JsonToken.BEGIN_OBJECT) {
               // polymer map
-              reader.skipValue();
-              names.add("POLYMER UNKNOWN NAME");
+              reader.skipValue()
+              names.add("POLYMER UNKNOWN NAME")
             }
             else {
-              names.add(reader.nextString(true));
+              names.add(reader.nextString(true))
             }
           }
-          while (reader.hasNext());
+          while (reader.hasNext())
         }
         else {
-          names = Collections.emptyList();
+          names = emptyList()
         }
-        reader.endArray();
+        reader.endArray()
       }
-      else if (propertyName.equals("mappings")) {
-        encodedMappings = reader.nextString();
+      "mappings" -> {
+        encodedMappings = reader.nextString()
       }
-      else if (propertyName.equals("file")) {
-        file = reader.nextString();
+      "file" -> {
+        file = reader.nextString()
       }
-      else if (propertyName.equals("sourcesContent")) {
-        reader.beginArray();
+      "sourcesContent" -> {
+        reader.beginArray()
         if (reader.peek() != JsonToken.END_ARRAY) {
-          sourcesContent = new SmartList<String>();
+          sourcesContent = SmartList<String>()
           do {
             if (reader.peek() == JsonToken.STRING) {
-              sourcesContent.add(StringUtilRt.convertLineSeparators(reader.nextString()));
+              sourcesContent.add(StringUtilRt.convertLineSeparators(reader.nextString()))
             }
             else {
-              reader.skipValue();
+              reader.skipValue()
             }
           }
-          while (reader.hasNext());
+          while (reader.hasNext())
         }
-        reader.endArray();
+        reader.endArray()
       }
-      else {
+      else -> {
         // skip file or extensions
-        reader.skipValue();
+        reader.skipValue()
       }
-    }
-    reader.close();
-
-    // check it before other checks, probably it is not sourcemap file
-    if (StringUtil.isEmpty(encodedMappings)) {
-      // empty map
-      return null;
-    }
-
-    if (version != 3) {
-      throw new IOException("Unsupported sourcemap version: " + version);
-    }
-
-    if (sourcesReader == null) {
-      throw new IOException("sources is not specified");
-    }
-
-    List<String> sources = readSources(sourcesReader, sourceRoot);
-    if (sources.isEmpty()) {
-      // empty map, meteor can report such ugly maps
-      return null;
-    }
-
-    @SuppressWarnings("unchecked")
-    List<MappingEntry>[] reverseMappingsBySourceUrl = new List[sources.size()];
-    readMappings(encodedMappings, line, column, mappings, reverseMappingsBySourceUrl, names);
-
-    MappingList[] sourceToEntries = new MappingList[reverseMappingsBySourceUrl.length];
-    for (int i = 0; i < reverseMappingsBySourceUrl.length; i++) {
-      List<MappingEntry> entries = reverseMappingsBySourceUrl[i];
-      if (entries != null) {
-        Collections.sort(entries, MAPPING_COMPARATOR_BY_SOURCE_POSITION);
-        sourceToEntries[i] = new SourceMappingList(entries);
-      }
-    }
-    return new SourceMap(file, new GeneratedMappingList(mappings), sourceToEntries, sourceResolverFactory.create(sources, sourcesContent), !ContainerUtil.isEmpty(names));
-  }
-
-  @Nullable
-  private static String readSourcePath(JsonReaderEx reader) {
-    return PathUtil.toSystemIndependentName(StringUtil.nullize(reader.nextString().trim()));
-  }
-
-  private static void readMappings(@NotNull String value,
-                                   int line,
-                                   int column,
-                                   @NotNull List<MappingEntry> mappings,
-                                   @NotNull List<MappingEntry>[] reverseMappingsBySourceUrl,
-                                   @Nullable List<String> names) {
-    if (StringUtil.isEmpty(value)) {
-      return;
-    }
-
-    CharSequenceIterator charIterator = new CharSequenceIterator(value);
-    int sourceIndex = 0;
-    List<MappingEntry> reverseMappings = getMapping(reverseMappingsBySourceUrl, sourceIndex);
-    int sourceLine = 0;
-    int sourceColumn = 0;
-    int nameIndex = 0;
-    while (charIterator.hasNext()) {
-      if (charIterator.peek() == ',') {
-        charIterator.next();
-      }
-      else {
-        while (charIterator.peek() == ';') {
-          line++;
-          column = 0;
-          charIterator.next();
-          if (!charIterator.hasNext()) {
-            return;
-          }
-        }
-      }
-
-      column += Base64VLQ.decode(charIterator);
-      if (isSeparator(charIterator)) {
-        mappings.add(new UnmappedEntry(line, column));
-        continue;
-      }
-
-      int sourceIndexDelta = Base64VLQ.decode(charIterator);
-      if (sourceIndexDelta != 0) {
-        sourceIndex += sourceIndexDelta;
-        reverseMappings = getMapping(reverseMappingsBySourceUrl, sourceIndex);
-      }
-      sourceLine += Base64VLQ.decode(charIterator);
-      sourceColumn += Base64VLQ.decode(charIterator);
-
-      MappingEntry entry;
-      if (isSeparator(charIterator)) {
-        entry = new UnnamedEntry(line, column, sourceIndex, sourceLine, sourceColumn);
-      }
-      else {
-        nameIndex += Base64VLQ.decode(charIterator);
-        assert names != null;
-        entry = new NamedEntry(names.get(nameIndex), line, column, sourceIndex, sourceLine, sourceColumn);
-      }
-      reverseMappings.add(entry);
-      mappings.add(entry);
     }
   }
+  reader.close()
 
-  private static List<String> readSources(@NotNull JsonReaderEx reader, @Nullable String sourceRootUrl) {
-    reader.beginArray();
-    List<String> sources;
-    if (reader.peek() == JsonToken.END_ARRAY) {
-      sources = Collections.emptyList();
+  // check it before other checks, probably it is not a sourcemap file
+  if (encodedMappings.isNullOrEmpty()) {
+    // empty map
+    return null
+  }
+
+  if (version != 3) {
+    throw IOException("Unsupported sourcemap version: $version")
+  }
+
+  if (sourcesReader == null) {
+    throw IOException("sources is not specified")
+  }
+
+  val sources = readSources(sourcesReader, sourceRoot)
+  if (sources.isEmpty()) {
+    // empty map, meteor can report such ugly maps
+    return null
+  }
+
+  val reverseMappingsBySourceUrl = arrayOfNulls<MutableList<MappingEntry>?>(sources.size)
+  readMappings(encodedMappings!!, line, column, mappings, reverseMappingsBySourceUrl, names)
+
+  val sourceToEntries = Array<MappingList?>(reverseMappingsBySourceUrl.size) {
+    val entries = reverseMappingsBySourceUrl[it]
+    if (entries == null) {
+      null
     }
     else {
-      sources = new SmartList<String>();
-      do {
-        String sourceUrl = readSourcePath(reader);
-        sourceUrl = StringUtil.isEmpty(sourceRootUrl) ? sourceUrl : (sourceRootUrl + '/' + sourceUrl);
-        sources.add(sourceUrl);
+      entries.sortWith(MAPPING_COMPARATOR_BY_SOURCE_POSITION)
+      SourceMappingList(entries)
+    }
+  }
+  return SourceMap(file, GeneratedMappingList(mappings), sourceToEntries, sourceResolverFactory(sources, sourcesContent), !names.isNullOrEmpty())
+}
+
+private fun readSourcePath(reader: JsonReaderEx) = PathUtil.toSystemIndependentName(StringUtil.nullize(reader.nextString().trim { it <= ' ' }))
+
+private fun readMappings(value: String,
+                         initialLine: Int,
+                         initialColumn: Int,
+                         mappings: MutableList<MappingEntry>,
+                         reverseMappingsBySourceUrl: Array<MutableList<MappingEntry>?>,
+                         names: List<String>?) {
+  if (value.isNullOrEmpty()) {
+    return
+  }
+
+  var line = initialLine
+  var column = initialColumn
+  val charIterator = CharSequenceIterator(value)
+  var sourceIndex = 0
+  var reverseMappings: MutableList<MappingEntry> = getMapping(reverseMappingsBySourceUrl, sourceIndex)
+  var sourceLine = 0
+  var sourceColumn = 0
+  var nameIndex = 0
+  while (charIterator.hasNext()) {
+    if (charIterator.peek() == ',') {
+      charIterator.next()
+    }
+    else {
+      while (charIterator.peek() == ';') {
+        line++
+        column = 0
+        charIterator.next()
+        if (!charIterator.hasNext()) {
+          return
+        }
       }
-      while (reader.hasNext());
-    }
-    reader.endArray();
-    return sources;
-  }
-
-  private static List<MappingEntry> getMapping(@NotNull List<MappingEntry>[] reverseMappingsBySourceUrl, int sourceIndex) {
-    List<MappingEntry> reverseMappings = reverseMappingsBySourceUrl[sourceIndex];
-    if (reverseMappings == null) {
-      reverseMappings = new ArrayList<MappingEntry>();
-      reverseMappingsBySourceUrl[sourceIndex] = reverseMappings;
-    }
-    return reverseMappings;
-  }
-
-  private static boolean isSeparator(CharSequenceIterator charIterator) {
-    if (!charIterator.hasNext()) {
-      return true;
     }
 
-    char current = charIterator.peek();
-    return current == ',' || current == ';';
-  }
-
-  /**
-   * Not mapped to a section in the original source.
-   */
-  private static class UnmappedEntry extends MappingEntry {
-    private final int line;
-    private final int column;
-
-    UnmappedEntry(int line, int column) {
-      this.line = line;
-      this.column = column;
+    column += Base64VLQ.decode(charIterator)
+    if (isSeparator(charIterator)) {
+      mappings.add(UnmappedEntry(line, column))
+      continue
     }
 
-    @Override
-    public int getGeneratedColumn() {
-      return column;
+    val sourceIndexDelta = Base64VLQ.decode(charIterator)
+    if (sourceIndexDelta != 0) {
+      sourceIndex += sourceIndexDelta
+      reverseMappings = getMapping(reverseMappingsBySourceUrl, sourceIndex)
     }
+    sourceLine += Base64VLQ.decode(charIterator)
+    sourceColumn += Base64VLQ.decode(charIterator)
 
-    @Override
-    public int getGeneratedLine() {
-      return line;
+    val entry: MappingEntry
+    if (isSeparator(charIterator)) {
+      entry = UnnamedEntry(line, column, sourceIndex, sourceLine, sourceColumn)
     }
-
-    @Override
-    public int getSourceLine() {
-      return UNMAPPED;
+    else {
+      nameIndex += Base64VLQ.decode(charIterator)
+      assert(names != null)
+      entry = NamedEntry(names!![nameIndex], line, column, sourceIndex, sourceLine, sourceColumn)
     }
-
-    @Override
-    public int getSourceColumn() {
-      return UNMAPPED;
-    }
-  }
-
-  /**
-   * Mapped to a section in the original source.
-   */
-  private static class UnnamedEntry extends UnmappedEntry {
-    private final int source;
-    private final int sourceLine;
-    private final int sourceColumn;
-
-    UnnamedEntry(int line, int column, int source, int sourceLine, int sourceColumn) {
-      super(line, column);
-
-      this.source = source;
-      this.sourceLine = sourceLine;
-      this.sourceColumn = sourceColumn;
-    }
-
-    @Override
-    public int getSource() {
-      return source;
-    }
-
-    @Override
-    public int getSourceLine() {
-      return sourceLine;
-    }
-
-    @Override
-    public int getSourceColumn() {
-      return sourceColumn;
-    }
-  }
-
-  /**
-   * Mapped to a section in the original source, and is associated with a name.
-   */
-  private static class NamedEntry extends UnnamedEntry {
-    private final String name;
-
-    NamedEntry(String name, int line, int column, int source, int sourceLine, int sourceColumn) {
-      super(line, column, source, sourceLine, sourceColumn);
-      this.name = name;
-    }
-
-    @Override
-    public String getName() {
-      return name;
-    }
-  }
-
-  // java CharacterIterator is ugly, next() impl, so, we reinvent
-  private static class CharSequenceIterator implements CharIterator {
-    private final CharSequence content;
-    private final int length;
-    private int current = 0;
-
-    CharSequenceIterator(CharSequence content) {
-      this.content = content;
-      length = content.length();
-    }
-
-    @Override
-    public char next() {
-      return content.charAt(current++);
-    }
-
-    char peek() {
-      return content.charAt(current);
-    }
-
-    @Override
-    public boolean hasNext() {
-      return current < length;
-    }
-  }
-
-  private static final class SourceMappingList extends MappingList {
-    public SourceMappingList(@NotNull List<MappingEntry> mappings) {
-      super(mappings);
-    }
-
-    @Override
-    public int getLine(@NotNull MappingEntry mapping) {
-      return mapping.getSourceLine();
-    }
-
-    @Override
-    public int getColumn(@NotNull MappingEntry mapping) {
-      return mapping.getSourceColumn();
-    }
-
-    @Override
-    protected Comparator<MappingEntry> getComparator() {
-      return MAPPING_COMPARATOR_BY_SOURCE_POSITION;
-    }
-  }
-
-  private static final class GeneratedMappingList extends MappingList {
-    public GeneratedMappingList(@NotNull List<MappingEntry> mappings) {
-      super(mappings);
-    }
-
-    @Override
-    public int getLine(@NotNull MappingEntry mapping) {
-      return mapping.getGeneratedLine();
-    }
-
-    @Override
-    public int getColumn(@NotNull MappingEntry mapping) {
-      return mapping.getGeneratedColumn();
-    }
-
-    @Override
-    protected Comparator<MappingEntry> getComparator() {
-      return MAPPING_COMPARATOR_BY_GENERATED_POSITION;
-    }
+    reverseMappings.add(entry)
+    mappings.add(entry)
   }
 }
+
+private fun readSources(reader: JsonReaderEx, sourceRootUrl: String?): List<String> {
+  reader.beginArray()
+  val sources: List<String>
+  if (reader.peek() == JsonToken.END_ARRAY) {
+    sources = emptyList()
+  }
+  else {
+    sources = SmartList<String>()
+    do {
+      var sourceUrl = readSourcePath(reader)
+      if (!sourceRootUrl.isNullOrEmpty()) {
+        sourceUrl = "$sourceRootUrl/$sourceUrl"
+      }
+      sources.add(sourceUrl)
+    }
+    while (reader.hasNext())
+  }
+  reader.endArray()
+  return sources
+}
+
+private fun getMapping(reverseMappingsBySourceUrl: Array<MutableList<MappingEntry>?>, sourceIndex: Int): MutableList<MappingEntry> {
+  var reverseMappings = reverseMappingsBySourceUrl[sourceIndex]
+  if (reverseMappings == null) {
+    reverseMappings = ArrayList<MappingEntry>()
+    reverseMappingsBySourceUrl[sourceIndex] = reverseMappings
+  }
+  return reverseMappings
+}
+
+private fun isSeparator(charIterator: CharSequenceIterator): Boolean {
+  if (!charIterator.hasNext()) {
+    return true
+  }
+
+  val current = charIterator.peek()
+  return current == ',' || current == ';'
+}
+
+/**
+ * Not mapped to a section in the original source.
+ */
+private open class UnmappedEntry internal constructor(private val line: Int, private val column: Int) : MappingEntry() {
+  override fun getGeneratedColumn() = column
+
+  override fun getGeneratedLine() = line
+
+  override fun getSourceLine() = UNMAPPED
+
+  override fun getSourceColumn() = UNMAPPED
+}
+
+/**
+ * Mapped to a section in the original source.
+ */
+private open class UnnamedEntry internal constructor(line: Int, column: Int, private val source: Int, private val sourceLine: Int, private val sourceColumn: Int) : UnmappedEntry(line, column) {
+  override fun getSource() = source
+
+  override fun getSourceLine() = sourceLine
+
+  override fun getSourceColumn() = sourceColumn
+}
+
+/**
+ * Mapped to a section in the original source, and is associated with a name.
+ */
+private class NamedEntry(private val name: String, line: Int, column: Int, source: Int, sourceLine: Int, sourceColumn: Int) : UnnamedEntry(line, column, source, sourceLine, sourceColumn) {
+  override fun getName() = name
+}
+
+// java CharacterIterator is ugly, next() impl, so, we reinvent
+private class CharSequenceIterator(private val content: CharSequence) : CharIterator {
+  private val length = content.length
+  private var current = 0
+
+  override fun next() = content[current++]
+
+  internal fun peek() = content[current]
+
+  override fun hasNext() = current < length
+}
+
+private class SourceMappingList(mappings: List<MappingEntry>) : MappingList(mappings) {
+  override fun getLine(mapping: MappingEntry) = mapping.sourceLine
+
+  override fun getColumn(mapping: MappingEntry) = mapping.sourceColumn
+
+  override fun getComparator() = MAPPING_COMPARATOR_BY_SOURCE_POSITION
+}
+
+private class GeneratedMappingList(mappings: List<MappingEntry>) : MappingList(mappings) {
+  override fun getLine(mapping: MappingEntry) = mapping.generatedLine
+
+  override fun getColumn(mapping: MappingEntry) = mapping.generatedColumn
+
+  override fun getComparator() = MAPPING_COMPARATOR_BY_GENERATED_POSITION
+}
+
