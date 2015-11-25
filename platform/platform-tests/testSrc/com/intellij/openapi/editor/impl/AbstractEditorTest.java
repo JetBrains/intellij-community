@@ -63,8 +63,12 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
 
   @Override
   protected void tearDown() throws Exception {
-    super.tearDown();
-    FontLayoutService.setInstance(null);
+    try {
+      FontLayoutService.setInstance(null);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   protected void initText(@NotNull @NonNls String fileText) throws IOException {
@@ -81,12 +85,8 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
 
   protected static FoldRegion addFoldRegion(final int startOffset, final int endOffset, final String placeholder) {
     final FoldRegion[] result = new FoldRegion[1];
-    myEditor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        result[0] = myEditor.getFoldingModel().addFoldRegion(startOffset, endOffset, placeholder);
-      }
-    });
+    myEditor.getFoldingModel().runBatchFoldingOperation(
+      () -> result[0] = myEditor.getFoldingModel().addFoldRegion(startOffset, endOffset, placeholder));
     return result[0];
   }
 
@@ -97,12 +97,7 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
   }
 
   protected static void toggleFoldRegionState(final FoldRegion foldRegion, final boolean expanded) {
-    myEditor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        foldRegion.setExpanded(expanded);
-      }
-    });
+    myEditor.getFoldingModel().runBatchFoldingOperation(() -> foldRegion.setExpanded(expanded));
   }
 
   protected static FoldRegion getFoldRegion(int startOffset) {
@@ -120,14 +115,11 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
 
   protected static void foldOccurrences(String textToFoldRegexp, final String placeholder) {
     final Matcher matcher = Pattern.compile(textToFoldRegexp).matcher(myEditor.getDocument().getCharsSequence());
-    myEditor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        while (matcher.find()) {
-          FoldRegion foldRegion = myEditor.getFoldingModel().addFoldRegion(matcher.start(), matcher.end(), placeholder);
-          assertNotNull(foldRegion);
-          foldRegion.setExpanded(false);
-        }
+    myEditor.getFoldingModel().runBatchFoldingOperation(() -> {
+      while (matcher.find()) {
+        FoldRegion foldRegion = myEditor.getFoldingModel().addFoldRegion(matcher.start(), matcher.end(), placeholder);
+        assertNotNull(foldRegion);
+        foldRegion.setExpanded(false);
       }
     });
   }
@@ -164,23 +156,20 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
   protected static void setupFolding(@NotNull String data) {
     Scanner scanner = new Scanner(data);
     Pattern pattern = Pattern.compile("FoldRegion ([+-])\\((\\d+):(\\d+)");
-    final List<Trinity<Boolean, Integer, Integer>> infos = new ArrayList<Trinity<Boolean, Integer, Integer>>();
+    final List<Trinity<Boolean, Integer, Integer>> infos = new ArrayList<>();
     while (scanner.findInLine(pattern) != null) {
       final MatchResult match = scanner.match();
       boolean expanded = "-".equals(match.group(1));
       int startOffset = Integer.parseInt(match.group(2));
       int endOffset = Integer.parseInt(match.group(3));
-      infos.add(new Trinity<Boolean, Integer, Integer>(expanded, startOffset, endOffset));
+      infos.add(new Trinity<>(expanded, startOffset, endOffset));
     }
     final FoldingModel foldingModel = myEditor.getFoldingModel();
-    foldingModel.runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        for (Trinity<Boolean, Integer, Integer> info : infos) {
-          final FoldRegion region = foldingModel.addFoldRegion(info.second, info.third, "...");
-          assert region != null;
-          region.setExpanded(info.first);
-        }
+    foldingModel.runBatchFoldingOperation(() -> {
+      for (Trinity<Boolean, Integer, Integer> info : infos) {
+        final FoldRegion region = foldingModel.addFoldRegion(info.second, info.third, "...");
+        assert region != null;
+        region.setExpanded(info.first);
       }
     });
   }
@@ -214,7 +203,7 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
       int endLogicalColumn = Integer.parseInt(generalMatch.group(7));
       int endVisualColumn = Integer.parseInt(generalMatch.group(8));
       
-      List<Pair<Integer, FoldRegion>> foldRegions = new ArrayList<Pair<Integer, FoldRegion>>();
+      List<Pair<Integer, FoldRegion>> foldRegions = new ArrayList<>();
       Scanner foldScanner = new Scanner(generalMatch.group(9));
       while (foldScanner.findInLine(foldPattern) != null) {
         final MatchResult foldMatch = foldScanner.match();
@@ -228,16 +217,16 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
             break;
           }
         }
-        foldRegions.add(new Pair<Integer, FoldRegion>(widthInColumns, region));
+        foldRegions.add(new Pair<>(widthInColumns, region));
       }
       
-      List<Pair<Integer, Integer>> tabData = new ArrayList<Pair<Integer, Integer>>();
+      List<Pair<Integer, Integer>> tabData = new ArrayList<>();
       Scanner tabScanner = new Scanner(generalMatch.group(10));
       while (tabScanner.findInLine(tabPattern) != null) {
         final MatchResult tabMatch = tabScanner.match();
         int offset = Integer.parseInt(tabMatch.group(1));
         int widthInColumns = Integer.parseInt(tabMatch.group(2));
-        tabData.add(new Pair<Integer, Integer>(offset, widthInColumns));
+        tabData.add(new Pair<>(offset, widthInColumns));
       }
       
       mapper.rawAdd(visualLine, startOffset, endOffset, startLogicalLine, startLogicalColumn, endLogicalLine, endLogicalColumn, endVisualColumn, foldRegions, tabData);
@@ -283,7 +272,7 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
   }
 
   public static void verifySoftWrapPositions(Integer... positions) {
-    List<Integer> softWrapPositions = new ArrayList<Integer>();
+    List<Integer> softWrapPositions = new ArrayList<>();
     for (SoftWrap softWrap : myEditor.getSoftWrapModel().getSoftWrapsForRange(0, myEditor.getDocument().getTextLength())) {
       softWrapPositions.add(softWrap.getStart());
     }
