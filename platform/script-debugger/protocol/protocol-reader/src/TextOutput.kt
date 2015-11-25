@@ -132,5 +132,5 @@ class TextOutput(public val out: StringBuilder) {
     return this
   }
 
-
+  operator fun plus(value: String) = append(value)
 }
