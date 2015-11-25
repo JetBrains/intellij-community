@@ -918,6 +918,10 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
+  public void testFormatStringFromRef() {
+    doTest();
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";

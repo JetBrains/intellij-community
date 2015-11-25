@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.inspections.PyStringFormatParser;
@@ -33,36 +34,121 @@ import java.util.List;
 import java.util.Map;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.patterns.StandardPatterns.or;
 
 public class PyStringFormatCompletionContributor extends CompletionContributor {
   public PyStringFormatCompletionContributor() {
     extend(
       CompletionType.BASIC,
-      psiElement().inside(PyReferenceExpression.class),
-      new FormatArgumentsCompletionProvider()
-    );
-
-    extend(
-      CompletionType.BASIC,
-      psiElement().inside(PyStringLiteralExpression.class),
+      or(psiElement().inside(PyArgumentList
+                            .class), psiElement().inside(PyStringLiteralExpression.class)),
       new FormattedStringCompletionProvider()
     );
   }
 
-  private static class FormatArgumentsCompletionProvider extends CompletionProvider <CompletionParameters> {
 
+  private static class FormattedStringCompletionProvider extends CompletionProvider<CompletionParameters> {
     @Override
     protected void addCompletions(@NotNull CompletionParameters parameters,
                                   ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
       PsiElement original = parameters.getOriginalPosition();
-      PyReferenceExpression referenceExpression = PsiTreeUtil.getParentOfType(original, PyReferenceExpression.class);
-      tryToAddElementsFromFormattedString(result, referenceExpression);
+      if (original != null) {
+        PsiElement parent = original.getParent();
+
+        if (parent instanceof PyStringLiteralExpression) {
+          int stringOffset = parameters.getOffset() - parameters.getPosition().getTextRange().getStartOffset();
+          if (isInsideSubstitutionChunk((PyStringLiteralExpression)parent,
+                                        stringOffset)) {
+          PyExpression[] arguments = getFormatFunctionKeyWordArguments(original);
+          for (PyExpression argument : arguments) {
+            result = result.withPrefixMatcher(getPrefix(parameters.getOffset(), argument.getContainingFile()));
+            tryToAddKeysFromStarArgument(result, argument);
+            tryToAddKeyWordArgument(result, argument);
+          }
+          }
+        }
+        else if (PyUtil.instanceOf(parent, PyKeywordArgument.class, PyReferenceExpression.class)) {
+          PyArgumentList argumentList = PsiTreeUtil.getParentOfType(original, PyArgumentList.class);
+          result = result.withPrefixMatcher(getPrefix(parameters.getOffset(), parent.getContainingFile()));
+          tryToAddElementsFromFormattedString(result, argumentList);
+        }
+      }
+
+
+    }
+
+    private static boolean isInsideSubstitutionChunk(@NotNull final PyStringLiteralExpression expression, final int offset) {
+        List<PyStringFormatParser.SubstitutionChunk> substitutions = PyStringFormatParser.filterSubstitutions(
+            PyStringFormatParser.parseNewStyleFormat(expression.getStringValue()));
+        for (PyStringFormatParser.SubstitutionChunk substitution: substitutions) {
+          if (offset >= substitution.getStartIndex() && offset <= substitution.getEndIndex()) {
+            return true;
+          }
+        }
+      return false;
+    }
+
+    @NotNull
+    private static PyExpression[] getFormatFunctionKeyWordArguments(PsiElement original) {
+      PsiElement pyReferenceExpression = PsiTreeUtil.getParentOfType(original, PyReferenceExpression.class);
+      PyArgumentList argumentList = PsiTreeUtil.getNextSiblingOfType(pyReferenceExpression, PyArgumentList.class);
+      if (argumentList != null) {
+        return argumentList.getArguments();
+      }
+      return PyExpression.EMPTY_ARRAY;
+    }
+
+    private static void tryToAddKeysFromStarArgument(@NotNull CompletionResultSet result, @NotNull final PyExpression arg) {
+      if (arg instanceof PyStarArgument) {
+        PyDictLiteralExpression dict = ObjectUtils.chooseNotNull(PsiTreeUtil.getChildOfType(arg, PyDictLiteralExpression.class),
+                                         getDictFromReference(arg));
+        if (dict != null) {
+          for (PyKeyValueExpression keyValue: dict.getElements()) {
+            if (keyValue.getKey() instanceof PyStringLiteralExpression) {
+              String key = ((PyStringLiteralExpression) keyValue.getKey()).getStringValue();
+              addElementToResult(result, key);
+            }
+          }
+        }
+        else {
+          getDictFromReference(arg);
+
+        }
+      }
+    }
+
+    private static PyDictLiteralExpression getDictFromReference(@NotNull PyExpression arg) {
+      PyReferenceExpression referenceExpression = PsiTreeUtil.getChildOfType(arg, PyReferenceExpression.class);
+      if (referenceExpression != null) {
+        PsiElement resolveResult = referenceExpression.getReference().resolve();
+        if (resolveResult instanceof PyTargetExpression) {
+          PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(resolveResult, PyAssignmentStatement.class);
+          return PsiTreeUtil.getChildOfType(assignmentStatement, PyDictLiteralExpression.class);
+        }
+      }
+      return null;
+    }
+
+    private static void tryToAddKeyWordArgument(@NotNull final CompletionResultSet result, @NotNull final PyExpression arg) {
+      if (arg instanceof PyKeywordArgument) {
+        final String keyword = ((PyKeywordArgument)arg).getKeyword();
+        addElementToResult(result, keyword);
+        result.stopHere();
+      }
+    }
+
+    @NotNull
+    private static CompletionResultSet addElementToResult(@NotNull CompletionResultSet result,String element) {
+      result.addElement(LookupElementBuilder
+                          .create(element)
+                          .withTypeText("arg")
+                          .withIcon(PlatformIcons.VARIABLE_ICON));
+      return result;
     }
 
     private static void tryToAddElementsFromFormattedString(@NotNull final CompletionResultSet result,
-                                                            @Nullable final PyReferenceExpression referenceExpression) {
-      PyArgumentList argumentList = PsiTreeUtil.getParentOfType(referenceExpression, PyArgumentList.class);
+                                                            @Nullable final PyArgumentList argumentList) {
       if (argumentList != null) {
         PyReferenceExpression pyReferenceExpression = PsiTreeUtil.getPrevSiblingOfType(argumentList, PyReferenceExpression.class);
         PyStringLiteralExpression formattedString = PsiTreeUtil.getChildOfType(pyReferenceExpression, PyStringLiteralExpression.class);
@@ -79,83 +165,9 @@ public class PyStringFormatCompletionContributor extends CompletionContributor {
         PyStringFormatParser.filterSubstitutions(PyStringFormatParser.parseNewStyleFormat(literalExpression.getStringValue())));
       List<LookupElementBuilder> keys = new ArrayList<LookupElementBuilder>();
       for (String chunk: chunks.keySet()) {
-        keys.add(LookupElementBuilder.create(chunk).withTypeText("field name").withIcon(PlatformIcons.VARIABLE_ICON));
+        keys.add(LookupElementBuilder.create(chunk).withTypeText("arg").withIcon(PlatformIcons.VARIABLE_ICON));
       }
       return keys;
-    }
-  }
-
-  private static class FormattedStringCompletionProvider extends CompletionProvider<CompletionParameters> {
-    @Override
-    protected void addCompletions(@NotNull CompletionParameters parameters,
-                                  ProcessingContext context,
-                                  @NotNull CompletionResultSet result) {
-      PsiElement original = parameters.getOriginalPosition();
-      if (isInsideSubstitutionChunk(original, parameters.getOffset())) {
-        PyExpression[] arguments = getFormatFunctionKeyWordArguments(original);
-        for (PyExpression argument : arguments) {
-          result = result.withPrefixMatcher(getPrefix(parameters.getOffset(), argument.getContainingFile()));
-          tryToAddKeysFromStarArgument(result, argument);
-          tryToAddKeyWordArgument(result, argument);
-        }
-      }
-    }
-
-    private static boolean isInsideSubstitutionChunk(final PsiElement original, final int offset) {
-      final PsiElement parent = original.getParent();
-      if (parent instanceof PyStringLiteralExpression) {
-        Map<String, PyStringFormatParser.SubstitutionChunk> substitutions =
-          PyStringFormatParser.getKeywordSubstitutions(PyStringFormatParser.filterSubstitutions(
-            PyStringFormatParser.parseNewStyleFormat(((PyStringLiteralExpression)
-                                                        (parent)).getStringValue())));
-        for (PyStringFormatParser.SubstitutionChunk substitution: substitutions.values()) {
-          if (offset >= substitution.getStartIndex() && offset <= substitution.getEndIndex()) {
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-
-    @NotNull
-    private static PyExpression[] getFormatFunctionKeyWordArguments(PsiElement original) {
-      PsiElement pyReferenceExpression = PsiTreeUtil.getParentOfType(original, PyReferenceExpression.class);
-      PyArgumentList argumentList = PsiTreeUtil.getNextSiblingOfType(pyReferenceExpression, PyArgumentList.class);
-      if (argumentList != null) {
-        return argumentList.getArguments();
-      }
-      return PyExpression.EMPTY_ARRAY;
-    }
-
-    private static void tryToAddKeysFromStarArgument(@NotNull CompletionResultSet result, @NotNull final PyExpression arg) {
-      if (arg instanceof PyStarArgument) {
-        PyDictLiteralExpression dict = PsiTreeUtil.getChildOfType(arg, PyDictLiteralExpression.class);
-        if (dict != null) {
-          for (PyKeyValueExpression keyValue: dict.getElements()) {
-            if (keyValue.getKey() instanceof PyStringLiteralExpression) {
-              String key = ((PyStringLiteralExpression) keyValue.getKey()).getStringValue();
-              addElementToResult(result, key);
-            }
-          }
-        }
-      }
-    }
-
-    private static void tryToAddKeyWordArgument(@NotNull final CompletionResultSet result, @NotNull final PyExpression arg) {
-      if (arg instanceof PyKeywordArgument) {
-        final String keyword = ((PyKeywordArgument)arg).getKeyword();
-        addElementToResult(result, keyword);
-        result.stopHere();
-      }
-    }
-
-    @NotNull
-    private static CompletionResultSet addElementToResult(@NotNull CompletionResultSet result,String element) {
-      result.addElement(LookupElementBuilder
-                          .create(element)
-                          .withTypeText("dict keys")
-                          .withIcon(PlatformIcons.VARIABLE_ICON));
-      return result;
     }
 
   }
