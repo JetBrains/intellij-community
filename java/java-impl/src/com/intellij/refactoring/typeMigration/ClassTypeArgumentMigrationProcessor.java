@@ -147,7 +147,9 @@ public class ClassTypeArgumentMigrationProcessor {
       final PsiMethod method = MethodSignatureUtil.findMethodBySuperMethod(currentClass, superMethod, true);
       if (method != null && method.getContainingClass() == currentClass) {
         final PsiParameter parameter = method.getParameterList().getParameters()[parameterIndex];
-        myLabeler.addRoot(new TypeMigrationUsageInfo(parameter), memberType, parameter, false);
+        if (!parameter.getType().equals(memberType)) {
+          myLabeler.addRoot(new TypeMigrationUsageInfo(parameter), memberType, parameter, false);
+        }
       }
     }
   }

@@ -20,10 +20,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
@@ -40,7 +42,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import org.jetbrains.annotations.NotNull;
@@ -49,8 +51,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.HashMap;
-import java.util.HashSet;
 
 /**
  * @author db
@@ -477,6 +477,50 @@ public class TypeMigrationLabeler {
 
     if (resolved instanceof PsiMethod) {
       final PsiMethod method = ((PsiMethod)resolved);
+
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass instanceof PsiAnonymousClass) {
+        final HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
+        final List<HierarchicalMethodSignature> superSignatures = signature.getSuperSignatures();
+        if (!superSignatures.isEmpty()) {
+
+          final HierarchicalMethodSignature superSignature = superSignatures.get(0);
+
+          final PsiSubstitutor substitutor = superSignature.getSubstitutor();
+          if (!substitutor.getSubstitutionMap().isEmpty()) {
+            final PsiMethod superMethod = superSignature.getMethod();
+
+            final PsiType superReturnType = superMethod.getReturnType();
+            if (superReturnType instanceof PsiClassType) {
+              final PsiClass resolvedClass = ((PsiClassType)superReturnType).resolve();
+              if (resolvedClass instanceof PsiTypeParameter) {
+                final PsiType expectedReturnType = substitutor.substitute((PsiTypeParameter)resolvedClass);
+                if (Comparing.equal(expectedReturnType, method.getReturnType())) {
+                  final PsiClassType baseClassType = ((PsiAnonymousClass)containingClass).getBaseClassType();
+                  final PsiClassType.ClassResolveResult result = baseClassType.resolveGenerics();
+                  final PsiClass anonymousBaseClass = result.getElement();
+
+                  final PsiSubstitutor superHierarchySubstitutor = TypeConversionUtil
+                    .getClassSubstitutor(superMethod.getContainingClass(), anonymousBaseClass, PsiSubstitutor.EMPTY);
+                  final PsiType maybeTypeParameter = superHierarchySubstitutor.substitute((PsiTypeParameter)resolvedClass);
+
+                  if (maybeTypeParameter instanceof PsiClassType &&
+                      ((PsiClassType)maybeTypeParameter).resolve() instanceof PsiTypeParameter) {
+                    final PsiSubstitutor newSubstitutor = result.getSubstitutor().put(
+                      (PsiTypeParameter)((PsiClassType)maybeTypeParameter).resolve(), type);
+                    addRoot(new TypeMigrationUsageInfo(((PsiAnonymousClass)containingClass).getBaseClassReference().getParameterList()),
+                            new PsiImmediateClassType(anonymousBaseClass, newSubstitutor),
+                            place,
+                            alreadyProcessed);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+
       final PsiMethod[] methods = OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY);
       final OverridenUsageInfo overridenUsageInfo = new OverridenUsageInfo(method);
       final OverriderUsageInfo[] overriders = new OverriderUsageInfo[methods.length];

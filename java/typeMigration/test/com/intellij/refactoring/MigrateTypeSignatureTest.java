@@ -4,10 +4,10 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiEllipsisType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import org.jetbrains.annotations.NotNull;
 
 public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
@@ -560,5 +560,38 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
     doTestFirstParamType("meth", "Type",
                          myJavaFacade.getElementFactory().createTypeFromText("ClassChild", null),
                          myJavaFacade.getElementFactory().createTypeFromText("FaceParent", null));
+  }
+
+  public void testMigrateAnonymousClassTypeParameters() {
+    doTestAnonymousClassMethod("invoke",
+                               myJavaFacade.getElementFactory().createTypeFromText("java.lang.Number", null),
+                               myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+  }
+
+  public void testMigrateAnonymousClassTypeParameters2() {
+    doTestAnonymousClassMethod("invoke",
+                               myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null),
+                               myJavaFacade.getElementFactory().createTypeFromText("java.lang.Long", null));
+  }
+
+  protected void doTestAnonymousClassMethod(@NotNull final String methodName,
+                                            final PsiType fromType,
+                                            final PsiType toType) {
+    final RulesProvider provider = new RulesProvider() {
+      @Override
+      public TypeMigrationRules provide() throws Exception {
+        final TypeMigrationRules rules = new TypeMigrationRules(fromType);
+        rules.setMigrationRootType(toType);
+        return rules;
+      }
+
+      @Override
+      public PsiElement victims(PsiClass aClass) {
+        final PsiAnonymousClass anonymousClass = PsiTreeUtil.findChildOfType(aClass, PsiAnonymousClass.class);
+        assertNotNull(anonymousClass);
+        return anonymousClass.findMethodsByName(methodName, false)[0];
+      }
+    };
+    start(provider);
   }
 }

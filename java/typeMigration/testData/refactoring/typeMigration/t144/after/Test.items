@@ -8,7 +8,6 @@ PsiMethodCallExpression:new AnInterface2<Long,Void>() {
         return null;
       }
     }.invoke(null) : java.lang.String
-PsiParameter:v : java.lang.Void
 PsiReferenceParameterList : Test.AnInterface2<java.lang.String,java.lang.Void>
 
 Conversions:
