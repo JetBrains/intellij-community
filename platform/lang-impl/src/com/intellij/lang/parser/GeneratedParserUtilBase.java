@@ -669,6 +669,14 @@ public class GeneratedParserUtilBase {
     }
   }
 
+  public static boolean withProtectedLastVariantPos(PsiBuilder builder, int level, Parser parser) {
+    ErrorState state = ErrorState.get(builder);
+    int backup = state.lastExpectedVariantPos;
+    boolean result = parser.parse(builder, level);
+    state.lastExpectedVariantPos = backup;
+    return result;
+  }
+
   private static int getLastVariantPos(ErrorState state, int defValue) {
     return state.lastExpectedVariantPos < 0? defValue : state.lastExpectedVariantPos;
   }
