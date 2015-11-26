@@ -109,17 +109,17 @@ public class GitUtil {
 
   @Nullable
   public static VirtualFile findGitDir(@NotNull VirtualFile rootDir) {
-    VirtualFile child = rootDir.findChild(DOT_GIT);
-    if (child == null) {
+    VirtualFile dotGit = rootDir.findChild(DOT_GIT);
+    if (dotGit == null) {
       return null;
     }
-    if (child.isDirectory()) {
-      boolean headExists = child.findChild(GitRepositoryFiles.HEAD) != null;
-      return headExists ? child : null;
+    if (dotGit.isDirectory()) {
+      boolean headExists = dotGit.findChild(GitRepositoryFiles.HEAD) != null;
+      return headExists ? dotGit : null;
     }
 
     // if .git is a file with some specific content, it indicates a submodule with a link to the real repository path
-    String content = readContent(child);
+    String content = readContent(dotGit);
     if (content == null) return null;
     String pathToDir = parsePathToRepository(content);
     File file = findSubmoduleRepositoryDir(rootDir, pathToDir);
@@ -147,13 +147,13 @@ public class GitUtil {
   }
 
   @Nullable
-  private static String readContent(@NotNull VirtualFile child) {
+  private static String readContent(@NotNull VirtualFile dotGit) {
     String content;
     try {
-      content = readFile(child);
+      content = readFile(dotGit);
     }
     catch (IOException e) {
-      LOG.error("Couldn't read the content of " + child, e);
+      LOG.error("Couldn't read the content of " + dotGit, e);
       return null;
     }
     return content;
