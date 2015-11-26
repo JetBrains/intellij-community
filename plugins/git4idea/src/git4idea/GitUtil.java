@@ -92,6 +92,21 @@ public class GitUtil {
     // do nothing
   }
 
+  @Nullable
+  public static File findGitDir(@NotNull File rootDir) {
+    File dotGit = new File(rootDir, DOT_GIT);
+    if (!dotGit.exists()) return null;
+    if (dotGit.isDirectory()) {
+      boolean headExists = new File(dotGit, GitRepositoryFiles.HEAD).exists();
+      return headExists ? dotGit : null;
+    }
+
+    String content = DvcsUtil.tryLoadFileOrReturn(dotGit, null);
+    if (content == null) return null;
+    String pathToDir = parsePathToRepository(content);
+    return findSubmoduleRepositoryDir(rootDir.getPath(), pathToDir);
+  }
+
   /**
    * Returns the Git repository location for the given repository root directory, or null if nothing can be found.
    * Finds the real repository roots for submodules.
@@ -115,15 +130,15 @@ public class GitUtil {
     String content = readContent(dotGit);
     if (content == null) return null;
     String pathToDir = parsePathToRepository(content);
-    File file = findSubmoduleRepositoryDir(rootDir, pathToDir);
+    File file = findSubmoduleRepositoryDir(rootDir.getPath(), pathToDir);
     if (file == null) return null;
     return VcsUtil.getVirtualFileWithRefresh(file);
   }
 
   @Nullable
-  private static File findSubmoduleRepositoryDir(@NotNull VirtualFile rootDir, @NotNull String path) {
+  private static File findSubmoduleRepositoryDir(@NotNull String rootPath, @NotNull String path) {
     if (!FileUtil.isAbsolute(path)) {
-      String canonicalPath = FileUtil.toCanonicalPath(FileUtil.join(rootDir.getPath(), path), true);
+      String canonicalPath = FileUtil.toCanonicalPath(FileUtil.join(rootPath, path), true);
       if (canonicalPath == null) {
         return null;
       }
@@ -345,8 +360,8 @@ public class GitUtil {
     return getGitRootOrNull(filePath.getIOFile());
   }
 
-  public static boolean isGitRoot(final File file) {
-    return file != null && file.exists() && new File(file, DOT_GIT).exists();
+  public static boolean isGitRoot(@NotNull File folder) {
+    return findGitDir(folder) != null;
   }
 
   /**
