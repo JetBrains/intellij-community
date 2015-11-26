@@ -40,6 +40,18 @@ public class DiffDrawUtil {
   private static final int INLINE_LAYER = HighlighterLayer.SELECTION - 2;
   private static final int LINE_MARKER_LAYER = HighlighterLayer.SELECTION - 1;
 
+  private static final double CTRL_PROXIMITY_X = 0.3;
+
+  public static final LineSeparatorRenderer BORDER_LINE_RENDERER = new LineSeparatorRenderer() {
+    @Override
+    public void drawLine(Graphics g, int x1, int x2, int y) {
+      Rectangle clip = g.getClipBounds();
+      x2 = clip.x + clip.width;
+      g.setColor(JBColor.border());
+      g.drawLine(x1, y, x2, y);
+    }
+  };
+
   private DiffDrawUtil() {
   }
 
@@ -77,46 +89,22 @@ public class DiffDrawUtil {
     DiffLineSeparatorRenderer.drawConnectorLine(g, x1, x2, start1, start2, end1 - start1, scheme);
   }
 
-  public static void drawDoubleChunkBorderLine(@NotNull Graphics2D g, int x1, int x2, int y, @NotNull Color color) {
-    UIUtil.drawLine(g, x1, y, x2, y, null, color);
-    UIUtil.drawLine(g, x1, y + 1, x2, y + 1, null, color);
-  }
-
-  public static void drawChunkBorderLine(@NotNull Graphics2D g, int x1, int x2, int y, @NotNull Color color) {
-    UIUtil.drawLine(g, x1, y, x2, y, null, color);
-  }
-
-  public static void drawDottedDoubleChunkBorderLine(@NotNull Graphics2D g, int x1, int x2, int y, @NotNull Color color) {
-    UIUtil.drawBoldDottedLine(g, x1, x2, y - 1, null, color, false);
-    UIUtil.drawBoldDottedLine(g, x1, x2, y, null, color, false);
-  }
-
-  public static void drawDottedChunkBorderLine(@NotNull Graphics2D g, int x1, int x2, int y, @NotNull Color color) {
-    UIUtil.drawBoldDottedLine(g, x1, x2, y - 1, null, color, false);
-  }
-
   public static void drawChunkBorderLine(@NotNull Graphics2D g, int x1, int x2, int y, @NotNull Color color,
                                          boolean doubleLine, boolean dottedLine) {
     if (dottedLine && doubleLine) {
-      drawDottedDoubleChunkBorderLine(g, x1, x2, y, color);
+      UIUtil.drawBoldDottedLine(g, x1, x2, y - 1, null, color, false);
+      UIUtil.drawBoldDottedLine(g, x1, x2, y, null, color, false);
     }
     else if (dottedLine) {
-      drawDottedChunkBorderLine(g, x1, x2, y, color);
+      UIUtil.drawBoldDottedLine(g, x1, x2, y - 1, null, color, false);
     }
     else if (doubleLine) {
-      drawDoubleChunkBorderLine(g, x1, x2, y, color);
+      UIUtil.drawLine(g, x1, y, x2, y, null, color);
+      UIUtil.drawLine(g, x1, y + 1, x2, y + 1, null, color);
     }
     else {
-      drawChunkBorderLine(g, x1, x2, y, color);
+      UIUtil.drawLine(g, x1, y, x2, y, null, color);
     }
-  }
-
-  public static void drawTrapezium(@NotNull Graphics2D g,
-                                   int x1, int x2,
-                                   int start1, int end1,
-                                   int start2, int end2,
-                                   @NotNull Color color) {
-    drawTrapezium(g, x1, x2, start1, end1, start2, end2, color, null);
   }
 
   public static void drawTrapezium(@NotNull Graphics2D g,
@@ -144,14 +132,6 @@ public class DiffDrawUtil {
                                         int x1, int x2,
                                         int start1, int end1,
                                         int start2, int end2,
-                                        @NotNull Color color) {
-    drawCurveTrapezium(g, x1, x2, start1, end1, start2, end2, color, null);
-  }
-
-  public static void drawCurveTrapezium(@NotNull Graphics2D g,
-                                        int x1, int x2,
-                                        int start1, int end1,
-                                        int start2, int end2,
                                         @Nullable Color fillColor,
                                         @Nullable Color borderColor) {
     Shape upperCurve = makeCurve(x1, x2, start1, start2, true);
@@ -173,8 +153,6 @@ public class DiffDrawUtil {
       g.draw(lowerCurveBorder);
     }
   }
-
-  public static final double CTRL_PROXIMITY_X = 0.3;
 
   private static Shape makeCurve(int x1, int x2, int y1, int y2, boolean forward) {
     int width = x2 - x1;
@@ -229,6 +207,22 @@ public class DiffDrawUtil {
   private static void installEmptyRangeRenderer(@NotNull RangeHighlighter highlighter,
                                                 @NotNull TextDiffType type) {
     highlighter.setCustomRenderer(new DiffEmptyHighlighterRenderer(type));
+  }
+
+  @NotNull
+  private static LineSeparatorRenderer createDiffLineRenderer(@NotNull final Editor editor,
+                                                              @NotNull final TextDiffType type,
+                                                              final boolean doubleLine,
+                                                              final boolean resolved) {
+    return new LineSeparatorRenderer() {
+      @Override
+      public void drawLine(Graphics g, int x1, int x2, int y) {
+        // TODO: change LineSeparatorRenderer interface ?
+        Rectangle clip = g.getClipBounds();
+        x2 = clip.x + clip.width;
+        drawChunkBorderLine((Graphics2D)g, x1, x2, y, type.getColor(editor), doubleLine, resolved);
+      }
+    };
   }
 
   //
@@ -289,15 +283,15 @@ public class DiffDrawUtil {
 
   @NotNull
   public static List<RangeHighlighter> createLineMarker(@NotNull final Editor editor, int line1, int line2,
-                                                        @NotNull final TextDiffType type, final boolean applied) {
+                                                        @NotNull final TextDiffType type, final boolean resolved) {
     if (line1 == line2) {
       if (line1 == 0) return Collections.emptyList();
-      return createLineMarker(editor, line1 - 1, type, SeparatorPlacement.BOTTOM, true, applied);
+      return createLineMarker(editor, line1 - 1, type, SeparatorPlacement.BOTTOM, true, resolved);
     }
     else {
       return ContainerUtil.concat(
-        createLineMarker(editor, line1, type, SeparatorPlacement.TOP, false, applied),
-        createLineMarker(editor, line2 - 1, type, SeparatorPlacement.BOTTOM, false, applied)
+        createLineMarker(editor, line1, type, SeparatorPlacement.TOP, false, resolved),
+        createLineMarker(editor, line2 - 1, type, SeparatorPlacement.BOTTOM, false, resolved)
       );
     }
   }
@@ -311,38 +305,19 @@ public class DiffDrawUtil {
   @NotNull
   public static List<RangeHighlighter> createLineMarker(@NotNull final Editor editor, int line, @NotNull final TextDiffType type,
                                                         @NotNull final SeparatorPlacement placement, final boolean doubleLine,
-                                                        final boolean applied) {
-    LineSeparatorRenderer renderer = new LineSeparatorRenderer() {
-      @Override
-      public void drawLine(Graphics g, int x1, int x2, int y) {
-        // TODO: change LineSeparatorRenderer interface ?
-        Rectangle clip = g.getClipBounds();
-        x2 = clip.x + clip.width;
-        drawChunkBorderLine((Graphics2D)g, x1, x2, y, type.getColor(editor), doubleLine, applied);
-      }
-    };
-    return createLineMarker(editor, line, placement, type, renderer, applied);
+                                                        final boolean resolved) {
+    return createLineMarker(editor, line, placement, type, createDiffLineRenderer(editor, type, doubleLine, resolved), resolved);
   }
 
   @NotNull
   public static List<RangeHighlighter> createBorderLineMarker(@NotNull final Editor editor, int line,
                                                               @NotNull final SeparatorPlacement placement) {
-    LineSeparatorRenderer renderer = new LineSeparatorRenderer() {
-      @Override
-      public void drawLine(Graphics g, int x1, int x2, int y) {
-        // TODO: change LineSeparatorRenderer interface ?
-        Rectangle clip = g.getClipBounds();
-        x2 = clip.x + clip.width;
-        g.setColor(JBColor.border());
-        g.drawLine(x1, y, x2, y);
-      }
-    };
-    return createLineMarker(editor, line, placement, null, renderer, false);
+    return createLineMarker(editor, line, placement, null, BORDER_LINE_RENDERER, false);
   }
 
   @NotNull
   public static List<RangeHighlighter> createLineMarker(@NotNull final Editor editor, int line, @NotNull final SeparatorPlacement placement,
-                                                        @Nullable TextDiffType type, @NotNull LineSeparatorRenderer renderer, boolean applied) {
+                                                        @Nullable TextDiffType type, @NotNull LineSeparatorRenderer renderer, boolean resolved) {
     // We won't use addLineHighlighter as it will fail to add marker into empty document.
     //RangeHighlighter highlighter = editor.getMarkupModel().addLineHighlighter(line, HighlighterLayer.SELECTION - 1, null);
 
@@ -353,7 +328,7 @@ public class DiffDrawUtil {
     highlighter.setLineSeparatorPlacement(placement);
     highlighter.setLineSeparatorRenderer(renderer);
 
-    if (type == null || applied) return Collections.singletonList(highlighter);
+    if (type == null || resolved) return Collections.singletonList(highlighter);
 
     TextAttributes stripeAttributes = getStripeTextAttributes(type, editor);
     RangeHighlighter stripeHighlighter = editor.getMarkupModel()
