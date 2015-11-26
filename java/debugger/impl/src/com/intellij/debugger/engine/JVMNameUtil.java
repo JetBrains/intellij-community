@@ -359,7 +359,7 @@ public class JVMNameUtil {
       return null;
     }
     final PsiElement element = position.getElementAt();
-    return (element != null) ? PsiTreeUtil.getParentOfType(element, PsiClass.class, false) : null;
+    return element != null && element.isValid() ? PsiTreeUtil.getParentOfType(element, PsiClass.class, false) : null;
   }
 
   @Nullable
