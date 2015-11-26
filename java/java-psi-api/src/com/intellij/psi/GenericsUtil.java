@@ -283,6 +283,7 @@ public class GenericsUtil {
       }
     }
 
+    //todo process type parameter bounds
     for (PsiType type : extendsTypes) {
       PsiType extendsType = substitutor.substitute(type);
       if (substituted instanceof PsiWildcardType) {
@@ -302,7 +303,9 @@ public class GenericsUtil {
           return null;
         }
       }
-      if (extendsType != null && !TypeConversionUtil.isAssignable(extendsType, substituted, allowUncheckedConversion)) {
+      if (extendsType != null && 
+          !TypeConversionUtil.isAssignable(extendsType, substituted, allowUncheckedConversion) &&
+          !TypeConversionUtil.isAssignable(type, substituted, allowUncheckedConversion)) {
         return extendsType;
       }
     }

@@ -221,16 +221,22 @@ public class TestNGUtil {
         if (checkJavadoc && getTextJavaDoc(method) != null) return true;
       }
       return false;
-    } else if (element instanceof PsiMethod) {
+    }
+    else if (element instanceof PsiMethod) {
+      //even if it has a global test, we ignore private and static methods
+      if (element.hasModifierProperty(PsiModifier.PRIVATE) || 
+          element.hasModifierProperty(PsiModifier.STATIC)) {
+        return false;
+      }
+
       //if it's a method, we check if the class it's in has a global @Test annotation
       PsiClass psiClass = ((PsiMethod)element).getContainingClass();
       if (psiClass != null) {
-        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(psiClass, true, TEST_ANNOTATION_FQN);
+        final PsiAnnotation annotation = checkHierarchy ? AnnotationUtil.findAnnotationInHierarchy(psiClass, Collections.singleton(TEST_ANNOTATION_FQN)) 
+                                                        : AnnotationUtil.findAnnotation(psiClass, true, TEST_ANNOTATION_FQN);
         if (annotation != null) {
           if (checkDisabled && isDisabled(annotation)) return false;
-          //even if it has a global test, we ignore private methods
-          boolean isPrivate = element.hasModifierProperty(PsiModifier.PRIVATE);
-          return !isPrivate && !element.hasModifierProperty(PsiModifier.STATIC) && !hasConfig(element);
+          return !hasConfig(element);
         }
         else if (checkJavadoc && getTextJavaDoc(psiClass) != null) return true;
       }
