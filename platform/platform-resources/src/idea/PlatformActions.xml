@@ -370,7 +370,7 @@
       </group>
 
       <!-- Tools -->
-      <group id="ToolsMenu" configurable="true" popup="true" compact="true">
+      <group id="ToolsMenu" popup="true" compact="true">
         <action id="PsiViewer" class="com.intellij.internal.psiView.PsiViewerAction"/>
         <action id="PsiViewerForContext" class="com.intellij.internal.psiView.PsiViewerForContextAction"/>
         <separator/>
@@ -481,7 +481,7 @@
       <group id="OtherMenu" class="com.intellij.ide.actions.NonEmptyActionGroup"/>
     </group>
 
-    <group id="MainToolBar" configurable="true">
+    <group id="MainToolBar">
       <reference ref="OpenFile"/>
       <reference ref="SaveAll"/>
       <reference ref="Synchronize"/>
@@ -506,7 +506,7 @@
 
     <group id="NavBarVcsGroup"/>
 
-    <group id="EditorPopupMenu" configurable="true">
+    <group id="EditorPopupMenu">
       <reference ref="$Cut"/>
       <reference ref="$Copy"/>
       <reference ref="$Paste"/>
