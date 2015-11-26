@@ -63,6 +63,7 @@ public class JdkBundle {
     return new JdkBundle(jvm, nameVersionAndUpdate.first, nameVersionAndUpdate.second, boot, bundled);
   }
 
+  @Nullable
   public static JdkBundle createBoot() {
     File bootJDK = new File(System.getProperty("java.home")).getParentFile();
     if (SystemInfo.isMac) {

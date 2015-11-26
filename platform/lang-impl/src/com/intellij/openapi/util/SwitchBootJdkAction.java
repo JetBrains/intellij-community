@@ -238,15 +238,20 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
   private static final Version JDK8_VERSION = new Version(1, 8, 0);
 
 
+  @NotNull
   private static JdkBundleList findJdkPaths() {
     JdkBundle bootJdk = JdkBundle.createBoot();
 
     JdkBundleList jdkBundleList = new JdkBundleList();
-    jdkBundleList.addBundle(bootJdk, true);
+    if (bootJdk != null) {
+      jdkBundleList.addBundle(bootJdk, true);
+    }
 
     if (bundledJdkFile.exists()) {
       JdkBundle bundledJdk = JdkBundle.createBundle(bundledJdkFile, false, true);
-      jdkBundleList.addBundle(bundledJdk, true);
+      if (bundledJdk != null) {
+        jdkBundleList.addBundle(bundledJdk, true);
+      }
     }
 
     if (SystemInfo.isMac) {

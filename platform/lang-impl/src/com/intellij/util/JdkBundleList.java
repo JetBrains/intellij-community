@@ -32,7 +32,7 @@ public class JdkBundleList {
   private HashMap<String, JdkBundle> bundleMap = new HashMap<String, JdkBundle>();
   private HashMap<String, JdkBundle> nameVersionMap = new HashMap<String, JdkBundle>();
 
-  public void addBundle(JdkBundle bundle, boolean forceOldVersion) {
+  public void addBundle(@NotNull JdkBundle bundle, boolean forceOldVersion) {
     JdkBundle bundleDescr = bundleMap.get(bundle.getBundleAsFile().getAbsolutePath());
     if (bundleDescr == null) {
       addMostRecent(bundle, forceOldVersion);
@@ -43,7 +43,7 @@ public class JdkBundleList {
     }
   }
 
-  private void addMostRecent(JdkBundle bundleDescriptor, boolean forceOldVersion) {
+  private void addMostRecent(@NotNull JdkBundle bundleDescriptor, boolean forceOldVersion) {
     Pair<Version, Integer> versionUpdate = bundleDescriptor.getVersionUpdate();
     boolean updateVersionMap = versionUpdate != null;
     if (!bundleList.isEmpty() && updateVersionMap) {
@@ -73,7 +73,7 @@ public class JdkBundleList {
     }
   }
 
-  public void addBundlesFromLocation(String location, @Nullable Version minVer, @Nullable Version maxVer) {
+  public void addBundlesFromLocation(@NotNull String location, @Nullable Version minVer, @Nullable Version maxVer) {
     File jvmLocation = new File(location);
 
     if (!jvmLocation.exists()) {
@@ -111,7 +111,7 @@ public class JdkBundleList {
     return bundleList;
   }
 
-  public boolean contains(String path) {
+  public boolean contains(@NotNull String path) {
     return bundleMap.keySet().contains(path);
   }
 }

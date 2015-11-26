@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import java.io.File;
 
+import static junit.framework.Assert.assertNotNull;
 import static junit.framework.TestCase.*;
 
 public class JdkBundleTest {
@@ -31,6 +32,9 @@ public class JdkBundleTest {
   public void testCreateBundle() throws Exception {
     if (SystemInfo.isWindows) return; // Windows is not supported so far
     File bootJDK = new File(System.getProperty("java.home")).getParentFile();
+
+    if (!new File(bootJDK, "lib/tools.jar").exists()) return; // Skip pure jre
+
     if (SystemInfo.isMac) {
       bootJDK = bootJDK.getParentFile().getParentFile();
     }
@@ -54,6 +58,9 @@ public class JdkBundleTest {
   public void testCreateBoot() throws Exception {
     if (SystemInfo.isWindows) return; // Windows is not supported so far
     File bootJDK = new File(System.getProperty("java.home")).getParentFile();
+
+    if (!new File(bootJDK, "lib/tools.jar").exists()) return; // Skip pure jre
+
     if (SystemInfo.isMac) {
       bootJDK = bootJDK.getParentFile().getParentFile();
     }
@@ -61,6 +68,7 @@ public class JdkBundleTest {
 
     JdkBundle bundle = JdkBundle.createBoot();
 
+    assertNotNull(bundle);
     assertTrue(bundle.isBoot());
     assertFalse(bundle.isBundled());
 
