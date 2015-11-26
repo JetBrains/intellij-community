@@ -18,6 +18,7 @@ package git4idea.repo;
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -34,6 +35,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.Collection;
 
+import static com.intellij.util.ObjectUtils.assertNotNull;
+
 /**
  * @author Kirill Likhodedov
  */
@@ -46,22 +49,21 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
 
   @NotNull private volatile GitRepoInfo myInfo;
 
-  /**
-   * Get the GitRepository instance from the {@link GitRepositoryManager}.
-   * If you need to have an instance of GitRepository for a repository outside the project, use
-   * {@link #getLightInstance(VirtualFile, Project, git4idea.GitPlatformFacade, Disposable)}
-   */
-  @SuppressWarnings("ConstantConditions")
-  protected GitRepositoryImpl(@NotNull VirtualFile rootDir, @NotNull GitPlatformFacade facade, @NotNull Project project,
-                              @NotNull Disposable parentDisposable, final boolean light) {
+  private GitRepositoryImpl(@NotNull VirtualFile rootDir,
+                            @NotNull VirtualFile gitDir,
+                            @NotNull GitPlatformFacade facade,
+                            @NotNull Project project,
+                            @NotNull Disposable parentDisposable,
+                            final boolean light) {
     super(project, rootDir, parentDisposable);
     myPlatformFacade = facade;
-    myGitDir = GitUtil.findGitDir(rootDir);
-    assert myGitDir != null : ".git directory wasn't found under " + rootDir.getPresentableUrl();
+    myGitDir = gitDir;
     myReader = new GitRepositoryReader(VfsUtilCore.virtualToIoFile(myGitDir));
     if (!light) {
       myUntrackedFilesHolder = new GitUntrackedFilesHolder(this);
       Disposer.register(this, myUntrackedFilesHolder);
+      myUntrackedFilesHolder.setupVfsListener(project);
+      setupUpdater();
     }
     else {
       myUntrackedFilesHolder = null;
@@ -69,28 +71,20 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     update();
   }
 
-  /**
-   * Returns the temporary light instance of GitRepository.
-   * It lacks functionality of auto-updating GitRepository on Git internal files change, and also stored a stub instance of
-   * {@link GitUntrackedFilesHolder}.
-   */
   @NotNull
-  public static GitRepository getLightInstance(@NotNull VirtualFile root, @NotNull Project project, @NotNull GitPlatformFacade facade,
-                                               @NotNull Disposable parentDisposable) {
-    return new GitRepositoryImpl(root, facade, project, parentDisposable, true);
+  public static GitRepository getInstance(@NotNull VirtualFile root,
+                                          @NotNull Project project,
+                                          boolean listenToRepoChanges) {
+    return getInstance(root, assertNotNull(GitUtil.findGitDir(root)), project, listenToRepoChanges);
   }
 
-  /**
-   * Returns the full-functional instance of GitRepository - with UntrackedFilesHolder and GitRepositoryUpdater.
-   * This is used for repositories registered in project, and should be optained via {@link GitRepositoryManager}.
-   */
   @NotNull
-  public static GitRepository getFullInstance(@NotNull VirtualFile root, @NotNull Project project, @NotNull GitPlatformFacade facade,
-                                              @NotNull Disposable parentDisposable) {
-    GitRepositoryImpl repository = new GitRepositoryImpl(root, facade, project, parentDisposable, false);
-    repository.myUntrackedFilesHolder.setupVfsListener(project);  //myUntrackedFilesHolder cannot be null because it is not light instance
-    repository.setupUpdater();
-    return repository;
+  public static GitRepository getInstance(@NotNull VirtualFile root,
+                                          @NotNull VirtualFile gitDir,
+                                          @NotNull Project project,
+                                          boolean listenToRepoChanges) {
+    GitPlatformFacade platformFacade = ServiceManager.getService(project, GitPlatformFacade.class);
+    return new GitRepositoryImpl(root, gitDir, platformFacade, project, project, !listenToRepoChanges);
   }
 
   private void setupUpdater() {
