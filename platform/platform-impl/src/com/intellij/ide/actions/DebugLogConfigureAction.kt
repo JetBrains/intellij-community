@@ -13,86 +13,69 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.actions;
+package com.intellij.ide.actions
 
-import com.intellij.diagnostic.DebugLogManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diagnostic.DebugLogManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.components.JBLabel
+import com.intellij.xml.util.XmlStringUtil
+import javax.swing.JComponent
+import javax.swing.JTextArea
 
-import javax.swing.*;
-import java.util.List;
-
-public class DebugLogConfigureAction extends DumbAwareAction {
-
-  @Override
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getProject() == null ? ProjectManager.getInstance().getDefaultProject() : e.getProject();
-    DebugLogManager logCustomizer = ApplicationManager.getApplication().getComponent(DebugLogManager.class);
-    DebugLogConfigureDialog dialog = new DebugLogConfigureDialog(project, logCustomizer.getSavedCategories());
+class DebugLogConfigureAction : DumbAwareAction() {
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project ?: ProjectManager.getInstance().defaultProject
+    val logCustomizer = ApplicationManager.getApplication().getComponent(DebugLogManager::class.java)!!
+    val dialog = DebugLogConfigureDialog(project, logCustomizer.getSavedCategories())
     if (dialog.showAndGet()) {
-      List<String> categories = dialog.getLogCategories();
-      logCustomizer.applyCategories(categories);
-      logCustomizer.saveCategories(categories);
+      val categories = dialog.getLogCategories()
+      logCustomizer.applyCategories(categories)
+      logCustomizer.saveCategories(categories)
     }
   }
+}
 
-  private static class DebugLogConfigureDialog extends DialogWrapper {
+private val TRACE_SUFFIX = ":trace"
+private val ALL_POSSIBLE_SEPARATORS = "(\n|,|;)+".toRegex()
 
-    private static final String ALL_POSSIBLE_SEPARATORS = "(\n|,|;)+";
-    @NotNull private final JTextArea myTextArea;
+private class DebugLogConfigureDialog(project: Project, categories: List<Pair<String, DebugLogManager.DebugLogLevel>>) : DialogWrapper(project, false) {
+  private val myTextArea: JTextArea
 
-    protected DebugLogConfigureDialog(@Nullable Project project, List<String> categories) {
-      super(project, false);
-      myTextArea = new JTextArea(10, 30);
-      myTextArea.setText(StringUtil.join(categories, "\n"));
-      setTitle("Custom Debug Log Configuration");
-      init();
+  init {
+    myTextArea = JTextArea(10, 30)
+    myTextArea.text = categories.joinToString("\n") {
+      when (it.second) {
+        DebugLogManager.DebugLogLevel.DEBUG -> it.first
+        DebugLogManager.DebugLogLevel.TRACE -> "${it.first}$TRACE_SUFFIX"
+      }
     }
+    title = "Custom Debug Log Configuration"
+    init()
+  }
 
-    @Nullable
-    @Override
-    protected JComponent createNorthPanel() {
-      return new JBLabel(XmlStringUtil.wrapInHtml("Enable DEBUG level for log categories (one per line).<br>Append '" + DebugLogManager.TRACE_SUFFIX + "' suffix to a category to enable TRACE level."));
-    }
+  override fun createNorthPanel(): JComponent? {
+    return JBLabel(XmlStringUtil.wrapInHtml("Enable DEBUG level for log categories (one per line).<br>Append '$TRACE_SUFFIX' suffix to a category to enable TRACE level."))
+  }
 
-    @Nullable
-    @Override
-    protected JComponent createCenterPanel() {
-      return ScrollPaneFactory.createScrollPane(myTextArea);
-    }
+  override fun createCenterPanel() = ScrollPaneFactory.createScrollPane(myTextArea)
 
-    @Nullable
-    @Override
-    public JComponent getPreferredFocusedComponent() {
-      return myTextArea;
-    }
+  override fun getPreferredFocusedComponent() = myTextArea
 
-    @NotNull
-    public List<String> getLogCategories() {
-      return parseCategories(myTextArea.getText());
-    }
-
-    @NotNull
-    private static List<String> parseCategories(@NotNull String text) {
-      return ContainerUtil.mapNotNull(text.split(ALL_POSSIBLE_SEPARATORS), new Function<String, String>() {
-        @Override
-        public String fun(String s) {
-          return StringUtil.isEmptyOrSpaces(s) ? null : s.trim();
+  fun getLogCategories(): List<Pair<String, DebugLogManager.DebugLogLevel>> {
+    return myTextArea.text
+        .split(ALL_POSSIBLE_SEPARATORS)
+        .filter { !StringUtil.isEmptyOrSpaces(it) }
+        .map(String::trim)
+        .map {
+          if (it.endsWith(TRACE_SUFFIX, ignoreCase = true)) Pair(it.dropLast(TRACE_SUFFIX.length), DebugLogManager.DebugLogLevel.TRACE)
+          else Pair(it, DebugLogManager.DebugLogLevel.DEBUG)
         }
-      });
-    }
   }
-
 }

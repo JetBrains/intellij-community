@@ -13,94 +13,81 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diagnostic;
+package com.intellij.diagnostic
 
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.*;
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.components.ApplicationComponent
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.text.StringUtil
+import org.apache.log4j.Level
+import org.apache.log4j.LogManager
 
 /**
- * Allows to apply & persist custom log debug categories which can be turned on by user via the {@link com.intellij.ide.actions.DebugLogConfigureAction}. <br/>
+ * Allows to apply & persist custom log debug categories which can be turned on by user via the [com.intellij.ide.actions.DebugLogConfigureAction].
  * Applies these custom categories on startup.
  */
-public class DebugLogManager extends ApplicationComponent.Adapter {
-  private static final Logger LOG = Logger.getInstance(DebugLogManager.class);
-  private static final String LOG_DEBUG_CATEGORIES = "log.debug.categories";
-  public static final String TRACE_SUFFIX = ":trace";
+class DebugLogManager : ApplicationComponent.Adapter() {
+  enum class DebugLogLevel { DEBUG, TRACE }
 
-  @Override
-  public void initComponent() {
-    List<String> categories = getSavedCategories();
+  fun getSavedCategories(): List<Pair<String, DebugLogLevel>> {
+    val properties = PropertiesComponent.getInstance()
+    return fromString(properties.getValue(LOG_DEBUG_CATEGORIES), DebugLogLevel.DEBUG) +
+           fromString(properties.getValue(LOG_TRACE_CATEGORIES), DebugLogLevel.TRACE)
+  }
+
+  override fun initComponent() {
+    val categories = getSavedCategories()
     if (categories.isEmpty()) {
-      saveCategories(getCurrentCategories());
+      saveCategories(getCurrentCategories())
     }
     else {
-      applyCategories(categories);
+      applyCategories(categories)
     }
   }
 
-  @NotNull
-  public List<String> getSavedCategories() {
-    String value = PropertiesComponent.getInstance().getValue(LOG_DEBUG_CATEGORIES);
-    return value == null ? Collections.<String>emptyList() : fromString(value);
+  private fun fromString(text: String?, level: DebugLogLevel) =
+    if (text != null) StringUtil.splitByLines(text, true).map { Pair(it, level) }.toList() else emptyList()
+
+  fun applyCategories(categories: List<Pair<String, DebugLogLevel>>) {
+    applyCategories(categories, DebugLogLevel.DEBUG, Level.DEBUG)
+    applyCategories(categories, DebugLogLevel.TRACE, Level.TRACE)
   }
 
-  public void applyCategories(@NotNull List<String> categories) {
-    List<String> debugLevel = new ArrayList<String>();
-    List<String> traceLevel = new ArrayList<String>();
-    for (String categoryWithSuffix : categories) {
-      boolean trace = StringUtil.endsWithIgnoreCase(categoryWithSuffix, TRACE_SUFFIX);
-      String category = trace ? categoryWithSuffix.substring(0, categoryWithSuffix.length() - TRACE_SUFFIX.length()) : categoryWithSuffix;
-      org.apache.log4j.Logger logger = LogManager.getLogger(
-        category);
-      if (logger != null) {
-        logger.setLevel(trace ? Level.TRACE : Level.DEBUG);
-        (trace ? traceLevel : debugLevel).add(category);
+  private fun applyCategories(categories: List<Pair<String, DebugLogLevel>>, level: DebugLogLevel, log4jLevel: Level) {
+    val filtered = categories.filter { it.second == level }.map { it.first }
+    filtered.forEach {
+      LogManager.getLogger(it)?.level = log4jLevel
+    }
+    if (!filtered.isEmpty()) {
+      LOG.info("Set ${level.name} for the following categories: ${filtered.joinToString()}")
+    }
+  }
+
+  fun saveCategories(categories: List<Pair<String, DebugLogLevel>>) {
+    PropertiesComponent.getInstance().setValue(LOG_DEBUG_CATEGORIES, toString(categories, DebugLogLevel.DEBUG), null)
+    PropertiesComponent.getInstance().setValue(LOG_TRACE_CATEGORIES, toString(categories, DebugLogLevel.TRACE), null)
+  }
+
+  private fun toString(categories: List<Pair<String, DebugLogLevel>>, level: DebugLogLevel): String? {
+    val filtered = categories.filter { it.second == level }.map { it.first }
+    return if (filtered.isNotEmpty()) filtered.joinToString("\n") else null
+  }
+
+  private fun getCurrentCategories(): List<Pair<String, DebugLogLevel>> {
+    val currentLoggers = LogManager.getCurrentLoggers().toList().filterIsInstance(org.apache.log4j.Logger::class.java)
+    return currentLoggers.map {
+      val category = it.name
+      val logger = Logger.getInstance(category)
+      when {
+        logger.isTraceEnabled -> Pair(category, DebugLogLevel.TRACE)
+        logger.isDebugEnabled ->  Pair(category, DebugLogLevel.DEBUG)
+        else -> null
       }
-    }
-    LOG.info("Set DEBUG for the following categories: " + debugLevel);
-    if (!traceLevel.isEmpty()) {
-      LOG.info("Set TRACE for the following categories: " + traceLevel);
-    }
-  }
+    }.filterNotNull()
 
-  public void saveCategories(@NotNull List<String> categories) {
-    PropertiesComponent.getInstance().setValue(LOG_DEBUG_CATEGORIES, categories.isEmpty() ? null : toString(categories), null);
   }
-
-  @NotNull
-  private static List<String> fromString(@NotNull String text) {
-    return Arrays.asList(StringUtil.splitByLines(text, true));
-  }
-
-  @NotNull
-  private static String toString(@NotNull List<String> categories) {
-    return StringUtil.join(categories, "\n");
-  }
-
-  @NotNull
-  private static List<String> getCurrentCategories() {
-    Enumeration currentLoggers = LogManager.getCurrentLoggers();
-    return ContainerUtil.mapNotNull(ContainerUtil.toList(currentLoggers), new Function<Object, String>() {
-      @Override
-      public String fun(Object o) {
-        if (o instanceof org.apache.log4j.Logger) {
-          String category = ((org.apache.log4j.Logger)o).getName();
-          if (Logger.getInstance(category).isDebugEnabled()) {
-            return category;
-          }
-        }
-        return null;
-      }
-    });
-  }
-
 }
+
+private val LOG_DEBUG_CATEGORIES = "log.debug.categories"
+private val LOG_TRACE_CATEGORIES = "log.trace.categories"
+private val LOG = Logger.getInstance(DebugLogManager::class.java)
