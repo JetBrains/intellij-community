@@ -123,7 +123,8 @@ public class GitUtil {
       content = readFile(child);
     }
     catch (IOException e) {
-      throw new RuntimeException("Couldn't read " + child, e);
+      LOG.error("Couldn't read the content of " + child, e);
+      return null;
     }
     String pathToDir;
     String prefix = "gitdir:";
