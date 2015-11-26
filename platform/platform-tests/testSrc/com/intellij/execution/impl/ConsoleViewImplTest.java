@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     assertEquals(2, console.getContentSize());
   }
 
-  public void testDoubleClear() throws Exception {
+  public void testConsolePrintsSomethingAfterDoubleClear() throws Exception {
     ConsoleViewImpl console = myConsole;
     Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
     CountDownLatch latch = new CountDownLatch(1);
@@ -81,7 +81,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     TimeoutUtil.sleep(SystemProperties.getIntProperty("console.flush.delay.ms", 200));
     UIUtil.dispatchAllInvocationEvents();
     assertFalse(console.hasDeferredOutput());
-    //assertEquals("Test", console.getText());
+    assertEquals("Test", console.getText());
   }
 
   public void testTypeInEmptyConsole() throws Exception {

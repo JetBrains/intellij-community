@@ -375,7 +375,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
     if (myFlushAlarm.isDisposed()) return;
     cancelAllFlushRequests();
-    UIUtil.invokeLaterIfNeeded(new MyClearRunnable());
+    addFlushRequest(new MyClearRunnable());
     cancelHeavyAlarm();
   }
 

@@ -40,6 +40,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.JBUI;
@@ -59,15 +60,30 @@ public class AnalyzeStacktraceUtil {
   private AnalyzeStacktraceUtil() {
   }
 
-  public static void printStacktrace(@NotNull ConsoleView consoleView, @NotNull String unscrambledTrace) {
+  public static void printStacktrace(@NotNull final ConsoleView consoleView, @NotNull String unscrambledTrace) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    String text = unscrambledTrace + "\n";
-    String consoleText = ((ConsoleViewImpl)consoleView).getText();
+    final String text = unscrambledTrace + "\n";
+    final String consoleText = ((ConsoleViewImpl)consoleView).getText();
     if (!text.equals(consoleText)) {
       consoleView.clear();
-      consoleView.print(text, ConsoleViewContentType.ERROR_OUTPUT);
-
-      consoleView.scrollTo(0);
+      // make sure other "clear" requests stuck in EDT are performed before our print next stacktrace
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            consoleView.print(text, ConsoleViewContentType.ERROR_OUTPUT);
+            consoleView.scrollTo(0);
+          }
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        }
+      }, new Condition() {
+        @Override
+        public boolean value(Object o) {
+          return !((ConsoleViewImpl)consoleView).isVisible();
+        }
+      });
     }
   }
 
