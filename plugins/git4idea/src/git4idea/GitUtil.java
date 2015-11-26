@@ -118,14 +118,8 @@ public class GitUtil {
     }
 
     // if .git is a file with some specific content, it indicates a submodule with a link to the real repository path
-    String content;
-    try {
-      content = readFile(child);
-    }
-    catch (IOException e) {
-      LOG.error("Couldn't read the content of " + child, e);
-      return null;
-    }
+    String content = readContent(child);
+    if (content == null) return null;
     String pathToDir;
     String prefix = "gitdir:";
     if (content.startsWith(prefix)) {
@@ -143,6 +137,19 @@ public class GitUtil {
       pathToDir = FileUtil.toSystemIndependentName(canonicalPath);
     }
     return VcsUtil.getVirtualFileWithRefresh(new File(pathToDir));
+  }
+
+  @Nullable
+  private static String readContent(@NotNull VirtualFile child) {
+    String content;
+    try {
+      content = readFile(child);
+    }
+    catch (IOException e) {
+      LOG.error("Couldn't read the content of " + child, e);
+      return null;
+    }
+    return content;
   }
 
   /**
