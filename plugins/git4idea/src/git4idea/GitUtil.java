@@ -130,7 +130,7 @@ public class GitUtil {
   @Nullable
   private static File findSubmoduleRepositoryDir(@NotNull VirtualFile rootDir, @NotNull String path) {
     if (!FileUtil.isAbsolute(path)) {
-      String canonicalPath = FileUtil.toCanonicalPath(FileUtil.join(rootDir.getPath(), path));
+      String canonicalPath = FileUtil.toCanonicalPath(FileUtil.join(rootDir.getPath(), path), true);
       if (canonicalPath == null) {
         return null;
       }
