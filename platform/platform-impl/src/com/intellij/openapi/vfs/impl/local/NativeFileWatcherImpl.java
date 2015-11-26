@@ -292,8 +292,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     private final BufferedWriter myWriter;
 
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-    private MyProcessHandler(@NotNull Process process, @NotNull String presentableName) {
-      super(process, null, null, presentableName);  // do not access EncodingManager here
+    private MyProcessHandler(@NotNull Process process, @NotNull String commandLine) {
+      super(process, commandLine, null);  // do not access EncodingManager here
       myWriter = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
     }
 

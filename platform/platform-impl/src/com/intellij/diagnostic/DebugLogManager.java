@@ -25,19 +25,16 @@ import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 
 /**
  * Allows to apply & persist custom log debug categories which can be turned on by user via the {@link com.intellij.ide.actions.DebugLogConfigureAction}. <br/>
  * Applies these custom categories on startup.
  */
 public class DebugLogManager extends ApplicationComponent.Adapter {
-
   private static final Logger LOG = Logger.getInstance(DebugLogManager.class);
   private static final String LOG_DEBUG_CATEGORIES = "log.debug.categories";
+  public static final String TRACE_SUFFIX = ":trace";
 
   @Override
   public void initComponent() {
@@ -57,13 +54,22 @@ public class DebugLogManager extends ApplicationComponent.Adapter {
   }
 
   public void applyCategories(@NotNull List<String> categories) {
-    for (String category : categories) {
-      org.apache.log4j.Logger logger = LogManager.getLogger(category);
+    List<String> debugLevel = new ArrayList<String>();
+    List<String> traceLevel = new ArrayList<String>();
+    for (String categoryWithSuffix : categories) {
+      boolean trace = StringUtil.endsWithIgnoreCase(categoryWithSuffix, TRACE_SUFFIX);
+      String category = trace ? categoryWithSuffix.substring(0, categoryWithSuffix.length() - TRACE_SUFFIX.length()) : categoryWithSuffix;
+      org.apache.log4j.Logger logger = LogManager.getLogger(
+        category);
       if (logger != null) {
-        logger.setLevel(Level.DEBUG);
+        logger.setLevel(trace ? Level.TRACE : Level.DEBUG);
+        (trace ? traceLevel : debugLevel).add(category);
       }
     }
-    LOG.info("Set DEBUG for the following categories: " + categories);
+    LOG.info("Set DEBUG for the following categories: " + debugLevel);
+    if (!traceLevel.isEmpty()) {
+      LOG.info("Set TRACE for the following categories: " + traceLevel);
+    }
   }
 
   public void saveCategories(@NotNull List<String> categories) {

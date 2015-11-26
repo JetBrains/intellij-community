@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,12 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.util.ConcurrencyUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
@@ -39,8 +41,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MavenArtifactDownloader {
   private static final ThreadPoolExecutor EXECUTOR =
-    new ThreadPoolExecutor(5, Integer.MAX_VALUE, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
-      AtomicInteger num = new AtomicInteger();
+    new ThreadPoolExecutor(0, Integer.MAX_VALUE, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
+      private final AtomicInteger num = new AtomicInteger();
 
       @NotNull
       @Override
@@ -276,5 +278,10 @@ public class MavenArtifactDownloader {
 
     public final Set<MavenId> unresolvedSources = new THashSet<MavenId>();
     public final Set<MavenId> unresolvedDocs = new THashSet<MavenId>();
+  }
+
+  @TestOnly
+  public static void awaitQuiescence(long timeout, @NotNull TimeUnit unit) {
+    ConcurrencyUtil.awaitQuiescence(EXECUTOR, timeout, unit);
   }
 }

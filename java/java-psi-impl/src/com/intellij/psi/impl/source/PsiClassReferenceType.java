@@ -42,6 +42,11 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
     myReference = reference;
   }
 
+  public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel level, @NotNull TypeAnnotationProvider annotations) {
+    super(level, annotations);
+    myReference = reference;
+  }
+
   private static PsiAnnotation[] collectAnnotations(PsiJavaCodeReferenceElement reference) {
     List<PsiAnnotation> result = null;
     for (PsiElement child = reference.getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -80,7 +85,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   @Override
   public PsiClassType setLanguageLevel(@NotNull final LanguageLevel languageLevel) {
     if (languageLevel.equals(myLanguageLevel)) return this;
-    return new PsiClassReferenceType(myReference, languageLevel, getAnnotations());
+    return new PsiClassReferenceType(myReference, languageLevel, getAnnotationProvider());
   }
 
   @Override
@@ -151,13 +156,13 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
       PsiManager manager = myReference.getManager();
       final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
       final PsiSubstitutor rawSubstitutor = factory.createRawSubstitutor(aClass);
-      return factory.createType(aClass, rawSubstitutor, getLanguageLevel(), getAnnotations());
+      return new PsiImmediateClassType(aClass, rawSubstitutor, getLanguageLevel(), getAnnotationProvider());
     }
     String qualifiedName = myReference.getQualifiedName();
     String name = myReference.getReferenceName();
     if (name == null) name = "";
     LightClassReference reference = new LightClassReference(myReference.getManager(), name, qualifiedName, myReference.getResolveScope());
-    return new PsiClassReferenceType(reference, null, getAnnotations());
+    return new PsiClassReferenceType(reference, null, getAnnotationProvider());
   }
 
   @Override

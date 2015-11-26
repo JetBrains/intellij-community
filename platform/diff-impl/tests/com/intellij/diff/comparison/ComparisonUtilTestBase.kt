@@ -155,11 +155,11 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
   // Test Builder
   //
 
-  private enum class TestType {
+  internal enum class TestType {
     LINE, WORD, CHAR, SPLITTER
   }
 
-  inner class TestBuilder(private val type: TestType) {
+  internal inner class TestBuilder(private val type: TestType) {
     private var isExecuted: Boolean = false
 
     private var before: Document? = null
@@ -305,13 +305,13 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
     }
   }
 
-  fun lines(f: TestBuilder.() -> Unit): Unit = doTest(TestType.LINE, f)
+  internal fun lines(f: TestBuilder.() -> Unit): Unit = doTest(TestType.LINE, f)
 
-  fun words(f: TestBuilder.() -> Unit): Unit = doTest(TestType.WORD, f)
+  internal fun words(f: TestBuilder.() -> Unit): Unit = doTest(TestType.WORD, f)
 
-  fun chars(f: TestBuilder.() -> Unit): Unit = doTest(TestType.CHAR, f)
+  internal fun chars(f: TestBuilder.() -> Unit): Unit = doTest(TestType.CHAR, f)
 
-  fun splitter(squash: Boolean = false, trim: Boolean = false, f: TestBuilder.() -> Unit): Unit {
+  internal  fun splitter(squash: Boolean = false, trim: Boolean = false, f: TestBuilder.() -> Unit): Unit {
     doTest(TestType.SPLITTER, {
       postprocess(squash, trim)
       f()

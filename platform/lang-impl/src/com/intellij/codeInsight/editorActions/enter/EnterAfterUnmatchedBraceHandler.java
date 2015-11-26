@@ -67,7 +67,7 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
       insertRBraces(file, editor,
                     caretOffset,
                     getRBraceOffset(file, editor, caretOffset),
-                    adjustRBraceCountForPosition(editor, caretOffset, maxRBraceCount));
+                    generateStringToInsert(editor, caretOffset, maxRBraceCount));
       return Result.DefaultForceIndent;
     }
     return Result.Continue;
@@ -102,14 +102,16 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
   }
 
   /**
-   * Calculates the precise number of '}' that have to be inserted by handler.
+   * Calculates the string of '}' that have to be inserted by handler.
+   * Some languages can expand the string by additional characters (i.e. '\', ';')
    *
    * @param editor         target editor
    * @param caretOffset    target caret offset
    * @param maxRBraceCount the maximum number of '}' for insert at position, it always positive
-   * @return number of '}' that has to be inserted by handler, it has to positive
+   * @return the string of '}' that has to be inserted by handler, it must have at least one '}'
    */
-  protected int adjustRBraceCountForPosition(@NotNull final Editor editor, int caretOffset, int maxRBraceCount) {
+  @NotNull
+  protected String generateStringToInsert(@NotNull final Editor editor, int caretOffset, int maxRBraceCount) {
     assert maxRBraceCount > 0;
 
     CharSequence text = editor.getDocument().getCharsSequence();
@@ -123,7 +125,7 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
         break;
       }
     }
-    return Math.max(bracesToInsert, 1);
+    return StringUtil.repeatSymbol('}', Math.max(bracesToInsert, 1));
   }
 
   /**
@@ -157,22 +159,21 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
   }
 
   /**
-   * Inserts the <code>rBracesCount</code> of '}' at the <code>rBracesInsertOffset</code> position and formats the code block.
-   *
+   * Inserts the <code>generatedRBraces</code> at the <code>rBracesInsertOffset</code> position and formats the code block.
    * @param file                target PSI file
    * @param editor              target editor
    * @param caretOffset         target caret offset
    * @param rBracesInsertOffset target position to insert
-   * @param rBracesCount        count of '}' to insert
+   * @param generatedRBraces    string of '}' to insert
    */
   protected void insertRBraces(@NotNull PsiFile file,
                                @NotNull Editor editor,
                                int caretOffset,
                                int rBracesInsertOffset,
-                               int rBracesCount) {
+                               String generatedRBraces) {
     final Document document = editor.getDocument();
-    insertRBracesAtPosition(document, caretOffset, rBracesInsertOffset, rBracesCount);
-    formatCodeFragmentBetweenBraces(file, document, caretOffset, rBracesInsertOffset, rBracesCount);
+    insertRBracesAtPosition(document, caretOffset, rBracesInsertOffset, generatedRBraces);
+    formatCodeFragmentBetweenBraces(file, document, caretOffset, rBracesInsertOffset, generatedRBraces);
   }
 
   /**
@@ -181,10 +182,10 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
    * @param document            target document
    * @param caretOffset         target caret offset
    * @param rBracesInsertOffset target position to insert
-   * @param rBracesCount        count of '}' to insert
+   * @param generatedRBraces    string of '}' to insert
    */
-  protected void insertRBracesAtPosition(Document document, int caretOffset, int rBracesInsertOffset, int rBracesCount) {
-    document.insertString(rBracesInsertOffset, "\n" + StringUtil.repeatSymbol('}', rBracesCount));
+  protected void insertRBracesAtPosition(Document document, int caretOffset, int rBracesInsertOffset, String generatedRBraces) {
+    document.insertString(rBracesInsertOffset, "\n" + generatedRBraces);
     // We need to adjust indents of the text that will be moved, hence, need to insert preliminary line feed.
     // Example:
     //     if (test1()) {
@@ -210,13 +211,13 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
    * @param document            target document
    * @param caretOffset         target caret offset
    * @param rBracesInsertOffset target position to insert
-   * @param rBracesCount        count of '}' to insert
+   * @param generatedRBraces    string of '}' to insert
    */
   protected void formatCodeFragmentBetweenBraces(@NotNull PsiFile file,
                                                  @NotNull Document document,
                                                  int caretOffset,
                                                  int rBracesInsertOffset,
-                                                 int rBracesCount) {
+                                                 String generatedRBraces) {
     Project project = file.getProject();
     long stamp = document.getModificationStamp();
     boolean closingBraceIndentAdjusted;

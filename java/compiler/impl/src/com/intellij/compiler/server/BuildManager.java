@@ -135,7 +135,6 @@ public class BuildManager implements Disposable {
   private static final String COMPILER_PROCESS_JDK_PROPERTY = "compiler.process.jdk";
   public static final String SYSTEM_ROOT = "compile-server";
   public static final String TEMP_DIR_NAME = "_temp_";
-  private static final String JAVA_EXT_DIRS_PROPERTY = "java.ext.dirs";
   // do not make static in order not to access application on class load
   private final boolean IS_UNIT_TEST_MODE;
   private static final String IWS_EXTENSION = ".iws";
@@ -807,6 +806,10 @@ public class BuildManager implements Disposable {
                   msg.append("Abnormal build process termination: ");
                   if (errorsOnLaunch != null && errorsOnLaunch.length() > 0) {
                     msg.append("\n").append(errorsOnLaunch);
+                    if (StringUtil.contains(errorsOnLaunch, "java.lang.NoSuchMethodError")) {
+                      msg.append("\nThe error may be caused by JARs in Java Extensions directory which conflicts with libraries used by the external build process.")
+                         .append("\nTry adding -Djava.ext.dirs=\"\" argument to 'Build process VM options' in File | Settings | Build, Execution, Deployment | Compiler to fix the problem.");
+                    }
                   }
                   else {
                     msg.append("unknown error");
@@ -1164,10 +1167,6 @@ public class BuildManager implements Disposable {
       cmdLine.addParameters(args);
     }
 
-    if (!cmdLine.getParametersList().hasProperty(JAVA_EXT_DIRS_PROPERTY)) {
-      cmdLine.getParametersList().addProperty(JAVA_EXT_DIRS_PROPERTY, "\"\"");
-    }
-
     @SuppressWarnings("UnnecessaryFullyQualifiedName")
     final Class<?> launcherClass = org.jetbrains.jps.cmdline.Launcher.class;
 
@@ -1204,9 +1203,7 @@ public class BuildManager implements Disposable {
       LOG.error(e);
     }
     
-    final Process process = cmdLine.createProcess();
-
-    final OSProcessHandler processHandler = new OSProcessHandler(process, null, mySystemCharset, BuildMain.class.getName()+" external process") {
+    final OSProcessHandler processHandler = new OSProcessHandler(cmdLine) {
       @Override
       protected boolean shouldDestroyProcessRecursively() {
         return true;
@@ -1316,9 +1313,10 @@ public class BuildManager implements Disposable {
     return 0;
   }
 
-  public void stopListening() {
-    myChannelRegistrar.close();
+  @NotNull
+  public Future<?> stopListening() {
     myListenPort = -1;
+    return myChannelRegistrar.close(true);
   }
 
   private int startListening() throws Exception {

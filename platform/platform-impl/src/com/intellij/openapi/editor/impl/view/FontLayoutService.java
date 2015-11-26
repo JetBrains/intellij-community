@@ -22,6 +22,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
+import java.util.Arrays;
 
 /**
  * Encapsulates logic related to font metrics. Mock instance can be used in tests to make them independent on font properties on particular
@@ -55,7 +56,20 @@ public abstract class FontLayoutService {
     @Override
     public GlyphVector layoutGlyphVector(@NotNull Font font, @NotNull FontRenderContext fontRenderContext,
                                          @NotNull char[] chars, int start, int end, boolean isRtl) {
-      return font.layoutGlyphVector(fontRenderContext, chars, start, end, isRtl ? Font.LAYOUT_RIGHT_TO_LEFT : Font.LAYOUT_LEFT_TO_RIGHT);
+      if (isRtl || font.hasLayoutAttributes() || isComplexText(chars, start, end)) {
+        return font.layoutGlyphVector(fontRenderContext, chars, start, end, isRtl ? Font.LAYOUT_RIGHT_TO_LEFT : Font.LAYOUT_LEFT_TO_RIGHT);
+      }
+      else {
+        return font.createGlyphVector(fontRenderContext, Arrays.copyOfRange(chars, start, end));
+      }
+    }
+
+    // a simplified version of sun.font.FontUtilities.isComplexText
+    private static boolean isComplexText(char[] chars, int start, int end) {
+      for (int i = start; i < end; i++) {
+        if (chars[i] >= 0x0300) return true;
+      }
+      return false;
     }
 
     @Override

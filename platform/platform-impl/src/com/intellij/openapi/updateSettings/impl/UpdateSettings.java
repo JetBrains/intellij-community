@@ -16,9 +16,7 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,10 +54,6 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
   }
 
   private State myState = new State();
-
-  public UpdateSettings() {
-    updateDefaultChannel();
-  }
 
   @Nullable
   public String getLasBuildChecked() {
@@ -100,12 +94,6 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
     myState.UPDATE_CHANNEL_TYPE = value;
   }
 
-  private void updateDefaultChannel() {
-    if (UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds() && ApplicationInfoImpl.getShadowInstance().isEAP()) {
-      myState.UPDATE_CHANNEL_TYPE = ChannelStatus.EAP.getCode();
-    }
-  }
-
   @NotNull
   @Override
   public State getState() {
@@ -116,7 +104,6 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
   public void loadState(@NotNull State state) {
     myState = state;
     myState.LAST_BUILD_CHECKED = StringUtil.nullize(myState.LAST_BUILD_CHECKED);
-    updateDefaultChannel();
   }
 
   @NotNull
@@ -128,9 +115,7 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
   @Override
   public void setKnownChannelIds(@NotNull List<String> ids) {
     myState.knownUpdateChannels.clear();
-    for (String id : ids) {
-      myState.knownUpdateChannels.add(id);
-    }
+    myState.knownUpdateChannels.addAll(ids);
   }
 
   public void forgetChannelId(String id) {

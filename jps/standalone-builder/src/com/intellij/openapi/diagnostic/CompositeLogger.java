@@ -62,6 +62,23 @@ public class CompositeLogger extends Logger {
   }
 
   @Override
+  public boolean isTraceEnabled() {
+    for (Logger logger : myLoggers) {
+      if (logger.isTraceEnabled()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public void trace(String message) {
+    for (Logger logger : myLoggers) {
+      logger.trace(message);
+    }
+  }
+
+  @Override
   public void info(@NonNls String message) {
     for (Logger logger : myLoggers) {
       logger.info(message);

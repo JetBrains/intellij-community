@@ -1,7 +1,6 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual C++ Express 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VistaUpdaterLauncher", "VistaUpdaterLauncher\VistaUpdaterLauncher.vcproj", "{05040CA8-09AC-48F2-89BE-1A271F97FE58}"
+﻿Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VistaUpdaterLauncher", "VistaUpdaterLauncher\VistaUpdaterLauncher.vcxproj", "{05040CA8-09AC-48F2-89BE-1A271F97FE58}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

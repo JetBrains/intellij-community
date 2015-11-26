@@ -47,3 +47,15 @@ class C {
         return h;
     }
 }
+class D  {
+    void f() {
+        int positiveValue = 10;
+        int counter = 12;
+        if (positiveValue == 10) {
+            while (counter > 0 && positiveValue > 0) {
+                counter--;
+                positiveValue--;
+            }
+        }
+    }
+}

@@ -98,7 +98,6 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
     myDocument.addDocumentListener(myDocumentListener);
 
     myEditor = createEditor();
-    myEditor.getContentComponent().setFocusTraversalKeysEnabled(false);
     add(myEditor.getComponent(), BorderLayout.CENTER);
     myModified = isModifiedImpl();
     myValid = isEditorValidImpl();

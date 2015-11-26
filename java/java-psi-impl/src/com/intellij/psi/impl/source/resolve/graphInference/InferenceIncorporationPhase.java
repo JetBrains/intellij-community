@@ -17,9 +17,11 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.StrictSubtypingConstraint;
+import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompatibilityConstraint;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
@@ -73,7 +75,6 @@ public class InferenceIncorporationPhase {
 
   public boolean incorporate() {
     final Collection<InferenceVariable> inferenceVariables = mySession.getInferenceVariables();
-    final PsiSubstitutor substitutor = mySession.retrieveNonPrimitiveEqualsBounds(inferenceVariables);
     for (InferenceVariable inferenceVariable : inferenceVariables) {
       if (inferenceVariable.getInstantiation() != PsiType.NULL) continue;
       final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
@@ -82,9 +83,9 @@ public class InferenceIncorporationPhase {
 
       eqEq(eqBounds);
 
-      upDown(lowerBounds, upperBounds, substitutor);
-      upDown(eqBounds, upperBounds, substitutor);
-      upDown(lowerBounds, eqBounds, substitutor);
+      upDown(lowerBounds, upperBounds);
+      upDown(eqBounds, upperBounds);
+      upDown(lowerBounds, eqBounds);
 
       upUp(upperBounds);
     }
@@ -263,7 +264,7 @@ public class InferenceIncorporationPhase {
    *           or
    * S <: a & a <: T imply S <: T
    */
-  private void upDown(List<PsiType> eqBounds, List<PsiType> upperBounds, PsiSubstitutor substitutor) {
+  private void upDown(List<PsiType> eqBounds, List<PsiType> upperBounds) {
     for (PsiType upperBound : upperBounds) {
       if (upperBound == null || PsiType.NULL.equals(upperBound) || upperBound instanceof PsiWildcardType) continue;
 
@@ -276,7 +277,12 @@ public class InferenceIncorporationPhase {
         if (eqBound instanceof PsiCapturedWildcardType) {
           eqBound = ((PsiCapturedWildcardType)eqBound).getUpperBound();
         }
-        addConstraint(new StrictSubtypingConstraint(substitutor.substitute(upperBound), substitutor.substitute(eqBound)));
+
+        if (Registry.is("javac.unchecked.subtyping.during.incorporation", true) && TypeCompatibilityConstraint.isUncheckedConversion(upperBound, eqBound)) {
+          continue;
+        }
+
+        addConstraint(new StrictSubtypingConstraint(upperBound, eqBound));
       }
     }
   }
@@ -338,5 +344,9 @@ public class InferenceIncorporationPhase {
         dependencies.add(var);
       }
     }
+  }
+
+  public List<Pair<PsiTypeParameter[], PsiClassType>> getCaptures() {
+    return myCaptures;
   }
 }

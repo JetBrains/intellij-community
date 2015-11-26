@@ -38,18 +38,18 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.jetbrains.edu.EduDocumentListener;
 import com.jetbrains.edu.EduUtils;
 import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.courseFormat.StudyStatus;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.run.StudySmartChecker;
 import com.jetbrains.edu.learning.run.StudyTestRunner;
-import com.jetbrains.edu.stepic.StudySettings;
 import com.jetbrains.edu.stepic.EduStepicConnector;
+import com.jetbrains.edu.stepic.StudySettings;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -144,10 +144,12 @@ public class StudyCheckAction extends DumbAwareAction {
 
             final StudyTestRunner testRunner = StudyUtils.getTestRunner(task, taskDir);
             Process testProcess = null;
+            String commandLine = "";
             try {
               final VirtualFile executablePath = getTaskVirtualFile(studyState, task, taskDir);
               if (executablePath != null) {
-                testProcess = testRunner.createCheckProcess(project, executablePath.getPath());
+                commandLine = executablePath.getPath();
+                testProcess = testRunner.createCheckProcess(project, commandLine);
               }
             }
             catch (ExecutionException e) {
@@ -157,7 +159,7 @@ public class StudyCheckAction extends DumbAwareAction {
               return;
             }
             checkInProgress = true;
-            ProgressManager.getInstance().run(getCheckTask(studyState, testRunner, testProcess, project, selectedEditor));
+            ProgressManager.getInstance().run(getCheckTask(studyState, testRunner, testProcess, commandLine, project, selectedEditor));
           }
         });
       }
@@ -186,7 +188,7 @@ public class StudyCheckAction extends DumbAwareAction {
   private com.intellij.openapi.progress.Task.Backgroundable getCheckTask(final StudyState studyState,
                                                                          final StudyTestRunner testRunner,
                                                                          final Process testProcess,
-                                                                         @NotNull final Project project,
+                                                                         @NotNull final String commandLine, @NotNull final Project project,
                                                                          final StudyEditor selectedEditor) {
     final Task task = studyState.getTask();
     final VirtualFile taskDir = studyState.getTaskDir();
@@ -213,7 +215,7 @@ public class StudyCheckAction extends DumbAwareAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         final Map<String, TaskFile> taskFiles = task.getTaskFiles();
-        final CapturingProcessHandler handler = new CapturingProcessHandler(testProcess);
+        final CapturingProcessHandler handler = new CapturingProcessHandler(testProcess, null, commandLine);
         final ProcessOutput output = handler.runProcessWithProgressIndicator(indicator);
         if (indicator.isCanceled()) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {

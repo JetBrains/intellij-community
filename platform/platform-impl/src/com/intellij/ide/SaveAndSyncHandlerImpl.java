@@ -164,6 +164,11 @@ public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements Dispos
       session.addAllFiles(ManagingFS.getInstance().getLocalRoots());
       myRefreshSessionId = session.getId();
       session.launch();
+      LOG.debug("vfs refreshed");
+    }
+    else if (LOG.isDebugEnabled()) {
+      LOG.debug("vfs refresh rejected, blocked: " + (myBlockSyncOnFrameActivationCount.get() != 0)
+                + ", isSyncOnFrameActivation: " + mySettings.isSyncOnFrameActivation());
     }
   }
 

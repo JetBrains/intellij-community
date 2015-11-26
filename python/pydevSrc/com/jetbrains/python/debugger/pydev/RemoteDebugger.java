@@ -490,7 +490,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
     private DebuggerReader(final InputStream stream) throws IOException {
       super(stream, CharsetToolkit.UTF8_CHARSET, SleepingPolicy.BLOCKING); //TODO: correct encoding?
-      start();
+      start(getClass().getName());
     }
 
     protected void doRun() {

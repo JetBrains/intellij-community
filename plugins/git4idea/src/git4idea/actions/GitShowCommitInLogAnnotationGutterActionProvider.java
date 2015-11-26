@@ -17,6 +17,7 @@ package git4idea.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.UpToDateLineNumberListener;
@@ -45,6 +46,12 @@ public class GitShowCommitInLogAnnotationGutterActionProvider implements Annotat
     @Override
     protected VcsRevisionNumber getRevisionNumber(@NotNull AnActionEvent event) {
       return myAnnotation.getLineRevisionNumber(myLineNumber);
+    }
+
+    @Nullable
+    @Override
+    protected VcsKey getVcsKey(@NotNull AnActionEvent event) {
+      return myAnnotation.getVcsKey();
     }
 
     @Override

@@ -16,6 +16,7 @@
 package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -32,15 +33,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   public static final String PYTHON = "python";
 
-  PyCondaPackageManagerImpl(@NotNull final String sdkHomePath) {
-    super(sdkHomePath);
+  PyCondaPackageManagerImpl(@NotNull final Sdk sdk) {
+    super(sdk);
   }
 
   @Override
@@ -51,9 +50,6 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   @Override
   public boolean hasManagement(boolean cachedOnly) throws ExecutionException {
     final Sdk sdk = getSdk();
-    if (sdk == null) {
-      throw new ExecutionException("Failed to find interpreter \"" + mySdkHomePath + "\"");
-    }
     return isCondaVEnv(sdk);
   }
 
@@ -79,21 +75,18 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
 
   private ProcessOutput getCondaOutput(@NotNull final String command, List<String> arguments) throws ExecutionException {
     final Sdk sdk = getSdk();
-    if (sdk == null) {
-      throw new ExecutionException("Failed to find interpreter \"" + mySdkHomePath + "\"");
-    }
+
     final String condaExecutable = PyCondaPackageService.getCondaExecutable(sdk.getHomeDirectory());
     if (condaExecutable == null) throw new PyExecutionException("Cannot find conda", "Conda", Collections.<String>emptyList(), new ProcessOutput());
 
     final String path = getCondaDirectory();
-    if (path == null) throw new PyExecutionException("Empty conda name for \"" + mySdkHomePath + "\"", command, arguments);
+    if (path == null) throw new PyExecutionException("Empty conda name for " + sdk.getHomePath(), command, arguments);
 
     final ArrayList<String> parameters = Lists.newArrayList(condaExecutable, command, "-p", path);
     parameters.addAll(arguments);
 
     final GeneralCommandLine commandLine = new GeneralCommandLine(parameters);
-    final Process process = commandLine.createProcess();
-    final CapturingProcessHandler handler = new CapturingProcessHandler(process);
+    final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     final ProcessOutput result;
     if (indicator != null) {
@@ -116,11 +109,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
 
   @Nullable
   private String getCondaDirectory() {
-    final Sdk sdk = getSdk();
-    if (sdk == null) {
-      return null;
-    }
-    final VirtualFile homeDirectory = sdk.getHomeDirectory();
+    final VirtualFile homeDirectory = getSdk().getHomeDirectory();
     if (homeDirectory == null) return null;
     if (SystemInfo.isWindows) return homeDirectory.getParent().getPath();
     return homeDirectory.getParent().getParent().getPath();
@@ -146,7 +135,9 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   @Override
   protected List<PyPackage> getPackages() throws ExecutionException {
     final ProcessOutput output = getCondaOutput("list", Lists.newArrayList("-e"));
-    return parseCondaToolOutput(output.getStdout());
+    final Set<PyPackage> packages = Sets.newConcurrentHashSet(parseCondaToolOutput(output.getStdout()));
+    packages.addAll(super.getPackages());
+    return Lists.newArrayList(packages);
   }
 
   @NotNull
@@ -192,8 +183,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
                                                             "python=" + version, "-y");
 
     final GeneralCommandLine commandLine = new GeneralCommandLine(parameters);
-    final Process process = commandLine.createProcess();
-    final CapturingProcessHandler handler = new CapturingProcessHandler(process);
+    final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     final ProcessOutput result = handler.runProcessWithProgressIndicator(indicator);
     if (result.isCancelled()) {

@@ -199,9 +199,10 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
       CodeStyleSchemesUIConfiguration.Util.setRecentImportFile(selectedFile);
       final SchemeCreator schemeCreator = new SchemeCreator();
       final CodeStyleScheme
-        schemeImported = importer.importScheme(myModel.getProject(), selectedFile, myModel.getSelectedScheme(), schemeCreator);
+        schemeImported = importer.importScheme(myModel.getProject(), selectedFile, getSelectedScheme(), schemeCreator);
       if (schemeImported != null) {
-        myModel.fireSchemeChanged(schemeImported);
+        if (schemeCreator.isSchemeWasCreated()) myModel.fireSchemeListChanged();
+        else myModel.fireSchemeChanged(schemeImported);
         return schemeImported;
       }
     }
@@ -230,15 +231,23 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
   }
 
   private void updateActions() {
-    CodeStyleScheme selectedScheme = getSelectedScheme();
-    myDeleteButton.setEnabled(!(selectedScheme.isDefault() || mySchemesTableModel.isProjectScheme(selectedScheme)));
-    myCopyToProjectButton.setEnabled(!mySchemesTableModel.isProjectScheme(selectedScheme));
+    // there is a possibility that nothing will be selected in a table. So we just need to corresponding disable actions
+    final CodeStyleScheme selectedScheme = getSelectedInTableScheme();
+    myDeleteButton.setEnabled(selectedScheme != null && (!(selectedScheme.isDefault() || mySchemesTableModel.isProjectScheme(selectedScheme))));
+    myCopyToProjectButton.setEnabled(selectedScheme != null && !mySchemesTableModel.isProjectScheme(selectedScheme));
+  }
+
+  @Nullable
+  private CodeStyleScheme getSelectedInTableScheme() {
+    int row = mySchemesTable.getSelectedRow();
+    if (row < 0) return null;
+    return mySchemesTableModel.getSchemeAt(row);
   }
 
   @NotNull
   private CodeStyleScheme getSelectedScheme() {
     int row = mySchemesTable.getSelectedRow();
-    assert row >= 0;
+    if (row < 0) row = mySchemesTableModel.getDefaultRow();
     return mySchemesTableModel.getSchemeAt(row);
   }
 
@@ -270,12 +279,20 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
   }
 
   private class SchemeCreator implements SchemeFactory<CodeStyleScheme> {
+    private boolean mySchemeWasCreated;
+
     @Override
     public CodeStyleScheme createNewScheme(@Nullable String targetName) {
+      mySchemeWasCreated = true;
       if (targetName == null) targetName = ApplicationBundle.message("code.style.scheme.import.unnamed");
       final int row = mySchemesTableModel.createNewScheme(getSelectedScheme(), targetName);
+
       mySchemesTable.getSelectionModel().setSelectionInterval(row, row);
       return mySchemesTableModel.getSchemeAt(row);
+    }
+
+    public boolean isSchemeWasCreated() {
+      return mySchemeWasCreated;
     }
   }
 
@@ -368,7 +385,7 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
       }
       return row;
     }
-    
+
     public int getDefaultRow() {
       int row = 0;
       for (CodeStyleScheme scheme : mySchemes) {

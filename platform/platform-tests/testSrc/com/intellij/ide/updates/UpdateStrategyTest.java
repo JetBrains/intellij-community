@@ -142,6 +142,45 @@ public class UpdateStrategyTest {
     assertNotNull(selectedChannel.findPatchForBuild(currentBuild));
   }
 
+  @Test
+  public void testStableUpdatePreferredByDefault() {
+    BuildNumber currentBuild = BuildNumber.fromString("IU-143.381");
+    TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.RELEASE);
+    UpdateStrategyCustomization customization = new UpdateStrategyCustomization();
+    UpdateStrategy strategy = new UpdateStrategy(15, currentBuild, InfoReader.read("idea-123280.xml"), settings, customization);
+
+    CheckForUpdateResult result = strategy.checkForUpdates();
+    assertEquals(UpdateStrategy.State.LOADED, result.getState());
+
+    UpdateChannel channel = result.getUpdatedChannel();
+    assertNotNull(channel);
+    assertEquals(ChannelStatus.RELEASE, channel.getStatus());
+
+    BuildInfo build = result.getNewBuildInSelectedChannel();
+    assertNotNull(build);
+    assertEquals("143.382", build.getNumber().toString());
+    assertNotNull(build.findPatchForBuild(currentBuild));
+  }
+
+  @Test
+  public void testStableChannelProposedByDefault() {
+    BuildNumber currentBuild = BuildNumber.fromString("IU-143.381");
+    TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.RELEASE);
+    UpdateStrategyCustomization customization = new UpdateStrategyCustomization();
+    UpdateStrategy strategy = new UpdateStrategy(15, currentBuild, InfoReader.read("idea-123280.xml"), settings, customization);
+
+    CheckForUpdateResult result = strategy.checkForUpdates();
+    assertEquals(UpdateStrategy.State.LOADED, result.getState());
+    UpdateChannel channelToPropose = result.getChannelToPropose();
+    assertNotNull(channelToPropose);
+    assertEquals("IDEA_Release", channelToPropose.getId());
+
+    settings.setKnownChannelIds(Collections.singletonList(channelToPropose.getId()));
+    result = strategy.checkForUpdates();
+    assertEquals(UpdateStrategy.State.LOADED, result.getState());
+    assertNull(result.getChannelToPropose());
+  }
+
   private static class TestUpdateSettings implements UserUpdateSettings {
     private final ChannelStatus myChannelStatus;
     private final List<String> myIgnoredBuildNumbers;

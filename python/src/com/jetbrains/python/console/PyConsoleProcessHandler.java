@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.run.PythonProcessHandler;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
 
@@ -33,7 +34,8 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
 
   public PyConsoleProcessHandler(final Process process,
                                  PythonConsoleView consoleView,
-                                 PydevConsoleCommunication pydevConsoleCommunication, final String commandLine,
+                                 PydevConsoleCommunication pydevConsoleCommunication,
+                                 @NotNull String commandLine,
                                  final Charset charset) {
     super(process, commandLine, charset);
     myConsoleView = consoleView;

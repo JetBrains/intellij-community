@@ -1638,8 +1638,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     @Override
     public LighterASTNode getParent(@NotNull final LighterASTNode node) {
-      if (node instanceof StartMarker) {
-        return ((StartMarker)node).myParent;
+      if (node instanceof ProductionMarker) {
+        return ((ProductionMarker)node).myParent;
       }
       throw new UnsupportedOperationException("Unknown node type: " + node);
     }

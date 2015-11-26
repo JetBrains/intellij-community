@@ -137,6 +137,7 @@ public class AnnotationUtilEx {
     final PsiElement parent = element.getParent();
 
     if (element instanceof PsiReferenceExpression) {
+      if (parent instanceof PsiReferenceExpression) return false; // skip qualified references
       if (!visitor.visitReference((PsiReferenceExpression)element)) return false;
     }
     else if (element instanceof PsiNameValuePair && parent != null && parent.getParent() instanceof PsiAnnotation) {

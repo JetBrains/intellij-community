@@ -20,11 +20,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
@@ -41,7 +42,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import org.jetbrains.annotations.NotNull;
@@ -50,8 +51,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.HashMap;
-import java.util.HashSet;
 
 /**
  * @author db
@@ -69,7 +68,7 @@ public class TypeMigrationLabeler {
   private final TypeMigrationRules myRules;
   private TypeEvaluator myTypeEvaluator;
   private final LinkedHashMap<PsiElement, Object> myConversions;
-  private final HashSet<Pair<PsiAnchor, PsiType>> myFailedConversions;
+  private final HashSet<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>> myFailedConversions;
   private LinkedList<Pair<TypeMigrationUsageInfo, PsiType>> myMigrationRoots;
   private final LinkedHashMap<TypeMigrationUsageInfo, PsiType> myNewExpressionTypeChange;
   private final LinkedHashMap<TypeMigrationUsageInfo, PsiClassType> myClassTypeArgumentsChange;
@@ -87,7 +86,7 @@ public class TypeMigrationLabeler {
     myRules = rules;
     
     myConversions = new LinkedHashMap<PsiElement, Object>();
-    myFailedConversions = new HashSet<Pair<PsiAnchor, PsiType>>();
+    myFailedConversions = new HashSet<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>>();
     myNewExpressionTypeChange = new LinkedHashMap<TypeMigrationUsageInfo, PsiType>();
     myClassTypeArgumentsChange = new LinkedHashMap<TypeMigrationUsageInfo, PsiClassType>();
   }
@@ -100,10 +99,10 @@ public class TypeMigrationLabeler {
     final String[] report = new String[myFailedConversions.size()];
     int j = 0;
 
-    for (final Pair<PsiAnchor, PsiType> p : myFailedConversions) {
-      final PsiElement element = p.getFirst().retrieve();
+    for (final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> p : myFailedConversions) {
+      final PsiExpression element = p.getFirst().getElement();
       LOG.assertTrue(element != null);
-      final PsiType type = ((PsiExpression)element).getType();
+      final PsiType type = element.getType();
       report[j++] = "Cannot convert type of expression <b>" + StringUtil.escapeXml(element.getText()) + "</b>" +
                     (type != null
                      ? " from <b>" + StringUtil.escapeXml(type.getCanonicalText()) + "</b>" +
@@ -117,8 +116,8 @@ public class TypeMigrationLabeler {
 
   public UsageInfo[] getFailedUsages() {
     final List<UsageInfo> usages = new ArrayList<UsageInfo>(myFailedConversions.size());
-    for (final Pair<PsiAnchor, PsiType> p : myFailedConversions) {
-      final PsiExpression expr = (PsiExpression)p.getFirst().retrieve();
+    for (final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> p : myFailedConversions) {
+      final PsiExpression expr = p.getFirst().getElement();
       if (expr != null) {
         usages.add(new UsageInfo(expr) {
           @Nullable
@@ -478,6 +477,50 @@ public class TypeMigrationLabeler {
 
     if (resolved instanceof PsiMethod) {
       final PsiMethod method = ((PsiMethod)resolved);
+
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass instanceof PsiAnonymousClass) {
+        final HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
+        final List<HierarchicalMethodSignature> superSignatures = signature.getSuperSignatures();
+        if (!superSignatures.isEmpty()) {
+
+          final HierarchicalMethodSignature superSignature = superSignatures.get(0);
+
+          final PsiSubstitutor substitutor = superSignature.getSubstitutor();
+          if (!substitutor.getSubstitutionMap().isEmpty()) {
+            final PsiMethod superMethod = superSignature.getMethod();
+
+            final PsiType superReturnType = superMethod.getReturnType();
+            if (superReturnType instanceof PsiClassType) {
+              final PsiClass resolvedClass = ((PsiClassType)superReturnType).resolve();
+              if (resolvedClass instanceof PsiTypeParameter) {
+                final PsiType expectedReturnType = substitutor.substitute((PsiTypeParameter)resolvedClass);
+                if (Comparing.equal(expectedReturnType, method.getReturnType())) {
+                  final PsiClassType baseClassType = ((PsiAnonymousClass)containingClass).getBaseClassType();
+                  final PsiClassType.ClassResolveResult result = baseClassType.resolveGenerics();
+                  final PsiClass anonymousBaseClass = result.getElement();
+
+                  final PsiSubstitutor superHierarchySubstitutor = TypeConversionUtil
+                    .getClassSubstitutor(superMethod.getContainingClass(), anonymousBaseClass, PsiSubstitutor.EMPTY);
+                  final PsiType maybeTypeParameter = superHierarchySubstitutor.substitute((PsiTypeParameter)resolvedClass);
+
+                  if (maybeTypeParameter instanceof PsiClassType &&
+                      ((PsiClassType)maybeTypeParameter).resolve() instanceof PsiTypeParameter) {
+                    final PsiSubstitutor newSubstitutor = result.getSubstitutor().put(
+                      (PsiTypeParameter)((PsiClassType)maybeTypeParameter).resolve(), type);
+                    addRoot(new TypeMigrationUsageInfo(((PsiAnonymousClass)containingClass).getBaseClassReference().getParameterList()),
+                            new PsiImmediateClassType(anonymousBaseClass, newSubstitutor),
+                            place,
+                            alreadyProcessed);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+
       final PsiMethod[] methods = OverridingMethodsSearch.search(method, true).toArray(PsiMethod.EMPTY_ARRAY);
       final OverridenUsageInfo overridenUsageInfo = new OverridenUsageInfo(method);
       final OverriderUsageInfo[] overriders = new OverriderUsageInfo[methods.length];
@@ -644,7 +687,7 @@ public class TypeMigrationLabeler {
 
   void markFailedConversion(final Pair<PsiType, PsiType> typePair, final PsiExpression expression) {
     LOG.assertTrue(typePair.getSecond() != null);
-    myFailedConversions.add(Pair.create(PsiAnchor.create(expression), typePair.getSecond()));
+    myFailedConversions.add(Pair.create(SmartPointerManager.getInstance(expression.getProject()).createSmartPsiElementPointer(expression), typePair.getSecond()));
   }
 
   void setConversionMapping(final PsiExpression expression, final Object obj) {
@@ -717,7 +760,7 @@ public class TypeMigrationLabeler {
       final TypeMigrationUsageInfo info = new TypeMigrationUsageInfo(root);
       info.setOwnerRoot(oldRoot);
       myClassTypeArgumentsChange.put(info, (PsiClassType)migrationType);
-      new ClassTypeArgumentMigrationProcessor(this).migrateClassTypeParameter((PsiReferenceParameterList)root, migrationType);
+      new ClassTypeArgumentMigrationProcessor(this).migrateClassTypeParameter((PsiReferenceParameterList)root, (PsiClassType)migrationType);
     }
 
     final Set<PsiElement> processed = new HashSet<PsiElement>();
@@ -940,18 +983,19 @@ public class TypeMigrationLabeler {
 
     buffer.append("Fails:\n");
 
-    final ArrayList<Pair<PsiAnchor, PsiType>> failsList = new ArrayList<Pair<PsiAnchor, PsiType>>(myFailedConversions);
-    Collections.sort(failsList, new Comparator<Pair<PsiAnchor, PsiType>>() {
-      public int compare(final Pair<PsiAnchor, PsiType> o1, final Pair<PsiAnchor, PsiType> o2) {
-        final PsiElement element1 = o1.getFirst().retrieve();
-        final PsiElement element2 = o2.getFirst().retrieve();
+    final ArrayList<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>>
+      failsList = new ArrayList<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>>(myFailedConversions);
+    Collections.sort(failsList, new Comparator<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>>() {
+      public int compare(final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> o1, final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> o2) {
+        final PsiElement element1 = o1.getFirst().getElement();
+        final PsiElement element2 = o2.getFirst().getElement();
         if (element1 == null || element2 == null) return 0;
         return element1.getText().compareTo(element2.getText());
       }
     });
 
-    for (final Pair<PsiAnchor, PsiType> p : failsList) {
-      final PsiElement element = p.getFirst().retrieve();
+    for (final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> p : failsList) {
+      final PsiElement element = p.getFirst().getElement();
       if (element != null) {
         buffer.append(element.getText()).append("->").append(p.getSecond().getCanonicalText()).append("\n");
       }

@@ -220,8 +220,7 @@ public class GroovyConsole {
       assert sdkType instanceof JavaSdkType;
       final String exePath = ((JavaSdkType)sdkType).getVMExecutablePath(sdk);
       final GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(exePath, javaParameters, true);
-      final Process process = commandLine.createProcess();
-      return new OSProcessHandler(process, commandLine.getCommandLineString()) {
+      return new OSProcessHandler(commandLine) {
         @Override
         public boolean isSilentlyDestroyOnClose() {
           return true;

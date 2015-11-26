@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package com.intellij.index
-
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.impl.CurrentEditorProvider
 import com.intellij.openapi.command.impl.UndoManagerImpl
@@ -33,20 +32,27 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.PsiManagerEx
+import com.intellij.psi.impl.cache.impl.id.IdIndex
+import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.impl.file.impl.FileManagerImpl
+import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.impl.source.PsiFileWithStubSupport
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
+import com.intellij.psi.stubs.SerializedStubTree
+import com.intellij.psi.stubs.StubIndex
+import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.util.Processor
+import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.MapIndexStorage
 import com.intellij.util.indexing.StorageException
 import com.intellij.util.io.*
 import org.jetbrains.annotations.NotNull
-
 /**
  * @author Eugene Zhuravlev
  * @since Dec 12, 2007
@@ -424,5 +430,70 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     def stubTree = psiFile.getStubTree()
     assertNotNull(stubTree)
     assertEquals(stubTreeHash, stubTree.hashCode())
+  }
+
+  public void "test report using index from other index"() throws IOException {
+    def vfile = myFixture.addClass("class Foo { void bar() {} }").getContainingFile().getVirtualFile();
+    def scope = GlobalSearchScope.allScope(project)
+    def foundClass = [false];
+    def foundMethod = [false];
+
+    try {
+      StubIndex.instance.processElements(JavaStubIndexKeys.CLASS_SHORT_NAMES, "Foo", project, scope,
+                                         PsiClass.class,
+                                         new Processor<PsiClass>() {
+                                           @Override
+                                           boolean process(PsiClass aClass) {
+                                             foundClass[0] = true
+                                             StubIndex.instance.processElements(JavaStubIndexKeys.METHODS, "bar", project, scope,
+                                                                                PsiMethod.class,
+                                                                                new Processor<PsiMethod>() {
+                                                                                  @Override
+                                                                                  boolean process(PsiMethod method) {
+                                                                                    foundMethod[0] = true;
+                                                                                    return true;
+                                                                                  }
+                                                                                });
+                                             return true;
+                                           }
+                                         });
+    } catch (e) {
+      if (!(e instanceof RuntimeException)) throw e;
+    }
+
+    assertTrue(foundClass[0])
+    assertTrue(!foundMethod[0])
+
+    def foundId = [false];
+    def foundStub = [false];
+
+    try {
+      FileBasedIndex.instance.
+        processValues(IdIndex.NAME, new IdIndexEntry("Foo", true), null, new FileBasedIndex.ValueProcessor<Integer>() {
+          @Override
+          boolean process(VirtualFile file, Integer value) {
+            foundId[0] = true
+            FileBasedIndex.instance.processValues(
+              StubUpdatingIndex.INDEX_ID,
+              vfile.id,
+              null,
+              new FileBasedIndex.ValueProcessor<SerializedStubTree>() {
+                @Override
+                boolean process(VirtualFile file2, SerializedStubTree value2) {
+                  foundStub[0] = true
+                  return true
+                }
+              },
+              scope
+            );
+            return true
+          }
+        }, scope)
+    } catch (e) {
+      if (!(e instanceof RuntimeException)) throw e;
+    }
+
+    assertTrue(foundId[0])
+    assertTrue(!foundStub[0])
   }
 }

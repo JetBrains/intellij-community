@@ -110,7 +110,7 @@ public class FunctionalInterfaceParameterizationUtil {
         return null;
       }
 
-      final PsiSubstitutor substitutor = session.retrieveNonPrimitiveEqualsBounds(session.getInferenceVariables());
+      final PsiSubstitutor substitutor = session.getInstantiations(session.getInferenceVariables());
       final PsiType[] newTypeParameters = new PsiType[parameters.length];
       for (int i = 0; i < typeParameters.length; i++) {
         PsiTypeParameter typeParameter = typeParameters[i];

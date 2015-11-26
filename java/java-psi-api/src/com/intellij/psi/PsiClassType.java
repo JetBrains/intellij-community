@@ -53,6 +53,11 @@ public abstract class PsiClassType extends PsiType {
     myLanguageLevel = languageLevel;
   }
 
+  public PsiClassType(LanguageLevel languageLevel, @NotNull TypeAnnotationProvider annotations) {
+    super(annotations);
+    myLanguageLevel = languageLevel;
+  }
+
   /**
    * Resolves the class reference and returns the resulting class.
    *
@@ -292,6 +297,10 @@ public abstract class PsiClassType extends PsiType {
    */
   public static abstract class Stub extends PsiClassType {
     protected Stub(LanguageLevel languageLevel, @NotNull PsiAnnotation[] annotations) {
+      super(languageLevel, annotations);
+    }
+
+    public Stub(LanguageLevel languageLevel, @NotNull TypeAnnotationProvider annotations) {
       super(languageLevel, annotations);
     }
 

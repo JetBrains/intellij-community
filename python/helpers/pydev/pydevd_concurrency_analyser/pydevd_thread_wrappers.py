@@ -1,5 +1,6 @@
 
 import _pydev_threading as threading
+import functools
 
 
 def wrapper(fun):
@@ -19,8 +20,9 @@ def wrap_attr(obj, attr):
 
 
 class ObjectWrapper(object):
-    def __init__(self, object):
-        self.wrapped_object = object
+    def __init__(self, obj):
+        self.wrapped_object = obj
+        functools.update_wrapper(self, obj)
 
     def __getattr__(self, attr):
         orig_attr = getattr(self.wrapped_object, attr) #.__getattribute__(attr)
@@ -71,17 +73,7 @@ def wrap_threads():
     # queue patching
     try:
         import queue
-        orig = queue.Queue
-        def wrapper(*args, **kwargs):
-            obj = orig(*args, **kwargs)
-            return ObjectWrapper(obj)
-        queue.Queue = wrapper
-
+        queue.Queue = factory_wrapper(queue.Queue)
     except:
         import Queue
-        orig = Queue.Queue
-        def wrapper(*args, **kwargs):
-            obj = orig(*args, **kwargs)
-            return ObjectWrapper(obj)
-        Queue.Queue = wrapper
-
+        Queue.Queue = factory_wrapper(Queue.Queue)

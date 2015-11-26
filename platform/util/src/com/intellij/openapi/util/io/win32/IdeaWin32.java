@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class IdeaWin32 {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.win32.IdeaWin32");
-  private static final boolean DEBUG_ENABLED = LOG.isDebugEnabled();
+  private static final boolean TRACE_ENABLED = LOG.isTraceEnabled();
 
   private static final IdeaWin32 ourInstance;
 
@@ -70,12 +70,12 @@ public class IdeaWin32 {
   @Nullable
   public FileInfo getInfo(@NotNull String path) {
     path = path.replace('/', '\\');
-    if (DEBUG_ENABLED) {
-      LOG.debug("getInfo(" + path + ")");
+    if (TRACE_ENABLED) {
+      LOG.trace("getInfo(" + path + ")");
       long t = System.nanoTime();
       FileInfo result = getInfo0(path);
       t = (System.nanoTime() - t) / 1000;
-      LOG.debug("  " + t + " mks");
+      LOG.trace("  " + t + " mks");
       return result;
     }
     else {
@@ -86,12 +86,12 @@ public class IdeaWin32 {
   @Nullable
   public String resolveSymLink(@NotNull String path) {
     path = path.replace('/', '\\');
-    if (DEBUG_ENABLED) {
-      LOG.debug("resolveSymLink(" + path + ")");
+    if (TRACE_ENABLED) {
+      LOG.trace("resolveSymLink(" + path + ")");
       long t = System.nanoTime();
       String result = resolveSymLink0(path);
       t = (System.nanoTime() - t) / 1000;
-      LOG.debug("  " + t + " mks");
+      LOG.trace("  " + t + " mks");
       return result;
     }
     else {
@@ -102,12 +102,12 @@ public class IdeaWin32 {
   @Nullable
   public FileInfo[] listChildren(@NotNull String path) {
     path = path.replace('/', '\\');
-    if (DEBUG_ENABLED) {
-      LOG.debug("list(" + path + ")");
+    if (TRACE_ENABLED) {
+      LOG.trace("list(" + path + ")");
       long t = System.nanoTime();
       FileInfo[] children = listChildren0(path);
       t = (System.nanoTime() - t) / 1000;
-      LOG.debug("  " + (children == null ? -1 : children.length) + " children, " + t + " mks");
+      LOG.trace("  " + (children == null ? -1 : children.length) + " children, " + t + " mks");
       return children;
     }
     else {

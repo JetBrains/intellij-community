@@ -26,7 +26,7 @@ class Foo {
       System.out.println(s);
     });
 
-    <error descr="Cannot resolve method 'foo(<lambda expression>)'">foo</error>((String p, String k) -> {
+    foo(<error descr="Incompatible parameter types in lambda expression: expected int but found String">(String p, String k)</error> -> {
       System.out.println(p);
     });
   }
@@ -62,7 +62,7 @@ class WithTypeParams {
         System.out.println(p);
       });
   
-      <error descr="Cannot resolve method 'foo(<lambda expression>)'">foo</error>((int k) -> {System.out.println(k);});
+      foo(<error descr="Incompatible parameter types in lambda expression: expected String but found int">(int k)</error> -> {System.out.println(k);});
     }
   }
 }

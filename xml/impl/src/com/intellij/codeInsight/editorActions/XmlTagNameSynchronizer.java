@@ -262,6 +262,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
       final CharSequence sequence = document.getCharsSequence();
       int start = -1;
       int end = -1;
+      boolean seenColon = false;
       for (int i = offset - 1; i >= Math.max(0, offset - 50); i--) {
         try {
           final char c = sequence.charAt(i);
@@ -270,6 +271,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
             break;
           }
           if (!XmlUtil.isValidTagNameChar(c)) break;
+          seenColon |= c == ':';
         }
         catch (IndexOutOfBoundsException e) {
           LOG.error("incorrect offset:" + i + ", initial: " + offset, new Attachment("document.txt", sequence.toString()));
@@ -279,10 +281,11 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
       if (start < 0) return null;
       for (int i = offset; i < Math.min(document.getTextLength(), offset + 50); i++) {
         final char c = sequence.charAt(i);
-        if (!XmlUtil.isValidTagNameChar(c)) {
+        if (!XmlUtil.isValidTagNameChar(c) || (seenColon && c == ':')) {
           end = i;
           break;
         }
+        seenColon |= c == ':';
       }
       if (end < 0 || start >= end) return null;
       return document.createRangeMarker(start, end, true);

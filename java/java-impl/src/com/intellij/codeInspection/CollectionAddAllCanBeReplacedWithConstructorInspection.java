@@ -20,16 +20,21 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.performance.CollectionsListSettings;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -40,6 +45,29 @@ import java.util.List;
 public class CollectionAddAllCanBeReplacedWithConstructorInspection extends BaseJavaBatchLocalInspectionTool {
   private final static Logger LOG = Logger.getInstance(CollectionAddAllCanBeReplacedWithConstructorInspection.class);
 
+  private final CollectionsListSettings mySettings = new CollectionsListSettings() {
+    @Override
+    protected Collection<String> getDefaultSettings() {
+      return DEFAULT_COLLECTION_LIST;
+    }
+  };
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    mySettings.writeSettings(node);
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return mySettings.createOptionsPanel();
+  }
+
+  @Override
+  public void readSettings(@NotNull Element node) throws InvalidDataException {
+    mySettings.readSettings(node);
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
@@ -49,12 +77,16 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
         final String methodName = expression.getMethodExpression().getReferenceName();
-        if ("addAll".equals(methodName)) {
+        if ("addAll".equals(methodName) || "putAll".equals(methodName)) {
           if (expression.getArgumentList().getExpressions().length != 1) {
             return;
           }
           final PsiExpression qualifierExpression = expression.getMethodExpression().getQualifierExpression();
           if (!(qualifierExpression instanceof PsiReferenceExpression)) {
+            return;
+          }
+          final PsiElement parent = expression.getParent();
+          if (!(parent instanceof PsiExpressionStatement)) {
             return;
           }
           final PsiElement resolvedReference = ((PsiReferenceExpression)qualifierExpression).resolve();
@@ -63,11 +95,11 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
           }
           PsiLocalVariable variable = (PsiLocalVariable)resolvedReference;
           final PsiType variableType = variable.getType();
-          if (!(variableType instanceof PsiClassType)) {
+          if (!(variableType instanceof PsiClassType) || statementHasSubsequentAddAll(parent, variable, methodName)) {
             return;
           }
           final PsiClass variableClass = ((PsiClassType)variableType).resolve();
-          if (variableClass == null || !InheritanceUtil.isInheritor(variableClass, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+          if (variableClass == null) {
             return;
           }
           PsiNewExpression assignmentExpression;
@@ -84,13 +116,13 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
           } else {
             return;
           }
-          if (!checkUsages(variable, expression, assignmentExpression)) {
+          if (!isAddAllReplaceable(expression, assignmentExpression) || !checkUsages(variable, expression, assignmentExpression)) {
             return;
           }
           final PsiMethod method = expression.resolveMethod();
           if (method != null) {
             //noinspection DialogTitleCapitalization
-            holder.registerProblem(expression, QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.description"),
+            holder.registerProblem(expression, QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.description", methodName),
                                    new ReplaceAddAllWithConstructorFix(assignmentExpression, expression));
           }
         }
@@ -98,7 +130,27 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
     };
   }
 
-  private static boolean checkLocalVariableAssignmentOrInitializer(PsiExpression initializer) {
+  private static boolean statementHasSubsequentAddAll(@NotNull PsiElement statement,
+                                                      @NotNull PsiLocalVariable referent,
+                                                      @NotNull String previousMethodName) {
+    final PsiElement sibling = PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
+    if (sibling instanceof PsiExpressionStatement) {
+      final PsiExpression siblingExpression = ((PsiExpressionStatement)sibling).getExpression();
+      if (siblingExpression instanceof PsiMethodCallExpression) {
+        final PsiMethodCallExpression siblingMethodCall = (PsiMethodCallExpression)siblingExpression;
+        final PsiExpression qualifier = siblingMethodCall.getMethodExpression().getQualifierExpression();
+        if (qualifier instanceof PsiReferenceExpression && referent.isEquivalentTo(((PsiReferenceExpression)qualifier).resolve())) {
+          final PsiMethod method = siblingMethodCall.resolveMethod();
+          if (method != null && method.getName().equals(previousMethodName)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private boolean checkLocalVariableAssignmentOrInitializer(PsiExpression initializer) {
     if (!(initializer instanceof PsiNewExpression)) {
       return false;
     }
@@ -108,14 +160,16 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
       return false;
     }
     final PsiClass initializerClass = (PsiClass)classReference.resolve();
-    if (initializerClass == null || !hasProperConstructor(initializerClass)) {
+    if (initializerClass == null ||
+        !mySettings.getCollectionClassesRequiringCapacity().contains(initializerClass.getQualifiedName()) ||
+        !hasProperConstructor(initializerClass)) {
       return false;
     }
     final PsiExpressionList argumentList = newExpression.getArgumentList();
     return argumentList != null && argumentList.getExpressions().length == 0;
   }
 
-  private static boolean hasProperConstructor(PsiClass psiClass) {
+  private boolean hasProperConstructor(PsiClass psiClass) {
     for (PsiMethod psiMethod : psiClass.getConstructors()) {
       PsiParameterList parameterList = psiMethod.getParameterList();
       if(parameterList.getParametersCount() == 1) {
@@ -123,7 +177,8 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
         PsiTypeElement typeElement = parameter.getTypeElement();
         if (typeElement != null) {
           PsiType type = typeElement.getType();
-          if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+          if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_COLLECTION) ||
+              InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
             return true;
           }
         }
@@ -132,7 +187,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
     return false;
   }
 
-  private static Pair<Boolean, PsiNewExpression> isProperAssignmentStatementFound(PsiLocalVariable localVariable, PsiMethodCallExpression addAllExpression) {
+  private Pair<Boolean, PsiNewExpression> isProperAssignmentStatementFound(PsiLocalVariable localVariable, PsiMethodCallExpression addAllExpression) {
     PsiStatement currentStatement = PsiTreeUtil.getParentOfType(addAllExpression, PsiStatement.class);
     final PsiStatement localVariableDefinitionStatement = PsiTreeUtil.getParentOfType(localVariable, PsiStatement.class);
     while (currentStatement != null) {
@@ -150,6 +205,28 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
       }
     }
     return Pair.create(true, null);
+  }
+
+  private boolean isAddAllReplaceable(final PsiExpression addAllExpression, PsiNewExpression newExpression) {
+    final boolean[] isReplaceable = new boolean[]{true};
+    final PsiFile newExpressionContainingFile = newExpression.getContainingFile();
+    final TextRange newExpressionTextRange = newExpression.getTextRange();
+
+    addAllExpression.accept(new JavaRecursiveElementVisitor() {
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        final PsiElement resolved = expression.resolve();
+        if (resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) {
+          PsiVariable variable = (PsiVariable) resolved;
+          final LocalSearchScope useScope = (LocalSearchScope)variable.getUseScope();
+          if (!useScope.containsRange(newExpressionContainingFile, newExpressionTextRange)) {
+            isReplaceable[0] = false;
+          }
+        }
+      }
+    });
+
+    return isReplaceable[0];
   }
 
   private static class ReplaceAddAllWithConstructorFix implements LocalQuickFix {

@@ -36,6 +36,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static git4idea.GitStatisticsCollectorKt.reportUsage;
+
 class GitBranchPopupActions {
 
   private final Project myProject;
@@ -87,6 +89,7 @@ class GitBranchPopupActions {
       if (name != null) {
         GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
         brancher.checkoutNewBranch(name, myRepositories);
+        reportUsage("git.branch.create.new");
       }
     }
   }
@@ -112,6 +115,7 @@ class GitBranchPopupActions {
       if (reference != null) {
         GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
         brancher.checkout(reference, true, Collections.singletonList(myRepository), null);
+        reportUsage("git.branch.checkout.revision");
       }
     }
 
@@ -194,8 +198,8 @@ class GitBranchPopupActions {
       public void actionPerformed(AnActionEvent e) {
         GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
         brancher.checkout(myBranchName, false, myRepositories, null);
+        reportUsage("git.branch.checkout.local");
       }
-
     }
 
     private static class CheckoutAsNewBranch extends DumbAwareAction {
@@ -219,8 +223,8 @@ class GitBranchPopupActions {
           GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
           brancher.checkoutNewBranchStartingFrom(name, myBranchName, myRepositories, null);
         }
+        reportUsage("git.checkout.as.new.branch");
       }
-
     }
 
     private static class DeleteAction extends DumbAwareAction {
@@ -239,6 +243,7 @@ class GitBranchPopupActions {
       public void actionPerformed(AnActionEvent e) {
         GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
         brancher.deleteBranch(myBranchName, myRepositories);
+        reportUsage("git.branch.delete.local");
       }
     }
   }
@@ -295,6 +300,7 @@ class GitBranchPopupActions {
         if (name != null) {
           GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
           brancher.checkoutNewBranchStartingFrom(name, myRemoteBranchName, myRepositories, null);
+          reportUsage("git.branch.checkout.remote");
         }
       }
 
@@ -322,9 +328,9 @@ class GitBranchPopupActions {
       public void actionPerformed(AnActionEvent e) {
         GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
         brancher.deleteRemoteBranch(myBranchName, myRepositories);
+        reportUsage("git.branch.delete.remote");
       }
     }
-
   }
   
   private static class CompareAction extends DumbAwareAction {
@@ -347,8 +353,8 @@ class GitBranchPopupActions {
     public void actionPerformed(AnActionEvent e) {
       GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
       brancher.compare(myBranchName, myRepositories, mySelectedRepository);
+      reportUsage("git.branch.compare");
     }
-
   }
 
   private static class MergeAction extends DumbAwareAction {
@@ -371,6 +377,7 @@ class GitBranchPopupActions {
     public void actionPerformed(AnActionEvent e) {
       GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
       brancher.merge(myBranchName, deleteOnMerge(), myRepositories);
+      reportUsage("git.branch.merge");
     }
 
     private GitBrancher.DeleteOnMergeOption deleteOnMerge() {
@@ -398,6 +405,7 @@ class GitBranchPopupActions {
     public void actionPerformed(AnActionEvent e) {
       GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
       brancher.rebase(myRepositories, myBranchName);
+      reportUsage("git.branch.rebase");
     }
   }
 }

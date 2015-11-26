@@ -42,6 +42,16 @@ public class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
            "}\n");
   }
 
+  public void testReader() {
+    doTest("import java.io.Reader;" +
+           "import java.io.IOException;" +
+           "class U {" +
+           "  void m(Reader r) throws IOException {" +
+           "    r./*Result of 'Reader.read()' is ignored*/read/**/();" +
+           "  }" +
+           "}")
+  }
+
   public void testPureMethod() {
     doTest """
 import org.jetbrains.annotations.Contract;

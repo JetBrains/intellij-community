@@ -15,13 +15,11 @@
  */
 package org.jetbrains.jps.gant;
 
+import com.intellij.openapi.diagnostic.Log4jBasedLogger;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.RollingFileAppender;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,52 +47,7 @@ public class Log4jFileLoggerFactory implements com.intellij.openapi.diagnostic.L
     final Logger logger = Logger.getLogger(category);
     logger.addAppender(myAppender);
     logger.setLevel(isDebugLevel(category) ? Level.DEBUG : Level.INFO);
-    return new com.intellij.openapi.diagnostic.Logger() {
-      @Override
-      public boolean isDebugEnabled() {
-        return logger.isDebugEnabled();
-      }
-
-      @Override
-      public void debug(@NonNls String message) {
-        logger.debug(message);
-      }
-
-      @Override
-      public void debug(@Nullable Throwable t) {
-        logger.debug(t);
-      }
-
-      @Override
-      public void debug(@NonNls String message, @Nullable Throwable t) {
-        logger.debug(message, t);
-      }
-
-      @Override
-      public void info(@NonNls String message) {
-        logger.info(message);
-      }
-
-      @Override
-      public void info(@NonNls String message, @Nullable Throwable t) {
-        logger.info(message, t);
-      }
-
-      @Override
-      public void warn(@NonNls String message, @Nullable Throwable t) {
-        logger.warn(message, t);
-      }
-
-      @Override
-      public void error(@NonNls String message, @Nullable Throwable t, @NonNls @NotNull String... details) {
-        logger.error(message, t);
-      }
-
-      @Override
-      public void setLevel(Level level) {
-        logger.setLevel(level);
-      }
-    };
+    return new Log4jBasedLogger(logger);
   }
 
   private boolean isDebugLevel(String category) {

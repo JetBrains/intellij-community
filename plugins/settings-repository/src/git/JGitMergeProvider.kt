@@ -28,11 +28,11 @@ import org.jetbrains.jgit.dirCache.deletePath
 import org.jetbrains.jgit.dirCache.writePath
 import org.jetbrains.settingsRepository.RepositoryVirtualFile
 import java.nio.CharBuffer
-import java.util.ArrayList
+import java.util.*
 
 internal fun conflictsToVirtualFiles(map: Map<String, Any>): MutableList<VirtualFile> {
-  val result = ArrayList<VirtualFile>(map.size())
-  for (path in map.keySet()) {
+  val result = ArrayList<VirtualFile>(map.size)
+  for (path in map.keys) {
     result.add(RepositoryVirtualFile(path))
   }
   return result
@@ -44,7 +44,7 @@ internal fun conflictsToVirtualFiles(map: Map<String, Any>): MutableList<Virtual
  * Base - missed (no base).
  */
 class JGitMergeProvider<T>(private val repository: Repository, private val conflicts: Map<String, T>, private val pathToContent: Map<String, T>.(path: String, index: Int) -> ByteArray?) : MergeProvider2 {
-  override fun createMergeSession(files: List<VirtualFile>) = JGitMergeSession()
+  override fun createMergeSession(files: List<VirtualFile>): MergeSession = JGitMergeSession()
 
   override fun conflictResolvedForFile(file: VirtualFile) {
     // we can postpone dir cache update (on merge dialog close) to reduce number of flush, but it can leads to data loss (if app crashed during merge - nothing will be saved)
@@ -61,7 +61,7 @@ class JGitMergeProvider<T>(private val repository: Repository, private val confl
     }
   }
 
-  private fun addFile(bytes: ByteArray, file: VirtualFile, size: Int = bytes.size()) {
+  private fun addFile(bytes: ByteArray, file: VirtualFile, size: Int = bytes.size) {
     repository.writePath(file.path, bytes, size)
   }
 

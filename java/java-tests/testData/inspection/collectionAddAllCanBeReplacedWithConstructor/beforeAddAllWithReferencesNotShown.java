@@ -1,4 +1,4 @@
-// "Replace 'addAll()' method with parametrized constructor call" "false"
+// "Replace 'addAll/putAll' method with parametrized constructor call" "false"
 import java.lang.String;
 import java.util.ArrayList;
 import java.util.List;

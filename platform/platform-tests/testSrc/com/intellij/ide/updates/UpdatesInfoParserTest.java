@@ -15,10 +15,7 @@
  */
 package com.intellij.ide.updates;
 
-import com.intellij.openapi.updateSettings.impl.BuildInfo;
-import com.intellij.openapi.updateSettings.impl.Product;
-import com.intellij.openapi.updateSettings.impl.UpdateChannel;
-import com.intellij.openapi.updateSettings.impl.UpdatesInfo;
+import com.intellij.openapi.updateSettings.impl.*;
 import com.intellij.openapi.util.BuildNumber;
 import org.junit.Test;
 
@@ -54,6 +51,10 @@ public class UpdatesInfoParserTest {
 
     UpdateChannel channel = product.findUpdateChannelById("IDEA10EAP");
     assertNotNull(channel);
+    assertEquals(ChannelStatus.EAP, channel.getStatus());
+    assertEquals(UpdateChannel.LICENSING_EAP, channel.getLicensing());
+    assertNotNull(channel.getHomePageUrl());
+    assertNotNull(channel.getFeedbackUrl());
 
     BuildInfo build = channel.getLatestBuild();
     assertNotNull(build);

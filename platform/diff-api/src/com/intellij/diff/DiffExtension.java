@@ -23,6 +23,11 @@ import org.jetbrains.annotations.NotNull;
 public abstract class DiffExtension {
   public static final ExtensionPointName<DiffExtension> EP_NAME = ExtensionPointName.create("com.intellij.diff.DiffExtension");
 
+  /**
+   * Can be used to extend existing DiffViewers without registering new DiffTool
+   *
+   * @see DiffViewerListener, DiffViewerBase
+   */
   @CalledInAwt
   public abstract void onViewerCreated(@NotNull FrameDiffTool.DiffViewer viewer,
                                        @NotNull DiffContext context,

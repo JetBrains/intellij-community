@@ -301,7 +301,7 @@ class Intf {
     return calcPopupElements(createPopup(model), text, checkboxState)
   }
 
-  static ArrayList<String> calcPopupElements(ChooseByNamePopup popup, String text, boolean checkboxState = false) {
+  static ArrayList<Object> calcPopupElements(ChooseByNamePopup popup, String text, boolean checkboxState = false) {
     List<Object> elements = ['empty']
     def semaphore = new Semaphore()
     semaphore.down()
@@ -323,9 +323,11 @@ class Intf {
       myPopup.close(false)
     }
 
-    def popup = myPopup = ChooseByNamePopup.createPopup(project, model, (PsiElement)context, "")
-    Disposer.register(testRootDisposable, { popup.close(false) } as Disposable)
-    popup
+    edt {
+      def popup = myPopup = ChooseByNamePopup.createPopup(project, model, (PsiElement)context, "")
+      Disposer.register(testRootDisposable, { popup.close(false) } as Disposable)
+    }
+    myPopup
   }
 
   @Override

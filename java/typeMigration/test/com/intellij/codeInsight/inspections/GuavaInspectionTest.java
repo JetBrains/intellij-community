@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.inspections;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PathManager;
@@ -25,9 +26,11 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.util.SmartList;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Dmitry Batkovich
@@ -118,6 +121,11 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  //needs Guava 18.0 as dependency
+  public void _testAppend() {
+    doTest();
+  }
+
   public void testChainContainsStopMethods() {
     doTestNoQuickFixes(GuavaInspection.MigrateFluentIterableChainQuickFix.class);
   }
@@ -131,6 +139,14 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testToArray() {
+    doTest();
+  }
+
+  public void testToArray2() {
+    doTest();
+  }
+
+  public void testToArray3() {
     doTest();
   }
 
@@ -206,6 +222,14 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testConvertImmutableCollections() {
+    doTestAllFile();
+  }
+
+  public void testUniqueIndex() {
+    doTestAllFile();
+  }
+
   private void doTestNoQuickFixes(final Class<? extends IntentionAction>... quickFixesClasses) {
     myFixture.configureByFile(getTestName(true) + ".java");
     myFixture.enableInspections(new GuavaInspection());
@@ -232,6 +256,18 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
       }
     }
     assertTrue("Quick fix isn't found", actionFound);
+    myFixture.checkResultByFile(getTestName(true) + "_after.java");
+  }
+
+  private void doTestAllFile() {
+    myFixture.configureByFile(getTestName(true) + ".java");
+    myFixture.enableInspections(new GuavaInspection());
+    for (HighlightInfo info : myFixture.doHighlighting()) {
+      if (GuavaInspection.PROBLEM_DESCRIPTION_FOR_METHOD_CHAIN.equals(info.getDescription()) ||
+          GuavaInspection.PROBLEM_DESCRIPTION_FOR_VARIABLE.equals(info.getDescription())) {
+        myFixture.launchAction(info.quickFixActionMarkers.get(0).getFirst().getAction());
+      }
+    }
     myFixture.checkResultByFile(getTestName(true) + "_after.java");
   }
 }

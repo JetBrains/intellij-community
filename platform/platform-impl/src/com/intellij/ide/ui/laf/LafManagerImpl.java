@@ -559,11 +559,13 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   private static void patchHiDPI(UIDefaults defaults) {
-    if (!JBUI.isHiDPI()) return;
+    Object prevScaleVal = defaults.get("hidpi.scaleFactor");
+    float prevScale = prevScaleVal != null ? (Float)prevScaleVal : 1f;
+
+    if (prevScale == JBUI.scale(1f)) return;
 
     List<String> myIntKeys = Arrays.asList("Tree.leftChildIndent",
-                                         "Tree.rightChildIndent");
-    List<String> patched = new ArrayList<String>();
+                                           "Tree.rightChildIndent");
     for (Map.Entry<Object, Object> entry : defaults.entrySet()) {
       Object value = entry.getValue();
       String key = entry.getKey().toString();
@@ -573,16 +575,12 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         entry.setValue(JBUI.insets(((InsetsUIResource)value)).asUIResource());
       } else if (value instanceof Integer) {
         if (key.endsWith(".maxGutterIconWidth") || myIntKeys.contains(key)) {
-          if (!"true".equals(defaults.get(key +".hidpi.patched"))) {
-            entry.setValue(Integer.valueOf(JBUI.scale((Integer)value)));
-            patched.add(key);
-          }
+          int normValue = (int)((Integer)value / prevScale);
+          entry.setValue(Integer.valueOf(JBUI.scale(normValue)));
         }
       }
     }
-    for (String key : patched) {
-      defaults.put(key + ".hidpi.patched", "true");
-    }
+    defaults.put("hidpi.scaleFactor", JBUI.scale(1f));
   }
 
   public static void updateToolWindows() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractUrl;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.TreeItem;
@@ -34,6 +35,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class FavoritesListNode extends AbstractTreeNode<String> {
+  private static final Logger LOGGER = Logger.getInstance(FavoritesListNode.class);
   private final Project myProject;
   private final String myDescription;
 
@@ -113,7 +115,8 @@ public class FavoritesListNode extends AbstractTreeNode<String> {
           }
         }
       }
-      catch (Exception ignored) {
+      catch (Exception e) {
+        LOGGER.error(e);
       }
     }
   }

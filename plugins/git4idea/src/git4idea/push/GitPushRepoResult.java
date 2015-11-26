@@ -42,7 +42,8 @@ class GitPushRepoResult {
     NEW_BRANCH,
     UP_TO_DATE,
     FORCED,
-    REJECTED,
+    REJECTED_NO_FF,
+    REJECTED_OTHER,
     ERROR,
     NOT_PUSHED;
   }
@@ -75,7 +76,7 @@ class GitPushRepoResult {
         return result.getSourceRef();
       }
     });
-    return new GitPushRepoResult(convertType(result.getType()), commits, source.getFullName(), target.getFullName(),
+    return new GitPushRepoResult(convertType(result), commits, source.getFullName(), target.getFullName(),
                                  target.getRemote().getName(), tags, null, null);
   }
 
@@ -157,8 +158,8 @@ class GitPushRepoResult {
   }
 
   @NotNull
-  private static Type convertType(@NotNull GitPushNativeResult.Type nativeType) {
-    switch (nativeType) {
+  private static Type convertType(@NotNull GitPushNativeResult nativeResult) {
+    switch (nativeResult.getType()) {
       case SUCCESS:
         return Type.SUCCESS;
       case FORCED_UPDATE:
@@ -166,14 +167,14 @@ class GitPushRepoResult {
       case NEW_REF:
         return Type.NEW_BRANCH;
       case REJECTED:
-        return Type.REJECTED;
+        return nativeResult.isNonFFUpdate() ? Type.REJECTED_NO_FF : Type.REJECTED_OTHER;
       case UP_TO_DATE:
         return Type.UP_TO_DATE;
       case ERROR:
         return Type.ERROR;
       case DELETED:
       default:
-        throw new IllegalArgumentException("Conversion is not supported: " + nativeType);
+        throw new IllegalArgumentException("Conversion is not supported: " + nativeResult.getType());
     }
   }
 

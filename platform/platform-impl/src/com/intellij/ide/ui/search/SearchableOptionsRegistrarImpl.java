@@ -93,36 +93,6 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     catch (IOException e) {
       LOG.error(e);
     }
-
-    loadExtensions();
-  }
-
-  private void loadExtensions() {
-    final SearchableOptionProcessor processor = new SearchableOptionProcessor() {
-      @Override
-      public void addOptions(@NotNull String text,
-                             @Nullable String path,
-                             @Nullable String hit,
-                             @NotNull String configurableId,
-                             @Nullable String configurableDisplayName,
-                             boolean applyStemming) {
-        Set<String> words = applyStemming ? getProcessedWords(text) : getProcessedWordsWithoutStemming(text);
-        for (String word : words) {
-          addOption(word, path, hit, configurableId, configurableDisplayName);
-        }
-      }
-
-    };
-
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        //todo what if application is disposed?
-        for (SearchableOptionContributor contributor : SearchableOptionContributor.EP_NAME.getExtensions()) {
-          contributor.processOptions(processor);
-        }
-      }
-    });
   }
 
   private void loadHugeFilesIfNecessary() {

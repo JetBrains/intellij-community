@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,24 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.io.NettyUtil;
 import org.junit.Assert;
 
+import java.lang.reflect.Method;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author cdr
@@ -31,50 +41,69 @@ public class ThreadTracker {
   private final Collection<Thread> before;
   private final boolean myDefaultProjectInitialized;
 
+  @TestOnly
   public ThreadTracker() {
     before = getThreads();
     myDefaultProjectInitialized = ((ProjectManagerImpl)ProjectManager.getInstance()).isDefaultProjectInitialized();
   }
 
+  private static final Method getThreads = ReflectionUtil.getDeclaredMethod(Thread.class, "getThreads");
+
+  @NotNull
   private static Collection<Thread> getThreads() {
-    //todo enable
-    return Collections.emptyList(); //Thread.getAllStackTraces().keySet();
+    Thread[] threads;
+    try {
+      // faster than Thread.getAllStackTraces().keySet()
+      threads = (Thread[])getThreads.invoke(null);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    return ContainerUtilRt.newArrayList(threads);
   }
 
-  private static final Set<String> wellKnownOffenders = new THashSet<String>(){{
-    add("Alarm pool(own)");
-    add("Alarm pool(shared)");
-    add("ApplicationImpl pooled thread");
-    add("AWT-Shutdown");
-    add("AWT-Windows");
-    add("CompilerThread0");
-    add("Finalizer");
-    add("FS Synchronizer");
-    add("IDEA Test Case Thread");
-    add("Image Fetcher 0");
-    add("Java2D Disposer");
-    add("Low Memory Detector");
-    add("main");
-    add("Monitor Ctrl-Break");
-    add("Periodic tasks thread");
-    add("Reference Handler");
-    add("Signal Dispatcher");
-    add("SimpleTimer");
-    add("timed reference disposer");
-    add("timer-int"); //serverImpl
-    add("timer-sys"); //clientimpl
-    add("TimerQueue");
-    add("UserActivityMonitor thread");
-    add("VM Periodic Task Thread");
-    add("VM Thread");
-    add("YJPAgent-Telemetry");
+  private static final Set<String> wellKnownOffenders = new THashSet<String>();
+  static {
+        wellKnownOffenders.add("Action Updater"); // todo remove
+        wellKnownOffenders.add("Alarm pool(own)");
+        wellKnownOffenders.add("Alarm pool(shared)");
+    wellKnownOffenders.add("ApplicationImpl pooled thread");
+    wellKnownOffenders.add("AWT-EventQueue-");
+    wellKnownOffenders.add("AWT-Shutdown");
+    wellKnownOffenders.add("AWT-Windows");
+        wellKnownOffenders.add("Change List Updater"); //todo remove
+    wellKnownOffenders.add("CompilerThread0");
+        wellKnownOffenders.add("Document commit thread");
+    wellKnownOffenders.add("Finalizer");
+        wellKnownOffenders.add("FS Synchronizer"); //todo remove
+    wellKnownOffenders.add("IDEA Test Case Thread");
+    wellKnownOffenders.add("Image Fetcher ");
+    wellKnownOffenders.add("Java2D Disposer");
+    wellKnownOffenders.add("JobScheduler FJ pool ");
+    wellKnownOffenders.add("JPS thread pool");
+    wellKnownOffenders.add("Keep-Alive-Timer");
+        wellKnownOffenders.add("Low Memory Detector");
+    wellKnownOffenders.add("main");
+    wellKnownOffenders.add("Monitor Ctrl-Break");
+    wellKnownOffenders.add("Periodic tasks thread");
+    wellKnownOffenders.add("Reference Handler");
+    wellKnownOffenders.add("RMI TCP Connection");
+    wellKnownOffenders.add("Signal Dispatcher");
+    wellKnownOffenders.add("Netty ");
+        wellKnownOffenders.add("timed reference disposer");
+    wellKnownOffenders.add("timer-int"); //serverImpl
+    wellKnownOffenders.add("timer-sys"); //clientimpl
+    wellKnownOffenders.add("TimerQueue");
+    wellKnownOffenders.add("UserActivityMonitor thread");
+    wellKnownOffenders.add("VM Periodic Task Thread");
+    wellKnownOffenders.add("VM Thread");
+    wellKnownOffenders.add("YJPAgent-Telemetry");
+  }
 
-
-
-
-    add("Change List Updater");
-  }};
+  @TestOnly
   public void checkLeak() throws AssertionError {
+    BaseOSProcessHandler.awaitQuiescence(100, TimeUnit.SECONDS);
+    NettyUtil.awaitQuiescenceOfGlobalEventExecutor(100, TimeUnit.SECONDS);
     try {
       if (myDefaultProjectInitialized != ((ProjectManagerImpl)ProjectManager.getInstance()).isDefaultProjectInitialized()) return;
 
@@ -85,15 +114,27 @@ public class ThreadTracker {
         if (thread == Thread.currentThread()) continue;
         ThreadGroup group = thread.getThreadGroup();
         if (group != null && "system".equals(group.getName()))continue;
-        String name = thread.getName();
-        if (name.startsWith("AWT-EventQueue-0")) continue;
-        if (name.startsWith("JobScheduler pool ")) continue;
-        if (wellKnownOffenders.contains(name)) continue;
+        final String name = thread.getName();
+        if (ContainerUtil.exists(wellKnownOffenders, new Condition<String>() {
+          @Override
+          public boolean value(String pattern) {
+            return name.contains(pattern);
+          }
+        })) {
+          continue;
+        }
 
-        String trace = "Thread leaked: " + thread+": "+ name +";\n ";
+        if (!thread.isAlive()) continue;
+        if (thread.getStackTrace().length == 0) {
+          TimeoutUtil.sleep(10000);
+          if (!thread.isAlive()) continue;
+        }
+
+        String trace = "Thread leaked: " + thread+"; " + thread.getState()+" ("+ thread.isAlive()+")\n--- its stacktrace:\n";
         for (final StackTraceElement stackTraceElement : thread.getStackTrace()) {
           trace += " at "+stackTraceElement +"\n";
         }
+        trace += "---\n";
         Assert.fail(trace);
       }
     }

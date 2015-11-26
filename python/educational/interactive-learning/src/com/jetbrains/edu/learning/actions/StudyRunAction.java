@@ -67,17 +67,15 @@ public class StudyRunAction extends DumbAwareAction {
     String sdkHomePath = sdk.getHomePath();
     if (sdkHomePath != null) {
       cmd.setExePath(sdkHomePath);
-      Process process;
       StudyUtils.setCommandLineParameters(cmd, project, filePath, sdkHomePath, currentTask);
 
       try {
-        process = cmd.createProcess();
+        myHandler = new OSProcessHandler(cmd);
       }
       catch (ExecutionException e) {
         LOG.error(e);
         return;
       }
-      myHandler = new OSProcessHandler(process);
 
       for (ProcessListener processListener : myProcessListeners) {
         myHandler.addProcessListener(processListener);

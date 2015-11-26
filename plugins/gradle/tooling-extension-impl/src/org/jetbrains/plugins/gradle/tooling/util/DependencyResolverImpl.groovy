@@ -128,6 +128,17 @@ class DependencyResolverImpl implements DependencyResolver {
         componentResults.each { componentResultsMap.put(it.id, it) }
 
         ResolutionResult resolutionResult = configuration.incoming.resolutionResult
+        if(!configuration.resolvedConfiguration.hasError()) {
+          def fileDeps = new LinkedHashSet<File>(configuration.incoming.files.files);
+          artifactMap.values().each {
+            fileDeps.remove(it.file)
+          }
+          fileDeps.each {
+            def fileCollectionDependency = new DefaultFileCollectionDependency([it])
+            fileCollectionDependency.scope = scope
+            result.add(fileCollectionDependency)
+          }
+        }
         result.addAll(transform(Lists.newArrayList(), resolutionResult.root.dependencies, artifactMap, componentResultsMap, scope))
       }
     }
@@ -164,9 +175,6 @@ class DependencyResolverImpl implements DependencyResolver {
     Multimap<ExternalDependencyId, ExternalDependency> resolvedMap = ArrayListMultimap.create()
     new DependencyTraverser(compileDependencies).each { resolvedMap.put(it.id, it) }
 
-    Multimap<ExternalDependencyId, ExternalDependency> toDelete = ArrayListMultimap.create()
-    new DependencyTraverser(runtimeDependencies).each { toDelete.put(it.id, it) }
-
     new DependencyTraverser(runtimeDependencies).each {
       Collection<ExternalDependency> dependencies = resolvedMap.get(it.id);
       if (dependencies && !dependencies.isEmpty()) {
@@ -180,15 +188,9 @@ class DependencyResolverImpl implements DependencyResolver {
       }
     }
 
-    toDelete = ArrayListMultimap.create()
-    new DependencyTraverser(runtimeDependencies).each { toDelete.put(it.id, it) }
-
     result.addAll(compileDependencies)
     result.addAll(runtimeDependencies)
     result.unique()
-
-    toDelete = ArrayListMultimap.create()
-    new DependencyTraverser(result).each { toDelete.put(it.id, it) }
 
     // merge file dependencies
     def jvmLanguages = ['Java', 'Groovy', 'Scala']
@@ -565,8 +567,9 @@ class DependencyResolverImpl implements DependencyResolver {
             group: project.group,
             version: project.version,
             scope: scope,
-            projectPath: project.path
+            projectPath: project.path,
           )
+          projectDependency.projectDependencyArtifacts = it.projectConfiguration.allArtifacts.files.collect {it.path}
           result.add(projectDependency)
         }
         else if (it instanceof Dependency) {
@@ -639,6 +642,7 @@ class DependencyResolverImpl implements DependencyResolver {
               selectionReason: selectionReason,
               projectPath: componentSelector.projectPath
             )
+            dependency.projectDependencyArtifacts = artifactMap.get(componentResult.moduleVersion).collect {it.file.path}
             if (componentResult != dependencyResult.from) {
               dependency.dependencies.addAll(
                 transform(handledDependencyResults, componentResult.dependencies, artifactMap, componentResultsMap, scope)

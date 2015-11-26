@@ -15,46 +15,15 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.openapi.diagnostic.Log4jBasedLogger;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TestLogger extends com.intellij.openapi.diagnostic.Logger {
-  private final Logger myLogger;
-
+public class TestLogger extends Log4jBasedLogger {
   public TestLogger(Logger logger) {
-    myLogger = logger;
-  }
-
-  @Override
-  public boolean isDebugEnabled() {
-    return myLogger.isDebugEnabled();
-  }
-
-  @Override
-  public void debug(String message) {
-    myLogger.debug(message);
-  }
-
-  @Override
-  public void debug(Throwable t) {
-    myLogger.debug(t);
-  }
-
-  @Override
-  public void debug(String message, Throwable t) {
-    myLogger.debug(message, t);
-  }
-
-  @Override
-  public void info(String message) {
-    myLogger.info(message);
-  }
-
-  @Override
-  public void info(String message, Throwable t) {
-    myLogger.info(message, t);
+    super(logger);
   }
 
   @Override
@@ -71,10 +40,5 @@ public class TestLogger extends com.intellij.openapi.diagnostic.Logger {
 
   public Level getLevel() {
     return myLogger.getLevel();
-  }
-
-  @Override
-  public void setLevel(Level level) {
-    myLogger.setLevel(level);
   }
 }

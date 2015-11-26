@@ -36,11 +36,7 @@ public class SvnProcessHandler extends OSProcessHandler {
   private final boolean myForceBinary;
   @NotNull private final ByteArrayOutputStream myBinaryOutput;
 
-  public SvnProcessHandler(@NotNull Process process, boolean forceUtf8, boolean forceBinary) {
-    this(process, null, forceUtf8, forceBinary);
-  }
-
-  public SvnProcessHandler(@NotNull Process process, @Nullable String commandLine, boolean forceUtf8, boolean forceBinary) {
+  public SvnProcessHandler(@NotNull Process process, @NotNull String commandLine, boolean forceUtf8, boolean forceBinary) {
     super(process, commandLine);
 
     myForceUtf8 = forceUtf8;
@@ -71,7 +67,7 @@ public class SvnProcessHandler extends OSProcessHandler {
   private class SimpleBinaryOutputReader extends BinaryOutputReader {
     private SimpleBinaryOutputReader(@NotNull InputStream stream, @NotNull SleepingPolicy sleepingPolicy) {
       super(stream, sleepingPolicy);
-      start();
+      start(myPresentableName);
     }
 
     @Override

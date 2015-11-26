@@ -151,6 +151,7 @@ public class TestNGTreeHierarchyTest {
                                           "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://ATest']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='ATest.testName' locationHint='java:test://ATest.testName|[0|]']\n" +
+                                          "\n" +
                                           "##teamcity[testFailed name='ATest.testName' details='java.lang.Exception|n' error='true' message='']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='ATest.testName']\n" +
@@ -270,6 +271,7 @@ public class TestNGTreeHierarchyTest {
                                           "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='ATest.setUp' locationHint='java:test://a.ATest.setUp' config='true']\n" +
+                                          "\n" +
                                           "##teamcity[testFailed name='ATest.setUp' details='java.lang.Exception|n' error='true' message='']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='ATest.setUp']\n" +

@@ -33,7 +33,7 @@ def error(message, retcode):
 
 
 def error_no_pip():
-    tb = sys.exc_traceback
+    type, value, tb = sys.exc_info()
     if tb is not None and tb.tb_next is None:
         error("Python packaging tool 'pip' not found", ERROR_NO_PIP)
     else:

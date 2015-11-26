@@ -24,7 +24,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.DebugUtil;
-import org.apache.log4j.Level;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +37,7 @@ import java.io.LineNumberReader;
  * @author Mike
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class IdeaLogger extends Logger {
+public class IdeaLogger extends Log4jBasedLogger {
   private static ApplicationInfoProvider ourApplicationInfoProvider = getIdeaInfoProvider();
 
   public static String ourLastActionId = "";
@@ -73,10 +72,8 @@ public class IdeaLogger extends Logger {
     }
   }
 
-  private final org.apache.log4j.Logger myLogger;
-
   IdeaLogger(org.apache.log4j.Logger logger) {
-    myLogger = logger;
+    super(logger);
   }
 
   @Override
@@ -92,26 +89,6 @@ public class IdeaLogger extends Logger {
   @Override
   public void error(@NonNls String message, Attachment... attachments) {
     myLogger.error(LogMessageEx.createEvent(message, DebugUtil.currentStackTrace(), attachments));
-  }
-
-  @Override
-  public boolean isDebugEnabled() {
-    return myLogger.isDebugEnabled();
-  }
-
-  @Override
-  public void debug(String message) {
-    myLogger.debug(message);
-  }
-
-  @Override
-  public void debug(Throwable t) {
-    myLogger.debug("", t);
-  }
-
-  @Override
-  public void debug(@NonNls String message, Throwable t) {
-    myLogger.debug(message, t);
   }
 
   @Override
@@ -171,21 +148,6 @@ public class IdeaLogger extends Logger {
     }
   }
 
-  @Override
-  public void info(String message) {
-    myLogger.info(message);
-  }
-
-  @Override
-  public void info(String message, @Nullable Throwable t) {
-    myLogger.info(message, t);
-  }
-
-  @Override
-  public void warn(@NonNls String message, @Nullable Throwable t) {
-    myLogger.warn(message, t);
-  }
-
   public static void setApplicationInfoProvider(ApplicationInfoProvider aProvider) {
     ourApplicationInfoProvider = aProvider;
   }
@@ -198,10 +160,5 @@ public class IdeaLogger extends Logger {
         return info.getFullApplicationName() + "  " + "Build #" + info.getBuild().asStringWithAllDetails();
       }
     };
-  }
-
-  @Override
-  public void setLevel(Level level) {
-    myLogger.setLevel(level);
   }
 }

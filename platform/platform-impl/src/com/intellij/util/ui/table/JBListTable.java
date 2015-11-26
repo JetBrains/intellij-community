@@ -40,6 +40,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
@@ -51,228 +52,23 @@ import static java.awt.event.KeyEvent.*;
  */
 public abstract class JBListTable {
   protected final JTable myInternalTable;
-  private final JBTable mainTable;
+  private final JBTable myMainTable;
   private final RowResizeAnimator myRowResizeAnimator;
-  private final Disposable myOnRemoveDisposable;
   private MouseEvent myMouseEvent;
   private MyCellEditor myCellEditor;
   private int myLastFocusedEditorComponentIdx = -1;
 
-  public JBListTable(@NotNull JTable t) {
-    this(t, Disposer.get("ui"));
-  }
-
   public JBListTable(@NotNull final JTable t, @NotNull Disposable parent) {
     myInternalTable = t;
-    myOnRemoveDisposable = Disposer.newDisposable();
-    Disposer.register(parent, myOnRemoveDisposable);
-    final JBListTableModel model = new JBListTableModel(t.getModel()) {
-      @Override
-      public JBTableRow getRow(int index) {
-        return getRowAt(index);
-      }
-
-      @Override
-      public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return isRowEditable(rowIndex);
-      }
-
-      @Override
-      public void addRow() {
-        myLastFocusedEditorComponentIdx = -1;
-        super.addRow();
-      }
-    };
-    mainTable = new JBTable(model) {
-      @Override
-      public void editingStopped(ChangeEvent e) {
-        super.editingStopped(e);
-      }
-
-      @Override
-      public void editingCanceled(ChangeEvent e) {
-        super.editingCanceled(e);
-      }
-
-      @Override
-      protected void processKeyEvent(KeyEvent e) {
-        myMouseEvent = null;
-        
-        //Mnemonics
-        if (e.isAltDown()) {
-          super.processKeyEvent(e);
-          return;
-        }
-
-        if (e.getKeyCode() == VK_TAB) {
-          if (e.getID() == KEY_PRESSED) {
-            final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-            if (e.isShiftDown()) {
-              keyboardFocusManager.focusPreviousComponent(this);
-            }
-            else {
-              keyboardFocusManager.focusNextComponent(this);
-            }
-          }
-          e.consume();
-          return;
-        }
-
-        super.processKeyEvent(e);
-      }
-
-      @Override
-      protected void processMouseEvent(MouseEvent e) {
-        myMouseEvent = e;
-        super.processMouseEvent(e);
-      }
-
-      @Override
-      public TableCellRenderer getCellRenderer(int row, int column) {
-        final JBTableRowRenderer rowRenderer = getRowRenderer(row);
-        return new TableCellRenderer() {
-          @Override
-          public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focused, int row, int col) {
-            return rowRenderer.getRowRendererComponent(t, row, selected, focused);
-          }
-        };
-      }
-
-      @Override
-      protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
-        //Mnemonics and actions
-        if (e.isAltDown() || e.isMetaDown() || e.isControlDown()) {
-          return false;
-        }
-        
-        if (e.getKeyCode() == VK_ESCAPE && pressed) {
-          final int row = getSelectedRow();
-          if (row != -1 && isRowEmpty(row)) {
-            final int count = model.getRowCount();
-            model.removeRow(row);
-            int newRow = count == row + 1 ? row - 1 : row;
-
-            if (0 <= newRow && newRow < model.getRowCount()) {
-              setRowSelectionInterval(newRow, newRow);
-            }
-
-          }
-        }
-
-        if (e.getKeyCode() == VK_ENTER) {
-          if (e.getID() == KEY_PRESSED) {
-            if (!isEditing() && e.getModifiers() == 0) {
-              editCellAt(getSelectedRow(), getSelectedColumn());
-            }
-            else if (isEditing()) {
-              TableUtil.stopEditing(this);
-              if (e.isControlDown() || e.isMetaDown()) {
-                return false;
-              }
-              else {
-                final int row = getSelectedRow() + 1;
-                if (row < getRowCount()) {
-                  getSelectionModel().setSelectionInterval(row, row);
-                }
-              }
-            }
-            else {
-              if (e.isControlDown() || e.isMetaDown()) {
-                return false;
-              }
-            }
-          }
-          e.consume();
-          return true;
-        }
-
-        if (isEditing() && e.getKeyCode() == VK_TAB) {
-          if (pressed) {
-            final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-            if (e.isShiftDown()) {
-              mgr.focusPreviousComponent();
-            }
-            else {
-              mgr.focusNextComponent();
-            }
-          }
-          return true;
-        }
-
-        final boolean isUp = e.getKeyCode() == VK_UP;
-        final boolean isDown = e.getKeyCode() == VK_DOWN;
-
-        if (isEditing() && (isUp || isDown) && e.getModifiers() == 0 && e.getID() == KEY_PRESSED) {
-          int row = getSelectedRow();
-          super.processKeyBinding(ks, e, condition, pressed);
-          if (!isEditing() && row != getSelectedRow()) {
-            TableUtil.editCellAt(this, getSelectedRow(), 0);
-            e.consume();
-            return true;
-          }
-        }
-
-        return super.processKeyBinding(ks, e, condition, pressed);
-      }
-
-      @Override
-      public void columnMarginChanged(ChangeEvent e) {
-        // we don't stop editing (it prevents editor removal when scrollbar is added)
-        TableColumn resizingColumn = tableHeader != null ? tableHeader.getResizingColumn() : null;
-        if (resizingColumn != null && autoResizeMode == AUTO_RESIZE_OFF) {
-          resizingColumn.setPreferredWidth(resizingColumn.getWidth());
-        }
-        resizeAndRepaint();
-      }
-
-      @Override
-      public TableCellEditor getCellEditor(final int row, int column) {
-        final JBTableRowEditor editor = getRowEditor(row);
-        if (editor != null) {
-          editor.setMouseEvent(myMouseEvent);
-          editor.prepareEditor(t, row);
-          installPaddingAndBordersForEditors(editor);
-          editor.setFocusCycleRoot(true);
-
-          editor.setFocusTraversalPolicy(new JBListTableFocusTraversalPolicy(editor));
-          MouseSuppressor.install(editor);
-
-          myCellEditor = new MyCellEditor(editor);
-          return myCellEditor;
-        }
-        myCellEditor = null;
-        return myCellEditor;
-      }
-
-      @Override
-      public Component prepareEditor(TableCellEditor editor, int row, int column) {
-        Object value = getValueAt(row, column);
-        boolean isSelected = isCellSelected(row, column);
-        return editor.getTableCellEditorComponent(this, value, isSelected, row, column);
-      }
-
-      @Override
-      public void addNotify() {
-        super.addNotify();
-        Disposer.register(myOnRemoveDisposable, myRowResizeAnimator);
-      }
-
-      @Override
-      public void removeNotify() {
-        super.removeNotify();
-        Disposer.dispose(myOnRemoveDisposable);
-      }
-    };
-    mainTable.setStriped(true);
-    myRowResizeAnimator = new RowResizeAnimator(mainTable);
+    myMainTable = new MyTable();
+    myMainTable.setTableHeader(null);
+    myMainTable.setStriped(true);
+    myRowResizeAnimator = new RowResizeAnimator(myMainTable);
+    Disposer.register(parent, myRowResizeAnimator);
   }
 
   public void stopEditing() {
-    TableUtil.stopEditing(mainTable);
-  }
-
-  public Disposable getOnRemoveDisposable() {
-    return myOnRemoveDisposable;
+    TableUtil.stopEditing(myMainTable);
   }
 
   private static void installPaddingAndBordersForEditors(JBTableRowEditor editor) {
@@ -284,7 +80,7 @@ public abstract class JBListTable {
   }
 
   public final JBTable getTable() {
-    return mainTable;
+    return myMainTable;
   }
 
   protected abstract JBTableRowRenderer getRowRenderer(int row);
@@ -501,6 +297,220 @@ public abstract class JBListTable {
         myLastUpdateTime = currentTime;
         return myTargetHeight == newHeight;
       }
+    }
+  }
+
+  private class MyTable extends JBTable {
+
+    public MyTable() {
+      super(new MyTableModel(myInternalTable.getModel()));
+    }
+
+    @Override
+    public MyTableModel getModel() {
+      return (MyTableModel)super.getModel();
+    }
+
+    @Override
+    public void editingStopped(ChangeEvent e) {
+      super.editingStopped(e);
+    }
+
+    @Override
+    public void editingCanceled(ChangeEvent e) {
+      super.editingCanceled(e);
+    }
+
+    @Override
+    protected void processKeyEvent(KeyEvent e) {
+      myMouseEvent = null;
+
+      //Mnemonics
+      if (e.isAltDown()) {
+        super.processKeyEvent(e);
+        return;
+      }
+
+      if (e.getKeyCode() == VK_TAB) {
+        if (e.getID() == KEY_PRESSED) {
+          final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+          if (e.isShiftDown()) {
+            keyboardFocusManager.focusPreviousComponent(this);
+          }
+          else {
+            keyboardFocusManager.focusNextComponent(this);
+          }
+        }
+        e.consume();
+        return;
+      }
+
+      super.processKeyEvent(e);
+    }
+
+    @Override
+    protected void processMouseEvent(MouseEvent e) {
+      myMouseEvent = e;
+      super.processMouseEvent(e);
+    }
+
+    @Override
+    public TableCellRenderer getCellRenderer(int row, int column) {
+      final JBTableRowRenderer rowRenderer = getRowRenderer(row);
+      return new TableCellRenderer() {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focused, int row, int col) {
+          return rowRenderer.getRowRendererComponent(myInternalTable, row, selected, focused);
+        }
+      };
+    }
+
+    @Override
+    protected boolean processKeyBinding(KeyStroke ks, KeyEvent e, int condition, boolean pressed) {
+      //Mnemonics and actions
+      if (e.isAltDown() || e.isMetaDown() || e.isControlDown()) {
+        return false;
+      }
+
+      if (e.getKeyCode() == VK_ESCAPE && pressed) {
+        final int row = getSelectedRow();
+        if (row != -1 && isRowEmpty(row)) {
+          MyTableModel model = getModel();
+          final int count = model.getRowCount();
+          model.removeRow(row);
+          int newRow = count == row + 1 ? row - 1 : row;
+
+          if (0 <= newRow && newRow < model.getRowCount()) {
+            setRowSelectionInterval(newRow, newRow);
+          }
+
+        }
+      }
+
+      if (e.getKeyCode() == VK_ENTER) {
+        if (e.getID() == KEY_PRESSED) {
+          if (!isEditing() && e.getModifiers() == 0) {
+            editCellAt(getSelectedRow(), getSelectedColumn());
+          }
+          else if (isEditing()) {
+            TableUtil.stopEditing(this);
+            if (e.isControlDown() || e.isMetaDown()) {
+              return false;
+            }
+            else {
+              final int row = getSelectedRow() + 1;
+              if (row < getRowCount()) {
+                getSelectionModel().setSelectionInterval(row, row);
+              }
+            }
+          }
+          else {
+            if (e.isControlDown() || e.isMetaDown()) {
+              return false;
+            }
+          }
+        }
+        e.consume();
+        return true;
+      }
+
+      if (isEditing() && e.getKeyCode() == VK_TAB) {
+        if (pressed) {
+          final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+          if (e.isShiftDown()) {
+            mgr.focusPreviousComponent();
+          }
+          else {
+            mgr.focusNextComponent();
+          }
+        }
+        return true;
+      }
+
+      final boolean isUp = e.getKeyCode() == VK_UP;
+      final boolean isDown = e.getKeyCode() == VK_DOWN;
+
+      if (isEditing() && (isUp || isDown) && e.getModifiers() == 0 && e.getID() == KEY_PRESSED) {
+        int row = getSelectedRow();
+        super.processKeyBinding(ks, e, condition, pressed);
+        if (!isEditing() && row != getSelectedRow()) {
+          TableUtil.editCellAt(this, getSelectedRow(), 0);
+          e.consume();
+          return true;
+        }
+      }
+
+      return super.processKeyBinding(ks, e, condition, pressed);
+    }
+
+    @Override
+    public void columnMarginChanged(ChangeEvent e) {
+      // we don't stop editing (it prevents editor removal when scrollbar is added)
+      TableColumn resizingColumn = tableHeader != null ? tableHeader.getResizingColumn() : null;
+      if (resizingColumn != null && autoResizeMode == AUTO_RESIZE_OFF) {
+        resizingColumn.setPreferredWidth(resizingColumn.getWidth());
+      }
+      resizeAndRepaint();
+    }
+
+    @Override
+    public TableCellEditor getCellEditor(final int row, int column) {
+      final JBTableRowEditor editor = getRowEditor(row);
+      if (editor != null) {
+        editor.setMouseEvent(myMouseEvent);
+        editor.prepareEditor(myInternalTable, row);
+        installPaddingAndBordersForEditors(editor);
+        editor.setFocusCycleRoot(true);
+
+        editor.setFocusTraversalPolicy(new JBListTableFocusTraversalPolicy(editor));
+        MouseSuppressor.install(editor);
+
+        myCellEditor = new MyCellEditor(editor);
+        return myCellEditor;
+      }
+      myCellEditor = null;
+      return myCellEditor;
+    }
+
+    @Override
+    public Component prepareEditor(TableCellEditor editor, int row, int column) {
+      Object value = getValueAt(row, column);
+      boolean isSelected = isCellSelected(row, column);
+      return editor.getTableCellEditorComponent(this, value, isSelected, row, column);
+    }
+
+    @Override
+    public void addNotify() {
+      super.addNotify();
+    }
+
+    @Override
+    public void removeNotify() {
+      super.removeNotify();
+      Disposer.dispose(myRowResizeAnimator);
+    }
+  }
+
+  private class MyTableModel extends JBListTableModel {
+
+    MyTableModel(TableModel model) {
+      super(model);
+    }
+
+    @Override
+    public JBTableRow getRow(int index) {
+      return getRowAt(index);
+    }
+
+    @Override
+    public boolean isCellEditable(int rowIndex, int columnIndex) {
+      return isRowEditable(rowIndex);
+    }
+
+    @Override
+    public void addRow() {
+      myLastFocusedEditorComponentIdx = -1;
+      super.addRow();
     }
   }
 }

@@ -21,7 +21,7 @@
 #include "stdafx.h"
 #include <windows.h>
 #include <Objbase.h>
-#include "jumplistbridge64.h"
+#include "jumplistbridge.h"
 #include <ShObjIdl.h>
 #include <Objectarray.h>
 #include <Knownfolders.h>

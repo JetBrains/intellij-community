@@ -58,7 +58,7 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
 
       @Override
       public boolean startInWriteAction() {
-        return true;
+        return false;
       }
     };
   }

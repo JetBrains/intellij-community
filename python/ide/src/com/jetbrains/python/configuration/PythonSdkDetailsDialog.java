@@ -51,6 +51,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.FactoryMap;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.packaging.PyPackageManagers;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PyRemoteSourceItem;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
@@ -229,7 +230,9 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     myModificators.clear();
     myModifiedModificators.clear();
     mySdkListChanged = false;
-    myShowMoreCallback.consume(getSelectedSdk());
+    final Sdk sdk = getSelectedSdk();
+    myShowMoreCallback.consume(sdk);
+    PyPackageManagers.getInstance().clearCache(sdk);
     Disposer.dispose(getDisposable());
   }
 

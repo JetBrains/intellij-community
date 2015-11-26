@@ -155,6 +155,10 @@ public class XmlSyncTagCommunityTest extends XmlSyncTagTest {
     doTest("<div></div><caret></div>", "\b\b\b\b\b\b", "<div></div>");
   }
 
+  public void testDoubleColonError() {
+    doTest("<soap:some<caret>:some></soap:some:some>", "a", "<soap:somea:some></soap:somea:some>");
+  }
+
   public void testMultipleEditors() {
     myFixture.configureByText(XmlFileType.INSTANCE, "<div<caret>></div>");
     final Editor editor = EditorFactory.getInstance().createEditor(myFixture.getEditor().getDocument());

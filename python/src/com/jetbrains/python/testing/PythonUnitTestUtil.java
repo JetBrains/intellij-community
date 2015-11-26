@@ -197,7 +197,7 @@ public class PythonUnitTestUtil {
         final VirtualFile virtualFile = containingFile.getVirtualFile();
         final String clsFileName = virtualFile == null? containingFile.getName() : virtualFile.getPath();
         final String clsFileNameWithoutExt = FileUtil.getNameWithoutExtension(clsFileName);
-        if (!clsFileNameWithoutExt.endsWith(fileName)) {
+        if (!clsFileNameWithoutExt.endsWith(fileName) && ! fileName.equals(clsFileName)) {
           continue;
         }
         if (methodName == null) {

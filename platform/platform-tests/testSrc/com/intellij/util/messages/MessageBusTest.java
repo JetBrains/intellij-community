@@ -89,6 +89,16 @@ public class MessageBusTest extends TestCase {
     myLog = new ArrayList<>();
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      myBus.dispose();
+    }
+    finally {
+      super.tearDown();
+    }
+  }
+
   public void testNoListenersSubscribed() {
     myBus.syncPublisher(TOPIC1).t11();
     assertEvents();

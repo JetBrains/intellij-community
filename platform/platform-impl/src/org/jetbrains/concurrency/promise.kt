@@ -80,6 +80,8 @@ fun <T> resolvedPromise(result: T) = Promise.resolve(result)
 
 fun <T> rejectedPromise(error: String): Promise<T> = Promise.reject(error)
 
+fun <T> rejectedPromise(error: Throwable): Promise<T> = Promise.reject(error)
+
 @Suppress("CAST_NEVER_SUCCEEDS")
 fun <T> rejectedPromise(): Promise<T> = rejectedPromise as Promise<T>
 

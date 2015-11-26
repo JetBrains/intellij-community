@@ -27,46 +27,71 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.TestDataProvider;
+import com.intellij.util.Alarm;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.TimeoutUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
+import java.util.concurrent.CountDownLatch;
 
 public class ConsoleViewImplTest extends LightPlatformTestCase {
 
-  public void testTypeText() throws Exception {
-    final ConsoleViewImpl console = createConsole();
-    console.print("Initial", ConsoleViewContentType.NORMAL_OUTPUT);
-    console.flushDeferredText();
+  private ConsoleViewImpl myConsole;
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    myConsole = createConsole();
+  }
+
+  @Override
+  public void tearDown() throws Exception {
     try {
-      console.clear();
-      console.print("Hi", ConsoleViewContentType.NORMAL_OUTPUT);
-      assertEquals(2, console.getContentSize());
-    }
-    catch (Exception e) {
-      e.printStackTrace();
+      Disposer.dispose(myConsole);
     }
     finally {
-      Disposer.dispose(console);
+      super.tearDown();
     }
   }
 
-  public void testTypeInEmptyConsole() throws Exception {
-    final ConsoleViewImpl console = createConsole();
-    try {
+  public void testTypeText() throws Exception {
+    ConsoleViewImpl console = myConsole;
+    console.print("Initial", ConsoleViewContentType.NORMAL_OUTPUT);
+    console.flushDeferredText();
+    console.clear();
+    console.print("Hi", ConsoleViewContentType.NORMAL_OUTPUT);
+    assertEquals(2, console.getContentSize());
+  }
+
+  public void testDoubleClear() throws Exception {
+    ConsoleViewImpl console = myConsole;
+    Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+    CountDownLatch latch = new CountDownLatch(1);
+    alarm.addRequest(() -> {
       console.clear();
-      EditorActionManager actionManager = EditorActionManager.getInstance();
-      final DataContext dataContext = DataManager.getInstance().getDataContext();
-      TypedAction action = actionManager.getTypedAction();
-      action.actionPerformed(console.getEditor(), 'h', dataContext);
-      assertEquals(1, console.getContentSize());
-    }
-    catch (Exception e) {
-      e.printStackTrace();
-    }
-    finally {
-      Disposer.dispose(console);
-    }
+      console.clear();
+      console.print("Test", ConsoleViewContentType.NORMAL_OUTPUT);
+      latch.countDown();
+    }, 0);
+    latch.await();
+    UIUtil.dispatchAllInvocationEvents();
+    TimeoutUtil.sleep(SystemProperties.getIntProperty("console.flush.delay.ms", 200));
+    UIUtil.dispatchAllInvocationEvents();
+    assertFalse(console.hasDeferredOutput());
+    //assertEquals("Test", console.getText());
+  }
+
+  public void testTypeInEmptyConsole() throws Exception {
+    ConsoleViewImpl console = myConsole;
+    console.clear();
+    EditorActionManager actionManager = EditorActionManager.getInstance();
+    DataContext dataContext = DataManager.getInstance().getDataContext(console.getComponent());
+    TypedAction action = actionManager.getTypedAction();
+    action.actionPerformed(console.getEditor(), 'h', dataContext);
+    assertEquals(1, console.getContentSize());
   }
 
   public void testTypingAfterMultipleCR() throws Exception {
@@ -74,21 +99,16 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     final TypedAction typedAction = actionManager.getTypedAction();
     final TestDataProvider dataContext = new TestDataProvider(getProject());
 
-    final ConsoleViewImpl console = createConsole();
+    final ConsoleViewImpl console = myConsole;
     final Editor editor = console.getEditor();
-    try {
-      console.print("System output\n", ConsoleViewContentType.SYSTEM_OUTPUT);
-      console.print("\r\r\r\r\r\r\r", ConsoleViewContentType.NORMAL_OUTPUT);
-      console.flushDeferredText();
+    console.print("System output\n", ConsoleViewContentType.SYSTEM_OUTPUT);
+    console.print("\r\r\r\r\r\r\r", ConsoleViewContentType.NORMAL_OUTPUT);
+    console.flushDeferredText();
 
-      typedAction.actionPerformed(editor, '1', dataContext);
-      typedAction.actionPerformed(editor, '2', dataContext);
+    typedAction.actionPerformed(editor, '1', dataContext);
+    typedAction.actionPerformed(editor, '2', dataContext);
 
-      assertEquals("System output\n12", editor.getDocument().getText());
-    }
-    finally {
-      Disposer.dispose(console);
-    }
+    assertEquals("System output\n12", editor.getDocument().getText());
   }
 
   @NotNull

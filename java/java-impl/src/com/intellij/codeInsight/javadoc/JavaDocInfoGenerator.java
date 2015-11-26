@@ -320,9 +320,11 @@ public class JavaDocInfoGenerator {
 
       relativeLink = relativeLink.replace('/', '.');
 
-      String qualifiedTargetClassName = packageName.isEmpty() ? relativeLink : packageName + "." + relativeLink;
-      targetElement = JavaPsiFacade.getInstance(contextElement.getProject()).findClass(qualifiedTargetClassName, 
-                                                                                       contextElement.getResolveScope());
+      String qualifiedTargetName = packageName.isEmpty() ? relativeLink : packageName + "." + relativeLink;
+      JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(contextElement.getProject());
+      targetElement = "package-summary".equals(StringUtil.getShortName(qualifiedTargetName))
+                      ? javaPsiFacade.findPackage(StringUtil.getPackageName(qualifiedTargetName))
+                      : javaPsiFacade.findClass(qualifiedTargetName, contextElement.getResolveScope());
     }
     if (targetElement == null) return null;
     
@@ -334,7 +336,7 @@ public class JavaDocInfoGenerator {
       }
       else  {
         for (PsiField field : ((PsiClass)targetElement).getFields()) {
-          if (field.getName().equals(fragment)) {
+          if (fragment.equals(field.getName())) {
             rawFragment = fragment;
             fragment = null; // reference to a field
             break;
@@ -1474,7 +1476,7 @@ public class JavaDocInfoGenerator {
   private void generateLiteralValue(StringBuilder buffer, PsiDocTag tag) {
     StringBuilder tmpBuffer = new StringBuilder();
     for (PsiElement element : tag.getDataElements()) {
-      appendPlainText(element.getText(), tmpBuffer);
+      appendPlainText(StringUtil.escapeXml(element.getText()), tmpBuffer);
     }
     if ((mySdkVersion == null || mySdkVersion.isAtLeast(JavaSdkVersion.JDK_1_8)) && isInPre(tag)) {
       buffer.append(tmpBuffer);
@@ -1503,9 +1505,6 @@ public class JavaDocInfoGenerator {
   }
 
   private static void appendPlainText(@NonNls String text, final StringBuilder buffer) {
-    text = text.replaceAll("<", LT);
-    text = text.replaceAll(">", GT);
-
     buffer.append(StringUtil.replaceUnicodeEscapeSequences(text));
   }
 

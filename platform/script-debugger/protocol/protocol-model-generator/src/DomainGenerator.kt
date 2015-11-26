@@ -9,19 +9,10 @@ import org.jetbrains.protocolReader.JSON_READER_PARAMETER_DEF
 import org.jetbrains.protocolReader.TextOutput
 import org.jetbrains.protocolReader.appendEnums
 
-//fun fixMethodName(name: String): String {
-//  val i = name.indexOf("breakpoint")
-//  return if (i > 0) name.substring(0, i) + 'B' + name.substring(i + 1) else name
-//}
-
-interface TextOutConsumer {
-  fun append(out: TextOutput)
-}
-
 internal class DomainGenerator(val generator: Generator, val domain: ProtocolMetaModel.Domain, val fileUpdater: FileUpdater) {
   fun registerTypes() {
-    if (domain.types() != null) {
-      for (type in domain.types()!!) {
+    domain.types?.let {
+      for (type in it) {
         generator.typeMap.getTypeData(domain.domain(), type.id()).type = type
       }
     }
@@ -29,25 +20,25 @@ internal class DomainGenerator(val generator: Generator, val domain: ProtocolMet
 
   fun generateCommandsAndEvents() {
     for (command in domain.commands()) {
-      val hasResponse = command.returns() != null
+      val hasResponse = command.returns != null
       val returnType = if (hasResponse) generator.naming.commandResult.getShortName(command.name()) else "Unit"
-      generateTopLevelOutputClass(generator.naming.params, command.name(), command.description(), "${generator.naming.requestClassName}<$returnType>", {
+      generateTopLevelOutputClass(generator.naming.params, command.name(), command.description, "${generator.naming.requestClassName}<$returnType>", {
         append('"')
         if (!domain.domain().isEmpty()) {
           append(domain.domain()).append('.')
         }
         append(command.name()).append('"')
-      }, command.parameters())
+      }, command.parameters)
 
       if (hasResponse) {
-        generateJsonProtocolInterface(generator.naming.commandResult.getShortName(command.name()), command.description(), command.returns(), null)
+        generateJsonProtocolInterface(generator.naming.commandResult.getShortName(command.name()), command.description, command.returns, null)
         generator.jsonProtocolParserClassNames.add(generator.naming.commandResult.getFullName(domain.domain(), command.name()).getFullText())
         generator.parserRootInterfaceItems.add(ParserRootInterfaceItem(domain.domain(), command.name(), generator.naming.commandResult))
       }
     }
 
-    if (domain.events() != null) {
-      for (event in domain.events()!!) {
+    if (domain.events != null) {
+      for (event in domain.events!!) {
         generateEvenData(event)
         generator.jsonProtocolParserClassNames.add(generator.naming.eventData.getFullName(domain.domain(), event.name()).getFullText())
         generator.parserRootInterfaceItems.add(ParserRootInterfaceItem(domain.domain(), event.name(), generator.naming.eventData))
@@ -56,7 +47,7 @@ internal class DomainGenerator(val generator: Generator, val domain: ProtocolMet
   }
 
   fun generateCommandAdditionalParam(type: ProtocolMetaModel.StandaloneType) {
-    generateTopLevelOutputClass(generator.naming.additionalParam, type.id(), type.description(), null, null, type.properties())
+    generateTopLevelOutputClass(generator.naming.additionalParam, type.id(), type.description, null, null, type.properties)
   }
 
   private fun <P : ItemDescriptor.Named> generateTopLevelOutputClass(nameScheme: ClassNameScheme, baseName: String, description: String?, baseType: String?, methodName: (TextOutput.() -> Unit)?, properties: List<P>?) {
@@ -127,7 +118,7 @@ internal class DomainGenerator(val generator: Generator, val domain: ProtocolMet
     if (properties != null) {
       for (parameter in properties) {
         val type = MemberScope(classScope, parameter.name()).resolveType(parameter).type
-        if (parameter.optional()) {
+        if (parameter.optional) {
           optionalParameters.add(parameter to type)
         }
         else {
@@ -150,7 +141,7 @@ internal class DomainGenerator(val generator: Generator, val domain: ProtocolMet
           override fun getJavaType() = StandaloneType(generator.naming.inputEnum.getFullName(domain.domain(), name), "writeEnum")
 
           override fun generate() {
-            fileUpdater.out.doc(type.description())
+            fileUpdater.out.doc(type.description)
             appendEnums(enumConstants, generator.naming.inputEnum.getShortName(name), true, fileUpdater.out)
           }
 
@@ -190,7 +181,7 @@ internal class DomainGenerator(val generator: Generator, val domain: ProtocolMet
         val className = generator.naming.inputValue.getFullName(domain.domain(), name)
         val out = fileUpdater.out
         out.newLine().newLine()
-        descriptionAndRequiredImport(type.description(), out)
+        descriptionAndRequiredImport(type.description, out)
 
         out.append("interface ").append(className.lastComponent).openBlock()
         val classScope = InputClassScope(this@DomainGenerator, className)
@@ -240,21 +231,25 @@ internal class DomainGenerator(val generator: Generator, val domain: ProtocolMet
     val className = generator.naming.eventData.getShortName(event.name())
     val domainName = domain.domain()
     val fullName = generator.naming.eventData.getFullName(domainName, event.name()).getFullText()
-    generateJsonProtocolInterface(className, event.description(), event.parameters(), object : TextOutConsumer {
-      override fun append(out: TextOutput) {
-        out.newLine().append("companion object").block {
-          out.append("val TYPE = object : org.jetbrains.wip.protocol.WipEventType<").append(fullName).append(">")
-          out.append("(\"").append(domainName).append('.').append(event.name()).append("\")").block() {
-            out.append("override fun read(protocolReader: ")
-            out.append(generator.naming.inputPackage).append('.').append(READER_INTERFACE_NAME).append(", ").append(JSON_READER_PARAMETER_DEF).append(")")
-            out.append("= protocolReader.").append(generator.naming.eventData.getParseMethodName(domainName, event.name())).append("(reader)")
-          }
-        }
+    generateJsonProtocolInterface(className, event.description, event.parameters) { out ->
+      out.newLine().append("companion object TYPE : org.jetbrains.jsonProtocol.EventType<").append(fullName)
+      if (event.optionalData || event.parameters.isNullOrEmpty()) {
+        out.append('?')
       }
-    })
+      out.append(", ").append(generator.naming.inputPackage).append('.').append(READER_INTERFACE_NAME).append('>')
+      out.append("(\"")
+      if (!domainName.isNullOrEmpty()) {
+        out.append(domainName).append('.')
+      }
+      out.append(event.name()).append("\")").block() {
+        out.append("override fun read(protocolReader: ")
+        out.append(generator.naming.inputPackage).append('.').append(READER_INTERFACE_NAME).append(", ").append(JSON_READER_PARAMETER_DEF).append(")")
+        out.append(" = protocolReader.").append(generator.naming.eventData.getParseMethodName(domainName, event.name())).append("(reader)")
+      }
+    }
   }
 
-  private fun generateJsonProtocolInterface(className: String, description: String?, parameters: List<ProtocolMetaModel.Parameter>?, additionalMembersText: TextOutConsumer?) {
+  private fun generateJsonProtocolInterface(className: String, description: String?, parameters: List<ProtocolMetaModel.Parameter>?, additionalMembersText: ((out: TextOutput) -> Unit)?) {
     val out = fileUpdater.out
     out.newLine().newLine()
     descriptionAndRequiredImport(description, out)

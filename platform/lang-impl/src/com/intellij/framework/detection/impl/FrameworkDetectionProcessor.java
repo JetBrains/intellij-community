@@ -20,6 +20,7 @@ import com.intellij.framework.detection.FrameworkDetectionContext;
 import com.intellij.framework.detection.FrameworkDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -74,24 +75,27 @@ public class FrameworkDetectionProcessor {
   }
 
   private void collectSuitableFiles(@NotNull VirtualFile file) {
-    class CancelledException extends RuntimeException { }
-
     try {
       VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
-          if (myProgressIndicator.isCanceled()) {
-            throw new CancelledException();
-          }
+          // Since this code is invoked from New Project Wizard it's very possible that VFS isn't loaded to memory yet, so we need to do it
+          // manually, otherwise refresh will do nothing
+          myProgressIndicator.checkCanceled();
+          return true;
+        }
+      });
+      file.refresh(false, true);
+
+      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+        @Override
+        public boolean visitFile(@NotNull VirtualFile file) {
+          myProgressIndicator.checkCanceled();
           if (!myProcessedFiles.add(file)) {
             return false;
           }
 
-          if (file.isDirectory()) {
-            file.getChildren();  // initialize myChildren field to ensure that refresh will be really performed
-            file.refresh(false, false);
-          }
-          else {
+          if (!file.isDirectory()) {
             final FileType fileType = file.getFileType();
             if (myDetectorsByFileType.containsKey(fileType)) {
               myProgressIndicator.setText2(file.getPresentableUrl());
@@ -113,7 +117,8 @@ public class FrameworkDetectionProcessor {
         }
       });
     }
-    catch (CancelledException ignored) { }
+    catch (ProcessCanceledException ignored) {
+    }
   }
 
   private static class FrameworkDetectorData {

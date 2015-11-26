@@ -71,7 +71,6 @@ binding.setVariable("mem32", "-server -Xms128m -Xmx512m -XX:MaxPermSize=250m -XX
 binding.setVariable("mem64", "-Xms128m -Xmx750m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=240m")
 binding.setVariable("common_vmoptions", "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -ea " +
                                         "-Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
-                                        "-Djava.ext.dirs=\"\" " +
                                         "-XX:+HeapDumpOnOutOfMemoryError -XX:-OmitStackTraceInFastThrow")
 
 binding.setVariable("vmOptions", { "$common_vmoptions".trim() })
@@ -338,6 +337,7 @@ binding.setVariable("commonJvmArgsForTests", {
     "-ea",
     "-Dfile.encoding=UTF-8",
     "-Dio.netty.leakDetectionLevel=PARANOID",
+//    yjpOptions("junit", "64"), // uncomment to start tests with a profiling agent (e.g. in a personal build)
     "-server",
     "-Xbootclasspath/p:${projectBuilder.moduleOutput(findModule("boot"))}",
     "-XX:+HeapDumpOnOutOfMemoryError",
@@ -346,6 +346,8 @@ binding.setVariable("commonJvmArgsForTests", {
     "-Didea.system.path=${p("teamcity.build.tempDir")}/system",
     "-Xdebug",
     "-XX:ReservedCodeCacheSize=240m",
+    "-XX:SoftRefLRUPolicyMSPerMB=50",
+    "-XX:+UseConcMarkSweepGC",
     "-XX:-OmitStackTraceInFastThrow",
     jdwp
   ]

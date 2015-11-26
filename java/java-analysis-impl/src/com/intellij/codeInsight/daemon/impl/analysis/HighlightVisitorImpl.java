@@ -322,21 +322,15 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
             myHolder.add(result);
           }
           else {
-            if (!LambdaUtil.isLambdaFullyInferred(expression, functionalInterfaceType) && !expression.hasFormalParameterTypes()) {
-              final PsiCallExpression callExpression = PsiTreeUtil.getParentOfType(expression, PsiCallExpression.class);
-              String description;
-              if (callExpression != null) {
-                final JavaResolveResult result = callExpression.resolveMethodGenerics();
-                description = result instanceof MethodCandidateInfo ? ((MethodCandidateInfo)result).getInferenceErrorMessage() : null;
-              }
-              else {
-                description = null;
-              }
-              if (description == null) {
-                description = "Cyclic inference";
-              }
-              HighlightInfo result =
-                HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
+            final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+            final PsiCallExpression callExpression = parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression ? 
+                                                     (PsiCallExpression)parent.getParent() : null;
+            final JavaResolveResult containingCallResolveResult = callExpression != null ? callExpression.resolveMethodGenerics() : null;
+            final String errorMessage = containingCallResolveResult instanceof MethodCandidateInfo ?
+                                        ((MethodCandidateInfo)containingCallResolveResult).getInferenceErrorMessage() : null;
+            if (errorMessage != null) {
+              HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                .range(expression).descriptionAndTooltip(errorMessage).create();
               myHolder.add(result);
             }
             else {

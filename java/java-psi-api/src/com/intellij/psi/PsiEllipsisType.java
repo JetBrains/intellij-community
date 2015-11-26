@@ -35,6 +35,9 @@ public class PsiEllipsisType extends PsiArrayType {
   public PsiEllipsisType(@NotNull PsiType componentType, @NotNull PsiAnnotation[] annotations) {
     super(componentType, annotations);
   }
+  public PsiEllipsisType(@NotNull PsiType componentType, @NotNull TypeAnnotationProvider annotations) {
+    super(componentType, annotations);
+  }
 
   @NotNull
   public static PsiType createEllipsis(@NotNull PsiType componentType, @NotNull PsiAnnotation[] annotations) {
@@ -71,16 +74,12 @@ public class PsiEllipsisType extends PsiArrayType {
    * @return the array type instance.
    */
   public PsiType toArrayType() {
-    return getComponentType().createArrayType(getAnnotations());
+    return new PsiArrayType(getComponentType(), getAnnotationProvider());
   }
 
   @Override
   public <A> A accept(@NotNull PsiTypeVisitor<A> visitor) {
     return visitor.visitEllipsisType(this);
-  }
-
-  public boolean equals(Object obj) {
-    return obj instanceof PsiEllipsisType && super.equals(obj);
   }
 
   public int hashCode() {

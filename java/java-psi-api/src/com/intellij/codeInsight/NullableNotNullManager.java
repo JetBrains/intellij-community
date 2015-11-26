@@ -143,6 +143,11 @@ public abstract class NullableNotNullManager implements PersistentStateComponent
   }
 
   @Nullable
+  public PsiAnnotation copyNullableAnnotation(@NotNull PsiModifierListOwner original, @NotNull PsiModifierListOwner generated) {
+    return copyAnnotation(getNullableAnnotation(original, false), generated);
+  }
+
+  @Nullable
   public PsiAnnotation copyNullableOrNotNullAnnotation(@NotNull PsiModifierListOwner original, @NotNull PsiModifierListOwner generated) {
     PsiAnnotation annotation = getNullableAnnotation(original, false);
     if (annotation == null) annotation = getNotNullAnnotation(original, false);

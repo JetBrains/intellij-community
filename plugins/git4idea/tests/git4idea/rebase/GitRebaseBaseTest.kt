@@ -16,46 +16,27 @@
 package git4idea.rebase
 
 import com.intellij.dvcs.repo.Repository
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType.ERROR
-import com.intellij.notification.NotificationType.INFORMATION
-import com.intellij.notification.NotificationType.WARNING
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.Executor
 import git4idea.GitUtil
-import git4idea.commands.Git
 import git4idea.repo.GitRepository
 import git4idea.test.*
 import git4idea.test.GitExecutor.cd
 import git4idea.test.GitExecutor.git
-import git4idea.test.GitTestUtil.assertNotification
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 
 public abstract class GitRebaseBaseTest : GitPlatformTest() {
 
   protected val LOCAL_CHANGES_WARNING : String = "Note that some local changes were <a>stashed</a> before rebase."
 
   lateinit protected var myVcsHelper: MockVcsHelper
-  lateinit protected var myFailingGit: TestGitImpl
 
   override fun setUp() {
     super.setUp()
 
     myVcsHelper = GitTestUtil.overrideService(myProject, AbstractVcsHelper::class.java, MockVcsHelper::class.java)
-    myFailingGit = GitTestUtil.overrideService(Git::class.java, TestGitImpl::class.java)
   }
 
-  override fun tearDown() {
-    try {
-      myFailingGit.setShouldFail { false } // to do check for null
-    }
-    finally {
-      super.tearDown()
-    }
-  }
-
-  override fun createRepository(path: String) = GitTestUtil.createRepository(myProject, path, false)
+  override fun createRepository(rootDir: String) = GitTestUtil.createRepository(myProject, rootDir, false)
 
   override fun getDebugLogCategories() = listOf("#" + GitRebaseProcess::class.java.name)
 
@@ -116,20 +97,6 @@ public abstract class GitRebaseBaseTest : GitPlatformTest() {
     }
   }
 
-  protected fun assertSuccessfulNotification(message: String) {
-    assertNotification(INFORMATION, "Rebase Successful", message, myVcsNotifier.lastNotification)
-  }
-
-  protected fun assertWarningNotification(title: String, message: String) {
-    assertNotification(WARNING, title, message, myVcsNotifier.lastNotification)
-  }
-
-  protected fun assertErrorNotification(title: String, message: String) : Notification {
-    val notification = myVcsNotifier.lastNotification
-    assertNotification(ERROR, title, message, notification)
-    return notification
-  }
-
   protected fun GitRepository.`make rebase fail on 2nd commit`() {
     build(this) {
       master {
@@ -147,7 +114,7 @@ public abstract class GitRebaseBaseTest : GitPlatformTest() {
   protected fun GitRepository.`make rebase fail after resolving conflicts`() {
     myVcsHelper.onMerge {
       resolveConflicts(this)
-      myFailingGit.setShouldFail { true }
+      myGit.setShouldRebaseFail { true }
     }
   }
 
@@ -171,8 +138,8 @@ public abstract class GitRebaseBaseTest : GitPlatformTest() {
 
   protected fun assertNotRebased(feature: String, master: String, repository: GitRepository) {
     cd(repository)
-    assertFalse(git("rev-parse " + master) == git("merge-base $feature $master"),
-                "$feature is unexpectedly rebased on $master" + GitUtil.mention(repository))
+    assertFalse("$feature is unexpectedly rebased on $master" + GitUtil.mention(repository),
+                git("rev-parse " + master) == git("merge-base $feature $master"))
   }
 
   protected fun assertNoRebaseInProgress(repository: GitRepository) {
@@ -190,7 +157,7 @@ public abstract class GitRebaseBaseTest : GitPlatformTest() {
   }
 
   protected fun GitRepository.assertNoLocalChanges() {
-    assertEquals("", gitStatus(), "There should be no local changes!")
+    assertEquals("There should be no local changes!", "", gitStatus())
   }
 
   protected fun GitRepository.isDirty(): Boolean {
@@ -216,8 +183,8 @@ public abstract class GitRebaseBaseTest : GitPlatformTest() {
 
     public fun assertNewFile(repository: GitRepository, file: String, content: String) {
       cd(repository)
-      assertEquals("A  " + file, git("status --porcelain"), "Incorrect git status output")
-      assertEquals(content, Executor.cat(file), "Incorrect content of the file [$file]")
+      assertEquals("Incorrect git status output", "A  " + file, git("status --porcelain"))
+      assertEquals("Incorrect content of the file [$file]", content, Executor.cat(file))
     }
   }
 }

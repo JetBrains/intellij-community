@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -54,11 +53,11 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
     myMediatedProcess = withMediator && MEDIATOR_KEY.get(commandLine) == Boolean.TRUE;
   }
 
-  public KillableColoredProcessHandler(@NotNull Process process, @Nullable String commandLine) {
+  public KillableColoredProcessHandler(@NotNull Process process, @NotNull String commandLine) {
     super(process, commandLine);
   }
 
-  public KillableColoredProcessHandler(@NotNull Process process, @Nullable String commandLine, @NotNull Charset charset) {
+  public KillableColoredProcessHandler(@NotNull Process process, @NotNull String commandLine, @NotNull Charset charset) {
     super(process, commandLine, charset);
   }
 

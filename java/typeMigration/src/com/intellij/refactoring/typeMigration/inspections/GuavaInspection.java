@@ -18,6 +18,7 @@ package com.intellij.refactoring.typeMigration.inspections;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -57,8 +58,8 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
 //public class GuavaInspection extends BaseJavaBatchLocalInspectionTool {
   private final static Logger LOG = Logger.getInstance(GuavaInspection.class);
 
-  private final static String PROBLEM_DESCRIPTION_FOR_VARIABLE = "Guava's functional primitives can be replaced by Java API";
-  private final static String PROBLEM_DESCRIPTION_FOR_METHOD_CHAIN = "Guava's FluentIterable method chain can be replaced by Java API";
+  public final static String PROBLEM_DESCRIPTION_FOR_VARIABLE = "Guava's functional primitives can be replaced by Java API";
+  public final static String PROBLEM_DESCRIPTION_FOR_METHOD_CHAIN = "Guava's FluentIterable method chain can be replaced by Java API";
 
   private final static SoftLazyValue<Set<String>> FLUENT_ITERABLE_STOP_METHODS = new SoftLazyValue<Set<String>>() {
     @NotNull
@@ -253,12 +254,11 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
     }
 
     @Override
-    public void invoke(@NotNull Project project,
-                       @NotNull PsiFile file,
+    public void invoke(@NotNull final Project project,
+                       @NotNull final PsiFile file,
                        @Nullable("is null when called from inspection") Editor editor,
                        @NotNull PsiElement startElement,
                        @NotNull PsiElement endElement) {
-
       if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
       try {
         final PsiMethodCallExpression expr = (PsiMethodCallExpression)startElement;
@@ -269,13 +269,18 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
         final TypeConversionDescriptorBase conversion =
           rules.findConversion(myInitialType, myTargetType, expr.resolveMethod(), expr, new TypeMigrationLabeler(rules));
         LOG.assertTrue(conversion != null);
-        PsiElement replacedExpression = TypeMigrationReplacementUtil.replaceExpression(expr, project, conversion);
-        if (isIterableAssignment) {
-          final String expressionText = replacedExpression.getText() + ".collect(java.util.stream.Collectors.toList())";
-          replacedExpression = replacedExpression.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(expressionText, replacedExpression));
-        }
-        JavaCodeStyleManager.getInstance(project).shortenClassReferences(replacedExpression);
-        UndoUtil.markPsiFileForUndo(file);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            PsiElement replacedExpression = TypeMigrationReplacementUtil.replaceExpression(expr, project, conversion);
+            if (isIterableAssignment) {
+              final String expressionText = replacedExpression.getText() + ".collect(java.util.stream.Collectors.toList())";
+              replacedExpression = replacedExpression.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(expressionText, replacedExpression));
+            }
+            JavaCodeStyleManager.getInstance(project).shortenClassReferences(replacedExpression);
+            UndoUtil.markPsiFileForUndo(file);
+          }
+        });
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -315,7 +320,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
 
     @Override
     public boolean startInWriteAction() {
-      return true;
+      return false;
     }
 
     @NotNull
@@ -376,7 +381,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
 
     @Override
     public boolean startInWriteAction() {
-      return true;
+      return false;
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.appengine.enhancement;
 
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.appengine.build.EnhancerProcessHandlerBase;
 
 /**
@@ -25,7 +26,7 @@ import org.jetbrains.jps.appengine.build.EnhancerProcessHandlerBase;
 public class EnhancerProcessHandler extends EnhancerProcessHandlerBase {
   private final CompileContext myContext;
 
-  public EnhancerProcessHandler(final Process process, final String commandLine, CompileContext context) {
+  public EnhancerProcessHandler(final Process process, @NotNull String commandLine, CompileContext context) {
     super(process, commandLine, null);
     myContext = context;
   }

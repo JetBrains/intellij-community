@@ -19,7 +19,6 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -38,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.*;
@@ -47,8 +45,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class ApplicationInfoImpl extends ApplicationInfoEx {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.ApplicationInfoImpl");
-
   private String myCodeName = null;
   private String myMajorVersion = null;
   private String myMinorVersion = null;
@@ -72,7 +68,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private int myLicenseOffsetY = Registry.is("ide.new.about") ? 85 : 30;
   private String mySplashImageUrl = null;
   private String myAboutImageUrl = null;
-  private Color mySplashTextColor = new Color(0, 35, 135);  // idea blue
+  @SuppressWarnings("UseJBColor") private Color mySplashTextColor = new Color(0, 35, 135);  // idea blue
   private String myIconUrl = "/icon.png";
   private String mySmallIconUrl = "/icon_small.png";
   private String myBigIconUrl = null;
@@ -198,15 +194,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String DEFAULT_PLUGINS_HOST = "http://plugins.jetbrains.com";
 
   ApplicationInfoImpl() {
+    String resource = IDEA_PATH + ApplicationNamesInfo.getComponentName() + XML_EXTENSION;
     try {
-      Document doc = JDOMUtil.loadDocument(ApplicationInfoImpl.class, IDEA_PATH + ApplicationNamesInfo.getComponentName() + XML_EXTENSION);
+      Document doc = JDOMUtil.loadDocument(ApplicationInfoImpl.class, resource);
       loadState(doc.getRootElement());
     }
-    catch (FileNotFoundException e) {
-      LOG.error("Resource is not in classpath or wrong platform prefix: " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY), e);
-    }
     catch (Exception e) {
-      LOG.error(e);
+      throw new RuntimeException("Cannot load resource: " + resource, e);
     }
   }
 
@@ -360,7 +354,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     if (myProgressTailIcon == null && myProgressTailIconName != null) {
       try {
         final URL url = getClass().getResource(myProgressTailIconName);
-        final Image image = ImageLoader.loadFromUrl(url, false);
+        @SuppressWarnings({"deprecation", "UnnecessaryFullyQualifiedName"}) final Image image = com.intellij.util.ImageLoader.loadFromUrl(url, false);
         if (image != null) {
           myProgressTailIcon = new ImageIcon(image);
         }

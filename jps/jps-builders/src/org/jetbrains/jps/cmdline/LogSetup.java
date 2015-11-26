@@ -15,15 +15,12 @@
  */
 package org.jetbrains.jps.cmdline;
 
+import com.intellij.openapi.diagnostic.Log4jBasedLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
-import org.apache.log4j.Level;
 import org.apache.log4j.PropertyConfigurator;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.GlobalOptions;
 
 import java.io.*;
@@ -88,54 +85,7 @@ public class LogSetup {
   private static class MyLoggerFactory implements Logger.Factory {
     @Override
     public Logger getLoggerInstance(String category) {
-      final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(category);
-
-      return new Logger() {
-        @Override
-        public boolean isDebugEnabled() {
-          return logger.isDebugEnabled();
-        }
-
-        @Override
-        public void debug(@NonNls String message) {
-          logger.debug(message);
-        }
-
-        @Override
-        public void debug(@Nullable Throwable t) {
-          logger.debug("", t);
-        }
-
-        @Override
-        public void debug(@NonNls String message, @Nullable Throwable t) {
-          logger.debug(message, t);
-        }
-
-        @Override
-        public void error(@NonNls String message, @Nullable Throwable t, @NotNull @NonNls String... details) {
-          logger.error(message, t);
-        }
-
-        @Override
-        public void info(@NonNls String message) {
-          logger.info(message);
-        }
-
-        @Override
-        public void info(@NonNls String message, @Nullable Throwable t) {
-          logger.info(message, t);
-        }
-
-        @Override
-        public void warn(@NonNls String message, @Nullable Throwable t) {
-          logger.warn(message, t);
-        }
-
-        @Override
-        public void setLevel(Level level) {
-          logger.setLevel(level);
-        }
-      };
+      return new Log4jBasedLogger(org.apache.log4j.Logger.getLogger(category));
     }
   }
 }

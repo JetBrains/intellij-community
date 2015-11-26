@@ -36,7 +36,7 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
   }
 
   @SuppressWarnings("UnusedParameters")
-  protected CollectionListModel(@NotNull List<T> items, boolean useListAsIs) {
+  public CollectionListModel(@NotNull List<T> items, boolean useListAsIs) {
     myItems = items;
   }
 

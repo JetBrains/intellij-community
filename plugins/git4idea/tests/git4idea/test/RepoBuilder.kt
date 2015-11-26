@@ -15,12 +15,8 @@
  */
 package git4idea.test
 
-import com.intellij.openapi.vcs.Executor.append
-import com.intellij.openapi.vcs.Executor.touch
 import git4idea.repo.GitRepository
-import git4idea.test.GitExecutor.addCommit
-import git4idea.test.GitExecutor.cd
-import git4idea.test.GitExecutor.git
+import git4idea.test.GitExecutor.*
 import java.io.File
 import java.util.*
 
@@ -41,7 +37,7 @@ public class RepoBuilder(val repo: GitRepository) {
   private val myCommitIndices = HashMap<Int, String>()
   private var myCurrentBranch : String = master
 
-  fun String.invoke(commands: RepoBuilder.() -> Unit) { // switch branch
+  operator fun String.invoke(commands: RepoBuilder.() -> Unit) { // switch branch
     createOrCheckout(this)
     myCurrentBranch = this
     commands()
@@ -65,15 +61,15 @@ public class RepoBuilder(val repo: GitRepository) {
 
   private fun isFresh(): Boolean = myCommitIndices.isEmpty()
 
-  fun String.invoke(fromCommit: Int, commands: RepoBuilder.() -> Unit) {
+  operator fun String.invoke(fromCommit: Int, commands: RepoBuilder.() -> Unit) {
     git("checkout -b $this ${myCommitIndices[fromCommit]}")
     myCurrentBranch = this
     commands()
   }
 
-  fun Int.invoke(file: String = this.toString() + ".txt",
-                 content: String = "More content in $myCurrentBranch: ${randomHash()}",
-                 commitMessage: String = if (File(repo.getRoot().getPath(), file).exists()) "Created $file" else "Modified $file") {
+  operator fun Int.invoke(file: String = this.toString() + ".txt",
+                          content: String = "More content in $myCurrentBranch: ${randomHash()}",
+                          commitMessage: String = if (File(repo.getRoot().getPath(), file).exists()) "Created $file" else "Modified $file") {
     modifyAndCommit(this, file, content, commitMessage)
   }
 

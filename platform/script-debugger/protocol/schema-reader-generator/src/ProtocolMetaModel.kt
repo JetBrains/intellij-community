@@ -12,29 +12,29 @@ val UNKNOWN_TYPE: String = "unknown"
 val ANY_TYPE: String = "any"
 
 interface ItemDescriptor {
-  fun description(): String?
+  val description: String?
 
-  fun type(): String
+  val type: String?
 
-  fun getEnum(): List<String>?
+  val enum: List<String>?
 
-  fun items(): ProtocolMetaModel.ArrayItemType
+  val items: ProtocolMetaModel.ArrayItemType?
 
   interface Named : Referenceable {
     fun name(): String
 
-    @JsonOptionalField
-    fun shortName(): String?
+    val shortName: String?
 
-    fun optional(): Boolean
+    val optional: Boolean
   }
 
   interface Referenceable : ItemDescriptor {
-    fun ref(): String
+    @ProtocolName("\$ref")
+    val ref: String?
   }
 
   interface Type : ItemDescriptor {
-    fun properties(): List<ProtocolMetaModel.ObjectProperty>?
+    val properties: List<ProtocolMetaModel.ObjectProperty>?
   }
 }
 
@@ -46,176 +46,80 @@ interface ProtocolSchemaReader {
 /**
  * Defines schema of WIP metamodel defined in http://svn.webkit.org/repository/webkit/trunk/Source/WebCore/inspector/Inspector.json
  */
-public interface ProtocolMetaModel {
+interface ProtocolMetaModel {
   @JsonType
-  public interface Root {
-    @JsonOptionalField
-    public fun version(): Version
+  interface Root {
+    val version: Version?
 
-    public fun domains(): List<Domain>
+    fun domains(): List<Domain>
+  }
+
+  interface Version {
+    fun major(): String
+    fun minor(): String
+  }
+
+  interface Domain {
+    fun domain(): String
+
+    val types: List<StandaloneType>?
+
+    fun commands(): List<Command>
+
+    val events: List<Event>?
+
+    val description: String?
+
+    val hidden: Boolean
+  }
+
+  interface Command {
+    fun name(): String
+
+    val parameters: List<Parameter>?
+
+    val returns: List<Parameter>?
+
+    val description: String?
+
+    val hidden: Boolean
+
+    val async: Boolean
+  }
+
+  interface Parameter : ItemDescriptor.Named {
+    val hidden: Boolean
+
+    @JsonField(allowAnyPrimitiveValue = true)
+    val default: String?
+  }
+
+  interface Event {
+    fun name(): String
+
+    val parameters: List<Parameter>?
+
+    val description: String?
+
+    val hidden: Boolean
+
+    val optionalData: Boolean
   }
 
   @JsonType
-  public interface Version {
-    public fun major(): String
-    public fun minor(): String
+  interface StandaloneType : ItemDescriptor.Type {
+    fun id(): String
+
+    val hidden: Boolean
   }
 
-  @JsonType
-  public interface Domain {
-    public fun domain(): String
-
-    @JsonOptionalField
-    public fun types(): List<StandaloneType>?
-
-    public fun commands(): List<Command>
-
-    @JsonOptionalField
-    public fun events(): List<Event>?
-
-    @JsonOptionalField
-    public fun description(): String
-
-    @JsonOptionalField
-    public fun hidden(): Boolean
+  interface ArrayItemType : ItemDescriptor.Type, ItemDescriptor.Referenceable {
+    val optional: Boolean
   }
 
-  @JsonType
-  public interface Command {
-    public fun name(): String
-
-    @JsonOptionalField
-    public fun parameters(): List<Parameter>?
-
-    @JsonOptionalField
-    public fun returns(): List<Parameter>?
-
-    @JsonOptionalField
-    public fun description(): String
-
-    @JsonOptionalField
-    public fun hidden(): Boolean
-
-    @JsonOptionalField
-    public fun async(): Boolean
-  }
-
-  @JsonType
-  public interface Parameter : ItemDescriptor.Named {
+  interface ObjectProperty : ItemDescriptor.Named {
     override fun name(): String
 
-    @JsonOptionalField
-    override fun shortName(): String
-
-    @JsonOptionalField
-    override fun type(): String
-
-    @JsonOptionalField
-    override fun items(): ArrayItemType
-
-    @JsonField(name = "enum", optional = true)
-    override fun getEnum(): List<String>
-
-    @JsonField(name = "\$ref", optional = true)
-    override fun ref(): String
-
-    @JsonOptionalField
-    override fun optional(): Boolean
-
-    @JsonOptionalField
-    override fun description(): String
-
-    @JsonOptionalField
-    public fun hidden(): Boolean
-  }
-
-  @JsonType
-  public interface Event {
-    public fun name(): String
-
-    @JsonOptionalField
-    public fun parameters(): List<Parameter>
-
-    @JsonOptionalField
-    public fun description(): String
-
-    @JsonOptionalField
-    public fun hidden(): Boolean
-  }
-
-  @JsonType
-  public interface StandaloneType : ItemDescriptor.Type {
-    public fun id(): String
-
-    @JsonOptionalField
-    override fun description(): String?
-
-    override fun type(): String
-
-    @JsonOptionalField
-    public fun hidden(): Boolean
-
-    @JsonOptionalField
-    override fun properties(): List<ObjectProperty>
-
-    @JsonField(name = "enum", optional = true)
-    override fun getEnum(): List<String>
-
-    @JsonOptionalField
-    override fun items(): ArrayItemType
-  }
-
-
-  @JsonType
-  public interface ArrayItemType : ItemDescriptor.Type, ItemDescriptor.Referenceable {
-    @JsonOptionalField
-    override fun description(): String
-
-    @JsonOptionalField
-    public fun optional(): Boolean
-
-    @JsonOptionalField
-    override fun type(): String
-
-    @JsonOptionalField
-    override fun items(): ArrayItemType
-
-    @JsonField(name = "\$ref", optional = true)
-    override fun ref(): String
-
-    @JsonField(name = "enum", optional = true)
-    override fun getEnum(): List<String>
-
-    @JsonOptionalField
-    override fun properties(): List<ObjectProperty>
-  }
-
-  @JsonType
-  public interface ObjectProperty : ItemDescriptor.Named {
-    override fun name(): String
-
-    @JsonOptionalField
-    override fun shortName(): String
-
-    @JsonOptionalField
-    override fun description(): String
-
-    @JsonOptionalField
-    override fun optional(): Boolean
-
-    @JsonOptionalField
-    override fun type(): String
-
-    @JsonOptionalField
-    override fun items(): ArrayItemType
-
-    @JsonField(name = "\$ref", optional = true)
-    override fun ref(): String
-
-    @JsonField(name = "enum", optional = true)
-    override fun getEnum(): List<String>
-
-    @JsonOptionalField
-    public fun hidden(): Boolean
+    val hidden: Boolean
   }
 }

@@ -16,6 +16,7 @@
 package org.jetbrains.jsonProtocol
 
 import io.netty.buffer.ByteBuf
+import org.jetbrains.io.JsonReaderEx
 
 interface Request<RESULT>  {
   val buffer: ByteBuf
@@ -23,4 +24,8 @@ interface Request<RESULT>  {
   val methodName: String
 
   fun finalize(id: Int)
+}
+
+interface ResponseResultReader {
+  fun readResult(methodName: String, reader: JsonReaderEx): Any?
 }

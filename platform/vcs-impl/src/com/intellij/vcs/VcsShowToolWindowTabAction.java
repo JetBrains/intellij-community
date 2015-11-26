@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
@@ -37,21 +36,18 @@ public abstract class VcsShowToolWindowTabAction extends DumbAwareAction {
     final ChangesViewContentManager changesViewContentManager = (ChangesViewContentManager)ChangesViewContentManager.getInstance(project);
     final String tabName = getTabName();
 
-    if (toolWindow.isActive() && changesViewContentManager.isContentSelected(tabName)) {
+    boolean contentAlreadySelected = changesViewContentManager.isContentSelected(tabName);
+    if (toolWindow.isActive() && contentAlreadySelected) {
         toolWindow.hide(null);
     }
     else {
-      toolWindow.activate(new Runnable() {
+      Runnable runnable = contentAlreadySelected ? null : new Runnable() {
         @Override
         public void run() {
-          IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
-            @Override
-            public void run() {
-              changesViewContentManager.selectContent(tabName, true);
-            }
-          });
+          changesViewContentManager.selectContent(tabName, true);
         }
-      }, true, true);
+      };
+      toolWindow.activate(runnable, true, true);
     }
   }
 

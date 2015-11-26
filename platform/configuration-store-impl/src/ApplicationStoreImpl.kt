@@ -74,11 +74,11 @@ class ApplicationStorageManager(private val application: Application, pathMacroM
   }
 
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
-    if (component is NamedJDOMExternalizable) {
-      return "${component.externalFileName}${FileStorageCoreUtil.DEFAULT_EXT}"
+    return if (component is NamedJDOMExternalizable) {
+      "${component.externalFileName}${FileStorageCoreUtil.DEFAULT_EXT}"
     }
     else {
-      return DEFAULT_STORAGE_SPEC
+      DEFAULT_STORAGE_SPEC
     }
   }
 
@@ -103,20 +103,12 @@ class ApplicationStorageManager(private val application: Application, pathMacroM
     }
   }
 
-  override fun normalizeFileSpec(fileSpec: String): String {
-    var path = super.normalizeFileSpec(fileSpec)
-    if (path.startsWithMacro(StoragePathMacros.APP_CONFIG)) {
-      return path.substring(StoragePathMacros.APP_CONFIG.length + 1)
-    }
-    return path
-  }
+  override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), StoragePathMacros.APP_CONFIG)
 
-  override fun expandMacros(path: String): String {
-    if (path[0] == '$') {
-      return super.expandMacros(path)
-    }
-    else {
-      return "${expandMacro(StoragePathMacros.APP_CONFIG)}/$path"
-    }
+  override fun expandMacros(path: String) = if (path[0] == '$') {
+    super.expandMacros(path)
+  }
+  else {
+    "${expandMacro(StoragePathMacros.APP_CONFIG)}/$path"
   }
 }

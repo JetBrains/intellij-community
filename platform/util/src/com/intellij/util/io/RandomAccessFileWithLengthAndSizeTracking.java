@@ -38,15 +38,15 @@ class RandomAccessFileWithLengthAndSizeTracking extends RandomAccessFile {
     mySize = super.length();
     myPath = name;
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Inst:" + this + "," + Thread.currentThread() + "," + getClass().getClassLoader());
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("Inst:" + this + "," + Thread.currentThread() + "," + getClass().getClassLoader());
     }
   }
 
   @Override
   public void seek(long pos) throws IOException {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Seek:" + this + "," + Thread.currentThread() + "," + pos + "," + myPointer + "," + mySize);
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("Seek:" + this + "," + Thread.currentThread() + "," + pos + "," + myPointer + "," + mySize);
     }
     if (doAssertions) {
       checkSizeAndPointerAssertions();
@@ -87,8 +87,8 @@ class RandomAccessFileWithLengthAndSizeTracking extends RandomAccessFile {
 
   @Override
   public void write(byte[] b, int off, int len) throws IOException {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("write:" + this + "," + Thread.currentThread() + "," + len + "," + myPointer + "," + mySize);
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("write:" + this + "," + Thread.currentThread() + "," + len + "," + myPointer + "," + mySize);
     }
     if (doAssertions) {
       checkSizeAndPointerAssertions();
@@ -104,8 +104,8 @@ class RandomAccessFileWithLengthAndSizeTracking extends RandomAccessFile {
     }
     myPointer = pointer;
     mySize = Math.max(pointer, mySize);
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("after write:" + this + "," + Thread.currentThread() + "," + myPointer + "," + mySize );
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("after write:" + this + "," + Thread.currentThread() + "," + myPointer + "," + mySize );
     }
     if (doAssertions) {
       checkSizeAndPointerAssertions();
@@ -126,8 +126,8 @@ class RandomAccessFileWithLengthAndSizeTracking extends RandomAccessFile {
 
   @Override
   public int read(byte[] b, int off, int len) throws IOException {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("read:" + this + "," + Thread.currentThread() + "," + len + "," + myPointer );
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("read:" + this + "," + Thread.currentThread() + "," + len + "," + myPointer );
     }
     if (doAssertions) {
       checkSizeAndPointerAssertions();
@@ -175,8 +175,8 @@ class RandomAccessFileWithLengthAndSizeTracking extends RandomAccessFile {
 
   @Override
   public void close() throws IOException {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Closed:" + this + "," + Thread.currentThread() );
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("Closed:" + this + "," + Thread.currentThread() );
     }
     super.close();
   }

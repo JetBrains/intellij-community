@@ -23,8 +23,10 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -58,7 +60,18 @@ public class UpdateCheckerComponent implements ApplicationComponent {
 
   public UpdateCheckerComponent(@NotNull final Application app, @NotNull UpdateSettings settings) {
     mySettings = settings;
+    updateDefaultChannel();
+    checkSecureConnection(app);
+    scheduleOnStartCheck(app);
+  }
 
+  private void updateDefaultChannel() {
+    if (ApplicationInfoEx.getInstanceEx().isEAP() && UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds()) {
+      mySettings.setUpdateChannelType(ChannelStatus.EAP.getCode());
+    }
+  }
+
+  private void checkSecureConnection(@NotNull final Application app) {
     if (mySettings.isSecureConnection() && !mySettings.canUseSecureConnection()) {
       mySettings.setSecureConnection(false);
 
@@ -83,8 +96,6 @@ public class UpdateCheckerComponent implements ApplicationComponent {
         }
       }, ModalityState.NON_MODAL);
     }
-
-    scheduleOnStartCheck(app);
   }
 
   private void scheduleOnStartCheck(@NotNull Application app) {

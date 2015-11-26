@@ -44,8 +44,8 @@ import java.util.List;
  */
 public class VFSTestFrameworkListener {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.testing.VFSTestFrameworkListener");
-  private static final MergingUpdateQueue myQueue = new MergingUpdateQueue("TestFrameworkChecker", 5000, true, null);
-  private PyTestFrameworkService myService;
+  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("TestFrameworkChecker", 5000, true, null);
+  private final PyTestFrameworkService myService;
 
   public VFSTestFrameworkListener() {
     myService = PyTestFrameworkService.getInstance();

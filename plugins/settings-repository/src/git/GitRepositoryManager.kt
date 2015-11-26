@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SmartList
 import org.eclipse.jgit.api.AddCommand
+import org.eclipse.jgit.api.errors.NoHeadException
 import org.eclipse.jgit.api.errors.UnmergedPathsException
 import org.eclipse.jgit.errors.TransportException
 import org.eclipse.jgit.ignore.IgnoreNode
@@ -137,6 +138,10 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
           indicator?.checkCanceled()
           return commitIfCan(indicator, repository.fixAndGetState())
         }
+      }
+      catch (e: NoHeadException) {
+        LOG.warn("Cannot commit - no HEAD", e)
+        return false
       }
     }
   }

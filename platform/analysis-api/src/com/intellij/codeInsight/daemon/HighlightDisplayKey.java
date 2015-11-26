@@ -51,8 +51,9 @@ public class HighlightDisplayKey {
 
   @Nullable
   public static HighlightDisplayKey register(@NonNls @NotNull final String name) {
-    if (find(name) != null) {
-      LOG.info("Key with name \'" + name + "\' already registered");
+    final HighlightDisplayKey key = find(name);
+    if (key != null) {
+      LOG.error("Key with name \'" + name + "\' already registered with display name: " + getDisplayNameByKey(key));
       return null;
     }
     return new HighlightDisplayKey(name);
@@ -86,8 +87,9 @@ public class HighlightDisplayKey {
   public static HighlightDisplayKey register(@NonNls @NotNull final String name,
                                              @NotNull final Computable<String> displayName,
                                              @NotNull @NonNls final String id) {
-    if (find(name) != null) {
-      LOG.info("Key with name \'" + name + "\' already registered");
+    final HighlightDisplayKey key = find(name);
+    if (key != null) {
+      LOG.error("Key with name \'" + name + "\' already registered with display name: " + getDisplayNameByKey(key));
       return null;
     }
     HighlightDisplayKey highlightDisplayKey = new HighlightDisplayKey(name, id);

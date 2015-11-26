@@ -8,7 +8,7 @@ class GenericsTest98 {
         List<Movable<? extends Serializable>> list = new ArrayList<Movable<? extends Serializable>> ();
         Factory factory = Factory.newInstance();
         // Doesn't compile, but Idea doesn't complain
-        Mover<? extends Serializable> mover  = factory.getNew<error descr="'getNew(java.util.List<? extends Movable<java.io.Serializable>>)' in 'Factory' cannot be applied to '(java.util.List<Movable<? extends java.io.Serializable>>)'">(list)</error>;
+        Mover<? extends Serializable> mover  = factory.getNew<error descr="'getNew(java.util.List<? extends Movable<T>>)' in 'Factory' cannot be applied to '(java.util.List<Movable<? extends java.io.Serializable>>)'">(list)</error>;
     }
 }
 

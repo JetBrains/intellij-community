@@ -83,6 +83,7 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -118,6 +119,7 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -689,7 +691,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals(0, count[0]);
   }
 
-  
   public void testLineMarkersReuse() throws Throwable {
     configureByFile(BASE_PATH + "LineMarkerChange.java");
 
@@ -701,37 +702,40 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     type('X');
 
-    final Collection<RangeHighlighter> changed = new HashSet<>();
+    final Collection<String> changed = new ArrayList<>();
     MarkupModelEx modelEx = (MarkupModelEx)DocumentMarkupModel.forDocument(getDocument(getFile()), getProject(), true);
     modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
-        changed(highlighter);
+        changed(highlighter, ExceptionUtil.getThrowableText(new Throwable("after added")));
       }
 
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        changed(highlighter);
+        changed(highlighter, ExceptionUtil.getThrowableText(new Throwable("before removed")));
       }
 
       @Override
       public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged) {
-        changed(highlighter);
+        changed(highlighter, ExceptionUtil.getThrowableText(new Throwable("changed")));
       }
 
-      private void changed(@NotNull RangeHighlighterEx highlighter) {
-        String text = highlighter.getDocument().getText().substring(highlighter.getStartOffset(), highlighter.getEndOffset());
-        if (text.equals("X")) return; //non relevant
-        changed.add(highlighter);
+      private void changed(@NotNull RangeHighlighterEx highlighter, String reason) {
+        if (highlighter.getTargetArea() != HighlighterTargetArea.LINES_IN_RANGE) return; // not line marker
+        List<LineMarkerInfo> lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
+        if (ContainerUtil.find(lineMarkers, lm -> lm.highlighter == highlighter) == null) return; // not line marker
+
+        changed.add(highlighter+": \n"+reason);
       }
     });
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    CodeInsightTestFixtureImpl.instantiateAndRun(myFile, myEditor, new int[]{Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS}, false);
+    List<HighlightInfo> infosAfter = CodeInsightTestFixtureImpl.instantiateAndRun(myFile, myEditor, new int[]{/*Pass.UPDATE_ALL, Pass.LOCAL_INSPECTIONS*/}, false);
+    assertNotEmpty(filter(infosAfter, HighlightSeverity.ERROR));
 
     assertEmpty(changed);
-    lineMarkers = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
-    assertEquals(5, lineMarkers.size());
+    List<LineMarkerInfo> lineMarkersAfter = DaemonCodeAnalyzerImpl.getLineMarkers(myEditor.getDocument(), getProject());
+    assertEquals(lineMarkersAfter.size(), lineMarkers.size());
   }
 
   public void testLineMarkersClearWhenTypingAtTheEndOfPsiComment() throws Throwable {

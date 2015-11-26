@@ -40,12 +40,6 @@ public abstract class BuilderAnnotationContributor extends AstTransformContribut
       final PsiElement element = ((GrReferenceExpression)value).resolve();
       return element instanceof PsiClass ? (PsiClass)element : null;
     }
-    else if (value instanceof PsiClassObjectAccessExpression) {
-      PsiType type = ((PsiClassObjectAccessExpression)value).getOperand().getType();
-      if (type instanceof PsiClassType) {
-        return ((PsiClassType)type).resolve();
-      }
-    }
     return null;
   }
 

@@ -38,24 +38,20 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     setHasPty(commandLine instanceof PtyCommandLine);
   }
 
+  @Deprecated
+  /**
+   * @deprecated use {@link OSProcessHandler#OSProcessHandler(Process, String)} or any other ctr instead
+   */
   public OSProcessHandler(@NotNull Process process) {
     this(process, null);
   }
 
-  public OSProcessHandler(@NotNull Process process, @Nullable String commandLine) {
+  public OSProcessHandler(@NotNull Process process, /*NotNull*/ String commandLine) {
     this(process, commandLine, EncodingManager.getInstance().getDefaultCharset());
   }
 
-  @Deprecated
-  /**
-   * @deprecated Use {@link OSProcessHandler#OSProcessHandler(Process, String, Charset, String)} instead
-   */
-  public OSProcessHandler(@NotNull Process process, @Nullable String commandLine, @Nullable Charset charset) {
+  public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset) {
     super(process, commandLine, charset);
-  }
-
-  public OSProcessHandler(@NotNull Process process, @Nullable String commandLine, @Nullable Charset charset, @NotNull String presentableName) {
-    super(process, commandLine, charset, presentableName);
   }
 
   @NotNull
