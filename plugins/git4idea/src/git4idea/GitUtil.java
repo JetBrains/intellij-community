@@ -92,6 +92,14 @@ public class GitUtil {
     // do nothing
   }
 
+  /**
+   * Returns the Git repository location for the given repository root directory, or null if nothing can be found.
+   * Finds the real repository roots for submodules.
+   * <p/>
+   * More precisely: checks if there is {@code .git} directory or file directly under rootDir. <br/>
+   * If there is a directory, performs a quick check that it looks like a Git repository;
+   * if it is a file, follows the path written inside this file to find the submodule repo dir.
+   */
   @Nullable
   public static VirtualFile findGitDir(@NotNull VirtualFile rootDir) {
     VirtualFile dotGit = rootDir.findChild(DOT_GIT);
