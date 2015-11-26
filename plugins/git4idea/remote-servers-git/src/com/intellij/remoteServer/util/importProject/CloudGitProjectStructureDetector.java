@@ -73,7 +73,6 @@ public class CloudGitProjectStructureDetector extends ProjectStructureDetector {
 
     Project project = ProjectManager.getInstance().getDefaultProject();
     GitRepository repository = GitRepositoryImpl.getInstance(repositoryRoot, project, false);
-    repository.update();
 
     for (CloudGitDeploymentDetector deploymentDetector : CloudGitDeploymentDetector.EP_NAME.getExtensions()) {
       String applicationName = deploymentDetector.getFirstApplicationName(repository);
