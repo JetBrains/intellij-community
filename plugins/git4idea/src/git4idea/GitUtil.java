@@ -82,6 +82,7 @@ public class GitUtil {
     }
   };
 
+  private static final String SUBMODULE_REPO_PATH_PREFIX = "gitdir:";
   private final static Logger LOG = Logger.getInstance(GitUtil.class);
 
   /**
@@ -105,14 +106,7 @@ public class GitUtil {
     // if .git is a file with some specific content, it indicates a submodule with a link to the real repository path
     String content = readContent(child);
     if (content == null) return null;
-    String pathToDir;
-    String prefix = "gitdir:";
-    if (content.startsWith(prefix)) {
-      pathToDir = content.substring(prefix.length()).trim();
-    }
-    else {
-      pathToDir = content;
-    }
+    String pathToDir = parsePathToRepository(content);
 
     if (!FileUtil.isAbsolute(pathToDir)) {
       String canonicalPath = FileUtil.toCanonicalPath(FileUtil.join(rootDir.getPath(), pathToDir));
@@ -122,6 +116,12 @@ public class GitUtil {
       pathToDir = FileUtil.toSystemIndependentName(canonicalPath);
     }
     return VcsUtil.getVirtualFileWithRefresh(new File(pathToDir));
+  }
+
+  @NotNull
+  private static String parsePathToRepository(@NotNull String content) {
+    content = content.trim();
+    return content.startsWith(SUBMODULE_REPO_PATH_PREFIX) ? content.substring(SUBMODULE_REPO_PATH_PREFIX.length()).trim() : content;
   }
 
   @Nullable
