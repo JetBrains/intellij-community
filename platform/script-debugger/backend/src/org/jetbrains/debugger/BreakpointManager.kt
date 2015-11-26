@@ -35,7 +35,14 @@ interface BreakpointManager {
 
   fun remove(breakpoint: Breakpoint): Promise<*>
 
-  val functionSupport: FunctionSupport?
+  /**
+   * Supports targets that refer to function text in form of function-returning
+   * JavaScript expression.
+   * E.g. you can set a breakpoint on the 5th line of user method addressed as
+   * 'PropertiesDialog.prototype.loadData'.
+   * Expression is calculated immediately and never recalculated again.
+   */
+  val functionSupport: ((expression: String) -> BreakpointTarget)?
     get() = null
 
   // Could be called multiple times for breakpoint
