@@ -200,6 +200,11 @@ open class OutMessage() {
     writer.name(name).value(value!!.toString())
   }
 
+  fun writeInt(name: String, value: Int) {
+    beginArguments()
+    writer.name(name).value(value.toLong())
+  }
+
   companion object {
     @Throws(IOException::class)
     fun prepareWriteRaw(message: OutMessage, name: String) {
