@@ -68,17 +68,13 @@ private class DebugLogConfigureDialog(project: Project, categories: List<Pair<St
 
   override fun getPreferredFocusedComponent() = myTextArea
 
-  fun getLogCategories(): List<Pair<String, DebugLogManager.DebugLogLevel>> {
-    return myTextArea.text
-        .split(ALL_POSSIBLE_SEPARATORS)
-        .filter { !StringUtil.isEmptyOrSpaces(it) }
-        /*
-        .map({String::trim})
-        */
-        .map {
-          val trimmed = it.trim()
-          if (trimmed.endsWith(TRACE_SUFFIX, ignoreCase = true)) Pair(trimmed.dropLast(TRACE_SUFFIX.length), DebugLogManager.DebugLogLevel.TRACE)
-          else Pair(trimmed, DebugLogManager.DebugLogLevel.DEBUG)
-        }
-  }
+  fun getLogCategories() =
+      myTextArea.text
+          .split(ALL_POSSIBLE_SEPARATORS)
+          .filter { !StringUtil.isEmptyOrSpaces(it) }
+          .map { it.trim() }
+          .map {
+            if (it.endsWith(TRACE_SUFFIX, ignoreCase = true)) Pair(it.dropLast(TRACE_SUFFIX.length), DebugLogManager.DebugLogLevel.TRACE)
+            else Pair(it, DebugLogManager.DebugLogLevel.DEBUG)
+          }
 }
