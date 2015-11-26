@@ -62,6 +62,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   public int DEBUGGER_TRANSPORT;
   public boolean FORCE_CLASSIC_VM;
   public boolean DISABLE_JIT;
+  public boolean SHOW_ALTERNATIVE_SOURCE = true;
   public boolean HOTSWAP_IN_BACKGROUND = true;
   public boolean SKIP_SYNTHETIC_METHODS;
   public boolean SKIP_CONSTRUCTORS;

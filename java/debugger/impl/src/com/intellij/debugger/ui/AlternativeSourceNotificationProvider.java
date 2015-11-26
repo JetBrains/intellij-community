@@ -17,7 +17,7 @@ package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.settings.ViewsGeneralSettings;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.util.ModuleRendererFactory;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -66,7 +66,7 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
   @Nullable
   @Override
   public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
-    if (!ViewsGeneralSettings.getInstance().SHOW_ALTERNATIVE_SOURCE) {
+    if (!DebuggerSettings.getInstance().SHOW_ALTERNATIVE_SOURCE) {
       return null;
     }
     XDebugSession session = XDebuggerManager.getInstance(myProject).getCurrentSession();
@@ -177,7 +177,7 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
       createActionLabel(DebuggerBundle.message("action.disable.text"), new Runnable() {
         @Override
         public void run() {
-          ViewsGeneralSettings.getInstance().SHOW_ALTERNATIVE_SOURCE = false;
+          DebuggerSettings.getInstance().SHOW_ALTERNATIVE_SOURCE = false;
           FILE_PROCESSED_KEY.set(file, null);
           FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
           FileEditor editor = fileEditorManager.getSelectedEditor(file);
