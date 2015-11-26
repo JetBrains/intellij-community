@@ -27,20 +27,16 @@ import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.persistence.SentUsagesPersistence;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Time;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
 public class StatisticsUploadAssistant {
-  private static final Logger LOG = Logger.getInstance(StatisticsUploadAssistant.class);
-
   public String getData() {
     return getData(Collections.<String>emptySet());
   }
@@ -84,7 +80,7 @@ public class StatisticsUploadAssistant {
   @NotNull
   public static String getDataString(@NotNull Set<String> disabledGroups,
                                      int maxSize) {
-    return getDataString(getAllUsages(disabledGroups), maxSize);
+    return getDataString(UsagesCollector.getAllUsages(disabledGroups), maxSize);
   }
 
   public static <T extends UsageDescriptor> String getDataString(@NotNull Map<GroupDescriptor, Set<T>> usages, int maxSize) {
@@ -94,23 +90,6 @@ public class StatisticsUploadAssistant {
 
     String dataStr = ConvertUsagesUtil.convertUsages(usages);
     return maxSize > 0 && dataStr.getBytes(CharsetToolkit.UTF8_CHARSET).length > maxSize ? ConvertUsagesUtil.cutDataString(dataStr, maxSize) : dataStr;
-  }
-
-  @NotNull
-  public static Map<GroupDescriptor, Set<UsageDescriptor>> getAllUsages(@NotNull Set<String> disabledGroups) {
-    Map<GroupDescriptor, Set<UsageDescriptor>> usageDescriptors = new LinkedHashMap<GroupDescriptor, Set<UsageDescriptor>>();
-    for (UsagesCollector usagesCollector : UsagesCollector.EP_NAME.getExtensions()) {
-      GroupDescriptor groupDescriptor = usagesCollector.getGroupId();
-      if (!disabledGroups.contains(groupDescriptor.getId())) {
-        try {
-          usageDescriptors.put(groupDescriptor, usagesCollector.getUsages());
-        }
-        catch (CollectUsagesException e) {
-          LOG.info(e);
-        }
-      }
-    }
-    return usageDescriptors;
   }
 
   private static final KeyedExtensionCollector<StatisticsService, String> COLLECTOR;
