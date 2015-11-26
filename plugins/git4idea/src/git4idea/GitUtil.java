@@ -107,15 +107,22 @@ public class GitUtil {
     String content = readContent(child);
     if (content == null) return null;
     String pathToDir = parsePathToRepository(content);
+    File file = findSubmoduleRepositoryDir(rootDir, pathToDir);
+    if (file == null) return null;
+    return VcsUtil.getVirtualFileWithRefresh(file);
+  }
 
-    if (!FileUtil.isAbsolute(pathToDir)) {
-      String canonicalPath = FileUtil.toCanonicalPath(FileUtil.join(rootDir.getPath(), pathToDir));
+  @Nullable
+  private static File findSubmoduleRepositoryDir(@NotNull VirtualFile rootDir, @NotNull String path) {
+    if (!FileUtil.isAbsolute(path)) {
+      String canonicalPath = FileUtil.toCanonicalPath(FileUtil.join(rootDir.getPath(), path));
       if (canonicalPath == null) {
         return null;
       }
-      pathToDir = FileUtil.toSystemIndependentName(canonicalPath);
+      path = FileUtil.toSystemIndependentName(canonicalPath);
     }
-    return VcsUtil.getVirtualFileWithRefresh(new File(pathToDir));
+    File file = new File(path);
+    return file.isDirectory() ? file : null;
   }
 
   @NotNull
