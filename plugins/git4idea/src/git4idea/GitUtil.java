@@ -102,7 +102,7 @@ public class GitUtil {
       return headExists ? child : null;
     }
 
-    // this is standard for submodules, although probably it can
+    // if .git is a file with some specific content, it indicates a submodule with a link to the real repository path
     String content;
     try {
       content = readFile(child);
