@@ -105,11 +105,8 @@
       <add-to-group group-id="SubversionGroup" relative-to-action="ChangesView.AddUnversioned" anchor="after"/>
     </group>
 
-    <action class="org.jetbrains.idea.svn.dialogs.MergeFromAction" id="Subversion.MergeFrom">
-      <add-to-group relative-to-action="Vcs.IntegrateProject" anchor="after" group-id="VcsGlobalGroup"/>
-    </action>
     <action class="org.jetbrains.idea.svn.actions.CleanupProjectAction" id="Subversion.CleanupProject">
-      <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Subversion.MergeFrom"/>
+      <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Vcs.IntegrateProject"/>
     </action>
 
     <action id="Svn.Show.Working.Copies" class="org.jetbrains.idea.svn.actions.ShowSvnMapAction" text="Show Working Copies"
