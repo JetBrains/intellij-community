@@ -122,6 +122,12 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
         else if (myS instanceof PsiArrayType) {
           return myT.isAssignableFrom(myS);
         }
+        else if (myS instanceof PsiCapturedWildcardType) {
+          final PsiType upperBound = ((PsiCapturedWildcardType)myS).getUpperBound();
+          if (upperBound instanceof PsiClassType) {
+            SResult = ((PsiClassType)upperBound).resolveGenerics();
+          }
+        }
 
         if (SResult == null) return false;
         PsiClass SClass = SResult.getElement();

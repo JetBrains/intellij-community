@@ -53,6 +53,15 @@ public class InferenceSession {
       if (pair.second instanceof PsiArrayType && TypesDistinctProver.proveArrayTypeDistinct((PsiArrayType)pair.second, pair.first)) {
         return null;
       }
+      
+      if (pair.first instanceof PsiCapturedWildcardType && TypesDistinctProver.provablyDistinct(((PsiCapturedWildcardType)pair.first).getUpperBound(), pair.second)) {
+        return null;
+      }
+
+      if (pair.second instanceof PsiCapturedWildcardType && TypesDistinctProver.provablyDistinct(((PsiCapturedWildcardType)pair.second).getUpperBound(), pair.first)) {
+        return null;
+      }
+      
       return GenericsUtil.getGreatestLowerBound(pair.first, pair.second);
     }
   };
