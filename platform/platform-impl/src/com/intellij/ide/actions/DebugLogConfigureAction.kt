@@ -76,8 +76,9 @@ private class DebugLogConfigureDialog(project: Project, categories: List<Pair<St
         .map({String::trim})
         */
         .map {
-          if (it.trim().endsWith(TRACE_SUFFIX, ignoreCase = true)) Pair(it.trim().dropLast(TRACE_SUFFIX.length), DebugLogManager.DebugLogLevel.TRACE)
-          else Pair(it.trim(), DebugLogManager.DebugLogLevel.DEBUG)
+          val trimmed = it.trim()
+          if (trimmed.endsWith(TRACE_SUFFIX, ignoreCase = true)) Pair(trimmed.dropLast(TRACE_SUFFIX.length), DebugLogManager.DebugLogLevel.TRACE)
+          else Pair(trimmed, DebugLogManager.DebugLogLevel.DEBUG)
         }
   }
 }
