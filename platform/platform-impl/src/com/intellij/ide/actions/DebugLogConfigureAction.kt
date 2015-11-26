@@ -76,8 +76,8 @@ private class DebugLogConfigureDialog(project: Project, categories: List<Pair<St
         .map({String::trim})
         */
         .map {
-          if (it.endsWith(TRACE_SUFFIX, ignoreCase = true)) Pair(it.dropLast(TRACE_SUFFIX.length), DebugLogManager.DebugLogLevel.TRACE)
-          else Pair(it, DebugLogManager.DebugLogLevel.DEBUG)
+          if (it.trim().endsWith(TRACE_SUFFIX, ignoreCase = true)) Pair(it.trim().dropLast(TRACE_SUFFIX.length), DebugLogManager.DebugLogLevel.TRACE)
+          else Pair(it.trim(), DebugLogManager.DebugLogLevel.DEBUG)
         }
   }
 }
