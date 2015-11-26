@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xml;
+package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.io.File;
@@ -61,6 +58,7 @@ public class XmlSmartCompletionTest extends LightPlatformCodeInsightFixtureTestC
               "        <s<caret>\n" +
               "    </servlet>\n" +
               "</web-app>",
+
               "<!DOCTYPE web-app\n" +
               "        PUBLIC \"-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN\"\n" +
               "        \"http://java.sun.com/j2ee/dtds/web-app_2_3.dtd\">\n" +
@@ -76,6 +74,7 @@ public class XmlSmartCompletionTest extends LightPlatformCodeInsightFixtureTestC
     doForText("<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n" +
               "    <ann<caret>\n" +
               "</xs:schema>",
+
               "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n" +
               "    <xs:annotation\n" +
               "</xs:schema>");
@@ -98,12 +97,7 @@ public class XmlSmartCompletionTest extends LightPlatformCodeInsightFixtureTestC
       CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = true;
     }
     assert elements != null;
-    List<String> strings = ContainerUtil.map(elements, new Function<LookupElement, String>() {
-      @Override
-      public String fun(LookupElement lookupElement) {
-        return lookupElement.getLookupString();
-      }
-    });
+    List<String> strings = ContainerUtil.map(elements, LookupElement::getLookupString);
     assertEquals(Arrays.asList(items), strings);
   }
 
