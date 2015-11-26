@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ public class ViewsGeneralSettings implements PersistentStateComponent<ViewsGener
   public boolean SHOW_OBJECTID = true;
   public boolean HIDE_NULL_ARRAY_ELEMENTS = true;
   public boolean AUTOSCROLL_TO_NEW_LOCALS = true;
+  public boolean SHOW_ALTERNATIVE_SOURCE = true;
 
   public static ViewsGeneralSettings getInstance() {
     return ServiceManager.getService(ViewsGeneralSettings.class);
@@ -46,6 +47,7 @@ public class ViewsGeneralSettings implements PersistentStateComponent<ViewsGener
     ViewsGeneralSettings generalSettings = ((ViewsGeneralSettings)object);
     return SHOW_OBJECTID == generalSettings.SHOW_OBJECTID &&
            HIDE_NULL_ARRAY_ELEMENTS == generalSettings.HIDE_NULL_ARRAY_ELEMENTS &&
-           AUTOSCROLL_TO_NEW_LOCALS == generalSettings.AUTOSCROLL_TO_NEW_LOCALS;
+           AUTOSCROLL_TO_NEW_LOCALS == generalSettings.AUTOSCROLL_TO_NEW_LOCALS &&
+           SHOW_ALTERNATIVE_SOURCE == generalSettings.SHOW_ALTERNATIVE_SOURCE;
   }
 }
