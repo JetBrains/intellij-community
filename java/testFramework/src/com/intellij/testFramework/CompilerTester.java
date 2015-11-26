@@ -21,7 +21,6 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.*;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
@@ -29,7 +28,6 @@ import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -211,18 +209,10 @@ public class CompilerTester {
       public void run() throws Throwable {
         PlatformTestUtil.saveProject(getProject());
         CompilerTestUtil.saveApplicationSettings();
-        for (final Module module : myModules) {
+        for (Module module : myModules) {
           File ioFile = new File(module.getModuleFilePath());
           if (!ioFile.exists()) {
             getProject().save();
-            WriteCommandAction.runWriteCommandAction(getProject(), new ThrowableComputable() {
-              @Override
-              public Object compute() throws Throwable {
-                String text = LoadTextUtil.loadText(module.getModuleFile()).toString();
-                VfsUtil.saveText(module.getModuleFile(), text);
-                return null;
-              }
-            });
             assert ioFile.exists() : "File does not exist: " + ioFile.getPath();
           }
         }
