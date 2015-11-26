@@ -31,6 +31,8 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.util.ModuleChooserUtil;
 
+import java.util.Collection;
+
 public abstract class GroovyShellActionBase extends AnAction {
 
   private final GroovyShellConfig myConfig;
@@ -77,7 +79,8 @@ public abstract class GroovyShellActionBase extends AnAction {
       @Nullable
       @Override
       public Result<Boolean> compute() {
-        return Result.create(ModuleChooserUtil.hasGroovyCompatibleModules(project, APPLICABLE_MODULE),
+        Collection<Module> possibleModules = myConfig.getPossiblySuitableModules(project);
+        return Result.create(ModuleChooserUtil.hasGroovyCompatibleModules(possibleModules, APPLICABLE_MODULE),
                              ProjectRootModificationTracker.getInstance(project));
       }
     }, false);
@@ -87,6 +90,9 @@ public abstract class GroovyShellActionBase extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     assert project != null;
-    ModuleChooserUtil.selectModule(project, APPLICABLE_MODULE, VERSION_PROVIDER, RUNNER);
+    Collection<Module> suitableModules = ModuleChooserUtil.filterGroovyCompatibleModules(myConfig.getPossiblySuitableModules(project),
+                                                                                         APPLICABLE_MODULE);
+    ModuleChooserUtil.selectModule(project, suitableModules, VERSION_PROVIDER, RUNNER);
   }
+
 }

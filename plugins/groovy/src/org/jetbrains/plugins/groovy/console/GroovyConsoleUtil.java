@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.JavaPsiFacade;
@@ -31,6 +32,8 @@ import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 import org.jetbrains.plugins.groovy.util.ModuleChooserUtil;
+
+import java.util.Arrays;
 
 public class GroovyConsoleUtil {
 
@@ -64,13 +67,17 @@ public class GroovyConsoleUtil {
            facade.findClass("groovy.ui.GroovyMain", scope) != null;
   }
 
-
   public static void selectModuleAndRun(Project project, Consumer<Module> consumer) {
-    ModuleChooserUtil.selectModule(project, APPLICABLE_MODULE, MODULE_VERSION, consumer);
+    ModuleChooserUtil.selectModule(project,
+                                   ModuleChooserUtil.filterGroovyCompatibleModules(
+                                     Arrays.asList(ModuleManager.getInstance(project).getModules()), APPLICABLE_MODULE),
+                                   MODULE_VERSION, consumer);
   }
 
   public static void selectModuleAndRun(Project project, Consumer<Module> consumer, DataContext context) {
-    ModuleChooserUtil.selectModule(project, APPLICABLE_MODULE, MODULE_VERSION, consumer, context);
+    ModuleChooserUtil.selectModule(project, ModuleChooserUtil.filterGroovyCompatibleModules(
+                                     Arrays.asList(ModuleManager.getInstance(project).getModules()), APPLICABLE_MODULE),
+                                   MODULE_VERSION, consumer, context);
   }
 
   @Contract("null -> null; !null -> !null")

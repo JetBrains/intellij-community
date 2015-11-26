@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,6 +31,7 @@ import org.jetbrains.plugins.groovy.console.GroovyConsole;
 import org.jetbrains.plugins.groovy.console.GroovyConsoleRootType;
 import org.jetbrains.plugins.groovy.util.ModuleChooserUtil;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.jetbrains.plugins.groovy.console.GroovyConsoleUtil.APPLICABLE_MODULE;
@@ -68,7 +70,8 @@ public class GrNewConsoleAction extends AnAction {
       if (moduleForFile != null) return moduleForFile;
     }
 
-    final List<Module> modules = ModuleChooserUtil.getGroovyCompatibleModules(project, APPLICABLE_MODULE);
+    final List<Module> modules = ModuleChooserUtil.filterGroovyCompatibleModules(
+      Arrays.asList(ModuleManager.getInstance(project).getModules()), APPLICABLE_MODULE);
     return modules.isEmpty() ? null : modules.get(0);
   }
 }
