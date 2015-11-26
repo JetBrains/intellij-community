@@ -72,7 +72,9 @@ private class DebugLogConfigureDialog(project: Project, categories: List<Pair<St
     return myTextArea.text
         .split(ALL_POSSIBLE_SEPARATORS)
         .filter { !StringUtil.isEmptyOrSpaces(it) }
-        .map(String::trim)
+        /*
+        .map({String::trim})
+        */
         .map {
           if (it.endsWith(TRACE_SUFFIX, ignoreCase = true)) Pair(it.dropLast(TRACE_SUFFIX.length), DebugLogManager.DebugLogLevel.TRACE)
           else Pair(it, DebugLogManager.DebugLogLevel.DEBUG)
