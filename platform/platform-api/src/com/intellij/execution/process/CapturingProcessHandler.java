@@ -55,7 +55,11 @@ public class CapturingProcessHandler extends OSProcessHandler {
     this(process, charset, "");
   }
 
-  public CapturingProcessHandler(@NotNull Process process, @Nullable Charset charset, @NotNull String commandLine) {
+  /**
+   *
+   * @param commandLine must be not empty
+   */
+  public CapturingProcessHandler(@NotNull Process process, @Nullable Charset charset, /*@NotNull*/ String commandLine) {
     super(process, commandLine, charset);
     addProcessListener(createProcessAdapter(myOutput));
   }

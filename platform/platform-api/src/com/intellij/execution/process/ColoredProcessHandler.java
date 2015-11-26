@@ -38,11 +38,19 @@ public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscap
     super(commandLine);
   }
 
-  public ColoredProcessHandler(@NotNull Process process, @NotNull String commandLine) {
+  /**
+   *
+   * @param commandLine must be not empty
+   */
+  public ColoredProcessHandler(@NotNull Process process, /*@NotNull */String commandLine) {
     super(process, commandLine);
   }
 
-  public ColoredProcessHandler(@NotNull Process process, @NotNull String commandLine, @NotNull Charset charset) {
+  /**
+   *
+   * @param commandLine must be not empty
+   */
+  public ColoredProcessHandler(@NotNull Process process, /*@NotNull */String commandLine, @NotNull Charset charset) {
     super(process, commandLine, charset);
   }
 
@@ -56,8 +64,6 @@ public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscap
    * Overrides should call super.coloredTextAvailable() if they want to pass lines to registered listeners
    * To receive chunks of data instead of fragments inherit your class from ColoredChunksAcceptor interface and
    * override coloredChunksAvailable method.
-   * @param text
-   * @param attributes
    */
   @Override
   public void coloredTextAvailable(String text, Key attributes) {
