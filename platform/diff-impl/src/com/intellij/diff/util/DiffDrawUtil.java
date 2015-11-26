@@ -253,32 +253,12 @@ public class DiffDrawUtil {
   @NotNull
   public static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type,
                                                          boolean ignored, @NotNull HighlighterTargetArea area, boolean resolved) {
-    TextAttributes attributes = start != end && !resolved ? getTextAttributes(type, editor, ignored) : null;
-    TextAttributes stripeAttributes = start != end && !resolved ? getStripeTextAttributes(type, editor) : null;
-
-    RangeHighlighter highlighter = editor.getMarkupModel()
-      .addRangeHighlighter(start, end, DEFAULT_LAYER, attributes, area);
-
-    installGutterRenderer(highlighter, type, ignored, resolved);
-
-    if (stripeAttributes == null) return Collections.singletonList(highlighter);
-
-    RangeHighlighter stripeHighlighter = editor.getMarkupModel()
-      .addRangeHighlighter(start, end, STRIPE_LAYER, stripeAttributes, area);
-
-    return ContainerUtil.list(highlighter, stripeHighlighter);
+    return new LineHighlighterBuilder(editor, start, end, type).withIgnored(ignored).withArea(area).withResolved(resolved).done();
   }
 
   @NotNull
   public static List<RangeHighlighter> createInlineHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type) {
-    TextAttributes attributes = getTextAttributes(type, editor, false);
-
-    RangeHighlighter highlighter = editor.getMarkupModel()
-      .addRangeHighlighter(start, end, INLINE_LAYER, attributes, HighlighterTargetArea.EXACT_RANGE);
-
-    if (start == end) installEmptyRangeRenderer(highlighter, type);
-
-    return Collections.singletonList(highlighter);
+    return new InlineHighlighterBuilder(editor, start, end, type).done();
   }
 
   @NotNull
@@ -306,35 +286,13 @@ public class DiffDrawUtil {
   public static List<RangeHighlighter> createLineMarker(@NotNull final Editor editor, int line, @NotNull final TextDiffType type,
                                                         @NotNull final SeparatorPlacement placement, final boolean doubleLine,
                                                         final boolean resolved) {
-    return createLineMarker(editor, line, placement, type, createDiffLineRenderer(editor, type, doubleLine, resolved), resolved);
+    return new LineMarkerBuilder(editor, line, placement).withType(type).withResolved(resolved).doneDefaultRenderer(doubleLine);
   }
 
   @NotNull
   public static List<RangeHighlighter> createBorderLineMarker(@NotNull final Editor editor, int line,
                                                               @NotNull final SeparatorPlacement placement) {
-    return createLineMarker(editor, line, placement, null, BORDER_LINE_RENDERER, false);
-  }
-
-  @NotNull
-  public static List<RangeHighlighter> createLineMarker(@NotNull final Editor editor, int line, @NotNull final SeparatorPlacement placement,
-                                                        @Nullable TextDiffType type, @NotNull LineSeparatorRenderer renderer, boolean resolved) {
-    // We won't use addLineHighlighter as it will fail to add marker into empty document.
-    //RangeHighlighter highlighter = editor.getMarkupModel().addLineHighlighter(line, HighlighterLayer.SELECTION - 1, null);
-
-    int offset = DocumentUtil.getFirstNonSpaceCharOffset(editor.getDocument(), line);
-    RangeHighlighter highlighter = editor.getMarkupModel()
-      .addRangeHighlighter(offset, offset, LINE_MARKER_LAYER, null, HighlighterTargetArea.LINES_IN_RANGE);
-
-    highlighter.setLineSeparatorPlacement(placement);
-    highlighter.setLineSeparatorRenderer(renderer);
-
-    if (type == null || resolved) return Collections.singletonList(highlighter);
-
-    TextAttributes stripeAttributes = getStripeTextAttributes(type, editor);
-    RangeHighlighter stripeHighlighter = editor.getMarkupModel()
-      .addRangeHighlighter(offset, offset, STRIPE_LAYER, stripeAttributes, HighlighterTargetArea.LINES_IN_RANGE);
-
-    return ContainerUtil.list(highlighter, stripeHighlighter);
+    return new LineMarkerBuilder(editor, line, placement).withRenderer(BORDER_LINE_RENDERER).done();
   }
 
   @NotNull
@@ -351,5 +309,153 @@ public class DiffDrawUtil {
     marker.setLineMarkerRenderer(renderer);
 
     return Collections.singletonList(marker);
+  }
+
+  private static class LineHighlighterBuilder {
+    @NotNull private final Editor editor;
+    @NotNull private final TextDiffType type;
+    private final int start;
+    private final int end;
+
+    @NotNull private HighlighterTargetArea area = HighlighterTargetArea.EXACT_RANGE;
+    private boolean ignored = false;
+    private boolean resolved = false;
+
+    private LineHighlighterBuilder(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type) {
+      this.editor = editor;
+      this.type = type;
+      this.start = start;
+      this.end = end;
+    }
+
+    @NotNull
+    public LineHighlighterBuilder withArea(@NotNull HighlighterTargetArea area) {
+      this.area = area;
+      return this;
+    }
+
+    @NotNull
+    public LineHighlighterBuilder withIgnored(boolean ignored) {
+      this.ignored = ignored;
+      return this;
+    }
+
+    @NotNull
+    public LineHighlighterBuilder withResolved(boolean resolved) {
+      this.resolved = resolved;
+      return this;
+    }
+
+    @NotNull
+    public List<RangeHighlighter> done() {
+      boolean empty = start == end;
+      TextAttributes attributes = empty || resolved ? null : getTextAttributes(type, editor, ignored);
+      TextAttributes stripeAttributes = empty || resolved ? null : getStripeTextAttributes(type, editor);
+
+      RangeHighlighter highlighter = editor.getMarkupModel()
+        .addRangeHighlighter(start, end, DEFAULT_LAYER, attributes, area);
+
+      installGutterRenderer(highlighter, type, ignored, resolved);
+
+      if (stripeAttributes == null) return Collections.singletonList(highlighter);
+
+      RangeHighlighter stripeHighlighter = editor.getMarkupModel()
+        .addRangeHighlighter(start, end, STRIPE_LAYER, stripeAttributes, area);
+
+      return ContainerUtil.list(highlighter, stripeHighlighter);
+    }
+  }
+
+  private static class InlineHighlighterBuilder {
+    @NotNull private final Editor editor;
+    @NotNull private final TextDiffType type;
+    private final int start;
+    private final int end;
+
+    private InlineHighlighterBuilder(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type) {
+      this.editor = editor;
+      this.type = type;
+      this.start = start;
+      this.end = end;
+    }
+
+    @NotNull
+    public List<RangeHighlighter> done() {
+      TextAttributes attributes = getTextAttributes(type, editor, false);
+
+      RangeHighlighter highlighter = editor.getMarkupModel()
+          .addRangeHighlighter(start, end, INLINE_LAYER, attributes, HighlighterTargetArea.EXACT_RANGE);
+
+      if (start == end) installEmptyRangeRenderer(highlighter, type);
+
+      return Collections.singletonList(highlighter);
+    }
+  }
+
+  private static class LineMarkerBuilder {
+    @NotNull private final Editor editor;
+    @NotNull private final SeparatorPlacement placement;
+    private final int line;
+
+    private boolean resolved = false;
+    @Nullable private TextDiffType type;
+    @Nullable private LineSeparatorRenderer renderer;
+
+    private LineMarkerBuilder(@NotNull Editor editor, int line, @NotNull SeparatorPlacement placement) {
+      this.editor = editor;
+      this.line = line;
+      this.placement = placement;
+    }
+
+    @NotNull
+    public LineMarkerBuilder withType(@NotNull TextDiffType type) {
+      this.type = type;
+      return this;
+    }
+
+    @NotNull
+    public LineMarkerBuilder withResolved(boolean resolved) {
+      this.resolved = resolved;
+      return this;
+    }
+
+    @NotNull
+    public LineMarkerBuilder withRenderer(@NotNull LineSeparatorRenderer renderer) {
+      this.renderer = renderer;
+      return this;
+    }
+
+    @NotNull
+    public List<RangeHighlighter> doneDefaultRenderer() {
+      return doneDefaultRenderer(false);
+    }
+
+    @NotNull
+    public List<RangeHighlighter> doneDefaultRenderer(boolean doubleLine) {
+      assert type != null;
+      this.renderer = createDiffLineRenderer(editor, type, doubleLine, resolved);
+      return done();
+    }
+
+    @NotNull
+    public List<RangeHighlighter> done() {
+      // We won't use addLineHighlighter as it will fail to add marker into empty document.
+      //RangeHighlighter highlighter = editor.getMarkupModel().addLineHighlighter(line, HighlighterLayer.SELECTION - 1, null);
+
+      int offset = DocumentUtil.getFirstNonSpaceCharOffset(editor.getDocument(), line);
+      RangeHighlighter highlighter = editor.getMarkupModel()
+        .addRangeHighlighter(offset, offset, LINE_MARKER_LAYER, null, HighlighterTargetArea.LINES_IN_RANGE);
+
+      highlighter.setLineSeparatorPlacement(placement);
+      highlighter.setLineSeparatorRenderer(renderer);
+
+      if (type == null || resolved) return Collections.singletonList(highlighter);
+
+      TextAttributes stripeAttributes = getStripeTextAttributes(type, editor);
+      RangeHighlighter stripeHighlighter = editor.getMarkupModel()
+        .addRangeHighlighter(offset, offset, STRIPE_LAYER, stripeAttributes, HighlighterTargetArea.LINES_IN_RANGE);
+
+      return ContainerUtil.list(highlighter, stripeHighlighter);
+    }
   }
 }
