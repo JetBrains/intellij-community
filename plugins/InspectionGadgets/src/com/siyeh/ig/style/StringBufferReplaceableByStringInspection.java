@@ -30,6 +30,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -46,6 +48,8 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
   private static class StringBufferReplaceableByStringFix extends InspectionGadgetsFix {
 
     private final boolean isStringBuilder;
+    private final List<PsiComment> leadingComments = new ArrayList<PsiComment>();
+    private final List<PsiElement> commentsAndWhitespace = new ArrayList<PsiElement>();
 
     private StringBufferReplaceableByStringFix(boolean isStringBuilder) {
       this.isStringBuilder = isStringBuilder;
@@ -75,14 +79,21 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
       if (!(parent instanceof PsiVariable)) {
         if (parent instanceof PsiNewExpression) {
           final PsiExpression stringBuilderExpression = getCompleteExpression(parent);
+          collectComments(stringBuilderExpression);
           final StringBuilder stringExpression = buildStringExpression(stringBuilderExpression, new StringBuilder());
           if (stringExpression != null && stringBuilderExpression != null) {
+            addLeadingCommentsBefore(stringBuilderExpression);
+            addTrailingCommentsAfter(stringBuilderExpression);
             PsiReplacementUtil.replaceExpression(stringBuilderExpression, stringExpression.toString());
           }
         }
         return;
       }
       final PsiVariable variable = (PsiVariable)parent;
+      final String variableName = variable.getName();
+      if (variableName == null) {
+        return;
+      }
       final PsiTypeElement originalTypeElement = variable.getTypeElement();
       if (originalTypeElement == null) {
         return;
@@ -93,6 +104,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
       }
       final StringBuilder builder;
       if (isAppendCall(initializer)) {
+        collectComments(parent);
         builder = buildStringExpression(initializer, new StringBuilder());
         if (builder == null) {
           return;
@@ -122,9 +134,9 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
         return;
       }
       final List<PsiMethodCallExpression> expressions = visitor.getExpressions();
-      final String expression = builder.toString().trim();
+      final String expressionText = builder.toString().trim();
       final PsiMethodCallExpression lastExpression = expressions.get(expressions.size() - 1);
-      final boolean useVariable = expression.contains("\n") && !isVariableInitializer(lastExpression);
+      final boolean useVariable = expressionText.contains("\n") && !isVariableInitializer(lastExpression);
       if (useVariable) {
         final PsiStatement statement = PsiTreeUtil.getParentOfType(variable, PsiStatement.class);
         if (statement == null) {
@@ -132,20 +144,33 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
         }
         final String modifier = CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS ? "final " : "";
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-        final PsiStatement newStatement =
-          factory.createStatementFromText(modifier + CommonClassNames.JAVA_LANG_STRING + ' ' + variable.getName() + '=' +
-                                          expression + ';', variable);
+        final StringBuilder statementText =
+          new StringBuilder(modifier).append(CommonClassNames.JAVA_LANG_STRING).append(' ').append(variableName).append("=");
+        for (PsiComment comment : leadingComments) {
+          statementText.append(comment.getText());
+          final PsiElement sibling = comment.getNextSibling();
+          if (sibling instanceof PsiWhiteSpace) {
+            statementText.append(sibling.getText());
+          }
+        }
+        statementText.append(expressionText).append(';');
+        final PsiStatement newStatement = factory.createStatementFromText(statementText.toString(), variable);
         codeBlock.addBefore(newStatement, statement);
+        addTrailingCommentsAfter(lastExpression);
+        PsiReplacementUtil.replaceExpression(lastExpression, variableName);
+      }
+      else {
+        final PsiStatement statement = PsiTreeUtil.getParentOfType(lastExpression, PsiStatement.class);
+        if (statement == null) {
+          return;
+        }
+        addLeadingCommentsBefore(statement);
+        addTrailingCommentsAfter(statement);
+        PsiReplacementUtil.replaceExpression(lastExpression, expressionText);
       }
       variable.delete();
       for (int i = 0, size = expressions.size() - 1; i < size; i++) {
         expressions.get(i).getParent().delete();
-      }
-      if (useVariable) {
-        PsiReplacementUtil.replaceExpression(lastExpression, variable.getName());
-      }
-      else {
-        PsiReplacementUtil.replaceExpression(lastExpression, expression);
       }
     }
 
@@ -160,13 +185,14 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
     }
 
     @Nullable
-    private static StringBuilder buildStringExpression(PsiElement element, @NonNls StringBuilder result) {
+    private StringBuilder buildStringExpression(PsiElement element, @NonNls StringBuilder result) {
       if (element instanceof PsiNewExpression) {
         final PsiNewExpression newExpression = (PsiNewExpression)element;
         final PsiExpressionList argumentList = newExpression.getArgumentList();
         if (argumentList == null) {
           return null;
         }
+        addCommentsBefore(argumentList, result);
         final PsiExpression[] arguments = argumentList.getExpressions();
         if (arguments.length == 1) {
           final PsiExpression argument = arguments[0];
@@ -194,15 +220,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
         }
       }
 
-      if (element instanceof PsiWhiteSpace) {
-        if (element.getText().contains("\n") && result.length() > 0) {
-          result.append('\n'); // keep line break structure
-        }
-      }
-      else if (element instanceof PsiComment && result.length() != 0) {
-        result.append(element.getText()); // keep comments
-      }
-      else if (element instanceof PsiMethodCallExpression) {
+      if (element instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
         final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
         final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
@@ -221,6 +239,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
             if (result.length() != 0) {
               insertPlus(result);
             }
+            addCommentsBefore(argumentList, result);
             result.append("String.valueOf").append(argumentList.getText());
             return result;
           }
@@ -229,6 +248,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
           final String argumentText = argument.getText();
           if (result.length() != 0) {
             insertPlus(result);
+            addCommentsBefore(argument, result);
             if (ParenthesesUtils.getPrecedence(argument) > ParenthesesUtils.ADDITIVE_PRECEDENCE ||
                 (type instanceof PsiPrimitiveType && ParenthesesUtils.getPrecedence(argument) == ParenthesesUtils.ADDITIVE_PRECEDENCE)) {
               result.append('(').append(argumentText).append(')');
@@ -241,6 +261,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
             }
           }
           else {
+            addCommentsBefore(argumentList, result);
             if (type instanceof PsiPrimitiveType) {
               if (argument instanceof PsiLiteralExpression) {
                 final PsiLiteralExpression literalExpression = (PsiLiteralExpression)argument;
@@ -277,6 +298,94 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
         }
       }
       return result;
+    }
+
+    private void addCommentsBefore(PsiElement anchor, StringBuilder out) {
+      final int offset = anchor.getTextOffset();
+      boolean newlineAdded = false;
+      boolean newlineEncountered = false;
+      for (final Iterator<PsiElement> iterator = commentsAndWhitespace.iterator(); iterator.hasNext(); ) {
+        final PsiElement element = iterator.next();
+        if (element.getTextOffset() >= offset) {
+          break;
+        }
+        if (element instanceof PsiComment) {
+          final PsiComment comment = (PsiComment)element;
+          if (out.length() == 0) {
+            leadingComments.add(comment);
+          }
+          else {
+            final PsiElement prev = comment.getPrevSibling();
+            if (prev instanceof PsiWhiteSpace) {
+              out.append(prev.getText());
+            }
+            out.append(comment.getText());
+            final PsiElement next = comment.getNextSibling();
+            if (next instanceof PsiWhiteSpace) {
+              final String text = next.getText();
+              if (text.contains("\n")) {
+                newlineAdded = true;
+              }
+              out.append(text);
+            }
+          }
+        }
+        else if (element instanceof PsiWhiteSpace) {
+          final String text = element.getText();
+          if (text.contains("\n")) {
+            newlineEncountered = true;
+          }
+        }
+        iterator.remove();
+      }
+      if (newlineEncountered && !newlineAdded && out.length() != 0) {
+        out.append("\n");
+      }
+    }
+
+    private void addLeadingCommentsBefore(PsiElement anchor) {
+      final PsiElement parent = anchor.getParent();
+      for (PsiComment comment : leadingComments) {
+        parent.addBefore(comment, anchor);
+        final PsiElement sibling = comment.getNextSibling();
+        if (sibling instanceof PsiWhiteSpace) {
+          parent.addBefore(sibling, anchor);
+        }
+      }
+      leadingComments.clear();
+    }
+
+    private void addTrailingCommentsAfter(PsiElement anchor) {
+      final PsiElement parent = anchor.getParent();
+      for (int i = commentsAndWhitespace.size() - 1; i >= 0; i--) {
+        final PsiElement element = commentsAndWhitespace.get(i);
+        if (element instanceof PsiComment) {
+          final PsiComment comment = (PsiComment)element;
+          parent.addAfter(comment, anchor);
+          final PsiElement sibling = comment.getPrevSibling();
+          if (sibling instanceof PsiWhiteSpace) {
+            parent.addAfter(sibling, anchor);
+          }
+        }
+      }
+      commentsAndWhitespace.clear();
+    }
+
+    private void collectComments(PsiElement element) {
+      commentsAndWhitespace.addAll(PsiTreeUtil.findChildrenOfAnyType(element, PsiComment.class, PsiWhiteSpace.class));
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiExpressionStatement) && !(parent instanceof PsiDeclarationStatement)) {
+        return;
+      }
+      PsiComment comment = PsiTreeUtil.getNextSiblingOfType(element, PsiComment.class);
+      while (comment != null) {
+        commentsAndWhitespace.add(comment);
+        comment = PsiTreeUtil.getNextSiblingOfType(comment, PsiComment.class);
+      }
+      final PsiElement sibling = parent.getNextSibling();
+      if (sibling instanceof PsiWhiteSpace) {
+        commentsAndWhitespace.add(sibling);
+      }
     }
 
     private static void insertPlus(@NonNls StringBuilder result) {
@@ -317,7 +426,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
       }
     }
 
-    private static class StringBuildingVisitor extends JavaRecursiveElementWalkingVisitor {
+    private class StringBuildingVisitor extends JavaRecursiveElementWalkingVisitor {
 
       private final PsiVariable myVariable;
       private final StringBuilder myBuilder;
@@ -353,10 +462,10 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
             break;
           }
         }
+        collectComments(methodCallExpression);
         if (buildStringExpression(methodCallExpression, myBuilder) == null) {
           myProblem = true;
         }
-        myBuilder.append('\n');
         expressions.add(methodCallExpression);
       }
 
