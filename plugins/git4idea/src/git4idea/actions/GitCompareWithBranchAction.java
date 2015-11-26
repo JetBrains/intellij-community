@@ -19,24 +19,27 @@ import com.intellij.dvcs.actions.DvcsCompareWithBranchAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.history.CurrentRevision;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.history.DiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitBranch;
-import git4idea.GitFileRevision;
+import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
-import git4idea.history.GitDiffFromHistoryHandler;
+import git4idea.changes.GitChangeUtils;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.openapi.vcs.history.DiffUtil.createChangesWithCurrentContentForFile;
 
 public class GitCompareWithBranchAction extends DvcsCompareWithBranchAction<GitRepository> {
   @Override
@@ -96,11 +99,23 @@ public class GitCompareWithBranchAction extends DvcsCompareWithBranchAction<GitR
       LOG.error(String.format("Current revision number is null for file [%s] and branch [%s]", filePath, head));
       return;
     }
+    final GitRepository gitRepository = GitUtil.getRepositoryManager(project).getRepositoryForFile(file);
+    if (gitRepository == null) {
+      LOG.error("Couldn't find Git Repository for " + file.getName());
+      return;
+    }
 
     // constructing the revision with human readable name (will work for files comparison however).
-    VcsFileRevision compareRevision = new GitFileRevision(project, filePath,
-                                                          new GitRevisionNumber(branchToCompare, compareRevisionNumber.getTimestamp()));
-    CurrentRevision currentRevision = new CurrentRevision(file, new GitRevisionNumber(head, currentRevisionNumber.getTimestamp()));
-    new GitDiffFromHistoryHandler(project).showDiffForTwo(project, VcsUtil.getFilePath(file), compareRevision, currentRevision);
+    final GitRevisionNumber compareToRevisionNumber = new GitRevisionNumber(branchToCompare, compareRevisionNumber.getTimestamp());
+    final GitRevisionNumber currentRevisionNumberWithBranchTitle = new GitRevisionNumber(head, currentRevisionNumber.getTimestamp());
+
+    Collection<Change> changes =
+      GitChangeUtils.getDiff(project, gitRepository.getRoot(), branchToCompare, head, Collections.singletonList(filePath));
+    DiffUtil.showDiffFor(project, changes.isEmpty() && !filePath.isDirectory()
+                                  ? createChangesWithCurrentContentForFile(filePath,
+                                                                           GitContentRevision
+                                                                             .createRevision(filePath, compareToRevisionNumber, project,
+                                                                                             null))
+                                  : changes, compareToRevisionNumber, currentRevisionNumberWithBranchTitle, filePath);
   }
 }

@@ -21,8 +21,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.history.CurrentRevision;
+import com.intellij.openapi.vcs.history.DiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,7 +36,6 @@ import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.log.HgBaseLogParser;
 import org.zmlx.hg4idea.log.HgFileRevisionLogParser;
 import org.zmlx.hg4idea.log.HgHistoryUtil;
-import org.zmlx.hg4idea.provider.HgDiffFromHistoryHandler;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgChangesetUtil;
@@ -43,6 +43,8 @@ import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.util.HgVersion;
 
 import java.util.*;
+
+import static com.intellij.openapi.vcs.history.DiffUtil.createChangesWithCurrentContentForFile;
 
 public class HgCompareWithBranchAction extends DvcsCompareWithBranchAction<HgRepository> {
   @Override
@@ -126,8 +128,19 @@ public class HgCompareWithBranchAction extends DvcsCompareWithBranchAction<HgRep
       fileDoesntExistInBranchError(project, file, branchToCompare);
       return;
     }
-    CurrentRevision currentRevision =
-      new CurrentRevision(file, HgRevisionNumber.getInstance(head, ObjectUtils.assertNotNull(repository.getCurrentRevision())));
-    new HgDiffFromHistoryHandler(project).showDiffForTwo(project, filePath, hgRevisions.get(0), currentRevision);
+
+    // constructing the revision with human readable name
+    final HgRevisionNumber compareWithRevisionNumber =
+      HgRevisionNumber.getInstance(branchToCompare, hgRevisions.get(0).getRevisionNumber().getChangeset());
+    final HgRevisionNumber currentRevisionNumber =
+      HgRevisionNumber.getInstance(head, ObjectUtils.assertNotNull(repository.getCurrentRevision()));
+
+    List<Change> changes = HgUtil.getDiff(project, repositoryRoot, filePath, compareWithRevisionNumber, null);
+
+    DiffUtil.showDiffFor(project, changes.isEmpty() && !filePath.isDirectory()
+                                  ? createChangesWithCurrentContentForFile(filePath,
+                                                                           HgContentRevision
+                                                                             .create(project, hgFile, compareWithRevisionNumber))
+                                  : changes, compareWithRevisionNumber, currentRevisionNumber, filePath);
   }
 }

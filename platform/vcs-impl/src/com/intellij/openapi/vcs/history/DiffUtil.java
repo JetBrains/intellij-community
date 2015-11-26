@@ -15,15 +15,54 @@
  */
 package com.intellij.openapi.vcs.history;
 
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.requests.MessageDiffRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.CurrentContentRevision;
+import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class DiffUtil {
+
+  public static void showDiffFor(@NotNull Project project,
+                                 @NotNull final Collection<Change> changes,
+                                 @NotNull final VcsRevisionNumber revNum1,
+                                 @NotNull final VcsRevisionNumber revNum2,
+                                 @NotNull final FilePath filePath) {
+    if (filePath.isDirectory()) {
+      showChangesDialog(project, getDialogTitle(filePath, revNum1, revNum2), ContainerUtil.newArrayList(changes));
+    }
+    else {
+      if (changes.isEmpty()) {
+        DiffManager.getInstance().showDiff(project, new MessageDiffRequest("No Changes Found"));
+      }
+      else {
+        ShowDiffAction.showDiffForChange(project, changes);
+      }
+    }
+  }
+
+  @NotNull
+  private static String getDialogTitle(@NotNull final FilePath filePath, @NotNull final VcsRevisionNumber revNum1,
+                                       @Nullable final VcsRevisionNumber revNum2) {
+    String rev1Title = revNum1.asString();
+    final String filePathName = filePath.getName();
+    return revNum2 != null
+           ? String.format("Difference between %s and %s in %s", rev1Title, revNum2.asString(), filePathName)
+           : String.format("Difference between %s and local version in %s", rev1Title, filePathName);
+  }
+
 
   public static void showChangesDialog(@NotNull Project project, @NotNull String title, @NotNull List<Change> changes) {
     DialogBuilder dialogBuilder = new DialogBuilder(project);
@@ -36,5 +75,11 @@ public class DiffUtil {
     dialogBuilder.setCenterPanel(changesBrowser);
     dialogBuilder.setPreferredFocusComponent(changesBrowser.getPreferredFocusedComponent());
     dialogBuilder.showNotModal();
+  }
+
+  @NotNull
+  public static List<Change> createChangesWithCurrentContentForFile(@NotNull FilePath filePath,
+                                                                    @Nullable ContentRevision beforeContentRevision) {
+    return Collections.singletonList(new Change(beforeContentRevision, CurrentContentRevision.create(filePath)));
   }
 }
