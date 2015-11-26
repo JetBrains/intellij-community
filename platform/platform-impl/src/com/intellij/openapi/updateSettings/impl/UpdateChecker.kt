@@ -282,8 +282,8 @@ object UpdateChecker {
 
     updateable += PluginManagerCore.getPlugins().filter { !it.isBundled }.toMapBy { it.pluginId }
 
-    val onceInstalled = File(PathManager.getConfigPath(), PluginManager.INSTALLED_TXT)
-    if (onceInstalled.isFile) {
+    val onceInstalled = PluginManager.getOnceInstalledIfExists()
+    if (onceInstalled != null) {
       try {
         for (line in FileUtil.loadLines(onceInstalled)) {
           val id = PluginId.getId(line.trim { it <= ' ' })

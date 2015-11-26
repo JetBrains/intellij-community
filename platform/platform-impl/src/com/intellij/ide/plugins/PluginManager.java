@@ -27,6 +27,7 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.PicoPluginExtensionInitializationException;
@@ -43,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -96,6 +98,16 @@ public class PluginManager extends PluginManagerCore {
     };
 
     new Thread(threadGroup, runnable, "Idea Main Thread").start();
+  }
+
+  /**
+   * Returns file with list of once installed plugins if it exists or null otherwise.
+   * @return file with list of once installed plugins if it exists, null otherwise
+   */
+  @Nullable
+  public static File getOnceInstalledIfExists() {
+    File onceInstalledFile = new File(PathManager.getConfigPath(), INSTALLED_TXT);
+    return onceInstalledFile.isFile() ? onceInstalledFile : null;
   }
 
   public static void processException(Throwable t) {
