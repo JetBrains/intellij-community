@@ -52,10 +52,7 @@ import git4idea.changes.GitCommittedChangeList;
 import git4idea.commands.*;
 import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
-import git4idea.repo.GitBranchTrackInfo;
-import git4idea.repo.GitRemote;
-import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
+import git4idea.repo.*;
 import git4idea.util.GitSimplePathsBrowser;
 import git4idea.util.GitUIUtil;
 import git4idea.util.StringScanner;
@@ -101,7 +98,8 @@ public class GitUtil {
       return null;
     }
     if (child.isDirectory()) {
-      return child;
+      boolean headExists = child.findChild(GitRepositoryFiles.HEAD) != null;
+      return headExists ? child : null;
     }
 
     // this is standard for submodules, although probably it can
