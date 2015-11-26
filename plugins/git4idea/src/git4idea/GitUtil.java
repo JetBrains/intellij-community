@@ -92,6 +92,11 @@ public class GitUtil {
     // do nothing
   }
 
+  /**
+   * Returns the Git repository location for the given repository root directory, or null if nothing can be found.
+   * Able to find the real repository root of a submodule.
+   * @see #findGitDir(VirtualFile) 
+   */
   @Nullable
   public static File findGitDir(@NotNull File rootDir) {
     File dotGit = new File(rootDir, DOT_GIT);
@@ -109,10 +114,10 @@ public class GitUtil {
 
   /**
    * Returns the Git repository location for the given repository root directory, or null if nothing can be found.
-   * Finds the real repository roots for submodules.
+   * Able to find the real repository root of a submodule.
    * <p/>
    * More precisely: checks if there is {@code .git} directory or file directly under rootDir. <br/>
-   * If there is a directory, performs a quick check that it looks like a Git repository;
+   * If there is a directory, performs a quick check that it looks like a Git repository;<br/>
    * if it is a file, follows the path written inside this file to find the submodule repo dir.
    */
   @Nullable
