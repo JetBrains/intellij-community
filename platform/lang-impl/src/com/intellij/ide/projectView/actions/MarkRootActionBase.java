@@ -140,8 +140,8 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
           return RootsSelection.EMPTY;
         }
       }
-      SourceFolder folder;
-      if (Comparing.equal(fileIndex.getSourceRootForFile(file), file) && ((folder = ProjectRootsUtil.findSourceFolder(module, file)) != null)) {
+      SourceFolder folder = ProjectRootsUtil.findSourceFolder(module, file);
+      if (folder != null) {
         selection.mySelectedRoots.add(folder);
       }
       else {
