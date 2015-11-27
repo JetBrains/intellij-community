@@ -57,6 +57,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -241,6 +242,16 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   public List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
                                            @NotNull Document document,
                                            @NotNull final ProgressIndicator progress) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      throw new IllegalStateException("Must not run highlighting from under EDT");
+    }
+    if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
+      throw new IllegalStateException("Must run highlighting from under read action");
+    }
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (!(indicator instanceof DaemonProgressIndicator)) {
+      throw new IllegalStateException("Must run highlighting under progress with DaemonProgressIndicator");
+    }
     // clear status maps to run passes from scratch so that refCountHolder won't conflict and try to restart itself on partially filled maps
     myFileStatusMap.markAllFilesDirty("prepare to run main passes");
     stopProcess(false, "disable background daemon");
