@@ -215,6 +215,7 @@ public abstract class MergeRequestProcessor implements Disposable {
         onDispose();
 
         destroyViewer();
+        applyRequestResult(MergeResult.CANCEL);
       }
     });
   }
@@ -269,7 +270,6 @@ public abstract class MergeRequestProcessor implements Disposable {
 
   @CalledInAwt
   protected void onDispose() {
-    applyRequestResult(MergeResult.CANCEL);
   }
 
   protected void setWindowTitle(@NotNull String title) {
