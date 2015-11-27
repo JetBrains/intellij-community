@@ -21,6 +21,7 @@ import com.intellij.lang.folding.CustomFoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,7 +31,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -211,16 +211,9 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
 
   private static String getLanguagePlaceholderForString(PyStringLiteralExpression stringLiteralExpression) {
     String stringText = stringLiteralExpression.getText();
-    int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
-    stringText = stringText.substring(prefixLength);
-    if (stringText.startsWith("'''") && stringText.endsWith("'''")) {
-      return "'''...'''";
-    }
-    if (stringText.startsWith("'") && stringText.endsWith("'")) {
-        return "'...'";
-    }
-    if (stringText.startsWith("\"") && stringText.endsWith("\"")) {
-        return "\"...\"";
+    Pair<String, String> quotes = PythonStringUtil.getQuotes(stringText);
+    if (quotes != null) {
+      return quotes.second + "..." + quotes.second;
     }
     return "...";
   }
