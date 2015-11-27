@@ -60,30 +60,14 @@ public class AnalyzeStacktraceUtil {
   private AnalyzeStacktraceUtil() {
   }
 
-  public static void printStacktrace(@NotNull final ConsoleView consoleView, @NotNull String unscrambledTrace) {
+  public static void printStacktrace(@NotNull ConsoleView consoleView, @NotNull String unscrambledTrace) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final String text = unscrambledTrace + "\n";
-    final String consoleText = ((ConsoleViewImpl)consoleView).getText();
+    String text = unscrambledTrace + "\n";
+    String consoleText = ((ConsoleViewImpl)consoleView).getText();
     if (!text.equals(consoleText)) {
       consoleView.clear();
-      // make sure other "clear" requests stuck in EDT are performed before our print next stacktrace
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            consoleView.print(text, ConsoleViewContentType.ERROR_OUTPUT);
-            consoleView.scrollTo(0);
-          }
-          catch (Exception e) {
-            throw new RuntimeException(e);
-          }
-        }
-      }, new Condition() {
-        @Override
-        public boolean value(Object o) {
-          return !((ConsoleViewImpl)consoleView).isVisible();
-        }
-      });
+      consoleView.print(text, ConsoleViewContentType.ERROR_OUTPUT);
+      consoleView.scrollTo(0);
     }
   }
 

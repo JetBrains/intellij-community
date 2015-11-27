@@ -76,10 +76,10 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       latch.countDown();
     }, 0);
     latch.await();
-    UIUtil.dispatchAllInvocationEvents();
-    TimeoutUtil.sleep(ConsoleViewImpl.DEFAULT_FLUSH_DELAY);
-    UIUtil.dispatchAllInvocationEvents();
-    assertFalse(console.hasDeferredOutput());
+    while (console.hasDeferredOutput()) {
+      UIUtil.dispatchAllInvocationEvents();
+      TimeoutUtil.sleep(5);
+    }
     assertEquals("Test", console.getText());
   }
 
@@ -99,15 +99,11 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       UIUtil.dispatchAllInvocationEvents(); // flush 1-st clear request
       latch.await();
       UIUtil.dispatchAllInvocationEvents(); // flush 2-nd clear request
-      TimeoutUtil.sleep(ConsoleViewImpl.DEFAULT_FLUSH_DELAY);
-      UIUtil.dispatchAllInvocationEvents(); // flush print request
-      // Need more investigation: sometimes console.hasDeferredOutput() is true
       while (console.hasDeferredOutput()) {
-        TimeoutUtil.sleep(10);
         UIUtil.dispatchAllInvocationEvents();
+        TimeoutUtil.sleep(5);
       }
-      //uncomment the next assertion to see probably failing test
-      //assertEquals("Test", console.getText());
+      assertEquals("Test", console.getText());
     }
   }
 
