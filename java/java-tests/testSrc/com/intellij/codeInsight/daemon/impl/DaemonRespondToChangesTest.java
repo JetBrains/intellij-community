@@ -559,7 +559,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEmpty(infos);
 
     int countAfter = visited.size();
-    assertEquals(visitedCount, countAfter);
+    assertTrue("visitedCount = "+visitedCount+"; countAfter="+countAfter, countAfter >= visitedCount);
   }
 
   
