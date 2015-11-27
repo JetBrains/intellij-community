@@ -328,7 +328,7 @@ public class HgHistoryUtil {
         .create(project, new HgFile(root, new File(root.getPath(), fileBefore)), revisionBefore);
     if (revisionAfter == null && fileBefore != null) {
       ContentRevision currentRevision =
-        CurrentContentRevision.create(new HgFile(root, new File(root.getPath(), fileBefore)).toFilePath());
+        CurrentContentRevision.create(new HgFile(root, new File(root.getPath(), fileAfter != null ? fileAfter : fileBefore)).toFilePath());
       return new Change(beforeRevision, currentRevision, aStatus);
     }
     HgContentRevision afterRevision =

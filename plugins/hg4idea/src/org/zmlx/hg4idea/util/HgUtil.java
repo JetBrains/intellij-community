@@ -461,7 +461,7 @@ public abstract class HgUtil {
     HgStatusCommand statusCommand;
     if (revNum1 != null) {
       //rev2==null means "compare with local version"
-      statusCommand = new HgStatusCommand.Builder(true).ignored(false).unknown(false).copySource(false).baseRevision(revNum1)
+      statusCommand = new HgStatusCommand.Builder(true).ignored(false).unknown(false).copySource(!path.isDirectory()).baseRevision(revNum1)
         .targetRevision(revNum2).build(project);
     }
     else {
