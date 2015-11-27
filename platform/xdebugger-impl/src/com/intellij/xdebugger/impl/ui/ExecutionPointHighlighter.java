@@ -234,6 +234,7 @@ public class ExecutionPointHighlighter {
       myRangeHighlighter = markupModel.addLineHighlighter(line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER, attributes);
     }
     myRangeHighlighter.putUserData(EXECUTION_POINT_HIGHLIGHTER_KEY, true);
+    myRangeHighlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
     myRangeHighlighter.setGutterIconRenderer(myGutterIconRenderer);
   }
 
