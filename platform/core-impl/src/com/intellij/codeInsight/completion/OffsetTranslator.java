@@ -33,10 +33,12 @@ import java.util.LinkedList;
 public class OffsetTranslator implements Disposable {
   static final Key<OffsetTranslator> RANGE_TRANSLATION = Key.create("completion.rangeTranslation");
 
+  private final PsiFile myOriginalFile;
   private final Document myCopyDocument;
   private final LinkedList<DocumentEvent> myTranslation = new LinkedList<DocumentEvent>();
 
   public OffsetTranslator(final Document originalDocument, final PsiFile originalFile, Document copyDocument) {
+    myOriginalFile = originalFile;
     myCopyDocument = copyDocument;
     myCopyDocument.putUserData(RANGE_TRANSLATION, this);
 
@@ -75,7 +77,7 @@ public class OffsetTranslator implements Disposable {
   }
 
   private boolean isUpToDate() {
-    return this == myCopyDocument.getUserData(RANGE_TRANSLATION);
+    return this == myCopyDocument.getUserData(RANGE_TRANSLATION) && myOriginalFile.isValid();
   }
 
   @Override
