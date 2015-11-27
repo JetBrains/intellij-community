@@ -235,6 +235,11 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     return myHostContext.getProject();
   }
 
+  @Override
+  public String toString() {
+    return "injected{type=" + myType + ", range=" + myInjectedFileRangeInHostFile + ", host=" + myHostContext + "}";
+  }
+
   private static class AffixOffsets {
     final int startAffixIndex;
     final int startAffixOffset;

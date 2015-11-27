@@ -283,4 +283,8 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     return myManager.getProject();
   }
 
+  @Override
+  public String toString() {
+    return "psi:range=" + calcPsiRange() + ",type=" + myType;
+  }
 }

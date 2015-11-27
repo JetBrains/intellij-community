@@ -83,4 +83,8 @@ class DirElementInfo extends SmartPointerElementInfo {
     return null;
   }
 
+  @Override
+  public String toString() {
+    return "dir{" + myVirtualFile + "}";
+  }
 }
