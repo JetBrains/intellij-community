@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,6 +56,11 @@ public class FileListPasteProvider implements PasteProvider {
     if (contents == null) return;
     final List<File> fileList = FileCopyPasteUtil.getFileList(contents);
     if (fileList == null) return;
+
+    if (DumbService.isDumb(project)) {
+      DumbService.getInstance(project).showDumbModeNotification("Sorry, file copy/paste is not available during indexing");
+      return;
+    }
 
     final List<PsiElement> elements = new ArrayList<PsiElement>();
     for (File file : fileList) {
