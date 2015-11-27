@@ -55,7 +55,8 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
     myCache = cache;
   }
 
-  protected List<OrderEnumerationHandler> getCustomHandlers(Module module) {
+  @Override
+  public List<OrderEnumerationHandler> getCustomHandlers(@NotNull Module module) {
     List<OrderEnumerationHandler> customHandlers = null;
     for (OrderEnumerationHandler.Factory handlerFactory : OrderEnumerationHandler.EP_NAME.getExtensions()) {
       if (handlerFactory.isApplicable(module)) {
@@ -197,63 +198,108 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
     return flags;
   }
 
+  @Override
+  public boolean shouldRecurse(@NotNull ModuleOrderEntry entry, @NotNull List<OrderEnumerationHandler> handlers) {
+    ProcessEntryAction action = shouldAddOrRecurse(entry, true, handlers);
+    return action.type == ProcessEntryActionType.RECURSE;
+  }
+
+  // Should process, should recurse, or not process at all.
+  protected enum ProcessEntryActionType {
+    SKIP,
+    RECURSE,
+    PROCESS
+  }
+
+  protected static class ProcessEntryAction {
+    public ProcessEntryActionType type;
+    @Nullable public Module recurseOnModule;
+
+    private ProcessEntryAction(ProcessEntryActionType type) {
+      this.type = type;
+    }
+
+    public static final ProcessEntryAction SKIP = new ProcessEntryAction(ProcessEntryActionType.SKIP);
+
+    public static ProcessEntryAction RECURSE(@NotNull Module module) {
+      ProcessEntryAction result = new ProcessEntryAction(ProcessEntryActionType.RECURSE);
+      result.recurseOnModule = module;
+      return result;
+    }
+
+    public static final ProcessEntryAction PROCESS = new ProcessEntryAction(ProcessEntryActionType.PROCESS);
+  }
+
+  protected ProcessEntryAction shouldAddOrRecurse(OrderEntry entry, boolean firstLevel, List<OrderEnumerationHandler> customHandlers) {
+    if (myCondition != null && !myCondition.value(entry)) return ProcessEntryAction.SKIP;
+
+    if (entry instanceof JdkOrderEntry && (myWithoutJdk || !firstLevel)) return ProcessEntryAction.SKIP;
+    if (myWithoutLibraries && entry instanceof LibraryOrderEntry) return ProcessEntryAction.SKIP;
+    if (myWithoutDepModules) {
+      if (!myRecursively && entry instanceof ModuleOrderEntry) return ProcessEntryAction.SKIP;
+      if (entry instanceof ModuleSourceOrderEntry && !isRootModuleModel(((ModuleSourceOrderEntry)entry).getRootModel())) {
+        return ProcessEntryAction.SKIP;
+      }
+    }
+    if (myWithoutModuleSourceEntries && entry instanceof ModuleSourceOrderEntry) return ProcessEntryAction.SKIP;
+
+    OrderEnumerationHandler.AddDependencyType shouldAdd = OrderEnumerationHandler.AddDependencyType.DEFAULT;
+    for (OrderEnumerationHandler handler : customHandlers) {
+      shouldAdd = handler.shouldAddDependency(entry, this);
+      if (shouldAdd != OrderEnumerationHandler.AddDependencyType.DEFAULT) break;
+    }
+    if (shouldAdd == OrderEnumerationHandler.AddDependencyType.DO_NOT_ADD) {
+      return ProcessEntryAction.SKIP;
+    }
+
+    boolean exported = !(entry instanceof JdkOrderEntry);
+    if (entry instanceof ExportableOrderEntry) {
+      ExportableOrderEntry exportableEntry = (ExportableOrderEntry)entry;
+      if (shouldAdd == OrderEnumerationHandler.AddDependencyType.DEFAULT) {
+        final DependencyScope scope = exportableEntry.getScope();
+        boolean forTestCompile = scope.isForTestCompile() ||
+                                 scope == DependencyScope.RUNTIME && shouldAddRuntimeDependenciesToTestCompilationClasspath(customHandlers);
+        if (myCompileOnly && !scope.isForProductionCompile() && !forTestCompile) return ProcessEntryAction.SKIP;
+        if (myRuntimeOnly && !scope.isForProductionRuntime() && !scope.isForTestRuntime()) return ProcessEntryAction.SKIP;
+        if (myProductionOnly) {
+          if (!scope.isForProductionCompile() && !scope.isForProductionRuntime() ||
+              myCompileOnly && !scope.isForProductionCompile() ||
+              myRuntimeOnly && !scope.isForProductionRuntime()) {
+            return ProcessEntryAction.SKIP;
+          }
+        }
+      }
+      exported = exportableEntry.isExported();
+    }
+    if (!exported) {
+      if (myExportedOnly) return ProcessEntryAction.SKIP;
+      if (myRecursivelyExportedOnly && !firstLevel) return ProcessEntryAction.SKIP;
+    }
+    if (myRecursively && entry instanceof ModuleOrderEntry) {
+      ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)entry;
+      final Module depModule = moduleOrderEntry.getModule();
+      if (depModule != null && shouldProcessRecursively(customHandlers)) {
+        return ProcessEntryAction.RECURSE(depModule);
+      }
+    }
+    if (myWithoutDepModules && entry instanceof ModuleOrderEntry) return ProcessEntryAction.SKIP;
+    return ProcessEntryAction.PROCESS;
+  }
+
   protected void processEntries(final ModuleRootModel rootModel, PairProcessor<OrderEntry, List<OrderEnumerationHandler>> processor,
                                 Set<Module> processed, boolean firstLevel, final List<OrderEnumerationHandler> customHandlers) {
     if (processed != null && !processed.add(rootModel.getModule())) return;
 
     for (OrderEntry entry : rootModel.getOrderEntries()) {
-      if (myCondition != null && !myCondition.value(entry)) continue;
-
-      if (entry instanceof JdkOrderEntry && (myWithoutJdk || !firstLevel)) continue;
-      if (myWithoutLibraries && entry instanceof LibraryOrderEntry) continue;
-      if (myWithoutDepModules) {
-        if (!myRecursively && entry instanceof ModuleOrderEntry) continue;
-        if (entry instanceof ModuleSourceOrderEntry && !isRootModuleModel(((ModuleSourceOrderEntry)entry).getRootModel())) continue;
+      ProcessEntryAction action = shouldAddOrRecurse(entry, firstLevel, customHandlers);
+      if (action.type == ProcessEntryActionType.SKIP) {
+        continue;
       }
-      if (myWithoutModuleSourceEntries && entry instanceof ModuleSourceOrderEntry) continue;
-
-      OrderEnumerationHandler.AddDependencyType shouldAdd = OrderEnumerationHandler.AddDependencyType.DEFAULT;
-      for (OrderEnumerationHandler handler : customHandlers) {
-        shouldAdd = handler.shouldAddDependency(entry, this);
-        if (shouldAdd != OrderEnumerationHandler.AddDependencyType.DEFAULT) break;
+      if (action.type == ProcessEntryActionType.RECURSE) {
+        processEntries(getRootModel(action.recurseOnModule), processor, processed, false, customHandlers);
+        continue;
       }
-      if (shouldAdd == OrderEnumerationHandler.AddDependencyType.DO_NOT_ADD) continue;
-
-      boolean exported = !(entry instanceof JdkOrderEntry);
-
-      if (entry instanceof ExportableOrderEntry) {
-        ExportableOrderEntry exportableEntry = (ExportableOrderEntry)entry;
-        if (shouldAdd == OrderEnumerationHandler.AddDependencyType.DEFAULT) {
-          final DependencyScope scope = exportableEntry.getScope();
-          boolean forTestCompile = scope.isForTestCompile() || scope == DependencyScope.RUNTIME && shouldAddRuntimeDependenciesToTestCompilationClasspath(
-            customHandlers);
-          if (myCompileOnly && !scope.isForProductionCompile() && !forTestCompile) continue;
-          if (myRuntimeOnly && !scope.isForProductionRuntime() && !scope.isForTestRuntime()) continue;
-          if (myProductionOnly) {
-            if (!scope.isForProductionCompile() && !scope.isForProductionRuntime()
-                || myCompileOnly && !scope.isForProductionCompile()
-                || myRuntimeOnly && !scope.isForProductionRuntime()) {
-              continue;
-            }
-          }
-        }
-        exported = exportableEntry.isExported();
-      }
-      if (!exported) {
-        if (myExportedOnly) continue;
-        if (myRecursivelyExportedOnly && !firstLevel) continue;
-      }
-
-      if (myRecursively && entry instanceof ModuleOrderEntry) {
-        ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)entry;
-        final Module module = moduleOrderEntry.getModule();
-        if (module != null && shouldProcessRecursively(customHandlers)) {
-          processEntries(getRootModel(module), processor, processed, false, customHandlers);
-          continue;
-        }
-      }
-
-      if (myWithoutDepModules && entry instanceof ModuleOrderEntry) continue;
+      assert action.type == ProcessEntryActionType.PROCESS;
       if (!processor.process(entry, customHandlers)) {
         return;
       }

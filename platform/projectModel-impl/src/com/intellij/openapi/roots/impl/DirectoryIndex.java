@@ -25,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
+import java.util.List;
+
 public abstract class DirectoryIndex {
   public static DirectoryIndex getInstance(Project project) {
     assert !project.isDefault() : "Must not call DirectoryIndex for default project";
@@ -61,5 +63,5 @@ public abstract class DirectoryIndex {
   }
 
   @NotNull
-  public abstract OrderEntry[] getOrderEntries(@NotNull DirectoryInfo info);
+  public abstract List<OrderEntry> getOrderEntries(@NotNull DirectoryInfo info);
 }

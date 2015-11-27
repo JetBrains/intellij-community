@@ -162,16 +162,16 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
   @NotNull
   @Override
-  public OrderEntry[] getOrderEntries(@NotNull DirectoryInfo info) {
+  public List<OrderEntry> getOrderEntries(@NotNull DirectoryInfo info) {
     checkAvailability();
     return getRootIndex().getOrderEntries(info);
   }
 
   @TestOnly
   void assertConsistency(DirectoryInfo info) {
-    OrderEntry[] entries = getOrderEntries(info);
-    for (int i = 1; i < entries.length; i++) {
-      assert RootIndex.BY_OWNER_MODULE.compare(entries[i - 1], entries[i]) <= 0;
+    List<OrderEntry> entries = getOrderEntries(info);
+    for (int i = 1; i < entries.size(); i++) {
+      assert RootIndex.BY_OWNER_MODULE.compare(entries.get(i - 1), entries.get(i)) <= 0;
     }
   }
 
