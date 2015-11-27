@@ -16,7 +16,6 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.actions.ActivateToolWindowAction;
-import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -70,7 +69,7 @@ public class EditorEmptyTextPainter {
   }
 
   protected void appendDnd(@NotNull UIUtil.TextPainter painter) {
-    appendLine(painter, "Drop files here from " + ShowFilePathAction.getFileManagerName());
+    appendLine(painter, "Drop files here to open");
   }
 
   protected void appendSearchEverywhere(@NotNull UIUtil.TextPainter painter) {
