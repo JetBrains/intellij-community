@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.annotations.Nullable;
@@ -105,6 +106,16 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     rebuildModel();
 
     selectScope(preselect);
+    new ComboboxSpeedSearch(combo) {
+      @Override
+      protected String getElementText(Object element) {
+        if (element instanceof ScopeDescriptor) {
+          final ScopeDescriptor descriptor = (ScopeDescriptor)element;
+          return descriptor.getDisplay();
+        }
+        return null;
+      }
+    };
   }
 
   public void setCurrentSelection(boolean currentSelection) {
