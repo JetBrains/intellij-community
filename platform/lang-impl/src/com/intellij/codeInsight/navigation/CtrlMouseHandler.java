@@ -55,6 +55,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -821,9 +822,10 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       if (offset >= selStart && offset < selEnd) return;
 
       ProgressIndicatorUtils.scheduleWithWriteActionPriority(myProgress, new ReadTask() {
+        @Nullable
         @Override
-        public void computeInReadAction(@NotNull ProgressIndicator indicator) {
-          doExecute(file, offset);
+        public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+          return doExecute(file, offset);
         }
 
         @Override
