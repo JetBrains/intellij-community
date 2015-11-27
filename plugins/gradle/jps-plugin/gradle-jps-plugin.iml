@@ -25,7 +25,6 @@
           <root url="jar://$MODULE_DIR$/../lib/gradle-base-services-groovy-2.9.jar!/" />
           <root url="jar://$MODULE_DIR$/../lib/gradle-native-2.9.jar!/" />
           <root url="jar://$MODULE_DIR$/../lib/gradle-resources-2.9.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-cli-2.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
@@ -39,7 +38,6 @@
           <root url="jar://$MODULE_DIR$/../lib/gradle-2.9-src.zip!/gradle-2.9/subprojects/base-services-groovy/src/main/groovy" />
           <root url="jar://$MODULE_DIR$/../lib/gradle-2.9-src.zip!/gradle-2.9/subprojects/native/src/main/java" />
           <root url="jar://$MODULE_DIR$/../lib/gradle-2.9-src.zip!/gradle-2.9/subprojects/resources/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.9-src.zip!/gradle-2.9/subprojects/cli/src/main/java" />
         </SOURCES>
       </library>
     </orderEntry>
