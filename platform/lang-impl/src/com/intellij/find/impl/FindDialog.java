@@ -1240,15 +1240,21 @@ public class FindDialog extends DialogWrapper {
     bgScope.add(myRbDirectory);
     bgScope.add(myRbCustomScope);
 
-    ActionListener validateAll = new ActionListener() {
+    myRbProject.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         validateScopeControls();
         validateFindButton();
       }
-    };
-    myRbProject.addActionListener(validateAll);
-    myRbCustomScope.addActionListener(validateAll);
+    });
+    myRbCustomScope.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        validateScopeControls();
+        validateFindButton();
+        myScopeCombo.getComboBox().requestFocusInWindow();
+      }
+    });
 
     myRbDirectory.addActionListener(new ActionListener() {
       @Override
