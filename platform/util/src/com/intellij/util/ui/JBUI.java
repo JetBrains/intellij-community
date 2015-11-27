@@ -62,9 +62,8 @@ public class JBUI {
       if (fdata == null) {
         UIUtil.initDefaultLAF();
         fdata = UIUtil.getSystemFontData();
-
-        if (fdata != null) size = fdata.getSecond();
       }
+      if (fdata != null) size = fdata.getSecond();
     }
     if (size == -1) {
       size = Fonts.label().getSize();
