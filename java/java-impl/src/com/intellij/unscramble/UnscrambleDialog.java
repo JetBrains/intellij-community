@@ -24,6 +24,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
@@ -385,10 +386,15 @@ public class UnscrambleDialog extends DialogWrapper {
         return;
       }
     }
-    if (performUnscramble()) {
-      myLogFile.addCurrentTextToHistory();
-      close(OK_EXIT_CODE);
-    }
+    DumbService.getInstance(myProject).withAlternativeResolveEnabled(new Runnable() {
+      @Override
+      public void run() {
+        if (performUnscramble()) {
+          myLogFile.addCurrentTextToHistory();
+          close(OK_EXIT_CODE);
+        }
+      }
+    });
   }
 
   @Override

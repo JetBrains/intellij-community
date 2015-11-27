@@ -17,6 +17,7 @@ package com.intellij.unscramble;
 
 import com.intellij.Patches;
 import com.intellij.openapi.application.ApplicationActivationListener;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
@@ -43,7 +44,9 @@ public class UnscrambleListener extends ApplicationActivationListener.Adapter {
           if (project != null && isStacktrace(stacktrace)) {
             final UnscrambleDialog dialog = new UnscrambleDialog(project);
             dialog.createNormalizeTextAction().actionPerformed(null);
-            dialog.doOKAction();
+            if (!DumbService.isDumb(project)) {
+              dialog.doOKAction();
+            }
           }
         }
       }
