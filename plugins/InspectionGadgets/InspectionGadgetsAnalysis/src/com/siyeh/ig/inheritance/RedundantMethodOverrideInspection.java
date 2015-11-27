@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2014 Bas Leijdekkers
+ * Copyright 2005-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,19 @@ package com.siyeh.ig.inheritance;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public class RedundantMethodOverrideInspection extends BaseInspection {
 
@@ -97,14 +97,10 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       if (method.getNameIdentifier() == null) {
         return;
       }
-      final Query<MethodSignatureBackedByPsiMethod> superMethodQuery =
-        SuperMethodsSearch.search(method, null, true, false);
-      final MethodSignatureBackedByPsiMethod signature =
-        superMethodQuery.findFirst();
-      if (signature == null) {
+      final PsiMethod superMethod = MethodUtils.getSuper(method);
+      if (superMethod == null) {
         return;
       }
-      final PsiMethod superMethod = signature.getMethod();
       final PsiCodeBlock superBody = superMethod.getBody();
       if (superBody == null) {
         return;
