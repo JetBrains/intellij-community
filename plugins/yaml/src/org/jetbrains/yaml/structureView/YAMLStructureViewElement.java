@@ -5,10 +5,13 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.*;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -23,22 +26,41 @@ public class YAMLStructureViewElement implements StructureViewTreeElement {
 
   @NotNull
   public StructureViewTreeElement[] getChildren() {
-    if (myElement instanceof YAMLFile ||
-        myElement instanceof YAMLDocument ||
-        myElement instanceof YAMLKeyValue && ((YAMLKeyValue)myElement).getValue() instanceof YAMLCompoundValue){
-      final List<YAMLPsiElement> children = myElement instanceof YAMLKeyValue
-                                        ? ((YAMLCompoundValue)((YAMLKeyValue)myElement).getValue()).getYAMLElements()
-                                        : myElement.getYAMLElements();
-      final List<StructureViewTreeElement> structureElements = new ArrayList<StructureViewTreeElement>();
-      for (YAMLPsiElement child : children) {
-        if (child instanceof YAMLDocument || child instanceof YAMLKeyValue){
-          structureElements.add(new YAMLStructureViewElement(child));
-        }
-      }
-      return structureElements.toArray(new StructureViewTreeElement[structureElements.size()]);
+    final Collection<? extends YAMLPsiElement> children;
+    if (myElement instanceof YAMLFile) {
+      children = ((YAMLFile)myElement).getDocuments();
     }
-    return EMPTY_ARRAY;
+    else if (myElement instanceof YAMLDocument) {
+      children = getChildrenForValue(((YAMLDocument)myElement).getTopLevelValue());
+    }
+    else if (myElement instanceof YAMLSequenceItem) {
+      children = getChildrenForValue(((YAMLSequenceItem)myElement).getValue());
+    }
+    else if (myElement instanceof YAMLKeyValue) {
+      children = getChildrenForValue(((YAMLKeyValue)myElement).getValue());
+    }
+    else {
+      children = Collections.emptyList();
+    }
+    
+    final List<StructureViewTreeElement> structureElements = new ArrayList<StructureViewTreeElement>();
+    for (YAMLPsiElement child : children) {
+      structureElements.add(new YAMLStructureViewElement(child));
+    }
+    return structureElements.toArray(new StructureViewTreeElement[structureElements.size()]);
   }
+  
+  @NotNull
+  private static Collection<? extends YAMLPsiElement> getChildrenForValue(@Nullable YAMLPsiElement element) {
+    if (element instanceof YAMLMapping) {
+      return ((YAMLMapping)element).getKeyValues();
+    }
+    if (element instanceof YAMLSequence) {
+      return ((YAMLSequence)element).getItems();
+    }
+    return Collections.emptyList();
+  }
+  
 
 
   @NotNull
@@ -51,13 +73,17 @@ public class YAMLStructureViewElement implements StructureViewTreeElement {
         }
 
         public String getLocationString() {
-          return null;
+          if (kv.getValue() instanceof YAMLScalar) {
+            return kv.getValueText();
+          }
+          else {
+            return null;
+          }
         }
 
         public Icon getIcon(boolean open) {
           final PsiElement value = kv.getValue();
-          return value instanceof YAMLCompoundValue && !((YAMLCompoundValue)value).getYAMLElements().isEmpty()
-                 ? PlatformIcons.XML_TAG_ICON : PlatformIcons.PROPERTY_ICON;
+          return value instanceof YAMLScalar ? PlatformIcons.PROPERTY_ICON : PlatformIcons.XML_TAG_ICON;
         }
       };
     }
@@ -73,6 +99,33 @@ public class YAMLStructureViewElement implements StructureViewTreeElement {
 
         public Icon getIcon(boolean open) {
           return PlatformIcons.XML_TAG_ICON;
+        }
+      };
+    }
+    if (myElement instanceof YAMLSequenceItem) {
+      final YAMLSequenceItem item = ((YAMLSequenceItem)myElement);
+      return new ItemPresentation() {
+        @Nullable
+        @Override
+        public String getPresentableText() {
+          if (item.getValue() instanceof YAMLScalar) {
+            return ((YAMLScalar)item.getValue()).getTextValue();
+          }
+          else {
+            return "Sequence Item";
+          }
+        }
+
+        @Nullable
+        @Override
+        public String getLocationString() {
+          return null;
+        }
+
+        @Nullable
+        @Override
+        public Icon getIcon(boolean unused) {
+          return item.getValue() instanceof YAMLScalar ? PlatformIcons.PROPERTY_ICON : PlatformIcons.XML_TAG_ICON;
         }
       };
     }
