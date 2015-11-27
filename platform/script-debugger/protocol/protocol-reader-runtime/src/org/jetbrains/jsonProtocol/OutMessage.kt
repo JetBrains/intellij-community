@@ -39,7 +39,12 @@ open class OutMessage() {
     writer.beginObject()
   }
 
-  open fun beginArguments() {
+  @Throws(IOException::class)
+  protected open fun beginArguments() {
+  }
+
+  internal fun _beginArguments() {
+    beginArguments()
   }
 
   fun writeMap(name: String, value: Map<String, String>) {
@@ -226,7 +231,7 @@ fun OutMessage.writeEnum(name: String, value: Enum<*>?, defaultValue: Enum<*>?) 
 }
 
 fun OutMessage.writeEnum(name: String, value: Enum<*>) {
-  beginArguments()
+  _beginArguments()
   writer.name(name).value(value.toString())
 }
 
@@ -237,7 +242,7 @@ fun OutMessage.writeString(name: String, value: CharSequence?, defaultValue: Cha
 }
 
 fun OutMessage.writeString(name: String, value: CharSequence) {
-  beginArguments()
+  _beginArguments()
   OutMessage.prepareWriteRaw(this, name)
   JsonUtil.escape(value, buffer)
 }
@@ -249,7 +254,7 @@ fun OutMessage.writeInt(name: String, value: Int, defaultValue: Int) {
 }
 
 fun OutMessage.writeInt(name: String, value: Int) {
-  beginArguments()
+  _beginArguments()
   writer.name(name).value(value.toLong())
 }
 
@@ -260,7 +265,7 @@ fun OutMessage.writeBoolean(name: String, value: Boolean, defaultValue: Boolean)
 }
 
 fun OutMessage.writeBoolean(name: String, value: Boolean) {
-  beginArguments()
+  _beginArguments()
   writer.name(name).value(value)
 }
 
@@ -271,6 +276,6 @@ fun OutMessage.writeDouble(name: String, value: Double, defaultValue: Double) {
 }
 
 fun OutMessage.writeDouble(name: String, value: Double) {
-  beginArguments()
+  _beginArguments()
   writer.name(name).value(value)
 }

@@ -39,3 +39,7 @@ annotation class Optional(val default: String = "")
 
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION)
 annotation class ProtocolName(val name: String)
+
+@Target(AnnotationTarget.FUNCTION)
+@Deprecated("Use Optional")
+annotation class JsonOptionalField
