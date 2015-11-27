@@ -131,11 +131,6 @@ public abstract class OrderEnumerator {
   public abstract boolean shouldRecurse(@NotNull ModuleOrderEntry entry, @NotNull List<OrderEnumerationHandler> handlers);
 
   /**
-   * @return a list of {@link OrderEnumerationHandler} registered to a module.
-   */
-  public abstract List<OrderEnumerationHandler> getCustomHandlers(@NotNull Module module);
-
-  /**
    * @return {@link OrderRootsEnumerator} instance for processing classes roots
    */
   public abstract OrderRootsEnumerator classes();

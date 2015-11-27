@@ -34,7 +34,7 @@ import com.intellij.util.CollectionQuery;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.SynchronizedSLRUCache;
+import com.intellij.util.containers.SLRUMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -267,7 +267,7 @@ public class RootIndex {
               }
               List<OrderEnumerationHandler> handlers = handlersMap.get(depModule);
               if (handlers == null) {
-                handlers = en.getCustomHandlers(depModule);
+                handlers = OrderEnumeratorBase.getCustomHandlers(depModule);
                 handlersMap.put(depModule, handlers);
               }
               boolean shouldRecurse = en.shouldRecurse(moduleOrderEntry, handlers);
@@ -693,5 +693,37 @@ public class RootIndex {
     DirectoryInfo getCachedInfo(@NotNull VirtualFile dir);
 
     void cacheInfo(@NotNull VirtualFile dir, @NotNull DirectoryInfo info);
+  }
+
+  /**
+   * An LRU cache with synchronization around the primary cache operations (get() and insertion
+   * of a newly created value). Other map operations are not synchronized.
+   */
+  abstract static class SynchronizedSLRUCache<K, V> extends SLRUMap<K,V> {
+    protected final Object myLock = new Object();
+
+    protected SynchronizedSLRUCache(final int protectedQueueSize, final int probationalQueueSize) {
+      super(protectedQueueSize, probationalQueueSize);
+    }
+
+    @NotNull
+    public abstract V createValue(K key);
+
+    @Override
+    @NotNull
+    public V get(K key) {
+      V value;
+      synchronized (myLock) {
+        value = super.get(key);
+        if (value != null) {
+          return value;
+        }
+      }
+      value = createValue(key);
+      synchronized (myLock) {
+        put(key, value);
+      }
+      return value;
+    }
   }
 }
