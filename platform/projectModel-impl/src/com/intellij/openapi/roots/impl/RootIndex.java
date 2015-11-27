@@ -239,10 +239,10 @@ public class RootIndex {
       Graph graph = new Graph();
 
       MultiMap<VirtualFile, Node> roots = MultiMap.createSmart();
-      Map<Module, List<OrderEnumerationHandler>> handlersMap = ContainerUtil.newHashMap();
 
       for (final Module module : ModuleManager.getInstance(myProject).getModules()) {
         final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+        List<OrderEnumerationHandler> handlers = OrderEnumeratorBase.getCustomHandlers(module);
         for (OrderEntry orderEntry : moduleRootManager.getOrderEntries()) {
           if (orderEntry instanceof ModuleOrderEntry) {
             ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
@@ -264,11 +264,6 @@ public class RootIndex {
                 for (VirtualFile sourceRoot : importedSourceRoots) {
                   roots.putValue(sourceRoot, node);
                 }
-              }
-              List<OrderEnumerationHandler> handlers = handlersMap.get(depModule);
-              if (handlers == null) {
-                handlers = OrderEnumeratorBase.getCustomHandlers(depModule);
-                handlersMap.put(depModule, handlers);
               }
               boolean shouldRecurse = en.shouldRecurse(moduleOrderEntry, handlers);
               node.myEdges.add(new Edge(module, moduleOrderEntry, shouldRecurse));
