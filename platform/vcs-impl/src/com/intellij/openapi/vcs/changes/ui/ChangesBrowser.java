@@ -334,7 +334,9 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
       treeActionsGroup.add(action);
     }
 
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroups, true).getComponent();
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroups, true);
+    toolbar.setTargetComponent(this);
+    return toolbar.getComponent();
   }
 
   protected void buildToolBar(final DefaultActionGroup toolBarGroup) {
