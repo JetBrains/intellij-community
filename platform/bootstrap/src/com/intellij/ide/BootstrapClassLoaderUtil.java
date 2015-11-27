@@ -103,7 +103,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
 
         boolean isExt = false;
         for (String extDir : extDirs) {
-          if (path.startsWith(extDir)) {
+          if (path.startsWith(extDir) && path.length() > extDir.length() && path.charAt(extDir.length()) == File.separatorChar) {
             isExt = true;
             break;
           }
