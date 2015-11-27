@@ -15,18 +15,35 @@
  */
 package com.intellij.uiDesigner.core;
 
-import junit.framework.TestCase;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.TestLoggerFactory;
+import com.intellij.testFramework.UsefulTestCase;
+import junit.framework.AssertionFailedError;
 
 import javax.swing.*;
 import java.awt.*;
 
-public final class TextAreasTest extends TestCase{
+public final class TextAreasTest extends UsefulTestCase {
+  {
+    Logger.setFactory(TestLoggerFactory.class);
+    TestLoggerFactory.enableDebugLogging(myTestRootDisposable,
+                                         new String[]{"#com.intellij.uiDesigner.core.GridLayoutManager"});
+  }
+  private final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.core.TextAreasTest");
+
+  private String getTestStartedLogMessage(String testName) {
+    return "Starting " + getClass().getName() + "." + testName;
+  }
+
   /**
    * label   |    label
    * text area (span 2)
-   */ 
-  
+   */
   public void test1() {
+    LOG.info(getTestStartedLogMessage("test1"));
+
     final JPanel panel = new JPanel(new GridLayoutManager(2,2, new Insets(0,0,0,0), 0, 0));
 
     final JLabel label1 = new JLabel();
@@ -46,7 +63,17 @@ public final class TextAreasTest extends TestCase{
       GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
       GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0));
 
-    assertEquals(100, textArea.getPreferredSize().width);
+    LOG.info("textArea: " + textArea.toString());
+    LOG.info("LaF: " + UIManager.getLookAndFeel());
+    LOG.info("textArea.font: " + textArea.getFont());
+    LOG.info("UIDefaults: " + UIManager.getLookAndFeelDefaults());
+
+    try {
+      assertEquals(100, textArea.getPreferredSize().width);
+    } catch (AssertionFailedError e) {
+      TestLoggerFactory.dumpLogToStdout(getTestStartedLogMessage("test1"));
+      throw e;
+    }
 
     final Dimension initialPreferredSize = panel.getPreferredSize();
     assertEquals(new Dimension(100,20 + textArea.getPreferredSize().height), initialPreferredSize);
