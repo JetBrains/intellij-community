@@ -135,11 +135,14 @@ public class ThreadTracker {
           }.isConditionRealized()) {
             continue;
           }
+        }
+        StackTraceElement[] stackTrace = thread.getStackTrace();
+        if (stackTrace.length == 0) {
           continue; // ignore threads with empty stack traces for now. Seems they are zombies unwilling to die.
         }
 
         String trace = "Thread leaked: " + thread+"; " + thread.getState()+" ("+ thread.isAlive()+")\n--- its stacktrace:\n";
-        for (final StackTraceElement stackTraceElement : thread.getStackTrace()) {
+        for (final StackTraceElement stackTraceElement : stackTrace) {
           trace += " at "+stackTraceElement +"\n";
         }
         trace += "---\n";
