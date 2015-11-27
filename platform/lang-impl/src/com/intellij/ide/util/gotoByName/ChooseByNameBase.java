@@ -49,6 +49,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -495,7 +496,7 @@ public abstract class ChooseByNameBase {
 
     if (checkBoxName != null) {
       if (myCheckBox != null && myCheckBoxShortcut != null) {
-        new AnAction("change goto check box", null, null) {
+        new DumbAwareAction("change goto check box", null, null) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             myCheckBox.setSelected(!myCheckBox.isSelected());
@@ -1681,7 +1682,7 @@ public abstract class ChooseByNameBase {
 
   private static final String ACTION_NAME = "Show All in View";
 
-  private abstract class ShowFindUsagesAction extends AnAction {
+  private abstract class ShowFindUsagesAction extends DumbAwareAction {
     public ShowFindUsagesAction() {
       super(ACTION_NAME, ACTION_NAME, AllIcons.General.AutohideOff);
     }

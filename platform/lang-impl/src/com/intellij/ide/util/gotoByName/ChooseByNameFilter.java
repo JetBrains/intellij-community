@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ide.util.gotoByName;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -79,22 +80,7 @@ public abstract class ChooseByNameFilter<T> {
                             @NotNull Project project) {
     myParentPopup = popup;
     DefaultActionGroup actionGroup = new DefaultActionGroup("go.to.file.filter", false);
-    ToggleAction action = new ToggleAction("Filter", "Filter files by type", AllIcons.General.Filter) {
-      @Override
-      public boolean isSelected(final AnActionEvent e) {
-        return myPopup != null;
-      }
-
-      @Override
-      public void setSelected(final AnActionEvent e, final boolean state) {
-        if (state) {
-          createPopup();
-        }
-        else {
-          close();
-        }
-      }
-    };
+    ToggleAction action = new FilterAction();
     actionGroup.add(action);
     myToolbar = ActionManager.getInstance().createActionToolbar("gotfile.filter", actionGroup, true);
     myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
@@ -230,6 +216,27 @@ public abstract class ChooseByNameFilter<T> {
   public void close() {
     if (myPopup != null) {
       Disposer.dispose(myPopup);
+    }
+  }
+
+  private class FilterAction extends ToggleAction implements DumbAware {
+    public FilterAction() {
+      super("Filter", "Filter files by type", AllIcons.General.Filter);
+    }
+
+    @Override
+    public boolean isSelected(final AnActionEvent e) {
+      return myPopup != null;
+    }
+
+    @Override
+    public void setSelected(final AnActionEvent e, final boolean state) {
+      if (state) {
+        createPopup();
+      }
+      else {
+        close();
+      }
     }
   }
 }
