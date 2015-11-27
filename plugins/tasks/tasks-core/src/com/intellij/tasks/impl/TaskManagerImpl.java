@@ -656,6 +656,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
           }
           TaskRepository repository = repositoryType.createRepository();
           repository.setUrl(server.url);
+          repository.setShared(true);
           myRepositories.add(repository);
         }
       }
