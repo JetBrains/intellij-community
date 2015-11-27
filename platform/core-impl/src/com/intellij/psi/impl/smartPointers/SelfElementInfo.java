@@ -189,7 +189,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
         }
         else {
           VirtualFile vParent = virtualFile.getParent();
-          if (vParent == null || !vParent.isDirectory()) return null;
+          if (vParent == null || !vParent.isValid()) return null;
           String name = virtualFile.getName();
           child = vParent.findChild(name);
         }
@@ -284,4 +284,8 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     return myManager.getProject();
   }
 
+  @Override
+  public String toString() {
+    return "psi:range=" + calcPsiRange() + ",type=" + myType;
+  }
 }
