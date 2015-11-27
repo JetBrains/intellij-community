@@ -1159,7 +1159,7 @@
 
     <debuggerEditorTextProvider language="JAVA" implementationClass="com.intellij.debugger.impl.JavaEditorTextProviderImpl"/>
 
-    <constructorBodyGenerator language="JAVA" implementationClass="com.intellij.codeInsight.generation.JavaConstructorBodyWithSuperCallGenerator"/>
+    <constructorBodyGenerator language="JAVA" implementationClass="com.intellij.codeInsight.generation.NewJavaConstructorBodyWithSuperCallGenerator"/>
 
     <quoteHandler fileType="JAVA" className="com.intellij.codeInsight.editorActions.JavaQuoteHandler"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.JavaTypedHandler" id="java"/>
