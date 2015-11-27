@@ -181,10 +181,10 @@ public class RootIndex {
 
     private static class Edge {
       Module myKey;
-      OrderEntry myOrderEntry; // Order entry from myKey -> the node containing the edge
+      ModuleOrderEntry myOrderEntry; // Order entry from myKey -> the node containing the edge
       boolean myRecursive; // Whether this edge should be descended into during graph walk
 
-      public Edge(Module key, OrderEntry orderEntry, boolean recursive) {
+      public Edge(Module key, ModuleOrderEntry orderEntry, boolean recursive) {
         myKey = key;
         myOrderEntry = orderEntry;
         myRecursive = recursive;
@@ -271,7 +271,7 @@ public class RootIndex {
                 handlersMap.put(depModule, handlers);
               }
               boolean shouldRecurse = en.shouldRecurse(moduleOrderEntry, handlers);
-              node.myEdges.add(new Edge(module, orderEntry, shouldRecurse));
+              node.myEdges.add(new Edge(module, moduleOrderEntry, shouldRecurse));
             }
           }
         }
