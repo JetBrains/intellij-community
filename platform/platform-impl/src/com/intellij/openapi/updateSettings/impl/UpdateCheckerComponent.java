@@ -17,6 +17,7 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -109,7 +110,11 @@ public class UpdateCheckerComponent implements ApplicationComponent {
         String currentBuild = ApplicationInfo.getInstance().getBuild().asString();
         long timeToNextCheck = mySettings.getLastTimeChecked() + CHECK_INTERVAL - System.currentTimeMillis();
 
-        if (StringUtil.compareVersionNumbers(mySettings.getLasBuildChecked(), currentBuild) < 0 || timeToNextCheck <= 0) {
+        boolean pluginsWereJustImportedFromPreviousVersion = PluginManager.getOnceInstalledIfExists() != null;
+
+        if (StringUtil.compareVersionNumbers(mySettings.getLasBuildChecked(), currentBuild) < 0 ||
+            timeToNextCheck <= 0 ||
+            pluginsWereJustImportedFromPreviousVersion) {
           myCheckRunnable.run();
         }
         else {

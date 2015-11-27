@@ -15,7 +15,7 @@
  */
 package com.intellij.refactoring.util;
 
-import com.intellij.ide.highlighter.JavaClassFileType;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +36,6 @@ public class ClsElementWritingAccessProvider extends WritingAccessProvider {
 
   @Override
   public boolean isPotentiallyWritable(@NotNull final VirtualFile file) {
-    // TODO make library class files readonly not by their file type but by location in library roots
-    return file.getFileType() != JavaClassFileType.INSTANCE;
+    return JarFileSystem.getInstance().getLocalVirtualFileFor(file) == null;
   }
 }

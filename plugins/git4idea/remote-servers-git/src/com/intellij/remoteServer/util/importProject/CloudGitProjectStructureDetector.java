@@ -22,14 +22,12 @@ import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
 import com.intellij.ide.util.projectWizard.importSources.impl.JavaProjectStructureDetector;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remoteServer.util.CloudGitDeploymentDetector;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryImpl;
@@ -74,9 +72,7 @@ public class CloudGitProjectStructureDetector extends ProjectStructureDetector {
     }
 
     Project project = ProjectManager.getInstance().getDefaultProject();
-    GitRepository repository
-      = GitRepositoryImpl.getLightInstance(repositoryRoot, project, ServiceManager.getService(project, GitPlatformFacade.class), project);
-    repository.update();
+    GitRepository repository = GitRepositoryImpl.getInstance(repositoryRoot, project, false);
 
     for (CloudGitDeploymentDetector deploymentDetector : CloudGitDeploymentDetector.EP_NAME.getExtensions()) {
       String applicationName = deploymentDetector.getFirstApplicationName(repository);

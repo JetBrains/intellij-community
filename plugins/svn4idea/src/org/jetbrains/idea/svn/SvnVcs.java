@@ -128,7 +128,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   private ChangeProvider myChangeProvider;
   private MergeProvider myMergeProvider;
-  private final WorkingCopiesContent myWorkingCopiesContent;
 
   private final SvnChangelistListener myChangeListListener;
 
@@ -193,8 +192,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
     myFrameStateListener = project.isDefault() ? null : new MyFrameStateListener(ChangeListManager.getInstance(project),
                                                                                  VcsDirtyScopeManager.getInstance(project));
-    myWorkingCopiesContent = new WorkingCopiesContent(this);
-
     myChecker = new SvnExecutableChecker(this);
 
     Application app = ApplicationManager.getApplication();
@@ -216,8 +213,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     else {
       invokeRefreshSvnRoots();
     }
-
-    myWorkingCopiesContent.activate();
   }
 
   /**
@@ -433,7 +428,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
     mySvnBranchPointsCalculator.deactivate();
     mySvnBranchPointsCalculator = null;
-    myWorkingCopiesContent.deactivate();
     myLoadedBranchesStorage.deactivate();
   }
 

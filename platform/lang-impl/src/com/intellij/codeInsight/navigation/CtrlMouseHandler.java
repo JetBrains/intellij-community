@@ -55,6 +55,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -821,9 +822,10 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       if (offset >= selStart && offset < selEnd) return;
 
       ProgressIndicatorUtils.scheduleWithWriteActionPriority(myProgress, new ReadTask() {
+        @Nullable
         @Override
-        public void computeInReadAction(@NotNull ProgressIndicator indicator) {
-          doExecute(file, offset);
+        public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+          return doExecute(file, offset);
         }
 
         @Override
@@ -833,21 +835,22 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       });
     }
 
-    private void doExecute(@NotNull PsiFile file, int offset) {
+    @Nullable
+    private ReadTask.Continuation doExecute(@NotNull PsiFile file, int offset) {
       final Info info;
       final DocInfo docInfo;
       try {
         info = getInfoAt(myEditor, file, offset, myBrowseMode);
-        if (info == null) return;
+        if (info == null) return null;
         docInfo = info.getInfo();
       }
       catch (IndexNotReadyException e) {
         showDumbModeNotification(myProject);
-        return;
+        return null;
       }
 
       LOG.debug("Obtained info about element under cursor");
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      return new ReadTask.Continuation(new Runnable() {
         @Override
         public void run() {
           if (myDisposed || myEditor.isDisposed() || !myEditor.getComponent().isShowing()) return;

@@ -48,6 +48,7 @@ public class JUnit4TestListener extends RunListener {
   private final PrintStream myPrintStream;
   private String myRootName;
   private long myCurrentTestStart;
+  private int myFinishedCount = 0;
 
   public JUnit4TestListener() {
     this(System.out);
@@ -113,6 +114,7 @@ public class JUnit4TestListener extends RunListener {
 
     for (int i = myStartedSuites.size() - 1; i >= idx; i--) {
       currentClass = (Description)myStartedSuites.remove(i);
+      myFinishedCount = 0;
       myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(getShortName(JUnit4ReflectionUtil.getClassName(currentClass))) + "\']");
     }
 
@@ -121,7 +123,7 @@ public class JUnit4TestListener extends RunListener {
       final String fqName = JUnit4ReflectionUtil.getClassName(descriptionFromHistory);
       final String className = getShortName(fqName);
       if (!className.equals(myRootName)) {
-        myPrintStream.println("##teamcity[testSuiteStarted name=\'" + escapeName(className) + "\'" + (parents == null ? " locationHint=\'java:suite://" + escapeName(fqName) + "\'" : "") + "]");
+        myPrintStream.println("##teamcity[testSuiteStarted name=\'" + escapeName(className) + "\'" + (parents == null ? getClassLocation(fqName) : "") + "]");
         myStartedSuites.add(descriptionFromHistory);
       }
     }
@@ -129,6 +131,10 @@ public class JUnit4TestListener extends RunListener {
     myPrintStream.println("##teamcity[testStarted name=\'" + escapeName(methodName) + "\' " + 
                           getTestMethodLocation(methodName, classFQN) + "]");
     myCurrentTestStart = currentTime();
+  }
+
+  private static String getClassLocation(String fqName) {
+    return " locationHint=\'java:suite://" + escapeName(fqName) + "\'";
   }
 
   private static boolean isHierarchyDifferent(List parents, 
@@ -149,6 +155,7 @@ public class JUnit4TestListener extends RunListener {
   public void testFinished(Description description) throws Exception {
     final String methodName = getFullMethodName(description);
     if (methodName != null) {
+      myFinishedCount++;
       final long duration = currentTime() - myCurrentTestStart;
       myPrintStream.println("\n##teamcity[testFinished name=\'" + escapeName(methodName) +
                             (duration > 0 ? "\' duration=\'"  + Long.toString(duration) : "") + "\']");
@@ -160,10 +167,21 @@ public class JUnit4TestListener extends RunListener {
   }
 
   private void testFailure(Failure failure, Description description, String messageName, boolean local) throws Exception {
-    final String methodName = getFullMethodName(description);
-    if (methodName == null) { //class setUp failed
-      for (Iterator iterator = description.getChildren().iterator(); iterator.hasNext(); ) {
-        testFailure(failure, (Description)iterator.next(), messageName, false);
+    String methodName = getFullMethodName(description);
+    if (methodName == null) { //class setUp/tearDown failed
+      final boolean isIgnored = MapSerializerUtil.TEST_IGNORED.equals(messageName);
+      if (!isIgnored) {
+        methodName = "Class Configuration";
+        myPrintStream.println("##teamcity[testStarted name=\'" + escapeName(methodName) + "\' " + getClassLocation(JUnit4ReflectionUtil.getClassName(description))+ " ]");
+        testFailure(failure, messageName, methodName);
+        myPrintStream.println("\n##teamcity[testFinished name=\'" + escapeName(methodName) + "\']");
+      }
+
+      if (myFinishedCount == 0) {
+        //only setup failures
+        for (Iterator iterator = description.getChildren().iterator(); iterator.hasNext(); ) {
+          testFailure(isIgnored ? failure : null, (Description)iterator.next(), MapSerializerUtil.TEST_IGNORED, false);
+        }
       }
     }
     else {
@@ -181,10 +199,12 @@ public class JUnit4TestListener extends RunListener {
       attrs.put("duration", Long.toString(duration));
     }
     try {
-      final String trace = getTrace(failure);
-      final Throwable ex = failure.getException();
-      final ComparisonFailureData notification = createExceptionNotification(ex);
-      ComparisonFailureData.registerSMAttributes(notification, trace, failure.getMessage(), attrs, ex);
+      if (failure != null) {
+        final String trace = getTrace(failure);
+        final Throwable ex = failure.getException();
+        final ComparisonFailureData notification = createExceptionNotification(ex);
+        ComparisonFailureData.registerSMAttributes(notification, trace, failure.getMessage(), attrs, ex);
+      }
     }
     catch (Throwable e) {
       final StringWriter stringWriter = new StringWriter();

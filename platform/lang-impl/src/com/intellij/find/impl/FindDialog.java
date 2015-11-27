@@ -44,6 +44,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -483,8 +484,10 @@ public class FindDialog extends DialogWrapper {
       final AtomicInteger resultsCount = new AtomicInteger();
 
       ProgressIndicatorUtils.scheduleWithWriteActionPriority(myResultsPreviewSearchProgress, new ReadTask() {
+
+        @Nullable
         @Override
-        public void computeInReadAction(@NotNull ProgressIndicator indicator) {
+        public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
           final UsageViewPresentation presentation =
             FindInProjectUtil.setupViewPresentation(FindSettings.getInstance().isShowResultsInSeparateView(), findModel);
           final boolean showPanelIfOnlyOneUsage = !FindSettings.getInstance().isSkipResultsWithOneUsage();
@@ -511,7 +514,7 @@ public class FindDialog extends DialogWrapper {
           }, processPresentation, filesToScanInitially);
           boolean succeeded = !progressIndicatorWhenSearchStarted.isCanceled();
           if (succeeded) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
+            return new Continuation(new Runnable() {
               @Override
               public void run() {
                 if (progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress && !myResultsPreviewSearchProgress.isCanceled()) {
@@ -522,6 +525,7 @@ public class FindDialog extends DialogWrapper {
               }
             }, state);
           }
+          return null;
         }
 
         @Override

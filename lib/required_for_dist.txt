@@ -16,7 +16,7 @@ httpcore-4.4.1.jar
 httpclient-4.4.1.jar
 fluent-hc-4.4.1.jar
 httpmime-4.4.1.jar
-ecj-4.4.jar
+ecj-4.5.1.jar
 groovy-all-2.3.9.jar
 gson-2.3.1.jar
 guava-17.0.jar

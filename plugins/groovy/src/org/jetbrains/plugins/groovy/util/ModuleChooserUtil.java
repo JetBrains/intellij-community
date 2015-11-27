@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.util;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -43,21 +42,21 @@ public class ModuleChooserUtil {
   private static final String GROOVY_LAST_MODULE = "Groovy.Last.Module.Chosen";
 
   public static void selectModule(@NotNull Project project,
-                                  final Condition<Module> check,
+                                  final Collection<Module> suitableModules,
                                   final Function<Module, String> versionProvider,
                                   final Consumer<Module> callback) {
-    selectModule(project, check, versionProvider, callback, null);
+    selectModule(project, suitableModules, versionProvider, callback, null);
   }
 
   public static void selectModule(@NotNull Project project,
-                                  final Condition<Module> check,
+                                  final Collection<Module> suitableModules,
                                   final Function<Module, String> versionProvider,
                                   final Consumer<Module> callback,
                                   @Nullable DataContext context) {
     final List<Module> modules = new ArrayList<Module>();
     final Map<Module, String> versions = new HashMap<Module, String>();
 
-    for (Module module : getGroovyCompatibleModules(project, check)) {
+    for (Module module : suitableModules) {
       modules.add(module);
       versions.put(module, versionProvider.fun(module));
     }
@@ -132,11 +131,11 @@ public class ModuleChooserUtil {
     };
   }
 
-  public static List<Module> getGroovyCompatibleModules(Project project, final Condition<Module> condition) {
-    return ContainerUtil.filter(ModuleManager.getInstance(project).getModules(), isGroovyCompatibleModule(condition));
+  public static List<Module> filterGroovyCompatibleModules(Collection<Module> modules, final Condition<Module> condition) {
+    return ContainerUtil.filter(modules, isGroovyCompatibleModule(condition));
   }
 
-  public static boolean hasGroovyCompatibleModules(Project project, final Condition<Module> condition) {
-    return ContainerUtil.or(ModuleManager.getInstance(project).getModules(), isGroovyCompatibleModule(condition));
+  public static boolean hasGroovyCompatibleModules(Collection<Module> modules, final Condition<Module> condition) {
+    return ContainerUtil.or(modules, isGroovyCompatibleModule(condition));
   }
 }

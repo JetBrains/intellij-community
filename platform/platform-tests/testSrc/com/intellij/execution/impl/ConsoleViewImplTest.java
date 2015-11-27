@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.TestDataProvider;
 import com.intellij.util.Alarm;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +65,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     assertEquals(2, console.getContentSize());
   }
 
-  public void testDoubleClear() throws Exception {
+  public void testConsolePrintsSomethingAfterDoubleClear() throws Exception {
     ConsoleViewImpl console = myConsole;
     Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
     CountDownLatch latch = new CountDownLatch(1);
@@ -77,11 +76,35 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       latch.countDown();
     }, 0);
     latch.await();
-    UIUtil.dispatchAllInvocationEvents();
-    TimeoutUtil.sleep(SystemProperties.getIntProperty("console.flush.delay.ms", 200));
-    UIUtil.dispatchAllInvocationEvents();
-    assertFalse(console.hasDeferredOutput());
-    //assertEquals("Test", console.getText());
+    while (console.hasDeferredOutput()) {
+      UIUtil.dispatchAllInvocationEvents();
+      TimeoutUtil.sleep(5);
+    }
+    assertEquals("Test", console.getText());
+  }
+
+  public void testClearAndPrintWhileAnotherClearExecution() throws Exception {
+    ConsoleViewImpl console = myConsole;
+    Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+    for (int i = 0; i < 100; i++) {
+      // To speed up test execution, set -Dconsole.flush.delay.ms=5 to reduce ConsoleViewImpl.DEFAULT_FLUSH_DELAY
+      System.out.println("Attempt #" + i);
+      console.clear(); // 1-st clear
+      CountDownLatch latch = new CountDownLatch(1);
+      alarm.addRequest(() -> {
+        console.clear(); // 2-nd clear
+        console.print("Test", ConsoleViewContentType.NORMAL_OUTPUT);
+        latch.countDown();
+      }, 0);
+      UIUtil.dispatchAllInvocationEvents(); // flush 1-st clear request
+      latch.await();
+      UIUtil.dispatchAllInvocationEvents(); // flush 2-nd clear request
+      while (console.hasDeferredOutput()) {
+        UIUtil.dispatchAllInvocationEvents();
+        TimeoutUtil.sleep(5);
+      }
+      assertEquals("Test", console.getText());
+    }
   }
 
   public void testTypeInEmptyConsole() throws Exception {

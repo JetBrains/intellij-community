@@ -393,7 +393,7 @@ class PyDB:
         return self.plugin
 
     def not_in_scope(self, filename):
-        return pydevd_utils.is_in_project_roots(filename)
+        return pydevd_utils.not_in_project_roots(filename)
 
     def first_appearance_in_scope(self, trace):
         if trace is None or self.not_in_scope(trace.tb_frame.f_code.co_filename):

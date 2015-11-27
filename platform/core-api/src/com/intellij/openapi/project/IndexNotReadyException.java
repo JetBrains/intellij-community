@@ -51,7 +51,7 @@ import java.io.PrintWriter;
  * @see DumbAware
  */
 public class IndexNotReadyException extends RuntimeException {
-  private final Throwable myStartTrace;
+  @Nullable private final Throwable myStartTrace;
 
   public IndexNotReadyException() {
     this(null);
@@ -65,18 +65,22 @@ public class IndexNotReadyException extends RuntimeException {
   @Override
   public void printStackTrace(PrintStream s) {
     super.printStackTrace(s);
-    s.println();
-    s.println("-----------");
-    s.println("Indexing started at:");
-    myStartTrace.printStackTrace(s);
+    if (myStartTrace != null) {
+      s.println();
+      s.println("-----------");
+      s.println("Indexing started at:");
+      myStartTrace.printStackTrace(s);
+    }
   }
 
   @Override
   public void printStackTrace(PrintWriter s) {
     super.printStackTrace(s);
-    s.println();
-    s.println("-----------");
-    s.println("Indexing started at:");
-    myStartTrace.printStackTrace(s);
+    if (myStartTrace != null) {
+      s.println();
+      s.println("-----------");
+      s.println("Indexing started at:");
+      myStartTrace.printStackTrace(s);
+    }
   }
 }

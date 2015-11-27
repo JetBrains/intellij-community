@@ -129,7 +129,7 @@ public class GitShowExternalLogAction extends DumbAwareAction {
     final GitRepositoryManager repositoryManager = ServiceManager.getService(project, GitRepositoryManager.class);
     GitPlatformFacade facade = ServiceManager.getService(GitPlatformFacade.class);
     for (VirtualFile root : roots) {
-      repositoryManager.addExternalRepository(root, GitRepositoryImpl.getFullInstance(root, project, facade, project));
+      repositoryManager.addExternalRepository(root, GitRepositoryImpl.getInstance(root, project, true));
     }
     VcsLogManager manager = new VcsLogManager(project, ServiceManager.getService(project, VcsLogSettings.class),
                                               ServiceManager.getService(project, VcsLogUiProperties.class));

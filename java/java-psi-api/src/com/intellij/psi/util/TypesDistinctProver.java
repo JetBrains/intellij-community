@@ -273,6 +273,14 @@ public class TypesDistinctProver {
       }
       return false;
     }
+    else if (bound instanceof PsiIntersectionType) {
+      for (PsiType conjunctBound : ((PsiIntersectionType)bound).getConjuncts()) {
+        if (!proveArrayTypeDistinct(type, conjunctBound)) return false;
+      }
+    }
+    else if (bound instanceof PsiCapturedWildcardType) {
+      return proveArrayTypeDistinct(type, ((PsiCapturedWildcardType)bound).getWildcard());
+    }
     return true;
   }
 

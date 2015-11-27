@@ -53,11 +53,19 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
     myMediatedProcess = withMediator && MEDIATOR_KEY.get(commandLine) == Boolean.TRUE;
   }
 
-  public KillableColoredProcessHandler(@NotNull Process process, @NotNull String commandLine) {
+  /**
+   *
+   * @param commandLine must be not empty
+   */
+  public KillableColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine) {
     super(process, commandLine);
   }
 
-  public KillableColoredProcessHandler(@NotNull Process process, @NotNull String commandLine, @NotNull Charset charset) {
+  /**
+   *
+   * @param commandLine must be not empty
+   */
+  public KillableColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset) {
     super(process, commandLine, charset);
   }
 

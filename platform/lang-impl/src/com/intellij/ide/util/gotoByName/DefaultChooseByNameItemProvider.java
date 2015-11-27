@@ -63,6 +63,8 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
     final ChooseByNameModel model = base.getModel();
     String matchingPattern = convertToMatchingPattern(base, namePattern);
+    if (matchingPattern == null) return true;
+
     List<MatchResult> namesList = new ArrayList<MatchResult>();
 
     final CollectConsumer<MatchResult> collect = new SynchronizedCollectConsumer<MatchResult>(namesList);
@@ -296,8 +298,11 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   @NotNull
   @Override
   public List<String> filterNames(@NotNull ChooseByNameBase base, @NotNull String[] names, @NotNull String pattern) {
+    pattern = convertToMatchingPattern(base, pattern);
+    if (pattern == null) return Collections.emptyList();
+
     final List<String> filtered = new ArrayList<String>();
-    processNamesByPattern(base, names, convertToMatchingPattern(base, pattern), ProgressIndicatorProvider.getGlobalProgressIndicator(), new Consumer<MatchResult>() {
+    processNamesByPattern(base, names, pattern, ProgressIndicatorProvider.getGlobalProgressIndicator(), new Consumer<MatchResult>() {
       @Override
       public void consume(MatchResult result) {
         synchronized (filtered) {
@@ -332,12 +337,12 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     }
   }
 
-  @NotNull
+  @Nullable
   private static String convertToMatchingPattern(@NotNull ChooseByNameBase base, @NotNull String pattern) {
     pattern = removeModelSpecificMarkup(base.getModel(), pattern);
 
-    if (!base.canShowListForEmptyPattern()) {
-      LOG.assertTrue(!pattern.isEmpty(), base);
+    if (!base.canShowListForEmptyPattern() && pattern.isEmpty()) {
+      return null;
     }
 
     return addSearchAnywherePatternDecorationIfNeeded(base, pattern);

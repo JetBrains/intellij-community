@@ -59,6 +59,8 @@ IDE_BIN_HOME=`dirname "$SCRIPT_LOCATION"`
 # ---------------------------------------------------------------------
 if [ -n "$@@product_uc@@_JDK" -a -x "$@@product_uc@@_JDK/bin/java" ]; then
   JDK="$@@product_uc@@_JDK"
+elif [ -s "$HOME/.@@system_selector@@/config/@@vm_options@@.jdk" ]; then
+  JDK=`$CAT $HOME/.@@system_selector@@/config/@@vm_options@@.jdk`
 elif [ -x "$IDE_HOME/jre/jre/bin/java" ] && "$IDE_HOME/jre/jre/bin/java" -version > /dev/null 2>&1 ; then
   JDK="$IDE_HOME/jre"
 elif [ -n "$JDK_HOME" -a -x "$JDK_HOME/bin/java" ]; then

@@ -881,4 +881,8 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testExpectedTypeBasedOnArrayCreationWithoutExplicitType() throws Exception {
     doTest();
   }
+
+  public void testIDEA148348() throws Exception {
+    doTest();
+  }
 }

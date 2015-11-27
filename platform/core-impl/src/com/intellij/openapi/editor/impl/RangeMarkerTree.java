@@ -115,6 +115,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     return node;
   }
   private String errMsg(@NotNull RMNode<T> node) {
+    System.gc();
     final AtomicInteger alive = new AtomicInteger();
     node.processAliveKeys(new Processor<Object>() {
       @Override

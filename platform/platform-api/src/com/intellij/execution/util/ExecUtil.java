@@ -182,7 +182,7 @@ public class ExecUtil {
   }
 
   @NotNull
-  public static GeneralCommandLine sudoCommand(@NotNull GeneralCommandLine commandLine, @NotNull String prompt) throws ExecutionException, IOException {
+  private static GeneralCommandLine sudoCommand(@NotNull GeneralCommandLine commandLine, @NotNull String prompt) throws ExecutionException, IOException {
     if (SystemInfo.isUnix && "root".equals(System.getenv("USER"))) {
       return commandLine;
     }

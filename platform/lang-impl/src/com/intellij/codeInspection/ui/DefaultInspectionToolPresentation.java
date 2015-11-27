@@ -506,16 +506,27 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
       if (element == null) return;
       @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
       problemClassElement.addContent(myToolWrapper.getDisplayName());
+
+      final HighlightSeverity severity;
       if (refEntity instanceof RefElement){
         final RefElement refElement = (RefElement)refEntity;
-        final HighlightSeverity severity = getSeverity(refElement);
+        severity = getSeverity(refElement);
+      }
+      else {
+        final InspectionProfile profile = InspectionProjectProfileManager.getInstance(getContext().getProject()).getInspectionProfile();
+        final HighlightDisplayLevel level = profile.getErrorLevel(HighlightDisplayKey.find(myToolWrapper.getShortName()), psiElement);
+        severity = level.getSeverity();
+      }
+      
+      if (severity != null) {
         ProblemHighlightType problemHighlightType = descriptor instanceof ProblemDescriptor
                                                     ? ((ProblemDescriptor)descriptor).getHighlightType()
                                                     : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-        final String attributeKey = getTextAttributeKey(refElement.getRefManager().getProject(), severity, problemHighlightType);
+        final String attributeKey = getTextAttributeKey(getRefManager().getProject(), severity, problemHighlightType);
         problemClassElement.setAttribute("severity", severity.myName);
         problemClassElement.setAttribute("attribute_key", attributeKey);
       }
+      
       element.addContent(problemClassElement);
       if (myToolWrapper instanceof GlobalInspectionToolWrapper) {
         final GlobalInspectionTool globalInspectionTool = ((GlobalInspectionToolWrapper)myToolWrapper).getTool();

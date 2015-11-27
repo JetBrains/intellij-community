@@ -24,6 +24,7 @@ import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
@@ -272,15 +273,17 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
     final Set<Pair<Object, SyncAction>> orderSnapshot = takeOrderSnapshot();
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ReadTask() {
+
+      @Nullable
       @Override
-      public void computeInReadAction(@NotNull ProgressIndicator indicator) {
+      public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
         if (!isUpToDate()) {
           scheduleRunActions();
-          return;
+          return null;
         }
 
         final Set<Trinity<Module, SyncAction, MvcFramework>> actions = computeRawActions(orderSnapshot);
-        app.invokeLater(new Runnable() {
+        return new Continuation(new Runnable() {
           @Override
           public void run() {
             if (!isUpToDate()) {

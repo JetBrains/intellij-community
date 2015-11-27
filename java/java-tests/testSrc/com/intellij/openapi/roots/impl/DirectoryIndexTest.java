@@ -461,16 +461,23 @@ public class DirectoryIndexTest extends IdeaTestCase {
     });
   }
 
+  private static OrderEntry[] toArray(Collection<OrderEntry> orderEntries) {
+    return orderEntries.toArray(new OrderEntry[orderEntries.size()]);
+  }
+
   public void testModuleSourceAsLibrarySource() throws Exception {
     ModuleRootModificationUtil.addModuleLibrary(myModule, "someLib", Collections.<String>emptyList(), Arrays.asList(mySrcDir1.getUrl()));
     
     checkInfo(mySrcDir1, myModule, false, true, "", JavaSourceRootType.SOURCE, myModule, myModule);
-    OrderEntry[] entries = myIndex.getOrderEntries(myIndex.getInfoForFile(mySrcDir1));
+    Collection<OrderEntry> entriesResult = myIndex.getOrderEntries(myIndex.getInfoForFile(mySrcDir1));
+    OrderEntry[] entries = toArray(entriesResult);
+
     assertInstanceOf(entries[0], LibraryOrderEntry.class);
     assertInstanceOf(entries[1], ModuleSourceOrderEntry.class);
 
     checkInfo(myTestSrc1, myModule, false, true, "testSrc", JavaSourceRootType.TEST_SOURCE, myModule, myModule);
-    entries = myIndex.getOrderEntries(myIndex.getInfoForFile(myTestSrc1));
+    entriesResult = myIndex.getOrderEntries(myIndex.getInfoForFile(myTestSrc1));
+    entries = toArray(entriesResult);
     assertInstanceOf(entries[0], LibraryOrderEntry.class);
     assertInstanceOf(entries[1], ModuleSourceOrderEntry.class);
   }
@@ -478,7 +485,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
   public void testModuleSourceAsLibraryClasses() throws Exception {
     ModuleRootModificationUtil.addModuleLibrary(myModule, "someLib", Arrays.asList(mySrcDir1.getUrl()), Collections.<String>emptyList());
     checkInfo(mySrcDir1, myModule, true, false, "", JavaSourceRootType.SOURCE, myModule);
-    assertInstanceOf(assertOneElement(myIndex.getOrderEntries(assertInProject(mySrcDir1))), ModuleSourceOrderEntry.class);
+    assertInstanceOf(assertOneElement(toArray(myIndex.getOrderEntries(assertInProject(mySrcDir1)))), ModuleSourceOrderEntry.class);
   }
 
   public void testModulesWithSameSourceContentRoot() {
@@ -631,7 +638,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     checkInfo(myLibSrcDir, myModule, true, true, "", null, myModule, myModule3);
     
     checkInfo(myResDir, myModule, true, false, "", JavaResourceRootType.RESOURCE, myModule);
-    assertInstanceOf(assertOneElement(myIndex.getOrderEntries(assertInProject(myResDir))), ModuleSourceOrderEntry.class);
+    assertInstanceOf(assertOneElement(toArray(myIndex.getOrderEntries(assertInProject(myResDir)))), ModuleSourceOrderEntry.class);
 
     checkInfo(myExcludedLibSrcDir, null, true, false, "lib.src.exc", null, myModule3, myModule);
     checkInfo(myExcludedLibClsDir, null, true, false, "lib.cls.exc", null, myModule3);
@@ -899,10 +906,10 @@ public class DirectoryIndexTest extends IdeaTestCase {
       assertEquals(packageName, myFileIndex.getPackageNameByDirectory(file));
     }
 
-    assertEquals(Arrays.toString(myIndex.getOrderEntries(info)), modulesOfOrderEntries.length, myIndex.getOrderEntries(info).length);
+    assertEquals(Arrays.toString(toArray(myIndex.getOrderEntries(info))), modulesOfOrderEntries.length, toArray(myIndex.getOrderEntries(info)).length);
     for (Module aModule : modulesOfOrderEntries) {
       OrderEntry found = ModuleFileIndexImpl.findOrderEntryWithOwnerModule(aModule, myIndex.getOrderEntries(info));
-      assertNotNull("not found: " + aModule + " in " + Arrays.toString(myIndex.getOrderEntries(info)), found);
+      assertNotNull("not found: " + aModule + " in " + Arrays.toString(toArray(myIndex.getOrderEntries(info))), found);
     }
   }
 

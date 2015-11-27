@@ -26,8 +26,6 @@ import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-
 public class GitRepositoryCreator extends VcsRepositoryCreator {
   @NotNull private final Project myProject;
   @NotNull private final GitPlatformFacade myPlatformFacade;
@@ -40,9 +38,8 @@ public class GitRepositoryCreator extends VcsRepositoryCreator {
   @Override
   @Nullable
   public Repository createRepositoryIfValid(@NotNull VirtualFile root) {
-    return GitUtil.isGitRoot(new File(root.getPath()))
-           ? GitRepositoryImpl.getFullInstance(root, myProject, myPlatformFacade, myProject)
-           : null;
+    VirtualFile gitDir = GitUtil.findGitDir(root);
+    return gitDir == null ? null : GitRepositoryImpl.getInstance(root, gitDir, myProject, true);
   }
 
   @NotNull

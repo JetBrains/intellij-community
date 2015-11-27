@@ -213,7 +213,7 @@ public class GithubUrlUtil {
       return "git@" + getGitHostWithoutProtocol() + ":" + user + "/" + repo + ".git";
     }
     else {
-      return "https://" + getGitHostWithoutProtocol() + "/" + user + "/" + repo + ".git";
+      return getApiProtocol() + getGitHostWithoutProtocol() + "/" + user + "/" + repo + ".git";
     }
   }
 }

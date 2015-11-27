@@ -18,10 +18,13 @@ package org.jetbrains.plugins.groovy.shell;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
+
+import java.util.Collection;
 
 public abstract class GroovyShellConfig {
 
@@ -45,6 +48,8 @@ public abstract class GroovyShellConfig {
   public boolean isSuitableModule(Module module) {
     return GroovyFacetUtil.isSuitableModule(module);
   }
+
+  public abstract Collection<Module> getPossiblySuitableModules(Project project);
 
   public abstract String getTitle();
 }

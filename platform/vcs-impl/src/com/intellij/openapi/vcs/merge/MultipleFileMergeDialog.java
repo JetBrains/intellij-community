@@ -44,6 +44,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.TableView;
@@ -63,6 +64,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.*;
 
@@ -175,6 +177,13 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       }
     }
     myTable.getSelectionModel().setSelectionInterval(0, 0);
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent event) {
+        showMergeDialog();
+        return true;
+      }
+    }.installOn(myTable);
   }
 
   private void updateButtonState() {

@@ -1243,10 +1243,12 @@ public final class PsiUtil extends PsiUtilCore {
     return false;
   }
 
+  @NotNull
   public static PsiReturnStatement[] findReturnStatements(@NotNull PsiMethod method) {
     return findReturnStatements(method.getBody());
   }
 
+  @NotNull
   public static PsiReturnStatement[] findReturnStatements(@Nullable PsiCodeBlock body) {
     ArrayList<PsiReturnStatement> vector = new ArrayList<PsiReturnStatement>();
     if (body != null) {

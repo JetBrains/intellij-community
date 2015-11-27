@@ -476,10 +476,14 @@ public class PyPackageManagerImpl extends PyPackageManager {
       PythonEnvUtil.setPythonUnbuffered(environment);
       PythonEnvUtil.setPythonDontWriteBytecode(environment);
       GeneralCommandLine commandLine = new GeneralCommandLine(cmdline).withWorkDirectory(workingDir).withEnvironment(environment);
+      Process process;
       if (useSudo) {
-        commandLine = ExecUtil.sudoCommand(commandLine, "Please enter your password to make changes in system packages: ");
+        process = ExecUtil.sudo(commandLine, "Please enter your password to make changes in system packages: ");
       }
-      final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
+      else {
+        process = commandLine.createProcess();
+      }
+      final CapturingProcessHandler handler = new CapturingProcessHandler(process, commandLine.getCharset(), commandLine.getCommandLineString());
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       final ProcessOutput result;
       if (showProgress && indicator != null) {

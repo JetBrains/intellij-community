@@ -46,10 +46,18 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     this(process, null);
   }
 
+  /**
+   *
+   * @param commandLine must be not empty
+   */
   public OSProcessHandler(@NotNull Process process, /*NotNull*/ String commandLine) {
     this(process, commandLine, EncodingManager.getInstance().getDefaultCharset());
   }
 
+  /**
+   *
+   * @param commandLine must be not empty
+   */
   public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset) {
     super(process, commandLine, charset);
   }

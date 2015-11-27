@@ -55,7 +55,7 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
         TestFramework framework = TestFrameworks.detectFramework((PsiClass)element);
         if (framework != null && framework.isTestClass(element)) {
           String url = "java:suite://" + ((PsiClass)element).getQualifiedName();
-          return getInfo(url, e.getProject());
+          return getInfo(url, e.getProject(), true);
         }
       }
       if (element instanceof PsiMethod) {
@@ -64,7 +64,7 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
           TestFramework framework = TestFrameworks.detectFramework(psiClass);
           if (framework != null && framework.isTestMethod(element)) {
             String url = "java:test://" + psiClass.getQualifiedName() + "." + ((PsiMethod)element).getName();
-            return getInfo(url, e.getProject());
+            return getInfo(url, e.getProject(), false);
           }
         }
       }
@@ -73,8 +73,8 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
   }
 
   @NotNull
-  private static Info getInfo(String url, Project project) {
-    Icon icon = getTestStateIcon(url, project);
+  private static Info getInfo(String url, Project project, boolean isClass) {
+    Icon icon = getTestStateIcon(url, project, isClass);
     return new Info(icon, TOOLTIP_PROVIDER, ExecutorAction.getActions(1));
   }
 
@@ -82,7 +82,7 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
     return e instanceof PsiIdentifier;
   }
 
-  private static Icon getTestStateIcon(String url, Project project) {
+  private static Icon getTestStateIcon(String url, Project project, boolean isClass) {
     TestStateStorage.Record state = TestStateStorage.getInstance(project).getState(url);
     if (state != null) {
       TestStateInfo.Magnitude magnitude = TestIconMapper.getMagnitude(state.magnitude);
@@ -97,6 +97,6 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
 
       }
     }
-    return AllIcons.RunConfigurations.TestState.Run;
+    return isClass ? AllIcons.RunConfigurations.TestState.Run_run : AllIcons.RunConfigurations.TestState.Run;
   }
 }

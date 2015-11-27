@@ -20,23 +20,23 @@ package org.jetbrains.debugger
  * method invocations will not take effect until
  * [.flush] is called.
  */
-public interface Breakpoint {
+interface Breakpoint {
   companion object {
     /**
      * This value is used when the corresponding parameter is absent
      */
-    public val EMPTY_VALUE: Int = -1
+    const val EMPTY_VALUE = -1
 
     /**
      * A breakpoint has this ID if it does not reflect an actual breakpoint in a
      * JavaScript VM debugger.
      */
-    public val INVALID_ID: Int = -1
+    const val INVALID_ID = -1
   }
 
-  public val target: BreakpointTarget
+  val target: BreakpointTarget
 
-  public val line: Int
+  val line: Int
 
   /**
    * @return whether this breakpoint is enabled
@@ -45,25 +45,34 @@ public interface Breakpoint {
    * Sets whether this breakpoint is enabled.
    * Requires subsequent [.flush] call.
    */
-  public var enabled: Boolean
+  var enabled: Boolean
 
   /**
    * Sets the breakpoint condition as plain JavaScript (`null` to clear).
    * Requires subsequent [.flush] call.
    * @param condition the new breakpoint condition
    */
-  public var condition: String?
+  var condition: String?
 
-  public val isResolved: Boolean
+  val isResolved: Boolean
 
   /**
    * Be aware! V8 doesn't provide reliable debugger API, so, sometimes actual locations is empty - in this case this methods return "true".
    * V8 debugger doesn't report about resolved breakpoint if it is happened after initial breakpoint set. So, you cannot trust "actual locations".
    */
-  public open fun isActualLineCorrect(): Boolean = true
+  open fun isActualLineCorrect() = true
 }
 
 /**
  * Visitor interface that includes all extensions.
  */
-public interface TargetExtendedVisitor<R> : FunctionSupport.Visitor<R>, ScriptRegExpSupportVisitor<R>
+interface TargetExtendedVisitor<R> : FunctionVisitor<R>, ScriptRegExpSupportVisitor<R>
+
+
+/**
+ * Additional interface that user visitor may implement for [BreakpointTarget.accept]
+ * method.
+ */
+interface FunctionVisitor<R> : BreakpointTarget.Visitor<R> {
+  fun visitFunction(expression: String): R
+}

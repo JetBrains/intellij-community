@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -131,7 +130,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   @NotNull
   public List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file) {
-    return Arrays.asList(myDirectoryIndex.getOrderEntries(getInfoForFileOrDirectory(file)));
+    return myDirectoryIndex.getOrderEntries(getInfoForFileOrDirectory(file));
   }
 
   @Override

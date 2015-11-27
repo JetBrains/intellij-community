@@ -23,6 +23,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
@@ -138,6 +139,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                                              boolean ignoreCase) {
     if (name.isEmpty()) {
       return null;
+    }
+    if (!isValid()) {
+      throw new InvalidVirtualFileAccessException(this);
     }
 
     VirtualFileSystemEntry found = doFindChildInArray(name, ignoreCase);
@@ -286,6 +290,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @Override
   @NotNull
   public VirtualFile[] getChildren() {
+    if (!isValid()) {
+      throw new InvalidVirtualFileAccessException(this);
+    }
     NewVirtualFileSystem delegate = getFileSystem();
     final boolean ignoreCase = !delegate.isCaseSensitive();
     synchronized (myData) {

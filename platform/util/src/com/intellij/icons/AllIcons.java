@@ -1089,6 +1089,7 @@ public class AllIcons {
       public static final Icon Green2 = IconLoader.getIcon("/runConfigurations/testState/green2.png"); // 12x12
       public static final Icon Red2 = IconLoader.getIcon("/runConfigurations/testState/red2.png"); // 12x12
       public static final Icon Run = IconLoader.getIcon("/runConfigurations/testState/run.png"); // 12x12
+      public static final Icon Run_run = IconLoader.getIcon("/runConfigurations/testState/run_run.png"); // 12x12
       public static final Icon Yellow2 = IconLoader.getIcon("/runConfigurations/testState/yellow2.png"); // 12x12
 
     }
@@ -1220,6 +1221,7 @@ public class AllIcons {
   }
   
   public static class Windows {
+    public static final Icon AppIconOk512 = IconLoader.getIcon("/windows/appIconOk512.png"); // 55x55
     public static final Icon Close = IconLoader.getIcon("/windows/close.png"); // 16x16
     public static final Icon Iconify = IconLoader.getIcon("/windows/iconify.png"); // 16x16
     public static final Icon Maximize = IconLoader.getIcon("/windows/maximize.png"); // 16x16

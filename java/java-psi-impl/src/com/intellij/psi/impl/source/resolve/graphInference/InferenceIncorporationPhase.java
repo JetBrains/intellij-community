@@ -98,10 +98,7 @@ public class InferenceIncorporationPhase {
       PsiType[] typeArgs = right.getParameters();
       if (parameters.length != typeArgs.length) continue;
       for (int i = 0; i < typeArgs.length; i++) {
-        PsiType aType = typeArgs[i];
-        if (aType instanceof PsiCapturedWildcardType) {
-          aType = ((PsiCapturedWildcardType)aType).getWildcard();
-        }
+        final PsiType aType = typeArgs[i];
         final InferenceVariable inferenceVariable = mySession.getInferenceVariable(parameters[i]);
         LOG.assertTrue(inferenceVariable != null);
 

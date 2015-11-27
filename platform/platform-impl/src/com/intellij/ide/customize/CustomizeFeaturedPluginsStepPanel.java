@@ -114,8 +114,8 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       JLabel descriptionLabel = createHTMLLabel("<i>" + description + "</i>");
       JLabel warningLabel = null;
       if (isVIM) {
-        warningLabel = createHTMLLabel("Enables Vim-keymap and 'insert' mode for editing. " +
-                                       "Not recommended if you are unfamiliar with Vim.");
+        warningLabel = createHTMLLabel("Recommended only if you are<br> familiar with Vim.");
+        warningLabel.setIcon(AllIcons.General.BalloonWarning);
 
         if (!SystemInfo.isWindows) UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, warningLabel);
       }
@@ -247,12 +247,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       if (warningLabel != null) {
         Insets insetsBefore = gbc.insets;
         gbc.insets = new Insets(0, -10, SMALL_GAP, -10);
-        JPanel warningPanel = new JPanel(new BorderLayout()) {
-          @Override
-          public Color getBackground() {
-            return new JBColor(new Color(252, 254, 200), ColorUtil.fromHex("52503A"));
-          }
-        };
+        JPanel warningPanel = new JPanel(new BorderLayout());
         warningPanel.setBorder(new EmptyBorder(5, 10, 5, 10));
         warningPanel.add(warningLabel);
 
