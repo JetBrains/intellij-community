@@ -92,7 +92,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   @NonNls private static final String CONSOLE_VIEW_POPUP_MENU = "ConsoleView.PopupMenu";
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.ConsoleViewImpl");
 
-  private static final int DEFAULT_FLUSH_DELAY = SystemProperties.getIntProperty("console.flush.delay.ms", 200);
+  static final int DEFAULT_FLUSH_DELAY = SystemProperties.getIntProperty("console.flush.delay.ms", 200);
 
   private static final CharMatcher NEW_LINE_MATCHER = CharMatcher.anyOf("\n\r");
 

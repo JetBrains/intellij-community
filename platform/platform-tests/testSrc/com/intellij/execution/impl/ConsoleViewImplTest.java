@@ -28,7 +28,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.TestDataProvider;
 import com.intellij.util.Alarm;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -78,10 +77,38 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     }, 0);
     latch.await();
     UIUtil.dispatchAllInvocationEvents();
-    TimeoutUtil.sleep(SystemProperties.getIntProperty("console.flush.delay.ms", 200));
+    TimeoutUtil.sleep(ConsoleViewImpl.DEFAULT_FLUSH_DELAY);
     UIUtil.dispatchAllInvocationEvents();
     assertFalse(console.hasDeferredOutput());
     assertEquals("Test", console.getText());
+  }
+
+  public void testClearAndPrintWhileAnotherClearExecution() throws Exception {
+    ConsoleViewImpl console = myConsole;
+    Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+    for (int i = 0; i < 100; i++) {
+      // To speed up test execution, set -Dconsole.flush.delay.ms=5 to reduce ConsoleViewImpl.DEFAULT_FLUSH_DELAY
+      System.out.println("Attempt #" + i);
+      console.clear(); // 1-st clear
+      CountDownLatch latch = new CountDownLatch(1);
+      alarm.addRequest(() -> {
+        console.clear(); // 2-nd clear
+        console.print("Test", ConsoleViewContentType.NORMAL_OUTPUT);
+        latch.countDown();
+      }, 0);
+      UIUtil.dispatchAllInvocationEvents(); // flush 1-st clear request
+      latch.await();
+      UIUtil.dispatchAllInvocationEvents(); // flush 2-nd clear request
+      TimeoutUtil.sleep(ConsoleViewImpl.DEFAULT_FLUSH_DELAY);
+      UIUtil.dispatchAllInvocationEvents(); // flush print request
+      // Need more investigation: sometimes console.hasDeferredOutput() is true
+      while (console.hasDeferredOutput()) {
+        TimeoutUtil.sleep(10);
+        UIUtil.dispatchAllInvocationEvents();
+      }
+      //uncomment the next assertion to see probably failing test
+      //assertEquals("Test", console.getText());
+    }
   }
 
   public void testTypeInEmptyConsole() throws Exception {
