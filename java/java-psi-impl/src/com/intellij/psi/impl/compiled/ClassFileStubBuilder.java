@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.compiled.ClassFileDecompilers;
 import com.intellij.psi.stubs.BinaryFileStubBuilder;
@@ -40,7 +39,6 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClassFileStubBuilder");
 
   public static final int STUB_VERSION = 12;
-  public static final Key<byte[]> ourCompiledClassContentHintKey = Key.create("compiled.class.content.hint");
 
   @Override
   public boolean acceptsFile(@NotNull VirtualFile file) {
@@ -53,7 +51,7 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
     byte[] content = fileContent.getContent();
 
     try {
-      file.putUserData(ourCompiledClassContentHintKey, content);
+      file.setForcedContentHint(content);
       ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.find(file);
       if (decompiler instanceof Full) {
         return ((Full)decompiler).getStubBuilder().buildFileStub(fileContent);
@@ -63,7 +61,7 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
       LOG.debug(e);
     }
     finally {
-      file.putUserData(ourCompiledClassContentHintKey, null);
+      file.setForcedContentHint(null);
     }
 
     try {
