@@ -40,6 +40,7 @@ public class GitRepositoryFiles {
   public static final String INFO_EXCLUDE = INFO + "/exclude";
   public static final String MERGE_HEAD = "MERGE_HEAD";
   public static final String MERGE_MSG = "MERGE_MSG";
+  public static final String ORIG_HEAD = "ORIG_HEAD";
   public static final String REBASE_APPLY = "rebase-apply";
   public static final String REBASE_MERGE = "rebase-merge";
   public static final String PACKED_REFS = "packed-refs";
@@ -60,6 +61,7 @@ public class GitRepositoryFiles {
   private final String myHeadFilePath;
   private final String myIndexFilePath;
   private final String myMergeHeadPath;
+  private final String myOrigHeadPath;
   private final String myRebaseApplyPath;
   private final String myRebaseMergePath;
   private final String myPackedRefsPath;
@@ -82,6 +84,7 @@ public class GitRepositoryFiles {
     myHeadFilePath = gitDirPath + slash(HEAD);
     myIndexFilePath = gitDirPath + slash(INDEX);
     myMergeHeadPath = gitDirPath + slash(MERGE_HEAD);
+    myOrigHeadPath = gitDirPath + slash(ORIG_HEAD);
     myCommitMessagePath = gitDirPath + slash(COMMIT_EDITMSG);
     myRebaseApplyPath = gitDirPath + slash(REBASE_APPLY);
     myRebaseMergePath = gitDirPath + slash(REBASE_MERGE);
@@ -139,6 +142,13 @@ public class GitRepositoryFiles {
    */
   public boolean isHeadFile(String file) {
     return file.equals(myHeadFilePath);
+  }
+
+  /**
+   * .git/ORIG_HEAD
+   */
+  public boolean isOrigHeadFile(@NotNull String file) {
+    return file.equals(myOrigHeadPath);
   }
 
   /**

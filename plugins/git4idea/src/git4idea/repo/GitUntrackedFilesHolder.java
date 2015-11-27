@@ -266,7 +266,11 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   }
 
   private boolean totalRefreshNeeded(@NotNull String path) {
-    return indexChanged(path) || externallyCommitted(path) || gitignoreChanged(path);
+    return indexChanged(path) || externallyCommitted(path) || headMoved(path) || gitignoreChanged(path);
+  }
+
+  private boolean headMoved(@NotNull String path) {
+    return myRepositoryFiles.isOrigHeadFile(path);
   }
 
   private boolean indexChanged(@NotNull String path) {
