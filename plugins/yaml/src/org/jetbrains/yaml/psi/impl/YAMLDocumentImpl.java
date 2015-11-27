@@ -3,8 +3,9 @@ package org.jetbrains.yaml.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.yaml.psi.YAMLCompoundValue;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.YAMLDocument;
+import org.jetbrains.yaml.psi.YAMLValue;
 
 /**
  * @author oleg
@@ -19,11 +20,9 @@ public class YAMLDocumentImpl extends YAMLPsiElementImpl implements YAMLDocument
     return "YAML document";
   }
 
-  @NotNull
+  @Nullable
   @Override
-  public YAMLCompoundValue getCompoundValue() {
-    final YAMLCompoundValue type = PsiTreeUtil.findChildOfType(this, YAMLCompoundValue.class);
-    assert type != null : "If compound value if not found, parser failed!!";
-    return type;
+  public YAMLValue getTopLevelValue() {
+    return PsiTreeUtil.findChildOfType(this, YAMLValue.class);
   }
 }

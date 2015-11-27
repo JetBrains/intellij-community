@@ -22,5 +22,9 @@
     <codeStyleSettingsProvider implementation="org.jetbrains.yaml.YAMLCodeStyleSettingsProvider"/>
     
     <psi.treeChangePreprocessor implementation="org.jetbrains.yaml.psi.YAMLPsiManager"/>
+
+    <projectService serviceImplementation="org.jetbrains.yaml.YAMLElementGenerator"/>
    </extensions>
+
+
 </idea-plugin>

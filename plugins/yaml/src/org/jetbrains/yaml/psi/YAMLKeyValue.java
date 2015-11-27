@@ -3,6 +3,7 @@ package org.jetbrains.yaml.psi;
 import com.intellij.pom.PomTarget;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,22 +11,23 @@ import org.jetbrains.annotations.Nullable;
  * @author oleg
  */
 public interface YAMLKeyValue extends YAMLPsiElement, PsiNamedElement, PomTarget {
-  YAMLKeyValue[] EMPTY_ARRAY = new YAMLKeyValue[0];
-
+  @Contract(pure = true)
   @Nullable
   PsiElement getKey();
 
+  @Contract(pure = true)
   @NotNull
   String getKeyText();
 
+  @Contract(pure = true)
   @Nullable
-  YAMLCompoundValue getValue();
+  YAMLValue getValue();
 
+  @Contract(pure = true)
   @NotNull
   String getValueText();
+  
+  YAMLMapping getParentMapping();
 
-  void setValueText(String text);
-
-  @NotNull
-  String getValueIndent();
+  void setValue(@NotNull YAMLValue value);
 }
