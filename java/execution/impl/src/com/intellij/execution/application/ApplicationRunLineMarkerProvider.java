@@ -17,6 +17,7 @@ package com.intellij.execution.application;
 
 import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
@@ -40,7 +41,7 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
       if (element instanceof PsiClass && PsiMethodUtil.findMainInClass((PsiClass)element) != null ||
           element instanceof PsiMethod && "main".equals(((PsiMethod)element).getName()) && PsiMethodUtil.isMainMethod((PsiMethod)element)) {
         final AnAction[] actions = ExecutorAction.getActions(0);
-        return new Info(ApplicationConfigurationType.getInstance().getIcon(), new Function<PsiElement, String>() {
+        return new Info(AllIcons.RunConfigurations.TestState.Run, new Function<PsiElement, String>() {
           @Override
           public String fun(final PsiElement element) {
             return StringUtil.join(ContainerUtil.mapNotNull(actions, new Function<AnAction, String>() {
