@@ -74,9 +74,9 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
 
     PsiElement context = InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(file);
 
-    if (context != null && (context.textContains('\'') || context.textContains('\"'))) {
+    if (context != null && (context.textContains('\'') || context.textContains('\"') || context.textContains('/'))) {
       String s = context.getText();
-      if (StringUtil.startsWith(s, "\"") || StringUtil.startsWith(s, "\'")) {
+      if (StringUtil.startsWith(s, "\"") || StringUtil.startsWith(s, "\'") || StringUtil.startsWith(s, "/")) {
         file = context.getContainingFile();
         editor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
         caret = caret instanceof InjectedCaret ? ((InjectedCaret)caret).getDelegate() : caret;
