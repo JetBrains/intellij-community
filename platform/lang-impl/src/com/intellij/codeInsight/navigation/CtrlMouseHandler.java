@@ -833,21 +833,22 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       });
     }
 
-    private void doExecute(@NotNull PsiFile file, int offset) {
+    @Nullable
+    private ReadTask.Continuation doExecute(@NotNull PsiFile file, int offset) {
       final Info info;
       final DocInfo docInfo;
       try {
         info = getInfoAt(myEditor, file, offset, myBrowseMode);
-        if (info == null) return;
+        if (info == null) return null;
         docInfo = info.getInfo();
       }
       catch (IndexNotReadyException e) {
         showDumbModeNotification(myProject);
-        return;
+        return null;
       }
 
       LOG.debug("Obtained info about element under cursor");
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      return new ReadTask.Continuation(new Runnable() {
         @Override
         public void run() {
           if (myDisposed || myEditor.isDisposed() || !myEditor.getComponent().isShowing()) return;

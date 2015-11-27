@@ -41,6 +41,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -1512,23 +1513,21 @@ public abstract class ChooseByNameBase {
     }
 
     @Override
-    public void runBackgroundProcess(@NotNull final ProgressIndicator indicator) {
-      Runnable r = new Runnable() {
+    public Continuation runBackgroundProcess(@NotNull final ProgressIndicator indicator) {
+      if (DumbService.isDumbAware(myModel)) return super.runBackgroundProcess(indicator);
+
+      return DumbService.getInstance(myProject).runReadActionInSmartMode(new Computable<Continuation>() {
         @Override
-        public void run() {
-          computeInReadAction(indicator);
+        public Continuation compute() {
+          return performInReadAction(indicator);
         }
-      };
-      if (DumbService.isDumbAware(myModel)) {
-        ApplicationManager.getApplication().runReadAction(r);
-      } else {
-        DumbService.getInstance(myProject).runReadActionInSmartMode(r);
-      }
+      });
     }
 
+    @Nullable
     @Override
-    public void computeInReadAction(@NotNull ProgressIndicator indicator) {
-      if (myProject != null && myProject.isDisposed()) return;
+    public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+      if (myProject != null && myProject.isDisposed()) return null;
 
       final Set<Object> elements = new LinkedHashSet<Object>();
 
@@ -1542,7 +1541,7 @@ public abstract class ChooseByNameBase {
 
       final boolean edt = myModel instanceof EdtSortingModel;
       final Set<Object> filtered = !edt ? filter(elements) : Collections.emptySet();
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      return new Continuation(new Runnable() {
         @Override
         public void run() {
           if (!checkDisposed() && !myProgress.isCanceled()) {

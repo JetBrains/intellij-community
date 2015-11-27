@@ -38,6 +38,7 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TLongArrayList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -136,6 +137,32 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       assertTrue(indicator.isCanceled());
     });
     assertTrue(indicator.isCanceled());
+  }
+
+  public void testReadTaskCanceledShouldNotHappenAfterEdtContinuation() {
+    for (int i = 0; i < 1000; i++) {
+      final AtomicBoolean afterContinuation = new AtomicBoolean();
+      final ProgressIndicatorBase indicator = new ProgressIndicatorBase();
+      ProgressIndicatorUtils.scheduleWithWriteActionPriority(indicator, new ReadTask() {
+        @Nullable
+        @Override
+        public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+          return new Continuation(() -> afterContinuation.set(true));
+        }
+
+        @Override
+        public void onCanceled(@NotNull ProgressIndicator indicator) {
+          assertFalse(afterContinuation.get());
+        }
+      });
+      UIUtil.dispatchAllInvocationEvents();
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        if (!afterContinuation.get()) {
+          assertTrue(indicator.isCanceled());
+        }
+      });
+      UIUtil.dispatchAllInvocationEvents();
+    }
   }
 
   public void testThereIsNoDelayBetweenIndicatorCancelAndProgressManagerCheckCanceled() throws Throwable {
