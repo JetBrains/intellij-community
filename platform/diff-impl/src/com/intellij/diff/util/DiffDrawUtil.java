@@ -235,25 +235,19 @@ public class DiffDrawUtil {
 
   @NotNull
   public static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type) {
-    return createHighlighter(editor, start, end, type, false);
+    return new LineHighlighterBuilder(editor, start, end, type).done();
   }
 
   @NotNull
   public static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type,
                                                          boolean ignored) {
-    return createHighlighter(editor, start, end, type, ignored, HighlighterTargetArea.EXACT_RANGE);
+    return new LineHighlighterBuilder(editor, start, end, type).withIgnored(ignored).done();
   }
 
   @NotNull
   public static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type,
-                                                         boolean ignored, @NotNull HighlighterTargetArea area) {
-    return createHighlighter(editor, start, end, type, ignored, area, false);
-  }
-
-  @NotNull
-  public static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type,
-                                                         boolean ignored, @NotNull HighlighterTargetArea area, boolean resolved) {
-    return new LineHighlighterBuilder(editor, start, end, type).withIgnored(ignored).withArea(area).withResolved(resolved).done();
+                                                         boolean ignored, boolean resolved) {
+    return new LineHighlighterBuilder(editor, start, end, type).withIgnored(ignored).withResolved(resolved).done();
   }
 
   @NotNull
@@ -279,13 +273,13 @@ public class DiffDrawUtil {
   @NotNull
   public static List<RangeHighlighter> createLineMarker(@NotNull Editor editor, int line, @NotNull final TextDiffType type,
                                                         @NotNull final SeparatorPlacement placement) {
-    return createLineMarker(editor, line, type, placement, false, false);
+    return new LineMarkerBuilder(editor, line, placement).withType(type).doneDefaultRenderer();
   }
 
   @NotNull
-  public static List<RangeHighlighter> createLineMarker(@NotNull final Editor editor, int line, @NotNull final TextDiffType type,
-                                                        @NotNull final SeparatorPlacement placement, final boolean doubleLine,
-                                                        final boolean resolved) {
+  private static List<RangeHighlighter> createLineMarker(@NotNull final Editor editor, int line, @NotNull final TextDiffType type,
+                                                         @NotNull final SeparatorPlacement placement,
+                                                         final boolean doubleLine, final boolean resolved) {
     return new LineMarkerBuilder(editor, line, placement).withType(type).withResolved(resolved).doneDefaultRenderer(doubleLine);
   }
 
@@ -384,7 +378,7 @@ public class DiffDrawUtil {
       TextAttributes attributes = getTextAttributes(type, editor, false);
 
       RangeHighlighter highlighter = editor.getMarkupModel()
-          .addRangeHighlighter(start, end, INLINE_LAYER, attributes, HighlighterTargetArea.EXACT_RANGE);
+        .addRangeHighlighter(start, end, INLINE_LAYER, attributes, HighlighterTargetArea.EXACT_RANGE);
 
       if (start == end) installEmptyRangeRenderer(highlighter, type);
 
