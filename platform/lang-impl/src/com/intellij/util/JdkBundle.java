@@ -56,20 +56,32 @@ public class JdkBundle {
 
   @Nullable
   public static JdkBundle createBundle(@NotNull File jvm, boolean boot, boolean bundled) {
-    File javaHome = SystemInfo.isMac ? new File(jvm, "Contents/Home") : jvm;
-    if (!new File(javaHome, "lib/tools.jar").exists()) return null; // Skip JRE
+    String homeSubPath = SystemInfo.isMac ? "Contents/Home" : "";
+    return createBundle(jvm, homeSubPath, boot, bundled);
+  }
 
-    Pair<String, Pair<Version, Integer>> nameVersionAndUpdate = getJDKNameVersionAndUpdate(jvm.getAbsolutePath());
+  @Nullable
+  public static JdkBundle createBundle(@NotNull File jvm, @NotNull String homeSubPath, boolean boot, boolean bundled) {
+    File javaHome = SystemInfo.isMac ? new File(jvm, homeSubPath) : jvm;
+    if (!new File(javaHome, "lib" + File.separator + "tools.jar").exists()) return null; // Skip JRE
+
+    Pair<String, Pair<Version, Integer>> nameVersionAndUpdate = getJDKNameVersionAndUpdate(jvm, homeSubPath);
     return new JdkBundle(jvm, nameVersionAndUpdate.first, nameVersionAndUpdate.second, boot, bundled);
   }
 
   @Nullable
   public static JdkBundle createBoot() {
+    return createBoot(true);
+  }
+
+  @Nullable
+  public static JdkBundle createBoot(boolean adjustToMacBundle) {
     File bootJDK = new File(System.getProperty("java.home")).getParentFile();
-    if (SystemInfo.isMac) {
+    if (SystemInfo.isMac && adjustToMacBundle) {
       bootJDK = bootJDK.getParentFile().getParentFile();
+      return createBundle(bootJDK, true, false);
     }
-    return createBundle(bootJDK, true, false);
+    return createBundle(bootJDK, "", true, false);
   }
 
   @NotNull
@@ -120,10 +132,10 @@ public class JdkBundle {
     return myBundleName + ((myVersionUpdate != null) ? myVersionUpdate.first.toString() : "");
   }
 
-  private static Pair<String, Pair<Version, Integer>> getJDKNameVersionAndUpdate(String jvmPath) {
+  private static Pair<String, Pair<Version, Integer>> getJDKNameVersionAndUpdate(File jvm, String homeSubPath) {
     GeneralCommandLine commandLine = new GeneralCommandLine();
-    commandLine.setExePath(jvmPath + (SystemInfo.isMac ? "/Contents/Home/" : "/") + "jre" +
-                           File.separator + "bin" + File.separator + "java");
+    commandLine.setExePath(new File(jvm,  homeSubPath + File.separator +  "jre" +
+                           File.separator + "bin" + File.separator + "java").getAbsolutePath());
     commandLine.addParameter("-version");
 
     String displayVersion = null;
@@ -140,7 +152,7 @@ public class JdkBundle {
       displayVersion = displayVersion.replaceFirst("\".*\"", "");
     }
     else {
-      displayVersion = new File(jvmPath).getName();
+      displayVersion = jvm.getName();
     }
 
     return Pair.create(displayVersion, versionAndUpdate);

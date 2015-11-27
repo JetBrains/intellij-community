@@ -31,16 +31,17 @@ public class JdkBundleTest {
   @Test
   public void testCreateBundle() throws Exception {
     if (SystemInfo.isWindows) return; // Windows is not supported so far
-    File bootJDK = new File(System.getProperty("java.home")).getParentFile();
+    File homeJDK = new File(System.getProperty("java.home")).getParentFile();
 
-    if (!new File(bootJDK, "lib/tools.jar").exists()) return; // Skip pure jre
+    if (!new File(homeJDK, "lib/tools.jar").exists()) return; // Skip pure jre
 
-    if (SystemInfo.isMac) {
-      bootJDK = bootJDK.getParentFile().getParentFile();
-    }
+    File bootJDK = SystemInfo.isMac ? homeJDK.getParentFile().getParentFile() : homeJDK;
     String verStr = System.getProperty("java.version");
 
-    JdkBundle bundle = JdkBundle.createBundle(bootJDK, true, true);
+    JdkBundle bundle = (SystemInfo.isMac && !new File(bootJDK, "Contents/Home").exists())
+                       ? JdkBundle.createBundle(homeJDK, "", true, true) : // the test is run under jdk with non-standard layout
+                       JdkBundle.createBundle(bootJDK, true, true);
+
     assertNotNull(bundle);
 
     assertTrue(bundle.isBoot());
@@ -57,16 +58,16 @@ public class JdkBundleTest {
   @Test
   public void testCreateBoot() throws Exception {
     if (SystemInfo.isWindows) return; // Windows is not supported so far
-    File bootJDK = new File(System.getProperty("java.home")).getParentFile();
+    File homeJDK = new File(System.getProperty("java.home")).getParentFile();
 
-    if (!new File(bootJDK, "lib/tools.jar").exists()) return; // Skip pure jre
+    if (!new File(homeJDK, "lib/tools.jar").exists()) return; // Skip pure jre
 
-    if (SystemInfo.isMac) {
-      bootJDK = bootJDK.getParentFile().getParentFile();
-    }
+    File bootJDK = SystemInfo.isMac ? homeJDK.getParentFile().getParentFile() : homeJDK;
     String verStr = System.getProperty("java.version");
 
-    JdkBundle bundle = JdkBundle.createBoot();
+    JdkBundle bundle = (SystemInfo.isMac && !new File(bootJDK, "Contents/Home").exists())
+                       ? JdkBundle.createBoot(false) : // the test is run under jdk with non-standard layout
+                       JdkBundle.createBoot();
 
     assertNotNull(bundle);
     assertTrue(bundle.isBoot());
