@@ -346,11 +346,16 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   public void readAttributes(@NotNull Element childNode) {
     for (Element e : childNode.getChildren(OPTION_ELEMENT)) {
-      TextAttributesKey name = TextAttributesKey.find(e.getAttributeValue(NAME_ATTR));
+      TextAttributesKey key = TextAttributesKey.find(e.getAttributeValue(NAME_ATTR));
+      String baseKeyName = e.getAttributeValue(BASE_ATTRIBUTES_ATTR);
+      if (baseKeyName != null) {
+        TextAttributesKey baseKey = TextAttributesKey.find(baseKeyName);
+        key.setFallbackAttributeKey(baseKey);
+      }
       Element valueElement = e.getChild(VALUE_ELEMENT);
       TextAttributes attr = myValueReader.read(TextAttributes.class, valueElement);
-      myAttributesMap.put(name, attr);
-      migrateErrorStripeColorFrom14(name, attr);
+      myAttributesMap.put(key, attr);
+      migrateErrorStripeColorFrom14(key, attr);
     }
   }
 
@@ -561,7 +566,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       TextAttributes defaultFallbackAttr =
         baseKey != null && myParentScheme instanceof AbstractColorsScheme ?
         ((AbstractColorsScheme)myParentScheme).getFallbackAttributes(baseKey) : null;
-      TextAttributes value = myAttributesMap.get(key);
+      TextAttributes value = myAttributesMap.get(key);                
       Element element = new Element(OPTION_ELEMENT);
       element.setAttribute(NAME_ATTR, key.getExternalName());
       if (baseKey != null && value.isFallbackEnabled()) {
