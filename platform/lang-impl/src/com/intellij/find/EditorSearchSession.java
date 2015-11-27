@@ -160,6 +160,7 @@ public class EditorSearchSession implements SearchSession,
           myFindModel.setWholeWordsOnly(false);
         }
         updateUIWithFindModel();
+        clearSearchResults();
         updateResults(true);
         FindUtil.updateFindInFileModel(getProject(), myFindModel);
       }
@@ -272,7 +273,7 @@ public class EditorSearchSession implements SearchSession,
       updateResults(true);
     }
     else {
-      nothingToSearchFor();
+      clearSearchResults();
     }
     updateMultiLineStateIfNeed();
   }
@@ -336,10 +337,6 @@ public class EditorSearchSession implements SearchSession,
     mySearchResults.setMatchesLimit(value);
   }
 
-  private boolean canReplaceCurrent() {
-    return myLivePreviewController != null && myLivePreviewController.canReplace();
-  }
-
   public void replaceCurrent() {
     if (mySearchResults.getCursor() != null) {
       myLivePreviewController.performReplace();
@@ -380,7 +377,7 @@ public class EditorSearchSession implements SearchSession,
   private void updateResults(final boolean allowedToChangedEditorSelection) {
     final String text = myFindModel.getStringToFind();
     if (text.length() == 0) {
-      nothingToSearchFor();
+      clearSearchResults();
     }
     else {
 
@@ -413,7 +410,7 @@ public class EditorSearchSession implements SearchSession,
     }
   }
 
-  private void nothingToSearchFor() {
+  private void clearSearchResults() {
     updateUIWithEmptyResults();
     if (mySearchResults != null) {
       mySearchResults.clear();

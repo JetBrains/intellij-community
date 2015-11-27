@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,12 @@ import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.find.impl.livePreview.LivePreview;
 import com.intellij.find.impl.livePreview.LivePreviewController;
 import com.intellij.find.impl.livePreview.SearchResults;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.testFramework.LightCodeInsightTestCase;
-import com.intellij.ui.LightweightHint;
+import com.intellij.testFramework.fixtures.EditorMouseFixture;
+import com.intellij.util.ui.UIUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -30,7 +32,6 @@ import java.io.PrintStream;
 public class FindInEditorTest extends LightCodeInsightTestCase {
 
   private LivePreviewController myLivePreviewController;
-  private SearchResults mySearchResults;
   private FindModel myFindModel;
 
   private ByteArrayOutputStream myOutputStream;
@@ -43,36 +44,26 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
 
     myOutputStream = new ByteArrayOutputStream();
     LivePreview.ourTestOutput = new PrintStream(myOutputStream);
-    EditorHintListener listener = new EditorHintListener() {
-      @Override
-      public void hintShown(Project project, LightweightHint hint, int flags) {
-        LivePreview.processNotFound();
-      }
-    };
+    EditorHintListener listener = (project, hint, flags) -> LivePreview.processNotFound();
     ApplicationManager.getApplication().getMessageBus().connect(myTestRootDisposable).subscribe(EditorHintListener.TOPIC, listener);
   }
 
   private void initFind() {
-    mySearchResults = new SearchResults(getEditor(), getProject());
-    myLivePreviewController = new LivePreviewController(mySearchResults, null);
-    myFindModel.addObserver(new FindModel.FindModelObserver() {
-      @Override
-      public void findModelChanged(FindModel findModel) {
-        myLivePreviewController.updateInBackground(myFindModel, true);
-      }
-    });
+    SearchResults searchResults = new SearchResults(getEditor(), getProject());
+    myLivePreviewController = new LivePreviewController(searchResults, null);
+    myFindModel.addObserver(findModel -> myLivePreviewController.updateInBackground(myFindModel, true));
     myLivePreviewController.on();
   }
 
   public void testBasicFind() throws Exception {
-    configureFromFileText("file.txt", "ab");
+    configureFromText("ab");
     initFind();
     myFindModel.setStringToFind("a");
     checkResults();
   }
 
   public void testEmacsLikeFallback() throws Exception {
-    configureFromFileText("file.txt", "a\nab");
+    configureFromText("a\nab");
     initFind();
     myFindModel.setStringToFind("a");
     myFindModel.setStringToFind("ab");
@@ -81,7 +72,7 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
   }
 
   public void testReplacementWithEmptyString() throws Exception {
-    configureFromFileText("file.txt", "a");
+    configureFromText("a");
     initFind();
 
     myFindModel.setRegularExpressions(true);
@@ -91,6 +82,23 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
 
     myLivePreviewController.performReplace();
     checkResults();
+  }
+  
+  public void testSecondFind() throws Exception {
+    configureFromText("<selection>a<caret></selection> b b a");
+    invokeFind();
+    new EditorMouseFixture((EditorImpl)myEditor).doubleClickAt(0, 3);
+    invokeFind();
+    checkResultByText("a <selection>b<caret></selection> b a");
+  }
+
+  private static void invokeFind() {
+    executeAction(IdeActions.ACTION_FIND);
+    UIUtil.dispatchAllInvocationEvents();
+  }
+
+  private static void configureFromText(String text) {
+    configureFromFileText("file.txt", text);
   }
 
   private void checkResults() {
