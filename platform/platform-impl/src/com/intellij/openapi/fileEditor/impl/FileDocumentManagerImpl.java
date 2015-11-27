@@ -101,7 +101,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   private final FileDocumentManagerListener myMultiCaster;
   private final TrailingSpacesStripper myTrailingSpacesStripper = new TrailingSpacesStripper();
 
-  private boolean myOnClose = false;
+  private boolean myOnClose;
 
   public FileDocumentManagerImpl(@NotNull VirtualFileManager virtualFileManager, @NotNull ProjectManager projectManager) {
     myDocumentCacheStrategy = createDocumentCacheStrategy();
@@ -236,14 +236,14 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   }
 
 
-  protected interface DocumentCacheStrategy {
+  private interface DocumentCacheStrategy {
     @Nullable Document getDocument (@NotNull VirtualFile file);
     void putDocument (@NotNull VirtualFile file, @NotNull Document document);
     void invalidateDocument (@NotNull VirtualFile file);
   }
 
   @NotNull
-  protected DocumentCacheStrategy createDocumentCacheStrategy() {
+  private static DocumentCacheStrategy createDocumentCacheStrategy() {
     return new DocumentCacheStrategy() {
       private final Map<VirtualFile, Document> myDocuments = ContainerUtil.createConcurrentWeakValueMap();
 
@@ -690,7 +690,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     myMultiCaster.fileContentReloaded(file, document);
   }
 
-  private PairProcessor<VirtualFile, Document> askReloadFromDisk = new PairProcessor<VirtualFile, Document>() {
+  private volatile PairProcessor<VirtualFile, Document> askReloadFromDisk = new PairProcessor<VirtualFile, Document>() {
     @Override
     public boolean process(final VirtualFile file, final Document document) {
       String message = UIBundle.message("file.cache.conflict.message.text", file.getPresentableUrl());
