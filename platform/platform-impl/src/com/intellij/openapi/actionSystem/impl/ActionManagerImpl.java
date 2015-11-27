@@ -62,6 +62,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,6 +71,7 @@ import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.*;
 import java.awt.event.*;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
 
@@ -133,9 +135,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private int myRegisteredActionsCount;
   private String myLastPreformedActionId;
   private String myPrevPerformedActionId;
-  private long myLastTimeEditorWasTypedIn = 0;
+  private long myLastTimeEditorWasTypedIn;
   private boolean myTransparentOnlyUpdate;
-  private int myActionsPreloaded = 0;
+  private int myActionsPreloaded;
 
   ActionManagerImpl(KeymapManager keymapManager, DataManager dataManager) {
     myKeymapManager = keymapManager;
@@ -152,31 +154,16 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       obj = ReflectionUtil.newInstance(aClass);
     }
     catch (ClassNotFoundException e) {
-      PluginId pluginId = stub.getPluginId();
-      if (pluginId != null) {
-        throw new PluginException("class with name \"" + className + "\" not found", e, pluginId);
-      }
-      else {
-        throw new IllegalStateException("class with name \"" + className + "\" not found");
-      }
+      throw error(stub, e, "class with name ''{0}'' not found", className);
+    }
+    catch (NoClassDefFoundError e) {
+      throw error(stub, e, "class with name ''{0}'' cannot be loaded", className);
     }
     catch(UnsupportedClassVersionError e) {
-      PluginId pluginId = stub.getPluginId();
-      if (pluginId != null) {
-        throw new PluginException(e, pluginId);
-      }
-      else {
-        throw new IllegalStateException(e);
-      }
+      throw error(stub, e, "error loading class ''{0}''", className);
     }
     catch (Exception e) {
-      PluginId pluginId = stub.getPluginId();
-      if (pluginId != null) {
-        throw new PluginException("cannot create class \"" + className + "\"", e, pluginId);
-      }
-      else {
-        throw new IllegalStateException("cannot create class \"" + className + "\"", e);
-      }
+      throw error(stub, e, "cannot create class ''{0}''", className);
     }
 
     if (!(obj instanceof AnAction)) {
@@ -196,10 +183,21 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return anAction;
   }
 
+  @NotNull
+  @Contract(pure = true)
+  private static RuntimeException error(@NotNull ActionStub stub, @NotNull Throwable original, @NotNull String template, @NotNull String className) {
+    PluginId pluginId = stub.getPluginId();
+    String text = MessageFormat.format(template, className);
+    if (pluginId == null) {
+      return new IllegalStateException(text);
+    }
+    return new PluginException(text, original, pluginId);
+  }
+
   private static void processAbbreviationNode(Element e, String id) {
     final String abbr = e.getAttributeValue(VALUE_ATTR_NAME);
     if (!StringUtil.isEmpty(abbr)) {
-      final AbbreviationManagerImpl abbreviationManager = ((AbbreviationManagerImpl)AbbreviationManager.getInstance());
+      final AbbreviationManagerImpl abbreviationManager = (AbbreviationManagerImpl)AbbreviationManager.getInstance();
       abbreviationManager.register(abbr, id, true);
     }
   }
@@ -1363,7 +1361,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     private final List<TimerListener> myTransparentTimerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
     private int myLastTimePerformed;
 
-    MyTimer() {
+    private MyTimer() {
       super(TIMER_DELAY, null);
       addActionListener(this);
       setRepeats(true);

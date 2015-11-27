@@ -15,6 +15,7 @@
  */
 package com.intellij.util.lang;
 
+import com.intellij.Patches;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -53,6 +54,7 @@ public class UrlClassLoader extends ClassLoader {
     // Unless explicitly disabled, request parallel loading capability via reflection due to current platform's Java 6 baseline
     // todo[r.sh] drop condition in IDEA 15
     // todo[r.sh] drop reflection after migrating to Java 7+
+    assert Patches.USE_REFLECTION_TO_ACCESS_JDK7;
     boolean parallelLoader = Boolean.parseBoolean(System.getProperty("idea.parallel.class.loader", "true"));
     if (parallelLoader) {
       try {
