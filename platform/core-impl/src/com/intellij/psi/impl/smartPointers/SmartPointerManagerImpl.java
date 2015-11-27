@@ -171,7 +171,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
 
   @Override
   public void removePointer(@NotNull SmartPsiElementPointer pointer) {
-    if (!(pointer instanceof SmartPsiElementPointerImpl)) {
+    if (!(pointer instanceof SmartPsiElementPointerImpl) || myProject.isDisposed()) {
       return;
     }
     PsiFile containingFile = pointer.getContainingFile();
