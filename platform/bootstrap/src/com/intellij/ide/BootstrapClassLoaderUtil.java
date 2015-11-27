@@ -96,6 +96,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
       }
     }
 
+    // todo[r.sh] drop after migration to Java 9
     for (URLClassLoader loader : loaders) {
       URL[] urls = loader.getURLs();
       for (URL url : urls) {
