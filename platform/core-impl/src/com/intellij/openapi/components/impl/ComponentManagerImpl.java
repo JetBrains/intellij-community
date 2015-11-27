@@ -162,7 +162,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myComponentConfigCount = -1;
   }
 
-  @Nullable
   @SuppressWarnings("unchecked")
   @Override
   public final <T> T getComponent(@NotNull Class<T> interfaceClass) {
