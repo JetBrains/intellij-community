@@ -39,6 +39,9 @@ import org.jetbrains.annotations.TestOnly;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class SmartPointerManagerImpl extends SmartPointerManager {
@@ -274,6 +277,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     private int size;
     private PointerReference[] references = new PointerReference[10];
     private final MarkerCache markerCache = new MarkerCache(this);
+    private boolean mySorted;
 
     private synchronized boolean add(@NotNull PointerReference reference) {
       if (reference.file.getUserData(reference.key) != this) {
@@ -296,6 +300,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       }
       references[nextAvailableIndex++] = reference;
       size++;
+      mySorted = false;
       return true;
     }
 
@@ -327,6 +332,53 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       return references;
     }
 
+    synchronized List<SelfElementInfo> getSortedInfos() {
+      if (!mySorted) {
+        List<SmartPsiElementPointerImpl> hardRefs = ContainerUtil.newArrayListWithCapacity(size);
+        for (int i = 0; i < references.length; i++) {
+          PointerReference reference = references[i];
+          if (reference == null) continue;
+
+          SmartPsiElementPointerImpl pointer = reference.get();
+          if (pointer != null) {
+            hardRefs.add(pointer);
+          } else {
+            removeReference(reference, i);
+            if (size == 0) {
+              return Collections.emptyList();
+            }
+          }
+        }
+        assert size == hardRefs.size();
+
+        Arrays.sort(references, 0, nextAvailableIndex, new Comparator<PointerReference>() {
+          @Override
+          public int compare(PointerReference o1, PointerReference o2) {
+            SmartPsiElementPointerImpl p1 = SoftReference.dereference(o1);
+            SmartPsiElementPointerImpl p2 = SoftReference.dereference(o2);
+            if (p1 == null || p2 == null) {
+              return p1 != null ? -1 : p2 != null ? 1 : 0; // null references to the end
+            }
+            return MarkerCache.INFO_COMPARATOR.compare((SelfElementInfo)p1.getElementInfo(), (SelfElementInfo)p2.getElementInfo());
+          }
+        });
+        nextAvailableIndex = hardRefs.size();
+        mySorted = true;
+      }
+
+      List<SelfElementInfo> infos = ContainerUtil.newArrayListWithCapacity(size);
+      for (Reference<SmartPsiElementPointerImpl> reference : references) {
+        SmartPsiElementPointerImpl pointer = SoftReference.dereference(reference);
+        if (pointer != null) {
+          SelfElementInfo info = (SelfElementInfo)pointer.getElementInfo();
+          if (!info.hasRange()) break;
+
+          infos.add(info);
+        }
+      }
+      return infos;
+    }
+
     int getSize() {
       return size;
     }
@@ -339,6 +391,10 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
           return SoftReference.dereference(reference);
         }
       });
+    }
+
+    synchronized void markUnsorted() {
+      mySorted = false;
     }
   }
 }
