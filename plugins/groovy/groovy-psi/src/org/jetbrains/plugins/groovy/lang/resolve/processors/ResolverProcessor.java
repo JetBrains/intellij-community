@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,11 +58,11 @@ public class ResolverProcessor extends GrScopeProcessorWithHints {
       return true; // the debugger creates a Java code block context and our expressions to evaluate resolve there
     }
 
-    if (myResolveTargetKinds.contains(getResolveKind(element))) {
+    if (myResolveTargetKinds == null || myResolveTargetKinds.contains(getResolveKind(element))) {
       //hack for resolve of java local vars and parameters
       //don't check field for name because they can be aliased imported
       if (element instanceof PsiVariable && !(element instanceof PsiField) &&
-          getName() != null && !getName().equals(((PsiVariable)element).getName())) {
+          myName != null && !myName.equals(((PsiVariable)element).getName())) {
         return true;
       }
       PsiNamedElement namedElement = (PsiNamedElement)element;
@@ -178,9 +178,9 @@ public class ResolverProcessor extends GrScopeProcessorWithHints {
   @Override
   public String toString() {
     return "NameHint: '" +
-           getName() +
+           myName +
            "', " +
-           myResolveTargetKinds.toString() +
+           myResolveTargetKinds +
            ", Candidates: " +
            (myCandidates == null ? 0 : myCandidates.size());
   }
