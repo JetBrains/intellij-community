@@ -114,7 +114,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       JLabel descriptionLabel = createHTMLLabel("<i>" + description + "</i>");
       JLabel warningLabel = null;
       if (isVIM) {
-        warningLabel = createHTMLLabel("Recommended if you are<br> familiar with Vim.");
+        warningLabel = createHTMLLabel("Recommended only if you are<br> familiar with Vim.");
         warningLabel.setIcon(AllIcons.General.BalloonWarning);
 
         if (!SystemInfo.isWindows) UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, warningLabel);
