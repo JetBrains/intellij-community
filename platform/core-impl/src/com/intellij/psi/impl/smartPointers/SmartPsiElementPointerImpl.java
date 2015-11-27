@@ -234,4 +234,9 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     if (myReferenceCount == Byte.MAX_VALUE) return Byte.MAX_VALUE; // saturated
     return myReferenceCount += delta;
   }
+
+  @Override
+  public String toString() {
+    return myElementInfo.toString();
+  }
 }

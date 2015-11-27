@@ -79,4 +79,9 @@ public class ClsElementInfo extends SmartPointerElementInfo {
   public PsiFile restoreFile() {
     return myStubIndexReference.getFile();
   }
+
+  @Override
+  public String toString() {
+    return myStubIndexReference.toString();
+  }
 }

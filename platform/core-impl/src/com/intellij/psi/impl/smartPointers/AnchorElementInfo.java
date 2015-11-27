@@ -142,4 +142,8 @@ class AnchorElementInfo extends SelfElementInfo {
     return super.getRange();
   }
 
+  @Override
+  public String toString() {
+    return super.toString() + ",stubId=" + getStubId();
+  }
 }
