@@ -53,7 +53,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   private ChangeListsIndexes myIdx;
   private final ChangesDelta myDelta;
-  private final List<String> myListsToDisappear;
+  private final Set<String> myListsToDisappear;
 
   public ChangeListWorker(final Project project, final PlusMinusModify<BaseRevision> deltaListener) {
     myProject = project;
@@ -63,7 +63,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     mySwitchedHolder = new SwitchedFileHolder(project, FileHolder.HolderType.SWITCHED);
 
     myDelta = new ChangesDelta(deltaListener);
-    myListsToDisappear = new LinkedList<String>();
+    myListsToDisappear = ContainerUtil.newLinkedHashSet();
   }
 
   private ChangeListWorker(final ChangeListWorker worker) {
@@ -73,7 +73,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myLocallyDeleted = worker.myLocallyDeleted.copy();
     mySwitchedHolder = worker.mySwitchedHolder.copy();
     myDelta = worker.myDelta;
-    myListsToDisappear = new LinkedList<String>(worker.myListsToDisappear);
+    myListsToDisappear = ContainerUtil.newLinkedHashSet(worker.myListsToDisappear);
     
     LocalChangeList defaultList = null;
     for (LocalChangeList changeList : worker.myMap.values()) {
