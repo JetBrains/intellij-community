@@ -54,6 +54,9 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
   public static final int TEST_LINE_HEIGHT = 10;
   public static final int TEST_DESCENT = 2;
   
+  public static final String LOREM_IPSUM =
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();

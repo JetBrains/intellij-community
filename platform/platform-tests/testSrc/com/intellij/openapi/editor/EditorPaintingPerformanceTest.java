@@ -24,8 +24,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import java.awt.*;
 
 public class EditorPaintingPerformanceTest extends AbstractEditorTest {
-  private static final String LOREM_IPSUM =
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
   private static final int EDITOR_WIDTH_PX = 1000;
 
   public void testScrollingThroughLongTextFile() throws Exception {
