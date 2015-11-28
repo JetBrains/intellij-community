@@ -66,10 +66,10 @@ public class SharedImplUtil {
   }
 
   public static PsiFile getContainingFile(ASTNode thisElement) {
-    FileASTNode element = findFileElement(thisElement);
-    PsiElement psiElement = element == null ? null : element.getPsi();
-    if (psiElement == null) return null;
-    return psiElement.getContainingFile();
+    FileASTNode node = findFileElement(thisElement);
+    PsiElement psi = node == null ? null : node.getPsi();
+    if (psi == null || psi instanceof PsiFile) return (PsiFile)psi;
+    throw new AssertionError("Invalid PSI " + psi + " of " + psi.getClass() + " for AST " + node + " of " + node.getClass());
   }
 
   public static boolean isValid(ASTNode thisElement) {
