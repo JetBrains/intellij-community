@@ -193,7 +193,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
       val path = FileUtil.toSystemIndependentName(externalPath)
       val file = files[path]
       assert(file != null) { path + " not in " + files.keys }
-      return file!!.contentsToByteArray()
+      return file!!.contentsToByteArray(false)
     }
   }
 
