@@ -807,17 +807,11 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
 
   @Override
   public String[] getActionIds() {
-    ArrayList<String> ids = new ArrayList<String>();
+    Set<String> ids = ContainerUtil.newLinkedHashSet();
     if (myParent != null) {
-      String[] parentIds = getParentActionIds();
-      ContainerUtil.addAll(ids, parentIds);
+      ContainerUtil.addAll(ids, getParentActionIds());
     }
-    String[] ownActionIds = getOwnActionIds();
-    for (String id : ownActionIds) {
-      if (!ids.contains(id)) {
-        ids.add(id);
-      }
-    }
+    Collections.addAll(ids, getOwnActionIds());
     return ArrayUtil.toStringArray(ids);
   }
 
