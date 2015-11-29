@@ -46,6 +46,7 @@ public class Main {
   public static final int INSTANCE_CHECK_FAILED = 6;
   public static final int LICENSE_ERROR = 7;
   public static final int PLUGIN_ERROR = 8;
+  public static final int OUT_OF_MEMORY = 9;
 
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";

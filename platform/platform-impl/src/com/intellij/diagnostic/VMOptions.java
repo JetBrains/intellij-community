@@ -52,15 +52,15 @@ public class VMOptions {
   }
 
   public static int readXmx() {
-    return getOption(MemoryKind.HEAP);
+    return readOption(MemoryKind.HEAP, true);
   }
 
   public static int readMaxPermGen() {
-    return getOption(MemoryKind.PERM_GEN);
+    return readOption(MemoryKind.PERM_GEN, true);
   }
 
   public static int readCodeCache() {
-    return getOption(MemoryKind.CODE_CACHE);
+    return readOption(MemoryKind.CODE_CACHE, true);
   }
 
   public static void writeXmx(int value) {
@@ -75,7 +75,7 @@ public class VMOptions {
     writeOption(MemoryKind.CODE_CACHE, value);
   }
 
-  private static int getOption(MemoryKind kind) {
+  public static int readOption(MemoryKind kind, boolean effective) {
     List<String> arguments;
     if (ourTestPath != null) {
       try {
@@ -86,8 +86,23 @@ public class VMOptions {
         throw new RuntimeException(e);
       }
     }
-    else {
+    else if (effective) {
       arguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
+    }
+    else {
+      File file = getWriteFile();
+      if (file == null || !file.exists()) {
+        return -1;
+      }
+
+      try {
+        String content = FileUtil.loadFile(file);
+        arguments = Collections.singletonList(content);
+      }
+      catch (IOException e) {
+        LOG.warn(e);
+        return -1;
+      }
     }
 
     for (String argument : arguments) {
