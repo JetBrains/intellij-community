@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,11 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
-import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.LibraryUtil;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ParameterNameDiffersFromOverriddenParameterInspectionBase extends BaseInspection {
@@ -67,21 +65,15 @@ public class ParameterNameDiffersFromOverriddenParameterInspectionBase extends B
       if (parameterList.getParametersCount() == 0) {
         return;
       }
-      final Query<MethodSignatureBackedByPsiMethod> query =
-        SuperMethodsSearch.search(
-          method, method.getContainingClass(), true, false);
-      final MethodSignatureBackedByPsiMethod methodSignature =
-        query.findFirst();
-      if (methodSignature == null) {
+      final PsiMethod superMethod = MethodUtils.getSuper(method);
+      if (superMethod == null) {
         return;
       }
-      final PsiMethod superMethod = methodSignature.getMethod();
       final PsiParameter[] parameters = parameterList.getParameters();
       checkParameters(superMethod, parameters);
     }
 
-    private void checkParameters(PsiMethod superMethod,
-                                 PsiParameter[] parameters) {
+    private void checkParameters(@NotNull PsiMethod superMethod, PsiParameter[] parameters) {
       if (m_ignoreOverridesOfLibraryMethods) {
         final PsiClass containingClass =
           superMethod.getContainingClass();

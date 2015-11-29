@@ -23,8 +23,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
@@ -133,12 +131,8 @@ public class CloneDeclaresCloneNotSupportedInspection extends BaseInspection {
       if (MethodUtils.hasInThrows(method, "java.lang.CloneNotSupportedException")) {
         return;
       }
-      final MethodSignatureBackedByPsiMethod signature = SuperMethodsSearch.search(method, null, true, false).findFirst();
-      if (signature == null) {
-        return;
-      }
-      final PsiMethod superMethod = signature.getMethod();
-      if (!MethodUtils.hasInThrows(superMethod, "java.lang.CloneNotSupportedException")) {
+      final PsiMethod superMethod = MethodUtils.getSuper(method);
+      if (superMethod != null && !MethodUtils.hasInThrows(superMethod, "java.lang.CloneNotSupportedException")) {
         return;
       }
       registerMethodError(method);

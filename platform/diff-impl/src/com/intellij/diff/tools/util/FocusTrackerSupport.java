@@ -19,11 +19,11 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.holders.EditorHolder;
 import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.diff.util.ThreeSide;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.List;
@@ -51,7 +51,7 @@ public class FocusTrackerSupport<T> {
     }
 
     public void processContextHints(@NotNull DiffRequest request, @NotNull DiffContext context) {
-      Side side = context.getUserData(DiffUserDataKeys.PREFERRED_FOCUS_SIDE);
+      Side side = DiffUtil.getUserData(request, context, DiffUserDataKeys.PREFERRED_FOCUS_SIDE);
       if (side != null) setCurrentSide(side);
     }
 
@@ -98,7 +98,7 @@ public class FocusTrackerSupport<T> {
     }
 
     public void processContextHints(@NotNull DiffRequest request, @NotNull DiffContext context) {
-      ThreeSide side = context.getUserData(DiffUserDataKeys.PREFERRED_FOCUS_THREESIDE);
+      ThreeSide side = DiffUtil.getUserData(request, context, DiffUserDataKeys.PREFERRED_FOCUS_THREESIDE);
       if (side != null) setCurrentSide(side);
     }
 

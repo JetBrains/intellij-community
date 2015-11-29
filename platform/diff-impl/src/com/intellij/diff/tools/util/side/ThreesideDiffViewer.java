@@ -195,47 +195,53 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
   // Actions
   //
 
-  protected class ShowLeftBasePartialDiffAction extends ShowPartialDiffAction {
-    public ShowLeftBasePartialDiffAction() {
-      super(ThreeSide.LEFT, ThreeSide.BASE, DiffBundle.message("merge.partial.diff.action.name.0.1"), null, AllIcons.Diff.LeftDiff);
-    }
-  }
-
-  protected class ShowBaseRightPartialDiffAction extends ShowPartialDiffAction {
-    public ShowBaseRightPartialDiffAction() {
-      super(ThreeSide.BASE, ThreeSide.RIGHT, DiffBundle.message("merge.partial.diff.action.name.1.2"), null, AllIcons.Diff.RightDiff);
-    }
-  }
-
-  protected class ShowLeftRightPartialDiffAction extends ShowPartialDiffAction {
-    public ShowLeftRightPartialDiffAction() {
-      super(ThreeSide.LEFT, ThreeSide.RIGHT, DiffBundle.message("merge.partial.diff.action.name"), null, AllIcons.Diff.BranchDiff);
-    }
-  }
-
+  protected enum PartialDiffMode {LEFT_BASE, BASE_RIGHT, LEFT_RIGHT}
   protected class ShowPartialDiffAction extends DumbAwareAction {
-    @NotNull private final ThreeSide mySide1;
-    @NotNull private final ThreeSide mySide2;
+    @NotNull protected final ThreeSide mySide1;
+    @NotNull protected final ThreeSide mySide2;
 
-    public ShowPartialDiffAction(@NotNull ThreeSide side1,
-                                 @NotNull ThreeSide side2,
-                                 @NotNull String text,
-                                 @Nullable String description,
-                                 @NotNull Icon icon) {
-      super(text, description, icon);
-      mySide1 = side1;
-      mySide2 = side2;
+    public ShowPartialDiffAction(@NotNull PartialDiffMode mode) {
+      String text;
+      Icon icon;
+      switch (mode) {
+        case LEFT_BASE:
+          mySide1 = ThreeSide.LEFT;
+          mySide2 = ThreeSide.BASE;
+          text = DiffBundle.message("merge.partial.diff.action.name.0.1");
+          icon = AllIcons.Diff.LeftDiff;
+          break;
+        case BASE_RIGHT:
+          mySide1 = ThreeSide.BASE;
+          mySide2 = ThreeSide.RIGHT;
+          text = DiffBundle.message("merge.partial.diff.action.name.1.2");
+          icon = AllIcons.Diff.RightDiff;
+          break;
+        case LEFT_RIGHT:
+          mySide1 = ThreeSide.LEFT;
+          mySide2 = ThreeSide.RIGHT;
+          text = DiffBundle.message("merge.partial.diff.action.name");
+          icon = AllIcons.Diff.BranchDiff;
+          break;
+        default:
+          throw new IllegalArgumentException();
+      }
+      getTemplatePresentation().setText(text);
+      getTemplatePresentation().setIcon(icon);
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
+      DiffRequest request = createRequest();
+      DiffManager.getInstance().showDiff(myProject, request, new DiffDialogHints(null, myPanel));
+    }
+
+    @NotNull
+    protected SimpleDiffRequest createRequest() {
       List<DiffContent> contents = myRequest.getContents();
       List<String> titles = myRequest.getContentTitles();
-
-      DiffRequest request = new SimpleDiffRequest(myRequest.getTitle(),
-                                                  mySide1.select(contents), mySide2.select(contents),
-                                                  mySide1.select(titles), mySide2.select(titles));
-      DiffManager.getInstance().showDiff(myProject, request, new DiffDialogHints(null, myPanel));
+      return new SimpleDiffRequest(myRequest.getTitle(),
+                                   mySide1.select(contents), mySide2.select(contents),
+                                   mySide1.select(titles), mySide2.select(titles));
     }
   }
 }

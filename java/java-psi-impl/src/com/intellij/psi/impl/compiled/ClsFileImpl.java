@@ -624,7 +624,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     @Override
     public void accept(VirtualFile innerClass, StubBuildingVisitor<VirtualFile> visitor) {
       try {
-        byte[] bytes = innerClass.contentsToByteArray();
+        byte[] bytes = innerClass.contentsToByteArray(false);
         new ClassReader(bytes).accept(visitor, ClassReader.SKIP_FRAMES);
       }
       catch (IOException ignored) { }

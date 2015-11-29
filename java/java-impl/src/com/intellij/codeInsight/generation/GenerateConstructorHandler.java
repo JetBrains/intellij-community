@@ -298,7 +298,19 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       if (isNotEnum) {
         generator.generateSuperCallIfNeeded(buffer, baseConstructor.getParameterList().getParameters());
       }
-      generator.generateFieldInitialization(buffer, fields, fieldParams.toArray(new PsiParameter[fieldParams.size()]));
+      final PsiParameter[] parameters = fieldParams.toArray(new PsiParameter[fieldParams.size()]);
+      final List<String> existingNames = ContainerUtil.map(dummyConstructor.getParameterList().getParameters(), new Function<PsiParameter, String>() {
+        @Override
+        public String fun(PsiParameter parameter) {
+          return parameter.getName();
+        }
+      });
+      if (generator instanceof ConstructorBodyGeneratorEx) {
+        ((ConstructorBodyGeneratorEx)generator).generateFieldInitialization(buffer, fields, parameters, existingNames);
+      }
+      else {
+        generator.generateFieldInitialization(buffer, fields, parameters);
+      }
       generator.finish(buffer);
       PsiMethod stub = factory.createMethodFromText(buffer.toString(), aClass);
       PsiCodeBlock original = constructor.getBody(), replacement = stub.getBody();
