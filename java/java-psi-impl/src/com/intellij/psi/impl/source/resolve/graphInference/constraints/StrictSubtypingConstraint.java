@@ -20,6 +20,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 
 import java.util.HashSet;
@@ -104,20 +105,20 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
           return false;
         }
 
-        PsiClassType.ClassResolveResult SResult = null;
+        PsiClassType sType = null;
         if (myS instanceof PsiIntersectionType) {
           for (PsiType conjunct : ((PsiIntersectionType)myS).getConjuncts()) {
             if (conjunct instanceof PsiClassType) {
               final PsiClassType.ClassResolveResult conjunctResult = ((PsiClassType)conjunct).resolveGenerics();
               if (InheritanceUtil.isInheritorOrSelf(conjunctResult.getElement(), CClass, true)) {
-                SResult = conjunctResult;
+                sType = (PsiClassType)conjunct;
                 break;
               }
             }
           }
         }
         else if (myS instanceof PsiClassType) {
-          SResult = ((PsiClassType)myS).resolveGenerics();
+          sType = (PsiClassType)myS;
         }
         else if (myS instanceof PsiArrayType) {
           return myT.isAssignableFrom(myS);
@@ -125,11 +126,12 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
         else if (myS instanceof PsiCapturedWildcardType) {
           final PsiType upperBound = ((PsiCapturedWildcardType)myS).getUpperBound();
           if (upperBound instanceof PsiClassType) {
-            SResult = ((PsiClassType)upperBound).resolveGenerics();
+            sType = (PsiClassType)upperBound;
           }
         }
 
-        if (SResult == null) return false;
+        if (sType == null) return false;
+        final PsiClassType.ClassResolveResult SResult = sType.resolveGenerics();
         PsiClass SClass = SResult.getElement();
         if (((PsiClassType)myT).isRaw()) {
           return SClass != null && InheritanceUtil.isInheritorOrSelf(SClass, CClass, true);
