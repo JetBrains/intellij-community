@@ -38,7 +38,8 @@ public class JdkBundleTest {
     File bootJDK = SystemInfo.isMac ? homeJDK.getParentFile().getParentFile() : homeJDK;
     String verStr = System.getProperty("java.version");
 
-    JdkBundle bundle = (SystemInfo.isMac && !new File(bootJDK, "Contents/Home").exists())
+    boolean macNonStandardJDK = SystemInfo.isMac && !new File(bootJDK, "Contents/Home").exists();
+    JdkBundle bundle = macNonStandardJDK
                        ? JdkBundle.createBundle(homeJDK, "", true, true) : // the test is run under jdk with non-standard layout
                        JdkBundle.createBundle(bootJDK, true, true);
 
@@ -47,7 +48,7 @@ public class JdkBundleTest {
     assertTrue(bundle.isBoot());
     assertTrue(bundle.isBundled());
 
-    assertTrue(FileUtil.filesEqual(bundle.getBundleAsFile(), bootJDK));
+    assertTrue(FileUtil.filesEqual(bundle.getBundleAsFile(), macNonStandardJDK ? homeJDK : bootJDK));
     Pair<Version, Integer> verUpdate = bundle.getVersionUpdate();
 
     assertNotNull(verUpdate);
@@ -65,15 +66,15 @@ public class JdkBundleTest {
     File bootJDK = SystemInfo.isMac ? homeJDK.getParentFile().getParentFile() : homeJDK;
     String verStr = System.getProperty("java.version");
 
-    JdkBundle bundle = (SystemInfo.isMac && !new File(bootJDK, "Contents/Home").exists())
-                       ? JdkBundle.createBoot(false) : // the test is run under jdk with non-standard layout
+    boolean macNonStandardJDK = SystemInfo.isMac && !new File(bootJDK, "Contents/Home").exists();
+    JdkBundle bundle = macNonStandardJDK ? JdkBundle.createBoot(false) : // the test is run under jdk with non-standard layout
                        JdkBundle.createBoot();
 
     assertNotNull(bundle);
     assertTrue(bundle.isBoot());
     assertFalse(bundle.isBundled());
 
-    assertTrue(FileUtil.filesEqual(bundle.getBundleAsFile(), bootJDK));
+    assertTrue(FileUtil.filesEqual(bundle.getBundleAsFile(), macNonStandardJDK ? homeJDK : bootJDK));
     Pair<Version, Integer> verUpdate = bundle.getVersionUpdate();
 
     assertNotNull(verUpdate);
