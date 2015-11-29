@@ -111,17 +111,17 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
   @Nullable
   private static MemoryKind getOOMErrorKind(Throwable t) {
     String message = t.getMessage();
-    if (message == null) return null;
 
     if (t instanceof OutOfMemoryError) {
-      if (message.contains("unable to create new native thread")) {
-        return null;
-      }
-      return message.contains("PermGen") ? MemoryKind.PERM_GEN : MemoryKind.HEAP;
+      if (message != null && message.contains("unable to create new native thread")) return null;
+      if (message != null && message.contains("PermGen")) return MemoryKind.PERM_GEN;
+      return MemoryKind.HEAP;
     }
-    if (t instanceof VirtualMachineError && message.contains("CodeCache")) {
+
+    if (t instanceof VirtualMachineError && message != null && message.contains("CodeCache")) {
       return MemoryKind.CODE_CACHE;
     }
+
     return null;
   }
 
