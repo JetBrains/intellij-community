@@ -56,10 +56,10 @@ class UnifiedFragmentBuilderTest : UsefulTestCase() {
     val block = builder.blocks[0]
     assertEquals(block.line1, 1)
     assertEquals(block.line2, 3)
-    assertEquals(block.startOffset1, 2)
-    assertEquals(block.endOffset1, 6)
-    assertEquals(block.startOffset2, 6)
-    assertEquals(block.endOffset2, 6)
+    assertEquals(block.range1.start, 1)
+    assertEquals(block.range1.end, 3)
+    assertEquals(block.range2.start, 3)
+    assertEquals(block.range2.end, 3)
   }
 
   companion object {

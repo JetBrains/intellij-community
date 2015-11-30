@@ -75,6 +75,7 @@ class UnifiedFragmentBuilder {
     appendTextMaster(startLine1, startLine2, endLine1, endLine2);
   }
 
+  @SuppressWarnings("UnnecessaryLocalVariable")
   private void processChanged(@NotNull LineFragment fragment) {
     int startLine1 = fragment.getStartLine1();
     int endLine1 = fragment.getEndLine1() - 1;
@@ -84,37 +85,35 @@ class UnifiedFragmentBuilder {
     int endLine2 = fragment.getEndLine2() - 1;
     int lines2 = endLine2 - startLine2;
 
-    int blockStartOffset1;
-    int blockEndOffset1;
-    int blockStartOffset2;
-    int blockEndOffset2;
-
     int linesBefore = totalLines;
     int linesAfter;
 
-    blockStartOffset1 = myBuilder.length();
     if (lines1 >= 0) {
       int startOffset = myDocument1.getLineStartOffset(startLine1);
       int endOffset = myDocument1.getLineEndOffset(endLine1);
 
       appendTextSide(Side.LEFT, startOffset, endOffset, lines1, startLine1, -1);
     }
-    blockEndOffset1 = myBuilder.length();
 
-    blockStartOffset2 = myBuilder.length();
+    int linesBetween = totalLines;
+
     if (lines2 >= 0) {
       int startOffset = myDocument2.getLineStartOffset(startLine2);
       int endOffset = myDocument2.getLineEndOffset(endLine2);
 
       appendTextSide(Side.RIGHT, startOffset, endOffset, lines2, -1, startLine2);
     }
-    blockEndOffset2 = myBuilder.length();
 
     linesAfter = totalLines;
 
-    myBlocks.add(new ChangedBlock(blockStartOffset1, blockEndOffset1,
-                                  blockStartOffset2, blockEndOffset2,
-                                  linesBefore, linesAfter,
+    int blockStartLine1 = linesBefore;
+    int blockEndLine1 = linesBetween;
+    int blockStartLine2 = linesBetween;
+    int blockEndLine2 = linesAfter;
+
+    myBlocks.add(new ChangedBlock(linesBefore, linesAfter,
+                                  new LineRange(blockStartLine1, blockEndLine1),
+                                  new LineRange(blockStartLine2, blockEndLine2),
                                   fragment));
 
     lastProcessedLine1 = endLine1;

@@ -52,6 +52,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -415,10 +416,10 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         List<RangeMarker> guarderRangeBlocks = new ArrayList<RangeMarker>();
         if (!myEditor.isViewer()) {
           for (ChangedBlock block : blocks) {
-            int start = myMasterSide.select(block.getStartOffset2(), block.getStartOffset1());
-            int end = myMasterSide.select(block.getEndOffset2() - 1, block.getEndOffset1() - 1);
-            if (start >= end) continue;
-            guarderRangeBlocks.add(createGuardedBlock(start, end));
+            LineRange range = myMasterSide.select(block.getRange2(), block.getRange1());
+            TextRange textRange = DiffUtil.getLinesRange(myDocument, range.start, range.end);
+            if (textRange.isEmpty()) continue;
+            guarderRangeBlocks.add(createGuardedBlock(textRange.getStartOffset(), textRange.getEndOffset()));
           }
           int textLength = myDocument.getTextLength(); // there are 'fake' newline at the very end
           guarderRangeBlocks.add(createGuardedBlock(textLength, textLength));

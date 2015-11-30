@@ -15,12 +15,14 @@
  */
 package com.intellij.diff.util;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.BooleanGetter;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.JBColor;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,6 +35,8 @@ import java.awt.geom.CubicCurve2D;
 import java.awt.geom.Path2D;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.diff.util.DiffUtil.getLineCount;
 
 public class DiffDrawUtil {
   private static final int STRIPE_LAYER = HighlighterLayer.ERROR - 1;
@@ -174,6 +178,15 @@ public class DiffDrawUtil {
   // Impl
   //
 
+  public static int lineToY(@NotNull Editor editor, int line) {
+    Document document = editor.getDocument();
+    if (line >= getLineCount(document)) {
+      int y = lineToY(editor, getLineCount(document) - 1);
+      return y + editor.getLineHeight() * (line - getLineCount(document) + 1);
+    }
+    return editor.logicalPositionToXY(editor.offsetToLogicalPosition(document.getLineStartOffset(line))).y;
+  }
+
   @NotNull
   private static TextAttributes getTextAttributes(@NotNull final TextDiffType type,
                                                   @Nullable final Editor editor,
@@ -200,8 +213,12 @@ public class DiffDrawUtil {
   private static void installGutterRenderer(@NotNull RangeHighlighter highlighter,
                                             @NotNull TextDiffType type,
                                             boolean ignoredFoldingOutline,
-                                            boolean resolved) {
-    highlighter.setLineMarkerRenderer(new DiffLineMarkerRenderer(type, ignoredFoldingOutline, resolved));
+                                            boolean resolved,
+                                            boolean isEmptyRange,
+                                            boolean isLastLine) {
+    DiffLineMarkerRenderer renderer = new DiffLineMarkerRenderer(highlighter, type, ignoredFoldingOutline, resolved,
+                                                                 isEmptyRange, isLastLine);
+    highlighter.setLineMarkerRenderer(renderer);
   }
 
   private static void installEmptyRangeRenderer(@NotNull RangeHighlighter highlighter,
@@ -229,25 +246,18 @@ public class DiffDrawUtil {
   // Highlighters
   //
 
-  // TODO: invalid highlighting of empty last line
-  // TODO: invalid highlighting in case on deletion '\n' before range
-  // TODO: desync of range and line markers
+  // TODO: desync of range and 'border' line markers on typing
 
   @NotNull
-  public static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type) {
-    return new LineHighlighterBuilder(editor, start, end, type).done();
-  }
-
-  @NotNull
-  public static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type,
+  public static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int startLine, int endLine, @NotNull TextDiffType type,
                                                          boolean ignored) {
-    return new LineHighlighterBuilder(editor, start, end, type).withIgnored(ignored).done();
+    return new LineHighlighterBuilder(editor, startLine, endLine, type).withIgnored(ignored).done();
   }
 
   @NotNull
-  public static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type,
+  public static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int startLine, int endLine, @NotNull TextDiffType type,
                                                          boolean ignored, boolean resolved) {
-    return new LineHighlighterBuilder(editor, start, end, type).withIgnored(ignored).withResolved(resolved).done();
+    return new LineHighlighterBuilder(editor, startLine, endLine, type).withIgnored(ignored).withResolved(resolved).done();
   }
 
   @NotNull
@@ -308,24 +318,17 @@ public class DiffDrawUtil {
   private static class LineHighlighterBuilder {
     @NotNull private final Editor editor;
     @NotNull private final TextDiffType type;
-    private final int start;
-    private final int end;
+    private final int startLine;
+    private final int endLine;
 
-    @NotNull private HighlighterTargetArea area = HighlighterTargetArea.EXACT_RANGE;
     private boolean ignored = false;
     private boolean resolved = false;
 
-    private LineHighlighterBuilder(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type) {
+    private LineHighlighterBuilder(@NotNull Editor editor, int startLine, int endLine, @NotNull TextDiffType type) {
       this.editor = editor;
       this.type = type;
-      this.start = start;
-      this.end = end;
-    }
-
-    @NotNull
-    public LineHighlighterBuilder withArea(@NotNull HighlighterTargetArea area) {
-      this.area = area;
-      return this;
+      this.startLine = startLine;
+      this.endLine = endLine;
     }
 
     @NotNull
@@ -342,19 +345,25 @@ public class DiffDrawUtil {
 
     @NotNull
     public List<RangeHighlighter> done() {
-      boolean empty = start == end;
-      TextAttributes attributes = empty || resolved ? null : getTextAttributes(type, editor, ignored);
-      TextAttributes stripeAttributes = empty || resolved ? null : getStripeTextAttributes(type, editor);
+      boolean isEmptyRange = startLine == endLine;
+      boolean isLastLine = endLine == getLineCount(editor.getDocument());
+
+      TextRange offsets = DiffUtil.getLinesRange(editor.getDocument(), startLine, endLine);
+      int start = offsets.getStartOffset();
+      int end = offsets.getEndOffset();
+
+      TextAttributes attributes = isEmptyRange || resolved ? null : getTextAttributes(type, editor, ignored);
+      TextAttributes stripeAttributes = isEmptyRange || resolved ? null : getStripeTextAttributes(type, editor);
 
       RangeHighlighter highlighter = editor.getMarkupModel()
-        .addRangeHighlighter(start, end, DEFAULT_LAYER, attributes, area);
+        .addRangeHighlighter(start, end, DEFAULT_LAYER, attributes, HighlighterTargetArea.LINES_IN_RANGE);
 
-      installGutterRenderer(highlighter, type, ignored, resolved);
+      installGutterRenderer(highlighter, type, ignored, resolved, isEmptyRange, isLastLine);
 
       if (stripeAttributes == null) return Collections.singletonList(highlighter);
 
       RangeHighlighter stripeHighlighter = editor.getMarkupModel()
-        .addRangeHighlighter(start, end, STRIPE_LAYER, stripeAttributes, area);
+        .addRangeHighlighter(start, end, STRIPE_LAYER, stripeAttributes, HighlighterTargetArea.LINES_IN_RANGE);
 
       return ContainerUtil.list(highlighter, stripeHighlighter);
     }

@@ -71,6 +71,7 @@ import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
 
+import static com.intellij.diff.util.DiffDrawUtil.lineToY;
 import static com.intellij.diff.util.DiffUtil.getDiffType;
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
@@ -150,15 +151,6 @@ public class LineStatusTrackerDrawing {
         paintRect(g, null, borderColor, x, y, endX, endY);
       }
     }
-  }
-
-  private static int lineToY(@NotNull Editor editor, int line) {
-    Document document = editor.getDocument();
-    if (line >= getLineCount(document)) {
-      int y = lineToY(editor, getLineCount(document) - 1);
-      return y + editor.getLineHeight() * (line - getLineCount(document) + 1);
-    }
-    return editor.logicalPositionToXY(editor.offsetToLogicalPosition(document.getLineStartOffset(line))).y;
   }
 
   private static void paintRect(@NotNull Graphics g, @Nullable Color color, @Nullable Color borderColor, int x1, int y1, int x2, int y2) {
