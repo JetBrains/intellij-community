@@ -35,7 +35,7 @@ public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   @Override
   public String getCodeSample(@NotNull SettingsType settingsType) {
-    return "product: \n" + "  name: RubyMine\n" + "  version: 4\n" + "  vendor: JetBrains\n" + "  url: \"https://www.jetbrains.com/ruby\"";
+    return "product: \n" + "  name: RubyMine\n" + "  version: 8\n" + "  vendor: JetBrains\n" + "  url: \"https://www.jetbrains.com/ruby\"";
   }
 
   private class YAMLIndentOptionsEditor extends IndentOptionsEditor {
