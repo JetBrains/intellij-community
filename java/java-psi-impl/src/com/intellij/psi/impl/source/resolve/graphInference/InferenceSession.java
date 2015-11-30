@@ -511,7 +511,7 @@ public class InferenceSession {
   }
 
   public static JavaResolveResult getResolveResult(final PsiCall callExpression) {
-    if (callExpression instanceof PsiNewExpression) {
+    if (callExpression instanceof PsiNewExpression && PsiDiamondTypeUtil.hasDiamond((PsiNewExpression)callExpression)) {
       PsiUtilCore.ensureValid(callExpression);
       return CachedValuesManager.getCachedValue(callExpression, new CachedValueProvider<JavaResolveResult>() {
         @Nullable
