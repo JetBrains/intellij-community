@@ -70,10 +70,6 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
   private int myFoldingChangeStartOffset = Integer.MAX_VALUE;
   private int myFoldingChangeEndOffset = Integer.MIN_VALUE;
   
-  private boolean myDirty; // true if we cannot calculate preferred size now because soft wrap model was invalidated after editor 
-                           // became hidden. myLineWidths contents is irrelevant in such a state. Previously calculated preferred size
-                           // is kept until soft wraps will be recalculated and size calculations will become possible
-  
   private final List<TextRange> myDeferredRanges = new ArrayList<TextRange>();
   
   private final SoftWrapAwareDocumentParsingListenerAdapter mySoftWrapChangeListener = new SoftWrapAwareDocumentParsingListenerAdapter() {
@@ -183,7 +179,6 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
   private int getPreferredWidth() {
     if (myWidthInPixels < 0) {
       assert !myDocument.isInBulkUpdate();
-      assert !myDirty;
       myWidthInPixels = calculatePreferredWidth();
     }
     validateMaxLineWithExtension();
@@ -278,11 +273,6 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
   }
   
   private void doInvalidateRange(int startOffset, int endOffset) {
-    if (myDirty) return;
-    if (myEditor.getSoftWrapModel().isDirty()) {
-      myDirty = true;
-      return;
-    }
     myWidthInPixels = -1;
     int startVisualLine = myView.offsetToVisualLine(startOffset, false);
     int endVisualLine = myView.offsetToVisualLine(endOffset, true);
@@ -319,11 +309,6 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
   }
 
   private void onTextLayoutPerformed(int startOffset, int endOffset) {
-    if (myDirty) return;
-    if (myEditor.getSoftWrapModel().isDirty()) {
-      myDirty = true;
-      return;
-    }
     boolean purePaintingMode = myEditor.isPurePaintingMode();
     boolean foldingEnabled = myEditor.getFoldingModel().isFoldingEnabled();
     myEditor.setPurePaintingMode(false);

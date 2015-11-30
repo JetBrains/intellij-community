@@ -754,10 +754,6 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
     return dumpState();
   }
 
-  public boolean isDirty() {
-    return myDirty;
-  }
-  
   /**
    * Defines generic interface for the command that may be proceeded in both <code>'soft wraps aware'</code> and
    * <code>'soft wraps unaware'</code> modes.
