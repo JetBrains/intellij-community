@@ -431,4 +431,9 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
   public void testConstantConditionsWithAssignmentsInside() { doTest(); }
   public void testIfConditionsWithAssignmentInside() { doTest(); }
+
+  public void testLiteralIfCondition() {
+    doTest();
+    myFixture.findSingleIntention("Remove 'if' statement");
+  }
 }
