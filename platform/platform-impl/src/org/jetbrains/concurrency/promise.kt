@@ -34,9 +34,7 @@ abstract class ObsolescentConsumer<T>(private val obsolescent: Obsolescent) : Ob
 }
 
 
-inline fun <T, SUB_RESULT> Promise<T>.then(crossinline handler: (T) -> SUB_RESULT) = then(object : Function<T, SUB_RESULT> {
-  override fun `fun`(param: T) = handler(param)
-})
+inline fun <T, SUB_RESULT> Promise<T>.then(crossinline handler: (T) -> SUB_RESULT) = then(Function<T, SUB_RESULT> { param -> handler(param) })
 
 inline fun <T, SUB_RESULT> Promise<T>.then(obsolescent: Obsolescent, crossinline handler: (T) -> SUB_RESULT) = then(object : ObsolescentFunction<T, SUB_RESULT> {
   override fun `fun`(param: T) = handler(param)
@@ -50,9 +48,7 @@ inline fun <T> Promise<T>.done(node: Obsolescent, crossinline handler: (T) -> Un
 })
 
 
-inline fun <T, SUB_RESULT> Promise<T>.thenAsync(crossinline handler: (T) -> Promise<SUB_RESULT>) = then(object : AsyncFunction<T, SUB_RESULT> {
-  override fun `fun`(param: T) = handler(param)
-})
+inline fun <T, SUB_RESULT> Promise<T>.thenAsync(crossinline handler: (T) -> Promise<SUB_RESULT>) = then(AsyncFunction<T, SUB_RESULT> { param -> handler(param) })
 
 inline fun <T, SUB_RESULT> Promise<T>.thenAsync(node: Obsolescent, crossinline handler: (T) -> Promise<SUB_RESULT>) = then(object : ValueNodeAsyncFunction<T, SUB_RESULT>(node) {
   override fun `fun`(param: T) = handler(param)
@@ -111,3 +107,5 @@ fun <T> collectResults(promises: List<Promise<T>>): Promise<List<T>> {
   }
   return Promise.all(promises, results)
 }
+
+fun createError(error: String, log: Boolean = false): RuntimeException = Promise.MessageError(error, log)

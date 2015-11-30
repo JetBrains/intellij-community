@@ -30,7 +30,6 @@ internal class InputClassScope(generator: DomainGenerator, namePath: NamePath) :
       addMember { out ->
         out.newLine().newLine().doc(description)
         if (properties == null) {
-          out.append("@JsonType(allowsOtherProperties=true)").newLine()
           out.append("interface ").append(objectName).append(" : JsonObjectBased").openBlock()
         }
         else {
