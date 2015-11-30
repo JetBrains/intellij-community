@@ -33,7 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class DiffUtil {
+public class VcsDiffUtil {
 
   public static void showDiffFor(@NotNull Project project,
                                  @NotNull final Collection<Change> changes,

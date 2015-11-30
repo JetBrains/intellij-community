@@ -23,7 +23,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.history.DiffUtil;
+import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,7 +44,7 @@ import org.zmlx.hg4idea.util.HgVersion;
 
 import java.util.*;
 
-import static com.intellij.openapi.vcs.history.DiffUtil.createChangesWithCurrentContentForFile;
+import static com.intellij.openapi.vcs.history.VcsDiffUtil.createChangesWithCurrentContentForFile;
 
 public class HgCompareWithBranchAction extends DvcsCompareWithBranchAction<HgRepository> {
   @Override
@@ -137,7 +137,7 @@ public class HgCompareWithBranchAction extends DvcsCompareWithBranchAction<HgRep
 
     List<Change> changes = HgUtil.getDiff(project, repositoryRoot, filePath, compareWithRevisionNumber, null);
 
-    DiffUtil.showDiffFor(project, changes.isEmpty() && !filePath.isDirectory()
+    VcsDiffUtil.showDiffFor(project, changes.isEmpty() && !filePath.isDirectory()
                                   ? createChangesWithCurrentContentForFile(filePath,
                                                                            HgContentRevision
                                                                              .create(project, hgFile, compareWithRevisionNumber))

@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.history.DiffUtil;
+import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -39,7 +39,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.history.DiffUtil.createChangesWithCurrentContentForFile;
+import static com.intellij.openapi.vcs.history.VcsDiffUtil.createChangesWithCurrentContentForFile;
 
 public class GitCompareWithBranchAction extends DvcsCompareWithBranchAction<GitRepository> {
   @Override
@@ -111,7 +111,7 @@ public class GitCompareWithBranchAction extends DvcsCompareWithBranchAction<GitR
 
     Collection<Change> changes =
       GitChangeUtils.getDiff(project, gitRepository.getRoot(), branchToCompare, head, Collections.singletonList(filePath));
-    DiffUtil.showDiffFor(project, changes.isEmpty() && !filePath.isDirectory()
+    VcsDiffUtil.showDiffFor(project, changes.isEmpty() && !filePath.isDirectory()
                                   ? createChangesWithCurrentContentForFile(filePath,
                                                                            GitContentRevision
                                                                              .createRevision(filePath, compareToRevisionNumber, project,
