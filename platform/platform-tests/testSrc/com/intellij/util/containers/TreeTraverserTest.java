@@ -177,6 +177,17 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(Arrays.asList(1, 2, 3, 4), it.toList());
   }
 
+  public void testGetAt() {
+    JBIterable<Integer> it = JBIterable.of(1, 2, 3, 4);
+    assertEquals((Integer)4, it.get(3));
+    assertNull(it.get(4));
+    assertNull(it.get(5));
+    JBIterable<Integer> it2 = JBIterable.generate(1, INCREMENT).take(4);
+    assertEquals((Integer)4, it2.get(3));
+    assertNull(it2.get(4));
+    assertNull(it2.get(5));
+  }
+
   public void testFilterTransformTakeWhile() {
     JBIterable<Integer> it = JBIterable.generate(1, INCREMENT).filter(IS_ODD).transform(SQUARE).takeWhile(LESS_THAN(100));
     assertEquals(Arrays.asList(1, 9, 25, 49, 81), it.toList());
