@@ -60,7 +60,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
           element.addChildElement().copyFrom(child);
         }
       }
-    }).cpuBound().attempts(1).assertTiming();
+    }).cpuBound().attempts(1).useLegacyScaling().assertTiming();
 
     final MyElement newElement = createElement(DomUtil.getFile(element).getText(), MyElement.class);
 
@@ -75,7 +75,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
         });
 
       }
-    }).cpuBound().assertTiming();
+    }).cpuBound().useLegacyScaling().assertTiming();
   }
 
   public void testShouldntParseNonDomFiles() throws Throwable {
@@ -125,7 +125,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
       public void run() throws Exception {
         assertNull(getDomManager().getFileElement(file));
       }
-    }).cpuBound().assertTiming();
+    }).cpuBound().useLegacyScaling().assertTiming();
   }
 
   public void testDontParseNamespacedDomFiles() throws Exception {

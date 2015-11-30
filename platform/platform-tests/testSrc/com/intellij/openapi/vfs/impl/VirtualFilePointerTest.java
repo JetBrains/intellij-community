@@ -562,7 +562,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
         myVirtualFilePointerManager.createContainer(parent);
       }
       Disposer.dispose(parent);
-    }).cpuBound().assertTiming();
+    }).cpuBound().useLegacyScaling().assertTiming();
   }
 
   private static void doVfsRefresh(File dir) {
@@ -708,7 +708,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
         myVirtualFilePointerManager.before(events);
         myVirtualFilePointerManager.after(events);
       }
-    }).assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 
   public void testMultipleCreationOfTheSamePointerPerformance() throws IOException {
@@ -721,7 +721,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
         VirtualFilePointer pointer = myVirtualFilePointerManager.create(url, disposable, listener);
         assertSame(pointer, thePointer);
       }
-    }).assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 
   public void testCidrConfusions() throws IOException {

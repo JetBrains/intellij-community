@@ -81,7 +81,7 @@ public class DictionaryTest {
       public void run() {
         ref.set(CompressedDictionary.create(getLoader(name), myTransformation));
       }
-    }).cpuBound().assertTiming();
+    }).cpuBound().useLegacyScaling().assertTiming();
 
     assertFalse(ref.isNull());
     return ref.get();
@@ -98,7 +98,7 @@ public class DictionaryTest {
           assertEquals(Boolean.TRUE, dictionary.contains(s));
         }
       }
-    }).cpuBound().assertTiming();
+    }).cpuBound().useLegacyScaling().assertTiming();
   }
 
   private void containsWordTest(Dictionary dictionary) {

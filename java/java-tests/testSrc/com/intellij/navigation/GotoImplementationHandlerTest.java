@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@
 package com.intellij.navigation;
 
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.navigation.GotoImplementationHandler;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -27,8 +25,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.ThrowableRunnable;
-
-import java.util.List;
 
 public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCase {
 
@@ -81,7 +77,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
         final PsiElement[] impls = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.getEditor(), file).targets;
         assertEquals(3, impls.length);
       }
-    }).cpuBound().usesAllCPUCores().assertTiming();
+    }).cpuBound().usesAllCPUCores().useLegacyScaling().assertTiming();
   }
 
   public void testToStringOnQualified() throws Throwable {
@@ -111,7 +107,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
         final PsiElement[] impls = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.getEditor(), file).targets;
         assertEquals(3, impls.length);
       }
-    }).cpuBound().usesAllCPUCores().assertTiming();
+    }).cpuBound().usesAllCPUCores().useLegacyScaling().assertTiming();
     
   }
 

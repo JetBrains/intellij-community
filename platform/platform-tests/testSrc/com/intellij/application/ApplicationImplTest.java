@@ -160,7 +160,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           System.out.println("write end");
         }
         reads.await();
-      }).cpuBound().assertTiming();
+      }).cpuBound().useLegacyScaling().assertTiming();
     }
     finally {
       Disposer.dispose(disposable);

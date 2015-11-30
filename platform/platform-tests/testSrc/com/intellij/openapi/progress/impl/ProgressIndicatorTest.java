@@ -349,7 +349,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       for (int i=0;i<100000;i++) {
         ProgressManager.getInstance().executeProcessUnderProgress(EmptyRunnable.getInstance(), indicator);
       }
-    }).assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 
   public void testWrapperIndicatorGotCanceledTooWhenInnerIndicatorHas() {

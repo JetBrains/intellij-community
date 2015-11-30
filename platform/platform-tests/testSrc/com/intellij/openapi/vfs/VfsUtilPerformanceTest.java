@@ -71,7 +71,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
         VirtualFile child = vDir.findChild("5111.txt");
         assertEquals(theChild, child);
       }
-    }).assertTiming();
+    }).useLegacyScaling().assertTiming();
 
     new WriteCommandAction.Simple(null) {
       @Override
@@ -103,7 +103,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
             assertSame(root, rootJar);
           }
           return true;
-        })).assertTiming();
+        })).useLegacyScaling().assertTiming();
   }
 
   @Test
@@ -144,13 +144,13 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
           }
         };
         int time = 1200;
-        PlatformTestUtil.startPerformanceTest("getParent is slow before movement", time, checkPerformance).assertTiming();
+        PlatformTestUtil.startPerformanceTest("getParent is slow before movement", time, checkPerformance).useLegacyScaling().assertTiming();
         VirtualFile dir1 = vDir.createChildDirectory(this, "dir1");
         VirtualFile dir2 = vDir.createChildDirectory(this, "dir2");
         for (int i = 0; i < 13; i++) {  /*13 is max length with THashMap capacity of 17, we get plenty collisions then*/
           dir1.createChildData(this, "a" + i + ".txt").move(this, dir2);
         }
-        PlatformTestUtil.startPerformanceTest("getParent is slow after movement", time, checkPerformance).assertTiming();
+        PlatformTestUtil.startPerformanceTest("getParent is slow after movement", time, checkPerformance).useLegacyScaling().assertTiming();
       }
     }.execute();
   }
@@ -172,7 +172,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
       for (int i = 0; i < 1000000; ++i) {
         file.getPath();
       }
-    }).cpuBound().assertTiming();
+    }).cpuBound().useLegacyScaling().assertTiming();
   }
 
   @Test

@@ -271,7 +271,7 @@ public class XmlParsingTest extends ParsingTestCase {
               System.out.println("Reparsed for: " + (System.currentTimeMillis() - tm));
             }
           }
-        }).cpuBound().assertTiming();
+        }).cpuBound().useLegacyScaling().assertTiming();
       }
     }.execute();
   }

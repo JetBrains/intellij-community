@@ -1084,7 +1084,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       backspace();
       infos = highlightErrors();
       assertEmpty(infos);
-    }).assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 
   

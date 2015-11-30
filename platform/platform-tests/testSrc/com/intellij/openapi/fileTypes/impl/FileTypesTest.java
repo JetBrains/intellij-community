@@ -121,7 +121,7 @@ public class FileTypesTest extends PlatformTestCase {
           }
         }
       }
-    }).assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 
   public void testMaskToPattern() {
