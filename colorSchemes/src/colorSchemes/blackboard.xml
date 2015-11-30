@@ -980,6 +980,8 @@
       </value>
     </option>
     <option baseAttributes="TEXT" name="PARAMETER_ATTRIBUTES" />
+    <option baseAttributes="DEFAULT_PARAMETER" name="PHP_PARAMETER" />
+    <option baseAttributes="DEFAULT_LOCAL_VARIABLE" name="PHP_VAR" />
     <option name="PROTOCOL_REFERENCE">
       <value>
         <option name="FOREGROUND" value="FF6400" />
