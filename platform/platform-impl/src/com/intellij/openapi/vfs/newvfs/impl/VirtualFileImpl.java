@@ -93,7 +93,7 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
     return false;
   }
 
-  private static final Key<byte[]> ourPreloadedContentKey = Key.create("forced.content.key");
+  private static final Key<byte[]> ourPreloadedContentKey = Key.create("preloaded.content.key");
 
   @Override
   public void setPreloadedContentHint(byte[] preloadedContentHint) {
