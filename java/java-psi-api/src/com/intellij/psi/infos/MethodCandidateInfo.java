@@ -82,7 +82,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   }
 
   public boolean isApplicable(){
-    return getApplicabilityLevel() != ApplicabilityLevel.NOT_APPLICABLE;
+    return getPertinentApplicabilityLevel() != ApplicabilityLevel.NOT_APPLICABLE;
   }
 
   @ApplicabilityLevelConstant

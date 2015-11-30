@@ -107,6 +107,10 @@ public class TypeEqualityConstraint implements ConstraintFormula {
           if (tSubstituted != null && sSubstituted != null) {
             constraints.add(new TypeEqualityConstraint(tSubstituted, sSubstituted));
           }
+          if (tSubstituted == null ^ sSubstituted == null) {
+            session.registerIncompatibleErrorMessage("Incompatible equality constraint: " + myT.getPresentableText() + " and " + myS.getPresentableText());
+            return false;
+          }
         }
         return true;
       }
