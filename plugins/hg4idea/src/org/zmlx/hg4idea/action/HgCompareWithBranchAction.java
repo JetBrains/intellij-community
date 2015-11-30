@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -99,14 +98,13 @@ public class HgCompareWithBranchAction extends DvcsCompareWithBranchAction<HgRep
   }
 
   @Override
-  protected void showDiffWithBranch(@NotNull Project project,
-                                    @NotNull VirtualFile file,
-                                    @NotNull String head,
-                                    @NotNull String branchToCompare) throws VcsException {
+  protected Collection<Change> getDiffChanges(@NotNull Project project,
+                                              @NotNull VirtualFile file,
+                                              @NotNull String head,
+                                              @NotNull String branchToCompare) throws VcsException {
     HgRepository repository = getRepositoryManager(project).getRepositoryForFile(file);
     if (repository == null) {
-      LOG.error("Couldn't find repository for " + file.getName());
-      return;
+      throw new VcsException("Couldn't find repository for " + file.getName());
     }
     final FilePath filePath = VcsUtil.getFilePath(file);
     final VirtualFile repositoryRoot = repository.getRoot();
@@ -118,11 +116,7 @@ public class HgCompareWithBranchAction extends DvcsCompareWithBranchAction<HgRep
       HgRevisionNumber.getInstance(branchToCompare, getBranchMainHash(repository, branchToCompare).toString());
     List<Change> changes = HgUtil.getDiff(project, repositoryRoot, filePath, compareWithRevisionNumber, null);
 
-    VcsDiffUtil.showDiffFor(project, changes.isEmpty() && !filePath.isDirectory()
-                                     ? createChangesWithCurrentContentForFile(filePath,
-                                                                              HgContentRevision
-                                                                                .create(project, hgFile, compareWithRevisionNumber))
-                                     : changes, VcsDiffUtil.getRevisionTitle(branchToCompare, false),
-                            VcsDiffUtil.getRevisionTitle(head, true), filePath);
+    return changes.isEmpty() && !filePath.isDirectory() ? createChangesWithCurrentContentForFile(filePath, HgContentRevision
+      .create(project, hgFile, compareWithRevisionNumber)) : changes;
   }
 }
