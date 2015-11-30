@@ -16,8 +16,10 @@
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.util.Computable;
-import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.PrintStream;
+import java.io.PrintWriter;
 
 /**
  * Thrown on accessing indices when they're not ready, in so-called dumb mode. Possible fixes:
@@ -49,22 +51,36 @@ import org.jetbrains.annotations.Nullable;
  * @see DumbAware
  */
 public class IndexNotReadyException extends RuntimeException {
-  private final Throwable myStartTrace;
+  @Nullable private final Throwable myStartTrace;
 
   public IndexNotReadyException() {
     this(null);
   }
 
   public IndexNotReadyException(@Nullable Throwable startTrace) {
+    super("Please change caller according to " + IndexNotReadyException.class.getName() + " documentation");
     myStartTrace = startTrace;
   }
 
   @Override
-  public String getMessage() {
-    String msg = "Please change caller according to " + IndexNotReadyException.class.getName() + " documentation";
+  public void printStackTrace(PrintStream s) {
+    super.printStackTrace(s);
     if (myStartTrace != null) {
-      msg += "\nIndexing started at: " + ExceptionUtil.getThrowableText(myStartTrace) + "\n-----------------------------\n";
+      s.println();
+      s.println("-----------");
+      s.println("Indexing started at:");
+      myStartTrace.printStackTrace(s);
     }
-    return msg;
+  }
+
+  @Override
+  public void printStackTrace(PrintWriter s) {
+    super.printStackTrace(s);
+    if (myStartTrace != null) {
+      s.println();
+      s.println("-----------");
+      s.println("Indexing started at:");
+      myStartTrace.printStackTrace(s);
+    }
   }
 }
