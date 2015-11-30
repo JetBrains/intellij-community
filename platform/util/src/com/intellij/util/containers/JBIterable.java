@@ -202,6 +202,9 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * Returns the number of elements in this iterable.
    */
   public final int size() {
+    if (myIterable instanceof Collection) {
+      return ((Collection)myIterable).size();
+    }
     int count = 0;
     for (E ignored : myIterable) {
       count++;
@@ -221,6 +224,16 @@ public abstract class JBIterable<E> implements Iterable<E> {
       if (Comparing.equal(e, element)) return true;
     }
     return false;
+  }
+
+  /**
+   * Returns element at index if it is present; otherwise {@code null}
+   */
+  public final E get(int index) {
+    if (myIterable instanceof List) {
+      return index >= ((List)myIterable).size() ? null : ((List<E>)myIterable).get(index);
+    }
+    return skip(index).first();
   }
 
   /**
@@ -412,6 +425,9 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * Determines whether this iterable is empty.
    */
   public final boolean isEmpty() {
+    if (myIterable instanceof Collection) {
+      return ((Collection)myIterable).isEmpty();
+    }
     return !myIterable.iterator().hasNext();
   }
 
