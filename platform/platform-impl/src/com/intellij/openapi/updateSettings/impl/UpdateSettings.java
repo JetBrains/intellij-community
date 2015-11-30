@@ -55,6 +55,18 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
 
   private State myState = new State();
 
+  @NotNull
+  @Override
+  public State getState() {
+    return myState;
+  }
+
+  @Override
+  public void loadState(@NotNull State state) {
+    myState = state;
+    myState.LAST_BUILD_CHECKED = StringUtil.nullize(myState.LAST_BUILD_CHECKED);
+  }
+
   @Nullable
   public String getLasBuildChecked() {
     return myState.LAST_BUILD_CHECKED;
@@ -81,29 +93,8 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
     myState.SECURE_CONNECTION = value;
   }
 
-  @NotNull
-  public String getUpdateChannelType() {
-    return myState.UPDATE_CHANNEL_TYPE;
-  }
-
   public long getLastTimeChecked() {
     return myState.LAST_TIME_CHECKED;
-  }
-
-  public void setUpdateChannelType(@NotNull String value) {
-    myState.UPDATE_CHANNEL_TYPE = value;
-  }
-
-  @NotNull
-  @Override
-  public State getState() {
-    return myState;
-  }
-
-  @Override
-  public void loadState(@NotNull State state) {
-    myState = state;
-    myState.LAST_BUILD_CHECKED = StringUtil.nullize(myState.LAST_BUILD_CHECKED);
   }
 
   @NotNull
@@ -133,6 +124,10 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
     return ChannelStatus.fromCode(myState.UPDATE_CHANNEL_TYPE);
   }
 
+  public void setSelectedChannelStatus(@NotNull ChannelStatus channel) {
+    myState.UPDATE_CHANNEL_TYPE = channel.getCode();
+  }
+
   public List<String> getPluginHosts() {
     List<String> hosts = new ArrayList<String>(myState.pluginHosts);
     String pluginHosts = System.getProperty("idea.plugin.hosts");
@@ -153,5 +148,17 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
 
   public boolean canUseSecureConnection() {
     return myState.SECURE_CONNECTION && NetUtils.isSniEnabled();
+  }
+
+  /** @deprecated use {@link #getSelectedChannelStatus()} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
+  public String getUpdateChannelType() {
+    return myState.UPDATE_CHANNEL_TYPE;
+  }
+
+  /** @deprecated use {@link #setSelectedChannelStatus(ChannelStatus)} (to be removed in IDEA 17) */
+  @SuppressWarnings("unused")
+  public void setUpdateChannelType(@NotNull String value) {
+    myState.UPDATE_CHANNEL_TYPE = value;
   }
 }

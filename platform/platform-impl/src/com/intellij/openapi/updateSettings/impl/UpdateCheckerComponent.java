@@ -58,7 +58,7 @@ public class UpdateCheckerComponent implements ApplicationComponent {
   };
   private final UpdateSettings mySettings;
 
-  public UpdateCheckerComponent(@NotNull final Application app, @NotNull UpdateSettings settings) {
+  public UpdateCheckerComponent(@NotNull Application app, @NotNull UpdateSettings settings) {
     mySettings = settings;
     updateDefaultChannel();
     checkSecureConnection(app);
@@ -67,11 +67,11 @@ public class UpdateCheckerComponent implements ApplicationComponent {
 
   private void updateDefaultChannel() {
     if (ApplicationInfoEx.getInstanceEx().isEAP() && UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds()) {
-      mySettings.setUpdateChannelType(ChannelStatus.EAP.getCode());
+      mySettings.setSelectedChannelStatus(ChannelStatus.EAP);
     }
   }
 
-  private void checkSecureConnection(@NotNull final Application app) {
+  private void checkSecureConnection(final Application app) {
     if (mySettings.isSecureConnection() && !mySettings.canUseSecureConnection()) {
       mySettings.setSecureConnection(false);
 
@@ -98,7 +98,7 @@ public class UpdateCheckerComponent implements ApplicationComponent {
     }
   }
 
-  private void scheduleOnStartCheck(@NotNull Application app) {
+  private void scheduleOnStartCheck(Application app) {
     if (!mySettings.isCheckNeeded()) {
       return;
     }
