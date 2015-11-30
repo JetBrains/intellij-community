@@ -19,51 +19,73 @@ import com.intellij.diff.DiffManager;
 import com.intellij.diff.requests.MessageDiffRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
+import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.hash.HashMap;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+
+import static com.intellij.diff.util.DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE;
+import static com.intellij.diff.util.DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE;
 
 public class VcsDiffUtil {
 
+  @CalledInAwt
   public static void showDiffFor(@NotNull Project project,
                                  @NotNull final Collection<Change> changes,
-                                 @NotNull final VcsRevisionNumber revNum1,
-                                 @NotNull final VcsRevisionNumber revNum2,
+                                 @NotNull final String revNumTitle1,
+                                 @NotNull final String revNumTitle2,
                                  @NotNull final FilePath filePath) {
     if (filePath.isDirectory()) {
-      showChangesDialog(project, getDialogTitle(filePath, revNum1, revNum2), ContainerUtil.newArrayList(changes));
+      showChangesDialog(project, getDialogTitle(filePath, revNumTitle1, revNumTitle2), ContainerUtil.newArrayList(changes));
     }
     else {
       if (changes.isEmpty()) {
         DiffManager.getInstance().showDiff(project, new MessageDiffRequest("No Changes Found"));
       }
       else {
-        ShowDiffAction.showDiffForChange(project, changes);
+        final HashMap<Key, Object> revTitlesMap = new HashMap<Key, Object>(2);
+        revTitlesMap.put(VCS_DIFF_LEFT_CONTENT_TITLE, revNumTitle1);
+        revTitlesMap.put(VCS_DIFF_RIGHT_CONTENT_TITLE, revNumTitle2);
+        ShowDiffContext showDiffContext = new ShowDiffContext() {
+          @NotNull
+          @Override
+          public Map<Key, Object> getChangeContext(@NotNull Change change) {
+            return revTitlesMap;
+          }
+        };
+        ShowDiffAction.showDiffForChange(project, changes, 0, showDiffContext);
       }
     }
   }
 
   @NotNull
-  private static String getDialogTitle(@NotNull final FilePath filePath, @NotNull final VcsRevisionNumber revNum1,
-                                       @Nullable final VcsRevisionNumber revNum2) {
-    String rev1Title = revNum1.asString();
-    final String filePathName = filePath.getName();
-    return revNum2 != null
-           ? String.format("Difference between %s and %s in %s", rev1Title, revNum2.asString(), filePathName)
-           : String.format("Difference between %s and local version in %s", rev1Title, filePathName);
+  private static String getDialogTitle(@NotNull final FilePath filePath, @NotNull final String revNumTitle1,
+                                       @NotNull final String revNumTitle2) {
+    return String.format("Difference between %s and %s versions in %s", revNumTitle1, revNumTitle2, filePath.getName());
   }
 
+  @NotNull
+  public static String getRevisionTitle(@NotNull String revision, boolean localMark) {
+    return revision +
+           (localMark ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
+  }
 
+  @CalledInAwt
   public static void showChangesDialog(@NotNull Project project, @NotNull String title, @NotNull List<Change> changes) {
     DialogBuilder dialogBuilder = new DialogBuilder(project);
 

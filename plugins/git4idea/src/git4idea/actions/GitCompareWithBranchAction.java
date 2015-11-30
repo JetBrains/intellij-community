@@ -107,15 +107,15 @@ public class GitCompareWithBranchAction extends DvcsCompareWithBranchAction<GitR
 
     // constructing the revision with human readable name (will work for files comparison however).
     final GitRevisionNumber compareToRevisionNumber = new GitRevisionNumber(branchToCompare, compareRevisionNumber.getTimestamp());
-    final GitRevisionNumber currentRevisionNumberWithBranchTitle = new GitRevisionNumber(head, currentRevisionNumber.getTimestamp());
 
     Collection<Change> changes =
       GitChangeUtils.getDiff(project, gitRepository.getRoot(), branchToCompare, head, Collections.singletonList(filePath));
     VcsDiffUtil.showDiffFor(project, changes.isEmpty() && !filePath.isDirectory()
-                                  ? createChangesWithCurrentContentForFile(filePath,
-                                                                           GitContentRevision
-                                                                             .createRevision(filePath, compareToRevisionNumber, project,
-                                                                                             null))
-                                  : changes, compareToRevisionNumber, currentRevisionNumberWithBranchTitle, filePath);
+                                     ? createChangesWithCurrentContentForFile(filePath,
+                                                                              GitContentRevision
+                                                                                .createRevision(filePath, compareToRevisionNumber, project,
+                                                                                                null))
+                                     : changes, VcsDiffUtil.getRevisionTitle(branchToCompare, false),
+                            VcsDiffUtil.getRevisionTitle(head, true), filePath);
   }
 }

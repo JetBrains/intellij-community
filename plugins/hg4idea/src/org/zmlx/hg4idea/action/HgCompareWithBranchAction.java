@@ -132,15 +132,14 @@ public class HgCompareWithBranchAction extends DvcsCompareWithBranchAction<HgRep
     // constructing the revision with human readable name
     final HgRevisionNumber compareWithRevisionNumber =
       HgRevisionNumber.getInstance(branchToCompare, hgRevisions.get(0).getRevisionNumber().getChangeset());
-    final HgRevisionNumber currentRevisionNumber =
-      HgRevisionNumber.getInstance(head, ObjectUtils.assertNotNull(repository.getCurrentRevision()));
 
     List<Change> changes = HgUtil.getDiff(project, repositoryRoot, filePath, compareWithRevisionNumber, null);
 
     VcsDiffUtil.showDiffFor(project, changes.isEmpty() && !filePath.isDirectory()
-                                  ? createChangesWithCurrentContentForFile(filePath,
-                                                                           HgContentRevision
-                                                                             .create(project, hgFile, compareWithRevisionNumber))
-                                  : changes, compareWithRevisionNumber, currentRevisionNumber, filePath);
+                                     ? createChangesWithCurrentContentForFile(filePath,
+                                                                              HgContentRevision
+                                                                                .create(project, hgFile, compareWithRevisionNumber))
+                                     : changes, VcsDiffUtil.getRevisionTitle(branchToCompare, false),
+                            VcsDiffUtil.getRevisionTitle(head, true), filePath);
   }
 }
