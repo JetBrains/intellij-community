@@ -43,9 +43,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * @author yole
@@ -145,6 +146,43 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
       return (HierarchyNodeDescriptor)userObject;
     }
     return null;
+  }
+
+  public PsiElement[] getAvailableElements() {
+    final JTree tree = getCurrentTree();
+    if (tree == null) {
+      return PsiElement.EMPTY_ARRAY;
+    }
+    final TreeModel model = tree.getModel();
+    final Object root = model.getRoot();
+    if (!(root instanceof DefaultMutableTreeNode)) {
+      return PsiElement.EMPTY_ARRAY;
+    }
+    final DefaultMutableTreeNode node = (DefaultMutableTreeNode)root;
+    final HierarchyNodeDescriptor descriptor = getDescriptor(node);
+    final Set<PsiElement> result = new HashSet<PsiElement>();
+    collectElements(descriptor, result);
+    return result.toArray(PsiElement.EMPTY_ARRAY);
+  }
+
+  private void collectElements(HierarchyNodeDescriptor descriptor, Set<PsiElement> out) {
+    if (descriptor == null) {
+      return;
+    }
+    final PsiElement element = getElementFromDescriptor(descriptor);
+    if (element != null) {
+      out.add(element);
+    }
+    final Object[] children = descriptor.getCachedChildren();
+    if (children == null) {
+      return;
+    }
+    for (Object child : children) {
+      if (child instanceof HierarchyNodeDescriptor) {
+        final HierarchyNodeDescriptor childDescriptor = (HierarchyNodeDescriptor)child;
+        collectElements(childDescriptor, out);
+      }
+    }
   }
 
   public final HierarchyNodeDescriptor[] getSelectedDescriptors() {
