@@ -186,9 +186,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public AbstractVcs findVcsByName(String name) {
     if (name == null) return null;
     AbstractVcs result = myProject.isDisposed() ? null : AllVcses.getInstance(myProject).getByName(name);
-    if (result == null) {
-      ProgressManager.checkCanceled();
-    }
+    ProgressManager.checkCanceled();
     return result;
   }
 
