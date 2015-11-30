@@ -154,7 +154,8 @@ public class PsiPolyExpressionUtil {
 
   public static boolean isExpressionOfPrimitiveType(@Nullable PsiExpression arg) {
     if (arg != null && !isPolyExpression(arg)) {
-      return arg.getType() instanceof PsiPrimitiveType;
+      final PsiType type = arg.getType();
+      return type instanceof PsiPrimitiveType && type != PsiType.NULL;
     }
     else if (arg instanceof PsiNewExpression || arg instanceof PsiFunctionalExpression) {
       return false;
