@@ -1223,7 +1223,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     return null;
   }
 
-  private static class LoadedContentRevision implements ContentRevision {
+  private static class LoadedContentRevision implements ByteBackedContentRevision {
     private final FilePath myFile;
     private final VcsFileRevision myRevision;
     private final Project myProject;
@@ -1237,6 +1237,17 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     public String getContent() throws VcsException {
       try {
         return VcsHistoryUtil.loadRevisionContentGuessEncoding(myRevision, myFile.getVirtualFile(), myProject);
+      }
+      catch (IOException e) {
+        throw new VcsException(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()));
+      }
+    }
+
+    @Nullable
+    @Override
+    public byte[] getContentAsBytes() throws VcsException {
+      try {
+        return VcsHistoryUtil.loadRevisionContent(myRevision);
       }
       catch (IOException e) {
         throw new VcsException(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()));
