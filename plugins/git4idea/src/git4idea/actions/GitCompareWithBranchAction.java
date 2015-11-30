@@ -28,7 +28,6 @@ import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
-import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -92,12 +91,8 @@ public class GitCompareWithBranchAction extends DvcsCompareWithBranchAction<GitR
     }
     final VirtualFile gitRepositoryRoot = gitRepository.getRoot();
     GitRevisionNumber compareRevisionNumber = new GitRevisionNumber(branchToCompare);
-    GitRevisionNumber currentRevisionNumber = (GitRevisionNumber)GitHistoryUtils.getCurrentRevision(project, filePath, head);
-    if (currentRevisionNumber == null) {
-      throw new VcsException(String.format("Current revision number is null for file [%s] and branch [%s]", filePath, head));
-    }
     Collection<Change> changes =
-      GitChangeUtils.getDiff(project, gitRepositoryRoot, branchToCompare, null, Collections.singletonList(filePath));
+      GitChangeUtils.getDiffWithWorkingDir(project, gitRepositoryRoot, branchToCompare, Collections.singletonList(filePath));
     return changes.isEmpty() && !filePath.isDirectory() ? createChangesWithCurrentContentForFile(filePath, GitContentRevision
       .createRevision(filePath, compareRevisionNumber, project, null)) : changes;
   }

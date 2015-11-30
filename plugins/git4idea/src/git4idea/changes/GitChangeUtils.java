@@ -395,6 +395,17 @@ public class GitChangeUtils {
     return changes;
   }
 
+  @NotNull
+  public static Collection<Change> getDiffWithWorkingDir(@NotNull Project project,
+                                                         @NotNull VirtualFile root,
+                                                         @NotNull String oldRevision,
+                                                         @Nullable Collection<FilePath> dirtyPaths) throws VcsException {
+    String output = getDiffOutput(project, root, oldRevision, dirtyPaths);
+    Collection<Change> changes = new ArrayList<Change>();
+    parseChanges(project, root, null, resolveReference(project, root, oldRevision), output, changes, Collections.<String>emptySet());
+    return changes;
+  }
+
   /**
    * Calls {@code git diff} on the given range.
    * @param project
