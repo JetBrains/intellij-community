@@ -109,7 +109,6 @@ public class HgCompareWithBranchAction extends DvcsCompareWithBranchAction<HgRep
     final FilePath filePath = VcsUtil.getFilePath(file);
     final VirtualFile repositoryRoot = repository.getRoot();
 
-    //FilePath originalFileName = HgUtil.getOriginalFileName(filePath, ChangeListManager.getInstance(project));
     final HgFile hgFile = new HgFile(repositoryRoot, filePath);
 
     final HgRevisionNumber compareWithRevisionNumber =
