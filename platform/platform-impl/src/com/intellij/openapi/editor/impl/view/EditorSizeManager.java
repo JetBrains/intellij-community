@@ -70,6 +70,10 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
   private int myFoldingChangeStartOffset = Integer.MAX_VALUE;
   private int myFoldingChangeEndOffset = Integer.MIN_VALUE;
   
+  private boolean myDirty; // true if we cannot calculate preferred size now because soft wrap model was invalidated after editor 
+                           // became hidden. myLineWidths contents is irrelevant in such a state. Previously calculated preferred size
+                           // is kept until soft wraps will be recalculated and size calculations will become possible
+  
   private final List<TextRange> myDeferredRanges = new ArrayList<TextRange>();
   
   private final SoftWrapAwareDocumentParsingListenerAdapter mySoftWrapChangeListener = new SoftWrapAwareDocumentParsingListenerAdapter() {
@@ -202,6 +206,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
   }
 
   private int calculatePreferredWidth() {
+    if (checkDirty()) return 1;
     if (myLineWidths.size() != myEditor.getVisibleLineCount()) {
       LOG.error("Inconsistent state", new Attachment("editor.txt", myEditor.dumpState()));
       reset();
@@ -273,6 +278,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
   }
   
   private void doInvalidateRange(int startOffset, int endOffset) {
+    if (checkDirty()) return;
     myWidthInPixels = -1;
     int startVisualLine = myView.offsetToVisualLine(startOffset, false);
     int endVisualLine = myView.offsetToVisualLine(endOffset, true);
@@ -309,6 +315,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
   }
 
   private void onTextLayoutPerformed(int startOffset, int endOffset) {
+    if (checkDirty()) return;    
     boolean purePaintingMode = myEditor.isPurePaintingMode();
     boolean foldingEnabled = myEditor.getFoldingModel().isFoldingEnabled();
     myEditor.setPurePaintingMode(false);
@@ -332,6 +339,24 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
       myEditor.setPurePaintingMode(purePaintingMode);
       myEditor.getFoldingModel().setFoldingEnabled(foldingEnabled);
     }
+  }
+  
+  private boolean checkDirty() {
+    if (myEditor.getSoftWrapModel().isDirty()) {
+      myDirty = true;
+      return true;
+    }
+    if (myDirty) {
+      int visibleLineCount = myEditor.getVisibleLineCount();
+      int lineDiff = visibleLineCount - myLineWidths.size();
+      if (lineDiff > 0) myLineWidths.add(new int[lineDiff]);
+      else if (lineDiff < 0) myLineWidths.remove(visibleLineCount, -lineDiff);
+      for (int i = 0; i < visibleLineCount; i++) {
+        myLineWidths.set(i, UNKNOWN_WIDTH);
+      }
+      myDirty = false;
+    }
+    return false;
   }
 
   @NotNull
