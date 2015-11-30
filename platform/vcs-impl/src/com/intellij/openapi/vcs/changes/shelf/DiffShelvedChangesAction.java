@@ -136,20 +136,15 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
                                          @NotNull List<MyDiffRequestProducer> diffRequestProducers) {
     final String base = project.getBaseDir().getPath();
     for (final ShelvedBinaryFile shelvedChange : files) {
-      diffRequestProducers.add(new MyDiffRequestProducer(shelvedChange) {
+      final File file = new File(base, shelvedChange.AFTER_PATH == null ? shelvedChange.BEFORE_PATH : shelvedChange.AFTER_PATH);
+      final FilePath filePath = VcsUtil.getFilePath(file);
+      diffRequestProducers.add(new MyDiffRequestProducer(shelvedChange, filePath) {
         @NotNull
         @Override
         public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
           throws DiffRequestProducerException, ProcessCanceledException {
           Change change = shelvedChange.createChange(project);
           return PatchDiffRequestFactory.createDiffRequest(project, change, getName(), context, indicator);
-        }
-
-        @NotNull
-        @Override
-        public FilePath getFilePath() {
-          final File file = new File(base, shelvedChange.AFTER_PATH == null ? shelvedChange.BEFORE_PATH : shelvedChange.AFTER_PATH);
-          return VcsUtil.getFilePath(file);
         }
       });
     }
@@ -165,6 +160,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
     for (final ShelvedChange shelvedChange : changesFromFirstList) {
       final String beforePath = shelvedChange.getBeforePath();
       final String afterPath = shelvedChange.getAfterPath();
+      final FilePath filePath = VcsUtil.getFilePath(new File(base, afterPath == null ? beforePath : afterPath));
       final boolean isNewFile = FileStatus.ADDED.equals(shelvedChange.getFileStatus());
 
       final VirtualFile file; // isNewFile -> parent directory, !isNewFile -> file
@@ -173,14 +169,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
         if (!isNewFile && (file == null || !file.exists())) throw new FileNotFoundException(beforePath);
       }
       catch (IOException e) {
-        diffRequestProducers.add(new MyDiffRequestProducer(shelvedChange) {
-          @NotNull
-          @Override
-          public FilePath getFilePath() {
-            File file = new File(base, shelvedChange.getAfterPath() == null ? shelvedChange.getBeforePath() : shelvedChange.getAfterPath());
-            return VcsUtil.getFilePath(file);
-          }
-
+        diffRequestProducers.add(new MyDiffRequestProducer(shelvedChange, filePath) {
           @NotNull
           @Override
           public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
@@ -191,14 +180,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
         continue;
       }
 
-      diffRequestProducers.add(new MyDiffRequestProducer(shelvedChange) {
-        @NotNull
-        @Override
-        public FilePath getFilePath() {
-          File file = new File(base, shelvedChange.getAfterPath() == null ? shelvedChange.getBeforePath() : shelvedChange.getAfterPath());
-          return VcsUtil.getFilePath(file);
-        }
-
+      diffRequestProducers.add(new MyDiffRequestProducer(shelvedChange, filePath) {
         @NotNull
         @Override
         public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
@@ -326,15 +308,18 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
   private static abstract class MyDiffRequestProducer implements DiffRequestProducer {
     @Nullable private final ShelvedChange myTextChange;
     @Nullable private final ShelvedBinaryFile myBinaryChange;
+    @NotNull private final FilePath myFilePath;
 
-    public MyDiffRequestProducer(@NotNull ShelvedChange textChange) {
+    public MyDiffRequestProducer(@NotNull ShelvedChange textChange, @NotNull FilePath filePath) {
       myBinaryChange = null;
       myTextChange = textChange;
+      myFilePath = filePath;
     }
 
-    public MyDiffRequestProducer(@NotNull ShelvedBinaryFile binaryChange) {
+    public MyDiffRequestProducer(@NotNull ShelvedBinaryFile binaryChange, @NotNull FilePath filePath) {
       myBinaryChange = binaryChange;
       myTextChange = null;
+      myFilePath = filePath;
     }
 
     @Nullable
@@ -365,6 +350,8 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
     }
 
     @NotNull
-    protected abstract FilePath getFilePath();
+    public FilePath getFilePath() {
+      return myFilePath;
+    }
   }
 }
