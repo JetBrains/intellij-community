@@ -66,20 +66,20 @@ public class BytecodeAnalysisConverter {
    * Converts an equation over asm keys into equation over small hash keys.
    */
   @NotNull
-  static DirectionResultPair convert(@NotNull Equation<Key, Value> equation, @NotNull MessageDigest md) {
+  static DirectionResultPair convert(@NotNull Equation equation, @NotNull MessageDigest md) {
     ProgressManager.checkCanceled();
 
-    Result<Key, Value> rhs = equation.rhs;
+    Result rhs = equation.rhs;
     HResult hResult;
     if (rhs instanceof Final) {
-      hResult = new HFinal(((Final<Key, Value>)rhs).value);
+      hResult = new HFinal(((Final)rhs).value);
     }
-    else {
-      Pending<Key, Value> pending = (Pending<Key, Value>)rhs;
-      Set<Product<Key, Value>> sumOrigin = pending.sum;
+    else if (rhs instanceof Pending) {
+      Pending pending = (Pending)rhs;
+      Set<Product> sumOrigin = pending.sum;
       HComponent[] components = new HComponent[sumOrigin.size()];
       int componentI = 0;
-      for (Product<Key, Value> prod : sumOrigin) {
+      for (Product prod : sumOrigin) {
         HKey[] intProd = new HKey[prod.ids.size()];
         int idI = 0;
         for (Key key : prod.ids) {
@@ -91,6 +91,27 @@ public class BytecodeAnalysisConverter {
         componentI++;
       }
       hResult = new HPending(components);
+    } else {
+      Effects wrapper = (Effects)rhs;
+      Set<EffectQuantum> effects = wrapper.effects;
+      Set<HEffectQuantum> hEffects = new HashSet<HEffectQuantum>();
+      for (EffectQuantum effect : effects) {
+        if (effect == EffectQuantum.TopEffectQuantum) {
+          hEffects.add(HEffectQuantum.TopEffectQuantum);
+        }
+        else if (effect == EffectQuantum.ThisChangeQuantum) {
+          hEffects.add(HEffectQuantum.ThisChangeQuantum);
+        }
+        else if (effect instanceof EffectQuantum.ParamChangeQuantum) {
+          EffectQuantum.ParamChangeQuantum paramChangeQuantum = (EffectQuantum.ParamChangeQuantum)effect;
+          hEffects.add(new HEffectQuantum.ParamChangeQuantum(paramChangeQuantum.n));
+        }
+        else if (effect instanceof EffectQuantum.CallQuantum) {
+          EffectQuantum.CallQuantum callQuantum = (EffectQuantum.CallQuantum)effect;
+          hEffects.add(new HEffectQuantum.CallQuantum(asmKey(callQuantum.key, md), callQuantum.data, callQuantum.isStatic));
+        }
+      }
+      hResult = new HEffects(hEffects);
     }
     return new DirectionResultPair(mkDirectionKey(equation.id.direction), hResult);
   }
@@ -339,7 +360,7 @@ public class BytecodeAnalysisConverter {
    * @see    #mkDirectionKey(Direction)
    */
   @NotNull
-  private static Direction extractDirection(int directionKey) {
+  static Direction extractDirection(int directionKey) {
     if (directionKey == 0) {
       return Out;
     }
@@ -377,7 +398,6 @@ public class BytecodeAnalysisConverter {
     PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
     ArrayList<HKey> keys = new ArrayList<HKey>(parameters.length * 2 + 2);
     keys.add(primaryKey);
-    keys.add(primaryKey.updateDirection(mkDirectionKey(Pure)));
     for (int i = 0; i < parameters.length; i++) {
       if (!(parameters[i].getType() instanceof PsiPrimitiveType)) {
         keys.add(primaryKey.updateDirection(mkDirectionKey(new InOut(i, Value.NotNull))));
@@ -395,7 +415,7 @@ public class BytecodeAnalysisConverter {
    * @param methodKey a primary key of a method being analyzed. not it is stable
    * @param arity arity of this method (hint for constructing @Contract annotations)
    */
-  public static void addMethodAnnotations(@NotNull HashMap<HKey, Value> solution, @NotNull MethodAnnotations methodAnnotations, @NotNull HKey methodKey, int arity) {
+  public static void addMethodAnnotations(@NotNull Map<HKey, Value> solution, @NotNull MethodAnnotations methodAnnotations, @NotNull HKey methodKey, int arity) {
     List<String> contractClauses = new ArrayList<String>(arity * 2);
     Set<HKey> notNulls = methodAnnotations.notNulls;
     Set<HKey> pures = methodAnnotations.pures;
@@ -433,6 +453,20 @@ public class BytecodeAnalysisConverter {
       contracts.put(methodKey, sb.toString().intern());
     }
 
+  }
+
+  public static void addEffectAnnotations(Map<HKey, Set<HEffectQuantum>> puritySolutions, MethodAnnotations result, HKey methodKey, int arity) {
+    for (Map.Entry<HKey, Set<HEffectQuantum>> entry : puritySolutions.entrySet()) {
+      Set<HEffectQuantum> effects = entry.getValue();
+      HKey key = entry.getKey().mkStable();
+      HKey baseKey = key.mkBase();
+      if (!methodKey.equals(baseKey)) {
+        continue;
+      }
+      if (effects.isEmpty()) {
+        result.pures.add(methodKey);
+      }
+    }
   }
 
   private static String contractValueString(@NotNull Value v) {
