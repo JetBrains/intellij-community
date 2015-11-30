@@ -133,16 +133,20 @@ class GitCheckoutOperation extends GitBranchOperation {
           updateRecentBranch();
         }
         else {
-          String message = getSuccessMessage();
-          String mention = GitUtil.mention(getSuccessfulRepositories());
-          VcsNotifier.getInstance(myProject).notifySuccess("", message + mention + " <a href='rollback'>Rollback</a>",
+          String mentionSuccess = getSuccessMessage() + GitUtil.mention(getSuccessfulRepositories(), 4);
+          String mentionSkipped = wereSkipped() ? "<br>Revision not found" + GitUtil.mention(getSkippedRepositories(), 4) : "";
+
+          VcsNotifier.getInstance(myProject).notifySuccess("",
+                                                           mentionSuccess +
+                                                           mentionSkipped +
+                                                           "<br><a href='rollback'>Rollback</a>",
                                                            new RollbackOperationNotificationListener());
           updateRecentBranch();
         }
       }
       else {
         LOG.assertTrue(!myRefShouldBeValid);
-        notifyError("Couldn't checkout " + myStartPointReference, "Revision doesn't exist");
+        notifyError("Couldn't checkout " + myStartPointReference, "Revision not found" + GitUtil.mention(getSkippedRepositories(), 4));
       }
     }
   }

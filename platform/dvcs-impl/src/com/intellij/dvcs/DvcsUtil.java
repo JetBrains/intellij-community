@@ -478,26 +478,41 @@ public class DvcsUtil {
 
   @NotNull
   public static String joinShortNames(@NotNull Collection<? extends Repository> repositories) {
+    return joinShortNames(repositories, -1);
+  }
+
+  @NotNull
+  public static String joinShortNames(@NotNull Collection<? extends Repository> repositories, int limit) {
     return joinWithAnd(ContainerUtil.map(repositories, new Function<Repository, String>() {
       @Override
       public String fun(@NotNull Repository repository) {
         return getShortRepositoryName(repository);
       }
-    }));
+    }), limit);
   }
 
   @NotNull
-  private static String joinWithAnd(@NotNull List<String> strings) {
+  private static String joinWithAnd(@NotNull List<String> strings, int limit) {
     int size = strings.size();
     if (size == 0) return "";
     if (size == 1) return strings.get(0);
     if (size == 2) return strings.get(0) + " and " + strings.get(1);
 
+    boolean isLimited = limit >= 2 && limit < size;
+    int listCount = isLimited ? limit - 1 : size - 1;
+
     StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < size - 2; i++) {
-      sb.append(strings.get(i)).append(", ");
+    for (int i = 0; i < listCount; i++) {
+      if (i != 0) sb.append(", ");
+      sb.append(strings.get(i));
     }
-    sb.append(strings.get(size - 2)).append(" and ").append(strings.get(size - 1));
+
+    if (isLimited) {
+      sb.append(" and ").append(size - limit + 1).append(" others");
+    }
+    else {
+      sb.append(" and ").append(strings.get(size - 1));
+    }
     return sb.toString();
   }
 }

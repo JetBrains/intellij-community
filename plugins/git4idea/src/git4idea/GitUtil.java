@@ -1029,7 +1029,12 @@ public class GitUtil {
 
   @NotNull
   public static String mention(@NotNull Collection<GitRepository> repositories) {
+    return mention(repositories, -1);
+  }
+
+  @NotNull
+  public static String mention(@NotNull Collection<GitRepository> repositories, int limit) {
     if (repositories.isEmpty()) return "";
-    return " in " + joinShortNames(repositories);
+    return " in " + joinShortNames(repositories, limit);
   }
 }
