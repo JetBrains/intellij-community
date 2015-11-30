@@ -93,22 +93,22 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
     return false;
   }
 
-  private static final Key<byte[]> ourForcedContentKey = Key.create("forced.content.key");
+  private static final Key<byte[]> ourPreloadedContentKey = Key.create("forced.content.key");
 
   @Override
-  public void setForcedContentHint(byte[] forcedContent) {
-    putUserData(ourForcedContentKey, forcedContent);
+  public void setPreloadedContentHint(byte[] preloadedContentHint) {
+    putUserData(ourPreloadedContentKey, preloadedContentHint);
   }
 
   @Override
   @NotNull
   public InputStream getInputStream() throws IOException {
-    final byte[] forcedContent = getUserData(ourForcedContentKey);
+    final byte[] preloadedContent = getUserData(ourPreloadedContentKey);
 
     return VfsUtilCore.inputStreamSkippingBOM(
-      forcedContent == null ?
+      preloadedContent == null ?
         ourPersistence.getInputStream(this):
-        new DataInputStream(new UnsyncByteArrayInputStream(forcedContent)),
+        new DataInputStream(new UnsyncByteArrayInputStream(preloadedContent)),
       this
     );
   }
@@ -122,8 +122,8 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   @NotNull
   @Override
   public byte[] contentsToByteArray(boolean cacheContent) throws IOException {
-    final byte[] forcedContent = getUserData(ourForcedContentKey);
-    if (forcedContent != null) return forcedContent;
+    final byte[] preloadedContent = getUserData(ourPreloadedContentKey);
+    if (preloadedContent != null) return preloadedContent;
     return ourPersistence.contentsToByteArray(this, cacheContent);
   }
 

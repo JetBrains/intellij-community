@@ -51,7 +51,7 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
     byte[] content = fileContent.getContent();
 
     try {
-      file.setForcedContentHint(content);
+      file.setPreloadedContentHint(content);
       ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.find(file);
       if (decompiler instanceof Full) {
         return ((Full)decompiler).getStubBuilder().buildFileStub(fileContent);
@@ -61,7 +61,7 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
       LOG.debug(e);
     }
     finally {
-      file.setForcedContentHint(null);
+      file.setPreloadedContentHint(null);
     }
 
     try {
