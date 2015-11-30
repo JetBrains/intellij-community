@@ -25,6 +25,7 @@ import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
@@ -35,10 +36,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author ven
@@ -49,6 +47,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
   private final Map<ExternalAnnotator, MyData> myAnnotator2DataMap = new HashMap<ExternalAnnotator, MyData>();
 
   private final ExternalToolPassFactory myExternalToolPassFactory;
+  private final boolean myMainHighlightingPass;
 
   private static class MyData {
     private final PsiFile myPsiRoot;
@@ -68,8 +67,21 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
                           int endOffset) {
     super(file.getProject(), editor.getDocument(), "External annotators", file, editor, new TextRange(startOffset, endOffset), false, new DefaultHighlightInfoProcessor());
     myAnnotationHolder = new AnnotationHolderImpl(new AnnotationSession(file));
-
     myExternalToolPassFactory = externalToolPassFactory;
+    myMainHighlightingPass = false;
+  }
+
+  ExternalToolPass(@NotNull ExternalToolPassFactory externalToolPassFactory,
+                          @NotNull PsiFile file,
+                          @NotNull Document document,
+                          int startOffset,
+                          int endOffset,
+                          @NotNull HighlightInfoProcessor highlightInfoProcessor,
+                          boolean mainHighlightingPass) {
+    super(file.getProject(), document, "External annotators", file, null, new TextRange(startOffset, endOffset), false, highlightInfoProcessor);
+    myAnnotationHolder = new AnnotationHolderImpl(new AnnotationSession(file));
+    myExternalToolPassFactory = externalToolPassFactory;
+    myMainHighlightingPass = mainHighlightingPass;
   }
 
   @Override
@@ -97,7 +109,15 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
         boolean errorFound = daemonCodeAnalyzer.getFileStatusMap().wasErrorFound(myDocument);
 
         for(ExternalAnnotator externalAnnotator: externalAnnotators) {
-          final Object collectedInfo = externalAnnotator.collectInformation(psiRoot, getEditor(), errorFound);
+          final Object collectedInfo;
+          Editor editor = getEditor();
+          if (editor != null) {
+            collectedInfo = externalAnnotator.collectInformation(psiRoot, editor, errorFound);
+          }
+          else {
+            collectedInfo = externalAnnotator.collectInformation(psiRoot);
+          }
+
           advanceProgress(1);
           if (collectedInfo != null) {
             myAnnotator2DataMap.put(externalAnnotator, new MyData(psiRoot, collectedInfo));
@@ -105,6 +125,20 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
         }
       }
     }
+  }
+
+  @NotNull
+  @Override
+  public List<HighlightInfo> getInfos() {
+    if (myProject.isDisposed()) {
+      return Collections.emptyList();
+    }
+    if (myMainHighlightingPass) {
+      doAnnotate();
+      applyRelevant();
+      return getHighlights();
+    }
+    return super.getInfos();
   }
 
   @Override
