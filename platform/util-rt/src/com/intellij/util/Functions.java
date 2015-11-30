@@ -46,6 +46,15 @@ public class Functions {
     return Function.ID;
   }
 
+  public static <A, B, C> Function<A, C> compose(final Function<A, B> f1, final Function<B, ? extends C> f2) {
+    return new Function<A, C>() {
+      @Override
+      public C fun(A a) {
+        return f2.fun(f1.fun(a));
+      }
+    };
+  }
+
   public static <A> Function<A, String> TO_STRING() {
     return Function.TO_STRING;
   }
