@@ -751,6 +751,6 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     return getName();
   }
 
-  public void setForcedContentHint(byte[] forcedContent) {
+  public void setPreloadedContentHint(byte[] preloadedContentHint) {
   }
 }
