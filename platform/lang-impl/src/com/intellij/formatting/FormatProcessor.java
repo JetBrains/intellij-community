@@ -1674,6 +1674,7 @@ public class FormatProcessor {
     private void adjustSpacingToKeepAligned(LeafBlockWrapper block, int newSpaces) {
       WhiteSpace space = block.getWhiteSpace();
       SpacingImpl property = block.getSpaceProperty();
+      if (property == null) return;
       space.arrangeSpaces(new SpacingImpl(newSpaces, newSpaces, 
                                           property.getMinLineFeeds(), 
                                           property.isReadOnly(), 
