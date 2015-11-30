@@ -713,4 +713,8 @@ interface TxANotAnno {}
     checkPreferredItems 0, 'xzMap', 'xaString'
   }
 
+  public void testPreferCollectionsStaticOfExpectedType() {
+    checkPreferredItems 0, 'unmodifiableList', 'unmodifiableCollection'
+  }
+
 }
