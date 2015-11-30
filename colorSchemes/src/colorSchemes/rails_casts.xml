@@ -1084,13 +1084,17 @@
       </value>
     </option>
     <option baseAttributes="TEXT" name="PARAMETER_ATTRIBUTES" />
+    <option baseAttributes="DEFAULT_PARAMETER" name="PHP_PARAMETER" />
+    <option name="PHP_VAR">
+      <value>
+        <option name="FOREGROUND" value="D0D0FF" />
+      </value>
+    </option>
     <option name="PROTOCOL_REFERENCE">
       <value>
         <option name="FOREGROUND" value="FFFFFF" />
       </value>
     </option>
-    <option name="PHP_VAR" baseAttributes="DEFAULT_LOCAL_VARIABLE" />
-    <option name="PHP_PARAMETER" baseAttributes="DEFAULT_PARAMETER" />
     <option name="PUPPET_BAD_CHARACTER">
       <value>
         <option name="FOREGROUND" value="FFFFFF" />

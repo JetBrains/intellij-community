@@ -1008,9 +1008,13 @@
       </value>
     </option>
     <option baseAttributes="TEXT" name="PARAMETER_ATTRIBUTES" />
+    <option name="PHP_PARAMETER">
+      <value>
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
+    <option baseAttributes="DEFAULT_LOCAL_VARIABLE" name="PHP_VAR" />
     <option baseAttributes="CLASS_REFERENCE" name="PROTOCOL_REFERENCE" />
-    <option name="PHP_VAR" baseAttributes="DEFAULT_LOCAL_VARIABLE" />
-    <option name="PHP_PARAMETER" baseAttributes="DEFAULT_PARAMETER" />
     <option name="PUPPET_BAD_CHARACTER">
       <value>
         <option name="BACKGROUND" value="6e3b3b" />
