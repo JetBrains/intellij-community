@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
@@ -384,36 +385,29 @@ public class InlineUtil {
 
   private static PsiElement replaceDiamondWithInferredTypesIfNeeded(PsiExpression initializer, PsiElement ref) {
     if (initializer instanceof PsiNewExpression) {
-      final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)initializer).getClassOrAnonymousClassReference();
-      if (classReference != null) {
-        final PsiReferenceParameterList parameterList = classReference.getParameterList();
-        if (parameterList != null) {
-          final PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
-          if (typeParameterElements.length == 1) {
-            final PsiType type = typeParameterElements[0].getType();
-            if (type instanceof PsiDiamondType) {
-              final PsiDiamondType.DiamondInferenceResult inferenceResult = ((PsiDiamondType)type).resolveInferredTypes();
-              if (inferenceResult.getErrorMessage() == null) {
-                final PsiElement copy = ref.copy();
-                final PsiElement parent = ref.replace(initializer);
-                final PsiDiamondType.DiamondInferenceResult result = PsiDiamondTypeImpl.resolveInferredTypes((PsiNewExpression)initializer, parent);
-                ref = parent.replace(copy);
-                if (!result.equals(inferenceResult)) {
-                  final String inferredTypeText = StringUtil.join(inferenceResult.getTypes(),
-                                                                  new Function<PsiType, String>() {
-                                                                    @Override
-                                                                    public String fun(PsiType psiType) {
-                                                                      return psiType.getCanonicalText();
-                                                                    }
-                                                                  }, ", ");
-                  final PsiExpressionList argumentList = ((PsiNewExpression)initializer).getArgumentList();
-                  if (argumentList != null) {
-                    final PsiExpression expression = JavaPsiFacade.getElementFactory(initializer.getProject())
-                      .createExpressionFromText("new " + classReference.getReferenceName() + "<" + inferredTypeText + ">" + argumentList.getText(), initializer);
-                    return ref.replace(expression);
-                  }
-                }
-              }
+      final PsiDiamondType diamondType = PsiDiamondTypeUtil.getDiamondType((PsiNewExpression)initializer);
+      if (diamondType != null) {
+        final PsiDiamondType.DiamondInferenceResult inferenceResult = diamondType.resolveInferredTypes();
+        if (inferenceResult.getErrorMessage() == null) {
+          final PsiElement copy = ref.copy();
+          final PsiElement parent = ref.replace(initializer);
+          final PsiDiamondType.DiamondInferenceResult result = PsiDiamondTypeImpl.resolveInferredTypes((PsiNewExpression)initializer, parent);
+          ref = parent.replace(copy);
+          if (!result.equals(inferenceResult)) {
+            final String inferredTypeText = StringUtil.join(inferenceResult.getTypes(),
+                                                            new Function<PsiType, String>() {
+                                                              @Override
+                                                              public String fun(PsiType psiType) {
+                                                                return psiType.getCanonicalText();
+                                                              }
+                                                            }, ", ");
+            final PsiExpressionList argumentList = ((PsiNewExpression)initializer).getArgumentList();
+            if (argumentList != null) {
+              final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)initializer).getClassOrAnonymousClassReference();
+              LOG.assertTrue(classReference != null);
+              final PsiExpression expression = JavaPsiFacade.getElementFactory(initializer.getProject())
+                .createExpressionFromText("new " + classReference.getReferenceName() + "<" + inferredTypeText + ">" + argumentList.getText(), initializer);
+              return ref.replace(expression);
             }
           }
         }
