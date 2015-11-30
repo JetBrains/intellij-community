@@ -175,6 +175,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testNoBoxingWithNullType() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }
