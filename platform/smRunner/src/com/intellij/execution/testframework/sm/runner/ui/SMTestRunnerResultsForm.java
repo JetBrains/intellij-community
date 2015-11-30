@@ -357,7 +357,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     if (configuration instanceof RunConfiguration && 
         !(consoleProperties instanceof ImportedTestConsoleProperties) &&
         !ApplicationManager.getApplication().isUnitTestMode() &&
-        !myDisposed) {
+        !myDisposed &&
+         Registry.is("idea.save.test.history", true)) {
       final MySaveHistoryTask backgroundable = new MySaveHistoryTask(consoleProperties, root, (RunConfiguration)configuration);
       final BackgroundableProcessIndicator processIndicator = new BackgroundableProcessIndicator(backgroundable);
       Disposer.register(parentDisposable, new Disposable() {
