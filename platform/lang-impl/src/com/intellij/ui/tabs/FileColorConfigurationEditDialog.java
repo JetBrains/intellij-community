@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.FileColorManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
@@ -105,6 +106,7 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
         updateOKButton();
       }
     });
+    new ComboboxSpeedSearch(myScopeComboBox);
 
     final JLabel pathLabel = new JLabel("Scope:");
     pathLabel.setDisplayedMnemonic('S');

@@ -6,8 +6,8 @@ class Issue {
 
   public static void main(String[] args) {
     consume(get());
-    consume<error descr="Cannot resolve method 'consume(java.io.Serializable)'">(getSerizalizable())</error>;
-    consume<error descr="Cannot resolve method 'consume(java.lang.Object)'">(getObject())</error>;
+    consume<error descr="Ambiguous method call: both 'Issue.consume(Issue...)' and 'Issue.consume(Collection)' match">(getSerizalizable())</error>;
+    consume<error descr="Ambiguous method call: both 'Issue.consume(Issue...)' and 'Issue.consume(Collection)' match">(getObject())</error>;
   }
 
   public static <T extends Issue> T get() {

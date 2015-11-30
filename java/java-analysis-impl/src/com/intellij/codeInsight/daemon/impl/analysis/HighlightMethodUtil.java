@@ -367,6 +367,10 @@ public class HighlightMethodUtil {
           final String errorMessage = ((MethodCandidateInfo)resolveResult).getInferenceErrorMessage();
           if (errorMessage != null) {
             highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(errorMessage).range(fixRange).create();
+            if (highlightInfo != null) {
+              registerMethodCallIntentions(highlightInfo, methodCall, list, resolveHelper);
+              registerMethodReturnFixAction(highlightInfo, (MethodCandidateInfo)resolveResult, methodCall);
+            }
           }
         }
       }

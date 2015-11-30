@@ -8,7 +8,7 @@ class Test {
 
   {
     m(foo());
-    m<error descr="Cannot resolve method 'm(java.lang.Object)'">(bar())</error>;
+    m<error descr="Ambiguous method call: both 'Test.m(Runnable)' and 'Test.m(List<Runnable>)' match">(bar())</error>;
   }
 
   <T> List<T> foo() {
