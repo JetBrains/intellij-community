@@ -35,12 +35,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
@@ -51,7 +49,6 @@ import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeGoToChangePopupAction;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
 import com.intellij.openapi.vcs.changes.patch.PatchDiffRequestFactory;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -162,8 +159,6 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
                                          @NotNull List<ShelvedChange> changesFromFirstList,
                                          @NotNull List<MyDiffRequestProducer> diffRequestProducers) {
     final String base = project.getBasePath();
-    final List<String> missing = new LinkedList<String>();
-
     final ApplyPatchContext patchContext = new ApplyPatchContext(project.getBaseDir(), 0, false, false);
     final PatchesPreloader preloader = new PatchesPreloader(project);
 
@@ -178,7 +173,21 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
         if (!isNewFile && (file == null || !file.exists())) throw new FileNotFoundException(beforePath);
       }
       catch (IOException e) {
-        if (beforePath != null) missing.add(beforePath);
+        diffRequestProducers.add(new MyDiffRequestProducer(shelvedChange) {
+          @NotNull
+          @Override
+          public FilePath getFilePath() {
+            File file = new File(base, shelvedChange.getAfterPath() == null ? shelvedChange.getBeforePath() : shelvedChange.getAfterPath());
+            return VcsUtil.getFilePath(file);
+          }
+
+          @NotNull
+          @Override
+          public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
+            throws DiffRequestProducerException, ProcessCanceledException {
+            throw new DiffRequestProducerException("Cannot find base for '" + (beforePath != null ? beforePath : afterPath) + "'");
+          }
+        });
         continue;
       }
 
@@ -233,12 +242,6 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
           }
         }
       });
-    }
-
-    if (!missing.isEmpty()) {
-      // 7-8
-      VcsBalloonProblemNotifier.showOverChangesView(project, "Show Diff: Cannot find base for: " + StringUtil.join(missing, ",\n"),
-                                                    MessageType.WARNING);
     }
   }
 
