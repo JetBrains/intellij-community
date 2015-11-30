@@ -475,4 +475,29 @@ public class DvcsUtil {
       }
     });
   }
+
+  @NotNull
+  public static String joinShortNames(@NotNull Collection<? extends Repository> repositories) {
+    return joinWithAnd(ContainerUtil.map(repositories, new Function<Repository, String>() {
+      @Override
+      public String fun(@NotNull Repository repository) {
+        return getShortRepositoryName(repository);
+      }
+    }));
+  }
+
+  @NotNull
+  private static String joinWithAnd(@NotNull List<String> strings) {
+    int size = strings.size();
+    if (size == 0) return "";
+    if (size == 1) return strings.get(0);
+    if (size == 2) return strings.get(0) + " and " + strings.get(1);
+
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < size - 2; i++) {
+      sb.append(strings.get(i)).append(", ");
+    }
+    sb.append(strings.get(size - 2)).append(" and ").append(strings.get(size - 1));
+    return sb.toString();
+  }
 }
