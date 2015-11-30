@@ -439,7 +439,7 @@ class Foo {
     }
     """)
     type 'o.'
-    assert myFixture.file.text.contains("ooo.")
+    assert myFixture.editor.document.text.contains("ooo.")
     assert lookup
   }
 
@@ -450,7 +450,7 @@ class Foo {
     }
     """)
     type 'tos.'
-    assert myFixture.file.text.contains("toString().")
+    assert myFixture.editor.document.text.contains("toString().")
     assert lookup
   }
 
@@ -461,7 +461,7 @@ class Foo {
     }
     """)
     type 'AIOO.'
-    assert myFixture.file.text.contains("ArrayIndexOutOfBoundsException.")
+    assert myFixture.editor.document.text.contains("ArrayIndexOutOfBoundsException.")
     assert lookup
   }
 
@@ -1090,7 +1090,7 @@ class Foo {
     type '\n.'
     assert lookup
     assert 'hashCode' in myFixture.lookupElementStrings
-    assert myFixture.file.text.contains('asdf.')
+    assert myFixture.editor.document.text.contains('asdf.')
   }
 
   public void testNoWordCompletionAutoPopup() {
@@ -1400,7 +1400,7 @@ class Foo extends Abcdefg <caret>'''
 }}
 '''
     type 'FIS:'
-    assert myFixture.file.text.contains('FIS:')
+    assert myFixture.editor.document.text.contains('FIS:')
   }
 
   public void testSoutvTemplate() {

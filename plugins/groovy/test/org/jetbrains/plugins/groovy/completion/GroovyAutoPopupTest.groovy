@@ -194,7 +194,7 @@ Abcdefg <caret>'''
   public void testEnteringLabel() {
     myFixture.configureByText 'a.groovy', '<caret>'
     type 'FIS:'
-    assert myFixture.file.text == 'FIS:'
+    assert myFixture.editor.document.text == 'FIS:'
   }
 
   public void testEnteringNamedArg() {
