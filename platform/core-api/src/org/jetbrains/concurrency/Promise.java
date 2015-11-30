@@ -17,6 +17,7 @@ package org.jetbrains.concurrency;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.Consumer;
@@ -157,8 +158,16 @@ public abstract class Promise<T> {
 
   @SuppressWarnings("ExceptionClassNameDoesntEndWithException")
   public static class MessageError extends RuntimeException {
+    private final boolean log;
+
     public MessageError(@NotNull String error) {
+      this(error, false);
+    }
+
+    public MessageError(@NotNull String error, boolean log) {
       super(error);
+
+      this.log = log;
     }
 
     @NotNull
@@ -172,7 +181,8 @@ public abstract class Promise<T> {
    * Log error if not message error
    */
   public static void logError(@NotNull Logger logger, @NotNull Throwable e) {
-    if (!(e instanceof MessageError) || ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!(e instanceof ProcessCanceledException) &&
+        (!(e instanceof MessageError) || ((MessageError)e).log || ApplicationManager.getApplication().isUnitTestMode())) {
       logger.error(e);
     }
   }

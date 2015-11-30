@@ -22,7 +22,7 @@ annotation class JsonField(
   val primitiveValue: String = "")
 
 @Target(AnnotationTarget.CLASS)
-annotation class JsonType(val allowsOtherProperties: Boolean = false)
+annotation class JsonType()
 
 @Target(AnnotationTarget.FUNCTION)
 annotation class JsonSubtypeCasting(val reinterpret: Boolean = false)
