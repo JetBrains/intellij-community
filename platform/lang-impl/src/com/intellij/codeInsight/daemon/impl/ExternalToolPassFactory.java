@@ -16,15 +16,13 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.codeHighlighting.*;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -40,7 +38,8 @@ import java.util.List;
 /**
  * @author cdr
 */
-public class ExternalToolPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
+public class ExternalToolPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory,
+                                                                                 MainHighlightingPassFactory {
   private final MergingUpdateQueue myExternalActivitiesQueue;
 
   public ExternalToolPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
@@ -82,5 +81,19 @@ public class ExternalToolPassFactory extends AbstractProjectComponent implements
 
   void scheduleExternalActivity(@NotNull Update update) {
     myExternalActivitiesQueue.queue(update);
+  }
+
+  @Nullable
+  @Override
+  public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
+                                                               @NotNull Document document,
+                                                               @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+    TextRange range = file.getTextRange();
+    if (range == null || !externalAnnotatorsDefined(file)) {
+      return null;
+    }
+    return new ExternalToolPass(this, file, document,
+                                range.getStartOffset(), range.getEndOffset(),
+                                highlightInfoProcessor, true);
   }
 }
