@@ -40,6 +40,7 @@ import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl;
 
+import java.util.Arrays;
 import java.util.Map;
 
 public class EclipseClasspathWriter {

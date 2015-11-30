@@ -173,7 +173,7 @@ public class PsiUtil {
     project.putUserData(IDEA_PROJECT, value);
   }
 
-  private static boolean checkIdeaProject(@NotNull Project project) {
+  private static boolean checkIdeaProject(@NotNull final Project project) {
     if (!isIntelliJBasedDir(project.getBaseDir())) {
       return false;
     }

@@ -97,9 +97,6 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     private static final File myBundledMaven3Home;
 
     static {
-      final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
-      final String root = pluginFileOrDir.getParent();
-
       PlatformRepository repository = PlatformLoader.getInstance().getRepository();
       myBundledMaven2Home = new File(repository.getModuleRootPath(RuntimeModuleId.moduleResource("maven2-server-impl", "maven2")));
       myBundledMaven3Home = new File(repository.getModuleRootPath(RuntimeModuleId.moduleResource("maven30-server-impl", "maven3")));
