@@ -118,11 +118,11 @@ public class UpdateCheckerComponent implements ApplicationComponent {
     app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
       @Override
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
-        String currentBuild = ApplicationInfo.getInstance().getBuild().asString();
+        BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
+        BuildNumber lastBuildChecked = BuildNumber.fromString(mySettings.getLasBuildChecked());
         long timeToNextCheck = mySettings.getLastTimeChecked() + CHECK_INTERVAL - System.currentTimeMillis();
 
-        if (BuildNumber.fromString(mySettings.getLasBuildChecked()).compareTo(BuildNumber.fromString(currentBuild)) < 0 ||
-            timeToNextCheck <= 0) {
+        if (lastBuildChecked == null || currentBuild.compareTo(lastBuildChecked) > 0 || timeToNextCheck <= 0) {
           myCheckRunnable.run();
         }
         else {

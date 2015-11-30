@@ -158,8 +158,16 @@ public abstract class Promise<T> {
 
   @SuppressWarnings("ExceptionClassNameDoesntEndWithException")
   public static class MessageError extends RuntimeException {
+    private final boolean log;
+
     public MessageError(@NotNull String error) {
+      this(error, false);
+    }
+
+    public MessageError(@NotNull String error, boolean log) {
       super(error);
+
+      this.log = log;
     }
 
     @NotNull
@@ -174,7 +182,7 @@ public abstract class Promise<T> {
    */
   public static void logError(@NotNull Logger logger, @NotNull Throwable e) {
     if (!(e instanceof ProcessCanceledException) &&
-        (!(e instanceof MessageError) || ApplicationManager.getApplication().isUnitTestMode())) {
+        (!(e instanceof MessageError) || ((MessageError)e).log || ApplicationManager.getApplication().isUnitTestMode())) {
       logger.error(e);
     }
   }

@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.shell;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
+import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.testFramework.LightVirtualFile;
@@ -28,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Map;
 
@@ -89,10 +90,9 @@ public class GroovyShellCodeFragment extends GroovyCodeFragment {
   }
 
   private boolean processVariables(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state) {
-    ClassHint classHint = processor.getHint(ClassHint.KEY);
-    if (classHint != null &&
-        !classHint.shouldProcess(ClassHint.ResolveKind.METHOD) &&
-        !classHint.shouldProcess(ClassHint.ResolveKind.PROPERTY)) {
+    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
+    if (!ResolveUtil.shouldProcessMethods(classHint) &&
+        !ResolveUtil.shouldProcessProperties(classHint)) {
       return true;
     }
 
@@ -119,8 +119,8 @@ public class GroovyShellCodeFragment extends GroovyCodeFragment {
   }
 
   private boolean processTypeDefinitions(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state) {
-    ClassHint classHint = processor.getHint(ClassHint.KEY);
-    if (classHint != null && !classHint.shouldProcess(ClassHint.ResolveKind.CLASS)) {
+    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
+    if (!ResolveUtil.shouldProcessClasses(classHint)) {
       return true;
     }
 

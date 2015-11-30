@@ -269,7 +269,7 @@ internal class DomainGenerator(val generator: Generator, val domain: ProtocolMet
     if (description != null) {
       out.doc(description)
     }
-    out.append("@JsonType").newLine()
+//    out.append("@JsonType").newLine()
   }
 }
 

@@ -22,6 +22,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
@@ -163,7 +164,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     }
 
 
-    EnumSet<ClassHint.ResolveKind> kinds = getParent() instanceof GrReferenceExpression
+    EnumSet<ElementClassHint.DeclarationKind> kinds = getParent() instanceof GrReferenceExpression
                                            ? ClassHint.RESOLVE_KINDS_CLASS_PACKAGE
                                            : ClassHint.RESOLVE_KINDS_CLASS;
 

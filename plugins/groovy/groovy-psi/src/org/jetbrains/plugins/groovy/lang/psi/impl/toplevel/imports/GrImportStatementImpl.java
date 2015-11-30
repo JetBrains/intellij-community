@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
+import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.IStubElementType;
@@ -45,6 +46,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GrDelegatingScopeProcessorWithHints;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_KINDS_METHOD;
 
 /**
  * @author ilyas
@@ -160,7 +163,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
       }
     }
 
-    if (ResolveUtil.shouldProcessMethods(processor.getHint(ClassHint.KEY))) {
+    if (ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) {
       if (hintName == null || importedName.equals(GroovyPropertyUtils.getPropertyNameByGetterName(hintName, true))) {
         if (!clazz.processDeclarations(new StaticGetterProcessor(refName, processor), state, lastParent, place)) {
           return false;
@@ -178,7 +181,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
   }
 
   private boolean processSingleClassImport(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state) {
-    if (!ResolveUtil.shouldProcessClasses(processor.getHint(ClassHint.KEY))) return true;
+    if (!ResolveUtil.shouldProcessClasses(processor.getHint(ElementClassHint.KEY))) return true;
 
     GrCodeReferenceElement ref = getImportReference();
     if (ref == null) return true;
@@ -226,7 +229,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
       }
     }
     else {
-      if (ResolveUtil.shouldProcessClasses(processor.getHint(ClassHint.KEY))) {
+      if (ResolveUtil.shouldProcessClasses(processor.getHint(ElementClassHint.KEY))) {
         String qName = PsiUtil.getQualifiedReferenceText(ref);
         if (qName != null) {
           PsiPackage aPackage = JavaPsiFacade.getInstance(getProject()).findPackage(qName);

@@ -32,7 +32,6 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.rt.debugger.DefaultMethodInvoker;
-import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 
 import java.util.ArrayList;
@@ -127,18 +126,7 @@ public class MethodEvaluator implements Evaluator {
       final String methodName = DebuggerUtilsEx.methodName(referenceType.name(), myMethodName, signature);
       if (isInvokableType(object)) {
         if (isInvokableType(referenceType)) {
-          Method jdiMethod;
-          if (signature != null) {
-            if (referenceType instanceof ClassType) {
-              jdiMethod = ((ClassType)referenceType).concreteMethodByName(myMethodName, signature);
-            }
-            else {
-              jdiMethod = ContainerUtil.getFirstItem(referenceType.methodsByName(myMethodName, signature));
-            }
-          }
-          else {
-            jdiMethod = ContainerUtil.getFirstItem(referenceType.methodsByName(myMethodName));
-          }
+          Method jdiMethod = DebuggerUtils.findMethod(referenceType, myMethodName, signature);
           if (jdiMethod != null && jdiMethod.isStatic()) {
             if (referenceType instanceof ClassType) {
               return debugProcess.invokeMethod(context, (ClassType)referenceType, jdiMethod, args);

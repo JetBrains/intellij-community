@@ -42,6 +42,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -149,7 +150,7 @@ public abstract class DebuggerUtils {
   }
 
   @Nullable
-  public static Method findMethod(@NotNull ReferenceType refType, @NonNls String methodName, @NonNls String methodSignature) {
+  public static Method findMethod(@NotNull ReferenceType refType, @NonNls String methodName, @Nullable @NonNls String methodSignature) {
     if (refType instanceof ArrayType) {
       // for array types methodByName() in JDI always returns empty list
       final Method method = findMethod(refType.virtualMachine().classesByName(CommonClassNames.JAVA_LANG_OBJECT).get(0), methodName, methodSignature);
@@ -164,20 +165,11 @@ public abstract class DebuggerUtils {
         method = ((ClassType)refType).concreteMethodByName(methodName, methodSignature);
       }
       if (method == null) {
-        final List<Method> methods = refType.methodsByName(methodName, methodSignature);
-        if (methods.size() > 0) {
-          method = methods.get(0);
-        }
+        method = ContainerUtil.getFirstItem(refType.methodsByName(methodName, methodSignature));
       }
     }
     else {
-      List<Method> methods = null;
-      if (refType instanceof ClassType) {
-        methods = refType.methodsByName(methodName);
-      }
-      if (methods != null && methods.size() > 0) {
-        method = methods.get(0);
-      }
+      method = ContainerUtil.getFirstItem(refType.methodsByName(methodName));
     }
     return method;
   }

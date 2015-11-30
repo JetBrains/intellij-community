@@ -71,7 +71,11 @@ open class OutMessage() {
     writer.endArray()
   }
 
-  fun writeIntArray(name: String, value: IntArray) {
+  fun writeIntArray(name: String, value: IntArray? = null) {
+    if (value == null) {
+      return
+    }
+
     beginArguments()
     writer.name(name)
     writer.beginArray()

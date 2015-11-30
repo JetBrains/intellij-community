@@ -22,6 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.ElementClassHint.DeclarationKind;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -73,6 +75,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_CONTEXT;
+
 /**
  * @author ven
  */
@@ -111,7 +115,7 @@ public class ResolveUtil {
                                    boolean processNonCodeMethods,
                                    @NotNull final ResolveState state) {
     try {
-    ClassHint hint = processor.getHint(ClassHint.KEY);
+    ElementClassHint hint = processor.getHint(ElementClassHint.KEY);
     if (hint != null) {
       return new DeclarationCacheKey(getNameHint(processor), hint, processNonCodeMethods, originalPlace).processCachedDeclarations(place, processor);
     }
@@ -239,7 +243,7 @@ public class ResolveUtil {
                                         @NotNull ResolveState state,
                                         @Nullable PsiElement lastParent,
                                         @NotNull PsiElement place) {
-    if (!shouldProcessProperties(processor.getHint(ClassHint.KEY))) return true;
+    if (!shouldProcessProperties(processor.getHint(ElementClassHint.KEY))) return true;
 
     PsiElement run = lastParent == null ? element.getLastChild() : lastParent.getPrevSibling();
     while (run != null) {
@@ -940,27 +944,28 @@ public class ResolveUtil {
     return expectedParams;
   }
 
-  public static boolean shouldProcessClasses(ClassHint classHint) {
-    return classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.CLASS);
+  public static boolean shouldProcessClasses(ElementClassHint classHint) {
+    return classHint == null || classHint.shouldProcess(DeclarationKind.CLASS);
   }
 
-  public static boolean shouldProcessMethods(ClassHint classHint) {
-    return classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.METHOD);
+  public static boolean shouldProcessMethods(ElementClassHint classHint) {
+    return classHint == null || classHint.shouldProcess(DeclarationKind.METHOD);
   }
 
-  public static boolean shouldProcessProperties(ClassHint classHint) {
-    return classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.PROPERTY);
+  public static boolean shouldProcessProperties(ElementClassHint classHint) {
+    return classHint == null || classHint.shouldProcess(DeclarationKind.VARIABLE)
+           || classHint.shouldProcess(DeclarationKind.FIELD) || classHint.shouldProcess(DeclarationKind.ENUM_CONST);
   }
 
-  public static boolean shouldProcessPackages(ClassHint classHint) {
-    return classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.PACKAGE);
+  public static boolean shouldProcessPackages(ElementClassHint classHint) {
+    return classHint == null || classHint.shouldProcess(DeclarationKind.PACKAGE);
   }
 
   public static boolean processStaticImports(@NotNull PsiScopeProcessor resolver,
                                              @NotNull PsiFile file,
                                              @NotNull ResolveState state,
                                              @NotNull PsiElement place) {
-    if (!shouldProcessMethods(resolver.getHint(ClassHint.KEY))) return true;
+    if (!shouldProcessMethods(resolver.getHint(ElementClassHint.KEY))) return true;
 
     return file.processDeclarations(new GrDelegatingScopeProcessorWithHints(resolver, null, ClassHint.RESOLVE_KINDS_METHOD) {
       @Override
