@@ -17,7 +17,6 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -29,10 +28,10 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
@@ -110,11 +109,8 @@ public class UpdateCheckerComponent implements ApplicationComponent {
         String currentBuild = ApplicationInfo.getInstance().getBuild().asString();
         long timeToNextCheck = mySettings.getLastTimeChecked() + CHECK_INTERVAL - System.currentTimeMillis();
 
-        boolean pluginsWereJustImportedFromPreviousVersion = PluginManager.getOnceInstalledIfExists() != null;
-
-        if (StringUtil.compareVersionNumbers(mySettings.getLasBuildChecked(), currentBuild) < 0 ||
-            timeToNextCheck <= 0 ||
-            pluginsWereJustImportedFromPreviousVersion) {
+        if (BuildNumber.fromString(mySettings.getLasBuildChecked()).compareTo(BuildNumber.fromString(currentBuild)) < 0 ||
+            timeToNextCheck <= 0) {
           myCheckRunnable.run();
         }
         else {
