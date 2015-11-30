@@ -31,8 +31,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
@@ -141,10 +141,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     fireEvent(EventType.BEFORE_REDIFF);
     onBeforeRediff();
 
-    // most of performRediff implementations take ReadLock inside. If EDT is holding write lock - this will never happen,
-    // and diff will not be calculated. This could happen for diff from FileDocumentManager.
-    boolean forceEDT = ApplicationManager.getApplication().isWriteAccessAllowed();
-
+    boolean forceEDT = forceRediffSynchronously();
     int waitMillis = trySync || tryRediffSynchronously() ? ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS : 0;
 
     myTaskExecutor.executeAndTryWait(
@@ -202,6 +199,13 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   @CalledInAwt
   protected boolean tryRediffSynchronously() {
     return myContext.isWindowFocused();
+  }
+
+  @CalledInAwt
+  protected boolean forceRediffSynchronously() {
+    // most of performRediff implementations take ReadLock inside. If EDT is holding write lock - this will never happen,
+    // and diff will not be calculated. This could happen for diff from FileDocumentManager.
+    return ApplicationManager.getApplication().isWriteAccessAllowed();
   }
 
   protected List<AnAction> createToolbarActions() {
