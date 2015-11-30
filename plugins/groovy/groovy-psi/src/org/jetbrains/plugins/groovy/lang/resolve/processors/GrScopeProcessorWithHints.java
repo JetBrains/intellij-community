@@ -28,12 +28,12 @@ import java.util.EnumSet;
 /**
  * Created by Max Medvedev on 31/03/14
  */
-public abstract class GrScopeProcessorWithHints implements PsiScopeProcessor, NameHint, ClassHint, ElementClassHint {
-  protected final @Nullable EnumSet<ResolveKind> myResolveTargetKinds;
+public abstract class GrScopeProcessorWithHints implements PsiScopeProcessor, NameHint, ElementClassHint {
+  protected final @Nullable EnumSet<DeclarationKind> myResolveTargetKinds;
   protected final @Nullable String myName;
 
   public GrScopeProcessorWithHints(@Nullable String name,
-                                   @Nullable EnumSet<ResolveKind> resolveTargets) {
+                                   @Nullable EnumSet<DeclarationKind> resolveTargets) {
     myName = name;
     myResolveTargetKinds = resolveTargets;
   }
@@ -45,7 +45,7 @@ public abstract class GrScopeProcessorWithHints implements PsiScopeProcessor, Na
       return (T)this;
     }
 
-    if ((ClassHint.KEY == hintKey || ElementClassHint.KEY == hintKey) && myResolveTargetKinds != null) {
+    if (ElementClassHint.KEY == hintKey && myResolveTargetKinds != null) {
       return (T)this;
     }
 
@@ -53,30 +53,9 @@ public abstract class GrScopeProcessorWithHints implements PsiScopeProcessor, Na
   }
 
   @Override
-  public boolean shouldProcess(@NotNull ResolveKind resolveKind) {
-    assert myResolveTargetKinds != null : "don't invoke shouldProcess if resolveTargets are not declared";
-    return myResolveTargetKinds.contains(resolveKind);
-  }
-
-  @Override
   public boolean shouldProcess(DeclarationKind kind) {
-    switch (kind) {
-      case CLASS:
-        return shouldProcess(ResolveKind.CLASS);
-
-      case ENUM_CONST:
-      case VARIABLE:
-      case FIELD:
-        return shouldProcess(ResolveKind.PROPERTY);
-
-      case METHOD:
-        return shouldProcess(ResolveKind.METHOD);
-
-      case PACKAGE:
-        return shouldProcess(ResolveKind.PACKAGE);
-    }
-
-    return false;
+    assert myResolveTargetKinds != null : "don't invoke shouldProcess if resolveTargets are not declared";
+    return myResolveTargetKinds.contains(kind);
   }
 
   @NotNull

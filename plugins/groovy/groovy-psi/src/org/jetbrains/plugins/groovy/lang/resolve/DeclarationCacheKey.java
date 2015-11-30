@@ -19,6 +19,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.ElementClassHint.DeclarationKind;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -29,7 +31,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GrScopeProcessorWithHints;
 
 import java.util.EnumSet;
@@ -50,20 +51,20 @@ class DeclarationCacheKey {
       }
     };
   @Nullable private final String name;
-  @NotNull private final EnumSet<ClassHint.ResolveKind> kinds;
+  @NotNull private final EnumSet<DeclarationKind> kinds;
   private final boolean nonCode;
   @NotNull private final PsiElement place;
 
-  DeclarationCacheKey(@Nullable String name, ClassHint hint, boolean nonCode, @NotNull PsiElement place) {
+  DeclarationCacheKey(@Nullable String name, ElementClassHint hint, boolean nonCode, @NotNull PsiElement place) {
     this.name = name;
     this.kinds = getResolveKinds(hint);
     this.nonCode = nonCode;
     this.place = place;
   }
 
-  private static EnumSet<ClassHint.ResolveKind> getResolveKinds(ClassHint hint) {
-    EnumSet<ClassHint.ResolveKind> set = EnumSet.noneOf(ClassHint.ResolveKind.class);
-    for (ClassHint.ResolveKind kind : ClassHint.ResolveKind.values()) {
+  private static EnumSet<DeclarationKind> getResolveKinds(ElementClassHint hint) {
+    EnumSet<DeclarationKind> set = EnumSet.noneOf(DeclarationKind.class);
+    for (DeclarationKind kind : DeclarationKind.values()) {
       if (hint.shouldProcess(kind)) {
         set.add(kind);
       }

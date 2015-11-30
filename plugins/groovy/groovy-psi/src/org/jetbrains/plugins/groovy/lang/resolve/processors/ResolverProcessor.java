@@ -32,6 +32,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_CONTEXT;
+
 /**
  * @author ven
  */
@@ -44,7 +46,7 @@ public class ResolverProcessor extends GrScopeProcessorWithHints {
   private List<GroovyResolveResult> myCandidates;
 
   protected ResolverProcessor(@Nullable String name,
-                              @NotNull EnumSet<ResolveKind> resolveTargets,
+                              @NotNull EnumSet<DeclarationKind> resolveTargets,
                               @NotNull PsiElement place,
                               @NotNull PsiType[] typeArguments) {
     super(name, resolveTargets);
@@ -58,7 +60,7 @@ public class ResolverProcessor extends GrScopeProcessorWithHints {
       return true; // the debugger creates a Java code block context and our expressions to evaluate resolve there
     }
 
-    if (myResolveTargetKinds == null || myResolveTargetKinds.contains(getResolveKind(element))) {
+    if (myResolveTargetKinds == null || myResolveTargetKinds.contains(getDeclarationKind(element))) {
       //hack for resolve of java local vars and parameters
       //don't check field for name because they can be aliased imported
       if (element instanceof PsiVariable && !(element instanceof PsiField) &&
@@ -105,7 +107,7 @@ public class ResolverProcessor extends GrScopeProcessorWithHints {
     String text;
     if (element instanceof LightElement) {
       final PsiElement context = element.getContext();
-      text = context instanceof LightElement ? context.toString() : 
+      text = context instanceof LightElement ? context.toString() :
              context != null ? context.getText() : null;
     }
     else {
@@ -166,12 +168,13 @@ public class ResolverProcessor extends GrScopeProcessorWithHints {
     return myCandidates != null;
   }
 
-  @Nullable
-  private static ResolveKind getResolveKind(PsiElement element) {
-    if (element instanceof PsiVariable) return ResolveKind.PROPERTY;
-    if (element instanceof PsiMethod) return ResolveKind.METHOD;
-    if (element instanceof PsiPackage) return ResolveKind.PACKAGE;
-    if (element instanceof PsiClass) return ResolveKind.CLASS;
+  private static DeclarationKind getDeclarationKind(PsiElement element) {
+    if (element instanceof PsiMethod) return DeclarationKind.METHOD;
+    if (element instanceof PsiEnumConstant) return DeclarationKind.ENUM_CONST;
+    if (element instanceof PsiField) return DeclarationKind.FIELD;
+    if (element instanceof PsiVariable) return DeclarationKind.VARIABLE;
+    if (element instanceof PsiClass) return DeclarationKind.CLASS;
+    if (element instanceof PsiPackage) return DeclarationKind.PACKAGE;
     return null;
   }
 

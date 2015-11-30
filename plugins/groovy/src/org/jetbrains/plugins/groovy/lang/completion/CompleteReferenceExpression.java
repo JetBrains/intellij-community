@@ -66,6 +66,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.SubstitutorComputer;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_CONTEXT;
+
 /**
  * @author ven
  */
@@ -404,7 +406,7 @@ public class CompleteReferenceExpression {
     private boolean myIsEmpty = true;
 
     protected CompleteReferenceProcessor() {
-      super(null, EnumSet.allOf(ResolveKind.class), myRefExpr, PsiType.EMPTY_ARRAY);
+      super(null, EnumSet.allOf(DeclarationKind.class), myRefExpr, PsiType.EMPTY_ARRAY);
       myConsumer = new Consumer<LookupElement>() {
         @Override
         public void consume(LookupElement element) {
