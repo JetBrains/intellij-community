@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
@@ -31,16 +30,13 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.*;
-import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.log.HgBaseLogParser;
-import org.zmlx.hg4idea.log.HgFileRevisionLogParser;
-import org.zmlx.hg4idea.log.HgHistoryUtil;
+import org.zmlx.hg4idea.HgContentRevision;
+import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgNameWithHashInfo;
+import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
-import org.zmlx.hg4idea.util.HgChangesetUtil;
 import org.zmlx.hg4idea.util.HgUtil;
-import org.zmlx.hg4idea.util.HgVersion;
 
 import java.util.*;
 
@@ -113,26 +109,13 @@ public class HgCompareWithBranchAction extends DvcsCompareWithBranchAction<HgRep
       return;
     }
     final FilePath filePath = VcsUtil.getFilePath(file);
-    final HgVcs hgVcs = HgVcs.getInstance(project);
-    assert hgVcs != null;
-    final HgVersion version = hgVcs.getVersion();
-    String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, version);
     final VirtualFile repositoryRoot = repository.getRoot();
-    HgCommandResult result = HgHistoryUtil
-      .getLogResult(project, repositoryRoot, version, 1, Arrays.asList("-r", branchToCompare), HgChangesetUtil.makeTemplate(templates));
-    FilePath originalFileName = HgUtil.getOriginalFileName(filePath, ChangeListManager.getInstance(project));
-    final HgFile hgFile = new HgFile(repositoryRoot, originalFileName);
-    List<HgFileRevision> hgRevisions =
-      HgHistoryUtil.getCommitRecords(project, result, new HgFileRevisionLogParser(project, hgFile, version), true);
-    if (hgRevisions.isEmpty()) {
-      fileDoesntExistInBranchError(project, file, branchToCompare);
-      return;
-    }
 
-    // constructing the revision with human readable name
+    //FilePath originalFileName = HgUtil.getOriginalFileName(filePath, ChangeListManager.getInstance(project));
+    final HgFile hgFile = new HgFile(repositoryRoot, filePath);
+
     final HgRevisionNumber compareWithRevisionNumber =
-      HgRevisionNumber.getInstance(branchToCompare, hgRevisions.get(0).getRevisionNumber().getChangeset());
-
+      HgRevisionNumber.getInstance(branchToCompare, getBranchMainHash(repository, branchToCompare).toString());
     List<Change> changes = HgUtil.getDiff(project, repositoryRoot, filePath, compareWithRevisionNumber, null);
 
     VcsDiffUtil.showDiffFor(project, changes.isEmpty() && !filePath.isDirectory()

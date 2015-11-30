@@ -86,34 +86,24 @@ public class GitCompareWithBranchAction extends DvcsCompareWithBranchAction<GitR
                                     @NotNull String head,
                                     @NotNull String branchToCompare) throws VcsException {
     FilePath filePath = VcsUtil.getFilePath(file);
-    // we could use something like GitRepository#getCurrentRevision here,
-    // but this way we can easily identify if the file is available in the branch
-    GitRevisionNumber compareRevisionNumber = (GitRevisionNumber)GitHistoryUtils.getCurrentRevision(project, filePath, branchToCompare);
-    if (compareRevisionNumber == null) {
-      fileDoesntExistInBranchError(project, file, branchToCompare);
-      return;
-    }
-
-    GitRevisionNumber currentRevisionNumber = (GitRevisionNumber)GitHistoryUtils.getCurrentRevision(project, filePath, head);
-    if (currentRevisionNumber == null) {
-      LOG.error(String.format("Current revision number is null for file [%s] and branch [%s]", filePath, head));
-      return;
-    }
     final GitRepository gitRepository = GitUtil.getRepositoryManager(project).getRepositoryForFile(file);
     if (gitRepository == null) {
       LOG.error("Couldn't find Git Repository for " + file.getName());
       return;
     }
-
-    // constructing the revision with human readable name (will work for files comparison however).
-    final GitRevisionNumber compareToRevisionNumber = new GitRevisionNumber(branchToCompare, compareRevisionNumber.getTimestamp());
-
+    final VirtualFile gitRepositoryRoot = gitRepository.getRoot();
+    GitRevisionNumber compareRevisionNumber = new GitRevisionNumber(branchToCompare);
+    GitRevisionNumber currentRevisionNumber = (GitRevisionNumber)GitHistoryUtils.getCurrentRevision(project, filePath, head);
+    if (currentRevisionNumber == null) {
+      LOG.error(String.format("Current revision number is null for file [%s] and branch [%s]", filePath, head));
+      return;
+    }
     Collection<Change> changes =
-      GitChangeUtils.getDiff(project, gitRepository.getRoot(), branchToCompare, head, Collections.singletonList(filePath));
+      GitChangeUtils.getDiff(project, gitRepositoryRoot, branchToCompare, null, Collections.singletonList(filePath));
     VcsDiffUtil.showDiffFor(project, changes.isEmpty() && !filePath.isDirectory()
                                      ? createChangesWithCurrentContentForFile(filePath,
                                                                               GitContentRevision
-                                                                                .createRevision(filePath, compareToRevisionNumber, project,
+                                                                                .createRevision(filePath, compareRevisionNumber, project,
                                                                                                 null))
                                      : changes, VcsDiffUtil.getRevisionTitle(branchToCompare, false),
                             VcsDiffUtil.getRevisionTitle(head, true), filePath);
