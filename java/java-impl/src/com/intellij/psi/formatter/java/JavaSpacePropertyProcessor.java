@@ -755,7 +755,11 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
 
     if (myRole2 == ChildRole.TRY_BLOCK) {
-      myResult = getSpaceBeforeLBrace(myChild2, mySettings.SPACE_BEFORE_TRY_LBRACE, null);
+      TextRange dependentRange = null;
+      if (myChild1 instanceof PsiResourceList && mySettings.BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED) {
+          dependentRange = myChild1.getTextRange();
+      }
+      myResult = getSpaceBeforeLBrace(myChild2, mySettings.SPACE_BEFORE_TRY_LBRACE, dependentRange);
     }
     else if (myRole2 == ChildRole.FINALLY_BLOCK) {
       myResult = getSpaceBeforeLBrace(myChild2, mySettings.SPACE_BEFORE_FINALLY_LBRACE, null);
