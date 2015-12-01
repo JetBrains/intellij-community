@@ -233,7 +233,7 @@ public class ProjectUtil {
     return confirmOpenNewProject;
   }
 
-  private static boolean isSameProject(String path, @NotNull Project project) {
+  public static boolean isSameProject(String path, @NotNull Project project) {
     IProjectStore projectStore = (IProjectStore)ServiceKt.getStateStore(project);
 
     String toOpen = FileUtil.toSystemIndependentName(path);
