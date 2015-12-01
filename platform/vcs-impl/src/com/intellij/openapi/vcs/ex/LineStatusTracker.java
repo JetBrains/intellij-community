@@ -64,7 +64,6 @@ public class LineStatusTracker {
     new Key<CanNotCalculateDiffPanel>("LineStatusTracker.CanNotCalculateDiffPanel");
 
   private final Object myLock = new Object();
-  private boolean myInitialized;
 
   @NotNull private final Project myProject;
   @NotNull private final Document myDocument;
@@ -75,9 +74,11 @@ public class LineStatusTracker {
   @NotNull private final FileEditorManager myFileEditorManager;
   @NotNull private final VcsDirtyScopeManager myVcsDirtyScopeManager;
 
-  private MyDocumentListener myDocumentListener;
+  @NotNull private final MyDocumentListener myDocumentListener;
+
   @Nullable private RevisionPack myBaseRevisionNumber;
 
+  private boolean myInitialized;
   private boolean mySuppressUpdate;
   private boolean myBulkUpdate;
   private boolean myAnathemaThrown;
@@ -101,6 +102,9 @@ public class LineStatusTracker {
     myFileEditorManager = FileEditorManager.getInstance(myProject);
     myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
 
+    myDocumentListener = new MyDocumentListener();
+    myDocument.addDocumentListener(myDocumentListener);
+
     myMode = mode;
 
     myRanges = new ArrayList<Range>();
@@ -120,11 +124,6 @@ public class LineStatusTracker {
         myVcsDocument.setText(vcsContent);
         myVcsDocument.setReadOnly(true);
         reinstallRanges();
-
-        if (myDocumentListener == null) {
-          myDocumentListener = new MyDocumentListener();
-          myDocument.addDocumentListener(myDocumentListener);
-        }
       }
       finally {
         myInitialized = true;
@@ -240,9 +239,7 @@ public class LineStatusTracker {
   public void release() {
     synchronized (myLock) {
       myReleased = true;
-      if (myDocumentListener != null) {
-        myDocument.removeDocumentListener(myDocumentListener);
-      }
+      myDocument.removeDocumentListener(myDocumentListener);
 
       if (myApplication.isDispatchThread()) {
         removeAnathema();
@@ -398,7 +395,7 @@ public class LineStatusTracker {
 
       synchronized (myLock) {
         if (myReleased) return;
-        if (myBulkUpdate || mySuppressUpdate || myAnathemaThrown || !myInitialized) return;
+        if (myBulkUpdate || mySuppressUpdate || myAnathemaThrown|| !myInitialized) return;
         assert myDocument == e.getDocument();
 
         int afterChangedLines;
