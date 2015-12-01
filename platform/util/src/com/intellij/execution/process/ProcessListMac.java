@@ -1,3 +1,19 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /*******************************************************************************
  * Copyright (c) 2005, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
@@ -8,24 +24,20 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package com.jetbrains.python.internal.macos;
+package com.intellij.execution.process;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.List;
 
 import com.google.common.collect.Lists;
-import com.jetbrains.python.internal.PyProcessInfo;
-import com.jetbrains.python.internal.IProcessList;
-import com.jetbrains.python.internal.PyProcessInfo;
-import com.jetbrains.python.internal.ProcessUtils;
 
 /**
  * Use through PlatformUtils.
  */
 public class ProcessListMac implements IProcessList {
 
-    PyProcessInfo[] empty = new PyProcessInfo[0];
+    ProcessInfo[] empty = new ProcessInfo[0];
 
     public ProcessListMac() {
     }
@@ -34,7 +46,7 @@ public class ProcessListMac implements IProcessList {
      * Insert the method's description here.
      * @see IProcessList#getProcessList
      */
-    public PyProcessInfo[] getProcessList() {
+    public ProcessInfo[] getProcessList() {
         Process ps;
         BufferedReader psOutput;
         String[] args = { "/bin/ps", "-a", "-x", "-o", "pid,command" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ 
@@ -43,11 +55,11 @@ public class ProcessListMac implements IProcessList {
             ps = ProcessUtils.createProcess(args, null, null);
             psOutput = new BufferedReader(new InputStreamReader(ps.getInputStream()));
         } catch (Exception e) {
-            return new PyProcessInfo[0];
+            return new ProcessInfo[0];
         }
 
         //Read the output and parse it into an array list
-        List<PyProcessInfo> procInfo = Lists.newArrayList();
+        List<ProcessInfo> procInfo = Lists.newArrayList();
 
         try {
             String lastline;
@@ -61,7 +73,7 @@ public class ProcessListMac implements IProcessList {
                     try {
                         int pid = Integer.parseInt(pidString);
                         String arg = lastline.substring(index + 1);
-                        procInfo.add(new PyProcessInfo(pid, arg));
+                        procInfo.add(new ProcessInfo(pid, arg));
                     } catch (NumberFormatException e) {
                     }
                 }
@@ -72,6 +84,6 @@ public class ProcessListMac implements IProcessList {
         }
 
         ps.destroy();
-        return procInfo.toArray(new PyProcessInfo[procInfo.size()]);
+        return procInfo.toArray(new ProcessInfo[procInfo.size()]);
     }
 }

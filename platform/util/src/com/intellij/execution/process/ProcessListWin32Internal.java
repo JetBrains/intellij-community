@@ -1,21 +1,22 @@
-/*******************************************************************************
- * Copyright (c) 2000, 2014 QNX Software Systems and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
- * Contributors:
- *     QNX Software Systems - Initial API and implementation
- *     Martin Oberhuber (Wind River) - [303083] Split out the Spawner
- *******************************************************************************/
-package com.jetbrains.python.internal.win32;
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.intellij.execution.process;
 
 import com.google.common.collect.Lists;
-import com.jetbrains.python.internal.PyProcessInfo;
-import com.jetbrains.python.internal.IProcessList;
-import com.jetbrains.python.internal.PyProcessInfo;
-import com.jetbrains.python.internal.ProcessUtils;
 
 import java.io.*;
 import java.util.List;
@@ -27,7 +28,7 @@ import java.util.List;
  */
 public class ProcessListWin32Internal implements IProcessList {
 
-  private PyProcessInfo[] NOPROCESS = new PyProcessInfo[0];
+  private ProcessInfo[] NOPROCESS = new ProcessInfo[0];
   private String myHelpersRoot;
 
   public ProcessListWin32Internal(String helpersRoot) {
@@ -35,11 +36,11 @@ public class ProcessListWin32Internal implements IProcessList {
     myHelpersRoot = helpersRoot;
   }
 
-  public PyProcessInfo[] getProcessList() {
+  public ProcessInfo[] getProcessList() {
     Process p = null;
     String command = null;
     InputStream in = null;
-    PyProcessInfo[] procInfos = NOPROCESS;
+    ProcessInfo[] procInfos = NOPROCESS;
 
     try {
       File file = new File(myHelpersRoot, "process/listtasks.exe");
@@ -74,9 +75,9 @@ public class ProcessListWin32Internal implements IProcessList {
     return procInfos;
   }
 
-  public PyProcessInfo[] parseListTasks(InputStreamReader reader) {
+  public ProcessInfo[] parseListTasks(InputStreamReader reader) {
     BufferedReader br = new BufferedReader(reader);
-    List<PyProcessInfo> processList = Lists.newArrayList();
+    List<ProcessInfo> processList = Lists.newArrayList();
     try {
       String line;
       while ((line = br.readLine()) != null) {
@@ -87,7 +88,7 @@ public class ProcessListWin32Internal implements IProcessList {
           if (proc.length() > 0 && name.length() > 0) {
             try {
               int pid = Integer.parseInt(proc);
-              processList.add(new PyProcessInfo(pid, name));
+              processList.add(new ProcessInfo(pid, name));
             }
             catch (NumberFormatException e) {
             }
@@ -97,6 +98,6 @@ public class ProcessListWin32Internal implements IProcessList {
     }
     catch (IOException e) {
     }
-    return processList.toArray(new PyProcessInfo[processList.size()]);
+    return processList.toArray(new ProcessInfo[processList.size()]);
   }
 }
