@@ -30,6 +30,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.XmlElementVisitor;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
@@ -128,7 +129,10 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
       new WriteCommandAction(project) {
         @Override
         protected void run(@NotNull final Result result) throws Throwable {
-          document.replaceString(offset, tag.getTextRange().getEndOffset(),"/>");
+          assert document != null;
+          document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
+          PsiDocumentManager.getInstance(project).commitDocument(document);
+          CodeStyleManager.getInstance(project).reformat(tag);
         }
       }.execute();
     }
