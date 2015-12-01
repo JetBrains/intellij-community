@@ -33,6 +33,7 @@ import org.zmlx.hg4idea.HgContentRevision;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
 import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.command.HgStatusCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -114,8 +115,20 @@ public class HgCompareWithBranchAction extends DvcsCompareWithBranchAction<HgRep
     final HgRevisionNumber compareWithRevisionNumber =
       HgRevisionNumber.getInstance(branchToCompare, getBranchMainHash(repository, branchToCompare).toString());
     List<Change> changes = HgUtil.getDiff(project, repositoryRoot, filePath, compareWithRevisionNumber, null);
+    if (changes.isEmpty() && !existInBranch(repository, filePath, compareWithRevisionNumber)) {
+      throw new VcsException(fileDoesntExistInBranchError(file, branchToCompare));
+    }
 
     return changes.isEmpty() && !filePath.isDirectory() ? createChangesWithCurrentContentForFile(filePath, HgContentRevision
       .create(project, hgFile, compareWithRevisionNumber)) : changes;
+  }
+
+  private static boolean existInBranch(@NotNull HgRepository repository,
+                                       @NotNull FilePath path,
+                                       @NotNull HgRevisionNumber compareWithRevisionNumber) {
+    HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).ignored(false).unknown(false).copySource(!path.isDirectory())
+      .baseRevision(compareWithRevisionNumber).targetRevision(null).build(repository.getProject());
+    statusCommand.cleanFilesOption(true);
+    return !statusCommand.execute(repository.getRoot(), Collections.singleton(path)).isEmpty();
   }
 }
