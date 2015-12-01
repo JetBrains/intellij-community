@@ -1276,11 +1276,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   @NotNull
   public VirtualFile[] getSelectedFiles() {
-    Set<VirtualFile> selectedFiles = new HashSet<VirtualFile>();
+    Set<VirtualFile> selectedFiles = new LinkedHashSet<VirtualFile>();
+    EditorsSplitters activeSplitters = getSplitters();
+    selectedFiles.addAll(Arrays.asList(activeSplitters.getSelectedFiles()));
     for (EditorsSplitters each : getAllSplitters()) {
-      selectedFiles.addAll(Arrays.asList(each.getSelectedFiles()));
+      if (each != activeSplitters) {
+        selectedFiles.addAll(Arrays.asList(each.getSelectedFiles()));
+      }
     }
-
     return VfsUtilCore.toVirtualFileArray(selectedFiles);
   }
 
