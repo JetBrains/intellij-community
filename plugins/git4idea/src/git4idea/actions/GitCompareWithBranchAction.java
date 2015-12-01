@@ -92,7 +92,7 @@ public class GitCompareWithBranchAction extends DvcsCompareWithBranchAction<GitR
     final VirtualFile gitRepositoryRoot = gitRepository.getRoot();
     GitRevisionNumber compareRevisionNumber = new GitRevisionNumber(branchToCompare);
     Collection<Change> changes =
-      GitChangeUtils.getDiffWithWorkingDir(project, gitRepositoryRoot, branchToCompare, Collections.singletonList(filePath));
+      GitChangeUtils.getDiffWithWorkingDir(project, gitRepositoryRoot, branchToCompare, Collections.singletonList(filePath), false);
     return changes.isEmpty() && !filePath.isDirectory() ? createChangesWithCurrentContentForFile(filePath, GitContentRevision
       .createRevision(filePath, compareRevisionNumber, project, null)) : changes;
   }

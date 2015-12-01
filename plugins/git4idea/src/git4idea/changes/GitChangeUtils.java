@@ -399,10 +399,12 @@ public class GitChangeUtils {
   public static Collection<Change> getDiffWithWorkingDir(@NotNull Project project,
                                                          @NotNull VirtualFile root,
                                                          @NotNull String oldRevision,
-                                                         @Nullable Collection<FilePath> dirtyPaths) throws VcsException {
-    String output = getDiffOutput(project, root, oldRevision, dirtyPaths);
+                                                         @Nullable Collection<FilePath> dirtyPaths, boolean reverse) throws VcsException {
+    String output = getDiffOutput(project, root, oldRevision, dirtyPaths, reverse);
     Collection<Change> changes = new ArrayList<Change>();
-    parseChanges(project, root, null, resolveReference(project, root, oldRevision), output, changes, Collections.<String>emptySet());
+    final GitRevisionNumber revisionNumber = resolveReference(project, root, oldRevision);
+    parseChanges(project, root, reverse ? revisionNumber : null, reverse ? null : revisionNumber, output, changes,
+                 Collections.<String>emptySet());
     return changes;
   }
 
@@ -412,24 +414,36 @@ public class GitChangeUtils {
    * @param root
    * @param diffRange  range or just revision (will be compared with current working tree).
    * @param dirtyPaths limit the command by paths if needed or pass null.
+   * @param reverse    swap two revision; that is, show differences from index or on-disk file to tree contents.
    * @return output of the 'git diff' command.
    * @throws VcsException
    */
   @NotNull
-  public static String getDiffOutput(@NotNull Project project, @NotNull VirtualFile root,
-                                     @NotNull String diffRange, @Nullable Collection<FilePath> dirtyPaths) throws VcsException {
-    GitSimpleHandler handler = getDiffHandler(project, root, diffRange, dirtyPaths);
+  private static String getDiffOutput(@NotNull Project project, @NotNull VirtualFile root,
+                                      @NotNull String diffRange, @Nullable Collection<FilePath> dirtyPaths, boolean reverse)
+    throws VcsException {
+    GitSimpleHandler handler = getDiffHandler(project, root, diffRange, dirtyPaths, reverse);
     if (handler.isLargeCommandLine()) {
       // if there are too much files, just get all changes for the project
-      handler = getDiffHandler(project, root, diffRange, null);
+      handler = getDiffHandler(project, root, diffRange, null, reverse);
     }
     return handler.run();
   }
 
   @NotNull
+  public static String getDiffOutput(@NotNull Project project, @NotNull VirtualFile root,
+                                     @NotNull String diffRange, @Nullable Collection<FilePath> dirtyPaths) throws VcsException {
+    return getDiffOutput(project, root, diffRange, dirtyPaths, false);
+  }
+
+
+  @NotNull
   private static GitSimpleHandler getDiffHandler(@NotNull Project project, @NotNull VirtualFile root,
-                                                 @NotNull String diffRange, @Nullable Collection<FilePath> dirtyPaths) {
+                                                 @NotNull String diffRange, @Nullable Collection<FilePath> dirtyPaths, boolean reverse) {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.DIFF);
+    if (reverse) {
+      handler.addParameters("-R");
+    }
     handler.addParameters("--name-status", "--diff-filter=ADCMRUXT", "-M", diffRange);
     handler.setSilent(true);
     handler.setStdoutSuppressed(true);
