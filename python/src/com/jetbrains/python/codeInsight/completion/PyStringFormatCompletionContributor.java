@@ -64,15 +64,15 @@ public class PyStringFormatCompletionContributor extends CompletionContributor {
             final PyExpression[] arguments = getFormatFunctionKeyWordArguments(original);
             for (PyExpression argument : arguments) {
               result = result.withPrefixMatcher(getPrefix(parameters.getOffset(), argument.getContainingFile()));
-              tryToAddKeysFromStarArgument(result, argument);
-              tryToAddKeyWordArgument(result, argument);
+              addKeysFromStarArgument(result, argument);
+              addKeyWordArgument(result, argument);
             }
           }
         }
         else if (PyUtil.instanceOf(parent, PyKeywordArgument.class, PyReferenceExpression.class)) {
           final PyArgumentList argumentList = PsiTreeUtil.getParentOfType(original, PyArgumentList.class);
           result = result.withPrefixMatcher(getPrefix(parameters.getOffset(), parent.getContainingFile()));
-          tryToAddElementsFromFormattedString(result, argumentList);
+          addElementsFromFormattedString(result, argumentList);
         }
       }
     }
@@ -98,7 +98,7 @@ public class PyStringFormatCompletionContributor extends CompletionContributor {
       return PyExpression.EMPTY_ARRAY;
     }
 
-    private static void tryToAddKeysFromStarArgument(@NotNull final CompletionResultSet result, @NotNull final PyExpression arg) {
+    private static void addKeysFromStarArgument(@NotNull final CompletionResultSet result, @NotNull final PyExpression arg) {
       if (arg instanceof PyStarArgument) {
         final PyDictLiteralExpression dict = ObjectUtils.chooseNotNull(PsiTreeUtil.getChildOfType(arg, PyDictLiteralExpression.class),
                                                                        getDictFromReference(arg));
@@ -125,7 +125,7 @@ public class PyStringFormatCompletionContributor extends CompletionContributor {
       return null;
     }
 
-    private static void tryToAddKeyWordArgument(@NotNull final CompletionResultSet result, @NotNull final PyExpression arg) {
+    private static void addKeyWordArgument(@NotNull final CompletionResultSet result, @NotNull final PyExpression arg) {
       if (arg instanceof PyKeywordArgument) {
         final String keyword = ((PyKeywordArgument)arg).getKeyword();
         if (keyword!= null) {
@@ -142,8 +142,8 @@ public class PyStringFormatCompletionContributor extends CompletionContributor {
                           .withAutoCompletionPolicy(AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE);
     }
 
-    private static void tryToAddElementsFromFormattedString(@NotNull final CompletionResultSet result,
-                                                               @Nullable final PyArgumentList argumentList) {
+    private static void addElementsFromFormattedString(@NotNull final CompletionResultSet result,
+                                                       @Nullable final PyArgumentList argumentList) {
       if (argumentList != null) {
         final PyReferenceExpression pyReferenceExpression = PsiTreeUtil.getPrevSiblingOfType(argumentList, PyReferenceExpression.class);
         final PyStringLiteralExpression formattedString = PsiTreeUtil.getChildOfType(pyReferenceExpression, PyStringLiteralExpression.class);

@@ -32,14 +32,14 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   private final int myPosition;
   private final PyStringFormatParser.SubstitutionChunk myChunk;
 
-  public PySubstitutionChunkReference(PyStringLiteralExpression element, @NotNull final PyStringFormatParser.SubstitutionChunk chunk, final int position) {
+  public PySubstitutionChunkReference(@NotNull final PyStringLiteralExpression element, @NotNull final PyStringFormatParser.SubstitutionChunk chunk, final int position) {
     super(element, getKeyWordRange(element, chunk));
     myChunk = chunk;
     myPosition = position;
   }
   @Nullable
   @Override
-  public HighlightSeverity getUnresolvedHighlightSeverity(TypeEvalContext context) {
+  public HighlightSeverity getUnresolvedHighlightSeverity(@NotNull final TypeEvalContext context) {
     return HighlightSeverity.WEAK_WARNING;
   }
 
@@ -49,7 +49,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
     return null;
   }
 
-  private static TextRange getKeyWordRange(PyStringLiteralExpression element, PyStringFormatParser.SubstitutionChunk chunk) {
+  private static TextRange getKeyWordRange(@NotNull final PyStringLiteralExpression element, @NotNull final PyStringFormatParser.SubstitutionChunk chunk) {
     final TextRange shifted = chunk.getTextRange().shiftRight(1);
     if (chunk.getMappingKey() != null) {
       final int start = shifted.getStartOffset() + chunk.getTextRange().substring(element.getStringValue()).indexOf(chunk.getMappingKey());
@@ -61,28 +61,25 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   @Nullable
   @Override
   public PsiElement resolve() {
-    PsiElement result = null;
-    if (myChunk != null) {
-      result = resolveFormatString();
-      if (result == null) {
-        result = resolvePercentString();
-      }
+    PsiElement result = resolveFormatString();
+    if (result == null) {
+      result = resolvePercentString();
     }
     return result;
   }
 
   @Nullable
   private PsiElement resolveFormatString() {
-    PyArgumentList argumentList = getArgumentList(getElement());
+    final PyArgumentList argumentList = getArgumentList(getElement());
     if (argumentList != null) {
-      PyExpression[] arguments = argumentList.getArguments();
+      final PyExpression[] arguments = argumentList.getArguments();
       if (myChunk.getMappingKey() != null) {
-        PyKeywordArgument argument = argumentList.getKeywordArgument(myChunk.getMappingKey());
-        PyExpression subStarExpression = getSubStarExpression(arguments);
+        final PyKeywordArgument argument = argumentList.getKeywordArgument(myChunk.getMappingKey());
+        final PyExpression subStarExpression = getSubStarExpression(arguments);
         return ObjectUtils.chooseNotNull(argument, subStarExpression);
       }
       else {
-        int position = myChunk.getPosition() == null ? myPosition : myChunk.getPosition();
+        final int position = myChunk.getPosition() == null ? myPosition : myChunk.getPosition();
         if (arguments.length == 1 && arguments[0] instanceof PyStarArgument) {
           return arguments[0];
         }
@@ -96,20 +93,20 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   }
 
   private PsiElement resolvePercentString() {
-    PyBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(getElement(), PyBinaryExpression.class);
+    final PyBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(getElement(), PyBinaryExpression.class);
     final Class[] SIMPLE_RESULT_EXPRESSIONS = {
       PyLiteralExpression.class, PySubscriptionExpression.class, PyBinaryExpression.class, PyConditionalExpression.class,
       PyCallExpression.class, PySliceExpression.class, PyReferenceExpression.class
     };
 
     if (binaryExpression != null) {
-      PyExpression rightExpression = binaryExpression.getRightExpression();
+      final PyExpression rightExpression = binaryExpression.getRightExpression();
 
       if (rightExpression instanceof PyParenthesizedExpression) {
-        PyParenthesizedExpression expression = (PyParenthesizedExpression)rightExpression;
-        PyExpression containedExpression = expression.getContainedExpression();
+        final PyParenthesizedExpression expression = (PyParenthesizedExpression)rightExpression;
+        final PyExpression containedExpression = expression.getContainedExpression();
         if (containedExpression instanceof PyTupleExpression ) {
-          PyExpression[] elements = ((PySequenceExpression)containedExpression).getElements();
+          final PyExpression[] elements = ((PySequenceExpression)containedExpression).getElements();
           if (elements.length > myPosition) {
             return elements[myPosition];
           }
@@ -117,9 +114,9 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
       }
       else if (rightExpression instanceof PyDictLiteralExpression) {
         if (myChunk.getMappingKey() != null) {
-          PyKeyValueExpression[] keyValueExpressions = ((PyDictLiteralExpression)rightExpression).getElements();
+          final PyKeyValueExpression[] keyValueExpressions = ((PyDictLiteralExpression)rightExpression).getElements();
           for (PyKeyValueExpression keyValueExpression: keyValueExpressions) {
-            PyStringLiteralExpression key = (PyStringLiteralExpression)keyValueExpression.getKey();
+            final PyStringLiteralExpression key = (PyStringLiteralExpression)keyValueExpression.getKey();
               if (key.getStringValue().equals(myChunk.getMappingKey())) {
                 return key;
               }
@@ -134,8 +131,8 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   }
 
   @Nullable
-  private static PyArgumentList getArgumentList(PsiElement original) {
-    PsiElement pyReferenceExpression = PsiTreeUtil.getParentOfType(original, PyReferenceExpression.class);
+  private static PyArgumentList getArgumentList(final PsiElement original) {
+    final PsiElement pyReferenceExpression = PsiTreeUtil.getParentOfType(original, PyReferenceExpression.class);
     return PsiTreeUtil.getNextSiblingOfType(pyReferenceExpression, PyArgumentList.class);
   }
 
