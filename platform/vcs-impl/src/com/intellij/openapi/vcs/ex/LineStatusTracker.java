@@ -42,6 +42,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.CalledWithWriteLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,6 +112,7 @@ public class LineStatusTracker {
     myRanges = new ArrayList<Range>();
   }
 
+  @CalledInAwt
   public void initialize(@NotNull final String vcsContent, @NotNull RevisionPack baseRevisionNumber) {
     myApplication.assertIsDispatchThread();
 
@@ -131,6 +134,7 @@ public class LineStatusTracker {
     }
   }
 
+  @CalledInAwt
   private void reinstallRanges() {
     myApplication.assertIsDispatchThread();
 
@@ -152,6 +156,7 @@ public class LineStatusTracker {
     }
   }
 
+  @CalledInAwt
   private void installAnathema() {
     myAnathemaThrown = true;
     final FileEditor[] editors = myFileEditorManager.getAllEditors(myVirtualFile);
@@ -165,6 +170,7 @@ public class LineStatusTracker {
     }
   }
 
+  @CalledInAwt
   private void removeAnathema() {
     if (!myAnathemaThrown) return;
     myAnathemaThrown = false;
@@ -178,6 +184,7 @@ public class LineStatusTracker {
     }
   }
 
+  @CalledInAwt
   public void setMode(@NotNull Mode mode) {
     synchronized (myLock) {
       if (myMode == mode) return;
@@ -187,6 +194,7 @@ public class LineStatusTracker {
   }
 
   @Nullable
+  @CalledInAwt
   private RangeHighlighter createHighlighter(@NotNull Range range) {
     myApplication.assertIsDispatchThread();
 
@@ -279,10 +287,12 @@ public class LineStatusTracker {
   }
 
   @NotNull
+  @CalledInAwt
   public Mode getMode() {
     return myMode;
   }
 
+  @CalledInAwt
   public boolean isSilentMode() {
     return myMode == Mode.SILENT;
   }
@@ -294,6 +304,7 @@ public class LineStatusTracker {
     }
   }
 
+  @CalledInAwt
   public void startBulkUpdate() {
     synchronized (myLock) {
       if (myReleased) return;
@@ -304,6 +315,17 @@ public class LineStatusTracker {
     }
   }
 
+  @CalledInAwt
+  public void finishBulkUpdate() {
+    synchronized (myLock) {
+      if (myReleased) return;
+
+      myBulkUpdate = false;
+      reinstallRanges();
+    }
+  }
+
+  @CalledInAwt
   private void removeHighlightersFromMarkupModel() {
     myApplication.assertIsDispatchThread();
 
@@ -323,15 +345,6 @@ public class LineStatusTracker {
       for (Range range : myRanges) {
         range.invalidate();
       }
-    }
-  }
-
-  public void finishBulkUpdate() {
-    synchronized (myLock) {
-      if (myReleased) return;
-
-      myBulkUpdate = false;
-      reinstallRanges();
     }
   }
 
@@ -759,10 +772,12 @@ public class LineStatusTracker {
     ((DocumentImpl)myDocument).clearLineModificationFlags(startLine, endLine);
   }
 
+  @CalledWithWriteLock
   public void rollbackChanges(@NotNull Range range) {
     rollbackChanges(Collections.singletonList(range));
   }
 
+  @CalledWithWriteLock
   public void rollbackChanges(@NotNull final BitSet lines) {
     List<Range> toRollback = new ArrayList<Range>();
     for (Range range : myRanges) {
@@ -778,6 +793,7 @@ public class LineStatusTracker {
   /**
    * @param ranges - sorted list of ranges to rollback
    */
+  @CalledWithWriteLock
   private void rollbackChanges(@NotNull final List<Range> ranges) {
     runBulkRollback(new Runnable() {
       @Override
@@ -817,6 +833,7 @@ public class LineStatusTracker {
     });
   }
 
+  @CalledWithWriteLock
   public void rollbackAllChanges() {
     runBulkRollback(new Runnable() {
       @Override
@@ -831,6 +848,7 @@ public class LineStatusTracker {
     });
   }
 
+  @CalledWithWriteLock
   private void runBulkRollback(@NotNull Runnable task) {
     myApplication.assertWriteAccessAllowed();
 
@@ -878,13 +896,10 @@ public class LineStatusTracker {
 
   @NotNull
   public TextRange getCurrentTextRange(@NotNull Range range) {
-    myApplication.assertReadAccessAllowed();
-
     synchronized (myLock) {
       if (!range.isValid()) {
         LOG.warn("Current TextRange of invalid range");
       }
-
       return DiffUtil.getLinesRange(myDocument, range.getLine1(), range.getLine2());
     }
   }
@@ -895,7 +910,6 @@ public class LineStatusTracker {
       if (!range.isValid()) {
         LOG.warn("Vcs TextRange of invalid range");
       }
-
       return DiffUtil.getLinesRange(myVcsDocument, range.getVcsLine1(), range.getVcsLine2());
     }
   }
