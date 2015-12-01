@@ -236,33 +236,17 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   }
 
 
-  private interface DocumentCacheStrategy {
+  // used in Upsource
+  protected interface DocumentCacheStrategy {
     @Nullable Document getDocument (@NotNull VirtualFile file);
     void putDocument (@NotNull VirtualFile file, @NotNull Document document);
     void invalidateDocument (@NotNull VirtualFile file);
   }
 
+  // used in Upsource
   @NotNull
-  private static DocumentCacheStrategy createDocumentCacheStrategy() {
-    return new DocumentCacheStrategy() {
-      private final Map<VirtualFile, Document> myDocuments = ContainerUtil.createConcurrentWeakValueMap();
-
-      @Nullable
-      @Override
-      public Document getDocument(@NotNull VirtualFile file) {
-        return myDocuments.get(file);
-      }
-
-      @Override
-      public void putDocument(@NotNull VirtualFile file, @NotNull Document document) {
-        myDocuments.put(file, document);
-      }
-
-      @Override
-      public void invalidateDocument(@NotNull VirtualFile file) {
-        myDocuments.remove(file);
-      }
-    };
+  protected DocumentCacheStrategy createDocumentCacheStrategy() {
+    return new MyDocumentCacheStrategy();
   }
 
   @Override
@@ -913,6 +897,26 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       for (Document document : failures.keySet()) {
         reloadFromDisk(document);
       }
+    }
+  }
+
+  private static class MyDocumentCacheStrategy implements DocumentCacheStrategy {
+    private final Map<VirtualFile, Document> myDocuments = ContainerUtil.createConcurrentWeakValueMap();
+
+    @Nullable
+    @Override
+    public Document getDocument(@NotNull VirtualFile file) {
+      return myDocuments.get(file);
+    }
+
+    @Override
+    public void putDocument(@NotNull VirtualFile file, @NotNull Document document) {
+      myDocuments.put(file, document);
+    }
+
+    @Override
+    public void invalidateDocument(@NotNull VirtualFile file) {
+      myDocuments.remove(file);
     }
   }
 }
