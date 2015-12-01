@@ -545,7 +545,7 @@ public abstract class HgUtil {
   @Nullable
   public static HgRepository getCurrentRepository(@NotNull Project project) {
     if (project.isDisposed()) return null;
-    return DvcsUtil.guessRepositoryForFile(project, getRepositoryManager(project), HgVcs.getInstance(project),
+    return DvcsUtil.guessRepositoryForFile(project, getRepositoryManager(project),
                                            DvcsUtil.getSelectedFile(project),
                                            HgProjectSettings.getInstance(project).getRecentRootPath());
   }
