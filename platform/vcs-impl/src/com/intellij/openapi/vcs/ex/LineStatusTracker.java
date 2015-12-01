@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.ex;
 
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Logger;
@@ -78,6 +79,7 @@ public class LineStatusTracker {
   @NotNull private final VcsDirtyScopeManager myVcsDirtyScopeManager;
 
   @NotNull private final MyDocumentListener myDocumentListener;
+  @NotNull private final ApplicationAdapter myApplicationListener;
 
   @Nullable private RevisionPack myBaseRevisionNumber;
 
@@ -90,6 +92,8 @@ public class LineStatusTracker {
   @NotNull private Mode myMode;
 
   @NotNull private List<Range> myRanges;
+
+  @Nullable private DirtyRange myDirtyRange;
 
   private LineStatusTracker(@NotNull final Document document,
                             @NotNull final Document vcsDocument,
@@ -108,6 +112,9 @@ public class LineStatusTracker {
     myDocumentListener = new MyDocumentListener();
     myDocument.addDocumentListener(myDocumentListener);
 
+    myApplicationListener = new MyApplicationListener();
+    ApplicationManager.getApplication().addApplicationListener(myApplicationListener);
+
     myMode = mode;
 
     myRanges = new ArrayList<Range>();
@@ -119,7 +126,7 @@ public class LineStatusTracker {
 
     synchronized (myLock) {
       try {
-        if (myReleased) return;
+        if (myInitialized || myReleased) return;
         if (myBaseRevisionNumber != null && myBaseRevisionNumber.contains(baseRevisionNumber)) return;
 
         myBaseRevisionNumber = baseRevisionNumber;
@@ -141,7 +148,7 @@ public class LineStatusTracker {
     myApplication.assertIsDispatchThread();
 
     synchronized (myLock) {
-      if (myReleased) return;
+      if (!myInitialized || myReleased || myBulkUpdate) return;
 
       destroyRanges();
       try {
@@ -269,10 +276,17 @@ public class LineStatusTracker {
     }
   }
 
+  public boolean isValid() {
+    synchronized (myLock) {
+      return myInitialized && !myReleased && !myAnathemaThrown && !myBulkUpdate && !myDuringRollback && myDirtyRange == null;
+    }
+  }
+
   public void release() {
     synchronized (myLock) {
       myReleased = true;
       myDocument.removeDocumentListener(myDocumentListener);
+      ApplicationManager.getApplication().removeApplicationListener(myApplicationListener);
 
       if (myApplication.isDispatchThread()) {
         destroyRanges();
@@ -384,11 +398,36 @@ public class LineStatusTracker {
     });
   }
 
+  private class MyApplicationListener extends ApplicationAdapter {
+    @Override
+    public void writeActionFinished(Object action) {
+      synchronized (myLock) {
+        if (!myInitialized || myReleased || myBulkUpdate || myDuringRollback || myAnathemaThrown) return;
+        if (myDirtyRange != null) {
+          doUpdateRanges(myDirtyRange.line1, myDirtyRange.line2, myDirtyRange.lineShift, myDirtyRange.beforeTotalLines);
+          myDirtyRange = null;
+        }
+      }
+    }
+  }
+
   private class MyDocumentListener extends DocumentAdapter {
-    // We have 3 document versions:
-    // * VCS version
-    // * before change
-    // * after change
+    /*
+     *   beforeWriteLock   beforeChange     Current
+     *              |            |             |
+     *              |            | line1       |
+     * updatedLine1 +============+-------------+ newLine1
+     *              |            |             |
+     *      r.line1 +------------+ oldLine1    |
+     *              |            |             |
+     *              |     old    |             |
+     *              |    dirty   |             |
+     *              |            | oldLine2    |
+     *      r.line2 +------------+         ----+ newLine2
+     *              |            |        /    |
+     * updatedLine2 +============+--------     |
+     *                            line2
+     */
 
     private int myLine1;
     private int myLine2;
@@ -399,8 +438,8 @@ public class LineStatusTracker {
       myApplication.assertIsDispatchThread();
 
       synchronized (myLock) {
-        if (myReleased) return;
-        if (myBulkUpdate || myDuringRollback || myAnathemaThrown || !myInitialized) return;
+        if (!myInitialized || myReleased) return;
+        if (myBulkUpdate || myDuringRollback || myAnathemaThrown) return;
         assert myDocument == e.getDocument();
 
         myLine1 = myDocument.getLineNumber(e.getOffset());
@@ -420,8 +459,8 @@ public class LineStatusTracker {
       myApplication.assertIsDispatchThread();
 
       synchronized (myLock) {
-        if (myReleased) return;
-        if (myBulkUpdate || myDuringRollback || myAnathemaThrown || !myInitialized) return;
+        if (!myInitialized || myReleased) return;
+        if (myBulkUpdate || myDuringRollback || myAnathemaThrown) return;
         assert myDocument == e.getDocument();
 
         int newLine1 = myLine1;
@@ -439,7 +478,18 @@ public class LineStatusTracker {
         int line1 = fixed[0];
         int line2 = fixed[1];
 
-        doUpdateRanges(line1, line2, linesShift, myBeforeTotalLines);
+        if (myDirtyRange == null) {
+          myDirtyRange = new DirtyRange(line1, line2, linesShift, myBeforeTotalLines);
+        }
+        else {
+          int oldLine1 = myDirtyRange.line1;
+          int oldLine2 = myDirtyRange.line2 + myDirtyRange.lineShift;
+
+          int updatedLine1 = myDirtyRange.line1 - Math.max(oldLine1 - line1, 0);
+          int updatedLine2 = myDirtyRange.line2 + Math.max(line2 - oldLine2, 0);
+
+          myDirtyRange = new DirtyRange(updatedLine1, updatedLine2, linesShift + myDirtyRange.lineShift, myDirtyRange.beforeTotalLines);
+        }
       }
     }
   }
@@ -545,8 +595,8 @@ public class LineStatusTracker {
     catch (ProcessCanceledException ignore) {
     }
     catch (FilesTooBigForDiffException e1) {
+      destroyRanges();
       installAnathema();
-      removeHighlightersFromMarkupModel();
     }
   }
 
@@ -803,7 +853,7 @@ public class LineStatusTracker {
     myApplication.assertWriteAccessAllowed();
 
     synchronized (myLock) {
-      if (myReleased || myBulkUpdate || myDuringRollback || myAnathemaThrown) return;
+      if (!isValid()) return;
 
       try {
         myDuringRollback = true;
@@ -906,6 +956,20 @@ public class LineStatusTracker {
     @Override
     public int hashCode() {
       return myRevision.hashCode();
+    }
+  }
+
+  private static class DirtyRange {
+    public final int line1;
+    public final int line2;
+    public final int lineShift;
+    public final int beforeTotalLines;
+
+    public DirtyRange(int line1, int line2, int lineShift, int beforeTotalLines) {
+      this.line1 = line1;
+      this.line2 = line2;
+      this.lineShift = lineShift;
+      this.beforeTotalLines = beforeTotalLines;
     }
   }
 
