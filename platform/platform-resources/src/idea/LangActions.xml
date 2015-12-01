@@ -277,6 +277,7 @@
 
       <group id="CodeFormatGroup">
         <action id="ReformatCode" class="com.intellij.codeInsight.actions.ReformatCodeAction"/>
+        <action id="ShowReformatFileDialog" class="com.intellij.codeInsight.actions.ShowReformatFileDialog"/>
         <action id="AutoIndentLines" class="com.intellij.codeInsight.generation.actions.AutoIndentLinesAction"/>
         <action id="OptimizeImports" class="com.intellij.codeInsight.actions.OptimizeImportsAction"/>
         <action id="RearrangeCode" class="com.intellij.application.options.codeStyle.arrangement.action.RearrangeCodeAction"/>
@@ -960,8 +961,6 @@
       <reference ref="Arrangement.Rule.Group.Condition.Move.Up"/>
       <reference ref="Arrangement.Rule.Group.Condition.Move.Down"/>
     </group>
-
-    <action id="ShowReformatFileDialog" class="com.intellij.codeInsight.actions.ShowReformatFileDialog"/>
 
     <action id="SeverityEditorDialog" class="com.intellij.codeInspection.ex.SeverityEditorDialogAction"/>
   </actions>
