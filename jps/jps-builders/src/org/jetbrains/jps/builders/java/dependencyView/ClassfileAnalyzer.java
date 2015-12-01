@@ -230,7 +230,7 @@ class ClassfileAnalyzer {
 
       @Override
       public SignatureVisitor visitTypeArgument(char wildcard) {
-        return mySignatureWithGenericBoundUsageCrawler;
+        return wildcard == '+' || wildcard == '-' ? mySignatureWithGenericBoundUsageCrawler : super.visitTypeArgument(wildcard);
       }
     };
 
