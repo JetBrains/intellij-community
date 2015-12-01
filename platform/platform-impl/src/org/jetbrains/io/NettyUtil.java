@@ -137,7 +137,7 @@ public final class NettyUtil {
         break;
       }
       catch (IOException e) {
-        if (stopCondition.value(null) || (promise != null && promise.getState() == Promise.State.REJECTED)) {
+        if (stopCondition.value(null) || (promise != null && promise.getState() != Promise.State.PENDING)) {
           return null;
         }
         else if (maxAttemptCount == -1) {
