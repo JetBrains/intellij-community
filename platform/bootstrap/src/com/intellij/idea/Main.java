@@ -194,7 +194,6 @@ public class Main {
     String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase(Locale.US);
     String tempDir = System.getProperty("java.io.tmpdir");
     File patch = new File(tempDir, patchFileName);
-    if (!patch.exists()) return;
 
     // always delete previous patch copy
     File patchCopy = new File(tempDir, patchFileName + "_copy");
@@ -205,6 +204,7 @@ public class Main {
       throw new IOException("Cannot delete temporary files in " + tempDir);
     }
 
+    if (!patch.exists()) return;
     File log4j = new File(PathManager.getLibPath(), "log4j.jar");
     if (!log4j.exists()) throw new IOException("Log4J is missing: " + log4j);
 
