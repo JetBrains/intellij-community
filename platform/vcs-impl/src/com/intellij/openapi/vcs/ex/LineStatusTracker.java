@@ -391,7 +391,7 @@ public class LineStatusTracker {
     // * after change
 
     private int myLine1;
-    private int myBeforeChangedLines;
+    private int myLine2;
     private int myBeforeTotalLines;
 
     @Override
@@ -405,12 +405,10 @@ public class LineStatusTracker {
 
         myLine1 = myDocument.getLineNumber(e.getOffset());
         if (e.getOldLength() == 0) {
-          myBeforeChangedLines = 1;
+          myLine2 = myLine1 + 1;
         }
         else {
-          int line1 = myLine1;
-          int line2 = myDocument.getLineNumber(e.getOffset() + e.getOldLength());
-          myBeforeChangedLines = line2 - line1 + 1;
+          myLine2 = myDocument.getLineNumber(e.getOffset() + e.getOldLength()) + 1;
         }
 
         myBeforeTotalLines = getLineCount(myDocument);
@@ -426,24 +424,20 @@ public class LineStatusTracker {
         if (myBulkUpdate || myDuringRollback || myAnathemaThrown || !myInitialized) return;
         assert myDocument == e.getDocument();
 
-        int afterChangedLines;
+        int newLine1 = myLine1;
+        int newLine2;
         if (e.getNewLength() == 0) {
-          afterChangedLines = 1;
+          newLine2 = newLine1 + 1;
         }
         else {
-          int line1 = myLine1;
-          int line2 = myDocument.getLineNumber(e.getOffset() + e.getNewLength());
-          afterChangedLines = line2 - line1 + 1;
+          newLine2 = myDocument.getLineNumber(e.getOffset() + e.getNewLength()) + 1;
         }
 
-        int linesShift = afterChangedLines - myBeforeChangedLines;
+        int linesShift = (newLine2 - newLine1) - (myLine2 - myLine1);
 
-        int line1 = myLine1;
-        int line2 = line1 + myBeforeChangedLines;
-
-        int[] fixed = fixRanges(e, line1, line2);
-        line1 = fixed[0];
-        line2 = fixed[1];
+        int[] fixed = fixRanges(e, myLine1, myLine2);
+        int line1 = fixed[0];
+        int line2 = fixed[1];
 
         doUpdateRanges(line1, line2, linesShift, myBeforeTotalLines);
       }
