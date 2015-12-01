@@ -2438,14 +2438,16 @@ public class HighlightUtil extends HighlightUtilBase {
 
 
   @Nullable
-  static HighlightInfo checkStatementPrependedWithCaseInsideSwitch(@NotNull PsiStatement statement) {
-    if (!(statement instanceof PsiSwitchLabelStatement) && statement.getParent() instanceof PsiCodeBlock &&
-        statement.getParent().getParent() instanceof PsiSwitchStatement &&
-        ((PsiCodeBlock)statement.getParent()).getStatements().length != 0 &&
-        statement == ((PsiCodeBlock)statement.getParent()).getStatements()[0]) {
-      String description = JavaErrorMessages.message("statement.must.be.prepended.with.case.label");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
+  static HighlightInfo checkStatementPrependedWithCaseInsideSwitch(@NotNull PsiSwitchStatement statement) {
+    PsiCodeBlock body = statement.getBody();
+    if (body != null) {
+      PsiElement first = PsiTreeUtil.skipSiblingsForward(body.getLBrace(), PsiWhiteSpace.class, PsiComment.class);
+      if (first != null && !(first instanceof PsiSwitchLabelStatement) && !PsiUtil.isJavaToken(first, JavaTokenType.RBRACE)) {
+        String description = JavaErrorMessages.message("statement.must.be.prepended.with.case.label");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(first).descriptionAndTooltip(description).create();
+      }
     }
+
     return null;
   }
 

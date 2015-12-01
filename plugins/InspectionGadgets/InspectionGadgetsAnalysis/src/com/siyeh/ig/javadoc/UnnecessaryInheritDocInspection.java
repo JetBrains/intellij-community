@@ -20,16 +20,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.*;
-import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -149,9 +148,7 @@ public class UnnecessaryInheritDocInspection extends BaseInspection {
           registerError(tag, WarningType.CONSTRUCTOR);
           return;
         }
-        final MethodSignatureBackedByPsiMethod superMethod =
-          SuperMethodsSearch.search(method, method.getContainingClass(), true, false).findFirst();
-        if (superMethod == null) {
+        if (!MethodUtils.hasSuper(method)) {
           registerError(tag, WarningType.NO_SUPER);
           return;
         }

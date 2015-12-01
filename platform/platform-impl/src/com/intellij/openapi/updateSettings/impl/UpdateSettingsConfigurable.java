@@ -110,7 +110,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
       }
     }
 
-    mySettings.setUpdateChannelType(myPanel.getSelectedChannelType().getCode());
+    mySettings.setSelectedChannelStatus(myPanel.getSelectedChannelType());
     mySettings.setSecureConnection(myPanel.myUseSecureConnection.isSelected());
   }
 
@@ -119,7 +119,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     myPanel.myCheckForUpdates.setSelected(mySettings.isCheckNeeded());
     myPanel.myUseSecureConnection.setSelected(mySettings.isSecureConnection());
     myPanel.updateLastCheckedLabel();
-    myPanel.setSelectedChannelType(ChannelStatus.fromCode(mySettings.getUpdateChannelType()));
+    myPanel.setSelectedChannelType(mySettings.getSelectedChannelStatus());
   }
 
   @Override
@@ -134,7 +134,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     }
 
     Object channel = myPanel.myUpdateChannels.getSelectedItem();
-    return channel != null && !channel.equals(ChannelStatus.fromCode(mySettings.getUpdateChannelType()));
+    return channel != null && !channel.equals(mySettings.getSelectedChannelStatus());
   }
 
   @Override
@@ -181,7 +181,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
             Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myCheckNow));
             UpdateSettings settings = new UpdateSettings();
             settings.loadState(mySettings.getState());
-            settings.setUpdateChannelType(getSelectedChannelType().getCode());
+            settings.setSelectedChannelStatus(getSelectedChannelType());
             settings.setSecureConnection(myUseSecureConnection.isSelected());
             UpdateChecker.updateAndShowResult(project, settings);
             updateLastCheckedLabel();
@@ -192,7 +192,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
         myCheckNow.setVisible(false);
       }
 
-      final ChannelStatus current = ChannelStatus.fromCode(mySettings.getUpdateChannelType());
+      final ChannelStatus current = mySettings.getSelectedChannelStatus();
       //noinspection unchecked
       myUpdateChannels.setModel(new CollectionComboBoxModel<ChannelStatus>(Arrays.asList(ChannelStatus.values()), current));
       myUpdateChannels.setEnabled(

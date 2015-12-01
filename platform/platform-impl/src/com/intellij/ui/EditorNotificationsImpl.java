@@ -100,7 +100,10 @@ public class EditorNotificationsImpl extends EditorNotifications {
 
         file.putUserData(CURRENT_UPDATES, new WeakReference<ProgressIndicator>(indicator));
         if (ApplicationManager.getApplication().isUnitTestMode()) {
-          task.performInReadAction(indicator);
+          ReadTask.Continuation continuation = task.performInReadAction(indicator);
+          if (continuation != null) {
+            continuation.getAction().run();
+          }
         }
         else {
           ProgressIndicatorUtils.scheduleWithWriteActionPriority(indicator, ourExecutor, task);

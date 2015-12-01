@@ -19,17 +19,20 @@
  */
 package com.intellij.openapi.vfs.newvfs.impl;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.UnsyncByteArrayInputStream;
 import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -90,10 +93,24 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
     return false;
   }
 
+  private static final Key<byte[]> ourPreloadedContentKey = Key.create("preloaded.content.key");
+
+  @Override
+  public void setPreloadedContentHint(byte[] preloadedContentHint) {
+    putUserData(ourPreloadedContentKey, preloadedContentHint);
+  }
+
   @Override
   @NotNull
   public InputStream getInputStream() throws IOException {
-    return VfsUtilCore.inputStreamSkippingBOM(ourPersistence.getInputStream(this), this);
+    final byte[] preloadedContent = getUserData(ourPreloadedContentKey);
+
+    return VfsUtilCore.inputStreamSkippingBOM(
+      preloadedContent == null ?
+        ourPersistence.getInputStream(this):
+        new DataInputStream(new UnsyncByteArrayInputStream(preloadedContent)),
+      this
+    );
   }
 
   @Override
@@ -105,6 +122,8 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   @NotNull
   @Override
   public byte[] contentsToByteArray(boolean cacheContent) throws IOException {
+    final byte[] preloadedContent = getUserData(ourPreloadedContentKey);
+    if (preloadedContent != null) return preloadedContent;
     return ourPersistence.contentsToByteArray(this, cacheContent);
   }
 

@@ -156,4 +156,9 @@ class AnchorElementInfo extends SelfElementInfo {
     }
     return super.getPsiRange();
   }
+
+  @Override
+  public String toString() {
+    return super.toString() + ",stubId=" + getStubId();
+  }
 }

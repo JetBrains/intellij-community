@@ -158,7 +158,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
   }
 
   private boolean areSoftWrapsEnabledInEditor() {
-    return myEditor.getSettings().isUseSoftWraps()
+    return myEditor.getSettings().isUseSoftWraps() && (!myEditor.myUseNewRendering || !myEditor.isOneLineMode())
            && (!(myEditor.getDocument() instanceof DocumentImpl) || !((DocumentImpl)myEditor.getDocument()).acceptsSlashR());
   }
 
@@ -204,7 +204,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
 
   @Override
   public boolean isSoftWrappingEnabled() {
-    if (!myUseSoftWraps || myEditor.isOneLineMode() || myEditor.isPurePaintingMode()) {
+    if (!myUseSoftWraps || (!myEditor.myUseNewRendering && myEditor.isOneLineMode()) || myEditor.isPurePaintingMode()) {
       return false;
     }
     
@@ -754,6 +754,10 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedInternalDo
     return dumpState();
   }
 
+  public boolean isDirty() {
+    return myUseSoftWraps && myDirty;
+  }
+  
   /**
    * Defines generic interface for the command that may be proceeded in both <code>'soft wraps aware'</code> and
    * <code>'soft wraps unaware'</code> modes.

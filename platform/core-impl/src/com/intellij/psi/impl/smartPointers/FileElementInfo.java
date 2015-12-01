@@ -97,4 +97,9 @@ class FileElementInfo extends SmartPointerElementInfo {
                                   ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).getLastCommittedDocument(currentDoc);
     return committedDoc == null ? getRange() : new TextRange(0, committedDoc.getTextLength());
   }
+
+  @Override
+  public String toString() {
+    return "file{" + myVirtualFile + ", " + myLanguage + "}";
+  }
 }

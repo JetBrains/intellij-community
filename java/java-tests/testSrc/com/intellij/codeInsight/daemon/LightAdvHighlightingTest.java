@@ -55,7 +55,6 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -67,7 +66,8 @@ import java.util.List;
  * For "heavyweight" tests use AdvHighlightingTest
  */
 public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
-  @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting";
+  static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting";
+
   private UnusedDeclarationInspectionBase myUnusedDeclarationInspection;
 
   private void doTest(boolean checkWarnings, boolean checkInfos) {
@@ -203,9 +203,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest(false, false);
   }
 
-  public void testIgnoreImplicitThisReferenceBeforeSuperSinceJdk7() throws Exception {
-    doTest(false, false);
-  }
+  public void testIgnoreImplicitThisReferenceBeforeSuperSinceJdk7() { doTest(false, false); }
 
   public void testCastFromVoid() { doTest(false, false); }
   public void testCatchUnknownMethod() { doTest(false, false); }
@@ -222,14 +220,15 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInnerClassesShadowing() { doTest(false, false); }
 
   public void testUnusedParamsOfPublicMethodDisabled() {
-    final UnusedSymbolLocalInspectionBase localInspectionTool = myUnusedDeclarationInspection.getSharedLocalInspectionTool();
-    boolean oldVal = localInspectionTool.REPORT_PARAMETER_FOR_PUBLIC_METHODS;
+    UnusedSymbolLocalInspectionBase tool = myUnusedDeclarationInspection.getSharedLocalInspectionTool();
+    assertNotNull(tool);
+    boolean oldVal = tool.REPORT_PARAMETER_FOR_PUBLIC_METHODS;
     try {
-      localInspectionTool.REPORT_PARAMETER_FOR_PUBLIC_METHODS = false;
+      tool.REPORT_PARAMETER_FOR_PUBLIC_METHODS = false;
       doTest(true, false);
     }
     finally {
-      localInspectionTool.REPORT_PARAMETER_FOR_PUBLIC_METHODS = oldVal;
+      tool.REPORT_PARAMETER_FOR_PUBLIC_METHODS = oldVal;
     }
   }
 
@@ -311,27 +310,6 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
   }
 
-  // must stay public for picocontainer to work
-  public static class MyAnnotator implements Annotator {
-    @Override
-    public void annotate(@NotNull PsiElement psiElement, @NotNull final AnnotationHolder holder) {
-      psiElement.accept(new XmlElementVisitor() {
-        @Override public void visitXmlTag(XmlTag tag) {
-          XmlAttribute attribute = tag.getAttribute("aaa", "");
-          if (attribute != null) {
-            holder.createWarningAnnotation(attribute, "AAATTR");
-          }
-        }
-
-        @Override public void visitXmlToken(XmlToken token) {
-          if (token.getTokenType() == XmlTokenType.XML_ENTITY_REF_TOKEN) {
-            holder.createWarningAnnotation(token, "ENTITY");
-          }
-        }
-      });
-    }
-  }
-
   public void testInjectedAnnotator() {
     Annotator annotator = new MyAnnotator();
     Language xml = StdFileTypes.XML.getLanguage();
@@ -390,29 +368,16 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testNewExpressionClass() { doTest(false, false); }
   public void testInnerClassObjectLiteralFromSuperExpression() { doTest(false, false); }
   public void testPrivateFieldInSuperClass() { doTest(false, false); }
-
-  public void testNoEnclosingInstanceWhenStaticNestedInheritsFromContainingClass() throws Exception {
-    doTest(false, false);
-  }
+  public void testNoEnclosingInstanceWhenStaticNestedInheritsFromContainingClass() { doTest(false, false); }
 
   public void testStaticMethodCalls() {
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
   }
+
   public void testInsane() throws IOException {
-    configureFromFileText("x.java", "class X { \nxxxx\n }");
+    configureFromFileText("x.java", "class X { \nx_x_x_x\n }");
     List<HighlightInfo> infos = highlightErrors();
     assertTrue(!infos.isEmpty());
-  }
-
-  // must stay public for picocontainer to work
-  public static class MyTopFileAnnotator implements Annotator {
-    @Override
-    public void annotate(@NotNull PsiElement psiElement, @NotNull final AnnotationHolder holder) {
-      if (psiElement instanceof PsiFile && !psiElement.getText().contains("xxx")) {
-        Annotation annotation = holder.createWarningAnnotation(psiElement, "top level");
-        annotation.setFileLevelAnnotation(true);
-      }
-    }
   }
 
   public void testAnnotatorWorksWithFileLevel() {
@@ -451,4 +416,35 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     assertFalse(list.toString(), list.contains(annotator));
   }
 
+  // must stay public for PicoContainer to work
+  public static class MyAnnotator implements Annotator {
+    @Override
+    public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
+      psiElement.accept(new XmlElementVisitor() {
+        @Override public void visitXmlTag(XmlTag tag) {
+          XmlAttribute attribute = tag.getAttribute("aaa", "");
+          if (attribute != null) {
+            holder.createWarningAnnotation(attribute, "MyAnnotator");
+          }
+        }
+
+        @Override public void visitXmlToken(XmlToken token) {
+          if (token.getTokenType() == XmlTokenType.XML_ENTITY_REF_TOKEN) {
+            holder.createWarningAnnotation(token, "ENTITY");
+          }
+        }
+      });
+    }
+  }
+
+  // must stay public for PicoContainer to work
+  public static class MyTopFileAnnotator implements Annotator {
+    @Override
+    public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
+      if (psiElement instanceof PsiFile && !psiElement.getText().contains("xxx")) {
+        Annotation annotation = holder.createWarningAnnotation(psiElement, "top level");
+        annotation.setFileLevelAnnotation(true);
+      }
+    }
+  }
 }

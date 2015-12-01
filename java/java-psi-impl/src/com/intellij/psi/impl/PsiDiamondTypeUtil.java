@@ -162,4 +162,25 @@ public class PsiDiamondTypeUtil {
     }
     return typeText;
   }
+
+  public static boolean hasDiamond(PsiNewExpression expression) {
+    return getDiamondType(expression) != null;
+  }
+
+  public static PsiDiamondType getDiamondType(PsiNewExpression expression) {
+    if (PsiUtil.isLanguageLevel7OrHigher(expression)) {
+      final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
+      if (classReference != null) {
+        final PsiReferenceParameterList parameterList = classReference.getParameterList();
+        if (parameterList != null) {
+          final PsiTypeElement[] parameterElements = parameterList.getTypeParameterElements();
+          if (parameterElements.length == 1) {
+            final PsiType type = parameterElements[0].getType();
+            return type instanceof PsiDiamondType ? (PsiDiamondType)type : null;
+          }
+        }
+      }
+    }
+    return null;
+  }
 }

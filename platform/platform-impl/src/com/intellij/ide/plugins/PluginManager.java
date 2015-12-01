@@ -101,7 +101,6 @@ public class PluginManager extends PluginManagerCore {
   }
 
   /**
-   * Returns file with list of once installed plugins if it exists or null otherwise.
    * @return file with list of once installed plugins if it exists, null otherwise
    */
   @Nullable

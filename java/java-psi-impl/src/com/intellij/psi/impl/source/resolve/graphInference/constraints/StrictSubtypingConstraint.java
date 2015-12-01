@@ -140,6 +140,9 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
           for (PsiTypeParameter parameter : CClass.getTypeParameters()) {
             final PsiType tSubstituted = tSubstitutor.substitute(parameter);
             final PsiType sSubstituted = sSubstitutor.substituteWithBoundsPromotion(parameter);
+            if (tSubstituted == null ^ sSubstituted == null) {
+              return false;
+            }
             constraints.add(new SubtypingConstraint(tSubstituted, sSubstituted));
           }
           return true;

@@ -1149,7 +1149,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
           assertEquals(2, list.size());  // 1 line plus one exact range marker
         }
       }
-    }).assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 
   public void testRangeHighlighterIteratorOrder() throws Exception {

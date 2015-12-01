@@ -38,8 +38,14 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
                                        PsiVariable localVariable,
                                        PsiExpression[] occurrences,
                                        TypeSelectorManagerImpl typeSelectorManager, String title) {
-    super(project, editor, expr, localVariable, occurrences, title, StdFileTypes.JAVA);
+    super(project, getEditor(editor, expr), expr, localVariable, occurrences, title, StdFileTypes.JAVA);
     myTypeSelectorManager = typeSelectorManager;
+  }
+
+  private static Editor getEditor(Editor editor, PsiExpression expr) {
+    return expr != null && Comparing.equal(InjectedLanguageUtil.getTopLevelFile(expr), expr.getContainingFile())
+           ? InjectedLanguageUtil.getTopLevelEditor(editor)
+           : editor;
   }
 
   protected abstract PsiVariable createFieldToStartTemplateOn(String[] names, PsiType psiType);

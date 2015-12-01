@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
@@ -53,7 +54,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrPackageDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.PackageSkippingProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import java.util.concurrent.ConcurrentMap;
 
@@ -127,7 +127,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
                                      @NotNull ResolveState state,
                                      @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    ClassHint classHint = processor.getHint(ClassHint.KEY);
+    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
 
     if (myContext != null) {
       if (ResolveUtil.shouldProcessProperties(classHint)) {
@@ -225,9 +225,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     final String name = nameHint.getName(state);
     if (name == null) return true;
 
-    final ClassHint classHint = processor.getHint(ClassHint.KEY);
-    if (classHint != null && !classHint.shouldProcess(ClassHint.ResolveKind.PROPERTY)) return true;
-
+    if (!ResolveUtil.shouldProcessProperties(processor.getHint(ElementClassHint.KEY))) return true;
 
     final ConcurrentMap<String, GrBindingVariable> bindings = getBindings();
 
@@ -257,7 +255,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
                                                @NotNull ResolveState state,
                                                @Nullable PsiElement lastParent,
                                                @NotNull PsiElement place) {
-    if (ResolveUtil.shouldProcessClasses(processor.getHint(ClassHint.KEY))) {
+    if (ResolveUtil.shouldProcessClasses(processor.getHint(ElementClassHint.KEY))) {
       PsiPackage aPackage = JavaPsiFacade.getInstance(getProject()).findPackage(getPackageName());
       if (aPackage != null) {
         return aPackage.processDeclarations(new PackageSkippingProcessor(processor), state, lastParent, place);

@@ -4,7 +4,7 @@ abstract class A<T> {
   <K> void baz37(B<K, ? extends K> a) {}
   abstract B<T,? extends T> foo37();
   void bar37(A<?> a){
-    baz37<error descr="'baz37(B<K,? extends K>)' in 'A' cannot be applied to '(B<capture<?>,capture<? extends capture<?>>>)'">(a.foo37())</error>;
+    baz37(a.foo37());
   }
 
   <K> void baz39(B<K, ? extends K> a) {}

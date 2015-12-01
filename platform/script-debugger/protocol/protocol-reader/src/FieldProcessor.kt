@@ -79,7 +79,7 @@ internal class FieldProcessor(private val reader: InterfaceReader, typeClass: Cl
           methodHandler = createMethodHandler(member, method, skippedNames.contains(method.name)) ?: continue
         }
         else {
-          methodHandler = processManualSubtypeMethod(method, jsonSubtypeCaseAnnotation)
+          methodHandler = processManualSubtypeMethod(member, method, jsonSubtypeCaseAnnotation)
           lazyRead = true
         }
         methodHandlerMap.put(method, methodHandler)
@@ -109,7 +109,7 @@ internal class FieldProcessor(private val reader: InterfaceReader, typeClass: Cl
       }
     }
 
-    val fieldTypeParser = reader.getFieldTypeParser(genericReturnType, false, method)
+    val fieldTypeParser = reader.getFieldTypeParser(member, genericReturnType, false, method)
     val isProperty = member is KProperty<*>
     val isAsImpl = isProperty && !isNotNull
     if (fieldTypeParser != VOID_PARSER) {
@@ -154,18 +154,17 @@ internal class FieldProcessor(private val reader: InterfaceReader, typeClass: Cl
     }
   }
 
-  private fun processManualSubtypeMethod(m: Method, jsonSubtypeCaseAnn: JsonSubtypeCasting): MethodHandler {
-    val fieldTypeParser = reader.getFieldTypeParser(m.genericReturnType, !jsonSubtypeCaseAnn.reinterpret, null)
+  private fun processManualSubtypeMethod(member: KCallable<*>, m: Method, jsonSubtypeCaseAnn: JsonSubtypeCasting): MethodHandler {
+    val fieldTypeParser = reader.getFieldTypeParser(member, m.genericReturnType, !jsonSubtypeCaseAnn.reinterpret, null)
     val fieldInfo = allocateVolatileField(fieldTypeParser, true)
     val handler = LazyCachedMethodHandler(fieldTypeParser, fieldInfo)
     val parserAsObjectValueParser = fieldTypeParser.asJsonTypeParser()
     if (parserAsObjectValueParser != null && parserAsObjectValueParser.isSubtyping()) {
-      val subtypeCaster = object : SubtypeCaster(parserAsObjectValueParser.type) {
+      reader.subtypeCasters.add(object : SubtypeCaster(parserAsObjectValueParser.type) {
         override fun writeJava(out: TextOutput) {
           out.append(m.name).append("()")
         }
-      }
-      reader.subtypeCasters.add(subtypeCaster)
+      })
     }
     return handler
   }
@@ -186,3 +185,13 @@ internal class FieldProcessor(private val reader: InterfaceReader, typeClass: Cl
 }
 
 internal inline fun <reified T : Annotation> KCallable<*>.annotation(): T? = annotations.firstOrNull() { it is T } as? T ?: (this as? KFunction<*>)?.javaMethod?.getAnnotation<T>(T::class.java)
+
+/**
+ * An internal facility for navigating from object of base type to object of subtype. Used only
+ * when user wants to parse JSON object as subtype.
+ */
+internal abstract class SubtypeCaster(private val subtypeRef: TypeRef<*>) {
+  abstract fun writeJava(out: TextOutput)
+
+  fun getSubtypeHandler() = subtypeRef.type!!
+}

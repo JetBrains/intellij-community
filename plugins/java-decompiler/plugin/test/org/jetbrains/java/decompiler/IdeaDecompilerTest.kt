@@ -115,7 +115,7 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
   fun testPerformance() {
     val decompiler = IdeaDecompiler()
     val file = getTestFile("${PlatformTestUtil.getRtJarPath()}!/javax/swing/JTable.class")
-    PlatformTestUtil.startPerformanceTest("decompiling JTable.class", 4000, { decompiler.getText(file) }).cpuBound().assertTiming()
+    PlatformTestUtil.startPerformanceTest("decompiling JTable.class", 4000, { decompiler.getText(file) }).cpuBound().useLegacyScaling().assertTiming()
   }
 
   fun testCancellation() {

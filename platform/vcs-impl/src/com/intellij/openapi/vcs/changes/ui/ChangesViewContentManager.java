@@ -162,9 +162,6 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
         addExtensionTab(ep);
       }
       else if (predicateResult.equals(Boolean.FALSE) && epContent != null) {
-        if (!(epContent.getComponent() instanceof ContentStub)) {
-          ep.getInstance(myProject).disposeContent();
-        }
         myContentManager.removeContent(epContent, true);
       }
     }
@@ -277,12 +274,15 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
       Content content = event.getContent();
       if (content.getComponent() instanceof ContentStub) {
         ChangesViewContentEP ep = ((ContentStub) content.getComponent()).getEP();
-        ChangesViewContentProvider provider = ep.getInstance(myProject);
+        final ChangesViewContentProvider provider = ep.getInstance(myProject);
         final JComponent contentComponent = provider.initContent();
         content.setComponent(contentComponent);
-        if (contentComponent instanceof Disposable) {
-          content.setDisposer((Disposable) contentComponent);
-        }
+        content.setDisposer(new Disposable() {
+          @Override
+          public void dispose() {
+            provider.disposeContent();
+          }
+        });
       }
     }
   }

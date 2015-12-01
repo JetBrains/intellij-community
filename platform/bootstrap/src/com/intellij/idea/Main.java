@@ -46,6 +46,7 @@ public class Main {
   public static final int INSTANCE_CHECK_FAILED = 6;
   public static final int LICENSE_ERROR = 7;
   public static final int PLUGIN_ERROR = 8;
+  public static final int OUT_OF_MEMORY = 9;
 
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
@@ -194,17 +195,18 @@ public class Main {
     String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase(Locale.US);
     String tempDir = System.getProperty("java.io.tmpdir");
     File patch = new File(tempDir, patchFileName);
-    if (!patch.exists()) return;
 
     // always delete previous patch copy
-    File patchCopy = new File(tempDir, patchFileName + "_copy");
-    File log4jCopy = new File(tempDir, "log4j.jar." + platform + "_copy");
-    File jnaUtilsCopy = new File(tempDir, "jna-platform.jar." + platform + "_copy");
-    File jnaCopy = new File(tempDir, "jna.jar." + platform + "_copy");
+    String userName = System.getProperty("user.name");
+    File patchCopy = new File(tempDir, patchFileName + "_copy_" + userName);
+    File log4jCopy = new File(tempDir, "log4j.jar." + platform + "_copy_" + userName);
+    File jnaUtilsCopy = new File(tempDir, "jna-platform.jar." + platform + "_copy_" + userName);
+    File jnaCopy = new File(tempDir, "jna.jar." + platform + "_copy_" + userName);
     if (!FileUtilRt.delete(patchCopy) || !FileUtilRt.delete(log4jCopy) || !FileUtilRt.delete(jnaUtilsCopy) || !FileUtilRt.delete(jnaCopy)) {
       throw new IOException("Cannot delete temporary files in " + tempDir);
     }
 
+    if (!patch.exists()) return;
     File log4j = new File(PathManager.getLibPath(), "log4j.jar");
     if (!log4j.exists()) throw new IOException("Log4J is missing: " + log4j);
 
@@ -319,15 +321,14 @@ public class Main {
         textPane.setBackground(UIUtil.getPanelBackground());
         textPane.setCaretPosition(0);
         JScrollPane scrollPane = new JScrollPane(
-          textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+          textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setBorder(null);
 
         int maxHeight = Math.min(JBUI.scale(600), Toolkit.getDefaultToolkit().getScreenSize().height - 150);
+        int maxWidth = Math.min(JBUI.scale(600), Toolkit.getDefaultToolkit().getScreenSize().width - 150);
         Dimension component = scrollPane.getPreferredSize();
-        if (component.height >= maxHeight) {
-          Object setting = UIManager.get("ScrollBar.width");
-          int width = setting instanceof Integer ? ((Integer)setting).intValue() : 20;
-          scrollPane.setPreferredSize(new Dimension(component.width + width, maxHeight));
+        if (component.height > maxHeight || component.width > maxWidth) {
+          scrollPane.setPreferredSize(new Dimension(Math.min(maxWidth, component.width), Math.min(maxHeight, component.height)));
         }
 
         int type = error ? JOptionPane.ERROR_MESSAGE : JOptionPane.INFORMATION_MESSAGE;

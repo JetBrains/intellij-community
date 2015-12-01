@@ -1,3 +1,19 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /******************************************************************************
  * Copyright (C) 2013  Fabio Zadrozny
  *
@@ -9,14 +25,10 @@
  * Contributors:
  *     Fabio Zadrozny <fabiofz@gmail.com> - initial API and implementation
  ******************************************************************************/
-package com.jetbrains.python.internal;
+package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.jetbrains.python.console.pydev.FastStringBuffer;
-import com.jetbrains.python.internal.linux.ProcessListLinux;
-import com.jetbrains.python.internal.macos.ProcessListMac;
-import com.jetbrains.python.internal.win32.ProcessListWin32;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,8 +77,8 @@ public class ProcessUtils {
     return new IProcessList() {
 
       @Override
-      public PyProcessInfo[] getProcessList() {
-        return new PyProcessInfo[0];
+      public ProcessInfo[] getProcessList() {
+        return new ProcessInfo[0];
       }
     };
   }
@@ -94,13 +106,13 @@ public class ProcessUtils {
 
     int DEFAULT_FILE_SIZE = 8 * BUFFER_SIZE;
 
-    FastStringBuffer buffer = new FastStringBuffer(DEFAULT_FILE_SIZE);
+    StringBuffer buffer = new StringBuffer(DEFAULT_FILE_SIZE);
 
     while (n > 0) {
       buffer.append(readBuffer, 0, n);
       n = reader.read(readBuffer);
     }
 
-    return buffer.toCharArray();
+    return buffer.toString().toCharArray();
   }
 }

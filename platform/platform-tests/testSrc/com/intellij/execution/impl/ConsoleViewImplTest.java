@@ -37,7 +37,6 @@ import java.io.OutputStream;
 import java.util.concurrent.CountDownLatch;
 
 public class ConsoleViewImplTest extends LightPlatformTestCase {
-
   private ConsoleViewImpl myConsole;
 
   @Override
@@ -83,12 +82,33 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     assertEquals("Test", console.getText());
   }
 
+  public void testConsolePrintsSomethingAfterClearPrintScroll() throws Exception {
+    ConsoleViewImpl console = myConsole;
+    Alarm alarm = new Alarm(getTestRootDisposable());
+    for (int i=0; i<1000/*000*/; i++) {
+      CountDownLatch latch = new CountDownLatch(1);
+      alarm.addRequest(() -> {
+        console.clear();
+        console.print("Test", ConsoleViewContentType.NORMAL_OUTPUT);
+        console.scrollTo(0);
+        latch.countDown();
+      }, 0);
+      while (latch.getCount() != 0) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+      while (console.hasDeferredOutput()) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+      assertEquals("Test", console.getText());
+    }
+  }
+
   public void testClearAndPrintWhileAnotherClearExecution() throws Exception {
     ConsoleViewImpl console = myConsole;
     Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
     for (int i = 0; i < 100; i++) {
       // To speed up test execution, set -Dconsole.flush.delay.ms=5 to reduce ConsoleViewImpl.DEFAULT_FLUSH_DELAY
-      System.out.println("Attempt #" + i);
+      //System.out.println("Attempt #" + i);
       console.clear(); // 1-st clear
       CountDownLatch latch = new CountDownLatch(1);
       alarm.addRequest(() -> {

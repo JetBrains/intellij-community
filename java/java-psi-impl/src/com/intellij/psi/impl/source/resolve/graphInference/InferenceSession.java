@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -257,17 +258,8 @@ public class InferenceSession {
     }
     else if (method.isConstructor() && gParent instanceof PsiNewExpression) {
       final PsiClass containingClass = method.getContainingClass();
-      if (containingClass != null && containingClass.hasTypeParameters()) {
-        final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)gParent).getClassOrAnonymousClassReference();
-        if (classReference != null) {
-          final PsiReferenceParameterList parameterList = classReference.getParameterList();
-          if (parameterList != null) {
-            final PsiTypeElement[] typeElements = parameterList.getTypeParameterElements();
-            if (typeElements.length == 1 && typeElements[0].getType() instanceof PsiDiamondType) {
-              owner = containingClass;
-            }
-          }
-        }
+      if (containingClass != null && containingClass.hasTypeParameters() && PsiDiamondTypeUtil.hasDiamond((PsiNewExpression)gParent)) {
+        owner = containingClass;
       }
     }
     return owner;
@@ -519,7 +511,7 @@ public class InferenceSession {
   }
 
   public static JavaResolveResult getResolveResult(final PsiCall callExpression) {
-    if (callExpression instanceof PsiNewExpression) {
+    if (callExpression instanceof PsiNewExpression && PsiDiamondTypeUtil.hasDiamond((PsiNewExpression)callExpression)) {
       PsiUtilCore.ensureValid(callExpression);
       return CachedValuesManager.getCachedValue(callExpression, new CachedValueProvider<JavaResolveResult>() {
         @Nullable

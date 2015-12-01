@@ -11,6 +11,7 @@ import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.lang.reflect.WildcardType
 import java.util.*
+import kotlin.reflect.KCallable
 
 internal fun InterfaceReader(protocolInterfaces: List<Class<*>>): InterfaceReader {
   val map = LinkedHashMap<Class<*>, TypeWriter<*>?>(protocolInterfaces.size)
@@ -132,7 +133,7 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
     typeToTypeHandler.put(typeClass, typeWriter)
   }
 
-  fun getFieldTypeParser(type: Type, isSubtyping: Boolean, method: Method?): ValueReader {
+  fun getFieldTypeParser(member: KCallable<*>?, type: Type, isSubtyping: Boolean, method: Method?): ValueReader {
     if (type is Class<*>) {
       @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
       return when {
@@ -144,7 +145,7 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
         type == Void.TYPE -> VOID_PARSER
         type == String::class.java -> {
           if (method != null) {
-            val jsonField = method.getAnnotation<JsonField>(JsonField::class.java)
+            val jsonField = member?.annotation<JsonField>()
             if (jsonField != null && jsonField.allowAnyPrimitiveValue) {
               return RAW_STRING_PARSER
             }
@@ -157,7 +158,7 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
         type == Any::class.java -> RAW_STRING_OR_MAP_PARSER
         type == JsonReaderEx::class.java -> JSON_PARSER
         type == StringIntPair::class.java -> STRING_INT_PAIR_PARSER
-        type.isArray -> ArrayReader(getFieldTypeParser(type.componentType, false, null), false)
+        type.isArray -> ArrayReader(getFieldTypeParser(null, type.componentType, false, null), false)
         type.isEnum -> EnumReader(type as Class<Enum<*>>)
         else -> {
           val ref = getTypeRef(type) ?: throw UnsupportedOperationException("Method return type $type (simple class) not supported")
@@ -175,7 +176,7 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
             argumentType = wildcard.upperBounds[0]
           }
         }
-        val componentParser = getFieldTypeParser(argumentType, false, method)
+        val componentParser = getFieldTypeParser(null, argumentType, false, method)
         return if (isList) ArrayReader(componentParser, true) else MapReader(componentParser)
       }
       else {

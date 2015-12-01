@@ -19,6 +19,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.process.ProcessInfo;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -29,8 +30,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SelectFromListDialog;
 import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.internal.ProcessUtils;
-import com.jetbrains.python.internal.PyProcessInfo;
+import com.intellij.execution.process.ProcessUtils;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,13 +63,13 @@ public class PyAttachToProcessAction extends AnAction {
     final SelectFromListDialog selectDialog =
       new SelectFromListDialog(project, pythonProcessesList(), new SelectFromListDialog.ToStringAspect() {
         public String getToStirng(Object obj) {
-          PyProcessInfo info = (PyProcessInfo)obj;
+          ProcessInfo info = (ProcessInfo)obj;
 
           return info.getPid() + " " + info.getArgs();
         }
       }, "Select Python Process", ListSelectionModel.SINGLE_SELECTION);
     if (selectDialog.showAndGet()) {
-      PyProcessInfo process = (PyProcessInfo)selectDialog.getSelection()[0];
+      ProcessInfo process = (ProcessInfo)selectDialog.getSelection()[0];
 
       PyAttachToProcessDebugRunner runner =
         new PyAttachToProcessDebugRunner(project, process.getPid(), sdk.getHomePath());
@@ -84,13 +84,13 @@ public class PyAttachToProcessAction extends AnAction {
     }
   }
 
-  private static PyProcessInfo[] pythonProcessesList() {
-    PyProcessInfo[] list = ProcessUtils.getProcessList(PythonHelpersLocator.getHelpersRoot().getAbsolutePath()).getProcessList();
-    return FluentIterable.from(Lists.newArrayList(list)).filter(new Predicate<PyProcessInfo>() {
+  private static ProcessInfo[] pythonProcessesList() {
+    ProcessInfo[] list = ProcessUtils.getProcessList(PythonHelpersLocator.getHelpersRoot().getAbsolutePath()).getProcessList();
+    return FluentIterable.from(Lists.newArrayList(list)).filter(new Predicate<ProcessInfo>() {
       @Override
-      public boolean apply(PyProcessInfo input) {
+      public boolean apply(ProcessInfo input) {
         return input.getCommand().toLowerCase().contains("python");
       }
-    }).toArray(PyProcessInfo.class);
+    }).toArray(ProcessInfo.class);
   }
 }

@@ -132,6 +132,6 @@ public class TokenSetTest {
           assertFalse(set.contains(next));
         }
       }
-    }).cpuBound().assertTiming();
+    }).cpuBound().useLegacyScaling().assertTiming();
   }
 }

@@ -480,8 +480,8 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
         if (myEditor instanceof EditorWindow) {
           myEditor = ((EditorWindow)myEditor).getDelegate();
-          myFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(myEditor.getDocument());
         }
+        myFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(myEditor.getDocument());
 
         String text = myFile.getText();
         text = StringUtil.convertLineSeparators(text);

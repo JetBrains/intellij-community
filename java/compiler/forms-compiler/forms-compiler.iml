@@ -14,6 +14,7 @@
     <orderEntry type="library" scope="TEST" name="JUnit3" level="project" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="module" module-name="instrumentation-util" exported="" />
+    <orderEntry type="module" module-name="util" scope="TEST" />
+    <orderEntry type="module" module-name="testFramework" scope="TEST" />
   </component>
 </module>
-

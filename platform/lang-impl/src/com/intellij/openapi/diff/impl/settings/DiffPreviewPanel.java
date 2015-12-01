@@ -59,7 +59,12 @@ public class DiffPreviewPanel implements PreviewPanel {
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
   public DiffPreviewPanel(@NotNull Disposable parent) {
-    myViewer = new SimpleThreesideDiffViewer(new SampleContext(), new SampleRequest());
+    myViewer = new SimpleThreesideDiffViewer(new SampleContext(), new SampleRequest()) {
+      @Override
+      protected boolean forceRediffSynchronously() {
+        return true;
+      }
+    };
     myViewer.init();
     Disposer.register(parent, myViewer);
 

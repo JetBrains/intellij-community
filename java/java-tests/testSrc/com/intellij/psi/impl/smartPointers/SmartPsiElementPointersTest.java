@@ -683,7 +683,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
         assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(document));
         assertEquals(range, pointer.getRange());
       }
-    }).cpuBound().assertTiming();
+    }).cpuBound().useLegacyScaling().assertTiming();
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     assertEquals(range, pointer.getRange());
@@ -867,7 +867,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
         assertEquals(tag.getName().length(), TextRange.create(pointer.getPsiRange()).getLength());
       }
       PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting();
-    }).cpuBound().assertTiming();
+    }).cpuBound().useLegacyScaling().assertTiming();
   }
 
   @NotNull

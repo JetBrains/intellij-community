@@ -79,4 +79,8 @@ class HardElementInfo extends SmartPointerElementInfo {
     return myProject;
   }
 
+  @Override
+  public String toString() {
+    return "hard{" + myElement + " of " + myElement.getClass() + "}";
+  }
 }

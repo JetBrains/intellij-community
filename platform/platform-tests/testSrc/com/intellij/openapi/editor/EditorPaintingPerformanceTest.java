@@ -24,21 +24,19 @@ import com.intellij.testFramework.PlatformTestUtil;
 import java.awt.*;
 
 public class EditorPaintingPerformanceTest extends AbstractEditorTest {
-  private static final String LOREM_IPSUM =
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
   private static final int EDITOR_WIDTH_PX = 1000;
 
   public void testScrollingThroughLongTextFile() throws Exception {
     initText(StringUtil.repeat(LOREM_IPSUM + '\n', 15000));
 
-    doTestScrollingPerformance("scrolling through text file with many lines", 1200);
+    doTestScrollingPerformance("scrolling through text file with many lines", 3600);
   }
 
   public void testScrollingThroughLongSoftWrappedLine() throws Exception {
     initText(StringUtil.repeat(LOREM_IPSUM + ' ', 15000));
     EditorTestUtil.configureSoftWraps(myEditor, EDITOR_WIDTH_PX, TEST_CHAR_WIDTH);
     
-    doTestScrollingPerformance("scrolling through long soft wrapped line", 1600);
+    doTestScrollingPerformance("scrolling through long soft wrapped line", 4800);
   }
 
   private static void doTestScrollingPerformance(String message, int expectedMs) {

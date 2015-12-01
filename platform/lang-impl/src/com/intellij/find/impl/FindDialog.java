@@ -152,6 +152,7 @@ public class FindDialog extends DialogWrapper {
     init();
     initByModel();
     updateReplaceVisibility();
+    validateFindButton();
 
     if (haveResultsPreview()) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -835,11 +836,6 @@ public class FindDialog extends DialogWrapper {
     findSettings.setFileMask(myModel.getFileFilter());
   }
 
-  @Override
-  protected boolean postponeValidation() {
-    return true;
-  }
-
   @Nullable("null means OK")
   private ValidationInfo getValidationInfo(@NotNull FindModel model) {
     if (myRbDirectory != null && myRbDirectory.isEnabled() && myRbDirectory.isSelected()) {
@@ -1210,7 +1206,7 @@ public class FindDialog extends DialogWrapper {
     myScopeCombo = new ScopeChooserCombo();
     myScopeCombo.init(myProject, true, true, FindSettings.getInstance().getDefaultScopeName(), new Condition<ScopeDescriptor>() {
       //final String projectFilesScopeName = PsiBundle.message("psi.search.scope.project");
-      final String moduleFilesScopeName;
+      private final String moduleFilesScopeName;
       {
         String moduleScopeName = PsiBundle.message("search.scope.module", "");
         final int ind = moduleScopeName.indexOf(' ');
@@ -1240,15 +1236,21 @@ public class FindDialog extends DialogWrapper {
     bgScope.add(myRbDirectory);
     bgScope.add(myRbCustomScope);
 
-    ActionListener validateAll = new ActionListener() {
+    myRbProject.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         validateScopeControls();
         validateFindButton();
       }
-    };
-    myRbProject.addActionListener(validateAll);
-    myRbCustomScope.addActionListener(validateAll);
+    });
+    myRbCustomScope.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        validateScopeControls();
+        validateFindButton();
+        myScopeCombo.getComboBox().requestFocusInWindow();
+      }
+    });
 
     myRbDirectory.addActionListener(new ActionListener() {
       @Override
@@ -1623,7 +1625,7 @@ public class FindDialog extends DialogWrapper {
   }
 
   private static class UsageTableCellRenderer extends JPanel implements TableCellRenderer {
-    private ColoredTableCellRenderer myUsageRenderer = new ColoredTableCellRenderer() {
+    private final ColoredTableCellRenderer myUsageRenderer = new ColoredTableCellRenderer() {
       @Override
       protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
         if (value instanceof UsageInfo2UsageAdapter) {
@@ -1638,7 +1640,7 @@ public class FindDialog extends DialogWrapper {
         setBorder(null);
       }
     };
-    private ColoredTableCellRenderer myFileAndLineNumber = new ColoredTableCellRenderer() {
+    private final ColoredTableCellRenderer myFileAndLineNumber = new ColoredTableCellRenderer() {
       @Override
       protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
         if (value instanceof UsageInfo2UsageAdapter) {
@@ -1653,7 +1655,7 @@ public class FindDialog extends DialogWrapper {
       }
     };
 
-    UsageTableCellRenderer() {
+    private UsageTableCellRenderer() {
       setLayout(new BorderLayout());
 
       add(myUsageRenderer, BorderLayout.WEST);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
         PsiDocumentManager.getInstance(project).commitAllDocuments()
       }
 
-    } as ThrowableRunnable).assertTiming()
+    } as ThrowableRunnable).useLegacyScaling().assertTiming()
   }
 
   public void testManyAnnotatedFields() {
@@ -130,7 +130,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
   private void measureHighlighting(String text, int time) {
-    IdeaTestUtil.startPerformanceTest("slow", time, configureAndHighlight(text)).cpuBound().usesAllCPUCores().assertTiming()
+    IdeaTestUtil.startPerformanceTest("slow", time, configureAndHighlight(text)).cpuBound().usesAllCPUCores().useLegacyScaling().assertTiming()
   }
 
   public void testDeeplyNestedClosures() {
@@ -264,7 +264,7 @@ while (true) {
   f.canoPath<caret>
 }
 '''
-    IdeaTestUtil.startPerformanceTest("slow", 300, configureAndComplete(text)).cpuBound().usesAllCPUCores().assertTiming()
+    IdeaTestUtil.startPerformanceTest("slow", 300, configureAndComplete(text)).cpuBound().usesAllCPUCores().useLegacyScaling().assertTiming()
   }
 
   public void testClosureRecursion() {

@@ -230,4 +230,9 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     if (myReferenceCount == 0) return 0; // disposed, not to be reused again
     return myReferenceCount += delta;
   }
+
+  @Override
+  public String toString() {
+    return myElementInfo.toString();
+  }
 }

@@ -21,6 +21,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
@@ -191,10 +192,19 @@ public class MethodUtils {
   }
 
   public static boolean hasSuper(@NotNull PsiMethod method) {
+    return getSuper(method) != null;
+  }
+
+  @Nullable
+  public static PsiMethod getSuper(@NotNull PsiMethod method) {
     if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.PRIVATE)) {
-      return false;
+      return null;
     }
-    return SuperMethodsSearch.search(method, null, true, false).findFirst() != null;
+    final MethodSignatureBackedByPsiMethod signature = SuperMethodsSearch.search(method, null, true, false).findFirst();
+    if (signature == null) {
+      return null;
+    }
+    return signature.getMethod();
   }
 
   public static boolean isOverridden(PsiMethod method) {
