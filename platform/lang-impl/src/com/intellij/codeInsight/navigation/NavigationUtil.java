@@ -370,7 +370,8 @@ public final class NavigationUtil {
           //noinspection ConstantConditions
           return ((GotoRelatedItem)value).getCustomName();
         }
-        final PsiElement element = (PsiElement)value;
+        PsiElement element = (PsiElement)value;
+        if (!element.isValid()) return "INVALID";
         return renderer.getElementText(element) + " " + renderer.getContainerText(element, null);
       }
 
