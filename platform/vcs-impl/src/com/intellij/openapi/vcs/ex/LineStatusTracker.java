@@ -597,119 +597,73 @@ public class LineStatusTracker {
                           @NotNull List<Range> rangesBeforeChange,
                           @NotNull List<Range> changedRanges,
                           @NotNull List<Range> rangesAfterChange) {
-    if (!Registry.is("diff.status.tracker.skip.spaces")) {
-      for (Range range : myRanges) {
-        if (range.getLine2() < beforeChangedLine1) {
-          rangesBeforeChange.add(range);
-        }
-        else if (range.getLine1() > beforeChangedLine2) {
-          rangesAfterChange.add(range);
-        }
-        else {
-          changedRanges.add(range);
-        }
+    int lastBefore = -1;
+    int firstAfter = myRanges.size();
+    for (int i = 0; i < myRanges.size(); i++) {
+      Range range = myRanges.get(i);
+
+      if (range.getLine2() < beforeChangedLine1) {
+        lastBefore = i;
+      }
+      else if (range.getLine1() > beforeChangedLine2) {
+        firstAfter = i;
+        break;
       }
     }
-    else {
-      int lastBefore = -1;
-      int firstAfter = myRanges.size();
-      for (int i = 0; i < myRanges.size(); i++) {
-        Range range = myRanges.get(i);
 
-        if (range.getLine2() < beforeChangedLine1) {
-          lastBefore = i;
+    if (Registry.is("diff.status.tracker.skip.spaces")) {
+      // Expand on ranges, that are separated from changed lines only by whitespaces
+
+      while (lastBefore != -1) {
+        int firstChangedLine = beforeChangedLine1;
+        if (lastBefore + 1 < myRanges.size()) {
+          Range firstChanged = myRanges.get(lastBefore + 1);
+          firstChangedLine = Math.min(firstChangedLine, firstChanged.getLine1());
         }
-        else if (range.getLine1() > beforeChangedLine2) {
-          firstAfter = i;
+
+        if (!isLineRangeEmpty(myDocument, myRanges.get(lastBefore).getLine2(), firstChangedLine)) {
           break;
         }
+
+        lastBefore--;
       }
 
-
-      // Expand on ranges, that are separated from changes only by empty/whitespaces lines
-      // This is needed to reduce amount of confusing cases, when changed blocks are matched wrong due to matched empty lines between them
-      // TODO: try to simplify logic, it's too high change that current one is broken somehow
-      CharSequence sequence = myDocument.getCharsSequence();
-      int lineCount = getLineCount(myDocument);
-
-      while (true) {
-        if (lastBefore == -1) break;
-
-        if (lastBefore < myRanges.size() - 1 && firstAfter - lastBefore > 1) {
-          Range firstChangedRange = myRanges.get(lastBefore + 1);
-          if (firstChangedRange.getLine1() < beforeChangedLine1) {
-            beforeChangedLine1 = firstChangedRange.getLine1();
-          }
+      while (firstAfter != myRanges.size()) {
+        int firstUnchangedLineAfter = beforeChangedLine2 + linesShift;
+        if (firstAfter > 0) {
+          Range lastChanged = myRanges.get(firstAfter - 1);
+          firstUnchangedLineAfter = Math.max(firstUnchangedLineAfter, lastChanged.getLine2() + linesShift);
         }
 
-        if (beforeChangedLine1 < 0) break;
-        if (beforeChangedLine1 >= lineCount) break;
-        int offset1 = myDocument.getLineStartOffset(beforeChangedLine1) - 2;
-
-        int deltaLines = 0;
-        while (offset1 > 0) {
-          char c = sequence.charAt(offset1);
-          if (!StringUtil.isWhiteSpace(c)) break;
-          if (c == '\n') deltaLines++;
-          offset1--;
+        if (!isLineRangeEmpty(myDocument, firstUnchangedLineAfter, myRanges.get(firstAfter).getLine1() + linesShift)) {
+          break;
         }
 
-        if (deltaLines == 0) break;
-        beforeChangedLine1 -= deltaLines;
-
-        if (myRanges.get(lastBefore).getLine2() < beforeChangedLine1) break;
-        while (lastBefore != -1 && myRanges.get(lastBefore).getLine2() >= beforeChangedLine1) {
-          lastBefore--;
-        }
-      }
-
-      while (true) {
-        if (firstAfter == myRanges.size()) break;
-
-        if (firstAfter > 0 && firstAfter - lastBefore > 1) {
-          Range lastChangedRange = myRanges.get(firstAfter - 1);
-          if (lastChangedRange.getLine2() > beforeChangedLine2) {
-            beforeChangedLine2 = lastChangedRange.getLine2();
-          }
-        }
-
-        // TODO: "afterChangedLine2 >= getLineCount(myDocument)" shouldn't ever be true, but it is sometimes for some reason
-        int afterChangedLine2 = beforeChangedLine2 + linesShift - 1;
-        if (afterChangedLine2 < 0) break;
-        if (afterChangedLine2 >= lineCount) break;
-        int offset2 = myDocument.getLineEndOffset(afterChangedLine2) + 1;
-
-        int deltaLines = 0;
-        while (offset2 < sequence.length()) {
-          char c = sequence.charAt(offset2);
-          if (!StringUtil.isWhiteSpace(c)) break;
-          if (c == '\n') deltaLines++;
-          offset2++;
-        }
-
-        if (deltaLines == 0) break;
-        beforeChangedLine2 += deltaLines;
-
-        if (myRanges.get(firstAfter).getLine1() > beforeChangedLine2) break;
-        while (firstAfter != myRanges.size() && myRanges.get(firstAfter).getLine1() <= beforeChangedLine2) {
-          firstAfter++;
-        }
-      }
-
-
-      for (int i = 0; i < myRanges.size(); i++) {
-        Range range = myRanges.get(i);
-        if (i <= lastBefore) {
-          rangesBeforeChange.add(range);
-        }
-        else if (i >= firstAfter) {
-          rangesAfterChange.add(range);
-        }
-        else {
-          changedRanges.add(range);
-        }
+        firstAfter++;
       }
     }
+
+    for (int i = 0; i < myRanges.size(); i++) {
+      Range range = myRanges.get(i);
+      if (i <= lastBefore) {
+        rangesBeforeChange.add(range);
+      }
+      else if (i >= firstAfter) {
+        rangesAfterChange.add(range);
+      }
+      else {
+        changedRanges.add(range);
+      }
+    }
+  }
+
+  private static boolean isLineRangeEmpty(@NotNull Document document, int line1, int line2) {
+    int lineCount = getLineCount(document);
+    int startOffset = line1 == lineCount ? document.getTextLength() : document.getLineStartOffset(line1);
+    int endOffset = line2 == lineCount ? document.getTextLength() : document.getLineStartOffset(line2);
+
+    CharSequence interval = document.getImmutableCharSequence().subSequence(startOffset, endOffset);
+    return StringUtil.isEmptyOrSpaces(interval);
   }
 
   @Nullable
