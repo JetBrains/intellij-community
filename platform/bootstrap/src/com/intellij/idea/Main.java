@@ -46,7 +46,6 @@ public class Main {
   public static final int INSTANCE_CHECK_FAILED = 6;
   public static final int LICENSE_ERROR = 7;
   public static final int PLUGIN_ERROR = 8;
-  public static final int OUT_OF_MEMORY = 9;
 
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
@@ -197,10 +196,11 @@ public class Main {
     File patch = new File(tempDir, patchFileName);
 
     // always delete previous patch copy
-    File patchCopy = new File(tempDir, patchFileName + "_copy");
-    File log4jCopy = new File(tempDir, "log4j.jar." + platform + "_copy");
-    File jnaUtilsCopy = new File(tempDir, "jna-platform.jar." + platform + "_copy");
-    File jnaCopy = new File(tempDir, "jna.jar." + platform + "_copy");
+    String userName = System.getProperty("user.name");
+    File patchCopy = new File(tempDir, patchFileName + "_copy_" + userName);
+    File log4jCopy = new File(tempDir, "log4j.jar." + platform + "_copy_" + userName);
+    File jnaUtilsCopy = new File(tempDir, "jna-platform.jar." + platform + "_copy_" + userName);
+    File jnaCopy = new File(tempDir, "jna.jar." + platform + "_copy_" + userName);
     if (!FileUtilRt.delete(patchCopy) || !FileUtilRt.delete(log4jCopy) || !FileUtilRt.delete(jnaUtilsCopy) || !FileUtilRt.delete(jnaCopy)) {
       throw new IOException("Cannot delete temporary files in " + tempDir);
     }
