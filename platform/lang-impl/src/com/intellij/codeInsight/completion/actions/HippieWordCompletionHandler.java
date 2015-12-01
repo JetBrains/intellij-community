@@ -35,6 +35,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +69,6 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     final CharSequence charsSequence = editor.getDocument().getCharsSequence();
 
     final CompletionData data = computeData(editor, charsSequence);
-    String currentPrefix = data.myPrefix;
 
     final CompletionState completionState = getCompletionState(editor);
 
@@ -75,18 +76,22 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     CompletionVariant lastProposedVariant = completionState.lastProposedVariant;
     boolean fromOtherFiles = completionState.fromOtherFiles;
 
-    if (lastProposedVariant == null || oldPrefix == null || !new CamelHumpMatcher(oldPrefix).isStartMatch(currentPrefix) ||
-        !currentPrefix.equals(lastProposedVariant.variant)) {
+    if (lastProposedVariant == null || oldPrefix == null ||
+        !completionState.caretOffsets.equals(getCaretOffsets(editor)) ||
+        completionState.lastModCount != editor.getDocument().getModificationStamp()) {
       //we are starting over
-      oldPrefix = currentPrefix;
+      oldPrefix = data.myPrefix;
       completionState.oldPrefix = oldPrefix;
       lastProposedVariant = null;
       fromOtherFiles = false;
+    } else {
+      data.startOffset = completionState.lastStartOffset;
     }
 
     CompletionVariant nextVariant = computeNextVariant(editor, oldPrefix, lastProposedVariant, data, file, fromOtherFiles, false);
     if (nextVariant == null) return;
 
+    RangeMarker start = editor.getDocument().createRangeMarker(data.startOffset, data.startOffset);
     nextVariant.fastenBelts();
     try {
       insertStringForEachCaret(editor, nextVariant.variant, caretOffset - data.startOffset);
@@ -95,9 +100,19 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
       nextVariant.unfastenBelts();
     }
 
+    if (!start.isValid()) {
+      editor.putUserData(KEY_STATE, null);
+      return;
+    }
+
     completionState.lastProposedVariant = nextVariant;
+    completionState.lastStartOffset = start.getStartOffset();
+    completionState.lastModCount = editor.getDocument().getModificationStamp();
+    completionState.caretOffsets = getCaretOffsets(editor);
     completionState.fromOtherFiles = nextVariant.editor != editor;
     if (nextVariant.editor == editor) highlightWord(nextVariant, project);
+
+    start.dispose();
   }
 
   private static void insertStringForEachCaret(final Editor editor, final String text, final int relativeOffset) {
@@ -123,7 +138,6 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
 
   private static class CompletionData {
     public String myPrefix;
-    public String myWordUnderCursor;
     public int startOffset;
   }
 
@@ -391,7 +405,6 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
         }
         if (end >= offset) {
           data.myPrefix = charsSequence.subSequence(start, offset).toString();
-          data.myWordUnderCursor = charsSequence.subSequence(start, end).toString();
           data.startOffset = start;
           return false;
         }
@@ -401,7 +414,6 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
 
     if (data.myPrefix == null) {
       data.myPrefix = "";
-      data.myWordUnderCursor = "";
       data.startOffset = offset;
     }
     return data;
@@ -422,9 +434,22 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     return state;
   }
 
+  @NotNull
+  private static List<Integer> getCaretOffsets(Editor editor) {
+    return ContainerUtil.map(editor.getCaretModel().getAllCarets(), new Function<Caret, Integer>() {
+      @Override
+      public Integer fun(Caret caret) {
+        return caret.getOffset();
+      }
+    });
+  }
+
   private static class CompletionState {
     public String oldPrefix;
     public CompletionVariant lastProposedVariant;
     public boolean fromOtherFiles;
+    int lastStartOffset;
+    long lastModCount;
+    List<Integer> caretOffsets = Collections.emptyList();
   }
 }
