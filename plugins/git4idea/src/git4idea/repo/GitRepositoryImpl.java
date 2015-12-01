@@ -37,12 +37,10 @@ import java.util.Collection;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
-/**
- * @author Kirill Likhodedov
- */
 public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
 
   @NotNull private final GitPlatformFacade myPlatformFacade;
+  @NotNull private final GitVcs myVcs;
   @NotNull private final GitRepositoryReader myReader;
   @NotNull private final VirtualFile myGitDir;
   @Nullable private final GitUntrackedFilesHolder myUntrackedFilesHolder;
@@ -57,6 +55,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
                             final boolean light) {
     super(project, rootDir, parentDisposable);
     myPlatformFacade = facade;
+    myVcs = assertNotNull(GitVcs.getInstance(project));
     myGitDir = gitDir;
     myReader = new GitRepositoryReader(VfsUtilCore.virtualToIoFile(myGitDir));
     if (!light) {
@@ -139,10 +138,10 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     return currentBranch == null ? null : currentBranch.getName();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public AbstractVcs getVcs() {
-    return GitVcs.getInstance(getProject());
+    return myVcs;
   }
 
   /**

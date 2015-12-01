@@ -118,10 +118,10 @@ public class MockGitRepository implements GitRepository {
     throw new UnsupportedOperationException();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public AbstractVcs getVcs() {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @Nullable
