@@ -16,6 +16,6 @@ public class YAMLLanguage extends Language {
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Yaml";
+    return "YAML";
   }
 }
