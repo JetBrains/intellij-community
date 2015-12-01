@@ -195,29 +195,38 @@ class NextId:
 
 _nextThreadId = NextId()
 
+
+#=======================================================================================================================
+# GetPid
+#=======================================================================================================================
+def GetPid():
+    try:
+        return os.getpid()
+    except AttributeError:
+        try:
+            #Jython does not have it!
+            import java.lang.management.ManagementFactory  #@UnresolvedImport -- just for jython
+            pid = java.lang.management.ManagementFactory.getRuntimeMXBean().getName()
+            return pid.replace('@', '_')
+        except:
+            #ok, no pid available (will be unable to debug multiple processes)
+            return '000001'
+
+
 #=======================================================================================================================
 # GetThreadId
 #=======================================================================================================================
-def GetThreadId(thread):
+def GetThreadId(thread, update_pydevd_id=False):
     try:
+        if update_pydevd_id:
+            del thread.__pydevd_id__
         return thread.__pydevd_id__
     except AttributeError:
         _nextThreadIdLock.acquire()
         try:
             #We do a new check with the lock in place just to be sure that nothing changed
             if not hasattr(thread, '__pydevd_id__'):
-                try:
-                    pid = os.getpid()
-                except AttributeError:
-                    try:
-                        #Jython does not have it!
-                        import java.lang.management.ManagementFactory  #@UnresolvedImport -- just for jython
-                        pid = java.lang.management.ManagementFactory.getRuntimeMXBean().getName()
-                        pid = pid.replace('@', '_')
-                    except:
-                        #ok, no pid available (will be unable to debug multiple processes)
-                        pid = '000001'
-
+                pid = GetPid()
                 thread.__pydevd_id__ = 'pid%s_seq%s' % (pid, _nextThreadId())
         finally:
             _nextThreadIdLock.release()

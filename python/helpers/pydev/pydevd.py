@@ -556,14 +556,17 @@ class PyDB:
             self._lock_running_thread_ids.acquire()
             try:
                 for t in all_threads:
-                    thread_id = GetThreadId(t)
-
                     if getattr(t, 'is_pydev_daemon_thread', False):
                         pass # I.e.: skip the DummyThreads created from pydev daemon threads
                     elif isinstance(t, PyDBDaemonThread):
                         pydev_log.error_once('Error in debugger: Found PyDBDaemonThread not marked with is_pydev_daemon_thread=True.\n')
 
                     elif isThreadAlive(t):
+                        if not self._running_thread_ids:
+                            thread_id = GetThreadId(t, True)
+                            curr_thread_id = GetThreadId(threadingCurrentThread())
+                        else:
+                            thread_id = GetThreadId(t)
                         program_threads_alive[thread_id] = t
 
                         if not DictContains(self._running_thread_ids, thread_id):
