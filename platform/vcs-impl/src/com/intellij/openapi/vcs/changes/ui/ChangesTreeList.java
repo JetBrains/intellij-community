@@ -531,14 +531,6 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     }
   }
 
-  public int getSelectionCount() {
-    if (myShowFlatten) {
-      return myList.getSelectedIndices().length;
-    } else {
-      return myTree.getSelectionCount();
-    }
-  }
-
   @NotNull
   public List<T> getSelectedChanges() {
     if (myShowFlatten) {
@@ -907,28 +899,6 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     }
   }
 
-  private class SelectAllAction extends AnAction {
-    private SelectAllAction() {
-      super("Select All", "Select all items", AllIcons.Actions.Selectall);
-    }
-
-    @Override
-    public void actionPerformed(final AnActionEvent e) {
-      if (myShowFlatten) {
-        final int count = myList.getModel().getSize();
-        if (count > 0) {
-          myList.setSelectionInterval(0, count-1);
-        }
-      }
-      else {
-        final int countTree = myTree.getRowCount();
-        if (countTree > 0) {
-          myTree.setSelectionInterval(0, countTree-1);
-        }
-      }
-    }
-  }
-
   public void select(final List<T> changes) {
     final DefaultTreeModel treeModel = (DefaultTreeModel) myTree.getModel();
     final TreeNode root = (TreeNode) treeModel.getRoot();
@@ -970,11 +940,6 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
       ++ i;
     }
     return toPass;
-  }
-
-  public void enableSelection(final boolean value) {
-    myTree.setEnabled(value);
-    myList.setEnabled(value);
   }
 
   public void setAlwaysExpandList(boolean alwaysExpandList) {
