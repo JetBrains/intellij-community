@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions
 
+import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -28,21 +29,23 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.File
 
-class EditCustomPropertiesAction : AnAction() {
+abstract class EditCustomSettingsAction : AnAction() {
+  protected abstract fun file(): File?
+  protected abstract fun template(): String
+
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.project != null && PathManager.getCustomOptionsDirectory() != null
+    e.presentation.isEnabled = e.project != null && file() != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val dir = PathManager.getCustomOptionsDirectory() ?: return
+    val file = file() ?: return
 
-    val file = File(dir, PathManager.PROPERTIES_FILE_NAME)
     if (!file.exists()) {
-      val message = IdeBundle.message("edit.custom.properties.confirm", file.path)
-      val result = Messages.showYesNoDialog(project, message, IdeBundle.message("edit.custom.properties.title"), Messages.getQuestionIcon())
+      val message = IdeBundle.message("edit.custom.settings.confirm", file.path)
+      val result = Messages.showYesNoDialog(project, message, e.presentation.text!!, Messages.getQuestionIcon())
       if (result == Messages.NO) return
-      FileUtil.writeToFile(file, "# custom ${ApplicationNamesInfo.getInstance().fullProductName} properties\n\n")
+      FileUtil.writeToFile(file, template())
     }
 
     val vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
@@ -51,9 +54,28 @@ class EditCustomPropertiesAction : AnAction() {
       OpenFileDescriptor(project, vFile, vFile.length.toInt()).navigate(true)
     }
   }
+}
+
+class EditCustomPropertiesAction : EditCustomSettingsAction() {
+  override fun file(): File? {
+    val dir = PathManager.getCustomOptionsDirectory()
+    return if (dir != null) File(dir, PathManager.PROPERTIES_FILE_NAME) else null
+  }
+
+  override fun template(): String = "# custom ${ApplicationNamesInfo.getInstance().fullProductName} properties\n\n"
 
   class AccessExtension : NonProjectFileWritingAccessExtension {
     override fun isWritable(file: VirtualFile): Boolean =
         FileUtil.pathsEqual(file.path, "${PathManager.getCustomOptionsDirectory()}/${PathManager.PROPERTIES_FILE_NAME}")
+  }
+}
+
+class EditCustomVmOptionsAction : EditCustomSettingsAction() {
+  override fun file() = VMOptions.getWriteFile()
+
+  override fun template(): String = "# custom ${ApplicationNamesInfo.getInstance().fullProductName} VM options\n\n${VMOptions.read() ?: ""}"
+
+  class AccessExtension : NonProjectFileWritingAccessExtension {
+    override fun isWritable(file: VirtualFile): Boolean = FileUtil.pathsEqual(file.path, VMOptions.getWriteFile()?.path)
   }
 }
