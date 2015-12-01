@@ -253,10 +253,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       return true;
     }
     if (myUncommittedDocuments.isEmpty()) {
-      action.run();
-      if (!hasUncommitedDocuments()) {
+      if (!ApplicationManager.getApplication().hasWriteAction(CommitToPsiFileAction.class)) {
+        // in case of fireWriteActionFinished() we didn't execute 'actionsWhenAllDocumentsAreCommitted' yet
         assert actionsWhenAllDocumentsAreCommitted.isEmpty() : actionsWhenAllDocumentsAreCommitted;
       }
+      action.run();
       return true;
     }
 

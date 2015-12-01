@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ public class UsageInfo {
   }
 
   public UsageInfo(@NotNull SmartPsiElementPointer<?> smartPointer,
-                   SmartPsiFileRange psiFileRange,
+                   @Nullable SmartPsiFileRange psiFileRange,
                    boolean dynamicUsage,
                    boolean nonCodeUsage) {
     myDynamicUsage = dynamicUsage;
@@ -88,21 +88,13 @@ public class UsageInfo {
     mySmartPointer = smartPointer;
   }
 
-  @NotNull
-  public SmartPsiElementPointer<?> getSmartPointer() {
-    return mySmartPointer;
-  }
-
-  public SmartPsiFileRange getPsiFileRange() {
-    return myPsiFileRange;
-  }
-
-  public boolean isNonCodeUsage() {
-    return isNonCodeUsage;
-  }
-
-  public void setDynamicUsage(boolean dynamicUsage) {
-    myDynamicUsage = dynamicUsage;
+  // in case of find file by name, not by text inside. Since it can be a binary file, do not query for text offsets.
+  public UsageInfo(@NotNull PsiFile psiFile) {
+    Project project = psiFile.getProject();
+    SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
+    mySmartPointer = smartPointerManager.createSmartPsiElementPointer(psiFile);
+    myPsiFileRange = null;
+    isNonCodeUsage = true;
   }
 
   public UsageInfo(@NotNull PsiElement element, boolean isNonCodeUsage) {
@@ -124,6 +116,23 @@ public class UsageInfo {
 
   public UsageInfo(@NotNull PsiElement element) {
     this(element, false);
+  }
+
+  @NotNull
+  public SmartPsiElementPointer<?> getSmartPointer() {
+    return mySmartPointer;
+  }
+
+  public SmartPsiFileRange getPsiFileRange() {
+    return myPsiFileRange;
+  }
+
+  public boolean isNonCodeUsage() {
+    return isNonCodeUsage;
+  }
+
+  public void setDynamicUsage(boolean dynamicUsage) {
+    myDynamicUsage = dynamicUsage;
   }
 
   @Nullable
@@ -209,13 +218,18 @@ public class UsageInfo {
   }
 
   public boolean isValid() {
+    if (myPsiFileRange == null && getElement() instanceof PsiFile) {
+      return true; // in case of binary file
+    }
     return getSegment() != null;
   }
 
   @Nullable
   public Segment getSegment() {
     PsiElement element = getElement();
-    if (element == null) return null;
+    if (element == null
+        // in case of binary file
+        || myPsiFileRange == null && element instanceof PsiFile) return null;
     TextRange range = element.getTextRange();
     TextRange.assertProperRange(range, element);
     if (element instanceof PsiFile) {

@@ -510,6 +510,12 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
 
     @Override
     public Dimension getPreferredScrollableViewportSize() {
+      int rowCount = getVisibleRowCount();
+      int size = getModel().getSize();
+      if (rowCount < size) {
+        // Note: labeled separators are not counted in this branch
+        return super.getPreferredScrollableViewportSize();
+      }
       return new Dimension(super.getPreferredScrollableViewportSize().width, getPreferredSize().height);
     }
 
