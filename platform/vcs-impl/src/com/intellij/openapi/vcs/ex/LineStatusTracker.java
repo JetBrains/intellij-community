@@ -58,6 +58,7 @@ import static com.intellij.diff.util.DiffUtil.getLineCount;
  * @author irengrig
  *         author: lesya
  */
+@SuppressWarnings("MethodMayBeStatic")
 public class LineStatusTracker {
   public enum Mode {DEFAULT, SMART, SILENT}
 
@@ -126,11 +127,12 @@ public class LineStatusTracker {
         myVcsDocument.setReadOnly(false);
         myVcsDocument.setText(vcsContent);
         myVcsDocument.setReadOnly(true);
-        reinstallRanges();
       }
       finally {
         myInitialized = true;
       }
+
+      reinstallRanges();
     }
   }
 
@@ -145,13 +147,12 @@ public class LineStatusTracker {
       removeHighlightersFromMarkupModel();
       try {
         myRanges = new RangesBuilder(myDocument, myVcsDocument, myMode).getRanges();
+        for (final Range range : myRanges) {
+          createHighlighter(range);
+        }
       }
       catch (FilesTooBigForDiffException e) {
         installAnathema();
-        return;
-      }
-      for (final Range range : myRanges) {
-        range.setHighlighter(createHighlighter(range));
       }
     }
   }
@@ -193,14 +194,32 @@ public class LineStatusTracker {
     }
   }
 
-  @Nullable
   @CalledInAwt
-  private RangeHighlighter createHighlighter(@NotNull Range range) {
+  private void disposeHighlighter(@NotNull Range range) {
+    try {
+      range.invalidate();
+      RangeHighlighter highlighter = range.getHighlighter();
+      if (highlighter != null) {
+        range.setHighlighter(null);
+        highlighter.dispose();
+      }
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
+
+  @CalledInAwt
+  private void createHighlighter(@NotNull Range range) {
     myApplication.assertIsDispatchThread();
 
     LOG.assertTrue(!myReleased, "Already released");
+    if (range.getHighlighter() != null) {
+      LOG.error("Multiple highlighters registered for the same Range");
+      return;
+    }
 
-    if (myMode == Mode.SILENT) return null;
+    if (myMode == Mode.SILENT) return;
 
     int first =
       range.getLine1() >= getLineCount(myDocument) ? myDocument.getTextLength() : myDocument.getLineStartOffset(range.getLine1());
@@ -235,7 +254,8 @@ public class LineStatusTracker {
     }
 
     highlighter.setErrorStripeTooltip(tooltip);
-    return highlighter;
+
+    range.setHighlighter(highlighter);
   }
 
   public boolean isReleased() {
@@ -331,10 +351,7 @@ public class LineStatusTracker {
 
     synchronized (myLock) {
       for (Range range : myRanges) {
-        if (range.getHighlighter() != null) {
-          range.getHighlighter().dispose();
-        }
-        range.invalidate();
+        disposeHighlighter(range);
       }
       myRanges.clear();
     }
@@ -515,16 +532,17 @@ public class LineStatusTracker {
       shiftRanges(rangesAfter, linesShift);
 
       if (!changedRanges.equals(newChangedRanges)) {
-        replaceRanges(changedRanges, newChangedRanges);
-
         myRanges = new ArrayList<Range>(rangesBefore.size() + newChangedRanges.size() + rangesAfter.size());
 
         myRanges.addAll(rangesBefore);
         myRanges.addAll(newChangedRanges);
         myRanges.addAll(rangesAfter);
 
-        for (Range range : myRanges) {
-          if (!range.hasHighlighter()) range.setHighlighter(createHighlighter(range));
+        for (Range range : changedRanges) {
+          disposeHighlighter(range);
+        }
+        for (Range range : newChangedRanges) {
+          createHighlighter(range);
         }
 
         if (myRanges.isEmpty()) {
@@ -565,19 +583,6 @@ public class LineStatusTracker {
     List<String> vcsLines = new DocumentWrapper(myVcsDocument).getLines(vcsLine1, vcsLine2 - 1);
 
     return new RangesBuilder(lines, vcsLines, changedLine1, vcsLine1, myMode).getRanges();
-  }
-
-  private void replaceRanges(@NotNull List<Range> rangesInChange, @NotNull List<Range> newRangesInChange) {
-    for (Range range : rangesInChange) {
-      if (range.getHighlighter() != null) {
-        range.getHighlighter().dispose();
-      }
-      range.setHighlighter(null);
-      range.invalidate();
-    }
-    for (Range range : newRangesInChange) {
-      range.setHighlighter(createHighlighter(range));
-    }
   }
 
   private static void shiftRanges(@NotNull List<Range> rangesAfterChange, int shift) {
