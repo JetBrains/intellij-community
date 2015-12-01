@@ -273,6 +273,7 @@ public class GitImpl implements Git {
     else { // checkout reference as new branch
       h.addParameters("-b", newBranch, reference);
     }
+    h.endOptions();
     for (GitLineHandlerListener listener : listeners) {
       h.addLineListener(listener);
     }

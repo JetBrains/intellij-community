@@ -16,6 +16,8 @@
 package git4idea.branch;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -33,6 +35,7 @@ import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -54,6 +57,7 @@ class GitCheckoutOperation extends GitBranchOperation {
 
   @NotNull private final String myStartPointReference;
   private final boolean myDetach;
+  private final boolean myRefShouldBeValid;
   @Nullable private final String myNewBranch;
 
   GitCheckoutOperation(@NotNull Project project,
@@ -63,10 +67,12 @@ class GitCheckoutOperation extends GitBranchOperation {
                        @NotNull Collection<GitRepository> repositories,
                        @NotNull String startPointReference,
                        boolean detach,
+                       boolean refShouldBeValid,
                        @Nullable String newBranch) {
     super(project, facade, git, uiHandler, repositories);
     myStartPointReference = startPointReference;
     myDetach = detach;
+    myRefShouldBeValid = refShouldBeValid;
     myNewBranch = newBranch;
   }
   
@@ -83,11 +89,12 @@ class GitCheckoutOperation extends GitBranchOperation {
         GitLocalChangesWouldBeOverwrittenDetector localChangesDetector =
           new GitLocalChangesWouldBeOverwrittenDetector(root, GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT);
         GitSimpleEventDetector unmergedFiles = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED_PREVENTING_CHECKOUT);
+        GitSimpleEventDetector unknownPathspec = new GitSimpleEventDetector(GitSimpleEventDetector.Event.INVALID_REFERENCE);
         GitUntrackedFilesOverwrittenByOperationDetector untrackedOverwrittenByCheckout =
           new GitUntrackedFilesOverwrittenByOperationDetector(root);
 
         GitCommandResult result = myGit.checkout(repository, myStartPointReference, myNewBranch, false, myDetach,
-                                                 localChangesDetector, unmergedFiles, untrackedOverwrittenByCheckout);
+                                                 localChangesDetector, unmergedFiles, unknownPathspec, untrackedOverwrittenByCheckout);
         if (result.success()) {
           refresh(repository);
           markSuccessful(repository);
@@ -106,6 +113,9 @@ class GitCheckoutOperation extends GitBranchOperation {
           fatalUntrackedFilesError(repository.getRoot(), untrackedOverwrittenByCheckout.getRelativeFilePaths());
           fatalErrorHappened = true;
         }
+        else if (!myRefShouldBeValid && unknownPathspec.hasHappened()) {
+          markSkip(repository);
+        }
         else {
           fatalError(getCommonErrorTitle(), result.getErrorOutputAsJoinedString());
           fatalErrorHappened = true;
@@ -117,8 +127,23 @@ class GitCheckoutOperation extends GitBranchOperation {
     }
 
     if (!fatalErrorHappened) {
-      notifySuccess();
-      updateRecentBranch();
+      if (wereSuccessful()) {
+        if (!wereSkipped()) {
+          notifySuccess();
+          updateRecentBranch();
+        }
+        else {
+          String message = getSuccessMessage();
+          String mention = GitUtil.mention(getSuccessfulRepositories());
+          VcsNotifier.getInstance(myProject).notifySuccess("", message + mention + " <a href='rollback'>Rollback</a>",
+                                                           new RollbackOperationNotificationListener());
+          updateRecentBranch();
+        }
+      }
+      else {
+        LOG.assertTrue(!myRefShouldBeValid);
+        notifyError("Couldn't checkout " + myStartPointReference, "Revision doesn't exist");
+      }
     }
   }
 
@@ -259,6 +284,16 @@ class GitCheckoutOperation extends GitBranchOperation {
       // repository state will be auto-updated with this VFS refresh => in general there is no need to call GitRepository#update()
       // but to avoid problems of the asynchronous refresh, let's force update the repository info.
       repository.update();
+    }
+  }
+
+  private class RollbackOperationNotificationListener implements NotificationListener {
+    @Override
+    public void hyperlinkUpdate(@NotNull Notification notification,
+                                @NotNull HyperlinkEvent event) {
+      if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equalsIgnoreCase("rollback")) {
+        rollback();
+      }
     }
   }
 }
