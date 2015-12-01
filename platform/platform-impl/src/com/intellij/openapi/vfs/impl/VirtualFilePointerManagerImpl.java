@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
@@ -431,7 +432,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
         }
         else if (event instanceof VFilePropertyChangeEvent) {
           final VFilePropertyChangeEvent change = (VFilePropertyChangeEvent)event;
-          if (VirtualFile.PROP_NAME.equals(change.getPropertyName())) {
+          if (VirtualFile.PROP_NAME.equals(change.getPropertyName())
+              && event.getRequestor() != FileContentUtilCore.FORCE_RELOAD_REQUESTOR) {
             VirtualFile eventFile = change.getFile();
             VirtualFile parent = eventFile.getParent(); // e.g. for LightVirtualFiles
             addPointersUnder(parent, true, change.getNewValue().toString(), toFireEvents);
