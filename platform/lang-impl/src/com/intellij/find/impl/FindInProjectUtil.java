@@ -247,7 +247,7 @@ public class FindInProjectUtil {
       if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
               @Override
               public Boolean compute() {
-                return consumer.process(new UsageInfo(psiFile,0,0,true));
+                return consumer.process(new UsageInfo(psiFile));
               }
             })) {
         throw new ProcessCanceledException();
