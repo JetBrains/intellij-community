@@ -26,7 +26,8 @@ target(compile: "Compile project") {
     fileset(dir: "$home/bin", includes: "*.hprof")
   }
 
-  print ("Deleting tmp dir "+p("java.io.tmpdir"))
+  def countTemp = new File(p("java.io.tmpdir")).list().length
+  print ("Deleting tmp dir "+p("java.io.tmpdir") + " ("+countTemp+" files)")
   ant.delete(failonerror: false) {
     fileset(dir: p("java.io.tmpdir"), includes: "*")
   }
