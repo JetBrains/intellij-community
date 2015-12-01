@@ -749,11 +749,12 @@ public class TypeConversionUtil {
       return false;
     }
 
-    if (left instanceof PsiCapturedWildcardType) {
-      return left.equals(right) || isAssignable(((PsiCapturedWildcardType)left).getLowerBound(), right, allowUncheckedConversion);
-    }
     if (right instanceof PsiCapturedWildcardType) {
       return isAssignable(left, ((PsiCapturedWildcardType)right).getUpperBound(), allowUncheckedConversion);
+    }
+
+    if (left instanceof PsiCapturedWildcardType) {
+      return left.equals(right) || isAssignable(((PsiCapturedWildcardType)left).getLowerBound(), right, allowUncheckedConversion);
     }
 
     if (left instanceof PsiWildcardType) {

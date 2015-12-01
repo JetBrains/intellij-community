@@ -124,7 +124,7 @@ public class ArrangementEntryWrapper<E extends ArrangementEntry> {
     CharSequence text = document.getCharsSequence();
     for (int current = getStartOffset() - 1; current >= 0; current--) {
       current = CharArrayUtil.shiftBackward(text, current, " \t");
-      if (text.charAt(current) == '\n') lineFeeds++;
+      if (current > 0 && text.charAt(current) == '\n') lineFeeds++;
       else break;
     }
     if (lineFeeds > 0) myBlankLinesBefore = lineFeeds - 1;
