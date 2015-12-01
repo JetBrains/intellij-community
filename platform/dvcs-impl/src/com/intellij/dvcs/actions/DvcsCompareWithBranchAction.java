@@ -203,7 +203,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
     }.queue();
   }
 
-  private static String fileDoesntExistInBranchError(@NotNull VirtualFile file, @NotNull String branchToCompare) {
+  public static String fileDoesntExistInBranchError(@NotNull VirtualFile file, @NotNull String branchToCompare) {
     return String.format("%s <code>%s</code> doesn't exist in branch <code>%s</code>",
                          DvcsUtil.fileOrFolder(file), file.getPresentableUrl(),
                          branchToCompare);

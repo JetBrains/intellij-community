@@ -28,6 +28,7 @@ import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
+import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -93,6 +94,11 @@ public class GitCompareWithBranchAction extends DvcsCompareWithBranchAction<GitR
     GitRevisionNumber compareRevisionNumber = new GitRevisionNumber(branchToCompare);
     Collection<Change> changes =
       GitChangeUtils.getDiffWithWorkingDir(project, gitRepositoryRoot, branchToCompare, Collections.singletonList(filePath), false);
+    // if git returned no changes we need to check that file exist in compareWith branch to avoid this error in diff dialog
+    // a.e. when you perform compareWith for unversioned file
+    if (changes.isEmpty() && GitHistoryUtils.getCurrentRevision(project, filePath, branchToCompare) == null) {
+      throw new VcsException(fileDoesntExistInBranchError(file, branchToCompare));
+    }
     return changes.isEmpty() && !filePath.isDirectory() ? createChangesWithCurrentContentForFile(filePath, GitContentRevision
       .createRevision(filePath, compareRevisionNumber, project, null)) : changes;
   }
