@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,18 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.util.text.StringUtilRt;
+
 public class Base64 {
-  private Base64() {
-  }
+  private Base64() { }
 
   public static String encode(byte[] bytes) {
     return encode(bytes, 0, bytes.length);
   }
 
   public static String encode(byte[] bytes, int offset, int length) {
+    if (length == 0) return StringUtilRt.EMPTY_STRING;
+
     StringBuilder builder = new StringBuilder();
     for (int i = offset; i < length; i += 3) {
       builder.append(encodeBlock(bytes, i));
@@ -59,7 +62,8 @@ public class Base64 {
   }
 
   public static byte[] decode(String s) {
-    if (s.length() == 0) return new byte[0];
+    if (s.length() == 0) return ArrayUtilRt.EMPTY_BYTE_ARRAY;
+
     int i = 0;
     for (int j = s.length() - 1; j > 0 && s.charAt(j) == '='; j--) {
       i++;

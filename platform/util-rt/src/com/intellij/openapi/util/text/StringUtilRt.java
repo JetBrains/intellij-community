@@ -28,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
  */
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class StringUtilRt {
+  public static final String EMPTY_STRING = "";
+
   @Contract(pure = true)
   public static boolean charsEqualIgnoreCase(char a, char b) {
     return a == b || toUpperCase(a) == toUpperCase(b) || toLowerCase(a) == toLowerCase(b);
