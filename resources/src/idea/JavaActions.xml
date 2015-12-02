@@ -209,8 +209,6 @@
       <action id="Debugger.AddSteppingFilter" class="com.intellij.debugger.actions.AddSteppingFilterAction" text="Add Stepping Filter...">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
       </action>
-
-      <add-to-group group-id="DebuggerActions" anchor="first"/>
     </group>
 
     <group id="Debugger.Representation">
