@@ -26,7 +26,6 @@ import javax.net.ssl.*;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.nio.charset.Charset;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -73,7 +72,7 @@ public class SslSocketFactory extends SSLSocketFactory {
     String[] tokens = string.split(END_CERTIFICATE);
     List<TrustManager> result = ContainerUtilRt.newArrayListWithCapacity(tokens.length);
     for (String token : tokens) {
-      if (token == null || token.trim().isEmpty()) continue;
+      if (token == null || token.trim().length() == 0) continue;
       result.add(new MyTrustManager(readCertificate(stringStream(token + END_CERTIFICATE))));
     }
     return new TrustManager[]{new CompositeX509TrustManager(result.toArray(new TrustManager[result.size()]))};
@@ -81,7 +80,12 @@ public class SslSocketFactory extends SSLSocketFactory {
 
   @NotNull
   public static InputStream stringStream(@NotNull String str) {
-    return new ByteArrayInputStream(str.getBytes(Charset.forName("UTF-8")));
+    try {
+      return new ByteArrayInputStream(str.getBytes("UTF-8"));
+    }
+    catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @NotNull
