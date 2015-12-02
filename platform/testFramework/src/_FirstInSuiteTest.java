@@ -15,10 +15,12 @@
  */
 
 import com.intellij.TestAll;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.testFramework.TestRunnerUtil;
 import junit.framework.TestCase;
 
 import javax.swing.*;
+import java.io.File;
 import java.nio.charset.Charset;
 import java.util.List;
 
@@ -71,6 +73,9 @@ public class _FirstInSuiteTest extends TestCase {
 
     // force platform JNA load
     Class.forName("com.sun.jna.Native");
+
+    String tempDirectory = FileUtilRt.getTempDirectory();
+    System.out.println("FileUtil.getTempDirectory() = " + tempDirectory + " ("+new File(tempDirectory).list().length+" files)");
   }
 
   // performance tests

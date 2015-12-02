@@ -26,12 +26,6 @@ target(compile: "Compile project") {
     fileset(dir: "$home/bin", includes: "*.hprof")
   }
 
-  def countTemp = new File(p("java.io.tmpdir")).list().length
-  print ("Deleting tmp dir "+p("java.io.tmpdir") + " ("+countTemp+" files)")
-  ant.delete(failonerror: false) {
-    fileset(dir: p("java.io.tmpdir"), includes: "*")
-  }
-
   loadProject()
   prepareOutputFolder()
 
@@ -74,9 +68,12 @@ target('run_tests': 'Run java tests') {
       "idea.test.patterns",
       "idea.fast.only",
       "idea.coverage.enabled.build",
-      "teamcity.build.tempDir",
       "teamcity.tests.recentlyFailedTests.file"
     ].each { pass(jvmArgs, it) }
+
+    def tempDir = p("teamcity.build.tempDir", p("java.io.tmpdir"))
+    jvmArgs << "-Djava.io.tmpdir=${tempDir}"
+    jvmArgs << "-Dteamcity.build.tempDir=${tempDir}"
 
     System.getProperties().entrySet().each {
       if (it.key.startsWith("pass.")) {
