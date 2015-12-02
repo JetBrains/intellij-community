@@ -148,16 +148,17 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
       PyDictLiteralExpression dictLiteralExpression = PsiTreeUtil.getChildOfAnyType(args[0], PyDictLiteralExpression.class);
       if (dictLiteralExpression != null) {
         for (PyKeyValueExpression keyValueExpression : dictLiteralExpression.getElements()) {
-          PyStringLiteralExpression key = (PyStringLiteralExpression)keyValueExpression.getKey();
-          if (key.getStringValue().equals(myChunk.getMappingKey())) {
-            return keyValueExpression.getKey();
+          if (keyValueExpression.getKey() instanceof PyStringLiteralExpression) {
+            PyStringLiteralExpression key = (PyStringLiteralExpression)keyValueExpression.getKey();
+            if (key.getStringValue().equals(myChunk.getMappingKey())) {
+              return key;
+            }
           }
         }
       }
     }
     return null;
   }
-
   @NotNull
   @Override
   public Object[] getVariants() {
