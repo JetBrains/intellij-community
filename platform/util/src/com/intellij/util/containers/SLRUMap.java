@@ -141,15 +141,19 @@ public class SLRUMap<K,V> {
   }
 
   public void clear() {
-    for (Map.Entry<K, V> entry : myProtectedQueue.entrySet()) {
-      onDropFromCache(entry.getKey(), entry.getValue());
+    if (!myProtectedQueue.isEmpty()) {
+      for (Map.Entry<K, V> entry : myProtectedQueue.entrySet()) {
+        onDropFromCache(entry.getKey(), entry.getValue());
+      }
+      myProtectedQueue.clear();
     }
-    myProtectedQueue.clear();
 
-    for (Map.Entry<K, V> entry : myProbationalQueue.entrySet()) {
-      onDropFromCache(entry.getKey(), entry.getValue());
+    if (!myProbationalQueue.isEmpty()) {
+      for (Map.Entry<K, V> entry : myProbationalQueue.entrySet()) {
+        onDropFromCache(entry.getKey(), entry.getValue());
+      }
+      myProbationalQueue.clear();
     }
-    myProbationalQueue.clear();
   }
 
   protected K getStableKey(K key) {
