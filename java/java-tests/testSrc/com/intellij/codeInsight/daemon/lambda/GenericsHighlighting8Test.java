@@ -28,6 +28,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+//javac option to dump bounds: -XDdumpInferenceGraphsTo=
 public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/genericsHighlighting8";
 
