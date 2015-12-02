@@ -21,7 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -32,7 +31,8 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   private final int myPosition;
   private final PyStringFormatParser.SubstitutionChunk myChunk;
 
-  public PySubstitutionChunkReference(@NotNull final PyStringLiteralExpression element, @NotNull final PyStringFormatParser.SubstitutionChunk chunk, final int position) {
+  public PySubstitutionChunkReference(@NotNull final PyStringLiteralExpression element,
+                                      @NotNull final PyStringFormatParser.SubstitutionChunk chunk, final int position) {
     super(element, getKeyWordRange(element, chunk));
     myChunk = chunk;
     myPosition = position;
@@ -49,7 +49,8 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
     return null;
   }
 
-  private static TextRange getKeyWordRange(@NotNull final PyStringLiteralExpression element, @NotNull final PyStringFormatParser.SubstitutionChunk chunk) {
+  private static TextRange getKeyWordRange(@NotNull final PyStringLiteralExpression element,
+                                           @NotNull final PyStringFormatParser.SubstitutionChunk chunk) {
     final TextRange shifted = chunk.getTextRange().shiftRight(1);
     if (chunk.getMappingKey() != null) {
       final int start = shifted.getStartOffset() + chunk.getTextRange().substring(element.getStringValue()).indexOf(chunk.getMappingKey());
@@ -75,8 +76,13 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
       final PyExpression[] arguments = argumentList.getArguments();
       if (myChunk.getMappingKey() != null) {
         final PyKeywordArgument argument = argumentList.getKeywordArgument(myChunk.getMappingKey());
-        final PyExpression subStarExpression = getSubStarExpression(arguments);
-        return ObjectUtils.chooseNotNull(argument, subStarExpression);
+        final PyExpression underStarExpression = getUnderStarExpression(arguments);
+        if (argument != null) {
+          return argument;
+        }
+        else {
+          return underStarExpression;
+        }
       }
       else {
         final int position = myChunk.getPosition() == null ? myPosition : myChunk.getPosition();
@@ -137,9 +143,17 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   }
 
   @Nullable
-  private static PyExpression getSubStarExpression(@NotNull final PyExpression[] args) {
+  private PyExpression getUnderStarExpression(@NotNull final PyExpression[] args) {
     if (args.length == 1 && args[0] instanceof PyStarArgument) {
-      return PsiTreeUtil.getChildOfAnyType(args[0], PyDictLiteralExpression.class, PyReferenceExpression.class);
+      PyDictLiteralExpression dictLiteralExpression = PsiTreeUtil.getChildOfAnyType(args[0], PyDictLiteralExpression.class);
+      if (dictLiteralExpression != null) {
+        for (PyKeyValueExpression keyValueExpression : dictLiteralExpression.getElements()) {
+          PyStringLiteralExpression key = (PyStringLiteralExpression)keyValueExpression.getKey();
+          if (key.getStringValue().equals(myChunk.getMappingKey())) {
+            return keyValueExpression.getKey();
+          }
+        }
+      }
     }
     return null;
   }
