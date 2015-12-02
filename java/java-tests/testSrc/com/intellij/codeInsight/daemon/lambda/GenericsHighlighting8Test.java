@@ -902,4 +902,8 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA139156() throws Exception {
     doTest();
   }
+
+  public void testIDEA139169() throws Exception {
+    doTest();
+  }
 }
