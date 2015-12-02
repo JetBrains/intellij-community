@@ -294,7 +294,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
       if (expressionType.equals(expectedType)) {
         return;
       }
-      if (ignoreWideningConversions && TypeUtils.isNarrowingConversion(expressionType, expectedType)) {
+      if (ignoreWideningConversions && !TypeUtils.isNarrowingConversion(expressionType, expectedType)) {
         return;
       }
       if (ignoreCharConversions && PsiType.CHAR.equals(expectedType)) {
