@@ -28,7 +28,6 @@ import org.jetbrains.io.JsonUtil
 import java.io.IOException
 
 open class OutMessage() {
-  // todo don't want to risk - are we really can release it properly? heap buffer for now
   val buffer: ByteBuf = ByteBufAllocator.DEFAULT.heapBuffer()
   @JvmField
   val writer = JsonWriter(ByteBufUtf8Writer(buffer))
