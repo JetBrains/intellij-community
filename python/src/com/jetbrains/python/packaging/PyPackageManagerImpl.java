@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -477,6 +477,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       PythonEnvUtil.setPythonUnbuffered(environment);
       PythonEnvUtil.setPythonDontWriteBytecode(environment);
       final GeneralCommandLine commandLine = new GeneralCommandLine(cmdline).withWorkDirectory(workingDir).withEnvironment(environment);
+      Process process;
       if (useSudo) {
         process = ExecUtil.sudo(commandLine, "Please enter your password to make changes in system packages: ");
       }
