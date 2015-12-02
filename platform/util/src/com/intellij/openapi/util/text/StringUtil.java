@@ -790,6 +790,9 @@ public class StringUtil extends StringUtilRt {
     if (suggestion.equals("This")) {
       return "These";
     }
+    if (suggestion.equals("fix") || suggestion.equals("Fix")) {
+      return suggestion + "es";
+    }
 
     if (endsWithIgnoreCase(suggestion, "es")) {
       return suggestion;
