@@ -1646,7 +1646,10 @@ public class FormatProcessor {
 
     private void restoreAlignments(MultiMap<Alignment, LeafBlockWrapper> blocks) {
       for (Alignment alignment : blocks.keySet()) {
-        Set<LeafBlockWrapper> toRealign = ((AlignmentImpl)alignment).getAllBlocks();
+        AlignmentImpl alignmentImpl = (AlignmentImpl)alignment;
+        if (!alignmentImpl.isAllowBackwardShift()) continue;
+        
+        Set<LeafBlockWrapper> toRealign = alignmentImpl.getAllBlocks();
         arrangeSpaces(toRealign);
         
         LeafBlockWrapper rightMostBlock = getRightMostBlock(toRealign);

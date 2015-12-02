@@ -126,6 +126,35 @@ public class JavaFormatterMultilineMethodCallParamsTest extends AbstractJavaForm
       ");\n"
     );
   }
+  
+  public void testMethodBracketsAlignment() {
+    getSettings().ALIGN_MULTILINE_METHOD_BRACKETS = true;
+    doTextTest(
+      "public class Foo {\n"                                                +
+      "  private IntPredicate example1() {\n"                               +
+      "    return Boo.combine(Boo.p1(),\n"                                  +
+      "                       Boo.p2());\n"                                 +
+      "  }\n"                                                               +
+      "  \n"                                                                +
+      "  private boolean example2() {\n"                                    +
+      "    return IntStream.range(0, 4).allMatch(Boo.combine(Boo.p1(),\n"   +
+      "                                                      Boo.p2()));\n" +
+      "  }\n"                                                               +
+      "}", 
+      "public class Foo {\n"                                                  +
+      "    private IntPredicate example1() {\n"                               +
+      "        return Boo.combine(Boo.p1(),\n"                                +
+      "                Boo.p2());\n"                                          +
+      "    }\n"                                                               +
+      "\n"                                                                  +
+      "    private boolean example2() {\n"                                    +
+      "        return IntStream.range(0, 4).allMatch(Boo.combine(Boo.p1(),\n" +
+      "                Boo.p2()));\n" +
+      "    }\n"                                                               +
+      "}"
+    );
+  }
+  
 
 
 }
