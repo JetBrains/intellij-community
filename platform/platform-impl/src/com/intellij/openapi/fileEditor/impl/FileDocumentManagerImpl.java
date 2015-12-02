@@ -93,7 +93,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   private static final Key<Boolean> MUST_RECOMPUTE_FILE_TYPE = Key.create("Must recompute file type");
 
   private final Set<Document> myUnsavedDocuments = ContainerUtil.newConcurrentSet();
-  private final DocumentCacheStrategy myDocumentCacheStrategy;
 
   private final MessageBus myBus;
 
@@ -104,8 +103,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   private boolean myOnClose;
 
   public FileDocumentManagerImpl(@NotNull VirtualFileManager virtualFileManager, @NotNull ProjectManager projectManager) {
-    myDocumentCacheStrategy = createDocumentCacheStrategy();
-
     virtualFileManager.addVirtualFileListener(this);
     projectManager.addProjectManagerListener(this);
 
@@ -187,8 +184,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
         document.setReadOnly(!file.isWritable() || fileType.isBinary());
         if (file instanceof LightVirtualFile) {
           registerDocument(document, file);
-        } else {
-          myDocumentCacheStrategy.putDocument(file, document);
+        }
+        else {
+          cacheDocument(file, document);
           document.putUserData(FILE_KEY, file);
         }
 
@@ -235,25 +233,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     return ((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(text, acceptSlashR, false);
   }
 
-
-  // used in Upsource
-  protected interface DocumentCacheStrategy {
-    @Nullable Document getDocument (@NotNull VirtualFile file);
-    void putDocument (@NotNull VirtualFile file, @NotNull Document document);
-    void invalidateDocument (@NotNull VirtualFile file);
-  }
-
-  // used in Upsource
-  @NotNull
-  protected DocumentCacheStrategy createDocumentCacheStrategy() {
-    return new MyDocumentCacheStrategy();
-  }
-
   @Override
   @Nullable
   public Document getCachedDocument(@NotNull VirtualFile file) {
     Document hard = file.getUserData(HARD_REF_TO_DOCUMENT_KEY);
-    return hard != null ? hard : myDocumentCacheStrategy.getDocument(file);
+    return hard != null ? hard : getDocumentFromCache(file);
   }
 
   public static void registerDocument(@NotNull final Document document, @NotNull VirtualFile virtualFile) {
@@ -583,7 +567,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   }
 
   private void unbindFileFromDocument(@NotNull VirtualFile file, @NotNull Document document) {
-    myDocumentCacheStrategy.invalidateDocument(file);
+    removeDocumentFromCache(file);
     file.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
     document.putUserData(FILE_KEY, null);
   }
@@ -900,23 +884,19 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     }
   }
 
-  private static class MyDocumentCacheStrategy implements DocumentCacheStrategy {
-    private final Map<VirtualFile, Document> myDocuments = ContainerUtil.createConcurrentWeakValueMap();
+  private final Map<VirtualFile, Document> myDocumentCache = ContainerUtil.createConcurrentWeakValueMap();
+  // used in Upsource
+  protected void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {
+    myDocumentCache.put(file, document);
+  }
 
-    @Nullable
-    @Override
-    public Document getDocument(@NotNull VirtualFile file) {
-      return myDocuments.get(file);
-    }
+  // used in Upsource
+  protected void removeDocumentFromCache(@NotNull VirtualFile file) {
+    myDocumentCache.remove(file);
+  }
 
-    @Override
-    public void putDocument(@NotNull VirtualFile file, @NotNull Document document) {
-      myDocuments.put(file, document);
-    }
-
-    @Override
-    public void invalidateDocument(@NotNull VirtualFile file) {
-      myDocuments.remove(file);
-    }
+  // used in Upsource
+  protected Document getDocumentFromCache(@NotNull VirtualFile file) {
+    return myDocumentCache.get(file);
   }
 }
