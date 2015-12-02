@@ -36,10 +36,7 @@ import com.intellij.util.NullableConsumer;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
-import com.jetbrains.python.sdk.PyDetectedSdk;
-import com.jetbrains.python.sdk.PySdkService;
-import com.jetbrains.python.sdk.PythonSdkAdditionalData;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +65,7 @@ public class GenerateProjectCallback implements NullableConsumer<ProjectSettings
       PySdkService.getInstance().solidifySdk(sdk);
       sdk = SdkConfigurationUtil.createAndAddSDK(sdkHome.getPath(), PythonSdkType.getInstance());
       if (sdk != null) {
-        PythonSdkType.getInstance().setupSdkPathsImmediately(sdk, project);
+        PythonSdkUpdater.updateOrShowError(sdk, null, project, null);
       }
 
       model.addSdk(sdk);
