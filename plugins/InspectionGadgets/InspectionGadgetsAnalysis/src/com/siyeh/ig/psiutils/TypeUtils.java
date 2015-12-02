@@ -66,10 +66,13 @@ public class TypeUtils {
     return getType(CommonClassNames.JAVA_LANG_STRING, context);
   }
 
-  public static boolean isNarrowingConversion(@NotNull PsiType operandType, @NotNull PsiType castType) {
-    final Integer operandPrecision = typePrecisions.get(operandType);
-    final Integer castPrecision = typePrecisions.get(castType);
-    return operandPrecision != null && castPrecision != null && operandPrecision.intValue() > castPrecision.intValue();
+  /**
+   * JLS 5.1.3. Narrowing Primitive Conversion
+   */
+  public static boolean isNarrowingConversion(@Nullable PsiType sourceType, @Nullable PsiType targetType) {
+    final Integer sourcePrecision = typePrecisions.get(sourceType);
+    final Integer targetPrecision = typePrecisions.get(targetType);
+    return sourcePrecision != null && targetPrecision != null && targetPrecision.intValue() < sourcePrecision.intValue();
   }
 
   public static boolean isJavaLangObject(@Nullable PsiType targetType) {

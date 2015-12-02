@@ -24,6 +24,7 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
@@ -80,7 +81,7 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
     if (switchExpression == null) {
       return;
     }
-    final PsiType switchExpressionType = switchExpression.getType();
+    final PsiType switchExpressionType = RefactoringUtil.getTypeByExpressionWithExpectedType(switchExpression);
     if (switchExpressionType == null) {
       return;
     }
@@ -110,10 +111,7 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
           "i", switchExpression, true);
       }
       expressionText = variableName;
-      declarationString =
-        switchExpressionType.getPresentableText() + ' ' +
-        variableName + " = " +
-        switchExpression.getText() + ';';
+      declarationString = switchExpressionType.getCanonicalText() + ' ' + variableName + " = " + switchExpression.getText() + ';';
     }
     else {
       hadSideEffects = false;
@@ -334,7 +332,7 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
     for (PsiLocalVariable variable : variables) {
       if (ReferencesSearch.search(variable, new LocalSearchScope(bodyStatements.toArray(new PsiElement[bodyStatements.size()]))).findFirst() != null) {
         final PsiType varType = variable.getType();
-        ifStatementString.append(varType.getPresentableText());
+        ifStatementString.append(varType.getCanonicalText());
         ifStatementString.append(' ');
         ifStatementString.append(variable.getName());
         ifStatementString.append(';');

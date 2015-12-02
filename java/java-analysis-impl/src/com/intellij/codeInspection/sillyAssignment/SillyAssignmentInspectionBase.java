@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -124,13 +125,20 @@ public class SillyAssignmentInspectionBase extends BaseJavaBatchLocalInspectionT
   private static PsiExpression deparenthesizeRExpr(PsiExpression rExpression, PsiVariable variable) {
     rExpression = PsiUtil.skipParenthesizedExprDown(rExpression);
     if (rExpression instanceof PsiTypeCastExpression) {
-      final PsiTypeElement castTypeElement = ((PsiTypeCastExpression)rExpression).getCastType();
-      if (castTypeElement != null &&
-          castTypeElement.getType() instanceof PsiPrimitiveType &&
-          variable.getType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-        return rExpression;
+      final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)rExpression;
+      final PsiExpression operand = typeCastExpression.getOperand();
+      final PsiTypeElement castTypeElement = typeCastExpression.getCastType();
+      if (castTypeElement == null || operand == null) return null;
+      final PsiType castType = castTypeElement.getType();
+      if (castType instanceof PsiPrimitiveType) {
+        if (variable.getType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+          return rExpression;
+        }
+        else if (TypeUtils.isNarrowingConversion(operand.getType(), castType)) {
+          return null;
+        }
       }
-      return PsiUtil.deparenthesizeExpression(rExpression);
+      return deparenthesizeRExpr(operand, variable);
     }
     return rExpression;
   }

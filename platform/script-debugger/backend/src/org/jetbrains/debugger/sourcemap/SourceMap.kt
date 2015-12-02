@@ -22,17 +22,14 @@ import com.intellij.util.Url
 // sources - is not originally specified, but canonicalized/normalized
 class SourceMap(val outFile: String?, val mappings: MappingList, internal val sourceIndexToMappings: Array<MappingList?>, val sourceResolver: SourceResolver, val hasNameMappings: Boolean) {
   val sources: Array<Url>
-    get() = sourceResolver.canonicalizedSources
+    get() = sourceResolver.canonicalizedUrls
 
   fun getSourceLineByRawLocation(rawLine: Int, rawColumn: Int) = mappings.get(rawLine, rawColumn)?.sourceLine ?: -1
 
   fun findMappingList(sourceUrls: List<Url>, sourceFile: VirtualFile?, resolver: NullableLazyValue<SourceResolver.Resolver>?): MappingList? {
     var mappings = sourceResolver.findMappings(sourceUrls, this, sourceFile)
     if (mappings == null && resolver != null) {
-      val resolverValue = resolver.value
-      if (resolverValue != null) {
-        mappings = sourceResolver.findMappings(sourceFile, this, resolverValue)
-      }
+      mappings = resolver.value?.let { sourceResolver.findMappings(sourceFile, this, it) }
     }
     return mappings
   }
