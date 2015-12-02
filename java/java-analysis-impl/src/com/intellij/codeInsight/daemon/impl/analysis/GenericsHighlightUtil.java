@@ -360,11 +360,8 @@ public class GenericsHighlightUtil {
                                                                  Map<PsiClass, PsiSubstitutor> inheritedClasses,
                                                                  Set<PsiClass> visited,
                                                                  TextRange textRange) {
-    final PsiClassType[] superTypes = aClass.getSuperTypes();
-    for (PsiClassType superType : superTypes) {
-      superType = PsiClassImplUtil.correctType(superType, place.getResolveScope());
-      if (superType == null) continue;
-      final PsiClassType.ClassResolveResult result = ((PsiClassType)PsiUtil.captureToplevelWildcards(superType, place)).resolveGenerics();
+    final List<PsiClassType.ClassResolveResult> superTypes = PsiClassImplUtil.getScopeCorrectedSuperTypes(aClass, place.getResolveScope());
+    for (PsiClassType.ClassResolveResult result : superTypes) {
       final PsiClass superClass = result.getElement();
       if (superClass == null || visited.contains(superClass)) continue;
       PsiSubstitutor superTypeSubstitutor = result.getSubstitutor();

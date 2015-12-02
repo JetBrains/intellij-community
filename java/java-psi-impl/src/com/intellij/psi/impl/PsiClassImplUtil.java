@@ -732,7 +732,7 @@ public class PsiClassImplUtil {
     return new TypeCorrector(resolveScope).correctType(originalType);
   }
 
-  private static List<PsiClassType.ClassResolveResult> getScopeCorrectedSuperTypes(final PsiClass aClass, GlobalSearchScope resolveScope) {
+  public static List<PsiClassType.ClassResolveResult> getScopeCorrectedSuperTypes(final PsiClass aClass, GlobalSearchScope resolveScope) {
     Map<GlobalSearchScope, List<PsiClassType.ClassResolveResult>> cache =
       CachedValuesManager.getCachedValue(aClass, new CachedValueProvider<Map<GlobalSearchScope, List<PsiClassType.ClassResolveResult>>>() {
         @Nullable
