@@ -20,7 +20,6 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 
 import java.util.HashSet;
@@ -78,9 +77,16 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
       return true;
     }
     if (myT instanceof PsiArrayType) {
-      if (!(myS instanceof PsiArrayType)) return false; //todo most specific array supertype
+      PsiType sType = myS;
+      if (myS instanceof PsiCapturedWildcardType) {
+        final PsiType upperBound = ((PsiCapturedWildcardType)myS).getUpperBound();
+        if (upperBound instanceof PsiArrayType) {
+          sType = upperBound;
+        }
+      }
+      if (!(sType instanceof PsiArrayType)) return false; //todo most specific array supertype
       final PsiType tComponentType = ((PsiArrayType)myT).getComponentType();
-      final PsiType sComponentType = ((PsiArrayType)myS).getComponentType();
+      final PsiType sComponentType = ((PsiArrayType)sType).getComponentType();
       if (!(tComponentType instanceof PsiPrimitiveType) && !(sComponentType instanceof PsiPrimitiveType)) {
         constraints.add(new StrictSubtypingConstraint(tComponentType, sComponentType));
         return true;
