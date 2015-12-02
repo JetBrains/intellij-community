@@ -51,13 +51,13 @@ public class BaseQuoteHandler extends SimpleTokenSetQuoteHandler implements Mult
     boolean mayBeTripleQuote = offset + 4 >= text.length() || Arrays.binarySearch(ourAutoClosingChars, text.charAt(offset + 4)) >= 0;
 
     if (mayBeTripleQuote) {
-      char the_quote = text.charAt(offset);
+      char theQuote = text.charAt(offset);
       // if we're next to two same quotes, auto-close triple quote
       if (
         offset >= 2 &&
-        text.charAt(offset - 1) == the_quote &&
-        text.charAt(offset - 2) == the_quote &&
-        (offset < 3 || text.charAt(offset - 3) != the_quote)
+        text.charAt(offset - 1) == theQuote &&
+        text.charAt(offset - 2) == theQuote &&
+        (offset < 3 || text.charAt(offset - 3) != theQuote)
         ) {
         return true;
       }
@@ -92,13 +92,13 @@ public class BaseQuoteHandler extends SimpleTokenSetQuoteHandler implements Mult
   protected boolean isNonClosedLiteral(HighlighterIterator iterator, CharSequence chars) {
     int end = iterator.getEnd();
     if (getLiteralStartOffset(chars, iterator.getStart()) >= end - 1) return true;
-    char end_symbol = chars.charAt(end - 1);
-    if (end_symbol != '"' && end_symbol != '\'') return true;
+    char endSymbol = chars.charAt(end - 1);
+    if (endSymbol != '"' && endSymbol != '\'') return true;
 
     //for triple quoted string
     if (end >= 3 &&
-        (end_symbol == chars.charAt(end - 2)) && (chars.charAt(end - 2) == chars.charAt(end - 3)) &&
-        (end < 4 || chars.charAt(end - 4) != end_symbol)) {
+        (endSymbol == chars.charAt(end - 2)) && (chars.charAt(end - 2) == chars.charAt(end - 3)) &&
+        (end < 4 || chars.charAt(end - 4) != endSymbol)) {
       return true;
     }
 
