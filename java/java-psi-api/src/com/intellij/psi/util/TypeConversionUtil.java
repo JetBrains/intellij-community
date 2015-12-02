@@ -1026,11 +1026,6 @@ public class TypeConversionUtil {
     }
   }
 
-  //todo delete
-  public static boolean containsWildcards(@NotNull PsiType leftBound) {
-    return leftBound.accept(new WildcardDetector());
-  }
-
   @Nullable
   public static PsiSubstitutor getClassSubstitutor(@NotNull PsiClass superClassCandidate,
                                                    @NotNull PsiClass derivedClassCandidate,
@@ -1849,45 +1844,5 @@ public class TypeConversionUtil {
 
   private static PsiType wrapperToPrimitive(@NotNull Object o) {
     return WRAPPER_TO_PRIMITIVE.get(o.getClass());
-  }
-
-  private static class WildcardDetector extends PsiTypeVisitor<Boolean> {
-    @Override
-    public Boolean visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
-      return true;
-    }
-
-    @Override
-    public Boolean visitWildcardType(PsiWildcardType wildcardType) {
-      return true;
-    }
-
-    @Override
-    public Boolean visitClassType(PsiClassType classType) {
-      final PsiType[] parameters = classType.getParameters();
-      for (PsiType parameter : parameters) {
-        if (parameter.accept(this)) return true;
-      }
-      return super.visitClassType(classType);
-    }
-
-    @Override
-    public Boolean visitArrayType(PsiArrayType arrayType) {
-      return arrayType.getComponentType().accept(this);
-    }
-
-    @Nullable
-    @Override
-    public Boolean visitIntersectionType(PsiIntersectionType intersectionType) {
-      for (PsiType psiType : intersectionType.getConjuncts()) {
-        if (psiType.accept(this)) return true;
-      }
-      return false;
-    }
-
-    @Override
-    public Boolean visitType(PsiType type) {
-      return false;
-    }
   }
 }
