@@ -30,9 +30,9 @@ class VcsLogJoinerTest {
   class StringArrayBuilder() {
     val result = ArrayList<String>()
 
-    fun String.plus() = result.add(this)
+    operator fun String.unaryPlus() = result.add(this)
 
-    fun Collection<String>.plus() = result.addAll(this)
+    operator fun Collection<String>.unaryPlus() = result.addAll(this)
   }
 
   class TestRunner() {

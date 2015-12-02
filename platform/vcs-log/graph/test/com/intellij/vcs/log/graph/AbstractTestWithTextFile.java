@@ -21,7 +21,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.io.IOException;
 
-abstract class AbstractTestWithTextFile {
+public abstract class AbstractTestWithTextFile {
   public static final String BASE_DIRECTORY = "platform/vcs-log/graph/testData/";
 
   protected final String myDirectory;

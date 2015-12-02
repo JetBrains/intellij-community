@@ -70,7 +70,7 @@ fun <T> Iterable<T>.joinLines(f: (T) -> String): String = map(f).joinToString(se
 
 class IntIntMultiMapTest {
 
-  fun runTest(test: MapTester.() -> Unit) = MapTester().test()
+  private fun runTest(test: MapTester.() -> Unit) = MapTester().test()
 
   @Test fun simple() {
     runTest {
