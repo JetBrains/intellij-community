@@ -39,6 +39,11 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
   public ExtractInterfaceDialog(Project project, PsiClass sourceClass) {
     super(project, sourceClass, collectMembers(sourceClass), ExtractInterfaceHandler.REFACTORING_NAME);
     for (MemberInfo memberInfo : myMemberInfos) {
+      final PsiMember member = memberInfo.getMember();
+      if (member instanceof PsiMethod &&
+          (member.hasModifierProperty(PsiModifier.STATIC) || member.hasModifierProperty(PsiModifier.PRIVATE))) {
+        continue;
+      }
       memberInfo.setToAbstract(true);
     }
     init();
@@ -48,8 +53,11 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
     return MemberInfo.extractClassMembers(c, new MemberInfoBase.Filter<PsiMember>() {
       public boolean includeMember(PsiMember element) {
         if (element instanceof PsiMethod) {
+          if (PsiUtil.isLanguageLevel9OrHigher(element)) {
+            return true;
+          }
           return element.hasModifierProperty(PsiModifier.PUBLIC)
-                 && !element.hasModifierProperty(PsiModifier.STATIC);
+                 && (PsiUtil.isLanguageLevel8OrHigher(element) || !element.hasModifierProperty(PsiModifier.STATIC));
         }
         else if (element instanceof PsiField && !(element instanceof PsiEnumConstant)) {
           return element.hasModifierProperty(PsiModifier.FINAL)
