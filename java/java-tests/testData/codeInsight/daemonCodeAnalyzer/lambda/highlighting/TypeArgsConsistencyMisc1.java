@@ -32,7 +32,7 @@ class Test1 {
         I<Object> lO =  x->x;
         bar2("", lO);
 
-        I<String> lS =  x-><error descr="Bad return type in lambda expression: List<String> cannot be converted to String">x</error>;
+        <error descr="Incompatible types. Found: '<lambda expression>', required: 'Test1.I<java.lang.String>'">I<String> lS =  x->x;</error>
         bar2("", lS);
 
         bar2("", x -> x);

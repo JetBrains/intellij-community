@@ -758,7 +758,7 @@ public class PsiClassImplUtil {
       PsiClassType corrected = correctType(type, resolveScope);
       if (corrected == null) continue;
 
-      PsiClassType.ClassResolveResult result = corrected.resolveGenerics();
+      PsiClassType.ClassResolveResult result = ((PsiClassType)PsiUtil.captureToplevelWildcards(corrected, aClass)).resolveGenerics();
       PsiClass superClass = result.getElement();
       if (superClass == null || !PsiSearchScopeUtil.isInScope(resolveScope, superClass)) continue;
 
@@ -905,10 +905,6 @@ public class PsiClassImplUtil {
       result[0] = objectType;
     }
     System.arraycopy(implementsTypes, 0, result, extendsListLength, implementsTypes.length);
-    for (int i = 0; i < result.length; i++) {
-      PsiClassType type = result[i];
-      result[i] = (PsiClassType)PsiUtil.captureToplevelWildcards(type, psiClass);
-    }
     return result;
   }
 

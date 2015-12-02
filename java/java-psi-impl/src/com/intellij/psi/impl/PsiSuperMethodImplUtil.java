@@ -46,7 +46,7 @@ public class PsiSuperMethodImplUtil {
       @NotNull
       @Override
       public Map<MethodSignature, HierarchicalMethodSignature> fun(PsiClass dom) {
-        return buildMethodHierarchy(dom, null, PsiSubstitutor.EMPTY, true, new THashSet<PsiClass>(), false, dom.getResolveScope());
+        return buildMethodHierarchy(dom, null, PsiSubstitutor.EMPTY, true, new THashSet<PsiClass>(), false, dom.getResolveScope(), dom);
       }
     });
   private static final PsiCacheKey<FactoryMap<String, Map<MethodSignature, HierarchicalMethodSignature>>, PsiClass> SIGNATURES_BY_NAME_KEY = PsiCacheKey
@@ -57,7 +57,7 @@ public class PsiSuperMethodImplUtil {
           @Nullable
           @Override
           protected Map<MethodSignature, HierarchicalMethodSignature> create(String methodName) {
-            return buildMethodHierarchy(psiClass, methodName, PsiSubstitutor.EMPTY, true, new THashSet<PsiClass>(), false, psiClass.getResolveScope());
+            return buildMethodHierarchy(psiClass, methodName, PsiSubstitutor.EMPTY, true, new THashSet<PsiClass>(), false, psiClass.getResolveScope(), psiClass);
           }
         };
       }
@@ -133,7 +133,7 @@ public class PsiSuperMethodImplUtil {
                                                                                         final boolean includePrivates,
                                                                                         @NotNull final Set<PsiClass> visited,
                                                                                         boolean isInRawContext,
-                                                                                        GlobalSearchScope resolveScope) {
+                                                                                        GlobalSearchScope resolveScope, PsiElement place) {
     ProgressManager.checkCanceled();
     Map<MethodSignature, HierarchicalMethodSignature> result = new LinkedHashMap<MethodSignature, HierarchicalMethodSignature>();
     final Map<MethodSignature, List<PsiMethod>> sameParameterErasureMethods = new THashMap<MethodSignature, List<PsiMethod>>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
@@ -193,7 +193,7 @@ public class PsiSuperMethodImplUtil {
     for (PsiClassType superType : aClass.getSuperTypes()) {
       superType = PsiClassImplUtil.correctType(superType, resolveScope);
       if (superType == null) continue; //super class doesn't belong to resolve scope
-      PsiClassType.ClassResolveResult superTypeResolveResult = superType.resolveGenerics();
+      PsiClassType.ClassResolveResult superTypeResolveResult = ((PsiClassType)PsiUtil.captureToplevelWildcards(superType, place)).resolveGenerics();
       PsiClass superClass = superTypeResolveResult.getElement();
       if (superClass == null) continue;
       if (!visited.add(superClass)) continue; // cyclic inheritance
@@ -201,7 +201,7 @@ public class PsiSuperMethodImplUtil {
       PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(superClass, superSubstitutor, substitutor, isInRawContext);
 
       final boolean isInRawContextSuper = (isInRawContext || PsiUtil.isRawSubstitutor(superClass, superSubstitutor)) && superClass.getTypeParameters().length != 0;
-      Map<MethodSignature, HierarchicalMethodSignature> superResult = buildMethodHierarchy(superClass, nameHint, finalSubstitutor, false, visited, isInRawContextSuper, resolveScope);
+      Map<MethodSignature, HierarchicalMethodSignature> superResult = buildMethodHierarchy(superClass, nameHint, finalSubstitutor, false, visited, isInRawContextSuper, resolveScope, place);
       visited.remove(superClass);
 
       List<Pair<MethodSignature, HierarchicalMethodSignature>> flattened = new ArrayList<Pair<MethodSignature, HierarchicalMethodSignature>>();

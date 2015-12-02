@@ -39,7 +39,7 @@ class VarianceTesting {
         k[0] = new VarianceTesting();
         x.method()[0] = new VarianceTesting();
         <error descr="Incompatible types. Found: 'VarianceTesting[]', required: 'capture<? extends VarianceTesting>[]'">x.arrayField = new VarianceTesting[10]</error>;
-        l1.addAll<error descr="'addAll(java.util.Collection<capture<? extends VarianceTesting>>)' in 'java.util.List' cannot be applied to '(java.util.ArrayList<VarianceTesting>)'">(new ArrayList<VarianceTesting>())</error>;
+        l1.addAll<error descr="'addAll(java.util.Collection<? extends capture<? extends VarianceTesting>>)' in 'java.util.List' cannot be applied to '(java.util.ArrayList<VarianceTesting>)'">(new ArrayList<VarianceTesting>())</error>;
         <error descr="Incompatible types. Found: 'java.util.ArrayList<java.lang.String>', required: 'java.util.List<? extends VarianceTesting>'">List<? extends VarianceTesting> l2 = new ArrayList<String>();</error>
         List<? extends VarianceTesting> l3 = l2;
         VarianceTesting t = l1.get(0);
@@ -214,7 +214,7 @@ public static void foo(List<? extends Foo> foos) {
 class OtherBug1 {
   public static void foo(List<? super Foo> foos) {
     final Comparator<Foo> comparator = createComparator();
-    Collections.sort<error descr="'sort(java.util.List<capture<? super OtherBug1.Foo>>, java.util.Comparator<capture<? super OtherBug1.Foo>>)' in 'java.util.Collections' cannot be applied to '(java.util.List<capture<? super OtherBug1.Foo>>, java.util.Comparator<OtherBug1.Foo>)'">(foos, comparator)</error>;
+    Collections.sort<error descr="'sort(java.util.List<capture<? super OtherBug1.Foo>>, java.util.Comparator<? super capture<? super OtherBug1.Foo>>)' in 'java.util.Collections' cannot be applied to '(java.util.List<capture<? super OtherBug1.Foo>>, java.util.Comparator<OtherBug1.Foo>)'">(foos, comparator)</error>;
   }
 
   private static Comparator<Foo> createComparator() {

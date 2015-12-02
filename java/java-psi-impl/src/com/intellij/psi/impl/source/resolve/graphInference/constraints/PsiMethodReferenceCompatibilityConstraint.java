@@ -209,7 +209,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         session.initBounds(myExpression, containingClass.getTypeParameters());
       }
 
-      final PsiType capturedReturnType = PsiImplUtil.normalizeWildcardTypeByPosition(psiSubstitutor.substitute(referencedMethodReturnType), myExpression);
+      final PsiType capturedReturnType = PsiUtil.captureToplevelWildcards(psiSubstitutor.substitute(referencedMethodReturnType), myExpression);
       constraints.add(new TypeCompatibilityConstraint(returnType, session.substituteWithInferenceVariables(capturedReturnType)));
     }
     

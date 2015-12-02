@@ -586,15 +586,18 @@ public class LambdaUtil {
       }
     } else if (functionalInterfaceReturnType != null) {
       final List<PsiExpression> returnExpressions = getReturnExpressions(lambdaExpression);
-      for (final PsiExpression expression : returnExpressions) {
-        final PsiType expressionType = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
-          @Override
-          public PsiType compute() {
-            return expression.getType();
+      if (getFunctionalTypeMap().get(lambdaExpression) != null) {
+        //todo if expression.getType() substituted to captured variable but PsiImplUtil.normalizeWildcardTypeByPosition substitutes it with the bound and check fails
+        for (final PsiExpression expression : returnExpressions) {
+          final PsiType expressionType = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
+            @Override
+            public PsiType compute() {
+              return expression.getType();
+            }
+          });
+          if (expressionType != null && !functionalInterfaceReturnType.isAssignableFrom(expressionType)) {
+            return "Bad return type in lambda expression: " + expressionType.getPresentableText() + " cannot be converted to " + functionalInterfaceReturnType.getPresentableText();
           }
-        });
-        if (expressionType != null && !functionalInterfaceReturnType.isAssignableFrom(expressionType)) {
-          return "Bad return type in lambda expression: " + expressionType.getPresentableText() + " cannot be converted to " + functionalInterfaceReturnType.getPresentableText();
         }
       }
       if (getReturnStatements(lambdaExpression).length > returnExpressions.size() || returnExpressions.isEmpty() && !lambdaExpression.isVoidCompatible()) {
@@ -663,7 +666,7 @@ public class LambdaUtil {
     @Nullable
     @Override
     public Boolean visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
-      return visitWildcardType(capturedWildcardType.getWildcard());
+      return true;
     }
 
     @Nullable

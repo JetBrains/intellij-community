@@ -7,7 +7,7 @@ interface I<T>{
 class C {
   void bar(I<?> x) {
     x.foo(a -> {
-      x.foo(y -> <error descr="Bad return type in lambda expression: capture of ? cannot be converted to capture of ?">a</error>);
+      x.foo<error descr="'foo(java.util.function.Function<capture<?>,capture<?>>)' in 'I' cannot be applied to '(<lambda expression>)'">(y -> a)</error>;
       return a;
     });
   }

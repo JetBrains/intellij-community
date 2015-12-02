@@ -884,7 +884,7 @@ public class TypeConversionUtil {
     if (psiClass == null) return false;
 
     final String qname = psiClass.getQualifiedName();
-    if (qname == null || !getAllBoxedTypeSupers(psiClass).contains(qname)) {
+    if (qname == null || !(psiClass instanceof PsiTypeParameter || getAllBoxedTypeSupers(psiClass).contains(qname))) {
       return false;
     }
 
@@ -1026,6 +1026,7 @@ public class TypeConversionUtil {
     }
   }
 
+  //todo delete
   public static boolean containsWildcards(@NotNull PsiType leftBound) {
     return leftBound.accept(new WildcardDetector());
   }

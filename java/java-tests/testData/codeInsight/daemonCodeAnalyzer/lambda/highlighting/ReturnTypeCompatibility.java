@@ -68,5 +68,5 @@ class ReturnTypeChecks1 {
     }
 
     I<Integer, Integer> accepted = i -> { return i; };
-    I<Double, Integer> rejected = i -> { return <error descr="Bad return type in lambda expression: Double cannot be converted to Integer">i</error>; };
+    <error descr="Incompatible types. Found: '<lambda expression>', required: 'ReturnTypeChecks1.I<java.lang.Double,java.lang.Integer>'">I<Double, Integer> rejected = i -> { return i; };</error>
 }

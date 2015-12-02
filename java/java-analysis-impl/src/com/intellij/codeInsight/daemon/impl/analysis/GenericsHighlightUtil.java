@@ -364,7 +364,7 @@ public class GenericsHighlightUtil {
     for (PsiClassType superType : superTypes) {
       superType = PsiClassImplUtil.correctType(superType, place.getResolveScope());
       if (superType == null) continue;
-      final PsiClassType.ClassResolveResult result = superType.resolveGenerics();
+      final PsiClassType.ClassResolveResult result = ((PsiClassType)PsiUtil.captureToplevelWildcards(superType, place)).resolveGenerics();
       final PsiClass superClass = result.getElement();
       if (superClass == null || visited.contains(superClass)) continue;
       PsiSubstitutor superTypeSubstitutor = result.getSubstitutor();
