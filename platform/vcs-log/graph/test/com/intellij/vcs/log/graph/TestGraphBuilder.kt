@@ -72,17 +72,17 @@ public class TestGraphBuilder : BaseTestGraphBuilder {
   private fun Int.asSimpleNode() = SimpleNode(this)
 
   private fun newNode(node: SimpleNode, edges: List<SimpleEdge> = listOf()) {
-    nodes add NodeWithEdges(node.nodeId, edges, node.type)
+    nodes.add(NodeWithEdges(node.nodeId, edges, node.type))
   }
 
   fun node(id: Int, vararg edge: Int) {
-    nodes add NodeWithEdges(id, edge.map {
+    nodes.add(NodeWithEdges(id, edge.map {
       SimpleEdge(it, GraphEdgeType.USUAL)
-    })
+    }))
   }
 
   fun node(id: Int, vararg edge: SimpleEdge) {
-    nodes add NodeWithEdges(id, edge.toList())
+    nodes.add(NodeWithEdges(id, edge.toList()))
   }
 
   private class TestLinearGraph(buildNodes: List<NodeWithEdges>) : LinearGraph {
