@@ -25,11 +25,37 @@ import java.util.Map;
  */
 public class Functions {
 
+  public static <A> Function.Mono<A> id() {
+    return (Function.Mono<A>)Function.ID;
+  }
+
+  public static <A, B> Function<A, B> constant(final B b) {
+    return new Function<A, B>() {
+      @Override
+      public B fun(A a) {
+        return b;
+      }
+    };
+  }
+
   public static <A, B> Function<A, B> identity() {
     return Function.ID;
   }
 
-  public static <A> Function<A, String> toString() {
+  public static <A, B> Function<A, B> cast(Class<B> clazz) {
+    return Function.ID;
+  }
+
+  public static <A, B, C> Function<A, C> compose(final Function<A, B> f1, final Function<B, ? extends C> f2) {
+    return new Function<A, C>() {
+      @Override
+      public C fun(A a) {
+        return f2.fun(f1.fun(a));
+      }
+    };
+  }
+
+  public static <A> Function<A, String> TO_STRING() {
     return Function.TO_STRING;
   }
 
@@ -49,7 +75,7 @@ public class Functions {
     }
   };
 
-  public static <T> Function<T, Class> toClass() {
+  public static <T> Function<T, Class> TO_CLASS() {
     return (Function<T, Class>)TO_CLASS;
   }
 
@@ -73,5 +99,14 @@ public class Functions {
 
   public static <B> Function<Pair<?, B>, B> pairSecond() {
     return (Function<Pair<?, B>, B>)PAIR_SECOND;
+  }
+
+  public static Function.Mono<Integer> intIncrement() {
+    return new Function.Mono<Integer>() {
+      @Override
+      public Integer fun(Integer integer) {
+        return integer + 1;
+      }
+    };
   }
 }

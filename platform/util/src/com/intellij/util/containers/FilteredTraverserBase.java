@@ -152,8 +152,8 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
   }
 
   @NotNull
-  public JBIterable<T> children(@NotNull T node) {
-    if (isAlwaysLeaf(node)) {
+  public JBIterable<T> children(@Nullable T node) {
+    if (node == null || isAlwaysLeaf(node)) {
       return JBIterable.empty();
     }
     else if (meta.regard.next == null && meta.forceDisregard.next == null) {
@@ -181,7 +181,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
 
   public abstract static class EdgeFilter<T> extends JBIterable.StatefulFilter<T> {
 
-    protected T curParent;
+    protected T edgeSource;
 
   }
 
@@ -283,7 +283,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
         if (impl != (invert ? Condition.TRUE : Condition.FALSE)) {
           copy = new Cond<Object>(invert ? not(impl) : impl, copy);
           if (impl instanceof EdgeFilter) {
-            ((EdgeFilter)impl).curParent = parent;
+            ((EdgeFilter)impl).edgeSource = parent;
           }
         }
         if (c.next == null) {
