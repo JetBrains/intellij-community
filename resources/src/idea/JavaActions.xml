@@ -130,14 +130,6 @@
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" anchor="before" relative-to-action="RunToCursor"/>
     </action>
 
-    <action id="Debugger.ForceEarlyReturn" class="com.intellij.debugger.actions.ForceEarlyReturnAction">
-      <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
-    </action>
-
-    <action id="Debugger.AddSteppingFilter" class="com.intellij.debugger.actions.AddSteppingFilterAction" text="Add Stepping Filter...">
-      <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
-    </action>
-
     <group id="ToggleBreakpointAction">
       <action id="ToggleMethodBreakpoint" class="com.intellij.debugger.actions.ToggleMethodBreakpointAction"/>
       <action id="ToggleFieldBreakpoint" class="com.intellij.debugger.actions.ToggleFieldBreakpointAction"/>
@@ -209,6 +201,15 @@
       <action id="Debugger.ResumeThread" class="com.intellij.debugger.actions.ResumeThreadAction"/>
       <action id="Debugger.FreezeThread" class="com.intellij.debugger.actions.FreezeThreadAction"/>
       <action id="Debugger.InterruptThread" class="com.intellij.debugger.actions.InterruptThreadAction"/>
+
+      <action id="Debugger.ForceEarlyReturn" class="com.intellij.debugger.actions.ForceEarlyReturnAction">
+        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
+      </action>
+
+      <action id="Debugger.AddSteppingFilter" class="com.intellij.debugger.actions.AddSteppingFilterAction" text="Add Stepping Filter...">
+        <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
+      </action>
+
       <add-to-group group-id="DebuggerActions" anchor="first"/>
     </group>
 
