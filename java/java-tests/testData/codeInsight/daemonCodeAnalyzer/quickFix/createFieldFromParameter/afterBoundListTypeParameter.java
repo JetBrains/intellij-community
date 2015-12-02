@@ -2,7 +2,7 @@
 
 import java.util.*;
 class Test{
-    private List<String> myP1;
+    private List<? extends String> myP1;
 
     <T extends String> void f(List<T> p1){
         myP1 = p1;
