@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
@@ -32,12 +31,10 @@ import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
-import java.awt.image.BufferedImage;
 
 /**
  * A facade for components responsible for drawing editor contents, managing editor size 
@@ -430,9 +427,8 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   }
 
   private static FontRenderContext createFontRenderContext() {
-    Graphics2D g = (Graphics2D)UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_RGB).getGraphics();
+    Graphics2D g = FontInfo.createReferenceGraphics();
     try {
-      EditorUIUtil.setupAntialiasing(g);
       return g.getFontRenderContext();
     }
     finally {

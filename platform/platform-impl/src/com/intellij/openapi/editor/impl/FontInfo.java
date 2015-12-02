@@ -196,8 +196,7 @@ public class FontInfo {
     if (myFontMetrics == null) {
       // We need to use antialising-aware font metrics because we've alrady encountered a situation when non-antialiased symbol
       // width is not equal to the antialiased one (IDEA-81539).
-      final Graphics graphics = UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_RGB).getGraphics();
-      EditorUIUtil.setupAntialiasing(graphics);
+      final Graphics graphics = createReferenceGraphics();
       graphics.setFont(myFont);
       myFontMetrics = graphics.getFontMetrics();
       for (char c = 0; c < 128; c++) {
@@ -207,6 +206,12 @@ public class FontInfo {
     return myFontMetrics;
   }
 
+  public static Graphics2D createReferenceGraphics() {
+    Graphics2D graphics = (Graphics2D)UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_RGB).getGraphics();
+    EditorUIUtil.setupAntialiasing(graphics);
+    return graphics;
+  }
+  
   void reset() {
     myFontMetrics = null;
   }
