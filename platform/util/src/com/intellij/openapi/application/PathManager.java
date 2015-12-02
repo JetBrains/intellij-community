@@ -233,6 +233,12 @@ public class PathManager {
     return platformPath(selector, "Library/Application Support", PLUGINS_FOLDER);
   }
 
+  @Nullable
+  public static String getCustomOptionsDirectory() {
+    // do not use getConfigPath() here - as it may be not yet defined
+    return PATHS_SELECTOR != null ? platformPath(PATHS_SELECTOR, "Library/Preferences", "") : null;
+  }
+
   // runtime paths
 
   @NotNull
@@ -283,7 +289,7 @@ public class PathManager {
   }
 
   @NotNull
-  public static String getPluginTempPath () {
+  public static String getPluginTempPath() {
     return getSystemPath() + File.separator + PLUGINS_FOLDER;
   }
 
@@ -384,13 +390,8 @@ public class PathManager {
   }
 
   private static String getUserPropertiesPath() {
-    if (PATHS_SELECTOR != null) {
-      // do not use getConfigPath() here - as it may be not yet defined
-      return platformPath(PATHS_SELECTOR, "Library/Preferences", /*"APPDATA", "XDG_CONFIG_HOME", ".config",*/ "") + "/idea.properties";
-    }
-    else {
-      return null;
-    }
+    String configPath = getCustomOptionsDirectory();
+    return configPath != null ? configPath + "/idea.properties" : null;
   }
 
   @Contract("null -> null")
@@ -501,12 +502,9 @@ public class PathManager {
     return FileUtil.toCanonicalPath(new File(path).getAbsolutePath());
   }
 
-  private static String trimPathQuotes(String path){
-    if (!(path != null && !(path.length() < 3))){
-      return path;
-    }
-    if (StringUtil.startsWithChar(path, '\"') && StringUtil.endsWithChar(path, '\"')){
-      return path.substring(1, path.length() - 1);
+  private static String trimPathQuotes(String path) {
+    if (path != null && path.length() >= 3 && StringUtil.startsWithChar(path, '\"') && StringUtil.endsWithChar(path, '\"')) {
+      path = path.substring(1, path.length() - 1);
     }
     return path;
   }
