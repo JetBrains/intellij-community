@@ -258,6 +258,9 @@ public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
     private ReplaceElementWithEvents(@NotNull CompositeElement oldRoot, @NotNull CompositeElement newRoot) {
       myOldRoot = oldRoot;
       myNewRoot = newRoot;
+      // parse in background to reduce time spent in EDT and to ensure the newRoot light containing file is still valid
+      TreeUtil.ensureParsed(myOldRoot.getFirstChildNode());
+      TreeUtil.ensureParsed(myNewRoot.getFirstChildNode());
     }
 
     @Override
