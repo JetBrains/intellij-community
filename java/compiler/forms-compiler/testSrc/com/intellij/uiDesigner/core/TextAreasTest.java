@@ -29,7 +29,7 @@ public final class TextAreasTest extends UsefulTestCase {
   {
     Logger.setFactory(TestLoggerFactory.class);
     TestLoggerFactory.enableDebugLogging(myTestRootDisposable,
-                                         new String[]{"#com.intellij.uiDesigner.core.GridLayoutManager"});
+                                         new String[]{"#com.intellij.util.ui.UIUtil"});
   }
   private final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.core.TextAreasTest");
 

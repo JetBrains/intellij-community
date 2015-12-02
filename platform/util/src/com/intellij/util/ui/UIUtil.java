@@ -87,6 +87,7 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public class UIUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.UIUtil");
 
   public static final String BORDER_LINE = "<hr size=1 noshade>";
 
@@ -217,8 +218,6 @@ public class UIUtil {
       }
     }
   };
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.UIUtil");
 
   private static final Color UNFOCUSED_SELECTION_COLOR = Gray._212;
   private static final Color ACTIVE_HEADER_COLOR = new Color(160, 186, 213);
@@ -2435,6 +2434,10 @@ public class UIUtil {
   public static void initDefaultLAF() {
     try {
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("LookAnfFeel: " + UIManager.getLookAndFeel(), new Throwable());
+      }
 
       if (ourSystemFontData == null) {
         Font font = getLabelFont();
