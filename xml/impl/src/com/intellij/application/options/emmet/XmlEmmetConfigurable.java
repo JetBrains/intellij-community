@@ -53,6 +53,7 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
       public void actionPerformed(ActionEvent e) {
         boolean selected = myEnableEmmetJBCheckBox.isSelected();
         myEnablePreviewJBCheckBox.setEnabled(selected);
+        myAddEditPointAtTheEndOfTemplateJBCheckBox.setEnabled(selected);
         myFiltersListPanel.setEnabled(selected);
         myEnableHrefAutodetectJBCheckBox.setEnabled(selected);
         for (JBCheckBox checkBox : myFilterCheckboxes.values()) {
@@ -121,6 +122,7 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
     myEnablePreviewJBCheckBox.setSelected(emmetOptions.isPreviewEnabled());
     myEnableHrefAutodetectJBCheckBox.setEnabled(emmetOptions.isEmmetEnabled());
     myEnableHrefAutodetectJBCheckBox.setSelected(emmetOptions.isHrefAutoDetectEnabled());
+    myAddEditPointAtTheEndOfTemplateJBCheckBox.setEnabled(emmetOptions.isEmmetEnabled());
     myAddEditPointAtTheEndOfTemplateJBCheckBox.setSelected(emmetOptions.isAddEditPointAtTheEndOfTemplate());
 
     Set<String> enabledByDefault = emmetOptions.getFiltersEnabledByDefault();
