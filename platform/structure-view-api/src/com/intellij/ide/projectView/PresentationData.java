@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.projectView;
 
+import com.intellij.ide.util.treeView.MulticoloredItemPresentation;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -191,6 +193,16 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
     if (presentation instanceof LocationPresentation) {
       myLocationPrefix = ((LocationPresentation)presentation).getLocationPrefix();
       myLocationSuffix = ((LocationPresentation)presentation).getLocationSuffix();
+    }
+    if (presentation instanceof MulticoloredItemPresentation) {
+      Collection<PresentableNodeDescriptor.ColoredFragment> fragments =
+        ((MulticoloredItemPresentation)presentation).getColoredFragments();
+
+      if (fragments != null) {
+        for (PresentableNodeDescriptor.ColoredFragment fragment : fragments) {
+          addText(fragment);
+        }
+      }
     }
   }
 
