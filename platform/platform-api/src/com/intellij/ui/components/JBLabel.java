@@ -15,8 +15,10 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnchorableComponent;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -173,15 +175,8 @@ public class JBLabel extends JLabel implements AnchorableComponent {
           @Override
           public void paint(Graphics g) {
             Dimension size = getSize();
-            MyHtml2Text parser = new MyHtml2Text();
-            String plain;
-            try {
-              plain = parser.parse(getText());
-            }
-            catch (IOException e) {
-              plain = getText();
-            }
-            boolean paintEllipsis = getPreferredSize().width > size.width && plain != null && !plain.contains("\n");
+            String plain = StringUtil.removeHtmlTags(getText());
+            boolean paintEllipsis = getPreferredSize().width > size.width && plain != null && !plain.contains(SystemProperties.getLineSeparator());
 
             if (!paintEllipsis) {
               super.paint(g);
@@ -237,11 +232,10 @@ public class JBLabel extends JLabel implements AnchorableComponent {
         myEditorPane.setContentType("text/html");
         myEditorPane.setEditable(false);
         myEditorPane.setBackground(UIUtil.TRANSPARENT_COLOR);
-        myEditorPane.setBorder(null);
         myEditorPane.setOpaque(false);
         myEditorPane.setText(getText());
         myEditorPane.setCaretPosition(0);
-        UIUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Collections.singleton(ellipsisLabel));
+        UIUtil.putClientProperty(myEditorPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Collections.singleton(ellipsisLabel));
         updateStyle(myEditorPane);
         add(myEditorPane);
       } else {
