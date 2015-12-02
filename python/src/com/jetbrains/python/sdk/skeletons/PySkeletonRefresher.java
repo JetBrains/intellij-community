@@ -47,7 +47,6 @@ import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.InvalidSdkException;
-import com.jetbrains.python.sdk.PySdkUpdater;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NonNls;
@@ -112,25 +111,25 @@ public class PySkeletonRefresher {
   public static void refreshSkeletonsOfSdk(@Nullable Project project,
                                            Component ownerComponent,
                                            String skeletonsPath,
-                                           @NotNull PySdkUpdater sdkUpdater)
+                                           @NotNull Sdk sdk)
     throws InvalidSdkException {
     final Map<String, List<String>> errors = new TreeMap<String, List<String>>();
     final List<String> failedSdks = new SmartList<String>();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    final String homePath = sdkUpdater.getHomePath();
+    final String homePath = sdk.getHomePath();
     if (skeletonsPath == null) {
       LOG.info("Could not find skeletons path for SDK path " + homePath);
     }
     else {
       LOG.info("Refreshing skeletons for " + homePath);
       SkeletonVersionChecker checker = new SkeletonVersionChecker(0); // this default version won't be used
-      final PySkeletonRefresher refresher = new PySkeletonRefresher(project, ownerComponent, sdkUpdater.getSdk(), skeletonsPath, indicator, null);
+      final PySkeletonRefresher refresher = new PySkeletonRefresher(project, ownerComponent, sdk, skeletonsPath, indicator, null);
 
       changeGeneratingSkeletons(1);
       try {
         List<String> sdkErrors = refresher.regenerateSkeletons(checker);
         if (sdkErrors.size() > 0) {
-          String sdkName = sdkUpdater.getSdk().getName();
+          String sdkName = sdk.getName();
           List<String> knownErrors = errors.get(sdkName);
           if (knownErrors == null) {
             errors.put(sdkName, sdkErrors);
