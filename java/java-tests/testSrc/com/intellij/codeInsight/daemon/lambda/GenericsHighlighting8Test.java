@@ -28,6 +28,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+//javac option to dump bounds: -XDdumpInferenceGraphsTo=
 public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/genericsHighlighting8";
 
@@ -883,6 +884,30 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   }
 
   public void testIDEA148348() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA148361() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA134059() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA139222() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA139156() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA139169() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA131686() throws Exception {
     doTest();
   }
 }

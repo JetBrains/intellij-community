@@ -45,7 +45,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 
 /**
  * @author Dmitry Avdeev
@@ -135,12 +134,7 @@ public class OpenTaskDialog extends DialogWrapper {
           VcsTaskHandler.TaskInfo[] tasks = handler.getAllExistingTasks();
           if (tasks.length > 0) {
             myVcsTaskHandler = handler;
-            Arrays.sort(tasks, new Comparator<VcsTaskHandler.TaskInfo>() {
-              @Override
-              public int compare(VcsTaskHandler.TaskInfo o1, VcsTaskHandler.TaskInfo o2) {
-                return o1.getName().compareTo(o2.getName());
-              }
-            });
+            Arrays.sort(tasks);
             //noinspection unchecked
             myBranchFrom.setModel(new DefaultComboBoxModel(tasks));
             myBranchFrom.setEnabled(true);

@@ -116,6 +116,7 @@ public class ChunkExtractor {
 
     Project project = file.getProject();
     myDocument = PsiDocumentManager.getInstance(project).getDocument(file);
+    LOG.assertTrue(myDocument != null);
     final FileType fileType = file.getFileType();
     SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, project, file.getVirtualFile());
     highlighter = highlighter == null ? new PlainSyntaxHighlighter() : highlighter;

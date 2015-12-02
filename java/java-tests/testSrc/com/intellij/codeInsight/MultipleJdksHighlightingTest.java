@@ -124,6 +124,11 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
    doTestWithoutLibrary();
   }
 
+  public void testWrongComparatorInUpperBound() throws Exception {
+    addDependencies_37_78();
+    doTestWithoutLibrary();
+  }
+
   public void testGenericComparator() throws Exception {
     addDependencies_37_78();
     doTestWithoutLibrary();
