@@ -651,7 +651,7 @@ public class InferenceSession {
       final PsiSubstitutor substitutor = resolveSubset(Collections.singletonList(inferenceVariable), mySiteSubstitutor);
       final PsiType substitutedReturnType = substitutor.substitute(inferenceVariable.getParameter());
       if (substitutedReturnType != null) {
-        addConstraint(new TypeCompatibilityConstraint(targetType, PsiUtil.captureToplevelWildcards(substitutedReturnType, (PsiExpression)myContext)));
+        addConstraint(new TypeCompatibilityConstraint(targetType, PsiUtil.captureToplevelWildcards(substitutedReturnType, myContext)));
       }
     } 
     else {
@@ -662,7 +662,7 @@ public class InferenceSession {
           LOG.assertTrue(returnType instanceof PsiClassType);
           PsiClassType substitutedCapture = (PsiClassType)returnType;
           if (!toplevel) {
-            substitutedCapture = (PsiClassType)PsiUtil.captureToplevelWildcards(returnType, (PsiExpression)myContext);
+            substitutedCapture = (PsiClassType)PsiUtil.captureToplevelWildcards(returnType, myContext);
             final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
             final InferenceVariable[] copy = initBounds(null, typeParameters);
 
