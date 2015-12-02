@@ -199,24 +199,24 @@ class VisiblePackBuilderTest {
     val refs = HashSet<Ref>()
     val data = HashMap<GraphCommit<Int>, Data>()
 
-    fun Int.invoke(vararg id: Int): GraphCommit<Int> {
+    operator fun Int.invoke(vararg id: Int): GraphCommit<Int> {
       val commit = GraphCommitImpl(this, id.toList(), this.toLong())
       commits.add(commit)
       data[commit] = Data()
       return commit
     }
 
-    fun GraphCommit<Int>.times(name: String): GraphCommit<Int> {
+    operator fun GraphCommit<Int>.times(name: String): GraphCommit<Int> {
       refs.add(Ref(name, this.getId()))
       return this
     }
 
-    fun GraphCommit<Int>.plus(name: String): GraphCommit<Int> {
+    operator fun GraphCommit<Int>.plus(name: String): GraphCommit<Int> {
       data[this] = Data(VcsUserImpl(name, name + "@example.com"))
       return this;
     }
 
-    fun GraphCommit<Int>.plus(user: VcsUser?): GraphCommit<Int> {
+    operator fun GraphCommit<Int>.plus(user: VcsUser?): GraphCommit<Int> {
       data[this] = Data(user)
       return this;
     }
