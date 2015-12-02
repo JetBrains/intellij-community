@@ -17,11 +17,13 @@ package org.jetbrains.io;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.stream.JsonToken;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
+import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.util.Arrays;
 
@@ -136,6 +138,11 @@ public final class JsonReaderEx implements Closeable {
     @Override
     public CharSequence subSequence(int start, int end) {
       return start == 0 && end == length() ? this : new String(myChars, myStart + start, end - start);
+    }
+
+    @NotNull
+    public ByteBuffer getByteBuffer() {
+      return CharsetToolkit.UTF8_CHARSET.encode(CharBuffer.wrap(myChars, myStart, length()));
     }
   }
 

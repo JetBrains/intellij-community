@@ -55,3 +55,13 @@ inline fun <T, R> Array<T>.computeOrNull(processor: (T) -> R): R? {
   }
   return null
 }
+
+inline fun <T, R> List<T>.computeOrNull(processor: (T) -> R): R? {
+  for (file in this) {
+    val result = processor(file)
+    if (result != null) {
+      return result
+    }
+  }
+  return null
+}
