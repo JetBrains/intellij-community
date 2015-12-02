@@ -123,6 +123,18 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
         PsiReplacementUtil.replaceExpression(expression, convertedExpression);
       }
       else {
+        final PsiElement parent = expression.getParent();
+        if (parent instanceof PsiAssignmentExpression) {
+          final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+          final PsiJavaToken sign = assignmentExpression.getOperationSign();
+          if (!JavaTokenType.EQ.equals(sign.getTokenType())) {
+            final String lhsText = assignmentExpression.getLExpression().getText();
+            final String newExpressionText =
+              lhsText + "=(" + expectedType.getCanonicalText() + ")(" + lhsText + sign.getText().charAt(0) + expression.getText() + ')';
+            PsiReplacementUtil.replaceExpression(assignmentExpression, newExpressionText);
+            return;
+          }
+        }
         final String castExpression;
         if (ParenthesesUtils.getPrecedence(expression) <= ParenthesesUtils.TYPE_CAST_PRECEDENCE) {
           castExpression = '(' + expectedType.getCanonicalText() + ')' + expression.getText();
