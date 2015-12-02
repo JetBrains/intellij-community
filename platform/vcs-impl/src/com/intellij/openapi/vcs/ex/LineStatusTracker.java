@@ -143,8 +143,7 @@ public class LineStatusTracker {
     synchronized (myLock) {
       if (myReleased) return;
 
-      removeAnathema();
-      removeHighlightersFromMarkupModel();
+      destroyRanges();
       try {
         myRanges = new RangesBuilder(myDocument, myVcsDocument, myMode).getRanges();
         for (final Range range : myRanges) {
@@ -155,6 +154,12 @@ public class LineStatusTracker {
         installAnathema();
       }
     }
+  }
+
+  @CalledInAwt
+  private void destroyRanges() {
+    removeAnathema();
+    removeHighlightersFromMarkupModel();
   }
 
   @CalledInAwt
@@ -270,16 +275,14 @@ public class LineStatusTracker {
       myDocument.removeDocumentListener(myDocumentListener);
 
       if (myApplication.isDispatchThread()) {
-        removeAnathema();
-        removeHighlightersFromMarkupModel();
+        destroyRanges();
       }
       else {
         invalidateRanges();
         myApplication.invokeLater(new Runnable() {
           @Override
           public void run() {
-            removeAnathema();
-            removeHighlightersFromMarkupModel();
+            destroyRanges();
           }
         });
       }
@@ -330,8 +333,7 @@ public class LineStatusTracker {
       if (myReleased) return;
 
       myBulkUpdate = true;
-      removeAnathema();
-      removeHighlightersFromMarkupModel();
+      destroyRanges();
     }
   }
 
@@ -353,7 +355,7 @@ public class LineStatusTracker {
       for (Range range : myRanges) {
         disposeHighlighter(range);
       }
-      myRanges.clear();
+      myRanges = Collections.emptyList();
     }
   }
 
@@ -401,21 +403,17 @@ public class LineStatusTracker {
         if (myBulkUpdate || myDuringRollback || myAnathemaThrown || !myInitialized) return;
         assert myDocument == e.getDocument();
 
-        try {
-          myLine1 = myDocument.getLineNumber(e.getOffset());
-          if (e.getOldLength() == 0) {
-            myBeforeChangedLines = 1;
-          }
-          else {
-            int line1 = myLine1;
-            int line2 = myDocument.getLineNumber(e.getOffset() + e.getOldLength());
-            myBeforeChangedLines = line2 - line1 + 1;
-          }
+        myLine1 = myDocument.getLineNumber(e.getOffset());
+        if (e.getOldLength() == 0) {
+          myBeforeChangedLines = 1;
+        }
+        else {
+          int line1 = myLine1;
+          int line2 = myDocument.getLineNumber(e.getOffset() + e.getOldLength());
+          myBeforeChangedLines = line2 - line1 + 1;
+        }
 
-          myBeforeTotalLines = getLineCount(myDocument);
-        }
-        catch (ProcessCanceledException ignore) {
-        }
+        myBeforeTotalLines = getLineCount(myDocument);
       }
     }
 
@@ -799,8 +797,7 @@ public class LineStatusTracker {
       public void run() {
         myDocument.setText(myVcsDocument.getText());
 
-        removeAnathema();
-        removeHighlightersFromMarkupModel();
+        destroyRanges();
 
         markFileUnchanged();
       }
