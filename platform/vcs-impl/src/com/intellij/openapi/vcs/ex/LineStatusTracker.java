@@ -81,7 +81,7 @@ public class LineStatusTracker {
   @Nullable private RevisionPack myBaseRevisionNumber;
 
   private boolean myInitialized;
-  private boolean mySuppressUpdate;
+  private boolean myDuringRollback;
   private boolean myBulkUpdate;
   private boolean myAnathemaThrown;
   private boolean myReleased;
@@ -381,7 +381,7 @@ public class LineStatusTracker {
 
       synchronized (myLock) {
         if (myReleased) return;
-        if (myBulkUpdate || mySuppressUpdate || myAnathemaThrown || !myInitialized) return;
+        if (myBulkUpdate || myDuringRollback || myAnathemaThrown || !myInitialized) return;
         assert myDocument == e.getDocument();
 
         try {
@@ -408,7 +408,7 @@ public class LineStatusTracker {
 
       synchronized (myLock) {
         if (myReleased) return;
-        if (myBulkUpdate || mySuppressUpdate || myAnathemaThrown|| !myInitialized) return;
+        if (myBulkUpdate || myDuringRollback || myAnathemaThrown || !myInitialized) return;
         assert myDocument == e.getDocument();
 
         int afterChangedLines;
@@ -853,10 +853,10 @@ public class LineStatusTracker {
     myApplication.assertWriteAccessAllowed();
 
     synchronized (myLock) {
-      if (myReleased || myBulkUpdate || mySuppressUpdate || myAnathemaThrown) return;
+      if (myReleased || myBulkUpdate || myDuringRollback || myAnathemaThrown) return;
 
       try {
-        mySuppressUpdate = true;
+        myDuringRollback = true;
 
         task.run();
       }
@@ -869,7 +869,7 @@ public class LineStatusTracker {
         throw e;
       }
       finally {
-        mySuppressUpdate = false;
+        myDuringRollback = false;
       }
     }
   }
