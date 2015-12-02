@@ -72,6 +72,7 @@ public class PluginHeaderPanel {
     final Font smallFont = new Font(font.getFontName(), font.getStyle(), font.getSize() - 1);
     myCategory.setFont(smallFont);
     myVersion.setFont(smallFont);
+    myVersion.setCopyable(true);
     myDownloads.setFont(smallFont);
     myUpdated.setFont(smallFont);
     myRoot.setVisible(false);
