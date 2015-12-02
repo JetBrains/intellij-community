@@ -24,6 +24,7 @@ package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.StandardProgressIndicator;
 import com.intellij.openapi.progress.WrappedProgressIndicator;
 import org.jetbrains.annotations.Contract;
@@ -48,6 +49,7 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
     if (nested > 50) {
       LOG.error("Too many wrapped indicators");
     }
+    ProgressManager.assertNotCircular(original);
   }
 
   @Override
