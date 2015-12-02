@@ -158,8 +158,8 @@ public class ComparisonUtilTest : DiffTestCase() {
   // Helpers
   //
 
-  public fun Int.not(): LineColHelper = LineColHelper(this)
-  public fun LineColHelper.minus(col: Int): IntPair = IntPair(this.line, col)
+  public operator fun Int.not(): LineColHelper = LineColHelper(this)
+  public operator fun LineColHelper.minus(col: Int): IntPair = IntPair(this.line, col)
 
   public inner class LineColHelper(val line: Int) {
   }

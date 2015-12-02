@@ -61,10 +61,10 @@ public class TestGraphBuilder : BaseTestGraphBuilder {
 
   public operator fun Int.invoke(): Unit = newNode(asSimpleNode())
   public operator fun Int.invoke(vararg edge: Int): Unit = newNode(asSimpleNode(), edge.asSimpleEdges())
-  public fun Int.invoke(vararg edge: SimpleEdge): Unit = newNode(asSimpleNode(), edge.toList())
-  public fun SimpleNode.invoke(): Unit = newNode(this)
-  public fun SimpleNode.invoke(vararg edge: Int): Unit = newNode(this, edge.asSimpleEdges())
-  public fun SimpleNode.invoke(vararg edge: SimpleEdge): Unit = newNode(this, edge.toList())
+  public operator fun Int.invoke(vararg edge: SimpleEdge): Unit = newNode(asSimpleNode(), edge.toList())
+  public operator fun SimpleNode.invoke(): Unit = newNode(this)
+  public operator fun SimpleNode.invoke(vararg edge: Int): Unit = newNode(this, edge.asSimpleEdges())
+  public operator fun SimpleNode.invoke(vararg edge: SimpleEdge): Unit = newNode(this, edge.toList())
 
   private class NodeWithEdges(val nodeId: Int, val edges: List<SimpleEdge>, val type: GraphNodeType = GraphNodeType.USUAL)
 

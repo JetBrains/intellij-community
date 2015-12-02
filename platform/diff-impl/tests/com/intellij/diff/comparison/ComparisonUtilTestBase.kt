@@ -15,14 +15,14 @@
  */
 package com.intellij.diff.comparison
 
-import com.intellij.diff.*
+import com.intellij.diff.DiffTestCase
 import com.intellij.diff.fragments.DiffFragment
 import com.intellij.diff.fragments.LineFragment
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Couple
 import com.intellij.util.containers.ContainerUtil
-import java.util.BitSet
+import java.util.*
 
 public abstract class ComparisonUtilTestBase : DiffTestCase() {
   private fun doLineTest(before: Document, after: Document, expected: List<Change>?, policy: ComparisonPolicy) {
@@ -155,7 +155,7 @@ public abstract class ComparisonUtilTestBase : DiffTestCase() {
   // Test Builder
   //
 
-  private enum class TestType {
+  enum class TestType {
     LINE, WORD, CHAR, SPLITTER
   }
 
@@ -237,7 +237,7 @@ public abstract class ComparisonUtilTestBase : DiffTestCase() {
     }
 
 
-    public fun String.minus(v: String): Helper {
+    public operator fun String.minus(v: String): Helper {
       return Helper(this, v)
     }
 
