@@ -62,15 +62,15 @@ abstract class LineLayout {
   }
   
   private static LineLayout createLayout(@NotNull List<BidiRun> runs) {
-    if (runs.isEmpty()) return new Simple(null);
+    if (runs.isEmpty()) return new SingleChunk(null);
     if (runs.size() == 1) {
       BidiRun run = runs.get(0);
       if (run.level == 0 && run.getChunkCount() == 1) {
         Chunk chunk = run.chunks == null ? new Chunk(0, run.endOffset) : run.chunks[0];
-        return new Simple(chunk);
+        return new SingleChunk(chunk);
       }
     }
-    return new Complex(runs.toArray(new BidiRun[runs.size()]));
+    return new MultiChunk(runs.toArray(new BidiRun[runs.size()]));
   }
 
   // runs are supposed to be in logical order initially
@@ -277,10 +277,10 @@ abstract class LineLayout {
 
   abstract BidiRun[] getRunsInVisualOrder();
   
-  private static class Simple extends LineLayout {
+  private static class SingleChunk extends LineLayout {
     private final Chunk myChunk;
 
-    private Simple(Chunk chunk) {
+    private SingleChunk(Chunk chunk) {
       myChunk = chunk;
     }
 
@@ -317,11 +317,11 @@ abstract class LineLayout {
     }
   }
   
-  private static class Complex extends LineLayout {
+  private static class MultiChunk extends LineLayout {
     private final BidiRun[] myBidiRunsInLogicalOrder;
     private final BidiRun[] myBidiRunsInVisualOrder;
 
-    private Complex(BidiRun[] bidiRunsInLogicalOrder) {
+    private MultiChunk(BidiRun[] bidiRunsInLogicalOrder) {
       myBidiRunsInLogicalOrder = bidiRunsInLogicalOrder;
       if (bidiRunsInLogicalOrder.length > 1) {
         myBidiRunsInVisualOrder = myBidiRunsInLogicalOrder.clone();
