@@ -218,7 +218,15 @@ public class Standalone {
       String messageText;
       if (msg instanceof CompilerMessage) {
         CompilerMessage compilerMessage = (CompilerMessage) msg;
-        messageText = compilerMessage.getSourcePath() + "(" + compilerMessage.getLine() + ":" + compilerMessage.getColumn() + "): " +  msg.getMessageText();
+        if (compilerMessage.getSourcePath() == null) {
+          messageText = msg.getMessageText();
+        }
+        else if (compilerMessage.getLine() < 0) {
+          messageText = compilerMessage.getSourcePath() + ": " +  msg.getMessageText();
+        }
+        else {
+          messageText = compilerMessage.getSourcePath() + "(" + compilerMessage.getLine() + ":" + compilerMessage.getColumn() + "): " +  msg.getMessageText();
+        }
       }
       else {
         messageText = msg.getMessageText();
