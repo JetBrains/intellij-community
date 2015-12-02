@@ -22,6 +22,7 @@ import junit.framework.TestCase;
 import javax.swing.*;
 import java.io.File;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -75,7 +76,8 @@ public class _FirstInSuiteTest extends TestCase {
     Class.forName("com.sun.jna.Native");
 
     String tempDirectory = FileUtilRt.getTempDirectory();
-    System.out.println("FileUtil.getTempDirectory() = " + tempDirectory + " ("+new File(tempDirectory).list().length+" files)");
+    String[] list = new File(tempDirectory).list();
+    System.out.println("FileUtil.getTempDirectory() = " + tempDirectory + " (" + list.length + " files): " + Arrays.asList(list));
   }
 
   // performance tests
