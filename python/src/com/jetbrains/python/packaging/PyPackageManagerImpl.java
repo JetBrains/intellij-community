@@ -472,6 +472,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     final boolean useSudo = !canCreate && !SystemInfo.isWindows && askForSudo;
 
     try {
+      final Process process;
       final Map<String, String> environment = new HashMap<String, String>(System.getenv());
       PythonEnvUtil.setPythonUnbuffered(environment);
       PythonEnvUtil.setPythonDontWriteBytecode(environment);
