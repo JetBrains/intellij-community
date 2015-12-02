@@ -29,6 +29,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.text.MutableAttributeSet;
+import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.parser.ParserDelegator;
 import java.beans.Introspector;
@@ -63,9 +65,23 @@ public class StringUtil extends StringUtilRt {
 
     @Override
     public void handleText(char[] text, int pos) {
-      if (myBuffer.length() > 0) myBuffer.append(SystemProperties.getLineSeparator());
-
       myBuffer.append(text);
+    }
+
+    @Override
+    public void handleStartTag(HTML.Tag tag, MutableAttributeSet set, int i) {
+      handleTag(tag);
+    }
+
+    @Override
+    public void handleSimpleTag(HTML.Tag tag, MutableAttributeSet set, int i) {
+      handleTag(tag);
+    }
+
+    private void handleTag(HTML.Tag tag) {
+      if (tag.breaksFlow() && myBuffer.length() > 0) {
+        myBuffer.append(SystemProperties.getLineSeparator());
+      }
     }
 
     public String getText() {
@@ -2152,7 +2168,8 @@ public class StringUtil extends StringUtilRt {
     return replace(text, REPLACES_DISP, REPLACES_REFS);
   }
 
-  public static String removeHtmlTags (@NotNull String htmlString) {
+  public static String removeHtmlTags (@Nullable String htmlString) {
+    if (isEmpty(htmlString)) return htmlString;
     try {
       html2TextParser.parse(new StringReader(htmlString));
     }
