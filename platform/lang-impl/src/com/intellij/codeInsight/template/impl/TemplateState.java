@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
+import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -265,7 +266,7 @@ public class TemplateState implements Disposable {
     return mySegments.getSegmentsCount();
   }
 
-  public TextRange getSegmentRange(int segment){
+  public TextRange getSegmentRange(int segment) {
     return new TextRange(mySegments.getSegmentStart(segment), mySegments.getSegmentEnd(segment));
   }
 
@@ -366,7 +367,6 @@ public class TemplateState implements Disposable {
       if (substituted != null) {
         template = substituted;
       }
-
     }
     return template;
   }
@@ -522,7 +522,8 @@ public class TemplateState implements Disposable {
     String variableName = myTemplate.getVariableNameAt(myCurrentVariableNumber);
     int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
     if (segmentNumber < 0) {
-      LOG.error("No segment for variable: var=" + myCurrentVariableNumber + "; name=" + variableName + "; " + presentTemplate(myTemplate));
+      LOG.error("No segment for variable: var=" + myCurrentVariableNumber + "; name=" + variableName + "; " + presentTemplate(myTemplate) +
+                "; offset: " + myEditor.getCaretModel().getOffset(), AttachmentFactory.createAttachment(myDocument));
     }
     return segmentNumber;
   }
@@ -770,13 +771,13 @@ public class TemplateState implements Disposable {
         return;
       }
     }
-    
+
     final boolean resultIsNullOrEmpty = result == null || result.equalsToText("", element);
-    
+
     // do not update default value of neighbour segment
-    if (resultIsNullOrEmpty && myCurrentSegmentNumber >= 0 && 
+    if (resultIsNullOrEmpty && myCurrentSegmentNumber >= 0 &&
         (mySegments.getSegmentStart(segmentNumber) == mySegments.getSegmentEnd(myCurrentSegmentNumber) ||
-        mySegments.getSegmentEnd(segmentNumber) == mySegments.getSegmentStart(myCurrentSegmentNumber))) {
+         mySegments.getSegmentEnd(segmentNumber) == mySegments.getSegmentStart(myCurrentSegmentNumber))) {
       return;
     }
     if (defaultValue != null && resultIsNullOrEmpty) {
@@ -963,7 +964,7 @@ public class TemplateState implements Disposable {
   private void setFinalEditorState(boolean brokenOff) {
     myEditor.getSelectionModel().removeSelection();
     if (brokenOff && !((TemplateManagerImpl)TemplateManager.getInstance(myProject)).shouldSkipInTests()) return;
-    
+
     int selectionSegment = myTemplate.getVariableSegmentNumber(TemplateImpl.SELECTION);
     int endSegmentNumber = selectionSegment >= 0 && getSelectionBeforeTemplate() == null ? selectionSegment : myTemplate.getEndSegmentNumber();
     int offset = -1;
@@ -984,7 +985,7 @@ public class TemplateState implements Disposable {
       myEditor.getCaretModel().moveToOffset(offset);
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
-    
+
     int selStart = myTemplate.getSelectionStartSegmentNumber();
     int selEnd = myTemplate.getSelectionEndSegmentNumber();
     if (selStart >= 0 && selEnd >= 0) {
@@ -1233,7 +1234,7 @@ public class TemplateState implements Disposable {
       int selectionStart = myTemplate.getSegmentOffset(selectionSegment);
       selectionIndent = 0;
       String templateText = myTemplate.getTemplateText();
-      while (selectionStart > 0 && templateText.charAt(selectionStart-1) == ' ') {
+      while (selectionStart > 0 && templateText.charAt(selectionStart - 1) == ' ') {
         // TODO handle tabs
         selectionIndent++;
         selectionStart--;
