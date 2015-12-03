@@ -441,8 +441,24 @@ public final class DefiniteAssignmentUtil {
   }
 
   private static void checkTryStatement(PsiTryStatement tryStatement, DefiniteAssignment definiteAssignment) {
-    // try with resources not specified
+    // try with resources not specified in JLS Java SE 8 Edition chapter 16
     final boolean da = definiteAssignment.isDefinitelyAssigned();
+    final PsiResourceList resourceList = tryStatement.getResourceList();
+    if (resourceList != null) {
+      for (PsiResourceListElement element : resourceList) {
+        if (element instanceof PsiResourceExpression) {
+          final PsiResourceExpression resourceExpression = (PsiResourceExpression)element;
+          checkExpression(resourceExpression.getExpression(), definiteAssignment, BooleanExpressionValue.UNDEFINED);
+        }
+        else if (element instanceof PsiResourceVariable) {
+          final PsiResourceVariable resourceVariable = (PsiResourceVariable)element;
+          checkExpression(resourceVariable.getInitializer(), definiteAssignment, BooleanExpressionValue.UNDEFINED);
+        }
+        else {
+          throw new AssertionError();
+        }
+      }
+    }
     checkCodeBlock(tryStatement.getTryBlock(), definiteAssignment);
     final boolean du = definiteAssignment.isDefinitelyUnassigned();
     boolean resultDa = definiteAssignment.isDefinitelyAssigned();

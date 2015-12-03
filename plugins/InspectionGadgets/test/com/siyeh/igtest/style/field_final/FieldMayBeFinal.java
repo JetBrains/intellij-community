@@ -1,5 +1,9 @@
 package com.siyeh.igtest.style.field_final;
-import java.awt.*; import java.io.File;import java.io.IOException; import java.util.*;
+
+import java.awt.*;
+import java.io.*;
+import java.util.*;
+
 public class FieldMayBeFinal {
 
     private static String string;
@@ -576,15 +580,6 @@ class T21 {
     final Object[] objects = new Object[]{1, 2, i=3};
   }
 }
-class T22 {
-  private final int i; // may not be final, but green when it is
-  {
-    new Object() {{
-      System.out.println(i);
-    }};
-    i = 1;
-  }
-}
 class T23 {
   private int <warning descr="Field 'i' may be 'final'">i</warning>; // may be final
   {
@@ -776,7 +771,7 @@ class T44 {
   }
 }
 class T45 {
-  private int i; // should be allowed final, but does not compile in javac
+  private int i; // should be allowed final and green when it is, but does not compile in javac
   {
     for (; true; i = 1) {
       i = 2;
@@ -896,6 +891,36 @@ class T60 {
   private int i = 1;
   {
     if (false) i = 2;
+  }
+}
+class T61 {
+  private String <warning descr="Field 's' may be 'final'">s</warning>; // may be final
+  T61() throws IOException {
+    try (final InputStream is = new FileInputStream(s="ab")) {
+    }
+  }
+}
+class T62 {
+  private String s; // may not be final
+  T62() throws IOException {
+    try (final InputStream is = new FileInputStream(s="ab")) {
+    }
+    s = "ba";
+  }
+}
+class T63 {
+  private String s; // may not be final
+  T63() throws IOException {
+    try (final InputStream is = new FileInputStream(s=s="ab")) {
+    }
+  }
+}
+class T64 {
+  private String s; // may not be final, but green when it is.
+  T64() throws IOException {
+    try (final InputStream is = new FileInputStream("ab") {{System.out.println(s);}}) {
+    }
+    s="";
   }
 }
 class Foo {
