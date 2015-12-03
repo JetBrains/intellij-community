@@ -206,8 +206,8 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
     JScrollPane pane = builder.getScrollPane();
     if (pane != null) {
-    	pane.setBorder(null);
-    	pane.setViewportBorder(null);
+        pane.setBorder(null);
+        pane.setViewportBorder(null);
     }
 
     if (gotoData.listUpdaterTask != null) {
