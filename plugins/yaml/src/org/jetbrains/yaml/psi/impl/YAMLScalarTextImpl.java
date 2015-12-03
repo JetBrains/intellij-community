@@ -2,6 +2,8 @@ package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLTokenTypes;
@@ -48,4 +50,12 @@ public class YAMLScalarTextImpl extends YAMLBlockScalarImpl implements YAMLScala
     return "YAML scalar text";
   }
 
+  @NotNull
+  /**
+   * Provide reference contributor with given method registerReferenceProviders implementation:
+   * registrar.registerReferenceProvider(PlatformPatterns.psiElement(YAMLKeyValue.class), ReferenceProvider);
+   */
+  public PsiReference[] getReferences() {
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this, YAMLScalarText.class);
+  }
 }

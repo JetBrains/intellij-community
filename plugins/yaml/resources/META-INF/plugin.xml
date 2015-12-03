@@ -24,10 +24,7 @@
     <psi.treeChangePreprocessor implementation="org.jetbrains.yaml.psi.YAMLPsiManager"/>
 
     <projectService serviceImplementation="org.jetbrains.yaml.YAMLElementGenerator"/>
-
-    <lang.elementManipulator forClass="org.jetbrains.yaml.psi.YAMLScalar"
-                             implementationClass="org.jetbrains.yaml.psi.impl.YAMLScalarElementManipulator"/>
-  </extensions>
+   </extensions>
 
 
 </idea-plugin>
