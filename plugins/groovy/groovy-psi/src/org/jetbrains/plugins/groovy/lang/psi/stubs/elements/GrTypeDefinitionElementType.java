@@ -106,7 +106,6 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
       final String fqn = stub.getQualifiedName();
       if (fqn != null) {
         sink.occurrence(GrFullClassNameIndex.KEY, fqn.hashCode());
-        sink.occurrence(JavaStubIndexKeys.CLASS_FQN, fqn.hashCode());
       }
     }
 
