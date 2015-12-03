@@ -160,7 +160,7 @@ public class EditorSearchSession implements SearchSession,
           myFindModel.setWholeWordsOnly(false);
         }
         updateUIWithFindModel();
-        clearSearchResults();
+        mySearchResults.clear();
         updateResults(true);
         FindUtil.updateFindInFileModel(getProject(), myFindModel);
       }
@@ -236,6 +236,7 @@ public class EditorSearchSession implements SearchSession,
 
   @Override
   public void searchResultsUpdated(SearchResults sr) {
+    if (sr.getFindModel() == null) return;
     if (myComponent.getSearchTextComponent().getText().isEmpty()) {
       updateUIWithEmptyResults();
     } else {
