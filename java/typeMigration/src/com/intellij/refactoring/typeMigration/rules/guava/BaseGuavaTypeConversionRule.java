@@ -26,7 +26,9 @@ import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Dmitry Batkovich
@@ -66,6 +68,11 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
 
   @NotNull
   public abstract String ruleToClass();
+
+  @NotNull
+  protected Set<String> getAdditionalUtilityClasses() {
+    return Collections.emptySet();
+  }
 
   @Nullable
   @Override
@@ -108,7 +115,7 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
   }
 
   protected boolean isValidMethodQualifierToConvert(PsiClass aClass) {
-    return aClass != null && ruleFromClass().equals(aClass.getQualifiedName());
+    return aClass != null && (ruleFromClass().equals(aClass.getQualifiedName()) || getAdditionalUtilityClasses().contains(aClass.getQualifiedName()));
   }
 
   static boolean canConvert(@Nullable PsiType from,
