@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.scratch;
 
+import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.PositionManagerImpl;
 import com.intellij.openapi.project.Project;
@@ -40,9 +41,7 @@ public class JavaScratchPositionManager extends PositionManagerImpl{
     myScratchFile = scratchFile;
   }
 
-  @Nullable
-  @Override
-  protected PsiFile getPsiFileByLocation(Project project, Location location) {
+  private PsiFile getScratchPsiFileByLocation(Project project, Location location) {
     if (location == null) {
       return null;
     }
@@ -77,5 +76,17 @@ public class JavaScratchPositionManager extends PositionManagerImpl{
     }
 
     return null;
+  }
+
+  @Nullable
+  @Override
+  protected PsiFile getPsiFileByLocation(Project project, Location location) throws NoDataException {
+    PsiFile file = getScratchPsiFileByLocation(project, location);
+    if (file != null) {
+      return file;
+    }
+    else {
+      throw NoDataException.INSTANCE;
+    }
   }
 }

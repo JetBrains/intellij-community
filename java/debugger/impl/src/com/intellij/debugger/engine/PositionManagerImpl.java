@@ -333,7 +333,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   }
 
   @Nullable
-  protected PsiFile getPsiFileByLocation(final Project project, final Location location) {
+  protected PsiFile getPsiFileByLocation(final Project project, final Location location) throws NoDataException {
     if (location == null) {
       return null;
     }
