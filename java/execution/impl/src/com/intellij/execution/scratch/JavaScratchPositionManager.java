@@ -33,7 +33,6 @@ import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -52,12 +51,7 @@ public class JavaScratchPositionManager extends PositionManagerImpl{
   @Override
   public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
     checkPosition(position);
-    try {
-      return super.locationsOfLine(type, position);
-    }
-    catch (NoDataException e) {
-      return Collections.emptyList();
-    }
+    return super.locationsOfLine(type, position);
   }
 
   @NotNull
@@ -65,30 +59,30 @@ public class JavaScratchPositionManager extends PositionManagerImpl{
   public List<ClassPrepareRequest> createPrepareRequests(@NotNull ClassPrepareRequestor requestor,
                                                          @NotNull SourcePosition position) throws NoDataException {
     checkPosition(position);
-    try {
-      return super.createPrepareRequests(requestor, position);
-    }
-    catch (NoDataException e) {
-      return Collections.emptyList();
-    }
+    return super.createPrepareRequests(requestor, position);
   }
 
   @NotNull
   @Override
   public List<ReferenceType> getAllClasses(@NotNull SourcePosition position) throws NoDataException {
     checkPosition(position);
-    try {
-      return super.getAllClasses(position);
-    }
-    catch (NoDataException e) {
-      return Collections.emptyList();
-    }
+    return super.getAllClasses(position);
   }
 
   private void checkPosition(@NotNull SourcePosition position) throws NoDataException{
     if (!myScratchFile.equals(position.getFile().getVirtualFile())) {
       throw NoDataException.INSTANCE;
     }
+  }
+
+  @Nullable
+  @Override
+  public SourcePosition getSourcePosition(Location location) throws NoDataException {
+    final SourcePosition position = super.getSourcePosition(location);
+    if (position == null) {
+      throw NoDataException.INSTANCE; // delegate to other managers
+    }
+    return position;
   }
 
   @Nullable
