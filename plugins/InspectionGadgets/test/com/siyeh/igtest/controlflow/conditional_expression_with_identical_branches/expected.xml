@@ -2,16 +2,57 @@
 <problems>
   <problem>
     <file>ConditionalExpressionWithIdenticalBranches.java</file>
-    <line>6</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Conditional expression with identical branches</problem_class>
-    <description>Conditional expression &lt;code&gt;b ? 1 + 2 + 3 : 1 + 2 + 3&lt;/code&gt; with identical branches #loc</description>
+    <line>8</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Conditional expression with identical or similar branches</problem_class>
+    <description>Conditional expression &lt;code&gt;b ? 1 + 2 + 3 : 1 + 2 + 3&lt;/code&gt; with identical or similar branches #loc</description>
   </problem>
 
   <problem>
     <file>ConditionalExpressionWithIdenticalBranches.java</file>
-    <line>14</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Conditional expression with identical branches</problem_class>
-    <description>Conditional expression &lt;code&gt;b ? java.lang.String.class : String.class&lt;/code&gt; with identical branches #loc</description>
+    <line>16</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Conditional expression with identical or similar branches</problem_class>
+    <description>Conditional expression &lt;code&gt;b ? java.lang.String.class : String.class&lt;/code&gt; with identical or similar branches #loc</description>
   </problem>
 
+  <problem>
+    <file>ConditionalExpressionWithIdenticalBranches.java</file>
+    <line>28</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Conditional expression with identical or similar branches</problem_class>
+    <description>Conditional expression &lt;code&gt;new Random().nextBoolean() ? (Object) &quot;1&quot; : (Object) &quot;2&quot;&lt;/code&gt; with identical or similar branches #loc</description>
+  </problem>
+
+  <problem>
+    <file>ConditionalExpressionWithIdenticalBranches.java</file>
+    <line>32</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Conditional expression with identical or similar branches</problem_class>
+    <description>Conditional expression &lt;code&gt;new Random().nextBoolean() ? &quot;21&quot; + (Object) &quot;1&quot; : &quot;21&quot; + (Object) &quot;2&quot;&lt;/code&gt; with identical or similar branches #loc</description>
+  </problem>
+
+  <problem>
+    <file>ConditionalExpressionWithIdenticalBranches.java</file>
+    <line>36</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Conditional expression with identical or similar branches</problem_class>
+    <description>Conditional expression &lt;code&gt;new Random().nextBoolean() ? ints[3] : ints[4]&lt;/code&gt; with identical or similar branches #loc</description>
+  </problem>
+
+  <problem>
+    <file>ConditionalExpressionWithIdenticalBranches.java</file>
+    <line>40</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Conditional expression with identical or similar branches</problem_class>
+    <description>Conditional expression &lt;code&gt;new Random().nextBoolean()? &quot;asd&quot; + strings[2] : &quot;qwe&quot; + strings[2]&lt;/code&gt; with identical or similar branches #loc</description>
+  </problem>
+
+  <problem>
+    <file>ConditionalExpressionWithIdenticalBranches.java</file>
+    <line>44</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Conditional expression with identical or similar branches</problem_class>
+    <description>Conditional expression &lt;code&gt;new Random().nextBoolean() ? 6 + someMethod(&quot;123&quot;, &quot;&quot;) : 6 + someMethod(&quot;321&quot;, &quot;&quot;)&lt;/code&gt; with identical or similar branches #loc</description>
+  </problem>
+
+  <problem>
+    <file>ConditionalExpressionWithIdenticalBranches.java</file>
+    <line>24</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Conditional expression with identical or similar branches</problem_class>
+    <description>Conditional expression &lt;code&gt;new Random().nextBoolean() ? &quot;2&quot; + &quot;q&quot; + &quot;1&quot; : &quot;2&quot; + &quot;qwe&quot; + &quot;1&quot;&lt;/code&gt; with identical or similar branches #loc</description>
+  </problem>
 </problems>
