@@ -183,6 +183,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIgnoreNumberOfParametersInPotentiallyCompatibleCheckNotToExcludeAllConflicts() throws Exception {
+    doTest(false);
+  }
+
   private void doTest() {
     doTest(true);
   }

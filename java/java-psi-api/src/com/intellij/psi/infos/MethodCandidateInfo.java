@@ -173,6 +173,10 @@ public class MethodCandidateInfo extends CandidateInfo{
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       final PsiExpression[] expressions = ((PsiExpressionList)myArgumentList).getExpressions();
 
+      if (!isVarargs() && expressions.length != parameters.length) {
+        return true;
+      }
+
       for (int i = 0; i < expressions.length; i++) {
         final PsiExpression expression = expressions[i];
         PsiType formalParameterType = i < parameters.length ? parameters[i].getType() : parameters[parameters.length - 1].getType();
