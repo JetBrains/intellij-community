@@ -256,7 +256,11 @@ public class MethodCandidateInfo extends CandidateInfo{
   public PsiSubstitutor getSubstitutor(boolean includeReturnConstraint) {
     PsiSubstitutor substitutor = myCalcedSubstitutor;
     if (substitutor == null || !includeReturnConstraint && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) || isOverloadCheck()) {
-      myInferenceError = null;
+
+      if (includeReturnConstraint) {
+        myInferenceError = null;
+      }
+
       PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
       PsiMethod method = getElement();
       if (myTypeArguments == null) {
