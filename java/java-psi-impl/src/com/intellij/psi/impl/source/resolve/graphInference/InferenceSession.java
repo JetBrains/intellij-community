@@ -632,18 +632,13 @@ public class InferenceSession {
       if (!PsiType.VOID.equals(returnType) && returnType != null) {
         PsiType targetType = getTargetTypeFromParent(context, false);
         if (targetType != null && !PsiType.VOID.equals(targetType)) {
-          registerReturnTypeConstraints(
-            PsiUtil.isRawSubstitutor(method, mySiteSubstitutor) ? returnType : mySiteSubstitutor.substitute(returnType), targetType, true);
+          registerReturnTypeConstraints(PsiUtil.isRawSubstitutor(method, mySiteSubstitutor) ? returnType : mySiteSubstitutor.substitute(returnType), targetType);
         }
       }
     }
   }
 
   public void registerReturnTypeConstraints(PsiType returnType, PsiType targetType) {
-    registerReturnTypeConstraints(returnType, targetType, false);
-  }
-
-  public void registerReturnTypeConstraints(PsiType returnType, PsiType targetType, boolean toplevel) {
     returnType = substituteWithInferenceVariables(returnType);
     final InferenceVariable inferenceVariable = shouldResolveAndInstantiate(returnType, targetType);
     if (inferenceVariable != null) {
@@ -659,25 +654,22 @@ public class InferenceSession {
         final PsiClass psiClass = resolveResult.getElement();
         if (psiClass != null) {
           LOG.assertTrue(returnType instanceof PsiClassType);
-          PsiClassType substitutedCapture = (PsiClassType)returnType;
-          if (!toplevel) {
-            substitutedCapture = (PsiClassType)PsiUtil.captureToplevelWildcards(returnType, myContext);
-            final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
-            final InferenceVariable[] copy = initBounds(null, typeParameters);
+          PsiClassType substitutedCapture = (PsiClassType)PsiUtil.captureToplevelWildcards(returnType, myContext);
+          final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
+          final InferenceVariable[] copy = initBounds(null, typeParameters);
 
-            final PsiType[] parameters = substitutedCapture.getParameters();
-            final PsiType[] newParameters = new PsiType[parameters.length];
-            final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myManager.getProject());
-            for (int i = 0; i < parameters.length; i++) {
-              newParameters[i] = parameters[i];
-              if (parameters[i] instanceof PsiCapturedWildcardType) {
-                newParameters[i] = elementFactory.createType(copy[i]);
-              }
+          final PsiType[] parameters = substitutedCapture.getParameters();
+          final PsiType[] newParameters = new PsiType[parameters.length];
+          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myManager.getProject());
+          for (int i = 0; i < parameters.length; i++) {
+            newParameters[i] = parameters[i];
+            if (parameters[i] instanceof PsiCapturedWildcardType) {
+              newParameters[i] = elementFactory.createType(copy[i]);
             }
-            substitutedCapture = elementFactory.createType(psiClass, newParameters);
-
-            myIncorporationPhase.addCapture(copy, substitutedCapture);
           }
+          substitutedCapture = elementFactory.createType(psiClass, newParameters);
+
+          myIncorporationPhase.addCapture(copy, substitutedCapture);
           addConstraint(new TypeCompatibilityConstraint(targetType, substitutedCapture));
         }
       } else {
