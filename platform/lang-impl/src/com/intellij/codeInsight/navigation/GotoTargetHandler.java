@@ -204,8 +204,11 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       setAdText(getAdText(gotoData.source, targets.length)).
       createPopup();
 
-    builder.getScrollPane().setBorder(null);
-    builder.getScrollPane().setViewportBorder(null);
+    JScrollPane pane = builder.getScrollPane();
+    if (pane != null) {
+    	pane.setBorder(null);
+    	pane.setViewportBorder(null);
+    }
 
     if (gotoData.listUpdaterTask != null) {
       gotoData.listUpdaterTask.init((AbstractPopup)popup, list, usageView);
