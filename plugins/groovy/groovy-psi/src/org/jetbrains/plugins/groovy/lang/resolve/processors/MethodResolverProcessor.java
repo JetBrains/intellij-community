@@ -203,20 +203,24 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
    *        -1 if first is more preferable
    */
   private int compareMethods(@NotNull GroovyMethodResult result1, @NotNull GroovyMethodResult result2) {
-    PsiMethod method1 = result1.getElement();
-    PsiMethod method2 = result2.getElement();
+    final PsiMethod method1 = result1.getElement();
+    final PsiMethod method2 = result2.getElement();
 
     if (!method1.getName().equals(method2.getName())) return 0;
 
-    if (secondMethodIsPreferable(result1, result2)) {
-      if (secondMethodIsPreferable(result2, result1)) {
+    boolean firstIsPreferable = secondMethodIsPreferable(result2, result1);
+    boolean secondIsPreferable = secondMethodIsPreferable(result1, result2);
+
+    if (secondIsPreferable) {
+      if (firstIsPreferable) {
         if (method2 instanceof GrGdkMethod && !(method1 instanceof GrGdkMethod)) {
           return -1;
         }
       }
       return 1;
     }
-    if (secondMethodIsPreferable(result2, result1)) {
+
+    if (firstIsPreferable) {
       return -1;
     }
 
