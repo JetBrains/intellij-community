@@ -84,6 +84,7 @@ class CompletionFileLogger(private val installationUID: String,
     
     override fun completionStarted(items: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.COMPLETION_STARTED)
+        builder.nextWrappedToken("LIST_LEN", items.size)
         builder.nextToken(convertCompletionList(items))
         log(builder)
     }
@@ -149,7 +150,20 @@ class CompletionFileLogger(private val installationUID: String,
 
     override fun charTyped(c: Char, items: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.TYPE)
-        builder.nextToken(convertCompletionList(items))
+        builder.nextWrappedToken("LIST_LEN", items.size)
+        
+        val ids = StringBuilder()
+        with (ids) {
+            append("{")
+            items.forEach { 
+                append("ID(")
+                append(itemsToId[it.item])
+                append("), ")
+            }
+            append('}')
+        }
+        
+        builder.nextToken(ids.toString())
         log(builder)
     }
 
@@ -178,13 +192,15 @@ class StatInfoBuilder(val installationUID: String, val completionUID: String, va
     private val builder = StringBuilder()
     
     init {
-        builder.append(installationUID)
-                .append(' ')
-                .append(completionUID)
-                .append(' ')
-                .append(timestamp)
-                .append(' ')
-                .append(action)
+        with (builder) {
+            append(installationUID)
+            append(' ')
+            append(completionUID)
+            append(' ')
+            append(timestamp)
+            append(' ')
+            append(action)
+        }
     }
 
     fun nextToken(any: Any) {
