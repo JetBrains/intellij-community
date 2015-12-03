@@ -657,6 +657,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="SillyAssignment" bundle="messages.InspectionsBundle" key="inspection.variable.assigned.to.itself.display.name" groupName="Declaration redundancy"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="DefaultAnnotationParam" bundle="messages.InspectionsBundle" key="inspection.default.annotation.param" groupName="Declaration redundancy"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.DefaultAnnotationParamInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantThrowsDeclaration" bundle="messages.InspectionsBundle" key="redundant.throws.declaration"
                      groupName="Declaration redundancy" enabledByDefault="false" level="WARNING" cleanupTool="true"
                      implementationClass="com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclaration" />
