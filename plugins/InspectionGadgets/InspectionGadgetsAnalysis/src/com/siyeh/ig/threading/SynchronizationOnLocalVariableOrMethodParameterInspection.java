@@ -21,6 +21,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.VariableSearchUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -80,7 +81,7 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
       final PsiElement target = referenceExpression.resolve();
       if (target instanceof PsiLocalVariable) {
         final PsiLocalVariable variable = (PsiLocalVariable)target;
-        if (!reportLocalVariables || isSynchronizedCollection(variable)) {
+        if (!reportLocalVariables || isSynchronizedCollection(variable, referenceExpression)) {
           return;
         }
         localVariable = true;
@@ -115,12 +116,12 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
       return PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class, PsiClassInitializer.class);
     }
 
-    private boolean isSynchronizedCollection(@NotNull PsiVariable variable) {
-      final PsiExpression initializer = ParenthesesUtils.stripParentheses(variable.getInitializer());
-      if (!(initializer instanceof PsiMethodCallExpression)) {
+    private boolean isSynchronizedCollection(@NotNull PsiVariable variable, PsiReferenceExpression referenceExpression) {
+      final PsiExpression definition = VariableSearchUtils.findDefinition(referenceExpression, variable);
+      if (!(definition instanceof PsiMethodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)initializer;
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)definition;
       final PsiMethod method = methodCallExpression.resolveMethod();
       if (method == null) {
         return false;

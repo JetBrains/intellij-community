@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.VariableSearchUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -161,31 +162,11 @@ public class UnnecessaryInitCauseInspectionBase extends BaseInspection {
     }
     else if (expression instanceof PsiReferenceExpression) {
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
-      final PsiElement target = referenceExpression.resolve();
-      if (!(target instanceof PsiVariable)) {
+      final PsiExpression definition = VariableSearchUtils.findDefinition(referenceExpression, null);
+      if (!(definition instanceof PsiNewExpression)) {
         return null;
       }
-      final PsiVariable variable = (PsiVariable)target;
-      final PsiExpression initializer = variable.getInitializer();
-      if ((initializer instanceof PsiNewExpression)) {
-        return (PsiNewExpression)initializer;
-      }
-      final PsiCodeBlock block = PsiTreeUtil.getParentOfType(target, PsiCodeBlock.class);
-      final PsiElement[] defs = DefUseUtil.getDefs(block, variable, expression);
-      if (defs.length != 1) {
-        return null;
-      }
-      final PsiElement def = defs[0];
-      if (!(def instanceof PsiReferenceExpression) || !(def.getParent() instanceof PsiAssignmentExpression)) {
-        return null;
-      }
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)def.getParent();
-      if (assignmentExpression.getOperationTokenType() != JavaTokenType.EQ) return null;
-      final PsiExpression rhs = ParenthesesUtils.stripParentheses(assignmentExpression.getRExpression());
-      if (!(rhs instanceof PsiNewExpression)) {
-        return null;
-      }
-      return (PsiNewExpression)rhs;
+      return (PsiNewExpression) definition;
     }
     return null;
   }
