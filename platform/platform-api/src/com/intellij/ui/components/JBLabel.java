@@ -25,17 +25,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.EditorKit;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
-import javax.swing.text.html.parser.ParserDelegator;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.io.IOException;
-import java.io.StringReader;
 import java.util.Collections;
 
 public class JBLabel extends JLabel implements AnchorableComponent {
@@ -43,6 +39,8 @@ public class JBLabel extends JLabel implements AnchorableComponent {
   private UIUtil.FontColor myFontColor = UIUtil.FontColor.NORMAL;
   private JComponent myAnchor = null;
   private JEditorPane myEditorPane = null;
+  private JLabel myIconLabel = null;
+  private boolean myMultiline = false;
 
   public JBLabel() {
     super();
@@ -154,7 +152,20 @@ public class JBLabel extends JLabel implements AnchorableComponent {
     if (myEditorPane != null) {
       myEditorPane.setText(getText());
       updateStyle(myEditorPane);
+      checkMultiline();
     }
+  }
+
+  @Override
+  public void setIcon(Icon icon) {
+    super.setIcon(icon);
+    if (myIconLabel != null) {
+      myIconLabel.setIcon(icon);
+    }
+  }
+
+  private void checkMultiline() {
+    myMultiline = StringUtil.removeHtmlTags(getText()).contains(SystemProperties.getLineSeparator());
   }
 
   @Override
@@ -165,18 +176,35 @@ public class JBLabel extends JLabel implements AnchorableComponent {
     }
   }
 
+  @Override
+  public void setIconTextGap(int iconTextGap) {
+    super.setIconTextGap(iconTextGap);
+    if (myEditorPane != null) {
+      setLayout(new BorderLayout(iconTextGap, 0));
+      add(myIconLabel, BorderLayout.WEST);
+      add(myEditorPane, BorderLayout.CENTER);
+    }
+  }
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    if (myEditorPane != null) {
+      setCopyable(false);
+      setCopyable(true);
+    }
+  }
 
   public JBLabel setCopyable(boolean copyable) {
     if (copyable ^ myEditorPane != null) {
       if (myEditorPane == null) {
-        setLayout(new GridLayout(1, 1));
         final JLabel ellipsisLabel = new JBLabel("...");
+        myIconLabel = new JLabel(getIcon());
         myEditorPane = new JEditorPane() {
           @Override
           public void paint(Graphics g) {
             Dimension size = getSize();
-            String plain = StringUtil.removeHtmlTags(getText());
-            boolean paintEllipsis = getPreferredSize().width > size.width && plain != null && !plain.contains(SystemProperties.getLineSeparator());
+            boolean paintEllipsis = getPreferredSize().width > size.width && !myMultiline;
 
             if (!paintEllipsis) {
               super.paint(g);
@@ -203,23 +231,6 @@ public class JBLabel extends JLabel implements AnchorableComponent {
             }
           }
         };
-        myEditorPane.setBorder(new Border() {
-          @Override
-          public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-          }
-
-          @Override
-          public Insets getBorderInsets(Component c) {
-            Icon icon = getIcon();
-            int leftGap = icon != null ? icon.getIconWidth() + getIconTextGap() : 0;
-            return new Insets(0, leftGap, 0, 0);
-          }
-
-          @Override
-          public boolean isBorderOpaque() {
-            return false;
-          }
-        });
         myEditorPane.addFocusListener(new FocusAdapter() {
           @Override
           public void focusLost(FocusEvent e) {
@@ -233,14 +244,19 @@ public class JBLabel extends JLabel implements AnchorableComponent {
         myEditorPane.setEditable(false);
         myEditorPane.setBackground(UIUtil.TRANSPARENT_COLOR);
         myEditorPane.setOpaque(false);
+        myEditorPane.setBorder(null);
         myEditorPane.setText(getText());
+        checkMultiline();
         myEditorPane.setCaretPosition(0);
         UIUtil.putClientProperty(myEditorPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Collections.singleton(ellipsisLabel));
         updateStyle(myEditorPane);
-        add(myEditorPane);
+        setLayout(new BorderLayout(getIconTextGap(), 0));
+        add(myIconLabel, BorderLayout.WEST);
+        add(myEditorPane, BorderLayout.CENTER);
       } else {
-        remove(myEditorPane);
+        removeAll();
         myEditorPane = null;
+        myIconLabel = null;
       }
     }
     return this;
@@ -250,27 +266,11 @@ public class JBLabel extends JLabel implements AnchorableComponent {
     EditorKit kit = pane.getEditorKit();
     if (kit instanceof HTMLEditorKit) {
       StyleSheet css = ((HTMLEditorKit)kit).getStyleSheet();
-      css.addRule("body, p {color:#" + ColorUtil.toHex(getForeground()) + ";font-family:" + getFont().getFamily() + "; font-size:" + getFont().getSize() + "pt;}");
-    }
-  }
-
-  private static class MyHtml2Text extends HTMLEditorKit.ParserCallback {
-    StringBuilder s;
-
-    @Nullable
-    public String parse(@Nullable String input) throws IOException {
-      if (input == null) return null;
-      s = new StringBuilder();
-      ParserDelegator delegator = new ParserDelegator();
-      delegator.parse(new StringReader(input), this, Boolean.TRUE);
-      return s.toString();
-    }
-
-    public void handleText(char[] text, int pos) {
-      if (s.length() > 0) {
-        s.append("\n");
-      }
-      s.append(text);
+      css.addRule("body, p {" +
+                  "color:#" + ColorUtil.toHex(getForeground()) + ";" +
+                  "font-family:" + getFont().getFamily() + ";" +
+                  "font-size:" + getFont().getSize() + "pt;" +
+                  "white-space:nowrap;}");
     }
   }
 }
