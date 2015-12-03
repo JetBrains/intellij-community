@@ -87,8 +87,13 @@ public class UnifiedDiffChange {
     boolean leftEditable = myViewer.isEditable(Side.LEFT, false);
     boolean rightEditable = myViewer.isEditable(Side.RIGHT, false);
 
-    if (rightEditable) myOperations.add(createOperation(Side.LEFT, false));
-    if (leftEditable) myOperations.add(createOperation(Side.RIGHT, rightEditable));
+    if (leftEditable && rightEditable) {
+      myOperations.add(createOperation(Side.LEFT));
+      myOperations.add(createOperation(Side.RIGHT));
+    }
+    else if (rightEditable) {
+      myOperations.add(createOperation(Side.LEFT));
+    }
   }
 
   private void doInstallHighlighterSimple(@NotNull LineRange deleted, @NotNull LineRange inserted) {
@@ -178,15 +183,13 @@ public class UnifiedDiffChange {
   }
 
   @NotNull
-  private MyGutterOperation createOperation(@NotNull Side side, boolean secondAction) {
-    int line = secondAction ? Math.min(myLine1 + 1, myLine2 - 1) : myLine1;
-    int offset = myEditor.getDocument().getLineStartOffset(line);
-
+  private MyGutterOperation createOperation(@NotNull Side sourceSide) {
+    int offset = myEditor.getDocument().getLineStartOffset(myLine1);
     RangeHighlighter highlighter = myEditor.getMarkupModel().addRangeHighlighter(offset, offset,
                                                                                  HighlighterLayer.ADDITIONAL_SYNTAX,
                                                                                  null,
                                                                                  HighlighterTargetArea.LINES_IN_RANGE);
-    return new MyGutterOperation(side, highlighter);
+    return new MyGutterOperation(sourceSide, highlighter);
   }
 
   private class MyGutterOperation {
@@ -212,23 +215,12 @@ public class UnifiedDiffChange {
     public GutterIconRenderer createRenderer() {
       if (myViewer.isStateIsOutOfDate()) return null;
       if (!myViewer.isEditable(mySide.other(), true)) return null;
-      boolean bothEditable = myViewer.isEditable(mySide, true);
 
-      if (bothEditable) {
-        if (mySide.isLeft()) {
-          return createIconRenderer(mySide, "Apply Before", AllIcons.Diff.ArrowRight);
-        }
-        else {
-          return createIconRenderer(mySide, "Apply After", AllIcons.Diff.Arrow);
-        }
+      if (mySide.isLeft()) {
+        return createIconRenderer(mySide, "Revert", AllIcons.Diff.Remove);
       }
       else {
-        if (mySide.isLeft()) {
-          return createIconRenderer(mySide, "Revert", AllIcons.Diff.Remove);
-        }
-        else {
-          return createIconRenderer(mySide, "Apply", AllIcons.Diff.Arrow);
-        }
+        return createIconRenderer(mySide, "Accept", AllIcons.Actions.Checked);
       }
     }
   }
