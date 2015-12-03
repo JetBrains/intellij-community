@@ -24,6 +24,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +50,7 @@ public class PythonUnitTestCommandLineState extends
     return PythonHelper.UT;
   }
 
+  @NotNull
   protected List<String> getTestSpecs() {
     List<String> specs = new ArrayList<String>();
 

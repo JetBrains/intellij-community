@@ -18,6 +18,7 @@ package com.jetbrains.python.testing.doctest;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +40,7 @@ public class PythonDocTestCommandLineState extends PythonTestCommandLineStateBas
     return PythonHelper.DOCSTRING;
   }
 
+  @NotNull
   protected List<String> getTestSpecs() {
     List<String> specs = new ArrayList<String>();
 
