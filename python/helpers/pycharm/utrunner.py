@@ -38,6 +38,8 @@ def loadSource(fileName):
       cnt += 1
     moduleName = getModuleName(prefix, cnt)
   debug("/ Loading " + fileName + " as " + moduleName)
+  if os.path.isdir(fileName):
+    fileName = fileName + os.path.sep
   module = imp.load_source(moduleName, fileName)
   modules[moduleName] = module
   return module
@@ -56,17 +58,15 @@ def walkModules(modulesAndPattern, dirname, names):
 # For default pattern see https://docs.python.org/2/library/unittest.html#test-discovery
 def loadModulesFromFolderRec(folder, pattern="test*.py"):
   modules = []
-  if PYTHON_VERSION_MAJOR == 3:
-    # fnmatch converts glob to regexp
-    prog_list = [re.compile(fnmatch.translate(pat.strip())) for pat in pattern.split(',')]
-    for root, dirs, files in os.walk(folder):
-      for name in files:
-        for prog in prog_list:
-          if name.endswith(".py") and prog.match(name):
-            modules.append(loadSource(os.path.join(root, name)))
-  else:   # actually for jython compatibility
-    os.path.walk(folder, walkModules, (modules, pattern))
-
+  # fnmatch converts glob to regexp
+  prog_list = [re.compile(fnmatch.translate(pat.strip())) for pat in pattern.split(',')]
+  for root, dirs, files in os.walk(folder):
+    files = [f for f in files if not f[0] == '.']
+    dirs[:] = [d for d in dirs if not d[0] == '.']
+    for name in files:
+      for prog in prog_list:
+        if name.endswith(".py") and prog.match(name):
+          modules.append(loadSource(os.path.join(root, name)))
   return modules
 
 testLoader = TestLoader()
@@ -109,11 +109,11 @@ if __name__ == "__main__":
       a_splitted = a[0].split("_args_separator_")  # ";" can't be used with bash, so we use "_args_separator_"
       if len(a_splitted) != 1:
         # means we have pattern to match against
-        if a_splitted[0].endswith(os.path.sep):
+        if os.path.isdir(a_splitted[0]):
           debug("/ from folder " + a_splitted[0] + ". Use pattern: " + a_splitted[1])
           modules = loadModulesFromFolderRec(a_splitted[0], a_splitted[1])
       else:
-        if a[0].endswith(os.path.sep):
+        if  os.path.isdir(a[0]):
           debug("/ from folder " + a[0])
           modules = loadModulesFromFolderRec(a[0])
         else:
