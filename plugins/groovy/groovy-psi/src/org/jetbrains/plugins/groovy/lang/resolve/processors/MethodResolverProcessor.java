@@ -33,7 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -168,35 +167,26 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
   }
 
   private GroovyResolveResult[] filterCandidates() {
-    List<? extends GroovyResolveResult> array = getCandidatesInternal();
+    List<GroovyMethodResult> array = getCandidatesInternal();
     if (array.size() == 1) return array.toArray(new GroovyResolveResult[array.size()]);
 
-    List<GroovyResolveResult> result = new ArrayList<GroovyResolveResult>();
+    List<GroovyMethodResult> result = ContainerUtil.newArrayList();
 
-    Iterator<? extends GroovyResolveResult> itr = array.iterator();
+    Iterator<GroovyMethodResult> itr = array.iterator();
 
     result.add(itr.next());
 
     Outer:
     while (itr.hasNext()) {
-      GroovyResolveResult resolveResult = itr.next();
-      PsiElement currentElement = resolveResult.getElement();
-      if (currentElement instanceof PsiMethod) {
-        PsiMethod currentMethod = (PsiMethod) currentElement;
-        for (Iterator<GroovyResolveResult> iterator = result.iterator(); iterator.hasNext();) {
-          final GroovyResolveResult otherResolveResult = iterator.next();
-          PsiElement other = otherResolveResult.getElement();
-          if (other instanceof PsiMethod) {
-            PsiMethod otherMethod = (PsiMethod) other;
-            int res = compareMethods(currentMethod, resolveResult.getSubstitutor(), resolveResult.getCurrentFileResolveContext(),
-                                     otherMethod, otherResolveResult.getSubstitutor(), otherResolveResult.getCurrentFileResolveContext());
-            if (res > 0) {
-              continue Outer;
-            }
-            else if (res < 0) {
-              iterator.remove();
-            }
-          }
+      GroovyMethodResult resolveResult = itr.next();
+      for (Iterator<GroovyMethodResult> iterator = result.iterator(); iterator.hasNext(); ) {
+        final GroovyMethodResult otherResolveResult = iterator.next();
+        int res = compareMethods(resolveResult, otherResolveResult);
+        if (res > 0) {
+          continue Outer;
+        }
+        else if (res < 0) {
+          iterator.remove();
         }
       }
 
@@ -212,23 +202,21 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
    *         0 if methods are equal
    *        -1 if first is more preferable
    */
-  private int compareMethods(@NotNull PsiMethod method1,
-                             @NotNull PsiSubstitutor substitutor1,
-                             @Nullable PsiElement resolveContext1,
-                             @NotNull PsiMethod method2,
-                             @NotNull PsiSubstitutor substitutor2,
-                             @Nullable PsiElement resolveContext2) {
+  private int compareMethods(@NotNull GroovyMethodResult result1, @NotNull GroovyMethodResult result2) {
+    PsiMethod method1 = result1.getElement();
+    PsiMethod method2 = result2.getElement();
+
     if (!method1.getName().equals(method2.getName())) return 0;
 
-    if (secondMethodIsPreferable(method1, substitutor1, resolveContext1, method2, substitutor2, resolveContext2)) {
-      if (secondMethodIsPreferable(method2, substitutor2, resolveContext2, method1, substitutor1, resolveContext1)) {
+    if (secondMethodIsPreferable(result1, result2)) {
+      if (secondMethodIsPreferable(result2, result1)) {
         if (method2 instanceof GrGdkMethod && !(method1 instanceof GrGdkMethod)) {
           return -1;
         }
       }
       return 1;
     }
-    if (secondMethodIsPreferable(method2, substitutor2, resolveContext2, method1, substitutor1, resolveContext1)) {
+    if (secondMethodIsPreferable(result2, result1)) {
       return -1;
     }
 
@@ -236,13 +224,13 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
   }
 
   //method1 has more general parameter types thn method2
-  private boolean secondMethodIsPreferable(@NotNull PsiMethod method1,
-                                           @NotNull PsiSubstitutor substitutor1,
-                                           @Nullable PsiElement resolveContext1,
-                                           @NotNull PsiMethod method2,
-                                           @NotNull PsiSubstitutor substitutor2,
-                                           @Nullable PsiElement resolveContext2) {
-    if (!method1.getName().equals(method2.getName())) return false;
+  private boolean secondMethodIsPreferable(@NotNull GroovyMethodResult result1, @NotNull GroovyMethodResult result2) {
+    PsiMethod method1 = result1.getElement();
+    PsiSubstitutor substitutor1 = result1.getSubstitutor();
+    PsiElement resolveContext1 = result1.getCurrentFileResolveContext();
+    PsiMethod method2 = result2.getElement();
+    PsiSubstitutor substitutor2 = result2.getSubstitutor();
+    PsiElement resolveContext2 = result2.getCurrentFileResolveContext();
 
     final Boolean custom = GrMethodComparator.checkDominated(method1, substitutor1, method2, substitutor2, this);
     if (custom != null) return custom;
@@ -256,9 +244,11 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
         System.arraycopy(myArgumentTypes, 0, argTypes, 1, myArgumentTypes.length);
         argTypes[0] = myThisType;
       }
-    } else if (method1 instanceof GrGdkMethod) {
+    }
+    else if (method1 instanceof GrGdkMethod) {
       return true;
-    } else if (method2 instanceof GrGdkMethod) {
+    }
+    else if (method2 instanceof GrGdkMethod) {
       return false;
     }
 
@@ -297,7 +287,6 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
               TypesUtil.resolvesTo(type2, CommonClassNames.JAVA_LANG_RUNNABLE)) {
             if (InheritanceUtil.isInheritor(argType, GroovyCommonClassNames.GROOVY_LANG_GROOVY_CALLABLE)) return true;
           }
-
         }
       }
 
