@@ -322,17 +322,17 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       LOG.error("Could not find OS X L&F: " + className);
     }
 
-    String defaultLafName = WelcomeWizardUtil.getDefaultLAF();
-    if (defaultLafName == null) {
-      defaultLafName = isIntelliJLafEnabled() ? IntelliJLaf.class.getName() : IdeaLookAndFeelInfo.CLASS_NAME;
+    String appLafName = WelcomeWizardUtil.getDefaultLAF();
+    if (appLafName != null) {
+      UIManager.LookAndFeelInfo laf = findLaf(appLafName);
+      if (laf != null) return laf;
+      LOG.error("Could not find app L&F: " + appLafName);
     }
+
+    String defaultLafName = isIntelliJLafEnabled() ? IntelliJLaf.class.getName() : IdeaLookAndFeelInfo.CLASS_NAME;
     UIManager.LookAndFeelInfo laf = findLaf(defaultLafName);
     if (laf != null) return laf;
-    UIManager.LookAndFeelInfo ideaLaf = findLaf(isIntelliJLafEnabled() ? IntelliJLaf.class.getName() : IdeaLookAndFeelInfo.CLASS_NAME);
-    if (ideaLaf != null) {
-      return ideaLaf;
-    }
-    throw new IllegalStateException("No default L&F found");
+    throw new IllegalStateException("No default L&F found: " + defaultLafName);
   }
 
   @Nullable
