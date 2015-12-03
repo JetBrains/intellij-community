@@ -183,16 +183,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
       @Override
       public PsiFile compute() {
         if (project.isDisposed()) return null;
-        VirtualFile child;
-        if (virtualFile.isValid()) {
-          child = virtualFile;
-        }
-        else {
-          VirtualFile vParent = virtualFile.getParent();
-          if (vParent == null || !vParent.isValid()) return null;
-          String name = virtualFile.getName();
-          child = vParent.findChild(name);
-        }
+        VirtualFile child = restoreVFile(virtualFile);
         if (child == null || !child.isValid()) return null;
         PsiFile file = PsiManager.getInstance(project).findFile(child);
         if (file != null && language != null) {
@@ -211,22 +202,28 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory>() {
       @Override
       public PsiDirectory compute() {
-        VirtualFile child;
-        if (virtualFile.isValid()) {
-          child = virtualFile;
-        }
-        else {
-          VirtualFile vParent = virtualFile.getParent();
-          if (vParent == null || !vParent.isDirectory()) return null;
-          String name = virtualFile.getName();
-          child = vParent.findChild(name);
-        }
+        VirtualFile child = restoreVFile(virtualFile);
         if (child == null || !child.isValid()) return null;
         PsiDirectory file = PsiManager.getInstance(project).findDirectory(child);
         if (file == null || !file.isValid()) return null;
         return file;
       }
     });
+  }
+
+  @Nullable
+  private static VirtualFile restoreVFile(VirtualFile virtualFile) {
+    VirtualFile child;
+    if (virtualFile.isValid()) {
+      child = virtualFile;
+    }
+    else {
+      VirtualFile vParent = virtualFile.getParent();
+      if (vParent == null || !vParent.isValid()) return null;
+      String name = virtualFile.getName();
+      child = vParent.findChild(name);
+    }
+    return child;
   }
 
   @Override
