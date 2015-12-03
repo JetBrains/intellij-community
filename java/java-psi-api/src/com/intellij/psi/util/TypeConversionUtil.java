@@ -236,10 +236,10 @@ public class TypeConversionUtil {
     }
 
     if (toType instanceof PsiCapturedWildcardType) {
-      return isNarrowingReferenceConversionAllowed(fromType, ((PsiCapturedWildcardType)toType).getWildcard());
+      return isNarrowingReferenceConversionAllowed(fromType, ((PsiCapturedWildcardType)toType).getUpperBound());
     }
     if (fromType instanceof PsiCapturedWildcardType) {
-      return isNarrowingReferenceConversionAllowed(((PsiCapturedWildcardType)fromType).getWildcard(), toType);
+      return isNarrowingReferenceConversionAllowed(((PsiCapturedWildcardType)fromType).getUpperBound(), toType);
     }
 
     if (isAssignable(fromType, toType)) return true;

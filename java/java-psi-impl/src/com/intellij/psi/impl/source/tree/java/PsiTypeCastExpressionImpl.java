@@ -18,11 +18,11 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +47,7 @@ public class PsiTypeCastExpressionImpl extends ExpressionPsiElement implements P
   @Nullable public PsiType getType() {
     final PsiTypeElement castType = getCastType();
     if (castType == null) return null;
-    return PsiImplUtil.normalizeWildcardTypeByPosition(castType.getType(), this);
+    return PsiUtil.captureToplevelWildcards(castType.getType(), this);
   }
 
   @Override

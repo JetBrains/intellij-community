@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -1432,7 +1431,7 @@ public class InferenceSession {
       for (int i = 0; i < functionalMethodParameters.length; i++) {
         final PsiType pType = signature.getParameterTypes()[i];
         addConstraint(new TypeCompatibilityConstraint(substituteWithInferenceVariables(getParameterType(parameters, i, psiSubstitutor, varargs)),
-                                                      PsiImplUtil.normalizeWildcardTypeByPosition(pType, reference)));
+                                                      PsiUtil.captureToplevelWildcards(pType, reference)));
       }
     }
     else if (PsiMethodReferenceUtil.isResolvedBySecondSearch(reference, signature, varargs, isStatic, parameters.length)) { //instance methods
@@ -1442,7 +1441,7 @@ public class InferenceSession {
       // the type to search is the result of capture conversion (5.1.10) applied to T; 
       // otherwise, the type to search is the same as the type of the first search. Again, the type arguments, if any, are given by the method reference.
       if (PsiUtil.isRawSubstitutor(containingClass, psiSubstitutor)) {
-        PsiType normalizedPType = PsiImplUtil.normalizeWildcardTypeByPosition(pType, (PsiExpression)myContext);
+        PsiType normalizedPType = PsiUtil.captureToplevelWildcards(pType, myContext);
         final PsiSubstitutor receiverSubstitutor = PsiMethodReferenceCompatibilityConstraint
           .getParameterizedTypeSubstitutor(containingClass, normalizedPType);
         if (receiverSubstitutor != null) {
@@ -1467,7 +1466,7 @@ public class InferenceSession {
       for (int i = 0; i < signature.getParameterTypes().length - 1; i++) {
         final PsiType interfaceParamType = signature.getParameterTypes()[i + 1];
         addConstraint(new TypeCompatibilityConstraint(substituteWithInferenceVariables(getParameterType(parameters, i, psiSubstitutor, varargs)),
-                                                      PsiImplUtil.normalizeWildcardTypeByPosition(interfaceParamType, reference)));
+                                                      PsiUtil.captureToplevelWildcards(interfaceParamType, reference)));
       }
     }
 

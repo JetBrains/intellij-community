@@ -260,7 +260,10 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
         return returnTypeErasure;
       }
     }
-    return PsiImplUtil.normalizeWildcardTypeByPosition(substitutedReturnType, call);
+    if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+      return PsiImplUtil.normalizeWildcardTypeByPosition(substitutedReturnType, call);
+    }
+    return PsiUtil.captureToplevelWildcards(substitutedReturnType, call);
   }
 }
 

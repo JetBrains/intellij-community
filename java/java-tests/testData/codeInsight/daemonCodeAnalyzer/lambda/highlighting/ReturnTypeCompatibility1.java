@@ -24,8 +24,8 @@ class Test {
         boolean b1 = as.<error descr="Ambiguous method call: both 'Foo.forAll(I<String, Boolean>)' and 'Foo.forAll(II<String, String>)' match">forAll</error>(s -> ac.<error descr="Ambiguous method call: both 'Foo.forAll(I<Character, Boolean>)' and 'Foo.forAll(II<Character, String>)' match">forAll</error>(c -> false));
         String s1 = as.<error descr="Ambiguous method call: both 'Foo.forAll(I<String, Boolean>)' and 'Foo.forAll(II<String, String>)' match">forAll</error>(s -> ac.<error descr="Ambiguous method call: both 'Foo.forAll(I<Character, Boolean>)' and 'Foo.forAll(II<Character, String>)' match">forAll</error>(c -> ""));
         boolean b2 = as.<error descr="Ambiguous method call: both 'Foo.forAll(I<String, Boolean>)' and 'Foo.forAll(II<String, String>)' match">forAll</error>(s -> ac.<error descr="Ambiguous method call: both 'Foo.forAll(I<Character, Boolean>)' and 'Foo.forAll(II<Character, String>)' match">forAll</error>(c -> ""));
-        String s2 = as.forAll2(s -> ac.forAll2<error descr="'forAll2(Test.II<java.lang.Character,java.lang.String>)' in 'Test.Foo' cannot be applied to '(<lambda expression>)'">(c -> false)</error>);
-        boolean b3 = as.forAll((I<String, Boolean>)s -> ac.forAll(<error descr="Inconvertible types; cannot cast '<lambda expression>' to 'Test.I<java.lang.Character,java.lang.Boolean>'">(I<Character, Boolean>)c -> ""</error>));
-        String s3 = as.forAll((II<String, String>)s -> ac.forAll(<error descr="Inconvertible types; cannot cast '<lambda expression>' to 'Test.II<java.lang.Character,java.lang.String>'">(II<Character, String>)c -> false</error>));
+        String s2 = as.forAll2(s -> ac.forAll2(c -> <error descr="Bad return type in lambda expression: boolean cannot be converted to String">false</error>));
+        boolean b3 = as.forAll((I<String, Boolean>)s -> ac.forAll((I<Character, Boolean>)c -> <error descr="Bad return type in lambda expression: String cannot be converted to Boolean">""</error>));
+        String s3 = as.forAll((II<String, String>)s -> ac.forAll((II<Character, String>)c -> <error descr="Bad return type in lambda expression: boolean cannot be converted to String">false</error>));
     }
 }
