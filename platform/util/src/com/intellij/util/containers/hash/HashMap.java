@@ -70,6 +70,10 @@ public class HashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   @Override
   public void clear() {
 
+    if (isEmpty())
+
+      return;
+
     clear(0);
   }
 
