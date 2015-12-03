@@ -75,8 +75,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_CONTEXT;
-
 /**
  * @author ven
  */
@@ -545,7 +543,7 @@ public class ResolveUtil {
     return elements;
   }
 
-  public static GroovyResolveResult[] filterSameSignatureCandidates(Collection<GroovyResolveResult> candidates) {
+  public static GroovyResolveResult[] filterSameSignatureCandidates(Collection<? extends GroovyResolveResult> candidates) {
     GroovyResolveResult[] array = candidates.toArray(new GroovyResolveResult[candidates.size()]);
     if (array.length == 1) return array;
 
@@ -970,7 +968,7 @@ public class ResolveUtil {
     return file.processDeclarations(new GrDelegatingScopeProcessorWithHints(resolver, null, ClassHint.RESOLVE_KINDS_METHOD) {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState _state) {
-        if (_state.get(RESOLVE_CONTEXT) instanceof GrImportStatement) {
+        if (_state.get(ClassHint.RESOLVE_CONTEXT) instanceof GrImportStatement) {
           super.execute(element, _state);
         }
         return true;

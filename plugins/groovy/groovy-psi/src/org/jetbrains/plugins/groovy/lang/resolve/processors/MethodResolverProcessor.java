@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -44,7 +44,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RES
 /**
  * @author ven
  */
-public class MethodResolverProcessor extends ResolverProcessor implements GrMethodComparator.Context {
+public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResult> implements GrMethodComparator.Context {
   private final PsiType myThisType;
 
   @Nullable
@@ -52,7 +52,7 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
 
   private final boolean myAllVariants;
 
-  private Set<GroovyResolveResult> myInapplicableCandidates = null;
+  private Set<GroovyMethodResult> myInapplicableCandidates = null;
 
   private final boolean myIsConstructor;
 
@@ -79,7 +79,7 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
                                  @Nullable PsiType[] typeArguments,
                                  boolean allVariants,
                                  final boolean byShape) {
-    super(name, RESOLVE_KINDS_METHOD_PROPERTY, place, PsiType.EMPTY_ARRAY);
+    super(name, RESOLVE_KINDS_METHOD_PROPERTY, place);
     myIsConstructor = isConstructor;
     myThisType = thisType;
     myArgumentTypes = argumentTypes;
@@ -110,7 +110,9 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
       boolean isApplicable = PsiUtil.isApplicable(myArgumentTypes, method, substitutor, myPlace, myByShape);
       boolean isValidResult = isStaticsOK && isAccessible && isApplicable;
 
-      GroovyResolveResultImpl candidate = new GroovyResolveResultImpl(method, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK, false, isValidResult);
+      GroovyMethodResult candidate = new GroovyMethodResult(
+        method, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK, isValidResult
+      );
 
       if (!myAllVariants && isValidResult) {
         addCandidate(candidate);
@@ -123,7 +125,7 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
     return true;
   }
 
-  protected boolean addInapplicableCandidate(@NotNull GroovyResolveResult candidate) {
+  protected boolean addInapplicableCandidate(@NotNull GroovyMethodResult candidate) {
     if (myInapplicableCandidates == null) {
       myInapplicableCandidates = ContainerUtil.newLinkedHashSet();
     }
@@ -146,19 +148,18 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
       return filterCandidates();
     }
     if (myInapplicableCandidates != null && !myInapplicableCandidates.isEmpty()) {
-      Set<GroovyResolveResult> resultSet = myAllVariants ? myInapplicableCandidates
-                                                         : filterCorrectParameterCount(myInapplicableCandidates);
+      Set<GroovyMethodResult> resultSet = myAllVariants ? myInapplicableCandidates
+                                                        : filterCorrectParameterCount(myInapplicableCandidates);
       return ResolveUtil.filterSameSignatureCandidates(resultSet);
     }
     return GroovyResolveResult.EMPTY_ARRAY;
   }
 
-  private Set<GroovyResolveResult> filterCorrectParameterCount(Set<GroovyResolveResult> candidates) {
+  private Set<GroovyMethodResult> filterCorrectParameterCount(Set<GroovyMethodResult> candidates) {
     if (myArgumentTypes == null) return candidates;
-    Set<GroovyResolveResult> result = ContainerUtil.newLinkedHashSet();
-    for (GroovyResolveResult candidate : candidates) {
-      final PsiElement element = candidate.getElement();
-      if (element instanceof PsiMethod && ((PsiMethod)element).getParameterList().getParametersCount() == myArgumentTypes.length) {
+    Set<GroovyMethodResult> result = ContainerUtil.newLinkedHashSet();
+    for (GroovyMethodResult candidate : candidates) {
+      if (candidate.getElement().getParameterList().getParametersCount() == myArgumentTypes.length) {
         result.add(candidate);
       }
     }
@@ -167,12 +168,12 @@ public class MethodResolverProcessor extends ResolverProcessor implements GrMeth
   }
 
   private GroovyResolveResult[] filterCandidates() {
-    List<GroovyResolveResult> array = getCandidatesInternal();
+    List<? extends GroovyResolveResult> array = getCandidatesInternal();
     if (array.size() == 1) return array.toArray(new GroovyResolveResult[array.size()]);
 
     List<GroovyResolveResult> result = new ArrayList<GroovyResolveResult>();
 
-    Iterator<GroovyResolveResult> itr = array.iterator();
+    Iterator<? extends GroovyResolveResult> itr = array.iterator();
 
     result.add(itr.next());
 
