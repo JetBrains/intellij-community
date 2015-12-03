@@ -59,16 +59,14 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     myPlatformFacade = facade;
     myGitDir = gitDir;
     myReader = new GitRepositoryReader(VfsUtilCore.virtualToIoFile(myGitDir));
+    myInfo = readRepoInfo();
     if (!light) {
       myUntrackedFilesHolder = new GitUntrackedFilesHolder(this);
       Disposer.register(this, myUntrackedFilesHolder);
-      myUntrackedFilesHolder.setupVfsListener(project);
-      setupUpdater();
     }
     else {
       myUntrackedFilesHolder = null;
     }
-    update();
   }
 
   @NotNull
@@ -84,7 +82,13 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
                                           @NotNull Project project,
                                           boolean listenToRepoChanges) {
     GitPlatformFacade platformFacade = ServiceManager.getService(project, GitPlatformFacade.class);
-    return new GitRepositoryImpl(root, gitDir, platformFacade, project, project, !listenToRepoChanges);
+    GitRepositoryImpl repository = new GitRepositoryImpl(root, gitDir, platformFacade, project, project, !listenToRepoChanges);
+    if (listenToRepoChanges) {
+      repository.getUntrackedFilesHolder().setupVfsListener(project);
+      repository.setupUpdater();
+      notifyListenersAsync(repository);
+    }
+    return repository;
   }
 
   private void setupUpdater() {
@@ -186,7 +190,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   public void update() {
     GitRepoInfo previousInfo = myInfo;
     myInfo = readRepoInfo();
-    notifyListeners(this, previousInfo, myInfo);
+    notifyIfRepoChanged(this, previousInfo, myInfo);
   }
 
   @NotNull
@@ -200,21 +204,24 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
                            state.getLocalBranches(), state.getRemoteBranches(), trackInfos);
   }
 
-  // previous info can be null before the first update
-  private static void notifyListeners(@NotNull final GitRepository repository, @Nullable GitRepoInfo previousInfo, @NotNull GitRepoInfo info) {
+  private static void notifyIfRepoChanged(@NotNull final GitRepository repository, @NotNull GitRepoInfo previousInfo, @NotNull GitRepoInfo info) {
     if (Disposer.isDisposed(repository.getProject())) {
       return;
     }
     if (!info.equals(previousInfo)) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        public void run() {
-          Project project = repository.getProject();
-          if (!project.isDisposed()) {
-            project.getMessageBus().syncPublisher(GIT_REPO_CHANGE).repositoryChanged(repository);
-          }
-        }
-      });
+      notifyListenersAsync(repository);
     }
+  }
+
+  private static void notifyListenersAsync(@NotNull final GitRepository repository) {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        Project project = repository.getProject();
+        if (!project.isDisposed()) {
+          project.getMessageBus().syncPublisher(GIT_REPO_CHANGE).repositoryChanged(repository);
+        }
+      }
+    });
   }
 
   @NotNull
