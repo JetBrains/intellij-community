@@ -26,10 +26,13 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.management.ListenerNotFoundException;
+import javax.management.Notification;
+import javax.management.NotificationEmitter;
+import javax.management.NotificationListener;
 import javax.swing.*;
 import java.io.*;
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
+import java.lang.management.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -130,6 +133,36 @@ public class PerformanceWatcher implements ApplicationComponent {
     }, "Performance watcher");
     myThread.setPriority(Thread.MIN_PRIORITY);
     myThread.start();
+
+    for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
+      if ("Code Cache".equals(bean.getName())) {
+        watchCodeCache(bean);
+        return;
+      }
+    }
+  }
+
+  private void watchCodeCache(final MemoryPoolMXBean bean) {
+    final long threshold = bean.getUsage().getMax() - 5 * 1024 * 1024;
+    if (!bean.isUsageThresholdSupported() || threshold <= 0) return;
+
+    bean.setUsageThreshold(threshold);
+    final NotificationEmitter emitter = (NotificationEmitter)ManagementFactory.getMemoryMXBean();
+    emitter.addNotificationListener(new NotificationListener() {
+      @Override
+      public void handleNotification(Notification n, Object hb) {
+        if (bean.getUsage().getUsed() > threshold) {
+          LOG.info("Code Cache is almost full");
+          dumpThreads("codeCacheFull", true);
+          try {
+            emitter.removeNotificationListener(this);
+          }
+          catch (ListenerNotFoundException e) {
+            LOG.error(e);
+          }
+        }
+      }
+    }, null, null);
   }
 
   private static void deleteOldThreadDumps() {
