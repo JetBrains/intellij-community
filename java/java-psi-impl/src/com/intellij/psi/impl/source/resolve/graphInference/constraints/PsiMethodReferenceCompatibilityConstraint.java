@@ -95,13 +95,13 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         }
         for (int i = 1; i < targetParameters.length; i++) {
           constraints.add(new TypeCompatibilityConstraint(session.substituteWithInferenceVariables(psiSubstitutor.substitute(parameters[i - 1].getType())),
-                                                          signature.getParameterTypes()[i]));
+                                                          PsiUtil.captureToplevelWildcards(signature.getParameterTypes()[i], myExpression)));
         }
       }
       else if (targetParameters.length == parameters.length) {
         for (int i = 0; i < targetParameters.length; i++) {
           constraints.add(new TypeCompatibilityConstraint(session.substituteWithInferenceVariables(psiSubstitutor.substitute(parameters[i].getType())),
-                                                          signature.getParameterTypes()[i]));
+                                                          PsiUtil.captureToplevelWildcards(signature.getParameterTypes()[i], myExpression)));
         }
       }
       else {
