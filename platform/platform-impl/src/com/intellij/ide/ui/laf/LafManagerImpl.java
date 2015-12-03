@@ -328,6 +328,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
     UIManager.LookAndFeelInfo laf = findLaf(defaultLafName);
     if (laf != null) return laf;
+    UIManager.LookAndFeelInfo ideaLaf = findLaf(isIntelliJLafEnabled() ? IntelliJLaf.class.getName() : IdeaLookAndFeelInfo.CLASS_NAME);
+    if (ideaLaf != null) {
+      return ideaLaf;
+    }
     throw new IllegalStateException("No default L&F found");
   }
 
