@@ -212,10 +212,15 @@ public class VMOptions {
       return null;
     }
 
+    return new File(location, getCustomFileName());
+  }
+
+  @NotNull
+  public static String getCustomFileName() {
     String name = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
     String platformSuffix = SystemInfo.is64Bit ? "64" : "";
     String osSuffix = SystemInfo.isWindows ? ".exe" : "";
-    return new File(location, name + platformSuffix + osSuffix + ".vmoptions");
+    return name + platformSuffix + osSuffix + ".vmoptions";
   }
 
   private static String ourTestPath;
