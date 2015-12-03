@@ -198,7 +198,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myHeadlessMode = isHeadless;
     myCommandLineMode = isCommandLine;
 
-    myDoNotSave = isUnitTestMode || isHeadless;
+    myDoNotSave = (isUnitTestMode || isHeadless) && !isOnAir();
 
     if (myTestModeFlag) {
       registerShutdownHook();
