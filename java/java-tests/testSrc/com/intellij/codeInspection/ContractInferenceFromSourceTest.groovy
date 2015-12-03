@@ -519,6 +519,18 @@ class Foo {{
     assert ContractInference.inferContracts(method).collect { it as String } == [' -> fail']
   }
 
+  public void "test vararg delegation"() {
+    def c = inferContracts("""
+  boolean delegating(Object o, Object o1) {
+    return smth(o, o1);
+  }
+  boolean smth(Object o, Object... o1) {
+    return o == null && o1 != null;
+  }
+""")
+    assert c == ['!null, _ -> false', 'null, _ -> true']
+  }
+
   private String inferContract(String method) {
     return assertOneElement(inferContracts(method))
   }
