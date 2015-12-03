@@ -923,6 +923,46 @@ class T64 {
     s="";
   }
 }
+class T65 {
+  private Runnable r; // may not be final
+  T65() {
+    r = () -> System.out.println(r);
+  }
+}
+class T66 {
+  private  String <warning descr="Field 's' may be 'final'">s</warning>; // may be final
+  T66() {
+    s = "10";
+    Runnable r = () -> System.out.println(s);
+  }
+}
+class T67 {
+  private  String s; // may not be final
+  T67() {
+    Runnable r = () -> System.out.println(s);
+    s = "10";
+  }
+}
+class T68 {
+  private Runnable <warning descr="Field 'r' may be 'final'">r</warning>; // may be final, compare to T65
+  T68() {
+    r = () -> System.out.println((this).r);
+  }
+}
+class T69 {
+  private String s; // may not be final
+  T69() {
+    Runnable r = () -> s = "asdf";
+  }
+}
+class T70 {
+  private String s; // may not be final
+  T70() {
+    Runnable r = () -> s = "asdf";
+    s = "";
+  }
+}
+
 class Foo {
 
   public interface Accessor<T> {

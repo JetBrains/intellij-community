@@ -525,6 +525,13 @@ public final class DefiniteAssignmentUtil {
       final PsiInstanceOfExpression instanceOfExpression = (PsiInstanceOfExpression)expression;
       checkExpression(instanceOfExpression.getOperand(), definiteAssignment, value);
     }
+    else if (expression instanceof PsiLambdaExpression) {
+      final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)expression;
+      final boolean du = definiteAssignment.isDefinitelyUnassigned();
+      definiteAssignment.set(definiteAssignment.isDefinitelyAssigned(), false);
+      checkLambdaExpression(lambdaExpression, definiteAssignment);
+      definiteAssignment.set(definiteAssignment.isDefinitelyAssigned(), du);
+    }
     else if (expression instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       checkMethodCallExpression(methodCallExpression, definiteAssignment, value);
@@ -651,6 +658,18 @@ public final class DefiniteAssignmentUtil {
     checkExpression(condition, definiteAssignment, BooleanExpressionValue.WHEN_FALSE);
     checkExpression(conditionalExpression.getElseExpression(), definiteAssignment, value);
     definiteAssignment.and(resultDa, resultDu);
+  }
+
+  private static void checkLambdaExpression(PsiLambdaExpression lambdaExpression, DefiniteAssignment definiteAssignment) {
+    final PsiElement body = lambdaExpression.getBody();
+    if (body instanceof PsiExpression) {
+      final PsiExpression bodyExpression = (PsiExpression)body;
+      checkExpression(bodyExpression, definiteAssignment, BooleanExpressionValue.UNDEFINED);
+    }
+    else if (body instanceof PsiCodeBlock) {
+      final PsiCodeBlock codeBlock = (PsiCodeBlock)body;
+      checkCodeBlock(codeBlock, definiteAssignment);
+    }
   }
 
   private static void checkMethodCallExpression(PsiMethodCallExpression methodCallExpression,
