@@ -76,7 +76,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     }
     catch (AbsentInformationException ignored) {
     }
-    return Collections.emptyList();
+    throw NoDataException.INSTANCE;
   }
 
   public ClassPrepareRequest createPrepareRequest(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position)
@@ -88,53 +88,58 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   @Override
   public List<ClassPrepareRequest> createPrepareRequests(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position)
     throws NoDataException {
-    return ApplicationManager.getApplication().runReadAction(new Computable<List<ClassPrepareRequest>>() {
-      @Override
-      public List<ClassPrepareRequest> compute() {
-        List<ClassPrepareRequest> res = new ArrayList<ClassPrepareRequest>();
-        for (PsiClass psiClass : getLineClasses(position.getFile(), position.getLine())) {
-          ClassPrepareRequestor prepareRequestor = requestor;
-          String classPattern = JVMNameUtil.getNonAnonymousClassName(psiClass);
-          if (classPattern == null) {
-            final PsiClass parent = JVMNameUtil.getTopLevelParentClass(psiClass);
-            if (parent == null) {
-              continue;
-            }
-            final String parentQName = JVMNameUtil.getNonAnonymousClassName(parent);
-            if (parentQName == null) {
-              continue;
-            }
-            classPattern = parentQName + "*";
-            prepareRequestor = new ClassPrepareRequestor() {
-              public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
-                final CompoundPositionManager positionManager = ((DebugProcessImpl)debuggerProcess).getPositionManager();
-                final List<ReferenceType> positionClasses = positionManager.getAllClasses(position);
-                if (positionClasses.contains(referenceType)) {
-                  requestor.processClassPrepare(debuggerProcess, referenceType);
-                }
+    final List<ClassPrepareRequest> requests =
+      ApplicationManager.getApplication().runReadAction(new Computable<List<ClassPrepareRequest>>() {
+        @Override
+        public List<ClassPrepareRequest> compute() {
+          List<ClassPrepareRequest> res = new ArrayList<ClassPrepareRequest>();
+          for (PsiClass psiClass : getLineClasses(position.getFile(), position.getLine())) {
+            ClassPrepareRequestor prepareRequestor = requestor;
+            String classPattern = JVMNameUtil.getNonAnonymousClassName(psiClass);
+            if (classPattern == null) {
+              final PsiClass parent = JVMNameUtil.getTopLevelParentClass(psiClass);
+              if (parent == null) {
+                continue;
               }
-            };
+              final String parentQName = JVMNameUtil.getNonAnonymousClassName(parent);
+              if (parentQName == null) {
+                continue;
+              }
+              classPattern = parentQName + "*";
+              prepareRequestor = new ClassPrepareRequestor() {
+                public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
+                  final CompoundPositionManager positionManager = ((DebugProcessImpl)debuggerProcess).getPositionManager();
+                  final List<ReferenceType> positionClasses = positionManager.getAllClasses(position);
+                  if (positionClasses.contains(referenceType)) {
+                    requestor.processClassPrepare(debuggerProcess, referenceType);
+                  }
+                }
+              };
+            }
+            ClassPrepareRequest request = myDebugProcess.getRequestsManager().createClassPrepareRequest(prepareRequestor, classPattern);
+            if (request != null) {
+              res.add(request);
+            }
           }
-          ClassPrepareRequest request = myDebugProcess.getRequestsManager().createClassPrepareRequest(prepareRequestor, classPattern);
-          if (request != null) {
-            res.add(request);
-          }
+          return res;
         }
-        return res;
-      }
-    });
+      });
+    if (requests.isEmpty()) {
+      throw NoDataException.INSTANCE;
+    }
+    return requests;
   }
 
   @Nullable
   public SourcePosition getSourcePosition(final Location location) throws NoDataException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if(location == null) {
-      return null;
+      throw NoDataException.INSTANCE;
     }
 
     PsiFile psiFile = getPsiFileByLocation(getDebugProcess().getProject(), location);
     if(psiFile == null ) {
-      return null;
+      throw NoDataException.INSTANCE;
     }
 
     LOG.assertTrue(myDebugProcess != null);
@@ -334,7 +339,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   }
 
   @Nullable
-  protected PsiFile getPsiFileByLocation(final Project project, final Location location) throws NoDataException {
+  protected PsiFile getPsiFileByLocation(final Project project, final Location location) {
     if (location == null) {
       return null;
     }
@@ -394,7 +399,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
   @NotNull
   public List<ReferenceType> getAllClasses(@NotNull final SourcePosition position) throws NoDataException {
-    return ApplicationManager.getApplication().runReadAction(new Computable<List<ReferenceType>>() {
+    final List<ReferenceType> allClasses = ApplicationManager.getApplication().runReadAction(new Computable<List<ReferenceType>>() {
       @Override
       public List<ReferenceType> compute() {
         List<ReferenceType> res = new ArrayList<ReferenceType>();
@@ -404,6 +409,10 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
         return res;
       }
     });
+    if (allClasses.isEmpty()) {
+      throw NoDataException.INSTANCE;
+    }
+    return allClasses;
   }
 
   private List<ReferenceType> getClassReferences(@NotNull final PsiClass psiClass, SourcePosition position) {
