@@ -114,16 +114,16 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
           return false;
         }
 
-        if (applicableMethodReturnType != null) {
-          constraints.add(new TypeCompatibilityConstraint(returnType,
-                                                          session.substituteWithInferenceVariables(psiSubstitutor.substitute(applicableMethodReturnType))));
-        }
-        else if (applicableMember instanceof PsiClass || applicableMember instanceof PsiMethod && ((PsiMethod)applicableMember).isConstructor()) {
-          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(applicableMember.getProject());
+        if (applicableMethodReturnType == null && 
+            (applicableMember instanceof PsiClass || applicableMember instanceof PsiMethod && ((PsiMethod)applicableMember).isConstructor())) {
           if (containingClass != null) {
-            final PsiType classType = session.substituteWithInferenceVariables(elementFactory.createType(containingClass, psiSubstitutor));
-            constraints.add(new TypeCompatibilityConstraint(returnType, classType));
-          }
+            applicableMethodReturnType = JavaPsiFacade.getElementFactory(applicableMember.getProject()).createType(containingClass, PsiSubstitutor.EMPTY);
+          } 
+        }
+
+        if (applicableMethodReturnType != null) {
+          final PsiType capturedReturnType = PsiUtil.captureToplevelWildcards(psiSubstitutor.substitute(applicableMethodReturnType), myExpression);
+          constraints.add(new TypeCompatibilityConstraint(returnType, session.substituteWithInferenceVariables(capturedReturnType)));
         }
       }
       return true;
