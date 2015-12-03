@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.apple.eawt.FullScreenUtilities;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.ActivateToolWindowAction;
@@ -2096,7 +2097,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
      */
     private AddFloatingDecoratorCmd(final InternalDecorator decorator, final WindowInfoImpl info) {
       super(myWindowManager.getCommandProcessor());
-      myFloatingDecorator = new FloatingDecorator(myFrame, info.copy(), decorator);
+      myFloatingDecorator = new FloatingDecorator(info.copy(), decorator);
       myId2FloatingDecorator.put(info.getId(), myFloatingDecorator);
       final Rectangle bounds = info.getFloatingBounds();
       if (bounds != null &&
@@ -2118,6 +2119,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     @Override
     public void run() {
       try {
+        FullScreenUtilities.setWindowCanFullScreen(myFloatingDecorator, true);
         myFloatingDecorator.show();
       }
       finally {
