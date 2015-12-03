@@ -118,7 +118,8 @@ public class PyTypeParser {
   }
 
   /**
-   * @param  anchor should never be null or null will be returned
+   * @param anchor should never be null or null will be returned
+   * @return null either if there was an error during parsing or if extracted type is equivalent to <tt>Any</tt> or <tt>undefined</tt>
    */
   @Nullable
   public static PyType getTypeByName(@Nullable final PsiElement anchor, @NotNull String type) {

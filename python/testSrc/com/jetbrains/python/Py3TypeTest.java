@@ -138,7 +138,7 @@ public class Py3TypeTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
       @Override
       public void run() {
-        doTest("Any", "def f(x: int):\n" +
+        doTest("int", "def f(x: int):\n" +
                       "    \"\"\"\n" +
                       "    Args:\n" +
                       "        x (): foo\n" +
@@ -147,8 +147,6 @@ public class Py3TypeTest extends PyTestCase {
       }
     });
   }
-  
-  // TODO: Same test for Numpy docstrings doesn't pass because typing provider is invoked earlier than NumpyDocStringTypeProvider
   
   // PY-16987
   public void testNoTypeInNumpyDocstringParamAnnotation() {
@@ -161,7 +159,37 @@ public class Py3TypeTest extends PyTestCase {
                       "    ----------\n" +
                       "    x\n" +
                       "        foo\n" +
-                      "    \"\"\"    \n" +
+                      "    \"\"\"\n" +
+                      "    expr = x");
+      }
+    });
+  }
+  
+  // PY-17010
+  public void testAnnotatedReturnTypePrecedesDocstring() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
+      @Override
+      public void run() {
+        doTest("int", "def func() -> int:\n" +
+                      "    \"\"\"\n" +
+                      "    Returns:\n" +
+                      "        str\n" +
+                      "    \"\"\"\n" +
+                      "expr = func()");
+      }
+    });
+  }
+
+  // PY-17010
+  public void testAnnotatedParamTypePrecedesDocstring() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
+      @Override
+      public void run() {
+        doTest("int", "def func(x: int):\n" +
+                      "    \"\"\"\n" +
+                      "    Args:\n" +
+                      "        x (str):\n" +
+                      "    \"\"\"\n" +
                       "    expr = x");
       }
     });
