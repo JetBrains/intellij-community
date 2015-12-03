@@ -166,6 +166,7 @@ public class DiffUtil {
     editor.putUserData(DiffManagerImpl.EDITOR_IS_DIFF_KEY, Boolean.TRUE);
 
     editor.getSettings().setLineNumbersShown(true);
+    editor.getSettings().setShowIntentionBulb(false);
     ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
     editor.getGutterComponentEx().setShowDefaultGutterPopup(false);
 
