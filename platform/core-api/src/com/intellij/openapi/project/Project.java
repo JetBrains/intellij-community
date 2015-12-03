@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>To get the list of all open projects, use {@code ProjectManager.getInstance().getOpenProjects()}.
  */
 public interface Project extends ComponentManager, AreaInstance {
-  String DIRECTORY_STORE_FOLDER = ProjectCoreUtil.DIRECTORY_BASED_PROJECT_DIR;
+  String DIRECTORY_STORE_FOLDER = ".idea";
 
   /**
    * Returns a name ot the project. For a directory-based project it's an arbitrary string specified by user at project creation
