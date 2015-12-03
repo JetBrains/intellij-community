@@ -16,8 +16,10 @@
 package com.intellij.execution.scratch;
 
 import com.intellij.debugger.NoDataException;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.PositionManagerImpl;
+import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,7 +29,12 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
+import com.sun.jdi.request.ClassPrepareRequest;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -41,7 +48,52 @@ public class JavaScratchPositionManager extends PositionManagerImpl{
     myScratchFile = scratchFile;
   }
 
-  private PsiFile getScratchPsiFileByLocation(Project project, Location location) {
+  @NotNull
+  @Override
+  public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
+    checkPosition(position);
+    try {
+      return super.locationsOfLine(type, position);
+    }
+    catch (NoDataException e) {
+      return Collections.emptyList();
+    }
+  }
+
+  @NotNull
+  @Override
+  public List<ClassPrepareRequest> createPrepareRequests(@NotNull ClassPrepareRequestor requestor,
+                                                         @NotNull SourcePosition position) throws NoDataException {
+    checkPosition(position);
+    try {
+      return super.createPrepareRequests(requestor, position);
+    }
+    catch (NoDataException e) {
+      return Collections.emptyList();
+    }
+  }
+
+  @NotNull
+  @Override
+  public List<ReferenceType> getAllClasses(@NotNull SourcePosition position) throws NoDataException {
+    checkPosition(position);
+    try {
+      return super.getAllClasses(position);
+    }
+    catch (NoDataException e) {
+      return Collections.emptyList();
+    }
+  }
+
+  private void checkPosition(@NotNull SourcePosition position) throws NoDataException{
+    if (!myScratchFile.equals(position.getFile().getVirtualFile())) {
+      throw NoDataException.INSTANCE;
+    }
+  }
+
+  @Nullable
+  @Override
+  protected PsiFile getPsiFileByLocation(Project project, Location location) {
     if (location == null) {
       return null;
     }
@@ -76,17 +128,5 @@ public class JavaScratchPositionManager extends PositionManagerImpl{
     }
 
     return null;
-  }
-
-  @Nullable
-  @Override
-  protected PsiFile getPsiFileByLocation(Project project, Location location) throws NoDataException {
-    PsiFile file = getScratchPsiFileByLocation(project, location);
-    if (file != null) {
-      return file;
-    }
-    else {
-      throw NoDataException.INSTANCE;
-    }
   }
 }
