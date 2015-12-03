@@ -918,4 +918,8 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testAccessClassForWildcardCaptureType() throws Exception {
     doTest();
   }
+
+  public void testDistinguishTypeArgs() throws Exception {
+    doTest();
+  }
 }
