@@ -98,7 +98,8 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
         if (anObject == null) {
           anObject = XExpressionImpl.EMPTY_EXPRESSION;
         }
-        super.setItem(createDocument(((XExpression)anObject)));
+        XExpression expression = (XExpression)anObject;
+        getEditorComponent().setNewDocumentAndFileType(getFileType(expression), createDocument(expression));
       }
 
       @Override

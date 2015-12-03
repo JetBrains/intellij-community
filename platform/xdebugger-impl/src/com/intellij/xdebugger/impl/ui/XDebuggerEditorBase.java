@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -217,6 +218,15 @@ public abstract class XDebuggerEditorBase {
         onHistoryChanged();
       }
     }
+  }
+
+  @NotNull
+  protected FileType getFileType(@NotNull XExpression expression) {
+    FileType fileType = LanguageUtil.getLanguageFileType(expression.getLanguage());
+    if (fileType != null) {
+      return fileType;
+    }
+    return getEditorsProvider().getFileType();
   }
 
   public XDebuggerEditorsProvider getEditorsProvider() {
