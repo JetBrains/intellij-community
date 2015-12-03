@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -227,10 +227,15 @@ public class VMOptions {
       }
     }
 
-    final String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
-    final String platformSuffix = SystemInfo.is64Bit ? "64" : "";
-    final String osSuffix = SystemInfo.isWindows ? ".exe" : "";
-    return PathManager.getBinPath() + File.separatorChar + productName + platformSuffix + osSuffix + ".vmoptions";
+    return PathManager.getBinPath() + File.separatorChar + getCustomFileName();
+  }
+
+  @NotNull
+  public static String getCustomFileName() {
+    String name = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
+    String platformSuffix = SystemInfo.is64Bit ? "64" : "";
+    String osSuffix = SystemInfo.isWindows ? ".exe" : "";
+    return name + platformSuffix + osSuffix + ".vmoptions";
   }
 
   private static String ourTestPath;
