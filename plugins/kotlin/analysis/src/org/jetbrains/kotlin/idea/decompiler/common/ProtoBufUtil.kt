@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-package org.jetbrains.kotlin.idea.decompiler.textBuilder
+package org.jetbrains.kotlin.idea.decompiler.common
 
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.name.ClassId
+import com.google.protobuf.ExtensionRegistryLite
+import org.jetbrains.kotlin.serialization.ProtoBuf
+import java.io.ByteArrayInputStream
 
-public interface ResolverForDecompiler {
-    public fun resolveTopLevelClass(classId: ClassId): ClassDescriptor?
+fun ByteArray.toPackageProto(extensionRegistry: ExtensionRegistryLite): ProtoBuf.Package {
+    return ProtoBuf.Package.parseFrom(ByteArrayInputStream(this), extensionRegistry)!!
+}
 
-    public fun resolveDeclarationsInFacade(facadeFqName: FqName): List<DeclarationDescriptor>
+fun ByteArray.toClassProto(extensionRegistry: ExtensionRegistryLite): ProtoBuf.Class {
+    return ProtoBuf.Class.parseFrom(ByteArrayInputStream(this), extensionRegistry)
 }
