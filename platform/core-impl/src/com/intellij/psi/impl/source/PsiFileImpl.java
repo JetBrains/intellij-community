@@ -386,10 +386,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public String getText() {
-    final ASTNode tree = derefTreeElement();
-    if (tree != null) return tree.getText();
+    if (!isValid()) {
+      // even invalid PSI can calculate its text by concatenating its children
+      final ASTNode tree = derefTreeElement();
+      if (tree != null) return tree.getText();
 
-    PsiUtilCore.ensureValid(this);
+      throw new PsiInvalidElementAccessException(this);
+    }
     return getViewProvider().getContents().toString();
   }
 
