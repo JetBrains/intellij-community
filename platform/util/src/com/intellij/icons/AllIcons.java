@@ -34,6 +34,7 @@ public class AllIcons {
     public static final Icon Back = IconLoader.getIcon("/actions/back.png"); // 16x16
     public static final Icon Browser_externalJavaDoc = IconLoader.getIcon("/actions/browser-externalJavaDoc.png"); // 16x16
     public static final Icon Cancel = IconLoader.getIcon("/actions/cancel.png"); // 16x16
+    public static final Icon ChangeView = IconLoader.getIcon("/actions/changeView.png"); // 16x16
     public static final Icon Checked = IconLoader.getIcon("/actions/checked.png"); // 12x12
     public static final Icon Checked_selected = IconLoader.getIcon("/actions/checked_selected.png"); // 12x12
     public static final Icon Checked_small = IconLoader.getIcon("/actions/checked_small.png"); // 11x11
