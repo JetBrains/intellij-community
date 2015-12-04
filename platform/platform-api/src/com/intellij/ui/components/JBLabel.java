@@ -190,11 +190,20 @@ public class JBLabel extends JLabel implements AnchorableComponent {
   public void updateUI() {
     super.updateUI();
     if (myEditorPane != null) {
+      //init inner components again (if any) to provide proper colors when LAF is being changed
       setCopyable(false);
       setCopyable(true);
     }
   }
 
+  /**
+   *
+   * In 'copyable' mode JBLabel has the same appearance but user can select text with mouse and copy it to clipboard with standard shortcut.
+   * @return 'this' (the same instance)
+   */
+  //
+  // By default JBLabel is NOT copyable
+  // This method re
   public JBLabel setCopyable(boolean copyable) {
     if (copyable ^ myEditorPane != null) {
       if (myEditorPane == null) {
