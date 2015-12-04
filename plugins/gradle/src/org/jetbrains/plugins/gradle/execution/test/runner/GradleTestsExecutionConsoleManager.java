@@ -26,6 +26,7 @@ import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.execution.testframework.sm.runner.ui.SMRootTestProxyFormatter;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.TestTreeRenderer;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -76,10 +77,15 @@ public class GradleTestsExecutionConsoleManager
                                                             @NotNull final Executor executor,
                                                             @NotNull final ExecutionEnvironment env,
                                                             @NotNull final ProcessHandler processHandler) throws ExecutionException {
-    final GradleConsoleProperties properties = new GradleConsoleProperties(configuration, executor);
-    final SMTRunnerConsoleView executionConsole = (SMTRunnerConsoleView)SMTestRunnerConnectionUtil.createAndAttachConsole(
-      configuration.getSettings().getExternalSystemId().getReadableName(), processHandler, properties);
-    final TestTreeView testTreeView = executionConsole.getResultsViewer().getTreeView();
+    final GradleConsoleProperties consoleProperties = new GradleConsoleProperties(configuration, executor);
+    String testFrameworkName = configuration.getSettings().getExternalSystemId().getReadableName();
+    String splitterPropertyName = SMTestRunnerConnectionUtil.getSplitterPropertyName(testFrameworkName);
+    final GradleTestsExecutionConsole consoleView = new GradleTestsExecutionConsole(consoleProperties, splitterPropertyName);
+    consoleView.initTaskExecutionView(project, processHandler, task.getId());
+    SMTestRunnerConnectionUtil.initConsoleView(consoleView, testFrameworkName);
+    consoleView.attachToProcess(processHandler);
+
+    final TestTreeView testTreeView = consoleView.getResultsViewer().getTreeView();
     if (testTreeView != null) {
       TestTreeRenderer originalRenderer = ObjectUtils.tryCast(testTreeView.getCellRenderer(), TestTreeRenderer.class);
       if (originalRenderer != null) {
@@ -113,7 +119,7 @@ public class GradleTestsExecutionConsoleManager
       }
     }
 
-    return new GradleTestsExecutionConsole(executionConsole);
+    return consoleView;
   }
 
   @Override
