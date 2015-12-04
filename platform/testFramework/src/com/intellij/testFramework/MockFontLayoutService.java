@@ -86,6 +86,11 @@ public class MockFontLayoutService extends FontLayoutService {
     }
 
     @Override
+    public Shape getGlyphLogicalBounds(int glyphIndex) {
+      return new Rectangle(glyphIndex * myCharWidth, -myDescent, myCharWidth, myLineHeight);
+    }
+
+    @Override
     public int getGlyphCode(int glyphIndex) {
       return myChars[glyphIndex];
     }

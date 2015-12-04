@@ -126,7 +126,7 @@ public class ComplexTextFragmentTest {
 
     @Override
     public Shape getGlyphLogicalBounds(int glyphIndex) {
-      return new Rectangle(myGlyphPositions[glyphIndex], 0, myGlyphWidths[glyphIndex], TEST_LINE_HEIGHT - TEST_DESCENT);
+      return new Rectangle(myGlyphPositions[glyphIndex], -TEST_DESCENT, myGlyphWidths[glyphIndex], TEST_LINE_HEIGHT);
     }
 
     @Override
