@@ -27,6 +27,7 @@ import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +85,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       }
       catch (IllegalThreadStateException ignored) {
         myName = "zombie";
-      }                    
+      }
     }
     return myName;
   }
@@ -219,13 +220,12 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       //LOG.assertTrue(threadRef.isSuspended());
       checkValid();
 
-      if(myFrames == null) {
+      if (myFrames == null) {
         checkFrames(threadRef);
-  
-        myFrames = new ArrayList<StackFrameProxyImpl>(frameCount());
-        for (ListIterator<StackFrameProxyImpl> iterator = myFramesFromBottom.listIterator(frameCount()); iterator.hasPrevious();) {
-          myFrames.add(iterator.previous());
-        }
+
+        int frameCount = frameCount();
+        StackFrameProxyImpl[] frames = myFramesFromBottom.subList(0, frameCount).toArray(new StackFrameProxyImpl[frameCount]);
+        myFrames = ContainerUtil.reverse(Arrays.asList(frames));
       }
     }
     catch (ObjectCollectedException ignored) {
