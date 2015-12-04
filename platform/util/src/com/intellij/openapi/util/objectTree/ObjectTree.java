@@ -202,7 +202,7 @@ public final class ObjectTree<T> {
           objectNode = objectNode.getParent();
         }
         final Throwable trace = objectNode.getTrace();
-        RuntimeException exception = new RuntimeException("Memory leak detected: " + object + " of class " + object.getClass()
+        RuntimeException exception = new RuntimeException("Memory leak detected: '" + object + "' of " + object.getClass()
                                                           + "\nSee the cause for the corresponding Disposer.register() stacktrace:\n",
                                                           trace);
         if (throwError) {

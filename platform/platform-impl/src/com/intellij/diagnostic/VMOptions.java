@@ -22,6 +22,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
@@ -212,10 +213,15 @@ public class VMOptions {
       return null;
     }
 
+    return new File(location, getCustomFileName());
+  }
+
+  @NotNull
+  public static String getCustomFileName() {
     String name = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
     String platformSuffix = SystemInfo.is64Bit ? "64" : "";
     String osSuffix = SystemInfo.isWindows ? ".exe" : "";
-    return new File(location, name + platformSuffix + osSuffix + ".vmoptions");
+    return name + platformSuffix + osSuffix + ".vmoptions";
   }
 
   private static String ourTestPath;

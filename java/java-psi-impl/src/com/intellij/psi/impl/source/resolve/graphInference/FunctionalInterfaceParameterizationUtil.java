@@ -130,7 +130,7 @@ public class FunctionalInterfaceParameterizationUtil {
       }
 
       //Otherwise, the inferred parameterization is either F<A'1, ..., A'm>, if all the type arguments are types,
-      if (!TypeConversionUtil.containsWildcards(parameterization)) {
+      if (!isWildcardParameterized(parameterization)) {
         return parameterization;
       }
 

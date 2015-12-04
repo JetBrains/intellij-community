@@ -67,7 +67,7 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
           return;
         }
         if (!propertiesFile.isAlphaSorted()) {
-          holder.registerProblem(file, "Properties file is unsorted", ProblemHighlightType.INFO, new PropertiesSorterQuickFix(true, propertiesFile));
+          holder.registerProblem(file, "Properties file is alphabetically unsorted", ProblemHighlightType.INFO, new PropertiesSorterQuickFix(true, propertiesFile));
         }
       }
     };

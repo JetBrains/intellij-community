@@ -37,4 +37,9 @@ class a {
   void cf2(a aa) {
     aa.f = f;
   }
+
+  void m() {
+    double m = 1.5;
+    m = (double) (int) m;
+  }
 }

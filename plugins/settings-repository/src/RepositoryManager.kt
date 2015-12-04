@@ -138,4 +138,4 @@ public fun UpdateResult?.concat(result: UpdateResult?): UpdateResult? {
   }
 }
 
-public class AuthenticationException(cause: Throwable) : RuntimeException(cause.getMessage(), cause)
+public class AuthenticationException(cause: Throwable) : RuntimeException(cause.message, cause)

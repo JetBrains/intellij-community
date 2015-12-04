@@ -613,6 +613,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       Document delegate = window.getDelegate();
       if (delegate instanceof FrozenDocument) return (DocumentEx)window;
 
+      if (!window.isValid()) {
+        throw new AssertionError("host committed: " + isCommitted(delegate) + ", window=" + window);
+      }
+
       UncommittedInfo info = myUncommittedInfos.get(delegate);
       DocumentWindow answer = info == null ? null : info.myFrozenWindows.get(document);
       if (answer == null) answer = freezeWindow(window);

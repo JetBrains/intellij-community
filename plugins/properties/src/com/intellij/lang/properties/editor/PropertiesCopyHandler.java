@@ -17,11 +17,17 @@ package com.intellij.lang.properties.editor;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -38,6 +44,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.refactoring.copy.CopyHandlerDelegateBase;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -60,6 +67,8 @@ import java.util.List;
  * @author Dmitry Batkovich
  */
 public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
+  private final static Logger LOG = Logger.getInstance(PropertiesCopyHandler.class);
+
   @Override
   public boolean canCopy(PsiElement[] elements, boolean fromUpdate) {
     String propertyName = null;
@@ -94,9 +103,8 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
                                                                     return propertiesFile.findPropertyByKey(key);
                                                                   }
                                                                 });
-
     final PropertiesCopyDialog dlg = new PropertiesCopyDialog(properties, resourceBundle);
-    if (dlg.showAndGet()) {
+    if (!properties.isEmpty() && dlg.showAndGet()) {
       final String propertyNewName = dlg.getCurrentPropertyName();
       final ResourceBundle destinationResourceBundle = dlg.getCurrentResourceBundle();
       copyPropertyToAnotherBundle(properties, propertyNewName, destinationResourceBundle);
@@ -107,17 +115,19 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
   public void doClone(PsiElement element) {
   }
 
-  private static void copyPropertyToAnotherBundle(Collection<IProperty> properties, final String newName, ResourceBundle resourceBundle) {
+  private static void copyPropertyToAnotherBundle(@NotNull Collection<IProperty> properties,
+                                                  @NotNull final String newName,
+                                                  @NotNull ResourceBundle targetResourceBundle) {
     final Map<IProperty, PropertiesFile> propertiesFileMapping = new HashMap<IProperty, PropertiesFile>();
     for (IProperty property : properties) {
       final PropertiesFile containingFile = property.getPropertiesFile();
-      final PropertiesFile matched = findWithMatchedSuffix(containingFile, resourceBundle);
+      final PropertiesFile matched = findWithMatchedSuffix(containingFile, targetResourceBundle);
       if (matched != null) {
         propertiesFileMapping.put(property, matched);
       }
     }
 
-    final Project project = resourceBundle.getProject();
+    final Project project = targetResourceBundle.getProject();
     if (properties.size() != propertiesFileMapping.size() &&
         Messages.NO == Messages.showYesNoDialog(project,
                                                  "Source and target resource bundles properties files are not matched correctly. Copy properties anyway?",
@@ -125,27 +135,51 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
       return;
     }
 
-    WriteCommandAction.runWriteCommandAction(project, new Runnable() {
-      @Override
-      public void run() {
-        if (!FileModificationService.getInstance().preparePsiElementsForWrite(ContainerUtil.map(propertiesFileMapping.values(),
-                                                                                                new Function<PropertiesFile, PsiElement>() {
-                                                                                                  @Override
-                                                                                                  public PsiElement fun(PropertiesFile file) {
-                                                                                                    return file.getContainingFile();
-                                                                                                  }
-                                                                                                }))) return;
-        for (Map.Entry<IProperty, PropertiesFile> entry : propertiesFileMapping.entrySet()) {
-          final String value = entry.getKey().getValue();
-          final PropertiesFile target = entry.getValue();
-          target.addProperty(newName, value);
+    if (!propertiesFileMapping.isEmpty()) {
+      WriteCommandAction.runWriteCommandAction(project, new Runnable() {
+        @Override
+        public void run() {
+          if (!FileModificationService.getInstance().preparePsiElementsForWrite(ContainerUtil.map(propertiesFileMapping.values(),
+                                                                                                  new Function<PropertiesFile, PsiElement>() {
+                                                                                                    @Override
+                                                                                                    public PsiElement fun(PropertiesFile file) {
+                                                                                                      return file.getContainingFile();
+                                                                                                    }
+                                                                                                  }))) return;
+          for (Map.Entry<IProperty, PropertiesFile> entry : propertiesFileMapping.entrySet()) {
+            final String value = entry.getKey().getValue();
+            final PropertiesFile target = entry.getValue();
+            target.addProperty(newName, value);
+          }
+        }
+      });
+
+      final IProperty representativeFromSourceBundle = ContainerUtil.getFirstItem(properties);
+      LOG.assertTrue(representativeFromSourceBundle != null);
+      final ResourceBundle sourceResourceBundle = representativeFromSourceBundle.getPropertiesFile().getResourceBundle();
+      if (sourceResourceBundle.equals(targetResourceBundle)) {
+        DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
+          @Override
+          public void consume(DataContext context) {
+            final FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(context);
+            if (fileEditor instanceof ResourceBundleEditor) {
+              final ResourceBundleEditor resourceBundleEditor = (ResourceBundleEditor)fileEditor;
+              resourceBundleEditor.updateTreeRoot();
+              resourceBundleEditor.selectProperty(newName);
+            }
+          }
+        });
+      } else {
+        for (FileEditor editor : FileEditorManager.getInstance(project).openFile(new ResourceBundleAsVirtualFile(targetResourceBundle), true)) {
+          ((ResourceBundleEditor) editor).updateTreeRoot();
+          ((ResourceBundleEditor) editor).selectProperty(newName);
         }
       }
-    });
+    }
   }
 
   @Nullable
-  private static PropertiesFile findWithMatchedSuffix(PropertiesFile searchFile, ResourceBundle resourceBundle) {
+  private static PropertiesFile findWithMatchedSuffix(@NotNull PropertiesFile searchFile, @NotNull ResourceBundle resourceBundle) {
     final String targetSuffix = getPropertiesFileSuffix(searchFile, searchFile.getResourceBundle().getBaseName());
 
     final String baseName = resourceBundle.getBaseName();

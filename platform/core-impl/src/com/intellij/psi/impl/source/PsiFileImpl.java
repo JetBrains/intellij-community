@@ -47,6 +47,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.*;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.IncorrectOperationException;
@@ -385,6 +386,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public String getText() {
+    if (!isValid()) {
+      // even invalid PSI can calculate its text by concatenating its children
+      final ASTNode tree = derefTreeElement();
+      if (tree != null) return tree.getText();
+
+      throw new PsiInvalidElementAccessException(this);
+    }
     return getViewProvider().getContents().toString();
   }
 
@@ -393,6 +401,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     final ASTNode tree = derefTreeElement();
     if (tree != null) return tree.getTextLength();
 
+    PsiUtilCore.ensureValid(this);
     return getViewProvider().getContents().length();
   }
 

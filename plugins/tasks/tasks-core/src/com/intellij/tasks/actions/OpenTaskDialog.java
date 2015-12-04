@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
 import java.util.Collection;
 
 /**
@@ -133,6 +134,7 @@ public class OpenTaskDialog extends DialogWrapper {
           VcsTaskHandler.TaskInfo[] tasks = handler.getAllExistingTasks();
           if (tasks.length > 0) {
             myVcsTaskHandler = handler;
+            Arrays.sort(tasks);
             //noinspection unchecked
             myBranchFrom.setModel(new DefaultComboBoxModel(tasks));
             myBranchFrom.setEnabled(true);

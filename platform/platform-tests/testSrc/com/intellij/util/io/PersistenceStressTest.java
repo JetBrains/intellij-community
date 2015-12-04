@@ -28,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -38,25 +39,23 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Dmitry Avdeev
  */
 public class PersistenceStressTest extends LightPlatformCodeInsightFixtureTestCase {
   private static final Condition<Future<Boolean>> STILL_RUNNING = future -> !future.isDone();
-  private ExecutorService myThreadPool;
+  private final ExecutorService myThreadPool = PooledThreadExecutor.INSTANCE;
   private final List<PersistentHashMap<String, Record>> myMaps = new ArrayList<>();
   private final List<String> myKeys = new ArrayList<>();
   private PersistentStringEnumerator myEnumerator;
 
   public static class Record {
-    public final int magnitude;
+    final int magnitude;
     public final Date date;
 
-    public Record(int magnitude, Date date) {
+    Record(int magnitude, Date date) {
       this.magnitude = magnitude;
       this.date = date;
     }
@@ -80,8 +79,6 @@ public class PersistenceStressTest extends LightPlatformCodeInsightFixtureTestCa
     }
     PagedFileStorage.StorageLockContext storageLockContext = new PagedFileStorage.StorageLockContext(false);
     myEnumerator = new PersistentStringEnumerator(FileUtil.createTempFile(tempDirectory, "persistent", "enum"), storageLockContext);
-
-    myThreadPool = Executors.newFixedThreadPool(myMaps.size() + 2);
   }
 
   @Override
@@ -90,8 +87,6 @@ public class PersistenceStressTest extends LightPlatformCodeInsightFixtureTestCa
       map.close();
     }
     myEnumerator.close();
-    myThreadPool.shutdown();
-    assertTrue(myThreadPool.awaitTermination(100, TimeUnit.SECONDS));
     super.tearDown();
   }
 
@@ -101,20 +96,18 @@ public class PersistenceStressTest extends LightPlatformCodeInsightFixtureTestCa
       Future<Boolean> submit = submit(map);
       futures.add(submit);
     }
-    myThreadPool.submit((Runnable)() -> {
+    Future<?> waitFuture = myThreadPool.submit((Runnable)() -> {
       try {
         while (ContainerUtil.find(futures, STILL_RUNNING) != null) {
           Thread.sleep(100);
-          for (PersistentHashMap<String, Record> map : myMaps) {
-            map.dropMemoryCaches();
-          }
+          myMaps.forEach(PersistentHashMap::dropMemoryCaches);
         }
       }
       catch (InterruptedException ignore) {
       }
     });
 
-    ArrayList<VirtualFile> files = new ArrayList<>();
+    List<VirtualFile> files = new ArrayList<>();
     for (int i = 0; i < 100; i++) {
       File file = FileUtil.createTempFile("", ".txt");
       VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
@@ -132,6 +125,7 @@ public class PersistenceStressTest extends LightPlatformCodeInsightFixtureTestCa
     for (Future<Boolean> future : futures) {
       assertTrue(future.get());
     }
+    waitFuture.get();
   }
 
   @NotNull

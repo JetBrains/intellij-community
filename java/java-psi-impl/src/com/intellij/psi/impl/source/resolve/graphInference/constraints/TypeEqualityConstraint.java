@@ -103,7 +103,7 @@ public class TypeEqualityConstraint implements ConstraintFormula {
         final PsiSubstitutor sSubstitutor = sResult.getSubstitutor();
         for (PsiTypeParameter typeParameter : tClass.getTypeParameters()) {
           final PsiType tSubstituted = tSubstitutor.substitute(typeParameter);
-          final PsiType sSubstituted = sSubstitutor.substituteWithBoundsPromotion(typeParameter);
+          final PsiType sSubstituted = sSubstitutor.substitute(typeParameter);
           if (tSubstituted != null && sSubstituted != null) {
             constraints.add(new TypeEqualityConstraint(tSubstituted, sSubstituted));
           }

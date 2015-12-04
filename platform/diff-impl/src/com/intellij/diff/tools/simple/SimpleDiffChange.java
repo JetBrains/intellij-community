@@ -112,10 +112,7 @@ public class SimpleDiffChange {
     int startLine = side.getStartLine(myFragment);
     int endLine = side.getEndLine(myFragment);
 
-    int start = side.getStartOffset(myFragment);
-    int end = side.getEndOffset(myFragment);
-
-    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, start, end, type, ignored));
+    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, ignored));
     myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, startLine, endLine, type, false));
   }
 

@@ -300,11 +300,10 @@ public class DvcsUtil {
   @Nullable
   public static <T extends Repository> T guessRepositoryForFile(@NotNull Project project,
                                                                 @NotNull RepositoryManager<T> manager,
-                                                                @Nullable AbstractVcs vcs,
                                                                 @Nullable VirtualFile file,
                                                                 @Nullable String defaultRootPathValue) {
     T repository = manager.getRepositoryForRoot(guessVcsRoot(project, file));
-    return repository != null ? repository : manager.getRepositoryForRoot(guessRootForVcs(project, vcs, defaultRootPathValue));
+    return repository != null ? repository : manager.getRepositoryForRoot(guessRootForVcs(project, manager.getVcs(), defaultRootPathValue));
   }
 
   @Nullable
@@ -475,5 +474,45 @@ public class DvcsUtil {
         return support.getVcs().equals(vcs);
       }
     });
+  }
+
+  @NotNull
+  public static String joinShortNames(@NotNull Collection<? extends Repository> repositories) {
+    return joinShortNames(repositories, -1);
+  }
+
+  @NotNull
+  public static String joinShortNames(@NotNull Collection<? extends Repository> repositories, int limit) {
+    return joinWithAnd(ContainerUtil.map(repositories, new Function<Repository, String>() {
+      @Override
+      public String fun(@NotNull Repository repository) {
+        return getShortRepositoryName(repository);
+      }
+    }), limit);
+  }
+
+  @NotNull
+  private static String joinWithAnd(@NotNull List<String> strings, int limit) {
+    int size = strings.size();
+    if (size == 0) return "";
+    if (size == 1) return strings.get(0);
+    if (size == 2) return strings.get(0) + " and " + strings.get(1);
+
+    boolean isLimited = limit >= 2 && limit < size;
+    int listCount = isLimited ? limit - 1 : size - 1;
+
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < listCount; i++) {
+      if (i != 0) sb.append(", ");
+      sb.append(strings.get(i));
+    }
+
+    if (isLimited) {
+      sb.append(" and ").append(size - limit + 1).append(" others");
+    }
+    else {
+      sb.append(" and ").append(strings.get(size - 1));
+    }
+    return sb.toString();
   }
 }

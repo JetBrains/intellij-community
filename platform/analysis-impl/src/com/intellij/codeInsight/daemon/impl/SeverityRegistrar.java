@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -47,6 +48,8 @@ import java.util.List;
  * Date: 24-Feb-2006
  */
 public class SeverityRegistrar implements Comparator<HighlightSeverity> {
+  private final static Logger LOG = Logger.getInstance(SeverityRegistrar.class);
+
   @NonNls private static final String INFO_TAG = "info";
   @NonNls private static final String COLOR_ATTRIBUTE = "color";
   private final Map<String, SeverityBasedTextAttributes> myMap = ContainerUtil.newConcurrentMap();
@@ -315,6 +318,9 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
 
   @NotNull
   private static OrderMap fromList(@NotNull List<HighlightSeverity> orderList) {
+    if (orderList.size() != new HashSet<HighlightSeverity>(orderList).size()) {
+      LOG.error("Severities order list MUST contain only unique severities: " + orderList);
+    }
     TObjectIntHashMap<HighlightSeverity> map = new TObjectIntHashMap<HighlightSeverity>();
     for (int i = 0; i < orderList.size(); i++) {
       HighlightSeverity severity = orderList.get(i);

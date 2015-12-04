@@ -105,6 +105,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
                                                  @NotNull AbstractRepositoryManager<GitRepository> repositoryManager) {
     List<GitRepository> allRepositories = repositoryManager.getRepositories();
     popupGroup.add(new GitBranchPopupActions.GitNewBranchAction(myProject, allRepositories));
+    popupGroup.add(new GitBranchPopupActions.CheckoutRevisionActions(myProject, allRepositories));
 
     popupGroup.addAll(createRepositoriesActions());
 

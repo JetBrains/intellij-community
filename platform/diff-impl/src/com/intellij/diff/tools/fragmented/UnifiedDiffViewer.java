@@ -52,6 +52,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,6 +63,7 @@ import javax.swing.*;
 import java.util.*;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
+import static com.intellij.diff.util.DiffUtil.getLinesContent;
 
 public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   public static final Logger LOG = Logger.getInstance(UnifiedDiffViewer.class);
@@ -414,10 +416,10 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         List<RangeMarker> guarderRangeBlocks = new ArrayList<RangeMarker>();
         if (!myEditor.isViewer()) {
           for (ChangedBlock block : blocks) {
-            int start = myMasterSide.select(block.getStartOffset2(), block.getStartOffset1());
-            int end = myMasterSide.select(block.getEndOffset2() - 1, block.getEndOffset1() - 1);
-            if (start >= end) continue;
-            guarderRangeBlocks.add(createGuardedBlock(start, end));
+            LineRange range = myMasterSide.select(block.getRange2(), block.getRange1());
+            TextRange textRange = DiffUtil.getLinesRange(myDocument, range.start, range.end);
+            if (textRange.isEmpty()) continue;
+            guarderRangeBlocks.add(createGuardedBlock(textRange.getStartOffset(), textRange.getEndOffset()));
           }
           int textLength = myDocument.getTextLength(); // there are 'fake' newline at the very end
           guarderRangeBlocks.add(createGuardedBlock(textLength, textLength));
@@ -1182,9 +1184,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
       LineFragment lineFragment = change.getLineFragment();
 
-      int insertedStart = lineFragment.getStartOffset2();
-      int insertedEnd = lineFragment.getEndOffset2();
-      CharSequence insertedText = getContent(mySide).getDocument().getCharsSequence().subSequence(insertedStart, insertedEnd);
+      Document document = getContent(mySide).getDocument();
+      CharSequence insertedText = getLinesContent(document, lineFragment.getStartLine2(), lineFragment.getEndLine2());
 
       int lineNumber = lineFragment.getStartLine2();
 

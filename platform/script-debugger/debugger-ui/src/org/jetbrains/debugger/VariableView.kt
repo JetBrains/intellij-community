@@ -69,7 +69,7 @@ class VariableView(name: String, private val variable: Variable, private val con
       evaluateContext.evaluate(variable.name)
         .done(node) {
           if (it.wasThrown) {
-            setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(value, null), null, node)
+            setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(it.value, null), null, node)
           }
           else {
             value = it.value

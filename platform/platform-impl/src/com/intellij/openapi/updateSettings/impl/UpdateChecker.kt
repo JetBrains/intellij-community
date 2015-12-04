@@ -545,8 +545,8 @@ object UpdateChecker {
 
     var bundledJdk = ""
     val jdkRedist = System.getProperty("idea.java.redist")
-    if (jdkRedist != null && jdkRedist.lastIndexOf("jdk-bundled") >= 0) {
-      bundledJdk = if ("jdk-bundled" == jdkRedist) "-jdk-bundled" else "-custom-jdk-bundled"
+    if (jdkRedist != null && jdkRedist.lastIndexOf("NoJavaDistribution") >= 0) {
+      bundledJdk = "-no-jdk"
     }
 
     val osSuffix = "-" + patch.osSuffix

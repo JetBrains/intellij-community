@@ -669,6 +669,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     final CommittedChangeList[] list = new CommittedChangeList[1];
     final FilePath[] targetPath = new FilePath[1];
     final VcsException[] exc = new VcsException[1];
+
+    final BackgroundableActionLock lock = BackgroundableActionLock.getLock(project, VcsBackgroundableActions.COMMITTED_CHANGES_DETAILS,
+                                                                           revision, virtualFile.getPath());
+    if (lock.isLocked()) return;
+    lock.lock();
+
     Task.Backgroundable task = new Task.Backgroundable(project, title, true, BackgroundFromStartOption.getInstance()) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -701,7 +707,13 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       }
 
       @Override
+      public void onCancel() {
+        lock.unlock();
+      }
+
+      @Override
       public void onSuccess() {
+        lock.unlock();
         if (exc[0] != null) {
           showError(exc[0], failedText(virtualFile, revision));
         }

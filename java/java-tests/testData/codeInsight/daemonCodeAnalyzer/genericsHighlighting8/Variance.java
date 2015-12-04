@@ -39,13 +39,13 @@ class VarianceTesting {
         k[0] = new VarianceTesting();
         x.method()[0] = new VarianceTesting();
         <error descr="Incompatible types. Found: 'VarianceTesting[]', required: 'capture<? extends VarianceTesting>[]'">x.arrayField = new VarianceTesting[10]</error>;
-        l1.addAll<error descr="'addAll(java.util.Collection<capture<? extends VarianceTesting>>)' in 'java.util.List' cannot be applied to '(java.util.ArrayList<VarianceTesting>)'">(new ArrayList<VarianceTesting>())</error>;
+        l1.addAll<error descr="'addAll(java.util.Collection<? extends capture<? extends VarianceTesting>>)' in 'java.util.List' cannot be applied to '(java.util.ArrayList<VarianceTesting>)'">(new ArrayList<VarianceTesting>())</error>;
         <error descr="Incompatible types. Found: 'java.util.ArrayList<java.lang.String>', required: 'java.util.List<? extends VarianceTesting>'">List<? extends VarianceTesting> l2 = new ArrayList<String>();</error>
         List<? extends VarianceTesting> l3 = l2;
         VarianceTesting t = l1.get(0);
         l.add(new VarianceTesting());
         l.add(null);
-        <error descr="Incompatible types. Found: 'java.lang.Object', required: 'VarianceTesting'">VarianceTesting t1 = l.get(0);</error>
+        <error descr="Incompatible types. Found: 'capture<? super VarianceTesting>', required: 'VarianceTesting'">VarianceTesting t1 = l.get(0);</error>
         X<? extends VarianceTesting> x1 = null;
         x1.putAll(new ArrayList<VarianceTesting>());
         List<?> unknownlist = l;
@@ -142,7 +142,7 @@ class S1 {
     }
 
     void bar(List<? extends S1> k) {
-        f<error descr="'f(java.util.List<T>, T)' in 'S1' cannot be applied to '(java.util.List<capture<? extends S1>>, S1)'">(k,  k.get(0))</error>;
+        f<error descr="'f(java.util.List<T>, T)' in 'S1' cannot be applied to '(java.util.List<capture<? extends S1>>, capture<? extends S1>)'">(k,  k.get(0))</error>;
     }
 }
 

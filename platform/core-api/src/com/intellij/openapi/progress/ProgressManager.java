@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,13 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ThrowableComputable;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Set;
 
 public abstract class ProgressManager extends ProgressIndicatorProvider {
   private static class ProgressManagerHolder {
@@ -191,4 +193,14 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   public abstract void executeProcessUnderProgress(@NotNull Runnable process,
                                           @Nullable("null means reuse current progress") ProgressIndicator progress)
     throws ProcessCanceledException;
+
+  public static void assertNotCircular(@NotNull ProgressIndicator original) {
+    Set<ProgressIndicator> wrappedParents = null;
+    for (ProgressIndicator parent = original; parent instanceof WrappedProgressIndicator; parent = ((WrappedProgressIndicator)parent).getOriginalProgressIndicator()) {
+      if (wrappedParents == null) wrappedParents = new THashSet<ProgressIndicator>();
+      if (!wrappedParents.add(parent)) {
+        throw new IllegalArgumentException(parent + " wraps itself");
+      }
+    }
+  }
 }

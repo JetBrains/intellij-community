@@ -129,10 +129,6 @@ public class Range {
     return myVcsLine2;
   }
 
-  public boolean hasHighlighter() {
-    return myRangeHighlighter != null;
-  }
-
   public void setHighlighter(@Nullable RangeHighlighter highlighter) {
     myRangeHighlighter = highlighter;
   }

@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -209,7 +208,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         session.initBounds(myExpression, containingClass.getTypeParameters());
       }
 
-      final PsiType capturedReturnType = PsiImplUtil.normalizeWildcardTypeByPosition(psiSubstitutor.substitute(referencedMethodReturnType), myExpression);
+      final PsiType capturedReturnType = PsiUtil.captureToplevelWildcards(psiSubstitutor.substitute(referencedMethodReturnType), myExpression);
       constraints.add(new TypeCompatibilityConstraint(returnType, session.substituteWithInferenceVariables(capturedReturnType)));
     }
     
@@ -228,7 +227,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       // otherwise, the type to search is the same as the type of the first search. Again, the type arguments, if any, are given by the method reference.
       if ( PsiUtil.isRawSubstitutor(qContainingClass, psiSubstitutor)) {
         if (member instanceof PsiMethod && PsiMethodReferenceUtil.isSecondSearchPossible(signature.getParameterTypes(), qualifierResolveResult, myExpression)) {
-          final PsiType pType = PsiImplUtil.normalizeWildcardTypeByPosition(signature.getParameterTypes()[0], myExpression);
+          final PsiType pType = PsiUtil.captureToplevelWildcards(signature.getParameterTypes()[0], myExpression);
           psiSubstitutor = getParameterizedTypeSubstitutor(qContainingClass, pType);
         }
         else if (member instanceof PsiMethod && ((PsiMethod)member).isConstructor() || member instanceof PsiClass) {

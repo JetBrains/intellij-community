@@ -190,10 +190,9 @@ public class PsiSuperMethodImplUtil {
       map.put(signature, newH);
     }
 
-    for (PsiClassType superType : aClass.getSuperTypes()) {
-      superType = PsiClassImplUtil.correctType(superType, resolveScope);
-      if (superType == null) continue; //super class doesn't belong to resolve scope
-      PsiClassType.ClassResolveResult superTypeResolveResult = superType.resolveGenerics();
+    final List<PsiClassType.ClassResolveResult> superTypes = PsiClassImplUtil.getScopeCorrectedSuperTypes(aClass, resolveScope);
+
+    for (PsiClassType.ClassResolveResult superTypeResolveResult : superTypes) {
       PsiClass superClass = superTypeResolveResult.getElement();
       if (superClass == null) continue;
       if (!visited.add(superClass)) continue; // cyclic inheritance

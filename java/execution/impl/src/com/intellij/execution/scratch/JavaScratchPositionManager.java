@@ -15,8 +15,11 @@
  */
 package com.intellij.execution.scratch;
 
+import com.intellij.debugger.NoDataException;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.PositionManagerImpl;
+import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,7 +29,11 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
+import com.sun.jdi.request.ClassPrepareRequest;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -38,6 +45,44 @@ public class JavaScratchPositionManager extends PositionManagerImpl{
   public JavaScratchPositionManager(DebugProcessImpl debugProcess, VirtualFile scratchFile) {
     super(debugProcess);
     myScratchFile = scratchFile;
+  }
+
+  @NotNull
+  @Override
+  public List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
+    checkPosition(position);
+    return super.locationsOfLine(type, position);
+  }
+
+  @NotNull
+  @Override
+  public List<ClassPrepareRequest> createPrepareRequests(@NotNull ClassPrepareRequestor requestor,
+                                                         @NotNull SourcePosition position) throws NoDataException {
+    checkPosition(position);
+    return super.createPrepareRequests(requestor, position);
+  }
+
+  @NotNull
+  @Override
+  public List<ReferenceType> getAllClasses(@NotNull SourcePosition position) throws NoDataException {
+    checkPosition(position);
+    return super.getAllClasses(position);
+  }
+
+  private void checkPosition(@NotNull SourcePosition position) throws NoDataException{
+    if (!myScratchFile.equals(position.getFile().getVirtualFile())) {
+      throw NoDataException.INSTANCE;
+    }
+  }
+
+  @Nullable
+  @Override
+  public SourcePosition getSourcePosition(Location location) throws NoDataException {
+    final SourcePosition position = super.getSourcePosition(location);
+    if (position == null) {
+      throw NoDataException.INSTANCE; // delegate to other managers
+    }
+    return position;
   }
 
   @Nullable

@@ -137,7 +137,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   private class SubstitutionVisitor extends PsiTypeMapper {
     @Override
     public PsiType visitCapturedWildcardType(PsiCapturedWildcardType type) {
-      return visitWildcardType(type.getWildcard());
+      return type;
     }
 
     @Override
@@ -161,12 +161,6 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
           final PsiType newBoundBound = ((PsiWildcardType)newBound).getBound();
           return !((PsiWildcardType)newBound).isBounded() ? PsiWildcardType.createUnbounded(wildcardType.getManager())
                                                           : rebound(wildcardType, newBoundBound);
-        }
-        if (newBound instanceof PsiCapturedWildcardType) {
-          final PsiWildcardType wildcard = ((PsiCapturedWildcardType)newBound).getWildcard();
-          if (wildcard.isBounded() && wildcardType.isExtends() == wildcard.isExtends()) {
-            return newBound;
-          }
         }
 
         return newBound == PsiType.NULL ? newBound : rebound(wildcardType, newBound);
@@ -231,16 +225,9 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
         final PsiType original = originalSubstitutor.substitute(param);
         if (original == null) {
           substMap.put(param, null);
-        } else {
-          PsiType substituted = substituteInternal(original);
-          if (original instanceof PsiWildcardType && substituted instanceof PsiCapturedWildcardType) {
-            final PsiCapturedWildcardType capturedWildcardType = PsiCapturedWildcardType.create(((PsiCapturedWildcardType)substituted).getWildcard(),
-                                                                                                ((PsiCapturedWildcardType)substituted).getContext(), param);
-            capturedWildcardType.setUpperBound(((PsiCapturedWildcardType)substituted).getUpperBound());
-            substituted = capturedWildcardType;
-          }
-          //if (substituted == null) return false;
-          substMap.put(param, substituted);
+        }
+        else {
+          substMap.put(param, substituteInternal(original));
         }
       }
       if (resolve.hasModifierProperty(PsiModifier.STATIC)) return true;

@@ -322,7 +322,7 @@ public class MethodSignatureUtil {
 
       final Set<PsiType> superSupers = new HashSet<PsiType>();
       for (PsiClassType superSuper : superTypeParameter.getSuperTypes()) {
-        superSupers.add(methodSubstitutor.substitute(PsiUtil.captureToplevelWildcards(result.substitute(superSuper), methodTypeParameter)));
+        superSupers.add(methodSubstitutor.substitute(result.substitute(superSuper)));
       }
       methodSupers.remove(PsiType.getJavaLangObject(methodTypeParameter.getManager(), methodTypeParameter.getResolveScope()));
       superSupers.remove(PsiType.getJavaLangObject(superTypeParameter.getManager(), superTypeParameter.getResolveScope()));

@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -38,7 +37,6 @@ import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.PySdkUpdater;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -146,13 +144,6 @@ public class PyUserSkeletonsUtil {
       cache.put(cacheQName, Collections.<PsiElement>emptyList());
     }
     return null;
-  }
-
-  public static void addUserSkeletonsRoot(@NotNull PySdkUpdater sdkUpdater) {
-    final VirtualFile root = getUserSkeletonsDirectory();
-    if (root != null) {
-      sdkUpdater.addRoot(root, OrderRootType.CLASSES);
-    }
   }
 
   @Nullable

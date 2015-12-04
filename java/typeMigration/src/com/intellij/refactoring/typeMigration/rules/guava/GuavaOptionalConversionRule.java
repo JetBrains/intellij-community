@@ -130,7 +130,7 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
 
   @Override
   protected void fillSimpleDescriptors(Map<String, TypeConversionDescriptorBase> descriptorsMap) {
-    descriptorsMap.put("absent", new TypeConversionDescriptor("Optional.absent()", "java.util.Optional.empty()") {
+    descriptorsMap.put("absent", new TypeConversionDescriptor("'Optional*.absent()", "java.util.Optional.empty()") {
       @Override
       public PsiExpression replace(PsiExpression expression) {
         LOG.assertTrue(expression instanceof PsiMethodCallExpression);
@@ -147,9 +147,9 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
 
     });
 
-    descriptorsMap.put("of", new TypeConversionDescriptor("Optional.of($ref$)", "java.util.Optional.of($ref$)"));
-    descriptorsMap.put("fromNullable", new TypeConversionDescriptor("Optional.fromNullable($ref$)", "java.util.Optional.ofNullable($ref$)"));
-    descriptorsMap.put("presentInstances", new TypeConversionDescriptor("Optional.presentInstances($it$)", "java.util.stream.StreamSupport.stream($it$.spliterator(), false).map(java.util.Optional::get).collect(java.util.Collectors.toList())"));
+    descriptorsMap.put("of", new TypeConversionDescriptor("'Optional*.of($ref$)", "java.util.Optional.of($ref$)"));
+    descriptorsMap.put("fromNullable", new TypeConversionDescriptor("'Optional*.fromNullable($ref$)", "java.util.Optional.ofNullable($ref$)"));
+    descriptorsMap.put("presentInstances", new TypeConversionDescriptor("'Optional*.presentInstances($it$)", "java.util.stream.StreamSupport.stream($it$.spliterator(), false).map(java.util.Optional::get).collect(java.util.Collectors.toList())"));
 
     final TypeConversionDescriptorBase identity = new TypeConversionDescriptorBase();
     descriptorsMap.put("get", identity);

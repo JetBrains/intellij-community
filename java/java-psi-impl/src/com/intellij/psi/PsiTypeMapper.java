@@ -66,15 +66,7 @@ public abstract class PsiTypeMapper extends PsiTypeVisitorEx<PsiType> {
 
   @Override
   public PsiType visitCapturedWildcardType(final PsiCapturedWildcardType type) {
-    PsiWildcardType mapped = mapType(type.getWildcard());
-    if (mapped == null) {
-      return null;
-    }
-    else {
-      final PsiCapturedWildcardType capturedWildcardType = PsiCapturedWildcardType.create(mapped, type.getContext(), type.getTypeParameter());
-      capturedWildcardType.setUpperBound(mapType(type.getUpperBound()));
-      return capturedWildcardType;
-    }
+    return type;
   }
 
   @Override

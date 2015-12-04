@@ -30,7 +30,7 @@ internal class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator
     LOG.debug { message }
 
     val resetResult = repository.resetHard()
-    val result = MutableUpdateResult(resetResult.updated.keySet(), resetResult.removed)
+    val result = MutableUpdateResult(resetResult.updated.keys, resetResult.removed)
 
     indicator?.checkCanceled()
 
@@ -45,7 +45,7 @@ internal class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator
     if (mergeResult?.status == MergeResult.MergeStatus.FAST_FORWARD && firstMergeResult!!.changed.isNotEmpty()) {
       // we specify forceMerge, so if we get FAST_FORWARD it means that our repo doesn't have HEAD (empty) and we must delete all local files to revert all remote updates
       repository.deleteAllFiles()
-      result.deleted.addAll(firstMergeResult!!.changed)
+      result.deleted.addAll(firstMergeResult.changed)
       repository.commit(commitMessage)
     }
 

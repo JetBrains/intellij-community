@@ -896,6 +896,12 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                                        myFactory.createTypeFromText("Test.AnInterface2<java.lang.String, java.lang.Void>", null));
   }
 
+  public void testRemoveStaticMethodQualifier() {
+    doTestFirstParamType("meth",
+                         myFactory.createTypeFromText("java.lang.Long", null),
+                         myFactory.createTypeFromText("Test", null));
+  }
+
   public void testPropagateViaEquals() {
     doTestFirstParamType("meth", myFactory.createTypeFromText("java.lang.String", null), myFactory.createTypeFromText("java.lang.Long", null));
   }

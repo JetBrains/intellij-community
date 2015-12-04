@@ -15,13 +15,21 @@
  */
 package com.intellij.diff.util;
 
+import com.intellij.openapi.diagnostic.Logger;
+
 public class LineRange {
+  private static final Logger LOG = Logger.getInstance(LineRange.class);
+
   public final int start;
   public final int end;
 
   public LineRange(int start, int end) {
     this.start = start;
     this.end = end;
+
+    if (start > end) {
+      LOG.error("LineRange is invalid: " + toString());
+    }
   }
 
   public boolean contains(int start, int end) {
@@ -51,5 +59,9 @@ public class LineRange {
   @Override
   public String toString() {
     return "[" + start + ", " + end + ")";
+  }
+
+  public boolean isEmpty() {
+    return start == end;
   }
 }

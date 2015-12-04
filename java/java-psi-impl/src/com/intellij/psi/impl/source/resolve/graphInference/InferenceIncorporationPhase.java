@@ -265,16 +265,8 @@ public class InferenceIncorporationPhase {
     for (PsiType upperBound : upperBounds) {
       if (upperBound == null || PsiType.NULL.equals(upperBound) || upperBound instanceof PsiWildcardType) continue;
 
-      if (upperBound instanceof PsiCapturedWildcardType) {
-        upperBound = ((PsiCapturedWildcardType)upperBound).getUpperBound();
-      }
-
       for (PsiType eqBound : eqBounds) {
         if (eqBound == null || PsiType.NULL.equals(eqBound) || eqBound instanceof PsiWildcardType) continue;
-        if (eqBound instanceof PsiCapturedWildcardType) {
-          eqBound = ((PsiCapturedWildcardType)eqBound).getUpperBound();
-        }
-
         if (Registry.is("javac.unchecked.subtyping.during.incorporation", true) && TypeCompatibilityConstraint.isUncheckedConversion(upperBound, eqBound)) {
           continue;
         }

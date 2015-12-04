@@ -48,8 +48,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
@@ -61,8 +63,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -134,7 +135,7 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
 
     //noinspection unchecked
     if (data.annotator.isAnnotationShown(data.viewer, data.side)) return true;
-    if (checkRunningProgress(data.viewer, data.side)) return false;
+    if (getBackgroundableLock(data.viewer, data.side).isLocked()) return false;
     return createAnnotationsLoader(data.viewer.getProject(), data.viewer.getRequest(), data.side) != null;
   }
 
@@ -183,7 +184,7 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
 
     final DiffContextEx diffContext = ObjectUtils.tryCast(viewer.getContext(), DiffContextEx.class);
 
-    markRunningProgress(viewer, side, true);
+    getBackgroundableLock(viewer, side).lock();
     if (diffContext != null) diffContext.showProgressBar(true);
 
     BackgroundTaskUtil.executeOnPooledThread(new Consumer<ProgressIndicator>() {
@@ -197,7 +198,7 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
             @Override
             public void run() {
               if (diffContext != null) diffContext.showProgressBar(false);
-              markRunningProgress(viewer, side, false);
+              getBackgroundableLock(viewer, side).unlock();
 
               VcsException exception = loader.getException();
               if (exception != null) {
@@ -585,26 +586,9 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
     }
   }
 
-  private static boolean checkRunningProgress(@NotNull DiffViewerBase viewer, @NotNull Side side) {
-    final ProjectLevelVcsManagerImpl plVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(viewer.getProject());
-    final BackgroundableActionEnabledHandler handler = plVcsManager.getBackgroundableActionHandler(VcsBackgroundableActions.ANNOTATE);
-    return handler.isInProgress(key(viewer, side));
-  }
-
-  private static void markRunningProgress(@NotNull DiffViewerBase viewer, @NotNull Side side, boolean running) {
-    final ProjectLevelVcsManagerImpl plVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(viewer.getProject());
-    final BackgroundableActionEnabledHandler handler = plVcsManager.getBackgroundableActionHandler(VcsBackgroundableActions.ANNOTATE);
-    if (running) {
-      handler.register(key(viewer, side));
-    }
-    else {
-      handler.completed(key(viewer, side));
-    }
-  }
-
   @NotNull
-  private static Object key(@NotNull DiffViewer viewer, @NotNull Side side) {
-    return Pair.create(viewer, side);
+  private static BackgroundableActionLock getBackgroundableLock(@NotNull DiffViewerBase viewer, @NotNull Side side) {
+    return BackgroundableActionLock.getLock(viewer.getProject(), VcsBackgroundableActions.ANNOTATE, viewer, side);
   }
 
   private static class EventData {

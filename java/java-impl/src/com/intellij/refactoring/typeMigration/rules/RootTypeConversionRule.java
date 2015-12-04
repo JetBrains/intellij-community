@@ -23,6 +23,8 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.style.UnnecessarilyQualifiedStaticUsageInspection;
+import com.siyeh.ig.style.UnnecessarilyQualifiedStaticallyImportedElementInspection;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -141,16 +143,20 @@ public class RootTypeConversionRule extends TypeConversionRule {
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
-      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
+      final PsiMethodCallExpression newMethodCall;
       if (qualifierExpression != null) {
-        codeStyleManager.shortenClassReferences(qualifierExpression.replace(elementFactory.createExpressionFromText(myTargetClassQName, expression)));
-        return expression;
+        JavaCodeStyleManager.getInstance(expression.getProject())
+          .shortenClassReferences(qualifierExpression.replace(elementFactory.createExpressionFromText(myTargetClassQName, expression)));
+        newMethodCall = methodCallExpression;
       }
       else {
-        final PsiElement replacedExpression = expression.replace(
+        newMethodCall = (PsiMethodCallExpression)expression.replace(
           elementFactory.createExpressionFromText(myTargetClassQName + "." + expression.getText(), expression));
-        return (PsiExpression)codeStyleManager.shortenClassReferences(replacedExpression);
       }
+      if (UnnecessarilyQualifiedStaticUsageInspection.isUnnecessarilyQualifiedAccess(newMethodCall.getMethodExpression(), false, false, false)) {
+        newMethodCall.getMethodExpression().getQualifierExpression().delete();
+      }
+      return newMethodCall;
     }
 
     @Override

@@ -316,7 +316,7 @@ public class GitBranchUtil {
   @Nullable
   public static GitRepository getRepositoryOrGuess(@NotNull Project project, @Nullable VirtualFile file) {
     if (project.isDisposed()) return null;
-    return DvcsUtil.guessRepositoryForFile(project, GitUtil.getRepositoryManager(project), GitVcs.getInstance(project), file,
+    return DvcsUtil.guessRepositoryForFile(project, GitUtil.getRepositoryManager(project), file,
                                            GitVcsSettings.getInstance(project).getRecentRootPath());
   }
 

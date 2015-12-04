@@ -184,12 +184,21 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
             final PsiClass targetClass = myGuavaClassConversions.getValue().get(qName);
             if (targetClass != null) {
               final PsiClassType createdType = addTypeParameters(type, resolveResult, targetClass);
-              return initialType instanceof PsiArrayType ? new PsiArrayType(createdType) : createdType;
+              return initialType instanceof PsiArrayType ? wrapAsArray((PsiArrayType)initialType, createdType) : createdType;
             }
           }
         }
         return null;
       };
+
+      private PsiType wrapAsArray(PsiArrayType initial, PsiType created) {
+        PsiArrayType result = new PsiArrayType(created);
+        while (initial.getComponentType() instanceof PsiArrayType) {
+          initial = (PsiArrayType)initial.getComponentType();
+          result = new PsiArrayType(result);
+        }
+        return result;
+      }
 
       private boolean isFluentIterableFromCall(PsiMethodCallExpression expression) {
         PsiMethod method = expression.resolveMethod();

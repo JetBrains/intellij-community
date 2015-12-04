@@ -25,7 +25,6 @@ import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -77,11 +76,9 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
     int endLine = myFragment.getEndLine(side);
     boolean hasInner = myFragment.getInnerFragments() != null;
 
-    TextRange range = DiffUtil.getLinesRange(editor.getDocument(), startLine, endLine, true);
-    int start = range.getStartOffset();
-    int end = range.getEndOffset();
+    int start = DiffUtil.getLinesRange(editor.getDocument(), startLine, endLine).getStartOffset();
 
-    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, start, end, type, hasInner));
+    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, hasInner));
     myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, startLine, endLine, type, false));
 
     if (hasInner) {

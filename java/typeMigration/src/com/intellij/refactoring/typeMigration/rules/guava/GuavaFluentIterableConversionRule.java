@@ -137,16 +137,9 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     PsiType conversionType = null;
     boolean needSpecifyType = true;
     if (methodName.equals("of")) {
-      descriptorBase = new TypeConversionDescriptor(null, "java.util.Arrays.stream($arr$)") {
-        @Override
-        public PsiExpression replace(PsiExpression expression) {
-          setStringToReplace((((PsiMethodCallExpression)expression).getMethodExpression().getQualifierExpression() != null
-                              ? "FluentIterable." : "") + "of($arr$)");
-          return super.replace(expression);
-        }
-      };
+      descriptorBase = new TypeConversionDescriptor("'FluentIterable*.of($arr$)", "java.util.Arrays.stream($arr$)");
     } else if (methodName.equals("from")) {
-      descriptorBase = new TypeConversionDescriptor(null, null) {
+      descriptorBase = new TypeConversionDescriptor("'FluentIterable*.from($it$)", null) {
         @Override
         public PsiExpression replace(PsiExpression expression) {
           final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
@@ -155,7 +148,6 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
           if (argument == null) {
             return expression;
           }
-          setStringToReplace((methodCall.getMethodExpression().getQualifierExpression() != null ? "FluentIterable." : "") + "from($it$)");
           boolean isCollection =
             InheritanceUtil.isInheritor(PsiTypesUtil.getPsiClass(argument.getType()), CommonClassNames.JAVA_UTIL_COLLECTION);
           setReplaceByString(isCollection ? "$it$.stream()" : "java.util.stream.StreamSupport.stream($it$.spliterator(), false)");

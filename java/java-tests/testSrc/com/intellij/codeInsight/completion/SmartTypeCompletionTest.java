@@ -724,6 +724,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testMethodColon() throws Exception { doFirstItemTest(':'); }
   public void testVariableColon() throws Exception { doFirstItemTest(':'); }
+  public void testConditionalColonOnNextLine() { doFirstItemTest(':'); }
 
   private void doFirstItemTest(char c) {
     configureByTestName();

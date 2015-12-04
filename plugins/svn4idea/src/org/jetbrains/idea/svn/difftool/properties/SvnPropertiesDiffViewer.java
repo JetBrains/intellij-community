@@ -153,16 +153,18 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
 
     EditorEx editor = getEditor(side);
     DocumentEx document = editor.getDocument();
-    int shift = document.getLineStartOffset(change.getStartLine(side));
+    int changeStartLine = change.getStartLine(side);
 
     for (LineFragment fragment : fragments) {
       List<DiffFragment> innerFragments = fragment.getInnerFragments();
 
-      int start = side.getStartOffset(fragment) + shift;
-      int end = side.getEndOffset(fragment) + shift;
+      int startLine = side.getStartLine(fragment) + changeStartLine;
+      int endLine = side.getEndLine(fragment) + changeStartLine;
+
+      int start = document.getLineStartOffset(startLine);
       TextDiffType type = DiffUtil.getLineDiffType(fragment);
 
-      DiffDrawUtil.createHighlighter(editor, start, end, type, innerFragments != null);
+      DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, innerFragments != null);
 
       // TODO: we can paint LineMarker here, but it looks ugly for small editors
       if (innerFragments != null) {

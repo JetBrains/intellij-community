@@ -29,7 +29,7 @@ public final class TextAreasTest extends UsefulTestCase {
   {
     Logger.setFactory(TestLoggerFactory.class);
     TestLoggerFactory.enableDebugLogging(myTestRootDisposable,
-                                         new String[]{"#com.intellij.uiDesigner.core.GridLayoutManager"});
+                                         new String[]{"#com.intellij.util.ui.UIUtil"});
   }
   private final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.core.TextAreasTest");
 
@@ -66,14 +66,17 @@ public final class TextAreasTest extends UsefulTestCase {
     LOG.info("textArea: " + textArea.toString());
     LOG.info("LaF: " + UIManager.getLookAndFeel());
     LOG.info("textArea.font: " + textArea.getFont());
-    LOG.info("UIDefaults: " + UIManager.getLookAndFeelDefaults());
 
-    try {
-      assertEquals(100, textArea.getPreferredSize().width);
-    } catch (AssertionFailedError e) {
-      TestLoggerFactory.dumpLogToStdout(getTestStartedLogMessage("test1"));
-      throw e;
-    }
+    UIDefaults uid = UIManager.getLookAndFeelDefaults();
+
+    LOG.info("UIDefaults: TextArea.font=" + uid.get("TextArea.font"));
+    LOG.info("UIDefaults: TextArea.margin=" + uid.get("TextArea.margin"));
+
+    LOG.info("textArea.getPreferredSize: " + textArea.getPreferredSize());
+
+    TestLoggerFactory.dumpLogToStdout(getTestStartedLogMessage("test1"));
+
+    assertEquals(100, textArea.getPreferredSize().width);
 
     final Dimension initialPreferredSize = panel.getPreferredSize();
     assertEquals(new Dimension(100,20 + textArea.getPreferredSize().height), initialPreferredSize);

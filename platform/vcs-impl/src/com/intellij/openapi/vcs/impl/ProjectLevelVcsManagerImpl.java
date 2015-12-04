@@ -70,10 +70,8 @@ import com.intellij.util.text.DateFormatUtil;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -119,7 +117,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private volatile int myBackgroundOperationCounter = 0;
 
-  private final Map<VcsBackgroundableActions, BackgroundableActionEnabledHandler> myBackgroundableActionHandlerMap;
+  private final Set<ActionKey> myBackgroundRunningTasks = ContainerUtil.newHashSet();
 
   private final List<Pair<String, ConsoleViewContentType>> myPendingOutput = ContainerUtil.newArrayList();
 
@@ -139,7 +137,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
     myDefaultVcsRootPolicy = DefaultVcsRootPolicy.getInstance(project);
 
-    myBackgroundableActionHandlerMap = new EnumMap<VcsBackgroundableActions, BackgroundableActionEnabledHandler>(VcsBackgroundableActions.class);
     myInitialization = new VcsInitialization(myProject);
     myMappings = new NewMappings(myProject, myMessageBus, this, manager);
     myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
@@ -814,15 +811,31 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return myMappings.haveDefaultMapping();
   }
 
+  /**
+   * @deprecated {@link BackgroundableActionLock}
+   */
+  @Deprecated
   public BackgroundableActionEnabledHandler getBackgroundableActionHandler(final VcsBackgroundableActions action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    return new BackgroundableActionEnabledHandler(myProject, action);
+  }
 
-    BackgroundableActionEnabledHandler result = myBackgroundableActionHandlerMap.get(action);
-    if (result == null) {
-      result = new BackgroundableActionEnabledHandler();
-      myBackgroundableActionHandlerMap.put(action, result);
-    }
-    return result;
+  @CalledInAwt
+  boolean isBackgroundTaskRunning(@NotNull Object... keys) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    return myBackgroundRunningTasks.contains(new ActionKey(keys));
+  }
+
+  @CalledInAwt
+  void startBackgroundTask(@NotNull Object... keys) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    LOG.assertTrue(myBackgroundRunningTasks.add(new ActionKey(keys)));
+  }
+
+  @CalledInAwt
+  void stopBackgroundTask(@NotNull Object... keys) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    LOG.assertTrue(myBackgroundRunningTasks.remove(new ActionKey(keys)));
   }
 
   public void addInitializationRequest(final VcsInitObject vcsInitObject, final Runnable runnable) {
@@ -908,5 +921,29 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @TestOnly
   public void waitForInitialized() {
     myInitialization.waitForInitialized();
+  }
+
+  private static class ActionKey {
+    private final Object[] myObjects;
+
+    public ActionKey(@NotNull Object... objects) {
+      myObjects = objects;
+    }
+
+    @Override
+    public final boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) return false;
+      return Arrays.equals(myObjects, ((ActionKey)o).myObjects);
+    }
+
+    @Override
+    public final int hashCode() {
+      return Arrays.hashCode(myObjects);
+    }
+
+    @Override
+    public String toString() {
+      return getClass() + " - " + Arrays.toString(myObjects);
+    }
   }
 }

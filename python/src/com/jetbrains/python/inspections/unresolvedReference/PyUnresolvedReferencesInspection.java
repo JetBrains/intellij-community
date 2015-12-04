@@ -182,7 +182,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                 if (PyNames.OBJECT.equals(ancestor.getName())) {
                   break;
                 }
-                if (canHaveAttribute(pyClass, attrName)) {
+                if (canHaveAttribute(ancestor, attrName)) {
                   return;
                 }
               }
@@ -195,8 +195,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
     }
 
-    private boolean canHaveAttribute(@NotNull PyClass cls, @Nullable String attrName) {
-      final List<String> slots = cls.getSlots(myTypeEvalContext);
+    private static boolean canHaveAttribute(@NotNull PyClass cls, @Nullable String attrName) {
+      final List<String> slots = cls.getOwnSlots();
       // Class instance can contain attributes with arbitrary names
       if (slots == null || slots.contains(PyNames.DICT)) {
         return true;

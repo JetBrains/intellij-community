@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.util;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -27,6 +28,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo.ApplicabilityLevel;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -117,6 +119,18 @@ public final class PsiUtil extends PsiUtilCore {
         return ((PsiClassType)lub).resolveGenerics();
       }
     }
+
+    if (type instanceof PsiCapturedWildcardType) {
+      final PsiType upperBound = ((PsiCapturedWildcardType)type).getUpperBound();
+      if (upperBound instanceof PsiClassType) {
+        String classText = "class I<T extends " + upperBound.getCanonicalText() + "> {}";
+        final PsiJavaFile file =
+          (PsiJavaFile)PsiFileFactory.getInstance(expression.getProject()).createFileFromText("inference_dummy.java", JavaLanguage.INSTANCE, classText);
+        final PsiTypeParameter freshParameter = file.getClasses()[0].getTypeParameters()[0];
+        return new ClassCandidateInfo(freshParameter, PsiSubstitutor.EMPTY);
+      }
+    }
+
     if (type == null && expression instanceof PsiReferenceExpression) {
       JavaResolveResult resolveResult = ((PsiReferenceExpression)expression).advancedResolve(false);
       if (resolveResult.getElement() instanceof PsiClass) {

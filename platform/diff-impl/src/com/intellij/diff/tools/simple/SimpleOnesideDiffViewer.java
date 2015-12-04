@@ -134,11 +134,9 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
           final DocumentContent content = getContent();
           final Document document = content.getDocument();
 
-          int start = 0;
-          int end = document.getTextLength();
           TextDiffType type = getSide().select(TextDiffType.DELETED, TextDiffType.INSERTED);
 
-          myHighlighters.addAll(DiffDrawUtil.createHighlighter(getEditor(), start, end, type, false));
+          myHighlighters.addAll(DiffDrawUtil.createHighlighter(getEditor(), 0, getLineCount(document), type, false));
 
           int startLine = 0;
           int endLine = getLineCount(document);

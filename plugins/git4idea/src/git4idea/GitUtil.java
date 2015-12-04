@@ -65,6 +65,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
+import static com.intellij.dvcs.DvcsUtil.joinShortNames;
 
 /**
  * Git utility/helper methods
@@ -1024,5 +1025,16 @@ public class GitUtil {
   @NotNull
   public static String mention(@NotNull GitRepository repository) {
     return getRepositoryManager(repository.getProject()).moreThanOneRoot() ? " in " + getShortRepositoryName(repository) : "";
+  }
+
+  @NotNull
+  public static String mention(@NotNull Collection<GitRepository> repositories) {
+    return mention(repositories, -1);
+  }
+
+  @NotNull
+  public static String mention(@NotNull Collection<GitRepository> repositories, int limit) {
+    if (repositories.isEmpty()) return "";
+    return " in " + joinShortNames(repositories, limit);
   }
 }

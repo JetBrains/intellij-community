@@ -663,7 +663,7 @@ public class LambdaUtil {
     @Nullable
     @Override
     public Boolean visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
-      return visitWildcardType(capturedWildcardType.getWildcard());
+      return true;
     }
 
     @Nullable

@@ -16,6 +16,8 @@
 package com.intellij.psi.impl;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.JavaClassSupers;
 import com.intellij.psi.util.PsiUtil;
@@ -37,6 +39,21 @@ public class JavaClassSupersImpl extends JavaClassSupers {
                                                  @NotNull GlobalSearchScope scope,
                                                  @NotNull PsiSubstitutor derivedSubstitutor) {
     if (InheritanceImplUtil.hasObjectQualifiedName(superClass)) return PsiSubstitutor.EMPTY;
+    if (superClass instanceof InferenceVariable && !(derivedClass instanceof PsiTypeParameter)) {
+      for (PsiType lowerBound : ((InferenceVariable)superClass).getBounds(InferenceBound.LOWER)) {
+        if (lowerBound instanceof PsiClassType) {
+          final PsiClassType.ClassResolveResult result = ((PsiClassType)lowerBound).resolveGenerics();
+          final PsiClass boundClass = result.getElement();
+          if (boundClass != null && boundClass.equals(derivedClass)) {
+            final PsiSubstitutor substitutor = getSuperSubstitutorWithCaching(boundClass, 
+                                                                              derivedClass, scope, result.getSubstitutor());
+            if (substitutor != null) {
+              return composeSubstitutors(derivedSubstitutor, substitutor, boundClass);
+            }
+          }
+        }
+      }
+    }
 
     return derivedClass instanceof PsiTypeParameter
            ? processTypeParameter((PsiTypeParameter)derivedClass, scope, superClass, ContainerUtil.<PsiTypeParameter>newTroveSet(), derivedSubstitutor)

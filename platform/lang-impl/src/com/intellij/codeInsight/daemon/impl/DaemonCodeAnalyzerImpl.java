@@ -58,6 +58,7 @@ import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -307,6 +308,19 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     return runPasses(file, document, Collections.singletonList(textEditor), toIgnore, canChangeDocument, callbackWhileWaiting);
   }
 
+  private volatile boolean mustWaitForSmartMode = true;
+  @TestOnly
+  public void mustWaitForSmartMode(final boolean mustWait, @NotNull Disposable parent) {
+    final boolean old = mustWaitForSmartMode;
+    mustWaitForSmartMode = mustWait;
+    Disposer.register(parent, new Disposable() {
+      @Override
+      public void dispose() {
+        mustWaitForSmartMode = old;
+      }
+    });
+  }
+
   @NotNull
   @TestOnly
   List<HighlightInfo> runPasses(@NotNull PsiFile file,
@@ -329,6 +343,13 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
     // refresh will fire write actions interfering with highlighting
     while (RefreshQueueImpl.isRefreshInProgress() || HeavyProcessLatch.INSTANCE.isRunning()) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    long dstart = System.currentTimeMillis();
+    while (mustWaitForSmartMode && DumbService.getInstance(myProject).isDumb()) {
+      if (System.currentTimeMillis() > dstart + 100000) {
+        throw new IllegalStateException("Timeout waiting for smart mode. If you absolutely want to be dumb, please use DaemonCodeAnalyzerImpl.mustWaitForSmartMode(false).");
+      }
       UIUtil.dispatchAllInvocationEvents();
     }
 

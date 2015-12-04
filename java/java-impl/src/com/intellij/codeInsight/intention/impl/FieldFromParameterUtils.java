@@ -87,7 +87,9 @@ public final class FieldFromParameterUtils {
 
     PsiSubstitutor subst = PsiSubstitutor.EMPTY;
     for (PsiTypeParameter usedTypeParameter : usedTypeParameters) {
-      subst = subst.put(usedTypeParameter, TypeConversionUtil.typeParameterErasure(usedTypeParameter));
+      final PsiType bound = TypeConversionUtil.typeParameterErasure(usedTypeParameter);
+      final PsiManager manager = usedTypeParameter.getManager();
+      subst = subst.put(usedTypeParameter, bound == null ? PsiWildcardType.createUnbounded(manager) : bound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ? bound : PsiWildcardType.createExtends(manager, bound));
     }
 
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
@@ -98,7 +100,7 @@ public final class FieldFromParameterUtils {
     }
 
     if (psiClass instanceof PsiTypeParameter) {
-      return subst.substitute((PsiTypeParameter)psiClass);
+      return GenericsUtil.getVariableTypeByExpressionType(subst.substitute((PsiTypeParameter)psiClass));
     }
     else {
       return JavaPsiFacade.getElementFactory(parameter.getProject()).createType(psiClass, substitutor);

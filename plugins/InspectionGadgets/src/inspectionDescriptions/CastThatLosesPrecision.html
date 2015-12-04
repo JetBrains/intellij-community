@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports any cast operations between built-in numeric types which may
+Reports any cast operations between primitive numeric types which may
 result in loss of precision. Such casts are not necessarily a problem, but may result in difficult to
 trace bugs if the loss of precision is unexpected.
 <!-- tooltip end -->
@@ -9,7 +9,7 @@ Use the checkbox below to indicate that this inspection should ignore casts from
 <b>int</b> to <b>char</b>.
 This type of cast is often used when implementing I/O operations, because the
 <b>read()</b> method of the class
-<b>java.io.Reader</b> returns an <b>int</b>l
+<b>java.io.Reader</b> returns an <b>int</b>.
 <p>
 
 </body>
