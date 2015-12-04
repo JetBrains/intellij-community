@@ -90,7 +90,7 @@ public class GradleRunnerUtil {
     duplexConsoleViewRef.set(duplexConsoleView);
 
     duplexConsoleView.setDisableSwitchConsoleActionOnProcessEnd(false);
-    duplexConsoleView.getSwitchConsoleActionPresentation().setIcon(AllIcons.Debugger.Console);
+    duplexConsoleView.getSwitchConsoleActionPresentation().setIcon(AllIcons.Actions.ChangeView);
     duplexConsoleView.getSwitchConsoleActionPresentation().setText(GradleBundle.message("gradle.runner.toggle.tree.text.action.name"));
 
     final ExternalSystemProgressNotificationManager progressManager =
