@@ -123,6 +123,8 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
     private var completionStarted = false
     
     override fun lookupCanceled(event: LookupEvent) {
+        if (!completionStarted) return
+        
         val items = lookup.items
         val prefix = lookup.additionalPrefix
 
@@ -142,30 +144,40 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
     }
     
     override fun itemSelected(event: LookupEvent) {
+        if (!completionStarted) return
+        
         val currentItem = lookup.currentItem
         val index = lookup.items.indexOf(currentItem)
         logger.itemSelectedCompletionFinished(index, currentItem!!.lookupString)
     }
 
     override fun downPressed() {
+        if (!completionStarted) return
+        
         val current = lookup.currentItem
         val index = lookup.items.indexOf(current)
         logger.downPressed(index, current!!.lookupString)
     }
 
     override fun upPressed() {
+        if (!completionStarted) return
+        
         val current = lookup.currentItem
         val index = lookup.items.indexOf(current)
         logger.upPressed(index, current!!.lookupString)
     }
 
     override fun backSpacePressed() {
+        if (!completionStarted) return
+        
         val current = lookup.currentItem
         val index = lookup.items.indexOf(current)
         logger.backspacePressed(index, current!!.lookupString, lookup.toRelevanceDataList())
     }
     
     override fun afterAppend(c: Char) {
+        if (!completionStarted) return
+        
         logger.charTyped(c, lookup.toRelevanceDataList())
     }
 }
