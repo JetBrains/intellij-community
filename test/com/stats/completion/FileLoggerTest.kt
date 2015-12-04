@@ -7,9 +7,18 @@ import org.mockito.Mockito.mock
 import java.io.File
 
 class FileLoggerTest : PlatformTestCase() {
-    
+    private val path = "x.txt"
+
+    override fun tearDown() {
+        val file = File(path)
+        if (file.exists()) {
+            file.delete()
+        }
+        super.tearDown()
+    }
+
     fun `test data is appended`() {
-        val path = createTempFile("x.txt").absolutePath
+        val path = createTempFile(path).absolutePath
         val mockPathProvider = mock(FilePathProvider::class.java)
         `when`(mockPathProvider.statsFilePath).thenReturn(path)
         
@@ -27,7 +36,7 @@ class FileLoggerTest : PlatformTestCase() {
     }
     
     fun `test file is created if it doesn't exist`() {
-        val path = "x.txt"
+        val path = path
         val mockPathProvider = mock(FilePathProvider::class.java)
         `when`(mockPathProvider.statsFilePath).thenReturn(path)
         performLogging(mockPathProvider)
@@ -39,10 +48,7 @@ class FileLoggerTest : PlatformTestCase() {
         var loggerProvider = CompletionFileLoggerProvider(pathProvider)
         var logger = loggerProvider.newCompletionLogger()
         logger.completionStarted(emptyList())
-        logger.charTyped('a', emptyList())
-        logger.charTyped('b', emptyList())
-        logger.charTyped('c', emptyList())
-        logger.itemSelectedCompletionFinished(0, "")
+        logger.completionCancelled()
         loggerProvider.dispose()
         return logger
     }
