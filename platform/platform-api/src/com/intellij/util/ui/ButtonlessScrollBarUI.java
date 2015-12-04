@@ -637,6 +637,10 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     if (alwaysShowTrack() || myMouseOverScrollbarExpandLevel > 0) {
       doPaintTrack(g, c, trackBounds);
     }
+    RegionPainter painter = UIUtil.getClientProperty(c, RegionPainter.BUTTONLESS_SCROLL_BAR_UI_EXTRA_TRACK);
+    if (painter != null) {
+      painter.paint(g, trackBounds.x, trackBounds.y, trackBounds.width, trackBounds.height);
+    }
   }
 
   protected void doPaintTrack(Graphics g, JComponent c, Rectangle bounds) {
