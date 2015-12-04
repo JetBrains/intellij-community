@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.history.VcsHistoryProviderEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -157,6 +158,15 @@ public abstract class AbstractVcsHelper {
                                        @NotNull FilePath path,
                                        @Nullable String repositoryPath,
                                        @NotNull final AbstractVcs vcs);
+  
+  public void showFileHistory(@NotNull VcsHistoryProviderEx historyProvider,
+                                       @Nullable AnnotationProvider annotationProvider,
+                                       @NotNull FilePath path,
+                                       @Nullable String repositoryPath,
+                                       @NotNull final AbstractVcs vcs,
+                                       @Nullable VcsRevisionNumber startingRevisionNumber) {
+    throw new UnsupportedOperationException();
+  }
 
   /**
    * Shows the "Rollback Changes" dialog with the specified list of changes.

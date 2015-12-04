@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,6 +111,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   private final AnnotationProvider myAnnotationProvider;
   private VcsHistorySession myHistorySession;
   @NotNull private final FilePath myFilePath;
+  @Nullable private final VcsRevisionNumber myStartingRevision;
   @NotNull private final FileHistoryRefresherI myRefresherI;
   private VcsFileRevision myBottomRevisionForShowDiff;
   private final DualView myDualView;
@@ -187,6 +188,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         refreshImpl(canUseLastRevision);
       }
     });
+  }
+
+  @Nullable
+  public VcsRevisionNumber getStartingRevision() {
+    return myStartingRevision;
   }
 
   private static class AuthorCellRenderer extends DefaultTableCellRenderer {
@@ -354,6 +360,17 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
                               ContentManager contentManager,
                               @NotNull FileHistoryRefresherI refresherI,
                               final boolean isStaticEmbedded) {
+    this(vcs, filePath, null, session, provider, contentManager, refresherI, isStaticEmbedded);
+  }
+  
+  public FileHistoryPanelImpl(AbstractVcs vcs,
+                              @NotNull FilePath filePath,
+                              @Nullable VcsRevisionNumber startingRevision,
+                              VcsHistorySession session,
+                              VcsHistoryProvider provider,
+                              ContentManager contentManager,
+                              @NotNull FileHistoryRefresherI refresherI,
+                              final boolean isStaticEmbedded) {
     super(contentManager, provider.getHelpId() != null ? provider.getHelpId() : "reference.versionControl.toolwindow.history", ! isStaticEmbedded);
     myProject = vcs.getProject();
     myIsStaticAndEmbedded = false;
@@ -363,6 +380,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     myRefresherI = refresherI;
     myHistorySession = session;
     myFilePath = filePath;
+    myStartingRevision = startingRevision;
 
     DiffFromHistoryHandler customDiffHandler = provider.getHistoryDiffHandler();
     myDiffHandler = customDiffHandler == null ? new StandardDiffFromHistoryHandler() : customDiffHandler;
@@ -1749,7 +1767,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof FileHistoryPanelImpl && Comparing.equal(((FileHistoryPanelImpl)obj).getVirtualFile(), getVirtualFile());
+    return obj instanceof FileHistoryPanelImpl && 
+           Comparing.equal(((FileHistoryPanelImpl)obj).getVirtualFile(), getVirtualFile()) &&
+           Comparing.equal(((FileHistoryPanelImpl)obj).getStartingRevision(), getStartingRevision());
   }
 
   @Override
