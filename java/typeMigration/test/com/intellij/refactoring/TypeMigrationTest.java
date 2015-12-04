@@ -906,6 +906,14 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     doTestFirstParamType("meth", myFactory.createTypeFromText("java.lang.String", null), myFactory.createTypeFromText("java.lang.Long", null));
   }
 
+  public void testAssignableGetter() {
+    doTestFieldType("foo", "Test", PsiType.LONG, PsiType.INT);
+  }
+
+  public void testAssignableSetter() {
+    doTestFieldType("foo", "Test", PsiType.INT, PsiType.LONG);
+  }
+
   private void doTestForeachParameter(final PsiType rootType, final PsiType migrationType) {
     start(new RulesProvider() {
       @Override

@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.typeMigration;
 
+import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -22,10 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -83,7 +81,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         break;
 
       case TypeInfection.LEFT_INFECTED:
-        myLabeler.migrateExpressionType(rExpression, ltype, myStatement, TypeConversionUtil.isAssignable(ltype, rtype), true);
+        myLabeler.migrateExpressionType(rExpression, ltype, myStatement, TypeConversionUtil.isAssignable(ltype, rtype) && !isSetter(expression), true);
         break;
 
       case TypeInfection.RIGHT_INFECTED:
@@ -178,7 +176,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitReturnStatement(PsiReturnStatement statement) { // has to change method return type corresponding to new value type 
+  public void visitReturnStatement(final PsiReturnStatement statement) { // has to change method return type corresponding to new value type
     super.visitReturnStatement(statement);
 
     final PsiElement method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class);
@@ -191,9 +189,8 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       }
       final PsiType returnType = ((PsiMethod)method).getReturnType();
       final PsiType valueType = myTypeEvaluator.evaluateType(value);
-
       if (returnType != null && valueType != null) {
-        if (!myLabeler.addMigrationRoot(method, valueType, myStatement, TypeConversionUtil.isAssignable(returnType, valueType), true, true)
+        if (!myLabeler.addMigrationRoot(method, valueType, myStatement, TypeConversionUtil.isAssignable(returnType, valueType) && !isGetter(value, method), true, true)
             && TypeMigrationLabeler.typeContainsTypeParameters(returnType)) {
           value.accept(this);
         }
@@ -593,5 +590,42 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     static int getInfection(final TypeView left, final TypeView right) {
       return (left.isChanged() ? 1 : 0) + (right.isChanged() ? 2 : 0);
     }
+  }
+
+  private static boolean isSetter(PsiAssignmentExpression expression) {
+    final PsiExpression lExpression = expression.getLExpression();
+    if (lExpression instanceof PsiReferenceExpression) {
+      final PsiElement resolved = ((PsiReferenceExpression)lExpression).resolve();
+      if (resolved instanceof PsiField) {
+        PsiField field = (PsiField) resolved;
+        final NavigatablePsiElement containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, PsiLambdaExpression.class);
+        if (containingMethod instanceof PsiMethod) {
+          final PsiMethod setter = PropertyUtil.findPropertySetter(field.getContainingClass(), field.getName(), field.hasModifierProperty(PsiModifier.STATIC), false);
+          if (containingMethod.isEquivalentTo(setter)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean isGetter(PsiExpression returnValue, PsiElement containingMethod) {
+    if (returnValue instanceof PsiReferenceExpression) {
+      final PsiElement resolved = ((PsiReferenceExpression)returnValue).resolve();
+      if (resolved instanceof PsiField) {
+        PsiField field = (PsiField)resolved;
+        final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
+        final PsiMethod[] getters = GetterSetterPrototypeProvider.findGetters(field.getContainingClass(), field.getName(), isStatic);
+        if (getters != null) {
+          for (PsiMethod getter : getters) {
+            if (containingMethod.isEquivalentTo(getter)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 }
