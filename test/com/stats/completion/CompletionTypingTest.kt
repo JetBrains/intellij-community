@@ -54,9 +54,8 @@ class Test {
     fun `test item selected on just typing`() {
         myFixture.type('.')
         myFixture.completeBasic()
-        
         myFixture.type("run(")
-        //todo in the real world it works another way
+        //todo check in real world works another way
         verify(mockLogger, times(1)).itemSelectedCompletionFinished(Matchers.anyInt(), Matchers.anyString())
     }
     
@@ -66,8 +65,8 @@ class Test {
 
         myFixture.type('r')
         myFixture.type('u')
-        verify(mockLogger).charTyped('r', emptyList())
-        verify(mockLogger).charTyped('u', emptyList())
+        verify(mockLogger).charTyped(eq('r'), Matchers.anyListOf(LookupStringWithRelevance::class.java))
+        verify(mockLogger).charTyped(eq('u'), Matchers.anyListOf(LookupStringWithRelevance::class.java))
     }
     
     fun `test up buttons`() {
@@ -89,8 +88,7 @@ class Test {
     fun `test completion started`() {
         myFixture.type('.')
         myFixture.completeBasic()
-
-        verify(mockLogger).completionStarted(emptyList())
+        verify(mockLogger).completionStarted(Matchers.anyListOf(LookupStringWithRelevance::class.java))
     }
     
     fun `test backspace`() {
@@ -98,7 +96,7 @@ class Test {
         myFixture.completeBasic()
         
         myFixture.type('\b')
-        verify(mockLogger).backspacePressed(0, "", emptyList())
+        verify(mockLogger).backspacePressed(Matchers.anyInt(), Matchers.anyString(), Matchers.anyListOf(LookupStringWithRelevance::class.java))
     }
     
     fun `test enter`() {
@@ -121,9 +119,7 @@ class Test {
     fun `test if typed prefix is correct completion variant, pressing dot will select it`() {
         myFixture.completeBasic()
         myFixture.type('.')
-        
-        verify(mockLogger, times(1)).completionStarted(emptyList())
-        //todo in the real world it works another way
+        verify(mockLogger, times(1)).completionStarted(Matchers.anyListOf(LookupStringWithRelevance::class.java))
         verify(mockLogger, times(1)).itemSelectedCompletionFinished(Matchers.anyInt(), Matchers.anyString())
     }
     

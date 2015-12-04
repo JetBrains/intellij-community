@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.PrefixChangeListener
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.AbstractProjectComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
@@ -53,11 +54,13 @@ interface CompletionPopupListener {
     fun downPressed()
     fun upPressed()
     fun backSpacePressed()
+    fun beforeCharTyped(c: Char)
     
     class Adapter: CompletionPopupListener {
         override fun downPressed() = Unit
         override fun upPressed() = Unit
         override fun backSpacePressed() = Unit
+        override fun beforeCharTyped(c: Char) = Unit
     }
 }
 
@@ -75,6 +78,10 @@ class LookupActionsListener : AnActionListener.Adapter() {
             up -> listener.upPressed()
             backspace -> listener.backSpacePressed()
         }
+    }
+
+    override fun beforeEditorTyping(c: Char, dataContext: DataContext) {
+        listener.beforeCharTyped(c)
     }
 }
 
@@ -121,14 +128,21 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
 {
 
     private var completionStarted = false
+    private var selectedByDotTyping = false
+    
+    private fun isCompletionActive(): Boolean {
+        return completionStarted && !lookup.isLookupDisposed
+                || ApplicationManager.getApplication().isUnitTestMode
+    } 
     
     override fun lookupCanceled(event: LookupEvent) {
         if (!completionStarted) return
         
         val items = lookup.items
-        val prefix = lookup.additionalPrefix
+        val prefix = lookup.itemPattern(lookup.currentItem!!)
 
-        if (items.firstOrNull()?.lookupString?.equals(prefix) ?: false) {
+        val wasTyped = items.firstOrNull()?.lookupString?.equals(prefix) ?: false
+        if (wasTyped || selectedByDotTyping) {
             logger.itemSelectedByTyping(prefix)
         }
         else {
@@ -144,7 +158,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
     }
     
     override fun itemSelected(event: LookupEvent) {
-        if (!completionStarted) return
+        if (!isCompletionActive()) return
         
         val currentItem = lookup.currentItem
         val index = lookup.items.indexOf(currentItem)
@@ -152,7 +166,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
     }
 
     override fun downPressed() {
-        if (!completionStarted) return
+        if (!isCompletionActive()) return
         
         val current = lookup.currentItem
         val index = lookup.items.indexOf(current)
@@ -160,7 +174,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
     }
 
     override fun upPressed() {
-        if (!completionStarted) return
+        if (!isCompletionActive()) return
         
         val current = lookup.currentItem
         val index = lookup.items.indexOf(current)
@@ -168,7 +182,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
     }
 
     override fun backSpacePressed() {
-        if (!completionStarted) return
+        if (!isCompletionActive()) return
         
         val current = lookup.currentItem
         val index = lookup.items.indexOf(current)
@@ -176,8 +190,20 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
     }
     
     override fun afterAppend(c: Char) {
-        if (!completionStarted) return
+        if (!isCompletionActive()) return
         
         logger.charTyped(c, lookup.toRelevanceDataList())
     }
+
+    override fun beforeCharTyped(c: Char) {
+        if (!isCompletionActive()) return
+        if (c == '.') {
+            val item = lookup.currentItem!!
+            val text = lookup.itemPattern(item)
+            if (item.lookupString.equals(text)) {
+                selectedByDotTyping = true
+            }
+        }
+    }
+    
 }
