@@ -118,7 +118,6 @@ class CompletionFileLogger(private val installationUID: String,
     override fun downPressed(pos: Int, itemName: String) {
         val builder = messageBuilder(Action.DOWN)
         builder.nextWrappedToken("POS", pos)
-        builder.nextWrappedToken("LEN", itemName.length)
         builder.nextWrappedToken("ID", itemsToId[itemName]!!)
         log(builder)
     }
@@ -126,7 +125,6 @@ class CompletionFileLogger(private val installationUID: String,
     override fun upPressed(pos: Int, itemName: String) {
         val builder = messageBuilder(Action.UP)
         builder.nextWrappedToken("POS", pos)
-        builder.nextWrappedToken("LEN", itemName.length)
         builder.nextWrappedToken("ID", itemsToId[itemName]!!)
         log(builder)
     }
@@ -143,7 +141,6 @@ class CompletionFileLogger(private val installationUID: String,
     override fun itemSelectedCompletionFinished(pos: Int, itemName: String) {
         val builder = messageBuilder(Action.EXPLICIT_SELECT)
         builder.nextWrappedToken("POS", pos)
-        builder.nextWrappedToken("LEN", itemName.length)
         builder.nextWrappedToken("ID", itemsToId[itemName]!!)
         log(builder)
     }
@@ -176,7 +173,6 @@ class CompletionFileLogger(private val installationUID: String,
 
     override fun itemSelectedByTyping(itemName: String) {
         val builder = messageBuilder(Action.TYPED_SELECT)
-        builder.nextWrappedToken("PREF_LEN", itemName.length)
         builder.nextWrappedToken("ID", itemsToId[itemName]!!)
         log(builder)
     }
