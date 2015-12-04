@@ -565,6 +565,16 @@ public class  PyIntentionTest extends PyTestCase {
     }
   }
 
+  // PY-15332
+  public void testGoogleNoReturnSectionForInit() {
+    doDocStubTest(DocStringFormat.GOOGLE);
+  }
+  
+  // PY-15332
+  public void testRestNoReturnTagForInit() {
+    doDocStubTest(DocStringFormat.REST);
+  }
+
   // PY-16904
   public void testNumpyAddMissingParameterPreservesNoneIndent() {
     doDocAddMissingParamsTest(DocStringFormat.NUMPY);
