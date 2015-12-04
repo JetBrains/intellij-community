@@ -78,6 +78,26 @@ public class PyPep8NamingInspectionTest extends PyTestCase {
     doMultiFileTest();
   }
 
+  public void testIgnoreN801() {
+    doIgnoredErrorsTest("N801");
+  }
+
+  public void testIgnoreN802() {
+    doIgnoredErrorsTest("N802");
+  }
+
+  public void testIgnoreN803() {
+    doIgnoredErrorsTest("N803");
+  }
+
+  public void testIgnoreN806() {
+    doIgnoredErrorsTest("N806");
+  }
+
+  public void testIgnoreOnlyOneError() {
+    doIgnoredErrorsTest("N806");
+  }
+
   public void testOverrideFromModule() {
     myFixture.configureByFiles("inspections/PyPep8NamingInspection/" + getTestName(true) + ".py",
                                "inspections/PyPep8NamingInspection/tmp1.py");
@@ -95,6 +115,14 @@ public class PyPep8NamingInspectionTest extends PyTestCase {
     myFixture.copyDirectoryToProject("inspections/PyPep8NamingInspection/" + getTestName(true), "");
     myFixture.configureByFile("a.py");
     myFixture.enableInspections(PyPep8NamingInspection.class);
+    myFixture.checkHighlighting(false, false, true);
+  }
+
+  private void doIgnoredErrorsTest(String errorCode) {
+    myFixture.configureByFiles("inspections/PyPep8NamingInspection/ignored/" + getTestName(true) + ".py");
+    final PyPep8NamingInspection inspection = new PyPep8NamingInspection();
+    inspection.ignoredErrors.add(errorCode);
+    myFixture.enableInspections(inspection);
     myFixture.checkHighlighting(false, false, true);
   }
 
