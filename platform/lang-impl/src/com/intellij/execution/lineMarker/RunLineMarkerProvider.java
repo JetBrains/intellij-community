@@ -17,7 +17,7 @@ package com.intellij.execution.lineMarker;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.LineMarkerProvider;
+import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -36,7 +36,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class RunLineMarkerProvider implements LineMarkerProvider {
+public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   @Nullable
   @Override
@@ -110,5 +110,11 @@ public class RunLineMarkerProvider implements LineMarkerProvider {
 
   @Override
   public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    return "Run line marker";
   }
 }

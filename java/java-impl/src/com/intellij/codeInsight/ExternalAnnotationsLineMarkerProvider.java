@@ -18,7 +18,7 @@ package com.intellij.codeInsight;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.LineMarkerProvider;
+import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.impl.AddAnnotationIntention;
@@ -51,7 +51,7 @@ import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
 
-public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider {
+public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDescriptor {
   private static final Function<PsiElement, String> ourTooltipProvider = new Function<PsiElement, String>() {
     @Override
     public String fun(PsiElement nameIdentifier) {
@@ -153,6 +153,12 @@ public class ExternalAnnotationsLineMarkerProvider implements LineMarkerProvider
 
   @Override
   public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {}
+
+  @NotNull
+  @Override
+  public String getName() {
+    return "External annotations";
+  }
 
   private static class MyIconGutterHandler implements GutterIconNavigationHandler<PsiElement> {
     static final MyIconGutterHandler INSTANCE = new MyIconGutterHandler();

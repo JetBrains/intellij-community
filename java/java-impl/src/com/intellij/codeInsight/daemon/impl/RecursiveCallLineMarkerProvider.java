@@ -17,7 +17,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.LineMarkerProvider;
+import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -36,7 +36,7 @@ import java.util.Set;
 /**
  * @author Danila Ponomarenko
  */
-public class RecursiveCallLineMarkerProvider implements LineMarkerProvider {
+public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
@@ -73,6 +73,12 @@ public class RecursiveCallLineMarkerProvider implements LineMarkerProvider {
     }
 
     return Comparing.equal(method, methodCall.resolveMethod());
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    return "Recursive call";
   }
 
   private static class RecursiveMethodCallMarkerInfo extends LineMarkerInfo<PsiMethodCallExpression> {

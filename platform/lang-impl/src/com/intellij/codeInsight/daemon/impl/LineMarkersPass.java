@@ -21,10 +21,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.LineMarkerProvider;
-import com.intellij.codeInsight.daemon.LineMarkerProviders;
-import com.intellij.codeInsight.daemon.MergeableLineMarkerInfo;
+import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
@@ -45,6 +42,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
@@ -52,6 +50,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -150,8 +149,17 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
     return result;
   }
 
-  public static List<LineMarkerProvider> getMarkerProviders(@NotNull Language language, @NotNull Project project) {
-    return DumbService.getInstance(project).filterByDumbAwareness(LineMarkerProviders.INSTANCE.allForLanguageOrAny(language));
+  public static List<LineMarkerProvider> getMarkerProviders(@NotNull Language language, @NotNull final Project project) {
+    List<LineMarkerProvider> forLanguage = LineMarkerProviders.INSTANCE.allForLanguageOrAny(language);
+    List<LineMarkerProvider> providers = DumbService.getInstance(project).filterByDumbAwareness(forLanguage);
+    final LineMarkerSettings settings = LineMarkerSettings.getSettings();
+    return ContainerUtil.filter(providers, new Condition<LineMarkerProvider>() {
+      @Override
+      public boolean value(LineMarkerProvider provider) {
+        if (!(provider instanceof LineMarkerProviderDescriptor)) return true;
+        return settings.isEnabled((LineMarkerProviderDescriptor)provider);
+      }
+    });
   }
 
   @Override

@@ -16,10 +16,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
-import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.LineMarkerProvider;
+import com.intellij.codeInsight.daemon.*;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -45,7 +42,7 @@ import java.util.List;
  *
  * @author Konstantin Bulenkov
  */
-public class IconLineMarkerProvider implements LineMarkerProvider {
+public class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   @Override
   public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
@@ -53,8 +50,6 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
 
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
-    if (!DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER) return null;
-
     if (element instanceof PsiAssignmentExpression) {
       final PsiExpression lExpression = ((PsiAssignmentExpression)element).getLExpression();
       final PsiExpression expr = ((PsiAssignmentExpression)element).getRExpression();
@@ -135,5 +130,16 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
     return new LineMarkerInfo<PsiElement>(bindingElement, bindingElement.getTextRange(), icon,
                                           Pass.UPDATE_ALL, null, navHandler,
                                           GutterIconRenderer.Alignment.LEFT);
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    return "Icon preview";
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER;
   }
 }

@@ -62,6 +62,7 @@
     <applicationService serviceImplementation="com.intellij.codeEditor.printing.PrintSettings"/>
     <applicationService serviceInterface="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings"
                         serviceImplementation="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsImpl"/>
+    <applicationService serviceImplementation="com.intellij.codeInsight.daemon.impl.LineMarkerSettings"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.actions.FormatChangedTextUtil"
                         serviceImplementation="com.intellij.codeInsight.actions.FormatChangedTextUtil"/>
@@ -635,6 +636,9 @@
     <editorOptionsProvider instance="com.intellij.application.options.editor.EditorAppearanceConfigurable"
                            id="editor.preferences.appearance"
                            key="tab.editor.settings.appearance" bundle="messages.ApplicationBundle"/>
+
+    <editorOptionsProvider instance="com.intellij.application.options.editor.GutterIconsConfigurable" id="editor.preferences.gutterIcons"
+                           displayName="Gutter Icons"/>
 
     <!-- Colors & Fonts-->
     <applicationConfigurable groupId="editor" groupWeight="180" dynamic="true" instance="com.intellij.application.options.colors.ColorAndFontOptions"
