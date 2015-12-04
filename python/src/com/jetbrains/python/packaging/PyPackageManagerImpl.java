@@ -326,6 +326,12 @@ public class PyPackageManagerImpl extends PyPackageManager {
     return null;
   }
 
+  @Nullable
+  @Override
+  public final PyPackage findPackage(@NotNull final String name) throws ExecutionException {
+    return findPackage(name, PySdkUtil.isRemote(mySdk));
+  }
+
   @NotNull
   public String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws ExecutionException {
     final List<String> args = new ArrayList<String>();
