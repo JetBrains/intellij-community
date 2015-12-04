@@ -59,7 +59,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
   private ProcessHandler myProcessHandler;
   @NotNull
   private final SwitchDuplexConsoleViewAction mySwitchConsoleAction;
-
+  private boolean myDisableSwitchConsoleActionOnProcessEnd = true;
 
   public DuplexConsoleView(@NotNull S primaryConsoleView, @NotNull T secondaryConsoleView) {
     this(primaryConsoleView, secondaryConsoleView, null);
@@ -258,6 +258,10 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     return mySwitchConsoleAction.getTemplatePresentation();
   }
 
+  public void setDisableSwitchConsoleActionOnProcessEnd(boolean disableSwitchConsoleActionOnProcessEnd) {
+    myDisableSwitchConsoleActionOnProcessEnd = disableSwitchConsoleActionOnProcessEnd;
+  }
+
   private class SwitchDuplexConsoleViewAction extends ToggleAction implements DumbAware {
 
     public SwitchDuplexConsoleViewAction() {
@@ -285,6 +289,8 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     @Override
     public void update(@NotNull AnActionEvent event) {
       super.update(event);
+      if(!myDisableSwitchConsoleActionOnProcessEnd) return;
+
       final Presentation presentation = event.getPresentation();
       final boolean isRunning = myProcessHandler != null && !myProcessHandler.isProcessTerminated();
       if (isRunning) {
