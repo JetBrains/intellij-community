@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@ package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.vcs.history.VcsHistoryProviderEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Refreshes file history.
@@ -29,16 +31,32 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
   private final VcsHistoryProvider myVcsHistoryProvider;
   private final FilePath myPath;
   private final AbstractVcs myVcs;
+  @Nullable private final VcsRevisionNumber myStartingRevisionNumber;
   private boolean myCanUseCache;
   private boolean myIsRefresh;
 
   public FileHistoryRefresher(final VcsHistoryProvider vcsHistoryProvider,
                               final FilePath path,
                               final AbstractVcs vcs) {
+    this(vcsHistoryProvider, path, null, vcs);
+  }
+  
+  public FileHistoryRefresher(final VcsHistoryProviderEx vcsHistoryProvider,
+                              final FilePath path,
+                              @Nullable VcsRevisionNumber startingRevisionNumber, 
+                              final AbstractVcs vcs) {
+    this((VcsHistoryProvider)vcsHistoryProvider, path, startingRevisionNumber, vcs);
+  }
+  
+  private FileHistoryRefresher(final VcsHistoryProvider vcsHistoryProvider,
+                               final FilePath path,
+                               @Nullable VcsRevisionNumber startingRevisionNumber, 
+                               final AbstractVcs vcs) {
     myVcsHistoryProvider = vcsHistoryProvider;
     myPath = path;
     myVcs = vcs;
-    mySessionPartner = new FileHistorySessionPartner(vcsHistoryProvider, path, vcs, this);
+    myStartingRevisionNumber = startingRevisionNumber;
+    mySessionPartner = new FileHistorySessionPartner(vcsHistoryProvider, path, startingRevisionNumber, vcs, this);
     myCanUseCache = true;
   }
 
@@ -46,8 +64,17 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
   public static FileHistoryRefresherI findOrCreate(@NotNull VcsHistoryProvider vcsHistoryProvider,
                                                    @NotNull FilePath path,
                                                    @NotNull AbstractVcs vcs) {
-    FileHistoryRefresherI refresher = FileHistorySessionPartner.findExistingHistoryRefresher(vcs.getProject(), path);
+    FileHistoryRefresherI refresher = FileHistorySessionPartner.findExistingHistoryRefresher(vcs.getProject(), path, null);
     return refresher == null ? new FileHistoryRefresher(vcsHistoryProvider, path, vcs) : refresher;
+  }
+
+  @NotNull
+  public static FileHistoryRefresherI findOrCreate(@NotNull VcsHistoryProviderEx vcsHistoryProvider,
+                                                   @NotNull FilePath path,
+                                                   @NotNull AbstractVcs vcs,
+                                                   @Nullable VcsRevisionNumber startingRevisionNumber) {
+    FileHistoryRefresherI refresher = FileHistorySessionPartner.findExistingHistoryRefresher(vcs.getProject(), path, startingRevisionNumber);
+    return refresher == null ? new FileHistoryRefresher(vcsHistoryProvider, path, startingRevisionNumber, vcs) : refresher;
   }
 
   /**
@@ -59,7 +86,12 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
     mySessionPartner.beforeRefresh();
     final VcsHistoryProviderBackgroundableProxy proxy = new VcsHistoryProviderBackgroundableProxy(
       myVcs, myVcsHistoryProvider, myVcs.getDiffProvider());
-    proxy.executeAppendableSession(myVcs.getKeyInstanceMethod(), myPath, mySessionPartner, null, myCanUseCache, canUseLastRevision);
+    if (myVcsHistoryProvider instanceof VcsHistoryProviderEx && myStartingRevisionNumber != null) {
+      proxy.executeAppendableSession(myVcs.getKeyInstanceMethod(), myPath, myStartingRevisionNumber, mySessionPartner, null);
+    }
+    else {
+      proxy.executeAppendableSession(myVcs.getKeyInstanceMethod(), myPath, mySessionPartner, null, myCanUseCache, canUseLastRevision);
+    }
     myCanUseCache = false;
   }
 
