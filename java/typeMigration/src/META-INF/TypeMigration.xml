@@ -37,5 +37,10 @@
                      groupName="Java language level migration aids" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.refactoring.typeMigration.inspections.GuavaInspection"
                      displayName="Guava's functional primitives can be replaced by Java"/>
+
+    <localInspection groupPath="Java" language="JAVA" shortName="MigrateAssertToMatcherAssert"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.refactoring.typeMigration.inspections.MigrateAssertToMatcherAssertInspection"
+                     displayName="Assertion expression can be replaced with 'assertThat' method call"/>
   </extensions>
 </idea-plugin>
