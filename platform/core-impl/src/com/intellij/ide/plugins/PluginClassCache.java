@@ -15,11 +15,8 @@
  */
 package com.intellij.ide.plugins;
 
-import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.extensions.PluginId;
-import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -28,29 +25,12 @@ import java.util.*;
  */
 class PluginClassCache {
   private static final Object ourLock = new Object();
-  private final Map<String, PluginId> myMissingClasses = new THashMap<String, PluginId>();
   private final TObjectIntHashMap<PluginId> myClassCounts = new TObjectIntHashMap<PluginId>();
 
-  public void addPluginClass(String className, PluginId pluginId, boolean loaded) {
+  public void addPluginClass(PluginId pluginId) {
     synchronized(ourLock) {
-      if (loaded) {
-        myMissingClasses.remove(className);
-        myClassCounts.put(pluginId, myClassCounts.get(pluginId) + 1);
-      } else {
-        myMissingClasses.put(className, pluginId);
-      }
+      myClassCounts.put(pluginId, myClassCounts.get(pluginId) + 1);
     }
-  }
-
-  @Nullable
-  private static PluginId findLoadingPlugin(String className) {
-    for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
-      ClassLoader loader = descriptor.getPluginClassLoader();
-      if (loader instanceof PluginClassLoader && ((PluginClassLoader)loader).hasLoadedClass(className)) {
-        return descriptor.getPluginId();
-      }
-    }
-    return null;
   }
 
   public void dumpPluginClassStatistics() {
@@ -71,16 +51,4 @@ class PluginClassCache {
       PluginManagerCore.getLogger().info(id + " loaded " + myClassCounts.get(id) + " classes");
     }
   }
-
-  @Nullable
-  public PluginId getPluginByClassName(String className) {
-    synchronized (ourLock) {
-      PluginId id = myMissingClasses.get(className);
-      if (id != null) {
-        return id;
-      }
-    }
-    return findLoadingPlugin(className);
-  }
-
 }

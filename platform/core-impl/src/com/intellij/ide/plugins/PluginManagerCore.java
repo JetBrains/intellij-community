@@ -299,13 +299,19 @@ public class PluginManagerCore {
     return true;
   }
 
-  public static void addPluginClass(@NotNull String className, PluginId pluginId, boolean loaded) {
-    ourPluginClasses.addPluginClass(className, pluginId, loaded);
+  public static void addPluginClass(PluginId pluginId) {
+    ourPluginClasses.addPluginClass(pluginId);
   }
 
   @Nullable
   public static PluginId getPluginByClassName(@NotNull String className) {
-    return ourPluginClasses.getPluginByClassName(className);
+    for (IdeaPluginDescriptor descriptor : getPlugins()) {
+      ClassLoader loader = descriptor.getPluginClassLoader();
+      if (loader instanceof PluginClassLoader && ((PluginClassLoader)loader).hasLoadedClass(className)) {
+        return descriptor.getPluginId();
+      }
+    }
+    return null;
   }
 
   public static void dumpPluginClassStatistics() {
