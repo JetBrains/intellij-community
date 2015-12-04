@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupAdapter
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.codeInsight.lookup.impl.PrefixChangeListener
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.components.AbstractProjectComponent
@@ -20,7 +21,9 @@ class CompletionTrackerInitializer(project: Project): AbstractProjectComponent(p
         val lookup = it.newValue
         if (lookup is LookupImpl) {
             val logger = CompletionLoggerProvider.getInstance().newCompletionLogger()
-            lookup.addLookupListener(CompletionActionsTracker(lookupPopupActionTracker, logger))
+            val tracker = CompletionActionsTracker(lookup, lookupPopupActionTracker, logger)
+            lookup.addLookupListener(tracker)
+            lookup.setPrefixChangeListener(tracker)
         }
     }
 
@@ -50,13 +53,11 @@ interface CompletionPopupListener {
     fun downPressed(lookup: Lookup)
     fun upPressed(lookup: Lookup)
     fun backSpacePressed(lookup: Lookup)
-    fun typed(c: Char, lookup: Lookup)
     
     class Adapter: CompletionPopupListener {
         override fun downPressed(lookup: Lookup) = Unit
         override fun upPressed(lookup: Lookup) = Unit
         override fun backSpacePressed(lookup: Lookup) = Unit
-        override fun typed(c: Char, lookup: Lookup) = Unit
     }
 }
 
@@ -79,11 +80,7 @@ class LookupActionsListener : AnActionListener.Adapter() {
             backspace -> popupListener.backSpacePressed(lookup)
         }
     }
-
-    override fun beforeEditorTyping(c: Char, dataContext: DataContext) {
-        val lookup = obtainLookup(dataContext) ?: return
-        popupListener.typed(c, lookup)
-    }
+    
 }
 
 class LookupStringWithRelevance(val item: String, val relevance: List<Pair<String, Any>>) {
@@ -110,8 +107,12 @@ class LookupStringWithRelevance(val item: String, val relevance: List<Pair<Strin
 }
 
 
-class CompletionActionsTracker(private val completionListener: LookupActionsListener,
-                               private val logger: CompletionLogger) : CompletionPopupListener, LookupAdapter() {
+class CompletionActionsTracker(private val lookup: LookupImpl,
+                               private val completionListener: LookupActionsListener,
+                               private val logger: CompletionLogger) : CompletionPopupListener, 
+                                                                       PrefixChangeListener, 
+                                                                       LookupAdapter() 
+{
     
     override fun lookupCanceled(event: LookupEvent) {
         val lookup = event.lookup as LookupImpl
@@ -167,10 +168,8 @@ class CompletionActionsTracker(private val completionListener: LookupActionsList
         val index = lookup.items.indexOf(current)
         logger.backspacePressed(index, current!!.lookupString, lookupImpl.toRelevanceDataList())
     }
-
-    override fun typed(c: Char, lookup: Lookup) {
-        val lookupImpl = lookup as LookupImpl
-        logger.charTyped(c, lookupImpl.toRelevanceDataList())
-    }
     
+    override fun afterAppend(c: Char) {
+        logger.charTyped(c, lookup.toRelevanceDataList())
+    }
 }
