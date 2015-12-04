@@ -274,7 +274,7 @@ public class EditorSearchSession implements SearchSession,
       updateResults(true);
     }
     else {
-      clearSearchResults();
+      nothingToSearchFor();
     }
     updateMultiLineStateIfNeed();
   }
@@ -378,7 +378,7 @@ public class EditorSearchSession implements SearchSession,
   private void updateResults(final boolean allowedToChangedEditorSelection) {
     final String text = myFindModel.getStringToFind();
     if (text.length() == 0) {
-      clearSearchResults();
+      nothingToSearchFor();
     }
     else {
 
@@ -411,7 +411,7 @@ public class EditorSearchSession implements SearchSession,
     }
   }
 
-  private void clearSearchResults() {
+  private void nothingToSearchFor() {
     updateUIWithEmptyResults();
     if (mySearchResults != null) {
       mySearchResults.clear();
