@@ -134,9 +134,9 @@ class CompletionFileLogger(private val installationUID: String,
     override fun backspacePressed(pos: Int, itemName: String, toRelevanceDataList: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.BACKSPACE)
         builder.nextWrappedToken("POS", pos)
-        builder.nextWrappedToken("LEN", itemName.length)
+        builder.nextWrappedToken("LIST_LEN", itemName.length)
         builder.nextWrappedToken("ID", itemsToId[itemName]!!)
-        builder.nextToken(convertCompletionList(toRelevanceDataList))
+        builder.nextToken(toIdsList(toRelevanceDataList))
         log(builder)
     }
 
@@ -151,7 +151,11 @@ class CompletionFileLogger(private val installationUID: String,
     override fun charTyped(c: Char, items: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.TYPE)
         builder.nextWrappedToken("LIST_LEN", items.size)
-        
+        builder.nextToken(toIdsList(items))
+        log(builder)
+    }
+    
+    private fun toIdsList(items: List<LookupStringWithRelevance>): String {
         val ids = StringBuilder()
         with (ids) {
             append("{")
@@ -162,9 +166,7 @@ class CompletionFileLogger(private val installationUID: String,
             }
             append('}')
         }
-        
-        builder.nextToken(ids.toString())
-        log(builder)
+        return ids.toString()
     }
 
     override fun completionCancelled() {
