@@ -30,6 +30,7 @@ import com.intellij.diff.tools.util.base.*;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -222,10 +223,10 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   protected List<AnAction> createEditorPopupActions() {
     List<AnAction> group = new ArrayList<AnAction>();
 
-    group.add(new ReplaceSelectedChangesAction(Side.LEFT, false));
-    group.add(new ReplaceSelectedChangesAction(Side.RIGHT, false));
-    group.add(new AppendSelectedChangesAction(Side.LEFT, false));
-    group.add(new AppendSelectedChangesAction(Side.RIGHT, false));
+    if (isEditable(Side.RIGHT, false)) {
+      group.add(new ReplaceSelectedChangesAction(Side.LEFT, false));
+      group.add(new ReplaceSelectedChangesAction(Side.RIGHT, false));
+    }
 
     group.add(Separator.getInstance());
     group.addAll(TextDiffViewerUtil.createEditorPopupActions());
@@ -674,7 +675,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         return;
       }
 
-      e.getPresentation().setText(getText());
       e.getPresentation().setVisible(true);
       e.getPresentation().setEnabled(isSomeChangeSelected());
     }
@@ -715,9 +715,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       return false;
     }
 
-    @NotNull
-    public abstract String getText();
-
     @CalledWithWriteLock
     protected abstract void apply(@NotNull List<UnifiedDiffChange> changes);
   }
@@ -727,19 +724,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       super(focusedSide.other(), shortcut);
 
       setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide")).getShortcutSet());
-      getTemplatePresentation().setIcon(DiffUtil.getArrowIcon(focusedSide));
-    }
-
-    @NotNull
-    @Override
-    public String getText() {
-      boolean bothEditable = isEditable(Side.LEFT, true) && isEditable(Side.RIGHT, true);
-      if (bothEditable) {
-        return myModifiedSide.select("Apply After", "Apply Before");
-      }
-      else {
-        return "Apply";
-      }
+      getTemplatePresentation().setText(focusedSide.select("Revert", "Accept"));
+      getTemplatePresentation().setIcon(focusedSide.select(AllIcons.Diff.Remove, AllIcons.Actions.Checked));
     }
 
     @Override
@@ -755,19 +741,8 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       super(focusedSide.other(), shortcut);
 
       setShortcutSet(ActionManager.getInstance().getAction(focusedSide.select("Diff.AppendLeftSide", "Diff.AppendRightSide")).getShortcutSet());
+      getTemplatePresentation().setText("Append");
       getTemplatePresentation().setIcon(DiffUtil.getArrowDownIcon(focusedSide));
-    }
-
-    @NotNull
-    @Override
-    public String getText() {
-      boolean bothEditable = isEditable(Side.LEFT, true) && isEditable(Side.RIGHT, true);
-      if (bothEditable) {
-        return myModifiedSide.select("Append Right Side", "Append Left Side");
-      }
-      else {
-        return "Append";
-      }
     }
 
     @Override

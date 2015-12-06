@@ -24,6 +24,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.model.task.event.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,9 +35,17 @@ import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.internal.nativeintegration.services.NativeServices;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
+import org.gradle.tooling.events.FailureResult;
+import org.gradle.tooling.events.FinishEvent;
+import org.gradle.tooling.events.SkippedResult;
+import org.gradle.tooling.events.StartEvent;
+import org.gradle.tooling.events.internal.DefaultOperationDescriptor;
+import org.gradle.tooling.events.task.TaskProgressEvent;
+import org.gradle.tooling.events.task.TaskSuccessResult;
 import org.gradle.tooling.internal.consumer.DefaultExecutorServiceFactory;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.gradle.tooling.internal.consumer.Distribution;
+import org.gradle.tooling.internal.protocol.events.InternalOperationDescriptor;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
@@ -154,12 +163,12 @@ public class GradleExecutionHelper {
       operation.setJvmArguments(ArrayUtil.toStringArray(filteredArgs));
     }
 
-    if(settings.isOfflineWork()) {
+    if (settings.isOfflineWork()) {
       commandLineArgs.add(GradleConstants.OFFLINE_MODE_CMD_OPTION);
     }
 
     final Application application = ApplicationManager.getApplication();
-    if(application != null && application.isUnitTestMode()) {
+    if (application != null && application.isUnitTestMode()) {
       commandLineArgs.add("--info");
       commandLineArgs.add("--recompile-scripts");
     }
@@ -193,11 +202,57 @@ public class GradleExecutionHelper {
     operation.addProgressListener(new org.gradle.tooling.events.ProgressListener() {
       @Override
       public void statusChanged(org.gradle.tooling.events.ProgressEvent event) {
-        listener.onStatusChange(new ExternalSystemTaskNotificationEvent(id, event.getDisplayName()));
+        listener.onStatusChange(convert(id, event));
       }
     });
     operation.setStandardOutput(standardOutput);
     operation.setStandardError(standardError);
+  }
+
+  @NotNull
+  private static ExternalSystemTaskNotificationEvent convert(ExternalSystemTaskId id, org.gradle.tooling.events.ProgressEvent event) {
+    final InternalOperationDescriptor internalDesc =
+      event.getDescriptor() instanceof DefaultOperationDescriptor ? ((DefaultOperationDescriptor)event.getDescriptor())
+        .getInternalOperationDescriptor() : null;
+    final String eventId = internalDesc == null ? event.getDescriptor().getDisplayName() : internalDesc.getId().toString();
+    final String parentEventId;
+    if (event.getDescriptor().getParent() == null) {
+      parentEventId = null;
+    }
+    else {
+      parentEventId = internalDesc == null ? event.getDescriptor().getParent().getDisplayName() : internalDesc.getParentId().toString();
+    }
+    final String description = event.getDescriptor().getName();
+
+    if (event instanceof StartEvent) {
+      return new ExternalSystemTaskExecutionEvent(
+        id, new ExternalSystemStartEventImpl(eventId, parentEventId, description, event.getEventTime()));
+    }
+    else if (event instanceof FinishEvent) {
+      return new ExternalSystemTaskExecutionEvent(
+        id, new ExternalSystemFinishEventImpl(eventId, parentEventId, description, convert(((FinishEvent)event).getResult())));
+    }
+    else if (event instanceof TaskProgressEvent) {
+      return new ExternalSystemTaskExecutionEvent(
+        id, new BaseExternalSystemProgressEvent(eventId, parentEventId, description, event.getEventTime()));
+    }
+    else {
+      return new ExternalSystemTaskNotificationEvent(id, description);
+    }
+  }
+
+  @NotNull
+  private static OperationResult convert(org.gradle.tooling.events.OperationResult operationResult) {
+    if (operationResult instanceof FailureResult) {
+      return new FailureResultImpl(operationResult.getStartTime(), operationResult.getEndTime());
+    }
+    else if (operationResult instanceof SkippedResult) {
+      return new SkippedResultImpl(operationResult.getStartTime(), operationResult.getEndTime());
+    }
+    else {
+      final boolean isUpToDate = operationResult instanceof TaskSuccessResult && ((TaskSuccessResult)operationResult).isUpToDate();
+      return new SuccessResultImpl(operationResult.getStartTime(), operationResult.getEndTime(), isUpToDate);
+    }
   }
 
   public <T> T execute(@NotNull String projectPath, @Nullable GradleExecutionSettings settings, @NotNull Function<ProjectConnection, T> f) {
@@ -275,8 +330,9 @@ public class GradleExecutionHelper {
         };
         final File tempFile = writeToFileGradleInitScript(StringUtil.join(lines, SystemProperties.getLineSeparator()));
 
-        BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener, ContainerUtil.<String>newArrayList(),
-                                                  ContainerUtil.newArrayList(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath()));
+        BuildLauncher launcher = getBuildLauncher(
+          id, connection, settings, listener, ContainerUtil.<String>newArrayList(),
+          ContainerUtil.newArrayList(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath()));
         launcher.forTasks("wrapper");
         launcher.run();
         String wrapperPropertyFile = FileUtil.loadFile(wrapperPropertyFileLocation);

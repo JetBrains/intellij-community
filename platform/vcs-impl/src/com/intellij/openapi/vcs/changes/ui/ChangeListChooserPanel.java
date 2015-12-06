@@ -33,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.*;
@@ -99,6 +101,12 @@ public class ChangeListChooserPanel extends JPanel {
       }
     });
     myNewListPanel.init(null);
+    myRbNew.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        getPreferredFocusedComponent().requestFocusInWindow();
+      }
+    });
     final ComboboxSpeedSearch search = new ComboboxSpeedSearch(myExistingListsCombo);
     search.setComparator(new SpeedSearchComparator(true, false));
   }

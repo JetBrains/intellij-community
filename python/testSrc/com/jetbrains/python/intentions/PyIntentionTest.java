@@ -51,10 +51,10 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   private void doTest(String hint) {
-    myFixture.configureByFile("intentions/before" + getTestName(false) + ".py");
+    myFixture.configureByFile("intentions/" + getTestName(true) + ".py");
     final IntentionAction action = myFixture.findSingleIntention(hint);
     myFixture.launchAction(action);
-    myFixture.checkResultByFile("intentions/after" + getTestName(false) + ".py");
+    myFixture.checkResultByFile("intentions/" + getTestName(true) + "_after.py");
   }
 
   private void doTest(String hint, LanguageLevel languageLevel) {
@@ -68,10 +68,10 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   private void doTest(String hint, boolean ignoreWhiteSpaces) {
-    myFixture.configureByFile("intentions/before" + getTestName(false) + ".py");
+    myFixture.configureByFile("intentions/" + getTestName(true) + ".py");
     final IntentionAction action = myFixture.findSingleIntention(hint);
     myFixture.launchAction(action);
-    myFixture.checkResultByFile("intentions/after" + getTestName(false) + ".py", ignoreWhiteSpaces);
+    myFixture.checkResultByFile("intentions/" + getTestName(true) + "_after.py", ignoreWhiteSpaces);
   }
 
   /**
@@ -80,7 +80,7 @@ public class  PyIntentionTest extends PyTestCase {
    * @param hint
    */
   private void doNegativeTest(String hint) {
-    myFixture.configureByFile("intentions/before" + getTestName(false) + ".py");
+    myFixture.configureByFile("intentions/" + getTestName(true) + ".py");
     List<IntentionAction> ints = myFixture.filterAvailableIntentions(hint);
     assertEmpty(ints);
   }
@@ -179,22 +179,16 @@ public class  PyIntentionTest extends PyTestCase {
     doTest(PyBundle.message("INTN.convert.dict.literal.to.dict.constructor"));
   }
 
-  public void testDictLiteralFormToConstructor1() {      //PY-2873
-    myFixture.configureByFile("intentions/beforeDictLiteralFormToConstructor1" + ".py");
-    final IntentionAction action = myFixture.getAvailableIntention(PyBundle.message("INTN.convert.dict.literal.to.dict.constructor"));
-    assertNull(action);
+  public void testDictLiteralFormToConstructor1() {      
+    doNegativeTest(PyBundle.message("INTN.convert.dict.literal.to.dict.constructor"));
   }
 
   public void testDictLiteralFormToConstructor2() {      //PY-5157
-    myFixture.configureByFile("intentions/beforeDictLiteralFormToConstructor2" + ".py");
-    final IntentionAction action = myFixture.getAvailableIntention(PyBundle.message("INTN.convert.dict.literal.to.dict.constructor"));
-    assertNull(action);
+    doNegativeTest(PyBundle.message("INTN.convert.dict.literal.to.dict.constructor"));
   }
 
   public void testDictLiteralFormToConstructor3() {
-    myFixture.configureByFile("intentions/beforeDictLiteralFormToConstructor3" + ".py");
-    final IntentionAction action = myFixture.getAvailableIntention(PyBundle.message("INTN.convert.dict.literal.to.dict.constructor"));
-    assertNull(action);
+    doNegativeTest(PyBundle.message("INTN.convert.dict.literal.to.dict.constructor"));
   }
 
   public void testQuotedString() {      //PY-2915
@@ -563,6 +557,16 @@ public class  PyIntentionTest extends PyTestCase {
     finally {
       codeInsightSettings.INSERT_TYPE_DOCSTUB = oldInsertTypeDocStub;
     }
+  }
+
+  // PY-15332
+  public void testGoogleNoReturnSectionForInit() {
+    doDocStubTest(DocStringFormat.GOOGLE);
+  }
+  
+  // PY-15332
+  public void testRestNoReturnTagForInit() {
+    doDocStubTest(DocStringFormat.REST);
   }
 
   // PY-16904

@@ -173,6 +173,10 @@ public class MethodCandidateInfo extends CandidateInfo{
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       final PsiExpression[] expressions = ((PsiExpressionList)myArgumentList).getExpressions();
 
+      if (!isVarargs() && expressions.length != parameters.length) {
+        return true;
+      }
+
       for (int i = 0; i < expressions.length; i++) {
         final PsiExpression expression = expressions[i];
         PsiType formalParameterType = i < parameters.length ? parameters[i].getType() : parameters[parameters.length - 1].getType();
@@ -256,7 +260,11 @@ public class MethodCandidateInfo extends CandidateInfo{
   public PsiSubstitutor getSubstitutor(boolean includeReturnConstraint) {
     PsiSubstitutor substitutor = myCalcedSubstitutor;
     if (substitutor == null || !includeReturnConstraint && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) || isOverloadCheck()) {
-      myInferenceError = null;
+
+      if (includeReturnConstraint) {
+        myInferenceError = null;
+      }
+
       PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
       PsiMethod method = getElement();
       if (myTypeArguments == null) {

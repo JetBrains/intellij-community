@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,6 +143,7 @@ public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
     if (PsiImplUtil.hasElementType(prev, GroovyTokenTypes.mSEMI)) prev = prev.getPrevSibling();
     if (PsiImplUtil.isWhiteSpaceOrNls(prev)) prev = prev.getPrevSibling();
 
+    ASTNode node = psiFile.getNode();
     if (prev instanceof GrImportStatement) {
       final int idx_before = getPackageEntryIdx(entries, (GrImportStatement)prev);
       final int idx = getPackageEntryIdx(entries, result);
@@ -151,11 +152,12 @@ public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
       //skip space and semicolon after import
       if (PsiImplUtil.isWhiteSpaceOrNls(prev.getNextSibling()) && PsiImplUtil
         .hasElementType(prev.getNextSibling().getNextSibling(), GroovyTokenTypes.mSEMI)) prev = prev.getNextSibling().getNextSibling();
-      ASTNode node = psiFile.getNode();
       while (PsiImplUtil.isWhiteSpaceOrNls(prev.getNextSibling())) {
         node.removeChild(prev.getNextSibling().getNode());
       }
       node.addLeaf(GroovyTokenTypes.mNLS, StringUtil.repeat("\n", spaceCount + 1), result.getNode());
+    } else if (prev instanceof GrPackageDefinition) {
+      node.addLeaf(GroovyTokenTypes.mNLS, "\n", result.getNode());
     }
   }
 

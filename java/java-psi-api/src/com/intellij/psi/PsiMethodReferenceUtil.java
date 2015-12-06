@@ -325,7 +325,7 @@ public class PsiMethodReferenceUtil {
         if (methodReturnType == null) {
           methodReturnType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(containingClass, subst);
         }
-        if (!TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType)) {
+        if (!TypeConversionUtil.isAssignable(interfaceReturnType, PsiUtil.captureToplevelWildcards(methodReturnType, expression))) {
           return "Bad return type in method reference: cannot convert " + methodReturnType.getCanonicalText() + " to " + interfaceReturnType.getCanonicalText();
         }
       }

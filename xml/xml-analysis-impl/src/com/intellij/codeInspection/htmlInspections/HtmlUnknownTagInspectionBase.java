@@ -24,6 +24,7 @@ import com.intellij.codeInspection.XmlQuickFixFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl;
 import com.intellij.psi.xml.XmlFile;
@@ -38,6 +39,7 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -127,14 +129,15 @@ public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
         List<LocalQuickFix> quickfixes = new ArrayList<LocalQuickFix>();
         quickfixes.add(action);
         if (isOnTheFly) {
-          LocalQuickFix fix;
-          if (startTagName.getContainingFile() instanceof XmlFile) {
-            fix = XmlQuickFixFactory.getInstance().createNSDeclarationIntentionFix(startTagName, "", null);
+          PsiFile file = startTagName.getContainingFile();
+          if (file instanceof XmlFile) {
+            quickfixes.add(XmlQuickFixFactory.getInstance().createNSDeclarationIntentionFix(startTagName, "", null));
           }
-          else {
-            fix = null;
-          }
-          ContainerUtil.addIfNotNull(fix, quickfixes);
+
+          // People using non-HTML as their template data language (but having not changed this in the IDE)
+          // will most likely see 'unknown html tag' error, because HTML is usually the default.
+          // So if they check quick fixes for this error they'll discover Change Template Data Language feature.
+          ContainerUtil.addIfNotNull(quickfixes, createChangeTemplateDataFix(file));
         }
         if (HtmlUtil.isHtml5Tag(name) && !HtmlUtil.hasNonHtml5Doctype(tag)) {
           quickfixes.add(new SwitchToHtml5WithHighPriorityAction());
@@ -151,5 +154,10 @@ public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
         }
       }
     }
+  }
+
+  @Nullable
+  protected LocalQuickFix createChangeTemplateDataFix(PsiFile file) {
+    return null;
   }
 }

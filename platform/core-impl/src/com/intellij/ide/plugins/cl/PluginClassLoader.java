@@ -83,7 +83,6 @@ public class PluginClassLoader extends UrlClassLoader {
       return c;
     }
 
-    PluginManagerCore.addPluginClass(name, myPluginId, false);
     return null;
   }
 
@@ -126,7 +125,7 @@ public class PluginClassLoader extends UrlClassLoader {
       throw new PluginException(e, myPluginId);
     }
     if (c != null) {
-      PluginManagerCore.addPluginClass(c.getName(), myPluginId, true);
+      PluginManagerCore.addPluginClass(myPluginId);
     }
 
     return c;

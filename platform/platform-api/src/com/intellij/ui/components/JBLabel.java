@@ -161,6 +161,7 @@ public class JBLabel extends JLabel implements AnchorableComponent {
     super.setIcon(icon);
     if (myIconLabel != null) {
       myIconLabel.setIcon(icon);
+      updateLayout();
     }
   }
 
@@ -180,21 +181,34 @@ public class JBLabel extends JLabel implements AnchorableComponent {
   public void setIconTextGap(int iconTextGap) {
     super.setIconTextGap(iconTextGap);
     if (myEditorPane != null) {
-      setLayout(new BorderLayout(iconTextGap, 0));
-      add(myIconLabel, BorderLayout.WEST);
-      add(myEditorPane, BorderLayout.CENTER);
+      updateLayout();
     }
+  }
+
+  protected void updateLayout() {
+    setLayout(new BorderLayout(getIcon() == null ? 0 : getIconTextGap(), 0));
+    add(myIconLabel, BorderLayout.WEST);
+    add(myEditorPane, BorderLayout.CENTER);
   }
 
   @Override
   public void updateUI() {
     super.updateUI();
     if (myEditorPane != null) {
+      //init inner components again (if any) to provide proper colors when LAF is being changed
       setCopyable(false);
       setCopyable(true);
     }
   }
 
+  /**
+   *
+   * In 'copyable' mode JBLabel has the same appearance but user can select text with mouse and copy it to clipboard with standard shortcut.
+   * @return 'this' (the same instance)
+   */
+  //
+  // By default JBLabel is NOT copyable
+  // This method re
   public JBLabel setCopyable(boolean copyable) {
     if (copyable ^ myEditorPane != null) {
       if (myEditorPane == null) {
@@ -250,9 +264,7 @@ public class JBLabel extends JLabel implements AnchorableComponent {
         myEditorPane.setCaretPosition(0);
         UIUtil.putClientProperty(myEditorPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Collections.singleton(ellipsisLabel));
         updateStyle(myEditorPane);
-        setLayout(new BorderLayout(getIconTextGap(), 0));
-        add(myIconLabel, BorderLayout.WEST);
-        add(myEditorPane, BorderLayout.CENTER);
+        updateLayout();
       } else {
         removeAll();
         myEditorPane = null;

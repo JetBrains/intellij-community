@@ -147,6 +147,12 @@ public class PyPackageManagersImpl extends PyPackageManagers {
 
     @Nullable
     @Override
+    public PyPackage findPackage(@NotNull String name) throws ExecutionException {
+      throw new ExecutionException(getErrorMessage());
+    }
+
+    @Nullable
+    @Override
     public List<PyRequirement> getRequirements(@NotNull Module module) {
       return null;
     }

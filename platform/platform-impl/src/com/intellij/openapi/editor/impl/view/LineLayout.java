@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -62,15 +63,15 @@ abstract class LineLayout {
   }
   
   private static LineLayout createLayout(@NotNull List<BidiRun> runs) {
-    if (runs.isEmpty()) return new Simple(null);
+    if (runs.isEmpty()) return new SingleChunk(null);
     if (runs.size() == 1) {
       BidiRun run = runs.get(0);
       if (run.level == 0 && run.getChunkCount() == 1) {
         Chunk chunk = run.chunks == null ? new Chunk(0, run.endOffset) : run.chunks[0];
-        return new Simple(chunk);
+        return new SingleChunk(chunk);
       }
     }
-    return new Complex(runs.toArray(new BidiRun[runs.size()]));
+    return new MultiChunk(runs.toArray(new BidiRun[runs.size()]));
   }
 
   // runs are supposed to be in logical order initially
@@ -190,35 +191,35 @@ abstract class LineLayout {
                                    FontPreferences fontPreferences, FontRenderContext fontRenderContext, 
                                    @Nullable TabFragment tabFragment) {
     assert start < end;
-    Font currentFont = null;
+    FontInfo currentFontInfo = null;
     int currentIndex = start;
     for(int i = start; i < end; i++) {
       char c = text[i];
       if (c == '\t' && tabFragment != null) {
         assert run.level == 0;
-        addTextFragmentIfNeeded(chunk, text, currentIndex, i, currentFont, fontRenderContext, false);
+        addTextFragmentIfNeeded(chunk, text, currentIndex, i, currentFontInfo, fontRenderContext, false);
         chunk.fragments.add(tabFragment);
-        currentFont = null;
+        currentFontInfo = null;
         currentIndex = i + 1;
       }
       else {
-        Font font = ComplementaryFontsRegistry.getFontAbleToDisplay(c, fontStyle, fontPreferences).getFont();
-        if (!font.equals(currentFont)) {
-          addTextFragmentIfNeeded(chunk, text, currentIndex, i, currentFont, fontRenderContext, run.isRtl());
-          currentFont = font;
+        FontInfo fontInfo = ComplementaryFontsRegistry.getFontAbleToDisplay(c, fontStyle, fontPreferences);
+        if (currentFontInfo == null || !fontInfo.getFont().equals(currentFontInfo.getFont())) {
+          addTextFragmentIfNeeded(chunk, text, currentIndex, i, currentFontInfo, fontRenderContext, run.isRtl());
+          currentFontInfo = fontInfo;
           currentIndex = i;
         }
       }
     }
-    addTextFragmentIfNeeded(chunk, text, currentIndex, end, currentFont, fontRenderContext, run.isRtl());
+    addTextFragmentIfNeeded(chunk, text, currentIndex, end, currentFontInfo, fontRenderContext, run.isRtl());
     assert !chunk.fragments.isEmpty();
   }
   
-  private static void addTextFragmentIfNeeded(Chunk chunk, char[] chars, int from, int to, Font font, 
+  private static void addTextFragmentIfNeeded(Chunk chunk, char[] chars, int from, int to, FontInfo fontInfo, 
                                               FontRenderContext fontRenderContext, boolean isRtl) {
     if (to > from) {
-      assert font != null;
-      chunk.fragments.add(new TextFragment(chars, from, to, isRtl, font, fontRenderContext));
+      assert fontInfo != null;
+      chunk.fragments.add(TextFragmentFactory.createTextFragment(chars, from, to, isRtl, fontInfo, fontRenderContext));
     }
   }
   
@@ -277,10 +278,10 @@ abstract class LineLayout {
 
   abstract BidiRun[] getRunsInVisualOrder();
   
-  private static class Simple extends LineLayout {
+  private static class SingleChunk extends LineLayout {
     private final Chunk myChunk;
 
-    private Simple(Chunk chunk) {
+    private SingleChunk(Chunk chunk) {
       myChunk = chunk;
     }
 
@@ -317,11 +318,11 @@ abstract class LineLayout {
     }
   }
   
-  private static class Complex extends LineLayout {
+  private static class MultiChunk extends LineLayout {
     private final BidiRun[] myBidiRunsInLogicalOrder;
     private final BidiRun[] myBidiRunsInVisualOrder;
 
-    private Complex(BidiRun[] bidiRunsInLogicalOrder) {
+    private MultiChunk(BidiRun[] bidiRunsInLogicalOrder) {
       myBidiRunsInLogicalOrder = bidiRunsInLogicalOrder;
       if (bidiRunsInLogicalOrder.length > 1) {
         myBidiRunsInVisualOrder = myBidiRunsInLogicalOrder.clone();

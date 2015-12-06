@@ -218,8 +218,8 @@ public class TextMergeTool implements MergeTool {
 
         DiffUtil.registerAction(new ApplySelectedChangesAction(Side.LEFT, true), myPanel);
         DiffUtil.registerAction(new ApplySelectedChangesAction(Side.RIGHT, true), myPanel);
-        DiffUtil.registerAction(new IgnoreSelectedChangesAction(Side.LEFT, true), myPanel);
-        DiffUtil.registerAction(new IgnoreSelectedChangesAction(Side.RIGHT, true), myPanel);
+        DiffUtil.registerAction(new IgnoreSelectedChangesSideAction(Side.LEFT, true), myPanel);
+        DiffUtil.registerAction(new IgnoreSelectedChangesSideAction(Side.RIGHT, true), myPanel);
 
         ProxyUndoRedoAction.register(getProject(), getEditor(ThreeSide.BASE), myContentPanel);
       }
@@ -265,8 +265,11 @@ public class TextMergeTool implements MergeTool {
 
         group.add(new ApplySelectedChangesAction(Side.LEFT, false));
         group.add(new ApplySelectedChangesAction(Side.RIGHT, false));
-        group.add(new IgnoreSelectedChangesAction(Side.LEFT, false));
-        group.add(new IgnoreSelectedChangesAction(Side.RIGHT, false));
+        group.add(new ResolveSelectedChangesAction(Side.LEFT));
+        group.add(new ResolveSelectedChangesAction(Side.RIGHT));
+        group.add(new IgnoreSelectedChangesSideAction(Side.LEFT, false));
+        group.add(new IgnoreSelectedChangesSideAction(Side.RIGHT, false));
+        group.add(new IgnoreSelectedChangesAction());
 
         group.add(Separator.getInstance());
         group.addAll(TextDiffViewerUtil.createEditorPopupActions());
@@ -922,8 +925,8 @@ public class TextMergeTool implements MergeTool {
         reinstallHighlighter(change);
       }
 
-      public void ignoreChange(@NotNull TextMergeChange change, @NotNull Side side, boolean modifier) {
-        if (!change.isConflict() || modifier) {
+      public void ignoreChange(@NotNull TextMergeChange change, @NotNull Side side, boolean resolveChange) {
+        if (!change.isConflict() || resolveChange) {
           markChangeResolved(change);
         }
         else {
@@ -932,7 +935,7 @@ public class TextMergeTool implements MergeTool {
       }
 
       @CalledWithWriteLock
-      public void replaceChange(@NotNull TextMergeChange change, @NotNull Side side, boolean modifier) {
+      public void replaceChange(@NotNull TextMergeChange change, @NotNull Side side, boolean resolveChange) {
         LOG.assertTrue(myCurrentMergeCommand != null);
         if (change.isResolved(side)) return;
         if (!change.isChange(side)) {
@@ -963,7 +966,7 @@ public class TextMergeTool implements MergeTool {
               moveChangesAfterInsertion(change, outputStartLine, newOutputEndLine);
             }
 
-            if (modifier || change.getStartLine(oppositeSide) == change.getEndLine(oppositeSide)) {
+            if (resolveChange || change.getStartLine(oppositeSide) == change.getEndLine(oppositeSide)) {
               markChangeResolved(change);
             } else {
               change.markOnesideAppliedConflict();
@@ -1125,6 +1128,8 @@ public class TextMergeTool implements MergeTool {
             return;
           }
 
+          presentation.setText(getText(side));
+
           presentation.setVisible(true);
           presentation.setEnabled(isSomeChangeSelected(side));
         }
@@ -1187,6 +1192,8 @@ public class TextMergeTool implements MergeTool {
           return affectedChanges;
         }
 
+        protected abstract String getText(@NotNull ThreeSide side);
+
         protected abstract boolean isVisible(@NotNull ThreeSide side);
 
         protected abstract boolean isEnabled(@NotNull TextMergeChange change);
@@ -1195,18 +1202,22 @@ public class TextMergeTool implements MergeTool {
         protected abstract void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes);
       }
 
-      private class IgnoreSelectedChangesAction extends ApplySelectedChangesActionBase {
+      private class IgnoreSelectedChangesSideAction extends ApplySelectedChangesActionBase {
         @NotNull private final Side mySide;
 
-        public IgnoreSelectedChangesAction(@NotNull Side side, boolean shortcut) {
+        public IgnoreSelectedChangesSideAction(@NotNull Side side, boolean shortcut) {
           super(shortcut);
           mySide = side;
           EmptyAction.setupAction(this, mySide.select("Diff.IgnoreLeftSide", "Diff.IgnoreRightSide"), null);
         }
 
         @Override
+        protected String getText(@NotNull ThreeSide side) {
+          return "Ignore";
+        }
+
+        @Override
         protected boolean isVisible(@NotNull ThreeSide side) {
-          if (side == ThreeSide.BASE) return true;
           return side == mySide.select(ThreeSide.LEFT, ThreeSide.RIGHT);
         }
 
@@ -1223,6 +1234,35 @@ public class TextMergeTool implements MergeTool {
         }
       }
 
+      private class IgnoreSelectedChangesAction extends ApplySelectedChangesActionBase {
+        public IgnoreSelectedChangesAction() {
+          super(false);
+          getTemplatePresentation().setIcon(AllIcons.Diff.Remove);
+        }
+
+        @Override
+        protected String getText(@NotNull ThreeSide side) {
+          return "Ignore";
+        }
+
+        @Override
+        protected boolean isVisible(@NotNull ThreeSide side) {
+          return side == ThreeSide.BASE;
+        }
+
+        @Override
+        protected boolean isEnabled(@NotNull TextMergeChange change) {
+          return !change.isResolved();
+        }
+
+        @Override
+        protected void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes) {
+          for (TextMergeChange change : changes) {
+            markChangeResolved(change);
+          }
+        }
+      }
+
       private class ApplySelectedChangesAction extends ApplySelectedChangesActionBase {
         @NotNull private final Side mySide;
 
@@ -1230,6 +1270,11 @@ public class TextMergeTool implements MergeTool {
           super(shortcut);
           mySide = side;
           EmptyAction.setupAction(this, mySide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide"), null);
+        }
+
+        @Override
+        protected String getText(@NotNull ThreeSide side) {
+          return side != ThreeSide.BASE ? "Accept" : getTemplatePresentation().getText();
         }
 
         @Override
@@ -1247,6 +1292,37 @@ public class TextMergeTool implements MergeTool {
         protected void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes) {
           for (int i = changes.size() - 1; i >= 0; i--) {
             replaceChange(changes.get(i), mySide, false);
+          }
+        }
+      }
+
+      private class ResolveSelectedChangesAction extends ApplySelectedChangesActionBase {
+        @NotNull private final Side mySide;
+
+        public ResolveSelectedChangesAction(@NotNull Side side) {
+          super(false);
+          mySide = side;
+        }
+
+        @Override
+        protected String getText(@NotNull ThreeSide side) {
+          return mySide.select("Resolve using Left", "Resolve using Right");
+        }
+
+        @Override
+        protected boolean isVisible(@NotNull ThreeSide side) {
+          return side == ThreeSide.BASE;
+        }
+
+        @Override
+        protected boolean isEnabled(@NotNull TextMergeChange change) {
+          return !change.isResolved(mySide);
+        }
+
+        @Override
+        protected void apply(@NotNull ThreeSide side, @NotNull List<TextMergeChange> changes) {
+          for (int i = changes.size() - 1; i >= 0; i--) {
+            replaceChange(changes.get(i), mySide, true);
           }
         }
       }

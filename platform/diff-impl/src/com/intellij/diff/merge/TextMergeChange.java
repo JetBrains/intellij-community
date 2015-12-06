@@ -31,7 +31,6 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -363,7 +362,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     return createIconRenderer(DiffBundle.message("merge.dialog.apply.change.action.name"), icon, isConflict(), new Runnable() {
       @Override
       public void run() {
-        myViewer.executeMergeCommand("Apply change", Collections.singletonList(TextMergeChange.this), new Runnable() {
+        myViewer.executeMergeCommand("Accept change", Collections.singletonList(TextMergeChange.this), new Runnable() {
           @Override
           public void run() {
             myViewer.replaceChange(TextMergeChange.this, side, modifier);
@@ -379,7 +378,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     return createIconRenderer(DiffBundle.message("merge.dialog.ignore.change.action.name"), AllIcons.Diff.Remove, isConflict(), new Runnable() {
       @Override
       public void run() {
-        myViewer.executeMergeCommand(null, Collections.singletonList(TextMergeChange.this), new Runnable() {
+        myViewer.executeMergeCommand("Ignore change", Collections.singletonList(TextMergeChange.this), new Runnable() {
           @Override
           public void run() {
             myViewer.ignoreChange(TextMergeChange.this, side, modifier);

@@ -212,7 +212,6 @@ public class SimpleDiffChange {
     @NotNull private final RangeHighlighter myHighlighter;
 
     private boolean myCtrlPressed;
-    private boolean myShiftPressed;
 
     private MyGutterOperation(@NotNull Side side, @NotNull RangeHighlighter highlighter) {
       mySide = side;
@@ -233,33 +232,41 @@ public class SimpleDiffChange {
     }
 
     private boolean areModifiersChanged() {
-      return myCtrlPressed != myViewer.getModifierProvider().isCtrlPressed() ||
-             myShiftPressed != myViewer.getModifierProvider().isShiftPressed();
+      return myCtrlPressed != myViewer.getModifierProvider().isCtrlPressed();
     }
 
     @Nullable
     public GutterIconRenderer createRenderer() {
       myCtrlPressed = myViewer.getModifierProvider().isCtrlPressed();
-      myShiftPressed = myViewer.getModifierProvider().isShiftPressed();
 
       boolean isEditable = DiffUtil.isEditable(myViewer.getEditor(mySide));
       boolean isOtherEditable = DiffUtil.isEditable(myViewer.getEditor(mySide.other()));
       boolean isAppendable = myFragment.getStartLine1() != myFragment.getEndLine1() &&
                              myFragment.getStartLine2() != myFragment.getEndLine2();
 
-      if ((myShiftPressed || !isOtherEditable) && isEditable) {
+      if (isOtherEditable && isEditable) {
+        if (myCtrlPressed && isAppendable) {
+          return createAppendRenderer(mySide);
+        }
+        else {
+          return createApplyRenderer(mySide);
+        }
+      }
+      else if (isEditable) {
         return createRevertRenderer(mySide);
       }
-      if (myCtrlPressed && isAppendable) {
-        return createAppendRenderer(mySide);
+      else if (isOtherEditable) {
+        if (isAppendable) {
+          return createAppendRenderer(mySide);
+        }
       }
-      return createApplyRenderer(mySide);
+      return null;
     }
   }
 
   @Nullable
   private GutterIconRenderer createApplyRenderer(@NotNull final Side side) {
-    return createIconRenderer(side, "Replace", DiffUtil.getArrowIcon(side), new Runnable() {
+    return createIconRenderer(side, "Accept", DiffUtil.getArrowIcon(side), new Runnable() {
       @Override
       public void run() {
         myViewer.replaceChange(SimpleDiffChange.this, side);
@@ -269,7 +276,7 @@ public class SimpleDiffChange {
 
   @Nullable
   private GutterIconRenderer createAppendRenderer(@NotNull final Side side) {
-    return createIconRenderer(side, "Insert", DiffUtil.getArrowDownIcon(side), new Runnable() {
+    return createIconRenderer(side, "Append", DiffUtil.getArrowDownIcon(side), new Runnable() {
       @Override
       public void run() {
         myViewer.appendChange(SimpleDiffChange.this, side);

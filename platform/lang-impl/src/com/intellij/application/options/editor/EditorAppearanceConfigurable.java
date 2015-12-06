@@ -16,8 +16,6 @@
 
 package com.intellij.application.options.editor;
 
-import com.intellij.application.options.OptionId;
-import com.intellij.application.options.OptionsApplicabilityFilter;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
@@ -64,7 +62,6 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
   private JCheckBox myCbShowMethodSeparators;
   //private JCheckBox myAntialiasingInEditorCheckBox;
   private JCheckBox myShowCodeLensInEditorCheckBox;
-  private JCheckBox myCbShowIconsInGutter;
   private JCheckBox myShowVerticalIndentGuidesCheckBox;
   private JCheckBox myShowBreadcrumbsCheckBox;
   //private JCheckBox myUseLCDRendering;
@@ -84,9 +81,6 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
       }
     }
     );
-    if (!OptionsApplicabilityFilter.isApplicable(OptionId.ICONS_IN_GUTTER)) {
-      myCbShowIconsInGutter.setVisible(false);
-    }
     myCbShowWhitespaces.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -122,7 +116,6 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     //myAntialiasingInEditorCheckBox.setSelected(UISettings.getInstance().ANTIALIASING_IN_EDITOR);
     //myUseLCDRendering.setSelected(UISettings.getInstance().USE_LCD_RENDERING_IN_EDITOR);
     myShowCodeLensInEditorCheckBox.setSelected(UISettings.getInstance().SHOW_EDITOR_TOOLTIP);
-    myCbShowIconsInGutter.setSelected(DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER);
 
     updateWhitespaceCheckboxesState();
 
@@ -151,7 +144,6 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     EditorOptionsPanel.reinitAllEditors();
 
     DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS = myCbShowMethodSeparators.isSelected();
-    DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER = myCbShowIconsInGutter.isSelected();
 
     UISettings uiSettings = UISettings.getInstance();
     boolean uiSettingsModified = false;
@@ -206,7 +198,6 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     isModified |= isModified(myTrailingWhitespacesCheckBox, editorSettings.isTrailingWhitespacesShown());
     isModified |= isModified(myShowVerticalIndentGuidesCheckBox, editorSettings.isIndentGuidesShown());
     isModified |= isModified(myCbShowMethodSeparators, DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS);
-    isModified |= isModified(myCbShowIconsInGutter, DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER);
     //isModified |= myAntialiasingInEditorCheckBox.isSelected() != UISettings.getInstance().ANTIALIASING_IN_EDITOR;
     //isModified |= myUseLCDRendering.isSelected() != UISettings.getInstance().USE_LCD_RENDERING_IN_EDITOR;
     isModified |= myShowCodeLensInEditorCheckBox.isSelected() != UISettings.getInstance().SHOW_EDITOR_TOOLTIP;
