@@ -137,7 +137,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
     if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
 
     return myByShape ? substitutor
-                     : mySubstitutorComputer.obtainSubstitutor(substitutor, method, state);
+                     : mySubstitutorComputer.obtainSubstitutor(substitutor, method, state.get(RESOLVE_CONTEXT));
   }
 
   @Override

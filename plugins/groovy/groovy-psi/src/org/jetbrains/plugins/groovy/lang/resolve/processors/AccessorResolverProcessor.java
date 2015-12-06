@@ -106,11 +106,11 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
     PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
     if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
 
+    final PsiElement resolveContext = state.get(RESOLVE_CONTEXT);
     if (mySubstitutorComputer != null) {
-      substitutor = mySubstitutorComputer.obtainSubstitutor(substitutor, method, state);
+      substitutor = mySubstitutorComputer.obtainSubstitutor(substitutor, method, resolveContext);
     }
     boolean isAccessible = isAccessible(method);
-    final PsiElement resolveContext = state.get(RESOLVE_CONTEXT);
     final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
     boolean isStaticsOK = isStaticsOK(method, resolveContext, false);
     final GroovyMethodResult candidate = new GroovyMethodResult(
