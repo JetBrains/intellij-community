@@ -51,7 +51,7 @@ class StatisticSender(val urlProvider: UrlProvider, val pathProvider: FilePathPr
     private fun sendContent(url: String, uid: String, content: String, okAction: Runnable) {
         val map = mapOf(Pair("uid", uid), Pair("content", content))
         val data = requestService.post(url, map)
-        if (data.code == HttpStatus.SC_OK) {
+        if (data.code >= 200 && data.code < 300) {
             okAction.run()
         }
     }
