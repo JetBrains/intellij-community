@@ -42,7 +42,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 
 public class DiffContentFactoryImpl extends DiffContentFactory {
-  public final Logger LOG = Logger.getInstance(DiffContentFactoryImpl.class);
+  public static final Logger LOG = Logger.getInstance(DiffContentFactoryImpl.class);
 
   @NotNull
   public static DiffContentFactoryImpl getInstanceImpl() {
@@ -206,6 +206,7 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
     }
     else {
       file = new BinaryLightVirtualFile(name, type, content);
+      file.setWritable(false);
     }
 
     return create(project, file);
@@ -221,6 +222,8 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
     if (content.length != 0) {
       FileUtil.writeToFile(tempFile, content);
     }
+    if (!tempFile.setWritable(false, false)) LOG.warn("Can't set writable attribute of temporal file");
+
     VirtualFile file = VfsUtil.findFileByIoFile(tempFile, true);
     if (file == null) {
       throw new IOException("Can't create temp file for revision content");

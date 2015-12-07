@@ -26,19 +26,27 @@ import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.StatusPanel;
 import com.intellij.diff.tools.util.side.TwosideDiffViewer;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.Side;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -52,6 +60,19 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
 
     myStatusPanel = new StatusPanel();
     new MyFocusOppositePaneAction().setupAction(myPanel);
+  }
+
+  @Override
+  protected List<AnAction> createToolbarActions() {
+    List<AnAction> group = new ArrayList<AnAction>();
+
+    group.add(new MyAcceptSideAction(Side.LEFT));
+    group.add(new MyAcceptSideAction(Side.RIGHT));
+
+    group.add(Separator.getInstance());
+    group.addAll(super.createToolbarActions());
+
+    return group;
   }
 
   //
@@ -153,6 +174,53 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
   //
   // Actions
   //
+
+  private class MyAcceptSideAction extends DumbAwareAction {
+    @NotNull private final Side myBaseSide;
+
+    public MyAcceptSideAction(@NotNull Side baseSide) {
+      myBaseSide = baseSide;
+      getTemplatePresentation().setText("Copy Content to " + baseSide.select("Right", "Left"));
+      getTemplatePresentation().setIcon(baseSide.select(AllIcons.Vcs.Arrow_right, AllIcons.Vcs.Arrow_left));
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      VirtualFile baseFile = getContentFile(myBaseSide);
+      VirtualFile targetFile = getContentFile(myBaseSide.other());
+
+      boolean enabled = baseFile != null && targetFile != null && targetFile.isWritable();
+      e.getPresentation().setEnabledAndVisible(enabled);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      final VirtualFile baseFile = getContentFile(myBaseSide);
+      final VirtualFile targetFile = getContentFile(myBaseSide.other());
+      assert baseFile != null && targetFile != null;
+
+      try {
+        ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Void, IOException>() {
+          @Override
+          public Void compute() throws IOException {
+            targetFile.setBinaryContent(baseFile.contentsToByteArray());
+            return null;
+          }
+        });
+      }
+      catch (IOException err) {
+        LOG.warn(err);
+        Messages.showErrorDialog(getProject(), err.getMessage(), "Can't Copy File");
+      }
+    }
+
+    @Nullable
+    private VirtualFile getContentFile(@NotNull Side side) {
+      DiffContent content = side.select(myRequest.getContents());
+      VirtualFile file = content instanceof FileContent ? ((FileContent)content).getFile() : null;
+      return file != null && file.isValid() ? file : null;
+    }
+  }
 
   private class MyFocusOppositePaneAction extends FocusOppositePaneAction {
     @Override
