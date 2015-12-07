@@ -771,7 +771,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             }
 
             if (documentationText == null) {
-              component.setText(CodeInsightBundle.message("no.documentation.found"), element, true);
+              component.setText(CodeInsightBundle.message("no.documentation.found"), element, true, clearHistory);
             }
             else if (documentationText.isEmpty()) {
               component.setText(component.getText(), element, true, clearHistory);
