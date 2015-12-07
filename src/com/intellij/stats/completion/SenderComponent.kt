@@ -14,13 +14,23 @@ import java.nio.file.Files
 
 
 class SenderComponent(val sender: StatisticSender) : ApplicationComponent.Adapter() {
+    
     override fun initComponent() {
+        sendStatistics()
+    }
+
+    override fun disposeComponent() {
+        sendStatistics()
+    }
+
+    private fun sendStatistics() {
         if (ApplicationManager.getApplication().isUnitTestMode) return
         ApplicationManager.getApplication().executeOnPooledThread {
             val uid = UpdateChecker.getInstallationUID(PropertiesComponent.getInstance())
             sender.sendStatsData(uid)
         }
     }
+    
 }
 
 class StatisticSender(val urlProvider: UrlProvider, val pathProvider: FilePathProvider, val requestService: RequestService) {
