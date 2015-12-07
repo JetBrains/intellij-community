@@ -104,6 +104,10 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
   public void testLinkToPackageSummaryWithReference() throws Exception {
     doTest("class Foo implements com.jetbrains.<caret>SimpleInterface {}");
   }
+  
+  public void testLinkBetweenMethods() throws Exception {
+    doTest("class Foo {{ new com.jetbrains.LinkBetweenMethods().<caret>m1(); }}");
+  }
 
   private void doTest(String text) throws Exception {
     String actualText = getDocumentationText(text);
