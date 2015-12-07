@@ -1,4 +1,4 @@
-package com.stats.completion
+package com.intellij.stats.completion
 
 import com.intellij.ide.plugins.PluginManager
 import java.io.File

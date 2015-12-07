@@ -1,4 +1,4 @@
-package com.stats.completion
+package com.intellij.stats.completion
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.ide.highlighter.JavaFileType

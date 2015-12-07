@@ -1,39 +1,30 @@
 <idea-plugin version="2">
-  <id>com.your.company.unique.plugin.id</id>
-  <name>Plugin display name here</name>
+  <id>com.intellij.stats.completion</id>
+  <name>Completion Stats Collector</name>
   <version>1.0</version>
-  <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">YourCompany</vendor>
+  <vendor email="yaroslav.lepenkin@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
 
   <description><![CDATA[
-      Enter short description for your plugin here.<br>
-      <em>most HTML tags may be used</em>
+      Collecting statistics about using completion feature
     ]]></description>
 
   <change-notes><![CDATA[
-      Add change notes here.<br>
-      <em>most HTML tags may be used</em>
+      initial
     ]]>
   </change-notes>
 
-  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
-  <idea-version since-build="141.0"/>
-
-  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
-       on how to target different products -->
-  <!-- uncomment to enable plugin in all products
-  <depends>com.intellij.modules.lang</depends>
-  -->
+  <idea-version since-build="144.0"/>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.stats.completion.CompletionLoggerProvider" serviceImplementation="com.stats.completion.CompletionFileLoggerProvider">
+    <applicationService serviceInterface="com.intellij.stats.completion.CompletionLoggerProvider" serviceImplementation="com.intellij.stats.completion.CompletionFileLoggerProvider">
     </applicationService>
-    <applicationService serviceInterface="com.stats.completion.UrlProvider" serviceImplementation="com.stats.completion.InternalUrlProvider">
+    <applicationService serviceInterface="com.intellij.stats.completion.UrlProvider" serviceImplementation="com.intellij.stats.completion.InternalUrlProvider">
     </applicationService>
-    <applicationService serviceInterface="com.stats.completion.FilePathProvider" serviceImplementation="com.stats.completion.PluginDirectoryFilePathProvider">
+    <applicationService serviceInterface="com.intellij.stats.completion.FilePathProvider" serviceImplementation="com.intellij.stats.completion.PluginDirectoryFilePathProvider">
     </applicationService>
-    <applicationService serviceInterface="com.stats.completion.StatisticSender" serviceImplementation="com.stats.completion.StatisticSender">
+    <applicationService serviceInterface="com.intellij.stats.completion.StatisticSender" serviceImplementation="com.intellij.stats.completion.StatisticSender">
     </applicationService>
-    <applicationService serviceInterface="com.stats.completion.RequestService" serviceImplementation="com.stats.completion.SimpleRequestService">
+    <applicationService serviceInterface="com.intellij.stats.completion.RequestService" serviceImplementation="com.intellij.stats.completion.SimpleRequestService">
     </applicationService>
   </extensions>
 
@@ -43,14 +34,14 @@
 
   <project-components>
     <component>
-      <implementation-class>com.stats.completion.CompletionTrackerInitializer</implementation-class>
+      <implementation-class>com.intellij.stats.completion.CompletionTrackerInitializer</implementation-class>
       <skipForDefaultProject/>
     </component>
   </project-components>
   
   <application-components>
     <component>
-      <implementation-class>com.stats.completion.SenderComponent</implementation-class>
+      <implementation-class>com.intellij.stats.completion.SenderComponent</implementation-class>
     </component>
   </application-components>
 
