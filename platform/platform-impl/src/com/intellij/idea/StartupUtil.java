@@ -38,6 +38,9 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.UrlClassLoader;
 import com.sun.jna.Native;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.PatternLayout;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.BuiltInServer;
 
@@ -97,6 +100,21 @@ public class StartupUtil {
     if (!checkJdkVersion()) {
       System.exit(Main.JDK_CHECK_FAILED);
     }
+
+    // IDEA-148979 avoid "log4j:WARN No appenders could be found for logger (io.netty.util.internal.logging.InternalLoggerFactory)"
+    // - we cannot set our LoggerFactory before system dir lock (because log file is located there by default), but Netty requires loggers (used in built-in server).
+    System.setProperty("log4j.defaultInitOverride", "true");
+    try {
+      org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
+      if (!root.getAllAppenders().hasMoreElements()) {
+        root.setLevel(Level.INFO);
+        root.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)));
+      }
+    }
+    catch (Throwable e) {
+      e.printStackTrace();
+    }
+
     // note: uses config folder!
     if (!checkSystemFolders()) {
       System.exit(Main.DIR_CHECK_FAILED);
