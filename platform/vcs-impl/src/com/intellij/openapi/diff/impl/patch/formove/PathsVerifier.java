@@ -54,7 +54,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
   // out
   private final List<Pair<VirtualFile, ApplyTextFilePatch>> myTextPatches;
   private final List<Pair<VirtualFile, ApplyFilePatchBase<BinaryType>>> myBinaryPatches;
-  private final List<VirtualFile> myWritableFiles;
+  @NotNull private final List<VirtualFile> myWritableFiles;
   private final BaseMapper myBaseMapper;
   private ProjectLevelVcsManager myVcsManager;
   private final List<FilePatch> mySkipped;
@@ -484,6 +484,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
     return myBinaryPatches;
   }
 
+  @NotNull
   public List<VirtualFile> getWritableFiles() {
     return myWritableFiles;
   }
