@@ -101,7 +101,10 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
           data.addText(directoryFile.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
 
-        data.setLocationString(ProjectViewDirectoryHelper.getInstance(project).getLocationString(psiDirectory, true, shouldShowSourcesRoot()));
+        boolean shouldShowUrl = parentValue instanceof Module || parentValue instanceof Project;
+        data.setLocationString(ProjectViewDirectoryHelper.getInstance(project).getLocationString(psiDirectory, 
+                                                                                                 shouldShowUrl, 
+                                                                                                 shouldShowSourcesRoot()));
         setupIcon(data, psiDirectory);
 
         return;
