@@ -915,8 +915,9 @@ public class DiffUtil {
       return true;
     }
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    if (file != null && file.isInLocalFileSystem()) {
-      return true;
+    if (file != null && file.isValid() && file.isInLocalFileSystem()) {
+      // decompiled file can be writable, but Document with decompiled content is still read-only
+      return !file.isWritable();
     }
     return false;
   }
@@ -925,8 +926,8 @@ public class DiffUtil {
   public static boolean makeWritable(@Nullable Project project, @NotNull Document document) {
     if (document.isWritable()) return true;
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    if (file == null) return false;
-    return makeWritable(project, file);
+    if (file == null || !file.isValid()) return false;
+    return makeWritable(project, file) && document.isWritable();
   }
 
   @CalledInAwt
