@@ -21,17 +21,15 @@ import java.util.Map;
 
 /**
  * @author gregsh
- * @noinspection unchecked
  */
+@SuppressWarnings("unchecked")
 public class Functions {
-
   public static <A> Function.Mono<A> id() {
     return (Function.Mono<A>)Function.ID;
   }
 
   public static <A, B> Function<A, B> constant(final B b) {
     return new Function<A, B>() {
-      @Override
       public B fun(A a) {
         return b;
       }
@@ -48,7 +46,6 @@ public class Functions {
 
   public static <A, B, C> Function<A, C> compose(final Function<A, B> f1, final Function<B, ? extends C> f2) {
     return new Function<A, C>() {
-      @Override
       public C fun(A a) {
         return f2.fun(f1.fun(a));
       }
@@ -61,7 +58,6 @@ public class Functions {
 
   public static <A, B> Function<A, B> fromMap(final Map<A, B> map) {
     return new Function<A, B>() {
-      @Override
       public B fun(A a) {
         return map.get(a);
       }
@@ -69,7 +65,6 @@ public class Functions {
   }
 
   private static final Function<Object, Class> TO_CLASS = new Function<Object, Class>() {
-    @Override
     public Class fun(Object o) {
       return o.getClass();
     }
@@ -80,14 +75,12 @@ public class Functions {
   }
 
   private static final Function PAIR_FIRST = new Function<Pair<?, ?>, Object>() {
-    @Override
     public Object fun(Pair<?, ?> pair) {
       return Pair.getFirst(pair);
     }
   };
 
   private static final Function PAIR_SECOND = new Function<Pair<?, ?>, Object>() {
-    @Override
     public Object fun(Pair<?, ?> pair) {
       return Pair.getSecond(pair);
     }
@@ -103,7 +96,6 @@ public class Functions {
 
   public static Function.Mono<Integer> intIncrement() {
     return new Function.Mono<Integer>() {
-      @Override
       public Integer fun(Integer integer) {
         return integer + 1;
       }

@@ -60,7 +60,6 @@ public class FileUtilRt {
   };
 
   protected static final ThreadLocal<byte[]> BUFFER = new ThreadLocal<byte[]>() {
-    @Override
     protected byte[] initialValue() {
       return new byte[1024 * 20];
     }
