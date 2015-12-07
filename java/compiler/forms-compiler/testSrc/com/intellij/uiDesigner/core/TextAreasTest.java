@@ -15,35 +15,17 @@
  */
 package com.intellij.uiDesigner.core;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.testFramework.TestLoggerFactory;
-import com.intellij.testFramework.UsefulTestCase;
-import junit.framework.AssertionFailedError;
+import junit.framework.TestCase;
 
 import javax.swing.*;
 import java.awt.*;
 
-public final class TextAreasTest extends UsefulTestCase {
-  {
-    Logger.setFactory(TestLoggerFactory.class);
-    TestLoggerFactory.enableDebugLogging(myTestRootDisposable,
-                                         new String[]{"#com.intellij.util.ui.UIUtil"});
-  }
-  private final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.core.TextAreasTest");
-
-  private String getTestStartedLogMessage(String testName) {
-    return "Starting " + getClass().getName() + "." + testName;
-  }
-
+public final class TextAreasTest extends TestCase {
   /**
    * label   |    label
    * text area (span 2)
    */
   public void test1() {
-    LOG.info(getTestStartedLogMessage("test1"));
-
     final JPanel panel = new JPanel(new GridLayoutManager(2,2, new Insets(0,0,0,0), 0, 0));
 
     final JLabel label1 = new JLabel();
@@ -63,19 +45,8 @@ public final class TextAreasTest extends UsefulTestCase {
       GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
       GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0));
 
-    LOG.info("textArea: " + textArea.toString());
-    LOG.info("LaF: " + UIManager.getLookAndFeel());
-    LOG.info("textArea.font: " + textArea.getFont());
-
-    UIDefaults uid = UIManager.getLookAndFeelDefaults();
-
-    LOG.info("UIDefaults: TextArea.font=" + uid.get("TextArea.font"));
-    LOG.info("UIDefaults: TextArea.margin=" + uid.get("TextArea.margin"));
-
-    LOG.info("textArea.getPreferredSize: " + textArea.getPreferredSize());
-
-    TestLoggerFactory.dumpLogToStdout(getTestStartedLogMessage("test1"));
-
+    assertFalse(UIManager.getLookAndFeel().getName().equals("Windows"));
+    // This check fails for Windows LaF due to its default TextArea settings, so it's not expected here. By default it's Metal on Windows.
     assertEquals(100, textArea.getPreferredSize().width);
 
     final Dimension initialPreferredSize = panel.getPreferredSize();
