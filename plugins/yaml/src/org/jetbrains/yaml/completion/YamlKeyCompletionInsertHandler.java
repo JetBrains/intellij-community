@@ -50,7 +50,7 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
       EditorModificationUtil.insertStringAtCaret(context.getEditor(), " ");
     }
     else {
-      context.getEditor().getCaretModel().moveCaretRelatively(1, 0, false, false, false);
+      context.getEditor().getCaretModel().moveCaretRelatively(1, 0, false, false, true);
     }
   }
 
