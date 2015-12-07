@@ -162,7 +162,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
     }
     
     override fun itemSelected(event: LookupEvent) {
-        if (!isCompletionActive()) return
+        if (!completionStarted) return
         
         val currentItem = lookup.currentItem
         val index = lookup.items.indexOf(currentItem)
