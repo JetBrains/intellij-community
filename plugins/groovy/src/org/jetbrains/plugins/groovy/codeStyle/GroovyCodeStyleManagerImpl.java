@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.codeStyle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
@@ -131,8 +132,9 @@ public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
   }
 
   protected void addLineFeedBefore(@NotNull PsiElement psiFile, @NotNull GrImportStatement result) {
-    final GroovyCodeStyleSettings settings =
-      CodeStyleSettingsManager.getInstance(psiFile.getProject()).getCurrentSettings().getCustomSettings(GroovyCodeStyleSettings.class);
+    final CodeStyleSettings commonSettings = CodeStyleSettingsManager.getInstance(psiFile.getProject()).getCurrentSettings();
+    final GroovyCodeStyleSettings settings = commonSettings.getCustomSettings(GroovyCodeStyleSettings.class);
+
     final PackageEntryTable layoutTable = settings.IMPORT_LAYOUT_TABLE;
     final PackageEntry[] entries = layoutTable.getEntries();
 
@@ -157,7 +159,7 @@ public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
       }
       node.addLeaf(GroovyTokenTypes.mNLS, StringUtil.repeat("\n", spaceCount + 1), result.getNode());
     } else if (prev instanceof GrPackageDefinition) {
-      node.addLeaf(GroovyTokenTypes.mNLS, "\n", result.getNode());
+      node.addLeaf(GroovyTokenTypes.mNLS, StringUtil.repeat("\n", commonSettings.BLANK_LINES_AFTER_PACKAGE), result.getNode());
     }
   }
 
