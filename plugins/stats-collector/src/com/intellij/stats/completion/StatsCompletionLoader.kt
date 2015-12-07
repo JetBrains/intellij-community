@@ -139,8 +139,12 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
         if (!completionStarted) return
         
         val items = lookup.items
+        if (lookup.currentItem == null) {
+            logger.completionCancelled()
+            return
+        }
+        
         val prefix = lookup.itemPattern(lookup.currentItem!!)
-
         val wasTyped = items.firstOrNull()?.lookupString?.equals(prefix) ?: false
         if (wasTyped || selectedByDotTyping) {
             logger.itemSelectedByTyping(prefix)
