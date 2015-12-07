@@ -141,7 +141,7 @@ class CompletionFileLogger(private val installationUID: String,
     override fun backspacePressed(pos: Int, itemName: String, newCompletionList: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.BACKSPACE)
         builder.nextWrappedToken("POS", pos)
-        builder.nextWrappedToken("COMP_LIST_LEN", itemName.length)
+        builder.nextWrappedToken("COMP_LIST_LEN", newCompletionList.size)
         builder.nextWrappedToken("ID", itemsToId[itemName]!!)
         builder.nextToken(toIdsList(newCompletionList))
         log(builder)
