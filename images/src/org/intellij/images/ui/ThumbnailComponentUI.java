@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 package org.intellij.images.ui;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
@@ -59,6 +60,7 @@ public class ThumbnailComponentUI extends ComponentUI {
     public void paint(Graphics g, JComponent c) {
         ThumbnailComponent tc = (ThumbnailComponent) c;
         if (tc != null) {
+            UISettings.setupAntialiasing(g);
             paintBackground(g, tc);
 
             if (tc.isDirectory()) {
