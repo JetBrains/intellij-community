@@ -55,7 +55,7 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
   }
 
   @Nullable
-  public YAMLValue deleteLookupTextAndRetrieveOldValue(InsertionContext context, @NotNull PsiElement elementAtCaret) {
+  protected YAMLValue deleteLookupTextAndRetrieveOldValue(InsertionContext context, @NotNull PsiElement elementAtCaret) {
     final YAMLValue oldValue;
     if (elementAtCaret.getNode().getElementType() != YAMLTokenTypes.SCALAR_KEY) {
       context.getDocument().deleteString(context.getStartOffset(), context.getTailOffset());
