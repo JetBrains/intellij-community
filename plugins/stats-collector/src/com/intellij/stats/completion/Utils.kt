@@ -20,8 +20,12 @@ class PluginDirectoryFilePathProvider: FilePathProvider() {
     override val statsFilePath: String by lazy { 
         val id = PluginManager.getPluginByClassName(CompletionLoggerProvider::class.java.name)
         val descriptor = PluginManager.getPlugin(id)
-        val path = descriptor!!.path.absolutePath
-        File(path, "completion_stats.txt").absolutePath
+        val path = descriptor!!.path.parentFile
+        val dir = File(path, "completion-stats-data")
+        if (!dir.exists()) {
+            dir.mkdir()
+        }
+        File(dir, "completion_stats.txt").absolutePath
     }
     
 }
