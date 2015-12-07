@@ -61,13 +61,14 @@ public class ExecutionNode extends CachingSimpleNode {
     return myInfo.getDisplayName();
   }
 
+  @Nullable
   public String getDuration() {
     if (myInfo.isRunning()) {
       final long duration = myInfo.getStartTime() == 0 ? 0 : System.currentTimeMillis() - myInfo.getStartTime();
       return "Running for " + StringUtil.formatDuration(duration);
     }
     else {
-      return StringUtil.formatDuration(myInfo.getEndTime() - myInfo.getStartTime());
+      return myInfo.isSkipped() ? null : StringUtil.formatDuration(myInfo.getEndTime() - myInfo.getStartTime());
     }
   }
 
@@ -87,7 +88,7 @@ public class ExecutionNode extends CachingSimpleNode {
     setIcon(
       myInfo.isRunning() ? NodeProgressAnimator.getCurrentFrame() :
       myInfo.isFailed() ? AllIcons.RunConfigurations.TestError :
-      myInfo.isSkipped() ? AllIcons.RunConfigurations.TestError :
+      myInfo.isSkipped() ? AllIcons.RunConfigurations.TestSkipped :
       AllIcons.RunConfigurations.TestPassed
     );
   }

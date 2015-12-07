@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEventUnsupported;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
@@ -112,6 +113,9 @@ public class GradleRunnerUtil {
           UIUtil.invokeLaterIfNeeded(new Runnable() {
             @Override
             public void run() {
+              if(((ExternalSystemTaskExecutionEvent)event).getProgressEvent() instanceof ExternalSystemProgressEventUnsupported) {
+                duplexConsoleView.enableConsole(false);
+              }
               gradleExecutionConsole.onStatusChange((ExternalSystemTaskExecutionEvent)event);
             }
           });
