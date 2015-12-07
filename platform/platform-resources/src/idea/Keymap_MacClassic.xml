@@ -230,6 +230,7 @@
       <keyboard-shortcut first-keystroke="control ENTER"/>
     </action>
     <action id="EditorToggleColumnMode">
+      <keyboard-shortcut first-keystroke="shift meta 8" />
       <keyboard-shortcut first-keystroke="meta shift MULTIPLY"/>
     </action>
     <action id="EditorLineEndWithSelection">
