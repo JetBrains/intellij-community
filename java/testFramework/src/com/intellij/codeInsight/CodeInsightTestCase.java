@@ -558,7 +558,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
   protected void caretLeft() {
-    caretRight(getEditor());
+    caretLeft(getEditor());
   }
   protected void caretLeft(@NotNull Editor editor) {
     LightPlatformCodeInsightTestCase.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT, editor, getProject());

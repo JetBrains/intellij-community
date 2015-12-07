@@ -23,10 +23,12 @@ import com.intellij.ide.util.treeView.TreeViewUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.impl.jrt.JrtFileSystem;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
+import com.intellij.util.FontUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,13 +43,18 @@ public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
     super(project, index);
   }
 
+  @Nullable
   @Override
-  public String getLocationString(@NotNull final PsiDirectory directory) {
+  public String getLocationString(@NotNull PsiDirectory directory, boolean includeUrl, boolean includeRootType) {
+    String result = null;
     PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (ProjectRootsUtil.isSourceRoot(directory) && aPackage != null) {   //package prefix
-      return aPackage.getQualifiedName();
+      result = StringUtil.nullize(aPackage.getQualifiedName(), true);
     }
-    return super.getLocationString(directory);
+    String baseString = super.getLocationString(directory, includeUrl, includeRootType);
+    if (result == null) return baseString;
+    if (baseString == null) return result;
+    return result  + "," + FontUtil.spaceAndThinSpace() + baseString;
   }
 
   @Override

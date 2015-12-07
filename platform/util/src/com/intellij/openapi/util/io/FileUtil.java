@@ -1247,7 +1247,10 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static void writeToFile(@NotNull File file, @NotNull String text) throws IOException {
-    writeToFile(file, text.getBytes(CharsetToolkit.UTF8_CHARSET), false);
+    writeToFile(file, text, false);
+  }
+  public static void writeToFile(@NotNull File file, @NotNull String text, boolean append) throws IOException {
+    writeToFile(file, text.getBytes(CharsetToolkit.UTF8_CHARSET), append);
   }
 
   public static void writeToFile(@NotNull File file, @NotNull byte[] text, int off, int len) throws IOException {

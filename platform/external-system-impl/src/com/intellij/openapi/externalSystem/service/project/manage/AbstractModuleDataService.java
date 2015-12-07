@@ -45,7 +45,10 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -82,13 +85,23 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     if (!toCreate.isEmpty()) {
       createModules(toCreate, modelsProvider, project);
     }
+
+    final boolean isOneToOneMapping = projectData != null && ExternalSystemApiUtil.isOneToOneMapping(project, projectData);
+
     for (DataNode<E> node : toImport) {
       Module module = node.getUserData(MODULE_KEY);
       if (module != null) {
         setModuleOptions(module, node);
 
         final ModifiableModuleModel modifiableModel = modelsProvider.getModifiableModuleModel();
-        modifiableModel.setModuleGroupPath(module, node.getData().getIdeModuleGroup());
+        final String[] groupPath;
+        if (isOneToOneMapping || node.getData().getIdeModuleGroup() == null || projectData == null) {
+          groupPath = node.getData().getIdeModuleGroup();
+        }
+        else {
+          groupPath = ArrayUtil.prepend(projectData.getInternalName() + " modules", node.getData().getIdeModuleGroup());
+        }
+        modifiableModel.setModuleGroupPath(module, groupPath);
         ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
         syncPaths(module, modifiableRootModel, node.getData());
         setLanguageLevel(modifiableRootModel, node.getData());
@@ -104,7 +117,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       final Module created = modelsProvider.newModule(data.getModuleFilePath(), data.getModuleTypeId());
       module.putUserData(MODULE_KEY, created);
       Set<String> orphanFiles = project.getUserData(ORPHAN_MODULE_FILES);
-      if(orphanFiles != null) {
+      if (orphanFiles != null) {
         orphanFiles.remove(created.getModuleFilePath());
       }
 
@@ -342,7 +355,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
   @Override
   public void onSuccessImport(@NotNull Project project) {
     final Set<String> orphanFiles = project.getUserData(ORPHAN_MODULE_FILES);
-    if(orphanFiles != null && !orphanFiles.isEmpty()) {
+    if (orphanFiles != null && !orphanFiles.isEmpty()) {
       ExternalSystemApiUtil.executeOnEdt(false, new Runnable() {
         @Override
         public void run() {

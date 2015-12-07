@@ -20,11 +20,14 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
+
+import java.util.Locale;
 
 /**
  * @author nik
@@ -33,8 +36,13 @@ public class UnmarkGeneratedSourceRootAction extends MarkRootActionBase {
   public UnmarkGeneratedSourceRootAction() {
     Presentation presentation = getTemplatePresentation();
     presentation.setIcon(AllIcons.Modules.SourceRoot);
-    presentation.setText("Unmark Generated Sources Root");
-    presentation.setDescription("Mark directory as an ordinary source root");
+
+    ModuleSourceRootEditHandler<JavaSourceRootProperties> handler = ModuleSourceRootEditHandler.getEditHandler(JavaSourceRootType.SOURCE);
+    if (handler == null) return;
+
+    String typeName = handler.getFullRootTypeName();
+    presentation.setText("Unmark Generated " + typeName);
+    presentation.setDescription("Mark directory as an ordinary " + typeName.toLowerCase(Locale.getDefault()));
   }
 
   @Override
@@ -49,7 +57,7 @@ public class UnmarkGeneratedSourceRootAction extends MarkRootActionBase {
   }
 
   @Override
-  protected void modifyRoots(VirtualFile vFile, ContentEntry entry) {
+  protected void modifyRoots(@NotNull VirtualFile vFile, @NotNull ContentEntry entry) {
     entry.addSourceFolder(vFile, JavaSourceRootType.SOURCE);
   }
 }

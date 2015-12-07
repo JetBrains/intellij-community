@@ -427,3 +427,13 @@ class NotDefinitelyUnassigned {
     <error descr="Variable 'i' might already have been assigned to">i</error> = 1;
   }
 }
+
+class ClassInitializerConstantEval {
+  {
+    final int x;
+    if(false){
+      x = 1;
+      <error descr="Variable 'x' might already have been assigned to">x</error> = 1;
+    }
+  }
+}

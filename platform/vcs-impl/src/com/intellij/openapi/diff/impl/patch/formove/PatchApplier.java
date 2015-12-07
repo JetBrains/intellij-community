@@ -314,7 +314,9 @@ public class PatchApplier<BinaryType extends FilePatch> {
   }
 
   protected ApplyPatchStatus executeWritable() {
-    if (!makeWritable(myVerifier.getWritableFiles())) {
+    final ReadonlyStatusHandler.OperationStatus readOnlyFilesStatus = getReadOnlyFilesStatus(myVerifier.getWritableFiles());
+    if (readOnlyFilesStatus.hasReadonlyFiles()) {
+      showError(myProject, readOnlyFilesStatus.getReadonlyFilesMessage(), true);
       return ApplyPatchStatus.FAILURE;
     }
 
@@ -479,10 +481,9 @@ public class PatchApplier<BinaryType extends FilePatch> {
     return myRemainingPatches;
   }
 
-  private boolean makeWritable(final List<VirtualFile> filesToMakeWritable) {
+  private ReadonlyStatusHandler.OperationStatus getReadOnlyFilesStatus(@NotNull final List<VirtualFile> filesToMakeWritable) {
     final VirtualFile[] fileArray = VfsUtilCore.toVirtualFileArray(filesToMakeWritable);
-    final ReadonlyStatusHandler.OperationStatus readonlyStatus = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(fileArray);
-    return (! readonlyStatus.hasReadonlyFiles());
+    return ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(fileArray);
   }
 
   private boolean fileTypesAreOk(final List<Pair<VirtualFile, ApplyTextFilePatch>> textPatches) {
@@ -496,6 +497,10 @@ public class PatchApplier<BinaryType extends FilePatch> {
             showError(myProject, "Cannot apply patch. File " + file.getPresentableName() + " type not defined.", true);
             return false;
           }
+        }
+        if (fileType.isBinary()) {
+          showError(myProject, "Cannot apply patch because it contains binary file " + file.getPresentableName(), true);
+          return false;
         }
       }
     }

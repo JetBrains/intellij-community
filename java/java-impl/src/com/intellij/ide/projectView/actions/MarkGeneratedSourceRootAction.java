@@ -22,12 +22,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+
+import java.util.Locale;
 
 /**
  * @author nik
@@ -36,8 +39,13 @@ public class MarkGeneratedSourceRootAction extends MarkRootActionBase {
   public MarkGeneratedSourceRootAction() {
     Presentation presentation = getTemplatePresentation();
     presentation.setIcon(AllIcons.Modules.GeneratedSourceRoot);
-    presentation.setText("Generated Sources Root");
-    presentation.setDescription("Mark directory as a source root for generated files");
+
+    ModuleSourceRootEditHandler<JavaSourceRootProperties> handler = ModuleSourceRootEditHandler.getEditHandler(JavaSourceRootType.SOURCE);
+    if (handler == null) return;
+    
+    String typeName = handler.getFullRootTypeName();
+    presentation.setText("Generated " + typeName);
+    presentation.setDescription("Mark directory as a " + typeName.toLowerCase(Locale.getDefault()) + " for generated files");
   }
 
   @Override
@@ -68,7 +76,7 @@ public class MarkGeneratedSourceRootAction extends MarkRootActionBase {
   }
 
   @Override
-  protected void modifyRoots(VirtualFile vFile, ContentEntry entry) {
+  protected void modifyRoots(@NotNull VirtualFile vFile, @NotNull ContentEntry entry) {
     JavaSourceRootProperties properties = JpsJavaExtensionService.getInstance().createSourceRootProperties("", true);
     entry.addSourceFolder(vFile, JavaSourceRootType.SOURCE, properties);
   }

@@ -892,7 +892,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
           result.set(new FindResultImpl());
         }
       }, progressIndicatorBase);
-    });
+    }, "runAsyncTest");
     thread.start();
 
     progressStarted.await();

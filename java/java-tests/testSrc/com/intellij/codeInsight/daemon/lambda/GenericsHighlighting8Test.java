@@ -922,4 +922,20 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testDistinguishTypeArgs() throws Exception {
     doTest();
   }
+
+  public void testRecursiveCapturedWildcardTypes() throws Exception {
+    doTest();
+  }
+
+  public void testRecursiveCapturedWildcardTypesIDEA139167() throws Exception {
+    doTest();
+  }
+  
+  public void testRecursiveCapturedWildcardTypesIDEA139157() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA146897() throws Exception {
+    doTest();
+  }
 }

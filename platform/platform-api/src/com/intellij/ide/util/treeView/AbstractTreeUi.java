@@ -2717,8 +2717,9 @@ public class AbstractTreeUi {
             @Override
             public void perform() {
               Promise<Boolean> promise = update(eachChildDescriptor, true);
-              //noinspection unchecked,ConstantConditions
-              loaded.putDescriptor(each, eachChildDescriptor, promise instanceof Getter ? ((Getter<Boolean>)promise).get() : null);
+              LOG.assertTrue(promise instanceof Getter);
+              //noinspection unchecked
+              loaded.putDescriptor(each, eachChildDescriptor, ((Getter<Boolean>)promise).get());
             }
           });
         }

@@ -216,6 +216,12 @@ public class TaskExecutionView implements ConsoleView {
 
       myBuilder.queueUpdateFrom(node, false, false);
     }
+    else if (progressEvent instanceof ExternalSystemProgressEventUnsupported) {
+      final ExecutionInfo executionInfo = new ExecutionInfo(null, "Build/task progress visualization available in Gradle version >= 2.5");
+      executionInfo.setSkipped(true);
+      myRoot.setInfo(executionInfo);
+      myProgressAnimator.stopMovie();
+    }
   }
 
   @Override

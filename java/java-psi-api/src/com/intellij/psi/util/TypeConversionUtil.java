@@ -958,7 +958,8 @@ public class TypeConversionUtil {
       PsiTypeParameter rp = ri.next();
       final PsiType typeLeft = leftSubstitutor.substitute(lp);
       if (typeLeft == null) continue;
-      final PsiType typeRight = rightSubstitutor.substituteWithBoundsPromotion(rp);
+      final PsiType typeRight = PsiCapturedWildcardType.isNoCapture() ? rightSubstitutor.substitute(rp) 
+                                                                      : rightSubstitutor.substituteWithBoundsPromotion(rp);
       if (typeRight == null) {
         // compatibility feature: allow to assign raw types to generic ones
         return allowUncheckedConversion;

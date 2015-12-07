@@ -52,6 +52,7 @@ import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -205,6 +206,12 @@ public class ApplyPatchAction extends DumbAwareAction {
       else {
         request = PatchDiffRequestFactory.createBadMergeRequest(project, document, file, localContent, patchedContent, callback);
       }
+      request.putUserData(DiffUserDataKeysEx.MERGE_ACTION_CAPTIONS, new Function<MergeResult, String>() {
+        @Override
+        public String fun(MergeResult result) {
+          return result.equals(MergeResult.CANCEL) ? "Abort..." : null;
+        }
+      });
       request.putUserData(DiffUserDataKeysEx.MERGE_CANCEL_HANDLER, new Condition<MergeTool.MergeViewer>() {
         @Override
         public boolean value(MergeTool.MergeViewer viewer) {
