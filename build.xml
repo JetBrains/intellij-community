@@ -25,6 +25,10 @@
     <isset property="product" />
   </condition>
 
+  <condition property="productPropertiesPath" value="${productPropertiesPath}" else="">
+    <isset property="productPropertiesPath" />
+  </condition>
+
   <condition property="studio.ui.tests" value="${enable.ui.tests}" else="">
     <isset property="enable.ui.tests" />
   </condition>
@@ -60,6 +64,7 @@
         <jvmarg value="-DbuildNumber=${build.number}" />
         <jvmarg value="-Didea.test.patterns=${test.patterns}" />
         <jvmarg value="-Dproduct=${product.name}" />
+        <jvmarg value="-DproductPropertiesPath=${productPropertiesPath}" />
         <jvmarg value="-Dstudio.ui.tests=${studio.ui.tests}" />
         <sysproperty key="java.awt.headless" value="true"/>
         <arg line="&quot;-Dgant.script=@{script}&quot;"/>
