@@ -72,7 +72,8 @@ public class ProjectViewDirectoryHelper {
 
   @Nullable
   public String getLocationString(@NotNull PsiDirectory psiDirectory) {
-    return getLocationString(psiDirectory, false, false);
+    boolean includeUrl = ProjectRootsUtil.isModuleContentRoot(psiDirectory);
+    return getLocationString(psiDirectory, includeUrl, false);
   }
 
   @Nullable
@@ -98,7 +99,7 @@ public class ProjectViewDirectoryHelper {
       }
     }
 
-    if (includeUrl || ProjectRootsUtil.isModuleContentRoot(directory, psiDirectory.getProject())) {
+    if (includeUrl) {
       if (result.length() > 0) result.append(",").append(FontUtil.spaceAndThinSpace());
       result.append(FileUtil.getLocationRelativeToUserHome(directory.getPresentableUrl()));
     }

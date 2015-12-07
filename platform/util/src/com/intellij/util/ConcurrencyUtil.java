@@ -145,13 +145,17 @@ public class ConcurrencyUtil {
   public static void awaitQuiescence(@NotNull ThreadPoolExecutor executor, long timeout, @NotNull TimeUnit unit) {
     long deadline = System.currentTimeMillis() + unit.toMillis(timeout);
     executor.setKeepAliveTime(1, TimeUnit.NANOSECONDS); // no need for zombies in tests
-    while (executor.getPoolSize() != 0 && System.currentTimeMillis() < deadline) {
+    String dump;
+    while (System.currentTimeMillis() < deadline && (executor.getPoolSize() != 0 ||
+        // hack to ensure the thread is really terminated. inside ThreadPoolExecutor.processWorkerExit() there is a place where workers are empty but the worker thread isn't exited yet
+        (dump = ThreadDumper.dumpThreadsToString()).contains("at java.lang.Thread.exit(Thread.java:")
+        || dump.contains("at java.util.concurrent.ThreadPoolExecutor.processWorkerExit(ThreadPoolExecutor.java:"))) {
       executor.setCorePoolSize(0); // interrupt idle workers
       TimeoutUtil.sleep(1);
     }
     if (executor.getPoolSize() != 0) {
-      String dump = ThreadDumper.dumpThreadsToString();
-      System.err.println("Executor "+executor+" is still active after "+unit.toSeconds(timeout)+" seconds://///\n"+ dump+"\n/////");
+      System.err.println("Executor " + executor + " is still active after " + unit.toSeconds(timeout) + " seconds://///\n" +
+                         ThreadDumper.dumpThreadsToString() + "\n/////");
     }
   }
 }

@@ -52,9 +52,9 @@ class Test {
   }*/
 
   abstract class D<T extends Throwable & Runnable> {
-    <error descr="'foo(T, D<? extends Runnable>)' is already defined in 'Test.D'">abstract <T extends Serializable & Comparable<?>> void foo(T x, D<? extends Runnable> y)</error>;
+    <error descr="'foo(T, D<? extends Runnable>)' clashes with 'foo(T, D<? extends Throwable>)'; both methods have same erasure">abstract <T extends Serializable & Comparable<?>> void foo(T x, D<? extends Runnable> y)</error>;
 
-    <error descr="'foo(T, D<? extends Throwable>)' is already defined in 'Test.D'">abstract <T extends Serializable & Comparable<?>> void foo(T x, D<? extends Throwable> y)</error>;
+    abstract <T extends Serializable & Comparable<?>> void foo(T x, D<? extends Throwable> y);
   }
 
 
@@ -62,8 +62,8 @@ class Test {
   interface IB {}
   void testExtendsOrder() {
     class E<T extends IA & IB> {
-      <error descr="'foo(E<? extends IA>)' is already defined in 'E'">void foo(E<? extends IA> x)</error> {}
-      <error descr="'foo(E<? extends IB>)' is already defined in 'E'">void foo(E<? extends IB> x)</error> {}
+      <error descr="'foo(E<? extends IA>)' clashes with 'foo(E<? extends IB>)'; both methods have same erasure">void foo(E<? extends IA> x)</error> {}
+      void foo(E<? extends IB> x) {}
     }
   }
 
