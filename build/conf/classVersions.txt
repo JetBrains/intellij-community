@@ -33,6 +33,8 @@
 1.3 => lib/idea_rt.jar
 1.4 => lib/forms_rt.jar
 
+1.6 => lib/util.jar
+
 1.7 => lib/optimizedFileManager.jar
 
 1.5 => plugins/Groovy/lib/groovy_rt.jar

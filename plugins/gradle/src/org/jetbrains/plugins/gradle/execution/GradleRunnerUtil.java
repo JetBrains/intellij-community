@@ -54,15 +54,25 @@ public class GradleRunnerUtil {
                                                           @Nullable final String stateStorageKey,
                                                           @NotNull final ProcessHandler processHandler,
                                                           @NotNull final ExternalSystemTaskId taskId) {
-    if (stateStorageKey != null && isTaskConsoleEnabledByDefault && !PropertiesComponent.getInstance().isValueSet(stateStorageKey)) {
-      PropertiesComponent.getInstance().setValue(stateStorageKey, true);
+    final String tripleStateStorageKey = stateStorageKey != null ? stateStorageKey + "_str" : null;
+    if (stateStorageKey != null && isTaskConsoleEnabledByDefault && !PropertiesComponent.getInstance().isValueSet(tripleStateStorageKey)) {
+      PropertiesComponent.getInstance().setValue(tripleStateStorageKey, Boolean.TRUE.toString());
+      PropertiesComponent.getInstance().setValue(stateStorageKey, Boolean.TRUE);
     }
-    ;
 
     final TaskExecutionView gradleExecutionConsole = new TaskExecutionView(project);
     final Ref<DuplexConsoleView> duplexConsoleViewRef = Ref.create();
     final DuplexConsoleView duplexConsoleView =
       new DuplexConsoleView<ConsoleView, ConsoleView>(gradleExecutionConsole, consoleView, stateStorageKey) {
+
+        @Override
+        public void enableConsole(boolean primary) {
+          super.enableConsole(primary);
+          if (stateStorageKey != null) {
+            PropertiesComponent.getInstance().setValue(tripleStateStorageKey, Boolean.toString(primary));
+          }
+        }
+
         @NotNull
         @Override
         public AnAction[] createConsoleActions() {
