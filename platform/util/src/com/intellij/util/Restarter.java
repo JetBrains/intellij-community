@@ -85,7 +85,7 @@ public class Restarter {
   private static void runCommand(String... beforeRestart) throws IOException {
     if (beforeRestart.length == 0) return;
 
-    File restartDir = new File(System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart");
+    File restartDir = new File(getRestarterDir());
     if (!FileUtilRt.createDirectory(restartDir)) {
       throw new IOException("Cannot create dir: " + restartDir);
     }
@@ -158,8 +158,12 @@ public class Restarter {
     Runtime.getRuntime().exec(ArrayUtil.toStringArray(commands));
   }
 
+  public static String getRestarterDir() {
+    return PathManager.getLogPath() + "/restart";
+  }
+
   public static File createTempExecutable(File executable) throws IOException {
-    File executableDir = new File(System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart");
+    File executableDir = new File(getRestarterDir());
     if (!FileUtilRt.createDirectory(executableDir)) throw new IOException("Cannot create dir: " + executableDir);
     File copy = new File(executableDir.getPath() + "/" + executable.getName());
     if (!FileUtilRt.ensureCanCreateFile(copy) || (copy.exists() && !copy.delete())) {

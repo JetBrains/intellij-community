@@ -166,7 +166,14 @@ public class Main {
   }
 
   private static String getBundledJava(String javaHome) throws Exception {
-    String javaHomeCopy = System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart/jre";
+    // remove the code after one cycle of EAP/patch
+    File removeRestartFromHome = new File(System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/restart");
+    if (removeRestartFromHome.exists()) {
+      FileUtil.delete(removeRestartFromHome);
+    }
+    // remove the code after one cycle of EAP/patch
+
+    String javaHomeCopy = Restarter.getRestarterDir() + "/jre";
     File javaCopy = SystemInfoRt.isWindows ? new File(javaHomeCopy + "/bin/java.exe") : new File(javaHomeCopy + "/bin/java");
     if (javaCopy != null && javaCopy.isFile() && checkBundledJava(javaCopy)) {
       javaHome = javaHomeCopy;
