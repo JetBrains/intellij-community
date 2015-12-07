@@ -74,14 +74,13 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Program Files %28x86%29\Java\jdk1.8.0_20\include;C:\Program Files %28x86%29\Java\jdk1.8.0_20\include\win32;$(IncludePath)</IncludePath>
+    <IncludePath>$(JdkPath)\include;$(JdkPath)\include\win32;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(JdkPath)\include;$(JdkPath)\include\win32;$(IncludePath)</IncludePath>
     <TargetName>$(ProjectName)64</TargetName>
     <OutDir>..\..\..\bin\WinLauncher</OutDir>
-    <IncludePath>C:\Program Files\Java\jdk1.8.0_65\include;C:\Program Files\Java\jdk1.8.0_65\include\win32;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
