@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.*;
@@ -379,13 +378,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
 
     File res = new File(resPath);
 
-    FileOutputStream out = new FileOutputStream(res);
-    try {
-      out.write(result.bytes);
-    }
-    finally {
-      out.close();
-    }
+    FileUtil.writeToFile(res, result.bytes);
     return resPath;
   }
 

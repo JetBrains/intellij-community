@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -130,13 +129,7 @@ public class OutputChecker {
     }
 
     if (!outFile.exists()) {
-      FileOutputStream fos = new FileOutputStream(outFile, false);
-      try {
-        fos.write(actual.getBytes());
-      }
-      finally {
-        fos.close();
-      }
+      FileUtil.writeToFile(outFile, actual);
       LOG.error("Test file created " + outFile.getPath() + "\n" + "**************** Don't forget to put it into VCS! *******************");
     }
     else {
