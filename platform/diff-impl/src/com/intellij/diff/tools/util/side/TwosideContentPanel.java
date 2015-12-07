@@ -18,6 +18,7 @@ package com.intellij.diff.tools.util.side;
 import com.intellij.diff.tools.holders.EditorHolder;
 import com.intellij.diff.tools.util.DiffSplitter;
 import com.intellij.diff.util.Side;
+import com.intellij.openapi.actionSystem.AnAction;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +40,14 @@ public class TwosideContentPanel extends JPanel {
     mySplitter.setSecondComponent(new HolderPanel(Side.RIGHT.select(holders), Side.RIGHT.select(titleComponents)));
     mySplitter.setHonorComponentsMinimumSize(false);
     add(mySplitter, BorderLayout.CENTER);
+  }
+
+  public void setBottomAction(@Nullable AnAction value) {
+    mySplitter.setBottomAction(value);
+  }
+
+  public void setTopAction(@Nullable AnAction value) {
+    mySplitter.setTopAction(value);
   }
 
   @CalledInAwt
