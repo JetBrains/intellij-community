@@ -122,10 +122,10 @@ fun LookupImpl.toRelevanceDataList(): List<LookupStringWithRelevance> {
 
 
 class CompletionActionsTracker(private val lookup: LookupImpl,
-                               private val logger: CompletionLogger) : CompletionPopupListener,
+                               private val logger: CompletionLogger) 
+      : CompletionPopupListener, 
         PrefixChangeListener, 
-                                                                       LookupAdapter() 
-{
+        LookupAdapter() {
 
     private var completionStarted = false
     private var selectedByDotTyping = false
