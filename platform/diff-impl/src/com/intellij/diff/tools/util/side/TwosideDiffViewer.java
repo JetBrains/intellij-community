@@ -110,7 +110,7 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
 
   @NotNull
   protected List<JComponent> createTitles() {
-    return DiffUtil.createSimpleTitles(myRequest);
+    return DiffUtil.createSyncHeightComponents(DiffUtil.createSimpleTitles(myRequest));
   }
 
   //

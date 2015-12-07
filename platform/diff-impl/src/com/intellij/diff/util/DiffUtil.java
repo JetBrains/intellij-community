@@ -494,6 +494,16 @@ public class DiffUtil {
     return label;
   }
 
+  @NotNull
+  public static List<JComponent> createSyncHeightComponents(@NotNull final List<JComponent> components) {
+    if (!ContainerUtil.exists(components, Condition.NOT_NULL)) return components;
+    List<JComponent> result = new ArrayList<JComponent>();
+    for (int i = 0; i < components.size(); i++) {
+      result.add(new SyncHeightComponent(components, i));
+    }
+    return result;
+  }
+
   //
   // Focus
   //
@@ -1168,6 +1178,33 @@ public class DiffUtil {
       if (side == mySide1) return myFragment.getEndOffset1();
       if (side == mySide2) return myFragment.getEndOffset2();
       return 0;
+    }
+  }
+
+  private static class SyncHeightComponent extends JPanel {
+    @NotNull private final List<JComponent> myComponents;
+
+    public SyncHeightComponent(@NotNull List<JComponent> components, int index) {
+      super(new BorderLayout());
+      myComponents = components;
+      JComponent delegate = components.get(index);
+      if (delegate != null) add(delegate, BorderLayout.CENTER);
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension size = super.getPreferredSize();
+      size.height = getPreferredHeight();
+      return size;
+    }
+
+    private int getPreferredHeight() {
+      int height = 0;
+      for (JComponent component : myComponents) {
+        if (component == null) continue;
+        height = Math.max(height, component.getPreferredSize().height);
+      }
+      return height;
     }
   }
 }

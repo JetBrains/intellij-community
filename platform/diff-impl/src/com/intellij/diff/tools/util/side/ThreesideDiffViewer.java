@@ -113,7 +113,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
 
   @NotNull
   protected List<JComponent> createTitles() {
-    return DiffUtil.createSimpleTitles(myRequest);
+    return DiffUtil.createSyncHeightComponents(DiffUtil.createSimpleTitles(myRequest));
   }
 
   //
