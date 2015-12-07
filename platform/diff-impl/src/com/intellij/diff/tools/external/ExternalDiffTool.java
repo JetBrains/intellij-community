@@ -94,7 +94,7 @@ public class ExternalDiffTool {
     catch (ProcessCanceledException ignore) {
     }
     catch (Throwable e) {
-      LOG.error(e);
+      LOG.warn(e);
       Messages.showErrorDialog(project, e.getMessage(), "Can't Show Diff In External Tool");
     }
   }
