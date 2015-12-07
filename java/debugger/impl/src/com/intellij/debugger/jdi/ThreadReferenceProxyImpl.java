@@ -223,9 +223,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       if (myFrames == null) {
         checkFrames(threadRef);
 
-        int frameCount = frameCount();
-        StackFrameProxyImpl[] frames = myFramesFromBottom.subList(0, frameCount).toArray(new StackFrameProxyImpl[frameCount]);
-        myFrames = ContainerUtil.reverse(Arrays.asList(frames));
+        myFrames = ContainerUtil.reverse(new ArrayList<StackFrameProxyImpl>(myFramesFromBottom.subList(0, frameCount())));
       }
     }
     catch (ObjectCollectedException ignored) {
