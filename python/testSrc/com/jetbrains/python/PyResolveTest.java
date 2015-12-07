@@ -619,13 +619,6 @@ public class PyResolveTest extends PyResolveTestCase {
   }
 
   //PY-2478
-  public void testFormatStarArgument() {
-    PsiElement target = resolve();
-    assertTrue(target instanceof PyReferenceExpression);
-    assertEquals("my_dict", ((PyReferenceExpression)target).getReferencedName());
-  }
-
-  //PY-2478
   public void testFormatPositionalArgs() {
     PsiElement target = resolve();
     assertTrue(target instanceof  PyReferenceExpression);

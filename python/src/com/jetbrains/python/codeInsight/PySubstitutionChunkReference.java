@@ -40,7 +40,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   @Nullable
   @Override
   public HighlightSeverity getUnresolvedHighlightSeverity(@NotNull final TypeEvalContext context) {
-    return HighlightSeverity.WEAK_WARNING;
+    return HighlightSeverity.INFORMATION;
   }
 
   @Nullable
@@ -75,14 +75,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
     if (argumentList != null) {
       final PyExpression[] arguments = argumentList.getArguments();
       if (myChunk.getMappingKey() != null) {
-        final PyKeywordArgument argument = argumentList.getKeywordArgument(myChunk.getMappingKey());
-        final PyExpression underStarExpression = getUnderStarExpression(arguments);
-        if (argument != null) {
-          return argument;
-        }
-        else {
-          return underStarExpression;
-        }
+        return argumentList.getKeywordArgument(myChunk.getMappingKey());
       }
       else {
         final int position = myChunk.getPosition() == null ? myPosition : myChunk.getPosition();
@@ -100,10 +93,10 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
 
   private PsiElement resolvePercentString() {
     final PyBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(getElement(), PyBinaryExpression.class);
-    final Class[] SIMPLE_RESULT_EXPRESSIONS = {
-      PyLiteralExpression.class, PySubscriptionExpression.class, PyBinaryExpression.class, PyConditionalExpression.class,
-      PyCallExpression.class, PySliceExpression.class, PyReferenceExpression.class
-    };
+    //final Class[] SIMPLE_RESULT_EXPRESSIONS = {
+    //  PyLiteralExpression.class, PySubscriptionExpression.class, PyBinaryExpression.class, PyConditionalExpression.class,
+    //  PyCallExpression.class, PySliceExpression.class, PyReferenceExpression.class
+    //};
 
     if (binaryExpression != null) {
       final PyExpression rightExpression = binaryExpression.getRightExpression();
@@ -129,9 +122,6 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
           }
         }
       }
-      else if (PyUtil.instanceOf(rightExpression, SIMPLE_RESULT_EXPRESSIONS)) {
-        return rightExpression;
-      }
     }
     return null;
   }
@@ -142,23 +132,6 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
     return PsiTreeUtil.getNextSiblingOfType(pyReferenceExpression, PyArgumentList.class);
   }
 
-  @Nullable
-  private PyExpression getUnderStarExpression(@NotNull final PyExpression[] args) {
-    if (args.length == 1 && args[0] instanceof PyStarArgument) {
-      PyDictLiteralExpression dictLiteralExpression = PsiTreeUtil.getChildOfAnyType(args[0], PyDictLiteralExpression.class);
-      if (dictLiteralExpression != null) {
-        for (PyKeyValueExpression keyValueExpression : dictLiteralExpression.getElements()) {
-          if (keyValueExpression.getKey() instanceof PyStringLiteralExpression) {
-            PyStringLiteralExpression key = (PyStringLiteralExpression)keyValueExpression.getKey();
-            if (key.getStringValue().equals(myChunk.getMappingKey())) {
-              return key;
-            }
-          }
-        }
-      }
-    }
-    return null;
-  }
   @NotNull
   @Override
   public Object[] getVariants() {
