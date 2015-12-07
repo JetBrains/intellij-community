@@ -279,6 +279,10 @@ public abstract class AppIcon {
       setDockIcon(img.myImg);
     }
 
+    // white 80% transparent
+    private static Color PROGRESS_BACKGROUND_COLOR = new Color(255, 255, 255, 217);
+    private static Color PROGRESS_OUTLINE_COLOR = new Color(140, 139, 140);
+
     @Override
     public boolean _setProgress(IdeFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
       assertIsDispatchThread();
@@ -312,14 +316,12 @@ public abstract class AppIcon {
 
         AppImage appImg = createAppImage();
 
-        // white 80% transparent
-        final Color backGround = new Color(255, 255, 255, 217);
-        appImg.myG2d.setColor(backGround);
+        appImg.myG2d.setColor(PROGRESS_BACKGROUND_COLOR);
         appImg.myG2d.fill(backgroundArea);
         final Color color = isOk ? scheme.getOkColor() : scheme.getErrorColor();
         appImg.myG2d.setColor(color);
         appImg.myG2d.fill(progressArea);
-        appImg.myG2d.setColor(new Color(140, 139, 140));
+        appImg.myG2d.setColor(PROGRESS_OUTLINE_COLOR);
         appImg.myG2d.draw(backgroundArea);
         appImg.myG2d.draw(borderArea);
 
