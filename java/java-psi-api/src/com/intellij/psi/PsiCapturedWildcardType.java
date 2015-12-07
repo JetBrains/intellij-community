@@ -55,7 +55,11 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
     myUpperBound = PsiType.getJavaLangObject(myContext.getManager(), getResolveScope());
   }
 
-  private static RecursionGuard guard = RecursionManager.createGuard("captureGuard");
+  public static RecursionGuard guard = RecursionManager.createGuard("captureGuard");
+
+  public static boolean isNoCapture() {
+    return !guard.currentStack().isEmpty();
+  }
   
   @Override
   public boolean equals(Object o) {
@@ -86,7 +90,7 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
         }
       });
 
-      if (sameUpperBounds != null && sameUpperBounds) {
+      if (sameUpperBounds == null || sameUpperBounds) {
         return true;
       }
     }

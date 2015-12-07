@@ -609,8 +609,8 @@ public final class PsiUtil extends PsiUtilCore {
    * would be equivalent
    */
   public static boolean equalOnEquivalentClasses(PsiClassType thisClassType, @NotNull PsiClass aClass, PsiClassType otherClassType, @NotNull PsiClass bClass) {
-    final PsiClassType capture1 = (PsiClassType)captureToplevelWildcards(thisClassType, aClass);
-    final PsiClassType capture2 = (PsiClassType)captureToplevelWildcards(otherClassType, bClass);
+    final PsiClassType capture1 = PsiCapturedWildcardType.isNoCapture() ? thisClassType : (PsiClassType)captureToplevelWildcards(thisClassType, aClass);
+    final PsiClassType capture2 = PsiCapturedWildcardType.isNoCapture() ? otherClassType : (PsiClassType)captureToplevelWildcards(otherClassType, bClass);
 
     final PsiClassType.ClassResolveResult result1 = capture1.resolveGenerics();
     final PsiClassType.ClassResolveResult result2 = capture2.resolveGenerics();
@@ -806,7 +806,7 @@ public final class PsiUtil extends PsiUtilCore {
       PsiType originalBound = !((PsiWildcardType)substituted).isSuper() ? ((PsiWildcardType)substituted).getBound() : null;
       glb = originalBound;
       for (PsiType boundType : boundTypes) {
-        PsiType substitutedBoundType = captureSubstitutor.substitute(boundType);
+        final PsiType substitutedBoundType = captureSubstitutor.substitute(boundType);
         if (substitutedBoundType != null && !(substitutedBoundType instanceof PsiWildcardType) &&
             !substitutedBoundType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
           if (originalBound instanceof PsiArrayType &&
@@ -816,16 +816,11 @@ public final class PsiUtil extends PsiUtilCore {
             continue;
           }
 
-          if (originalBound == null ||
-              !TypeConversionUtil.erasure(substitutedBoundType).isAssignableFrom(TypeConversionUtil.erasure(originalBound)) &&
-              !TypeConversionUtil.erasure(substitutedBoundType).isAssignableFrom(originalBound)) { //erasure is essential to avoid infinite recursion
-
-            if (glb == null) {
-              glb = substitutedBoundType;
-            }
-            else {
-              glb = GenericsUtil.getGreatestLowerBound(glb, substitutedBoundType);
-            }
+          if (glb == null) {
+            glb = substitutedBoundType;
+          }
+          else {
+            glb = GenericsUtil.getGreatestLowerBound(glb, substitutedBoundType);
           }
         }
       }
