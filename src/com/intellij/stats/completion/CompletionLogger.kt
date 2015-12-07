@@ -53,16 +53,16 @@ class CompletionFileLoggerProvider(val filePathProvider: FilePathProvider) : Com
 abstract class CompletionLogger {
     
     abstract fun completionStarted(items: List<LookupStringWithRelevance>)
-    
-    abstract fun downPressed(pos: Int, itemName: String)
-    
-    abstract fun upPressed(pos: Int, itemName: String)
-    
-    abstract fun backspacePressed(pos: Int, itemName: String, toRelevanceDataList: List<LookupStringWithRelevance>)
+
+    abstract fun downPressed(pos: Int, itemName: String, completionList: List<LookupStringWithRelevance>)
+
+    abstract fun upPressed(pos: Int, itemName: String, completionList: List<LookupStringWithRelevance>)
+
+    abstract fun backspacePressed(pos: Int, itemName: String, newCompletionList: List<LookupStringWithRelevance>)
     
     abstract fun itemSelectedCompletionFinished(pos: Int, itemName: String)
-    
-    abstract fun charTyped(c: Char, items: List<LookupStringWithRelevance>)
+
+    abstract fun charTyped(c: Char, newCompletionList: List<LookupStringWithRelevance>)
     
     abstract fun completionCancelled()
     
@@ -90,13 +90,7 @@ class CompletionFileLogger(private val installationUID: String,
     }
     
     fun convertCompletionList(items: List<LookupStringWithRelevance>): String {
-        items.forEach {
-            val lookupString = it.item
-            var id = itemsToId[lookupString]
-            if (id == null) {
-                itemsToId[lookupString] = itemsToId.size
-            }
-        }
+        addUntrackedItemsToIdMap(items)
         
         val builder = StringBuilder()
         with(builder, {
@@ -113,28 +107,43 @@ class CompletionFileLogger(private val installationUID: String,
         
         return builder.toString()
     }
-    
 
-    override fun downPressed(pos: Int, itemName: String) {
+    private fun addUntrackedItemsToIdMap(items: List<LookupStringWithRelevance>) {
+        items.forEach {
+            val lookupString = it.item
+            var id = itemsToId[lookupString]
+            if (id == null) {
+                itemsToId[lookupString] = itemsToId.size
+            }
+        }
+    }
+
+    override fun downPressed(pos: Int, itemName: String, completionList: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.DOWN)
         builder.nextWrappedToken("POS", pos)
+        if (itemsToId[itemName] == null) {
+            addUntrackedItemsToIdMap(completionList)
+        }
         builder.nextWrappedToken("ID", itemsToId[itemName]!!)
         log(builder)
     }
 
-    override fun upPressed(pos: Int, itemName: String) {
+    override fun upPressed(pos: Int, itemName: String, completionList: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.UP)
         builder.nextWrappedToken("POS", pos)
+        if (itemsToId[itemName] == null) {
+            addUntrackedItemsToIdMap(completionList)
+        }
         builder.nextWrappedToken("ID", itemsToId[itemName]!!)
         log(builder)
     }
 
-    override fun backspacePressed(pos: Int, itemName: String, toRelevanceDataList: List<LookupStringWithRelevance>) {
+    override fun backspacePressed(pos: Int, itemName: String, newCompletionList: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.BACKSPACE)
         builder.nextWrappedToken("POS", pos)
         builder.nextWrappedToken("COMP_LIST_LEN", itemName.length)
         builder.nextWrappedToken("ID", itemsToId[itemName]!!)
-        builder.nextToken(toIdsList(toRelevanceDataList))
+        builder.nextToken(toIdsList(newCompletionList))
         log(builder)
     }
 
@@ -145,10 +154,10 @@ class CompletionFileLogger(private val installationUID: String,
         log(builder)
     }
 
-    override fun charTyped(c: Char, items: List<LookupStringWithRelevance>) {
+    override fun charTyped(c: Char, newCompletionList: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.TYPE)
-        builder.nextWrappedToken("COMP_LIST_LEN", items.size)
-        builder.nextToken(toIdsList(items))
+        builder.nextWrappedToken("COMP_LIST_LEN", newCompletionList.size)
+        builder.nextToken(toIdsList(newCompletionList))
         log(builder)
     }
     
