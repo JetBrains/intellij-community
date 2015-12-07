@@ -299,7 +299,19 @@ public class UrlClassLoader extends ClassLoader {
 
   public static void loadPlatformLibrary(@NotNull String libName) {
     String libFileName = mapLibraryName(libName);
-    String libPath = PathManager.getBinPath() + "/" + libFileName;
+
+    String libPath = null;
+    String jarPath = PathManager.getJarPathForClass(UrlClassLoader.class);
+    if (jarPath != null) {
+      File jarDirectoryPath = new File(jarPath).getParentFile();
+      File libFile = new File(jarDirectoryPath, libFileName);
+      if (libFile.exists()) {
+        libPath = libFile.getPath();
+      }
+    }
+    if (libPath == null) {
+      libPath = PathManager.getBinPath() + "/" + libFileName;
+    }
 
     if (!new File(libPath).exists()) {
       String platform = getPlatformName();

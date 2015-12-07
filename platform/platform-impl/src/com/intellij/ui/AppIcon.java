@@ -425,6 +425,8 @@ public abstract class AppIcon {
     private static void writeTransparentIcoImageWithSanselan(BufferedImage src, OutputStream os)
       throws ImageWriteException, IOException {
 
+      LOG.assertTrue(BufferedImage.TYPE_INT_ARGB == src.getType());
+
       int bitCount = 32;
 
       BinaryOutputStream bos = new BinaryOutputStream(os, BinaryConstants.BYTE_ORDER_INTEL);
