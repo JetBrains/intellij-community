@@ -74,7 +74,7 @@ class Test {
         myFixture.completeBasic()
         
         myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)
-        verify(mockLogger).upPressed(Matchers.anyInt(), Matchers.anyString())
+        verify(mockLogger).upPressed(Matchers.anyInt(), Matchers.anyString(), Matchers.anyListOf(LookupStringWithRelevance::class.java))
     }
     
     fun `test down button`() {
@@ -82,7 +82,7 @@ class Test {
         myFixture.completeBasic()
 
         myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
-        verify(mockLogger).downPressed(Matchers.anyInt(), Matchers.anyString())
+        verify(mockLogger).downPressed(Matchers.anyInt(), Matchers.anyString(), Matchers.anyListOf(LookupStringWithRelevance::class.java))
     }
     
     fun `test completion started`() {

@@ -170,7 +170,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
         
         val current = lookup.currentItem
         val index = lookup.items.indexOf(current)
-        logger.downPressed(index, current!!.lookupString)
+        logger.downPressed(index, current!!.lookupString, lookup.toRelevanceDataList())
     }
 
     override fun upPressed() {
@@ -178,7 +178,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
         
         val current = lookup.currentItem
         val index = lookup.items.indexOf(current)
-        logger.upPressed(index, current!!.lookupString)
+        logger.upPressed(index, current!!.lookupString, lookup.toRelevanceDataList())
     }
 
     override fun backSpacePressed() {
