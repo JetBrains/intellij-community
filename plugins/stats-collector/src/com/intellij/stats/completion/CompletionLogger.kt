@@ -1,4 +1,4 @@
-package com.stats.completion
+package com.intellij.stats.completion
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.ServiceManager

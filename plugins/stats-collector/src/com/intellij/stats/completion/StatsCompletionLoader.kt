@@ -1,4 +1,4 @@
-package com.stats.completion
+package com.intellij.stats.completion
 
 import com.intellij.codeInsight.lookup.LookupAdapter
 import com.intellij.codeInsight.lookup.LookupEvent
@@ -20,7 +20,7 @@ class CompletionTrackerInitializer(project: Project): AbstractProjectComponent(p
     private val lookupTrackerInitializer = PropertyChangeListener {
         val lookup = it.newValue
         if (lookup is LookupImpl) {
-            val logger = CompletionLoggerProvider.getInstance().newCompletionLogger()
+            val logger = CompletionLoggerProvider.Factory.getInstance().newCompletionLogger()
             val tracker = CompletionActionsTracker(lookup, logger)
             lookupActionsTracker.listener = tracker
             lookup.addLookupListener(tracker)
@@ -122,8 +122,8 @@ fun LookupImpl.toRelevanceDataList(): List<LookupStringWithRelevance> {
 
 
 class CompletionActionsTracker(private val lookup: LookupImpl,
-                               private val logger: CompletionLogger) : CompletionPopupListener, 
-                                                                       PrefixChangeListener, 
+                               private val logger: CompletionLogger) : CompletionPopupListener,
+        PrefixChangeListener, 
                                                                        LookupAdapter() 
 {
 

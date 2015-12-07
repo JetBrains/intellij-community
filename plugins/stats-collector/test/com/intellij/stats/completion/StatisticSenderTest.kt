@@ -1,4 +1,4 @@
-package com.stats.completion
+package com.intellij.stats.completion
 
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
