@@ -82,7 +82,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   // You must update all existing default configurations accordingly
   private static final int VERSION = 16;
-  private static final Key<FileType> FILE_TYPE_KEY = Key.create("FILE_TYPE_KEY");
+  private static final ThreadLocal<Pair<VirtualFile, FileType>> FILE_TYPE_FIXED_TEMPORARILY = new ThreadLocal<Pair<VirtualFile, FileType>>();
+
   // cached auto-detected file type. If the file was auto-detected as plain text or binary
   // then the value is null and AUTO_DETECTED_* flags stored in packedFlags are used instead.
   static final Key<FileType> DETECTED_FROM_CONTENT_FILE_TYPE_KEY = Key.create("DETECTED_FROM_CONTENT_FILE_TYPE_KEY");
@@ -470,10 +471,26 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return ObjectUtils.notNull(type, UnknownFileType.INSTANCE);
   }
 
-  public void cacheFileType(@NotNull VirtualFile file, @Nullable FileType fileType) {
-    file.putUserData(FILE_TYPE_KEY, fileType);
+  public void freezeFileTypeTemporarilyIn(@NotNull VirtualFile file, @NotNull Runnable runnable) {
+    FileType fileType = file.getFileType();
+    Pair<VirtualFile, FileType> old = FILE_TYPE_FIXED_TEMPORARILY.get();
+    FILE_TYPE_FIXED_TEMPORARILY.set(Pair.create(file, fileType));
     if (toLog()) {
-      log("F: Cached file type for "+file.getName()+" to "+(fileType == null ? null : fileType.getName()));
+      log("F: freezeFileTypeTemporarilyIn(" + file.getName() + ") to " + fileType.getName()+" in "+Thread.currentThread());
+    }
+    try {
+      runnable.run();
+    }
+    finally {
+      if (old == null) {
+        FILE_TYPE_FIXED_TEMPORARILY.remove();
+      }
+      else {
+        FILE_TYPE_FIXED_TEMPORARILY.set(old);
+      }
+      if (toLog()) {
+        log("F: unfreezeFileType(" + file.getName() + ") in "+Thread.currentThread());
+      }
     }
   }
 
@@ -491,13 +508,17 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @Nullable // null means all conventional detect methods returned UnknownFileType.INSTANCE, have to detect from content
   private FileType getOrDetectByFile(@NotNull VirtualFile file) {
-    FileType fileType = file.getUserData(FILE_TYPE_KEY);
-    if (fileType != null) {
+    Pair<VirtualFile, FileType> fixedType = FILE_TYPE_FIXED_TEMPORARILY.get();
+    if (fixedType != null && fixedType.getFirst().equals(file)) {
+      FileType fileType = fixedType.getSecond();
+      if (toLog()) {
+        log("F: getOrDetectByFile(" + file.getName() + ") was frozen to " + fileType.getName()+" in "+Thread.currentThread());
+      }
       return fileType;
     }
 
     if (file instanceof LightVirtualFile) {
-      fileType = ((LightVirtualFile)file).getAssignedFileType();
+      FileType fileType = ((LightVirtualFile)file).getAssignedFileType();
       if (fileType != null) {
         return fileType;
       }
@@ -512,7 +533,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
 
-    fileType = getFileTypeByFileName(file.getNameSequence());
+    FileType fileType = getFileTypeByFileName(file.getNameSequence());
     if (fileType == UnknownFileType.INSTANCE) {
       fileType = null;
     }
