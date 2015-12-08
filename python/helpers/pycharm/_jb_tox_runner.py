@@ -39,8 +39,10 @@ class _Reporter(Reporter):
         super(_Reporter, self).error(msg)
         name = teamcity.current_test_name()
         if name:
-            teamcity.testError(name, msg)
-            if name == teamcity.topmost_suite:
+            if name != teamcity.topmost_suite:
+                teamcity.testFailed(name, msg)
+            else:
+                teamcity.testFailed("ERROR", msg)
                 teamcity.testSuiteFinished(name)
         else:
             sys.stderr.write(msg)
