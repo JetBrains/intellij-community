@@ -13,17 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*******************************************************************************
- * Copyright (c) 2014 Brainwy Software Ltda.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     Fabio Zadrozny
- *******************************************************************************/
+
+
 package com.intellij.execution.process;
+
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -32,25 +27,22 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.common.base.Joiner;
-import com.intellij.openapi.diagnostic.Logger;
-
-/*
+/**
  * This implementation uses the tasklist.exe from windows (must be on the path).
  * 
  * Use through PlatformUtils.
  */
 public class ProcessListWin32 implements IProcessList {
   private static final Logger LOG = Logger.getInstance(ProcessListWin32.class);
+
   private String myHelpersRoot;
 
   public ProcessListWin32(String helpersRoot) {
-
     myHelpersRoot = helpersRoot;
   }
 
+  @Override
   public ProcessInfo[] getProcessList() {
-
     try {
       return createFromWMIC();
     }
@@ -58,48 +50,35 @@ public class ProcessListWin32 implements IProcessList {
       //Keep on going for other alternatives
     }
 
-    Process p = null;
-    InputStream in = null;
-    ProcessInfo[] procInfos = new ProcessInfo[0];
-
     try {
-
+      Process p;
       try {
-        try {
-          p = ProcessUtils.createProcess(new String[]{"tasklist.exe", "/fo", "csv", "/nh", "/v"}, null,
-                                         null);
-        }
-        catch (Exception e) {
-          //Use fallback
-          return new ProcessListWin32Internal(myHelpersRoot).getProcessList();
-        }
-        in = p.getInputStream();
-        InputStreamReader reader = new InputStreamReader(in);
-        procInfos = parseListTasks(reader);
+        String[] command = {"tasklist.exe", "/fo", "csv", "/nh", "/v"};
+        p = ProcessUtils.createProcess(command, null, null);
+      }
+      catch (Exception e) {
+        //Use fallback
+        return new ProcessListWin32Internal(myHelpersRoot).getProcessList();
+      }
+      try {
+        return parseListTasks(p.getInputStream());
       }
       finally {
-        if (in != null) {
-          in.close();
-        }
-        if (p != null) {
-          p.destroy();
-        }
+        p.destroy();
       }
     }
-    catch (IOException e) {
-    }
-    return procInfos;
+    catch (IOException ignored) { }
+
+    return ProcessInfo.EMPTY_ARRAY;
   }
 
-  private ProcessInfo[] createFromWMIC() throws Exception {
-    Process p = ProcessUtils.createProcess(new String[]{"wmic.exe", "path", "win32_process", "get",
-                                             "Caption,Processid,Commandline"}, null,
-                                           null);
+  private static ProcessInfo[] createFromWMIC() throws Exception {
+    @SuppressWarnings("SpellCheckingInspection") String[] command = {"wmic.exe", "path", "win32_process", "get", "Caption,Processid,Commandline"};
+    Process p = ProcessUtils.createProcess(command, null, null);
+
     List<ProcessInfo> lst = new ArrayList<ProcessInfo>();
-    InputStream in = p.getInputStream();
-    InputStreamReader reader = new InputStreamReader(in);
+    BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
     try {
-      BufferedReader br = new BufferedReader(reader);
       String line = br.readLine();
       //We should have something as: Caption      CommandLine      ProcessId
       //From this we get the number of characters for each column
@@ -128,37 +107,42 @@ public class ProcessListWin32 implements IProcessList {
       if (lst.size() == 0) {
         throw new AssertionError("Error: no processes found");
       }
-      return lst.toArray(new ProcessInfo[0]);
+      return lst.toArray(new ProcessInfo[lst.size()]);
     }
     catch (Exception e) {
       LOG.error(e);
       throw e;
     }
     finally {
-      in.close();
+      br.close();
     }
   }
 
-  public ProcessInfo[] parseListTasks(InputStreamReader reader) {
-    BufferedReader br = new BufferedReader(reader);
-    CSVReader csvReader = new CSVReader(br);
-    List<ProcessInfo> processList = new ArrayList();
-    String[] next;
-    do {
-      try {
-        next = csvReader.readNext();
-        if (next != null) {
-          int pid = Integer.parseInt(next[1]);
-          String name = Joiner.on(" - ").join(next[0], next[next.length - 1]);
-          processList.add(new ProcessInfo(pid, name));
+  private static ProcessInfo[] parseListTasks(InputStream stream) throws IOException {
+    List<ProcessInfo> processList = ContainerUtil.newArrayList();
+
+    CSVReader reader = new CSVReader(new BufferedReader(new InputStreamReader(stream)));
+    try {
+      String[] next;
+      do {
+        try {
+          next = reader.readNext();
+          if (next != null) {
+            int pid = Integer.parseInt(next[1]);
+            String name = next[0] + " - " + next[next.length - 1];
+            processList.add(new ProcessInfo(pid, name));
+          }
+        }
+        catch (IOException e) {
+          break;
         }
       }
-      catch (IOException e) {
-        break;
-      }
+      while (next != null);
     }
-    while (next != null);
+    finally {
+      reader.close();
+    }
 
-    return processList.toArray(new ProcessInfo[processList.size()]);
+    return processList.isEmpty() ? ProcessInfo.EMPTY_ARRAY : processList.toArray(new ProcessInfo[processList.size()]);
   }
 }
