@@ -65,7 +65,7 @@ public class StudyProjectComponent implements ProjectComponent {
       updateCourse();
     }
 
-    registerStudyToolwindow(course);
+    registerStudyToolWindow(course);
     ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
       @Override
       public void run() {
@@ -83,7 +83,7 @@ public class StudyProjectComponent implements ProjectComponent {
     });
   }
 
-  public void registerStudyToolwindow(@Nullable final Course course) {
+  public void registerStudyToolWindow(@Nullable final Course course) {
     if (course != null && "PyCharm".equals(course.getCourseType())) {
       final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
       registerToolWindows(toolWindowManager);
