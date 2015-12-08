@@ -270,4 +270,33 @@ public abstract class Task implements TaskInfo, Progressive {
       return myShowWhenFocused;
     }
   }
+
+  public abstract static class WithResult<T, E extends Exception> extends Task.Modal {
+    private final Ref<T> myResult = Ref.create();
+    private final Ref<Throwable> myError = Ref.create();
+
+    public WithResult(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title, boolean canBeCancelled) {
+      super(project, title, canBeCancelled);
+    }
+
+    @Override
+    public final void run(@NotNull ProgressIndicator indicator) {
+      try {
+        myResult.set(compute(indicator));
+      }
+      catch (Throwable t) {
+        myError.set(t);
+      }
+    }
+
+    protected abstract T compute(@NotNull ProgressIndicator indicator) throws E;
+
+    @SuppressWarnings("unchecked")
+    public T getResult() throws E {
+      Throwable t = myError.get();
+      ExceptionUtil.rethrowUnchecked(t);
+      if (t != null) throw (E)t;
+      return myResult.get();
+    }
+  }
 }

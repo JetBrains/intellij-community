@@ -27,9 +27,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -38,7 +38,6 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nls;
@@ -50,13 +49,11 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
-import java.util.concurrent.Callable;
 
 public final class LoadTextUtil {
   @Nls private static final String AUTO_DETECTED_FROM_BOM = "auto-detected from BOM";
 
-  private LoadTextUtil() {
-  }
+  private LoadTextUtil() { }
 
   @NotNull
   private static Pair<CharSequence, String> convertLineSeparators(@NotNull CharBuffer buffer) {
@@ -248,7 +245,7 @@ public final class LoadTextUtil {
    *                             it is considered to be an external change if <code>requestor</code> is <code>null</code>.
    *                             See {@link com.intellij.openapi.vfs.VirtualFileEvent#getRequestor}
    * @param newModificationStamp new modification stamp or -1 if no special value should be set @return <code>Writer</code>
-   * @throws java.io.IOException if an I/O error occurs
+   * @throws IOException if an I/O error occurs
    * @see VirtualFile#getModificationStamp()
    */
   public static void write(@Nullable Project project,
@@ -371,35 +368,23 @@ public final class LoadTextUtil {
 
         Application app = ApplicationManager.getApplication();
         if (app != null && app.isDispatchThread() && !app.isWriteAccessAllowed() && !ourDecompileProgressStarted) {
-          final Ref<CharSequence> result = Ref.create(ArrayUtil.EMPTY_CHAR_SEQUENCE);
-          final Ref<Throwable> error = Ref.create();
-
           ourDecompileProgressStarted = true;
           try {
-            ProgressManager.getInstance().run(new Task.Modal(null, "Decompiling " + file.getName(), true) {
+            text = ProgressManager.getInstance().run(new Task.WithResult<CharSequence, RuntimeException>(null, "Decompiling " + file.getName(), true) {
               @Override
-              public void run(@NotNull ProgressIndicator indicator) {
-                indicator.setIndeterminate(true);
-                try {
-                  result.set(ApplicationUtil.runWithCheckCanceled(new Callable<CharSequence>() {
-                    @Override
-                    public CharSequence call() {
-                      return decompiler.decompile(file);
-                    }
-                  }, indicator));
-                }
-                catch (Throwable t) {
-                  error.set(t);
-                }
+              protected CharSequence compute(@NotNull ProgressIndicator indicator) {
+                return ApplicationUtil.runWithCheckCanceled(new Computable<CharSequence>() {
+                  @Override
+                  public CharSequence compute() {
+                    return decompiler.decompile(file);
+                  }
+                }, indicator);
               }
             });
           }
           finally {
             ourDecompileProgressStarted = false;
           }
-
-          ExceptionUtil.rethrowUnchecked(error.get());
-          text = result.get();
         }
         else {
           text = decompiler.decompile(file);
@@ -409,7 +394,8 @@ public final class LoadTextUtil {
         return text;
       }
 
-      throw new IllegalArgumentException("Attempt to load text for binary file which doesn't have a decompiler plugged in: " + file.getPresentableUrl() + ". File type: " + fileType.getName());
+      throw new IllegalArgumentException("Attempt to load text for binary file which doesn't have a decompiler plugged in: " +
+                                         file.getPresentableUrl() + ". File type: " + fileType.getName());
     }
 
     try {
