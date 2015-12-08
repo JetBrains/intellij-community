@@ -267,7 +267,7 @@ public class XmlCompletionData extends CompletionData {
     }
   }
 
-  public static XmlFile findDescriptorFile(final XmlTag tag, final XmlFile containingFile) {
+  public static XmlFile findDescriptorFile(@NotNull XmlTag tag, @NotNull XmlFile containingFile) {
     final XmlElementDescriptor descriptor = tag.getDescriptor();
     final XmlNSDescriptor nsDescriptor = descriptor != null ? descriptor.getNSDescriptor() : null;
     XmlFile descriptorFile = nsDescriptor != null

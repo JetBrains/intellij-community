@@ -447,7 +447,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
   public static PsiElement findDeclWithName(final String name, final @NotNull PsiElement element) {
     final XmlFile containingXmlFile = XmlUtil.getContainingFile(element);
     final XmlTag nearestTag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
-    final XmlFile xmlFile = nearestTag != null? XmlCompletionData.findDescriptorFile(nearestTag, containingXmlFile):containingXmlFile;
+    final XmlFile xmlFile = nearestTag != null && containingXmlFile != null ? XmlCompletionData.findDescriptorFile(nearestTag, containingXmlFile):containingXmlFile;
 
     if (xmlFile != null) {
       final PsiElement[] result = new PsiElement[1];
