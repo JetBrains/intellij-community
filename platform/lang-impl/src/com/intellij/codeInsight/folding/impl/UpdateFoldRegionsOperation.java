@@ -37,8 +37,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
-import static com.intellij.util.containers.ContainerUtil.newTroveMap;
+import static com.intellij.util.containers.ContainerUtil.*;
 
 /**
  * @author cdr
@@ -172,6 +171,8 @@ class UpdateFoldRegionsOperation implements Runnable {
     List<FoldRegion> toRemove = newArrayList();
     InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(myProject);
     for (FoldRegion region : foldingModel.getAllFoldRegions()) {
+      if (!region.isExpanded() && !isRegionInCaretLine(region)) continue;
+      
       PsiElement element = info.getPsiElement(region);
       if (element != null) {
         PsiFile containingFile = element.getContainingFile();
@@ -225,4 +226,10 @@ class UpdateFoldRegionsOperation implements Runnable {
     }
   }
 
+  private boolean isRegionInCaretLine(FoldRegion region) {
+    int regionStartLine = myEditor.getDocument().getLineNumber(region.getStartOffset());
+    int regionEndLine = myEditor.getDocument().getLineNumber(region.getEndOffset());
+    int caretLine = myEditor.getCaretModel().getLogicalPosition().line;
+    return caretLine >= regionStartLine && caretLine <= regionEndLine;
+  }
 }

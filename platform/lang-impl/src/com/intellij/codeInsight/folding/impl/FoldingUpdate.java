@@ -127,6 +127,7 @@ public class FoldingUpdate {
     };
     Set<Object> dependencies = new HashSet<Object>();
     dependencies.add(document);
+    dependencies.add(editor.getFoldingModel());
     for (FoldingDescriptor descriptor : elementsToFoldMap.values()) {
       dependencies.addAll(descriptor.getDependencies());
     }
