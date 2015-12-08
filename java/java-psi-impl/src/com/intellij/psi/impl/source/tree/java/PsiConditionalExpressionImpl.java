@@ -65,6 +65,15 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
     if (type2 == null) return type1;
 
     if (type1.equals(type2)) return type1;
+
+    if (PsiUtil.isLanguageLevel8OrHigher(this) &&
+        PsiPolyExpressionUtil.isPolyExpression(this) &&
+        !MethodCandidateInfo.ourOverloadGuard.currentStack().contains(PsiUtil.skipParenthesizedExprUp(this.getParent()))) {
+      //15.25.3 Reference Conditional Expressions 
+      // The type of a poly reference conditional expression is the same as its target type.
+      return InferenceSession.getTargetType(this);
+    }
+
     final int typeRank1 = TypeConversionUtil.getTypeRank(type1);
     final int typeRank2 = TypeConversionUtil.getTypeRank(type2);
 
@@ -89,14 +98,6 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
     }
     if (TypeConversionUtil.isNullType(type1) && !(type2 instanceof PsiPrimitiveType)) return type2;
     if (TypeConversionUtil.isNullType(type2) && !(type1 instanceof PsiPrimitiveType)) return type1;
-
-    if (PsiUtil.isLanguageLevel8OrHigher(this) && 
-        PsiPolyExpressionUtil.isPolyExpression(this) && 
-        !MethodCandidateInfo.ourOverloadGuard.currentStack().contains(PsiUtil.skipParenthesizedExprUp(this.getParent()))) {
-      //15.25.3 Reference Conditional Expressions 
-      // The type of a poly reference conditional expression is the same as its target type.
-      return InferenceSession.getTargetType(this);
-    }
 
     if (TypeConversionUtil.isAssignable(type1, type2, false)) return type1;
     if (TypeConversionUtil.isAssignable(type2, type1, false)) return type2;

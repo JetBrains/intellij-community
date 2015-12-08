@@ -416,7 +416,7 @@ public class IdeEventQueue extends EventQueue {
     if (!(e instanceof KeyEvent)) return e;
 
     KeyboardSettingsExternalizable externalizable = KeyboardSettingsExternalizable.getInstance();
-    if (externalizable == null || !externalizable.isNonEnglishKeyboardSupportEnabled()) return e;
+    if (!Registry.is("ide.non.english.keyboard.layout.fix") || externalizable == null || !externalizable.isNonEnglishKeyboardSupportEnabled()) return e;
 
     KeyEvent ke = (KeyEvent)e;
 

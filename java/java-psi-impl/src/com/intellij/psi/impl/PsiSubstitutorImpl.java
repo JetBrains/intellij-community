@@ -106,7 +106,16 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
 
   @Override
   public PsiType substituteWithBoundsPromotion(@NotNull PsiTypeParameter typeParameter) {
-    return PsiUtil.captureTypeParameterBounds(typeParameter, substitute(typeParameter), null, this);
+    final PsiType substituted = substitute(typeParameter);
+    if (substituted instanceof PsiWildcardType && !((PsiWildcardType)substituted).isSuper()) {
+      final PsiWildcardType wildcardType = (PsiWildcardType)substituted;
+      final PsiType glb = PsiCapturedWildcardType.captureUpperBound(typeParameter, wildcardType, this);
+      if (glb != null ) {
+        return glb instanceof PsiCapturedWildcardType ? ((PsiCapturedWildcardType)glb).getWildcard()
+                                                      : PsiWildcardType.createExtends(typeParameter.getManager(), glb);
+      }
+    }
+    return substituted;
   }
 
   public boolean equals(final Object o) {

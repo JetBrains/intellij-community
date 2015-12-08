@@ -864,7 +864,7 @@ public class FindManagerImpl extends FindManager {
     }
 
     boolean isReplacementLowercase = true;
-    for (int i = 0; i < toReplace.length(); i++) {
+    for (int i = 1; i < toReplace.length(); i++) {
       isReplacementLowercase = Character.isLowerCase(toReplace.charAt(i));
       if (!isReplacementLowercase) break;
     }

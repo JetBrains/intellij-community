@@ -71,6 +71,7 @@ import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.SerializationManagerEx;
 import com.intellij.util.*;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
@@ -676,7 +677,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       try {
         for(VirtualFile file:myChangedFilesCollector.getAllFilesToUpdate()) {
           if (!file.isValid()) {
-            removeDataFromIndicesForFile(file);
+            removeDataFromIndicesForFile(Math.abs(getIdMaskingNonIdBasedFile(file)));
           }
         }
         IndexingStamp.flushCaches();
@@ -700,8 +701,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
-  private void removeDataFromIndicesForFile(VirtualFile file) {
-    final int fileId = Math.abs(getIdMaskingNonIdBasedFile(file));
+  private void removeDataFromIndicesForFile(final int fileId) {
     final List<ID<?, ?>> states = IndexingStamp.getNontrivialFileIndexedStates(fileId);
     if (!states.isEmpty()) {
       ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
@@ -1657,20 +1657,21 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   public boolean isFileUpToDate(VirtualFile file) {
-    return !myChangedFilesCollector.myFilesToUpdate.contains(file);
+    return !myChangedFilesCollector.myFilesToUpdate.containsKey(Math.abs(getIdMaskingNonIdBasedFile(file)));
   }
 
   // caller is responsible to ensure no concurrent same document processing
   void processRefreshedFile(@NotNull Project project, @NotNull final com.intellij.ide.caches.FileContent fileContent) {
     // ProcessCanceledException will cause re-adding the file to processing list
     final VirtualFile file = fileContent.getVirtualFile();
-    if (myChangedFilesCollector.myFilesToUpdate.contains(file)) {
+    if (myChangedFilesCollector.myFilesToUpdate.containsKey(Math.abs(getIdMaskingNonIdBasedFile(file)))) {
       indexFileContent(project, fileContent);
     }
   }
 
   public void indexFileContent(@Nullable Project project, @NotNull com.intellij.ide.caches.FileContent content) {
     VirtualFile file = content.getVirtualFile();
+    final int fileId = Math.abs(getIdMaskingNonIdBasedFile(file));
 
     try {
       // if file was scheduled for update due to vfs events then it is present in myFilesToUpdate
@@ -1678,16 +1679,19 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       // todo this assumption isn't correct for vfs events happened between content loading and indexing itself
       // proper fix will when events handling will be out of direct execution by EDT
       if (!file.isValid() || isTooLarge(file)) {
-        removeDataFromIndicesForFile(file);
+        removeDataFromIndicesForFile(fileId);
+        if (file instanceof DeletedVirtualFileStub && ((DeletedVirtualFileStub)file).isResurrected()) {
+          doIndexFileContent(project, new com.intellij.ide.caches.FileContent(((DeletedVirtualFileStub)file).getOriginalFile()));
+        }
       } else {
         doIndexFileContent(project, content);
       }
     }
     finally {
-      IndexingStamp.flushCache(content.getVirtualFile());
+      IndexingStamp.flushCache(fileId);
     }
 
-    myChangedFilesCollector.myFilesToUpdate.remove(file);
+    myChangedFilesCollector.myFilesToUpdate.remove(fileId);
   }
 
   private void doIndexFileContent(@Nullable Project project, @NotNull final com.intellij.ide.caches.FileContent content) {
@@ -2011,10 +2015,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               }
             }
 
-            if (scheduleForUpdate) {
-              if (resetStamp) IndexingStamp.flushCache(file);
-              myChangedFilesCollector.scheduleForUpdate(file);
-            }
+          if (scheduleForUpdate) {
+            if (resetStamp) IndexingStamp.flushCache(fileId);
+            myChangedFilesCollector.scheduleForUpdate(file);
+          }
 
             if (!myUpToDateIndicesForUnsavedOrTransactedDocuments.isEmpty()) {
               clearUpToDateStateForPsiIndicesOfUnsavedDocuments(file);
@@ -2026,7 +2030,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private final class ChangedFilesCollector extends IndexedFilesListener {
-    private final Set<VirtualFile> myFilesToUpdate = ContainerUtil.newConcurrentSet();
+    private final ConcurrentIntObjectMap<VirtualFile> myFilesToUpdate = ContainerUtil.createConcurrentIntObjectMap();
 
     private final ManagingFS myManagingFS = ManagingFS.getInstance();
 
@@ -2078,19 +2082,34 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       return true;
     }
 
-    private void scheduleForUpdate(VirtualFile file) {
-      myFilesToUpdate.add(file);
+    void scheduleForUpdate(VirtualFile file) {
+      final int fileId = Math.abs(getIdMaskingNonIdBasedFile(file));
+      final VirtualFile previousVirtualFile = myFilesToUpdate.put(fileId, file);
+
+      if (previousVirtualFile instanceof DeletedVirtualFileStub &&
+          !previousVirtualFile.equals(file)) {
+        assert ((DeletedVirtualFileStub)previousVirtualFile).getOriginalFile().equals(file);
+        ((DeletedVirtualFileStub)previousVirtualFile).setResurrected(true);
+        myFilesToUpdate.put(fileId, previousVirtualFile);
+      }
     }
 
     private void removeScheduledFileFromUpdate(VirtualFile file) {
-      myFilesToUpdate.remove(file);
+      final int fileId = Math.abs(getIdMaskingNonIdBasedFile(file));
+      final VirtualFile previousVirtualFile = myFilesToUpdate.remove(fileId);
+
+      if (previousVirtualFile instanceof DeletedVirtualFileStub) {
+        assert ((DeletedVirtualFileStub)previousVirtualFile).getOriginalFile().equals(file);
+        ((DeletedVirtualFileStub)previousVirtualFile).setResurrected(false);
+        myFilesToUpdate.put(fileId, previousVirtualFile);
+      }
     }
 
     public Collection<VirtualFile> getAllFilesToUpdate() {
       if (myFilesToUpdate.isEmpty()) {
         return Collections.emptyList();
       }
-      return new ArrayList<VirtualFile>(myFilesToUpdate);
+      return new ArrayList<VirtualFile>(myFilesToUpdate.values());
     }
 
     @Override
@@ -2218,14 +2237,13 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             }
           }
           FileContent fileContent = null;
-          int inputId = -1;
+          int inputId = Math.abs(getIdMaskingNonIdBasedFile(file));
           for (ID<?, ?> indexId : myNotRequiringContentIndices) {
             if (shouldIndexFile(file, indexId)) {
               oldStuff = false;
               try {
                 if (fileContent == null) {
                   fileContent = new FileContentImpl(file);
-                  inputId = Math.abs(getFileId(file));
                 }
                 updateSingleIndex(indexId, inputId, fileContent);
               }
@@ -2235,7 +2253,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               }
             }
           }
-          IndexingStamp.flushCache(file);
+          IndexingStamp.flushCache(inputId);
 
           if (oldStuff && file instanceof VirtualFileSystemEntry) {
             ((VirtualFileSystemEntry)file).setFileIndexed(true);
@@ -2329,11 +2347,12 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     myIndexableSetToProjectMap.remove(set);
 
     for (VirtualFile file : myChangedFilesCollector.getAllFilesToUpdate()) {
+      final int fileId = Math.abs(getIdMaskingNonIdBasedFile(file));
       if (!file.isValid()) {
-        removeDataFromIndicesForFile(file);
-        myChangedFilesCollector.myFilesToUpdate.remove(file);
+        removeDataFromIndicesForFile(fileId);
+        myChangedFilesCollector.myFilesToUpdate.remove(fileId);
       } else if (getIndexableSetForFile(file) == null) { // todo remove data from indices for removed
-        myChangedFilesCollector.myFilesToUpdate.remove(file);
+        myChangedFilesCollector.myFilesToUpdate.remove(fileId);
       }
     }
 

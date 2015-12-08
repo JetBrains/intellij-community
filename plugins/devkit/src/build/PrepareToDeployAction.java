@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.compiler.server.CompileServerPlugin;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -72,6 +74,8 @@ public class PrepareToDeployAction extends AnAction {
   @NonNls private static final String TEMP_PREFIX = "temp";
   @NonNls private static final String MIDDLE_LIB_DIR = "lib";
 
+  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Plugin DevKit Deployment");
+
   public void actionPerformed(final AnActionEvent e) {
     final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
     if (module != null && PluginModuleType.isOfType(module)) {
@@ -110,10 +114,11 @@ public class PrepareToDeployAction extends AnAction {
                                      }
                                      messageBuf.append(message);
                                    }
-                                   Messages.showInfoMessage(messageBuf.toString(),
-                                                            pluginModules.size() == 1
-                                                            ? DevKitBundle.message("success.deployment.message", pluginModules.get(0).getName())
-                                                            : DevKitBundle.message("success.deployment.message.all"));
+                                   final String title = pluginModules.size() == 1 ?
+                                                        DevKitBundle.message("success.deployment.message", pluginModules.get(0).getName()) :
+                                                        DevKitBundle.message("success.deployment.message.all");
+                                   NOTIFICATION_GROUP.createNotification(title, messageBuf.toString(),
+                                                                         NotificationType.INFORMATION, null).notify(project);
                                  }
                                }
                              }, project.getDisposed());
@@ -172,7 +177,6 @@ public class PrepareToDeployAction extends AnAction {
         }
       }
     }, DevKitBundle.message("prepare.for.deployment", pluginName), true, module.getProject());
-
   }
 
   @NotNull

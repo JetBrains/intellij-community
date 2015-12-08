@@ -17,7 +17,6 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -39,7 +38,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -54,7 +52,6 @@ import com.intellij.testFramework.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,7 +104,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     return new CodeInsightTestData();
   }
 
-  protected void configureByFile(@NonNls String filePath) throws Exception {
+  protected void configureByFile(String filePath) throws Exception {
     configureByFile(filePath, null);
   }
 
@@ -127,27 +124,21 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
   private void allowRootAccess(final String filePath) {
-    VfsRootAccess.allowRootAccess(filePath);
-    Disposer.register(myTestRootDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        VfsRootAccess.disallowRootAccess(filePath);
-      }
-    });
+    VfsRootAccess.allowRootAccess(myTestRootDisposable, filePath);
   }
 
-  protected VirtualFile configureByFile(@NonNls String filePath, @Nullable String projectRoot) throws Exception {
+  protected VirtualFile configureByFile(String filePath, @Nullable String projectRoot) throws Exception {
     VirtualFile vFile = findVirtualFile(filePath);
     File projectFile = projectRoot == null ? null : new File(getTestDataPath() + projectRoot);
 
     return configureByFile(vFile, projectFile);
   }
 
-  protected PsiFile configureByText(@NotNull FileType fileType, @NonNls @NotNull final String text) {
+  protected PsiFile configureByText(@NotNull FileType fileType, @NotNull final String text) {
     return configureByText(fileType, text, null);
   }
 
-  protected PsiFile configureByText(@NotNull final FileType fileType, @NonNls @NotNull final String text, @Nullable String _extension) {
+  protected PsiFile configureByText(@NotNull final FileType fileType, @NotNull final String text, @Nullable String _extension) {
     try {
       final String extension = _extension == null ? fileType.getDefaultExtension():_extension;
 
@@ -440,11 +431,11 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     myEditor.getSelectionModel().setSelection(selectionStart, selectionEnd);
   }
 
-  protected void checkResultByFile(@NonNls @NotNull String filePath) throws Exception {
+  protected void checkResultByFile(@NotNull String filePath) throws Exception {
     checkResultByFile(filePath, false);
   }
 
-  protected void checkResultByFile(@NonNls @NotNull final String filePath, final boolean stripTrailingSpaces) throws Exception {
+  protected void checkResultByFile(@NotNull final String filePath, final boolean stripTrailingSpaces) throws Exception {
     new WriteCommandAction<Document>(getProject()) {
       @SuppressWarnings("ConstantConditions")
       @Override
@@ -527,12 +518,12 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
   @NotNull
-  protected VirtualFile getVirtualFile(@NonNls @NotNull String filePath) {
+  protected VirtualFile getVirtualFile(@NotNull String filePath) {
     return findVirtualFile(filePath);
   }
 
   @NotNull
-  private VirtualFile findVirtualFile(@NonNls @NotNull String filePath) {
+  private VirtualFile findVirtualFile(@NotNull String filePath) {
     String absolutePath = getTestDataPath() + filePath;
     allowRootAccess(absolutePath);
     return VfsTestUtil.findFileByCaseSensitivePath(absolutePath);
@@ -577,7 +568,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     LightPlatformCodeInsightTestCase.deleteLine(myEditor,getProject());
   }
 
-  protected void type(@NonNls @NotNull String s) {
+  protected void type(@NotNull String s) {
     for (char c : s.toCharArray()) {
       type(c);
     }
@@ -604,14 +595,14 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
   @NotNull
-  protected PsiClass findClass(@NotNull @NonNls final String name) {
+  protected PsiClass findClass(@NotNull final String name) {
     final PsiClass aClass = myJavaFacade.findClass(name, ProjectScope.getProjectScope(getProject()));
     assertNotNull("Class " + name + " not found", aClass);
     return aClass;
   }
 
   @NotNull
-  protected PsiPackage findPackage(@NotNull @NonNls final String name) {
+  protected PsiPackage findPackage(@NotNull final String name) {
     final PsiPackage aPackage = myJavaFacade.findPackage(name);
     assertNotNull("Package " + name + " not found", aPackage);
     return aPackage;

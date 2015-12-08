@@ -416,6 +416,17 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assert JavaPsiFacade.getInstance(project).findClass("Foo3", scope)
   }
 
+  public void "test rename file invalidates indices in right order"() throws IOException {
+    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+
+    for(def i = 0; i < 100; ++i) {
+      final VirtualFile file = myFixture.addFileToProject("foo/Foo" + i + ".java", "package foo; class Foo" + i + " {}").getVirtualFile();
+      assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("foo.Foo" + i, scope));
+      file.rename(this, "Bar" + i + ".java");
+      assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("foo.Foo" + i, scope));
+    }
+  }
+
   public void "test do not collect stub tree while holding stub elements"() throws IOException {
     final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile();
 

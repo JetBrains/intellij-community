@@ -516,7 +516,7 @@ public class FileWatcherTest extends PlatformTestCase {
     File subDir = createTestDir(targetDir, "sub");
     File file = createTestFile(subDir, "test.txt");
     File rootFile = createSubst(targetDir.getPath());
-    VfsRootAccess.allowRootAccess(rootFile.getPath());
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), rootFile.getPath());
     VirtualFile vfsRoot = myFileSystem.findFileByIoFile(rootFile);
 
     try {
@@ -557,7 +557,6 @@ public class FileWatcherTest extends PlatformTestCase {
         ((NewVirtualFile)vfsRoot).markDirty();
         myFileSystem.refresh(false);
       }
-      VfsRootAccess.disallowRootAccess(rootFile.getPath());
     }
   }
 

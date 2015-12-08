@@ -621,6 +621,11 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     FindUtil.replace(myProject, myEditor, 0, model);
     assertEquals("Foo foo FOO", myEditor.getDocument().getText());
 
+    model.setStringToFind("Foo");
+    model.setStringToReplace("Bar");
+    FindUtil.replace(myProject, myEditor, 0, model);
+    assertEquals("Bar bar BAR", myEditor.getDocument().getText());
+
     configureByText(FileTypes.PLAIN_TEXT, "Bar bar");
 
     model.setStringToFind("bar");

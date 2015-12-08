@@ -175,6 +175,7 @@ public class VfsRootAccess {
 
   @TestOnly
   public static void allowRootAccess(@NotNull Disposable disposable, @NotNull final String... roots) {
+    if (roots.length == 0) return;
     allowRootAccess(roots);
     Disposer.register(disposable, new Disposable() {
       @Override

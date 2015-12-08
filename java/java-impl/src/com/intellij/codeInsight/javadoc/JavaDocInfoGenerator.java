@@ -24,6 +24,7 @@ import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.javadoc.JavadocGeneratorRunProfile;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LangBundle;
+import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -328,24 +329,28 @@ public class JavaDocInfoGenerator {
     }
     if (targetElement == null) return null;
     
-    String rawFragment = null;
     if (fragment != null && targetElement instanceof PsiClass) {
       if (fragment.contains("-") || fragment.contains("(")) {
-        rawFragment = fragment;
-        fragment = null; // reference to a method
+        for (PsiMethod method : ((PsiClass)targetElement).getMethods()) {
+          Set<String> signatures = JavaDocumentationProvider.getHtmlMethodSignatures(method, true);
+          if (signatures.contains(fragment)) {
+            targetElement = method;
+            fragment = null;
+            break;
+          }
+        }
       }
       else  {
         for (PsiField field : ((PsiClass)targetElement).getFields()) {
           if (fragment.equals(field.getName())) {
-            rawFragment = fragment;
-            fragment = null; // reference to a field
+            targetElement = field;
+            fragment = null;
             break;
           }
         }
       }
     }
     return DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL + JavaDocUtil.getReferenceText(targetElement.getProject(), targetElement) +
-           (rawFragment == null ? "" : ('#' + rawFragment)) +
            (fragment == null ? "" : DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL_REF_SEPARATOR + fragment);
   }
 

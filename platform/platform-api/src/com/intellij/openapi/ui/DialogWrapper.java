@@ -1755,7 +1755,7 @@ public abstract class DialogWrapper {
   }
 
   public long getTypeAheadTimeoutMs() {
-    return 0l;
+    return 0L;
   }
 
   public boolean isToDispatchTypeAhead() {
