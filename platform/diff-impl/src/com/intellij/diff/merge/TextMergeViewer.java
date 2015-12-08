@@ -80,22 +80,19 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
   @NotNull private final MergeContext myMergeContext;
   @NotNull private final TextMergeRequest myMergeRequest;
 
-  @NotNull private final DiffContext myDiffContext;
-  @NotNull private final ContentDiffRequest myDiffRequest;
-
   @NotNull private final MyThreesideViewer myViewer;
 
   public TextMergeViewer(@NotNull MergeContext context, @NotNull TextMergeRequest request) {
     myMergeContext = context;
     myMergeRequest = request;
 
-    myDiffContext = new MergeUtil.ProxyDiffContext(myMergeContext);
-    myDiffRequest = new SimpleDiffRequest(myMergeRequest.getTitle(),
-                                          getDiffContents(myMergeRequest),
-                                          getDiffContentTitles(myMergeRequest));
-    myDiffRequest.putUserData(DiffUserDataKeys.FORCE_READ_ONLY_CONTENTS, new boolean[]{true, false, true});
+    DiffContext diffContext = new MergeUtil.ProxyDiffContext(myMergeContext);
+    ContentDiffRequest diffRequest = new SimpleDiffRequest(myMergeRequest.getTitle(),
+                                                           getDiffContents(myMergeRequest),
+                                                           getDiffContentTitles(myMergeRequest));
+    diffRequest.putUserData(DiffUserDataKeys.FORCE_READ_ONLY_CONTENTS, new boolean[]{true, false, true});
 
-    myViewer = new MyThreesideViewer(myDiffContext, myDiffRequest);
+    myViewer = new MyThreesideViewer(diffContext, diffRequest);
   }
 
   @NotNull
