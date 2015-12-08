@@ -24,6 +24,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -62,9 +63,7 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
   protected static String filterMessage(String message) {
     if (message == null) return null;
     @NonNls String ioExceptionPrefix = "java.io.IOException:";
-    if (message.startsWith(ioExceptionPrefix)) {
-      message = message.substring(ioExceptionPrefix.length());
-    }
+    message = StringUtil.trimStart(message, ioExceptionPrefix);
     return message;
   }
 

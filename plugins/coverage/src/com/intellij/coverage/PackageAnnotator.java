@@ -30,7 +30,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
@@ -523,7 +526,7 @@ public class PackageAnnotator {
   private static String getSourceToplevelFQName(String classFQVMName) {
     final int index = classFQVMName.indexOf('$');
     if (index > 0) classFQVMName = classFQVMName.substring(0, index);
-    if (classFQVMName.startsWith("/")) classFQVMName = classFQVMName.substring(1);
+    classFQVMName = StringUtil.trimStart(classFQVMName, "/");
     return classFQVMName.replaceAll("/", ".");
   }
 

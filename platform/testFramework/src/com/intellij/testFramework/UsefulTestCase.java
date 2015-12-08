@@ -149,10 +149,6 @@ public abstract class UsefulTestCase extends TestCase {
     ApplicationInfoImpl.setInPerformanceTest(isPerformanceTest);
     // turn off Disposer debugging for performance tests
     oldDisposerDebug = Disposer.setDebugMode(Disposer.isDebugMode() && !isPerformanceTest);
-
-    // various tests can use different mocking techniques for font-related code
-    // so we must reset our font cache, to avoid potential impact of tests on other tests 
-    ComplementaryFontsRegistry.resetCaches();
   }
 
   @Override

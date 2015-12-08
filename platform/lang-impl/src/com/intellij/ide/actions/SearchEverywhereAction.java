@@ -1330,9 +1330,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
     hit = hit.replace("  ", " "); //avoid extra spaces from mnemonics and xml conversion
     String text = hit.trim();
-    if (text.endsWith(":")) {
-      text = text.substring(0, text.length() - 1);
-    }
+    text = StringUtil.trimEnd(text, ":");
     return text;
   }
 

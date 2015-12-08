@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.Table;
 
@@ -128,7 +129,7 @@ public class PathMacroTable extends Table {
       final String value = pair.getSecond();
       if (value != null && value.trim().length() > 0) {
         String path = value.replace(File.separatorChar, '/');
-        if (path.endsWith("/")) path = path.substring(0, path.length() - 1);
+        path = StringUtil.trimEnd(path, "/");
         myPathMacros.setMacro(pair.getFirst(), path);
       }
     }

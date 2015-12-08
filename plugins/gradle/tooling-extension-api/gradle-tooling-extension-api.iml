@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="external-system-api" />
+    <orderEntry type="module" module-name="external-system-rt" />
     <orderEntry type="module" module-name="annotations" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />

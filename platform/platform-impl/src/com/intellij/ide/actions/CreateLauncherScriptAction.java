@@ -149,7 +149,7 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
     String runPath = PathManager.getHomePath();
     String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
     if (!SystemInfo.isMac) runPath += "/bin/" + productName + ".sh";
-    else if (runPath.endsWith(CONTENTS)) runPath = runPath.substring(0, runPath.length() - CONTENTS.length());
+    else runPath = StringUtil.trimEnd(runPath, CONTENTS);
 
     ClassLoader loader = CreateLauncherScriptAction.class.getClassLoader();
     assert loader != null;

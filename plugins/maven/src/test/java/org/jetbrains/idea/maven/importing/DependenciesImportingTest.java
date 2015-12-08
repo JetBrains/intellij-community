@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
@@ -1042,7 +1043,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
   public void testDependencyWithEnvironmentENVProperty() throws Exception {
     String envDir = FileUtil.toSystemIndependentName(System.getenv(getEnvVar()));
-    if (envDir.endsWith("/")) envDir = envDir.substring(0, envDir.length() - 1);
+    envDir = StringUtil.trimEnd(envDir, "/");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

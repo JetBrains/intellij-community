@@ -40,6 +40,7 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspectionBase;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -2118,13 +2119,19 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   private void waitForDaemon() {
-    long deadline = System.currentTimeMillis() + 10000;
+    long deadline = System.currentTimeMillis() + 60_000;
     while (!myDaemonCodeAnalyzer.isRunning()) {
-      if (System.currentTimeMillis() > deadline) fail("Too long waiting for daemon to start");
+      if (System.currentTimeMillis() > deadline) {
+        System.out.println(ThreadDumper.dumpThreadsToString());
+        fail("Too long waiting for daemon to start");
+      }
       UIUtil.dispatchAllInvocationEvents();
     }
     while (myDaemonCodeAnalyzer.isRunning()) {
-      if (System.currentTimeMillis() > deadline) fail("Too long waiting for daemon to finish");
+      if (System.currentTimeMillis() > deadline) {
+        System.out.println(ThreadDumper.dumpThreadsToString());
+        fail("Too long waiting for daemon to finish");
+      }
       UIUtil.dispatchAllInvocationEvents();
     }
   }

@@ -88,6 +88,11 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
       .toCanonicalPath(myModuleFileDirectoryPath + "/" + getInternalName() + ModuleFileType.DOT_DEFAULT_EXTENSION);
   }
 
+  @NotNull
+  public String getModuleFileDirectoryPath() {
+    return myModuleFileDirectoryPath;
+  }
+
   public void setModuleFileDirectoryPath(@NotNull String path) {
     myModuleFileDirectoryPath = path;
   }

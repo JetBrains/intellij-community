@@ -550,9 +550,7 @@ public class VfsUtilCore {
       uri = uri.substring("file:/".length());
       if (!SystemInfo.isWindows) uri = "/" + uri;
     }
-    else if (uri.startsWith("file:")) {
-      uri = uri.substring("file:".length());
-    }
+    else uri = StringUtil.trimStart(uri, "file:");
 
     VirtualFile file = null;
 

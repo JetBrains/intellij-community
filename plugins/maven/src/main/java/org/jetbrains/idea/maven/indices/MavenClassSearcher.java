@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
       while (matcher.find()) {
         String classFQName = matcher.group(1);
         classFQName = classFQName.replace("/", ".");
-        if (classFQName.startsWith(".")) classFQName = classFQName.substring(1);
+        classFQName = StringUtil.trimStart(classFQName, ".");
 
         String key = makeKey(classFQName, each);
 

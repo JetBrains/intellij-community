@@ -433,18 +433,19 @@ public final class IconLoader {
         scaledIcons = new HashMap<Float, Icon>(1);
       }
 
-      Icon result = scaledIcons.get(scaleFactor);
+      // TODO: consider clearing the cache on SCALE change
+      Icon result = scaledIcons.get(scaleFactor * SCALE);
       if (result != null) {
         return result;
       }
 
-      final Image image = ImageLoader.loadFromUrl(myUrl, UIUtil.isUnderDarcula(), scaleFactor >= 1.5f, filter);
+      final Image image = ImageLoader.loadFromUrl(myUrl, UIUtil.isUnderDarcula(), (scaleFactor * SCALE) >= 1.5f, filter);
       if (image != null) {
         int width = (int)(getIconWidth() * scaleFactor);
         int height = (int)(getIconHeight() * scaleFactor);
         final BufferedImage resizedImage = Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, width, height);
         result = getIcon(resizedImage);
-        scaledIcons.put(scaleFactor, result);
+        scaledIcons.put(scaleFactor * SCALE, result);
         return result;
       }
 

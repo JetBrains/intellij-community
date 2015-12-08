@@ -308,9 +308,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     List<OutputStream> streamsToClose = new ArrayList<OutputStream>();
 
     for (String relativePath : relativePaths) {
-      if (relativePath.startsWith("/")) {
-        relativePath = relativePath.substring(1);
-      }
+      relativePath = StringUtil.trimStart(relativePath, "/");
       final VirtualFile fromFile = fromDir.findFileByRelativePath(relativePath);
       assertNotNull(fromDir.getPath() + "/" + relativePath, fromFile);
       VirtualFile toFile = toDir.findFileByRelativePath(relativePath);
