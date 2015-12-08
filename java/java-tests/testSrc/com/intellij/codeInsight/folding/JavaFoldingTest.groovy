@@ -82,7 +82,7 @@ class Foo { List a; Map b; }
 
     myFixture.type 'import '
     myFixture.doHighlighting()
-    assert !myFixture.editor.foldingModel.getCollapsedRegionAtOffset(10)
+    assert !myFixture.editor.foldingModel.getCollapsedRegionAtOffset(46)
   }
 
   public void testJavadocLikeClassHeader() {
