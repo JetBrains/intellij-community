@@ -239,14 +239,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (clip.height < 0) return;
 
       Graphics2D g = IdeBackgroundUtil.withEditorBackground(g_, this);
-      AffineTransform old = g.getTransform();
-
-      if (isMirrored()) {
-        final AffineTransform transform = new AffineTransform(old);
-        transform.scale(-1, 1);
-        transform.translate(-getWidth(), 0);
-        g.setTransform(transform);
-      }
+      AffineTransform old = setMirrorTransformIfNeeded(g, 0, getWidth());
 
       EditorUIUtil.setupAntialiasing(g);
       Color backgroundColor = getBackground();
@@ -274,7 +267,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, hint);
       }
 
-      g.setTransform(old);
+      if (old != null) g.setTransform(old);
     }
     finally {
       ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintFinish();
@@ -376,8 +369,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     if (w == 0) return;
 
-    AffineTransform old = g.getTransform();
-    g.setTransform(getMirrorTransform(old, x, w));
+    AffineTransform old = setMirrorTransformIfNeeded(g, x, w);
     try {
       Color color = myEditor.getColorsScheme().getColor(EditorColors.ANNOTATIONS_COLOR);
       g.setColor(color != null ? color : JBColor.blue);
@@ -419,7 +411,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     }
     finally {
-      g.setTransform(old);
+      if (old != null) g.setTransform(old);
     }
   }
 
@@ -495,8 +487,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     g.setColor(color != null ? color : JBColor.blue);
     g.setFont(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
 
-    AffineTransform old = g.getTransform();
-    g.setTransform(getMirrorTransform(old, getLineNumberAreaOffset(), getLineNumberAreaWidth()));
+    AffineTransform old = setMirrorTransformIfNeeded(g, getLineNumberAreaOffset(), getLineNumberAreaWidth());
     try {
       for (int i = startLineNumber; i < endLineNumber; i++) {
         LogicalPosition logicalPosition = myEditor.visualToLogicalPosition(new VisualPosition(i, 0));
@@ -523,7 +514,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     }
     finally {
-      g.setTransform(old);
+      if (old != null) g.setTransform(old);
     }
   }
 
@@ -807,13 +798,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       public void process(int x, int y, GutterMark renderer) {
         Icon icon = scaleIcon(renderer.getIcon());
 
-        AffineTransform old = g.getTransform();
-        g.setTransform(getMirrorTransform(old, x, icon.getIconWidth()));
+        AffineTransform old = setMirrorTransformIfNeeded(g, x, icon.getIconWidth());
         try {
           icon.paintIcon(EditorGutterComponentImpl.this, g, x, y);
         }
         finally {
-          g.setTransform(old);
+          if (old != null) g.setTransform(old);
         }
       }
     });
@@ -1261,10 +1251,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return myEditor.getVerticalScrollbarOrientation() != EditorEx.VERTICAL_SCROLLBAR_RIGHT;
   }
 
-  @NotNull
-  private AffineTransform getMirrorTransform(@NotNull AffineTransform old, int offset, int width) {
-    final AffineTransform transform = new AffineTransform(old);
+  @Nullable
+  private AffineTransform setMirrorTransformIfNeeded(Graphics2D g, int offset, int width) {
     if (isMirrored()) {
+      AffineTransform old = g.getTransform();
+      AffineTransform transform = new AffineTransform(old);
       //transform.translate(getWidth(), 0); // revert mirroring transform
       //transform.scale(-1, 1); // revert mirroring transform
       //transform.translate(getWidth() - offset - width, 0); // move range start to the X==0
@@ -1272,8 +1263,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
       transform.scale(-1, 1);
       transform.translate(-offset * 2 - width, 0);
+      g.setTransform(transform);
+      return old;
     }
-    return transform;
+    else {
+      return null;
+    }
   }
 
   @Nullable
