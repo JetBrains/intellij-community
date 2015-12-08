@@ -342,17 +342,14 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       // It could happen between this init() EDT chunk and invokeLater().
       getEditor().setViewer(true);
 
-      setInitialOutputContent();
-
       // we have to collect contents here, because someone can modify document while we're starting rediff
-      List<DiffContent> contents = myRequest.getContents();
-      final List<CharSequence> sequences = ContainerUtil.map(contents, new Function<DiffContent, CharSequence>() {
+      List<DocumentContent> contents = myMergeRequest.getContents();
+      final List<CharSequence> sequences = ContainerUtil.map(contents, new Function<DocumentContent, CharSequence>() {
         @Override
-        public CharSequence fun(DiffContent diffContent) {
-          return ((DocumentContent)diffContent).getDocument().getImmutableCharSequence();
+        public CharSequence fun(DocumentContent content) {
+          return content.getDocument().getImmutableCharSequence();
         }
       });
-      final long outputModificationStamp = myMergeRequest.getOutputContent().getDocument().getModificationStamp();
 
       // we need invokeLater() here because viewer is partially-initialized (ex: there are no toolbar or status panel)
       // user can see this state while we're showing progress indicator, so we want let init() to finish.
@@ -364,7 +361,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
-              myCallback = doPerformRediff(sequences, outputModificationStamp, indicator);
+              myCallback = doPerformRediff(sequences, indicator);
             }
 
             @Override
@@ -384,7 +381,6 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
     @NotNull
     protected Runnable doPerformRediff(@NotNull List<CharSequence> sequences,
-                                       long outputModificationStamp,
                                        @NotNull ProgressIndicator indicator) {
       try {
         indicator.checkCanceled();
@@ -392,7 +388,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         List<MergeLineFragment> lineFragments = ByLine.compareTwoStep(sequences.get(0), sequences.get(1), sequences.get(2),
                                                                       ComparisonPolicy.DEFAULT, indicator);
 
-        return apply(lineFragments, outputModificationStamp);
+        return apply(lineFragments);
       }
       catch (DiffTooBigException e) {
         return applyNotification(DiffNotifications.createDiffTooBig());
@@ -413,13 +409,11 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     @NotNull
-    private Runnable apply(@NotNull final List<MergeLineFragment> fragments, final long outputModificationStamp) {
+    private Runnable apply(@NotNull final List<MergeLineFragment> fragments) {
       return new Runnable() {
         @Override
         public void run() {
-          if (myMergeRequest.getOutputContent().getDocument().getModificationStamp() != outputModificationStamp) {
-            setInitialOutputContent(); // in case if anyone changed output content since init() call. (unlikely, but possible)
-          }
+          setInitialOutputContent();
 
           clearDiffPresentation();
 
