@@ -289,5 +289,6 @@ public class ComplementaryFontsRegistry {
   @TestOnly
   public static void resetCaches() {
     ourUsedFonts.clear();
+    ourSharedDefaultFont = null;
   }
 }

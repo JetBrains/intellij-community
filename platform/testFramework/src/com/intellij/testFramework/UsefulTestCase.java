@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.impl.StartMarkAction;
+import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -148,6 +149,10 @@ public abstract class UsefulTestCase extends TestCase {
     ApplicationInfoImpl.setInPerformanceTest(isPerformanceTest);
     // turn off Disposer debugging for performance tests
     oldDisposerDebug = Disposer.setDebugMode(Disposer.isDebugMode() && !isPerformanceTest);
+
+    // various tests can use different mocking techniques for font-related code
+    // so we must reset our font cache, to avoid potential impact of tests on other tests 
+    ComplementaryFontsRegistry.resetCaches();
   }
 
   @Override
