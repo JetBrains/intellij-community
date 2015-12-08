@@ -208,7 +208,7 @@ public class Foundation {
   }
 
   private static long convertCFEncodingToNS(long cfEncoding) {
-    return myFoundationLibrary.CFStringConvertEncodingToNSStringEncoding(cfEncoding) & 0xffffffffffl;  // trim to C-type limits
+    return myFoundationLibrary.CFStringConvertEncodingToNSStringEncoding(cfEncoding) & 0xffffffffffL;  // trim to C-type limits
   }
 
   public static void cfRetain(ID id) {
