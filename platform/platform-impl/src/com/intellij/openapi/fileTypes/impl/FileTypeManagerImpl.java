@@ -21,7 +21,6 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.TransferToPooledThreadQueue;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -51,6 +50,7 @@ import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.BoundedTaskExecutorService;
 import com.intellij.util.containers.ConcurrentPackedBitsArray;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
@@ -63,12 +63,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.*;
 import java.net.URL;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -245,7 +248,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           if (toLog()) {
             log("F: after() queued to redetect: " + files);
           }
-          reDetectQueue.offerIfAbsent(files);
+
+          if (filesToRedetect.addAll(files)) {
+            awakeReDetectExecutor();
+          }
         }
       }
     });
@@ -340,23 +346,38 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     System.out.println(message + " - "+Thread.currentThread());
   }
 
-  private final TransferToPooledThreadQueue<Collection<VirtualFile>> reDetectQueue = new TransferToPooledThreadQueue<Collection<VirtualFile>>("File type re-detect", Conditions.alwaysFalse(), -1, new Processor<Collection<VirtualFile>>() {
-    @Override
-    public boolean process(Collection<VirtualFile> files) {
-      reDetect(files);
-      return true;
-    }
-  });
+  private final BoundedTaskExecutorService reDetectExecutor = new BoundedTaskExecutorService(PooledThreadExecutor.INSTANCE, 1, this);
+  private final BlockingQueue<VirtualFile> filesToRedetect = new LinkedBlockingDeque<VirtualFile>();
+
+  private void awakeReDetectExecutor() {
+    reDetectExecutor.submit(new Runnable() {
+      private static final int CHUNK = 10;
+      @Override
+      public void run() {
+        List<VirtualFile> files = new ArrayList<VirtualFile>();
+        int drained = filesToRedetect.drainTo(files, CHUNK);
+        reDetect(files);
+        if (drained == CHUNK) {
+          awakeReDetectExecutor();
+        }
+      }
+    });
+  }
 
   @TestOnly
   public void drainReDetectQueue() {
-    reDetectQueue.waitFor();
+    try {
+      reDetectExecutor.waitAllTasksExecuted();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @TestOnly
   @NotNull
   Collection<VirtualFile> dumpReDetectQueue() {
-    return ContainerUtil.flatten(reDetectQueue.dump());
+    return new ArrayList<VirtualFile>(filesToRedetect);
   }
 
   @TestOnly
@@ -603,6 +624,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private volatile FileAttribute autoDetectedAttribute;
   // read auto-detection flags from the persistent FS file attributes. If file attributes are absent, return 0 for flags
   // returns three bits value for AUTO_DETECTED_AS_TEXT_MASK, AUTO_DETECTED_AS_BINARY_MASK and AUTO_DETECT_WAS_RUN_MASK bits
+  // protected for Upsource
   protected byte readFlagsFromCache(@NotNull VirtualFile file) {
     DataInputStream stream = autoDetectedAttribute.readAttribute(file);
     boolean wasAutoDetectRun = false;
@@ -627,6 +649,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   // store auto-detection flags to the persistent FS file attributes
   // writes AUTO_DETECTED_AS_TEXT_MASK, AUTO_DETECTED_AS_BINARY_MASK bits only
+  // protected for Upsource
   protected void writeFlagsToCache(@NotNull VirtualFile file, int flags) {
     DataOutputStream stream = autoDetectedAttribute.writeAttribute(file);
     try {
