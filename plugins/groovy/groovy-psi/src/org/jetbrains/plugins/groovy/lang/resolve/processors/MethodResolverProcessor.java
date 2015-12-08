@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.util.InheritanceUtil;
@@ -82,10 +83,15 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
     myIsConstructor = isConstructor;
     myThisType = thisType;
     myArgumentTypes = argumentTypes;
+    if (byShape && myArgumentTypes != null) {
+      for (int i = 0; i < myArgumentTypes.length; i++) {
+        myArgumentTypes[i] = TypeConversionUtil.erasure(myArgumentTypes[i]);
+      }
+    }
     myAllVariants = allVariants;
     myByShape = byShape;
 
-    mySubstitutorComputer = new SubstitutorComputer(myThisType, myArgumentTypes, typeArguments, myPlace, myPlace.getParent());
+    mySubstitutorComputer = new SubstitutorComputer(myThisType, argumentTypes, typeArguments, myPlace, myPlace.getParent());
   }
 
 
@@ -95,22 +101,29 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
       return false;
     }
     if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod) element;
+      final PsiMethod method = (PsiMethod)element;
 
       if (method.isConstructor() != myIsConstructor) return true;
 
-      PsiSubstitutor substitutor = inferSubstitutor(method, state);
-
-      PsiElement resolveContext = state.get(RESOLVE_CONTEXT);
+      final PsiElement resolveContext = state.get(RESOLVE_CONTEXT);
       final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
+      final PsiSubstitutor partialSubstitutor = getSubstitutor(state);
+      final NotNullLazyValue<PsiSubstitutor> substitutorInferer
+        = myByShape ? NotNullLazyValue.createConstantValue(partialSubstitutor) : new NotNullLazyValue<PsiSubstitutor>() {
+        @NotNull
+        @Override
+        protected PsiSubstitutor compute() {
+          return mySubstitutorComputer.obtainSubstitutor(partialSubstitutor, method, resolveContext);
+        }
+      };
 
       boolean isAccessible = isAccessible(method);
       boolean isStaticsOK = isStaticsOK(method, resolveContext, false);
-      boolean isApplicable = PsiUtil.isApplicable(myArgumentTypes, method, substitutor, myPlace, myByShape);
+      boolean isApplicable = PsiUtil.isApplicable(myArgumentTypes, method, null, myPlace, true);
       boolean isValidResult = isStaticsOK && isAccessible && isApplicable;
 
       GroovyMethodResult candidate = new GroovyMethodResult(
-        method, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK, isValidResult
+        method, resolveContext, spreadState, partialSubstitutor, substitutorInferer, isAccessible, isStaticsOK, isValidResult
       );
 
       if (!myAllVariants && isValidResult) {
@@ -132,12 +145,10 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
   }
 
   @NotNull
-  private PsiSubstitutor inferSubstitutor(@NotNull PsiMethod method, @NotNull ResolveState state) {
+  private static PsiSubstitutor getSubstitutor(@NotNull final ResolveState state) {
     PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
     if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
-
-    return myByShape ? substitutor
-                     : mySubstitutorComputer.obtainSubstitutor(substitutor, method, state.get(RESOLVE_CONTEXT));
+    return substitutor;
   }
 
   @Override
@@ -230,10 +241,10 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
   //method1 has more general parameter types thn method2
   private boolean secondMethodIsPreferable(@NotNull GroovyMethodResult result1, @NotNull GroovyMethodResult result2) {
     PsiMethod method1 = result1.getElement();
-    PsiSubstitutor substitutor1 = result1.getSubstitutor();
+    PsiSubstitutor substitutor1 = result1.getSubstitutor(false);
     PsiElement resolveContext1 = result1.getCurrentFileResolveContext();
     PsiMethod method2 = result2.getElement();
-    PsiSubstitutor substitutor2 = result2.getSubstitutor();
+    PsiSubstitutor substitutor2 = result2.getSubstitutor(false);
     PsiElement resolveContext2 = result2.getCurrentFileResolveContext();
 
     final Boolean custom = GrMethodComparator.checkDominated(method1, substitutor1, method2, substitutor2, this);

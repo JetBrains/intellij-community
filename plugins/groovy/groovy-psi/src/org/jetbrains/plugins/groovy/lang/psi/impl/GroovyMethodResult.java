@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
@@ -24,25 +25,41 @@ import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 
 public class GroovyMethodResult extends GroovyResolveResultImpl {
 
+  private final NotNullLazyValue<PsiSubstitutor> mySubstitutorInferer;
+
   public GroovyMethodResult(@NotNull PsiMethod method,
                             @Nullable PsiElement resolveContext,
                             @Nullable SpreadState spreadState,
                             @NotNull PsiSubstitutor substitutor,
                             boolean isAccessible, boolean staticsOK) {
     super(method, resolveContext, spreadState, substitutor, isAccessible, staticsOK, true, true);
+    mySubstitutorInferer = NotNullLazyValue.createConstantValue(substitutor);
   }
 
-  public GroovyMethodResult(@NotNull PsiMethod method,
+  public GroovyMethodResult(@NotNull PsiMethod element,
                             @Nullable PsiElement resolveContext,
                             @Nullable SpreadState spreadState,
-                            @NotNull PsiSubstitutor substitutor,
+                            @NotNull PsiSubstitutor partialSubstitutor,
+                            @NotNull NotNullLazyValue<PsiSubstitutor> substitutorInferer,
                             boolean isAccessible, boolean staticsOK, boolean isApplicable) {
-    super(method, resolveContext, spreadState, substitutor, isAccessible, staticsOK, false, isApplicable);
+    super(element, resolveContext, spreadState, partialSubstitutor, isAccessible, staticsOK, false, isApplicable);
+    mySubstitutorInferer = substitutorInferer;
   }
 
   @NotNull
   @Override
   public PsiMethod getElement() {
     return (PsiMethod)super.getElement();
+  }
+
+  @NotNull
+  @Override
+  public PsiSubstitutor getSubstitutor() {
+    return mySubstitutorInferer.getValue();
+  }
+
+  @NotNull
+  public PsiSubstitutor getSubstitutor(boolean infer) {
+    return infer ? mySubstitutorInferer.getValue() : super.getSubstitutor();
   }
 }

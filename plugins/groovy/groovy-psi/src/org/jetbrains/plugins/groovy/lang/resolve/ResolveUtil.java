@@ -61,6 +61,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -543,34 +544,71 @@ public class ResolveUtil {
     return elements;
   }
 
+  /**
+   * The point is that we do not want to see repeating methods in completion.
+   * Candidates can have multiple toString() methods (e.g. from Object and from some inheritor) and we want to show only one.
+   */
   public static GroovyResolveResult[] filterSameSignatureCandidates(Collection<? extends GroovyResolveResult> candidates) {
-    GroovyResolveResult[] array = candidates.toArray(new GroovyResolveResult[candidates.size()]);
-    if (array.length == 1) return array;
+    if (candidates.size() == 0) return GroovyResolveResult.EMPTY_ARRAY;
+    if (candidates.size() == 1) return candidates.toArray(new GroovyResolveResult[candidates.size()]);
 
-    List<GroovyResolveResult> result = new ArrayList<GroovyResolveResult>();
-    result.add(array[0]);
+    final List<GroovyResolveResult> result = new ArrayList<GroovyResolveResult>();
+
+    final Iterator<? extends GroovyResolveResult> allIterator = candidates.iterator();
+    result.add(allIterator.next());
 
     Outer:
-    for (int i = 1; i < array.length; i++) {
-      PsiElement currentElement = array[i].getElement();
-      if (currentElement instanceof PsiMethod) {
-        PsiMethod currentMethod = (PsiMethod)currentElement;
-        for (Iterator<GroovyResolveResult> iterator = result.iterator(); iterator.hasNext();) {
-          final GroovyResolveResult otherResolveResult = iterator.next();
-          PsiElement element = otherResolveResult.getElement();
-          if (element instanceof PsiMethod) {
-            PsiMethod method = (PsiMethod)element;
-            if (dominated(currentMethod, array[i].getSubstitutor(), method, otherResolveResult.getSubstitutor())) {
-              continue Outer;
-            }
-            else if (dominated(method, otherResolveResult.getSubstitutor(), currentMethod, array[i].getSubstitutor())) {
-              iterator.remove();
-            }
-          }
+    while (allIterator.hasNext()) {
+      final GroovyResolveResult currentResult = allIterator.next();
+
+      final PsiMethod currentMethod;
+      final PsiSubstitutor currentSubstitutor;
+      if (currentResult instanceof GroovyMethodResult) {
+        final GroovyMethodResult currentMethodResult = (GroovyMethodResult)currentResult;
+        currentMethod = currentMethodResult.getElement();
+        currentSubstitutor = currentMethodResult.getSubstitutor(false);
+      }
+      else if (currentResult.getElement() instanceof PsiMethod) {
+        currentMethod = (PsiMethod)currentResult.getElement();
+        currentSubstitutor = currentResult.getSubstitutor();
+      }
+      else {
+        result.add(currentResult);
+        continue;
+      }
+
+      Inner:
+      for (Iterator<GroovyResolveResult> resultIterator = result.iterator(); resultIterator.hasNext(); ) {
+        final GroovyResolveResult otherResult = resultIterator.next();
+
+        final PsiMethod otherMethod;
+        final PsiSubstitutor otherSubstitutor;
+        if (otherResult instanceof GroovyMethodResult) {
+          final GroovyMethodResult otherMethodResult = (GroovyMethodResult)otherResult;
+          otherMethod = otherMethodResult.getElement();
+          otherSubstitutor = otherMethodResult.getSubstitutor(false);
+        }
+        else if (otherResult.getElement() instanceof PsiMethod) {
+          otherMethod = (PsiMethod)otherResult.getElement();
+          otherSubstitutor = otherResult.getSubstitutor();
+        }
+        else {
+          continue Inner;
+        }
+
+        if (dominated(currentMethod, currentSubstitutor, otherMethod, otherSubstitutor)) {
+          // if current method is dominated by other method
+          // then do not add current method to result and skip rest other methods
+          continue Outer;
+        }
+        else if (dominated(otherMethod, otherSubstitutor, currentMethod, currentSubstitutor)) {
+          // if other method is dominated by current method
+          // then remove other from result
+          resultIterator.remove();
         }
       }
 
-      result.add(array[i]);
+      result.add(currentResult);
     }
 
     return result.toArray(new GroovyResolveResult[result.size()]);
