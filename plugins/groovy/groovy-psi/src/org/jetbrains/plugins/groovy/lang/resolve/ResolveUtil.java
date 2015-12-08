@@ -588,8 +588,8 @@ public class ResolveUtil {
     if (params1.length != params2.length) return false;
 
     for (int i = 0; i < params2.length; i++) {
-      PsiType type1 = substitutor1.substitute(params1[i].getType());
-      PsiType type2 = substitutor2.substitute(params2[i].getType());
+      PsiType type1 = TypeConversionUtil.erasure(substitutor1.substitute(params1[i].getType()));
+      PsiType type2 = TypeConversionUtil.erasure(substitutor2.substitute(params2[i].getType()));
       if (!type1.equals(type2)) return false;
     }
 
