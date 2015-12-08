@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -25,7 +24,10 @@ import javax.swing.*;
  */
 public abstract class LineMarkerProviderDescriptor implements LineMarkerProvider {
 
-  @NotNull
+  /**
+   * Human-readable provider name for UI.
+   * @return null if no configuration needed
+   */
   public abstract String getName();
 
   @Nullable
