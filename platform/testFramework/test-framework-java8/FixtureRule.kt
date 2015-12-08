@@ -91,12 +91,12 @@ class ProjectRule() : ExternalResource() {
     }
   }
 
-  override final fun before() {
+  override public final fun before() {
     IdeaTestApplication.getInstance()
     TestRunnerUtil.replaceIdeEventQueueSafely()
   }
 
-  override fun after() {
+  override public fun after() {
     if (projectOpened.compareAndSet(true, false)) {
       sharedProject?.let { runInEdtAndWait { (ProjectManager.getInstance() as ProjectManagerImpl).closeProject(it, false, false, false) } }
     }

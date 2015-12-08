@@ -39,8 +39,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
                                                      val connection: C,
                                                      private val editorsProvider: XDebuggerEditorsProvider,
-                                                     private val smartStepIntoHandler: XSmartStepIntoHandler<*>?,
-                                                     protected val executionResult: ExecutionResult?) : XDebugProcess(session) {
+                                                     private val smartStepIntoHandler: XSmartStepIntoHandler<*>? = null,
+                                                     protected val executionResult: ExecutionResult? = null) : XDebugProcess(session) {
   protected val repeatStepInto: AtomicBoolean = AtomicBoolean()
   @Volatile protected var lastStep: StepAction? = null
   @Volatile protected var lastCallFrame: CallFrame? = null
