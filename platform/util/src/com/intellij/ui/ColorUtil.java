@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,9 +109,7 @@ public class ColorUtil {
    * @return Color object
    */
   public static Color fromHex(String str) {
-    if (str.startsWith("#")) {
-      str = str.substring(1);
-    }
+    str = StringUtil.trimStart(str, "#");
     if (str.length() == 3) {
       return new Color(
         17 * Integer.valueOf(String.valueOf(str.charAt(0)), 16).intValue(),

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.JBColor;
@@ -63,16 +64,16 @@ public class UseJBColorInspection extends InternalInspection {
             if (text.contains(".")) {
               text = text.substring(text.lastIndexOf('.'));
             }
-            if (text.startsWith(".")) {
-              text = text.substring(1);
-            }
+            text = StringUtil.trimStart(text, ".");
             if (text.equalsIgnoreCase("lightGray")) {
               text = "LIGHT_GRAY";
-            } else if (text.equalsIgnoreCase("darkGray")) {
+            }
+            else if (text.equalsIgnoreCase("darkGray")) {
               text = "DARK_GRAY";
             }
             final ProblemDescriptor descriptor = holder.getManager()
-              .createProblemDescriptor(expression, "Change to JBColor." + text.toUpperCase(), new ConvertToJBColorConstantQuickFix(text.toUpperCase()),
+              .createProblemDescriptor(expression, "Change to JBColor." + text.toUpperCase(),
+                                       new ConvertToJBColorConstantQuickFix(text.toUpperCase()),
                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
             holder.registerProblem(descriptor);
           }

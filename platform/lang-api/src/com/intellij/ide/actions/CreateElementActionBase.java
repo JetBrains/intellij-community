@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
@@ -115,9 +116,7 @@ public abstract class CreateElementActionBase extends AnAction {
   public static String filterMessage(String message) {
     if (message == null) return null;
     @NonNls final String ioExceptionPrefix = "java.io.IOException:";
-    if (message.startsWith(ioExceptionPrefix)) {
-      message = message.substring(ioExceptionPrefix.length());
-    }
+    message = StringUtil.trimStart(message, ioExceptionPrefix);
     return message;
   }
 

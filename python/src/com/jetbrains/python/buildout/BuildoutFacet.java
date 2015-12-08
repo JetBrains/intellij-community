@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -258,9 +258,7 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
     index++;
     while (index < lines.length && !lines[index].trim().equals("]")) {
       String line = lines[index].trim();
-      if (line.endsWith(",")) {
-        line = line.substring(0, line.length() - 1);
-      }
+      line = StringUtil.trimEnd(line, ",");
       if (line.startsWith("'") && line.endsWith("'")) {
         result.add(StringUtil.unescapeStringCharacters(line.substring(1, line.length() - 1)));
       }

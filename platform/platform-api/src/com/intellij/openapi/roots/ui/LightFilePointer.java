@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -70,9 +71,7 @@ public class LightFilePointer implements VirtualFilePointer {
 
   public static String toPresentableUrl(String url) {
     String path = VirtualFileManager.extractPath(url);
-    if (path.endsWith(JarFileSystem.JAR_SEPARATOR)) {
-      path = path.substring(0, path.length() - JarFileSystem.JAR_SEPARATOR.length());
-    }
+    path = StringUtil.trimEnd(path, JarFileSystem.JAR_SEPARATOR);
     return path.replace('/', File.separatorChar);
   }
 
