@@ -17,6 +17,7 @@ package com.intellij.testFramework.fixtures;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -102,6 +103,10 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
     myFixture.setTestDataPath(getTestDataPath());
 
     myModule = myFixture.getModule();
+
+    // various tests can use different mocking techniques for font-related code
+    // so we must reset our font cache, to avoid potential impact of tests on other tests 
+    ComplementaryFontsRegistry.resetCaches();
   }
 
   /**
