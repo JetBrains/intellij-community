@@ -3149,6 +3149,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
            + "', allow caret inside tab: " + mySettings.isCaretInsideTabs()
            + ", allow caret after line end: " + mySettings.isVirtualSpace()
            + ", soft wraps: " + (mySoftWrapModel.isSoftWrappingEnabled() ? "on" : "off")
+           + ", caret model: " + getCaretModel().dumpState()
            + ", soft wraps data: " + getSoftWrapModel().dumpState()
            + "\n\nfolding data: " + getFoldingModel().dumpState()
            + (myDocument instanceof DocumentImpl ? "\n\ndocument info: " + ((DocumentImpl)myDocument).dumpState() : "")

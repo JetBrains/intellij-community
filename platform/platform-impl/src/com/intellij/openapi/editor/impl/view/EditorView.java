@@ -469,6 +469,14 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   @NotNull
   @Override
   public String dumpState() {
-    return "[Size manager: " + mySizeManager.dumpState() + "]";
+    return "[prefix text: " + myPrefixText + 
+           ", prefix attributes: " + myPrefixAttributes + 
+           ", space width: " + myPlainSpaceWidth +
+           ", line height: " + myLineHeight +
+           ", descent: " + myDescent +
+           ", char height: " + myCharHeight +
+           ", max char width: " + myMaxCharWidth +
+           ", tab size: " + myTabSize + 
+           " ,size manager: " + mySizeManager.dumpState() + "]";
   }
 }

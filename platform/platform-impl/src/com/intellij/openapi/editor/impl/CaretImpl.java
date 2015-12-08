@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.diagnostic.Dumpable;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -47,7 +48,7 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.util.List;
 
-public class CaretImpl extends UserDataHolderBase implements Caret {
+public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.CaretImpl");
 
   private final EditorImpl myEditor;
@@ -1482,6 +1483,33 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
   @Override
   public boolean isAtBidiRunBoundary() {
     return myEditor.myUseNewRendering && myEditor.myView.isAtBidiRunBoundary(myVisibleCaret);
+  }
+
+  @NotNull
+  @Override
+  public String dumpState() {
+    return "{valid: " + isValid +
+           ", offset: " + myOffset +
+           ", logical pos: " + myLogicalCaret +
+           ", visual pos: " + myVisibleCaret +
+           ", visual line start: " + myVisualLineStart +
+           ", visual line end: " + myVisualLineEnd +
+           ", savedBeforeBulkCaretMarker: " + savedBeforeBulkCaretMarker +
+           ", skip change requests: " + mySkipChangeRequests +
+           ", desired selection start column: " + myDesiredSelectionStartColumn +
+           ", desired selection end column: " + myDesiredSelectionEndColumn +
+           ", report caret moves: " + myReportCaretMoves +
+           ", desired x: " + myDesiredX +
+           ", selection marker: " + mySelectionMarker +
+           ", rangeMarker start position: " + myRangeMarkerStartPosition +
+           ", rangeMarker end position: " + myRangeMarkerEndPosition +
+           ", rangeMarker end position is lead: " + myRangeMarkerEndPositionIsLead +
+           ", selection start before change: " + startBefore +
+           ", selection end after change: " + endBefore +
+           ", unknown direction: " + myUnknownDirection +
+           ", virtual space offset: " + myVirtualSpaceOffset +
+           ", virtual selection start offset: " + myStartVirtualOffset +
+           ", virtual selection end offset: " + myEndVirtualOffset + '}';
   }
 
   /**
