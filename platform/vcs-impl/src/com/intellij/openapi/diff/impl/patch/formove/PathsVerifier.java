@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
@@ -114,7 +115,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
     return affected;
   }
 
-  private void addAllFilePath(final Collection<VirtualFile> files, final Collection<FilePath> paths) {
+  private static void addAllFilePath(final Collection<VirtualFile> files, final Collection<FilePath> paths) {
     for (VirtualFile file : files) {
       paths.add(VcsUtil.getFilePath(file));
     }
@@ -122,7 +123,6 @@ public class PathsVerifier<BinaryType extends FilePatch> {
 
   @CalledInAwt
   public boolean nonWriteActionPreCheck() {
-    final List<CheckPath> checkers = new ArrayList<CheckPath>(myPatches.size());
     myDelayedPrecheckContext = new DelayedPrecheckContext(myProject);
     for (FilePatch patch : myPatches) {
       final CheckPath checker = getChecker(patch);
@@ -133,7 +133,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
     }
     final Collection<FilePatch> skipped = myDelayedPrecheckContext.doDelayed();
     mySkipped.addAll(skipped);
-    myPatches.remove(skipped);
+    myPatches.removeAll(skipped);
     return true;
   }
 
@@ -284,6 +284,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
       if (! checkExistsAndValid(beforeFile, myBeforeName)) {
         return false;
       }
+      assert beforeFile != null; // if beforeFile is null then checkExist returned false;
       myMovedFiles.put(beforeFile, new MovedFileData(afterFileParent, beforeFile, myPatch.getAfterFileName()));
       addPatch(myPatch, beforeFile);
       return true;
@@ -359,11 +360,11 @@ public class PathsVerifier<BinaryType extends FilePatch> {
     myWritableFiles.add(file);
   }
 
-  private String fileNotFoundMessage(final String path) {
+  private static String fileNotFoundMessage(final String path) {
     return VcsBundle.message("cannot.find.file.to.patch", path);
   }
 
-  private String fileAlreadyExists(final String path) {
+  private static String fileAlreadyExists(final String path) {
     return VcsBundle.message("cannot.apply.file.already.exists", path);
   }
 
@@ -411,7 +412,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
   }
 
 
-  private VirtualFile createFile(final VirtualFile parent, final String name) throws IOException {
+  private static VirtualFile createFile(final VirtualFile parent, final String name) throws IOException {
     return parent.createChildData(PatchApplier.class, name);
     /*final Ref<IOException> ioExceptionRef = new Ref<IOException>();
     final Ref<VirtualFile> result = new Ref<VirtualFile>();
@@ -458,7 +459,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
     final int size = (pieces.length - 1);
     for (int i = 0; i < size; i++) {
       final String piece = pieces[i];
-      if ("".equals(piece)) {
+      if (StringUtil.isEmptyOrSpaces(piece)) {
         continue;
       }
       if ("..".equals(piece)) {
