@@ -507,7 +507,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     @Override
     protected DefaultTreeModel buildTreeModel(List<AbstractFilePatchInProgress.PatchChange> changes,
                                               ChangeNodeDecorator changeNodeDecorator) {
-      TreeModelBuilder builder = new TreeModelBuilder(myProject, false);
+      TreeModelBuilder builder = new TreeModelBuilder(myProject, isShowFlatten());
       return builder.buildModel(ObjectsConvertor.convert(changes,
                                                          new Convertor<AbstractFilePatchInProgress.PatchChange, Change>() {
                                                            public Change convert(AbstractFilePatchInProgress.PatchChange o) {

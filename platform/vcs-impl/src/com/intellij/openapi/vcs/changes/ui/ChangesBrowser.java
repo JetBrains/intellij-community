@@ -90,7 +90,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
 
     myViewer = new ChangesTreeList<Change>(myProject, changes, capableOfExcludingChanges, highlightProblems, inclusionListener, decorator) {
       protected DefaultTreeModel buildTreeModel(final List<Change> changes, ChangeNodeDecorator changeNodeDecorator) {
-        TreeModelBuilder builder = new TreeModelBuilder(myProject, false);
+        TreeModelBuilder builder = new TreeModelBuilder(myProject, isShowFlatten());
         return builder.buildModel(changes, changeNodeDecorator);
       }
 
