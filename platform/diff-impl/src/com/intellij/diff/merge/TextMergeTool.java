@@ -221,7 +221,7 @@ public class TextMergeTool implements MergeTool {
         DiffUtil.registerAction(new IgnoreSelectedChangesSideAction(Side.LEFT, true), myPanel);
         DiffUtil.registerAction(new IgnoreSelectedChangesSideAction(Side.RIGHT, true), myPanel);
 
-        ProxyUndoRedoAction.register(getProject(), getEditor(ThreeSide.BASE), myContentPanel);
+        ProxyUndoRedoAction.register(getProject(), getEditor(), myContentPanel);
       }
 
       @Override
@@ -360,7 +360,7 @@ public class TextMergeTool implements MergeTool {
 
         // This is made to reduce unwanted modifications before rediff is finished.
         // It could happen between this init() EDT chunk and invokeLater().
-        getEditor(ThreeSide.BASE).setViewer(true);
+        getEditor().setViewer(true);
 
         setInitialOutputContent();
 
@@ -455,7 +455,7 @@ public class TextMergeTool implements MergeTool {
             myContentPanel.repaintDividers();
             myStatusPanel.update();
 
-            getEditor(ThreeSide.BASE).setViewer(false);
+            getEditor().setViewer(false);
 
             myInnerDiffWorker.onSettingsChanged();
             myInitialRediffFinished = true;
@@ -645,7 +645,7 @@ public class TextMergeTool implements MergeTool {
         if (!corruptedStates.isEmpty() && myUndoManager != null) {
           // document undo is registered inside onDocumentChange, so our undo() will be called after its undo().
           // thus thus we can avoid checks for isUndoInProgress() (to avoid modification of the same TextMergeChange by this listener)
-          myUndoManager.undoableActionPerformed(new BasicUndoableAction(getEditor(ThreeSide.BASE).getDocument()) {
+          myUndoManager.undoableActionPerformed(new BasicUndoableAction(getEditor().getDocument()) {
             @Override
             public void undo() throws UnexpectedUndoException {
               enterBulkChangeUpdateBlock();
@@ -725,7 +725,7 @@ public class TextMergeTool implements MergeTool {
                 }
               };
 
-              JComponent component = getEditor(ThreeSide.BASE).getComponent();
+              JComponent component = getEditor().getComponent();
               Point point = new Point(component.getWidth() / 2, JBUI.scale(5));
               Color bgColor = MessageType.INFO.getPopupBackground();
 
@@ -779,6 +779,11 @@ public class TextMergeTool implements MergeTool {
         return myModifierProvider;
       }
 
+      @NotNull
+      public EditorEx getEditor() {
+        return getEditor(ThreeSide.BASE);
+      }
+
       @Nullable
       private TextMergeChange getFirstUnresolvedChange(boolean acceptConflicts, @Nullable Side side) {
         for (TextMergeChange change : getAllChanges()) {
@@ -817,7 +822,7 @@ public class TextMergeTool implements MergeTool {
                                   @NotNull UndoConfirmationPolicy confirmationPolicy,
                                   boolean underBulkUpdate,
                                   @Nullable List<TextMergeChange> changes) {
-          super(project, getEditor(ThreeSide.BASE).getDocument(), commandName, commandGroupId, confirmationPolicy, underBulkUpdate);
+          super(project, getEditor().getDocument(), commandName, commandGroupId, confirmationPolicy, underBulkUpdate);
           myAffectedChanges = collectAffectedChanges(changes);
         }
 
@@ -1000,17 +1005,17 @@ public class TextMergeTool implements MergeTool {
                                              int newOutputStartLine,
                                              int newOutputEndLine) {
         LOG.assertTrue(myCurrentMergeCommand != null);
-        if (change.getStartLine(ThreeSide.BASE) != newOutputStartLine ||
-            change.getEndLine(ThreeSide.BASE) != newOutputEndLine) {
-          change.setStartLine(ThreeSide.BASE, newOutputStartLine);
-          change.setEndLine(ThreeSide.BASE, newOutputEndLine);
+        if (change.getStartLine() != newOutputStartLine ||
+            change.getEndLine() != newOutputEndLine) {
+          change.setStartLine(newOutputStartLine);
+          change.setEndLine(newOutputEndLine);
           reinstallHighlighter(change);
         }
 
         boolean beforeChange = true;
         for (TextMergeChange otherChange : getAllChanges()) {
-          int startLine = otherChange.getStartLine(ThreeSide.BASE);
-          int endLine = otherChange.getEndLine(ThreeSide.BASE);
+          int startLine = otherChange.getStartLine();
+          int endLine = otherChange.getEndLine();
           if (endLine < newOutputStartLine) continue;
           if (startLine > newOutputEndLine) break;
           if (otherChange == change) {
@@ -1021,8 +1026,8 @@ public class TextMergeTool implements MergeTool {
           int newStartLine = beforeChange ? Math.min(startLine, newOutputStartLine) : Math.max(startLine, newOutputEndLine);
           int newEndLine = beforeChange ? Math.min(endLine, newOutputStartLine) : Math.max(endLine, newOutputEndLine);
           if (startLine != newStartLine || endLine != newEndLine) {
-            otherChange.setStartLine(ThreeSide.BASE, newStartLine);
-            otherChange.setEndLine(ThreeSide.BASE, newEndLine);
+            otherChange.setStartLine(newStartLine);
+            otherChange.setEndLine(newEndLine);
             reinstallHighlighter(otherChange);
           }
         }
@@ -1051,10 +1056,10 @@ public class TextMergeTool implements MergeTool {
             continue;
           }
 
-          int directStart = directChange.getStartLine(ThreeSide.BASE);
-          int directEnd = directChange.getEndLine(ThreeSide.BASE);
-          int otherStart = otherChange.getStartLine(ThreeSide.BASE);
-          int otherEnd = otherChange.getEndLine(ThreeSide.BASE);
+          int directStart = directChange.getStartLine();
+          int directEnd = directChange.getEndLine();
+          int otherStart = otherChange.getStartLine();
+          int otherEnd = otherChange.getEndLine();
           if (otherEnd < directStart) {
             otherIndex++;
             continue;
@@ -1416,7 +1421,7 @@ public class TextMergeTool implements MergeTool {
           ThreeSide right = mySide.select(ThreeSide.BASE, ThreeSide.RIGHT);
           for (TextMergeChange mergeChange : myAllMergeChanges) {
             if (!mergeChange.isChange(mySide)) continue;
-            Color color = mergeChange.getDiffType().getColor(getEditor(ThreeSide.BASE));
+            Color color = mergeChange.getDiffType().getColor(getEditor());
             boolean isResolved = mergeChange.isResolved(mySide);
             if (!handler.process(mergeChange.getStartLine(left), mergeChange.getEndLine(left),
                                  mergeChange.getStartLine(right), mergeChange.getEndLine(right),

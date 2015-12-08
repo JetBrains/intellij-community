@@ -211,6 +211,14 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     }
   }
 
+  public int getStartLine() {
+    return myStartLines[1];
+  }
+
+  public int getEndLine() {
+    return myEndLines[1];
+  }
+
   @Override
   public int getStartLine(@NotNull ThreeSide side) {
     return side.select(myStartLines);
@@ -221,12 +229,12 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     return side.select(myEndLines);
   }
 
-  public void setStartLine(@NotNull ThreeSide side, int value) {
-    myStartLines[side.getIndex()] = value;
+  public void setStartLine(int value) {
+    myStartLines[1] = value;
   }
 
-  public void setEndLine(@NotNull ThreeSide side, int value) {
-    myEndLines[side.getIndex()] = value;
+  public void setEndLine(int value) {
+    myEndLines[1] = value;
   }
 
   public void markInnerFragmentsDamaged() {
@@ -247,8 +255,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   @Nullable
   State processBaseChange(int oldLine1, int oldLine2, int shift) {
-    int line1 = getStartLine(ThreeSide.BASE);
-    int line2 = getEndLine(ThreeSide.BASE);
+    int line1 = getStartLine();
+    int line2 = getEndLine();
 
     UpdatedLineRange newRange = DiffUtil.updateRangeOnModification(line1, line2, oldLine1, oldLine2, shift);
 
@@ -261,8 +269,8 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
       myViewer.markChangeResolved(this);
     }
 
-    setStartLine(ThreeSide.BASE, newRange.startLine);
-    setEndLine(ThreeSide.BASE, newRange.endLine);
+    setStartLine(newRange.startLine);
+    setEndLine(newRange.endLine);
 
     return oldState;
   }
