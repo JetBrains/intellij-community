@@ -49,22 +49,15 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
       public String compute() {
-        ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
         boolean hideExcludedFiles = Registry.is("ide.hide.excluded.files");
+        ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
         Module module = fileIndex.getModuleForFile(file, hideExcludedFiles);
         VirtualFile contentRoot = fileIndex.getContentRootForFile(file, hideExcludedFiles);
         if (module == null || contentRoot == null) return file.getPresentableUrl();
-        StringBuffer result = new StringBuffer();
-        result.append("[");
-        result.append(module.getName());
-        result.append("] ");
-        result.append(contentRoot.getName());
         String relativePath = VfsUtilCore.getRelativePath(file, contentRoot, File.separatorChar);
-        if (!relativePath.isEmpty()) {
-          result.append(File.separatorChar);
-          result.append(relativePath);
-        }
-        return result.toString();
+        assert relativePath != null;
+
+        return getPresentableRelativePathFor(module, contentRoot, relativePath);
       }
     });
   }
@@ -95,4 +88,19 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
     return (result == null) ? null : result.replace("/", File.separator);
   }
 
+  @NotNull
+  private static String getPresentableRelativePathFor(@NotNull final Module module,
+                                                      @NotNull final VirtualFile contentRoot,
+                                                      @NotNull final String relativePath) {
+    StringBuilder result = new StringBuilder();
+    result.append("[");
+    result.append(module.getName());
+    result.append("] ");
+    result.append(contentRoot.getName());
+    if (!relativePath.isEmpty()) {
+      result.append(File.separatorChar);
+      result.append(relativePath);
+    }
+    return result.toString();
+  }
 }
