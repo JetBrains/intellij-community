@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-ackage com.intellij.execution.process;
+package com.intellij.execution.process;
 
 /**
  * @author traff

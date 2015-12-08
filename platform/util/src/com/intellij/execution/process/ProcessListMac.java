@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-ackage com.intellij.execution.process;
+package com.intellij.execution.process;
 
 import com.intellij.util.containers.ContainerUtil;
 
