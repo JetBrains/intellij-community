@@ -9,22 +9,21 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.EduUtils;
@@ -74,7 +73,6 @@ public class StudyProjectComponent implements ProjectComponent {
           @Override
           public void run() {
             if (course != null) {
-              moveFocusToEditor();
               UISettings.getInstance().HIDE_TOOL_STRIPES = false;
               UISettings.getInstance().fireUISettingsChanged();
               registerShortcuts();
@@ -99,31 +97,6 @@ public class StudyProjectComponent implements ProjectComponent {
         progressToolWindow.show(null);
       }
     }
-  }
-
-  private void moveFocusToEditor() {
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
-      @Override
-      public void run() {
-        ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW).show(new Runnable() {
-          @Override
-          public void run() {
-            FileEditor[] editors = FileEditorManager.getInstance(myProject).getSelectedEditors();
-            if (editors.length > 0) {
-              final JComponent focusedComponent = editors[0].getPreferredFocusedComponent();
-              if (focusedComponent != null) {
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
-                  @Override
-                  public void run() {
-                    IdeFocusManager.getInstance(myProject).requestFocus(focusedComponent, true);
-                  }
-                });
-              }
-            }
-          }
-        });
-      }
-    });
   }
 
   private void registerShortcuts() {
