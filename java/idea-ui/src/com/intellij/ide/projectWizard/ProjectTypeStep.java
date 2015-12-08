@@ -407,6 +407,12 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
         for (FrameworkSupportInModuleProvider provider : filtered) {
           for (FrameworkSupportInModuleProvider.FrameworkDependency depId : provider.getDependenciesFrameworkIds()) {
             FrameworkSupportInModuleProvider dependency = map.get(depId.getFrameworkId());
+            if (dependency == null) {
+              if (!depId.isOptional()) {
+                LOG.error("Cannot find provider '" + depId.getFrameworkId() + "' which is required for '" + provider.getId() + "'");
+              }
+              continue;
+            }
             set.add(dependency);
           }
         }
