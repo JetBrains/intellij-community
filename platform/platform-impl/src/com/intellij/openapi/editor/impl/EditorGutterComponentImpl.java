@@ -1579,14 +1579,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Override
   @Nullable
-  public Point getPoint(final GutterIconRenderer renderer) {
+  public Point getCenterPoint(final GutterIconRenderer renderer) {
     final Ref<Point> result = Ref.create();
     for (int line : myLineToGutterRenderers.keys()) {
       processIconsRow(line, myLineToGutterRenderers.get(line), new LineGutterIconRendererProcessor() {
         @Override
         public void process(int x, int y, GutterMark r) {
           if (result.isNull() && r.equals(renderer)) {
-            result.set(new Point(x, y));
+            Icon icon = scaleIcon(r.getIcon());
+            result.set(new Point(x + icon.getIconWidth() / 2, y + icon.getIconHeight() / 2));
           }
         }
       }, true);
