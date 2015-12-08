@@ -522,18 +522,8 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     return actions;
   }
 
-  public void setSelectionMode(@JdkConstants.ListSelectionMode int mode) {
-    myTree.getSelectionModel().setSelectionMode(getTreeSelectionModeFromListSelectionMode(mode));
-  }
-
-  @JdkConstants.TreeSelectionMode
-  private static int getTreeSelectionModeFromListSelectionMode(@JdkConstants.ListSelectionMode int mode) {
-    switch (mode) {
-      case ListSelectionModel.SINGLE_SELECTION: return TreeSelectionModel.SINGLE_TREE_SELECTION;
-      case ListSelectionModel.SINGLE_INTERVAL_SELECTION: return TreeSelectionModel.CONTIGUOUS_TREE_SELECTION;
-      case ListSelectionModel.MULTIPLE_INTERVAL_SELECTION: return TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION;
-    }
-    throw new IllegalArgumentException("Illegal selection mode: " + mode);
+  public void setSelectionMode(@JdkConstants.TreeSelectionMode int mode) {
+    myTree.getSelectionModel().setSelectionMode(mode);
   }
 
   private class MyTreeCellRenderer extends JPanel implements TreeCellRenderer {

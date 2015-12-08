@@ -435,7 +435,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     myDataIsDirty = dataIsDirty;
   }
 
-  public void setSelectionMode(@JdkConstants.ListSelectionMode int mode) {
+  public void setSelectionMode(@JdkConstants.TreeSelectionMode int mode) {
     myViewer.setSelectionMode(mode);
   }
 }
