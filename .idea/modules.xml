@@ -88,6 +88,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/extensions/extensions.iml" filepath="$PROJECT_DIR$/platform/extensions/extensions.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/external-system-api/external-system-api.iml" filepath="$PROJECT_DIR$/platform/external-system-api/external-system-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/external-system-impl/external-system-impl.iml" filepath="$PROJECT_DIR$/platform/external-system-impl/external-system-impl.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/platform/external-system-rt/external-system-rt.iml" filepath="$PROJECT_DIR$/platform/external-system-rt/external-system-rt.iml" group="platform"/>
       <module fileurl="file://$PROJECT_DIR$/java/compiler/forms-compiler/forms-compiler.iml" filepath="$PROJECT_DIR$/java/compiler/forms-compiler/forms-compiler.iml" group="java/compiler" />
       <module fileurl="file://$PROJECT_DIR$/platform/forms_rt/forms_rt.iml" filepath="$PROJECT_DIR$/platform/forms_rt/forms_rt.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/git4idea/git4idea.iml" filepath="$PROJECT_DIR$/plugins/git4idea/git4idea.iml" group="plugins/VCS" />
