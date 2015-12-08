@@ -16,9 +16,9 @@
 package com.jetbrains.python.testing.tox;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.PyCommonOptionsFormData;
@@ -28,27 +28,33 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author Ilya.Kazakevich
  */
 final class PyToxConfigurationSettings extends SettingsEditor<PyToxConfiguration> {
+  private static final Pattern ARG_SEPARATOR = Pattern.compile("\\s+");
   @NotNull
   private final Project myProject;
   private AbstractPyCommonOptionsForm myForm;
+  private JPanel myPanel;
+  private JTextField myArgumentsField;
 
   PyToxConfigurationSettings(@NotNull final Project project) {
     myProject = project;
   }
 
   @Override
-  protected void applyEditorTo(final PyToxConfiguration s) throws ConfigurationException {
+  protected void applyEditorTo(final PyToxConfiguration s) {
     AbstractPythonRunConfiguration.copyParams(myForm, s);
+    s.setArguments(ARG_SEPARATOR.split(myArgumentsField.getText()));
   }
 
   @Override
   protected void resetEditorFrom(final PyToxConfiguration s) {
     AbstractPythonRunConfiguration.copyParams(s, myForm);
+    myArgumentsField.setText(StringUtil.join(s.getArguments(), " "));
   }
 
   @NotNull
@@ -56,7 +62,7 @@ final class PyToxConfigurationSettings extends SettingsEditor<PyToxConfiguration
   protected JComponent createEditor() {
 
     final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(new JLabel("Tox"), BorderLayout.PAGE_START);
+    panel.add(myPanel, BorderLayout.PAGE_START);
 
     myForm = createEnvPanel();
     final JComponent envPanel = myForm.getMainPanel();

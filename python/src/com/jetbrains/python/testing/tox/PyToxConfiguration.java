@@ -20,7 +20,15 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.xmlb.SkipEmptySerializationFilter;
+import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.jetbrains.serialization.CompoundFilter;
+import com.jetbrains.serialization.AnnotationSerializationFilter;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,14 +37,44 @@ import org.jetbrains.annotations.Nullable;
  */
 final class PyToxConfiguration extends AbstractPythonRunConfiguration<PyToxConfiguration> {
 
+  private static final String[] EMPTY_STRINGS = new String[0];
   @NotNull
   private final Project myProject;
+
+  @Tag
+  private String[] myArguments;
 
   PyToxConfiguration(@NotNull final PyToxConfigurationFactory factory, @NotNull final Project project) {
     super(project, factory);
     myProject = project;
+    // Module will be stored with XmlSerializer
+    //noinspection AssignmentToSuperclassField
+    mySkipModuleSerialization = true;
   }
 
+  @NotNull
+  String[] getArguments() {
+    return (myArguments == null ? EMPTY_STRINGS : myArguments.clone());
+  }
+
+  void setArguments(@NotNull final String... arguments) {
+    myArguments = arguments.clone();
+  }
+
+  @Override
+  public void readExternal(Element element) throws InvalidDataException {
+    super.readExternal(element);
+    XmlSerializer.deserializeInto(this, element);
+  }
+
+  @Override
+  public void writeExternal(final Element element) throws WriteExternalException {
+    super.writeExternal(element);
+    XmlSerializer.serializeInto(this, element, new CompoundFilter(
+      new SkipEmptySerializationFilter(),
+      new AnnotationSerializationFilter()
+    ));
+  }
 
   @Override
   protected SettingsEditor<PyToxConfiguration> createConfigurationEditor() {
@@ -46,7 +84,6 @@ final class PyToxConfiguration extends AbstractPythonRunConfiguration<PyToxConfi
   @Nullable
   @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment environment) {
-    getWorkingDirectory();
-    return new PyToxCommandLineState(this, environment);
+    return  new PyToxCommandLineState(this, environment, myArguments);
   }
 }

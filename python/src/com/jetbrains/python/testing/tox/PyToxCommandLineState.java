@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.testing.tox;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PythonHelper;
@@ -29,14 +31,30 @@ import java.util.List;
  */
 class PyToxCommandLineState extends PythonTestCommandLineStateBase {
 
-  public PyToxCommandLineState(PyToxConfiguration configuration,
-                               ExecutionEnvironment environment) {
+  @NotNull
+  private final String[] myArguments;
+
+
+  PyToxCommandLineState(@NotNull final PyToxConfiguration configuration,
+                                @NotNull final ExecutionEnvironment environment,
+                                @NotNull final String... arguments) {
     super(configuration, environment);
+    myArguments = arguments;
   }
 
   @Override
   protected HelperPackage getRunner() {
     return PythonHelper.TOX;
+  }
+
+
+  @Override
+  public GeneralCommandLine generateCommandLine() {
+    final GeneralCommandLine line = super.generateCommandLine();
+    final ParamsGroup group = line.getParametersList().getParamsGroup(GROUP_SCRIPT);
+    assert group != null: "No group " + GROUP_SCRIPT;
+    group.addParameters(myArguments);
+    return line;
   }
 
   @NotNull

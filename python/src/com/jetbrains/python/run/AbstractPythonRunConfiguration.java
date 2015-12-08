@@ -73,6 +73,11 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
   private boolean myAddSourceRoots = true;
 
   protected PathMappingSettings myMappingSettings;
+  /**
+   * To prevent "double module saving" child may enable this flag
+   * and no module info would be saved
+   */
+  protected boolean mySkipModuleSerialization;
 
   public AbstractPythonRunConfiguration(Project project, final ConfigurationFactory factory) {
     super(project, factory);
@@ -235,7 +240,9 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     myAddContentRoots = addContentRoots == null || Boolean.parseBoolean(addContentRoots);
     final String addSourceRoots = JDOMExternalizerUtil.readField(element, "ADD_SOURCE_ROOTS");
     myAddSourceRoots = addSourceRoots == null || Boolean.parseBoolean(addSourceRoots);
-    getConfigurationModule().readExternal(element);
+    if ( !mySkipModuleSerialization) {
+      getConfigurationModule().readExternal(element);
+    }
 
     setMappingSettings(PathMappingSettings.readExternal(element));
     // extension settings:
@@ -259,7 +266,9 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     JDOMExternalizerUtil.writeField(element, "IS_MODULE_SDK", Boolean.toString(myUseModuleSdk));
     JDOMExternalizerUtil.writeField(element, "ADD_CONTENT_ROOTS", Boolean.toString(myAddContentRoots));
     JDOMExternalizerUtil.writeField(element, "ADD_SOURCE_ROOTS", Boolean.toString(myAddSourceRoots));
-    getConfigurationModule().writeExternal(element);
+    if ( !mySkipModuleSerialization) {
+      getConfigurationModule().writeExternal(element);
+    }
 
     // extension settings:
     PythonRunConfigurationExtensionsManager.getInstance().writeExternal(this, element);
