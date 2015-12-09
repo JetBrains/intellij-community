@@ -159,7 +159,7 @@ public class Restarter {
   }
 
   public static String getRestarterDir() {
-    return PathManager.getConfigPath() + "/restart";
+    return PathManager.getSystemPath() + "/restart";
   }
 
   public static File createTempExecutable(File executable) throws IOException {
