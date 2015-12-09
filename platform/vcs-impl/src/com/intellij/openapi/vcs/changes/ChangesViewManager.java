@@ -32,7 +32,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -89,7 +88,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   @NonNls private static final String ATT_FLATTENED_VIEW = "flattened_view";
   @NonNls private static final String ATT_SHOW_IGNORED = "show_ignored";
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesViewManager");
-  private Splitter mySplitter;
+  private JBSplitter mySplitter;
   private MessageBusConnection myConnection;
   private ChangesViewManager.ToggleDetailsAction myToggleDetailsAction;
 
@@ -98,7 +97,6 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
   private final TreeSelectionListener myTsl;
   private Content myContent;
-  private static final String DETAILS_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
   public static ChangesViewI getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangesViewI.class);
@@ -236,7 +234,16 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     panel.setToolbar(toolbarPanel);
 
     final JPanel content = new JPanel(new BorderLayout());
-    mySplitter = new JBSplitter(false, DETAILS_SPLITTER_PROPORTION, 0.5f);
+    String value = PropertiesComponent.getInstance().getValue(DETAILS_SPLITTER_PROPORTION);
+    float f = 0.5f;
+    if (! StringUtil.isEmptyOrSpaces(value)) {
+      try {
+        f = Float.parseFloat(value);
+      } catch (NumberFormatException e) {
+        //
+      }
+    }
+    mySplitter = new Splitter(false, f);
     mySplitter.setHonorComponentsMinimumSize(false);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myView);
     final JPanel wrapper = new JPanel(new BorderLayout());
