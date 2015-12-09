@@ -195,6 +195,23 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           }
         }
       })
+      .setTargetChecker(new DnDTargetChecker() {
+        @Override
+        public boolean update(DnDEvent e) {
+          final Object attachedObject = e.getAttachedObject();
+          if (attachedObject instanceof GutterIconRenderer && checkDumbAware(attachedObject, myEditor.getProject())) {
+            final GutterDraggableObject draggableObject = ((GutterIconRenderer)attachedObject).getDraggableObject();
+            if (draggableObject != null) {
+              final int line = convertPointToLineNumber(e.getPoint());
+              if (line != -1) {
+                e.setDropPossible(true);
+                e.setCursor(draggableObject.getCursor(line));
+              }
+            }
+          }
+          return true;
+        }
+      })
       .setImageProvider(new NullableFunction<DnDActionInfo, DnDImage>() {
         @Override
         public DnDImage fun(DnDActionInfo info) {
