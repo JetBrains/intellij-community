@@ -2406,7 +2406,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @Override
   public void iterateIndexableFilesConcurrently(@NotNull ContentIterator processor, @NotNull Project project, ProgressIndicator indicator) {
-    PushedFilePropertiesUpdaterImpl.invoke2xConcurrentlyIfPossible(collectScanRootRunnables(processor, project, indicator));
+    PushedFilePropertiesUpdaterImpl.invokeConcurrentlyIfPossible(collectScanRootRunnables(processor, project, indicator));
   }
 
   @Override
