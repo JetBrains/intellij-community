@@ -115,7 +115,17 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
       assert inProgress > 0 : inProgress;
       Runnable next;
       if (inProgress <= myMaxTasks && (next = myTaskQueue.poll()) != null) {
-        myBackendExecutor.execute(wrap(next));
+        try {
+          myBackendExecutor.execute(wrap(next));
+        }
+        catch (Error e) {
+          myInProgress.decrementAndGet();
+          throw e;
+        }
+        catch (RuntimeException e) {
+          myInProgress.decrementAndGet();
+          throw e;
+        }
         break;
       }
       if (myInProgress.compareAndSet(inProgress, inProgress-1)) {
