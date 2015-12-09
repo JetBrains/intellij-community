@@ -56,7 +56,7 @@ class Test {
         myFixture.completeBasic()
         myFixture.type("run(")
         //todo check in real world works another way
-        verify(mockLogger, times(1)).itemSelectedCompletionFinished(Matchers.anyInt(), Matchers.anyString())
+        verify(mockLogger, times(1)).itemSelectedCompletionFinished(Matchers.anyInt(), Matchers.anyString(), Matchers.anyListOf(LookupStringWithRelevance::class.java))
     }
     
     fun `test typing`() {
@@ -105,7 +105,7 @@ class Test {
         
         myFixture.type('r')
         myFixture.type('\n')
-        verify(mockLogger).itemSelectedCompletionFinished(Matchers.anyInt(), Matchers.anyString())
+        verify(mockLogger).itemSelectedCompletionFinished(Matchers.anyInt(), Matchers.anyString(), Matchers.anyListOf(LookupStringWithRelevance::class.java))
     }
     
     fun `test completion cancelled`() {
@@ -120,7 +120,7 @@ class Test {
         myFixture.completeBasic()
         myFixture.type('.')
         verify(mockLogger, times(1)).completionStarted(Matchers.anyListOf(LookupStringWithRelevance::class.java))
-        verify(mockLogger, times(1)).itemSelectedCompletionFinished(Matchers.anyInt(), Matchers.anyString())
+        verify(mockLogger, times(1)).itemSelectedCompletionFinished(Matchers.anyInt(), Matchers.anyString(), Matchers.anyListOf(LookupStringWithRelevance::class.java))
     }
     
 }
