@@ -38,7 +38,10 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.SyntheticFileSystemItem;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.refactoring.copy.CopyHandlerDelegateBase;
@@ -60,7 +63,6 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.*;
-import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -194,9 +196,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
   @NotNull
   private static String getPropertiesFileSuffix(PropertiesFile searchFile, String baseName) {
     String suffix = FileUtil.getNameWithoutExtension(searchFile.getContainingFile().getName());
-    if (suffix.startsWith(baseName)) {
-      suffix = suffix.substring(baseName.length());
-    }
+    suffix = StringUtil.trimStart(suffix, baseName);
     return suffix;
   }
 

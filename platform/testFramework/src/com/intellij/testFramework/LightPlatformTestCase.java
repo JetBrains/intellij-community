@@ -45,7 +45,6 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.extensions.Extensions;
@@ -302,10 +301,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         ModuleRootManager.getInstance(ourModule).orderEntries().getAllLibrariesAndSdkClassesRoots();
         VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
         filePointerManager.storePointers();
-
-        // various tests can use different mocking techniques for font-related code
-        // so we must reset our font cache, to avoid potential impact of tests on other tests 
-        ComplementaryFontsRegistry.resetCaches();
       }
     });
   }

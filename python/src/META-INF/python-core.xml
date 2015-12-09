@@ -80,6 +80,9 @@
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyStructuralTypeAttributesCompletionContributor"/>
 
+    <completion.contributor language="Python"
+                            implementationClass="com.jetbrains.python.codeInsight.completion.PyStringFormatCompletionContributor" />
+
     <lang.tokenSeparatorGenerator language="Python" implementationClass="com.jetbrains.python.PyTokenSeparatorGenerator"/>
     <lang.elementManipulator forClass="com.jetbrains.python.psi.PyReferenceExpression"
                              implementationClass="com.jetbrains.python.psi.impl.PyReferenceExpressionManipulator"/>
@@ -484,6 +487,7 @@
     <moduleService serviceInterface="com.jetbrains.python.documentation.PyDocumentationSettings"
                    serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings"/>
     <psi.referenceContributor implementation="com.jetbrains.python.documentation.docstrings.DocStringReferenceContributor"/>
+    <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PythonFormattedStringReferenceContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.documentation.docstrings.DocStringTagCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.documentation.docstrings.DocStringSectionHeaderCompletionContributor"/>
 
@@ -572,6 +576,7 @@
 
     <lang.inspectionSuppressor language="Python" implementationClass="com.jetbrains.python.inspections.PyInspectionsSuppressor"/>
     <refactoring.invertBoolean implementation="com.jetbrains.python.refactoring.invertBoolean.PyInvertBooleanDelegate"/>
+    <backspaceHandlerDelegate implementation="com.jetbrains.python.codeInsight.editorActions.PyTripleQuoteBackspaceDelegate"/>
   </extensions>
 
   <extensionPoints>

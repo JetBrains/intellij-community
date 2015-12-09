@@ -17,6 +17,7 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 public class WrapperTest extends JavaFormatterTestCase {
@@ -28,9 +29,7 @@ public class WrapperTest extends JavaFormatterTestCase {
   @Override
   protected String prepareText(final String text) {
     String result = text;
-    if (result.startsWith("\n")) {
-      result = result.substring(1);
-    }
+    result = StringUtil.trimStart(result, "\n");
     return result;
   }
 

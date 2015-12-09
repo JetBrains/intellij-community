@@ -4,15 +4,15 @@ import junit.framework.TestCase;
 
 import java.util.Collection;
 
-public class SimplifiableJUnitAssertionInspection extends TestCase{
+public class SimplifiableJUnitAssertion extends TestCase{
     public void test()
     {
-        assertTrue(3 == 4);
-        assertEquals(false, new Object() != null);
-        assertTrue(false);
-        assertFalse("foo", true);
+        <warning descr="'assertTrue()' can be simplified to 'assertEquals()'">assertTrue</warning>(3 == 4);
+        <warning descr="'assertEquals()' can be simplified to 'assertFalse()'">assertEquals</warning>(false, new Object() != null);
+        <warning descr="'assertTrue()' can be simplified to 'fail()'">assertTrue</warning>(false);
+        <warning descr="'assertFalse()' can be simplified to 'fail()'">assertFalse</warning>("foo", true);
         Collection collection = null;
-        assertTrue(collection.size() == 2);
+        <warning descr="'assertTrue()' can be simplified to 'assertEquals()'">assertTrue</warning>(collection.size() == 2);
     }
 
 

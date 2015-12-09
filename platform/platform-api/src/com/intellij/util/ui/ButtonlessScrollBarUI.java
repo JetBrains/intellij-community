@@ -637,9 +637,9 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     if (alwaysShowTrack() || myMouseOverScrollbarExpandLevel > 0) {
       doPaintTrack(g, c, trackBounds);
     }
-    RegionPainter painter = UIUtil.getClientProperty(c, RegionPainter.BUTTONLESS_SCROLL_BAR_UI_EXTRA_TRACK);
+    RegionPainter<Object> painter = UIUtil.getClientProperty(c, RegionPainter.BUTTONLESS_SCROLL_BAR_UI_EXTRA_TRACK);
     if (painter != null) {
-      painter.paint(g, trackBounds.x, trackBounds.y, trackBounds.width, trackBounds.height);
+      painter.paint((Graphics2D)g, trackBounds.x, trackBounds.y, trackBounds.width, trackBounds.height, null);
     }
   }
 
@@ -698,9 +698,15 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       paintMacThumb(g, thumbBounds);
     }
     else {
-      g.translate(thumbBounds.x, thumbBounds.y);
-      paintMaxiThumb((Graphics2D)g, thumbBounds);
-      g.translate(-thumbBounds.x, -thumbBounds.y);
+      RegionPainter<Integer> painter = UIUtil.getClientProperty(scrollbar, RegionPainter.BUTTONLESS_SCROLL_BAR_UI_MAXI_THUMB);
+      if (painter != null) {
+        painter.paint((Graphics2D)g, thumbBounds.x, thumbBounds.y, thumbBounds.width, thumbBounds.height, myThumbFadeColorShift);
+      }
+      else {
+        g.translate(thumbBounds.x, thumbBounds.y);
+        paintMaxiThumb((Graphics2D)g, thumbBounds);
+        g.translate(-thumbBounds.x, -thumbBounds.y);
+      }
     }
   }
 

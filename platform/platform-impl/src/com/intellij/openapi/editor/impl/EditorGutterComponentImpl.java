@@ -57,10 +57,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Function;
-import com.intellij.util.IconUtil;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -198,10 +195,28 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           }
         }
       })
+      .setTargetChecker(new DnDTargetChecker() {
+        @Override
+        public boolean update(DnDEvent e) {
+          final Object attachedObject = e.getAttachedObject();
+          if (attachedObject instanceof GutterIconRenderer && checkDumbAware(attachedObject, myEditor.getProject())) {
+            final GutterDraggableObject draggableObject = ((GutterIconRenderer)attachedObject).getDraggableObject();
+            if (draggableObject != null) {
+              final int line = convertPointToLineNumber(e.getPoint());
+              if (line != -1) {
+                e.setDropPossible(true);
+                e.setCursor(draggableObject.getCursor(line));
+              }
+            }
+          }
+          return true;
+        }
+      })
       .setImageProvider(new NullableFunction<DnDActionInfo, DnDImage>() {
         @Override
         public DnDImage fun(DnDActionInfo info) {
-          return new DnDImage(IconUtil.toImage(scaleIcon(getGutterRenderer(info.getPoint()).getIcon())));
+          Image image = IconUtil.toImage(scaleIcon(getGutterRenderer(info.getPoint()).getIcon()));
+          return new DnDImage(image, new Point(image.getWidth(null) / 2, image.getHeight(null) / 2));
         }
       })
       .install();
@@ -242,14 +257,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (clip.height < 0) return;
 
       Graphics2D g = IdeBackgroundUtil.withEditorBackground(g_, this);
-      AffineTransform old = g.getTransform();
-
-      if (isMirrored()) {
-        final AffineTransform transform = new AffineTransform(old);
-        transform.scale(-1, 1);
-        transform.translate(-getWidth(), 0);
-        g.setTransform(transform);
-      }
+      AffineTransform old = setMirrorTransformIfNeeded(g, 0, getWidth());
 
       EditorUIUtil.setupAntialiasing(g);
       Color backgroundColor = getBackground();
@@ -277,7 +285,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, hint);
       }
 
-      g.setTransform(old);
+      if (old != null) g.setTransform(old);
     }
     finally {
       ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintFinish();
@@ -379,8 +387,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     if (w == 0) return;
 
-    AffineTransform old = g.getTransform();
-    g.setTransform(getMirrorTransform(old, x, w));
+    AffineTransform old = setMirrorTransformIfNeeded(g, x, w);
     try {
       Color color = myEditor.getColorsScheme().getColor(EditorColors.ANNOTATIONS_COLOR);
       g.setColor(color != null ? color : JBColor.blue);
@@ -422,7 +429,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     }
     finally {
-      g.setTransform(old);
+      if (old != null) g.setTransform(old);
     }
   }
 
@@ -498,8 +505,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     g.setColor(color != null ? color : JBColor.blue);
     g.setFont(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
 
-    AffineTransform old = g.getTransform();
-    g.setTransform(getMirrorTransform(old, getLineNumberAreaOffset(), getLineNumberAreaWidth()));
+    AffineTransform old = setMirrorTransformIfNeeded(g, getLineNumberAreaOffset(), getLineNumberAreaWidth());
     try {
       for (int i = startLineNumber; i < endLineNumber; i++) {
         LogicalPosition logicalPosition = myEditor.visualToLogicalPosition(new VisualPosition(i, 0));
@@ -526,7 +532,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     }
     finally {
-      g.setTransform(old);
+      if (old != null) g.setTransform(old);
     }
   }
 
@@ -810,13 +816,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       public void process(int x, int y, GutterMark renderer) {
         Icon icon = scaleIcon(renderer.getIcon());
 
-        AffineTransform old = g.getTransform();
-        g.setTransform(getMirrorTransform(old, x, icon.getIconWidth()));
+        AffineTransform old = setMirrorTransformIfNeeded(g, x, icon.getIconWidth());
         try {
           icon.paintIcon(EditorGutterComponentImpl.this, g, x, y);
         }
         finally {
-          g.setTransform(old);
+          if (old != null) g.setTransform(old);
         }
       }
     });
@@ -875,7 +880,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private Icon scaleIcon(Icon icon) {
     if (Registry.is("editor.scale.gutter.icons") && icon instanceof ScalableIcon) {
-      return ((ScalableIcon)icon).scale((float)myEditor.getLineHeight() / JBUI.scale(17f));
+      float scale = myEditor.getLineHeight() / JBUI.scale(16f);
+      if (Math.abs(1f - scale) > 0.10f) {
+        return ((ScalableIcon)icon).scale(scale);
+      }
     }
     return icon;
   }
@@ -1261,10 +1269,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return myEditor.getVerticalScrollbarOrientation() != EditorEx.VERTICAL_SCROLLBAR_RIGHT;
   }
 
-  @NotNull
-  private AffineTransform getMirrorTransform(@NotNull AffineTransform old, int offset, int width) {
-    final AffineTransform transform = new AffineTransform(old);
+  @Nullable
+  private AffineTransform setMirrorTransformIfNeeded(Graphics2D g, int offset, int width) {
     if (isMirrored()) {
+      AffineTransform old = g.getTransform();
+      AffineTransform transform = new AffineTransform(old);
       //transform.translate(getWidth(), 0); // revert mirroring transform
       //transform.scale(-1, 1); // revert mirroring transform
       //transform.translate(getWidth() - offset - width, 0); // move range start to the X==0
@@ -1272,8 +1281,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
       transform.scale(-1, 1);
       transform.translate(-offset * 2 - width, 0);
+      g.setTransform(transform);
+      return old;
     }
-    return transform;
+    else {
+      return null;
+    }
   }
 
   @Nullable
@@ -1579,14 +1592,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Override
   @Nullable
-  public Point getPoint(final GutterIconRenderer renderer) {
+  public Point getCenterPoint(final GutterIconRenderer renderer) {
     final Ref<Point> result = Ref.create();
     for (int line : myLineToGutterRenderers.keys()) {
       processIconsRow(line, myLineToGutterRenderers.get(line), new LineGutterIconRendererProcessor() {
         @Override
         public void process(int x, int y, GutterMark r) {
           if (result.isNull() && r.equals(renderer)) {
-            result.set(new Point(x, y));
+            Icon icon = scaleIcon(r.getIcon());
+            result.set(new Point(x + icon.getIconWidth() / 2, y + icon.getIconHeight() / 2));
           }
         }
       }, true);

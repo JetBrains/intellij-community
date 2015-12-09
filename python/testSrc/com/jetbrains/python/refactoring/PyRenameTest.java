@@ -236,6 +236,11 @@ public class PyRenameTest extends PyTestCase {
     renameWithDocStringFormat(DocStringFormat.NUMPY, "bar");
   }
 
+  //PY-2478
+  public void testFormatStringKeyword() {
+    doTest("renamed");
+  }
+
   private void renameWithDocStringFormat(DocStringFormat format, final String newName) {
     runWithDocStringFormat(format, new Runnable() {
       public void run() {

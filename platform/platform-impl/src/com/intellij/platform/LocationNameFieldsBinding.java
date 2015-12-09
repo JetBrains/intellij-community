@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
@@ -88,9 +89,7 @@ public class LocationNameFieldsBinding {
         }
         myModifyingLocation = true;
         String path = locationField.getText().trim();
-        if (path.endsWith(File.separator)) {
-          path = path.substring(0, path.length() - File.separator.length());
-        }
+        path = StringUtil.trimEnd(path, File.separator);
         int ind = path.lastIndexOf(File.separator);
         if (ind != -1) {
           String projectName = path.substring(ind + 1, path.length());

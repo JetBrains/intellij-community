@@ -16,29 +16,24 @@
 package org.jetbrains.idea.eclipse.util;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 
 public class PathUtil {
   public static String normalize(String path) {
     path = FileUtil.toSystemIndependentName(path);
-    if (path.endsWith("/")) {
-      path = path.substring(0, path.length() - 1);
-    }
+    path = StringUtil.trimEnd(path, "/");
     while (path.contains("/./")) {
       path = path.replace("/./", "/");
     }
-    if (path.startsWith("./")) {
-      path = path.substring(2);
-    }
-    if (path.endsWith("/.")) {
-      path = path.substring(0, path.length() - 2);
-    }
+    path = StringUtil.trimStart(path, "./");
+    path = StringUtil.trimEnd(path, "/.");
 
-    while ( true ) {
+    while (true) {
       int index = path.indexOf("/..");
-      if ( index < 0 ) break;
-      int slashIndex = path.substring(0,index).lastIndexOf("/");
-      if ( slashIndex < 0 ) break;
-      path = path.substring(0, slashIndex ) + path.substring(index+3);
+      if (index < 0) break;
+      int slashIndex = path.substring(0, index).lastIndexOf("/");
+      if (slashIndex < 0) break;
+      path = path.substring(0, slashIndex) + path.substring(index + 3);
     }
 
     return path;

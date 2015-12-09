@@ -450,7 +450,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testIntersectionWildcardExpectedType() {
-    doTest(new MockIntroduceVariableHandler("l", false, false, false, "java.util.List<? extends java.lang.Enum<? extends java.lang.Enum<? extends java.lang.Enum<?>>>>", true));
+    doTest(new MockIntroduceVariableHandler("l", false, false, false, "java.util.List<? extends java.lang.Enum<? extends java.lang.Enum<?>>>", true));
   }
 
   public void testMethodRefNotInContextInferredFilterWithNonAcceptableSince() {
@@ -498,6 +498,14 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
 
   public void testMethodReferenceExpr() {
     doTest(new MockIntroduceVariableHandler("m", false, false, false, "Foo.I"));
+  }
+
+  public void testDenotableType1() {
+    doTest(new MockIntroduceVariableHandler("m", false, false, false, "A<? extends A<?>>"));
+  }
+
+  public void testDenotableType2() {
+    doTest(new MockIntroduceVariableHandler("m", false, false, false, "I<? extends I<?>>"));
   }
 
   public void testReturnNonExportedArray() {

@@ -32,9 +32,16 @@ public abstract class OutputReader extends BaseOutputReader {
 
   private final Semaphore myReadFullySemaphore = new Semaphore();
 
-  public OutputReader(@NotNull InputStream inputStream, @Nullable Charset charset, @Nullable SleepingPolicy sleepingPolicy, @NotNull String presentableName) {
-    super(inputStream, charset, sleepingPolicy);
-    start(presentableName);
+  /** @deprecated use {@link #OutputReader(InputStream, Charset, String)} to be removed in IDEA 16 */
+  @Deprecated
+  public OutputReader(@NotNull InputStream inputStream, @Nullable Charset charset) {
+    this(inputStream, charset, "");
+  }
+
+  /** @deprecated use {@link #OutputReader(InputStream, Charset, SleepingPolicy, String)} to be removed in IDEA 16 */
+  @Deprecated
+  public OutputReader(@NotNull InputStream inputStream, @Nullable Charset charset, @Nullable SleepingPolicy sleepingPolicy) {
+    this(inputStream, charset, sleepingPolicy, "");
   }
 
   public OutputReader(@NotNull InputStream inputStream, @Nullable Charset charset, @NotNull String presentableName) {
@@ -42,10 +49,19 @@ public abstract class OutputReader extends BaseOutputReader {
     start(presentableName);
   }
 
+  public OutputReader(@NotNull InputStream inputStream,
+                      @Nullable Charset charset,
+                      @Nullable SleepingPolicy sleepingPolicy,
+                      @NotNull String presentableName) {
+    super(inputStream, charset, sleepingPolicy);
+    start(presentableName);
+  }
+
+  /** @deprecated to be removed in IDEA 16 */
   @Deprecated
   public OutputReader(@NotNull Reader reader) {
     super(reader);
-    start();
+    start("");
   }
 
   @Override

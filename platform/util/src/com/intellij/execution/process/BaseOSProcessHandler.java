@@ -48,14 +48,13 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
   protected final Process myProcess;
   protected final String myCommandLine;
   protected final Charset myCharset;
-  @NotNull protected final String myPresentableName;
+  protected final String myPresentableName;
   protected final ProcessWaitFor myWaitFor;
 
   /**
-   *
-   * @param commandLine must be not null (for correct thread attribution in the stacktrace)
+   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
    */
-  public BaseOSProcessHandler(@NotNull Process process, /*NotNull*/String commandLine, @Nullable Charset charset) {
+  public BaseOSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset) {
     myProcess = process;
     myCommandLine = commandLine;
     myCharset = charset;
@@ -159,12 +158,12 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
 
   @NotNull
   protected BaseDataReader createErrorDataReader(@NotNull BaseDataReader.SleepingPolicy sleepingPolicy) {
-    return new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR, sleepingPolicy, "error stream of "+myPresentableName);
+    return new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR, sleepingPolicy, "error stream of " + myPresentableName);
   }
 
   @NotNull
   protected BaseDataReader createOutputDataReader(@NotNull BaseDataReader.SleepingPolicy sleepingPolicy) {
-    return new SimpleOutputReader(createProcessOutReader(), ProcessOutputTypes.STDOUT, sleepingPolicy, "output stream of "+myPresentableName);
+    return new SimpleOutputReader(createProcessOutReader(), ProcessOutputTypes.STDOUT, sleepingPolicy, "output stream of " + myPresentableName);
   }
 
   protected void onOSProcessTerminated(final int exitCode) {
@@ -245,7 +244,7 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     return myProcess.getOutputStream();
   }
 
-  /*NotNull*/
+  /*@NotNull*/
   public String getCommandLine() {
     return myCommandLine;
   }
@@ -260,12 +259,8 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
       new ThreadPoolExecutor(0, Integer.MAX_VALUE, 1, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
                              ConcurrencyUtil.newNamedThreadFactory("OSProcessHandler pooled thread"));
 
-    @NotNull
+    /** @deprecated use {@link BaseOSProcessHandler#submit(Runnable)} instead (to be removed in IDEA 16) */
     @Deprecated
-    /**
-     * todo remove in IDEA16
-     * @deprecated use {@link BaseOSProcessHandler#submit(Runnable)} instead.
-     */
     public static Future<?> submit(@NotNull Runnable task) {
       return BaseOSProcessHandler.submit(task);
     }

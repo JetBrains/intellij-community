@@ -24,6 +24,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -83,9 +84,7 @@ class AboutHttpService extends RestService {
     if (!PlatformUtils.isIdeaUltimate()) {
       String productName = ApplicationNamesInfo.getInstance().getProductName();
       appName = appName.replace(productName + " (" + productName + ")", productName);
-      if (appName.startsWith("JetBrains ")) {
-        appName = appName.substring("JetBrains ".length());
-      }
+      appName = StringUtil.trimStart(appName, "JetBrains ");
     }
 
     writer.name("name").value(appName);

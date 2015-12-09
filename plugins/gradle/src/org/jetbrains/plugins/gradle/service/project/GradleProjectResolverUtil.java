@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service.project;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
@@ -22,6 +23,8 @@ import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -30,6 +33,8 @@ import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.model.GradleProject;
+import org.gradle.tooling.model.gradle.BasicGradleProject;
+import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
@@ -39,8 +44,10 @@ import org.jetbrains.plugins.gradle.ExternalDependencyId;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Queue;
@@ -50,8 +57,106 @@ import java.util.Queue;
  * @since 10/6/2015
  */
 public class GradleProjectResolverUtil {
+  private static final Logger LOG = Logger.getInstance(GradleProjectResolverUtil.class);
   @NotNull
   private static final Key<Object> CONTAINER_KEY = Key.create(Object.class, ExternalSystemConstants.UNORDERED);
+
+  @NotNull
+  public static DataNode<ModuleData> createMainModule(@NotNull ProjectResolverContext resolverCtx,
+                                                      @NotNull IdeaModule gradleModule,
+                                                      @NotNull DataNode<ProjectData> projectDataNode) {
+    final String moduleName = gradleModule.getName();
+    if (moduleName == null) {
+      throw new IllegalStateException("Module with undefined name detected: " + gradleModule);
+    }
+
+    final ProjectData projectData = projectDataNode.getData();
+    final String mainModuleConfigPath = getModuleConfigPath(resolverCtx, gradleModule, projectData.getLinkedExternalProjectPath());
+    final String ideProjectPath = resolverCtx.getIdeProjectPath();
+    final String relativePath;
+    if (FileUtil.isAncestor(projectData.getLinkedExternalProjectPath(), mainModuleConfigPath, false)) {
+      relativePath = FileUtil.getRelativePath(projectData.getLinkedExternalProjectPath(), mainModuleConfigPath, '/');
+    }
+    else {
+      relativePath = String.valueOf(FileUtil.pathHashCode(mainModuleConfigPath));
+    }
+    final String mainModuleFileDirectoryPath =
+      ideProjectPath == null ? mainModuleConfigPath : ideProjectPath + "/.idea/modules/" +
+                                                      (relativePath == null || relativePath.equals(".") ? "" : relativePath);
+    if (ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
+      LOG.info(String.format(
+        "Creating module data ('%s') with the external config path: '%s'", gradleModule.getGradleProject().getPath(), mainModuleConfigPath
+      ));
+    }
+
+    String gradlePath = gradleModule.getGradleProject().getPath();
+    final boolean isRootModule = StringUtil.isEmpty(gradlePath) || ":".equals(gradlePath);
+    String mainModuleId = isRootModule ? moduleName : gradlePath;
+    final ModuleData moduleData =
+      new ModuleData(mainModuleId, GradleConstants.SYSTEM_ID, StdModuleTypes.JAVA.getId(), moduleName,
+                     mainModuleFileDirectoryPath, mainModuleConfigPath);
+
+    ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
+    if (externalProject != null) {
+      moduleData.setGroup(externalProject.getGroup());
+      moduleData.setVersion(externalProject.getVersion());
+      moduleData.setDescription(externalProject.getDescription());
+      moduleData.setArtifacts(externalProject.getArtifacts());
+    }
+
+    return projectDataNode.createChild(ProjectKeys.MODULE, moduleData);
+  }
+
+  @NotNull
+  public static String getModuleConfigPath(@NotNull ProjectResolverContext resolverCtx,
+                                            @NotNull IdeaModule gradleModule,
+                                            @NotNull String rootProjectPath) {
+    GradleBuild build = resolverCtx.getExtraProject(gradleModule, GradleBuild.class);
+    if (build != null) {
+      String gradlePath = gradleModule.getGradleProject().getPath();
+      File moduleDirPath = getModuleDirPath(build, gradlePath);
+      if (moduleDirPath == null) {
+        throw new IllegalStateException(String.format("Unable to find root directory for module '%s'", gradleModule.getName()));
+      }
+      try {
+        return ExternalSystemApiUtil.toCanonicalPath(moduleDirPath.getCanonicalPath());
+      }
+      catch (IOException e) {
+        LOG.warn("construction of the canonical path for the module fails", e);
+      }
+    }
+
+    return GradleUtil.getConfigPath(gradleModule.getGradleProject(), rootProjectPath);
+  }
+
+  /**
+   * Returns the physical path of the module's root directory (the path in the file system.)
+   * <p>
+   * It is important to note that Gradle has its own "logical" path that may or may not be equal to the physical path of a Gradle project.
+   * For example, the sub-project at ${projectRootDir}/apps/app will have the Gradle path :apps:app. Gradle also allows mapping physical
+   * paths to a different logical path. For example, in settings.gradle:
+   * <pre>
+   *   include ':app'
+   *   project(':app').projectDir = new File(rootDir, 'apps/app')
+   * </pre>
+   * In this example, sub-project at ${projectRootDir}/apps/app will have the Gradle path :app.
+   * </p>
+   *
+   * @param build contains information about the root Gradle project and its sub-projects. Such information includes the physical path of
+   *              the root Gradle project and its sub-projects.
+   * @param path  the Gradle "logical" path. This path uses colon as separator, and may or may not be equal to the physical path of a
+   *              Gradle project.
+   * @return the physical path of the module's root directory.
+   */
+  @Nullable
+  public static File getModuleDirPath(@NotNull GradleBuild build, @NotNull String path) {
+    for (BasicGradleProject project : build.getProjects()) {
+      if (project.getPath().equals(path)) {
+        return project.getProjectDirectory();
+      }
+    }
+    return null;
+  }
 
   @NotNull
   public static String getModuleId(@NotNull IdeaModule gradleModule) {

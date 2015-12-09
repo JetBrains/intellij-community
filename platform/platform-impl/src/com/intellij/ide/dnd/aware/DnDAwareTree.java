@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,13 +109,13 @@ public class DnDAwareTree extends Tree implements DnDAware {
     c.paint(g2);
     g2.dispose();
 
-    Point point = new Point(-image.getWidth(null) / 2, -image.getHeight(null) / 2);
+    Point point = new Point(image.getWidth(null) / 2, image.getHeight(null) / 2);
 
     if (adjustToPathUnderDragOrigin) {
       TreePath path = tree.getPathForLocation(dragOrigin.x, dragOrigin.y);
       if (path != null) {
         Rectangle bounds = tree.getPathBounds(path);
-        point = new Point(bounds.x - dragOrigin.x, bounds.y - dragOrigin.y);
+        point = new Point(dragOrigin.x - bounds.x, dragOrigin.y - bounds.y);
       }
     }
 

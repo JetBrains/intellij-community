@@ -362,6 +362,8 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
   @NotNull
   @Override
   public String dumpState() {
-    return "[line widths: " + myLineWidths + "]";
+    return "[cached width: " + myWidthInPixels + 
+           ", max line with extension width: " + myMaxLineWithExtensionWidth + 
+           ", line widths: " + myLineWidths + "]";
   }
 }

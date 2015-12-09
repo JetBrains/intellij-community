@@ -12,6 +12,8 @@
  */
 package org.netbeans.lib.cvsclient.command.status;
 
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.command.AbstractMessageParser;
 import org.netbeans.lib.cvsclient.event.IEventSender;
 import org.netbeans.lib.cvsclient.file.AbstractFileObject;
@@ -19,7 +21,6 @@ import org.netbeans.lib.cvsclient.file.FileObject;
 import org.netbeans.lib.cvsclient.file.FileStatus;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 import org.netbeans.lib.cvsclient.util.BugLog;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -135,9 +136,7 @@ final class StatusMessageParser extends AbstractMessageParser {
 				final String statusString = line.substring(statusIndex + STATUS.length());
 				final FileStatus status = FileStatus.getStatusForString(statusString);
 				String fileName = line.substring(FILE.length(), statusIndex).trim();
-				if (fileName.startsWith(NO_FILE)) {
-					fileName = fileName.substring(NO_FILE.length());
-				}
+				fileName = StringUtil.trimStart(fileName, NO_FILE);
 
 				outputDone();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.search.scope.packageSet;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +23,7 @@ public class NamedPackageSetReference extends PackageSetBase {
   private final String myName;
 
   public NamedPackageSetReference(String name) {
-    myName = name.startsWith("$") ? name.substring(1) : name;
+    myName = StringUtil.trimStart(name, "$");
   }
 
   @Override

@@ -57,8 +57,8 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
 
   public static RecursionGuard guard = RecursionManager.createGuard("captureGuard");
 
-  public static boolean isNoCapture() {
-    return !guard.currentStack().isEmpty();
+  public static boolean isCapture() {
+    return guard.currentStack().isEmpty();
   }
 
   @Nullable

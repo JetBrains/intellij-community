@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.Patches;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -58,7 +59,7 @@ public class Alarm implements Disposable {
   private static final ThreadPoolExecutor ourSharedExecutorService = ConcurrencyUtil.newSingleThreadExecutor("Alarm pool(shared)", Thread.NORM_PRIORITY - 2);
 
   private final Object LOCK = new Object();
-  protected final ThreadToUse myThreadToUse;
+  final ThreadToUse myThreadToUse;
 
   private JComponent myActivationComponent;
 
@@ -76,7 +77,7 @@ public class Alarm implements Disposable {
     }
   }
 
-  public void checkDisposed() {
+  private void checkDisposed() {
     LOG.assertTrue(!myDisposed, "Already disposed");
   }
 
@@ -95,7 +96,7 @@ public class Alarm implements Disposable {
     /**
      * Alarm requests are run on one of application pooled threads. 
      * 
-     * @see com.intellij.openapi.application.Application#executeOnPooledThread(java.util.concurrent.Callable) 
+     * @see Application#executeOnPooledThread(Callable)
      */
     POOLED_THREAD,
 
@@ -186,7 +187,7 @@ public class Alarm implements Disposable {
     _addRequest(request, delayMillis, modalityState);
   }
 
-  protected void _addRequest(@NotNull Runnable request, long delayMillis, ModalityState modalityState) {
+  void _addRequest(@NotNull Runnable request, long delayMillis, ModalityState modalityState) {
     synchronized (LOCK) {
       checkDisposed();
       final Request requestToSchedule = new Request(request, modalityState, delayMillis);
@@ -390,14 +391,10 @@ public class Alarm implements Disposable {
       }
     }
 
-    public void setFuture(@NotNull ScheduledFuture<?> future) {
+    private void setFuture(@NotNull ScheduledFuture<?> future) {
       synchronized (LOCK) {
         myFuture = future;
       }
-    }
-
-    public ModalityState getModalityState() {
-      return myModalityState;
     }
 
     /**
@@ -406,10 +403,12 @@ public class Alarm implements Disposable {
     @Nullable
     private Runnable cancel() {
       synchronized (LOCK) {
-        if (myFuture != null) {
-          myFuture.cancel(false);
+        Future<?> future = myFuture;
+        if (future != null) {
+          future.cancel(false);
+          assert Patches.USE_REFLECTION_TO_ACCESS_JDK7;
           // TODO Use java.util.concurrent.ScheduledThreadPoolExecutor.setRemoveOnCancelPolicy(true) when on jdk 1.7
-          ((ScheduledThreadPoolExecutor)JobScheduler.getScheduler()).remove((Runnable)myFuture);
+          ((ThreadPoolExecutor)JobScheduler.getScheduler()).remove((Runnable)future);
           myFuture = null;
         }
         Runnable task = myTask;
@@ -425,8 +424,10 @@ public class Alarm implements Disposable {
     }
   }
 
+  @NotNull
   public Alarm setActivationComponent(@NotNull final JComponent component) {
     myActivationComponent = component;
+    //noinspection ResultOfObjectAllocationIgnored
     new UiNotifyConnector(component, new Activatable() {
       @Override
       public void showNotify() {

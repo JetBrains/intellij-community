@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ public class FoldingDescriptor {
   @Nullable private final FoldingGroup myGroup;
   private final Set<Object> myDependencies;
   private final boolean myNeverExpands;
+  private boolean myCanBeRemovedWhenCollapsed;
 
   /**
    * Creates a folding region related to the specified AST node and covering the specified
@@ -146,6 +147,18 @@ public class FoldingDescriptor {
 
   public boolean isNonExpandable() {
     return myNeverExpands;
+  }
+
+  public boolean canBeRemovedWhenCollapsed() {
+    return myCanBeRemovedWhenCollapsed;
+  }
+
+  /**
+   * By default, collapsed regions are not removed automatically, even if related PSI elements become invalid.
+   * This method allows to override default behaviour for specific regions.
+   */
+  public void setCanBeRemovedWhenCollapsed(boolean canBeRemovedWhenCollapsed) {
+    myCanBeRemovedWhenCollapsed = canBeRemovedWhenCollapsed;
   }
 
   @SuppressWarnings("HardCodedStringLiteral")

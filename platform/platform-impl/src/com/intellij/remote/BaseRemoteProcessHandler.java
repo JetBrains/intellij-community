@@ -21,6 +21,7 @@ import com.intellij.execution.process.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
@@ -37,20 +38,20 @@ import java.util.concurrent.Future;
  */
 public class BaseRemoteProcessHandler<T extends RemoteProcess> extends AbstractRemoteProcessHandler<T> implements TaskExecutor {
   private static final Logger LOG = Logger.getInstance(BaseRemoteProcessHandler.class);
-  @NotNull
+
   protected final String myCommandLine;
   protected final ProcessWaitFor myWaitFor;
-  @Nullable
   protected final Charset myCharset;
   protected T myProcess;
 
-  public BaseRemoteProcessHandler(@NotNull T process,
-                                  @NotNull String commandLine,
-                                  @Nullable Charset charset) {
+  public BaseRemoteProcessHandler(@NotNull T process, /*@NotNull*/ String commandLine, @Nullable Charset charset) {
     myProcess = process;
     myCommandLine = commandLine;
     myWaitFor = new ProcessWaitFor(process, this, CommandLineUtil.extractPresentableName(commandLine));
     myCharset = charset;
+    if (StringUtil.isEmpty(commandLine)) {
+      LOG.warn(new IllegalArgumentException("Must specify non-empty 'commandLine' parameter"));
+    }
   }
 
   @Override

@@ -59,7 +59,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
     final RulesProvider provider = new RulesProvider() {
       @Override
       public TypeMigrationRules provide() throws Exception {
-        final TypeMigrationRules rules = new TypeMigrationRules(fromType);
+        final TypeMigrationRules rules = new TypeMigrationRules();
         rules.setMigrationRootType(toType);
         return rules;
       }
@@ -88,7 +88,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
     final RulesProvider provider = new RulesProvider() {
       @Override
       public TypeMigrationRules provide() throws Exception {
-        final TypeMigrationRules rules = new TypeMigrationRules(rootType);
+        final TypeMigrationRules rules = new TypeMigrationRules();
         rules.setMigrationRootType(migrationType);
         return rules;
       }
@@ -112,7 +112,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
     final RulesProvider provider = new RulesProvider() {
       @Override
       public TypeMigrationRules provide() throws Exception {
-        final TypeMigrationRules rules = new TypeMigrationRules(rootType);
+        final TypeMigrationRules rules = new TypeMigrationRules();
         rules.setMigrationRootType(migrationType);
         return rules;
       }
@@ -134,7 +134,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
     final RulesProvider provider = new RulesProvider() {
       @Override
       public TypeMigrationRules provide() throws Exception {
-        final TypeMigrationRules rules = new TypeMigrationRules(rootType);
+        final TypeMigrationRules rules = new TypeMigrationRules();
         rules.setMigrationRootType(migrationType);
         return rules;
       }

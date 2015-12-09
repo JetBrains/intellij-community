@@ -29,6 +29,7 @@ public class TestOnlyInspectionTest extends InspectionTestCase {
   protected void setupRootModel(String testDir, VirtualFile[] sourceDir, String jdkName) {
     super.setupRootModel(testDir, sourceDir, jdkName);
     VirtualFile projectDir = LocalFileSystem.getInstance().findFileByPath(testDir);
+    assertNotNull(projectDir);
     VirtualFile test = projectDir.findChild("test");
     if (test != null) PsiTestUtil.addSourceRoot(myModule, test, true);
   }
@@ -39,29 +40,33 @@ public class TestOnlyInspectionTest extends InspectionTestCase {
     return new AnalysisScope(myModule);
   }
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     doTest();
   }
 
-  public void testInsideInner() throws Exception {
+  public void testInsideInner() {
     doTest();
   }
 
-  public void testConstructor() throws Exception {
+  public void testConstructor() {
     doTest();
   }
 
-  public void testVisibleForTesting() throws Exception { doTest(); }
+  public void testVisibleForTesting() { doTest(); }
 
-  public void testUnresolved() throws Exception {
+  public void testUnresolved() {
     doTest(); // shouldn't throw
   }
   
-  public void testClass() throws Exception {
+  public void testClass() {
+    doTest();
+  }
+  
+  public void testInsideField() {
     doTest();
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     TestOnlyInspection i = new TestOnlyInspection();
     doTest("testOnly/" + getTestName(true), new LocalInspectionToolWrapper(i), "java 1.5");
   }

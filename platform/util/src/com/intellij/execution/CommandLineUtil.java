@@ -98,11 +98,12 @@ public class CommandLineUtil {
   @NotNull
   public static String extractPresentableName(@NotNull String commandLine) {
     String executable = commandLine.trim();
+
     if (StringUtil.startsWithChar(executable, '\"') || StringUtil.startsWithChar(executable, '\'')) {
       char quote = executable.charAt(0);
-      for (int i=1;i<executable.length();i++) {
+      for (int i = 1; i < executable.length(); i++) {
         if (executable.charAt(i) == quote &&
-            (executable.charAt(i-1) != '\'' || StringUtil.isEscapedBackslash(executable, 0, i-1))) {
+            (executable.charAt(i - 1) != '\'' || StringUtil.isEscapedBackslash(executable, 0, i - 1))) {
           executable = executable.substring(1, i);
           break;
         }

@@ -72,6 +72,13 @@ public abstract class ModelsHolder<K extends Model,V>  implements Serializable {
     return modules;
   }
 
+  public boolean hasModulesWithModel(@NotNull Class modelClazz) {
+    for (Map.Entry<String, Object> set : myModelsById.entrySet()) {
+      if (modelClazz.isInstance(set.getValue())) return true;
+    }
+    return false;
+  }
+
   public void addExtraProject(@NotNull Object project, @NotNull Class modelClazz) {
     myModelsById.put(extractMapKey(modelClazz, null), project);
   }
@@ -81,7 +88,7 @@ public abstract class ModelsHolder<K extends Model,V>  implements Serializable {
   }
 
   @NotNull
-  protected abstract String extractMapKey(Class modelClazz, @Nullable V module) ;
+  protected abstract String extractMapKey(Class modelClazz, @Nullable V module);
 
   @NotNull
   private static String extractModulePath(Class modelClazz, String key) {

@@ -805,7 +805,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     start(new RulesProvider() {
       @Override
       public TypeMigrationRules provide() {
-        final TypeMigrationRules rules = new TypeMigrationRules(rootType);
+        final TypeMigrationRules rules = new TypeMigrationRules();
         rules.setMigrationRootType(migrationType);
         return rules;
       }
@@ -862,8 +862,8 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testT139() {
-    doTestForeachParameter(myFactory.createTypeFromText("java.lang.String", null),
-                           myFactory.createTypeFromText("java.lang.Integer", null));
+    doTestForeachParameter(
+      myFactory.createTypeFromText("java.lang.Integer", null));
   }
 
   public void testT140() {
@@ -914,11 +914,36 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     doTestFieldType("foo", "Test", PsiType.INT, PsiType.LONG);
   }
 
-  private void doTestForeachParameter(final PsiType rootType, final PsiType migrationType) {
+  public void testMethodReturnTypeWithTypeParameter() {
+    doTestReturnType("meth", myFactory.createTypeFromText("java.util.List<T>", null));
+  }
+
+  private void doTestReturnType(final String methodName, final PsiType migrationType) {
+    start(new RulesProvider() {
+      @Override
+      public TypeMigrationRules provide() throws Exception {
+        final TypeMigrationRules rules = new TypeMigrationRules();
+        rules.setMigrationRootType(migrationType);
+        return rules;
+      }
+
+      @Override
+      public PsiElement victims(PsiClass aClass) {
+        for (PsiMethod method : PsiTreeUtil.findChildrenOfType(aClass, PsiMethod.class)) {
+          if (methodName.equals(method.getName())) {
+            return method;
+          }
+        }
+        throw new AssertionError();
+      }
+    });
+  }
+
+  private void doTestForeachParameter(final PsiType migrationType) {
     start(new RulesProvider() {
       @Override
       public TypeMigrationRules provide() {
-        final TypeMigrationRules rules = new TypeMigrationRules(rootType);
+        final TypeMigrationRules rules = new TypeMigrationRules();
         rules.setMigrationRootType(migrationType);
         return rules;
       }

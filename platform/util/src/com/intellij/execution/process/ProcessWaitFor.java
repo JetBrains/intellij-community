@@ -31,16 +31,10 @@ public class ProcessWaitFor {
   private final Future<?> myWaitForThreadFuture;
   private final BlockingQueue<Consumer<Integer>> myTerminationCallback = new ArrayBlockingQueue<Consumer<Integer>>(1);
 
-  public void detach() {
-    myWaitForThreadFuture.cancel(true);
-  }
-
+  /** @deprecated use {@link #ProcessWaitFor(Process, TaskExecutor, String)} instead (to be removed in IDEA 17) */
   @Deprecated
-  /**
-   * @deprecated use {@link ProcessWaitFor#ProcessWaitFor(Process, TaskExecutor, String)} instead
-   */
   public ProcessWaitFor(@NotNull final Process process, @NotNull TaskExecutor executor) {
-    this(process, executor,"");
+    this(process, executor, "");
   }
 
   public ProcessWaitFor(@NotNull final Process process, @NotNull TaskExecutor executor, @NotNull final String presentableName) {
@@ -49,7 +43,7 @@ public class ProcessWaitFor {
       public void run() {
         String oldThreadName = Thread.currentThread().getName();
         if (!StringUtil.isEmptyOrSpaces(presentableName)) {
-          Thread.currentThread().setName(StringUtil.first("ProcessWaitFor: "+presentableName, 120, true));
+          Thread.currentThread().setName(StringUtil.first("ProcessWaitFor: " + presentableName, 120, true));
         }
         int exitCode = 0;
         try {
@@ -76,6 +70,10 @@ public class ProcessWaitFor {
         }
       }
     });
+  }
+
+  public void detach() {
+    myWaitForThreadFuture.cancel(true);
   }
 
   public void setTerminationCallback(Consumer<Integer> r) {

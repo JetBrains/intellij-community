@@ -27,12 +27,15 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.CheckBox;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -41,6 +44,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,9 +64,12 @@ public class PyPep8NamingInspection extends PyInspection {
   private static final Pattern LOWERCASE_REGEX = Pattern.compile("[_\\p{javaLowerCase}][_\\p{javaLowerCase}0-9]*");
   private static final Pattern UPPERCASE_REGEX = Pattern.compile("[_\\p{javaUpperCase}][_\\p{javaUpperCase}0-9]*");
   private static final Pattern MIXEDCASE_REGEX = Pattern.compile("_?[\\p{javaUpperCase}][\\p{javaLowerCase}\\p{javaUpperCase}0-9]*");
+  private static final String INSPECTION_SHORT_NAME = "PyPep8NamingInspection";
+
+  public final List<String> ignoredErrors = new ArrayList<String>();
 
   public boolean ignoreOverriddenFunctions = true;
-  public List<String> ignoredBaseClasses = Lists.newArrayList("unittest.TestCase", "unittest.case.TestCase");
+  public final List<String> ignoredBaseClasses = Lists.newArrayList("unittest.TestCase", "unittest.case.TestCase");
 
   @NotNull
   @Override
@@ -72,8 +79,35 @@ public class PyPep8NamingInspection extends PyInspection {
     return new Visitor(holder, session);
   }
 
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    final JPanel rootPanel = new JPanel(new BorderLayout());
+    rootPanel.add(new CheckBox("Ignore overridden functions", this, "ignoreOverriddenFunctions"), BorderLayout.NORTH);
+
+    final OnePixelSplitter splitter = new OnePixelSplitter(false);
+    splitter.setFirstComponent(new ListEditForm("Excluded base classes", ignoredBaseClasses).getContentPanel());
+    splitter.setSecondComponent(new ListEditForm("Ignored errors", ignoredErrors).getContentPanel());
+    rootPanel.add(splitter, BorderLayout.CENTER);
+
+    return rootPanel;
+  }
+
   public class Visitor extends PyInspectionVisitor {
-    public Visitor(@NotNull final ProblemsHolder holder, LocalInspectionToolSession session) {
+    @SuppressWarnings("Duplicates") private final HashMap<String, String> errorCodesDescription = new HashMap<String, String>() {
+      {
+        put("N801", "Class names should use CamelCase convention");
+        put("N802", "Function name should be lowercase");
+        put("N803", "Argument name should be lowercase");
+        put("N806", "Variable in function should be lowercase");
+        put("N811", "Constant variable imported as non constant");
+        put("N812", "Lowercase variable imported as non lowercase");
+        put("N813", "CamelCase variable imported as lowercase");
+        put("N814", "CamelCase variable imported as constant");
+      }
+    };
+
+    public Visitor(ProblemsHolder holder, LocalInspectionToolSession session) {
       super(holder, session);
     }
 
@@ -91,8 +125,9 @@ public class PyPep8NamingInspection extends PyInspection {
             return;
           }
         }
-        if (!LOWERCASE_REGEX.matcher(name).matches() && !name.startsWith("_")) {
-          registerAndAddRenameQuickFix(expression, "Variable in function should be lowercase");
+        final String errorCode = "N806";
+        if (!LOWERCASE_REGEX.matcher(name).matches() && !name.startsWith("_") && !ignoredErrors.contains(errorCode)) {
+          registerAndAddRenameAndIgnoreErrorQuickFixes(expression, errorCode);
         }
       }
     }
@@ -101,16 +136,18 @@ public class PyPep8NamingInspection extends PyInspection {
     public void visitPyParameter(PyParameter node) {
       final String name = node.getName();
       if (name == null) return;
-      if (!LOWERCASE_REGEX.matcher(name).matches()) {
-        registerAndAddRenameQuickFix(node, "Argument name should be lowercase");
+
+      final String errorCode = "N803";
+      if (!LOWERCASE_REGEX.matcher(name).matches() && !ignoredErrors.contains(errorCode)) {
+        registerAndAddRenameAndIgnoreErrorQuickFixes(node, errorCode);
       }
     }
 
-    private void registerAndAddRenameQuickFix(@Nullable final PsiElement node, @NotNull final String name) {
+    private void registerAndAddRenameAndIgnoreErrorQuickFixes(@Nullable final PsiElement node, @NotNull final String errorCode) {
       if (getHolder() != null && getHolder().isOnTheFly())
-        registerProblem(node, name, new PyRenameElementQuickFix());
+        registerProblem(node, errorCodesDescription.get(errorCode), new PyRenameElementQuickFix(), new IgnoreErrorFix(errorCode));
       else
-        registerProblem(node, name);
+        registerProblem(node, errorCodesDescription.get(errorCode), new IgnoreErrorFix(errorCode));
     }
 
     @Override
@@ -132,7 +169,12 @@ public class PyPep8NamingInspection extends PyInspection {
           if (containingClass != null) {
             quickFixes.add(new IgnoreBaseClassQuickFix(containingClass, myTypeEvalContext));
           }
-          registerProblem(nameNode.getPsi(), "Function name should be lowercase", quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
+          final String errorCode = "N802";
+          if (!ignoredErrors.contains(errorCode)) {
+            quickFixes.add(new IgnoreErrorFix(errorCode));
+            registerProblem(nameNode.getPsi(), errorCodesDescription.get(errorCode),
+                            quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
+          }
         }
       }
     }
@@ -156,12 +198,13 @@ public class PyPep8NamingInspection extends PyInspection {
 
     @Override
     public void visitPyClass(PyClass node) {
+      final String errorCode = "N801";
       final String name = node.getName();
       if (name == null) return;
       if (!MIXEDCASE_REGEX.matcher(name).matches()) {
         final ASTNode nameNode = node.getNameNode();
-        if (nameNode != null) {
-          registerAndAddRenameQuickFix(nameNode.getPsi(), "Class names should use CamelCase convention");
+        if (nameNode != null && !ignoredErrors.contains(errorCode)) {
+          registerAndAddRenameAndIgnoreErrorQuickFixes(nameNode.getPsi(), errorCode);
         }
       }
     }
@@ -175,32 +218,40 @@ public class PyPep8NamingInspection extends PyInspection {
 
       if (asName == null || name == null) return;
       if (UPPERCASE_REGEX.matcher(name).matches()) {
-        if (!UPPERCASE_REGEX.matcher(asName).matches()) {
-          registerAndAddRenameQuickFix(node.getAsNameElement(), "Constant variable imported as non constant");
+        final String errorCode = "N811";
+        if (!UPPERCASE_REGEX.matcher(asName).matches() && !ignoredErrors.contains(errorCode)) {
+          registerAndAddRenameAndIgnoreErrorQuickFixes(node.getAsNameElement(), errorCode);
         }
       }
       else if (LOWERCASE_REGEX.matcher(name).matches()) {
-        if (!LOWERCASE_REGEX.matcher(asName).matches()) {
-          registerAndAddRenameQuickFix(node.getAsNameElement(), "Lowercase variable imported as non lowercase");
+        final String errorCode = "N812";
+        if (!LOWERCASE_REGEX.matcher(asName).matches() && !ignoredErrors.contains(errorCode)) {
+          registerAndAddRenameAndIgnoreErrorQuickFixes(node.getAsNameElement(), errorCode);
         }
       }
       else if (LOWERCASE_REGEX.matcher(asName).matches()) {
-        registerAndAddRenameQuickFix(node.getAsNameElement(), "CamelCase variable imported as lowercase");
+        final String errorCode = "N813";
+        if (!ignoredErrors.contains(errorCode)) {
+          registerAndAddRenameAndIgnoreErrorQuickFixes(node.getAsNameElement(), errorCode);
+        }
       }
       else if (UPPERCASE_REGEX.matcher(asName).matches()) {
-        registerAndAddRenameQuickFix(node.getAsNameElement(), "CamelCase variable imported as constant");
+        final String errorCode = "N814";
+        if (!ignoredErrors.contains(errorCode)) {
+          registerAndAddRenameAndIgnoreErrorQuickFixes(node.getAsNameElement(), errorCode);
+        }
       }
     }
   }
 
   private static class IgnoreBaseClassQuickFix implements LocalQuickFix {
-    final List<String> myBaseClassNames;
+    private final List<String> myBaseClassNames;
 
     public IgnoreBaseClassQuickFix(@NotNull PyClass baseClass, @NotNull TypeEvalContext context) {
       myBaseClassNames = new ArrayList<String>();
-      ContainerUtil.addIfNotNull(myBaseClassNames, baseClass.getQualifiedName());
+      ContainerUtil.addIfNotNull(getBaseClassNames(), baseClass.getQualifiedName());
       for (PyClass ancestor : baseClass.getAncestorClasses(context)) {
-        ContainerUtil.addIfNotNull(myBaseClassNames, ancestor.getQualifiedName());
+        ContainerUtil.addIfNotNull(getBaseClassNames(), ancestor.getQualifiedName());
       }
     }
 
@@ -218,7 +269,7 @@ public class PyPep8NamingInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-      final JBList list = new JBList(myBaseClassNames);
+      final JBList list = new JBList(getBaseClassNames());
       final Runnable updateBlackList = new Runnable() {
         @Override
         public void run() {
@@ -250,14 +301,46 @@ public class PyPep8NamingInspection extends PyInspection {
         }
       });
     }
+
+    public List<String> getBaseClassNames() {
+      return myBaseClassNames;
+    }
   }
 
-  @Nullable
-  @Override
-  public JComponent createOptionsPanel() {
-    final JPanel rootPanel = new JPanel(new BorderLayout());
-    rootPanel.add(new CheckBox("Ignore overridden functions", this, "ignoreOverriddenFunctions"), BorderLayout.NORTH);
-    rootPanel.add(new ListEditForm("Excluded base classes", ignoredBaseClasses).getContentPanel(), BorderLayout.CENTER);
-    return rootPanel;
+  private static class IgnoreErrorFix implements LocalQuickFix {
+    private final String myCode;
+    private static final String myText = "Ignore errors like this";
+
+    public IgnoreErrorFix(String code) {
+      myCode = code;
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return  myText;
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return myText;
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiFile file = descriptor.getStartElement().getContainingFile();
+      InspectionProjectProfileManager.getInstance(project).getInspectionProfile().modifyProfile(new Consumer<ModifiableModel>() {
+        @Override
+        public void consume(ModifiableModel model) {
+          PyPep8NamingInspection tool = (PyPep8NamingInspection)model.getUnwrappedTool(INSPECTION_SHORT_NAME, file);
+          if (!tool.ignoredErrors.contains(myCode)) {
+            tool.ignoredErrors.add(myCode);
+          }
+        }
+      });
+    }
   }
 }

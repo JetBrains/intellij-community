@@ -17,6 +17,7 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.JBProtocolCommand;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,9 +37,7 @@ public class JBProtocolOpenProjectCommand extends JBProtocolCommand {
   @Override
   public void perform(String target, Map<String, String> parameters) {
     String path = URLDecoder.decode(target);
-    if (path.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
-      path = path.substring(LocalFileSystem.PROTOCOL_PREFIX.length());
-    }
+    path = StringUtil.trimStart(path, LocalFileSystem.PROTOCOL_PREFIX);
     ProjectUtil.openProject(path, null, true);
   }
 }

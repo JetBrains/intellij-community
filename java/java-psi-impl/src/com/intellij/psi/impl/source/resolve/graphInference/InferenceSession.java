@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference;
 
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -42,6 +41,7 @@ import java.util.*;
 public class InferenceSession {
   private static final Logger LOG = Logger.getInstance("#" + InferenceSession.class.getName());
   public static final Key<PsiType> LOWER_BOUND = Key.create("LowBound");
+  public static final Key<PsiType> UPPER_BOUND = Key.create("UpperBound");
   private static final Key<PsiElement> ORIGINAL_CONTEXT = Key.create("ORIGINAL_CONTEXT");
   private static final Key<Boolean> ERASED = Key.create("UNCHECKED_CONVERSION");
   private static final Function<Pair<PsiType, PsiType>, PsiType> UPPER_BOUND_FUNCTION = new Function<Pair<PsiType, PsiType>, PsiType>() {
@@ -985,24 +985,10 @@ public class InferenceSession {
         }
       }
 
-      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getManager().getProject());
-      final PsiTypeParameter[] freshParameters = createFreshVariables(vars, substitutor);
-      for (int i = 0; i < freshParameters.length; i++) {
-        PsiTypeParameter parameter = freshParameters[i];
-        final InferenceVariable var = vars.get(i);
-        final PsiType lub = getLowerBound(var, substitutor);
-        if (lub != PsiType.NULL) {
-          for (PsiClassType upperBoundType : parameter.getExtendsListTypes()) {
-            if (!TypeConversionUtil.isAssignable(upperBoundType, lub)) {
-              return null;
-            }
-          }
-          parameter.putUserData(LOWER_BOUND, lub);
-        }
-        if (!var.addBound(elementFactory.createType(parameter), InferenceBound.EQ)) {
-          return null;
-        }
+      if (!initFreshVariables(substitutor, vars)) {
+        return null;
       }
+
       myIncorporationPhase.forgetCaptures(vars);
       if (!repeatInferencePhases(true)) {
         return null;
@@ -1011,38 +997,36 @@ public class InferenceSession {
     return substitutor;
   }
 
-  private PsiTypeParameter[] createFreshVariables(final List<InferenceVariable> vars, final PsiSubstitutor siteSubstitutor) {
+  private boolean initFreshVariables(PsiSubstitutor substitutor, List<InferenceVariable> vars) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getManager().getProject());
-
-    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+    PsiSubstitutor ySubstitutor = PsiSubstitutor.EMPTY;
     final PsiTypeParameter[] yVars = new PsiTypeParameter[vars.size()];
     for (int i = 0; i < vars.size(); i++) {
       InferenceVariable var = vars.get(i);
       final PsiTypeParameter parameter = var.getParameter();
       yVars[i] = elementFactory.createTypeParameterFromText(getFreshVariableName(var), parameter);
-      substitutor = substitutor.put(var, elementFactory.createType(yVars[i]));
+      ySubstitutor = ySubstitutor.put(var, elementFactory.createType(yVars[i]));
     }
-
-
-    final PsiSubstitutor ySubstitutor = substitutor;
-    final String classText = "class I<" + StringUtil.join(vars, new Function<InferenceVariable, String>() {
-      @Override
-      public String fun(InferenceVariable variable) {
-        final PsiType glb = composeBound(variable, InferenceBound.UPPER, UPPER_BOUND_FUNCTION, ySubstitutor.putAll(siteSubstitutor), true);
-        return getFreshVariableName(variable) + " extends " + glb.getInternalCanonicalText();
+    for (int i = 0; i < yVars.length; i++) {
+      PsiTypeParameter parameter = yVars[i];
+      final InferenceVariable var = vars.get(i);
+      final PsiType lub = getLowerBound(var, substitutor);
+      if (lub != PsiType.NULL) {
+        for (PsiClassType upperBoundType : parameter.getExtendsListTypes()) {
+          if (!TypeConversionUtil.isAssignable(upperBoundType, lub)) {
+            return false;
+          }
+        }
+        parameter.putUserData(LOWER_BOUND, lub);
       }
-    }, ", ") + ">{}";
-
-    final PsiFile file =
-      PsiFileFactory.getInstance(getManager().getProject()).createFileFromText("inference_dummy.java", JavaFileType.INSTANCE, classText);
-    LOG.assertTrue(file instanceof PsiJavaFile, classText);
-    final PsiClass[] classes = ((PsiJavaFile)file).getClasses();
-    LOG.assertTrue(classes.length == 1, classText);
-    final PsiTypeParameter[] parameters = classes[0].getTypeParameters();
-    for (PsiTypeParameter parameter : parameters) {
+      parameter.putUserData(UPPER_BOUND,
+                            composeBound(var, InferenceBound.UPPER, UPPER_BOUND_FUNCTION, ySubstitutor.putAll(substitutor), true));
       parameter.putUserData(ORIGINAL_CONTEXT, myContext);
+      if (!var.addBound(elementFactory.createType(parameter), InferenceBound.EQ)) {
+        return false;
+      }
     }
-    return parameters;
+    return true;
   }
 
   private static String getFreshVariableName(InferenceVariable var) {
@@ -1303,7 +1287,8 @@ public class InferenceSession {
     if (formula instanceof ExpressionCompatibilityConstraint) {
       PsiExpression expression = ((ExpressionCompatibilityConstraint)formula).getExpression();
       if (expression instanceof PsiLambdaExpression) {
-        PsiType parameterType = ((ExpressionCompatibilityConstraint)formula).getT();
+        PsiType parameterType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(((ExpressionCompatibilityConstraint)formula).getT(),
+                                                                                            (PsiLambdaExpression)expression);
         collectLambdaReturnExpression(additionalConstraints, (PsiLambdaExpression)expression, parameterType, !isProperType(parameterType), substitutor);
       }
     }

@@ -95,11 +95,14 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
 
         final ModifiableModuleModel modifiableModel = modelsProvider.getModifiableModuleModel();
         final String[] groupPath;
-        if (isOneToOneMapping || node.getData().getIdeModuleGroup() == null || projectData == null) {
+        if (isOneToOneMapping || projectData == null) {
           groupPath = node.getData().getIdeModuleGroup();
         }
         else {
-          groupPath = ArrayUtil.prepend(projectData.getInternalName() + " modules", node.getData().getIdeModuleGroup());
+          final String externalProjectGroup = projectData.getInternalName() + " modules";
+          groupPath = node.getData().getIdeModuleGroup() == null
+                      ? new String[]{externalProjectGroup}
+                      : ArrayUtil.prepend(externalProjectGroup, node.getData().getIdeModuleGroup());
         }
         modifiableModel.setModuleGroupPath(module, groupPath);
         ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);

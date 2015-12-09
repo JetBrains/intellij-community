@@ -149,17 +149,13 @@ public class IndentTest extends LightIdeaTestCase {
         });
       }
     }, null, null);
-    
+
 
     String textAfter = loadFile(fileNameAfter);
     String fileText = file.getText();
-    if (textAfter.startsWith("\n")) {
-      textAfter = textAfter.substring(1);
-    }
-    if (fileText.startsWith("\n")) {
-      fileText = fileText.substring(1);
-    }
-    
+    textAfter = StringUtil.trimStart(textAfter, "\n");
+    fileText = StringUtil.trimStart(fileText, "\n");
+
     assertEquals(textAfter, fileText);
   }
 

@@ -75,8 +75,12 @@ public class PyEditingTest extends PyTestCase {
     assertEquals("'' ", doTestTyping(" ", 0, '\''));
   }
 
-  public void testNoClosingTriple() {
-    assertEquals("'''", doTestTyping("''", 2, '\''));
+  public void testAutoCloseTriple() {
+    assertEquals("''''''", doTestTyping("''", 2, '\''));
+  }
+
+  public void testAutoRemoveTriple() {
+    doTestBackspace("closedTripleQuoteBackspace", new LogicalPosition(1, 3));
   }
 
   public void testOvertypeFromInside() {

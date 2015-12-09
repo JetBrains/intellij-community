@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -201,9 +201,7 @@ public class ClasspathCache {
   }
 
   static String transformName(String name) {
-    if (name.endsWith("/")) {
-      name = name.substring(0, name.length() - 1);
-    }
+    name = StringUtil.trimEnd(name, "/");
     name = name.substring(name.lastIndexOf('/') + 1);
 
     if (name.endsWith(UrlClassLoader.CLASS_EXTENSION)) {

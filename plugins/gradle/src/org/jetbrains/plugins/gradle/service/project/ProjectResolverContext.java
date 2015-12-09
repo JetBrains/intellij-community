@@ -18,6 +18,7 @@ package org.jetbrains.plugins.gradle.service.project;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.UserDataHolderEx;
 import org.gradle.tooling.CancellationTokenSource;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.idea.IdeaModule;
@@ -32,101 +33,45 @@ import java.util.Collection;
  * @author Vladislav.Soroka
  * @since 10/15/13
  */
-public class ProjectResolverContext {
-  @NotNull private final ExternalSystemTaskId myExternalSystemTaskId;
-  @NotNull private final String myProjectPath;
-  @Nullable private final GradleExecutionSettings mySettings;
-  @NotNull private final ProjectConnection myConnection;
-  @Nullable private CancellationTokenSource myCancellationTokenSource;
-  @NotNull private final ExternalSystemTaskNotificationListener myListener;
-  private final boolean myIsPreviewMode;
+public interface ProjectResolverContext extends UserDataHolderEx {
   @NotNull
-  private ProjectImportAction.AllModels myModels;
-
-  public ProjectResolverContext(@NotNull final ExternalSystemTaskId externalSystemTaskId,
-                                @NotNull final String projectPath,
-                                @Nullable final GradleExecutionSettings settings,
-                                @NotNull final ProjectConnection connection,
-                                @NotNull final ExternalSystemTaskNotificationListener listener,
-                                final boolean isPreviewMode) {
-    myExternalSystemTaskId = externalSystemTaskId;
-    myProjectPath = projectPath;
-    mySettings = settings;
-    myConnection = connection;
-    myListener = listener;
-    myIsPreviewMode = isPreviewMode;
-  }
-
-  @NotNull
-  public ExternalSystemTaskId getExternalSystemTaskId() {
-    return myExternalSystemTaskId;
-  }
+  ExternalSystemTaskId getExternalSystemTaskId();
 
   @Nullable
-  public String getIdeProjectPath() {
-    return mySettings != null ? mySettings.getIdeProjectPath() : null;
-  }
+  String getIdeProjectPath();
 
   @NotNull
-  public String getProjectPath() {
-    return myProjectPath;
-  }
+  String getProjectPath();
 
   @Nullable
-  public GradleExecutionSettings getSettings() {
-    return mySettings;
-  }
+  GradleExecutionSettings getSettings();
 
   @NotNull
-  public ProjectConnection getConnection() {
-    return myConnection;
-  }
+  ProjectConnection getConnection();
 
   @Nullable
-  public CancellationTokenSource getCancellationTokenSource() {
-    return myCancellationTokenSource;
-  }
-
-  public void setCancellationTokenSource(@Nullable CancellationTokenSource cancellationTokenSource) {
-    myCancellationTokenSource = cancellationTokenSource;
-  }
+  CancellationTokenSource getCancellationTokenSource();
 
   @NotNull
-  public ExternalSystemTaskNotificationListener getListener() {
-    return myListener;
-  }
+  ExternalSystemTaskNotificationListener getListener();
 
-  public boolean isPreviewMode() {
-    return myIsPreviewMode;
-  }
+  boolean isPreviewMode();
 
   @NotNull
-  public ProjectImportAction.AllModels getModels() {
-    return myModels;
-  }
+  ProjectImportAction.AllModels getModels();
 
-  public void setModels(@NotNull ProjectImportAction.AllModels models) {
-    myModels = models;
-  }
+  public void setModels(@NotNull ProjectImportAction.AllModels models) ;
 
   @Nullable
-  public <T> T getExtraProject(Class<T> modelClazz) {
-    return myModels.getExtraProject(null, modelClazz);
-  }
+  <T> T getExtraProject(Class<T> modelClazz);
 
   @Nullable
-  public <T> T getExtraProject(@Nullable IdeaModule module, Class<T> modelClazz) {
-    return myModels.getExtraProject(module, modelClazz);
-  }
+  <T> T getExtraProject(@Nullable IdeaModule module, Class<T> modelClazz);
 
   @NotNull
-  public Collection<String> findModulesWithModel(@NotNull Class modelClazz) {
-    return myModels.findModulesWithModel(modelClazz);
-  }
+  Collection<String> findModulesWithModel(@NotNull Class modelClazz);
 
-  public void checkCancelled() {
-    if (myCancellationTokenSource != null && myCancellationTokenSource.token().isCancellationRequested()) {
-      throw new ProcessCanceledException();
-    }
-  }
+  boolean hasModulesWithModel(@NotNull Class modelClazz);
+
+  void checkCancelled() throws ProcessCanceledException;
 }

@@ -411,7 +411,9 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
         @Override
         public void consume(ModifiableModel model) {
           PyPep8Inspection tool = (PyPep8Inspection)model.getUnwrappedTool(PyPep8Inspection.INSPECTION_SHORT_NAME, file);
-          tool.ignoredErrors.add(myCode);
+          if (!tool.ignoredErrors.contains(myCode)) {
+            tool.ignoredErrors.add(myCode);
+          }
         }
       });
     }

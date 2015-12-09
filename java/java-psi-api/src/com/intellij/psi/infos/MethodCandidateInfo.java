@@ -125,7 +125,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     
     if (isToInferApplicability()) {
       //already performed checks, so if inference failed, error message should be saved  
-      if (myInferenceError != null) {
+      if (myInferenceError != null || !isPotentiallyCompatible()) {
         return ApplicabilityLevel.NOT_APPLICABLE;
       }
       return isVarargs() ? ApplicabilityLevel.VARARGS : ApplicabilityLevel.FIXED_ARITY;
@@ -173,8 +173,19 @@ public class MethodCandidateInfo extends CandidateInfo{
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       final PsiExpression[] expressions = ((PsiExpressionList)myArgumentList).getExpressions();
 
-      if (!isVarargs() && expressions.length != parameters.length) {
-        return true;
+      if (!isVarargs() &&  myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+        if (expressions.length != parameters.length) {
+          return false;
+        }
+      }
+      else {
+        if (expressions.length < parameters.length - 1) {
+          return false;
+        }
+
+        if (parameters.length == 0 && expressions.length != parameters.length) {
+          return false;
+        }
       }
 
       for (int i = 0; i < expressions.length; i++) {

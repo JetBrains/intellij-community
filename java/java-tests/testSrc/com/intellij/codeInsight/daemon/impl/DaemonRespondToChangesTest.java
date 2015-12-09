@@ -2081,6 +2081,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
   
   public void testCodeFoldingPassRestartsOnRegionUnfolding() throws Exception {
+    TestLoggerFactory.enableDebugLogging(myTestRootDisposable, "#com.intellij.codeInsight.daemon.impl.PassExecutorService");
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     int savedDelay = settings.AUTOREPARSE_DELAY;
     settings.AUTOREPARSE_DELAY = 0;
@@ -2091,6 +2092,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
                                          "    }\n" +
                                          "}");
       CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(myEditor);
+      waitForDaemon();
       EditorTestUtil.executeAction(myEditor, IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
       waitForDaemon();
       checkFoldingState("[FoldRegion +(25:33), placeholder='{...}']");
@@ -2118,11 +2120,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   private void waitForDaemon() {
-    long deadline = System.currentTimeMillis() + 10000;
-    while (!myDaemonCodeAnalyzer.isRunning()) {
-      if (System.currentTimeMillis() > deadline) fail("Too long waiting for daemon to start");
+    long deadline = System.currentTimeMillis() + 60_000;
+    while (PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
+      if (System.currentTimeMillis() > deadline) fail("Too long waiting for document commit");
       UIUtil.dispatchAllInvocationEvents();
     }
+    UIUtil.dispatchAllInvocationEvents(); // make sure daemon is started
     while (myDaemonCodeAnalyzer.isRunning()) {
       if (System.currentTimeMillis() > deadline) fail("Too long waiting for daemon to finish");
       UIUtil.dispatchAllInvocationEvents();

@@ -386,8 +386,8 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     @Override
     public void applyFix(@NotNull final Project project,
                          @NotNull final CommonProblemDescriptor[] descriptors,
-                         final List<PsiElement> psiElementsToIgnore,
-                         final Runnable refreshViews) {
+                         @NotNull final List<PsiElement> psiElementsToIgnore,
+                         @Nullable final Runnable refreshViews) {
       for (CommonProblemDescriptor descriptor : descriptors) {
         RefElement refElement = (RefElement)myProcessor.getElement(descriptor);
         if (refElement.isValid() && refElement instanceof RefMethod) {

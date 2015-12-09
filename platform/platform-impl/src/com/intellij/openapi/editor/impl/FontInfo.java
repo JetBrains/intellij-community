@@ -51,7 +51,6 @@ public class FontInfo {
   @JdkConstants.FontStyle private final int myStyle;
   private final TIntHashSet mySafeCharacters = new TIntHashSet();
   private FontMetrics myFontMetrics = null;
-  private final int[] charWidth = new int[128];
   private boolean myHasGlyphsToBreakDrawingIteration;
   private boolean myCheckedForProblemGlyphs;
 
@@ -188,7 +187,6 @@ public class FontInfo {
 
   public int charWidth(char c) {
     final FontMetrics metrics = fontMetrics();
-    if (c < 128) return charWidth[c];
     return FontLayoutService.getInstance().charWidth(metrics, c);
   }
 
@@ -199,9 +197,6 @@ public class FontInfo {
       final Graphics graphics = createReferenceGraphics();
       graphics.setFont(myFont);
       myFontMetrics = graphics.getFontMetrics();
-      for (char c = 0; c < 128; c++) {
-        charWidth[c] = FontLayoutService.getInstance().charWidth(myFontMetrics, c);
-      }
     }
     return myFontMetrics;
   }

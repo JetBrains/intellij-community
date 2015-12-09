@@ -39,10 +39,8 @@ public abstract class BaseDataReader {
     mySleepingPolicy = sleepingPolicy != null ? sleepingPolicy: SleepingPolicy.SIMPLE;
   }
 
+  /** @deprecated use {@link #start(String)} instead (to be removed in IDEA 17) */
   @Deprecated
-  /**
-   * @deprecated use {@link BaseDataReader#start(String)} instead
-   */
   protected void start() {
     start("");
   }
@@ -57,7 +55,7 @@ public abstract class BaseDataReader {
         public void run() {
           String oldThreadName = Thread.currentThread().getName();
           if (!StringUtil.isEmptyOrSpaces(presentableName)) {
-            Thread.currentThread().setName(StringUtil.first("BaseDataReader: "+presentableName, 120, true));
+            Thread.currentThread().setName(StringUtil.first("BaseDataReader: " + presentableName, 120, true));
           }
           try {
             doRun();

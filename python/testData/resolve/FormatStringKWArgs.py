@@ -1,0 +1,1 @@
+"formatted string with args:"<ref>"{fst}".format(fst=12)

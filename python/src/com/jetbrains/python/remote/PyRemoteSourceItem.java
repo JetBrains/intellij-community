@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.remote;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remote.RemoteFile;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.PathUtil;
@@ -81,9 +82,7 @@ public class PyRemoteSourceItem {
   }
 
   public void setLocalPrefix(String localPrefix) {
-    if (localPrefix.endsWith("/")) {
-      localPrefix = localPrefix.substring(0, localPrefix.length() - 1);
-    }
+    localPrefix = StringUtil.trimEnd(localPrefix, "/");
     myLocalPrefix = localPrefix;
   }
 

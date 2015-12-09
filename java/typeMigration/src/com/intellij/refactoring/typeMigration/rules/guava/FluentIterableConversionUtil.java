@@ -188,9 +188,12 @@ public class FluentIterableConversionUtil {
                                          PsiClass iterable,
                                          PsiClass collection) {
       if (retValue == null) return false;
-      final PsiType type = retValue.getType();
+      PsiType type = retValue.getType();
       if (PsiType.NULL.equals(type)) {
         return true;
+      }
+      if (type instanceof PsiCapturedWildcardType) {
+        type = ((PsiCapturedWildcardType)type).getUpperBound();
       }
       if (type instanceof PsiClassType) {
         final PsiClass resolvedClass = ((PsiClassType)type).resolve();
@@ -265,7 +268,7 @@ public class FluentIterableConversionUtil {
     }
     else if ("toSortedSet".equals(methodName)) {
       findTemplate = "$it$.toSortedSet($c$)";
-      replaceTemplate = "$it$.collect(java.util.stream.Collectors.toCollection(java.util.TreeSet::new))";
+      replaceTemplate = "$it$.collect(java.util.stream.Collectors.toCollection(() -> new java.util.TreeSet<>($c$)))";
       returnType = CommonClassNames.JAVA_UTIL_SET;
     } else {
       return null;

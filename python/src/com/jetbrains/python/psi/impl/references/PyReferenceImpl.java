@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -394,9 +395,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     ASTNode nameElement = myElement.getNameElement();
-    if (newElementName.endsWith(PyNames.DOT_PY)) {
-      newElementName = newElementName.substring(0, newElementName.length() - PyNames.DOT_PY.length());
-    }
+    newElementName = StringUtil.trimEnd(newElementName, PyNames.DOT_PY);
     if (nameElement != null && PyNames.isIdentifier(newElementName)) {
       final ASTNode newNameElement = PyUtil.createNewName(myElement, newElementName);
       myElement.getNode().replaceChild(nameElement, newNameElement);

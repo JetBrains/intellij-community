@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.jetbrains.python;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,9 +44,7 @@ public class PythonHelpersLocator {
       return new File(pluginBaseDir, "helpers");
     }
 
-    if (jarPath.endsWith(COMMUNITY_SUFFIX)) {
-      jarPath = jarPath.substring(0, jarPath.length() - COMMUNITY_SUFFIX.length());
-    }
+    jarPath = StringUtil.trimEnd(jarPath, COMMUNITY_SUFFIX);
 
     return new File(jarPath + "-helpers");
   }

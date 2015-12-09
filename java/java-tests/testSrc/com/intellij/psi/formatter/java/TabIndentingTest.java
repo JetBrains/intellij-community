@@ -128,7 +128,7 @@ public class TabIndentingTest extends LightIdeaTestCase {
     doTest("SCR6197.java", "SCR6197_after.java");
   }
 
-  private void doTest(String fileNameBefore, String fileNameAfter) throws Exception{
+  private void doTest(String fileNameBefore, String fileNameAfter) throws Exception {
     String text = loadFile(fileNameBefore);
     final PsiFile file = createFile(fileNameBefore, text);
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
@@ -147,18 +147,14 @@ public class TabIndentingTest extends LightIdeaTestCase {
         });
       }
     }, null, null);
-    
+
 
     String textAfter = loadFile(fileNameAfter);
     String fileText = file.getText();
 
-    if (textAfter.startsWith("\n")) {
-      textAfter = textAfter.substring(1);
-    }
-    if (fileText.startsWith("\n")) {
-      fileText = fileText.substring(1);
-    }
-    
+    textAfter = StringUtil.trimStart(textAfter, "\n");
+    fileText = StringUtil.trimStart(fileText, "\n");
+
     if (!textAfter.equals(fileText)) {
       System.err.println("Expected:");
       System.err.println(textAfter);

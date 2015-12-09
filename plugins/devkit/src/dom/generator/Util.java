@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
  */
 package org.jetbrains.idea.devkit.dom.generator;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.apache.xerces.xs.XSObject;
 
 import java.util.HashMap;
@@ -150,7 +151,7 @@ public class Util {
 
   public static String toDefXmlTagName(String tname) {
     String xmlName = tname;
-    if (xmlName.endsWith(TYPE_SUFFIX)) xmlName = xmlName.substring(0, xmlName.length() - TYPE_SUFFIX.length());
+    xmlName = StringUtil.trimEnd(xmlName, TYPE_SUFFIX);
     return xmlName;
   }
 
