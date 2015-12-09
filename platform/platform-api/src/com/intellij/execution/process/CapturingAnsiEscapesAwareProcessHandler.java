@@ -26,15 +26,13 @@ import org.jetbrains.annotations.NotNull;
  * @author traff
  */
 public class CapturingAnsiEscapesAwareProcessHandler extends CapturingProcessHandler {
-  public CapturingAnsiEscapesAwareProcessHandler(@NotNull GeneralCommandLine commandLine)
-    throws ExecutionException {
+  public CapturingAnsiEscapesAwareProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
   }
 
+  /** @deprecated Use {@link #CapturingAnsiEscapesAwareProcessHandler(Process, String)} instead (to be removed in IDEA 17) */
+  @SuppressWarnings({"deprecation", "unused"})
   @Deprecated
-  /**
-   * @deprecated use {@link CapturingAnsiEscapesAwareProcessHandler#CapturingAnsiEscapesAwareProcessHandler(Process, String)} instead
-   */
   public CapturingAnsiEscapesAwareProcessHandler(Process process) {
     super(process);
   }
