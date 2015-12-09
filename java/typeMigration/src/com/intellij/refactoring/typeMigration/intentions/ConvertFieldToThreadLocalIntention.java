@@ -98,7 +98,7 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
     final PsiClassType toType = factory.createType(threadLocalClass, factory.createSubstitutor(substitutor));
 
     try {
-      final TypeMigrationRules rules = new TypeMigrationRules(fromType);
+      final TypeMigrationRules rules = new TypeMigrationRules();
       rules.setMigrationRootType(toType);
       rules.setBoundScope(GlobalSearchScope.fileScope(element.getContainingFile()));
       final TypeMigrationLabeler labeler = new TypeMigrationLabeler(rules);

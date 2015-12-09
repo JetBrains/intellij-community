@@ -805,7 +805,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     start(new RulesProvider() {
       @Override
       public TypeMigrationRules provide() {
-        final TypeMigrationRules rules = new TypeMigrationRules(rootType);
+        final TypeMigrationRules rules = new TypeMigrationRules();
         rules.setMigrationRootType(migrationType);
         return rules;
       }
@@ -918,7 +918,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     start(new RulesProvider() {
       @Override
       public TypeMigrationRules provide() {
-        final TypeMigrationRules rules = new TypeMigrationRules(rootType);
+        final TypeMigrationRules rules = new TypeMigrationRules();
         rules.setMigrationRootType(migrationType);
         return rules;
       }

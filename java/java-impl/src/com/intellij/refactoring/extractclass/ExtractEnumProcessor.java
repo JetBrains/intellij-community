@@ -144,7 +144,7 @@ public class ExtractEnumProcessor {
         }
       }
 
-      final TypeMigrationRules rules = new TypeMigrationRules(myEnumConstants.get(0).getType());
+      final TypeMigrationRules rules = new TypeMigrationRules();
       rules.addConversionDescriptor(new EnumTypeConversionRule(myEnumConstants));
       rules.setMigrationRootType(
         JavaPsiFacade.getElementFactory(myProject).createType(myClass));

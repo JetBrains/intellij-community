@@ -208,7 +208,7 @@ public class TypeMigrationDialog extends RefactoringDialog {
     }
 
     if (myRules == null) {
-      myRules = new TypeMigrationRules(rootType);
+      myRules = new TypeMigrationRules();
       myRules.setMigrationRootType(migrationType);
       myRules.setBoundScope(myScopeChooserCombo.getSelectedScope());
     }
