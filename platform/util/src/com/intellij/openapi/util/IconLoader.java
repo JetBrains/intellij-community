@@ -42,6 +42,7 @@ import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
@@ -361,6 +362,7 @@ public final class IconLoader {
     private float scale;
     private ImageFilter filter;
     private HashMap<Float, Icon> scaledIcons;
+    private static final int SCALED_ICONS_CACHE_LIMIT = 5;
 
     public CachedImageIcon(@NotNull URL url) {
       myUrl = url;
@@ -430,7 +432,12 @@ public final class IconLoader {
         return this;
       }
       if (scaledIcons == null) {
-        scaledIcons = new HashMap<Float, Icon>(1);
+        scaledIcons = new LinkedHashMap<Float, Icon>(1) {
+          @Override
+          public boolean removeEldestEntry(Map.Entry<Float, Icon> entry) {
+            return size() > SCALED_ICONS_CACHE_LIMIT;
+          }
+        };
       }
 
       // TODO: consider clearing the cache on SCALE change
