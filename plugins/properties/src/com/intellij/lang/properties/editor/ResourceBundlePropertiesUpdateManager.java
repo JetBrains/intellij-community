@@ -139,7 +139,7 @@ public class ResourceBundlePropertiesUpdateManager {
 
   @Nullable
   private static Pair<List<String>, Boolean> keysOrder(final ResourceBundle resourceBundle) {
-    final boolean[] isEdgesProperlyDirection = new boolean[]{true};
+    final boolean[] isAlphaSorted = new boolean[]{true};
     final GraphGenerator<String> generator = GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<String>() {
       @Override
       public Collection<String> getNodes() {
@@ -167,8 +167,8 @@ public class ResourceBundlePropertiesUpdateManager {
             if (sibling instanceof IProperty) {
               final String key = ((IProperty)sibling).getKey();
               if (key != null) {
-                if (isEdgesProperlyDirection[0] && n.compareTo(key) > 0) {
-                  isEdgesProperlyDirection[0] = false;
+                if (isAlphaSorted[0] && String.CASE_INSENSITIVE_ORDER.compare(n, key) > 0) {
+                  isAlphaSorted[0] = false;
                 }
                 siblings.add(key);
               }
@@ -181,7 +181,7 @@ public class ResourceBundlePropertiesUpdateManager {
     DFSTBuilder<String> dfstBuilder = new DFSTBuilder<String>(generator);
     final boolean acyclic = dfstBuilder.isAcyclic();
     if (acyclic) {
-      if (isEdgesProperlyDirection[0]) {
+      if (isAlphaSorted[0]) {
         final List<String> sortedNodes = new ArrayList<String>(generator.getNodes());
         Collections.sort(sortedNodes, String.CASE_INSENSITIVE_ORDER);
         return Pair.create(sortedNodes, true);
