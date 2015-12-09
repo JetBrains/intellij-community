@@ -2081,6 +2081,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
   
   public void testCodeFoldingPassRestartsOnRegionUnfolding() throws Exception {
+    TestLoggerFactory.enableDebugLogging(myTestRootDisposable, "#com.intellij.codeInsight.daemon.impl.PassExecutorService");
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
     int savedDelay = settings.AUTOREPARSE_DELAY;
     settings.AUTOREPARSE_DELAY = 0;
