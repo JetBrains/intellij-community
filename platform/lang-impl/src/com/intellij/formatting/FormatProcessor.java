@@ -327,12 +327,6 @@ public class FormatProcessor {
     doIterationsSynchronously();
   }
 
-  /**
-   * Perform iterations against the {@link #myCurrentState current state} until it's {@link FormattingStateId type}
-   * is {@link FormattingStateId#getPreviousStates() less} or equal to the given state.
-   *
-   * @param state   target state to process
-   */
   private void doIterationsSynchronously() {
     while (!myStateProcessor.isDone()) {
       myStateProcessor.iteration();
@@ -1315,11 +1309,9 @@ public class FormatProcessor {
     return result.toString();
   }
 
-  public abstract class State {
+  public abstract static class State {
 
     private boolean myDone;
-
-    protected State(FormattingStateId stateId) {}
 
     public void iteration() {
       if (!isDone()) {
@@ -1353,7 +1345,6 @@ public class FormatProcessor {
                     @Nullable final FormatTextRanges affectedRanges,
                     int interestingOffset)
     {
-      super(FormattingStateId.WRAPPING_BLOCKS);
       myModel = model;
       myWrapper = InitialInfoBuilder.prepareToBuildBlocksSequentially(
         root, model, affectedRanges, mySettings, myDefaultIndentOption, interestingOffset, myProgressCallback
@@ -1391,10 +1382,6 @@ public class FormatProcessor {
   }
 
   private class AdjustWhiteSpacesState extends State {
-
-    AdjustWhiteSpacesState() {
-      super(FormattingStateId.PROCESSING_BLOCKS);
-    }
     
     @Override
     protected void doIteration() {
@@ -1428,7 +1415,6 @@ public class FormatProcessor {
     private       boolean                myResetBulkUpdateState;
 
     private ApplyChangesState(FormattingModel model) {
-      super(FormattingStateId.APPLYING_CHANGES);
       myModel = model;
     }
 
@@ -1583,10 +1569,6 @@ public class FormatProcessor {
   private class ExpandChildrenIndent extends State {
     private Iterator<ExpandableIndent> myIterator;
     private MultiMap<Alignment, LeafBlockWrapper> myBlocksToRealign = new MultiMap<Alignment, LeafBlockWrapper>();
-
-    public ExpandChildrenIndent() {
-      super(FormattingStateId.EXPANDING_CHILDREN_INDENTS);
-    }
 
     @Override
     protected void doIteration() {
