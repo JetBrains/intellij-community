@@ -268,7 +268,7 @@ public class FluentIterableConversionUtil {
     }
     else if ("toSortedSet".equals(methodName)) {
       findTemplate = "$it$.toSortedSet($c$)";
-      replaceTemplate = "$it$.collect(java.util.stream.Collectors.toCollection(java.util.TreeSet::new))";
+      replaceTemplate = "$it$.collect(java.util.stream.Collectors.toCollection(() -> new java.util.TreeSet<>($c$)))";
       returnType = CommonClassNames.JAVA_UTIL_SET;
     } else {
       return null;
