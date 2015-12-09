@@ -169,7 +169,12 @@ public class CheckBoxList<T> extends JBList {
     this.checkBoxListListener = checkBoxListListener;
   }
 
-  protected void adjustRendering(final JCheckBox checkBox, int index, final boolean selected, final boolean hasFocus) {
+  protected JComponent adjustRendering(JComponent rootComponent,
+                                       final JCheckBox checkBox,
+                                       int index,
+                                       final boolean selected,
+                                       final boolean hasFocus) {
+    return rootComponent;
   }
 
   private class CellRenderer implements ListCellRenderer {
@@ -230,7 +235,8 @@ public class CheckBoxList<T> extends JBList {
 
       rootComponent.setBorder(isSelected ? mySelectedBorder : myBorder);
 
-      adjustRendering(checkbox, index, isSelected, cellHasFocus);
+      rootComponent = adjustRendering(rootComponent, checkbox, index, isSelected, cellHasFocus);
+
       return rootComponent;
     }
   }

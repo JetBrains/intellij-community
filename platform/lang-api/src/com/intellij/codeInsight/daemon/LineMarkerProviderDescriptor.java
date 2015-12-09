@@ -15,30 +15,8 @@
  */
 package com.intellij.codeInsight.daemon;
 
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-
 /**
  * @author Dmitry Avdeev
  */
-public abstract class LineMarkerProviderDescriptor implements LineMarkerProvider {
-
-  /**
-   * Human-readable provider name for UI.
-   * @return null if no configuration needed
-   */
-  public abstract String getName();
-
-  @Nullable
-  public Icon getIcon() {
-    return null;
-  }
-
-  public boolean isEnabledByDefault() { return true; }
-
-  @Override
-  public String toString() {
-    return getName();
-  }
+public abstract class LineMarkerProviderDescriptor extends GutterIconDescriptor implements LineMarkerProvider {
 }
