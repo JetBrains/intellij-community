@@ -47,17 +47,17 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ScalableIcon;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Function;
-import com.intellij.util.IconUtil;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -198,10 +198,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       .setImageProvider(new NullableFunction<DnDActionInfo, DnDImage>() {
         @Override
         public DnDImage fun(DnDActionInfo info) {
-          Point dndPoint = info.getPoint();
-          Pair<GutterMark, Point> res = findGutterRendererAndPoint(dndPoint);
-          return new DnDImage(IconUtil.toImage(scaleIcon(res.first.getIcon())),
-                              new Point(dndPoint.x - res.second.x, dndPoint.y - res.second.y));
+          return new DnDImage(IconUtil.toImage(scaleIcon(getGutterRenderer(info.getPoint()).getIcon())));
         }
       })
       .install();
@@ -1715,7 +1712,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   @Nullable
-  private Pair<GutterMark, Point> findGutterRendererAndPoint(final Point p) {
+  private GutterMark getGutterRenderer(final Point p) {
     int line = convertPointToLineNumber(p);
     if (line == -1) return null;
     List<GutterMark> renderers = myLineToGutterRenderers.get(line);
@@ -1723,28 +1720,20 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       return null;
     }
 
-    final Ref<Pair<GutterMark, Point>> result = new Ref<Pair<GutterMark, Point>>();
+    final GutterMark[] result = {null};
     processIconsRow(line, renderers, new LineGutterIconRendererProcessor() {
       @Override
       public void process(int x, int y, GutterMark renderer) {
-        if (result.isNull()) {
-          int ex = convertX((int)p.getX());
-          Icon icon = scaleIcon(renderer.getIcon());
-          // Do not check y to extend the area where users could click
-          if (x <= ex && ex <= x + icon.getIconWidth()) {
-            result.set(Pair.create(renderer, new Point(x, y)));
-          }
+        final int ex = convertX((int)p.getX());
+        Icon icon = scaleIcon(renderer.getIcon());
+        // Do not check y to extend the area where users could click
+        if (x <= ex && ex <= x + icon.getIconWidth()) {
+          result[0] = renderer;
         }
       }
     });
 
-    return result.get();
-  }
-
-  @Nullable
-  private GutterMark getGutterRenderer(Point p) {
-    Pair<GutterMark, Point> info = findGutterRendererAndPoint(p);
-    return info != null ? info.first : null;
+    return result[0];
   }
 
   @Nullable
