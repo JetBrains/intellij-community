@@ -69,9 +69,10 @@ open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: 
       return promise
     }
 
-    messageProcessor.closed()
+    val disconnectPromise = messageProcessor.send(disconnectRequest)
     channel = null
-    messageProcessor.send(disconnectRequest).processed {
+    messageProcessor.closed()
+    disconnectPromise.processed {
       promise.catchError {
         messageProcessor.cancelWaitingRequests()
         closeChannel(currentChannel, promise)
