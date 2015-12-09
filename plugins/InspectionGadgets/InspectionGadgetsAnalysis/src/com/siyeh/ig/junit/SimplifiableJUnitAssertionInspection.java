@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -63,7 +62,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement methodNameIdentifier = descriptor.getPsiElement();
       final PsiElement parent = methodNameIdentifier.getParent();
       if (parent == null) {
@@ -87,7 +86,28 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
       }
     }
 
-    private static void replaceAssertWithFail(PsiMethodCallExpression callExpression) throws IncorrectOperationException {
+    private static void addStaticImportOrQualifier(String methodName, PsiMethodCallExpression originalMethodCall, StringBuilder out) {
+      final PsiReferenceExpression methodExpression = originalMethodCall.getMethodExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
+      if (qualifier == null) {
+        final PsiMethod method = originalMethodCall.resolveMethod();
+        if (method == null) {
+          return;
+        }
+        final PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null && "org.junit.Assert".equals(containingClass.getQualifiedName()) &&
+            !ImportUtils.addStaticImport("org.junit.Assert", methodName, originalMethodCall)) {
+          // add qualifier if old call was to JUnit4 method and adding static import failed
+          out.append("org.junit.Assert.");
+        }
+      }
+      else {
+        // apparently not statically imported, keep old qualifier in new assert call
+        out.append(qualifier.getText()).append('.');
+      }
+    }
+
+    private static void replaceAssertWithFail(PsiMethodCallExpression callExpression) {
       final PsiMethod method = callExpression.resolveMethod();
       if (method == null) {
         return;
@@ -102,9 +122,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         message = null;
       }
       @NonNls final StringBuilder newExpression = new StringBuilder();
-      if (!ImportUtils.addStaticImport("org.junit.Assert", "fail", callExpression)) {
-        newExpression.append("org.junit.Assert.");
-      }
+      addStaticImportOrQualifier("fail", callExpression, newExpression);
       newExpression.append("fail(");
       if (message != null) {
         newExpression.append(message.getText());
@@ -113,7 +131,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
       PsiReplacementUtil.replaceExpressionAndShorten(callExpression, newExpression.toString());
     }
 
-    private static void replaceAssertTrueWithAssertEquals(PsiMethodCallExpression callExpression) throws IncorrectOperationException {
+    private static void replaceAssertTrueWithAssertEquals(PsiMethodCallExpression callExpression) {
       final PsiMethod method = callExpression.resolveMethod();
       if (method == null) {
         return;
@@ -159,9 +177,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
         return;
       }
       @NonNls final StringBuilder newExpression = new StringBuilder();
-      if (!ImportUtils.addStaticImport("org.junit.Assert", "assertEquals", callExpression)) {
-        newExpression.append("org.junit.Assert.");
-      }
+      addStaticImportOrQualifier("assertEquals", callExpression, newExpression);
       newExpression.append("assertEquals(");
       if (message != null) {
         newExpression.append(message.getText()).append(',');
@@ -174,7 +190,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
       PsiReplacementUtil.replaceExpressionAndShorten(callExpression, newExpression.toString());
     }
 
-    private static void replaceAssertWithAssertNull(PsiMethodCallExpression callExpression) throws IncorrectOperationException {
+    private static void replaceAssertWithAssertNull(PsiMethodCallExpression callExpression) {
       final PsiMethod method = callExpression.resolveMethod();
       if (method == null) {
         return;
@@ -215,9 +231,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
       else {
         memberName = "assertNull";
       }
-      if (!ImportUtils.addStaticImport("org.junit.Assert", memberName, callExpression)) {
-        newExpression.append("org.junit.Assert.");
-      }
+      addStaticImportOrQualifier(memberName, callExpression, newExpression);
       newExpression.append(memberName).append('(');
       if (message != null) {
         newExpression.append(message.getText()).append(',');
@@ -226,7 +240,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
       PsiReplacementUtil.replaceExpressionAndShorten(callExpression, newExpression.toString());
     }
 
-    private static void replaceAssertWithAssertSame(PsiMethodCallExpression callExpression) throws IncorrectOperationException {
+    private static void replaceAssertWithAssertSame(PsiMethodCallExpression callExpression) {
       final PsiMethod method = callExpression.resolveMethod();
       if (method == null) {
         return;
@@ -269,9 +283,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
       else {
         memberName = "assertSame";
       }
-      if (!ImportUtils.addStaticImport("org.junit.Assert", memberName, callExpression)) {
-        newExpression.append("org.junit.Assert.");
-      }
+      addStaticImportOrQualifier(memberName, callExpression, newExpression);
       newExpression.append(memberName).append('(');
       if (message != null) {
         newExpression.append(message.getText()).append(',');
@@ -280,9 +292,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
       PsiReplacementUtil.replaceExpressionAndShorten(callExpression, newExpression.toString());
     }
 
-    private static void replaceAssertEqualsWithAssertLiteral(
-      PsiMethodCallExpression callExpression)
-      throws IncorrectOperationException {
+    private static void replaceAssertEqualsWithAssertLiteral(PsiMethodCallExpression callExpression) {
       final PsiMethod method = callExpression.resolveMethod();
       if (method == null) {
         return;
@@ -321,9 +331,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
       final String uppercaseLiteralValue = Character.toUpperCase(literalValue.charAt(0)) + literalValue.substring(1);
       @NonNls final StringBuilder newExpression = new StringBuilder();
       @NonNls final String methodName = "assert" + uppercaseLiteralValue;
-      if (!ImportUtils.addStaticImport("org.junit.Assert", methodName, callExpression)) {
-        newExpression.append("org.junit.Assert.");
-      }
+      addStaticImportOrQualifier(methodName, callExpression, newExpression);
       newExpression.append(methodName).append('(');
       if (message != null) {
         newExpression.append(message.getText()).append(',');
