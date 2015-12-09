@@ -109,3 +109,20 @@ fun <T> collectResults(promises: List<Promise<T>>): Promise<List<T>> {
 }
 
 fun createError(error: String, log: Boolean = false): RuntimeException = Promise.MessageError(error, log)
+
+inline fun <T> AsyncPromise<*>.tryOrReject(runnable: () -> T): T? {
+  try {
+    return runnable()
+  }
+  catch (e: Throwable) {
+    setError(e)
+    return null
+  }
+}
+
+inline fun <T> AsyncPromise<T>.compute(runnable: () -> T) {
+  val result = tryOrReject(runnable)
+  if (!isRejected) {
+    setResult(result)
+  }
+}
