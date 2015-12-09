@@ -93,14 +93,9 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
 
   private PsiElement resolvePercentString() {
     final PyBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(getElement(), PyBinaryExpression.class);
-    //final Class[] SIMPLE_RESULT_EXPRESSIONS = {
-    //  PyLiteralExpression.class, PySubscriptionExpression.class, PyBinaryExpression.class, PyConditionalExpression.class,
-    //  PyCallExpression.class, PySliceExpression.class, PyReferenceExpression.class
-    //};
 
     if (binaryExpression != null) {
       final PyExpression rightExpression = binaryExpression.getRightExpression();
-
       if (rightExpression instanceof PyParenthesizedExpression) {
         final PyParenthesizedExpression expression = (PyParenthesizedExpression)rightExpression;
         final PyExpression containedExpression = expression.getContainedExpression();

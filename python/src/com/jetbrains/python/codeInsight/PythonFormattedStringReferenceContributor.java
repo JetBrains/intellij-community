@@ -17,6 +17,8 @@ package com.jetbrains.python.codeInsight;
 
 import com.intellij.psi.PsiReferenceContributor;
 import com.intellij.psi.PsiReferenceRegistrar;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +28,10 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 public class PythonFormattedStringReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(psiElement(PyStringLiteralExpression.class), new PythonFormattedStringReferenceProvider());
+    registrar.registerReferenceProvider(psiElement().andOr(
+      psiElement(PyStringLiteralExpression.class).withParent(PyBinaryExpression.class),
+      psiElement(PyStringLiteralExpression.class).withParent(PyReferenceExpression.class))
+      , new PythonFormattedStringReferenceProvider());
 
   }
 }

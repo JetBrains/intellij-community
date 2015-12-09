@@ -52,9 +52,11 @@ public class PythonFormattedStringReferenceProvider extends PsiReferenceProvider
   private static PsiReference[] getReferencesFromChunks(@NotNull final PyStringLiteralExpression element,
                                                         @NotNull final List<PyStringFormatParser.SubstitutionChunk> chunks) {
     final PsiReference[] result = new PsiReference[chunks.size()];
-    for (int i = 0; i < chunks.size(); i++) {
-      final PyStringFormatParser.SubstitutionChunk chunk = chunks.get(i);
-      result[i] = new PySubstitutionChunkReference(element, chunk, i);
+    if (!element.isDocString()) {
+      for (int i = 0; i < chunks.size(); i++) {
+        final PyStringFormatParser.SubstitutionChunk chunk = chunks.get(i);
+        result[i] = new PySubstitutionChunkReference(element, chunk, i);
+      }
     }
     return result;
   }
