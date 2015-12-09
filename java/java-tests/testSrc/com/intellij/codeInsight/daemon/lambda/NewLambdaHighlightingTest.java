@@ -244,6 +244,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testGroundTargetTypeForExpectedReturnTypeOfLambdaExpression() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
