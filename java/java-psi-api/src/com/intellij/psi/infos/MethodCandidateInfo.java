@@ -173,13 +173,17 @@ public class MethodCandidateInfo extends CandidateInfo{
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       final PsiExpression[] expressions = ((PsiExpressionList)myArgumentList).getExpressions();
 
-      if (!isVarargs()) {
+      if (!isVarargs() &&  myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
         if (expressions.length != parameters.length) {
           return false;
         }
       }
       else {
         if (expressions.length < parameters.length - 1) {
+          return false;
+        }
+
+        if (parameters.length == 0 && expressions.length != parameters.length) {
           return false;
         }
       }
