@@ -27,7 +27,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -50,8 +50,8 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,10 +69,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, ProjectComponent {
+@State(
+  name = "ChangesViewManager",
+  storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE)
+)
+public class ChangesViewManager implements ChangesViewI, ProjectComponent, PersistentStateComponent<ChangesViewManager.State> {
   private static final int UNVERSIONED_MAX_SIZE = 50;
-  private boolean SHOW_FLATTEN_MODE = true;
-  private boolean SHOW_IGNORED_MODE = false;
 
   private final ChangesListView myView;
   private JPanel myProgressLabel;
@@ -85,8 +87,8 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   private final Project myProject;
   private final ChangesViewContentManager myContentManager;
 
-  @NonNls private static final String ATT_FLATTENED_VIEW = "flattened_view";
-  @NonNls private static final String ATT_SHOW_IGNORED = "show_ignored";
+  @NotNull private ChangesViewManager.State myState = new ChangesViewManager.State();
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesViewManager");
   private JBSplitter mySplitter;
   private MessageBusConnection myConnection;
@@ -227,7 +229,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     DefaultActionGroup menuGroup = (DefaultActionGroup) ActionManager.getInstance().getAction("ChangesViewPopupMenu");
     myView.setMenuActions(menuGroup);
 
-    myView.setShowFlatten(SHOW_FLATTEN_MODE);
+    myView.setShowFlatten(myState.myShowFlatten);
 
     myProgressLabel = new JPanel(new BorderLayout());
 
@@ -362,26 +364,27 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
                        changeListManager.getModifiedWithoutEditing(),
                        changeListManager.getSwitchedFilesMap(),
                        changeListManager.getSwitchedRoots(),
-                       SHOW_IGNORED_MODE ? changeListManager.getIgnoredFiles() : null, changeListManager.getLockedFolders(),
+                       myState.myShowIgnored ? changeListManager.getIgnoredFiles() : null, changeListManager.getLockedFolders(),
                        changeListManager.getLogicallyLockedFolders());
 
     changeDetails();
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    SHOW_FLATTEN_MODE = Boolean.valueOf(element.getAttributeValue(ATT_FLATTENED_VIEW)).booleanValue();
-    SHOW_IGNORED_MODE = Boolean.valueOf(element.getAttributeValue(ATT_SHOW_IGNORED)).booleanValue();
+  @NotNull
+  @Override
+  public ChangesViewManager.State getState() {
+    return myState;
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    element.setAttribute(ATT_FLATTENED_VIEW, String.valueOf(SHOW_FLATTEN_MODE));
-    element.setAttribute(ATT_SHOW_IGNORED, String.valueOf(SHOW_IGNORED_MODE));
+  @Override
+  public void loadState(@NotNull ChangesViewManager.State state) {
+    myState = state;
   }
 
   @Override
   public void setShowFlattenMode(boolean state) {
-    SHOW_FLATTEN_MODE = state;
-    myView.setShowFlatten(SHOW_FLATTEN_MODE);
+    myState.myShowFlatten = state;
+    myView.setShowFlatten(state);
     refreshView();
   }
 
@@ -424,6 +427,15 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
         myView.getModel().nodeChanged(node);
       }
     }
+  }
+
+  public static class State {
+
+    @Attribute("flattened_view")
+    public boolean myShowFlatten = true;
+
+    @Attribute("show_ignored")
+    public boolean myShowIgnored;
   }
 
   private class MyChangeListListener extends ChangeListAdapter {
@@ -493,7 +505,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     }
 
     public boolean isSelected(AnActionEvent e) {
-      return !SHOW_FLATTEN_MODE;
+      return !myState.myShowFlatten;
     }
 
     public void setSelected(AnActionEvent e, boolean state) {
@@ -509,11 +521,11 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     }
 
     public boolean isSelected(AnActionEvent e) {
-      return SHOW_IGNORED_MODE;
+      return myState.myShowIgnored;
     }
 
     public void setSelected(AnActionEvent e, boolean state) {
-      SHOW_IGNORED_MODE = state;
+      myState.myShowIgnored = state;
       refreshView();
     }
   }
