@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -34,10 +35,12 @@ import com.intellij.psi.SmartPointerManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static com.intellij.util.containers.ContainerUtil.newTroveMap;
 
 /**
  * @author cdr
@@ -53,6 +56,7 @@ class UpdateFoldRegionsOperation implements Runnable {
   private final PsiFile myFile;
   private final ApplyDefaultStateMode myApplyDefaultState;
   private final FoldingUpdate.FoldingMap myElementsToFoldMap;
+  private final boolean myKeepCollapsedRegions;
   private final boolean myForInjected;
 
   UpdateFoldRegionsOperation(@NotNull Project project,
@@ -60,12 +64,14 @@ class UpdateFoldRegionsOperation implements Runnable {
                              @NotNull PsiFile file,
                              @NotNull FoldingUpdate.FoldingMap elementsToFoldMap,
                              ApplyDefaultStateMode applyDefaultState,
+                             boolean keepCollapsedRegions,
                              boolean forInjected) {
     myProject = project;
     myEditor = editor;
     myFile = file;
     myApplyDefaultState = applyDefaultState;
     myElementsToFoldMap = elementsToFoldMap;
+    myKeepCollapsedRegions = keepCollapsedRegions;
     myForInjected = forInjected;
   }
 
@@ -171,7 +177,7 @@ class UpdateFoldRegionsOperation implements Runnable {
     List<FoldRegion> toRemove = newArrayList();
     InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(myProject);
     for (FoldRegion region : foldingModel.getAllFoldRegions()) {
-      if (!region.isExpanded() && !isRegionInCaretLine(region)) continue;
+      if (myKeepCollapsedRegions && !region.isExpanded() && !isRegionInCaretLine(region)) continue;
       
       PsiElement element = info.getPsiElement(region);
       if (element != null) {
@@ -227,9 +233,16 @@ class UpdateFoldRegionsOperation implements Runnable {
   }
 
   private boolean isRegionInCaretLine(FoldRegion region) {
-    int regionStartLine = myEditor.getDocument().getLineNumber(region.getStartOffset());
-    int regionEndLine = myEditor.getDocument().getLineNumber(region.getEndOffset());
-    int caretLine = myEditor.getCaretModel().getLogicalPosition().line;
-    return caretLine >= regionStartLine && caretLine <= regionEndLine;
+    FoldingGroup group = region.getGroup();
+    List<FoldRegion> affectedRegions = group != null && myEditor instanceof EditorEx 
+                                       ? ((EditorEx)myEditor).getFoldingModel().getGroupedRegions(group) 
+                                       : Collections.singletonList(region);
+    for (FoldRegion affectedRegion : affectedRegions) {
+      int regionStartLine = myEditor.getDocument().getLineNumber(affectedRegion.getStartOffset());
+      int regionEndLine = myEditor.getDocument().getLineNumber(affectedRegion.getEndOffset());
+      int caretLine = myEditor.getCaretModel().getLogicalPosition().line;
+      if (caretLine >= regionStartLine && caretLine <= regionEndLine) return true;
+    }
+    return false;
   }
 }
