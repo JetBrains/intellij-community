@@ -609,8 +609,10 @@ public final class PsiUtil extends PsiUtilCore {
    * would be equivalent
    */
   public static boolean equalOnEquivalentClasses(PsiClassType thisClassType, @NotNull PsiClass aClass, PsiClassType otherClassType, @NotNull PsiClass bClass) {
-    final PsiClassType capture1 = PsiCapturedWildcardType.isNoCapture() ? thisClassType : (PsiClassType)captureToplevelWildcards(thisClassType, aClass);
-    final PsiClassType capture2 = PsiCapturedWildcardType.isNoCapture() ? otherClassType : (PsiClassType)captureToplevelWildcards(otherClassType, bClass);
+    final PsiClassType capture1 = !PsiCapturedWildcardType.isCapture()
+                                  ? thisClassType : (PsiClassType)captureToplevelWildcards(thisClassType, aClass);
+    final PsiClassType capture2 = !PsiCapturedWildcardType.isCapture()
+                                  ? otherClassType : (PsiClassType)captureToplevelWildcards(otherClassType, bClass);
 
     final PsiClassType.ClassResolveResult result1 = capture1.resolveGenerics();
     final PsiClassType.ClassResolveResult result2 = capture2.resolveGenerics();
