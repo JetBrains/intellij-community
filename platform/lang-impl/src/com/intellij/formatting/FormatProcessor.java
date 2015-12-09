@@ -168,8 +168,6 @@ public class FormatProcessor {
   private MultiMap<ExpandableIndent, AbstractBlockWrapper> myExpandableIndents;
   private int myTotalBlocksWithAlignments;
   private int myBlockRollbacks;
-  
-  private AlignmentCyclesDetector myCyclesDetector;
 
   public FormatProcessor(final FormattingDocumentModel docModel,
                          Block rootBlock,
@@ -181,7 +179,7 @@ public class FormatProcessor {
     this(docModel, rootBlock, new FormatOptions(settings, indentOptions, affectedRanges, false), progressCallback);
   }
 
-  public FormatProcessor(FormattingDocumentModel model,
+  public FormatProcessor(final FormattingDocumentModel model,
                          Block block,
                          FormatOptions options,
                          @NotNull FormattingProgressCallback callback)
@@ -191,11 +189,28 @@ public class FormatProcessor {
     mySettings = options.mySettings;
     myDocument = model.getDocument();
     myReformatContext = options.myReformatContext;
-
-    InitialInfoBuilder builder = prepareToBuildBlocksSequentially(block, model, options, mySettings, myDefaultIndentOption, myProgressCallback);
-    
-    myStateProcessor = new StateProcessor(new WrapBlocksState(model, builder));
     myRightMargin = getRightMargin(block);
+    
+    final InitialInfoBuilder builder = prepareToBuildBlocksSequentially(block, model, options, mySettings, myDefaultIndentOption, myProgressCallback);
+    final WrapBlocksState wrapState = new WrapBlocksState(builder);
+    wrapState.setOnDone(new Runnable() {
+      @Override
+      public void run() {
+        myInfos = builder.getBlockToInfoMap();
+        myRootBlockWrapper = builder.getRootBlockWrapper();
+        myFirstTokenBlock = builder.getFirstTokenBlock();
+        myLastTokenBlock = builder.getLastTokenBlock();
+        myCurrentBlock = myFirstTokenBlock;
+        myTextRangeToWrapper = buildTextRangeToInfoMap(myFirstTokenBlock);
+        int lastBlockOffset = getLastBlock().getEndOffset();
+        myLastWhiteSpace = new WhiteSpace(lastBlockOffset, false);
+        myLastWhiteSpace.append(Math.max(lastBlockOffset, builder.getEndOffset()), model, myDefaultIndentOption);
+        myAlignmentsInsideRangesToModify = builder.getAlignmentsInsideRangeToModify();
+        myTotalBlocksWithAlignments = builder.getBlocksToAlign().values().size();
+        myExpandableIndents = builder.getExpandableIndentsBlocks();
+      } 
+    });
+    myStateProcessor = new StateProcessor(wrapState);
   }
 
   private int getRightMargin(Block rootBlock) {
@@ -735,9 +750,8 @@ public class FormatProcessor {
     BlockAlignmentProcessor.Context context = new BlockAlignmentProcessor.Context(
       myDocument, alignment, myCurrentBlock, myAlignmentMappings, myBackwardShiftedAlignedBlocks,
       getIndentOptionsToUse(myCurrentBlock, myDefaultIndentOption));
-    final LeafBlockWrapper offsetResponsibleBlock = alignment.getOffsetRespBlockBefore(myCurrentBlock);
-    myCyclesDetector.registerOffsetResponsibleBlock(offsetResponsibleBlock);
     BlockAlignmentProcessor.Result result = alignmentProcessor.applyAlignment(context);
+    final LeafBlockWrapper offsetResponsibleBlock = alignment.getOffsetRespBlockBefore(myCurrentBlock);
     switch (result) {
       case TARGET_BLOCK_PROCESSED_NOT_ALIGNED: return true;
       case TARGET_BLOCK_ALIGNED: storeAlignmentMapping(); return true;
@@ -751,13 +765,13 @@ public class FormatProcessor {
         blocksCausedRealignment.add(myCurrentBlock);
         storeAlignmentMapping(myCurrentBlock, offsetResponsibleBlock);
         
-        if (myCyclesDetector.isCycleDetected()) {
+        if (myBlockRollbacks > myTotalBlocksWithAlignments) {
           reportAlignmentProcessingError(context);
           return true;
         }
         else {
-          myCyclesDetector.registerBlockRollback(myCurrentBlock);
           myCurrentBlock = offsetResponsibleBlock.getNextBlock();
+          myBlockRollbacks++;
         }
         onCurrentLineChanged();
         return false;
@@ -1314,17 +1328,11 @@ public class FormatProcessor {
     return result.toString();
   }
 
-  private class WrapBlocksState extends State {
-
-    private final InitialInfoBuilder      myWrapper;
-    private final FormattingDocumentModel myModel;
+  private static class WrapBlocksState extends State {
+    private final InitialInfoBuilder myWrapper;
     
-    WrapBlocksState(@NotNull FormattingDocumentModel model,
-                    @NotNull InitialInfoBuilder initialInfoBuilder)
-    {
-      myModel = model;
+    WrapBlocksState(@NotNull InitialInfoBuilder initialInfoBuilder) {
       myWrapper = initialInfoBuilder;
-      myExpandableIndents = myWrapper.getExpandableIndentsBlocks();
     }
     
     @Override
@@ -1337,20 +1345,6 @@ public class FormatProcessor {
       if (!isDone()) {
         return;
       }
-
-      myInfos = myWrapper.getBlockToInfoMap();
-      myRootBlockWrapper = myWrapper.getRootBlockWrapper();
-      myFirstTokenBlock = myWrapper.getFirstTokenBlock();
-      myLastTokenBlock = myWrapper.getLastTokenBlock();
-      myCurrentBlock = myFirstTokenBlock;
-      myTextRangeToWrapper = buildTextRangeToInfoMap(myFirstTokenBlock);
-      int lastBlockOffset = getLastBlock().getEndOffset();
-      myLastWhiteSpace = new WhiteSpace(lastBlockOffset, false);
-      myLastWhiteSpace.append(Math.max(lastBlockOffset, myWrapper.getEndOffset()), myModel, myDefaultIndentOption);
-      myAlignmentsInsideRangesToModify = myWrapper.getAlignmentsInsideRangeToModify();
-      myTotalBlocksWithAlignments = myWrapper.getBlocksToAlign().values().size();
-
-      myCyclesDetector = new AlignmentCyclesDetector(myTotalBlocksWithAlignments);
     }
   }
 

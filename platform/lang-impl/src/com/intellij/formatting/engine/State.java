@@ -18,6 +18,7 @@ package com.intellij.formatting.engine;
 public abstract class State {
 
   private boolean myDone;
+  private Runnable myOnDoneAction;
 
   public void iteration() {
     if (!isDone()) {
@@ -30,6 +31,9 @@ public abstract class State {
   }
 
   protected void setDone(boolean done) {
+    if (!myDone && done && myOnDoneAction != null) {
+      myOnDoneAction.run();
+    }
     myDone = done;
   }
 
@@ -38,5 +42,9 @@ public abstract class State {
   protected abstract void doIteration();
 
   public void prepare() {}
+
+  public void setOnDone(Runnable onDoneAction) {
+    myOnDoneAction = onDoneAction;
+  }
   
 }
