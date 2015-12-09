@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
@@ -50,6 +51,7 @@ class UpdateFoldRegionsOperation implements Runnable {
   enum ApplyDefaultStateMode { YES, EXCEPT_CARET_REGION, NO }
   
   private static final Logger LOG = Logger.getInstance("#" + UpdateFoldRegionsOperation.class.getName());
+  private static final Key<Boolean> CAN_BE_REMOVED_WHEN_COLLAPSED = Key.create("canBeRemovedWhenCollapsed"); 
   
   private final Project myProject;
   private final Editor myEditor;
@@ -137,6 +139,8 @@ class UpdateFoldRegionsOperation implements Runnable {
           region.dispose();
           continue;
         }
+        
+        if (descriptor.canBeRemovedWhenCollapsed()) region.putUserData(CAN_BE_REMOVED_WHEN_COLLAPSED, Boolean.TRUE);
 
         info.addRegion(region, smartPointerManager.createSmartPsiElementPointer(psi));
         newRegions.add(region);
@@ -177,7 +181,7 @@ class UpdateFoldRegionsOperation implements Runnable {
     List<FoldRegion> toRemove = newArrayList();
     InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(myProject);
     for (FoldRegion region : foldingModel.getAllFoldRegions()) {
-      if (myKeepCollapsedRegions && !region.isExpanded() && !isRegionInCaretLine(region)) continue;
+      if (myKeepCollapsedRegions && !region.isExpanded() && !regionOrGroupCanBeRemovedWhenCollapsed(region)) continue;
       
       PsiElement element = info.getPsiElement(region);
       if (element != null) {
@@ -232,17 +236,25 @@ class UpdateFoldRegionsOperation implements Runnable {
     }
   }
 
-  private boolean isRegionInCaretLine(FoldRegion region) {
+  private boolean regionOrGroupCanBeRemovedWhenCollapsed(FoldRegion region) {
     FoldingGroup group = region.getGroup();
-    List<FoldRegion> affectedRegions = group != null && myEditor instanceof EditorEx 
-                                       ? ((EditorEx)myEditor).getFoldingModel().getGroupedRegions(group) 
+    List<FoldRegion> affectedRegions = group != null && myEditor instanceof EditorEx
+                                       ? ((EditorEx)myEditor).getFoldingModel().getGroupedRegions(group)
                                        : Collections.singletonList(region);
     for (FoldRegion affectedRegion : affectedRegions) {
-      int regionStartLine = myEditor.getDocument().getLineNumber(affectedRegion.getStartOffset());
-      int regionEndLine = myEditor.getDocument().getLineNumber(affectedRegion.getEndOffset());
-      int caretLine = myEditor.getCaretModel().getLogicalPosition().line;
-      if (caretLine >= regionStartLine && caretLine <= regionEndLine) return true;
+      if (regionCanBeRemovedWhenCollapsed(affectedRegion)) return true;
     }
     return false;
+  }
+
+  private boolean regionCanBeRemovedWhenCollapsed(FoldRegion region) {
+    return Boolean.TRUE.equals(region.getEditor().getUserData(CAN_BE_REMOVED_WHEN_COLLAPSED)) || isRegionInCaretLine(region);
+  }
+
+  private boolean isRegionInCaretLine(FoldRegion region) {
+    int regionStartLine = myEditor.getDocument().getLineNumber(region.getStartOffset());
+    int regionEndLine = myEditor.getDocument().getLineNumber(region.getEndOffset());
+    int caretLine = myEditor.getCaretModel().getLogicalPosition().line;
+    return caretLine >= regionStartLine && caretLine <= regionEndLine;
   }
 }
