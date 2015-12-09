@@ -248,7 +248,7 @@ class UpdateFoldRegionsOperation implements Runnable {
   }
 
   private boolean regionCanBeRemovedWhenCollapsed(FoldRegion region) {
-    return Boolean.TRUE.equals(region.getEditor().getUserData(CAN_BE_REMOVED_WHEN_COLLAPSED)) || isRegionInCaretLine(region);
+    return Boolean.TRUE.equals(region.getUserData(CAN_BE_REMOVED_WHEN_COLLAPSED)) || isRegionInCaretLine(region);
   }
 
   private boolean isRegionInCaretLine(FoldRegion region) {
