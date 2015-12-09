@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.PsiSearchScopeUtil;
@@ -37,11 +38,9 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.usageInfo.OverridenUsageInfo;
 import com.intellij.refactoring.typeMigration.usageInfo.OverriderUsageInfo;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Query;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
@@ -468,7 +467,15 @@ public class TypeMigrationLabeler {
     type = userDefinedType ? type : TypeEvaluator.substituteType(type, originalType, isContraVariantPosition);
 
     if (!userDefinedType) {
-      if (typeContainsTypeParameters(originalType)) return false;
+      final Set<PsiTypeParameter> collector;
+      if (originalType instanceof PsiClassReferenceType) {
+        collector = new HashSet<PsiTypeParameter>();
+        final PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType)originalType).getReference();
+        RefactoringUtil.collectTypeParameters(collector, reference);
+      } else {
+        collector = Collections.emptySet();
+      }
+      if (typeContainsTypeParameters(originalType, collector)) return false;
     }
 
     if (type instanceof PsiCapturedWildcardType) {
@@ -571,14 +578,17 @@ public class TypeMigrationLabeler {
     }
   }
 
-  static boolean typeContainsTypeParameters(PsiType originalType) {
+  static boolean typeContainsTypeParameters(@Nullable PsiType originalType, @NotNull Set<PsiTypeParameter> excluded) {
     if (originalType instanceof PsiClassType) {
       final PsiClassType psiClassType = (PsiClassType)originalType;
       if (psiClassType.resolve() instanceof PsiTypeParameter) {
         return true;
       }
       for (PsiType paramType : psiClassType.getParameters()) {
-        if (paramType instanceof PsiClassType && ((PsiClassType)paramType).resolve() instanceof PsiTypeParameter) return true;
+        if (paramType instanceof PsiClassType) {
+          final PsiClass resolved = ((PsiClassType)paramType).resolve();
+          if (resolved instanceof PsiTypeParameter && !excluded.contains(resolved)) return true;
+        }
       }
     }
     return false;
