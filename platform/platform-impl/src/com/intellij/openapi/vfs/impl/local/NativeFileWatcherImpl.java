@@ -270,11 +270,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   }
 
   private void writeLine(final String line) throws IOException {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("<< " + line);
-    }
-
-    final MyProcessHandler processHandler = myProcessHandler;
+    if (LOG.isTraceEnabled()) LOG.trace("<< " + line);
+    MyProcessHandler processHandler = myProcessHandler;
     if (processHandler != null) {
       processHandler.writeLine(line);
     }
@@ -343,10 +340,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
         return;
       }
 
-      final String line = event.getText().trim();
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(">> " + line);
-      }
+      String line = event.getText().trim();
+      if (LOG.isTraceEnabled()) LOG.trace(">> " + line);
 
       if (myLastOp == null) {
         final WatcherOp watcherOp;
@@ -424,9 +419,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       }
 
       if ((op == WatcherOp.CHANGE || op == WatcherOp.STATS) && isRepetition(path)) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("repetition: " + path);
-        }
+        if (LOG.isTraceEnabled()) LOG.trace("repetition: " + path);
         return;
       }
 
