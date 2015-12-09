@@ -393,6 +393,10 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "    do {\n" +
     "        x--;\n" +
     "    } while (x > 10); \n" +
+    "    try (MyResource r1 = getResource();\n" +
+    "      MyResource r2 = null) {\n" +
+    "      doSomething();\n" +
+    "    }" +
     "  }\n" +
     "    public static void test() \n" +
     "        throws Exception { \n" +
