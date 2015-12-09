@@ -1031,6 +1031,20 @@ public class PsiClassImplUtil {
     if (psiClass.isAnnotationType()) {
       return new PsiClassType[]{getAnnotationSuperType(psiClass, JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory())};
     }
+    PsiType upperBound = psiClass.getUserData(InferenceSession.UPPER_BOUND);
+    if (upperBound instanceof PsiIntersectionType) {
+      final PsiType[] conjuncts = ((PsiIntersectionType)upperBound).getConjuncts();
+      final List<PsiClassType> result = new ArrayList<PsiClassType>();
+      for (PsiType conjunct : conjuncts) {
+        if (conjunct instanceof PsiClassType) {
+          result.add((PsiClassType)conjunct);
+        }
+      }
+      return result.toArray(new PsiClassType[result.size()]);
+    }
+    else if (upperBound instanceof PsiClassType) {
+      return new PsiClassType[] {(PsiClassType)upperBound};
+    }
     final PsiReferenceList extendsList = psiClass.getExtendsList();
     if (extendsList != null) {
       return extendsList.getReferencedTypes();
