@@ -188,9 +188,12 @@ public class FluentIterableConversionUtil {
                                          PsiClass iterable,
                                          PsiClass collection) {
       if (retValue == null) return false;
-      final PsiType type = retValue.getType();
+      PsiType type = retValue.getType();
       if (PsiType.NULL.equals(type)) {
         return true;
+      }
+      if (type instanceof PsiCapturedWildcardType) {
+        type = ((PsiCapturedWildcardType)type).getUpperBound();
       }
       if (type instanceof PsiClassType) {
         final PsiClass resolvedClass = ((PsiClassType)type).resolve();
