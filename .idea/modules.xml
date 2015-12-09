@@ -100,6 +100,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/jps-plugin/gradle-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/gradle/jps-plugin/gradle-jps-plugin.iml" group="plugins/gradle" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/tooling-extension-api/gradle-tooling-extension-api.iml" filepath="$PROJECT_DIR$/plugins/gradle/tooling-extension-api/gradle-tooling-extension-api.iml" group="plugins/gradle" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/tooling-extension-impl/gradle-tooling-extension-impl.iml" filepath="$PROJECT_DIR$/plugins/gradle/tooling-extension-impl/gradle-tooling-extension-impl.iml" group="plugins/gradle" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/gradle/tooling-extension-impl/gradle-tooling-extension-tests.iml" filepath="$PROJECT_DIR$/plugins/gradle/tooling-extension-impl/gradle-tooling-extension-tests.iml" group="plugins/gradle"/>
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/jps-plugin/groovy-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/groovy/jps-plugin/groovy-jps-plugin.iml" group="plugins/Groovy" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/groovy-psi/groovy-psi.iml" filepath="$PROJECT_DIR$/plugins/groovy/groovy-psi/groovy-psi.iml" group="plugins/Groovy" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/rt-constants/groovy-rt-constants.iml" filepath="$PROJECT_DIR$/plugins/groovy/rt-constants/groovy-rt-constants.iml" group="plugins/Groovy" />
