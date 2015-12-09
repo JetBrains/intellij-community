@@ -17,6 +17,7 @@
 package com.intellij.formatting;
 
 import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.formatting.engine.State;
 import com.intellij.formatting.engine.StateProcessor;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -1307,32 +1308,6 @@ public class FormatProcessor {
       result.append(myDocument.getCharsSequence().subSequence(block.getStartOffset(), block.getEndOffset()));
     }
     return result.toString();
-  }
-
-  public abstract static class State {
-
-    private boolean myDone;
-
-    public void iteration() {
-      if (!isDone()) {
-        doIteration();
-      }
-    }
-
-    public boolean isDone() {
-      return myDone;
-    }
-
-    protected void setDone(boolean done) {
-      myDone = done;
-    }
-
-    public void stop() {}
-
-    protected abstract void doIteration();
-    
-    public void prepare() {}
-    
   }
 
   private class WrapBlocksState extends State {

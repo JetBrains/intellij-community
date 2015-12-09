@@ -15,21 +15,20 @@
  */
 package com.intellij.formatting.engine;
 
-import com.intellij.formatting.FormatProcessor;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
 
 public class StateProcessor {
   
-  private final List<FormatProcessor.State> myStates = ContainerUtil.newArrayList();
-  private FormatProcessor.State myCurrentState;
+  private final List<State> myStates = ContainerUtil.newArrayList();
+  private State myCurrentState;
   
-  public StateProcessor(FormatProcessor.State initial) {
+  public StateProcessor(State initial) {
     myCurrentState = initial;
   }
   
-  public void setNextState(FormatProcessor.State state) {
+  public void setNextState(State state) {
     myStates.add(state);
   }
   
