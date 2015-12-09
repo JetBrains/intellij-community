@@ -564,16 +564,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final String prefix = "1.";
     final int parseBegin = ver.startsWith(prefix)? prefix.length() : 0;
 
-    final int parseEnd = ver.indexOf('.', parseBegin);
-    if (parseEnd > 0) {
-      ver = ver.substring(parseBegin, parseEnd);
+    int parseEnd = parseBegin;
+    while (parseEnd < ver.length()) {
+      if (!Character.isDigit(ver.charAt(parseEnd))) {
+        break;
+      }
+      parseEnd++;
     }
-    else {
-      ver = ver.substring(parseBegin);
-    }
-
     try {
-      return Integer.parseInt(ver);
+      return Integer.parseInt(ver.substring(parseBegin, parseEnd));
     }
     catch (NumberFormatException ignored) {
     }
