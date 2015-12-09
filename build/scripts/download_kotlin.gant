@@ -24,8 +24,25 @@ target('default': 'Ensures that build/kotlinc directory contains JARs from Kotli
   def communityHome = guessHome(this)
   def reasonToUpdate = getReasonToUpdate(communityHome, new File(communityHome, "build/kotlinc"))
   if (reasonToUpdate == null) {
-    projectBuilder.info("Compatible Kotlin plugin already installed, no update is required")
-    return
+    if (isDefined("workIdeaHome")) {
+      def workKotlinVersionFile = new File(workIdeaHome, "plugins/Kotlin/kotlinc/build.txt")
+      if (workKotlinVersionFile.exists()) {
+        try {
+          def currentKotlinVersionFile = new File(communityHome, "build/kotlinc/build.txt")
+          if (VersionComparatorUtil.compare(currentKotlinVersionFile.text, workKotlinVersionFile.text) < 0) {
+            reasonToUpdate = "a newer version is installed in $workIdeaHome"
+          }
+        }
+        catch (IOException e) {
+          reasonToUpdate = "cannot read Kotlin version: $e"
+        }
+      }
+    }
+
+    if (reasonToUpdate == null) {
+      projectBuilder.info("Compatible Kotlin plugin already installed, no update is required")
+      return
+    }
   }
 
   projectBuilder.info("Kotlin plugin will be updated: $reasonToUpdate")
