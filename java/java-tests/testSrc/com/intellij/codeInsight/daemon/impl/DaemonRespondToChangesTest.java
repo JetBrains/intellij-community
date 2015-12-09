@@ -2120,10 +2120,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   private void waitForDaemon() {
     long deadline = System.currentTimeMillis() + 60_000;
-    while (!myDaemonCodeAnalyzer.isRunning()) {
-      if (System.currentTimeMillis() > deadline) fail("Too long waiting for daemon to start");
+    while (PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
+      if (System.currentTimeMillis() > deadline) fail("Too long waiting for document commit");
       UIUtil.dispatchAllInvocationEvents();
     }
+    UIUtil.dispatchAllInvocationEvents(); // make sure daemon is started
     while (myDaemonCodeAnalyzer.isRunning()) {
       if (System.currentTimeMillis() > deadline) fail("Too long waiting for daemon to finish");
       UIUtil.dispatchAllInvocationEvents();
