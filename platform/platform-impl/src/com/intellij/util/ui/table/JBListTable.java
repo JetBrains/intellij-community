@@ -54,7 +54,7 @@ public abstract class JBListTable {
   protected final JTable myInternalTable;
   private final JBTable myMainTable;
   private final RowResizeAnimator myRowResizeAnimator;
-  private MouseEvent myMouseEvent;
+  protected MouseEvent myMouseEvent;
   private MyCellEditor myCellEditor;
   private int myLastFocusedEditorComponentIdx = -1;
 

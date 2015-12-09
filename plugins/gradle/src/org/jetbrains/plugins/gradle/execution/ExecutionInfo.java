@@ -90,7 +90,7 @@ public class ExecutionInfo {
   }
 
   public boolean isRunning() {
-    return endTime <= 0;
+    return endTime <= 0 && !isSkipped && !isFailed;
   }
 
   @Override

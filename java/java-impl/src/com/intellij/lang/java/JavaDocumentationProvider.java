@@ -637,13 +637,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
 
           final boolean useJava8Format = PsiUtil.isLanguageLevel8OrHigher(method);
 
-          final Set<String> signatures = new LinkedHashSet<String>();
-          signatures.add(formatMethodSignature(method, true, useJava8Format));
-          signatures.add(formatMethodSignature(method, false, useJava8Format));
-
-          signatures.add(formatMethodSignature(method, true, !useJava8Format));
-          signatures.add(formatMethodSignature(method, false, !useJava8Format));
-
+          final Set<String> signatures = getHtmlMethodSignatures(method, useJava8Format);
           for (String signature : signatures) {
             for (String classUrl : classUrls) {
               urls.add(classUrl + "#" + signature);
@@ -671,6 +665,16 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
       }
       return urls;
     }
+  }
+
+  public static Set<String> getHtmlMethodSignatures(PsiMethod method, boolean java8FormatFirst) {
+    final Set<String> signatures = new LinkedHashSet<String>();
+    signatures.add(formatMethodSignature(method, true, java8FormatFirst));
+    signatures.add(formatMethodSignature(method, false, java8FormatFirst));
+
+    signatures.add(formatMethodSignature(method, true, !java8FormatFirst));
+    signatures.add(formatMethodSignature(method, false, !java8FormatFirst));
+    return signatures;
   }
 
   private static String formatMethodSignature(PsiMethod method, boolean raw, boolean java8Format) {

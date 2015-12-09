@@ -24,6 +24,10 @@
     <isset property="product" />
   </condition>
 
+  <condition property="productPropertiesPath" value="${productPropertiesPath}" else="">
+    <isset property="productPropertiesPath" />
+  </condition>
+
   <property name="tmp.dir" value="${out.dir}/tmp"/>
 
   <target name="cleanup">
@@ -55,6 +59,7 @@
         <sysproperty key="buildNumber" value="${build.number}" />
         <sysproperty key="idea.test.patterns" value="${test.patterns}" />
         <sysproperty key="product" value="${product.name}" />
+        <jvmarg value="-DproductPropertiesPath=${productPropertiesPath}" />
         <sysproperty key="java.awt.headless" value="true"/>
         <sysproperty key="gant.script" value="@{script}"/>
         <sysproperty key="teamcity.build.tempDir" value="${tmp.dir}"/>

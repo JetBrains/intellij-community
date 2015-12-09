@@ -38,6 +38,9 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.UrlClassLoader;
 import com.sun.jna.Native;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.PatternLayout;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.BuiltInServer;
 
@@ -97,6 +100,21 @@ public class StartupUtil {
     if (!checkJdkVersion()) {
       System.exit(Main.JDK_CHECK_FAILED);
     }
+
+    // avoiding "log4j:WARN No appenders could be found"
+    System.setProperty("log4j.defaultInitOverride", "true");
+    try {
+      org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
+      if (!root.getAllAppenders().hasMoreElements()) {
+        root.setLevel(Level.WARN);
+        root.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)));
+      }
+    }
+    catch (Throwable e) {
+      //noinspection CallToPrintStackTrace
+      e.printStackTrace();
+    }
+
     // note: uses config folder!
     if (!checkSystemFolders()) {
       System.exit(Main.DIR_CHECK_FAILED);

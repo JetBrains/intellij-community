@@ -115,7 +115,7 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
                                                                                             classType.getPresentableText()));
                   return;
                 }
-                final TypeMigrationRules myRules = new TypeMigrationRules(((PsiAnonymousClass)aClass).getBaseClassType());
+                final TypeMigrationRules myRules = new TypeMigrationRules();
                 final PsiSubstitutor substitutor = result.getSubstitutor().put(typeParameter, targetParam);
                 final PsiType targetClassType = elementFactory.createType(baseClass, substitutor);
                 myRules.setMigrationRootType(targetClassType);

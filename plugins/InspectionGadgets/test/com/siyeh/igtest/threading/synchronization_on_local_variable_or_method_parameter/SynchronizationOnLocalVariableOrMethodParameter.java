@@ -50,6 +50,16 @@ class SynchronizationOnLocalVariableOrMethodParameter {
     }
   }
 
+  public void error2(List<Object> foo) {
+    List<Object> bar;
+    bar = Collections.synchronizedList(foo);
+    synchronized (bar) {
+      for (Object o : bar) {
+        // ...
+      }
+    }
+  }
+
   void concurrent() {
     final Object o = new Object();
     synchronized (o) {

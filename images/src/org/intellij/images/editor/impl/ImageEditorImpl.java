@@ -15,10 +15,12 @@
  */
 package org.intellij.images.editor.impl;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageZoomModel;
@@ -156,11 +158,12 @@ final class ImageEditorImpl implements ImageEditor {
   void contentsChanged(@NotNull VirtualFileEvent event) {
     if (file.equals(event.getFile())) {
       // Change document
-      file.refresh(true, false, new Runnable() {
+      Runnable postRunnable = new Runnable() {
         public void run() {
           setValue(file);
         }
-      });
+      };
+      RefreshQueue.getInstance().refresh(true, false, postRunnable, ModalityState.current(), file);
     }
   }
 }

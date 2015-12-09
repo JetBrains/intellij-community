@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -462,11 +462,9 @@ public class MavenProject {
 
     Element compilerArguments = compilerConfig.getChild("compilerArguments");
     if (compilerArguments != null) {
-      for (Element e : compilerArguments.getChildren()){
+      for (Element e : compilerArguments.getChildren()) {
         String name = e.getName();
-        if (name.startsWith("-")) {
-          name = name.substring(1);
-        }
+        name = StringUtil.trimStart(name, "-");
 
         if (name.length() > 1 && name.charAt(0) == 'A') {
           res.put(name.substring(1), e.getTextTrim());

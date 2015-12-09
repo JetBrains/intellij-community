@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEventUnsupported;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
@@ -54,15 +55,25 @@ public class GradleRunnerUtil {
                                                           @Nullable final String stateStorageKey,
                                                           @NotNull final ProcessHandler processHandler,
                                                           @NotNull final ExternalSystemTaskId taskId) {
-    if (stateStorageKey != null && isTaskConsoleEnabledByDefault && !PropertiesComponent.getInstance().isValueSet(stateStorageKey)) {
-      PropertiesComponent.getInstance().setValue(stateStorageKey, true);
+    final String tripleStateStorageKey = stateStorageKey != null ? stateStorageKey + "_str" : null;
+    if (stateStorageKey != null && isTaskConsoleEnabledByDefault && !PropertiesComponent.getInstance().isValueSet(tripleStateStorageKey)) {
+      PropertiesComponent.getInstance().setValue(tripleStateStorageKey, Boolean.TRUE.toString());
+      PropertiesComponent.getInstance().setValue(stateStorageKey, Boolean.TRUE);
     }
-    ;
 
     final TaskExecutionView gradleExecutionConsole = new TaskExecutionView(project);
     final Ref<DuplexConsoleView> duplexConsoleViewRef = Ref.create();
     final DuplexConsoleView duplexConsoleView =
       new DuplexConsoleView<ConsoleView, ConsoleView>(gradleExecutionConsole, consoleView, stateStorageKey) {
+
+        @Override
+        public void enableConsole(boolean primary) {
+          super.enableConsole(primary);
+          if (stateStorageKey != null) {
+            PropertiesComponent.getInstance().setValue(tripleStateStorageKey, Boolean.toString(primary));
+          }
+        }
+
         @NotNull
         @Override
         public AnAction[] createConsoleActions() {
@@ -102,6 +113,9 @@ public class GradleRunnerUtil {
           UIUtil.invokeLaterIfNeeded(new Runnable() {
             @Override
             public void run() {
+              if(((ExternalSystemTaskExecutionEvent)event).getProgressEvent() instanceof ExternalSystemProgressEventUnsupported) {
+                duplexConsoleView.enableConsole(false);
+              }
               gradleExecutionConsole.onStatusChange((ExternalSystemTaskExecutionEvent)event);
             }
           });

@@ -28,7 +28,7 @@ import java.util.List;
  *
  * @author nik
  */
-public abstract class RelatedItemLineMarkerProvider implements LineMarkerProvider {
+public abstract class RelatedItemLineMarkerProvider extends LineMarkerProviderDescriptor {
   @Override
   public RelatedItemLineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
     return null;
@@ -56,5 +56,10 @@ public abstract class RelatedItemLineMarkerProvider implements LineMarkerProvide
   }
 
   protected void collectNavigationMarkers(@NotNull PsiElement element, Collection<? super RelatedItemLineMarkerInfo> result) {
+  }
+
+  @Override
+  public String getName() {
+    return null;
   }
 }

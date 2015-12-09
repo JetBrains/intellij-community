@@ -42,6 +42,7 @@ import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
@@ -360,7 +361,10 @@ public final class IconLoader {
     private boolean dark;
     private float scale;
     private ImageFilter filter;
-    private HashMap<Float, Icon> scaledIcons;
+
+    private Image retinaImageCache;
+    private HashMap<Float, Icon> scaledIconsCache;
+    private static final int SCALED_ICONS_CACHE_LIMIT = 5;
 
     public CachedImageIcon(@NotNull URL url) {
       myUrl = url;
@@ -429,22 +433,36 @@ public final class IconLoader {
       if (scaleFactor == 1f) {
         return this;
       }
-      if (scaledIcons == null) {
-        scaledIcons = new HashMap<Float, Icon>(1);
+      if (scaledIconsCache == null) {
+        scaledIconsCache = new LinkedHashMap<Float, Icon>(1) {
+          @Override
+          public boolean removeEldestEntry(Map.Entry<Float, Icon> entry) {
+            return size() > SCALED_ICONS_CACHE_LIMIT;
+          }
+        };
       }
 
-      Icon result = scaledIcons.get(scaleFactor);
+      float effectiveScale = scaleFactor * JBUI.scale(1f);
+
+      Icon result = scaledIconsCache.get(effectiveScale);
       if (result != null) {
         return result;
       }
 
-      final Image image = ImageLoader.loadFromUrl(myUrl, UIUtil.isUnderDarcula(), scaleFactor >= 1.5f, filter);
+      boolean needRetinaImage = effectiveScale >= 1.5f || UIUtil.isRetina();
+      Image image = needRetinaImage && retinaImageCache != null ?
+                    retinaImageCache :
+                    ImageLoader.loadFromUrl(myUrl, UIUtil.isUnderDarcula(), needRetinaImage, filter);
+
       if (image != null) {
+        if (needRetinaImage && retinaImageCache == null) {
+          retinaImageCache = image;
+        }
         int width = (int)(getIconWidth() * scaleFactor);
         int height = (int)(getIconHeight() * scaleFactor);
         final BufferedImage resizedImage = Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, width, height);
         result = getIcon(resizedImage);
-        scaledIcons.put(scaleFactor, result);
+        scaledIconsCache.put(effectiveScale, result);
         return result;
       }
 

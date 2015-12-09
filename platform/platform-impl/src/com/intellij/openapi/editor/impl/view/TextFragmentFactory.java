@@ -33,6 +33,7 @@ class TextFragmentFactory {
 
   private static boolean isComplexText(char[] chars, int start, int end) {
     for (int i = start; i < end; i++) {
+      // Unicode characters with code points below 0x0300 don't combine with each other on rendering, so they can be processed one-by-one  
       if (chars[i] >= 0x0300) return true;
     }
     return false;

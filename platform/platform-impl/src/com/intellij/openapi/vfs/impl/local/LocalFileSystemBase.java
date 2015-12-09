@@ -158,9 +158,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         final String[] names = new String[roots.length];
         for (int i = 0; i < names.length; i++) {
           String name = roots[i].getPath();
-          if (name.endsWith(File.separator)) {
-            name = name.substring(0, name.length() - File.separator.length());
-          }
+          name = StringUtil.trimEnd(name, File.separator);
           names[i] = name;
         }
         return names;

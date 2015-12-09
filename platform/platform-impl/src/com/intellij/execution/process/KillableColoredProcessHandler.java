@@ -54,16 +54,14 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
   }
 
   /**
-   *
-   * @param commandLine must be not empty
+   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
    */
   public KillableColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine) {
     super(process, commandLine);
   }
 
   /**
-   *
-   * @param commandLine must be not empty
+   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
    */
   public KillableColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset) {
     super(process, commandLine, charset);

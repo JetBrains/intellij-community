@@ -580,7 +580,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
     final RulesProvider provider = new RulesProvider() {
       @Override
       public TypeMigrationRules provide() throws Exception {
-        final TypeMigrationRules rules = new TypeMigrationRules(fromType);
+        final TypeMigrationRules rules = new TypeMigrationRules();
         rules.setMigrationRootType(toType);
         return rules;
       }

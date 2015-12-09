@@ -178,8 +178,12 @@ public class PsiPolyExpressionUtil {
         type = method.getReturnType();
       }
     }
-    if (TypeConversionUtil.isNumericType(type)) return ConditionalKind.NUMERIC;
-    if (TypeConversionUtil.isBooleanType(type)) return ConditionalKind.BOOLEAN;
+
+    final ConditionalKind kind = isBooleanOrNumericType(type);
+    if (kind != null) {
+      return kind;
+    }
+
     if (expr instanceof PsiConditionalExpression) {
       final PsiExpression thenExpression = ((PsiConditionalExpression)expr).getThenExpression();
       final PsiExpression elseExpression = ((PsiConditionalExpression)expr).getElseExpression();
@@ -187,6 +191,23 @@ public class PsiPolyExpressionUtil {
       final ConditionalKind elseKind = isBooleanOrNumeric(elseExpression);
       if (thenKind == elseKind || elseKind == null) return thenKind;
       if (thenKind == null) return elseKind;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static ConditionalKind isBooleanOrNumericType(PsiType type) {
+    final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    if (TypeConversionUtil.isNumericType(type)) return ConditionalKind.NUMERIC;
+    if (TypeConversionUtil.isBooleanType(type)) return ConditionalKind.BOOLEAN;
+
+    if (psiClass instanceof PsiTypeParameter) {
+      for (PsiClassType classType : psiClass.getExtendsListTypes()) {
+        final ConditionalKind kind = isBooleanOrNumericType(classType);
+        if (kind != null) {
+          return kind;
+        }
+      }
     }
     return null;
   }

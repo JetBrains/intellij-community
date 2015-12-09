@@ -311,13 +311,6 @@ public class IndexingStamp {
   private static final ConcurrentIntObjectMap<Timestamps> myTimestampsCache = ContainerUtil.createConcurrentIntObjectMap();
   private static final BlockingQueue<Integer> ourFinishedFiles = new ArrayBlockingQueue<Integer>(100);
 
-  public static long getIndexStamp(@NotNull VirtualFile file, ID<?, ?> indexName) {
-    if(file instanceof NewVirtualFile && file.isValid()) {
-      return getIndexStamp(((NewVirtualFile)file).getId(), indexName);
-    }
-    return 0;
-  }
-
   public static long getIndexStamp(int fileId, ID<?, ?> indexName) {
     Lock readLock = getStripedLock(fileId).readLock();
     readLock.lock();
@@ -332,7 +325,9 @@ public class IndexingStamp {
 
   private static Timestamps createOrGetTimeStamp(int id) {
     boolean isValid = id > 0;
-    if (!isValid) id = -id;
+    if (!isValid) {
+      id = -id;
+    }
     Timestamps timestamps = myTimestampsCache.get(id);
     if (timestamps == null) {
       final DataInputStream stream = FSRecords.readAttributeWithLock(id, Timestamps.PERSISTENCE);
@@ -421,12 +416,6 @@ public class IndexingStamp {
       if (finishedFile == null) break;
       // else repeat until ourFinishedFiles.offer() succeeds
     }
-  }
-  public static void flushCache(@Nullable VirtualFile finishedVirtualFile) {
-    // todo make better (e.g. FinishedFiles striping)
-    Integer finishedFile = (finishedVirtualFile instanceof NewVirtualFile) ? ((NewVirtualFile)finishedVirtualFile).getId() : null;
-
-    flushCache(finishedFile);
   }
 
   private static final ReadWriteLock[] ourLocks = new ReadWriteLock[16];

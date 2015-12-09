@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.idea.maven;
 
 import com.intellij.compiler.server.BuildManager;
@@ -60,16 +59,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenProjectsTree myProjectsTree;
   protected MavenProjectsManager myProjectsManager;
-  private File myGlobalSettingsFile;
 
   @Override
   protected void setUp() throws Exception {
-    VfsRootAccess.allowRootAccess(PathManager.getConfigPath());
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), PathManager.getConfigPath());
+
     super.setUp();
-    myGlobalSettingsFile =
-      MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.getEffectiveGlobalSettingsIoFile();
-    if (myGlobalSettingsFile != null) {
-      VfsRootAccess.allowRootAccess(myGlobalSettingsFile.getAbsolutePath());
+
+    File settingsFile = MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.getEffectiveGlobalSettingsIoFile();
+    if (settingsFile != null) {
+      VfsRootAccess.allowRootAccess(getTestRootDisposable(), settingsFile.getAbsolutePath());
     }
   }
 
@@ -83,10 +82,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      if (myGlobalSettingsFile != null) {
-        VfsRootAccess.disallowRootAccess(myGlobalSettingsFile.getAbsolutePath());
-      }
-      VfsRootAccess.disallowRootAccess(PathManager.getConfigPath());
       Messages.setTestDialog(TestDialog.DEFAULT);
       removeFromLocalRepository("test");
       FileUtil.delete(BuildManager.getInstance().getBuildSystemDirectory());

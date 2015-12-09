@@ -28,7 +28,6 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.JavaModuleType;
@@ -47,7 +46,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.TObjectHashingStrategy;
 import groovy.lang.GroovyObject;
 import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling;
 import org.gradle.tooling.ProjectConnection;
@@ -55,14 +53,11 @@ import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleModuleVersion;
 import org.gradle.tooling.model.GradleTask;
 import org.gradle.tooling.model.UnsupportedMethodException;
-import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.tooling.model.idea.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.DefaultExternalDependencyId;
-import org.jetbrains.plugins.gradle.ExternalDependencyId;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
@@ -71,11 +66,9 @@ import org.jetbrains.plugins.gradle.tooling.builder.ModelBuildScriptClasspathBui
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.slf4j.impl.Log4jLoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -94,7 +87,7 @@ import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
  */
 @Order(Integer.MAX_VALUE)
 public class BaseGradleProjectResolverExtension implements GradleProjectResolverExtension {
-  private static final Logger LOG = Logger.getInstance("#" + BaseGradleProjectResolverExtension.class.getName());
+  private static final Logger LOG = Logger.getInstance(BaseGradleProjectResolverExtension.class);
 
   @NotNull @NonNls private static final String UNRESOLVED_DEPENDENCY_PREFIX = "unresolved dependency - ";
 
@@ -164,46 +157,23 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   @NotNull
   @Override
   public DataNode<ModuleData> createModule(@NotNull IdeaModule gradleModule, @NotNull DataNode<ProjectData> projectDataNode) {
-    final String moduleName = gradleModule.getName();
-    if (moduleName == null) {
-      throw new IllegalStateException("Module with undefined name detected: " + gradleModule);
-    }
-
-    final ProjectData projectData = projectDataNode.getData();
-    final String mainModuleConfigPath = getModuleConfigPath(gradleModule, projectData.getLinkedExternalProjectPath());
-    final String ideProjectPath = resolverCtx.getIdeProjectPath();
-    final String relativePath;
-    if (FileUtil.isAncestor(projectData.getLinkedExternalProjectPath(), mainModuleConfigPath, false)) {
-      relativePath = FileUtil.getRelativePath(projectData.getLinkedExternalProjectPath(), mainModuleConfigPath, '/');
-    }
-    else {
-      relativePath = String.valueOf(FileUtil.pathHashCode(mainModuleConfigPath));
-    }
-    final String mainModuleFileDirectoryPath =
-      ideProjectPath == null ? mainModuleConfigPath : ideProjectPath + "/.idea/modules/" +
-                                                      (relativePath == null || relativePath.equals(".") ? "" : relativePath);
-    if (ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
-      LOG.info(String.format(
-        "Creating module data ('%s') with the external config path: '%s'", gradleModule.getGradleProject().getPath(), mainModuleConfigPath
-      ));
-    }
-
-    String gradlePath = gradleModule.getGradleProject().getPath();
-    final boolean isRootModule = StringUtil.isEmpty(gradlePath) || ":".equals(gradlePath);
-    String mainModuleId = isRootModule ? moduleName : gradlePath;
-    final ModuleData moduleData =
-      new ModuleData(mainModuleId, GradleConstants.SYSTEM_ID, StdModuleTypes.JAVA.getId(), moduleName,
-                     mainModuleFileDirectoryPath, mainModuleConfigPath);
-    final String[] moduleGroup = null;
-    moduleData.setIdeModuleGroup(moduleGroup);
-    DataNode<ModuleData> mainModuleNode = projectDataNode.createChild(ProjectKeys.MODULE, moduleData);
+    DataNode<ModuleData> mainModuleNode = createMainModule(resolverCtx, gradleModule, projectDataNode);
+    final ModuleData mainModuleData = mainModuleNode.getData();
+    final String mainModuleConfigPath = mainModuleData.getLinkedExternalProjectPath();
+    final String mainModuleFileDirectoryPath = mainModuleData.getModuleFileDirectoryPath();
 
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
     if (externalProject != null) {
-      moduleData.setGroup(externalProject.getGroup());
-      moduleData.setVersion(externalProject.getVersion());
-      moduleData.setDescription(externalProject.getDescription());
-      moduleData.setArtifacts(externalProject.getArtifacts());
+      String gradlePath = gradleModule.getGradleProject().getPath();
+      final boolean isRootModule = StringUtil.isEmpty(gradlePath) || ":".equals(gradlePath);
+      final String[] moduleGroup;
+      if (isRootModule) {
+        moduleGroup = new String[]{mainModuleData.getInternalName()};
+      }
+      else {
+        moduleGroup = ArrayUtil.remove(gradlePath.split(":"), 0);
+      }
+      mainModuleData.setIdeModuleGroup(isRootModule ? null : moduleGroup);
 
       for (ExternalSourceSet sourceSet : externalProject.getSourceSets().values()) {
         final String moduleId = getModuleId(externalProject, sourceSet);
@@ -246,9 +216,10 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       }
     }
 
-    if (StringUtil.equals(moduleData.getLinkedExternalProjectPath(), projectData.getLinkedExternalProjectPath())) {
-      projectData.setGroup(moduleData.getGroup());
-      projectData.setVersion(moduleData.getVersion());
+    final ProjectData projectData = projectDataNode.getData();
+    if (StringUtil.equals(mainModuleData.getLinkedExternalProjectPath(), projectData.getLinkedExternalProjectPath())) {
+      projectData.setGroup(mainModuleData.getGroup());
+      projectData.setVersion(mainModuleData.getVersion());
     }
 
     return mainModuleNode;
@@ -524,7 +495,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   @Override
   public Set<Class> getToolingExtensionsClasses() {
     return ContainerUtil.<Class>set(
-      // externalSystem api jar
+      // external-system-rt.jar
       ExternalSystemSourceType.class,
       // gradle-tooling-extension-api jar
       ProjectImportAction.class,
@@ -645,55 +616,6 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
   @Override
   public void enhanceLocalProcessing(@NotNull List<URL> urls) {
-  }
-
-  @NotNull
-  private String getModuleConfigPath(@NotNull IdeaModule gradleModule, @NotNull String rootProjectPath) {
-    GradleBuild build = resolverCtx.getExtraProject(gradleModule, GradleBuild.class);
-    if (build != null) {
-      String gradlePath = gradleModule.getGradleProject().getPath();
-      File moduleDirPath = getModuleDirPath(build, gradlePath);
-      if (moduleDirPath == null) {
-        throw new IllegalStateException(String.format("Unable to find root directory for module '%s'", gradleModule.getName()));
-      }
-      try {
-        return ExternalSystemApiUtil.toCanonicalPath(moduleDirPath.getCanonicalPath());
-      }
-      catch (IOException e) {
-        LOG.warn("construction of the canonical path for the module fails", e);
-      }
-    }
-
-    return GradleUtil.getConfigPath(gradleModule.getGradleProject(), rootProjectPath);
-  }
-
-  /**
-   * Returns the physical path of the module's root directory (the path in the file system.)
-   * <p>
-   * It is important to note that Gradle has its own "logical" path that may or may not be equal to the physical path of a Gradle project.
-   * For example, the sub-project at ${projectRootDir}/apps/app will have the Gradle path :apps:app. Gradle also allows mapping physical
-   * paths to a different logical path. For example, in settings.gradle:
-   * <pre>
-   *   include ':app'
-   *   project(':app').projectDir = new File(rootDir, 'apps/app')
-   * </pre>
-   * In this example, sub-project at ${projectRootDir}/apps/app will have the Gradle path :app.
-   * </p>
-   *
-   * @param build contains information about the root Gradle project and its sub-projects. Such information includes the physical path of
-   *              the root Gradle project and its sub-projects.
-   * @param path  the Gradle "logical" path. This path uses colon as separator, and may or may not be equal to the physical path of a
-   *              Gradle project.
-   * @return the physical path of the module's root directory.
-   */
-  @Nullable
-  static File getModuleDirPath(@NotNull GradleBuild build, @NotNull String path) {
-    for (BasicGradleProject project : build.getProjects()) {
-      if (project.getPath().equals(path)) {
-        return project.getProjectDirectory();
-      }
-    }
-    return null;
   }
 
   /**

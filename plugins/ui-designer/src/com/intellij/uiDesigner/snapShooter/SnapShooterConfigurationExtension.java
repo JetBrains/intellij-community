@@ -16,6 +16,7 @@
 
 package com.intellij.uiDesigner.snapShooter;
 
+import com.intellij.designer.DesignerEditorPanelFacade;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.application.ApplicationConfiguration;
@@ -74,18 +75,19 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
       // add +1 because idea_rt.jar will be added as the last entry to the classpath
       params.getProgramParametersList().prepend(Integer.toString(params.getClassPath().getPathList().size() + 1));
       Set<String> paths = new TreeSet<String>();
-      paths.add(PathUtil.getJarPathForClass(SnapShooter.class));         // ui-designer-impl
-      paths.add(PathUtil.getJarPathForClass(BaseComponent.class));       // appcore-api
-      paths.add(PathUtil.getJarPathForClass(ProjectComponent.class));    // openapi
-      paths.add(PathUtil.getJarPathForClass(LwComponent.class));         // UIDesignerCore
-      paths.add(PathUtil.getJarPathForClass(GridConstraints.class));     // forms_rt
-      paths.add(PathUtil.getJarPathForClass(PaletteGroup.class));        // openapi
-      paths.add(PathUtil.getJarPathForClass(LafManagerListener.class));  // ui-impl
-      paths.add(PathUtil.getJarPathForClass(DataProvider.class));        // action-system-openapi
-      paths.add(PathUtil.getJarPathForClass(XmlStringUtil.class));       // idea
-      paths.add(PathUtil.getJarPathForClass(Navigatable.class));         // pom
-      paths.add(PathUtil.getJarPathForClass(AreaInstance.class));        // extensions
-      paths.add(PathUtil.getJarPathForClass(FormLayout.class));          // jgoodies
+      paths.add(PathUtil.getJarPathForClass(SnapShooter.class));               // ui-designer-impl
+      paths.add(PathUtil.getJarPathForClass(BaseComponent.class));             // appcore-api
+      paths.add(PathUtil.getJarPathForClass(ProjectComponent.class));          // openapi
+      paths.add(PathUtil.getJarPathForClass(DesignerEditorPanelFacade.class)); // platform-impl
+      paths.add(PathUtil.getJarPathForClass(LwComponent.class));               // UIDesignerCore
+      paths.add(PathUtil.getJarPathForClass(GridConstraints.class));           // forms_rt
+      paths.add(PathUtil.getJarPathForClass(PaletteGroup.class));              // openapi
+      paths.add(PathUtil.getJarPathForClass(LafManagerListener.class));        // ui-impl
+      paths.add(PathUtil.getJarPathForClass(DataProvider.class));              // action-system-openapi
+      paths.add(PathUtil.getJarPathForClass(XmlStringUtil.class));             // idea
+      paths.add(PathUtil.getJarPathForClass(Navigatable.class));               // pom
+      paths.add(PathUtil.getJarPathForClass(AreaInstance.class));              // extensions
+      paths.add(PathUtil.getJarPathForClass(FormLayout.class));                // jgoodies
       paths.addAll(PathManager.getUtilClassPath());
       for(String path: paths) {
         params.getClassPath().addFirst(path);

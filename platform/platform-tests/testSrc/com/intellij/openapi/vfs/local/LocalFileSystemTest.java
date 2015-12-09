@@ -316,20 +316,16 @@ public class LocalFileSystemTest extends PlatformTestCase {
     }
 
     String parent = FileUtil.toSystemIndependentName(file.getParent());
-    VfsRootAccess.allowRootAccess(parent);
-    try {
-      VirtualFile virtualFile = myFS.refreshAndFindFileByIoFile(file);
-      assertNotNull(virtualFile);
+    VfsRootAccess.allowRootAccess(getTestRootDisposable(), parent);
 
-      NewVirtualFileSystem fs = (NewVirtualFileSystem)virtualFile.getFileSystem();
-      FileAttributes attributes = fs.getAttributes(virtualFile);
-      assertNotNull(attributes);
-      assertEquals(FileAttributes.Type.FILE, attributes.type);
-      assertEquals(FileAttributes.HIDDEN, attributes.flags);
-    }
-    finally {
-      VfsRootAccess.disallowRootAccess(parent);
-    }
+    VirtualFile virtualFile = myFS.refreshAndFindFileByIoFile(file);
+    assertNotNull(virtualFile);
+
+    NewVirtualFileSystem fs = (NewVirtualFileSystem)virtualFile.getFileSystem();
+    FileAttributes attributes = fs.getAttributes(virtualFile);
+    assertNotNull(attributes);
+    assertEquals(FileAttributes.Type.FILE, attributes.type);
+    assertEquals(FileAttributes.HIDDEN, attributes.flags);
   }
 
   public void testRefreshSeesLatestDirectoryContents() throws Exception {

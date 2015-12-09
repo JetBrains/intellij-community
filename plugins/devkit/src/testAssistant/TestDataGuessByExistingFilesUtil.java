@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -241,9 +241,7 @@ public class TestDataGuessByExistingFilesUtil {
     if (result == null) {
       return null;
     }
-    if (result.endsWith("Test")) {
-      result = result.substring(0, result.length() - "Test".length());
-    }
+    result = StringUtil.trimEnd(result, "Test");
     int i = result.lastIndexOf('.');
     if (i >= 0) {
       result = result.substring(i + 1);

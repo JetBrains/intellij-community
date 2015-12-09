@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.intellij.uiDesigner.make;
 import com.intellij.compiler.PsiClassWriter;
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.uiDesigner.actions.PreviewFormAction;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.CodeGenerationException;
@@ -33,7 +34,6 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Set;
 
@@ -87,12 +87,6 @@ public class PreviewNestedFormLoader extends PsiNestedFormLoader {
       throw new CodeGenerationException(errors [0].getComponentId(), errors [0].getErrorMessage());
     }
 
-    FileOutputStream fos = new FileOutputStream(new File(myTempPath, generatedClassName + ".class"));
-    try {
-      fos.write(data);
-    }
-    finally {
-      fos.close();
-    }
+    FileUtil.writeToFile(new File(myTempPath, generatedClassName + ".class"), data);
   }
 }

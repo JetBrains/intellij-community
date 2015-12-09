@@ -66,7 +66,7 @@ public class JavaProjectDataService extends AbstractProjectDataService<JavaProje
     final DataNode<ProjectData> projectDataNode = ExternalSystemApiUtil.findParent(javaProjectDataNode, ProjectKeys.PROJECT);
 
     assert projectDataNode != null;
-    if (!ExternalSystemApiUtil.isOneToOneMapping(project, projectDataNode)) {
+    if (!ExternalSystemApiUtil.isOneToOneMapping(project, projectDataNode.getData())) {
       return;
     }
 

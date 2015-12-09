@@ -191,7 +191,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       final PsiType valueType = myTypeEvaluator.evaluateType(value);
       if (returnType != null && valueType != null) {
         if (!myLabeler.addMigrationRoot(method, valueType, myStatement, TypeConversionUtil.isAssignable(returnType, valueType) && !isGetter(value, method), true, true)
-            && TypeMigrationLabeler.typeContainsTypeParameters(returnType)) {
+            && TypeMigrationLabeler.typeContainsTypeParameters(returnType, Collections.<PsiTypeParameter>emptySet())) {
           value.accept(this);
         }
       }

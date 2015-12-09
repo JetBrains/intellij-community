@@ -13,71 +13,49 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution.process;
 
-import com.google.common.collect.Lists;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.io.*;
 import java.util.List;
 
-/*
+/**
  * This implementation uses a listtasks which is shipped together (so, it should always work on windows).
  * 
  * Use through PlatformUtils.
  */
 public class ProcessListWin32Internal implements IProcessList {
-
-  private ProcessInfo[] NOPROCESS = new ProcessInfo[0];
   private String myHelpersRoot;
 
   public ProcessListWin32Internal(String helpersRoot) {
-
     myHelpersRoot = helpersRoot;
   }
 
+  @Override
   public ProcessInfo[] getProcessList() {
-    Process p = null;
-    String command = null;
-    InputStream in = null;
-    ProcessInfo[] procInfos = NOPROCESS;
-
     try {
       File file = new File(myHelpersRoot, "process/listtasks.exe");
-
-
-      //TODO: use listtasks.exe
-      //IPath relative = new Path("com/jetbrains/python/internal/win32").addTrailingSeparator().append("listtasks.exe");
-      //file = BundleUtils.getRelative(relative, bundle);
-
-      if (file != null && file.exists()) {
-        command = file.getCanonicalPath();
-        if (command != null) {
-          try {
-            p = ProcessUtils.createProcess(new String[]{command}, null, null);
-            in = p.getInputStream();
-            InputStreamReader reader = new InputStreamReader(in);
-            procInfos = parseListTasks(reader);
-          }
-          finally {
-            if (in != null) {
-              in.close();
-            }
-            if (p != null) {
-              p.destroy();
-            }
-          }
+      if (file.exists()) {
+        String[] command = {file.getCanonicalPath()};
+        Process p = ProcessUtils.createProcess(command, null, null);
+        try {
+          return parseListTasks(p.getInputStream());
+        }
+        finally {
+          p.destroy();
         }
       }
     }
-    catch (IOException e) {
-    }
-    return procInfos;
+    catch (IOException ignored) { }
+
+    return ProcessInfo.EMPTY_ARRAY;
   }
 
-  public ProcessInfo[] parseListTasks(InputStreamReader reader) {
-    BufferedReader br = new BufferedReader(reader);
-    List<ProcessInfo> processList = Lists.newArrayList();
+  private static ProcessInfo[] parseListTasks(InputStream stream) throws IOException {
+    List<ProcessInfo> processList = ContainerUtil.newArrayList();
+
+    BufferedReader br = new BufferedReader(new InputStreamReader(stream));
     try {
       String line;
       while ((line = br.readLine()) != null) {
@@ -90,14 +68,15 @@ public class ProcessListWin32Internal implements IProcessList {
               int pid = Integer.parseInt(proc);
               processList.add(new ProcessInfo(pid, name));
             }
-            catch (NumberFormatException e) {
-            }
+            catch (NumberFormatException ignored) { }
           }
         }
       }
     }
-    catch (IOException e) {
+    finally {
+      br.close();
     }
-    return processList.toArray(new ProcessInfo[processList.size()]);
+
+    return processList.isEmpty() ? ProcessInfo.EMPTY_ARRAY : processList.toArray(new ProcessInfo[processList.size()]);
   }
 }

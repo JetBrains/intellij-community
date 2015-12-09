@@ -26,6 +26,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.PerformFixesModalTask;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -35,8 +36,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialModalProgressTask;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -46,6 +49,8 @@ import java.util.List;
  * Date: 21-Feb-2006
  */
 public class CleanupInspectionIntention implements IntentionAction, HighPriorityAction {
+  private final static Logger LOG = Logger.getInstance(CleanupInspectionIntention.class);
+
   private final InspectionToolWrapper myToolWrapper;
   private final Class myQuickfixClass;
   private final String myText;
@@ -92,7 +97,8 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
     final String templatePresentationText = "Apply Fixes";
     final SequentialModalProgressTask progressTask =
       new SequentialModalProgressTask(project, templatePresentationText, true);
-    final PerformFixesTask fixesTask = new PerformFixesTask(project, descriptions.toArray(new CommonProblemDescriptor[descriptions.size()]), progressTask);
+    final boolean isBatch = BatchQuickFix.class.isAssignableFrom(myQuickfixClass);
+    final AbstractPerformFixesTask fixesTask = createTask(project, descriptions.toArray(new ProblemDescriptor[descriptions.size()]), progressTask, isBatch);
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
       public void run() {
@@ -118,25 +124,38 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
   public boolean startInWriteAction() {
     return false;
   }
-  
-  private class PerformFixesTask extends PerformFixesModalTask {
+
+  @NotNull
+  private AbstractPerformFixesTask createTask(@NotNull Project project,
+                                              ProblemDescriptor[] descriptions,
+                                              SequentialModalProgressTask progressTask,
+                                              boolean isBatch) {
+    return isBatch ?
+           new PerformBatchFixesTask(project, descriptions, progressTask) :
+           new PerformFixesTask(project, descriptions, progressTask);
+  }
+
+  private abstract class AbstractPerformFixesTask extends PerformFixesModalTask {
     private boolean myApplicableFixFound = false;
 
-    public PerformFixesTask(@NotNull Project project,
+    public AbstractPerformFixesTask(@NotNull Project project,
                             @NotNull CommonProblemDescriptor[] descriptors,
                             @NotNull SequentialModalProgressTask task) {
       super(project, descriptors, task);
     }
 
+    protected abstract void collectFix(QuickFix fix, ProblemDescriptor descriptor, Project project);
+
     @Override
-    protected void applyFix(Project project, CommonProblemDescriptor descriptor) {
+    protected final void applyFix(Project project, CommonProblemDescriptor descriptor) {
       final QuickFix[] fixes = descriptor.getFixes();
       if (fixes != null && fixes.length > 0) {
-        for (final QuickFix<CommonProblemDescriptor> fix : fixes) {
+        for (final QuickFix fix : fixes) {
           if (fix != null && fix.getClass().isAssignableFrom(myQuickfixClass)) {
-            final PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
+            final ProblemDescriptor problemDescriptor = (ProblemDescriptor)descriptor;
+            final PsiElement element = problemDescriptor.getPsiElement();
             if (element != null && element.isValid()) {
-              fix.applyFix(project, descriptor);
+              collectFix(fix, problemDescriptor, project);
               myApplicableFixFound = true;
             }
             break;
@@ -145,8 +164,61 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
       }
     }
 
-    public boolean isApplicableFixFound() {
+    public final boolean isApplicableFixFound() {
       return myApplicableFixFound;
+    }
+  }
+
+  private class PerformBatchFixesTask extends AbstractPerformFixesTask {
+    private final List<ProblemDescriptor> myBatchModeDescriptors = new SmartList<ProblemDescriptor>();
+    private boolean myApplied = false;
+
+    public PerformBatchFixesTask(@NotNull Project project,
+                                 @NotNull CommonProblemDescriptor[] descriptors,
+                                 @NotNull SequentialModalProgressTask task) {
+      super(project, descriptors, task);
+    }
+
+    @Override
+    protected void collectFix(QuickFix fix, ProblemDescriptor descriptor, Project project) {
+      myBatchModeDescriptors.add(descriptor);
+    }
+
+    @Override
+    public boolean isDone() {
+      if (super.isDone()) {
+        if (!myApplied && !myBatchModeDescriptors.isEmpty()) {
+          final ProblemDescriptor representative = myBatchModeDescriptors.get(0);
+          LOG.assertTrue(representative.getFixes() != null);
+          for (QuickFix fix : representative.getFixes()) {
+            if (fix != null && fix.getClass().isAssignableFrom(myQuickfixClass)) {
+              ((BatchQuickFix)fix).applyFix(myProject,
+                                            myBatchModeDescriptors.toArray(new ProblemDescriptor[myBatchModeDescriptors.size()]),
+                                            new ArrayList<PsiElement>(),
+                                            null);
+              break;
+            }
+          }
+          myApplied = true;
+        }
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
+  }
+  
+  private class PerformFixesTask extends AbstractPerformFixesTask {
+    public PerformFixesTask(@NotNull Project project,
+                            @NotNull CommonProblemDescriptor[] descriptors,
+                            @NotNull SequentialModalProgressTask task) {
+      super(project, descriptors, task);
+    }
+
+    @Override
+    protected void collectFix(QuickFix fix, ProblemDescriptor descriptor, Project project) {
+      fix.applyFix(project, descriptor);
     }
   }
 }

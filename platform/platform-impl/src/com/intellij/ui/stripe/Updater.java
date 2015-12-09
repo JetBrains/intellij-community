@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.RegionPainter;
@@ -31,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import java.awt.Cursor;
-import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -60,15 +61,21 @@ public abstract class Updater<Painter extends ErrorStripePainter> implements Dis
     myScrollBar.addMouseListener(myMouseAdapter);
     myScrollBar.addMouseMotionListener(myMouseAdapter);
     myQueue = new MergingUpdateQueue("ErrorStripeUpdater", 100, true, myScrollBar, this);
-    UIUtil.putClientProperty(myScrollBar, RegionPainter.BUTTONLESS_SCROLL_BAR_UI_EXTRA_TRACK, new RegionPainter() {
+    UIUtil.putClientProperty(myScrollBar, RegionPainter.BUTTONLESS_SCROLL_BAR_UI_EXTRA_TRACK, new RegionPainter<Object>() {
       @Override
-      public void paint(Graphics g, int x, int y, int width, int height) {
+      public void paint(Graphics2D g, int x, int y, int width, int height, Object object) {
         DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
         myPainter.setMinimalThickness(settings == null ? 2 : Math.min(settings.ERROR_STRIPE_MARK_MIN_HEIGHT, JBUI.scale(4)));
         myPainter.setErrorStripeGap(Registry.intValue("error.stripe.gap", 0));
-        myPainter.paint(g, x, y, width, height);
+        if (myPainter instanceof ExtraErrorStripePainter) {
+          ExtraErrorStripePainter extra = (ExtraErrorStripePainter)myPainter;
+          extra.setGroupSwap(!myScrollBar.getComponentOrientation().isLeftToRight());
+        }
+        myPainter.paint(g, x, y, width, height, object);
       }
     });
+    Disposer.register(this, new TranslucencyThumbPainter(myPainter, myScrollBar));
+    Disposer.register(this, new TranslucencyThumbPainter(null, pane.getHorizontalScrollBar()));
   }
 
   @Override
@@ -141,9 +148,7 @@ public abstract class Updater<Painter extends ErrorStripePainter> implements Dis
       @Override
       public void run() {
         update(myPainter);
-        if (myPainter.isModified()) {
-          myScrollBar.repaint();
-        }
+        myScrollBar.repaint();
       }
     });
   }

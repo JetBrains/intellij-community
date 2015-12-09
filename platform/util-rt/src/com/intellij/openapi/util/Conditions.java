@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.util;
 
 import com.intellij.reference.SoftReference;
@@ -25,11 +24,10 @@ import java.util.HashMap;
 
 /**
  * @author max
- * @noinspection unchecked
  */
+@SuppressWarnings("unchecked")
 public class Conditions {
-  private Conditions() {
-  }
+  private Conditions() { }
 
   public final static Condition<Object> TRUE = Condition.TRUE;
   public final static Condition<Object> FALSE = Condition.FALSE;
@@ -52,7 +50,6 @@ public class Conditions {
 
   public static <T> Condition<T> instanceOf(final Class<?> clazz) {
     return new Condition<T>() {
-      @Override
       public boolean value(T t) {
         return clazz.isInstance(t);
       }
@@ -61,7 +58,6 @@ public class Conditions {
 
   public static <T> Condition<T> notInstanceOf(final Class<?> clazz) {
     return new Condition<T>() {
-      @Override
       public boolean value(T t) {
         return !clazz.isInstance(t);
       }
@@ -70,7 +66,6 @@ public class Conditions {
 
   public static Condition<Class> assignableTo(final Class clazz) {
     return new Condition<Class>() {
-      @Override
       public boolean value(Class t) {
         return clazz.isAssignableFrom(t);
       }
@@ -79,7 +74,6 @@ public class Conditions {
 
   public static <T> Condition<T> instanceOf(final Class<?>... clazz) {
     return new Condition<T>() {
-      @Override
       public boolean value(T t) {
         for (Class<?> aClass : clazz) {
           if (aClass.isInstance(t)) return true;
@@ -95,7 +89,6 @@ public class Conditions {
 
   public static <T> Condition<T> equalTo(final Object option) {
     return new Condition<T>() {
-      @Override
       public boolean value(T t) {
         return Comparing.equal(t, option);
       }
@@ -104,7 +97,6 @@ public class Conditions {
 
   public static <T> Condition<T> notEqualTo(final Object option) {
     return new Condition<T>() {
-      @Override
       public boolean value(T t) {
         return !Comparing.equal(t, option);
       }
@@ -117,7 +109,6 @@ public class Conditions {
 
   public static <T> Condition<T> oneOf(final Collection<? extends T> options) {
     return new Condition<T>() {
-      @Override
       public boolean value(T t) {
         return options.contains(t);
       }
@@ -153,7 +144,6 @@ public class Conditions {
 
   public static <A, B> Condition<A> compose(final Function<? super A, B> fun, final Condition<? super B> condition) {
     return new Condition<A>() {
-      @Override
       public boolean value(A o) {
         return condition.value(fun.fun(o));
       }
@@ -171,7 +161,6 @@ public class Conditions {
       this.c = c;
     }
 
-    @Override
     public boolean value(T value) {
       return !c.value(value);
     }
@@ -186,7 +175,6 @@ public class Conditions {
       this.c2 = c2;
     }
 
-    @Override
     public boolean value(T object) {
       return c1.value(object) && c2.value(object);
     }
@@ -201,7 +189,6 @@ public class Conditions {
       this.c2 = c2;
     }
 
-    @Override
     public boolean value(T object) {
       return c1.value(object) || c2.value(object);
     }
@@ -215,7 +202,6 @@ public class Conditions {
       myCondition = condition;
     }
 
-    @Override
     public final boolean value(T object) {
       final int key = object.hashCode();
       final Pair<SoftReference<T>, Boolean> entry = myCache.get(key);

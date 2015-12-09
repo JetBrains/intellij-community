@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
@@ -39,18 +38,16 @@ public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscap
   }
 
   /**
-   *
-   * @param commandLine must be not empty
+   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
    */
-  public ColoredProcessHandler(@NotNull Process process, /*@NotNull */String commandLine) {
+  public ColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine) {
     super(process, commandLine);
   }
 
   /**
-   *
-   * @param commandLine must be not empty
+   * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
    */
-  public ColoredProcessHandler(@NotNull Process process, /*@NotNull */String commandLine, @NotNull Charset charset) {
+  public ColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset) {
     super(process, commandLine, charset);
   }
 

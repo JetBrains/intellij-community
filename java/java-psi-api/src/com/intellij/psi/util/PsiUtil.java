@@ -609,8 +609,10 @@ public final class PsiUtil extends PsiUtilCore {
    * would be equivalent
    */
   public static boolean equalOnEquivalentClasses(PsiClassType thisClassType, @NotNull PsiClass aClass, PsiClassType otherClassType, @NotNull PsiClass bClass) {
-    final PsiClassType capture1 = (PsiClassType)captureToplevelWildcards(thisClassType, aClass);
-    final PsiClassType capture2 = (PsiClassType)captureToplevelWildcards(otherClassType, bClass);
+    final PsiClassType capture1 = !PsiCapturedWildcardType.isCapture()
+                                  ? thisClassType : (PsiClassType)captureToplevelWildcards(thisClassType, aClass);
+    final PsiClassType capture2 = !PsiCapturedWildcardType.isCapture()
+                                  ? otherClassType : (PsiClassType)captureToplevelWildcards(otherClassType, bClass);
 
     final PsiClassType.ClassResolveResult result1 = capture1.resolveGenerics();
     final PsiClassType.ClassResolveResult result2 = capture2.resolveGenerics();
@@ -770,8 +772,13 @@ public final class PsiUtil extends PsiUtilCore {
           final PsiType substituted = substitutor.substitute(typeParameter);
           if (substituted instanceof PsiWildcardType) {
             if (substitutionMap == null) substitutionMap = new HashMap<PsiTypeParameter, PsiType>(substitutor.getSubstitutionMap());
-            substitutionMap.put(typeParameter,
-                                captureTypeParameterBounds(typeParameter, substituted, context, captureSubstitutor));
+            final PsiCapturedWildcardType capturedWildcard = (PsiCapturedWildcardType)captureSubstitutor.substitute(typeParameter);
+            LOG.assertTrue(capturedWildcard != null);
+            final PsiType upperBound = PsiCapturedWildcardType.captureUpperBound(typeParameter, (PsiWildcardType)substituted, captureSubstitutor);
+            if (upperBound != null) {
+              capturedWildcard.setUpperBound(upperBound);
+            }
+            substitutionMap.put(typeParameter, capturedWildcard);
           }
         }
 
@@ -787,66 +794,6 @@ public final class PsiUtil extends PsiUtilCore {
     }
 
     return type;
-  }
-
-  public static PsiType captureTypeParameterBounds(@NotNull PsiTypeParameter typeParameter, PsiType substituted,
-                                                   PsiElement context,
-                                                   PsiSubstitutor captureSubstitutor) {
-    PsiType oldSubstituted = substituted;
-    PsiElement captureContext = context;
-    if (substituted instanceof PsiCapturedWildcardType) {
-      final PsiCapturedWildcardType captured = (PsiCapturedWildcardType)substituted;
-      substituted = captured.getWildcard();
-      captureContext = captured.getContext();
-    }
-    PsiType glb = null;
-    if (substituted instanceof PsiWildcardType) {
-      final PsiType[] boundTypes = typeParameter.getExtendsListTypes();
-      PsiManager manager = typeParameter.getManager();
-      PsiType originalBound = !((PsiWildcardType)substituted).isSuper() ? ((PsiWildcardType)substituted).getBound() : null;
-      glb = originalBound;
-      for (PsiType boundType : boundTypes) {
-        PsiType substitutedBoundType = captureSubstitutor.substitute(boundType);
-        if (substitutedBoundType != null && !(substitutedBoundType instanceof PsiWildcardType) &&
-            !substitutedBoundType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-          if (originalBound instanceof PsiArrayType &&
-              substitutedBoundType instanceof PsiArrayType &&
-              !originalBound.isAssignableFrom(substitutedBoundType) &&
-              !substitutedBoundType.isAssignableFrom(originalBound)) {
-            continue;
-          }
-
-          if (originalBound == null ||
-              !TypeConversionUtil.erasure(substitutedBoundType).isAssignableFrom(TypeConversionUtil.erasure(originalBound)) &&
-              !TypeConversionUtil.erasure(substitutedBoundType).isAssignableFrom(originalBound)) { //erasure is essential to avoid infinite recursion
-
-            if (glb == null) {
-              glb = substitutedBoundType;
-            }
-            else {
-              glb = GenericsUtil.getGreatestLowerBound(glb, substitutedBoundType);
-            }
-          }
-        }
-      }
-
-      if (glb != null && !((PsiWildcardType)substituted).isSuper()) {
-        substituted = glb instanceof PsiCapturedWildcardType ? ((PsiCapturedWildcardType)glb).getWildcard()
-                                                             : PsiWildcardType.createExtends(manager, glb);
-      }
-    }
-
-    if (captureContext != null) {
-      substituted =
-        oldSubstituted instanceof PsiCapturedWildcardType && substituted.equals(((PsiCapturedWildcardType)oldSubstituted).getWildcard())
-        ? oldSubstituted
-        : captureSubstitutor.substitute(typeParameter);
-      LOG.assertTrue(substituted instanceof PsiCapturedWildcardType);
-      if (glb != null) {
-        ((PsiCapturedWildcardType)substituted).setUpperBound(glb);
-      }
-    }
-    return substituted;
   }
 
   public static boolean isInsideJavadocComment(PsiElement element) {

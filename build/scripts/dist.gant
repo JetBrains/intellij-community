@@ -62,7 +62,10 @@ loadProductProperties(home, snapshot)
 
 def loadProductProperties(String home, String buildNumber) {
   requireProperty("product", "idea")
-  def productPropertiesPath = "$home/build/scripts/" + p("product") + "_properties.gant"
+  requireProperty("productPropertiesPath", "")
+  if (productPropertiesPath.isEmpty()) {
+    productPropertiesPath = "$home/build/scripts/" + p("product") + "_properties.gant";
+  }
   if (!new File(productPropertiesPath).exists()) {
     throw new BuildException("No product specific properties file found at: " + productPropertiesPath)
   }

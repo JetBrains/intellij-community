@@ -13,77 +13,62 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*******************************************************************************
- * Copyright (c) 2005, 2010 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
 package com.intellij.execution.process;
+
+import com.intellij.util.containers.ContainerUtil;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.List;
 
-import com.google.common.collect.Lists;
-
 /**
  * Use through PlatformUtils.
  */
 public class ProcessListMac implements IProcessList {
+  public ProcessListMac() { }
 
-    ProcessInfo[] empty = new ProcessInfo[0];
-
-    public ProcessListMac() {
+  @Override
+  public ProcessInfo[] getProcessList() {
+    Process ps;
+    try {
+      String[] command = {"/bin/ps", "-a", "-x", "-o", "pid,command"};
+      ps = ProcessUtils.createProcess(command, null, null);
+    }
+    catch (Exception e) {
+      return ProcessInfo.EMPTY_ARRAY;
     }
 
-    /**
-     * Insert the method's description here.
-     * @see IProcessList#getProcessList
-     */
-    public ProcessInfo[] getProcessList() {
-        Process ps;
-        BufferedReader psOutput;
-        String[] args = { "/bin/ps", "-a", "-x", "-o", "pid,command" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ 
+    //Read the output and parse it into an array list
+    List<ProcessInfo> procInfo = ContainerUtil.newArrayList();
 
-        try {
-            ps = ProcessUtils.createProcess(args, null, null);
-            psOutput = new BufferedReader(new InputStreamReader(ps.getInputStream()));
-        } catch (Exception e) {
-            return new ProcessInfo[0];
-        }
-
-        //Read the output and parse it into an array list
-        List<ProcessInfo> procInfo = Lists.newArrayList();
-
-        try {
-            String lastline;
-            while ((lastline = psOutput.readLine()) != null) {
-                //The format of the output should be 
-                //PID space name
-                lastline = lastline.trim();
-                int index = lastline.indexOf(' ');
-                if (index != -1) {
-                    String pidString = lastline.substring(0, index).trim();
-                    try {
-                        int pid = Integer.parseInt(pidString);
-                        String arg = lastline.substring(index + 1);
-                        procInfo.add(new ProcessInfo(pid, arg));
-                    } catch (NumberFormatException e) {
-                    }
-                }
+    try {
+      BufferedReader psOutput = new BufferedReader(new InputStreamReader(ps.getInputStream()));
+      try {
+        String line;
+        while ((line = psOutput.readLine()) != null) {
+          //The format of the output should be
+          //PID space name
+          line = line.trim();
+          int index = line.indexOf(' ');
+          if (index != -1) {
+            String pidString = line.substring(0, index).trim();
+            try {
+              int pid = Integer.parseInt(pidString);
+              String arg = line.substring(index + 1);
+              procInfo.add(new ProcessInfo(pid, arg));
             }
-            psOutput.close();
-        } catch (Exception e) {
-            /* Ignore */
+            catch (NumberFormatException ignored) { }
+          }
         }
-
-        ps.destroy();
-        return procInfo.toArray(new ProcessInfo[procInfo.size()]);
+      }
+      finally {
+        psOutput.close();
+      }
     }
+    catch (Exception ignored) { }
+
+    ps.destroy();
+
+    return procInfo.isEmpty() ? ProcessInfo.EMPTY_ARRAY : procInfo.toArray(new ProcessInfo[procInfo.size()]);
+  }
 }

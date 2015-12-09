@@ -646,4 +646,15 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
   
+  public void test_KeepSimpleLambdasInOneLine() {
+    getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
+    doMethodTest("      execute(  () -> {});", 
+                 "execute(() -> {});");
+    
+    getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = false;
+    doMethodTest("execute(() -> {});", 
+                 "execute(() -> {\n" +
+                 "});");
+  }
+  
 }

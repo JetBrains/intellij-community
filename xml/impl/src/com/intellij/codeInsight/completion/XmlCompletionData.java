@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
@@ -184,9 +185,7 @@ public class XmlCompletionData extends CompletionData {
           final int i = valueText.indexOf('#');
           if (i > 0) {
             String s = valueText.substring(i + 1);
-            if (s.endsWith(";")) {
-              s = s.substring(0, s.length() - 1);
-            }
+            s = StringUtil.trimEnd(s, ";");
 
             try {
               final int unicodeChar = Integer.valueOf(s).intValue();
@@ -267,7 +266,7 @@ public class XmlCompletionData extends CompletionData {
     }
   }
 
-  public static XmlFile findDescriptorFile(final XmlTag tag, final XmlFile containingFile) {
+  public static XmlFile findDescriptorFile(@NotNull XmlTag tag, @NotNull XmlFile containingFile) {
     final XmlElementDescriptor descriptor = tag.getDescriptor();
     final XmlNSDescriptor nsDescriptor = descriptor != null ? descriptor.getNSDescriptor() : null;
     XmlFile descriptorFile = nsDescriptor != null

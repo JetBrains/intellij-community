@@ -41,9 +41,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
-import static com.intellij.openapi.diagnostic.LogUtil.debug;
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.containers.ContainerUtil.newTroveSet;
 
@@ -76,7 +78,7 @@ public class RefreshWorker {
   public void scan() {
     NewVirtualFile root = myRefreshQueue.pullFirst().first;
     boolean rootDirty = root.isDirty();
-    debug(LOG, "root=%s dirty=%b", root, rootDirty);
+    if (LOG.isDebugEnabled()) LOG.debug("root=" + root + " dirty=" + rootDirty);
     if (!rootDirty) return;
 
     NewVirtualFileSystem fs = root.getFileSystem();
@@ -106,7 +108,7 @@ public class RefreshWorker {
       Pair<NewVirtualFile, FileAttributes> pair = myRefreshQueue.pullFirst();
       NewVirtualFile file = pair.first;
       boolean fileDirty = file.isDirty();
-      debug(LOG, "file=%s dirty=%b", file, fileDirty);
+      if (LOG.isTraceEnabled()) LOG.trace("file=" + file + " dirty=" + fileDirty);
       if (!fileDirty) continue;
 
       checkCancelled(file);
@@ -202,7 +204,7 @@ public class RefreshWorker {
       if (!fs.isCaseSensitive()) {
         actualNames = new OpenTHashSet<String>(strategy, upToDateNames);
       }
-      debug(LOG, "current=%s +%s -%s", Arrays.toString(currentNames), newNames, deletedNames);
+      if (LOG.isTraceEnabled()) LOG.trace("current=" + Arrays.toString(currentNames) + " +" + newNames + " -" + deletedNames);
 
       List<Pair<String, FileAttributes>> addedMap = ContainerUtil.newArrayListWithCapacity(newNames.size());
       for (String name : newNames) {
@@ -221,7 +223,7 @@ public class RefreshWorker {
       token = ApplicationManager.getApplication().acquireReadActionLock();
       try {
         if (!Arrays.equals(currentNames, persistence.list(dir)) || !Arrays.equals(children, dir.getChildren())) {
-          LOG.debug("retry");
+          if (LOG.isDebugEnabled()) LOG.debug("retry: " + dir);
           continue;
         }
 
@@ -281,8 +283,10 @@ public class RefreshWorker {
         actualNames = new OpenTHashSet<String>(strategy, VfsUtil.filterNames(fs.list(dir)));
       }
 
-      debug(LOG, "cached=%s actual=%s", cached, actualNames);
-      debug(LOG, "suspicious=%s", wanted);
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("cached=" + cached + " actual=" + actualNames);
+        LOG.trace("suspicious=" + wanted);
+      }
 
       // reading children attributes
       List<Pair<VirtualFile, FileAttributes>> existingMap = ContainerUtil.newArrayListWithCapacity(cached.size());
@@ -302,7 +306,7 @@ public class RefreshWorker {
       token = ApplicationManager.getApplication().acquireReadActionLock();
       try {
         if (!cached.equals(dir.getCachedChildren()) || !wanted.equals(dir.getSuspiciousNames())) {
-          LOG.debug("retry");
+          if (LOG.isDebugEnabled()) LOG.debug("retry: " + dir);
           continue;
         }
 
@@ -393,23 +397,23 @@ public class RefreshWorker {
   }
 
   private void scheduleAttributeChange(@NotNull VirtualFile file, @NotNull String property, Object current, Object upToDate) {
-    debug(LOG, "update '%s' file=%s", property, file);
+    if (LOG.isTraceEnabled()) LOG.trace("update '" + property + "' file=" + file);
     myEvents.add(new VFilePropertyChangeEvent(null, file, property, current, upToDate, true));
   }
 
   private void scheduleUpdateContent(@NotNull VirtualFile file) {
-    debug(LOG, "update file=%s", file);
+    if (LOG.isTraceEnabled()) LOG.trace("update file=" + file);
     myEvents.add(new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, true));
   }
 
   private void scheduleCreation(@NotNull VirtualFile parent, @NotNull String childName, boolean isDirectory, boolean isReCreation) {
-    debug(LOG, "create parent=%s name=%s dir=%b", parent, childName, isDirectory);
+    if (LOG.isTraceEnabled()) LOG.trace("create parent=" + parent + " name=" + childName + " dir=" + isDirectory);
     myEvents.add(new VFileCreateEvent(null, parent, childName, isDirectory, true, isReCreation));
   }
 
   private void scheduleDeletion(@Nullable VirtualFile file) {
     if (file != null) {
-      debug(LOG, "delete file=%s", file);
+      if (LOG.isTraceEnabled()) LOG.trace("delete file=" + file);
       myEvents.add(new VFileDeleteEvent(null, file, true));
     }
   }

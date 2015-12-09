@@ -241,7 +241,8 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
         if (isFoldingsInitializedInEditor(editor)) return;
         if (DumbService.isDumb(myProject) && !FoldingUpdate.supportsDumbModeFolding(editor)) return;
 
-        foldingModel.runBatchFoldingOperationDoNotCollapseCaret(new UpdateFoldRegionsOperation(myProject, editor, file, foldingMap, YES, false));
+        foldingModel.runBatchFoldingOperationDoNotCollapseCaret(new UpdateFoldRegionsOperation(myProject, editor, file, foldingMap, YES, 
+                                                                                               false, false));
         initFolding(editor);
       }
     };

@@ -29,26 +29,26 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleFileIndex;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.roots.impl.DirectoryInfo;
+import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.FontUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ProjectViewDirectoryHelper {
   protected static final Logger LOG = Logger.getInstance("#" + ProjectViewDirectoryHelper.class.getName());
@@ -69,21 +69,43 @@ public class ProjectViewDirectoryHelper {
     return myProject;
   }
 
+
   @Nullable
   public String getLocationString(@NotNull PsiDirectory psiDirectory) {
-    final VirtualFile directory = psiDirectory.getVirtualFile();
-    
-    if (ProjectRootsUtil.isLibraryRoot(directory, psiDirectory.getProject())) {
-      return "library home";
-    }
-    
-    final VirtualFile contentRootForFile = ProjectRootManager.getInstance(myProject).getFileIndex().getContentRootForFile(directory);
-    if (Comparing.equal(contentRootForFile, psiDirectory)) {
-      return directory.getPresentableUrl();
-    }
-    return null;
+    boolean includeUrl = ProjectRootsUtil.isModuleContentRoot(psiDirectory);
+    return getLocationString(psiDirectory, includeUrl, false);
   }
 
+  @Nullable
+  public String getLocationString(@NotNull PsiDirectory psiDirectory, boolean includeUrl, boolean includeRootType) {
+    StringBuilder result = new StringBuilder();
+
+    final VirtualFile directory = psiDirectory.getVirtualFile();
+
+    if (ProjectRootsUtil.isLibraryRoot(directory, psiDirectory.getProject())) {
+      result.append(ProjectBundle.message("module.paths.root.node", "library").toLowerCase(Locale.getDefault()));
+    }
+    else if (includeRootType) {
+      SourceFolder sourceRoot = ProjectRootsUtil.getModuleSourceRoot(psiDirectory.getVirtualFile(), psiDirectory.getProject());
+      if (sourceRoot != null) {
+        ModuleSourceRootEditHandler<?> handler = ModuleSourceRootEditHandler.getEditHandler(sourceRoot.getRootType());
+        if (handler != null) {
+          JavaSourceRootProperties properties = sourceRoot.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES);
+          if (properties != null && properties.isForGeneratedSources()) {
+            result.append("generated ");
+          }
+          result.append(handler.getFullRootTypeName().toLowerCase(Locale.getDefault()));
+        }
+      }
+    }
+
+    if (includeUrl) {
+      if (result.length() > 0) result.append(",").append(FontUtil.spaceAndThinSpace());
+      result.append(FileUtil.getLocationRelativeToUserHome(directory.getPresentableUrl()));
+    }
+    
+    return result.length() == 0 ? null : result.toString();
+  }
 
 
   public boolean isShowFQName(ViewSettings settings, Object parentValue, PsiDirectory value) {

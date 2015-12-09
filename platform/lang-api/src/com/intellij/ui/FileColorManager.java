@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ public abstract class FileColorManager {
 
   public abstract Project getProject();
 
-  @SuppressWarnings({"MethodMayBeStatic"})
   @Nullable
   public abstract Color getColor(@NotNull String name);
 
@@ -65,4 +64,6 @@ public abstract class FileColorManager {
 
   @Nullable
   public abstract Color getRendererBackground(PsiFile file);
+
+  public abstract void addScopeColor(@NotNull String scopeName, @NotNull String colorName, boolean isProjectLevel);
 }

@@ -64,7 +64,7 @@ public class BaseFixture implements IdeaTestFixture {
     }
   }
 
-  public Disposable getTestRootDisposable() {
+  public final Disposable getTestRootDisposable() {
     return myTestRootDisposable;
   }
 }

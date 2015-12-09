@@ -330,7 +330,7 @@ public class MavenUtil {
         if (!Comparing.equal(modulePath.getParent(), parentModulePath)) {
           String relativePath = VfsUtil.getPath(file, parentModulePath, '/');
           if (relativePath != null) {
-            if (relativePath.endsWith("/")) relativePath = relativePath.substring(0, relativePath.length() - 1);
+            relativePath = StringUtil.trimEnd(relativePath, "/");
 
             conditions.setProperty("HAS_RELATIVE_PATH", "true");
             properties.setProperty("PARENT_RELATIVE_PATH", relativePath);

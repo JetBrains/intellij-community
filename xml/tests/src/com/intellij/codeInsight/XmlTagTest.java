@@ -39,7 +39,6 @@ import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Arrays;
@@ -911,10 +910,7 @@ public class XmlTagTest extends LightCodeInsightTestCase {
     String text = "<wpd><methods> </methods></wpd>";
     final File tempFile = FileUtil.createTempFile("idea-test", ".xml");
     tempFile.createNewFile();
-    final FileOutputStream fileOutputStream = new FileOutputStream(tempFile);
-    fileOutputStream.write(text.getBytes());
-    fileOutputStream.flush();
-    fileOutputStream.close();
+    FileUtil.writeToFile(tempFile, text);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override

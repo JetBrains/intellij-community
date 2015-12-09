@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
@@ -58,10 +59,18 @@ public class PsiIntersectionType extends PsiType.Stub {
     return new PsiIntersectionType(conjuncts);
   }
 
-  private static PsiType[] flattenAndRemoveDuplicates(PsiType[] conjuncts) {
+  private static PsiType[] flattenAndRemoveDuplicates(final PsiType[] conjuncts) {
     try {
-      Set<PsiType> flattened = flatten(conjuncts, ContainerUtil.<PsiType>newLinkedHashSet());
-      return flattened.toArray(createArray(flattened.size()));
+      final Set<PsiType> flattenConjuncts = PsiCapturedWildcardType.guard.doPreventingRecursion(conjuncts, true, new Computable<Set<PsiType>>() {
+        @Override
+        public Set<PsiType> compute() {
+          return flatten(conjuncts, ContainerUtil.<PsiType>newLinkedHashSet());
+        }
+      });
+      if (flattenConjuncts == null) {
+        return conjuncts;
+      }
+      return flattenConjuncts.toArray(createArray(flattenConjuncts.size()));
     }
     catch (NoSuchElementException e) {
       throw new RuntimeException(Arrays.toString(conjuncts), e);

@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.File
 import java.io.IOException
+import java.io.OutputStream
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
@@ -13,9 +14,26 @@ import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 
-fun Path.exists(): Boolean = Files.exists(this)
+fun Path.exists() = Files.exists(this)
 
-fun Path.createDirectories(): Path = Files.createDirectories(this)
+fun Path.createDirectories() = Files.createDirectories(this)
+
+/**
+ * Opposite to Java, parent directories will be created
+ */
+fun Path.outputStream(): OutputStream {
+  parent?.createDirectories()
+  return Files.newOutputStream(this)
+}
+
+/**
+ * Opposite to Java, parent directories will be created
+ */
+fun Path.createSymbolicLink(target: Path): Path {
+  parent?.createDirectories()
+  Files.createSymbolicLink(this, target)
+  return this
+}
 
 fun Path.deleteRecursively(): Path = if (exists()) Files.walkFileTree(this, object : SimpleFileVisitor<Path>() {
   override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {

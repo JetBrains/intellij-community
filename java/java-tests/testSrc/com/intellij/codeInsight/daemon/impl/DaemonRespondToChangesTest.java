@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteCatchFix;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
+import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
@@ -2077,6 +2078,58 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertSame(lastHintBeforeDeletion, lastHintAfterDeletion);
 
     assertEmpty(visibleHints);
+  }
+  
+  public void testCodeFoldingPassRestartsOnRegionUnfolding() throws Exception {
+    TestLoggerFactory.enableDebugLogging(myTestRootDisposable, "#com.intellij.codeInsight.daemon.impl.PassExecutorService");
+    DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
+    int savedDelay = settings.AUTOREPARSE_DELAY;
+    settings.AUTOREPARSE_DELAY = 0;
+    try {
+      configureByText(StdFileTypes.JAVA, "class Foo {\n" +
+                                         "    void m() {\n" +
+                                         "\n" +
+                                         "    }\n" +
+                                         "}");
+      CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(myEditor);
+      waitForDaemon();
+      EditorTestUtil.executeAction(myEditor, IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
+      waitForDaemon();
+      checkFoldingState("[FoldRegion +(25:33), placeholder='{...}']");
+
+      new WriteCommandAction<Void>(myProject){
+        @Override
+        protected void run(@NotNull Result<Void> result) throws Throwable {
+          myEditor.getDocument().insertString(0, "/*");
+        }
+      }.execute();
+      waitForDaemon();
+      checkFoldingState("[FoldRegion -(0:37), placeholder='/.../', FoldRegion +(27:35), placeholder='{...}']");
+      
+      EditorTestUtil.executeAction(myEditor, IdeActions.ACTION_EXPAND_ALL_REGIONS);
+      waitForDaemon();
+      checkFoldingState("[FoldRegion -(0:37), placeholder='/.../']");
+    }
+    finally {
+      settings.AUTOREPARSE_DELAY = savedDelay;
+    }
+  }
+
+  private void checkFoldingState(String expected) {
+    assertEquals(expected, Arrays.toString(myEditor.getFoldingModel().getAllFoldRegions()));
+  }
+
+  private void waitForDaemon() {
+    long deadline = System.currentTimeMillis() + 60_000;
+    while (PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
+      if (System.currentTimeMillis() > deadline) fail("Too long waiting for document commit");
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    UIUtil.dispatchAllInvocationEvents(); // make sure daemon is started
+    while (myDaemonCodeAnalyzer.isRunning()) {
+      if (System.currentTimeMillis() > deadline) fail("Too long waiting for daemon to finish");
+      UIUtil.dispatchAllInvocationEvents();
+    }
   }
 }
 

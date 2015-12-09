@@ -37,6 +37,7 @@ import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.EduNames;
 import com.jetbrains.edu.courseFormat.Task;
 import com.jetbrains.edu.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.actions.*;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +57,7 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
 
   public StudyToolWindow(final Project project) {
     super(true, true);
-    JPanel toolbarPanel = createToolbarPanel();
+    JPanel toolbarPanel = createToolbarPanel(project);
     setToolbar(toolbarPanel);
 
     final JTextPane taskTextPane = createTaskTextPane();
@@ -114,9 +115,9 @@ public class StudyToolWindow extends SimpleToolWindowPanel implements DataProvid
   public void dispose() {
   }
 
-  private static JPanel createToolbarPanel() {
+  private static JPanel createToolbarPanel(@NotNull final Project project) {
     final DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new StudyCheckAction());
+    group.add(StudyCheckAction.createCheckAction(StudyTaskManager.getInstance(project).getCourse()));
     group.add(new StudyPreviousStudyTaskAction());
     group.add(new StudyNextStudyTaskAction());
     group.add(new StudyRefreshTaskFileAction());

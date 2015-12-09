@@ -187,6 +187,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest(false);
   }
 
+  public void testPotentialCompatibilityInCaseWhenNoMethodHasValidNumberOfParameters() throws Exception {
+    doTest(false);
+  }
+
   private void doTest() {
     doTest(true);
   }

@@ -272,7 +272,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
       try {
         final PsiMethodCallExpression expr = (PsiMethodCallExpression)startElement;
         final boolean isIterableAssignment = isIterable(expr);
-        final TypeMigrationRules rules = new TypeMigrationRules(myInitialType);
+        final TypeMigrationRules rules = new TypeMigrationRules();
         rules.setMigrationRootType(myTargetType);
         rules.setBoundScope(GlobalSearchScope.fileScope(file));
         final TypeConversionDescriptorBase conversion =
@@ -364,7 +364,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
       if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
       try {
         PsiMethod method = (PsiMethod)getStartElement();
-        final TypeMigrationRules rules = new TypeMigrationRules(TypeMigrationLabeler.getElementType(method));
+        final TypeMigrationRules rules = new TypeMigrationRules();
         rules.setMigrationRootType(myTargetType);
         rules.setBoundScope(method.getUseScope());
         TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, method, true);
@@ -375,10 +375,15 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
       }
     }
 
+    @Override
+    protected boolean isAvailable() {
+      return super.isAvailable() && myTargetType.isValid();
+    }
+
     @NotNull
     @Override
     public String getText() {
-      return "Migrate method return type to '" + myTargetType.getCanonicalText(false) + "'";
+      return !myTargetType.isValid() ? "Migrate method return type" : "Migrate method return type to '" + myTargetType.getCanonicalText(false) + "'";
     }
 
     @Nls

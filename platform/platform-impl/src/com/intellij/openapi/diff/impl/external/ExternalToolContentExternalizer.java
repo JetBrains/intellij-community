@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 
 /**
@@ -52,14 +51,9 @@ class ExternalToolContentExternalizer implements ContentExternalizer {
     catch (IOException e) {
       tempFile = FileUtil.createTempFile(STD_PREFIX, extension);
     }
-    FileOutputStream stream = null;
-    try {
-      stream = new FileOutputStream(tempFile);
-      final DiffContent content = getContent();
-      stream.write(myRequest instanceof MergeRequest ? content.getDocument().getText().getBytes() : content.getBytes());
-    } finally {
-      if (stream != null) stream.close();
-    }
+    final DiffContent content = getContent();
+    byte[] bytes = myRequest instanceof MergeRequest ? content.getDocument().getText().getBytes() : content.getBytes();
+    FileUtil.writeToFile(tempFile, bytes);
     return tempFile;
   }
 

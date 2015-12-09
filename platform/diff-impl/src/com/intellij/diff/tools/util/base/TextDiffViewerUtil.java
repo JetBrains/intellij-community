@@ -25,6 +25,7 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -203,6 +204,7 @@ public class TextDiffViewerUtil {
     @Override
     protected void applySetting(@NotNull HighlightPolicy setting, @NotNull AnActionEvent e) {
       if (getCurrentSetting() == setting) return;
+      UsageTrigger.trigger("diff.TextDiffSettings.HighlightPolicy." + setting.name());
       mySettings.setHighlightPolicy(setting);
       update(e);
       onSettingsChanged();
@@ -239,6 +241,7 @@ public class TextDiffViewerUtil {
     @Override
     protected void applySetting(@NotNull IgnorePolicy setting, @NotNull AnActionEvent e) {
       if (getCurrentSetting() == setting) return;
+      UsageTrigger.trigger("diff.TextDiffSettings.IgnorePolicy." + setting.name());
       mySettings.setIgnorePolicy(setting);
       update(e);
       onSettingsChanged();

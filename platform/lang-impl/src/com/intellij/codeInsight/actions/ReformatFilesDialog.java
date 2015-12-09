@@ -18,16 +18,21 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.lang.Language;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-import static com.intellij.codeInsight.actions.TextRangeType.*;
+import static com.intellij.codeInsight.actions.TextRangeType.VCS_CHANGED_TEXT;
+import static com.intellij.codeInsight.actions.TextRangeType.WHOLE_FILE;
 
 public class ReformatFilesDialog extends DialogWrapper implements ReformatFilesOptions {
   private JPanel myPanel;
@@ -46,9 +51,24 @@ public class ReformatFilesDialog extends DialogWrapper implements ReformatFilesO
     myOnlyChangedText.setSelected(canTargetVcsChanges && myLastRunSettings.getLastTextRangeType() == VCS_CHANGED_TEXT);
     myOptimizeImports.setSelected(myLastRunSettings.getLastOptimizeImports());
     myRearrangeEntriesCb.setSelected(myLastRunSettings.getLastRearrangeCode());
+    myRearrangeEntriesCb.setEnabled(containsAtLeastOneFileToRearrange(files));
 
     setTitle(CodeInsightBundle.message("dialog.reformat.files.title"));
     init();
+  }
+  
+  private static boolean containsAtLeastOneFileToRearrange(@NotNull VirtualFile[] files) {
+    for (VirtualFile file : files) {
+      FileType fileType = file.getFileType();
+      if (fileType instanceof LanguageFileType) {
+        Language language = ((LanguageFileType)fileType).getLanguage();
+        if (Rearranger.EXTENSION.forLanguage(language) != null) {
+          return true;
+        }
+      }
+      
+    }
+    return false;
   }
 
   @Override
@@ -77,7 +97,9 @@ public class ReformatFilesDialog extends DialogWrapper implements ReformatFilesO
   protected void doOKAction() {
     super.doOKAction();
     myLastRunSettings.saveOptimizeImportsState(isOptimizeImports());
-    myLastRunSettings.saveRearrangeCodeState(isRearrangeCode());
+    if (myRearrangeEntriesCb.isEnabled()) {
+      myLastRunSettings.saveRearrangeCodeState(isRearrangeCode());
+    }
     if (myOnlyChangedText.isEnabled()) {
       myLastRunSettings.saveProcessVcsChangedTextState(getTextRangeType() == VCS_CHANGED_TEXT);
     }

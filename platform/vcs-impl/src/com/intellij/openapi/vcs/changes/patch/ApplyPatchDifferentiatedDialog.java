@@ -20,6 +20,8 @@ import com.intellij.diff.DiffManager;
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
+import com.intellij.diff.chains.DiffRequestProducerException;
+import com.intellij.diff.requests.DiffRequest;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
@@ -31,6 +33,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -994,7 +998,6 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
       int selectedIdx = 0;
       final List<DiffRequestProducer> diffRequestPresentableList = new ArrayList<DiffRequestProducer>(changes.size());
-      final List<Change> diffRequestChangeList = new ArrayList<Change>(changes.size());
       if (selectedChanges.isEmpty()) {
         selectedChanges = changes;
       }
@@ -1002,26 +1005,50 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         final AbstractFilePatchInProgress.PatchChange c = selectedChanges.get(0);
         for (AbstractFilePatchInProgress.PatchChange change : changes) {
           final AbstractFilePatchInProgress patchInProgress = change.getPatchInProgress();
-          if (!patchInProgress.baseExistsOrAdded()) continue;
-          diffRequestPresentableList.add(patchInProgress.getDiffRequestProducers(myProject, myReader));
-          diffRequestChangeList.add(change);
+          if (!patchInProgress.baseExistsOrAdded()) {
+            diffRequestPresentableList.add(createBaseNotFoundErrorRequest(patchInProgress));
+          }
+          else {
+            diffRequestPresentableList.add(patchInProgress.getDiffRequestProducers(myProject, myReader));
+          }
           if (change.equals(c)) {
             selectedIdx = diffRequestPresentableList.size() - 1;
           }
         }
       }
       if (diffRequestPresentableList.isEmpty()) return;
-      MyDiffRequestChain chain = new MyDiffRequestChain(diffRequestPresentableList, diffRequestChangeList, selectedIdx);
+      MyDiffRequestChain chain = new MyDiffRequestChain(diffRequestPresentableList, changes, selectedIdx);
       DiffManager.getInstance().showDiff(myProject, chain, DiffDialogHints.DEFAULT);
     }
   }
 
+  @NotNull
+  private static DiffRequestProducer createBaseNotFoundErrorRequest(@NotNull final AbstractFilePatchInProgress patchInProgress) {
+    final String beforePath = patchInProgress.getPatch().getBeforeName();
+    final String afterPath = patchInProgress.getPatch().getAfterName();
+    return new DiffRequestProducer() {
+      @NotNull
+      @Override
+      public String getName() {
+        final File ioCurrentBase = patchInProgress.getIoCurrentBase();
+        return ioCurrentBase == null ? patchInProgress.getCurrentPath() : ioCurrentBase.getPath();
+      }
+
+      @NotNull
+      @Override
+      public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
+        throws DiffRequestProducerException, ProcessCanceledException {
+        throw new DiffRequestProducerException("Cannot find base for '" + (beforePath != null ? beforePath : afterPath) + "'");
+      }
+    };
+  }
+
   private static class MyDiffRequestChain extends UserDataHolderBase implements DiffRequestChain, GoToChangePopupBuilder.Chain {
     private final List<DiffRequestProducer> myRequests;
-    private final List<Change> myChanges;
+    private final List<? extends Change> myChanges;
     private int myIndex;
 
-    public MyDiffRequestChain(@NotNull List<DiffRequestProducer> requests, @NotNull List<Change> changes, int index) {
+    public MyDiffRequestChain(@NotNull List<DiffRequestProducer> requests, @NotNull List<? extends Change> changes, int index) {
       myRequests = requests;
       myChanges = changes;
 

@@ -1,5 +1,21 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.tasks.bugzilla;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.*;
 import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
@@ -104,9 +120,7 @@ public class BugzillaTask extends Task {
   @Override
   public String getIssueUrl() {
     String repositoryUrl = myRepository.getUrl();
-    if (repositoryUrl.endsWith("xmlrpc.cgi")) {
-      repositoryUrl = repositoryUrl.substring(0, repositoryUrl.length() - "xmlrpc.cgi".length());
-    }
+    repositoryUrl = StringUtil.trimEnd(repositoryUrl, "xmlrpc.cgi");
     return repositoryUrl + "/show_bug.cgi?id=" + getId();
   }
 

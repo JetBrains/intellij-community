@@ -59,6 +59,7 @@ import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
+import java.awt.font.GlyphVector;
 import java.awt.im.InputContext;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
@@ -547,6 +548,22 @@ public class UIUtil {
     final Rectangle stringBounds = font.getStringBounds(string, frc).getBounds();
 
     return (int)(centerY - stringBounds.height / 2.0 - stringBounds.y);
+  }
+
+  /**
+   * @param string {@code String} to examine
+   * @param font {@code Font} that is used to render the string
+   * @param graphics {@link Graphics} that should be used to render the string
+   * @return height of the tallest glyph in a string. If string is empty, returns 0
+   */
+  public static int getHighestGlyphHeight(@NotNull String string, @NotNull Font font, @NotNull Graphics graphics) {
+    FontRenderContext frc = ((Graphics2D)graphics).getFontRenderContext();
+    GlyphVector gv = font.createGlyphVector(frc, string);
+    int maxHeight = 0;
+    for (int i = 0; i < string.length(); i ++) {
+      maxHeight = Math.max(maxHeight, (int)gv.getGlyphMetrics(i).getBounds2D().getHeight());
+    }
+    return maxHeight;
   }
 
   public static void setEnabled(Component component, boolean enabled, boolean recursively) {

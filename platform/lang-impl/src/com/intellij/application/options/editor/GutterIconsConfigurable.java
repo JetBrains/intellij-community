@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.editor;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
 import com.intellij.codeInsight.daemon.LineMarkerProviders;
@@ -24,16 +25,20 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyIcon;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,7 +73,11 @@ public class GutterIconsConfigurable implements Configurable {
         @Override
         public LineMarkerProviderDescriptor fun(LanguageExtensionPoint<LineMarkerProvider> point) {
           LineMarkerProvider instance = point.getInstance();
-          return instance instanceof LineMarkerProviderDescriptor ? (LineMarkerProviderDescriptor)instance : null;
+          if (instance instanceof LineMarkerProviderDescriptor) {
+            LineMarkerProviderDescriptor descriptor = (LineMarkerProviderDescriptor)instance;
+            return descriptor.getName() == null ? null : descriptor;
+          }
+          return null;
         }
       });
     myDescriptors = new ArrayList<LineMarkerProviderDescriptor>(new THashSet<LineMarkerProviderDescriptor>(descriptors,
@@ -108,7 +117,9 @@ public class GutterIconsConfigurable implements Configurable {
     for (LineMarkerProviderDescriptor descriptor : myDescriptors) {
       LineMarkerSettings.getSettings().setEnabled(descriptor, myList.isItemSelected(descriptor));
     }
-    EditorOptionsPanel.restartDaemons();
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      DaemonCodeAnalyzer.getInstance(project).restart();
+    }
   }
 
   @Override
@@ -124,6 +135,17 @@ public class GutterIconsConfigurable implements Configurable {
   }
 
   private void createUIComponents() {
-    myList = new CheckBoxList<LineMarkerProviderDescriptor>();
+    myList = new CheckBoxList<LineMarkerProviderDescriptor>() {
+      @Override
+      protected JComponent adjustRendering(JComponent rootComponent, JCheckBox checkBox, int index, boolean selected, boolean hasFocus) {
+        JPanel panel = new JPanel(new BorderLayout());
+        LineMarkerProviderDescriptor descriptor = myList.getItemAt(index);
+        Icon icon = descriptor == null ? null : descriptor.getIcon();
+        panel.add(new JLabel(icon == null ? EmptyIcon.ICON_16 : icon), BorderLayout.WEST);
+        panel.add(checkBox, BorderLayout.CENTER);
+        panel.setBackground(rootComponent.getBackground());
+        return panel;
+      }
+    };
   }
 }

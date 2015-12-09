@@ -33,6 +33,8 @@
 1.3 => lib/idea_rt.jar
 1.4 => lib/forms_rt.jar
 
+1.6 => lib/util.jar
+
 1.7 => lib/optimizedFileManager.jar
 
 1.5 => plugins/Groovy/lib/groovy_rt.jar
@@ -41,3 +43,14 @@
 1.5 => lib/annotations.jar
 1.8 => redist/annotations-java8.jar
 1.3 => plugins/junit/lib/junit-rt.jar
+
+1.6 => lib/external-system-rt.jar
+
+1.6 => plugins/gradle/lib/gradle-tooling-extension-api.jar
+1.6 => plugins/gradle/lib/gradle-tooling-extension-impl.jar
+
+1.4 => plugins/xpath/lib/rt/xslt-rt.jar
+1.5 => plugins/xslt-debugger/lib/xslt-debugger-engine.jar
+1.5 => plugins/xslt-debugger/lib/rt/xslt-debugger-engine-impl.jar
+
+1.6 => plugins/android/lib/android-rt.jar

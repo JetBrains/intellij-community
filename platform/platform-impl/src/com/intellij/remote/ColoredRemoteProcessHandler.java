@@ -28,8 +28,7 @@ import java.nio.charset.Charset;
 public class ColoredRemoteProcessHandler<T extends RemoteProcess> extends BaseRemoteProcessHandler<T> implements AnsiEscapeDecoder.ColoredTextAcceptor {
   private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
 
-  public ColoredRemoteProcessHandler(@NotNull T process,
-                                     @NotNull String commandLine, @Nullable Charset charset) {
+  public ColoredRemoteProcessHandler(@NotNull T process, /*@NotNull*/ String commandLine, @Nullable Charset charset) {
     super(process, commandLine, charset);
   }
 

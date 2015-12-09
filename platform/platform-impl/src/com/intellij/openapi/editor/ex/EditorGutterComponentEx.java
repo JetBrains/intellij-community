@@ -61,7 +61,7 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   public abstract int getAnnotationsAreaWidth();
 
   @Nullable
-  public abstract Point getPoint(GutterIconRenderer renderer);
+  public abstract Point getCenterPoint(GutterIconRenderer renderer);
 
   public abstract void setLineNumberConvertor(@NotNull TIntFunction lineNumberConvertor);
 

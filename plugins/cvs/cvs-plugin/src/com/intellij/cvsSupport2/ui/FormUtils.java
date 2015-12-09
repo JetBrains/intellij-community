@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.cvsSupport2.ui;
 import com.intellij.CvsBundle;
 import com.intellij.openapi.ui.InputException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
 
 import javax.swing.*;
 
@@ -44,9 +45,7 @@ public class FormUtils {
   private static String getLabelText(JComponent field) {
     final JLabel label = (JLabel)field.getClientProperty("labeledBy");
     String text = label.getText();
-    if (text.endsWith(":")) {
-      text = text.substring(0, text.length() - 1);
-    }
+    text = StringUtil.trimEnd(text, ":");
     return text;
   }
 

@@ -15,7 +15,7 @@
  */
 package com.intellij.ui.stripe;
 
-import java.awt.Graphics;
+import java.awt.Graphics2D;
 
 /**
  * @author Sergey.Malenkov
@@ -38,7 +38,7 @@ public class ExtraErrorStripePainter extends ErrorStripePainter {
   }
 
   public int getGroupGap() {
-    return myGroupGap;
+    return myGroupGap != null ? myGroupGap : getMinimalThickness();
   }
 
   public void setGroupGap(int gap) {
@@ -71,7 +71,7 @@ public class ExtraErrorStripePainter extends ErrorStripePainter {
   }
 
   @Override
-  public void paint(Graphics g, int x, int y, int width, int height) {
+  public void paint(Graphics2D g, int x, int y, int width, int height, Object object) {
     int min = getMinimalThickness();
     int gap = myGroupGap == null ? min : myGroupGap;
     int pos = x;
@@ -81,7 +81,7 @@ public class ExtraErrorStripePainter extends ErrorStripePainter {
     else {
       x += gap + min;
     }
-    myPainter.paint(g, pos, y, min, height);
-    super.paint(g, x, y, width - gap - min, height);
+    myPainter.paint(g, pos, y, min, height, object);
+    super.paint(g, x, y, width - gap - min, height, object);
   }
 }

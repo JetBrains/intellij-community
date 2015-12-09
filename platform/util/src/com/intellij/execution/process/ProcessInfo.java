@@ -1,14 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2000, 2006 QNX Software Systems and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     QNX Software Systems - Initial API and implementation
- *******************************************************************************/
-
 /*
  * Copyright 2000-2015 JetBrains s.r.o.
  *
@@ -26,12 +15,11 @@
  */
 package com.intellij.execution.process;
 
-import com.google.common.base.Joiner;
-
 /**
  * @author traff
  */
 public class ProcessInfo {
+  public static ProcessInfo[] EMPTY_ARRAY = new ProcessInfo[0];
 
   private final int myPid;
   private final String myCommand;
@@ -56,12 +44,12 @@ public class ProcessInfo {
     return myCommand;
   }
 
-  @Override
-  public String toString() {
-    return Joiner.on("").join(String.valueOf(myPid), " (", myArgs, ")");
-  }
-
   public String getArgs() {
     return myArgs;
+  }
+
+  @Override
+  public String toString() {
+    return String.valueOf(myPid) + " (" + myArgs + ")";
   }
 }

@@ -16,6 +16,7 @@
 package git4idea.push;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -51,9 +52,7 @@ class GitPushSpecParser {
     }
     String source = parts[0].trim();
     String target = parts[1].trim();
-    if (source.startsWith("+")) {
-      source = source.substring(1);
-    }
+    source = StringUtil.trimStart(source, "+");
 
     if (!isStarPositionValid(source, target)) {
       return null;
