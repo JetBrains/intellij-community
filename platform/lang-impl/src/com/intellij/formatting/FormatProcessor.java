@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.formatting.AbstractBlockAlignmentProcessor.Context;
+import static com.intellij.formatting.InitialInfoBuilder.prepareToBuildBlocksSequentially;
 
 public class FormatProcessor {
 
@@ -190,7 +191,10 @@ public class FormatProcessor {
     mySettings = options.mySettings;
     myDocument = model.getDocument();
     myReformatContext = options.myReformatContext;
-    myStateProcessor = new StateProcessor(new WrapBlocksState(block, model, options.myAffectedRanges, options.myInterestingOffset));
+
+    InitialInfoBuilder builder = prepareToBuildBlocksSequentially(block, model, options, mySettings, myDefaultIndentOption, myProgressCallback);
+    
+    myStateProcessor = new StateProcessor(new WrapBlocksState(model, builder));
     myRightMargin = getRightMargin(block);
   }
 
@@ -1314,18 +1318,12 @@ public class FormatProcessor {
 
     private final InitialInfoBuilder      myWrapper;
     private final FormattingDocumentModel myModel;
-
-    WrapBlocksState(@NotNull Block root,
-                    @NotNull FormattingDocumentModel model,
-                    @Nullable final FormatTextRanges affectedRanges,
-                    int interestingOffset)
+    
+    WrapBlocksState(@NotNull FormattingDocumentModel model,
+                    @NotNull InitialInfoBuilder initialInfoBuilder)
     {
       myModel = model;
-      myWrapper = InitialInfoBuilder.prepareToBuildBlocksSequentially(
-        root, model, affectedRanges, mySettings, myDefaultIndentOption, interestingOffset, myProgressCallback
-      );
-      myWrapper.setCollectAlignmentsInsideFormattingRange(myReformatContext);
-
+      myWrapper = initialInfoBuilder;
       myExpandableIndents = myWrapper.getExpandableIndentsBlocks();
     }
     
@@ -1513,13 +1511,13 @@ public class FormatProcessor {
 
 
   public static class FormatOptions {
-    private CodeStyleSettings mySettings;
-    private CommonCodeStyleSettings.IndentOptions myIndentOptions;
+    public CodeStyleSettings mySettings;
+    public CommonCodeStyleSettings.IndentOptions myIndentOptions;
 
-    private FormatTextRanges myAffectedRanges;
-    private boolean myReformatContext;
+    public FormatTextRanges myAffectedRanges;
+    public boolean myReformatContext;
 
-    private int myInterestingOffset;
+    public int myInterestingOffset;
 
     public FormatOptions(CodeStyleSettings settings,
                          CommonCodeStyleSettings.IndentOptions options,
