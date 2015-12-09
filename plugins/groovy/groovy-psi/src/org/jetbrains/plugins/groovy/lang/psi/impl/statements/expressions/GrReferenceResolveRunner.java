@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -32,7 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhan
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 /**
  * @author Medvedev Max
@@ -40,13 +40,13 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 public class GrReferenceResolveRunner {
 
   private final GrReferenceExpression place;
-  private ResolverProcessor processor;
+  private PsiScopeProcessor processor;
 
   public GrReferenceResolveRunner(@NotNull GrReferenceExpression _place) {
     place = _place;
   }
 
-  public boolean resolveImpl(@NotNull ResolverProcessor _processor) {
+  public boolean resolveImpl(@NotNull PsiScopeProcessor _processor) {
     processor = _processor;
     try {
       boolean result = doResolve();
@@ -62,11 +62,9 @@ public class GrReferenceResolveRunner {
     GrExpression qualifier = place.getQualifier();
     if (qualifier == null) {
       if (!ResolveUtil.treeWalkUp(place, processor, true)) return false;
-      if (!processor.hasCandidates()) {
-        GrExpression runtimeQualifier = PsiImplUtil.getRuntimeQualifier(place);
-        if (runtimeQualifier != null) {
-          if (!processQualifier(runtimeQualifier)) return false;
-        }
+      final GrExpression runtimeQualifier = PsiImplUtil.getRuntimeQualifier(place);
+      if (runtimeQualifier != null) {
+        if (!processQualifier(runtimeQualifier)) return false;
       }
     }
     else {
