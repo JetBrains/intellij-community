@@ -102,6 +102,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "MODIFIER_LIST_WRAP",
                                    "KEEP_SIMPLE_BLOCKS_IN_ONE_LINE",
                                    "KEEP_SIMPLE_METHODS_IN_ONE_LINE",
+                                   "KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE",
                                    "KEEP_SIMPLE_CLASSES_IN_ONE_LINE",
                                    "KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE",
                                    "FOR_STATEMENT_WRAP",
@@ -396,7 +397,8 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "    try (MyResource r1 = getResource();\n" +
     "      MyResource r2 = null) {\n" +
     "      doSomething();\n" +
-    "    }" +
+    "    }\n" +
+    "    Runnable r = () -> {};\n" +
     "  }\n" +
     "    public static void test() \n" +
     "        throws Exception { \n" +

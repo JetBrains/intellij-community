@@ -828,6 +828,7 @@ public class CommonCodeStyleSettings {
 
   public boolean KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
   public boolean KEEP_SIMPLE_METHODS_IN_ONE_LINE = false;
+  public boolean KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = false;
   public boolean KEEP_SIMPLE_CLASSES_IN_ONE_LINE = false;
   public boolean KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = false;
 

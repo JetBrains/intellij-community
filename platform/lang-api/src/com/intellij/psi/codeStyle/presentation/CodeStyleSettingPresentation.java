@@ -307,6 +307,8 @@ public class CodeStyleSettingPresentation {
                                        ApplicationBundle.message("wrapping.keep.simple.blocks.in.one.line")),
       new CodeStyleSettingPresentation("KEEP_SIMPLE_METHODS_IN_ONE_LINE",
                                        ApplicationBundle.message("wrapping.keep.simple.methods.in.one.line")),
+      new CodeStyleSettingPresentation("KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE",
+                                       ApplicationBundle.message("wrapping.keep.simple.lambdas.in.one.line")),
       new CodeStyleSettingPresentation("KEEP_SIMPLE_CLASSES_IN_ONE_LINE",
                                        ApplicationBundle.message("wrapping.keep.simple.classes.in.one.line"))
     ));

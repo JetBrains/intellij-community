@@ -910,9 +910,16 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     if (block.getParent() instanceof PsiMethod) {
       return shouldHandleAsSimpleMethod((PsiMethod)block.getParent());
     }
+    else if (block.getParent() instanceof PsiLambdaExpression) {
+      return shouldHandleAsSimpleLambda((PsiLambdaExpression)block.getParent());
+    }
     else {
       return shouldHandleAsSimpleBlock(block.getNode());
-   }
+    }
+  }
+
+  private boolean shouldHandleAsSimpleLambda(PsiLambdaExpression lambda) {
+    return mySettings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE && !lambda.textContains('\n');
   }
 
   @Override

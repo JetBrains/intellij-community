@@ -334,7 +334,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   }
 
   public void testSpacesInsideLambda() {
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
     getSettings().SPACE_AROUND_LAMBDA_ARROW = true;
 
     doMethodTest("()->{}",
