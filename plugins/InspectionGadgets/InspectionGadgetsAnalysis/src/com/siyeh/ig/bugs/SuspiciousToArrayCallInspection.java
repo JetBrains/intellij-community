@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2013 Bas Leijdekkers
+ * Copyright 2005-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -123,6 +124,22 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
         final PsiType parameter = parameters[0];
         if (componentType.isAssignableFrom(parameter)) {
           return;
+        }
+        if (parameter instanceof PsiClassType) {
+          final PsiClassType classType = (PsiClassType)parameter;
+          final PsiClass aClass = classType.resolve();
+          if (aClass instanceof PsiTypeParameter) {
+            final PsiTypeParameter typeParameter = (PsiTypeParameter)aClass;
+            final PsiReferenceList extendsList = typeParameter.getExtendsList();
+            final PsiClassType[] types = extendsList.getReferencedTypes();
+            if (types.length == 0) {
+              registerError(argument, TypeUtils.getObjectType(argument));
+            }
+            else if (types.length == 1) {
+              registerError(argument, types[0]);
+            }
+            return;
+          }
         }
         registerError(argument, parameter);
       }
