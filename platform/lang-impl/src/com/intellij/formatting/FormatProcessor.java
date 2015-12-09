@@ -17,6 +17,7 @@
 package com.intellij.formatting;
 
 import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.formatting.engine.StateProcessor;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
@@ -161,7 +162,7 @@ public class FormatProcessor {
   private final int myRightMargin;
 
   @NotNull
-  private State myCurrentState;
+  private StateProcessor myStateProcessor;
   private MultiMap<ExpandableIndent, AbstractBlockWrapper> myExpandableIndents;
   private int myTotalBlocksWithAlignments;
   private int myBlockRollbacks;
@@ -188,7 +189,7 @@ public class FormatProcessor {
     mySettings = options.mySettings;
     myDocument = model.getDocument();
     myReformatContext = options.myReformatContext;
-    myCurrentState = new WrapBlocksState(block, model, options.myAffectedRanges, options.myInterestingOffset);
+    myStateProcessor = new StateProcessor(new WrapBlocksState(block, model, options.myAffectedRanges, options.myInterestingOffset));
     myRightMargin = getRightMargin(block);
   }
 
@@ -256,13 +257,9 @@ public class FormatProcessor {
    */
   public void format(FormattingModel model, boolean sequentially) {
     if (sequentially) {
-      AdjustWhiteSpacesState adjustState = new AdjustWhiteSpacesState();
-      ExpandChildrenIndent expandChildrenIndent = new ExpandChildrenIndent();
-      ApplyChangesState applyChangesState = new ApplyChangesState(model);
-
-      expandChildrenIndent.setNext(applyChangesState);
-      adjustState.setNext(expandChildrenIndent);
-      myCurrentState.setNext(adjustState);
+      myStateProcessor.setNextState(new AdjustWhiteSpacesState());
+      myStateProcessor.setNextState(new ExpandChildrenIndent());
+      myStateProcessor.setNextState(new ApplyChangesState(model));
     }
     else {
       formatWithoutRealModifications(false);
@@ -277,18 +274,18 @@ public class FormatProcessor {
    * @see #format(FormattingModel, boolean)
    */
   public boolean iteration() {
-    if (myCurrentState.isDone()) {
+    if (myStateProcessor.isDone()) {
       return true;
     }
-    myCurrentState.iteration();
-    return myCurrentState.isDone();
+    myStateProcessor.iteration();
+    return myStateProcessor.isDone();
   }
 
   /**
    * Asks current processor to stop any active sequential processing if any.
    */
   public void stopSequentialProcessing() {
-    myCurrentState.stop();
+    myStateProcessor.stop();
   }
 
   public void formatWithoutRealModifications() {
@@ -297,15 +294,12 @@ public class FormatProcessor {
 
   @SuppressWarnings({"WhileLoopSpinsOnField"})
   public void formatWithoutRealModifications(boolean sequentially) {
-    AdjustWhiteSpacesState adjustSpace = new AdjustWhiteSpacesState();
-    adjustSpace.setNext(new ExpandChildrenIndent());
-    myCurrentState.setNext(adjustSpace);
-
+    myStateProcessor.setNextState(new AdjustWhiteSpacesState());
+    myStateProcessor.setNextState(new ExpandChildrenIndent());
     if (sequentially) {
       return;
     }
-
-    doIterationsSynchronously(FormattingStateId.PROCESSING_BLOCKS);
+    doIterationsSynchronously();
   }
 
   private void reset() {
@@ -324,13 +318,13 @@ public class FormatProcessor {
 
   public void performModifications(FormattingModel model, boolean sequentially) {
     assert !myDisposed;
-    myCurrentState.setNext(new ApplyChangesState(model));
+    myStateProcessor.setNextState(new ApplyChangesState(model));
 
     if (sequentially) {
       return;
     }
 
-    doIterationsSynchronously(FormattingStateId.APPLYING_CHANGES);
+    doIterationsSynchronously();
   }
 
   /**
@@ -339,11 +333,9 @@ public class FormatProcessor {
    *
    * @param state   target state to process
    */
-  private void doIterationsSynchronously(@NotNull FormattingStateId state) {
-    while ((myCurrentState.getStateId() == state || state.getPreviousStates().contains(myCurrentState.getStateId()))
-           && !myCurrentState.isDone())
-    {
-      myCurrentState.iteration();
+  private void doIterationsSynchronously() {
+    while (!myStateProcessor.isDone()) {
+      myStateProcessor.iteration();
     }
   }
 
@@ -1323,22 +1315,16 @@ public class FormatProcessor {
     return result.toString();
   }
 
-  private abstract class State {
+  public abstract class State {
 
-    private final FormattingStateId myStateId;
-
-    private State   myNextState;
     private boolean myDone;
 
-    protected State(FormattingStateId stateId) {
-      myStateId = stateId;
-    }
+    protected State(FormattingStateId stateId) {}
 
     public void iteration() {
       if (!isDone()) {
         doIteration();
       }
-      shiftStateIfNecessary();
     }
 
     public boolean isDone() {
@@ -1349,31 +1335,12 @@ public class FormatProcessor {
       myDone = done;
     }
 
-    public void setNext(@NotNull State state) {
-      if (getStateId() == state.getStateId() || (myNextState != null && myNextState.getStateId() == state.getStateId())) {
-        return;
-      }
-      myNextState = state;
-      shiftStateIfNecessary();
-    }
-
-    public FormattingStateId getStateId() {
-      return myStateId;
-    }
-
-    public void stop() {
-    }
+    public void stop() {}
 
     protected abstract void doIteration();
-    protected abstract void prepare();
-
-    private void shiftStateIfNecessary() {
-      if (isDone() && myNextState != null) {
-        myCurrentState = myNextState;
-        myNextState = null;
-        myCurrentState.prepare();
-      }
-    }
+    
+    public void prepare() {}
+    
   }
 
   private class WrapBlocksState extends State {
@@ -1395,11 +1362,7 @@ public class FormatProcessor {
 
       myExpandableIndents = myWrapper.getExpandableIndentsBlocks();
     }
-
-    @Override
-    protected void prepare() {
-    }
-
+    
     @Override
     public void doIteration() {
       if (isDone()) {
@@ -1432,11 +1395,7 @@ public class FormatProcessor {
     AdjustWhiteSpacesState() {
       super(FormattingStateId.PROCESSING_BLOCKS);
     }
-
-    @Override
-    protected void prepare() {
-    }
-
+    
     @Override
     protected void doIteration() {
       LeafBlockWrapper blockToProcess = myCurrentBlock;
@@ -1474,7 +1433,7 @@ public class FormatProcessor {
     }
 
     @Override
-    protected void prepare() {
+    public void prepare() {
       myBlocksToModify = collectBlocksToModify();
       // call doModifications static method to ensure no access to state
       // thus we may clear formatting state
@@ -1802,10 +1761,6 @@ public class FormatProcessor {
         }
         current = current.getNextBlock();
       }
-    }
-
-    @Override
-    protected void prepare() {
     }
   }
 }
