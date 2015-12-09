@@ -468,9 +468,10 @@ public class TypeMigrationLabeler {
 
     if (!userDefinedType) {
       final Set<PsiTypeParameter> collector;
-      if (originalType instanceof PsiClassReferenceType) {
+      final PsiType rootInitialType = getElementType(getCurrentRoot().getElement());
+      if (rootInitialType  instanceof PsiClassReferenceType) {
         collector = new HashSet<PsiTypeParameter>();
-        final PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType)originalType).getReference();
+        final PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType)rootInitialType).getReference();
         RefactoringUtil.collectTypeParameters(collector, reference);
       } else {
         collector = Collections.emptySet();
