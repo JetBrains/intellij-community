@@ -58,11 +58,11 @@ abstract class CompletionLogger {
 
     abstract fun upPressed(pos: Int, itemName: String, completionList: List<LookupStringWithRelevance>)
 
-    abstract fun backspacePressed(pos: Int, itemName: String, newCompletionList: List<LookupStringWithRelevance>)
+    abstract fun backspacePressed(pos: Int, itemName: String, completionList: List<LookupStringWithRelevance>)
     
-    abstract fun itemSelectedCompletionFinished(pos: Int, itemName: String)
+    abstract fun itemSelectedCompletionFinished(pos: Int, itemName: String, completionList: List<LookupStringWithRelevance>)
 
-    abstract fun charTyped(c: Char, newCompletionList: List<LookupStringWithRelevance>)
+    abstract fun charTyped(c: Char, completionList: List<LookupStringWithRelevance>)
     
     abstract fun completionCancelled()
     
@@ -121,43 +121,48 @@ class CompletionFileLogger(private val installationUID: String,
     override fun downPressed(pos: Int, itemName: String, completionList: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.DOWN)
         builder.nextWrappedToken("POS", pos)
-        if (itemsToId[itemName] == null) {
-            addUntrackedItemsToIdMap(completionList)
-        }
-        builder.nextWrappedToken("ID", itemsToId[itemName]!!)
+        val id = getItemId(itemName, completionList)
+        builder.nextWrappedToken("ID", id)
         log(builder)
     }
 
     override fun upPressed(pos: Int, itemName: String, completionList: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.UP)
         builder.nextWrappedToken("POS", pos)
-        if (itemsToId[itemName] == null) {
-            addUntrackedItemsToIdMap(completionList)
-        }
-        builder.nextWrappedToken("ID", itemsToId[itemName]!!)
+        val id = getItemId(itemName, completionList)
+        builder.nextWrappedToken("ID", id)
         log(builder)
     }
 
-    override fun backspacePressed(pos: Int, itemName: String, newCompletionList: List<LookupStringWithRelevance>) {
+    override fun backspacePressed(pos: Int, itemName: String, completionList: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.BACKSPACE)
         builder.nextWrappedToken("POS", pos)
-        builder.nextWrappedToken("COMP_LIST_LEN", newCompletionList.size)
-        builder.nextWrappedToken("ID", itemsToId[itemName]!!)
-        builder.nextToken(toIdsList(newCompletionList))
+        builder.nextWrappedToken("COMP_LIST_LEN", completionList.size)
+        val id = getItemId(itemName, completionList)
+        builder.nextWrappedToken("ID", id)
+        builder.nextToken(toIdsList(completionList))
         log(builder)
     }
 
-    override fun itemSelectedCompletionFinished(pos: Int, itemName: String) {
+    private fun getItemId(itemName: String, newCompletionList: List<LookupStringWithRelevance>): Int {
+        if (itemsToId[itemName] == null) {
+            addUntrackedItemsToIdMap(newCompletionList)
+        }
+        return itemsToId[itemName]!!
+    }
+
+    override fun itemSelectedCompletionFinished(pos: Int, itemName: String, completionList: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.EXPLICIT_SELECT)
         builder.nextWrappedToken("POS", pos)
-        builder.nextWrappedToken("ID", itemsToId[itemName]!!)
+        val id = getItemId(itemName, completionList)
+        builder.nextWrappedToken("ID", id)
         log(builder)
     }
 
-    override fun charTyped(c: Char, newCompletionList: List<LookupStringWithRelevance>) {
+    override fun charTyped(c: Char, completionList: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.TYPE)
-        builder.nextWrappedToken("COMP_LIST_LEN", newCompletionList.size)
-        builder.nextToken(toIdsList(newCompletionList))
+        builder.nextWrappedToken("COMP_LIST_LEN", completionList.size)
+        builder.nextToken(toIdsList(completionList))
         log(builder)
     }
     
