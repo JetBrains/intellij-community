@@ -153,7 +153,5 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   @Override
-  public void dispose() {
-
-  }
+  public void dispose() { }
 }
