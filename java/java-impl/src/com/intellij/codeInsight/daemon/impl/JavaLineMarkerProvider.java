@@ -55,7 +55,7 @@ import java.util.Set;
 public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
   private final DaemonCodeAnalyzerSettings myDaemonSettings;
   private final EditorColorsManager myColorsManager;
-  private final Option myLambdaOption = new Option("Lambda", AllIcons.Gutter.ImplementingFunctional);
+  private final Option myLambdaOption = new Option("java.lambda", "Lambda", AllIcons.Gutter.ImplementingFunctional);
 
   public JavaLineMarkerProvider(DaemonCodeAnalyzerSettings daemonSettings, EditorColorsManager colorsManager) {
     myDaemonSettings = daemonSettings;
@@ -80,7 +80,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
 
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(element);
     final PsiElement firstChild = element.getFirstChild();
-    if (interfaceMethod != null && firstChild != null && myLambdaOption.isEnabled()) {
+    if (interfaceMethod != null && firstChild != null && LineMarkerSettings.getSettings().isEnabled(myLambdaOption)) {
       return createSuperMethodLineMarkerInfo(firstChild, AllIcons.Gutter.ImplementingFunctional, Pass.UPDATE_ALL);
     }
 

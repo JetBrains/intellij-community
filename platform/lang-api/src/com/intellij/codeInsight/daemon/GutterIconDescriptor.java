@@ -40,6 +40,10 @@ public abstract class GutterIconDescriptor {
 
   public boolean isEnabledByDefault() { return true; }
 
+  public String getId() {
+    return getClass().getName();
+  }
+
   public Option[] getOptions() {
     return NO_OPTIONS;
   }
@@ -52,21 +56,14 @@ public abstract class GutterIconDescriptor {
 
   public static class Option extends GutterIconDescriptor {
 
+    private final String myId;
     private final String myName;
     private final Icon myIcon;
-    private boolean myEnabled = isEnabledByDefault();
 
-    public Option(String name, Icon icon) {
+    public Option(@NotNull String id, @NotNull String name, Icon icon) {
+      myId = id;
       myName = name;
       myIcon = icon;
-    }
-
-    public boolean isEnabled() {
-      return myEnabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-      myEnabled = enabled;
     }
 
     @Nullable
@@ -79,6 +76,11 @@ public abstract class GutterIconDescriptor {
     @Override
     public String getName() {
       return myName;
+    }
+
+    @Override
+    public String getId() {
+      return myId;
     }
   }
 }

@@ -75,7 +75,7 @@ public class CheckBoxList<T> extends JBList {
             catch (ClassCastException c) {
               iconArea = DEFAULT_CHECK_BOX_WIDTH;
             }
-            if (e.getX() < iconArea) {
+            if (e.getX() < iconArea + checkbox.getX()) {
               setSelected(checkbox, index);
               return true;
             }

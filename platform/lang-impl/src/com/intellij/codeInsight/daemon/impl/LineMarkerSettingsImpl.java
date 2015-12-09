@@ -15,7 +15,8 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
+import com.intellij.codeInsight.daemon.GutterIconDescriptor;
+import com.intellij.codeInsight.daemon.LineMarkerSettings;
 import com.intellij.openapi.components.*;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import org.jetbrains.annotations.Nullable;
@@ -30,19 +31,17 @@ import java.util.Map;
   name = "LineMarkerSettings",
   storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/gutter.xml")
 )
-public class LineMarkerSettings implements PersistentStateComponent<LineMarkerSettings> {
+public class LineMarkerSettingsImpl extends LineMarkerSettings implements PersistentStateComponent<LineMarkerSettingsImpl> {
 
-  public static LineMarkerSettings getSettings() {
-    return ServiceManager.getService(LineMarkerSettings.class);
-  }
-
-  public boolean isEnabled(LineMarkerProviderDescriptor descriptor) {
-    Boolean aBoolean = providers.get(descriptor.getClass().getName());
+  @Override
+  public boolean isEnabled(GutterIconDescriptor descriptor) {
+    Boolean aBoolean = providers.get(descriptor.getId());
     return aBoolean == null || aBoolean;
   }
 
-  public void setEnabled(LineMarkerProviderDescriptor descriptor, boolean selected) {
-    providers.put(descriptor.getClass().getName(), selected);
+  @Override
+  public void setEnabled(GutterIconDescriptor descriptor, boolean selected) {
+    providers.put(descriptor.getId(), selected);
   }
 
   @MapAnnotation
@@ -50,12 +49,12 @@ public class LineMarkerSettings implements PersistentStateComponent<LineMarkerSe
 
   @Nullable
   @Override
-  public LineMarkerSettings getState() {
+  public LineMarkerSettingsImpl getState() {
     return this;
   }
 
   @Override
-  public void loadState(LineMarkerSettings state) {
+  public void loadState(LineMarkerSettingsImpl state) {
     providers.clear();
     providers.putAll(state.providers);
   }
