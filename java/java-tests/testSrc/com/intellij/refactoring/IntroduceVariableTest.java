@@ -500,6 +500,14 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("m", false, false, false, "Foo.I"));
   }
 
+  public void testDenotableType1() {
+    doTest(new MockIntroduceVariableHandler("m", false, false, false, "A<? extends A<?>>"));
+  }
+
+  public void testDenotableType2() {
+    doTest(new MockIntroduceVariableHandler("m", false, false, false, "I<? extends I<?>>"));
+  }
+
   public void testReturnNonExportedArray() {
     doTest(new MockIntroduceVariableHandler("i", false, false, false, "java.io.File[]") {
       @Override
