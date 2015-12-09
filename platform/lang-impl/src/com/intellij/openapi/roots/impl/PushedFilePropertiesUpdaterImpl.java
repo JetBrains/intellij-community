@@ -303,53 +303,49 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
       tasks.add(iteration);
     }
 
-    invoke2xConcurrentlyIfPossible(tasks);
+    invokeConcurrentlyIfPossible(tasks);
   }
 
-  public static void invoke2xConcurrentlyIfPossible(final List<Runnable> tasks) {
+  public static void invokeConcurrentlyIfPossible(final List<Runnable> tasks) {
     if (tasks.size() == 1 ||
         ApplicationManager.getApplication().isWriteAccessAllowed() ||
         !Registry.is("idea.concurrent.scanning.files.to.index")) {
       for(Runnable r:tasks) r.run();
       return;
     }
-    
+
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     
     final ConcurrentLinkedQueue<Runnable> tasksQueue = new ConcurrentLinkedQueue<Runnable>(tasks);
-    Future<?> result = null;
+    List<Future<?>> results = ContainerUtil.newArrayList();
     if (tasks.size() > 1) {
-      result = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          ProgressManager.getInstance().runProcess(new Runnable() {
-            @Override
-            public void run() {
-              Runnable runnable;
-              while ((runnable = tasksQueue.poll()) != null) runnable.run();
-            }
-          }, ProgressWrapper.wrap(progress));
-        }
-      });
+      int numThreads = Math.max(Math.min(CacheUpdateRunner.indexingThreadCount() - 1, tasks.size() - 1), 1);
+
+      for (int i = 0; i < numThreads; ++i) {
+        results.add(ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            ProgressManager.getInstance().runProcess(new Runnable() {
+              @Override
+              public void run() {
+                Runnable runnable;
+                while ((runnable = tasksQueue.poll()) != null) runnable.run();
+              }
+            }, ProgressWrapper.wrap(progress));
+          }}));
+      }
     }
 
     Runnable runnable;
     while ((runnable = tasksQueue.poll()) != null) runnable.run();
 
-    if (result != null) {
+    for (Future<?> result : results) {
       try {
         result.get();
       } catch (Exception ex) {
         LOG.error(ex);
       }
     }
-    //JobLauncher.getInstance().invokeConcurrently(tasks, null, false, false, new Processor<Runnable>() {
-    //  @Override
-    //  public boolean process(Runnable runnable) {
-    //    runnable.run();
-    //    return true;
-    //  }
-    //});
   }
 
   private void applyPushersToFile(final VirtualFile fileOrDir, final FilePropertyPusher[] pushers, final Object[] moduleValues) {

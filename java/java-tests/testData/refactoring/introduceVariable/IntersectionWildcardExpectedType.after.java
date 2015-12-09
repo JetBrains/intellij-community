@@ -8,6 +8,6 @@ class Test {
   enum Y implements I {a}
 
   {
-      List<? extends Enum<? extends Enum<? extends Enum<?>>>> l = Arrays.asList(X.a, Y.a);
+      List<? extends Enum<? extends Enum<?>>> l = Arrays.asList(X.a, Y.a);
   }
 }

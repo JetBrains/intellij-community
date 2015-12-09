@@ -97,7 +97,7 @@ public class BoundedTaskExecutorTest extends TestCase {
 
   public void testStressWhenSomeTasksCallOtherTasksGet() throws ExecutionException, InterruptedException {
     ExecutorService backendExecutor = Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory(getName()));
-    for (int maxSimultaneousTasks = 1; maxSimultaneousTasks<20;maxSimultaneousTasks++) {
+    for (int maxSimultaneousTasks = 1; maxSimultaneousTasks<20; maxSimultaneousTasks++) {
       final Disposable myDisposable = Disposer.newDisposable();
       BoundedTaskExecutorService executor = new BoundedTaskExecutorService(backendExecutor, maxSimultaneousTasks, myDisposable);
       AtomicInteger running = new AtomicInteger();
@@ -116,7 +116,7 @@ public class BoundedTaskExecutorTest extends TestCase {
             try {
               int r = random.nextInt(finalMaxSimultaneousTasks);
               int prev = finalI - r;
-              if (prev != finalI && prev >= 0) {
+              if (prev < finalI && prev >= 0) {
                 try {
                   futures[prev].get();
                 }

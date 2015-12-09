@@ -446,7 +446,11 @@ public final class IconLoader {
         return result;
       }
 
-      final Image image = ImageLoader.loadFromUrl(myUrl, UIUtil.isUnderDarcula(), (scaleFactor * SCALE) >= 1.5f, filter);
+      Icon icon = getRealIcon();
+      Image image = icon instanceof ImageIcon ?
+                    ((ImageIcon)icon).getImage() :
+                    ImageLoader.loadFromUrl(myUrl, UIUtil.isUnderDarcula(), (scaleFactor * SCALE) >= 1.5f || UIUtil.isRetina(), filter);
+
       if (image != null) {
         int width = (int)(getIconWidth() * scaleFactor);
         int height = (int)(getIconHeight() * scaleFactor);
