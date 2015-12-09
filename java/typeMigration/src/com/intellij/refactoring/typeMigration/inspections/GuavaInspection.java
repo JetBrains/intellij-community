@@ -375,10 +375,15 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
       }
     }
 
+    @Override
+    protected boolean isAvailable() {
+      return super.isAvailable() && myTargetType.isValid();
+    }
+
     @NotNull
     @Override
     public String getText() {
-      return "Migrate method return type to '" + myTargetType.getCanonicalText(false) + "'";
+      return !myTargetType.isValid() ? "Migrate method return type" : "Migrate method return type to '" + myTargetType.getCanonicalText(false) + "'";
     }
 
     @Nls
