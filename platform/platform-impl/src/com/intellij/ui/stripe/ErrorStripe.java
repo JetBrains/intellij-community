@@ -15,15 +15,12 @@
  */
 package com.intellij.ui.stripe;
 
-import com.intellij.util.ui.RegionPainter;
-
 import java.awt.Color;
-import java.awt.Graphics;
 
 /**
  * @author Sergey.Malenkov
  */
-public final class ErrorStripe implements RegionPainter, Comparable<ErrorStripe> {
+public final class ErrorStripe implements Comparable<ErrorStripe> {
   private final Color myColor;
   private final int myLayer;
 
@@ -42,12 +39,6 @@ public final class ErrorStripe implements RegionPainter, Comparable<ErrorStripe>
 
   public int getLayer() {
     return myLayer;
-  }
-
-  @Override
-  public void paint(Graphics g, int x, int y, int width, int height) {
-    g.setColor(myColor);
-    g.fillRect(x, y, width, height);
   }
 
   @Override
