@@ -62,7 +62,7 @@ public class MigrationRootNode extends AbstractTreeNode<TypeMigrationLabeler> im
         }
       }
       else {
-        addRoot(new TypeMigrationUsageInfo(myRoot), myLabeler.getRules().getMigrationRootType());
+        addRoot(new TypeMigrationUsageInfo(myRoot), myLabeler.getRootTypes().fun(myRoot));
       }
     }
     return myCachedChildren;

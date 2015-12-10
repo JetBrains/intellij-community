@@ -65,6 +65,7 @@ public class TypeMigrationLabeler {
   }
 
   private final TypeMigrationRules myRules;
+  private final Function<PsiElement, PsiType> myRootTypes;
   private TypeEvaluator myTypeEvaluator;
   private final LinkedHashMap<PsiElement, Object> myConversions;
   private final HashSet<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>> myFailedConversions;
@@ -80,10 +81,14 @@ public class TypeMigrationLabeler {
   private final Map<Pair<TypeMigrationUsageInfo, TypeMigrationUsageInfo>, Set<PsiElement>> myRootUsagesTree = new HashMap<Pair<TypeMigrationUsageInfo, TypeMigrationUsageInfo>, Set<PsiElement>>();
   private final Set<TypeMigrationUsageInfo> myProcessedRoots = new HashSet<TypeMigrationUsageInfo>();
 
+  public TypeMigrationLabeler(final TypeMigrationRules rules, PsiType rootType) {
+    this(rules, Functions.<PsiElement, PsiType>constant(rootType));
+  }
 
-  public TypeMigrationLabeler(final TypeMigrationRules rules) {
+  public TypeMigrationLabeler(final TypeMigrationRules rules, Function<PsiElement, PsiType> rootTypes) {
     myRules = rules;
-    
+    myRootTypes = rootTypes;
+
     myConversions = new LinkedHashMap<PsiElement, Object>();
     myFailedConversions = new HashSet<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>>();
     myNewExpressionTypeChange = new LinkedHashMap<TypeMigrationUsageInfo, PsiType>();
@@ -92,6 +97,10 @@ public class TypeMigrationLabeler {
 
   public boolean hasFailedConversions() {
     return myFailedConversions.size() > 0;
+  }
+
+  public Function<PsiElement, PsiType> getRootTypes() {
+    return myRootTypes;
   }
 
   public String[] getFailedConversionsReport() {
@@ -884,9 +893,8 @@ public class TypeMigrationLabeler {
     myTypeEvaluator = new TypeEvaluator(myMigrationRoots, this);
 
 
-    final PsiType rootType = myRules.getMigrationRootType();
     for (PsiElement victim : victims) {
-      addMigrationRoot(victim, rootType, null, false, true, true);
+      addMigrationRoot(victim, myRootTypes.fun(victim), null, false, true, true);
     }
 
     if (autoMigrate) {

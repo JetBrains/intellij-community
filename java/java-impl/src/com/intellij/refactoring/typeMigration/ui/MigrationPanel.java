@@ -254,7 +254,7 @@ public class MigrationPanel extends JPanel implements Disposable {
         UsageViewManager.getInstance(myProject).closeContent(myContent);
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            ChangeTypeSignatureHandler.invoke(myProject, myInitialRoot, myLabeler.getRules(), null);
+            ChangeTypeSignatureHandler.invoke(myProject, myInitialRoot, myLabeler.getRootTypes().fun(myInitialRoot), myLabeler.getRules(), null);
           }
         });
       }

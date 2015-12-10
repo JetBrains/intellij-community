@@ -273,10 +273,9 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
         final PsiMethodCallExpression expr = (PsiMethodCallExpression)startElement;
         final boolean isIterableAssignment = isIterable(expr);
         final TypeMigrationRules rules = new TypeMigrationRules();
-        rules.setMigrationRootType(myTargetType);
         rules.setBoundScope(GlobalSearchScope.fileScope(file));
         final TypeConversionDescriptorBase conversion =
-          rules.findConversion(myInitialType, myTargetType, expr.resolveMethod(), expr, new TypeMigrationLabeler(rules));
+          rules.findConversion(myInitialType, myTargetType, expr.resolveMethod(), expr, new TypeMigrationLabeler(rules, myTargetType));
         LOG.assertTrue(conversion != null);
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
@@ -365,9 +364,8 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
       try {
         PsiMethod method = (PsiMethod)getStartElement();
         final TypeMigrationRules rules = new TypeMigrationRules();
-        rules.setMigrationRootType(myTargetType);
         rules.setBoundScope(method.getUseScope());
-        TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, method, true);
+        TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, method, myTargetType, true);
         UndoUtil.markPsiFileForUndo(file);
       }
       catch (IncorrectOperationException e) {

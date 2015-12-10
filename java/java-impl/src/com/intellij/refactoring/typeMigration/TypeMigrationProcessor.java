@@ -34,9 +34,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewManager;
-import com.intellij.util.Consumer;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,34 +47,38 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   private PsiElement[] myRoot;
+  private Function<PsiElement, PsiType> myRootTypes;
   private final TypeMigrationRules myRules;
   private TypeMigrationLabeler myLabeler;
 
-  public TypeMigrationProcessor(final Project project, final PsiElement root, final TypeMigrationRules rules) {
-    this(project, new PsiElement[]{root}, rules);
+  public TypeMigrationProcessor(final Project project, final PsiElement root, final PsiType migrationType, final TypeMigrationRules rules) {
+    this(project, new PsiElement[]{root}, Functions.<PsiElement, PsiType>constant(migrationType), rules);
   }
 
-  public TypeMigrationProcessor(final Project project, final PsiElement[] roots, final TypeMigrationRules rules) {
+  public TypeMigrationProcessor(final Project project, final PsiElement[] roots, final Function<PsiElement, PsiType> rootTypes, final TypeMigrationRules rules) {
     super(project);
     myRoot = roots;
     myRules = rules;
+    myRootTypes = rootTypes;
   }
 
 
   public static void runHighlightingTypeMigration(final Project project,
-                                                          final Editor editor,
-                                                          final TypeMigrationRules rules,
-                                                          final PsiElement root) {
-    runHighlightingTypeMigration(project, editor, rules, root, false);
+                                                  final Editor editor,
+                                                  final TypeMigrationRules rules,
+                                                  final PsiElement root,
+                                                  final PsiType migrationType) {
+    runHighlightingTypeMigration(project, editor, rules, root, migrationType, false);
   }
 
   public static void runHighlightingTypeMigration(final Project project,
-                                                          final Editor editor,
-                                                          final TypeMigrationRules rules,
-                                                          final PsiElement root,
-                                                          final boolean optimizeImports) {
+                                                  final Editor editor,
+                                                  final TypeMigrationRules rules,
+                                                  final PsiElement root,
+                                                  final PsiType migrationType,
+                                                  final boolean optimizeImports) {
     final PsiFile containingFile = root.getContainingFile();
-    final TypeMigrationProcessor processor = new TypeMigrationProcessor(project, root, rules) {
+    final TypeMigrationProcessor processor = new TypeMigrationProcessor(project, root, migrationType, rules) {
       @Override
       public void performRefactoring(@NotNull final UsageInfo[] usages) {
         super.performRefactoring(usages);
@@ -170,7 +172,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
       text = Arrays.toString(myRoot);
     }
     String fromType = assertNotNull(TypeMigrationLabeler.getElementType(myRoot[0])).getPresentableText();
-    String toType = myRules.getMigrationRootType().getPresentableText();
+    String toType = myRootTypes.fun(myRoot[0]).getPresentableText();
     String name = "Migrate Type of " + text + " from \'" + fromType + "\' to \'" + toType + "\'";
     Content content = UsageViewManager.getInstance(myProject).addContent(name, false, panel, true, true);
     panel.setContent(content);
@@ -180,7 +182,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   @NotNull
   @Override
   public UsageInfo[] findUsages() {
-    myLabeler = new TypeMigrationLabeler(myRules);
+    myLabeler = new TypeMigrationLabeler(myRules, myRootTypes);
 
     try {
       return myLabeler.getMigratedUsages(!isPreviewUsages(), myRoot);
