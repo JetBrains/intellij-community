@@ -49,20 +49,6 @@ public class SafeFileOutputStream extends OutputStream {
   }
 
   @Override
-  @SuppressWarnings("Duplicates")
-  public void write(byte[] b) throws IOException {
-    try {
-      myBackupStream.write(b);
-    }
-    catch (IOException e) {
-      LOG.warn(e);
-      myFailed = true;
-      throw e;
-    }
-  }
-
-  @Override
-  @SuppressWarnings("Duplicates")
   public void write(int b) throws IOException {
     try {
       myBackupStream.write(b);
@@ -75,7 +61,11 @@ public class SafeFileOutputStream extends OutputStream {
   }
 
   @Override
-  @SuppressWarnings("Duplicates")
+  public void write(byte[] b) throws IOException {
+    write(b, 0, b.length);
+  }
+
+  @Override
   public void write(byte[] b, int off, int len) throws IOException {
     try {
       myBackupStream.write(b, off, len);
@@ -114,7 +104,7 @@ public class SafeFileOutputStream extends OutputStream {
       throw new IOException(CommonBundle.message("safe.write.failed", myTargetFile, myBackupFile.getName()));
     }
 
-    final File oldFile = new File(myTargetFile.getParent(), myTargetFile.getName() + EXTENSION_OLD);
+    File oldFile = new File(myTargetFile.getParent(), myTargetFile.getName() + EXTENSION_OLD);
     try {
       FileUtil.rename(myTargetFile, oldFile);
     }
