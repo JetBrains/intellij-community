@@ -53,7 +53,7 @@ public class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspection
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.CLASS_LAYOUT_GROUP_NAME;
+    return GroupNames.VISIBILITY_GROUP_NAME;
   }
 
   @Override
