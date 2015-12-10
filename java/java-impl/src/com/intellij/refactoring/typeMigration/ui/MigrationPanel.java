@@ -97,7 +97,7 @@ public class MigrationPanel extends JPanel implements Disposable {
 
     myRootsTree = new MyTree(new DefaultTreeModel(new DefaultMutableTreeNode()));
     final TypeMigrationTreeBuilder builder = new TypeMigrationTreeBuilder(myRootsTree, project);
-    final MigrationRootNode currentRoot = new MigrationRootNode(project, myLabeler, builder, root, previewUsages);
+    final MigrationRootNode currentRoot = new MigrationRootNode(project, myLabeler, root, previewUsages);
     builder.setRoot(currentRoot);
     initTree(myRootsTree);
     myRootsTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
