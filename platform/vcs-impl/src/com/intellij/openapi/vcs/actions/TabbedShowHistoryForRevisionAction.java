@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.VcsRevisionNumberAware;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.util.ObjectUtils.tryCast;
 
 
 public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
@@ -63,12 +65,14 @@ public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
     FilePath path = assertNotNull(getChangedPath(change));
     VcsRevisionNumber revisionNumber = ((VcsRevisionNumberAware)changeList).getRevisionNumber();
 
-    AbstractVcsHelper.getInstance(project).showFileHistory(vcsHistoryProvider, annotationProvider, path, null, vcs, revisionNumber);
+    assertNotNull(getVcsHelper(project)).showFileHistory(vcsHistoryProvider, path, vcs, revisionNumber);
   }
 
   private static boolean isVisible(@NotNull AnActionEvent event) {
     Project project = event.getProject();
     if (project == null) return false;
+    AbstractVcsHelperImpl helper = getVcsHelper(project);
+    if (helper == null) return false;
     ChangeList[] changeLists = event.getData(VcsDataKeys.CHANGE_LISTS);
     if (changeLists == null || changeLists.length != 1) return false;
     ChangeList changeList = changeLists[0];
@@ -102,5 +106,11 @@ public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
     Change change = ContainerUtil.getFirstItem(changes);
     if (change == null) return null;
     return ChangesUtil.getVcsForChange(change, project);
+  }
+
+  @Nullable
+  private static AbstractVcsHelperImpl getVcsHelper(@NotNull Project project) {
+    AbstractVcsHelper helper = AbstractVcsHelper.getInstance(project);
+    return tryCast(helper, AbstractVcsHelperImpl.class);
   }
 }
