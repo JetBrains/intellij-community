@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
@@ -25,22 +25,28 @@ import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 
 public class GroovyMethodResult extends GroovyResolveResultImpl {
 
-  private final NotNullLazyValue<PsiSubstitutor> mySubstitutorComputer;
+  private final @NotNull NotNullComputable<PsiSubstitutor> mySubstitutorComputer;
 
   public GroovyMethodResult(@NotNull PsiMethod method,
                             @Nullable PsiElement resolveContext,
                             @Nullable SpreadState spreadState,
-                            @NotNull PsiSubstitutor substitutor,
+                            @NotNull final PsiSubstitutor substitutor,
                             boolean isAccessible, boolean staticsOK) {
     super(method, resolveContext, spreadState, substitutor, isAccessible, staticsOK, true, true);
-    mySubstitutorComputer = NotNullLazyValue.createConstantValue(substitutor);
+    mySubstitutorComputer = new NotNullComputable<PsiSubstitutor>() {
+      @NotNull
+      @Override
+      public PsiSubstitutor compute() {
+        return substitutor;
+      }
+    };
   }
 
   public GroovyMethodResult(@NotNull PsiMethod element,
                             @Nullable PsiElement resolveContext,
                             @Nullable SpreadState spreadState,
                             @NotNull PsiSubstitutor partialSubstitutor,
-                            @NotNull NotNullLazyValue<PsiSubstitutor> substitutorComputer,
+                            @NotNull NotNullComputable<PsiSubstitutor> substitutorComputer,
                             boolean isAccessible, boolean staticsOK, boolean isApplicable) {
     super(element, resolveContext, spreadState, partialSubstitutor, isAccessible, staticsOK, false, isApplicable);
     mySubstitutorComputer = substitutorComputer;
@@ -55,11 +61,11 @@ public class GroovyMethodResult extends GroovyResolveResultImpl {
   @NotNull
   @Override
   public PsiSubstitutor getSubstitutor() {
-    return mySubstitutorComputer.getValue();
+    return mySubstitutorComputer.compute();
   }
 
   @NotNull
   public PsiSubstitutor getSubstitutor(boolean infer) {
-    return infer ? mySubstitutorComputer.getValue() : super.getSubstitutor();
+    return infer ? mySubstitutorComputer.compute() : super.getSubstitutor();
   }
 }

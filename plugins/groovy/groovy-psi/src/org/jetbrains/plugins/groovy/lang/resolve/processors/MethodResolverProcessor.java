@@ -16,7 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.util.InheritanceUtil;
@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.util.NotNullCachedComputableWrapper;
 
 import java.util.Iterator;
 import java.util.List;
@@ -108,14 +109,24 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
       final PsiElement resolveContext = state.get(RESOLVE_CONTEXT);
       final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
       final PsiSubstitutor partialSubstitutor = getSubstitutor(state);
-      final NotNullLazyValue<PsiSubstitutor> substitutorComputer
-        = myByShape ? NotNullLazyValue.createConstantValue(partialSubstitutor) : new NotNullLazyValue<PsiSubstitutor>() {
-        @NotNull
-        @Override
-        protected PsiSubstitutor compute() {
-          return mySubstitutorComputer.obtainSubstitutor(partialSubstitutor, method, resolveContext);
-        }
-      };
+      final NotNullComputable<PsiSubstitutor> substitutorComputer;
+      if (myByShape) {
+        substitutorComputer = new NotNullComputable<PsiSubstitutor>() {
+          @NotNull
+          @Override
+          public PsiSubstitutor compute() {
+            return partialSubstitutor;
+          }
+        };
+      } else {
+        substitutorComputer = new NotNullCachedComputableWrapper<PsiSubstitutor>(new NotNullComputable<PsiSubstitutor>() {
+          @NotNull
+          @Override
+          public PsiSubstitutor compute() {
+            return mySubstitutorComputer.obtainSubstitutor(partialSubstitutor, method, resolveContext);
+          }
+        });
+      }
 
       boolean isAccessible = isAccessible(method);
       boolean isStaticsOK = isStaticsOK(method, resolveContext, false);
