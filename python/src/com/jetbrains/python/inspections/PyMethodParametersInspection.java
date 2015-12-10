@@ -24,12 +24,12 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.AddSelfQuickFix;
 import com.jetbrains.python.inspections.quickfix.RenameParameterQuickFix;
 import com.jetbrains.python.psi.*;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -101,7 +101,7 @@ public class PyMethodParametersInspection extends PyInspection {
         PyParameter[] params = plist.getParameters();
         final String methodName = node.getName();
         final String CLS = "cls"; // TODO: move to style settings
-        final String MCS = "mcs"; // as per pylint inspection C0203
+        final String MCS = "metacls"; // PEP-3115
         if (params.length == 0) { // fix: add
           // check for "staticmetod"
           if (flags.isStaticMethod()) return; // no params may be fine
