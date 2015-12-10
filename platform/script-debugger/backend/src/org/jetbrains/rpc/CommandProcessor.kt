@@ -41,7 +41,7 @@ abstract class CommandProcessor<INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS_RESPO
     return id
   }
 
-  override final fun <RESULT> doSend(message: Request<RESULT>, callback: CommandSenderBase.RequestPromise<SUCCESS_RESPONSE, RESULT>) {
+  override final fun <RESULT> doSend(message: Request<RESULT>, callback: RequestPromise<SUCCESS_RESPONSE, RESULT>) {
     messageManager.send(message, callback)
   }
 }
