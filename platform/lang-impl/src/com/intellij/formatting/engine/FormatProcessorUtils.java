@@ -20,7 +20,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
-public class Utils {
+public class FormatProcessorUtils {
   
   
   private static int calcShift(@NotNull final IndentInside oldIndent,

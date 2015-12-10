@@ -358,73 +358,12 @@ public class FormatProcessor {
     myJavaIndentOptions = javaIndentOptions;
   }
 
-  /**
-   * Performs formatter changes in a series of blocks, for each block a new contents of document is calculated 
-   * and whole document is replaced in one operation.
-   *
-   * @param blocksToModify        changes introduced by formatter
-   * @param model                 current formatting model
-   */
-  @SuppressWarnings({"deprecation"})
-  private void applyChangesAtRewriteMode(@NotNull final List<LeafBlockWrapper> blocksToModify,
-                                         @NotNull final FormattingModel model)
-  {
-    FormattingDocumentModel documentModel = model.getDocumentModel();
-    Document document = documentModel.getDocument();
-    CaretOffsetUpdater caretOffsetUpdater = new CaretOffsetUpdater(document);
-
-    if (document instanceof DocumentEx) ((DocumentEx)document).setInBulkUpdate(true);
-    try {
-      List<TextChange> changes = new ArrayList<TextChange>();
-      int shift = 0;
-      int currentIterationShift = 0;
-      for (LeafBlockWrapper block : blocksToModify) {
-        WhiteSpace whiteSpace = block.getWhiteSpace();
-        CharSequence newWs = documentModel.adjustWhiteSpaceIfNecessary(
-          whiteSpace.generateWhiteSpace(myBlockIndentOptions.getIndentOptions(block)), whiteSpace.getStartOffset(),
-          whiteSpace.getEndOffset(), block.getNode(), false
-        );
-        if (changes.size() > 10000) {
-          caretOffsetUpdater.update(changes);
-          CharSequence mergeResult = BulkChangesMerger.INSTANCE.mergeToCharSequence(document.getChars(), document.getTextLength(), changes);
-          document.replaceString(0, document.getTextLength(), mergeResult);
-          shift += currentIterationShift;
-          currentIterationShift = 0;
-          changes.clear();
-        }
-        TextChangeImpl change = new TextChangeImpl(newWs, whiteSpace.getStartOffset() + shift, whiteSpace.getEndOffset() + shift);
-        currentIterationShift += change.getDiff();
-        changes.add(change);
-      }
-      caretOffsetUpdater.update(changes);
-      CharSequence mergeResult = BulkChangesMerger.INSTANCE.mergeToCharSequence(document.getChars(), document.getTextLength(), changes);
-      document.replaceString(0, document.getTextLength(), mergeResult);
-    }
-    finally {
-      if (document instanceof DocumentEx) ((DocumentEx)document).setInBulkUpdate(false);
-    }
-
-    caretOffsetUpdater.restoreCaretLocations();
-    cleanupBlocks(blocksToModify);
-  }
-
   private static void cleanupBlocks(List<LeafBlockWrapper> blocks) {
     for (LeafBlockWrapper block : blocks) {
       block.getParent().dispose();
       block.dispose();
     }
     blocks.clear();
-  }
-
-  @Nullable
-  private static DocumentEx getAffectedDocument(final FormattingModel model) {
-    final Document document = model.getDocumentModel().getDocument();
-    if (document instanceof DocumentEx) {
-      return (DocumentEx)document;
-    }
-    else {
-      return null;
-    }
   }
 
   private void processToken() {
@@ -1273,6 +1212,67 @@ public class FormatProcessor {
     //myBlockIndentOptions
     //mySettings
 
+    /**
+     * Performs formatter changes in a series of blocks, for each block a new contents of document is calculated
+     * and whole document is replaced in one operation.
+     *
+     * @param blocksToModify changes introduced by formatter
+     * @param model          current formatting model
+     */
+    @SuppressWarnings({"deprecation"})
+    private void applyChangesAtRewriteMode(@NotNull final List<LeafBlockWrapper> blocksToModify,
+                                           @NotNull final FormattingModel model) {
+      FormattingDocumentModel documentModel = model.getDocumentModel();
+      Document document = documentModel.getDocument();
+      CaretOffsetUpdater caretOffsetUpdater = new CaretOffsetUpdater(document);
+
+      if (document instanceof DocumentEx) ((DocumentEx)document).setInBulkUpdate(true);
+      try {
+        List<TextChange> changes = new ArrayList<TextChange>();
+        int shift = 0;
+        int currentIterationShift = 0;
+        for (LeafBlockWrapper block : blocksToModify) {
+          WhiteSpace whiteSpace = block.getWhiteSpace();
+          CharSequence newWs = documentModel.adjustWhiteSpaceIfNecessary(
+            whiteSpace.generateWhiteSpace(myBlockIndentOptions.getIndentOptions(block)), whiteSpace.getStartOffset(),
+            whiteSpace.getEndOffset(), block.getNode(), false
+          );
+          if (changes.size() > 10000) {
+            caretOffsetUpdater.update(changes);
+            CharSequence mergeResult =
+              BulkChangesMerger.INSTANCE.mergeToCharSequence(document.getChars(), document.getTextLength(), changes);
+            document.replaceString(0, document.getTextLength(), mergeResult);
+            shift += currentIterationShift;
+            currentIterationShift = 0;
+            changes.clear();
+          }
+          TextChangeImpl change = new TextChangeImpl(newWs, whiteSpace.getStartOffset() + shift, whiteSpace.getEndOffset() + shift);
+          currentIterationShift += change.getDiff();
+          changes.add(change);
+        }
+        caretOffsetUpdater.update(changes);
+        CharSequence mergeResult = BulkChangesMerger.INSTANCE.mergeToCharSequence(document.getChars(), document.getTextLength(), changes);
+        document.replaceString(0, document.getTextLength(), mergeResult);
+      }
+      finally {
+        if (document instanceof DocumentEx) ((DocumentEx)document).setInBulkUpdate(false);
+      }
+
+      caretOffsetUpdater.restoreCaretLocations();
+      cleanupBlocks(blocksToModify);
+    }
+
+    @Nullable
+    private DocumentEx getAffectedDocument(final FormattingModel model) {
+      final Document document = model.getDocumentModel().getDocument();
+      if (document instanceof DocumentEx) {
+        return (DocumentEx)document;
+      }
+      else {
+        return null;
+      }
+    }
+
     private List<LeafBlockWrapper> collectBlocksToModify() {
       List<LeafBlockWrapper> blocksToModify = new ArrayList<LeafBlockWrapper>();
 
@@ -1324,7 +1324,7 @@ public class FormatProcessor {
     @Override
     protected void doIteration() {
       LeafBlockWrapper blockWrapper = myBlocksToModify.get(myIndex);
-      myShift = Utils.replaceWhiteSpace(
+      myShift = FormatProcessorUtils.replaceWhiteSpace(
         myModel,
         blockWrapper,
         myShift,
