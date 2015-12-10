@@ -17,10 +17,7 @@
 package com.intellij.formatting;
 
 import com.intellij.diagnostic.LogMessageEx;
-import com.intellij.formatting.engine.BlockIndentOptions;
-import com.intellij.formatting.engine.State;
-import com.intellij.formatting.engine.StateProcessor;
-import com.intellij.formatting.engine.WrapBlocksState;
+import com.intellij.formatting.engine.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
@@ -428,53 +425,6 @@ public class FormatProcessor {
     else {
       return null;
     }
-  }
-
-  private static int replaceWhiteSpace(final FormattingModel model,
-                                       @NotNull final LeafBlockWrapper block,
-                                       int shift,
-                                       final CharSequence _newWhiteSpace,
-                                       final CommonCodeStyleSettings.IndentOptions options
-  ) {
-    final WhiteSpace whiteSpace = block.getWhiteSpace();
-    final TextRange textRange = whiteSpace.getTextRange();
-    final TextRange wsRange = textRange.shiftRight(shift);
-    final String newWhiteSpace = _newWhiteSpace.toString();
-    TextRange newWhiteSpaceRange = model instanceof FormattingModelEx
-                                   ? ((FormattingModelEx) model).replaceWhiteSpace(wsRange, block.getNode(), newWhiteSpace)
-                                   : model.replaceWhiteSpace(wsRange, newWhiteSpace);
-
-    shift += newWhiteSpaceRange.getLength() - textRange.getLength();
-
-    if (block.isLeaf() && whiteSpace.containsLineFeeds() && block.containsLineFeeds()) {
-      final TextRange currentBlockRange = block.getTextRange().shiftRight(shift);
-
-      IndentInside oldBlockIndent = whiteSpace.getInitialLastLineIndent();
-      IndentInside whiteSpaceIndent = IndentInside.createIndentOn(IndentInside.getLastLine(newWhiteSpace));
-      final int shiftInside = calcShift(oldBlockIndent, whiteSpaceIndent, options);
-
-      if (shiftInside != 0 || !oldBlockIndent.equals(whiteSpaceIndent)) {
-        final TextRange newBlockRange = model.shiftIndentInsideRange(block.getNode(), currentBlockRange, shiftInside);
-        shift += newBlockRange.getLength() - block.getLength();
-      }
-    }
-    return shift;
-  }
-
-  @NotNull
-  private List<LeafBlockWrapper> collectBlocksToModify() {
-    List<LeafBlockWrapper> blocksToModify = new ArrayList<LeafBlockWrapper>();
-
-    for (LeafBlockWrapper block = myFirstTokenBlock; block != null; block = block.getNextBlock()) {
-      final WhiteSpace whiteSpace = block.getWhiteSpace();
-      if (!whiteSpace.isReadOnly()) {
-        final String newWhiteSpace = whiteSpace.generateWhiteSpace(myBlockIndentOptions.getIndentOptions(block));
-        if (!whiteSpace.equalsToString(newWhiteSpace)) {
-          blocksToModify.add(block);
-        }
-      }
-    }
-    return blocksToModify;
   }
 
   private void processToken() {
@@ -1282,22 +1232,6 @@ public class FormatProcessor {
     return myLastWhiteSpace;
   }
 
-  /**
-   * Calculates difference in visual columns between the given indents.
-   *
-   * @param oldIndent  old indent
-   * @param newIndent  new indent
-   * @param options    indent options to use
-   * @return           difference in visual columns between the given indents
-   */
-  private static int calcShift(@NotNull final IndentInside oldIndent,
-                               @NotNull final IndentInside newIndent,
-                               @NotNull final CommonCodeStyleSettings.IndentOptions options)
-  {
-    if (oldIndent.equals(newIndent)) return 0;
-    return newIndent.getSpacesCount(options) - oldIndent.getSpacesCount(options);
-  }
-
   private class AdjustWhiteSpacesState extends State {
     
     @Override
@@ -1334,6 +1268,25 @@ public class FormatProcessor {
     private ApplyChangesState(FormattingModel model) {
       myModel = model;
     }
+    
+    //myFirstTokenBlock
+    //myBlockIndentOptions
+    //mySettings
+
+    private List<LeafBlockWrapper> collectBlocksToModify() {
+      List<LeafBlockWrapper> blocksToModify = new ArrayList<LeafBlockWrapper>();
+
+      for (LeafBlockWrapper block = myFirstTokenBlock; block != null; block = block.getNextBlock()) {
+        final WhiteSpace whiteSpace = block.getWhiteSpace();
+        if (!whiteSpace.isReadOnly()) {
+          final String newWhiteSpace = whiteSpace.generateWhiteSpace(myBlockIndentOptions.getIndentOptions(block));
+          if (!whiteSpace.equalsToString(newWhiteSpace)) {
+            blocksToModify.add(block);
+          }
+        }
+      }
+      return blocksToModify;
+    }
 
     @Override
     public void prepare() {
@@ -1341,16 +1294,7 @@ public class FormatProcessor {
       // call doModifications static method to ensure no access to state
       // thus we may clear formatting state
       reset();
-
-      myInfos = null;
-      myRootBlockWrapper = null;
-      myTextRangeToWrapper = null;
-      myPreviousDependencies = null;
-      myLastWhiteSpace = null;
-      myFirstTokenBlock = null;
-      myLastTokenBlock = null;
       myDisposed = true;
-
       if (myBlocksToModify.isEmpty()) {
         setDone(true);
         return;
@@ -1380,7 +1324,7 @@ public class FormatProcessor {
     @Override
     protected void doIteration() {
       LeafBlockWrapper blockWrapper = myBlocksToModify.get(myIndex);
-      myShift = replaceWhiteSpace(
+      myShift = Utils.replaceWhiteSpace(
         myModel,
         blockWrapper,
         myShift,

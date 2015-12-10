@@ -45,7 +45,7 @@ import java.util.ArrayList;
  * <p/>
  * Not thread-safe.
  */
-class WhiteSpace {
+public class WhiteSpace {
 
   private static final char LINE_FEED = '\n';
 
