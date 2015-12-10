@@ -16,30 +16,30 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.daemon.*;
-import com.intellij.codeInsight.daemon.LineMarkerSettings;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.ui.CheckBoxList;
+import com.intellij.ui.SeparatorWithText;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.EmptyIcon;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Dmitry Avdeev
@@ -48,6 +48,7 @@ public class GutterIconsConfigurable implements Configurable {
   private JPanel myPanel;
   private CheckBoxList<GutterIconDescriptor> myList;
   private List<GutterIconDescriptor> myDescriptors;
+  private Map<GutterIconDescriptor, PluginDescriptor> myFirstDescriptors = new HashMap<GutterIconDescriptor, PluginDescriptor>();
 
   @Nls
   @Override
@@ -65,33 +66,40 @@ public class GutterIconsConfigurable implements Configurable {
   @Override
   public JComponent createComponent() {
     ExtensionPoint<LineMarkerProvider> point = Extensions.getRootArea().getExtensionPoint(LineMarkerProviders.EP_NAME);
+    @SuppressWarnings("unchecked")
     LanguageExtensionPoint<LineMarkerProvider>[] extensions = (LanguageExtensionPoint<LineMarkerProvider>[])point.getExtensions();
-    List<LineMarkerProviderDescriptor> descriptors = ContainerUtil
-      .mapNotNull(extensions, new NullableFunction<LanguageExtensionPoint<LineMarkerProvider>, LineMarkerProviderDescriptor>() {
+    NullableFunction<LanguageExtensionPoint<LineMarkerProvider>, PluginDescriptor> function =
+      new NullableFunction<LanguageExtensionPoint<LineMarkerProvider>, PluginDescriptor>() {
         @Nullable
         @Override
-        public LineMarkerProviderDescriptor fun(LanguageExtensionPoint<LineMarkerProvider> point) {
+        public PluginDescriptor fun(LanguageExtensionPoint<LineMarkerProvider> point) {
           LineMarkerProvider instance = point.getInstance();
-          if (instance instanceof LineMarkerProviderDescriptor) {
-            LineMarkerProviderDescriptor descriptor = (LineMarkerProviderDescriptor)instance;
-            return descriptor.getName() == null ? null : descriptor;
-          }
-          return null;
+          return instance instanceof LineMarkerProviderDescriptor && ((LineMarkerProviderDescriptor)instance).getName() != null ? point.getPluginDescriptor() : null;
         }
-      });
-    myDescriptors = new ArrayList<GutterIconDescriptor>(new THashSet<LineMarkerProviderDescriptor>(descriptors,
-                                                                                                           new TObjectHashingStrategy<LineMarkerProviderDescriptor>() {
-                                                                                                             @Override
-                                                                                                             public int computeHashCode(LineMarkerProviderDescriptor object) {
-                                                                                                               return object.getClass().hashCode();
-                                                                                                             }
-
-                                                                                                             @Override
-                                                                                                             public boolean equals(LineMarkerProviderDescriptor o1,
-                                                                                                                                   LineMarkerProviderDescriptor o2) {
-                                                                                                               return o1.getClass().equals(o2.getClass());
-                                                                                                             }
-                                                                                                           }));
+      };
+    MultiMap<PluginDescriptor, LanguageExtensionPoint<LineMarkerProvider>> map = ContainerUtil.groupBy(Arrays.asList(extensions), function);
+    myDescriptors = new ArrayList<GutterIconDescriptor>();
+    for (final PluginDescriptor descriptor : map.keySet()) {
+      Collection<LanguageExtensionPoint<LineMarkerProvider>> points = map.get(descriptor);
+      final AtomicBoolean first = new AtomicBoolean(true);
+      for (LanguageExtensionPoint<LineMarkerProvider> extensionPoint : points) {
+        GutterIconDescriptor instance = (GutterIconDescriptor)extensionPoint.getInstance();
+        if (instance.getOptions().length > 0) {
+          for (GutterIconDescriptor option : instance.getOptions()) {
+            if (first.getAndSet(false)) {
+              myFirstDescriptors.put(instance, descriptor);
+            }
+            myDescriptors.add(option);
+          }
+        }
+        else {
+          if (first.getAndSet(false)) {
+            myFirstDescriptors.put(instance, descriptor);
+          }
+          myDescriptors.add(instance);
+        }
+      }
+    }
     List<GutterIconDescriptor> options = new ArrayList<GutterIconDescriptor>();
     for (Iterator<GutterIconDescriptor> iterator = myDescriptors.iterator(); iterator.hasNext(); ) {
       GutterIconDescriptor descriptor = iterator.next();
@@ -156,6 +164,15 @@ public class GutterIconsConfigurable implements Configurable {
         panel.add(checkBox, BorderLayout.CENTER);
         panel.setBackground(rootComponent.getBackground());
         checkBox.setBorder(null);
+
+        PluginDescriptor pluginDescriptor = myFirstDescriptors.get(descriptor);
+        if (pluginDescriptor instanceof IdeaPluginDescriptor) {
+          SeparatorWithText separator = new SeparatorWithText();
+          String name = ((IdeaPluginDescriptor)pluginDescriptor).getName();
+          separator.setCaption("IDEA CORE".equals(name) ? "Platform" : name);
+          panel.add(separator, BorderLayout.NORTH);
+        }
+
         return panel;
       }
     };
