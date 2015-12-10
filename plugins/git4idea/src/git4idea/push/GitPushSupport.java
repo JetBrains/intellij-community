@@ -136,7 +136,7 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
     if (existingRemoteBranch != null) {
       return new GitPushTarget(existingRemoteBranch, false);
     }
-    return new GitPushTarget(new GitStandardRemoteBranch(remote, currentBranch.getName(), GitBranch.DUMMY_HASH), true);
+    return new GitPushTarget(new GitStandardRemoteBranch(remote, currentBranch.getName()), true);
   }
 
   @NotNull

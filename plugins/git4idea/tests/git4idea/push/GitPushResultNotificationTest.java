@@ -206,14 +206,14 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
   }
 
   private static GitLocalBranch from(String from) {
-    return new GitLocalBranch(from, GitBranch.DUMMY_HASH);
+    return new GitLocalBranch(from);
   }
 
   private static GitRemoteBranch to(String to) {
     int firstSlash = to.indexOf('/');
     GitRemote remote = new GitRemote(to.substring(0, firstSlash), Collections.<String>emptyList(), Collections.<String>emptyList(),
                                      Collections.<String>emptyList(), Collections.<String>emptyList());
-    return new GitStandardRemoteBranch(remote, to.substring(firstSlash + 1), GitBranch.DUMMY_HASH);
+    return new GitStandardRemoteBranch(remote, to.substring(firstSlash + 1));
   }
 
   private GitPushResultNotification notification(GitPushRepoResult singleResult) {

@@ -65,7 +65,7 @@ public class GitConfigTest extends GitPlatformTest {
     File gitDir = new File(myProjectPath, ".git");
     GitConfig config = GitConfig.read(myPlatformFacade, new File(gitDir, "config"));
     GitBranchState state = new GitRepositoryReader(gitDir).readState(config.parseRemotes());
-    Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(state.getLocalBranches(), state.getRemoteBranches());
+    Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
     assertTrue("Couldn't find correct a#branch tracking information among: [" + trackInfos + "]",
                ContainerUtil.exists(trackInfos, new Condition<GitBranchTrackInfo>() {
                  @Override
@@ -213,8 +213,8 @@ public class GitConfigTest extends GitPlatformTest {
       String remoteBranchAtRemote = info[2];
       String remoteBranchHere = info[3];
       boolean merge = info[4].equals("merge");
-      remotes.add(new GitBranchTrackInfo(new GitLocalBranch(branch, GitBranch.DUMMY_HASH),
-                                         new GitStandardRemoteBranch(remote, remoteBranchAtRemote, GitBranch.DUMMY_HASH),
+      remotes.add(new GitBranchTrackInfo(new GitLocalBranch(branch),
+                                         new GitStandardRemoteBranch(remote, remoteBranchAtRemote),
                                          merge));
     }
     return remotes;

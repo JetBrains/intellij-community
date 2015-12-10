@@ -79,8 +79,8 @@ class GitRepositoryReader {
 
   @NotNull
   GitBranchState readState(@NotNull Collection<GitRemote> remotes) {
-    Pair<Set<GitLocalBranch>, Set<GitRemoteBranch>> branches = readBranches(remotes);
-    Set<GitLocalBranch> localBranches = branches.first;
+    Pair<Map<GitLocalBranch, Hash>, Map<GitRemoteBranch, Hash>> branches = readBranches(remotes);
+    Map<GitLocalBranch, Hash> localBranches = branches.first;
 
     HeadInfo headInfo = readHead();
     Repository.State state = readRepositoryState(headInfo);
@@ -92,11 +92,11 @@ class GitRepositoryReader {
       currentRevision = headInfo.content;
     }
     else if (!localBranches.isEmpty()) {
-      currentBranch = findCurrentBranch(headInfo, state, localBranches);
-      currentRevision = getCurrentRevision(headInfo, currentBranch);
+      currentBranch = findCurrentBranch(headInfo, state, localBranches.keySet());
+      currentRevision = getCurrentRevision(headInfo, currentBranch == null ? null : localBranches.get(currentBranch));
     }
     else if (headInfo.content != null) {
-      currentBranch = new GitLocalBranch(headInfo.content, GitBranch.DUMMY_HASH);
+      currentBranch = new GitLocalBranch(headInfo.content);
       currentRevision = null;
     }
     else {
@@ -107,16 +107,16 @@ class GitRepositoryReader {
   }
 
   @Nullable
-  private static String getCurrentRevision(@NotNull HeadInfo headInfo, @Nullable GitLocalBranch currentBranch) {
+  private static String getCurrentRevision(@NotNull HeadInfo headInfo, @Nullable Hash currentBranchHash) {
     String currentRevision;
     if (!headInfo.isBranch) {
       currentRevision = headInfo.content;
     }
-    else if (currentBranch == null) {
+    else if (currentBranchHash == null) {
       currentRevision = null;
     }
     else {
-      currentRevision = currentBranch.getHash().asString();
+      currentRevision = currentBranchHash.asString();
     }
     return currentRevision;
   }
@@ -220,7 +220,7 @@ class GitRepositoryReader {
   }
 
   @NotNull
-  private Pair<Set<GitLocalBranch>, Set<GitRemoteBranch>> readBranches(@NotNull Collection<GitRemote> remotes) {
+  private Pair<Map<GitLocalBranch, Hash>, Map<GitRemoteBranch, Hash>> readBranches(@NotNull Collection<GitRemote> remotes) {
     Map<String, String> data = readBranchRefsFromFiles();
     Map<String, Hash> resolvedRefs = resolveRefs(data);
     return createBranchesFromData(remotes, resolvedRefs);
@@ -236,20 +236,20 @@ class GitRepositoryReader {
   }
 
   @NotNull
-  private static Pair<Set<GitLocalBranch>, Set<GitRemoteBranch>> createBranchesFromData(@NotNull Collection<GitRemote> remotes,
-                                                                                        @NotNull Map<String, Hash> data) {
-    Set<GitLocalBranch> localBranches = ContainerUtil.newHashSet();
-    Set<GitRemoteBranch> remoteBranches = ContainerUtil.newHashSet();
+  private static Pair<Map<GitLocalBranch, Hash>, Map<GitRemoteBranch, Hash>> createBranchesFromData(@NotNull Collection<GitRemote> remotes,
+                                                                                                    @NotNull Map<String, Hash> data) {
+    Map<GitLocalBranch, Hash> localBranches = ContainerUtil.newHashMap();
+    Map<GitRemoteBranch, Hash> remoteBranches = ContainerUtil.newHashMap();
     for (Map.Entry<String, Hash> entry : data.entrySet()) {
       String refName = entry.getKey();
       Hash hash = entry.getValue();
       if (refName.startsWith(REFS_HEADS_PREFIX)) {
-        localBranches.add(new GitLocalBranch(refName, hash));
+        localBranches.put(new GitLocalBranch(refName), hash);
       }
       else if (refName.startsWith(REFS_REMOTES_PREFIX)) {
-        GitRemoteBranch remoteBranch = parseRemoteBranch(refName, hash, remotes);
+        GitRemoteBranch remoteBranch = parseRemoteBranch(refName, remotes);
         if (remoteBranch != null) {
-          remoteBranches.add(remoteBranch);
+          remoteBranches.put(remoteBranch, hash);
         }
       }
       else {
@@ -295,13 +295,12 @@ class GitRepositoryReader {
 
   @Nullable
   private static GitRemoteBranch parseRemoteBranch(@NotNull String fullBranchName,
-                                                   @NotNull Hash hash,
                                                    @NotNull Collection<GitRemote> remotes) {
     String stdName = GitBranchUtil.stripRefsPrefix(fullBranchName);
 
     int slash = stdName.indexOf('/');
     if (slash == -1) { // .git/refs/remotes/my_branch => git-svn
-      return new GitSvnRemoteBranch(fullBranchName, hash);
+      return new GitSvnRemoteBranch(fullBranchName);
     }
     else {
       GitRemote remote;
@@ -319,9 +318,9 @@ class GitRepositoryReader {
         LOG.debug(String.format("No remote found with the name [%s]. All remotes: %s", remoteName, remotes));
         GitRemote fakeRemote = new GitRemote(remoteName, ContainerUtil.<String>emptyList(), Collections.<String>emptyList(),
                                              Collections.<String>emptyList(), Collections.<String>emptyList());
-        return new GitStandardRemoteBranch(fakeRemote, branchName, hash);
+        return new GitStandardRemoteBranch(fakeRemote, branchName);
       }
-      return new GitStandardRemoteBranch(remote, branchName, hash);
+      return new GitStandardRemoteBranch(remote, branchName);
     }
   }
 
