@@ -32,6 +32,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * User: ktisha
  *
@@ -73,6 +75,8 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
       if (node.getModifier() != null) return;
       final Property property = containingClass.findPropertyByCallable(node);
       if (property != null) return;
+      final List<PyAssignmentStatement> attributes = node.findAttributes();
+      if (!attributes.isEmpty()) return;
 
       final PyStatementList statementList = node.getStatementList();
       final PyStatement[] statements = statementList.getStatements();
