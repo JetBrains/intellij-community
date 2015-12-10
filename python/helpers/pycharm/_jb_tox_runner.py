@@ -16,24 +16,26 @@ helpers_dir = str(os.path.split(__file__)[0])
 
 
 class _Unit2(object):
-    def fix(self, command):
-        if command[0] != "unit2":
-            return None
-        return [os.path.join(helpers_dir, "utrunner.py"), os.getcwd()] + command[1:] + ["true"]
+    def fix(self, command, dir_to_run):
+        if command[0] == "unit2":
+            return [os.path.join(helpers_dir, "utrunner.py"), dir_to_run] + command[1:] + ["true"]
+        elif command == ["python", "-m", "unittest", "discover"]:
+            return [os.path.join(helpers_dir, "utrunner.py"), dir_to_run] + ["true"]
+        return None
 
 
 class _PyTest(object):
-    def fix(self, command):
+    def fix(self, command, dir_to_run):
         if command[0] != "py.test":
             return None
-        return [os.path.join(helpers_dir, "pytestrunner.py"), "-p", "pytest_teamcity", os.getcwd()] + command[1:]
+        return [os.path.join(helpers_dir, "pytestrunner.py"), "-p", "pytest_teamcity", dir_to_run] + command[1:]
 
 
 class _Nose(object):
-    def fix(self, command):
+    def fix(self, command, dir_to_run):
         if command[0] != "nosetests":
             return None
-        return [os.path.join(helpers_dir, "noserunner.py"), os.getcwd()] + command[1:]
+        return [os.path.join(helpers_dir, "noserunner.py"), dir_to_run] + command[1:]
 
 
 
@@ -82,8 +84,9 @@ for env, tmp_config in config.envconfigs.items():
     if not isinstance(commands, list) or not len(commands):
         continue
     for fixer in _RUNNERS:
+        dir_to_run = str(config.envconfigs[env].changedir)
         for i, command in enumerate(commands):
-            fixed_command = fixer.fix(command)
+            fixed_command = fixer.fix(command, dir_to_run)
             if fixed_command:
                 commands[i] = fixed_command
     tmp_config.commands = commands
