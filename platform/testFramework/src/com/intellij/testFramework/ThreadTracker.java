@@ -74,7 +74,6 @@ public class ThreadTracker {
         wellKnownOffenders.add("Change List Updater"); //todo remove
     wellKnownOffenders.add("CompilerThread0");
     wellKnownOffenders.add("Finalizer");
-        wellKnownOffenders.add("FS Synchronizer"); //todo remove
     wellKnownOffenders.add("IDEA Test Case Thread");
     wellKnownOffenders.add("Image Fetcher ");
     wellKnownOffenders.add("Java2D Disposer");
