@@ -278,7 +278,7 @@ public class FormatProcessor {
     if (sequentially) {
       myStateProcessor.setNextState(new AdjustWhiteSpacesState());
       myStateProcessor.setNextState(new ExpandChildrenIndent());
-      myStateProcessor.setNextState(new ApplyChangesState(model));
+      myStateProcessor.setNextState(new ApplyChangesState(model, myBlockIndentOptions));
     }
     else {
       formatWithoutRealModifications(false);
@@ -337,7 +337,7 @@ public class FormatProcessor {
 
   public void performModifications(FormattingModel model, boolean sequentially) {
     assert !myDisposed;
-    myStateProcessor.setNextState(new ApplyChangesState(model));
+    myStateProcessor.setNextState(new ApplyChangesState(model, myBlockIndentOptions));
 
     if (sequentially) {
       return;
@@ -350,14 +350,6 @@ public class FormatProcessor {
     while (!myStateProcessor.isDone()) {
       myStateProcessor.iteration();
     }
-  }
-  
-  private static void cleanupBlocks(List<LeafBlockWrapper> blocks) {
-    for (LeafBlockWrapper block : blocks) {
-      block.getParent().dispose();
-      block.dispose();
-    }
-    blocks.clear();
   }
 
   private void processToken() {
@@ -1197,9 +1189,12 @@ public class FormatProcessor {
     private       int                    myShift;
     private       int                    myIndex;
     private       boolean                myResetBulkUpdateState;
+    
+    private BlockIndentOptions myBlockIndentOptions;
 
-    private ApplyChangesState(FormattingModel model) {
+    private ApplyChangesState(FormattingModel model, BlockIndentOptions indentOptions) {
       myModel = model;
+      myBlockIndentOptions = indentOptions;
     }
     
     //myFirstTokenBlock
@@ -1254,6 +1249,14 @@ public class FormatProcessor {
 
       caretOffsetUpdater.restoreCaretLocations();
       cleanupBlocks(blocksToModify);
+    }
+
+    private void cleanupBlocks(List<LeafBlockWrapper> blocks) {
+      for (LeafBlockWrapper block : blocks) {
+        block.getParent().dispose();
+        block.dispose();
+      }
+      blocks.clear();
     }
 
     @Nullable
@@ -1318,7 +1321,7 @@ public class FormatProcessor {
         blockWrapper,
         myShift,
         blockWrapper.getWhiteSpace().generateWhiteSpace(myBlockIndentOptions.getIndentOptions(blockWrapper)),
-        myDefaultIndentOption
+        myBlockIndentOptions.getIndentOptions()
       );
       myProgressCallback.afterApplyingChange(blockWrapper);
       // block could be gc'd

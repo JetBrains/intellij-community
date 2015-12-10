@@ -29,6 +29,10 @@ public class BlockIndentOptions {
     mySettings = settings;
     myIndentOptions = indentOptions;
   }
+  
+  public CommonCodeStyleSettings.IndentOptions getIndentOptions() {
+    return myIndentOptions;
+  }
 
   @NotNull
   public CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull AbstractBlockWrapper block) {
