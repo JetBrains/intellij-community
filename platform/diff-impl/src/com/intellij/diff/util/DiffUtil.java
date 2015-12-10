@@ -30,6 +30,8 @@ import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.fragments.MergeWordFragment;
+import com.intellij.diff.impl.DiffSettingsHolder;
+import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
@@ -1097,6 +1099,16 @@ public class DiffUtil {
       holder.putUserData(DiffUserDataKeys.DATA_PROVIDER, dataProvider);
     }
     ((GenericDataProvider)dataProvider).putData(key, value);
+  }
+
+  @NotNull
+  public static DiffSettings getDiffSettings(@NotNull DiffContext context) {
+    DiffSettings settings = context.getUserData(DiffSettingsHolder.KEY);
+    if (settings == null) {
+      settings = DiffSettings.getSettings(context.getUserData(DiffUserDataKeys.PLACE));
+      context.putUserData(DiffSettingsHolder.KEY, settings);
+    }
+    return settings;
   }
 
   //

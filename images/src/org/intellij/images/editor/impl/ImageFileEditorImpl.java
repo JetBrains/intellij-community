@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.EventDispatcher;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageFileEditor;
 import org.intellij.images.editor.ImageZoomModel;
@@ -31,6 +32,7 @@ import org.intellij.images.options.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 /**
@@ -38,10 +40,11 @@ import java.beans.PropertyChangeListener;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileEditor {
+final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileEditor, PropertyChangeListener {
   private static final String NAME = "ImageFileEditor";
 
   private final ImageEditor imageEditor;
+  private final EventDispatcher<PropertyChangeListener> myDispatcher = EventDispatcher.create(PropertyChangeListener.class);
 
   ImageFileEditorImpl(@NotNull Project project, @NotNull VirtualFile file) {
     imageEditor = new ImageEditorImpl(project, file);
@@ -54,6 +57,8 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
     TransparencyChessboardOptions transparencyChessboardOptions = editorOptions.getTransparencyChessboardOptions();
     imageEditor.setGridVisible(gridOptions.isShowDefault());
     imageEditor.setTransparencyChessboardVisible(transparencyChessboardOptions.isShowDefault());
+
+    ((ImageEditorImpl)imageEditor).getComponent().getImageComponent().addPropertyChangeListener(this);
   }
 
   @NotNull
@@ -104,9 +109,17 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
   }
 
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
+    myDispatcher.addListener(listener);
   }
 
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
+    myDispatcher.removeListener(listener);
+  }
+
+  @Override
+  public void propertyChange(@NotNull PropertyChangeEvent event) {
+    PropertyChangeEvent editorEvent = new PropertyChangeEvent(this, event.getPropertyName(), event.getOldValue(), event.getNewValue());
+    myDispatcher.getMulticaster().propertyChange(editorEvent);
   }
 
   public BackgroundEditorHighlighter getBackgroundHighlighter() {

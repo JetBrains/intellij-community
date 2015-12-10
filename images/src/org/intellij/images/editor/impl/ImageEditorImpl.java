@@ -26,6 +26,7 @@ import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
+import org.intellij.images.ui.ImageComponent;
 import org.intellij.images.vfs.IfsUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -79,7 +80,7 @@ final class ImageEditorImpl implements ImageEditor {
     return document.getValue() != null;
   }
 
-  public JComponent getComponent() {
+  public ImageEditorUI getComponent() {
     return editorUI;
   }
 
