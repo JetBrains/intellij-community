@@ -155,14 +155,17 @@ public class GutterIconsConfigurable implements Configurable {
       @Override
       protected JComponent adjustRendering(JComponent rootComponent, JCheckBox checkBox, int index, boolean selected, boolean hasFocus) {
         JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder());
         GutterIconDescriptor descriptor = myList.getItemAt(index);
         Icon icon = descriptor == null ? null : descriptor.getIcon();
         JLabel label = new JLabel(icon == null ? EmptyIcon.ICON_16 : icon);
+        label.setOpaque(true);
         label.setPreferredSize(new Dimension(25, -1));
         label.setHorizontalAlignment(SwingConstants.CENTER);
         panel.add(label, BorderLayout.WEST);
         panel.add(checkBox, BorderLayout.CENTER);
-        panel.setBackground(rootComponent.getBackground());
+        panel.setBackground(getBackground(false));
+        label.setBackground(getBackground(selected));
         checkBox.setBorder(null);
 
         PluginDescriptor pluginDescriptor = myFirstDescriptors.get(descriptor);
@@ -176,5 +179,6 @@ public class GutterIconsConfigurable implements Configurable {
         return panel;
       }
     };
+    myList.setBorder(BorderFactory.createEmptyBorder());
   }
 }
