@@ -145,7 +145,7 @@
 
     <localInspection language="Groovy" groupPath="Gradle" shortName="MultipleRepositoryUrls"
                      bundle="org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle"
-                     key="multiple.repository.urls" groupName="Probable bugs" enabledByDefault="true" level="WARNING"
+                     key="multiple.repository.urls" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.MultipleRepositoryUrlsInspection"/>
 
   </extensions>
