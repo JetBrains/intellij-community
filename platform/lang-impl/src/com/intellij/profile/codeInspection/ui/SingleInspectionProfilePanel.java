@@ -1286,7 +1286,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private class MyFilterComponent extends FilterComponent {
     private MyFilterComponent() {
       super(INSPECTION_FILTER_HISTORY, 10);
-      setHistory(Collections.singletonList("\"New in 14\""));
+      setHistory(Collections.singletonList("\"New in 15\""));
     }
 
     @Override
