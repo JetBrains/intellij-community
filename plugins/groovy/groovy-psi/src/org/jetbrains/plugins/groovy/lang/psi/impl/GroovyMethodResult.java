@@ -21,6 +21,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 
 public class GroovyMethodResult extends GroovyResolveResultImpl {
@@ -67,5 +68,11 @@ public class GroovyMethodResult extends GroovyResolveResultImpl {
   @NotNull
   public PsiSubstitutor getSubstitutor(boolean infer) {
     return infer ? mySubstitutorComputer.compute() : super.getSubstitutor();
+  }
+
+  @TestOnly
+  @NotNull
+  public NotNullComputable<PsiSubstitutor> getSubstitutorComputer() {
+    return mySubstitutorComputer;
   }
 }

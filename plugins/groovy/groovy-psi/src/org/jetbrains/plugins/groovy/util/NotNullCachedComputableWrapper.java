@@ -19,6 +19,7 @@ import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 public class NotNullCachedComputableWrapper<T> implements NotNullComputable<T> {
 
@@ -44,5 +45,10 @@ public class NotNullCachedComputableWrapper<T> implements NotNullComputable<T> {
       }
     }
     return result;
+  }
+
+  @TestOnly
+  public boolean isComputed() {
+    return myValue != null;
   }
 }
