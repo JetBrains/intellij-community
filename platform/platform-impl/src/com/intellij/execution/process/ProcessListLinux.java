@@ -32,9 +32,9 @@ import java.io.IOException;
 
 
 /**
- * Use through PlatformUtils.
+ * Use through ProcessUtils.
  */
-public class ProcessListLinux implements IProcessList {
+class ProcessListLinux implements IProcessList {
 
   ProcessInfo[] empty = new ProcessInfo[0];
 

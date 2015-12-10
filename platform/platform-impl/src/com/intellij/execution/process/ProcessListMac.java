@@ -22,9 +22,9 @@ import java.io.InputStreamReader;
 import java.util.List;
 
 /**
- * Use through PlatformUtils.
+ * Use through ProcessUtils.
  */
-public class ProcessListMac implements IProcessList {
+class ProcessListMac implements IProcessList {
   public ProcessListMac() { }
 
   @Override

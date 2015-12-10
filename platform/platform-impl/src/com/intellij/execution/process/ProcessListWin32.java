@@ -28,9 +28,9 @@ import java.util.List;
 /**
  * This implementation uses the tasklist.exe from windows (must be on the path).
  * 
- * Use through PlatformUtils.
+ * Use through ProcessUtils.
  */
-public class ProcessListWin32 implements IProcessList {
+class ProcessListWin32 implements IProcessList {
   private static final Logger LOG = Logger.getInstance(ProcessListWin32.class);
 
   private String myHelpersRoot;

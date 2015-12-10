@@ -23,9 +23,9 @@ import java.util.List;
 /**
  * This implementation uses a listtasks which is shipped together (so, it should always work on windows).
  * 
- * Use through PlatformUtils.
+ * Use through ProcessUtils.
  */
-public class ProcessListWin32Internal implements IProcessList {
+class ProcessListWin32Internal implements IProcessList {
   private String myHelpersRoot;
 
   public ProcessListWin32Internal(String helpersRoot) {
