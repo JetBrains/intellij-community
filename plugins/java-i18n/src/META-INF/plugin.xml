@@ -44,7 +44,7 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.lang.properties.UnusedMessageFormatParameterInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="DuplicateStringLiteralInspection" bundle="messages.InspectionsBundle"
-                     key="inspection.duplicates.display.name" groupName="Internationalization issues" enabledByDefault="false"
+                     key="inspection.duplicates.display.name" groupKey="group.names.internationalization.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="false"
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.duplicateStringLiteral.DuplicateStringLiteralInspection"/>
 
