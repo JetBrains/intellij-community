@@ -26,7 +26,7 @@ public class NotNullCachedComputableWrapper<T> implements NotNullComputable<T> {
   private static final RecursionGuard ourGuard = RecursionManager.createGuard(NotNullCachedComputableWrapper.class.getName());
 
   private NotNullComputable<T> myComputable;
-  private T myValue;
+  private volatile T myValue;
 
   public NotNullCachedComputableWrapper(@NotNull NotNullComputable<T> computable) {
     myComputable = computable;
@@ -36,14 +36,21 @@ public class NotNullCachedComputableWrapper<T> implements NotNullComputable<T> {
   @Override
   public T compute() {
     T result = myValue;
-    if (result == null) {
-      final RecursionGuard.StackStamp stamp = ourGuard.markStack();
-      result = myComputable.compute();
-      if (stamp.mayCacheNow()) {
-        myValue = result;
-        myComputable = null;  // allow gc to clean this up
+    if (result != null) return result;
+
+    //noinspection SynchronizeOnThis
+    synchronized (this) {
+      result = myValue;
+      if (result == null) {
+        final RecursionGuard.StackStamp stamp = ourGuard.markStack();
+        result = myComputable.compute();
+        if (stamp.mayCacheNow()) {
+          myValue = result;
+          myComputable = null;  // allow gc to clean this up
+        }
       }
     }
+
     return result;
   }
 
