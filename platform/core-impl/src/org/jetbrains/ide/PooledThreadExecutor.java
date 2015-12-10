@@ -19,19 +19,34 @@ import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
+import kotlin.Lazy;
+import kotlin.LazyKt;
+import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public final class PooledThreadExecutor  {
+public final class PooledThreadExecutor {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.ide.PooledThreadExecutor");
-  private static final AtomicInteger myAliveThreads = new AtomicInteger();
-  private static final AtomicInteger seq = new AtomicInteger();
-  private static final int ourReasonableThreadPoolSize = Registry.intValue("core.pooled.threads");
 
-  private static final ExecutorService ourThreadExecutorsService = new ThreadPoolExecutor(
+  private static final AtomicInteger ourAliveThreads = new AtomicInteger();
+  private static final AtomicInteger ourSeq = new AtomicInteger();
+  private static final int ourReasonableThreadPoolSize = Registry.intValue("core.pooled.threads");
+  private static final Lazy<Boolean> ourLogDumps = LazyKt.lazy(new Function0<Boolean>() {
+    @Override
+    public Boolean invoke() {
+      try {
+        return ApplicationInfoImpl.getShadowInstance().isEAP();
+      }
+      catch (Throwable ignore) {
+        return false;
+      }
+    }
+  });
+
+  public static final ExecutorService INSTANCE = new ThreadPoolExecutor(
     3,
     Integer.MAX_VALUE,
     5 * 60L,
@@ -41,8 +56,9 @@ public final class PooledThreadExecutor  {
       @NotNull
       @Override
       public Thread newThread(@NotNull Runnable r) {
-        final int count = myAliveThreads.incrementAndGet();
-        final Thread thread = new Thread(r, "ApplicationImpl pooled thread "+seq.incrementAndGet()) {
+        final int count = ourAliveThreads.incrementAndGet();
+
+        final Thread thread = new Thread(r, "ApplicationImpl pooled thread " + ourSeq.incrementAndGet()) {
           @Override
           public void interrupt() {
             LOG.debug("Interrupted worker, will remove from pool");
@@ -58,23 +74,21 @@ public final class PooledThreadExecutor  {
               LOG.debug("Worker exits due to exception", t);
             }
             finally {
-              myAliveThreads.decrementAndGet();
+              ourAliveThreads.decrementAndGet();
             }
           }
         };
-        if (count > ourReasonableThreadPoolSize && ApplicationInfoImpl.getShadowInstance().isEAP()) {
+
+        if (count > ourReasonableThreadPoolSize && ourLogDumps.getValue()) {
           File file = PerformanceWatcher.getInstance().dumpThreads("newPooledThread/", true);
-          LOG.info("Not enough pooled threads" +
-                   (file != null ? "; dumped threads into file '"+file.getPath()+"'" : ""));
+          LOG.info("Not enough pooled threads" + (file != null ? "; dumped threads into file '" + file.getPath() + "'" : ""));
         }
+
         thread.setPriority(Thread.NORM_PRIORITY - 1);
         return thread;
       }
     }
   );
 
-  private PooledThreadExecutor() {
-  }
-
-  public static final ExecutorService INSTANCE = ourThreadExecutorsService;
+  private PooledThreadExecutor() { }
 }
