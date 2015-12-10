@@ -17,6 +17,7 @@
 package com.intellij.formatting;
 
 import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.formatting.engine.BlockIndentOptions;
 import com.intellij.formatting.engine.State;
 import com.intellij.formatting.engine.StateProcessor;
 import com.intellij.formatting.engine.WrapBlocksState;
@@ -46,7 +47,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.formatting.AbstractBlockAlignmentProcessor.Context;
+import static com.intellij.formatting.BlockAlignmentProcessor.Context;
 import static com.intellij.formatting.InitialInfoBuilder.prepareToBuildBlocksSequentially;
 
 public class FormatProcessor {
@@ -76,6 +77,7 @@ public class FormatProcessor {
   private CompositeBlockWrapper               myRootBlockWrapper;
   private TIntObjectHashMap<LeafBlockWrapper> myTextRangeToWrapper;
 
+  private final BlockIndentOptions myBlockIndentOptions;
   private final CommonCodeStyleSettings.IndentOptions myDefaultIndentOption;
   private final CodeStyleSettings                     mySettings;
   private final Document                              myDocument;
@@ -188,6 +190,7 @@ public class FormatProcessor {
     myProgressCallback = callback;
     myDefaultIndentOption = options.myIndentOptions;
     mySettings = options.mySettings;
+    myBlockIndentOptions = new BlockIndentOptions(mySettings, myDefaultIndentOption);
     myDocument = model.getDocument();
     myReformatContext = options.myReformatContext;
     myRightMargin = getRightMargin(block);
@@ -364,12 +367,10 @@ public class FormatProcessor {
    *
    * @param blocksToModify        changes introduced by formatter
    * @param model                 current formatting model
-   * @param indentOption          indent options to use
    */
   @SuppressWarnings({"deprecation"})
   private void applyChangesAtRewriteMode(@NotNull final List<LeafBlockWrapper> blocksToModify,
-                                            @NotNull final FormattingModel model,
-                                            @NotNull CommonCodeStyleSettings.IndentOptions indentOption)
+                                         @NotNull final FormattingModel model)
   {
     FormattingDocumentModel documentModel = model.getDocumentModel();
     Document document = documentModel.getDocument();
@@ -383,7 +384,7 @@ public class FormatProcessor {
       for (LeafBlockWrapper block : blocksToModify) {
         WhiteSpace whiteSpace = block.getWhiteSpace();
         CharSequence newWs = documentModel.adjustWhiteSpaceIfNecessary(
-          whiteSpace.generateWhiteSpace(getIndentOptionsToUse(block, indentOption)), whiteSpace.getStartOffset(),
+          whiteSpace.generateWhiteSpace(myBlockIndentOptions.getIndentOptions(block)), whiteSpace.getStartOffset(),
           whiteSpace.getEndOffset(), block.getNode(), false
         );
         if (changes.size() > 10000) {
@@ -467,29 +468,13 @@ public class FormatProcessor {
     for (LeafBlockWrapper block = myFirstTokenBlock; block != null; block = block.getNextBlock()) {
       final WhiteSpace whiteSpace = block.getWhiteSpace();
       if (!whiteSpace.isReadOnly()) {
-        final String newWhiteSpace = whiteSpace.generateWhiteSpace(getIndentOptionsToUse(block, myDefaultIndentOption));
+        final String newWhiteSpace = whiteSpace.generateWhiteSpace(myBlockIndentOptions.getIndentOptions(block));
         if (!whiteSpace.equalsToString(newWhiteSpace)) {
           blocksToModify.add(block);
         }
       }
     }
     return blocksToModify;
-  }
-
-  @NotNull
-  private CommonCodeStyleSettings.IndentOptions getIndentOptionsToUse(@NotNull AbstractBlockWrapper block,
-                                                                      @NotNull CommonCodeStyleSettings.IndentOptions fallbackIndentOptions)
-  {
-    final Language language = block.getLanguage();
-    if (language == null) {
-      return fallbackIndentOptions;
-    }
-    final CommonCodeStyleSettings commonSettings = mySettings.getCommonSettings(language);
-    if (commonSettings == null) {
-      return fallbackIndentOptions;
-    }
-    final CommonCodeStyleSettings.IndentOptions result = commonSettings.getIndentOptions();
-    return result == null ? fallbackIndentOptions : result;
   }
 
   private void processToken() {
@@ -750,7 +735,7 @@ public class FormatProcessor {
 
     BlockAlignmentProcessor.Context context = new BlockAlignmentProcessor.Context(
       myDocument, alignment, myCurrentBlock, myAlignmentMappings, myBackwardShiftedAlignedBlocks,
-      getIndentOptionsToUse(myCurrentBlock, myDefaultIndentOption));
+      myBlockIndentOptions.getIndentOptions(myCurrentBlock));
     BlockAlignmentProcessor.Result result = alignmentProcessor.applyAlignment(context);
     final LeafBlockWrapper offsetResponsibleBlock = alignment.getOffsetRespBlockBefore(myCurrentBlock);
     switch (result) {
@@ -842,7 +827,7 @@ public class FormatProcessor {
   }
 
   private void adjustSpacingByIndentOffset() {
-    IndentData offset = myCurrentBlock.calculateOffset(getIndentOptionsToUse(myCurrentBlock, myDefaultIndentOption));
+    IndentData offset = myCurrentBlock.calculateOffset(myBlockIndentOptions.getIndentOptions(myCurrentBlock));
     myCurrentBlock.getWhiteSpace().setSpaces(offset.getSpaces(), offset.getIndentSpaces());
   }
 
@@ -1110,7 +1095,7 @@ public class FormatProcessor {
   private IndentInfo adjustLineIndent(final AbstractBlockWrapper parent, final ChildAttributes childAttributes, final int index) {
     int alignOffset = getAlignOffsetBefore(childAttributes.getAlignment(), null);
     if (alignOffset == -1) {
-      return parent.calculateChildOffset(getIndentOptionsToUse(parent, myDefaultIndentOption), childAttributes, index).createIndentInfo();
+      return parent.calculateChildOffset(myBlockIndentOptions.getIndentOptions(parent), childAttributes, index).createIndentInfo();
     }
     else {
       AbstractBlockWrapper indentedParentBlock = CoreFormatterUtil.getIndentedParentBlock(myCurrentBlock);
@@ -1313,22 +1298,6 @@ public class FormatProcessor {
     return newIndent.getSpacesCount(options) - oldIndent.getSpacesCount(options);
   }
 
-  /**
-   * Utility method to use during debugging formatter processing.
-   *
-   * @return    text that contains intermediate formatter-introduced changes (even not committed yet)
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  @NotNull
-  private String getCurrentText() {
-    StringBuilder result = new StringBuilder();
-    for (LeafBlockWrapper block = myFirstTokenBlock; block != null; block = block.getNextBlock()) {
-      result.append(block.getWhiteSpace().generateWhiteSpace(getIndentOptionsToUse(block, myDefaultIndentOption)));
-      result.append(myDocument.getCharsSequence().subSequence(block.getStartOffset(), block.getEndOffset()));
-    }
-    return result.toString();
-  }
-
   private class AdjustWhiteSpacesState extends State {
     
     @Override
@@ -1396,7 +1365,7 @@ public class FormatProcessor {
 
       final int blocksToModifyCount = myBlocksToModify.size();
       if (blocksToModifyCount > BULK_REPLACE_OPTIMIZATION_CRITERIA) {
-        applyChangesAtRewriteMode(myBlocksToModify, myModel, myDefaultIndentOption);
+        applyChangesAtRewriteMode(myBlocksToModify, myModel);
         setDone(true);
       }
       else if (blocksToModifyCount > 50) {
@@ -1415,7 +1384,7 @@ public class FormatProcessor {
         myModel,
         blockWrapper,
         myShift,
-        blockWrapper.getWhiteSpace().generateWhiteSpace(getIndentOptionsToUse(blockWrapper, myDefaultIndentOption)),
+        blockWrapper.getWhiteSpace().generateWhiteSpace(myBlockIndentOptions.getIndentOptions(blockWrapper)),
         myDefaultIndentOption
       );
       myProgressCallback.afterApplyingChange(blockWrapper);
