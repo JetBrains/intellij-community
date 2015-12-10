@@ -19,7 +19,7 @@ class Test {
   private void <warning descr="Private method 'm1(I3)' is never used">m1</warning>(I3 i2) {System.out.println(i2);}
 
   void test() {
-    m <error descr="Ambiguous method call: both 'Test.m(I1)' and 'Test.m(I2)' match">(this::bar)</error>;
+    m (this::<error descr="Cannot resolve method 'bar'">bar</error>);
     m1(this::bar);
   }
 

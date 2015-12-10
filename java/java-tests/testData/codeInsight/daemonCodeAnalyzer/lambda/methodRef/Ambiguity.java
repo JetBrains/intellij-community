@@ -29,7 +29,7 @@ class MyTest {
 
     {
         Bar1 b1 = MyTest :: foo;
-        bar<error descr="Ambiguous method call: both 'MyTest.bar(Bar1)' and 'MyTest.bar(Bar2)' match">(MyTest :: foo)</error>;
+        bar(MyTest :: <error descr="Cannot resolve method 'foo'">foo</error>);
     }
 }
 
@@ -129,7 +129,7 @@ class MyTest4 {
     }
 
     {
-         bar<error descr="'bar(todelete.MyTest4.Bar1)' in 'todelete.MyTest4' cannot be applied to '(<method reference>)'">(MyTest4:: foo)</error>;
+         bar(MyTest4:: <error descr="Cannot resolve method 'foo'">foo</error>);
     }
 }
 

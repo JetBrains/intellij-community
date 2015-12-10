@@ -38,7 +38,7 @@ class MyTest1 {
     }
 
     public static void main(String[] args) {
-        call<error descr="Ambiguous method call: both 'MyTest1.call(int, I1)' and 'MyTest1.call(int, I2)' match">(1, MyTest1::m)</error>;
+        call(1, MyTest1::<error descr="Cannot resolve method 'm'">m</error>);
     }
 }
 
@@ -192,6 +192,6 @@ class MyTest9 {
 
     void test() {
         g1(MyTest9::m);
-        g2<error descr="Ambiguous method call: both 'MyTest9.g2(I1)' and 'MyTest9.g2(I2)' match">(MyTest9::m)</error>;
+        g2(MyTest9::<error descr="Cannot resolve method 'm'">m</error>);
     }
 }

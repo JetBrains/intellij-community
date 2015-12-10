@@ -32,12 +32,12 @@ class Test {
         meth1(Foo::<error descr="Cannot resolve constructor 'Foo'">new</error>);
         meth2(Foo::new);
         meth3(Foo::<error descr="Cannot resolve constructor 'Foo'">new</error>);
-        meth4<error descr="Ambiguous method call: both 'Test.meth4(I1)' and 'Test.meth4(I2)' match">(Foo::new)</error>;
+        meth4(Foo::<error descr="Cannot resolve constructor 'Foo'">new</error>);
 
         meth1(Test::<error descr="Cannot resolve method 'foo'">foo</error>);
         meth2(Test::foo);
         meth3(Test::<error descr="Cannot resolve method 'foo'">foo</error>);
-        meth4<error descr="Ambiguous method call: both 'Test.meth4(I1)' and 'Test.meth4(I2)' match">(Test::foo)</error>;
+        meth4(Test::<error descr="Cannot resolve method 'foo'">foo</error>);
     }
 
 

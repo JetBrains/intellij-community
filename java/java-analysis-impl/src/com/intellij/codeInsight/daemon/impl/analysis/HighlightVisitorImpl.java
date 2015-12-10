@@ -1339,7 +1339,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     if (!myHolder.hasErrorResults()) {
-      if (results.length == 0) {
+      if (results.length == 0 || results[0] instanceof MethodCandidateInfo && !((MethodCandidateInfo)results[0]).isApplicable()) {
         String description = null;
         if (expression.isConstructor()) {
           final PsiClass containingClass = PsiMethodReferenceUtil.getQualifierResolveResult(expression).getContainingClass();

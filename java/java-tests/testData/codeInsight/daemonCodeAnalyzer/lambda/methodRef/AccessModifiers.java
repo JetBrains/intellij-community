@@ -26,8 +26,8 @@ class AlienTest {
 
     static {
         IInt i1 = MyTest::<error descr="Cannot resolve method 'abracadabra'">abracadabra</error>;
-        IInt i2 = MyTest::<error descr="Cannot resolve method 'foo'">foo</error>;
-        <error descr="Incompatible types. Found: '<method reference>', required: 'AlienTest.IInt'">IInt i3 = MyTest::bar;</error>
+        IInt i2 = <error descr="Bad return type in method reference: cannot convert void to int">MyTest::foo</error>;
+        IInt i3 = MyTest::<error descr="Cannot resolve method 'bar'">bar</error>;
         <error descr="Incompatible types. Found: '<method reference>', required: 'AlienTest.IIntInt'">IIntInt i4 = MyTest::bar;</error>
         IInt i5 = <error descr="Non-static method cannot be referenced from a static context">MyTest::baz</error>;
         IInt i6 = <error descr="'foo(int)' is not public in 'MyTest.Foo'. Cannot be accessed from outside package">MyTest.foo::foo</error>;

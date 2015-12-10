@@ -1,6 +1,6 @@
 public class Test {
   {
-    if (<error descr="Method reference expression is not expected here">Test::length instanceof String</error>) {
+    if (Test::<error descr="Cannot resolve method 'length'">length</error> instanceof String) {
     }
     bar(Test::length);
   }

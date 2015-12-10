@@ -70,8 +70,8 @@ class MyTest3<X> {
     static void test(I<Integer> s) {   }
 
     public static void main(String[] args) {
-        I<Integer> s = MyTest3<String>::<error descr="Cannot resolve constructor 'MyTest3'">new</error>;
-        test(MyTest3<String>::<error descr="Cannot resolve constructor 'MyTest3'">new</error>);
+        I<Integer> s = <error descr="Bad return type in method reference: cannot convert MyTest3<java.lang.String> to MyTest3<java.lang.Integer>">MyTest3<String>::new</error>;
+        test(<error descr="Bad return type in method reference: cannot convert MyTest3<java.lang.String> to MyTest3<java.lang.Integer>">MyTest3<String>::new</error>);
     }
 }
 

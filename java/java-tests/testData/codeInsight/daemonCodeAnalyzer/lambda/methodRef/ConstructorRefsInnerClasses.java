@@ -71,7 +71,7 @@ class StaticInner1 {
     static void call3(I2 s) {}
 
     static {
-      call3<error descr="Ambiguous method call: both 'StaticInner1.call3(I1)' and 'StaticInner1.call3(I2)' match">(StaticInner1.Inner :: new)</error>;
+      call3(StaticInner1.Inner :: <error descr="Cannot resolve constructor 'Inner'">new</error>);
     }
 }
 
@@ -109,7 +109,7 @@ class NonStaticInner2 {
 
 
   static {
-     I1 i1 = NonStaticInner2.Inner :: <error descr="Cannot resolve constructor 'Inner'">new</error>;
+     I1 i1 = <error descr="An enclosing instance of type NonStaticInner2 is not in scope">NonStaticInner2.Inner :: new</error>;
   }
 
   {
@@ -145,7 +145,7 @@ class NonStaticInner3 {
     }
 
     {
-        <error descr="Incompatible types. Found: '<method reference>', required: 'NonStaticInner3.I3<NonStaticInner3.Foo>'">I3<Foo> b1 = Foo::new;</error>
-        <error descr="Incompatible types. Found: '<method reference>', required: 'NonStaticInner3.I4<NonStaticInner3.Foo>'">I4<Foo> b2 = Foo::new;</error>
+        I3<Foo> b1 = Foo::<error descr="Cannot resolve constructor 'Foo'">new</error>;
+        I4<Foo> b2 = Foo::<error descr="Cannot resolve constructor 'Foo'">new</error>;
     }
 }

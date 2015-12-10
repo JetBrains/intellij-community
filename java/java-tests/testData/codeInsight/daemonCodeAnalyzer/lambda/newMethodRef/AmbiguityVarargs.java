@@ -12,7 +12,7 @@ class Test {
   void m(LongMapper... lm) { }
   
   {
-      m<error descr="Ambiguous method call: both 'Test.m(IntMapper, IntMapper...)' and 'Test.m(LongMapper...)' match">(this ::ii)</error>;
+      m(this ::<error descr="Cannot resolve method 'ii'">ii</error>);
   }
 
   int ii() {return 0;}

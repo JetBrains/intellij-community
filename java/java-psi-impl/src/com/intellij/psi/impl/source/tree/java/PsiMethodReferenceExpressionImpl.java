@@ -450,6 +450,10 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       map.remove(this);
     }
 
+    if (result instanceof MethodCandidateInfo && !((MethodCandidateInfo)result).isApplicable()) {
+      return false;
+    }
+
     final PsiElement resolve = result.getElement();
     if (resolve == null) {
       return false;
