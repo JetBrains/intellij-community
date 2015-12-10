@@ -148,7 +148,10 @@ public abstract class Updater<Painter extends ErrorStripePainter> implements Dis
       @Override
       public void run() {
         update(myPainter);
-        myScrollBar.repaint();
+        if (myPainter.isModified()) {
+          myScrollBar.invalidate();
+          myScrollBar.repaint();
+        }
       }
     });
   }
