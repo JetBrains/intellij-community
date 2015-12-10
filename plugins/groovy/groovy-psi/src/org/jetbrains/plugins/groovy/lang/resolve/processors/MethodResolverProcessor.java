@@ -108,7 +108,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
       final PsiElement resolveContext = state.get(RESOLVE_CONTEXT);
       final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
       final PsiSubstitutor partialSubstitutor = getSubstitutor(state);
-      final NotNullLazyValue<PsiSubstitutor> substitutorInferer
+      final NotNullLazyValue<PsiSubstitutor> substitutorComputer
         = myByShape ? NotNullLazyValue.createConstantValue(partialSubstitutor) : new NotNullLazyValue<PsiSubstitutor>() {
         @NotNull
         @Override
@@ -123,7 +123,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
       boolean isValidResult = isStaticsOK && isAccessible && isApplicable;
 
       GroovyMethodResult candidate = new GroovyMethodResult(
-        method, resolveContext, spreadState, partialSubstitutor, substitutorInferer, isAccessible, isStaticsOK, isValidResult
+        method, resolveContext, spreadState, partialSubstitutor, substitutorComputer, isAccessible, isStaticsOK, isValidResult
       );
 
       if (!myAllVariants && isValidResult) {

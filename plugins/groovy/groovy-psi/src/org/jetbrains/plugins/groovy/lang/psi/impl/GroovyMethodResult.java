@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 
 public class GroovyMethodResult extends GroovyResolveResultImpl {
 
-  private final NotNullLazyValue<PsiSubstitutor> mySubstitutorInferer;
+  private final NotNullLazyValue<PsiSubstitutor> mySubstitutorComputer;
 
   public GroovyMethodResult(@NotNull PsiMethod method,
                             @Nullable PsiElement resolveContext,
@@ -33,17 +33,17 @@ public class GroovyMethodResult extends GroovyResolveResultImpl {
                             @NotNull PsiSubstitutor substitutor,
                             boolean isAccessible, boolean staticsOK) {
     super(method, resolveContext, spreadState, substitutor, isAccessible, staticsOK, true, true);
-    mySubstitutorInferer = NotNullLazyValue.createConstantValue(substitutor);
+    mySubstitutorComputer = NotNullLazyValue.createConstantValue(substitutor);
   }
 
   public GroovyMethodResult(@NotNull PsiMethod element,
                             @Nullable PsiElement resolveContext,
                             @Nullable SpreadState spreadState,
                             @NotNull PsiSubstitutor partialSubstitutor,
-                            @NotNull NotNullLazyValue<PsiSubstitutor> substitutorInferer,
+                            @NotNull NotNullLazyValue<PsiSubstitutor> substitutorComputer,
                             boolean isAccessible, boolean staticsOK, boolean isApplicable) {
     super(element, resolveContext, spreadState, partialSubstitutor, isAccessible, staticsOK, false, isApplicable);
-    mySubstitutorInferer = substitutorInferer;
+    mySubstitutorComputer = substitutorComputer;
   }
 
   @NotNull
@@ -55,11 +55,11 @@ public class GroovyMethodResult extends GroovyResolveResultImpl {
   @NotNull
   @Override
   public PsiSubstitutor getSubstitutor() {
-    return mySubstitutorInferer.getValue();
+    return mySubstitutorComputer.getValue();
   }
 
   @NotNull
   public PsiSubstitutor getSubstitutor(boolean infer) {
-    return infer ? mySubstitutorInferer.getValue() : super.getSubstitutor();
+    return infer ? mySubstitutorComputer.getValue() : super.getSubstitutor();
   }
 }
