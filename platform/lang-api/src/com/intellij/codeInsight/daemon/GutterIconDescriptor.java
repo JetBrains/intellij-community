@@ -31,6 +31,7 @@ public abstract class GutterIconDescriptor {
    * Human-readable provider name for UI.
    * @return null if no configuration needed
    */
+  @Nullable("null means disabled")
   public abstract String getName();
 
   @Nullable
