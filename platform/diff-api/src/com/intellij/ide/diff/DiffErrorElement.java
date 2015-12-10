@@ -15,9 +15,11 @@
  */
 package com.intellij.ide.diff;
 
-import com.intellij.openapi.Disposable;
+import com.intellij.diff.chains.DiffRequestProducerException;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +32,6 @@ import java.io.IOException;
  */
 public class DiffErrorElement extends DiffElement {
   private final String myMessage;
-  private final JTextArea myDescription;
 
   public DiffErrorElement() {
     this("Can't load children", "");
@@ -38,12 +39,7 @@ public class DiffErrorElement extends DiffElement {
 
   public DiffErrorElement(@NotNull String message, @NotNull String description) {
     myMessage = message;
-    myDescription = new JTextArea(description);
-    //myDescription.setBackground(new Color(0,0,0,0));
-    myDescription.setEditable(false);
   }
-
-
 
   @Override
   public String getPath() {
@@ -76,9 +72,10 @@ public class DiffErrorElement extends DiffElement {
     return EMPTY_ARRAY;
   }
 
+  @Nullable
   @Override
   public byte[] getContent() throws IOException {
-    return ArrayUtil.EMPTY_BYTE_ARRAY;
+    return null;
   }
 
   @Override
@@ -91,8 +88,9 @@ public class DiffErrorElement extends DiffElement {
     return PlatformIcons.ERROR_INTRODUCTION_ICON;
   }
 
-  @Override
-  public JComponent getViewComponent(Project project, @Nullable DiffElement target, @NotNull Disposable parentDisposable) {
-    return myDescription;
+  @NotNull
+  public DiffContent createDiffContent(@Nullable Project project, @NotNull ProgressIndicator indicator)
+    throws DiffRequestProducerException, ProcessCanceledException {
+    throw new DiffRequestProducerException(myMessage);
   }
 }

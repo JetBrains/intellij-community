@@ -15,29 +15,22 @@
  */
 package com.intellij.ide.diff;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.*;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.chains.DiffRequestProducerException;
+import com.intellij.diff.contents.DiffContent;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.concurrent.Callable;
@@ -45,12 +38,8 @@ import java.util.concurrent.Callable;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class DiffElement<T> /*implements Disposable */{
+public abstract class DiffElement<T> {
   public static final DiffElement[] EMPTY_ARRAY = new DiffElement[0];
-  public static final DiffElement ERROR_NODE = new DiffErrorElement("Can't load elements", "An error has been occurred while getting children");
-  private DiffPanel myDiffPanel;
-  private Editor myEditor;
-  private static final Logger LOG = Logger.getInstance(DiffElement.class.getName());
 
   public abstract String getPath();
 
@@ -91,125 +80,7 @@ public abstract class DiffElement<T> /*implements Disposable */{
     return EncodingManager.getInstance().getDefaultCharset();
   }
 
-  @Nullable
-  public JComponent getViewComponent(Project project, @Nullable DiffElement target, @NotNull Disposable parentDisposable) {
-    disposeViewComponent();
-    try {
-      FileType fileType = getFileType();
-      if (fileType != null && fileType.isBinary()) {
-        return getFromProviders(project, target);
-      }
-      final byte[] content = getContent();
-      myEditor = createViewComponentEditor(project, content, fileType);
-      return myEditor != null? myEditor.getComponent() : null;
-    }
-    catch (IOException e) {
-      LOG.error(e);
-      // TODO
-    }
-    return null;
-  }
-
-  @Nullable
-  protected Editor createViewComponentEditor(Project project, @Nullable byte[] content, @Nullable FileType fileType) {
-    EditorFactory editorFactory = EditorFactory.getInstance();
-    if (editorFactory == null) return null;
-    T value = getValue();
-    Document document = value instanceof VirtualFile
-                        ? FileDocumentManager.getInstance().getDocument((VirtualFile)value)
-                        : editorFactory.createDocument(StringUtil.convertLineSeparators(new String(content)));
-
-    if (document != null && fileType != null) {
-      return editorFactory.createEditor(document, project, fileType, true);
-    }
-    return null;
-  }
-
-  @Nullable
-  protected JComponent getFromProviders(Project project, DiffElement target) {
-    return null;
-  }
-
-  @Nullable
-  public JComponent getDiffComponent(DiffElement element, Project project, Window parentWindow, Disposable disposableParent) throws FilesTooBigForDiffException {
-    disposeDiffComponent();
-
-    DiffRequest request;
-    try {
-      request = createRequest(project, element);
-    }
-    catch (IOException e) {
-      // TODO
-      LOG.error(e);
-      return null;
-    }
-    if (request != null) {
-      myDiffPanel = DiffManager.getInstance().createDiffPanel(parentWindow, project, disposableParent, null);
-      myDiffPanel.setRequestFocus(false);
-      myDiffPanel.setDiffRequest(request);
-      myDiffPanel.setTitle1(getName());
-      myDiffPanel.setTitle2(element.getName());
-      return myDiffPanel.getComponent();
-    }
-
-    return null;
-  }
-
-  @Nullable
-  protected DiffRequest createRequest(Project project, DiffElement element) throws IOException {
-    final T src = getValue();
-    final Object trg = element.getValue();
-    if (src instanceof VirtualFile && trg instanceof VirtualFile
-        && ((VirtualFile)src).getFileType().isBinary()
-        && ((VirtualFile)trg).getFileType().isBinary()) {
-      return createRequestForBinaries(project, ((VirtualFile)src), ((VirtualFile)trg));
-    }
-    if (src instanceof VirtualFile) {
-      if (((VirtualFile)src).getFileType().isBinary()) return null;
-      if (trg instanceof VirtualFile) {
-        if (((VirtualFile)trg).getFileType().isBinary()) return null;
-        final FileDocumentManager mgr = FileDocumentManager.getInstance();
-        if (mgr.getDocument((VirtualFile)src) != null && mgr.getDocument((VirtualFile)trg) != null) {
-          return SimpleDiffRequest.compareFiles((VirtualFile)src, (VirtualFile)trg, project == null ? ProjectManager.getInstance().getDefaultProject() : project);
-        }
-      }
-    }
-    final DiffContent srcContent = createDiffContent();
-    final DiffContent trgContent = element.createDiffContent();
-
-    if (srcContent != null && trgContent != null) {
-      final SimpleDiffRequest request = new SimpleDiffRequest(project, "");
-      request.setContents(srcContent, trgContent);
-      return request;
-    }
-    return null;
-  }
-
-  @Nullable
-  protected DiffRequest createRequestForBinaries(Project project, @NotNull VirtualFile src, @NotNull VirtualFile trg) {
-    return SimpleDiffRequest.compareFiles(src, trg, project);
-  }
-
-  @Nullable
-  protected DiffContent createDiffContent() throws IOException {
-    return new SimpleContent(new String(getContent(), getCharset()), getFileType());
-  }
-
   public abstract T getValue();
-
-  public void disposeViewComponent() {
-    if (myEditor != null) {
-      EditorFactory.getInstance().releaseEditor(myEditor);
-      myEditor = null;
-    }
-  }
-
-  public void disposeDiffComponent() {
-    if (myDiffPanel != null) {
-      Disposer.dispose(myDiffPanel);
-      myDiffPanel = null;
-    }
-  }
 
   public String getSeparator() {
     return "/";
@@ -220,17 +91,32 @@ public abstract class DiffElement<T> /*implements Disposable */{
     return null;
   }
 
-  //@Override
-  //public void dispose() {
-  //}
+  /**
+   * Called in background thread without ReadLock OR in EDT
+   *
+   * @see com.intellij.diff.chains.DiffRequestProducer#process
+   */
+  @NotNull
+  public DiffContent createDiffContent(@Nullable Project project, @NotNull ProgressIndicator indicator)
+    throws DiffRequestProducerException, ProcessCanceledException {
+    try {
+      final T src = getValue();
+      if (src instanceof VirtualFile) {
+        return DiffContentFactory.getInstance().create(project, (VirtualFile)src);
+      }
 
-  @Nullable
-  public Callable<DiffElement<T>> getElementChooser(Project project) {
-    return null;
+      byte[] content = getContent();
+      if (content == null) throw new DiffRequestProducerException("Can't get content");
+
+      return DiffContentFactory.getInstance().create(new String(content, getCharset()), getFileType());
+    }
+    catch (IOException e) {
+      throw new DiffRequestProducerException(e);
+    }
   }
 
   @Nullable
-  public DataProvider getDataProvider(Project project) {
+  public Callable<DiffElement<T>> getElementChooser(Project project) {
     return null;
   }
 
