@@ -755,7 +755,7 @@ public class TypeMigrationLabeler {
 
   public void setRootAndMigrate(final TypeMigrationUsageInfo newRootUsageInfo, final PsiType migrationType, final PsiReference[] usages) {
     final TypeMigrationUsageInfo oldRoot = getCurrentRoot();
-    setCurrentRoot(newRootUsageInfo);
+    myCurrentRoot = newRootUsageInfo;
     PsiElement root = newRootUsageInfo.getElement();
     if (root instanceof PsiMethod) {
       migrateMethodReturnExpression(migrationType, (PsiMethod)root);
@@ -902,10 +902,6 @@ public class TypeMigrationLabeler {
 
   public Map<TypeMigrationUsageInfo, HashSet<Pair<TypeMigrationUsageInfo, PsiType>>> getRootsTree() {
     return myRootsTree;
-  }
-
-  public void setCurrentRoot(final TypeMigrationUsageInfo currentRoot) {
-    myCurrentRoot = currentRoot;
   }
 
   TypeMigrationUsageInfo getCurrentRoot() {
