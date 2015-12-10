@@ -673,7 +673,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
 
     if (isVertical()) {
-      g.drawLine(bounds.x, bounds.y, bounds.x, bounds.y + bounds.height);
+      int x = scrollbar.getComponentOrientation().isLeftToRight() ? bounds.x : bounds.x + bounds.width - 1;
+      g.drawLine(x, bounds.y, x, bounds.y + bounds.height);
     }
     else {
       g.drawLine(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y);
@@ -794,6 +795,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
     int w = thumbBounds.width - hGap * 2;
     int h = thumbBounds.height - vGap * 2;
+
+    if (!scrollbar.getComponentOrientation().isLeftToRight()) hGap--;
 
     // leave one pixel between thumb and right or bottom edge
     if (vertical) {
