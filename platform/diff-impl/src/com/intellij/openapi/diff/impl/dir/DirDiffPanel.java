@@ -23,6 +23,7 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffPlaces;
+import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.diff.DirDiffElement;
@@ -176,34 +177,21 @@ public class DirDiffPanel implements Disposable, DataProvider {
       @Override
       public void keyPressed(KeyEvent e) {
         final int keyCode = e.getKeyCode();
-        final int rowCount = myTable.getRowCount();
-        int row = myTable.getSelectionModel().getLeadSelectionIndex();
-        final int[] rows = myTable.getSelectedRows();
-        if (rows.length == 0) return;
-        if (keyCode == KeyEvent.VK_DOWN && row < rowCount - 1) {
-          row++;
-          final DirDiffElementImpl element = myModel.getElementAt(row);
-          if (element == null) return;
-          if (element.isSeparator()) {
-            row++;
-          }
+
+        int row;
+        if (keyCode == KeyEvent.VK_DOWN) {
+          row = getNextRow();
         }
-        else if (keyCode == KeyEvent.VK_UP && row > 0) {
-          row--;
-          final DirDiffElementImpl element = myModel.getElementAt(row);
-          if (element == null) return;
-          if (element.isSeparator()) {
-            row--;
-          }
+        else if (keyCode == KeyEvent.VK_UP) {
+          row = getPrevRow();
         }
         else {
-          return;
+          row = -1;
         }
-        final DirDiffElementImpl element = myModel.getElementAt(row);
-        if (element == null) return;
-        if (!element.isSeparator()) {
+
+        if (row != -1) {
+          selectRow(row, e.isShiftDown());
           e.consume();
-          myTable.changeSelection(row, (myModel.getColumnCount() - 1) / 2, false, e.isShiftDown());
         }
       }
     });
@@ -372,6 +360,44 @@ public class DirDiffPanel implements Disposable, DataProvider {
     myDiffRequestProcessor = new MyDiffRequestProcessor(project);
     Disposer.register(this, myDiffRequestProcessor);
     myDiffPanel.add(myDiffRequestProcessor.getComponent(), BorderLayout.CENTER);
+  }
+
+  private int getNextRow() {
+    if (myTable.getSelectedRows().length == 0) return -1;
+    int rowCount = myTable.getRowCount();
+    int row = myTable.getSelectionModel().getLeadSelectionIndex();
+
+    while (true) {
+      if (row >= rowCount) return -1;
+      row++;
+      DirDiffElementImpl element = myModel.getElementAt(row);
+      if (element == null) return -1;
+      if (!element.isSeparator()) break;
+    }
+
+    return row;
+  }
+
+  private int getPrevRow() {
+    if (myTable.getSelectedRows().length == 0) return -1;
+    int row = myTable.getSelectionModel().getLeadSelectionIndex();
+
+    while (true) {
+      if (row <= 0) return -1;
+      row--;
+      DirDiffElementImpl element = myModel.getElementAt(row);
+      if (element == null) return -1;
+      if (!element.isSeparator()) break;
+    }
+
+    return row;
+  }
+
+  private void selectRow(int row, boolean extend) {
+    if (row == -1) return;
+    DirDiffElementImpl element = myModel.getElementAt(row);
+    if (element == null || element.isSeparator()) return;
+    myTable.changeSelection(row, (myModel.getColumnCount() - 1) / 2, false, extend);
   }
 
   public AnAction[] getActions() {
@@ -553,6 +579,37 @@ public class DirDiffPanel implements Disposable, DataProvider {
                                   DiffContentFactory.getInstance().createEmpty();
 
       return new SimpleDiffRequest(null, sourceContent, targetContent, null, null);
+    }
+
+    //
+    // Navigation
+    //
+
+    @Override
+    protected boolean hasNextChange() {
+      return getNextRow() != -1;
+    }
+
+    @Override
+    protected boolean hasPrevChange() {
+      return getPrevRow() != -1;
+    }
+
+    @Override
+    protected void goToNextChange(boolean fromDifferences) {
+      selectRow(getNextRow(), false);
+      updateRequest(false, fromDifferences ? ScrollToPolicy.FIRST_CHANGE : null);
+    }
+
+    @Override
+    protected void goToPrevChange(boolean fromDifferences) {
+      selectRow(getPrevRow(), false);
+      updateRequest(false, fromDifferences ? ScrollToPolicy.LAST_CHANGE : null);
+    }
+
+    @Override
+    protected boolean isNavigationEnabled() {
+      return myModel.getRowCount() > 0;
     }
   }
 
