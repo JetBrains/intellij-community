@@ -170,7 +170,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
   }
 
   private class PerformBatchFixesTask extends AbstractPerformFixesTask {
-    private final List<ProblemDescriptor> myBatchModeDescriptors = new SmartList<ProblemDescriptor>();
+    private final List<ProblemDescriptor> myBatchModeDescriptors = new ArrayList<ProblemDescriptor>();
     private boolean myApplied = false;
 
     public PerformBatchFixesTask(@NotNull Project project,
