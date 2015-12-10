@@ -16,7 +16,6 @@
 package com.intellij.remote;
 
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author traff
@@ -30,19 +29,5 @@ public interface RemoteSdkAdditionalData<T extends RemoteSdkCredentials>
   @Deprecated
   void setInitialized(boolean initialized);
 
-  void setVagrantConnectionType(@NotNull VagrantBasedCredentialsHolder vagrantBasedCredentials);
-
-  /**
-   * This method switches to use of ssh-credentials based data
-   * @param credentials credentials that specify connection
-   */
-  void setSshCredentials(@NotNull RemoteCredentialsHolder credentials);
-
-  void setDeploymentConnectionType(@NotNull WebDeploymentCredentialsHolder credentials);
-
-  void setDockerConnectionType(@NotNull DockerCredentialsHolder credentials);
-
-  CredentialsType getRemoteConnectionType();
-
-  void switchOnConnectionType(@NotNull RemoteSdkConnectionAcceptor acceptor);
+  RemoteConnectionCredentialsWrapper connectionCredentials();
 }
