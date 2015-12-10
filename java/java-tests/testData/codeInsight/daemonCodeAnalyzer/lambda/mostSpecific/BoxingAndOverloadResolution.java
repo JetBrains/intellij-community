@@ -28,6 +28,6 @@ class Test2 {
   static void call(I2 i2) { System.out.println(i2); }
 
   static {
-    call(Test2::<error descr="Cannot resolve method 'm'">m</error>);
+    call<error descr="Ambiguous method call: both 'Test2.call(I1)' and 'Test2.call(I2)' match">(Test2::m)</error>;
   }
 }

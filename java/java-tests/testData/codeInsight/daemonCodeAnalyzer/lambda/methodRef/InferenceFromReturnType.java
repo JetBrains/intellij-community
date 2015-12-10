@@ -49,7 +49,7 @@ class MyTestConstructor {
    private static void <warning descr="Private method 'foo(MyTestConstructor.I3)' is never used">foo</warning>(I3 i) {System.out.println(i);}
 
    static {
-       foo(Foo::<error descr="Cannot resolve constructor 'Foo'">new</error>);
+       foo<error descr="Ambiguous method call: both 'MyTestConstructor.foo(I1)' and 'MyTestConstructor.foo(I2)' match">(Foo::new)</error>;
    }
 }
 
@@ -78,6 +78,6 @@ class MyTestMethod {
     private static void <warning descr="Private method 'foo(MyTestMethod.I3)' is never used">foo</warning>(I3 i) {System.out.println(i);}
 
     static {
-       foo(MyTestMethod::<error descr="Cannot resolve method 'm'">m</error>);
+       foo<error descr="Ambiguous method call: both 'MyTestMethod.foo(I1)' and 'MyTestMethod.foo(I2)' match">(MyTestMethod::m)</error>;
     }
 }

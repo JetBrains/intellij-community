@@ -40,6 +40,6 @@ class AAmbiguous {
   }
 
   public static void main(Promise<String> helloWorld) {
-    helloWorld.then(AAmbiguous::<error descr="Cannot resolve method 'calculateLength'">calculateLength</error>);
+    helloWorld.then<error descr="Ambiguous method call: both 'Promise.then(Function<? super String, Promise<Integer>>)' and 'Promise.then(AsyncFunction<? super String, Promise<Integer>>)' match">(AAmbiguous::calculateLength)</error>;
   }
 }

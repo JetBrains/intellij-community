@@ -20,8 +20,8 @@ class MyTest {
     static void foo(I3 i) {}
 
     static {
-         foo(MyTest::<error descr="Cannot resolve method 'm'">m</error>);
-         foo(MyTest::<error descr="Cannot resolve method 'm1'">m1</error>);
+         foo<error descr="Ambiguous method call: both 'MyTest.foo(I1)' and 'MyTest.foo(I2)' match">(MyTest::m)</error>;
+         foo<error descr="Ambiguous method call: both 'MyTest.foo(I1)' and 'MyTest.foo(I2)' match">(MyTest::m1)</error>;
     }
 }
 
@@ -44,9 +44,9 @@ class MyTest1 {
 
     static {
         foo1(MyTest1::m);
-        foo2(MyTest1::<error descr="Cannot resolve method 'm'">m</error>);
+        foo2<error descr="Ambiguous method call: both 'MyTest1.foo2(I1)' and 'MyTest1.foo2(I2)' match">(MyTest1::m)</error>;
 
         foo1(MyTest1::m1);
-        foo2(MyTest1::<error descr="Cannot resolve method 'm1'">m1</error>);  
+        foo2<error descr="Ambiguous method call: both 'MyTest1.foo2(I1)' and 'MyTest1.foo2(I2)' match">(MyTest1::m1)</error>;  
     }
 }
