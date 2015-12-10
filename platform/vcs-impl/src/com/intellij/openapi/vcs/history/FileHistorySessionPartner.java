@@ -95,12 +95,18 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
     JComponent component = ContentUtilEx.findContentComponent(getToolWindow(project).getContentManager(), new Condition<JComponent>() {
       @Override
       public boolean value(JComponent component) {
-        return component instanceof FileHistoryPanelImpl && 
-               ((FileHistoryPanelImpl)component).getFilePath().equals(path) &&
-               Comparing.equal(((FileHistoryPanelImpl)component).getStartingRevision(), startingRevisionNumber);
+        return component instanceof FileHistoryPanelImpl && sameHistories((FileHistoryPanelImpl)component, path, startingRevisionNumber);
       }
     });
     return component == null ? null : ((FileHistoryPanelImpl)component).getRefresher();
+  }
+
+  private static boolean sameHistories(@NotNull FileHistoryPanelImpl historyPanel,
+                                       @NotNull FilePath path,
+                                       @Nullable VcsRevisionNumber startingRevisionNumber) {
+    String existingRevision = historyPanel.getStartingRevision() == null ? null : historyPanel.getStartingRevision().asString();
+    String newRevision = startingRevisionNumber == null ? null : startingRevisionNumber.asString();
+    return historyPanel.getFilePath().equals(path) && Comparing.equal(existingRevision, newRevision);
   }
 
   public void acceptRevision(VcsFileRevision revision) {
