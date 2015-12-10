@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
+import org.jetbrains.plugins.groovy.util.NotNullCachedComputableWrapper
 import org.jetbrains.plugins.groovy.util.TestUtils
+
 /**
  * @author ven
  */
@@ -2231,5 +2234,21 @@ class SourceConcrete implements GenericSourceTrait<String> {})
 SourceConcrete.someOtherStatic<caret>Method()
 ''', GrTraitMethod)
     assertEquals "java.lang.String", method.returnType.canonicalText
+  }
+
+  void 'test substitutor is not computed within resolve'() {
+    def ref = configureByText('_.groovy', '''
+[1, 2, 3].with {
+  group<caret>By({2})
+}
+''', GrReferenceExpression)
+    def results = ref.multiResolve(false)
+    assert results.length > 0
+    results.each {
+      assert it instanceof GroovyMethodResult
+      def computer = it.substitutorComputer
+      assert computer instanceof NotNullCachedComputableWrapper
+      assert !computer.computed
+    }
   }
 }

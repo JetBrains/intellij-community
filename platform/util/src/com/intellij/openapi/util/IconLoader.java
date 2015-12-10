@@ -41,10 +41,10 @@ import java.awt.image.ImageFilter;
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.util.*;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 public final class IconLoader {
@@ -355,16 +355,14 @@ public final class IconLoader {
   }
 
   private static final class CachedImageIcon implements ScalableIcon {
-    private Object myRealIcon;
+    private volatile Object myRealIcon;
     @NotNull
     private final URL myUrl;
-    private boolean dark;
-    private float scale;
-    private ImageFilter filter;
+    private volatile boolean dark;
+    private volatile float scale;
+    private volatile ImageFilter filter;
 
-    private Image retinaImageCache;
-    private HashMap<Float, Icon> scaledIconsCache;
-    private static final int SCALED_ICONS_CACHE_LIMIT = 5;
+    private final MyScaledIconsCache myScaledIconsCache = new MyScaledIconsCache();
 
     public CachedImageIcon(@NotNull URL url) {
       myUrl = url;
@@ -377,11 +375,12 @@ public final class IconLoader {
     private synchronized Icon getRealIcon() {
       if (isLoaderDisabled() && (myRealIcon == null || dark != USE_DARK_ICONS || scale != SCALE || filter != IMAGE_FILTER)) return EMPTY_ICON;
 
-      if (dark != USE_DARK_ICONS || scale != SCALE || filter != IMAGE_FILTER) {
+      if (!isValid()) {
         myRealIcon = null;
         dark = USE_DARK_ICONS;
         scale = SCALE;
         filter = IMAGE_FILTER;
+        myScaledIconsCache.clear();
       }
       Object realIcon = myRealIcon;
       if (realIcon instanceof Icon) return (Icon)realIcon;
@@ -406,6 +405,10 @@ public final class IconLoader {
       }
 
       return icon == null ? EMPTY_ICON : icon;
+    }
+
+    private boolean isValid() {
+      return dark == USE_DARK_ICONS && scale == SCALE && filter == IMAGE_FILTER;
     }
 
     @Override
@@ -433,40 +436,65 @@ public final class IconLoader {
       if (scaleFactor == 1f) {
         return this;
       }
-      if (scaledIconsCache == null) {
-        scaledIconsCache = new LinkedHashMap<Float, Icon>(1) {
-          @Override
-          public boolean removeEldestEntry(Map.Entry<Float, Icon> entry) {
-            return size() > SCALED_ICONS_CACHE_LIMIT;
-          }
-        };
+
+      if (!isValid()) getRealIcon(); // force state update & cache reset
+
+      Icon icon = myScaledIconsCache.getScaledIcon(scaleFactor);
+      if (icon != null) {
+        return icon;
       }
-
-      float effectiveScale = scaleFactor * JBUI.scale(1f);
-
-      Icon result = scaledIconsCache.get(effectiveScale);
-      if (result != null) {
-        return result;
-      }
-
-      boolean needRetinaImage = effectiveScale >= 1.5f || UIUtil.isRetina();
-      Image image = needRetinaImage && retinaImageCache != null ?
-                    retinaImageCache :
-                    ImageLoader.loadFromUrl(myUrl, UIUtil.isUnderDarcula(), needRetinaImage, filter);
-
-      if (image != null) {
-        if (needRetinaImage && retinaImageCache == null) {
-          retinaImageCache = image;
-        }
-        int width = (int)(getIconWidth() * scaleFactor);
-        int height = (int)(getIconHeight() * scaleFactor);
-        final BufferedImage resizedImage = Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, width, height);
-        result = getIcon(resizedImage);
-        scaledIconsCache.put(effectiveScale, result);
-        return result;
-      }
-
       return this;
+    }
+
+    private class MyScaledIconsCache {
+      // Map {false -> image}, {true -> image@2x}
+      private Map<Boolean, SoftReference<Image>> origImagesCache = Collections.synchronizedMap(new HashMap<Boolean, SoftReference<Image>>(2));
+
+      private static final int SCALED_ICONS_CACHE_LIMIT = 5;
+
+      // Map {effective scale -> icon}
+      private Map<Float, SoftReference<Icon>> scaledIconsCache = Collections.synchronizedMap(new LinkedHashMap<Float, SoftReference<Icon>>(SCALED_ICONS_CACHE_LIMIT) {
+        @Override
+        public boolean removeEldestEntry(Map.Entry<Float, SoftReference<Icon>> entry) {
+          return size() > SCALED_ICONS_CACHE_LIMIT;
+        }
+      });
+
+      public Image getOrigImage(boolean retina) {
+        SoftReference<Image> val = origImagesCache.get(retina);
+        Image img = val != null ? val.get() : null;
+
+        if (img == null) {
+          img = ImageLoader.loadFromUrl(myUrl, UIUtil.isUnderDarcula(), retina, filter);
+          origImagesCache.put(retina, new SoftReference<Image>(img));
+        }
+        return img;
+      }
+
+      public Icon getScaledIcon(float scale) {
+        float effectiveScale = scale * JBUI.scale(1f);
+        SoftReference<Icon> val = scaledIconsCache.get(effectiveScale);
+        Icon icon = val != null ? val.get() : null;
+
+        if (icon == null) {
+          boolean needRetinaImage = (effectiveScale >= 1.5f || UIUtil.isRetina());
+          Image image = getOrigImage(needRetinaImage);
+
+          if (image != null) {
+            Icon realIcon = getRealIcon();
+            int width = (int)(realIcon.getIconWidth() * scale);
+            int height = (int)(realIcon.getIconHeight() * scale);
+            icon = getIcon(Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, width, height));
+            scaledIconsCache.put(effectiveScale, new SoftReference<Icon>(icon));
+          }
+        }
+        return icon;
+      }
+
+      public void clear() {
+        scaledIconsCache.clear();
+        origImagesCache.clear();
+      }
     }
   }
 

@@ -25,6 +25,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -119,7 +120,8 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
         map.put(methodReferenceExpression, functionalInterfaceType);
         final JavaResolveResult result = methodReferenceExpression.advancedResolve(false);
         final PsiElement element = result.getElement();
-        if (element != null && result.isAccessible()) {
+        if (element != null && result.isAccessible() &&
+            !(result instanceof MethodCandidateInfo && !((MethodCandidateInfo)result).isApplicable())) {
           if (element instanceof PsiMethod && !isSimpleCall(parameters, callExpression, (PsiMethod)element)) {
             return null;
           }

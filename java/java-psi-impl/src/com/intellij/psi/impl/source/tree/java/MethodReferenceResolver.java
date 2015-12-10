@@ -133,6 +133,15 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                   }
                   return session.infer(method.getParameterList().getParameters(), null, null);
                 }
+
+                @Override
+                public boolean isApplicable() {
+                  if (signature == null) return false;
+                  final PsiType[] argTypes = signature.getParameterTypes();
+                  boolean hasReceiver = PsiMethodReferenceUtil.isSecondSearchPossible(argTypes, qualifierResolveResult, reference);
+
+                  return MethodReferenceConflictResolver.isApplicableByFirstSearch(this, argTypes, hasReceiver, interfaceMethod.isVarArgs()) != null;
+                }
               };
             }
         };
@@ -211,8 +220,14 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
     protected CandidateInfo guardedOverloadResolution(@NotNull List<CandidateInfo> conflicts) {
       if (mySignature == null) return null;
 
-      if (conflicts.size() > 1) checkSameSignatures(conflicts);
-      if (conflicts.size() > 1) checkAccessStaticLevels(conflicts, true);
+      if (conflicts.isEmpty()) return null;
+      if (conflicts.size() == 1) return conflicts.get(0);
+
+      checkSameSignatures(conflicts);
+      if (conflicts.size() == 1) return  conflicts.get(0);
+
+      checkAccessStaticLevels(conflicts, true);
+      if (conflicts.size() == 1) return  conflicts.get(0);
 
       final PsiType[] argTypes = mySignature.getParameterTypes();
       boolean hasReceiver = PsiMethodReferenceUtil.isSecondSearchPossible(argTypes, myQualifierResolveResult, myReferenceExpression);
@@ -222,23 +237,9 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
 
       for (CandidateInfo conflict : conflicts) {
         if (!(conflict instanceof MethodCandidateInfo)) continue;
-        final PsiMethod psiMethod = ((MethodCandidateInfo)conflict).getElement();
-
-        final PsiSubstitutor substitutor = ((MethodCandidateInfo)conflict).getSubstitutor(false);
-        final PsiType[] parameterTypes = psiMethod.getSignature(substitutor).getParameterTypes();
-
-        final boolean varargs = ((MethodCandidateInfo)conflict).isVarargs();
-        if (varargs && (!psiMethod.isVarArgs() || myFunctionalMethodVarArgs)) continue;
-
-        if ((varargs || argTypes.length == parameterTypes.length) &&
-            PsiMethodReferenceUtil.isCorrectAssignment(parameterTypes, argTypes, varargs, 0)) {
-          firstCandidates.add(conflict);
-        }
-
-        if (hasReceiver &&
-            (varargs || argTypes.length == parameterTypes.length + 1) &&
-            PsiMethodReferenceUtil.isCorrectAssignment(parameterTypes, argTypes, varargs, 1)) {
-          secondCandidates.add(conflict);
+        final Boolean applicableByFirstSearch = isApplicableByFirstSearch(conflict, argTypes, hasReceiver, myFunctionalMethodVarArgs);
+        if (applicableByFirstSearch != null) {
+          (applicableByFirstSearch ? firstCandidates : secondCandidates).add(conflict);
         }
       }
 
@@ -264,9 +265,39 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
         return !firstCandidates.isEmpty() ? firstCandidates.get(0) : secondCandidates.get(0);
       }
 
+      if (firstCandidates.isEmpty() && secondCandidates.isEmpty()) {
+        return null;
+      }
+
       conflicts.clear();
       firstCandidates.addAll(secondCandidates);
       conflicts.addAll(firstCandidates);
+      return null;
+    }
+
+    private static Boolean isApplicableByFirstSearch(CandidateInfo conflict, PsiType[] argTypes,
+                                                    boolean hasReceiver,
+                                                    boolean functionalMethodVarArgs) {
+      final PsiMethod psiMethod = ((MethodCandidateInfo)conflict).getElement();
+
+      final PsiSubstitutor substitutor = ((MethodCandidateInfo)conflict).getSubstitutor(false);
+      final PsiType[] parameterTypes = psiMethod.getSignature(substitutor).getParameterTypes();
+
+      final boolean varargs = ((MethodCandidateInfo)conflict).isVarargs();
+      if (varargs && (!psiMethod.isVarArgs() || functionalMethodVarArgs)) {
+        return null;
+      }
+
+      if ((varargs || argTypes.length == parameterTypes.length) &&
+          PsiMethodReferenceUtil.isCorrectAssignment(parameterTypes, argTypes, varargs, 0)) {
+        return true;
+      }
+
+      if (hasReceiver &&
+          (varargs || argTypes.length == parameterTypes.length + 1) &&
+          PsiMethodReferenceUtil.isCorrectAssignment(parameterTypes, argTypes, varargs, 1)) {
+        return false;
+      }
       return null;
     }
 

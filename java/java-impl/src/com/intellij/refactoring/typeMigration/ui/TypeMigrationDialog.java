@@ -67,12 +67,12 @@ public class TypeMigrationDialog extends RefactoringDialog {
   private final PsiTypeCodeFragment myTypeCodeFragment;
   private final ScopeChooserCombo myScopeChooserCombo;
 
-  public TypeMigrationDialog(@NotNull Project project, PsiElement root, TypeMigrationRules rules) {
+  public TypeMigrationDialog(@NotNull Project project, PsiElement root, PsiType migrationType, TypeMigrationRules rules) {
     super(project, false);
     myRoot = root;
     myRules = rules;
 
-    final PsiType migrationRootType = rules != null ? rules.getMigrationRootType() : null;
+    final PsiType migrationRootType = migrationType;
     final PsiType rootType = getRootType();
     final String text = migrationRootType != null ? migrationRootType.getCanonicalText(true) :
                         rootType != null ? rootType.getCanonicalText(true) : "";
@@ -209,10 +209,9 @@ public class TypeMigrationDialog extends RefactoringDialog {
 
     if (myRules == null) {
       myRules = new TypeMigrationRules();
-      myRules.setMigrationRootType(migrationType);
       myRules.setBoundScope(myScopeChooserCombo.getSelectedScope());
     }
-    invokeRefactoring(new TypeMigrationProcessor(myProject, myRoot, myRules));
+    invokeRefactoring(new TypeMigrationProcessor(myProject, myRoot, migrationType, myRules));
   }
 
   @Nullable

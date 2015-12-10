@@ -27,7 +27,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.FunctionUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -79,6 +81,12 @@ public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescripto
   @Override
   public String getName() {
     return "Recursive call";
+  }
+
+  @Nullable
+  @Override
+  public Icon getIcon() {
+    return AllIcons.Gutter.RecursiveMethod;
   }
 
   private static class RecursiveMethodCallMarkerInfo extends LineMarkerInfo<PsiMethodCallExpression> {

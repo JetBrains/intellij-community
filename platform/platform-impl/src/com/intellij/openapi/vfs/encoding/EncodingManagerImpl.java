@@ -48,7 +48,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.concurrency.BoundedTaskExecutorService;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.xmlb.annotations.Attribute;
 import gnu.trove.Equality;
 import gnu.trove.THashSet;
@@ -100,7 +100,8 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   private final Alarm updateEncodingFromContent = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   private static final Key<Charset> CACHED_CHARSET_FROM_CONTENT = Key.create("CACHED_CHARSET_FROM_CONTENT");
 
-  private final BoundedTaskExecutorService changedDocumentExecutor = new BoundedTaskExecutorService(PooledThreadExecutor.INSTANCE, JobSchedulerImpl.CORES_COUNT, this);
+  private final BoundedTaskExecutor changedDocumentExecutor =
+    new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, JobSchedulerImpl.CORES_COUNT, this);
 
   public EncodingManagerImpl(@NotNull EditorFactory editorFactory) {
     editorFactory.getEventMulticaster().addDocumentListener(new DocumentAdapter() {

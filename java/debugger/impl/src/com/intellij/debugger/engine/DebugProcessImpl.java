@@ -86,11 +86,13 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -151,6 +153,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final Alarm myStatusUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myDisposable);
 
   private final ThreadBlockedMonitor myThreadBlockedMonitor = new ThreadBlockedMonitor(this, myDisposable);
+  private ThreadGroup myThreadGroupForJDI;
 
   protected DebugProcessImpl(Project project) {
     myProject = project;
@@ -288,6 +291,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     checkVirtualMachineVersion(vm);
 
     myVirtualMachineProxy = new VirtualMachineProxyImpl(this, vm);
+    myThreadGroupForJDI = ReflectionUtil.getField(vm.getClass(), vm, ThreadGroup.class, "threadGroupForJDI");
 
     if (!StringUtil.isEmpty(ourTrace)) {
       int mask = 0;
@@ -2221,5 +2225,28 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   public DebuggerSession getSession() {
     return mySession;
+  }
+
+  @TestOnly
+  public void awaitJDIThreadTermination(long timeout, @NotNull TimeUnit unit) {
+    ThreadGroup threadGroupForJDI = myThreadGroupForJDI;
+    if (threadGroupForJDI == null) {
+      return;
+    }
+    long start = System.currentTimeMillis();
+    Thread[] threads = new Thread[1];
+    while (System.currentTimeMillis() < start + unit.toMillis(timeout)) {
+      int n = threadGroupForJDI.enumerate(threads);
+      if (n == 0) {
+        break;
+      }
+      try {
+        long timeLeft = start + unit.toMillis(timeout) - System.currentTimeMillis();
+        threads[0].join(timeLeft);
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 }

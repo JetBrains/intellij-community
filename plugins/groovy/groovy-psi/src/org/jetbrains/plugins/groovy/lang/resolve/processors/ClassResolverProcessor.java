@@ -26,7 +26,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RES
 /**
  * @author ven
  */
-public class ClassResolverProcessor extends ResolverProcessor {
+public class ClassResolverProcessor extends ResolverProcessorImpl {
   public ClassResolverProcessor(String refName, GrReferenceElement ref, EnumSet<DeclarationKind> kinds) {
     super(refName, kinds, ref, ref.getTypeArguments());
   }

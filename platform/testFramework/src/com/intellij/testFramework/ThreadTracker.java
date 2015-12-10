@@ -79,7 +79,6 @@ public class ThreadTracker {
     wellKnownOffenders.add("IDEA Test Case Thread");
     wellKnownOffenders.add("Image Fetcher ");
     wellKnownOffenders.add("Java2D Disposer");
-    wellKnownOffenders.add("JDI Target VM Interface");
     wellKnownOffenders.add("JobScheduler FJ pool ");
     wellKnownOffenders.add("JPS thread pool");
     wellKnownOffenders.add("Keep-Alive-Timer");

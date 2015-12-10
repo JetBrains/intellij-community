@@ -150,7 +150,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       }
     }
     final PsiElement element = resolve.getElement();
-    if (element == null) {
+    if (element == null || resolve instanceof MethodCandidateInfo && !((MethodCandidateInfo)resolve).isApplicable()) {
       session.registerIncompatibleErrorMessage("No compile-time declaration for the method reference is found");
       return false;
     }

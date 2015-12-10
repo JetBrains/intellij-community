@@ -412,7 +412,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
           ContainerUtil.addAllNotNull(compileSet,
                                       moduleData.getCompileOutputPath(ExternalSystemSourceType.SOURCE),
                                       moduleData.getCompileOutputPath(ExternalSystemSourceType.RESOURCE));
-          if (!compileSet.isEmpty() && libraryPaths.containsAll(compileSet)) {
+          if (!compileSet.isEmpty() && ContainerUtil.intersects(libraryPaths, compileSet)) {
             targetModuleOutputPaths = compileSet;
           }
           else {
@@ -420,7 +420,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
             ContainerUtil.addAllNotNull(testSet,
                                         moduleData.getCompileOutputPath(ExternalSystemSourceType.TEST),
                                         moduleData.getCompileOutputPath(ExternalSystemSourceType.TEST_RESOURCE));
-            if (compileSet.isEmpty() && libraryPaths.containsAll(testSet)) {
+            if (compileSet.isEmpty() && ContainerUtil.intersects(libraryPaths, testSet)) {
               targetModuleOutputPaths = testSet;
             }
           }

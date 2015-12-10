@@ -109,7 +109,7 @@ class NonStaticInner2 {
 
 
   static {
-     I1 i1 = NonStaticInner2.Inner :: <error descr="Cannot resolve constructor 'Inner'">new</error>;
+     I1 i1 = <error descr="An enclosing instance of type NonStaticInner2 is not in scope">NonStaticInner2.Inner :: new</error>;
   }
 
   {

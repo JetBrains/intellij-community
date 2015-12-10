@@ -97,7 +97,7 @@ public class MigrationPanel extends JPanel implements Disposable {
 
     myRootsTree = new MyTree(new DefaultTreeModel(new DefaultMutableTreeNode()));
     final TypeMigrationTreeBuilder builder = new TypeMigrationTreeBuilder(myRootsTree, project);
-    final MigrationRootNode currentRoot = new MigrationRootNode(project, myLabeler, builder, root, previewUsages);
+    final MigrationRootNode currentRoot = new MigrationRootNode(project, myLabeler, root, previewUsages);
     builder.setRoot(currentRoot);
     initTree(myRootsTree);
     myRootsTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
@@ -254,7 +254,7 @@ public class MigrationPanel extends JPanel implements Disposable {
         UsageViewManager.getInstance(myProject).closeContent(myContent);
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            ChangeTypeSignatureHandler.invoke(myProject, myInitialRoot, myLabeler.getRules(), null);
+            ChangeTypeSignatureHandler.invoke(myProject, myInitialRoot, myLabeler.getRootTypes().fun(myInitialRoot), myLabeler.getRules(), null);
           }
         });
       }

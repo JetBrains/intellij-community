@@ -72,10 +72,9 @@ public class VariableTypeFromCallFix implements IntentionAction {
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
     final TypeMigrationRules rules = new TypeMigrationRules();
-    rules.setMigrationRootType(myExpressionType);
     rules.setBoundScope(PsiSearchHelper.SERVICE.getInstance(project).getUseScope(myVar));
 
-    TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, myVar);
+    TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, myVar, myExpressionType);
   }
 
   @Override

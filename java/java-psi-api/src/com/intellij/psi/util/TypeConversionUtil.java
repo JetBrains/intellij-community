@@ -137,9 +137,9 @@ public class TypeConversionUtil {
           if (languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) {
             final PsiClassType classType = (PsiClassType)fromType;
             final PsiClass psiClass = classType.resolve();
-            if (psiClass == null || psiClass instanceof PsiTypeParameter) return false;
+            if (psiClass == null) return false;
             final PsiClassType boxedType = ((PsiPrimitiveType)toType).getBoxedType(psiClass.getManager(), psiClass.getResolveScope());
-            if (boxedType != null && isAssignable(fromType, boxedType)) {
+            if (boxedType != null && isNarrowingReferenceConversionAllowed(fromType, boxedType)) {
               return true;
             }
           }

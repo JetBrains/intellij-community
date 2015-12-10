@@ -32,7 +32,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RES
 /**
  * @author ven
  */
-public class CompletionProcessor extends ResolverProcessor {
+public class CompletionProcessor extends ResolverProcessorImpl {
   private CompletionProcessor(PsiElement place, final EnumSet<DeclarationKind> resolveTargets, final String name) {
     super(name, resolveTargets, place, PsiType.EMPTY_ARRAY);
   }

@@ -804,10 +804,8 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   private void doTestCatchParameter(final PsiType rootType, final PsiType migrationType) {
     start(new RulesProvider() {
       @Override
-      public TypeMigrationRules provide() {
-        final TypeMigrationRules rules = new TypeMigrationRules();
-        rules.setMigrationRootType(migrationType);
-        return rules;
+      public PsiType migrationType() {
+        return migrationType;
       }
 
       @Override
@@ -921,10 +919,8 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   private void doTestReturnType(final String methodName, final PsiType migrationType) {
     start(new RulesProvider() {
       @Override
-      public TypeMigrationRules provide() throws Exception {
-        final TypeMigrationRules rules = new TypeMigrationRules();
-        rules.setMigrationRootType(migrationType);
-        return rules;
+      public PsiType migrationType() throws Exception {
+        return migrationType;
       }
 
       @Override
@@ -942,10 +938,8 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   private void doTestForeachParameter(final PsiType migrationType) {
     start(new RulesProvider() {
       @Override
-      public TypeMigrationRules provide() {
-        final TypeMigrationRules rules = new TypeMigrationRules();
-        rules.setMigrationRootType(migrationType);
-        return rules;
+      public PsiType migrationType() {
+        return migrationType;
       }
 
       @Override

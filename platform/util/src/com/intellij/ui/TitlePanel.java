@@ -20,6 +20,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicHTML;
 import java.awt.*;
 
 /**
@@ -63,7 +64,7 @@ public class TitlePanel extends CaptionPanel {
   }
 
   public void setText(String titleText) {
-    myHtml = titleText.indexOf('<') >= 0;
+    myHtml = BasicHTML.isHTMLString(titleText);
     myLabel.setText(titleText);
   }
 

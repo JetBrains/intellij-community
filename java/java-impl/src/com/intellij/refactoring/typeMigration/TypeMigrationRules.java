@@ -35,22 +35,12 @@ import java.util.LinkedList;
  */
 public class TypeMigrationRules {
   private final LinkedList<TypeConversionRule> myConversionRules = new LinkedList<TypeConversionRule>();
-
-  private PsiType myMigrationRootType;
   private SearchScope mySearchScope;
 
   public TypeMigrationRules() {
     myConversionRules.add(new RootTypeConversionRule());
     myConversionRules.add(new DisjunctionTypeConversionRule());
     ContainerUtil.addAll(myConversionRules, Extensions.getExtensions(TypeConversionRule.EP_NAME));
-  }
-
-  public void setMigrationRootType(PsiType migrationRootType) {
-    myMigrationRootType = migrationRootType;
-  }
-
-  public PsiType getMigrationRootType() {
-    return myMigrationRootType;
   }
 
   public void addConversionDescriptor(TypeConversionRule rule) {
