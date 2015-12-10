@@ -21,17 +21,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.VcsRevisionNumberAware;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -75,18 +77,13 @@ public class TabbedShowHistoryForRevisionAction extends AbstractVcsAction {
     return revision == null ? null : revision.getFile();
   }
 
-  private static AbstractVcs getVcsForChangeList(Project project, ChangeList changeList) {
+  @Nullable
+  private static AbstractVcs getVcsForChangeList(@NotNull Project project, @NotNull ChangeList changeList) {
     Collection<Change> changes = changeList.getChanges();
     if (changes == null || changes.isEmpty()) return null;
-    Change change = changes.iterator().next();
+    Change change = ContainerUtil.getFirstItem(changes);
     if (change == null) return null;
-    AbstractVcs vcs = getVcsForContentRevision(project, change.getAfterRevision());
-    if (vcs != null) return vcs;
-    return getVcsForContentRevision(project, change.getBeforeRevision());
-  }
-
-  private static AbstractVcs getVcsForContentRevision(Project project, ContentRevision contentRevision) {
-    return ProjectLevelVcsManager.getInstance(project).getVcsFor(contentRevision.getFile());
+    return ChangesUtil.getVcsForChange(change, project);
   }
 
   @SuppressWarnings("ConstantConditions")
