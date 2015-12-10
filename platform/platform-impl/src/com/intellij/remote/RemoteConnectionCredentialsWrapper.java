@@ -204,6 +204,10 @@ public class RemoteConnectionCredentialsWrapper {
     return RemoteCredentialsHolder.SSH_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getPort();
   }
 
+  public CredentialsType getRemoteConnectionType() {
+    return DefaultRemoteSdkConnectionAcceptor.getRemoteConnectionType(this);
+  }
+
   public void switchType(@NotNull final RemoteSdkConnectionAcceptor acceptor) {
     if (isVagrantConnection()) {
       acceptor.vagrant(getVagrantCredentials());

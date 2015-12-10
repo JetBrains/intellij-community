@@ -58,7 +58,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
       final PyRemoteSdkAdditionalDataBase remoteSdkData = (PyRemoteSdkAdditionalDataBase) sdkData;
       try {
         String helpersPath;
-        if (remoteSdkData.getRemoteConnectionType() != CredentialsType.DOCKER) {
+        if (remoteSdkData.connectionCredentials().getRemoteConnectionType() != CredentialsType.DOCKER) {
           final RemoteSdkCredentials remoteSdkCredentials = remoteSdkData.getRemoteSdkCredentials(false);
           helpersPath = remoteSdkCredentials.getHelpersPath();
         }
@@ -98,7 +98,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
       final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
 
       RemoteSdkCredentials remoteSdkCredentials;
-      if (((PyRemoteSdkAdditionalDataBase)sdkData).getRemoteConnectionType() != CredentialsType.DOCKER) {
+      if (((PyRemoteSdkAdditionalDataBase)sdkData).connectionCredentials().getRemoteConnectionType() != CredentialsType.DOCKER) {
         try {
           remoteSdkCredentials = ((RemoteSdkAdditionalData)sdkData).getRemoteSdkCredentials(false);
         }
