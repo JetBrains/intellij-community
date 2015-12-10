@@ -19,6 +19,7 @@ package com.intellij.formatting;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.formatting.engine.State;
 import com.intellij.formatting.engine.StateProcessor;
+import com.intellij.formatting.engine.WrapBlocksState;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
@@ -1326,26 +1327,6 @@ public class FormatProcessor {
       result.append(myDocument.getCharsSequence().subSequence(block.getStartOffset(), block.getEndOffset()));
     }
     return result.toString();
-  }
-
-  private static class WrapBlocksState extends State {
-    private final InitialInfoBuilder myWrapper;
-    
-    WrapBlocksState(@NotNull InitialInfoBuilder initialInfoBuilder) {
-      myWrapper = initialInfoBuilder;
-    }
-    
-    @Override
-    public void doIteration() {
-      if (isDone()) {
-        return;
-      }
-
-      setDone(myWrapper.iteration());
-      if (!isDone()) {
-        return;
-      }
-    }
   }
 
   private class AdjustWhiteSpacesState extends State {
