@@ -156,12 +156,12 @@ public class FontInfo {
     return mySymbolsToBreakDrawingIteration;
   }
 
-  public boolean canDisplay(char c) {
+  public boolean canDisplay(int codePoint) {
     try {
-      if (c < 128) return true;
-      if (mySafeCharacters.contains(c)) return true;
-      if (canDisplayImpl(c)) {
-        mySafeCharacters.add(c);
+      if (codePoint < 128) return true;
+      if (mySafeCharacters.contains(codePoint)) return true;
+      if (canDisplayImpl(codePoint)) {
+        mySafeCharacters.add(codePoint);
         return true;
       }
       return false;
@@ -172,12 +172,13 @@ public class FontInfo {
     }
   }
 
-  private boolean canDisplayImpl(char c) {
+  private boolean canDisplayImpl(int codePoint) {
+    if (!Character.isValidCodePoint(codePoint)) return false;
     if (USE_ALTERNATIVE_CAN_DISPLAY_PROCEDURE) {
-      return myFont.createGlyphVector(DUMMY_CONTEXT, new char[]{c}).getGlyphCode(0) > 0;
+      return myFont.createGlyphVector(DUMMY_CONTEXT, new String(new int[]{codePoint}, 0, 1)).getGlyphCode(0) > 0;
     }
     else {
-      return myFont.canDisplay(c);
+      return myFont.canDisplay(codePoint);
     }
   }
 
