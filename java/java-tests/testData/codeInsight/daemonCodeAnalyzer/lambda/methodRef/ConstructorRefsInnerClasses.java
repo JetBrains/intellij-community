@@ -145,7 +145,7 @@ class NonStaticInner3 {
     }
 
     {
-        I3<Foo> b1 = Foo::<error descr="Cannot resolve constructor 'Foo'">new</error>;
-        I4<Foo> b2 = Foo::<error descr="Cannot resolve constructor 'Foo'">new</error>;
+        <error descr="Incompatible types. Found: '<method reference>', required: 'NonStaticInner3.I3<NonStaticInner3.Foo>'">I3<Foo> b1 = Foo::new;</error>
+        <error descr="Incompatible types. Found: '<method reference>', required: 'NonStaticInner3.I4<NonStaticInner3.Foo>'">I4<Foo> b2 = Foo::new;</error>
     }
 }

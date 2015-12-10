@@ -129,7 +129,7 @@ class MyTest4 {
     }
 
     {
-         bar(MyTest4:: <error descr="Cannot resolve method 'foo'">foo</error>);
+         bar<error descr="'bar(todelete.MyTest4.Bar1)' in 'todelete.MyTest4' cannot be applied to '(<method reference>)'">(MyTest4:: foo)</error>;
     }
 }
 

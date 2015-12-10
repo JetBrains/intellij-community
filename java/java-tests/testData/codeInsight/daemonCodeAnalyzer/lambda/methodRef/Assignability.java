@@ -16,7 +16,7 @@ class Test {
 
 class Test1 {
     {
-        Runnable b = Test1 :: <error descr="Cannot resolve method 'length'">length</error>;
+        <error descr="Incompatible types. Found: '<method reference>', required: 'java.lang.Runnable'">Runnable b = Test1 :: length;</error>
         Comparable<String> c = Test1 :: length;
         Comparable<Integer> c1 =  Test1 :: length;
     }

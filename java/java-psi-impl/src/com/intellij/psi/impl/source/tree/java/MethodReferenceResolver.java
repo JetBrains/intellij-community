@@ -264,6 +264,9 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
         return !firstCandidates.isEmpty() ? firstCandidates.get(0) : secondCandidates.get(0);
       }
 
+      if (firstCandidates.isEmpty() && secondCandidates.isEmpty() && conflicts.size() > 1) {
+        return null;
+      }
       conflicts.clear();
       firstCandidates.addAll(secondCandidates);
       conflicts.addAll(firstCandidates);
