@@ -305,6 +305,9 @@ public class PathManager {
       return null;
     }
 
+    if (SystemInfo.isWindows && resultPath.startsWith("/")) {
+      resultPath = resultPath.substring(1);
+    }
     resultPath = StringUtil.trimEnd(resultPath, File.separator);
     resultPath = URLUtil.unescapePercentSequences(resultPath);
 
