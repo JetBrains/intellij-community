@@ -89,8 +89,10 @@ public class CalendarNumberOfWeekPanel extends JPanel /*
 			labels[i].setForeground(isEnabled() ? UIManager
 					.getColor("controlText") : UIManager
 					.getColor("textInactiveText"));
+			
+			calendar.add(Calendar.WEEK_OF_YEAR, 1);
+			startWeek = calendar.get(Calendar.WEEK_OF_YEAR);
 
-			startWeek++;
 			numActiveWeeks--;
 		}
 
