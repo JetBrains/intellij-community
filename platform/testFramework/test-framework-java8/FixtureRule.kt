@@ -76,7 +76,7 @@ class ProjectRule() : ApplicationRule() {
       val projectPath = projectFile.systemIndependentPath
 
       val buffer = ByteArrayOutputStream()
-      java.lang.Throwable(projectPath).printStackTrace(PrintStream(buffer))
+      Throwable(projectPath, null).printStackTrace(PrintStream(buffer))
 
       val project = PlatformTestCase.createProject(projectPath, "Light project: $buffer") as ProjectEx
       Disposer.register(ApplicationManager.getApplication(), Disposable {
@@ -149,10 +149,6 @@ class ProjectRule() : ApplicationRule() {
     }
 }
 
-fun runInEdtAndWait(runnable: () -> Unit) {
-  EdtTestUtil.runInEdtAndWait(runnable)
-}
-
 /**
  * rules: outer, middle, inner
  * out:
@@ -195,12 +191,14 @@ class EdtRule : TestRule {
       base
     }
     else {
-      object : Statement() {
-        override fun evaluate() {
-          runInEdtAndWait { base.evaluate() }
-        }
-      }
+      statement { runInEdtAndWait { base.evaluate() } }
     }
+  }
+}
+
+private inline fun statement(crossinline runnable: () -> Unit) = object : Statement() {
+  override fun evaluate() {
+    runnable()
   }
 }
 
@@ -217,11 +215,7 @@ class ActiveStoreRule(private val projectRule: ProjectRule) : TestRule {
       base
     }
     else {
-      object : Statement() {
-        override fun evaluate() {
-          projectRule.project.runInLoadComponentStateMode { base.evaluate() }
-        }
-      }
+      statement { projectRule.project.runInLoadComponentStateMode { base.evaluate() } }
     }
   }
 }
@@ -249,11 +243,9 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
 class DisposeNonLightProjectsRule() : ExternalResource() {
   override fun after() {
     val projectManager = ProjectManager.getInstance() as ProjectManagerImpl
-    for (project in projectManager.openProjects) {
-      if (!ProjectManagerImpl.isLight(project)) {
-        runInEdtAndWait {
-          projectManager.closeProject(project, false, true, false)
-        }
+    projectManager.openProjects.forEachGuaranteed {
+      if (!ProjectManagerImpl.isLight(it)) {
+        runInEdtAndWait { projectManager.closeProject(it, false, true, false) }
       }
     }
   }
@@ -295,17 +287,13 @@ inline fun <T> Array<out T>.forEachGuaranteed(operation: (T) -> Unit): Unit {
  * So, should be one task per rule.
  */
 class WrapRule(private val before: () -> () -> Unit) : TestRule {
-  override final fun apply(base: Statement, description: Description): Statement {
-    return object : Statement() {
-      override fun evaluate() {
-        val after = before()
-        try {
-          base.evaluate()
-        }
-        finally {
-          after()
-        }
-      }
+  override fun apply(base: Statement, description: Description) = statement {
+    val after = before()
+    try {
+      base.evaluate()
+    }
+    finally {
+      after()
     }
   }
 }

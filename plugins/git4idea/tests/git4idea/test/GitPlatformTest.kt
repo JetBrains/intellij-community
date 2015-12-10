@@ -27,9 +27,9 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.PlatformTestCase
 import com.intellij.testFramework.TestLoggerFactory
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
 import com.intellij.util.ArrayUtil
 import git4idea.DialogManager
@@ -69,7 +69,7 @@ abstract class GitPlatformTest : PlatformTestCase() {
 
     checkTestRootIsEmpty(myTestRoot)
 
-    EdtTestUtil.runInEdtAndWait { super@GitPlatformTest.setUp() }
+    runInEdtAndWait { super@GitPlatformTest.setUp() }
 
     myTestStartedIndicator = enableDebugLogging()
 
@@ -102,7 +102,7 @@ abstract class GitPlatformTest : PlatformTestCase() {
     }
     finally {
       try {
-        EdtTestUtil.runInEdtAndWait { super@GitPlatformTest.tearDown() }
+        runInEdtAndWait { super@GitPlatformTest.tearDown() }
       }
       finally {
         if (myAssertionsInTestDetected) {
