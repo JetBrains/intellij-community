@@ -295,7 +295,8 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
         descriptor = optionalDescriptor.getValue().findConversion(null, null, method, current.getMethodExpression(), labeler);
       }
       if (descriptor == null) {
-        return null;
+        addToMigrateChainQualifier(labeler, current);
+        break;
       }
       methodDescriptors.add(descriptor);
       final PsiExpression qualifier = current.getMethodExpression().getQualifierExpression();
@@ -313,17 +314,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
         break;
       }
       else if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).resolve() instanceof PsiVariable) {
-        final PsiClass qClass = PsiTypesUtil.getPsiClass(qualifier.getType());
-        final boolean isFluentIterable;
-        if (qClass != null && ((isFluentIterable = GuavaFluentIterableConversionRule.FLUENT_ITERABLE.equals(qClass.getQualifiedName())) ||
-                                GuavaOptionalConversionRule.GUAVA_OPTIONAL.equals(qClass.getQualifiedName()))) {
-          labeler.migrateExpressionType(qualifier,
-                                        GuavaConversionUtil.addTypeParameters(isFluentIterable ? StreamApiConstants.JAVA_UTIL_STREAM_STREAM :
-                                                                              GuavaOptionalConversionRule.JAVA_OPTIONAL, qualifier.getType(), qualifier),
-                                        qualifier.getParent(),
-                                        false,
-                                        false);
-        }
+        addToMigrateChainQualifier(labeler, qualifier);
         break;
       }
       else {
@@ -332,6 +323,20 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     }
 
     return new GuavaChainedConversionDescriptor(methodDescriptors, to);
+  }
+
+  private static void addToMigrateChainQualifier(TypeMigrationLabeler labeler, PsiExpression qualifier) {
+    final PsiClass qClass = PsiTypesUtil.getPsiClass(qualifier.getType());
+    final boolean isFluentIterable;
+    if (qClass != null && ((isFluentIterable = GuavaFluentIterableConversionRule.FLUENT_ITERABLE.equals(qClass.getQualifiedName())) ||
+                           GuavaOptionalConversionRule.GUAVA_OPTIONAL.equals(qClass.getQualifiedName()))) {
+      labeler.migrateExpressionType(qualifier,
+                                    GuavaConversionUtil.addTypeParameters(isFluentIterable ? StreamApiConstants.JAVA_UTIL_STREAM_STREAM :
+                                                                          GuavaOptionalConversionRule.JAVA_OPTIONAL, qualifier.getType(), qualifier),
+                                    qualifier.getParent(),
+                                    false,
+                                    false);
+    }
   }
 
   private static class GuavaChainedConversionDescriptor extends TypeConversionDescriptorBase {
