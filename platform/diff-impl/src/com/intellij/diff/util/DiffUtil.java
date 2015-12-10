@@ -341,15 +341,21 @@ public class DiffUtil {
     return result.toString();
   }
 
+  //
   // Titles
+  //
 
   @NotNull
   public static List<JComponent> createSimpleTitles(@NotNull ContentDiffRequest request) {
     List<String> titles = request.getContentTitles();
 
+    if (!ContainerUtil.exists(titles, Condition.NOT_NULL)) {
+      return Collections.nCopies(titles.size(), null);
+    }
+
     List<JComponent> components = new ArrayList<JComponent>(titles.size());
     for (String title : titles) {
-      components.add(createTitle(title));
+      components.add(createTitle(StringUtil.notNullize(title)));
     }
 
     return components;
@@ -380,7 +386,7 @@ public class DiffUtil {
 
     List<JComponent> result = new ArrayList<JComponent>(contents.size());
 
-    if (equalCharsets && equalSeparators && ContainerUtil.find(titles, Condition.NOT_NULL) == null) {
+    if (equalCharsets && equalSeparators && !ContainerUtil.exists(titles, Condition.NOT_NULL)) {
       return Collections.nCopies(titles.size(), null);
     }
 
