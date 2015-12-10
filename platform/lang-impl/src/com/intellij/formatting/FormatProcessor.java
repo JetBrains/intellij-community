@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.BulkChangesMerger;
 import com.intellij.openapi.editor.impl.TextChangeImpl;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -160,7 +159,6 @@ public class FormatProcessor {
 
   private WhiteSpace                      myLastWhiteSpace;
   private boolean                         myDisposed;
-  private CommonCodeStyleSettings.IndentOptions myJavaIndentOptions;
   private final int myRightMargin;
 
   @NotNull
@@ -353,11 +351,7 @@ public class FormatProcessor {
       myStateProcessor.iteration();
     }
   }
-
-  public void setJavaIndentOptions(final CommonCodeStyleSettings.IndentOptions javaIndentOptions) {
-    myJavaIndentOptions = javaIndentOptions;
-  }
-
+  
   private static void cleanupBlocks(List<LeafBlockWrapper> blocks) {
     for (LeafBlockWrapper block : blocks) {
       block.getParent().dispose();
@@ -1299,12 +1293,7 @@ public class FormatProcessor {
         setDone(true);
         return;
       }
-
-      //for GeneralCodeFormatterTest
-      if (myJavaIndentOptions == null) {
-        myJavaIndentOptions = mySettings.getIndentOptions(StdFileTypes.JAVA);
-      }
-
+      
       myProgressCallback.beforeApplyingFormatChanges(myBlocksToModify);
 
       final int blocksToModifyCount = myBlocksToModify.size();

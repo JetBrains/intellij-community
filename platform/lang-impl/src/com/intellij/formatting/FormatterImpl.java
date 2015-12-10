@@ -181,8 +181,6 @@ public class FormatterImpl extends FormatterEx
           FormatProcessor processor = new FormatProcessor(
             model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, affectedRanges, FormattingProgressCallback.EMPTY
           );
-          processor.setJavaIndentOptions(javaIndentOptions);
-
           processor.format(model);
           return processor;
         }
