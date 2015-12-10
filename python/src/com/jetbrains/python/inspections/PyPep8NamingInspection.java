@@ -63,7 +63,7 @@ import static com.intellij.util.containers.ContainerUtilRt.addIfNotNull;
 public class PyPep8NamingInspection extends PyInspection {
   private static final Pattern LOWERCASE_REGEX = Pattern.compile("[_\\p{javaLowerCase}][_\\p{javaLowerCase}0-9]*");
   private static final Pattern UPPERCASE_REGEX = Pattern.compile("[_\\p{javaUpperCase}][_\\p{javaUpperCase}0-9]*");
-  private static final Pattern MIXEDCASE_REGEX = Pattern.compile("_?[\\p{javaUpperCase}][\\p{javaLowerCase}\\p{javaUpperCase}0-9]*");
+  private static final Pattern MIXEDCASE_REGEX = Pattern.compile("_?_?[\\p{javaUpperCase}][\\p{javaLowerCase}\\p{javaUpperCase}0-9]*");
   private static final String INSPECTION_SHORT_NAME = "PyPep8NamingInspection";
 
   public final List<String> ignoredErrors = new ArrayList<String>();
