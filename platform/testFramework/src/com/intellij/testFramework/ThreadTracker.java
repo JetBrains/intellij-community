@@ -73,7 +73,6 @@ public class ThreadTracker {
     wellKnownOffenders.add("AWT-Windows");
         wellKnownOffenders.add("Change List Updater"); //todo remove
     wellKnownOffenders.add("CompilerThread0");
-        wellKnownOffenders.add("Document commit thread");
     wellKnownOffenders.add("Finalizer");
         wellKnownOffenders.add("FS Synchronizer"); //todo remove
     wellKnownOffenders.add("IDEA Test Case Thread");

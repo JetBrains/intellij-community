@@ -54,7 +54,6 @@ import java.util.concurrent.Future;
 
 public class DocumentCommitThread extends DocumentCommitProcessor implements Runnable, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DocumentCommitThread");
-  private static final String NAME = "Document commit thread";
 
   private final ExecutorService executor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, JobSchedulerImpl.CORES_COUNT, this);
 
@@ -191,7 +190,6 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
 
     String indent = new SimpleDateFormat("hh:mm:ss:SSSS").format(new Date()) +
       (SwingUtilities.isEventDispatchThread() ?        "-(EDT) " :
-       Thread.currentThread().getName().equals(NAME) ? "-(DCT) " :
                                                        "-      ");
     @NonNls
     String s = indent +
