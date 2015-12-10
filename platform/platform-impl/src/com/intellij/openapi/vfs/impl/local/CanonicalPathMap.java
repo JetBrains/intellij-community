@@ -20,14 +20,19 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -49,19 +54,57 @@ class CanonicalPathMap {
     myRecursiveWatchRoots = ContainerUtil.newArrayList(recursive);
     myFlatWatchRoots = ContainerUtil.newArrayList(flat);
 
+    Map<String, String> canonicalPathMap = getCanonicalMap(recursive, flat);
+
     List<Pair<String, String>> mapping = ContainerUtil.newSmartList();
-    myCanonicalRecursiveWatchRoots = mapPaths(recursive, mapping);
-    myCanonicalFlatWatchRoots = mapPaths(flat, mapping);
+    myCanonicalRecursiveWatchRoots = mapPaths(canonicalPathMap, recursive, mapping);
+    myCanonicalFlatWatchRoots = mapPaths(canonicalPathMap, flat, mapping);
 
     myPathMapping = MultiMap.createConcurrentSet();
     addMapping(mapping);
   }
 
-  private static List<String> mapPaths(List<String> paths, Collection<Pair<String, String>> mapping) {
+  @NotNull
+  private Map<String, String> getCanonicalMap(@NotNull Collection<String> recursiveRoots, @NotNull Collection<String> flatRoots) {
+    final Map<String, String> result = ContainerUtil.newConcurrentMap();
+    BoundedTaskExecutor boundedTaskExecutor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE,
+                                                                      Runtime.getRuntime().availableProcessors());
+    List<Future<?>> futures = ContainerUtil.newArrayList();
+    for (final String root : ContainerUtil.concat(recursiveRoots, flatRoots)) {
+      futures.add(boundedTaskExecutor.submit(new Runnable() {
+        @Override
+        public void run() {
+          String canonicalPath = FileSystemUtil.resolveSymLink(root);
+          if (canonicalPath != null) {
+            result.put(root, canonicalPath);
+          }
+        }
+      }));
+    }
+    try {
+      for (int i = futures.size() - 1; i >= 0; --i) {
+        Future<?> future = futures.get(i);
+        future.get();
+      }
+    }
+    catch (InterruptedException e) {
+      LOG.error(e);
+      Thread.currentThread().interrupt();
+    }
+    catch (ExecutionException e) {
+      LOG.error(e);
+    }
+    return result;
+  }
+
+  @NotNull
+  private static List<String> mapPaths(@NotNull Map<String, String> canonicalPathMap,
+                                       @NotNull List<String> paths,
+                                       @NotNull Collection<Pair<String, String>> mapping) {
     List<String> canonicalPaths = ContainerUtil.newArrayList(paths);
     for (int i = 0; i < paths.size(); i++) {
       String path = paths.get(i);
-      String canonicalPath = FileSystemUtil.resolveSymLink(path);
+      String canonicalPath = canonicalPathMap.get(path);
       if (canonicalPath != null && !path.equals(canonicalPath)) {
         canonicalPaths.set(i, canonicalPath);
         mapping.add(pair(canonicalPath, path));

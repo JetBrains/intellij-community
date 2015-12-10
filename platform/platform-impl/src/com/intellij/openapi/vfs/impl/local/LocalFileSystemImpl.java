@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
@@ -39,10 +40,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public final class LocalFileSystemImpl extends LocalFileSystemBase implements ApplicationComponent {
@@ -59,7 +63,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     private final boolean myWatchRecursively;
     private boolean myDominated;
 
-    public WatchRequestImpl(String rootPath, boolean watchRecursively) throws FileNotFoundException {
+    public WatchRequestImpl(String rootPath, boolean isDirectory, boolean watchRecursively) throws FileNotFoundException {
       int index = rootPath.indexOf(JarFileSystem.JAR_SEPARATOR);
       if (index >= 0) rootPath = rootPath.substring(0, index);
 
@@ -68,7 +72,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
         throw new FileNotFoundException("Invalid path: " + rootPath);
       }
 
-      if (index > 0 || !(FileUtil.isRootPath(rootFile) || rootFile.isDirectory())) {
+      if (index > 0 || !(FileUtil.isRootPath(rootFile) || isDirectory)) {
         File parentFile = rootFile.getParentFile();
         if (parentFile == null) {
           throw new FileNotFoundException(rootPath);
@@ -421,8 +425,10 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
                                     @NotNull final Set<VirtualFile> filesToSync) {
     boolean update = false;
 
+    final Set<String> directorySet = getDirectorySet(recursiveRoots, flatRoots);
+
     for (String root : recursiveRoots) {
-      final WatchRequestImpl request = watch(root, true);
+      final WatchRequestImpl request = watch(root, directorySet.contains(root), true);
       if (request == null) continue;
       final boolean alreadyWatched = isAlreadyWatched(request);
 
@@ -434,7 +440,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
 
     for (String root : flatRoots) {
-      final WatchRequestImpl request = watch(root, false);
+      final WatchRequestImpl request = watch(root, directorySet.contains(root), false);
       if (request == null) continue;
       final boolean alreadyWatched = isAlreadyWatched(request);
 
@@ -455,10 +461,47 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     return update;
   }
 
-  @Nullable
-  private static WatchRequestImpl watch(final String root, final boolean recursively) {
+  @NotNull
+  private Set<String> getDirectorySet(@NotNull Collection<String> recursiveRoots,
+                                      @NotNull Collection<String> flatRoots) {
+    BoundedTaskExecutor boundedTaskExecutor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE,
+                                                                      Runtime.getRuntime().availableProcessors());
+    final Set<String> result = ContainerUtil.newConcurrentSet();
+    List<Future<?>> futures = ContainerUtil.newArrayList();
+    for (final String root : ContainerUtil.concat(recursiveRoots, flatRoots)) {
+      futures.add(boundedTaskExecutor.submit(new Runnable() {
+        @Override
+        public void run() {
+          boolean isJar = root.contains(JarFileSystem.JAR_SEPARATOR);
+          boolean isDirectory = !isJar && new File(root).isDirectory();
+          if (isDirectory) {
+            result.add(root);
+          }
+        }
+      }));
+    }
+
     try {
-      return new WatchRequestImpl(root, recursively);
+      for (int i = futures.size() - 1; i >= 0; --i) {
+        Future<?> future = futures.get(i);
+        future.get();
+      }
+    }
+    catch (InterruptedException e) {
+      LOG.error(e);
+      Thread.currentThread().interrupt();
+    }
+    catch (ExecutionException e) {
+      LOG.error(e);
+    }
+
+    return result;
+  }
+
+  @Nullable
+  private static WatchRequestImpl watch(final String root, boolean isDirectory, final boolean recursively) {
+    try {
+      return new WatchRequestImpl(root, isDirectory, recursively);
     }
     catch (FileNotFoundException e) {
       LOG.warn(e);
