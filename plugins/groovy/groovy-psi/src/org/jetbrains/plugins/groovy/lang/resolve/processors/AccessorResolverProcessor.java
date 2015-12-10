@@ -81,7 +81,7 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
   /**
    * use only for imported properties
    */
-  private static boolean isAppropriatePropertyNameForSetter(@NotNull String importedName, @NotNull String propertyName) {
+  public static boolean isAppropriatePropertyNameForSetter(@NotNull String importedName, @NotNull String propertyName) {
     propertyName = GroovyPropertyUtils.decapitalize(propertyName);
     return propertyName.equals(GroovyPropertyUtils.getPropertyNameBySetterName(importedName));
   }
@@ -89,7 +89,7 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
   /**
    * use only for imported properties
    */
-  private static boolean isAppropriatePropertyNameForGetter(@NotNull PsiMethod getter, @NotNull String importedNameForGetter, @NotNull String propertyName) {
+  public static boolean isAppropriatePropertyNameForGetter(@NotNull PsiMethod getter, @NotNull String importedNameForGetter, @NotNull String propertyName) {
     propertyName = GroovyPropertyUtils.decapitalize(propertyName);
     return propertyName.equals(getPropertyNameByGetter(getter, importedNameForGetter));
   }
