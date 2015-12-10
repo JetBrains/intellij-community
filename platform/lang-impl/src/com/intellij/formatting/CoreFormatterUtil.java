@@ -100,7 +100,7 @@ public class CoreFormatterUtil {
           return result;
         }
         block = block.getPreviousBlock();
-        if (block == null) return result;
+        if (result > CodeStyleSettings.MAX_RIGHT_MARGIN || block == null) return result;
         result += block.getSymbolsAtTheLastLine();
         if (block.containsLineFeeds()) return result;
       }
