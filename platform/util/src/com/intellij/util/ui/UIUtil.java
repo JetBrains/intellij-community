@@ -1821,22 +1821,28 @@ public class UIUtil {
   /** @see #pump() */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
+    //noinspection StatementWithEmptyBody
+    while(dispatchInvocationEvent());
+  }
+  
+  @TestOnly
+  public static boolean dispatchInvocationEvent() {
     assert EdtInvocationManager.getInstance().isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
     final EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-    while (true) {
-      AWTEvent event = eventQueue.peekEvent();
-      if (event == null) break;
-      try {
-        AWTEvent event1 = eventQueue.getNextEvent();
-        if (event1 instanceof InvocationEvent) {
-          ((InvocationEvent)event1).dispatch();
-        }
-      }
-      catch (Exception e) {
-        LOG.error(e); //?
+    AWTEvent event = eventQueue.peekEvent();
+    if (event == null) return false;
+    try {
+      AWTEvent event1 = eventQueue.getNextEvent();
+      if (event1 instanceof InvocationEvent) {
+        ((InvocationEvent)event1).dispatch();
       }
     }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+    return true;
   }
+  
   private static Thread getEventQueueThread() {
     EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     try {

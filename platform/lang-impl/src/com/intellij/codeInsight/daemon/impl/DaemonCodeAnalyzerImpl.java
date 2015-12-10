@@ -591,6 +591,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   synchronized boolean isRunning() {
     return myUpdateProgress != null && !myUpdateProgress.isCanceled();
   }
+  
+  @TestOnly
+  boolean isRunningOrPending() {
+    return isRunning() || !myAlarm.isEmpty();
+  }
 
   synchronized void stopProcess(boolean toRestartAlarm, @NonNls String reason) {
     if (!allowToInterrupt) throw new RuntimeException("Cannot interrupt daemon");
