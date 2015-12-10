@@ -33,7 +33,7 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
   private final boolean myIsStaticsOK;
   private final boolean myIsApplicable;
 
-  private final PsiSubstitutor mySubstitutor;
+  private final @NotNull PsiSubstitutor mySubstitutor;
   private final boolean myIsInvokedOnProperty;
 
   private final @Nullable PsiElement myCurrentFileResolveContext;
@@ -102,6 +102,7 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
     return isAccessible() && isApplicable() && isStaticsOK();
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -112,6 +113,7 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
            myElement.getManager().areElementsEquivalent(myElement, that.myElement);
   }
 
+  @Override
   public int hashCode() {
     int result = 0;
     if (myElement instanceof PsiNamedElement) {
