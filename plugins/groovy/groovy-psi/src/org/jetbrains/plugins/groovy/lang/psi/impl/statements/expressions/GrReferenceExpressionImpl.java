@@ -164,6 +164,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       }
     }
 
+    if (true) {
+      GroovyResolverProcessor processor = new GroovyResolverProcessor(this, name, false);
+      new GrReferenceResolveRunner(this).resolveImpl(processor);
+      return processor.getCandidates();
+    }
 
     EnumSet<ElementClassHint.DeclarationKind> kinds = getParent() instanceof GrReferenceExpression
                                            ? ClassHint.RESOLVE_KINDS_CLASS_PACKAGE
