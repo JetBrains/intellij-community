@@ -31,7 +31,6 @@ import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.history.VcsHistoryProviderEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -159,15 +158,6 @@ public abstract class AbstractVcsHelper {
                                        @Nullable String repositoryPath,
                                        @NotNull final AbstractVcs vcs);
   
-  public void showFileHistory(@NotNull VcsHistoryProviderEx historyProvider,
-                                       @Nullable AnnotationProvider annotationProvider,
-                                       @NotNull FilePath path,
-                                       @Nullable String repositoryPath,
-                                       @NotNull final AbstractVcs vcs,
-                                       @Nullable VcsRevisionNumber startingRevisionNumber) {
-    throw new UnsupportedOperationException();
-  }
-
   /**
    * Shows the "Rollback Changes" dialog with the specified list of changes.
    *

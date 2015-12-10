@@ -146,11 +146,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     refresher.run(false, true);
   }
 
-  @Override
   public void showFileHistory(@NotNull VcsHistoryProviderEx historyProvider,
-                              @Nullable AnnotationProvider annotationProvider,
                               @NotNull FilePath path,
-                              @Nullable String repositoryPath,
                               @NotNull AbstractVcs vcs,
                               @Nullable VcsRevisionNumber startingRevisionNumber) {
     FileHistoryRefresherI refresher = FileHistoryRefresher.findOrCreate(historyProvider, path, vcs, startingRevisionNumber);
