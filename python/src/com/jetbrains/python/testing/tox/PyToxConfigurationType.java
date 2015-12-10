@@ -27,7 +27,7 @@ import javax.swing.*;
  */
 public class PyToxConfigurationType implements ConfigurationType {
 
-  public static final String ID = "tox";
+  public static final String ID = "Tox";
   public static final ConfigurationType INSTANCE = new PyToxConfigurationType();
 
   @Override
@@ -37,7 +37,7 @@ public class PyToxConfigurationType implements ConfigurationType {
 
   @Override
   public String getDisplayName() {
-    return "tox";
+    return ID;
   }
 
   @Override

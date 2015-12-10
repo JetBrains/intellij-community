@@ -25,9 +25,9 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.xmlb.SkipEmptySerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Tag;
-import com.jetbrains.serialization.CompoundFilter;
-import com.jetbrains.serialization.AnnotationSerializationFilter;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
+import com.jetbrains.serialization.AnnotationSerializationFilter;
+import com.jetbrains.serialization.CompoundFilter;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +42,7 @@ final class PyToxConfiguration extends AbstractPythonRunConfiguration<PyToxConfi
   private final Project myProject;
 
   @Tag
+  @Nullable
   private String[] myArguments;
 
   PyToxConfiguration(@NotNull final PyToxConfigurationFactory factory, @NotNull final Project project) {
@@ -62,7 +63,7 @@ final class PyToxConfiguration extends AbstractPythonRunConfiguration<PyToxConfi
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(final Element element) throws InvalidDataException {
     super.readExternal(element);
     XmlSerializer.deserializeInto(this, element);
   }
@@ -84,6 +85,6 @@ final class PyToxConfiguration extends AbstractPythonRunConfiguration<PyToxConfi
   @Nullable
   @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment environment) {
-    return  new PyToxCommandLineState(this, environment, myArguments);
+    return new PyToxCommandLineState(this, environment, getArguments());
   }
 }

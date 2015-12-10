@@ -15,29 +15,49 @@
  */
 package com.jetbrains.python.testing.tox;
 
+import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 
 /**
  * @author Ilya.Kazakevich
  */
 public final class PyToxConfigurationProducer extends RunConfigurationProducer<PyToxConfiguration> {
+  private static final String TOX_FILE_NAME = "tox.ini";
 
   public PyToxConfigurationProducer() {
     super(PyToxConfigurationFactory.INSTANCE);
   }
 
   @Override
-  public boolean isConfigurationFromContext(PyToxConfiguration configuration, ConfigurationContext context) {
-    return false;
+  public boolean isConfigurationFromContext(final PyToxConfiguration configuration, final ConfigurationContext context) {
+    final Location<?> location = context.getLocation();
+    if (location == null) {
+      return false;
+    }
+    final VirtualFile virtualFile = location.getVirtualFile();
+    if (virtualFile == null) {
+      return false;
+    }
+    return TOX_FILE_NAME.equals(virtualFile.getName());
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(PyToxConfiguration configuration,
-                                                  ConfigurationContext context,
-                                                  Ref<PsiElement> sourceElement) {
+  protected boolean setupConfigurationFromContext(final PyToxConfiguration configuration,
+                                                  final ConfigurationContext context,
+                                                  final Ref<PsiElement> sourceElement) {
+    final PsiFile file = sourceElement.get().getContainingFile();
+    if (file == null) {
+      return false;
+    }
+    if (TOX_FILE_NAME.equals(file.getName())) {
+      configuration.setName("Tox");
+      return true;
+    }
     return false;
   }
 }
