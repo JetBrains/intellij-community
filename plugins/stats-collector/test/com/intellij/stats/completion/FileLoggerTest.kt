@@ -45,7 +45,8 @@ class FileLoggerTest : PlatformTestCase() {
     }
 
     private fun performLogging(pathProvider: FilePathProvider): CompletionLogger {
-        var loggerProvider = CompletionFileLoggerProvider(pathProvider)
+        val logFileManager = LogFileManagerImpl(pathProvider)
+        var loggerProvider = CompletionFileLoggerProvider(logFileManager)
         var logger = loggerProvider.newCompletionLogger()
         logger.completionStarted(emptyList())
         logger.completionCancelled()

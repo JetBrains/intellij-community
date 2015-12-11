@@ -14,24 +14,49 @@ interface LogFileManager {
     fun dispose()
 }
 
+fun FilePathProvider.getLogFile(): File {
+    val path = this.statsFilePath
+    val file = File(path)
+    if (!file.exists()) {
+        file.createNewFile()
+    }
+    return file
+}
+
+fun newFileAppender(file: File): PrintWriter {
+    val bufferedWriter = Files.newBufferedWriter(file.toPath(), StandardOpenOption.APPEND)
+    return PrintWriter(bufferedWriter)
+}
+
+class SelfOpeningWriter(private val filePathProvider: FilePathProvider) {
+    private var writer: PrintWriter? = null
+
+    fun println(message: String) {
+        val writer = getWriter()
+        writer.println(message)
+    }
+    
+    private fun getWriter(): PrintWriter {
+        if (writer == null) {
+            val file = filePathProvider.getLogFile()
+            writer = newFileAppender(file)
+        }
+        return writer!!
+    }
+    
+    fun flush() {
+        writer?.flush()
+    }
+    
+    fun close() {
+        writer?.close()
+        writer = null
+    }
+}
+
 class LogFileManagerImpl(private val filePathProvider: FilePathProvider): LogFileManager {
     private val lock = ReentrantLock()
-    private val file: File = initLogFile()
-    private var writer = newAppendWriter()
-
-    private fun newAppendWriter(): PrintWriter {
-        val bufferedWriter = Files.newBufferedWriter(file.toPath(), StandardOpenOption.APPEND)
-        return PrintWriter(bufferedWriter)
-    }
-
-    private fun initLogFile(): File {
-        val path = filePathProvider.statsFilePath
-        val file = File(path)
-        if (!file.exists()) {
-            file.createNewFile()
-        }
-        return file
-    }
+    private val writer = SelfOpeningWriter(filePathProvider)
 
     override fun dispose() {
         writer.close()
@@ -46,16 +71,17 @@ class LogFileManagerImpl(private val filePathProvider: FilePathProvider): LogFil
     override fun read(): String {
         return withFileLock {
             writer.flush()
+            val file = filePathProvider.getLogFile()
             file.readText()
         }
     }
 
     override fun delete() {
         withFileLock {
-            dispose()
+            writer.close()
+            val file = filePathProvider.getLogFile()
             file.delete()
             file.createNewFile()
-            writer = newAppendWriter()
         }
     }
 
