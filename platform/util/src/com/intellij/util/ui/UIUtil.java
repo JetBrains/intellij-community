@@ -66,10 +66,7 @@ import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 import java.awt.image.PixelGrabber;
 import java.beans.PropertyChangeListener;
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -95,11 +92,46 @@ public class UIUtil {
   private static final StyleSheet DEFAULT_HTML_KIT_CSS;
 
   static {
+    if (SystemInfo.isLinux && Registry.is("linux.jdk.accessibility.atkwrapper.block")) {
+      blockATKWrapper();
+    }
     // save the default JRE CSS and ..
     HTMLEditorKit kit = new HTMLEditorKit();
     DEFAULT_HTML_KIT_CSS = kit.getStyleSheet();
     // .. erase global ref to this CSS so no one can alter it
     kit.setStyleSheet(null);
+  }
+
+  private static void blockATKWrapper() {
+    /*
+     * The method should be called before java.awt.Toolkit.initAssistiveTechnologies()
+     * which is called from Toolkit.getDefaultToolkit().
+     */
+    assert SystemInfo.isLinux;
+    assert Registry.is("linux.jdk.accessibility.atkwrapper.block");
+
+    String ATK_WRAPPER = "org.GNOME.Accessibility.AtkWrapper";
+
+    Properties properties = new Properties();
+    try {
+      File propsFile = new File(System.getProperty("java.home") + File.separator + "lib" + File.separator + "accessibility.properties");
+      FileInputStream in = new FileInputStream(propsFile);
+      properties.load(in);
+      in.close();
+    } catch (Exception ignore) {
+    }
+    if (!properties.isEmpty()) {
+      String classNames = System.getProperty("javax.accessibility.assistive_technologies");
+      if (classNames == null) {
+        // If the system property is not set, Toolkit will try to use the properties file.
+        classNames = properties.getProperty("assistive_technologies", null);
+        if (classNames != null && classNames.contains(ATK_WRAPPER)) {
+          // Replace AtkWrapper with a dummy Object. It'll be instantiated & GC'ed right away, a NOP.
+          System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object");
+          LOG.info("org.GNOME.Accessibility.AtkWrapper is blocked, see IDEA-149219");
+        }
+      }
+    }
   }
 
   public static int getMultiClickInterval() {
