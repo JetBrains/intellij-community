@@ -138,10 +138,10 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
       @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
       return when {
         type == java.lang.Long.TYPE -> LONG_PARSER
-        type == Integer.TYPE, type == Integer::class.java -> INTEGER_PARSER
+        type == Integer.TYPE || type == Integer::class.java -> INTEGER_PARSER
         type == java.lang.Boolean.TYPE -> BOOLEAN_PARSER
         type == java.lang.Float.TYPE -> FLOAT_PARSER
-        type == Number::class.java, type == java.lang.Double.TYPE, type == java.lang.Double::class.java -> NUMBER_PARSER
+        type == Number::class.java || type == java.lang.Double.TYPE || type == java.lang.Double::class.java -> NUMBER_PARSER
         type == Void.TYPE -> VOID_PARSER
         type == String::class.java -> {
           if (method != null) {
