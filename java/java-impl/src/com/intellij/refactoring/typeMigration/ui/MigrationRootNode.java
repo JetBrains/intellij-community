@@ -34,7 +34,7 @@ import java.util.*;
  * @author anna
  * Date: 16-Apr-2008
  */
-public class MigrationRootNode extends AbstractTreeNode<TypeMigrationLabeler> implements DuplicateNodeRenderer.DuplicatableNode  {
+public class MigrationRootNode extends AbstractTreeNode<PsiElement> implements DuplicateNodeRenderer.DuplicatableNode  {
   private final TypeMigrationLabeler myLabeler;
   private List<MigrationNode> myCachedChildren;
   private final PsiElement myRoot;
@@ -44,7 +44,7 @@ public class MigrationRootNode extends AbstractTreeNode<TypeMigrationLabeler> im
                               TypeMigrationLabeler labeler, 
                               final PsiElement root,
                               final boolean previewUsages) {
-    super(project, labeler);
+    super(project, root);
     myLabeler = labeler;
     myRoot = root;
     myPreviewUsages = previewUsages;
