@@ -15,14 +15,15 @@
  */
 package com.intellij.diff.tools.util;
 
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.ui.ClickListener;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.CalledInAwt;
@@ -31,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
+import java.util.List;
 
 
 public class DiffSplitter extends Splitter {
@@ -51,19 +52,25 @@ public class DiffSplitter extends Splitter {
         removeAll();
         setCursor(Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
 
+        List<JComponent> actionComponents = ContainerUtil.list(createActionComponent(myTopAction),
+                                                               createActionComponent(myBottomAction));
+        List<JComponent> syncComponents = DiffUtil.createSyncHeightComponents(actionComponents);
+
+
         GridBag bag = new GridBag();
 
-        if (myTopAction != null) {
-          add(createActionComponent(myTopAction), bag.nextLine());
+        if (syncComponents.get(0) != null) {
+          add(syncComponents.get(0), bag.nextLine());
           add(Box.createVerticalStrut(JBUI.scale(20)), bag.nextLine());
         }
 
         add(new JLabel(AllIcons.General.SplitGlueH), bag.nextLine());
 
-        if (myBottomAction != null) {
+        if (syncComponents.get(1) != null) {
           add(Box.createVerticalStrut(JBUI.scale(20)), bag.nextLine());
-          add(createActionComponent(myBottomAction), bag.nextLine());
+          add(syncComponents.get(1), bag.nextLine());
         }
+
 
         revalidate();
         repaint();
@@ -75,29 +82,6 @@ public class DiffSplitter extends Splitter {
         if (myPainter != null) myPainter.paint(g, this);
       }
     };
-  }
-
-  @NotNull
-  private JComponent createActionComponent(@NotNull final AnAction action) {
-    String text = action.getTemplatePresentation().getText();
-    Icon icon = action.getTemplatePresentation().getIcon();
-
-    JLabel label = new JLabel(icon);
-    label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    label.setToolTipText(text);
-
-    new ClickListener() {
-      @Override
-      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        DataContext context = DataManager.getInstance().getDataContext(DiffSplitter.this);
-        AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, e, "", context);
-        action.update(actionEvent);
-        if (actionEvent.getPresentation().isEnabledAndVisible()) action.actionPerformed(actionEvent);
-        return true;
-      }
-    }.installOn(label);
-
-    return label;
   }
 
   public void setTopAction(@Nullable AnAction value) {
@@ -121,5 +105,15 @@ public class DiffSplitter extends Splitter {
 
   public interface Painter {
     void paint(@NotNull Graphics g, @NotNull JComponent divider);
+  }
+
+  @Nullable
+  private static JComponent createActionComponent(@Nullable final AnAction action) {
+    if (action == null) return null;
+
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("", new DefaultActionGroup(action), true);
+    toolbar.setReservePlaceAutoPopupIcon(false);
+    toolbar.getComponent().setCursor(Cursor.getDefaultCursor());
+    return toolbar.getComponent();
   }
 }
