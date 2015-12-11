@@ -573,4 +573,8 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
     configureFromFileText("Collections.java", StringUtil.convertLineSeparators(StringUtil.replace(text, "package java.util;", "package java.utilx; import java.util.*;")));
     doTestConfiguredFile(false, false, null);
   }
+
+  public void testReturnTypeSubstitutableForSameOverrideEquivalentMethods() throws Exception {
+    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
+  }
 }

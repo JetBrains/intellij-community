@@ -392,4 +392,36 @@ public class MethodSignatureUtil {
     }
     return true;
   }
+
+
+  /**
+   * 8.4.5 Method Result :: return type substitutable
+   */
+  public static boolean isReturnTypeSubstitutable(MethodSignature d1, MethodSignature d2, PsiType r1, PsiType r2) {
+    //If R1 is void then R2 is void.
+    if (PsiType.VOID.equals(r1)) {
+      return PsiType.VOID.equals(r2);
+    }
+
+    //If R1 is a primitive type then R2 is identical to R1.
+    if (r1 instanceof PsiPrimitiveType) {
+      return r1.equals(r2);
+    }
+
+    if (r1 instanceof PsiClassType && r2 != null) {
+
+      //R1, adapted to the type parameters of d2 (§8.4.4), is a subtype of R2.
+      final PsiSubstitutor adaptingSubstitutor = getSuperMethodSignatureSubstitutor(d1, d2);
+      if (adaptingSubstitutor != null && r2.isAssignableFrom(adaptingSubstitutor.substitute(r1))) {
+        return true;
+      }
+
+      //d1 does not have the same signature as d2 (§8.4.2), and R1 = |R2|.
+      if (!areSignaturesEqual(d1, d2)) {
+        return r1.equals(TypeConversionUtil.erasure(r2));
+      }
+    }
+
+    return Comparing.equal(r1, r2);
+  }
 }
