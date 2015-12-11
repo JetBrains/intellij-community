@@ -26,11 +26,9 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.util.SmartList;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Dmitry Batkovich
@@ -251,9 +249,8 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     boolean actionFound = false;
     myFixture.doHighlighting();
     for (IntentionAction action : myFixture.getAvailableIntentions()) {
-      if (action instanceof VariableTypeFix ||
-          action instanceof GuavaInspection.MigrateFluentIterableChainQuickFix ||
-          action instanceof GuavaInspection.MigrateMethodReturnTypeFix) {
+      if (action instanceof GuavaInspection.MigrateFluentIterableChainQuickFix ||
+          action instanceof GuavaInspection.MigrateGuavaTypeFix) {
         myFixture.launchAction(action);
         actionFound = true;
         break;

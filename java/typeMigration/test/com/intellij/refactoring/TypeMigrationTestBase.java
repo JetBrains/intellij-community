@@ -29,6 +29,7 @@ import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Functions;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -216,7 +217,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
 
   private static class TestTypeMigrationProcessor extends TypeMigrationProcessor {
     public TestTypeMigrationProcessor(final Project project, final PsiElement root, final PsiType migrationType, final TypeMigrationRules rules) {
-      super(project, root, migrationType, rules);
+      super(project, new PsiElement[] {root}, Functions.<PsiElement, PsiType>constant(migrationType), rules);
     }
 
     @NotNull
