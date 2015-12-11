@@ -167,6 +167,7 @@ class CompletionFileLogger(private val installationUID: String,
     }
     
     private fun toIdsList(items: List<LookupStringWithRelevance>): String {
+        addUntrackedItemsToIdMap(items)
         val ids = StringBuilder()
         with (ids) {
             append("{")
