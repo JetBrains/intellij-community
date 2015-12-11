@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -60,7 +59,6 @@ public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
     CommittedChangeList changeList = (CommittedChangeList)event.getRequiredData(VcsDataKeys.CHANGE_LISTS)[0];
     AbstractVcs vcs = assertNotNull(getVcsForChangeList(project, changeList));
     VcsHistoryProviderEx vcsHistoryProvider = assertNotNull((VcsHistoryProviderEx)vcs.getVcsHistoryProvider());
-    AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
     Change change = event.getRequiredData(VcsDataKeys.CHANGES)[0];
     FilePath path = assertNotNull(getChangedPath(change));
     VcsRevisionNumber revisionNumber = ((VcsRevisionNumberAware)changeList).getRevisionNumber();
