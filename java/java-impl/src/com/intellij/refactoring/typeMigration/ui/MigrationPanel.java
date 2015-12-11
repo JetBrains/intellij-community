@@ -37,7 +37,6 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.typeMigration.ChangeTypeSignatureHandler;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
@@ -261,7 +260,7 @@ public class MigrationPanel extends JPanel implements Disposable {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             final TypeMigrationDialog.MultipleElements dialog =
-              new TypeMigrationDialog.MultipleElements(myProject, myInitialRoots, myLabeler.getRootTypes(), myLabeler.getRules());
+              new TypeMigrationDialog.MultipleElements(myProject, myInitialRoots, myLabeler.getMigrationRootTypeFunction(), myLabeler.getRules());
             dialog.show();
           }
         });

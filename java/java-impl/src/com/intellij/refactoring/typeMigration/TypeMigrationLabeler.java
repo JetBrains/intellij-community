@@ -65,7 +65,7 @@ public class TypeMigrationLabeler {
   }
 
   private final TypeMigrationRules myRules;
-  private final Function<PsiElement, PsiType> myRootTypes;
+  private final Function<PsiElement, PsiType> myMigrationRootTypeFunction;
   private TypeEvaluator myTypeEvaluator;
   private final LinkedHashMap<PsiElement, Object> myConversions;
   private final HashSet<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>> myFailedConversions;
@@ -85,9 +85,9 @@ public class TypeMigrationLabeler {
     this(rules, Functions.<PsiElement, PsiType>constant(rootType));
   }
 
-  public TypeMigrationLabeler(final TypeMigrationRules rules, Function<PsiElement, PsiType> rootTypes) {
+  public TypeMigrationLabeler(final TypeMigrationRules rules, Function<PsiElement, PsiType> migrationRootTypeFunction) {
     myRules = rules;
-    myRootTypes = rootTypes;
+    myMigrationRootTypeFunction = migrationRootTypeFunction;
 
     myConversions = new LinkedHashMap<PsiElement, Object>();
     myFailedConversions = new HashSet<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>>();
@@ -99,8 +99,8 @@ public class TypeMigrationLabeler {
     return myFailedConversions.size() > 0;
   }
 
-  public Function<PsiElement, PsiType> getRootTypes() {
-    return myRootTypes;
+  public Function<PsiElement, PsiType> getMigrationRootTypeFunction() {
+    return myMigrationRootTypeFunction;
   }
 
   public String[] getFailedConversionsReport() {
@@ -894,7 +894,7 @@ public class TypeMigrationLabeler {
 
 
     for (PsiElement victim : victims) {
-      addMigrationRoot(victim, myRootTypes.fun(victim), null, false, true, true);
+      addMigrationRoot(victim, myMigrationRootTypeFunction.fun(victim), null, false, true, true);
     }
 
     if (autoMigrate) {
