@@ -314,4 +314,9 @@ public class TaskExecutionView implements ConsoleView {
   @Override
   public void dispose() {
   }
+
+  public void onFailure(Exception e) {
+    myRoot.getInfo().setFailed(true);
+    myProgressAnimator.stopMovie();
+  }
 }

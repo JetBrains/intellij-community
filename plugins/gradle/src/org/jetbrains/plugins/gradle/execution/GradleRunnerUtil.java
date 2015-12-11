@@ -121,16 +121,23 @@ public class GradleRunnerUtil {
           });
         }
       }
+
+      @Override
+      public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull final Exception e) {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            gradleExecutionConsole.onFailure(e);
+          }
+        });
+      }
+
+      @Override
+      public void onEnd(@NotNull ExternalSystemTaskId id) {
+        progressManager.removeNotificationListener(this);
+      }
     };
     progressManager.addNotificationListener(taskId, taskListener);
-
-    processHandler.addProcessListener(new ProcessAdapter() {
-      @Override
-      public void processTerminated(ProcessEvent event) {
-        progressManager.removeNotificationListener(taskListener);
-      }
-    });
-
     return duplexConsoleView;
   }
 }
