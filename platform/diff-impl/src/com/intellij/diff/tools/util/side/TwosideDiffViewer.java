@@ -22,7 +22,7 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.holders.EditorHolder;
 import com.intellij.diff.tools.holders.EditorHolderFactory;
 import com.intellij.diff.tools.util.DiffDataKeys;
-import com.intellij.diff.tools.util.FocusTrackerSupport.TwosideFocusTrackerSupport;
+import com.intellij.diff.tools.util.FocusTrackerSupport;
 import com.intellij.diff.tools.util.SimpleDiffPanel;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
 import com.intellij.diff.util.DiffUtil;
@@ -45,7 +45,7 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
 
   @NotNull private final List<T> myHolders;
 
-  @NotNull private final TwosideFocusTrackerSupport myFocusTrackerSupport;
+  @NotNull private final FocusTrackerSupport<Side> myFocusTrackerSupport;
 
   public TwosideDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request, @NotNull EditorHolderFactory<T> factory) {
     super(context, request);
@@ -53,7 +53,7 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
     myHolders = createEditorHolders(factory);
 
     List<JComponent> titlePanels = createTitles();
-    myFocusTrackerSupport = new TwosideFocusTrackerSupport(myHolders);
+    myFocusTrackerSupport = new FocusTrackerSupport.Twoside(myHolders);
     myContentPanel = new TwosideContentPanel(myHolders, titlePanels);
 
     myPanel = new SimpleDiffPanel(myContentPanel, this, context);

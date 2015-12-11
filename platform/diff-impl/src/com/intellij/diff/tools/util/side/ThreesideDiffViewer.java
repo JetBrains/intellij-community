@@ -25,7 +25,7 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.holders.EditorHolder;
 import com.intellij.diff.tools.holders.EditorHolderFactory;
 import com.intellij.diff.tools.util.DiffDataKeys;
-import com.intellij.diff.tools.util.FocusTrackerSupport.ThreesideFocusTrackerSupport;
+import com.intellij.diff.tools.util.FocusTrackerSupport;
 import com.intellij.diff.tools.util.SimpleDiffPanel;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
 import com.intellij.diff.util.DiffUtil;
@@ -52,7 +52,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
 
   @NotNull private final List<T> myHolders;
 
-  @NotNull private final ThreesideFocusTrackerSupport myFocusTrackerSupport;
+  @NotNull private final FocusTrackerSupport<ThreeSide> myFocusTrackerSupport;
 
   public ThreesideDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request, @NotNull EditorHolderFactory<T> factory) {
     super(context, request);
@@ -60,7 +60,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
     myHolders = createEditorHolders(factory);
 
     List<JComponent> titlePanel = createTitles();
-    myFocusTrackerSupport = new ThreesideFocusTrackerSupport(myHolders);
+    myFocusTrackerSupport = new FocusTrackerSupport.Threeside(myHolders);
     myContentPanel = new ThreesideContentPanel(myHolders, titlePanel);
 
     myPanel = new SimpleDiffPanel(myContentPanel, this, context);
