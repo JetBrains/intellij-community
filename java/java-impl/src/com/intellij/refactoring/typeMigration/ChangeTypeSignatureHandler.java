@@ -27,6 +27,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.typeMigration.ui.TypeMigrationDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
@@ -89,7 +90,7 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
 
   public static void invoke(final Project project, final PsiElement root, final PsiType type, final TypeMigrationRules rules, final Editor editor) {
     if (Util.canBeMigrated(root)) {
-      TypeMigrationDialog dialog = new TypeMigrationDialog(project, root, type, rules);
+      TypeMigrationDialog dialog = new TypeMigrationDialog.SingleElement(project, root, type, rules);
       dialog.show();
       return;
     }

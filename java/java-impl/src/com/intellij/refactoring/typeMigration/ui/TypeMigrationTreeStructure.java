@@ -15,10 +15,14 @@
  */
 package com.intellij.refactoring.typeMigration.ui;
 
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.TreeStructureProvider;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructureBase;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -27,14 +31,25 @@ import java.util.List;
  * Date: 11-Apr-2008
  */
 public class TypeMigrationTreeStructure extends AbstractTreeStructureBase {
-  private MigrationRootNode myRoot;
+  private AbstractTreeNode<String> myRoot;
 
   public TypeMigrationTreeStructure(final Project project) {
     super(project);
   }
 
-  public void setRoot(final MigrationRootNode root) {
-    myRoot = root;
+  public void setRoots(final List<MigrationRootNode> roots) {
+    myRoot = new AbstractTreeNode<String>(myProject, "Migration structure:") {
+      @NotNull
+      @Override
+      public Collection<? extends AbstractTreeNode> getChildren() {
+        return roots;
+      }
+
+      @Override
+      protected void update(PresentationData presentation) {
+        presentation.setPresentableText(getValue());
+      }
+    };
   }
 
   public List<TreeStructureProvider> getProviders() {

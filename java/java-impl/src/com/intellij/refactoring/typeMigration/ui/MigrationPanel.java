@@ -68,7 +68,9 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -79,7 +81,7 @@ public class MigrationPanel extends JPanel implements Disposable {
   @NonNls private static final String MIGRATION_USAGES = "migration.usages";
   private static final DataKey<TypeMigrationUsageInfo[]> MIGRATION_USAGES_KEYS = DataKey.create(MIGRATION_USAGES);
 
-  private final PsiElement myInitialRoot;
+  private final PsiElement[] myInitialRoots;
   private final TypeMigrationLabeler myLabeler;
 
 
@@ -89,16 +91,20 @@ public class MigrationPanel extends JPanel implements Disposable {
   private final MigrationUsagesPanel myUsagesPanel;
   private final MigrationConflictsPanel myConflictsPanel;
 
-  public MigrationPanel(final PsiElement root, TypeMigrationLabeler labeler, final Project project, final boolean previewUsages) {
+  public MigrationPanel(final PsiElement[] roots, TypeMigrationLabeler labeler, final Project project, final boolean previewUsages) {
     super(new BorderLayout());
-    myInitialRoot = root;
+    myInitialRoots = roots;
     myLabeler = labeler;
     myProject = project;
 
     myRootsTree = new MyTree(new DefaultTreeModel(new DefaultMutableTreeNode()));
     final TypeMigrationTreeBuilder builder = new TypeMigrationTreeBuilder(myRootsTree, project);
-    final MigrationRootNode currentRoot = new MigrationRootNode(project, myLabeler, root, previewUsages);
-    builder.setRoot(currentRoot);
+
+    final List<MigrationRootNode> rootNodes = new ArrayList<MigrationRootNode>(roots.length);
+    for (PsiElement root : roots) {
+      rootNodes.add(new MigrationRootNode(project, myLabeler, root, previewUsages));
+    }
+    builder.setRoots(rootNodes);
     initTree(myRootsTree);
     myRootsTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(final TreeSelectionEvent e) {
@@ -137,12 +143,12 @@ public class MigrationPanel extends JPanel implements Disposable {
       public void run() {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            if (builder.isDisposed()) return;
-            myRootsTree.expandPath(new TreePath(myRootsTree.getModel().getRoot()));
-            final Collection<? extends AbstractTreeNode> children = currentRoot.getChildren();
-            if (!children.isEmpty()) {
-              builder.select(children.iterator().next());
-            }
+            //if (builder.isDisposed()) return;
+            //myRootsTree.expandPath(new TreePath(myRootsTree.getModel().getRoot()));
+            //final Collection<? extends AbstractTreeNode> children = currentRoot.getChildren();
+            //if (!children.isEmpty()) {
+            //  builder.select(children.iterator().next());
+            //}
           }
         });
       }
@@ -254,7 +260,9 @@ public class MigrationPanel extends JPanel implements Disposable {
         UsageViewManager.getInstance(myProject).closeContent(myContent);
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            ChangeTypeSignatureHandler.invoke(myProject, myInitialRoot, myLabeler.getRootTypes().fun(myInitialRoot), myLabeler.getRules(), null);
+            final TypeMigrationDialog.MultipleElements dialog =
+              new TypeMigrationDialog.MultipleElements(myProject, myInitialRoots, myLabeler.getRootTypes(), myLabeler.getRules());
+            dialog.show();
           }
         });
       }
@@ -275,6 +283,7 @@ public class MigrationPanel extends JPanel implements Disposable {
   private void initTree(final Tree tree) {
     final MigrationRootsTreeCellRenderer rootsTreeCellRenderer = new MigrationRootsTreeCellRenderer();
     tree.setCellRenderer(rootsTreeCellRenderer);
+    //TODO Dmitry Batkovich root is visible. don't know why
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(tree);

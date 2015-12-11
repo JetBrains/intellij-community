@@ -35,6 +35,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,6 +47,8 @@ import java.util.Set;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class TypeMigrationProcessor extends BaseRefactoringProcessor {
+  private final static int MAX_ROOT_IN_PREVIEW_PRESENTATION = 3;
+
   private PsiElement[] myRoot;
   private Function<PsiElement, PsiType> myRootTypes;
   private final TypeMigrationRules myRules;
@@ -154,26 +157,41 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected void previewRefactoring(@NotNull final UsageInfo[] usages) {
-    MigrationPanel panel = new MigrationPanel(myRoot[0], myLabeler, myProject, isPreviewUsages());
-    String text;
-    if (myRoot[0] instanceof PsiField) {
-      text = "field \'" + ((PsiField)myRoot[0]).getName() + "\'";
+    MigrationPanel panel = new MigrationPanel(myRoot, myLabeler, myProject, isPreviewUsages());
+    String name;
+    if (myRoot.length == 1) {
+      String fromType = assertNotNull(TypeMigrationLabeler.getElementType(myRoot[0])).getPresentableText();
+      String toType = myRootTypes.fun(myRoot[0]).getPresentableText();
+      String text;
+      if (myRoot[0] instanceof PsiField) {
+        text = "field \'" + ((PsiField)myRoot[0]).getName() + "\'";
+      }
+      else if (myRoot[0] instanceof PsiParameter) {
+        text = "parameter \'" + ((PsiParameter)myRoot[0]).getName() + "\'";
+      }
+      else if (myRoot[0] instanceof PsiLocalVariable) {
+        text = "variable \'" + ((PsiLocalVariable)myRoot[0]).getName() + "\'";
+      }
+      else if (myRoot[0] instanceof PsiMethod) {
+        text = "method \'" + ((PsiMethod)myRoot[0]).getName() + "\' return";
+      }
+      else {
+        text = myRoot[0].getText();
+      }
+      name = "Migrate Type of " + text + " from \'" + fromType + "\' to \'" + toType + "\'";
+    } else {
+      final int rootsInPresentationCount = myRoot.length > MAX_ROOT_IN_PREVIEW_PRESENTATION ? MAX_ROOT_IN_PREVIEW_PRESENTATION : myRoot.length;
+      String[] rootsPresentation = new String[rootsInPresentationCount];
+      for (int i = 0; i < rootsInPresentationCount; i++) {
+        final PsiElement root = myRoot[i];
+        rootsPresentation[i] = root instanceof PsiNamedElement ? ((PsiNamedElement)root).getName() : root.getText();
+      }
+      rootsPresentation = StringUtil.surround(rootsPresentation, "\'", "\'");
+      name = "Migrate Type of " + StringUtil.join(rootsPresentation, ", ");
+      if (myRoot.length > MAX_ROOT_IN_PREVIEW_PRESENTATION) {
+        name += "...";
+      }
     }
-    else if (myRoot[0] instanceof PsiParameter) {
-      text = "parameter \'" + ((PsiParameter)myRoot[0]).getName() + "\'";
-    }
-    else if (myRoot[0] instanceof PsiLocalVariable) {
-      text = "variable \'" + ((PsiLocalVariable)myRoot[0]).getName() + "\'";
-    }
-    else if (myRoot[0] instanceof PsiMethod) {
-      text = "method \'" + ((PsiMethod)myRoot[0]).getName() + "\' return";
-    }
-    else {
-      text = Arrays.toString(myRoot);
-    }
-    String fromType = assertNotNull(TypeMigrationLabeler.getElementType(myRoot[0])).getPresentableText();
-    String toType = myRootTypes.fun(myRoot[0]).getPresentableText();
-    String name = "Migrate Type of " + text + " from \'" + fromType + "\' to \'" + toType + "\'";
     Content content = UsageViewManager.getInstance(myProject).addContent(name, false, panel, true, true);
     panel.setContent(content);
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.FIND).activate(null);
