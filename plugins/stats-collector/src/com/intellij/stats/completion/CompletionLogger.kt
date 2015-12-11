@@ -3,10 +3,6 @@ package com.intellij.stats.completion
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
-import java.io.File
-import java.io.PrintWriter
-import java.nio.file.Files
-import java.nio.file.StandardOpenOption
 import java.util.*
 
 
@@ -22,29 +18,17 @@ abstract class CompletionLoggerProvider {
 
 }
 
-class CompletionFileLoggerProvider(val filePathProvider: FilePathProvider) : CompletionLoggerProvider() {
-    var initialized = false
-    val writer: PrintWriter by lazy {
-        val path = filePathProvider.statsFilePath
-        val file = File(path)
-        if (!file.exists()) {
-            file.createNewFile()
-        }
-        val bufferedWriter = Files.newBufferedWriter(file.toPath(), StandardOpenOption.APPEND)
-        initialized = true
-        PrintWriter(bufferedWriter)
-    }
-    
+class CompletionFileLoggerProvider(filePathProvider: FilePathProvider) : CompletionLoggerProvider() {
+    val logFileManager = LogFileManager(filePathProvider)
+
     override fun dispose() {
-        if (initialized) {
-            writer.close()
-        }
+        logFileManager.dispose()
     }
-    
+
     override fun newCompletionLogger(): CompletionLogger {
         val installationUID = UpdateChecker.getInstallationUID(PropertiesComponent.getInstance())
         val completionUID = UUID.randomUUID().toString()
-        return CompletionFileLogger(installationUID, completionUID, writer)  
+        return CompletionFileLogger(installationUID, completionUID, logFileManager)  
     }
 
 }
@@ -72,12 +56,12 @@ abstract class CompletionLogger {
 
 class CompletionFileLogger(private val installationUID: String,
                            private val completionUID: String,
-                           private val writer: PrintWriter) : CompletionLogger() {
+                           private val logFileManager: LogFileManager) : CompletionLogger() {
     
     private fun log(statInfoBuilder: StatInfoBuilder) {
         val msg = statInfoBuilder.message()
         println(msg)
-        writer.println(msg)
+        logFileManager.println(msg)
     }
     
     private val itemsToId: MutableMap<String, Int> = hashMapOf()
