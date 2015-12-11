@@ -39,9 +39,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.ThreadTracker;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.lang.CompoundRuntimeException;
@@ -115,10 +115,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
   @Override
   protected void tearDown() throws Exception {
-    DebugProcessImpl debugProcess = ObjectUtils.chooseNotNull(getDebugProcess(), myDebugProcess);
-    if (debugProcess != null) {
-      debugProcess.awaitJDIThreadTermination(100, TimeUnit.SECONDS);
-    }
+    ThreadTracker.awaitThreadTerminationWithParentParentGroup("JDI main", 100, TimeUnit.SECONDS);
     try {
       super.tearDown();
     }
