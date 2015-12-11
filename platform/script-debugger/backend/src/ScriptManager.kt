@@ -15,7 +15,6 @@
  */
 package org.jetbrains.debugger
 
-import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
 import com.intellij.util.Url
 import org.jetbrains.concurrency.Promise
@@ -30,9 +29,9 @@ interface ScriptManager {
 
   fun containsScript(script: Script): Boolean
 
-  fun forEachScript(scriptProcessor: Processor<Script>)
+  fun forEachScript(scriptProcessor: (Script) -> Boolean)
 
-  fun forEachScript(scriptProcessor: CommonProcessors.FindProcessor<Script>): Script?
+  fun forEachScript(scriptProcessor: Processor<Script>) = forEachScript { scriptProcessor.process(it)}
 
   fun getScript(function: FunctionValue): Promise<Script>
 

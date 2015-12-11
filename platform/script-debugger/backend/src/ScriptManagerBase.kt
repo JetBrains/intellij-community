@@ -15,8 +15,6 @@
  */
 package org.jetbrains.debugger
 
-import com.intellij.util.CommonProcessors
-import com.intellij.util.Processor
 import com.intellij.util.Url
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.PromiseManager
@@ -46,11 +44,6 @@ abstract class ScriptManagerBase<SCRIPT : ScriptBase> : ScriptManager {
 
   fun setSource(script: SCRIPT, source: String?) {
     scriptSourceLoader.set(script, source)
-  }
-
-  override fun forEachScript(scriptProcessor: CommonProcessors.FindProcessor<Script>): Script? {
-    forEachScript((scriptProcessor as Processor<Script>))
-    return scriptProcessor.getFoundValue()
   }
 }
 
