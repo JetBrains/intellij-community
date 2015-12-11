@@ -27,14 +27,13 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
-import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.fixes.ChangeModifierFix;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -101,15 +100,6 @@ public class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspection
       checkMember(field);
     }
 
-    private static boolean isOverridden(PsiMethod method) {
-      if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.PRIVATE)) {
-        return false;
-      }
-      final Query<PsiMethod> overridingMethodQuery = OverridingMethodsSearch.search(method);
-      final PsiMethod result = overridingMethodQuery.findFirst();
-      return result != null;
-    }
-
     private void checkMember(@NotNull final PsiMember member) {
       if (member.hasModifierProperty(PsiModifier.PRIVATE) || member.hasModifierProperty(PsiModifier.NATIVE)) return;
       if (member instanceof PsiMethod && member instanceof SyntheticElement  || !member.isPhysical()) return;
@@ -120,7 +110,7 @@ public class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspection
           log(member.getName() + " overrides");
           return; // overrides
         }
-        if (isOverridden(method)) {
+        if (MethodUtils.isOverridden(method)) {
           log(member.getName() + " overridden");
           return;
         }
@@ -156,12 +146,9 @@ public class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspection
         UnusedSymbolUtil.processUsages(project, memberFile, member, new EmptyProgressIndicator(), null, new Processor<UsageInfo>() {
           @Override
           public boolean process(UsageInfo info) {
-            if (member.getName().equals("getConstBoolean")) {
-              int i = 0;
-            }
             foundUsage.set(true);
             PsiFile psiFile = info.getFile();
-            if (psiFile == null) return true; // ignore usages in containingFile because isLocallyUsed() method would have caught that
+            if (psiFile == null) return true;
             if (!(psiFile instanceof PsiJavaFile)) {
               log("     refd from " + psiFile.getName() + "; set to public");
               maxLevel.set(PsiUtil.ACCESS_LEVEL_PUBLIC);
@@ -177,10 +164,9 @@ public class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspection
             @PsiUtil.AccessLevel
             int level = getEffectiveLevel(element, psiFile, memberFile, memberClass, memberPackage);
             log("    ref in file " + psiFile.getName() + "; level = " + PsiUtil.getAccessModifier(level) + "; (" + element + ")");
-            int oldLevel = maxLevel.get();
-            if (level > oldLevel) {
-              boolean set = maxLevel.compareAndSet(oldLevel, level);
-              //assert set;
+            while (true) {
+              int oldLevel = maxLevel.get();
+              if (level <= oldLevel || maxLevel.compareAndSet(oldLevel, level)) break;
             }
             if (level == PsiUtil.ACCESS_LEVEL_PUBLIC && memberClass != null) {
               childMembersAreUsedOutsideMyPackage.add(memberClass);
