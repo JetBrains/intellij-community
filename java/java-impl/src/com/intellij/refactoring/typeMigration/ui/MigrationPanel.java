@@ -99,11 +99,8 @@ public class MigrationPanel extends JPanel implements Disposable {
     myRootsTree = new MyTree(new DefaultTreeModel(new DefaultMutableTreeNode()));
     final TypeMigrationTreeBuilder builder = new TypeMigrationTreeBuilder(myRootsTree, project);
 
-    final List<MigrationRootNode> rootNodes = new ArrayList<MigrationRootNode>(roots.length);
-    for (PsiElement root : roots) {
-      rootNodes.add(new MigrationRootNode(project, myLabeler, root, previewUsages));
-    }
-    builder.setRoots(rootNodes);
+    final MigrationRootNode currentRoot = new MigrationRootNode(project, myLabeler, roots, previewUsages);
+    builder.setRoot(currentRoot);
     initTree(myRootsTree);
     myRootsTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(final TreeSelectionEvent e) {
@@ -142,12 +139,12 @@ public class MigrationPanel extends JPanel implements Disposable {
       public void run() {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            //if (builder.isDisposed()) return;
-            //myRootsTree.expandPath(new TreePath(myRootsTree.getModel().getRoot()));
-            //final Collection<? extends AbstractTreeNode> children = currentRoot.getChildren();
-            //if (!children.isEmpty()) {
-            //  builder.select(children.iterator().next());
-            //}
+            if (builder.isDisposed()) return;
+            myRootsTree.expandPath(new TreePath(myRootsTree.getModel().getRoot()));
+            final Collection<? extends AbstractTreeNode> children = currentRoot.getChildren();
+            if (!children.isEmpty()) {
+              builder.select(children.iterator().next());
+            }
           }
         });
       }
@@ -282,7 +279,6 @@ public class MigrationPanel extends JPanel implements Disposable {
   private void initTree(final Tree tree) {
     final MigrationRootsTreeCellRenderer rootsTreeCellRenderer = new MigrationRootsTreeCellRenderer();
     tree.setCellRenderer(rootsTreeCellRenderer);
-    //TODO Dmitry Batkovich root is visible. don't know why
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(tree);
