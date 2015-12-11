@@ -18,6 +18,7 @@ package com.intellij.util;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -63,10 +64,12 @@ public class JdkBundle {
   @Nullable
   static JdkBundle createBundle(@NotNull File jvm, @NotNull String homeSubPath, boolean boot, boolean bundled) {
     File javaHome = SystemInfo.isMac ? new File(jvm, homeSubPath) : jvm;
+    if (bundled) javaHome = new File(PathManager.getHomePath(), javaHome.getPath());
     boolean hasToolsJar = new File(javaHome, "lib" + File.separator + "tools.jar").exists();
     if (!SystemInfo.isMac && !hasToolsJar) return null; // Skip jre
 
-    Pair<String, Pair<Version, Integer>> nameVersionAndUpdate = getJDKNameVersionAndUpdate(jvm, homeSubPath);
+    File absJvmLocation = bundled ? new File(PathManager.getHomePath(), jvm.getPath()) : jvm;
+    Pair<String, Pair<Version, Integer>> nameVersionAndUpdate = getJDKNameVersionAndUpdate(absJvmLocation, homeSubPath);
 
     if (SystemInfo.isMac && nameVersionAndUpdate.second != null && nameVersionAndUpdate.second.first.isOrGreaterThan(1, 7) && !hasToolsJar)
       return null; // Skip jre
@@ -90,7 +93,12 @@ public class JdkBundle {
   }
 
   @NotNull
-  public File getBundleAsFile() {
+  File getAbsoluteLocation() {
+    return myBundled ? new File(PathManager.getHomePath(), myBundleAsFile.getPath()) : myBundleAsFile;
+  }
+
+  @NotNull
+  public File getLocation() {
     return myBundleAsFile;
   }
 

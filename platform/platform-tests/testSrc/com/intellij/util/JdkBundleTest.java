@@ -76,7 +76,7 @@ public class JdkBundleTest {
     for (File file : jdk6Files) {
       testPassed = false;
       for (JdkBundle bundle : bundles) {
-        if (FileUtil.filesEqual(bundle.getBundleAsFile(), file)) {
+        if (FileUtil.filesEqual(bundle.getAbsoluteLocation(), file)) {
           testPassed = true;
           break;
         }
@@ -110,8 +110,8 @@ public class JdkBundleTest {
     ArrayList<JdkBundle> bundles = jdkBundleList.toArrayList();
 
     for (JdkBundle bundle : bundles) {
-      assertTrue("jre \"" + bundle.getBundleAsFile().getAbsolutePath() + "\" found among jdk bundles",
-                  new File(bundle.getBundleAsFile(), "Contents/Home/lib/tools.jar").exists());
+      assertTrue("jre \"" + bundle.getAbsoluteLocation().getAbsolutePath() + "\" found among jdk bundles",
+                  new File(bundle.getAbsoluteLocation(), "Contents/Home/lib/tools.jar").exists());
     }
   }
 
@@ -127,15 +127,15 @@ public class JdkBundleTest {
 
     boolean macNonStandardJDK = SystemInfo.isMac && !new File(bootJDK, "Contents/Home").exists();
     JdkBundle bundle = macNonStandardJDK
-                       ? JdkBundle.createBundle(homeJDK, "", true, true) : // the test is run under jdk with non-standard layout
-                       JdkBundle.createBundle(bootJDK, true, true);
+                       ? JdkBundle.createBundle(homeJDK, "", true, false) : // the test is run under jdk with non-standard layout
+                       JdkBundle.createBundle(bootJDK, true, false);
 
     assertNotNull(bundle);
 
     assertTrue(bundle.isBoot());
-    assertTrue(bundle.isBundled());
+    assertFalse(bundle.isBundled());
 
-    assertTrue(FileUtil.filesEqual(bundle.getBundleAsFile(), macNonStandardJDK ? homeJDK : bootJDK));
+    assertTrue(FileUtil.filesEqual(bundle.getAbsoluteLocation(), macNonStandardJDK ? homeJDK : bootJDK));
     Pair<Version, Integer> verUpdate = bundle.getVersionUpdate();
 
     assertNotNull(verUpdate);
@@ -161,7 +161,7 @@ public class JdkBundleTest {
     assertTrue(bundle.isBoot());
     assertFalse(bundle.isBundled());
 
-    assertTrue(FileUtil.filesEqual(bundle.getBundleAsFile(), macNonStandardJDK ? homeJDK : bootJDK));
+    assertTrue(FileUtil.filesEqual(bundle.getAbsoluteLocation(), macNonStandardJDK ? homeJDK : bootJDK));
     Pair<Version, Integer> verUpdate = bundle.getVersionUpdate();
 
     assertNotNull(verUpdate);

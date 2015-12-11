@@ -236,6 +236,11 @@ NSBundle *findMatchingVm() {
     
     NSString *pathForFile = [NSString stringWithFormat:@"%@/%@.jdk", getPreferencesFolderPath(), getExecutable()];
     
+    if (!pathForFile.isAbsolutePath) {
+        // Handle relative paths
+        pathForFile = [[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent:pathForFile];
+    }
+    
     if ([fileManager fileExistsAtPath:pathForFile]){
         NSString* fileContents = [NSString stringWithContentsOfFile:pathForFile encoding:NSUTF8StringEncoding error:nil];
         NSArray* allLinedStrings = [fileContents componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
