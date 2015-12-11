@@ -15,80 +15,87 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NotNullComputable;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.util.NotNullCachedComputableWrapper;
 
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.List;
 
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isApplicable;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isAccessible;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isStaticsOK;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorResolverProcessor.isAppropriatePropertyNameForGetter;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorResolverProcessor.isAppropriatePropertyNameForSetter;
 
-public class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassHint {
+public abstract class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassHint {
 
-  private final @NotNull GrReferenceExpression myRef;
+  final @NotNull GrReferenceExpression myRef;
   private final @NotNull String myName;
-  private final @NotNull EnumSet<GroovyResolveKind> myAcceptableKinds;
-  private final boolean myByShape;
+  final @NotNull EnumSet<GroovyResolveKind> myAcceptableKinds;
 
-  private final @NotNull PsiType[] myTypeArguments;
+  private final boolean myIsLValue;
 
-  private final NullableLazyValue<PsiType> myThisType = new NullableLazyValue<PsiType>() {
-    @Nullable
-    @Override
-    protected PsiType compute() {
-      return PsiImplUtil.getQualifierType(myRef);
-    }
-  };
-  private final NullableLazyValue<SubstitutorComputer> mySubstitutorComputer = new NullableLazyValue<SubstitutorComputer>() {
-    @Nullable
-    @Override
-    protected SubstitutorComputer compute() {
-      return myByShape
-             ? null
-             : new SubstitutorComputer(myThisType.getValue(), PsiType.EMPTY_ARRAY, myTypeArguments, myRef, myRef);
-    }
-  };
-  private final NotNullLazyValue<Boolean> myIsLValue = new NotNullLazyValue<Boolean>() {
-    @NotNull
-    @Override
-    protected Boolean compute() {
-      return PsiUtil.isLValue(myRef);
-    }
-  };
-  private final boolean myIsPartOfFqn;
+  final @Nullable PsiType myThisType;
+  final @NotNull PsiType[] myTypeArguments;
+  final @Nullable PsiType[] myArgumentTypes;
+  private final NotNullLazyValue<SubstitutorComputer> myPropertySubstitutorComputer;
+  private final NotNullLazyValue<SubstitutorComputer> myMethodSubstitutorComputer;
 
-  private final MultiMap<GroovyResolveKind, GroovyResolveResult> myCandidates = MultiMap.create();
-  private final MultiMap<GroovyResolveKind, GroovyResolveResult> myInapplicableCandidates = MultiMap.create();
+  final MultiMap<GroovyResolveKind, GroovyResolveResult> myCandidates = MultiMap.create();
+  final MultiMap<GroovyResolveKind, GroovyResolveResult> myInapplicableCandidates = MultiMap.create();
 
-  public GroovyResolverProcessor(@NotNull GrReferenceExpression ref, @NotNull String name, boolean byShape) {
+  private boolean myStopExecutingMethods = false;
+
+  GroovyResolverProcessor(@NotNull final GrReferenceExpression ref, @Nullable GrExpression myUpToArgument) {
     myRef = ref;
-    myName = name;
-    myAcceptableKinds = computeKinds(myRef);
-    myByShape = byShape;
-    myTypeArguments = myRef.getTypeArguments();
-    myIsPartOfFqn = ResolveUtil.isPartOfFQN(myRef);
+    myName = getReferenceName(ref);
+    myAcceptableKinds = computeKinds(ref);
+
+    myIsLValue = PsiUtil.isLValue(myRef);
+
+    myThisType = PsiImplUtil.getQualifierType(ref);
+    final PsiType[] argumentTypes = PsiUtil.getArgumentTypes(ref, false, myUpToArgument, false);
+    myArgumentTypes = eraseTypes(argumentTypes);
+    myTypeArguments = ref.getTypeArguments();
+    myPropertySubstitutorComputer = new NotNullLazyValue<SubstitutorComputer>() {
+      @NotNull
+      @Override
+      protected SubstitutorComputer compute() {
+        return new SubstitutorComputer(myThisType, PsiType.EMPTY_ARRAY, myTypeArguments, ref, ref);
+      }
+    };
+    myMethodSubstitutorComputer = new NotNullLazyValue<SubstitutorComputer>() {
+      @NotNull
+      @Override
+      protected SubstitutorComputer compute() {
+        return new SubstitutorComputer(myThisType, argumentTypes, myTypeArguments, ref, ref.getParent());
+      }
+    };
   }
 
   @Override
@@ -101,121 +108,58 @@ public class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassH
     final GroovyResolveKind kind = computeKindAndCheckName(namedElement, resolveContext);
     if (!myAcceptableKinds.contains(kind)) return true;
 
-    if (kind != GroovyResolveKind.PROPERTY && kind != GroovyResolveKind.METHOD) {
+    if (kind == GroovyResolveKind.METHOD && myStopExecutingMethods) {
+      return true;
+    }
+    else if (kind != GroovyResolveKind.PROPERTY && kind != GroovyResolveKind.METHOD) {
       if (!myCandidates.get(kind).isEmpty()) return true;
     }
 
     final GroovyResolveResultImpl candidate;
     {
-      PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
-      if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
-
-      if (kind == GroovyResolveKind.PROPERTY && mySubstitutorComputer.getValue() != null) {
-        substitutor = mySubstitutorComputer.getValue().obtainSubstitutor(substitutor, (PsiMethod)element, resolveContext);
-      }
-
+      final PsiSubstitutor substitutor = getSubstitutor(state);
       final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
       final boolean isAccessible = isAccessible(myRef, namedElement);
       final boolean isStaticsOK = isStaticsOK(myRef, namedElement, resolveContext, false);
 
-      candidate = new GroovyResolveResultImpl(
-        namedElement, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK, kind == GroovyResolveKind.PROPERTY, true
-      );
+      if (kind == GroovyResolveKind.METHOD || kind == GroovyResolveKind.PROPERTY) {
+        final PsiMethod method = (PsiMethod)namedElement;
+        final boolean isApplicable = kind == GroovyResolveKind.PROPERTY || isApplicable(myArgumentTypes, method, null, myRef, true);
+
+        final NotNullComputable<PsiSubstitutor> substitutorComputer;
+        if (kind == GroovyResolveKind.METHOD) {
+          substitutorComputer = new NotNullCachedComputableWrapper<PsiSubstitutor>(new NotNullComputable<PsiSubstitutor>() {
+            @NotNull
+            @Override
+            public PsiSubstitutor compute() {
+              return myMethodSubstitutorComputer.getValue().obtainSubstitutor(substitutor, method, resolveContext);
+            }
+          });
+        }
+        else {
+          substitutorComputer = new NotNullCachedComputableWrapper<PsiSubstitutor>(new NotNullComputable<PsiSubstitutor>() {
+            @NotNull
+            @Override
+            public PsiSubstitutor compute() {
+              return myPropertySubstitutorComputer.getValue().obtainSubstitutor(substitutor, method, resolveContext);
+            }
+          });
+        }
+        candidate = new GroovyMethodResult(
+          method, resolveContext, spreadState,
+          substitutor, substitutorComputer,
+          kind == GroovyResolveKind.PROPERTY,
+          isAccessible, isStaticsOK, isApplicable
+        );
+      }
+      else {
+        candidate = new GroovyResolveResultImpl(
+          namedElement, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK, false, true
+        );
+      }
     }
     (candidate.isValidResult() ? myCandidates : myInapplicableCandidates).putValue(kind, candidate);
     return true;
-  }
-
-  @NotNull
-  public GroovyResolveResult[] getCandidates() {
-    Pair<Boolean, GroovyResolveResult[]> candidates;
-
-    // we do not care about other stuff if we have field operator (.@)
-    if (myRef.hasAt()) {
-      candidates = getCandidates(GroovyResolveKind.FIELD);
-      return candidates.first ? candidates.second : GroovyResolveResult.EMPTY_ARRAY;
-    }
-
-    // return package if whole ref text is valid class name
-    if (myAcceptableKinds.contains(GroovyResolveKind.PACKAGE) && myIsPartOfFqn) {
-      candidates = getCandidates(GroovyResolveKind.PACKAGE);
-      if (candidates.first) {
-        final GroovyResolveResult candidate = candidates.second[0];
-        final PsiElement element = candidate.getElement();
-        assert element instanceof PsiPackage;
-        final GrReferenceExpressionImpl topRef = getContextReferenceExpression(myRef);
-        if (topRef != null) {
-          final String fqn = topRef.getTextSkipWhiteSpaceAndComments();
-          if (JavaPsiFacade.getInstance(myRef.getProject()).findClass(fqn, myRef.getResolveScope()) != null) {
-            return candidates.second;
-          }
-        }
-      }
-    }
-
-    candidates = getCandidates(GroovyResolveKind.VARIABLE);
-    if (candidates.first) {
-      return candidates.second;
-    }
-
-    candidates = getCandidates(GroovyResolveKind.FIELD);
-    if (candidates.first) {
-      assert candidates.second.length == 1;
-      final GroovyResolveResult candidate = candidates.second[0];
-      final PsiElement element = candidate.getElement();
-      if (element instanceof PsiField) {
-        final PsiClass containingClass = ((PsiField)element).getContainingClass();
-        if (containingClass != null && PsiUtil.getContextClass(myRef) == containingClass) return candidates.second;
-      }
-      else if (!(element instanceof GrBindingVariable)) {
-        return candidates.second;
-      }
-    }
-
-    if (myIsPartOfFqn) {
-      candidates = getCandidates(GroovyResolveKind.PACKAGE, GroovyResolveKind.CLASS);
-      if (candidates.first) {
-        return candidates.second;
-      }
-    }
-
-    candidates = getCandidates(GroovyResolveKind.PROPERTY);
-    if (candidates.first) {
-      final GroovyResolveResult[] results = candidates.second;
-      return results.length <= 1 ? results : new GroovyResolveResult[]{results[0]};
-    }
-
-    candidates = getCandidates(GroovyResolveKind.FIELD);
-    if (candidates.first) {
-      return candidates.second;
-    }
-
-    candidates = getCandidates(GroovyResolveKind.PACKAGE, GroovyResolveKind.CLASS);
-    if (candidates.first) {
-      return candidates.second;
-    }
-
-    candidates = getCandidates(GroovyResolveKind.PROPERTY);
-    if (candidates.first) {
-      return candidates.second;
-    }
-
-    for (GroovyResolveKind kind : myAcceptableKinds) {
-      Collection<GroovyResolveResult> results = myInapplicableCandidates.get(kind);
-      if (!results.isEmpty()) return results.toArray(new GroovyResolveResult[results.size()]);
-    }
-
-    return GroovyResolveResult.EMPTY_ARRAY;
-  }
-
-  @NotNull
-  private Pair<Boolean, GroovyResolveResult[]> getCandidates(@NotNull GroovyResolveKind... kinds) {
-    final Collection<GroovyResolveResult> results = ContainerUtil.newSmartList();
-    for (GroovyResolveKind kind : kinds) {
-      results.addAll(myCandidates.get(kind));
-    }
-    return !results.isEmpty() ? Pair.create(true, results.toArray(new GroovyResolveResult[results.size()]))
-                              : Pair.create(false, (GroovyResolveResult[])null);
   }
 
   @SuppressWarnings("unchecked")
@@ -230,6 +174,9 @@ public class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassH
 
   @Override
   public void handleEvent(@NotNull Event event, @Nullable Object associated) {
+    if (JavaScopeProcessorEvent.CHANGE_LEVEL == event && !myCandidates.get(GroovyResolveKind.METHOD).isEmpty()) {
+      myStopExecutingMethods = true;
+    }
   }
 
   @Override
@@ -240,20 +187,36 @@ public class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassH
     return false;
   }
 
+  @NotNull
+  public abstract List<GroovyResolveResult> getCandidates();
+
+  public final GroovyResolveResult[] getCandidatesArray() {
+    final List<GroovyResolveResult> candidates = getCandidates();
+    final int size = candidates.size();
+    if (size == 0) return GroovyResolveResult.EMPTY_ARRAY;
+    if (size == 1) return new GroovyResolveResult[]{candidates.get(0)};
+    return candidates.toArray(new GroovyResolveResult[size]);
+  }
+
   private GroovyResolveKind computeKindAndCheckName(PsiNamedElement element, PsiElement resolveContext) {
     final String importedName = resolveContext instanceof GrImportStatement ? ((GrImportStatement)resolveContext).getImportedName() : null;
     if (element instanceof PsiMethod) {
-      if (myIsLValue.getValue()) {
-        if ((importedName != null &&
-             GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)element, null) &&
-             (isAppropriatePropertyNameForSetter(importedName, myName) || myName.equals(importedName)) ||
-             importedName == null && GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)element, myName))) {
-          return GroovyResolveKind.PROPERTY;
+      if (importedName == null) {
+        if (myIsLValue) {
+          if (GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)element, myName)) {
+            return GroovyResolveKind.PROPERTY;
+          }
+        }
+        else {
+          if (GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)element, myName)) {
+            return GroovyResolveKind.PROPERTY;
+          }
         }
       }
       else {
-        if (importedName == null) {
-          if (GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)element, myName)) {
+        if (myIsLValue) {
+          if (GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)element, null) &&
+              (isAppropriatePropertyNameForSetter(importedName, myName) || myName.equals(importedName))) {
             return GroovyResolveKind.PROPERTY;
           }
         }
@@ -263,6 +226,12 @@ public class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassH
                myName.equals(importedName))) {
             return GroovyResolveKind.PROPERTY;
           }
+        }
+
+        // import static Foo.foo; setFoo(1) or getFoo()
+        if (importedName.equals(GroovyPropertyUtils.getPropertyNameByGetterName(myName, true)) ||
+            importedName.equals(GroovyPropertyUtils.getPropertyNameBySetterName(myName))) {
+          return GroovyResolveKind.METHOD;
         }
       }
     }
@@ -301,7 +270,31 @@ public class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassH
     return null;
   }
 
-  private static EnumSet<GroovyResolveKind> computeKinds(GrReferenceExpression ref) {
+  @NotNull
+  protected Pair<Boolean, List<GroovyResolveResult>> getCandidates(@NotNull GroovyResolveKind... kinds) {
+    final List<GroovyResolveResult> results = ContainerUtil.newSmartList();
+    for (GroovyResolveKind kind : kinds) {
+      results.addAll(myCandidates.get(kind));
+    }
+    return !results.isEmpty() ? Pair.create(true, results) : Pair.create(false, (List<GroovyResolveResult>)null);
+  }
+
+  @NotNull
+  protected static PsiSubstitutor getSubstitutor(@NotNull final ResolveState state) {
+    PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
+    if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
+    return substitutor;
+  }
+
+  @NotNull
+  private static String getReferenceName(@NotNull GrReferenceExpression ref) {
+    final String name = ref.getReferenceName();
+    assert name != null : "Reference name cannot be null";
+    return name;
+  }
+
+  @NotNull
+  private static EnumSet<GroovyResolveKind> computeKinds(@NotNull GrReferenceExpression ref) {
     if (ref.hasAt()) return EnumSet.of(GroovyResolveKind.FIELD);
     if (ref.hasMemberPointer()) return EnumSet.of(GroovyResolveKind.METHOD);
 
@@ -315,13 +308,14 @@ public class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassH
     return result;
   }
 
-  private static GrReferenceExpressionImpl getContextReferenceExpression(GrReferenceExpression ref) {
-    final PsiElement firstNonReferenceExprParent = PsiTreeUtil.skipParentsOfType(ref, GrReferenceExpressionImpl.class);
-    return (GrReferenceExpressionImpl)PsiTreeUtil.findFirstParent(ref, new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement parent) {
-        return parent.getParent() == firstNonReferenceExprParent && parent instanceof GrReferenceExpressionImpl;
+  @Nullable
+  private static PsiType[] eraseTypes(@Nullable PsiType[] types) {
+    final PsiType[] erasedTypes = types == null ? null : Arrays.copyOf(types, types.length);
+    if (erasedTypes != null) {
+      for (int i = 0; i < types.length; i++) {
+        erasedTypes[i] = TypeConversionUtil.erasure(erasedTypes[i]);
       }
-    });
+    }
+    return erasedTypes;
   }
 }

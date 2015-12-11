@@ -43,6 +43,17 @@ public class GroovyMethodResult extends GroovyResolveResultImpl {
                             @Nullable SpreadState spreadState,
                             @NotNull PsiSubstitutor partialSubstitutor,
                             @NotNull NotNullComputable<PsiSubstitutor> substitutorComputer,
+                            boolean isInvokedOnProperty,
+                            boolean isAccessible, boolean staticsOK, boolean isApplicable) {
+    super(element, resolveContext, spreadState, partialSubstitutor, isAccessible, staticsOK, isInvokedOnProperty, isApplicable);
+    mySubstitutorComputer = substitutorComputer;
+  }
+
+  public GroovyMethodResult(@NotNull PsiMethod element,
+                            @Nullable PsiElement resolveContext,
+                            @Nullable SpreadState spreadState,
+                            @NotNull PsiSubstitutor partialSubstitutor,
+                            @NotNull NotNullComputable<PsiSubstitutor> substitutorComputer,
                             boolean isAccessible, boolean staticsOK, boolean isApplicable) {
     super(element, resolveContext, spreadState, partialSubstitutor, isAccessible, staticsOK, false, isApplicable);
     mySubstitutorComputer = substitutorComputer;

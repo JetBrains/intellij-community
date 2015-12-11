@@ -165,9 +165,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     }
 
     if (true) {
-      GroovyResolverProcessor processor = new GroovyResolverProcessor(this, name, false);
+      final GroovyResolverProcessor processor = GroovyResolverProcessorBuilder.builder().build(this);
       new GrReferenceResolveRunner(this).resolveImpl(processor);
-      return processor.getCandidates();
+      return processor.getCandidatesArray();
     }
 
     EnumSet<ElementClassHint.DeclarationKind> kinds = getParent() instanceof GrReferenceExpression
@@ -289,6 +289,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
    */
   @NotNull
   private GroovyResolveResult[] resolveMethodOrProperty(boolean allVariants, @Nullable GrExpression upToArgument) {
+    if (true) {
+      final GroovyResolverProcessor processor = GroovyResolverProcessorBuilder.builder()
+        .setAllVariants(allVariants).setUpToArgument(upToArgument).build(this);
+      new GrReferenceResolveRunner(this).resolveImpl(processor);
+      return processor.getCandidatesArray();
+    }
     final String name = getReferenceName();
     if (name == null) return GroovyResolveResult.EMPTY_ARRAY;
 
