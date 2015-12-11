@@ -40,7 +40,7 @@ class StatisticSender(val urlProvider: UrlProvider, val logFileManager: LogFileM
                 if (text.isNotEmpty()) {
                     val url = urlProvider.statsServerPostUrl
                     sendContent(url, uid, text, okAction = Runnable {
-                        logFileManager.delete()
+                        logFileManager.dispose()
                     })
                 }
             }

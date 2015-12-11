@@ -45,9 +45,11 @@ class StatisticsSenderTest: TestCase() {
     }
 
     fun `test data is remove when sent`() {
-        val sender = StatisticSender(urlProvider, pathProvider, requestService)
+        var logFileManager = LogFileManagerImpl(pathProvider)
+        var loggerProvider = CompletionFileLoggerProvider(logFileManager)
+        val sender = StatisticSender(urlProvider, logFileManager, requestService)
         sender.sendStatsData("uuid-secret-xxx")
-        UsefulTestCase.assertTrue(!file.exists())
+        UsefulTestCase.assertTrue(file.readText().isEmpty())
     }
     
     
