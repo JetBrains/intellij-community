@@ -15,12 +15,13 @@
  */
 package com.intellij.util.io;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.*;
+
+import static com.intellij.CommonBundle.message;
 
 /**
  * @author max
@@ -28,13 +29,13 @@ import java.io.*;
 public class SafeFileOutputStream extends OutputStream {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.SafeFileOutputStream");
 
-  private static final String EXTENSION_BAK = "___jb_bak___";
+  private static final String EXTENSION_TMP = "___jb_tmp___";
   private static final String EXTENSION_OLD = "___jb_old___";
 
   private final File myTargetFile;
   private final boolean myPreserveAttributes;
-  private final File myBackupFile;
-  private final OutputStream myBackupStream;
+  private final File myTempFile;
+  private final OutputStream myOutputStream;
   private boolean myFailed = false;
 
   public SafeFileOutputStream(File target) throws FileNotFoundException {
@@ -44,14 +45,14 @@ public class SafeFileOutputStream extends OutputStream {
   public SafeFileOutputStream(File target, boolean preserveAttributes) throws FileNotFoundException {
     myTargetFile = target;
     myPreserveAttributes = preserveAttributes;
-    myBackupFile = new File(myTargetFile.getParentFile(), myTargetFile.getName() + EXTENSION_BAK);
-    myBackupStream = new FileOutputStream(myBackupFile);
+    myTempFile = new File(myTargetFile.getPath() + EXTENSION_TMP);
+    myOutputStream = new FileOutputStream(myTempFile);
   }
 
   @Override
   public void write(int b) throws IOException {
     try {
-      myBackupStream.write(b);
+      myOutputStream.write(b);
     }
     catch (IOException e) {
       LOG.warn(e);
@@ -68,7 +69,7 @@ public class SafeFileOutputStream extends OutputStream {
   @Override
   public void write(byte[] b, int off, int len) throws IOException {
     try {
-      myBackupStream.write(b, off, len);
+      myOutputStream.write(b, off, len);
     }
     catch (IOException e) {
       LOG.warn(e);
@@ -80,7 +81,7 @@ public class SafeFileOutputStream extends OutputStream {
   @Override
   public void flush() throws IOException {
     try {
-      myBackupStream.flush();
+      myOutputStream.flush();
     }
     catch (IOException e) {
       LOG.warn(e);
@@ -92,16 +93,16 @@ public class SafeFileOutputStream extends OutputStream {
   @Override
   public void close() throws IOException {
     try {
-      myBackupStream.close();
+      myOutputStream.close();
     }
     catch (IOException e) {
       LOG.warn(e);
-      FileUtil.delete(myBackupFile);
-      throw e;
+      FileUtil.delete(myTempFile);
+      myFailed = true;
     }
 
     if (myFailed) {
-      throw new IOException(CommonBundle.message("safe.write.failed", myTargetFile, myBackupFile.getName()));
+      throw new IOException(message("safe.write.failed", myTargetFile, myTempFile.getName()));
     }
 
     File oldFile = new File(myTargetFile.getParent(), myTargetFile.getName() + EXTENSION_OLD);
@@ -110,15 +111,15 @@ public class SafeFileOutputStream extends OutputStream {
     }
     catch (IOException e) {
       LOG.warn(e);
-      throw new IOException(CommonBundle.message("safe.write.rename.original", myTargetFile, myBackupFile.getName()));
+      throw new IOException(message("safe.write.rename.original", myTargetFile, myTempFile.getName()));
     }
 
     try {
-      FileUtil.rename(myBackupFile, myTargetFile);
+      FileUtil.rename(myTempFile, myTargetFile);
     }
     catch (IOException e) {
       LOG.warn(e);
-      throw new IOException(CommonBundle.message("safe.write.rename.backup", myTargetFile, oldFile.getName(), myBackupFile.getName()));
+      throw new IOException(message("safe.write.rename.backup", myTargetFile, oldFile.getName(), myTempFile.getName()));
     }
 
     if (myPreserveAttributes) {
@@ -126,7 +127,7 @@ public class SafeFileOutputStream extends OutputStream {
     }
 
     if (!FileUtil.delete(oldFile)) {
-      throw new IOException(CommonBundle.message("safe.write.drop.temp", oldFile));
+      throw new IOException(message("safe.write.drop.temp", oldFile));
     }
   }
 }
