@@ -48,7 +48,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.FunctionUtil;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -95,7 +94,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   @NotNull private ChangesViewManager.State myState = new ChangesViewManager.State();
 
   private JBSplitter mySplitter;
-  private MessageBusConnection myConnection;
 
   private boolean myDetailsOn;
   @NotNull private final MyChangeProcessor myDiffDetails;
@@ -154,8 +152,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myContentManager.addContent(myContent);
 
     scheduleRefresh();
-    myConnection = myProject.getMessageBus().connect(myProject);
-    myConnection.subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, new Runnable() {
+    myProject.getMessageBus().connect().subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
@@ -172,7 +169,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   public void projectClosed() {
     Disposer.dispose(myDiffDetails);
     myView.removeTreeSelectionListener(myTsl);
-    myConnection.disconnect();
     myDisposed = true;
     myRepaintAlarm.cancelAllRequests();
   }
