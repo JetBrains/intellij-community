@@ -292,9 +292,9 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
   }
 
   @Nullable
-  protected static String createMethodReferenceText(final PsiElement element,
-                                                    final PsiType functionalInterfaceType,
-                                                    final PsiParameter[] parameters) {
+  public static String createMethodReferenceText(final PsiElement element,
+                                                 final PsiType functionalInterfaceType,
+                                                 final PsiParameter[] parameters) {
     if (element instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
 
