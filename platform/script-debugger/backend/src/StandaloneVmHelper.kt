@@ -53,7 +53,8 @@ open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: 
     fun createDisconnectRequest(): Request<out Any>?
   }
 
-  override fun isAttached() = channel != null
+  override val isAttached: Boolean
+    get() = channel != null
 
   override fun detach(): Promise<*> {
     val currentChannel = channel ?: return resolvedPromise()

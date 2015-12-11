@@ -20,7 +20,8 @@ import org.jetbrains.concurrency.resolvedPromise
 interface AttachStateManager {
   fun detach() = resolvedPromise()
 
-  fun isAttached() = true
+  val isAttached: Boolean
+    get() = true
 }
 
 interface Vm {
