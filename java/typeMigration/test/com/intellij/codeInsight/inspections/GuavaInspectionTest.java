@@ -16,11 +16,9 @@
 package com.intellij.codeInsight.inspections;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -29,6 +27,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import org.junit.Assert;
 
 import java.io.File;
 import java.util.Arrays;
@@ -46,10 +45,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
-    moduleBuilder.addLibraryJars("guava-17.0.jar", PathManager.getHomePath().replace(File.separatorChar, '/') + "/community/lib/",
-                                 "guava-17.0.jar");
-    moduleBuilder.addLibraryJars("guava-17.0.jar-2", PathManager.getHomePath().replace(File.separatorChar, '/') + "/lib/",
-                                 "guava-17.0.jar");
+    moduleBuilder.addLibraryJars("guava", PathManager.getHomePathFor(Assert.class) + "/lib/", "guava-17.0.jar");
     moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
   }
 
