@@ -72,6 +72,7 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -367,7 +368,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @TestOnly
   public void drainReDetectQueue() {
     try {
-      reDetectExecutor.waitAllTasksExecuted();
+      reDetectExecutor.waitAllTasksExecuted(1, TimeUnit.MINUTES);
     }
     catch (Exception e) {
       throw new RuntimeException(e);

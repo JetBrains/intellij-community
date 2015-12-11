@@ -49,7 +49,7 @@ public class BoundedTaskExecutorTest extends TestCase {
           }
         });
       }
-      executor.waitAllTasksExecuted();
+      executor.waitAllTasksExecuted(5, TimeUnit.MINUTES);
       assertEquals(0, executor.shutdownNow().size());
       assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS));
       backendExecutor.shutdownNow();
@@ -131,7 +131,7 @@ public class BoundedTaskExecutorTest extends TestCase {
             }
           });
         }
-        executor.waitAllTasksExecuted();
+        executor.waitAllTasksExecuted(5, TimeUnit.MINUTES);
         for (Future future : futures) {
           assertTrue(future.isDone());
         }

@@ -156,7 +156,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   }
 
   @TestOnly
-  public void waitAllTasksExecuted() throws ExecutionException, InterruptedException {
+  public void waitAllTasksExecuted(int timeout, TimeUnit unit) throws ExecutionException, InterruptedException {
     final CountDownLatch started = new CountDownLatch(myMaxTasks);
     final CountDownLatch readyToFinish = new CountDownLatch(1);
     // start myMaxTasks runnables which will spread to all available executor threads
@@ -179,7 +179,9 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
       }
     });
     try {
-      started.await();
+      if (!started.await(timeout, unit)) {
+        throw new RuntimeException("Interrupted by timeout");
+      }
     }
     catch (InterruptedException e) {
       throw new RuntimeException(e);
