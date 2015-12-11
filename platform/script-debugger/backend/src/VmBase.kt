@@ -13,22 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.settingsRepository
+package org.jetbrains.debugger
 
-import com.intellij.openapi.util.text.StringUtil
-import java.nio.ByteBuffer
+abstract class VmBase(override val debugListener: DebugEventListener) : Vm, AttachStateManager {
+  override val evaluateContext by lazy(LazyThreadSafetyMode.NONE) { computeEvaluateContext() }
 
-public fun String?.nullize(): String? = StringUtil.nullize(this)
+  override val attachStateManager: AttachStateManager = this
 
-public fun byteBufferToBytes(byteBuffer: ByteBuffer): ByteArray {
-  if (byteBuffer.hasArray() && byteBuffer.arrayOffset() == 0) {
-    val bytes = byteBuffer.array()
-    if (bytes.size == byteBuffer.limit()) {
-      return bytes
-    }
-  }
-
-  val bytes = ByteArray(byteBuffer.limit())
-  byteBuffer.get(bytes)
-  return bytes
+  protected open fun computeEvaluateContext(): EvaluateContext? = null
 }

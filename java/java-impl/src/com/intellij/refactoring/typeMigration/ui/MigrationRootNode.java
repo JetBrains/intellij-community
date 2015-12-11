@@ -37,16 +37,16 @@ import java.util.*;
 public class MigrationRootNode extends AbstractTreeNode<TypeMigrationLabeler> implements DuplicateNodeRenderer.DuplicatableNode  {
   private final TypeMigrationLabeler myLabeler;
   private List<MigrationNode> myCachedChildren;
-  private final PsiElement myRoot;
+  private final PsiElement myRoots[];
   private final boolean myPreviewUsages;
 
   protected MigrationRootNode(Project project,
                               TypeMigrationLabeler labeler, 
-                              final PsiElement root,
+                              final PsiElement[] roots,
                               final boolean previewUsages) {
     super(project, labeler);
     myLabeler = labeler;
-    myRoot = root;
+    myRoots = roots;
     myPreviewUsages = previewUsages;
   }
 
@@ -60,7 +60,9 @@ public class MigrationRootNode extends AbstractTreeNode<TypeMigrationLabeler> im
         }
       }
       else {
-        addRoot(new TypeMigrationUsageInfo(myRoot), myLabeler.getMigrationRootTypeFunction().fun(myRoot));
+        for (PsiElement root : myRoots) {
+          addRoot(new TypeMigrationUsageInfo(root), myLabeler.getMigrationRootTypeFunction().fun(root));
+        }
       }
     }
     return myCachedChildren;

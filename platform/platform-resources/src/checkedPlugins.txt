@@ -5,6 +5,7 @@ com.jetbrains.php
 org.intellij.clojure
 NodeJS
 Pythonid
+PythonCore
 com.jetbrains.lang.ejs
 com.jetbrains.twig
 Karma

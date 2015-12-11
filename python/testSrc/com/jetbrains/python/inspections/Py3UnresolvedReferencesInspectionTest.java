@@ -132,4 +132,9 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
   public void testMostDerivedMetaClass() {
     doTest();
   }
+
+  // PY-17841
+  public void testNoMostDerivedMetaClass() {
+    doTest();
+  }
 }

@@ -38,7 +38,7 @@ public class TypeMigrationTreeBuilder extends AbstractTreeBuilder{
     return false;
   }
 
-  public void setRoots(List<MigrationRootNode> roots) {
-    ((TypeMigrationTreeStructure)getTreeStructure()).setRoots(roots);
+  public void setRoot(MigrationRootNode root) {
+    ((TypeMigrationTreeStructure)getTreeStructure()).setRoots(root);
   }
 }

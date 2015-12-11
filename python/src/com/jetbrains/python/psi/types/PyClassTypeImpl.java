@@ -301,23 +301,31 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     if (classTypes.isEmpty()) {
       return null;
     }
-    return Collections.max(classTypes, new Comparator<PyClassLikeType>() {
-      @Override
-      public int compare(@Nullable PyClassLikeType t1, @Nullable PyClassLikeType t2) {
-        if (t1 == t2 || t1 != null && t1.equals(t2)) {
-          return 0;
+    try {
+      return Collections.max(classTypes, new Comparator<PyClassLikeType>() {
+        @Override
+        public int compare(@Nullable PyClassLikeType t1, @Nullable PyClassLikeType t2) {
+          if (t1 == t2 || t1 != null && t1.equals(t2)) {
+            return 0;
+          }
+          else if (t2 == null || t1 != null && Sets.newHashSet(t1.getAncestorTypes(context)).contains(t2)) {
+            return 1;
+          }
+          else if (t1 == null || Sets.newHashSet(t2.getAncestorTypes(context)).contains(t1)) {
+            return -1;
+          }
+          else {
+            throw new NotDerivedClassTypeException();
+          }
         }
-        if (t1 != null && Sets.newHashSet(t1.getAncestorTypes(context)).contains(t2)) {
-          return 1;
-        }
-        else if (t2 != null && Sets.newHashSet(t2.getAncestorTypes(context)).contains(t1)) {
-          return -1;
-        }
-        else {
-          return 0;
-        }
-      }
-    });
+      });
+    }
+    catch (NotDerivedClassTypeException ignored) {
+      return null;
+    }
+  }
+
+  private static final class NotDerivedClassTypeException extends RuntimeException {
   }
 
   private List<PyClassLikeType> getAllExplicitMetaClassTypes(@NotNull TypeEvalContext context) {

@@ -88,7 +88,7 @@ public class ExecutionNode extends CachingSimpleNode {
     setIcon(
       myInfo.isRunning() ? NodeProgressAnimator.getCurrentFrame() :
       myInfo.isFailed() ? AllIcons.RunConfigurations.TestError :
-      myInfo.isSkipped() ? AllIcons.RunConfigurations.TestSkipped :
+      myInfo.isSkipped() ? AllIcons.RunConfigurations.TestIgnored :
       AllIcons.RunConfigurations.TestPassed
     );
   }

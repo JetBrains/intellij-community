@@ -40,8 +40,8 @@ class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
       debugData.put("Text1", textToReadableFormat(text1.charsSequence))
       debugData.put("Text2", textToReadableFormat(text2.charsSequence))
 
-      for (side in Side.values) {
-        for (comparisonPolicy in ComparisonPolicy.values) {
+      for (side in Side.values()) {
+        for (comparisonPolicy in ComparisonPolicy.values()) {
           debugData.put("Policy", comparisonPolicy)
           debugData.put("Current side", side)
           doTest(text1, text2, comparisonPolicy, side)

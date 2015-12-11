@@ -63,7 +63,7 @@ import static com.intellij.util.containers.ContainerUtilRt.addIfNotNull;
 public class PyPep8NamingInspection extends PyInspection {
   private static final Pattern LOWERCASE_REGEX = Pattern.compile("[_\\p{javaLowerCase}][_\\p{javaLowerCase}0-9]*");
   private static final Pattern UPPERCASE_REGEX = Pattern.compile("[_\\p{javaUpperCase}][_\\p{javaUpperCase}0-9]*");
-  private static final Pattern MIXEDCASE_REGEX = Pattern.compile("_?[\\p{javaUpperCase}][\\p{javaLowerCase}\\p{javaUpperCase}0-9]*");
+  private static final Pattern MIXEDCASE_REGEX = Pattern.compile("_?_?[\\p{javaUpperCase}][\\p{javaLowerCase}\\p{javaUpperCase}0-9]*");
   private static final String INSPECTION_SHORT_NAME = "PyPep8NamingInspection";
 
   public final List<String> ignoredErrors = new ArrayList<String>();
@@ -198,15 +198,45 @@ public class PyPep8NamingInspection extends PyInspection {
 
     @Override
     public void visitPyClass(PyClass node) {
-      final String errorCode = "N801";
       final String name = node.getName();
       if (name == null) return;
-      if (!MIXEDCASE_REGEX.matcher(name).matches()) {
+      if (isContextManager(node)) {
+        if (!LOWERCASE_REGEX.matcher(name).matches()) {
+          final ASTNode nameNode = node.getNameNode();
+          if (nameNode != null) {
+            registerProblem(nameNode.getPsi(), "Context manager class name should be lowercase", new PyRenameElementQuickFix());
+          }
+        }
+      }
+      else if ((!MIXEDCASE_REGEX.matcher(name).matches())) {
+        final String errorCode = "N801";
         final ASTNode nameNode = node.getNameNode();
         if (nameNode != null && !ignoredErrors.contains(errorCode)) {
           registerAndAddRenameAndIgnoreErrorQuickFixes(nameNode.getPsi(), errorCode);
         }
       }
+    }
+
+    private boolean isContextManager(PyClass node) {
+      final String[] contextManagerFunctionNames = new String[] {"__enter__", "__exit__"};
+      PyStatementList[] statementLists = PsiTreeUtil.getChildrenOfType(node, PyStatementList.class);
+      ArrayList<String> names = new ArrayList<String>();
+      if (statementLists != null) {
+        for (PyStatementList statementList : statementLists) {
+          PyFunction[] functions = PsiTreeUtil.getChildrenOfType(statementList, PyFunction.class);
+          if (functions != null) {
+            for (PyFunction function : functions) {
+              names.add(function.getName());
+            }
+          }
+        }
+        for (String name : contextManagerFunctionNames) {
+          if (!names.contains(name)) {
+            return false;
+          }
+        }
+      }
+      return true;
     }
 
     @Override

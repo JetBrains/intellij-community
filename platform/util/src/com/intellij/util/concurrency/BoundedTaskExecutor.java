@@ -188,7 +188,9 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
-    readyToFinish.countDown();
+    finally {
+      readyToFinish.countDown();
+    }
     for (Future future : futures) {
       future.get();
     }

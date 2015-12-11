@@ -15,11 +15,8 @@
  */
 package com.intellij.lang.properties.editor.inspections;
 
-import com.intellij.codeInspection.*;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,31 +25,7 @@ import java.util.List;
 /**
  * @author Dmitry Batkovich
  */
-public abstract class ResourceBundleEditorInspection extends LocalInspectionTool {
-
+public interface ResourceBundleEditorInspection {
   @Nullable
-  public abstract ResourceBundleEditorProblemDescriptor[] checkPropertyGroup(@NotNull List<IProperty> properties,
-                                                                             @NotNull ResourceBundle resourceBundle);
-
-  @NotNull
-  @Override
-  public final PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return PsiElementVisitor.EMPTY_VISITOR;
-  }
-
-  @NotNull
-  @Override
-  public final PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                              boolean isOnTheFly,
-                                              @NotNull LocalInspectionToolSession session) {
-    return PsiElementVisitor.EMPTY_VISITOR;
-  }
-
-  @Nullable
-  @Override
-  public final ProblemDescriptor[] checkFile(@NotNull PsiFile file,
-                                             @NotNull InspectionManager manager,
-                                             boolean isOnTheFly) {
-    return null;
-  }
+  ResourceBundleEditorProblemDescriptor[] checkPropertyGroup(@NotNull List<IProperty> properties, @NotNull ResourceBundle resourceBundle);
 }

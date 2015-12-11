@@ -151,4 +151,29 @@ public class ThreadTracker {
       before.clear();
     }
   }
+
+  public static void awaitThreadTerminationWithParentParentGroup(@NotNull final String grandThreadGroup, int timeout, @NotNull TimeUnit unit) {
+    long start = System.currentTimeMillis();
+    while (System.currentTimeMillis() < start + unit.toMillis(timeout)) {
+      Thread jdiThread = ContainerUtil.find(getThreads(), new Condition<Thread>() {
+        @Override
+        public boolean value(Thread thread) {
+          ThreadGroup group = thread.getThreadGroup();
+          return group != null && group.getParent() != null && grandThreadGroup.equals(group.getParent().getName());
+        }
+      });
+
+      if (jdiThread == null) {
+        break;
+      }
+      try {
+        long timeLeft = start + unit.toMillis(timeout) - System.currentTimeMillis();
+        System.out.println("Waiting for the "+jdiThread+" for " + timeLeft+"ms");
+        jdiThread.join(timeLeft);
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
 }

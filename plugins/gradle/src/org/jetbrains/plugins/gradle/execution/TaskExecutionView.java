@@ -53,7 +53,8 @@ import java.util.Map;
  */
 public class TaskExecutionView implements ConsoleView {
 
-  private static final int TIME_COLUMN_WIDTH = 140;
+  private static final int TREE_COLUMN_MIN_WIDTH = 300;
+  private static final int TIME_COLUMN_MIN_WIDTH = 140;
   private final Project myProject;
   private final Map<String, ExecutionNode> nodeMap = ContainerUtil.newHashMap();
   private final JScrollPane myPane;
@@ -106,6 +107,8 @@ public class TaskExecutionView implements ConsoleView {
                                                            int column) {
               super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
               setHorizontalAlignment(SwingConstants.RIGHT);
+              final Color fg = isSelected ? UIUtil.getTreeSelectionForeground() : SimpleTextAttributes.GRAY_ATTRIBUTES.getFgColor();
+              setForeground(fg);
               return this;
             }
           };
@@ -152,10 +155,9 @@ public class TaskExecutionView implements ConsoleView {
     myTreeTable.setTableHeader(null);
 
     final TableColumn treeColumn = myTreeTable.getColumnModel().getColumn(0);
-    treeColumn.setMinWidth(300);
+    treeColumn.setMinWidth(TREE_COLUMN_MIN_WIDTH);
     final TableColumn timeColumn = myTreeTable.getColumnModel().getColumn(1);
-    timeColumn.setMaxWidth(TIME_COLUMN_WIDTH);
-    timeColumn.setMinWidth(TIME_COLUMN_WIDTH);
+    timeColumn.setMinWidth(TIME_COLUMN_MIN_WIDTH);
 
     TreeTableTree tree = myTreeTable.getTree();
     final SimpleTreeStructure treeStructure = new SimpleTreeStructure.Impl(myRoot);
@@ -311,5 +313,10 @@ public class TaskExecutionView implements ConsoleView {
 
   @Override
   public void dispose() {
+  }
+
+  public void onFailure(Exception e) {
+    myRoot.getInfo().setFailed(true);
+    myProgressAnimator.stopMovie();
   }
 }

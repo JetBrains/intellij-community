@@ -57,7 +57,7 @@ interface SuspendContext<CALL_FRAME : CallFrame> {
 abstract class ContextDependentAsyncResultConsumer<T>(private val context: SuspendContext<*>) : Consumer<T> {
   override final fun consume(result: T) {
     val vm = (context.valueManager as VmAwareValueManager<*>).vm
-    if (vm.attachStateManager.isAttached() && !vm.suspendContextManager.isContextObsolete(context)) {
+    if (vm.attachStateManager.isAttached && !vm.suspendContextManager.isContextObsolete(context)) {
       consume(result, vm)
     }
   }
