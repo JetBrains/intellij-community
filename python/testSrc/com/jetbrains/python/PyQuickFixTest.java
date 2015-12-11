@@ -619,6 +619,16 @@ public class PyQuickFixTest extends PyTestCase {
     myFixture.checkHighlighting(true, false, true);
   }
 
+  public void testImplementAbstractProperty() {
+    doInspectionTest("ImplementAbstractProperty.py", PyAbstractClassInspection.class, PyBundle.message("QFIX.NAME.implement.methods"),
+                     true, true);
+  }
+
+  public void testImplementAbstractProperty1() {
+    doInspectionTest("ImplementAbstractProperty.py", PyAbstractClassInspection.class, PyBundle.message("QFIX.NAME.implement.methods"),
+                     true, true);
+  }
+
   @Override
   @NonNls
   protected String getTestDataPath() {
@@ -669,7 +679,7 @@ public class PyQuickFixTest extends PyTestCase {
       }
       if (applyFix) {
         myFixture.launchAction(intentionActions.get(0));
-        myFixture.checkResultByFile(graftBeforeExt(testFiles[0], "_after"));
+        myFixture.checkResultByFile(graftBeforeExt(testFiles[0], "_after"), true);
       }
     }
     else {
