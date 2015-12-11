@@ -101,7 +101,8 @@ target(name: "compile", description: "Compile module python") {
       include(name: "resources")
       include(name: "src")
       include(name: "gen")
-      include(name: "pluginSrc")
+      include(name: "pluginCore")
+      include(name: "pluginJava")
       include(name: "pydevSrc")
       include(name: "openapi/src")
       include(name: "psi-api/src")
@@ -167,8 +168,9 @@ target(name: "compile", description: "Compile module python") {
   //copy plugin.xml
   ant.mkdir(dir: "${classesDir}/META-INF")
   ant.copy(todir: "${classesDir}/META-INF") {
-    fileset(file: "${pluginHome}/pluginSrc/META-INF/python-plugin-core.xml")
-    fileset(file: "${pluginHome}/pluginResources/META-INF/*.xml")
+    fileset(file: "${pluginHome}/pluginCore/META-INF/python-community-plugin-core.xml")
+    fileset(file: "${pluginHome}/pluginJava/META-INF/python-community-plugin-java.xml")
+    fileset(file: "${pluginHome}/pluginResources/META-INF/plugin.xml")
     fileset(file: "${pluginHome}/build/python-plugin-dependencies.xml")
   }
 

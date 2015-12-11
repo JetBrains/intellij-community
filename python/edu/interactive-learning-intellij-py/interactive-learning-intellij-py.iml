@@ -10,7 +10,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="lang-api" />
-    <orderEntry type="module" module-name="python-community-plugin" />
+    <orderEntry type="module" module-name="python-community-plugin-core" />
+    <orderEntry type="module" module-name="python-community-plugin-java" />
     <orderEntry type="module" module-name="interactive-learning" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="interactive-learning-intellij" />
