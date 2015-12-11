@@ -15,6 +15,8 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.application.ApplicationInfo;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -41,6 +43,11 @@ public class PlatformUtils {
 
   public static String getPlatformPrefix(String defaultPrefix) {
     return System.getProperty(PLATFORM_PREFIX_KEY, defaultPrefix);
+  }
+
+  public static boolean isJetBrainsProduct() {
+    final ApplicationInfo appInfo = ApplicationInfo.getInstance();
+    return appInfo != null && appInfo.getCompanyName().contains("JetBrains");
   }
 
   public static boolean isIntelliJ() {
