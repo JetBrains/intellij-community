@@ -298,18 +298,32 @@ public class MethodSignatureUtil {
   }
 
   /**
+   * * 8.4.4 Generic Methods :: same type parameters condition
+   * Two methods or constructors M and N have the same type parameters if both of the following are true:
+   * • M and N have same number of type parameters (possibly zero).
+   * • Where A1, ..., An are the type parameters of M and B1, ..., Bn are the type parameters of N, let θ=[B1:=A1, ..., Bn:=An]. 
+   *   Then, for all i (1 ≤ i ≤ n), the bound of Ai is the same type as θ applied to the bound of Bi.
+   * 
    * @param methodSignature method signature
    * @param superMethodSignature super method signature
    * @return null if signatures do not match
    */
   @Nullable
   public static PsiSubstitutor getSuperMethodSignatureSubstitutor(@NotNull MethodSignature methodSignature, @NotNull MethodSignature superMethodSignature) {
-    PsiSubstitutor result = getSuperMethodSignatureSubstitutorImpl(methodSignature, superMethodSignature);
-    if (result == null) return null;
-
     PsiTypeParameter[] methodTypeParameters = methodSignature.getTypeParameters();
     PsiTypeParameter[] superTypeParameters = superMethodSignature.getTypeParameters();
-    PsiSubstitutor methodSubstitutor = methodSignature.getSubstitutor();
+
+    // both methods are parameterized and number of parameters mismatch
+    if (methodTypeParameters.length != superTypeParameters.length) return null;
+
+    PsiSubstitutor result = superMethodSignature.getSubstitutor();
+    for (int i = 0; i < methodTypeParameters.length; i++) {
+      PsiTypeParameter methodTypeParameter = methodTypeParameters[i];
+      PsiElementFactory factory = JavaPsiFacade.getInstance(methodTypeParameter.getProject()).getElementFactory();
+      result = result.put(superTypeParameters[i], factory.createType(methodTypeParameter));
+    }
+
+    final PsiSubstitutor methodSubstitutor = methodSignature.getSubstitutor();
 
     //check bounds
     for (int i = 0; i < methodTypeParameters.length; i++) {
@@ -327,26 +341,6 @@ public class MethodSignatureUtil {
       methodSupers.remove(PsiType.getJavaLangObject(methodTypeParameter.getManager(), methodTypeParameter.getResolveScope()));
       superSupers.remove(PsiType.getJavaLangObject(superTypeParameter.getManager(), superTypeParameter.getResolveScope()));
       if (!methodSupers.equals(superSupers)) return null;
-    }
-
-    return result;
-  }
-
-  @Nullable
-  private static PsiSubstitutor getSuperMethodSignatureSubstitutorImpl(@NotNull MethodSignature methodSignature, @NotNull MethodSignature superSignature) {
-    // normalize generic method declarations: correlate type parameters
-    // todo: correlate type params by name?
-    PsiTypeParameter[] methodTypeParameters = methodSignature.getTypeParameters();
-    PsiTypeParameter[] superTypeParameters = superSignature.getTypeParameters();
-
-    // both methods are parameterized and number of parameters mismatch
-    if (methodTypeParameters.length != superTypeParameters.length) return null;
-
-    PsiSubstitutor result = superSignature.getSubstitutor();
-    for (int i = 0; i < methodTypeParameters.length; i++) {
-      PsiTypeParameter methodTypeParameter = methodTypeParameters[i];
-      PsiElementFactory factory = JavaPsiFacade.getInstance(methodTypeParameter.getProject()).getElementFactory();
-      result = result.put(superTypeParameters[i], factory.createType(methodTypeParameter));
     }
 
     return result;
