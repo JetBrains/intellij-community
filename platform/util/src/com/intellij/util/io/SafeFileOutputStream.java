@@ -18,6 +18,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 
 import java.io.*;
 
@@ -29,13 +30,15 @@ import static com.intellij.CommonBundle.message;
 public class SafeFileOutputStream extends OutputStream {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.SafeFileOutputStream");
 
+  private static final boolean DO_SYNC = Registry.is("idea.io.safe.sync");
+
   private static final String EXTENSION_TMP = "___jb_tmp___";
   private static final String EXTENSION_OLD = "___jb_old___";
 
   private final File myTargetFile;
   private final boolean myPreserveAttributes;
   private final File myTempFile;
-  private final OutputStream myOutputStream;
+  private final FileOutputStream myOutputStream;
   private boolean myFailed = false;
 
   public SafeFileOutputStream(File target) throws FileNotFoundException {
@@ -92,16 +95,26 @@ public class SafeFileOutputStream extends OutputStream {
 
   @Override
   public void close() throws IOException {
+    if (!myFailed && DO_SYNC) {
+      try {
+        myOutputStream.getFD().sync();
+      }
+      catch (IOException e) {
+        LOG.warn(e);
+        myFailed = true;
+      }
+    }
+
     try {
       myOutputStream.close();
     }
     catch (IOException e) {
       LOG.warn(e);
-      FileUtil.delete(myTempFile);
       myFailed = true;
     }
 
     if (myFailed) {
+      FileUtil.delete(myTempFile);
       throw new IOException(message("safe.write.failed", myTargetFile, myTempFile.getName()));
     }
 
