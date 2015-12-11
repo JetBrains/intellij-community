@@ -24,8 +24,10 @@ import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.PyCommonOptionsFormData;
 import com.jetbrains.python.run.PyCommonOptionsFormFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -40,6 +42,7 @@ final class PyToxConfigurationSettings extends SettingsEditor<PyToxConfiguration
   private AbstractPyCommonOptionsForm myForm;
   private JPanel myPanel;
   private JTextField myArgumentsField;
+  private JTextField myRunOnlyTestsField;
 
   PyToxConfigurationSettings(@NotNull final Project project) {
     myProject = project;
@@ -48,13 +51,25 @@ final class PyToxConfigurationSettings extends SettingsEditor<PyToxConfiguration
   @Override
   protected void applyEditorTo(final PyToxConfiguration s) {
     AbstractPythonRunConfiguration.copyParams(myForm, s);
-    s.setArguments(ARG_SEPARATOR.split(myArgumentsField.getText()));
+    s.setArguments(asArray(myArgumentsField));
+    s.setRunOnlyEnvs(asArray(myRunOnlyTestsField));
+  }
+
+  @NotNull
+  private static String[] asArray(@NotNull final JTextComponent field) {
+    return ARG_SEPARATOR.split(field.getText());
   }
 
   @Override
   protected void resetEditorFrom(final PyToxConfiguration s) {
     AbstractPythonRunConfiguration.copyParams(s, myForm);
-    myArgumentsField.setText(StringUtil.join(s.getArguments(), " "));
+    myArgumentsField.setText(fromArray(s.getArguments()));
+    myRunOnlyTestsField.setText(fromArray(s.getRunOnlyEnvs()));
+  }
+
+  @Nullable
+  private static String fromArray(@NotNull final String... arguments) {
+    return StringUtil.join(arguments, " ");
   }
 
   @NotNull

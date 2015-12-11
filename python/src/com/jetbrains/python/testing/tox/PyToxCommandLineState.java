@@ -18,6 +18,7 @@ package com.jetbrains.python.testing.tox;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
@@ -32,14 +33,13 @@ import java.util.List;
 class PyToxCommandLineState extends PythonTestCommandLineStateBase {
 
   @NotNull
-  private final String[] myArguments;
+  private final PyToxConfiguration myConfiguration;
 
 
   PyToxCommandLineState(@NotNull final PyToxConfiguration configuration,
-                                @NotNull final ExecutionEnvironment environment,
-                                @NotNull final String... arguments) {
+                        @NotNull final ExecutionEnvironment environment) {
     super(configuration, environment);
-    myArguments = arguments;
+    myConfiguration = configuration;
   }
 
   @Override
@@ -52,8 +52,12 @@ class PyToxCommandLineState extends PythonTestCommandLineStateBase {
   public GeneralCommandLine generateCommandLine() {
     final GeneralCommandLine line = super.generateCommandLine();
     final ParamsGroup group = line.getParametersList().getParamsGroup(GROUP_SCRIPT);
-    assert group != null: "No group " + GROUP_SCRIPT;
-    group.addParameters(myArguments);
+    assert group != null : "No group " + GROUP_SCRIPT;
+    final String[] envs = myConfiguration.getRunOnlyEnvs();
+    if (envs.length > 0) {
+      group.addParameter(String.format("-e %s", StringUtil.join(envs, ",")));
+    }
+    group.addParameters(myConfiguration.getArguments());
     return line;
   }
 

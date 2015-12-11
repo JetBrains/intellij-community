@@ -22,6 +22,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.SkipEmptySerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -37,13 +38,15 @@ import org.jetbrains.annotations.Nullable;
  */
 final class PyToxConfiguration extends AbstractPythonRunConfiguration<PyToxConfiguration> {
 
-  private static final String[] EMPTY_STRINGS = new String[0];
   @NotNull
   private final Project myProject;
 
   @Tag
   @Nullable
   private String[] myArguments;
+  @Tag
+  @Nullable
+  private String[] myRunOnlyEnvs;
 
   PyToxConfiguration(@NotNull final PyToxConfigurationFactory factory, @NotNull final Project project) {
     super(project, factory);
@@ -54,8 +57,17 @@ final class PyToxConfiguration extends AbstractPythonRunConfiguration<PyToxConfi
   }
 
   @NotNull
+  String[] getRunOnlyEnvs() {
+    return (myRunOnlyEnvs == null ? ArrayUtil.EMPTY_STRING_ARRAY : myRunOnlyEnvs.clone());
+  }
+
+  void setRunOnlyEnvs(@NotNull final String... tests) {
+    myRunOnlyEnvs = tests.clone();
+  }
+
+  @NotNull
   String[] getArguments() {
-    return (myArguments == null ? EMPTY_STRINGS : myArguments.clone());
+    return (myArguments == null ? ArrayUtil.EMPTY_STRING_ARRAY : myArguments.clone());
   }
 
   void setArguments(@NotNull final String... arguments) {
@@ -85,6 +97,6 @@ final class PyToxConfiguration extends AbstractPythonRunConfiguration<PyToxConfi
   @Nullable
   @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment environment) {
-    return new PyToxCommandLineState(this, environment, getArguments());
+    return new PyToxCommandLineState(this, environment);
   }
 }
