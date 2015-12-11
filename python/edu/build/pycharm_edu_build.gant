@@ -420,7 +420,7 @@ private layoutUnix(Map args, String target) {
     }
   }
 
-  ant.copy(file: "$pythonCommunityHome/resources/PyCharmCore128.png", tofile: "$target/bin/pycharm.png")
+  ant.copy(file: "$pythonEduHome/resources/PyCharmEdu128.png", tofile: "$target/bin/pycharm.png")
 
   unixScripts(target, ch, "pycharm.sh", args)
   unixVMOptions(target, "pycharm")
@@ -444,7 +444,7 @@ private layoutMac(Map _args, String target) {
   }
 
   Map args = new HashMap(_args)
-  args.icns = "$pythonCommunityHome/resources/PyCharmEdu.icns"
+  args.icns = "$pythonEduHome/resources/PyCharmEdu.icns"
   args.bundleIdentifier = "com.jetbrains.pycharm"
   args.platform_prefix = "PyCharmEdu"
   args.help_id = "PE"
