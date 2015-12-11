@@ -18,9 +18,7 @@ abstract class CompletionLoggerProvider {
 
 }
 
-class CompletionFileLoggerProvider(filePathProvider: FilePathProvider) : CompletionLoggerProvider() {
-    val logFileManager = LogFileManager(filePathProvider)
-
+class CompletionFileLoggerProvider(private val logFileManager: LogFileManager) : CompletionLoggerProvider() {
     override fun dispose() {
         logFileManager.dispose()
     }
@@ -30,7 +28,6 @@ class CompletionFileLoggerProvider(filePathProvider: FilePathProvider) : Complet
         val completionUID = UUID.randomUUID().toString()
         return CompletionFileLogger(installationUID, completionUID, logFileManager)  
     }
-
 }
 
 
