@@ -6,7 +6,15 @@ import java.nio.file.Files
 import java.nio.file.StandardOpenOption
 import java.util.concurrent.locks.ReentrantLock
 
-class LogFileManager(private val filePathProvider: FilePathProvider) {
+interface LogFileManager {
+    fun println(message: String)
+    fun read(): String
+    fun delete()
+    fun <R> withFileLock(block: () -> R): R
+    fun dispose()
+}
+
+class LogFileManagerImpl(private val filePathProvider: FilePathProvider): LogFileManager {
     private val lock = ReentrantLock()
     private val file: File = initLogFile()
     private var writer = newAppendWriter()
@@ -25,24 +33,24 @@ class LogFileManager(private val filePathProvider: FilePathProvider) {
         return file
     }
 
-    fun dispose() {
+    override fun dispose() {
         writer.close()
     }
 
-    fun println(message: String) {
+    override fun println(message: String) {
         withFileLock {
             writer.println(message)
         }
     }
 
-    fun read(): String {
+    override fun read(): String {
         return withFileLock {
             writer.flush()
             file.readText()
         }
     }
 
-    fun delete() {
+    override fun delete() {
         withFileLock {
             dispose()
             file.delete()
@@ -51,7 +59,7 @@ class LogFileManager(private val filePathProvider: FilePathProvider) {
         }
     }
 
-    fun <R> withFileLock(block: () -> R): R {
+    override fun <R> withFileLock(block: () -> R): R {
         lock.lock()
         try {
             return block()

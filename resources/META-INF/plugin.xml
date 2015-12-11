@@ -22,6 +22,8 @@
     </applicationService>
     <applicationService serviceInterface="com.intellij.stats.completion.FilePathProvider" serviceImplementation="com.intellij.stats.completion.PluginDirectoryFilePathProvider">
     </applicationService>
+    <applicationService serviceInterface="com.intellij.stats.completion.LogFileManager" serviceImplementation="com.intellij.stats.completion.LogFileManagerImpl">
+    </applicationService>
     <applicationService serviceInterface="com.intellij.stats.completion.StatisticSender" serviceImplementation="com.intellij.stats.completion.StatisticSender">
     </applicationService>
     <applicationService serviceInterface="com.intellij.stats.completion.RequestService" serviceImplementation="com.intellij.stats.completion.SimpleRequestService">
