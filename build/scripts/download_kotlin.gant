@@ -18,7 +18,7 @@ import com.intellij.util.text.VersionComparatorUtil
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 
-String kotlinBuildConfigurationOnPublicTeamCity = "Kotlin_Beta2_Idea142branch150versionNoTests"
+String kotlinBuildConfigurationOnPublicTeamCity = "Kotlin_Beta3_Idea142branch150versionNoTests"
 
 target('default': 'Ensures that build/kotlinc directory contains JARs from Kotlin plugin compatible with current IDEA sources. These JARs are used by build scripts.') {
   def communityHome = guessHome(this)
