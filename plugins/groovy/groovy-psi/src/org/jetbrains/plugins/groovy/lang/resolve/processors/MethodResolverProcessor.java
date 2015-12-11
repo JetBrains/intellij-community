@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.util.NotNullCachedComputableWrapper;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -59,8 +60,6 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
 
   private boolean myStopExecuting = false;
 
-  private final boolean myByShape;
-
   private final SubstitutorComputer mySubstitutorComputer;
 
   public MethodResolverProcessor(@Nullable String name,
@@ -69,7 +68,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
                                  @Nullable PsiType thisType,
                                  @Nullable PsiType[] argumentTypes,
                                  @Nullable PsiType[] typeArguments) {
-    this(name, place, isConstructor, thisType, argumentTypes, typeArguments, false, false);
+    this(name, place, isConstructor, thisType, argumentTypes, typeArguments, false);
   }
 
   public MethodResolverProcessor(@Nullable String name,
@@ -78,21 +77,18 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
                                  @Nullable PsiType thisType,
                                  @Nullable PsiType[] argumentTypes,
                                  @Nullable PsiType[] typeArguments,
-                                 boolean allVariants,
-                                 final boolean byShape) {
+                                 boolean allVariants) {
     super(name, RESOLVE_KINDS_METHOD_PROPERTY, place);
     myIsConstructor = isConstructor;
     myThisType = thisType;
-    myArgumentTypes = argumentTypes;
-    if (byShape && myArgumentTypes != null) {
+    mySubstitutorComputer = new SubstitutorComputer(myThisType, argumentTypes, typeArguments, myPlace, myPlace.getParent());
+    myArgumentTypes = argumentTypes == null ? null : Arrays.copyOf(argumentTypes, argumentTypes.length);
+    if (myArgumentTypes != null) {
       for (int i = 0; i < myArgumentTypes.length; i++) {
         myArgumentTypes[i] = TypeConversionUtil.erasure(myArgumentTypes[i]);
       }
     }
     myAllVariants = allVariants;
-    myByShape = byShape;
-
-    mySubstitutorComputer = new SubstitutorComputer(myThisType, argumentTypes, typeArguments, myPlace, myPlace.getParent());
   }
 
 
@@ -109,24 +105,15 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
       final PsiElement resolveContext = state.get(RESOLVE_CONTEXT);
       final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
       final PsiSubstitutor partialSubstitutor = getSubstitutor(state);
-      final NotNullComputable<PsiSubstitutor> substitutorComputer;
-      if (myByShape) {
-        substitutorComputer = new NotNullComputable<PsiSubstitutor>() {
-          @NotNull
-          @Override
-          public PsiSubstitutor compute() {
-            return partialSubstitutor;
-          }
-        };
-      } else {
-        substitutorComputer = new NotNullCachedComputableWrapper<PsiSubstitutor>(new NotNullComputable<PsiSubstitutor>() {
+      final NotNullComputable<PsiSubstitutor> substitutorComputer = new NotNullCachedComputableWrapper<PsiSubstitutor>(
+        new NotNullComputable<PsiSubstitutor>() {
           @NotNull
           @Override
           public PsiSubstitutor compute() {
             return mySubstitutorComputer.obtainSubstitutor(partialSubstitutor, method, resolveContext);
           }
-        });
-      }
+        }
+      );
 
       boolean isAccessible = isAccessible(method);
       boolean isStaticsOK = isStaticsOK(method, resolveContext, false);
@@ -156,7 +143,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
   }
 
   @NotNull
-  private static PsiSubstitutor getSubstitutor(@NotNull final ResolveState state) {
+  protected static PsiSubstitutor getSubstitutor(@NotNull final ResolveState state) {
     PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
     if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
     return substitutor;

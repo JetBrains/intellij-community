@@ -31,16 +31,11 @@ public class GroovyMethodResult extends GroovyResolveResultImpl {
   public GroovyMethodResult(@NotNull PsiMethod method,
                             @Nullable PsiElement resolveContext,
                             @Nullable SpreadState spreadState,
-                            @NotNull final PsiSubstitutor substitutor,
+                            @NotNull PsiSubstitutor substitutor,
+                            @NotNull NotNullComputable<PsiSubstitutor> substitutorComputer,
                             boolean isAccessible, boolean staticsOK) {
     super(method, resolveContext, spreadState, substitutor, isAccessible, staticsOK, true, true);
-    mySubstitutorComputer = new NotNullComputable<PsiSubstitutor>() {
-      @NotNull
-      @Override
-      public PsiSubstitutor compute() {
-        return substitutor;
-      }
-    };
+    mySubstitutorComputer = substitutorComputer;
   }
 
   public GroovyMethodResult(@NotNull PsiMethod element,
