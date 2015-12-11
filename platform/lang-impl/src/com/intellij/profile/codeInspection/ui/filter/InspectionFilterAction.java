@@ -25,9 +25,11 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.profile.codeInspection.ui.LevelChooserAction;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
@@ -68,7 +70,10 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
   private void tune(InspectionProfileImpl profile, Project project) {
     addAction(new ResetFilterAction());
     addSeparator();
-    addAction(new ShowNewInspectionsAction());
+    if (ApplicationNamesInfo.getInstance().getProductName().contains("IDEA")) {
+      // minor IDEs don't have "New in XXX" in inspection descriptions
+      addAction(new ShowNewInspectionsAction());
+    }
     addSeparator();
 
     addAction(new ShowEnabledOrDisabledInspectionsAction(true));
@@ -238,10 +243,15 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     }
   }
 
-  private final String version = ApplicationInfo.getInstance().getMajorVersion();
+  private final String version = ApplicationInfo.getInstance().getMajorVersion() +
+                                 (StringUtil.isEmptyOrSpaces(StringUtil.trimStart(ApplicationInfo.getInstance().getMinorVersion(),"0")) ?
+                                 "" : "."+ApplicationInfo.getInstance().getMinorVersion());
+  private final String presentableVersion = ApplicationNamesInfo.getInstance().getProductName() + " " + version;
   private class ShowNewInspectionsAction extends AnAction {
     private ShowNewInspectionsAction() {
-      super("Show New Inspections in IDEA "+version, "Shows new inspections which are available since IDEA "+version, AllIcons.Actions.Lightning);
+      super("Show New Inspections in " + presentableVersion,
+            "Shows new inspections which are available since " + presentableVersion,
+            AllIcons.Actions.Lightning);
     }
 
     @Override
