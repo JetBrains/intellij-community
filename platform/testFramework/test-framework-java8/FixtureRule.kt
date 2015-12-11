@@ -166,20 +166,9 @@ fun runInEdtAndWait(runnable: () -> Unit) {
 class RuleChain(vararg val rules: TestRule) : TestRule {
   override fun apply(base: Statement, description: Description): Statement {
     var statement = base
-    var errors: MutableList<Throwable>? = null
     for (i in (rules.size - 1) downTo 0) {
-      try {
-        statement = rules[i].apply(statement, description)
-      }
-      catch (e: Throwable) {
-        if (errors == null) {
-          errors = SmartList<Throwable>()
-        }
-        errors.add(e)
-      }
+      statement = rules[i].apply(statement, description)
     }
-
-    CompoundRuntimeException.throwIfNotEmpty(errors)
     return statement
   }
 }
