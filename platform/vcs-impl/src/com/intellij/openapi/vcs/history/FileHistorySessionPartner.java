@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.history;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -38,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+
+import static com.intellij.openapi.vcs.history.FileHistoryPanelImpl.*;
 
 /**
  * @author irengrig
@@ -99,14 +100,6 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
       }
     });
     return component == null ? null : ((FileHistoryPanelImpl)component).getRefresher();
-  }
-
-  private static boolean sameHistories(@NotNull FileHistoryPanelImpl historyPanel,
-                                       @NotNull FilePath path,
-                                       @Nullable VcsRevisionNumber startingRevisionNumber) {
-    String existingRevision = historyPanel.getStartingRevision() == null ? null : historyPanel.getStartingRevision().asString();
-    String newRevision = startingRevisionNumber == null ? null : startingRevisionNumber.asString();
-    return historyPanel.getFilePath().equals(path) && Comparing.equal(existingRevision, newRevision);
   }
 
   public void acceptRevision(VcsFileRevision revision) {

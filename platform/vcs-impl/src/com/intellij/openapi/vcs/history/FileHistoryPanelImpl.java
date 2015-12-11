@@ -1767,15 +1767,25 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof FileHistoryPanelImpl && 
-           Comparing.equal(((FileHistoryPanelImpl)obj).getVirtualFile(), getVirtualFile()) &&
-           Comparing.equal(((FileHistoryPanelImpl)obj).getStartingRevision(), getStartingRevision());
+    return obj instanceof FileHistoryPanelImpl && sameHistories((FileHistoryPanelImpl)obj, myFilePath, myStartingRevision);
   }
 
   @Override
   public int hashCode() {
-    final VirtualFile file = getVirtualFile();
-    return file == null ? 0 : file.hashCode();
+    int result = myFilePath.hashCode();
+    result = 31 * result + (myStartingRevision != null ? myStartingRevision.asString().hashCode() : 0); // NB: asString to conform to equals
+    return result;
+  }
+
+  /**
+   * Checks if the given historyPanel shows the history for given path and revision number.
+   */
+  static boolean sameHistories(@NotNull FileHistoryPanelImpl historyPanel,
+                               @NotNull FilePath path,
+                               @Nullable VcsRevisionNumber startingRevisionNumber) {
+    String existingRevision = historyPanel.getStartingRevision() == null ? null : historyPanel.getStartingRevision().asString();
+    String newRevision = startingRevisionNumber == null ? null : startingRevisionNumber.asString();
+    return historyPanel.getFilePath().equals(path) && Comparing.equal(existingRevision, newRevision);
   }
 
   private class MyToggleAction extends ToggleAction implements DumbAware {
