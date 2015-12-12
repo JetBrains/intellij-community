@@ -57,6 +57,21 @@ public class OSProcessManagerImpl extends OSProcessManager {
     return false;
   }
 
+  public static void killProcess(@NotNull Process process) {
+    if (SystemInfo.isWindows) {
+      try {
+        WinProcess winProcess = createWinProcess(process);
+        winProcess.kill();
+      }
+      catch (Throwable e) {
+        LOG.info("Cannot kill process tree", e);
+      }
+    }
+    else if (SystemInfo.isUnix) {
+      UnixProcessManager.sendSignal(UnixProcessManager.getProcessPid(process), UnixProcessManager.SIGKILL);
+    }
+  }
+
   @SuppressWarnings("deprecation")
   @NotNull
   private static WinProcess createWinProcess(@NotNull Process process) {
