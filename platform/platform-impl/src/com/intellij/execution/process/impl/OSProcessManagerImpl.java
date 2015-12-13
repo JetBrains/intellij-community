@@ -64,12 +64,28 @@ public class OSProcessManagerImpl extends OSProcessManager {
         winProcess.kill();
       }
       catch (Throwable e) {
-        LOG.info("Cannot kill process tree", e);
+        LOG.info("Cannot kill process", e);
       }
     }
     else if (SystemInfo.isUnix) {
       UnixProcessManager.sendSignal(UnixProcessManager.getProcessPid(process), UnixProcessManager.SIGKILL);
     }
+  }
+  
+  public static int getProcessID(@NotNull Process process) {
+    if (SystemInfo.isWindows) {
+      try {
+        return createWinProcess(process).getPid();
+      }
+      catch (Throwable e) {
+        LOG.info("Cannot get process id", e);
+        return -1;
+      }
+    }
+    else if (SystemInfo.isUnix) {
+      return UnixProcessManager.getProcessPid(process);
+    }
+    throw new IllegalStateException("Unknown OS: "  + SystemInfo.OS_NAME);
   }
 
   @SuppressWarnings("deprecation")
