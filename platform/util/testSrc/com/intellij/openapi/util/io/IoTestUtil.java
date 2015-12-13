@@ -73,7 +73,11 @@ public class IoTestUtil {
       command = new ProcessBuilder("ln", "-s", targetFile.getPath(), linkFile.getPath());
     }
     final int res = runCommand(command);
-    assertEquals(command.command().toString(), 0, res);
+    String message = command.command().toString();
+    if (SystemInfo.isWindows)  {
+      message = "Cannot create a symlink; configure permissions as described: http://superuser.com/a/105381\n" + message;
+    }
+    assertEquals(message, 0, res);
 
     shouldExist |= SystemInfo.isWindows && SystemInfo.JAVA_VERSION.startsWith("1.6");
     assertEquals("target=" + target + ", link=" + linkFile, shouldExist, linkFile.exists());
