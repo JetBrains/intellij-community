@@ -118,6 +118,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
   @Override
   public void loadState(final State state) {
+    removeDuplicates(state);
     if (state.lastPath != null && !new File(state.lastPath).exists()) {
       state.lastPath = null;
     }
@@ -128,6 +129,16 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       }
     }
     myState = state;
+  }
+
+  protected void removeDuplicates(State state) {
+    for (String path : new ArrayList<String>(state.recentPaths)) {
+      if (path.endsWith(File.separator)) {
+        state.recentPaths.remove(path);
+        state.additionalInfo.remove(path);
+        state.openPaths.remove(path);
+      }
+    }
   }
 
   private static void removePathFrom(List<String> items, String path) {
@@ -425,6 +436,9 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
   private void markPathRecent(String path) {
     synchronized (myStateLock) {
+      if (path.endsWith(File.separator)) {
+        path = path.substring(0, path.length() - File.separator.length());
+      }
       myState.lastPath = path;
       ProjectGroup group = getProjectGroup(path);
       removePath(path);
