@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
@@ -114,6 +115,9 @@ public class AutoCloseableResourceInspectionBase extends BaseInspection {
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (ignoreFromMethodCall) {
+        return;
+      }
+      if (MethodCallUtils.isCallToMethod(expression, "java.util.Formatter", null, "format", null)) {
         return;
       }
       if (!isNotSafelyClosedResource(expression)) {
