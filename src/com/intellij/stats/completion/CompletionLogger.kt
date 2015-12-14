@@ -39,7 +39,7 @@ abstract class CompletionLogger {
 
     abstract fun upPressed(pos: Int, itemName: String, completionList: List<LookupStringWithRelevance>)
 
-    abstract fun backspacePressed(pos: Int, itemName: String, completionList: List<LookupStringWithRelevance>)
+    abstract fun backspacePressed(pos: Int, itemName: String?, completionList: List<LookupStringWithRelevance>)
     
     abstract fun itemSelectedCompletionFinished(pos: Int, itemName: String, completionList: List<LookupStringWithRelevance>)
 
@@ -115,7 +115,7 @@ class CompletionFileLogger(private val installationUID: String,
         log(builder)
     }
 
-    override fun backspacePressed(pos: Int, itemName: String, completionList: List<LookupStringWithRelevance>) {
+    override fun backspacePressed(pos: Int, itemName: String?, completionList: List<LookupStringWithRelevance>) {
         val builder = messageBuilder(Action.BACKSPACE)
         builder.nextWrappedToken("POS", pos)
         builder.nextWrappedToken("COMP_LIST_LEN", completionList.size)
@@ -125,7 +125,12 @@ class CompletionFileLogger(private val installationUID: String,
         log(builder)
     }
 
-    private fun getItemId(itemName: String, newCompletionList: List<LookupStringWithRelevance>): Int {
+    private fun getItemId(itemName: String?, newCompletionList: List<LookupStringWithRelevance>): Int {
+        if (itemName == null) {
+            //maybe completion list was not rebuild
+            return -777
+        }
+        
         if (itemsToId[itemName] == null) {
             addUntrackedItemsToIdMap(newCompletionList)
         }
