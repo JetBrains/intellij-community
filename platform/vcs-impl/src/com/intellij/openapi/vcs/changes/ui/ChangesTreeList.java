@@ -56,6 +56,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -245,10 +246,17 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     final List<T> wasSelected = getSelectedChanges();
     myShowFlatten = showFlatten;
     setChangesToDisplay(getChanges());
+    setChildIndent(showFlatten);
     myTree.setCellRenderer(myShowFlatten ? myShowFlattenNodeRenderer : myNodeRenderer);
     select(wasSelected);
   }
 
+  private void setChildIndent(boolean showFlatten) {
+    BasicTreeUI treeUI = (BasicTreeUI)myTree.getUI();
+
+    treeUI.setLeftChildIndent(!showFlatten ? UIUtil.getTreeLeftChildIndent() : 0);
+    treeUI.setRightChildIndent(!showFlatten ? UIUtil.getTreeRightChildIndent() : 0);
+  }
 
   @Override
   public void requestFocus() {
