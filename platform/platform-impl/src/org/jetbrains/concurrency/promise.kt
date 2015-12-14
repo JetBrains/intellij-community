@@ -87,6 +87,9 @@ val Promise<*>.isRejected: Boolean
 val Promise<*>.isPending: Boolean
   get() = state == Promise.State.PENDING
 
+val Promise<*>.isFulfilled: Boolean
+  get() = state == Promise.State.FULFILLED
+
 inline fun <T> AsyncPromise<*>.catchError(runnable: () -> T): T? {
   try {
     return runnable()
