@@ -63,7 +63,7 @@ public class JdkBundle {
   @Nullable
   public static JdkBundle createBundle(@NotNull File jvm, @NotNull String homeSubPath, boolean boot, boolean bundled) {
     File javaHome = SystemInfo.isMac ? new File(jvm, homeSubPath) : jvm;
-    if (!new File(javaHome, "lib" + File.separator + "tools.jar").exists()) return null; // Skip JRE
+    //if (!new File(javaHome, "lib" + File.separator + "tools.jar").exists()) return null; // Skip JRE
 
     Pair<String, Pair<Version, Integer>> nameVersionAndUpdate = getJDKNameVersionAndUpdate(jvm, homeSubPath);
     return new JdkBundle(jvm, nameVersionAndUpdate.first, nameVersionAndUpdate.second, boot, bundled);

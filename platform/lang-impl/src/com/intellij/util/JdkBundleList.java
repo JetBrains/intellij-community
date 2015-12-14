@@ -90,9 +90,9 @@ public class JdkBundleList {
 
     for (File jvm : jvms) {
       JdkBundle jvmBundle = JdkBundle.createBundle(jvm, false, false);
-      if (jvmBundle == null || jvmBundle.getVersionUpdate() == null) continue;
+      if (jvmBundle == null /*|| jvmBundle.getVersionUpdate() == null*/) continue;
 
-      Version jdkVer = jvmBundle.getVersion();
+     /* Version jdkVer = jvmBundle.getVersion();
       if (jdkVer == null) continue; // Skip unknown
 
       if (minVer != null && jdkVer.lessThan(minVer.major, minVer.minor, minVer.bugfix)) {
@@ -101,7 +101,7 @@ public class JdkBundleList {
 
       if (maxVer != null && maxVer.lessThan(jdkVer.major, jdkVer.minor, jdkVer.bugfix)) {
         continue; // Skip above supported
-      }
+      }*/
 
       addBundle(jvmBundle, false);
     }
