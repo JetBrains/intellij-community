@@ -355,8 +355,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       myEditor.getHorizontalScrollBar().setPersistentUI(EditorImpl.createEditorScrollbarUI(myEditor));
     }
     else {
-      myEditor.getVerticalScrollBar().setPersistentUI(ButtonlessScrollBarUI.createNormal());
-      myEditor.getHorizontalScrollBar().setPersistentUI(ButtonlessScrollBarUI.createNormal());
+      myEditor.getVerticalScrollBar().setPersistentUI(EditorImpl.createEditorScrollbarUI(myEditor));
+      myEditor.getHorizontalScrollBar().setPersistentUI(EditorImpl.createEditorScrollbarUI(myEditor));
     }
   }
 
