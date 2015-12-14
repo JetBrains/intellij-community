@@ -28,7 +28,6 @@ import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -610,13 +609,13 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @NotNull
     @Override
     protected String getText(@NotNull Side side) {
-      return isBothEditable() ? "Accept" : "Revert";
+      return "Accept";
     }
 
     @Nullable
     @Override
     protected Icon getIcon(@NotNull Side side) {
-      return isBothEditable() ? DiffUtil.getArrowIcon(myModifiedSide.other()) : AllIcons.Diff.Remove;
+      return DiffUtil.getArrowIcon(myModifiedSide.other());
     }
 
     @Override
