@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.local;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,6 +32,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -849,6 +851,30 @@ public class FileWatcherTest extends PlatformTestCase {
     }
     finally {
       unwatch(request.get());
+    }
+  }
+
+  public void testPermissionUpdate() throws IOException {
+    File file = createTestFile(myTempDirectory, "test.txt", "some content");
+    VirtualFile vFile = refresh(file);
+    assertTrue(vFile.isWritable());
+    boolean win = SystemInfo.isWindows;
+
+    LocalFileSystem.WatchRequest request = watch(file);
+    try {
+      myAccept = true;
+      PlatformTestUtil.assertSuccessful(new GeneralCommandLine(win ? "attrib" : "chmod", win ? "+R" : "500", file.getPath()));
+      assertEvent(VFilePropertyChangeEvent.class, file.getPath());
+      assertFalse(vFile.isWritable());
+
+      myAccept = true;
+      PlatformTestUtil.assertSuccessful(new GeneralCommandLine(win ? "attrib" : "chmod", win ? "-R" : "700", file.getPath()));
+      assertEvent(VFilePropertyChangeEvent.class, file.getPath());
+      assertTrue(vFile.isWritable());
+    }
+    finally {
+      unwatch(request);
+      delete(file);
     }
   }
 
