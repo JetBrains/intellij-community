@@ -44,8 +44,8 @@ import java.util.List;
 public class TextMergeChange extends ThreesideDiffChangeBase {
   private static final String CTRL_CLICK_TO_RESOLVE = "Ctrl+click to resolve conflict";
 
-  @NotNull private final TextMergeTool.TextMergeViewer myMergeViewer;
-  @NotNull private final TextMergeTool.TextMergeViewer.MyThreesideViewer myViewer;
+  @NotNull private final TextMergeViewer myMergeViewer;
+  @NotNull private final TextMergeViewer.MyThreesideViewer myViewer;
   @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
   @NotNull private final List<RangeHighlighter> myInnerHighlighters = new ArrayList<RangeHighlighter>();
 
@@ -60,7 +60,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   private boolean myInnerFragmentsDamaged;
 
   @CalledInAwt
-  public TextMergeChange(@NotNull MergeLineFragment fragment, @NotNull TextMergeTool.TextMergeViewer viewer) {
+  public TextMergeChange(@NotNull MergeLineFragment fragment, @NotNull TextMergeViewer viewer) {
     super(fragment, viewer.getViewer().getEditors(), ComparisonPolicy.DEFAULT);
     myMergeViewer = viewer;
     myViewer = viewer.getViewer();

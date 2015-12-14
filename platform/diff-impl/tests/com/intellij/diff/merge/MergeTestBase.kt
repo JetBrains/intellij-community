@@ -19,8 +19,8 @@ import com.intellij.diff.DiffContentFactoryImpl
 import com.intellij.diff.DiffTestCase
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.merge.MergeTestBase.SidesState.*
-import com.intellij.diff.merge.TextMergeTool.TextMergeViewer
-import com.intellij.diff.merge.TextMergeTool.TextMergeViewer.MyThreesideViewer
+import com.intellij.diff.merge.TextMergeViewer
+import com.intellij.diff.merge.TextMergeViewer.MyThreesideViewer
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.TextDiffType
