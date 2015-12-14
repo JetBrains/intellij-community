@@ -18,11 +18,13 @@ package org.jetbrains.debugger
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.CharsetToolkit
 import io.netty.buffer.ByteBuf
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.io.JsonReaderEx
 import java.io.File
 import java.io.FileOutputStream
+import java.nio.CharBuffer
 import java.text.SimpleDateFormat
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -31,8 +33,8 @@ internal class LogEntry(val message: Any, val marker: String) {
 }
 
 class MessagingLogger internal constructor(private val queue: ConcurrentLinkedQueue<LogEntry>) {
-  fun add(inMessage: CharSequence) {
-    queue.add(LogEntry(inMessage, "IN"))
+  fun add(inMessage: CharSequence, marker: String = "IN") {
+    queue.add(LogEntry(inMessage, marker))
   }
 
   fun add(outMessage: ByteBuf, marker: String = "OUT") {
@@ -58,7 +60,7 @@ fun createDebugLogger(@PropertyKey(resourceBundle = Registry.REGISTRY_BUNDLE) ke
 
     val dateFormatter = SimpleDateFormat("HH.mm.ss,SSS")
 
-    o@ while (vm.isAttached) {
+    o@ do {
       while (true) {
         val entry = queue.poll()
         if (entry == null) {
@@ -69,11 +71,16 @@ fun createDebugLogger(@PropertyKey(resourceBundle = Registry.REGISTRY_BUNDLE) ke
         writer.write("""{"timestamp": "${dateFormatter.format(entry.time)}", """)
         val message = entry.message
         when (message) {
-          is JsonReaderEx.CharSequenceBackedByChars -> {
+          is CharSequence -> {
             writer.write("\"${entry.marker}\": ")
             writer.flush()
 
-            fileChannel.write(message.byteBuffer)
+            if (message is JsonReaderEx.CharSequenceBackedByChars) {
+              fileChannel.write(message.byteBuffer)
+            }
+            else {
+              fileChannel.write(CharsetToolkit.UTF8_CHARSET.encode(CharBuffer.wrap(message)))
+            }
 
             writer.write("},\n")
             writer.flush()
@@ -88,10 +95,11 @@ fun createDebugLogger(@PropertyKey(resourceBundle = Registry.REGISTRY_BUNDLE) ke
             writer.write("},\n")
             writer.flush()
           }
-          else -> throw AssertionError("Unknown message type")
+          else -> throw RuntimeException("Unknown message type")
         }
       }
     }
+    while (vm.isAttached)
     writer.write("]")
     out.close()
   }

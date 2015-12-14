@@ -56,7 +56,7 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
 
       result
         .done {
-          vm = it
+          vm = it!!
           setState(ConnectionStatus.CONNECTED, "Connected to ${connectedAddressToPresentation(address, it)}")
           startProcessing()
         }
@@ -87,7 +87,7 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
 
 fun RemoteVmConnection.open(address: InetSocketAddress, processHandler: ProcessHandler) = open(address, Condition<java.lang.Void> { processHandler.isProcessTerminating || processHandler.isProcessTerminated })
 
-fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, itemToString: (T) -> String): Promise<T> {
+fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T, ColoredListCellRenderer.KotlinFriendlyColoredListCellRenderer<*>) -> Unit): Promise<T> {
   if (targets.size == 1) {
     return resolvedPromise(targets.first())
   }
@@ -100,7 +100,7 @@ fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, itemToString:
     val list = JBList(targets)
     list.cellRenderer = object : ColoredListCellRenderer.KotlinFriendlyColoredListCellRenderer<T>() {
       override fun customizeCellRenderer(value: T, index: Int, selected: Boolean, hasFocus: Boolean) {
-        append(itemToString(value))
+        renderer(value, this)
       }
     }
     if (selectedIndex != -1) {
