@@ -17,8 +17,8 @@
 package com.intellij.vcs.log.graph.impl.facade;
 
 import com.intellij.util.Consumer;
+import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LiteLinearGraph;
-import com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl;
 import com.intellij.vcs.log.graph.utils.DfsUtil;
 import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
@@ -43,7 +43,7 @@ public class ReachableNodes {
   }
 
   @NotNull
-  public static UnsignedBitSet getReachableNodes(@NotNull PermanentLinearGraphImpl permanentGraph, @Nullable Set<Integer> headNodeIndexes) {
+  public static UnsignedBitSet getReachableNodes(@NotNull LinearGraph permanentGraph, @Nullable Set<Integer> headNodeIndexes) {
     if (headNodeIndexes == null) {
       UnsignedBitSet nodesVisibility = new UnsignedBitSet();
       nodesVisibility.set(0, permanentGraph.nodesCount() - 1, true);

@@ -200,7 +200,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   }
 
   @NotNull
-  public PermanentLinearGraphImpl getPermanentLinearGraph() {
+  public PermanentLinearGraphImpl getLinearGraph() {
     return myPermanentLinearGraph;
   }
 
