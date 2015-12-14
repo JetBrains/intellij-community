@@ -16,9 +16,12 @@
 package com.intellij.testFramework;
 
 import com.intellij.execution.process.BaseOSProcessHandler;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.WaitFor;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,6 +33,7 @@ import org.jetbrains.io.NettyUtil;
 import org.junit.Assert;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -67,7 +71,6 @@ public class ThreadTracker {
         wellKnownOffenders.add("Action Updater"); // todo remove
         wellKnownOffenders.add("Alarm pool(own)");
         wellKnownOffenders.add("Alarm pool(shared)");
-    wellKnownOffenders.add("ApplicationImpl pooled thread");
     wellKnownOffenders.add("AWT-EventQueue-");
     wellKnownOffenders.add("AWT-Shutdown");
     wellKnownOffenders.add("AWT-Windows");
@@ -83,7 +86,6 @@ public class ThreadTracker {
         wellKnownOffenders.add("Low Memory Detector");
     wellKnownOffenders.add("main");
     wellKnownOffenders.add("Monitor Ctrl-Break");
-    wellKnownOffenders.add("Periodic tasks thread");
     wellKnownOffenders.add("Reference Handler");
     wellKnownOffenders.add("RMI TCP Connection");
     wellKnownOffenders.add("Signal Dispatcher");
@@ -96,6 +98,20 @@ public class ThreadTracker {
     wellKnownOffenders.add("VM Periodic Task Thread");
     wellKnownOffenders.add("VM Thread");
     wellKnownOffenders.add("YJPAgent-Telemetry");
+
+    longRunningThreadCreated(ApplicationManager.getApplication(), "Periodic tasks thread", "ApplicationImpl pooled thread");
+  }
+
+  // marks Thread with this name as long-running, which should be ignored from the thread-leaking checks
+  public static void longRunningThreadCreated(@NotNull Disposable parentDisposable,
+                                              @NotNull final String... threadNamePrefixes) {
+    wellKnownOffenders.addAll(Arrays.asList(threadNamePrefixes));
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        wellKnownOffenders.removeAll(Arrays.asList(threadNamePrefixes));
+      }
+    });
   }
 
   @TestOnly
