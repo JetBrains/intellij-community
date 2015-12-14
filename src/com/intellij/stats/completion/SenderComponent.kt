@@ -5,31 +5,42 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
+import com.intellij.openapi.util.Disposer
+import com.intellij.util.Alarm
+import com.intellij.util.Time
 import org.apache.http.client.fluent.Form
 import org.apache.http.client.fluent.Request
 import java.io.IOException
-
+import javax.swing.SwingUtilities
 
 class SenderComponent(val sender: StatisticSender) : ApplicationComponent.Adapter() {
+    private val disposable = Disposer.newDisposable()
+    private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable)
     
-    override fun initComponent() {
-        sendStatistics()
-    }
-    
-    private fun sendStatistics() {
-        if (ApplicationManager.getApplication().isUnitTestMode) return
-        ApplicationManager.getApplication().executeOnPooledThread {
+    private fun send() {
+        if (!ApplicationManager.getApplication().isUnitTestMode) {
             val uid = UpdateChecker.getInstallationUID(PropertiesComponent.getInstance())
             sender.sendStatsData(uid)
+            alarm.addRequest({ send() }, Time.HOUR)
         }
     }
     
+    override fun disposeComponent() {
+        Disposer.dispose(disposable)
+    }
+
+    override fun initComponent() {
+        ApplicationManager.getApplication().executeOnPooledThread {
+            send()
+        }
+    }
 }
 
 class StatisticSender(val urlProvider: UrlProvider, val logFileManager: LogFileManager, val requestService: RequestService) {
     private val LOG = Logger.getInstance(StatisticSender::class.java)
 
     fun sendStatsData(uid: String) {
+        assertNotEDT()
         try {
             logFileManager.withFileLock {
                 val text = logFileManager.read()
@@ -44,7 +55,11 @@ class StatisticSender(val urlProvider: UrlProvider, val logFileManager: LogFileM
             LOG.error(e)
         }
     }
-    
+
+    private fun assertNotEDT() {
+        assert(!SwingUtilities.isEventDispatchThread())
+    }
+
     private fun sendContent(url: String, uid: String, content: String, okAction: Runnable) {
         val map = mapOf(Pair("uid", uid), Pair("content", content))
         val data = requestService.post(url, map)
