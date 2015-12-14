@@ -32,6 +32,7 @@ public class CellRendererPanel extends JPanel {
 
   public CellRendererPanel() {
     super(null); // we do the layout ourselves
+    setOpaque(false); // to be consistent with #isOpaque
   }
 
   public final boolean isSelected() {
