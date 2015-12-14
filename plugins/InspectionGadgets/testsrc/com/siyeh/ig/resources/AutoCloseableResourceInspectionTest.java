@@ -95,6 +95,15 @@ public class AutoCloseableResourceInspectionTest extends LightInspectionTestCase
            "}");
   }
 
+  public void testWriterAppend() {
+    doTest("import java.io.*;" +
+           "class A {" +
+           "    private static void write(Writer writer) throws IOException {" +
+           "        writer.append(\"command\");" +
+           "    }" +
+           "}");
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
     return new AutoCloseableResourceInspection();

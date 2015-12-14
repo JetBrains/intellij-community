@@ -117,7 +117,9 @@ public class AutoCloseableResourceInspectionBase extends BaseInspection {
       if (ignoreFromMethodCall) {
         return;
       }
-      if (MethodCallUtils.isCallToMethod(expression, "java.util.Formatter", null, "format", null)) {
+      if (MethodCallUtils.isCallToMethod(expression, "java.util.Formatter", null, "format", null) ||
+          MethodCallUtils.isCallToMethod(expression, "java.io.Writer", null, "append", null) ||
+          MethodCallUtils.isCallToMethod(expression, "com.google.common.base.Preconditions", null, "checkNotNull", null)) {
         return;
       }
       if (!isNotSafelyClosedResource(expression)) {
