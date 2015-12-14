@@ -21,4 +21,8 @@ abstract class VmBase(override val debugListener: DebugEventListener) : Vm, Atta
   override val attachStateManager: AttachStateManager = this
 
   protected open fun computeEvaluateContext(): EvaluateContext? = null
+
+  override var captureAsyncStackTraces: Boolean
+    get() = false
+    set(value) { }
 }

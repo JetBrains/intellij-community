@@ -68,6 +68,13 @@ enum class StepAction {
    */
   IN,
 
+
+  /**
+   * Step into first scheduled async handler.
+   * @see <a href="https://groups.google.com/a/chromium.org/forum/#!topic/blink-reviews-bindings/LRAHGXErvOc">Chrome debugger suggestion</a>
+   */
+  IN_ASYNC,
+
   /**
    * Step over the current statement.
    */

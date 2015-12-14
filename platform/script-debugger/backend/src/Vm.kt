@@ -41,4 +41,6 @@ interface Vm {
    * Controls whether VM stops on exceptions
    */
   fun setBreakOnException(catchMode: ExceptionCatchMode) = resolvedPromise()
+
+  var captureAsyncStackTraces: Boolean
 }
