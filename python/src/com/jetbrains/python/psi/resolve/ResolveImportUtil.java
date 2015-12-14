@@ -403,16 +403,15 @@ public class ResolveImportUtil {
       if (target instanceof PsiDirectory) {
         target = PyUtil.getPackageElement((PsiDirectory)target, null);
       }
-      if (target != null) {   // Ignore non-package dirs, worthless
+      if (target != null) {
         int rate = RatedResolveResult.RATE_HIGH;
         if (target instanceof PyFile) {
-          VirtualFile vFile = ((PyFile)target).getVirtualFile();
-          if (vFile != null && vFile.getLength() > 0) {
-            rate += 100;
-          }
           for (PyResolveResultRater rater : Extensions.getExtensions(PyResolveResultRater.EP_NAME)) {
             rate += rater.getImportElementRate(target);
           }
+        }
+        else if (isDunderAll(target)) {
+          rate = RatedResolveResult.RATE_NORMAL;
         }
         ret.poke(target, rate);
       }
