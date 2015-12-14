@@ -26,17 +26,17 @@ import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.concurrent.ConcurrentLinkedQueue
 
-internal class LogEntry(val message: Any) {
+internal class LogEntry(val message: Any, val marker: String) {
   internal val time = System.currentTimeMillis()
 }
 
 class MessagingLogger internal constructor(private val queue: ConcurrentLinkedQueue<LogEntry>) {
   fun add(inMessage: CharSequence) {
-    queue.add(LogEntry(inMessage))
+    queue.add(LogEntry(inMessage, "IN"))
   }
 
-  fun add(outMessage: ByteBuf) {
-    queue.add(LogEntry(outMessage.copy()))
+  fun add(outMessage: ByteBuf, marker: String = "OUT") {
+    queue.add(LogEntry(outMessage.copy(), marker))
   }
 }
 
@@ -70,7 +70,7 @@ fun createDebugLogger(@PropertyKey(resourceBundle = Registry.REGISTRY_BUNDLE) ke
         val message = entry.message
         when (message) {
           is JsonReaderEx.CharSequenceBackedByChars -> {
-            writer.write("\"IN\": ")
+            writer.write("\"${entry.marker}\": ")
             writer.flush()
 
             fileChannel.write(message.byteBuffer)
@@ -79,7 +79,7 @@ fun createDebugLogger(@PropertyKey(resourceBundle = Registry.REGISTRY_BUNDLE) ke
             writer.flush()
           }
           is ByteBuf -> {
-            writer.write("\"OUT\": ")
+            writer.write("\"${entry.marker}\": ")
             writer.flush()
 
             message.getBytes(message.readerIndex(), out, message.readableBytes())
