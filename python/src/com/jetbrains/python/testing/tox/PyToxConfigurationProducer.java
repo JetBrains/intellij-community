@@ -43,6 +43,14 @@ public final class PyToxConfigurationProducer extends RunConfigurationProducer<P
     if (virtualFile == null) {
       return false;
     }
+    final String currentPath = virtualFile.getParent().getCanonicalPath();
+    final String directoryPath = configuration.getWorkingDirectory();
+
+    if (currentPath != null && directoryPath != null && ! directoryPath.equals(currentPath)) {
+      return false; // Tox but for different dir
+    }
+
+
     return TOX_FILE_NAME.equals(virtualFile.getName());
   }
 
@@ -54,6 +62,7 @@ public final class PyToxConfigurationProducer extends RunConfigurationProducer<P
     if (file == null) {
       return false;
     }
+    configuration.setWorkingDirectory(file.getContainingDirectory().getVirtualFile().getCanonicalPath());
     if (TOX_FILE_NAME.equals(file.getName())) {
       configuration.setName("Tox");
       return true;
