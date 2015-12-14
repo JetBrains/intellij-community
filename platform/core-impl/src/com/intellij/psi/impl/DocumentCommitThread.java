@@ -36,7 +36,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.BoundedTaskExecutorService;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,9 +54,8 @@ import java.util.concurrent.Future;
 
 public class DocumentCommitThread extends DocumentCommitProcessor implements Runnable, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DocumentCommitThread");
-  private static final String NAME = "Document commit thread";
 
-  private final ExecutorService executor = new BoundedTaskExecutorService(PooledThreadExecutor.INSTANCE, JobSchedulerImpl.CORES_COUNT, this);
+  private final ExecutorService executor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, JobSchedulerImpl.CORES_COUNT, this);
 
   private final Queue<CommitTask> documentsToCommit = new Queue<CommitTask>(10);
   private final List<CommitTask> documentsToApplyInEDT = new ArrayList<CommitTask>(10);  // guarded by documentsToCommit
@@ -191,7 +190,6 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
 
     String indent = new SimpleDateFormat("hh:mm:ss:SSSS").format(new Date()) +
       (SwingUtilities.isEventDispatchThread() ?        "-(EDT) " :
-       Thread.currentThread().getName().equals(NAME) ? "-(DCT) " :
                                                        "-      ");
     @NonNls
     String s = indent +

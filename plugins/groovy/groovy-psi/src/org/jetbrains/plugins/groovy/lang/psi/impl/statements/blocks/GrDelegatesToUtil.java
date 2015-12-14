@@ -49,9 +49,9 @@ public class GrDelegatesToUtil {
     GrCall call = getContainingCall(closableBlock);
     if (call == null) return null;
 
-    GroovyResolveResult result = resolveCall(call);
+    GroovyResolveResult result = call.advancedResolve();
 
-    if (GdkMethodUtil.isWithOrIdentity(result)) {
+    if (GdkMethodUtil.isWithOrIdentity(result.getElement())) {
       final GrExpression qualifier = inferCallQualifier((GrMethodCall)call);
       if (qualifier == null) return null;
 
@@ -207,25 +207,6 @@ public class GrDelegatesToUtil {
     final GrExpression expression = call.getInvokedExpression();
     if (!(expression instanceof GrReferenceExpression)) return null;
     return ((GrReferenceExpression)expression).getQualifier();
-  }
-
-  @NotNull
-  private static GroovyResolveResult resolveCall(@NotNull GrCall call) {
-    GroovyResolveResult result = GroovyResolveResult.EMPTY_RESULT;
-
-    if (call instanceof GrMethodCall) {
-      final GrExpression invoked = ((GrMethodCall)call).getInvokedExpression();
-      if (invoked instanceof GrReferenceExpression) {
-        final GroovyResolveResult[] results = ((GrReferenceExpression)invoked).resolveByShape();
-        if (results.length == 1) {
-          result = results[0];
-        }
-      }
-    }
-    else {
-      result = call.advancedResolve();
-    }
-    return result;
   }
 
   @Nullable

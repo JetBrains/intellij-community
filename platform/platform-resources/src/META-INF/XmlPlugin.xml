@@ -97,6 +97,8 @@
       <with attribute="implementationClass" implements="com.intellij.lang.HtmlInlineScriptTokenTypesProvider"/>
     </extensionPoint>
 
+    <extensionPoint name="html.attributeValuesProvider" interface="com.intellij.html.impl.providers.HtmlAttributeValuesProvider"/>
+
     <extensionPoint name="xml.psiPolicy"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.impl.source.xml.XmlPsiPolicy"/>

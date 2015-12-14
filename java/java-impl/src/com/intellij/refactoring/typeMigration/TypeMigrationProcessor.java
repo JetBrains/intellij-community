@@ -34,9 +34,8 @@ import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewManager;
-import com.intellij.util.Consumer;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,35 +47,51 @@ import java.util.Set;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class TypeMigrationProcessor extends BaseRefactoringProcessor {
+  private final static int MAX_ROOT_IN_PREVIEW_PRESENTATION = 3;
+
   private PsiElement[] myRoot;
+  private Function<PsiElement, PsiType> myRootTypes;
   private final TypeMigrationRules myRules;
   private TypeMigrationLabeler myLabeler;
 
-  public TypeMigrationProcessor(final Project project, final PsiElement root, final TypeMigrationRules rules) {
-    this(project, new PsiElement[]{root}, rules);
-  }
-
-  public TypeMigrationProcessor(final Project project, final PsiElement[] roots, final TypeMigrationRules rules) {
+  public TypeMigrationProcessor(final Project project, final PsiElement[] roots, final Function<PsiElement, PsiType> rootTypes, final TypeMigrationRules rules) {
     super(project);
     myRoot = roots;
     myRules = rules;
+    myRootTypes = rootTypes;
+  }
+
+  public static void runHighlightingTypeMigration(final Project project,
+                                                  final Editor editor,
+                                                  final TypeMigrationRules rules,
+                                                  final PsiElement root,
+                                                  final PsiType migrationType) {
+    runHighlightingTypeMigration(project, editor, rules, root, migrationType, false);
+  }
+
+  public static void runHighlightingTypeMigration(final Project project,
+                                                  final Editor editor,
+                                                  final TypeMigrationRules rules,
+                                                  final PsiElement root,
+                                                  final PsiType migrationType,
+                                                  final boolean optimizeImports) {
+    runHighlightingTypeMigration(project, editor, rules, new PsiElement[] {root}, Functions.<PsiElement, PsiType>constant(migrationType), optimizeImports);
   }
 
 
   public static void runHighlightingTypeMigration(final Project project,
-                                                          final Editor editor,
-                                                          final TypeMigrationRules rules,
-                                                          final PsiElement root) {
-    runHighlightingTypeMigration(project, editor, rules, root, false);
-  }
-
-  public static void runHighlightingTypeMigration(final Project project,
-                                                          final Editor editor,
-                                                          final TypeMigrationRules rules,
-                                                          final PsiElement root,
-                                                          final boolean optimizeImports) {
-    final PsiFile containingFile = root.getContainingFile();
-    final TypeMigrationProcessor processor = new TypeMigrationProcessor(project, root, rules) {
+                                                  final Editor editor,
+                                                  final TypeMigrationRules rules,
+                                                  final PsiElement[] roots,
+                                                  final Function<PsiElement, PsiType> migrationTypeFunction,
+                                                  final boolean optimizeImports) {
+    final Set<PsiFile> containingFiles = ContainerUtil.map2Set(roots, new Function<PsiElement, PsiFile>() {
+      @Override
+      public PsiFile fun(PsiElement element) {
+        return element.getContainingFile();
+      }
+    });
+    final TypeMigrationProcessor processor = new TypeMigrationProcessor(project, roots, migrationTypeFunction, rules) {
       @Override
       public void performRefactoring(@NotNull final UsageInfo[] usages) {
         super.performRefactoring(usages);
@@ -86,7 +101,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
               final List<PsiElement> result = new ArrayList<PsiElement>();
               for (UsageInfo usage : usages) {
                 final PsiElement element = usage.getElement();
-                if (element == null || containingFile != element.getContainingFile()) continue;
+                if (element == null || !containingFiles.contains(element.getContainingFile())) continue;
                 if (element instanceof PsiMethod) {
                   result.add(((PsiMethod)element).getReturnTypeElement());
                 }
@@ -120,6 +135,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
     processor.run();
   }
 
+
   @NotNull
   @Override
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
@@ -152,35 +168,56 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected void previewRefactoring(@NotNull final UsageInfo[] usages) {
-    MigrationPanel panel = new MigrationPanel(myRoot[0], myLabeler, myProject, isPreviewUsages());
-    String text;
-    if (myRoot[0] instanceof PsiField) {
-      text = "field \'" + ((PsiField)myRoot[0]).getName() + "\'";
+    MigrationPanel panel = new MigrationPanel(myRoot, myLabeler, myProject, isPreviewUsages());
+    String name;
+    if (myRoot.length == 1) {
+      String fromType = assertNotNull(TypeMigrationLabeler.getElementType(myRoot[0])).getPresentableText();
+      String toType = myRootTypes.fun(myRoot[0]).getPresentableText();
+      String text;
+      text = getPresentation(myRoot[0]);
+      name = "Migrate Type of " + text + " from \'" + fromType + "\' to \'" + toType + "\'";
+    } else {
+      final int rootsInPresentationCount = myRoot.length > MAX_ROOT_IN_PREVIEW_PRESENTATION ? MAX_ROOT_IN_PREVIEW_PRESENTATION : myRoot.length;
+      String[] rootsPresentation = new String[rootsInPresentationCount];
+      for (int i = 0; i < rootsInPresentationCount; i++) {
+        final PsiElement root = myRoot[i];
+        rootsPresentation[i] = root instanceof PsiNamedElement ? ((PsiNamedElement)root).getName() : root.getText();
+      }
+      rootsPresentation = StringUtil.surround(rootsPresentation, "\'", "\'");
+      name = "Migrate Type of " + StringUtil.join(rootsPresentation, ", ");
+      if (myRoot.length > MAX_ROOT_IN_PREVIEW_PRESENTATION) {
+        name += "...";
+      }
     }
-    else if (myRoot[0] instanceof PsiParameter) {
-      text = "parameter \'" + ((PsiParameter)myRoot[0]).getName() + "\'";
-    }
-    else if (myRoot[0] instanceof PsiLocalVariable) {
-      text = "variable \'" + ((PsiLocalVariable)myRoot[0]).getName() + "\'";
-    }
-    else if (myRoot[0] instanceof PsiMethod) {
-      text = "method \'" + ((PsiMethod)myRoot[0]).getName() + "\' return";
-    }
-    else {
-      text = Arrays.toString(myRoot);
-    }
-    String fromType = assertNotNull(TypeMigrationLabeler.getElementType(myRoot[0])).getPresentableText();
-    String toType = myRules.getMigrationRootType().getPresentableText();
-    String name = "Migrate Type of " + text + " from \'" + fromType + "\' to \'" + toType + "\'";
     Content content = UsageViewManager.getInstance(myProject).addContent(name, false, panel, true, true);
     panel.setContent(content);
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.FIND).activate(null);
   }
 
+  public static String getPresentation(PsiElement element) {
+    String text;
+    if (element instanceof PsiField) {
+      text = "field \'" + ((PsiField)element).getName() + "\'";
+    }
+    else if (element instanceof PsiParameter) {
+      text = "parameter \'" + ((PsiParameter)element).getName() + "\'";
+    }
+    else if (element instanceof PsiLocalVariable) {
+      text = "variable \'" + ((PsiLocalVariable)element).getName() + "\'";
+    }
+    else if (element instanceof PsiMethod) {
+      text = "method \'" + ((PsiMethod)element).getName() + "\' return";
+    }
+    else {
+      text = element.getText();
+    }
+    return text;
+  }
+
   @NotNull
   @Override
   public UsageInfo[] findUsages() {
-    myLabeler = new TypeMigrationLabeler(myRules);
+    myLabeler = new TypeMigrationLabeler(myRules, myRootTypes);
 
     try {
       return myLabeler.getMigratedUsages(!isPreviewUsages(), myRoot);

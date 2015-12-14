@@ -177,7 +177,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         @Override
         public DnDDragStartBean fun(DnDActionInfo info) {
           final GutterMark renderer = getGutterRenderer(info.getPoint());
-          return renderer != null && (info.isCopy() || info.isMove()) ? new DnDDragStartBean(renderer) : null;
+          if (renderer instanceof GutterIconRenderer &&
+              ((GutterIconRenderer)renderer).getDraggableObject() != null &&
+              (info.isCopy() || info.isMove())) {
+            return new DnDDragStartBean(renderer);
+          }
+          return null;
         }
       })
       .setDropHandler(new DnDDropHandler() {

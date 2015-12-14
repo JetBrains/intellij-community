@@ -6,5 +6,5 @@ import org.jetbrains.io.JsonReaderEx;
 import java.io.IOException;
 
 public interface JsonServiceInvocator {
-  void invoke(@NotNull String command, @NotNull Client client, @NotNull JsonReaderEx reader, int messageId) throws IOException;
+  void invoke(@NotNull String command, @NotNull Client client, @NotNull JsonReaderEx reader, int messageId, @NotNull CharSequence rawMessage) throws IOException;
 }

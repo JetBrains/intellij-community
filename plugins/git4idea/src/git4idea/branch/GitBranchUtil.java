@@ -123,7 +123,7 @@ public class GitBranchUtil {
     try {
       String name = handler.run();
       if (!name.equals("HEAD")) {
-        return new GitLocalBranch(name, GitBranch.DUMMY_HASH);
+        return new GitLocalBranch(name);
       }
       else {
         return null;
@@ -180,12 +180,12 @@ public class GitBranchUtil {
     }
 
     if (".".equals(remoteName)) {
-      return new GitSvnRemoteBranch(branch, GitBranch.DUMMY_HASH);
+      return new GitSvnRemoteBranch(branch);
     }
 
     GitRemote remote = findRemoteByNameOrLogError(project, root, remoteName);
     if (remote == null) return null;
-    return new GitStandardRemoteBranch(remote, branch, GitBranch.DUMMY_HASH);
+    return new GitStandardRemoteBranch(remote, branch);
   }
 
   @Nullable

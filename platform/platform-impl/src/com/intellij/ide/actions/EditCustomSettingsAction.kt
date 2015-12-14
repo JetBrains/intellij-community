@@ -42,7 +42,7 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
     val file = file() ?: return
 
     if (!file.exists()) {
-      val message = IdeBundle.message("edit.custom.settings.confirm", file.path)
+      val message = IdeBundle.message("edit.custom.settings.confirm", FileUtil.getLocationRelativeToUserHome(file.path))
       val result = Messages.showYesNoDialog(project, message, e.presentation.text!!, Messages.getQuestionIcon())
       if (result == Messages.NO) return
       FileUtil.writeToFile(file, template())

@@ -47,6 +47,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -124,10 +125,15 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
   }
 
   protected Filter<?> getFailuresFilter() {
-    if (TestConsoleProperties.INCLUDE_NON_STARTED_IN_RERUN_FAILED.value(myConsoleProperties)) {
-      return Filter.NOT_PASSED.and(Filter.IGNORED.not()).or(Filter.FAILED_OR_INTERRUPTED);
+    return getFailuresFilter(myConsoleProperties);
+  }
+
+  @TestOnly
+  public static Filter<?> getFailuresFilter(TestConsoleProperties consoleProperties) {
+    if (TestConsoleProperties.INCLUDE_NON_STARTED_IN_RERUN_FAILED.value(consoleProperties)) {
+      return Filter.NOT_PASSED.or(Filter.FAILED_OR_INTERRUPTED).and(Filter.IGNORED.not());
     }
-    return Filter.FAILED_OR_INTERRUPTED;
+    return Filter.FAILED_OR_INTERRUPTED.and(Filter.IGNORED.not());
   }
 
   @Override

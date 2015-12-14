@@ -16,21 +16,21 @@
 package com.intellij.codeInsight.inspections;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.inspections.GuavaInspection;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.util.SmartList;
+import org.junit.Assert;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Dmitry Batkovich
@@ -45,10 +45,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
-    moduleBuilder.addLibraryJars("guava-17.0.jar", PathManager.getHomePath().replace(File.separatorChar, '/') + "/community/lib/",
-                                 "guava-17.0.jar");
-    moduleBuilder.addLibraryJars("guava-17.0.jar-2", PathManager.getHomePath().replace(File.separatorChar, '/') + "/lib/",
-                                 "guava-17.0.jar");
+    moduleBuilder.addLibraryJars("guava", PathManager.getHomePathFor(Assert.class) + "/lib/", "guava-17.0.jar");
     moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
   }
 
@@ -109,7 +106,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testDontShowFluentIterableChainQuickFix() {
-    doTestNoQuickFixes(GuavaInspection.MigrateFluentIterableChainQuickFix.class);
+    doTestNoQuickFixes(PsiMethodCallExpression.class);
   }
 
   public void testRemoveMethodReferenceForFunctionalInterfaces() {
@@ -127,7 +124,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testChainContainsStopMethods() {
-    doTestNoQuickFixes(GuavaInspection.MigrateFluentIterableChainQuickFix.class);
+    doTestNoQuickFixes(PsiMethodCallExpression.class);
   }
 
   public void testFluentIterableAndOptionalChain() {
@@ -230,13 +227,24 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTestAllFile();
   }
 
-  private void doTestNoQuickFixes(final Class<? extends IntentionAction>... quickFixesClasses) {
+  public void testMigrateMethodAsChainQualifier() {
+    doTest();
+  }
+
+  public void testFixAllProblems() {
+    doTestAllFile();
+  }
+
+  private void doTestNoQuickFixes(Class<? extends PsiElement>... highlightedElements) {
     myFixture.configureByFile(getTestName(true) + ".java");
     myFixture.enableInspections(new GuavaInspection());
     myFixture.doHighlighting();
     for (IntentionAction action : myFixture.getAvailableIntentions()) {
-      if (PsiTreeUtil.instanceOf(action, quickFixesClasses)) {
-        fail("Quick fix is found for types " + Arrays.toString(quickFixesClasses));
+      if (action instanceof GuavaInspection.MigrateGuavaTypeFix) {
+        final PsiElement element = ((GuavaInspection.MigrateGuavaTypeFix)action).getStartElement();
+        if (PsiTreeUtil.instanceOf(element, highlightedElements)) {
+          fail("Quick fix is found but not expected for types " + Arrays.toString(highlightedElements));
+        }
       }
     }
   }
@@ -247,9 +255,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     boolean actionFound = false;
     myFixture.doHighlighting();
     for (IntentionAction action : myFixture.getAvailableIntentions()) {
-      if (action instanceof VariableTypeFix ||
-          action instanceof GuavaInspection.MigrateFluentIterableChainQuickFix ||
-          action instanceof GuavaInspection.MigrateMethodReturnTypeFix) {
+      if (action instanceof GuavaInspection.MigrateGuavaTypeFix) {
         myFixture.launchAction(action);
         actionFound = true;
         break;

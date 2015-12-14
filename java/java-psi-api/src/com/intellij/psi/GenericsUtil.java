@@ -320,6 +320,11 @@ public class GenericsUtil {
         final PsiType bound = wildcardType.getBound();
         PsiManager manager = wildcardType.getManager();
         if (bound != null) {
+
+          if (wildcardType.isSuper() && bound instanceof PsiIntersectionType) {
+            return PsiWildcardType.createUnbounded(manager);
+          }
+
           final PsiType acceptedBound = bound.accept(this);
           if (acceptedBound instanceof PsiWildcardType) {
             if (((PsiWildcardType)acceptedBound).isExtends() != wildcardType.isExtends()) return PsiWildcardType.createUnbounded(manager);

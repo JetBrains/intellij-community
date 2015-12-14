@@ -31,10 +31,6 @@ internal val LOG = Logger.getInstance(SsiProcessor::class.java)
 internal val COMMAND_START = "<!--#"
 internal val COMMAND_END = "-->"
 
-interface SsiCommand {
-  fun process(state: SsiProcessingState, commandName: String, paramNames: List<String>, paramValues: Array<String>, writer: ByteBufUtf8Writer): Long
-}
-
 class SsiStopProcessingException : RuntimeException()
 
 class SsiProcessor(allowExec: Boolean) {

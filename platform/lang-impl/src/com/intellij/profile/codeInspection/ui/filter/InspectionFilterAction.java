@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,16 @@ import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.profile.codeInspection.ui.LevelChooserAction;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
+import com.intellij.ui.FilterComponent;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,12 +47,15 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
 
   private final SeverityRegistrar mySeverityRegistrar;
   private final InspectionsFilter myInspectionsFilter;
+  @NotNull private final FilterComponent myFilterComponent;
 
-  public InspectionFilterAction(final InspectionProfileImpl profile,
-                                final InspectionsFilter inspectionsFilter,
-                                final Project project) {
+  public InspectionFilterAction(@NotNull InspectionProfileImpl profile,
+                                @NotNull InspectionsFilter inspectionsFilter,
+                                @NotNull Project project,
+                                @NotNull FilterComponent filterComponent) {
     super("Filter Inspections", true);
     myInspectionsFilter = inspectionsFilter;
+    myFilterComponent = filterComponent;
     mySeverityRegistrar = ((SeverityProvider)profile.getProfileManager()).getOwnSeverityRegistrar();
     getTemplatePresentation().setIcon(AllIcons.General.Filter);
     tune(profile, project);
@@ -62,6 +69,11 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
 
   private void tune(InspectionProfileImpl profile, Project project) {
     addAction(new ResetFilterAction());
+    addSeparator();
+    if (ApplicationNamesInfo.getInstance().getProductName().contains("IDEA")) {
+      // minor IDEs don't have "New in XXX" in inspection descriptions
+      addAction(new ShowNewInspectionsAction());
+    }
     addSeparator();
 
     addAction(new ShowEnabledOrDisabledInspectionsAction(true));
@@ -228,6 +240,23 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
       } else {
         myInspectionsFilter.removeLanguageId(myLanguageId);
       }
+    }
+  }
+
+  private final String version = ApplicationInfo.getInstance().getMajorVersion() +
+                                 (StringUtil.isEmptyOrSpaces(StringUtil.trimStart(ApplicationInfo.getInstance().getMinorVersion(),"0")) ?
+                                 "" : "."+ApplicationInfo.getInstance().getMinorVersion());
+  private final String presentableVersion = ApplicationNamesInfo.getInstance().getProductName() + " " + version;
+  private class ShowNewInspectionsAction extends AnAction {
+    private ShowNewInspectionsAction() {
+      super("Show New Inspections in " + presentableVersion,
+            "Shows new inspections which are available since " + presentableVersion,
+            AllIcons.Actions.Lightning);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myFilterComponent.setFilter("\"New in " + version + "\"");
     }
   }
 }

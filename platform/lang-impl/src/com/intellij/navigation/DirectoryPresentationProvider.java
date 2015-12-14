@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.navigation;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -27,6 +28,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -39,7 +41,9 @@ public class DirectoryPresentationProvider implements ItemPresentationProvider<P
     final String locationString = vFile.getPath();
 
     if (ProjectRootsUtil.isProjectHome(directory)) {
-      final Icon projectIcon = IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
+      final Icon projectIcon = PlatformUtils.isJetBrainsProduct()
+                               ? AllIcons.Nodes.IdeaProject
+                               : IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
       return new PresentationData(project.getName(), locationString, projectIcon, null);
     }
 

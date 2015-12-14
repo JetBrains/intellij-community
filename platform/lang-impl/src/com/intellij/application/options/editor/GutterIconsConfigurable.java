@@ -15,40 +15,40 @@
  */
 package com.intellij.application.options.editor;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.LineMarkerProvider;
-import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
-import com.intellij.codeInsight.daemon.LineMarkerProviders;
-import com.intellij.codeInsight.daemon.impl.LineMarkerSettings;
+import com.intellij.codeInsight.daemon.*;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.ui.CheckBoxList;
+import com.intellij.ui.SeparatorWithText;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.EmptyIcon;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Dmitry Avdeev
  */
 public class GutterIconsConfigurable implements Configurable {
   private JPanel myPanel;
-  private CheckBoxList<LineMarkerProviderDescriptor> myList;
-  private List<LineMarkerProviderDescriptor> myDescriptors;
+  private CheckBoxList<GutterIconDescriptor> myList;
+  private List<GutterIconDescriptor> myDescriptors;
+  private Map<GutterIconDescriptor, PluginDescriptor> myFirstDescriptors = new HashMap<GutterIconDescriptor, PluginDescriptor>();
 
   @Nls
   @Override
@@ -66,36 +66,52 @@ public class GutterIconsConfigurable implements Configurable {
   @Override
   public JComponent createComponent() {
     ExtensionPoint<LineMarkerProvider> point = Extensions.getRootArea().getExtensionPoint(LineMarkerProviders.EP_NAME);
+    @SuppressWarnings("unchecked")
     LanguageExtensionPoint<LineMarkerProvider>[] extensions = (LanguageExtensionPoint<LineMarkerProvider>[])point.getExtensions();
-    List<LineMarkerProviderDescriptor> descriptors = ContainerUtil
-      .mapNotNull(extensions, new NullableFunction<LanguageExtensionPoint<LineMarkerProvider>, LineMarkerProviderDescriptor>() {
+    NullableFunction<LanguageExtensionPoint<LineMarkerProvider>, PluginDescriptor> function =
+      new NullableFunction<LanguageExtensionPoint<LineMarkerProvider>, PluginDescriptor>() {
         @Nullable
         @Override
-        public LineMarkerProviderDescriptor fun(LanguageExtensionPoint<LineMarkerProvider> point) {
+        public PluginDescriptor fun(LanguageExtensionPoint<LineMarkerProvider> point) {
           LineMarkerProvider instance = point.getInstance();
-          if (instance instanceof LineMarkerProviderDescriptor) {
-            LineMarkerProviderDescriptor descriptor = (LineMarkerProviderDescriptor)instance;
-            return descriptor.getName() == null ? null : descriptor;
-          }
-          return null;
+          return instance instanceof LineMarkerProviderDescriptor && ((LineMarkerProviderDescriptor)instance).getName() != null ? point.getPluginDescriptor() : null;
         }
-      });
-    myDescriptors = new ArrayList<LineMarkerProviderDescriptor>(new THashSet<LineMarkerProviderDescriptor>(descriptors,
-                                                                                                           new TObjectHashingStrategy<LineMarkerProviderDescriptor>() {
-                                                                                                             @Override
-                                                                                                             public int computeHashCode(LineMarkerProviderDescriptor object) {
-                                                                                                               return object.getClass().hashCode();
-                                                                                                             }
-
-                                                                                                             @Override
-                                                                                                             public boolean equals(LineMarkerProviderDescriptor o1,
-                                                                                                                                   LineMarkerProviderDescriptor o2) {
-                                                                                                               return o1.getClass().equals(o2.getClass());
-                                                                                                             }
-                                                                                                           }));
-    myList.setItems(myDescriptors, new Function<LineMarkerProviderDescriptor, String>() {
+      };
+    MultiMap<PluginDescriptor, LanguageExtensionPoint<LineMarkerProvider>> map = ContainerUtil.groupBy(Arrays.asList(extensions), function);
+    myDescriptors = new ArrayList<GutterIconDescriptor>();
+    for (final PluginDescriptor descriptor : map.keySet()) {
+      Collection<LanguageExtensionPoint<LineMarkerProvider>> points = map.get(descriptor);
+      final AtomicBoolean first = new AtomicBoolean(true);
+      for (LanguageExtensionPoint<LineMarkerProvider> extensionPoint : points) {
+        GutterIconDescriptor instance = (GutterIconDescriptor)extensionPoint.getInstance();
+        if (instance.getOptions().length > 0) {
+          for (GutterIconDescriptor option : instance.getOptions()) {
+            if (first.getAndSet(false)) {
+              myFirstDescriptors.put(instance, descriptor);
+            }
+            myDescriptors.add(option);
+          }
+        }
+        else {
+          if (first.getAndSet(false)) {
+            myFirstDescriptors.put(instance, descriptor);
+          }
+          myDescriptors.add(instance);
+        }
+      }
+    }
+    List<GutterIconDescriptor> options = new ArrayList<GutterIconDescriptor>();
+    for (Iterator<GutterIconDescriptor> iterator = myDescriptors.iterator(); iterator.hasNext(); ) {
+      GutterIconDescriptor descriptor = iterator.next();
+      if (descriptor.getOptions().length > 0) {
+        options.addAll(Arrays.asList(descriptor.getOptions()));
+        iterator.remove();
+      }
+    }
+    myDescriptors.addAll(options);
+    myList.setItems(myDescriptors, new Function<GutterIconDescriptor, String>() {
       @Override
-      public String fun(LineMarkerProviderDescriptor descriptor) {
+      public String fun(GutterIconDescriptor descriptor) {
         return descriptor.getName();
       }
     });
@@ -104,7 +120,7 @@ public class GutterIconsConfigurable implements Configurable {
 
   @Override
   public boolean isModified() {
-    for (LineMarkerProviderDescriptor descriptor : myDescriptors) {
+    for (GutterIconDescriptor descriptor : myDescriptors) {
       if (myList.isItemSelected(descriptor) != LineMarkerSettings.getSettings().isEnabled(descriptor)) {
         return true;
       }
@@ -114,7 +130,7 @@ public class GutterIconsConfigurable implements Configurable {
 
   @Override
   public void apply() throws ConfigurationException {
-    for (LineMarkerProviderDescriptor descriptor : myDescriptors) {
+    for (GutterIconDescriptor descriptor : myDescriptors) {
       LineMarkerSettings.getSettings().setEnabled(descriptor, myList.isItemSelected(descriptor));
     }
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
@@ -124,7 +140,7 @@ public class GutterIconsConfigurable implements Configurable {
 
   @Override
   public void reset() {
-    for (LineMarkerProviderDescriptor descriptor : myDescriptors) {
+    for (GutterIconDescriptor descriptor : myDescriptors) {
       myList.setItemSelected(descriptor, LineMarkerSettings.getSettings().isEnabled(descriptor));
     }
   }
@@ -135,17 +151,34 @@ public class GutterIconsConfigurable implements Configurable {
   }
 
   private void createUIComponents() {
-    myList = new CheckBoxList<LineMarkerProviderDescriptor>() {
+    myList = new CheckBoxList<GutterIconDescriptor>() {
       @Override
       protected JComponent adjustRendering(JComponent rootComponent, JCheckBox checkBox, int index, boolean selected, boolean hasFocus) {
         JPanel panel = new JPanel(new BorderLayout());
-        LineMarkerProviderDescriptor descriptor = myList.getItemAt(index);
+        panel.setBorder(BorderFactory.createEmptyBorder());
+        GutterIconDescriptor descriptor = myList.getItemAt(index);
         Icon icon = descriptor == null ? null : descriptor.getIcon();
-        panel.add(new JLabel(icon == null ? EmptyIcon.ICON_16 : icon), BorderLayout.WEST);
+        JLabel label = new JLabel(icon == null ? EmptyIcon.ICON_16 : icon);
+        label.setOpaque(true);
+        label.setPreferredSize(new Dimension(25, -1));
+        label.setHorizontalAlignment(SwingConstants.CENTER);
+        panel.add(label, BorderLayout.WEST);
         panel.add(checkBox, BorderLayout.CENTER);
-        panel.setBackground(rootComponent.getBackground());
+        panel.setBackground(getBackground(false));
+        label.setBackground(getBackground(selected));
+        checkBox.setBorder(null);
+
+        PluginDescriptor pluginDescriptor = myFirstDescriptors.get(descriptor);
+        if (pluginDescriptor instanceof IdeaPluginDescriptor) {
+          SeparatorWithText separator = new SeparatorWithText();
+          String name = ((IdeaPluginDescriptor)pluginDescriptor).getName();
+          separator.setCaption("IDEA CORE".equals(name) ? "Platform" : name);
+          panel.add(separator, BorderLayout.NORTH);
+        }
+
         return panel;
       }
     };
+    myList.setBorder(BorderFactory.createEmptyBorder());
   }
 }

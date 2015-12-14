@@ -64,21 +64,26 @@ public class TerminalProcessHandler extends SvnProcessHandler {
 
   @Override
   public void notifyTextAvailable(String text, Key outputType) {
-    terminalOutputCapturer.onTextAvailable(new ProcessEvent(this, text), outputType);
+    if (ProcessOutputTypes.SYSTEM.equals(outputType)) {
+      super.notifyTextAvailable(text, outputType);
+    }
+    else {
+      terminalOutputCapturer.onTextAvailable(new ProcessEvent(this, text), outputType);
 
-    text = filterText(text);
+      text = filterText(text);
 
-    if (!StringUtil.isEmpty(text)) {
-      StringBuilder lastLine = getLastLineFor(outputType);
-      String currentLine = lastLine.append(text).toString();
-      lastLine.setLength(0);
+      if (!StringUtil.isEmpty(text)) {
+        StringBuilder lastLine = getLastLineFor(outputType);
+        String currentLine = lastLine.append(text).toString();
+        lastLine.setLength(0);
 
-      currentLine = filterCombinedText(currentLine);
+        currentLine = filterCombinedText(currentLine);
 
-      // check if current line presents some interactive output
-      boolean handled = handlePrompt(currentLine, outputType);
-      if (!handled) {
-        notify(currentLine, outputType, lastLine);
+        // check if current line presents some interactive output
+        boolean handled = handlePrompt(currentLine, outputType);
+        if (!handled) {
+          notify(currentLine, outputType, lastLine);
+        }
       }
     }
   }

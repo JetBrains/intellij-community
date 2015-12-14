@@ -87,12 +87,16 @@ val Promise<*>.isRejected: Boolean
 val Promise<*>.isPending: Boolean
   get() = state == Promise.State.PENDING
 
-inline fun AsyncPromise<out Any?>.catchError(task: () -> Unit) {
+val Promise<*>.isFulfilled: Boolean
+  get() = state == Promise.State.FULFILLED
+
+inline fun <T> AsyncPromise<*>.catchError(runnable: () -> T): T? {
   try {
-    task()
+    return runnable()
   }
   catch (e: Throwable) {
     setError(e)
+    return null
   }
 }
 
@@ -108,20 +112,10 @@ fun <T> collectResults(promises: List<Promise<T>>): Promise<List<T>> {
   return Promise.all(promises, results)
 }
 
-fun createError(error: String, log: Boolean = false): RuntimeException = Promise.MessageError(error, log)
-
-inline fun <T> AsyncPromise<*>.tryOrReject(runnable: () -> T): T? {
-  try {
-    return runnable()
-  }
-  catch (e: Throwable) {
-    setError(e)
-    return null
-  }
-}
+fun createError(error: String, log: Boolean): RuntimeException = Promise.MessageError(error, log)
 
 inline fun <T> AsyncPromise<T>.compute(runnable: () -> T) {
-  val result = tryOrReject(runnable)
+  val result = catchError(runnable)
   if (!isRejected) {
     setResult(result)
   }

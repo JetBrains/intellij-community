@@ -53,10 +53,6 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     return jbColor(Gray._215, Gray._80);
   }
 
-  private JBColor getGradientThumbBorderColor() {
-    return jbColor(Gray._201, Gray._85);
-  }
-
   public static JBColor getTrackBackgroundDefault() {
     return new JBColor(LightColors.SLIGHTLY_GRAY, UIUtil.getListBackground());
   }
@@ -73,8 +69,6 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     return jbColor(Gray._230, UIUtil.getListBackground());
   }
 
-  private static final BasicStroke BORDER_STROKE = new BasicStroke();
-  
   private JBColor jbColor(final Color regular, final Color dark) {
     return new JBColor(new NotNullProducer<Color>() {
       @NotNull
@@ -673,7 +667,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
 
     if (isVertical()) {
-      g.drawLine(bounds.x, bounds.y, bounds.x, bounds.y + bounds.height);
+      int x = scrollbar.getComponentOrientation().isLeftToRight() ? bounds.x : bounds.x + bounds.width - 1;
+      g.drawLine(x, bounds.y, x, bounds.y + bounds.height);
     }
     else {
       g.drawLine(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y);
@@ -788,41 +783,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   protected void paintMaxiThumb(Graphics2D g, Rectangle thumbBounds) {
-    final boolean vertical = isVertical();
-    int hGap = vertical ? 2 : 1;
-    int vGap = vertical ? 1 : 2;
-
-    int w = thumbBounds.width - hGap * 2;
-    int h = thumbBounds.height - vGap * 2;
-
-    // leave one pixel between thumb and right or bottom edge
-    if (vertical) {
-      h -= 1;
-    }
-    else {
-      w -= 1;
-    }
-
-    final Paint paint;
-    final Color start = adjustColor(getGradientLightColor());
-    final Color end = adjustColor(getGradientDarkColor());
-
-    if (vertical) {
-      paint = UIUtil.getGradientPaint(1, 0, start, w + 1, 0, end);
-    }
-    else {
-      paint = UIUtil.getGradientPaint(0, 1, start, 0, h + 1, end);
-    }
-
-    g.setPaint(paint);
-    g.fillRect(hGap + 1, vGap + 1, w - 1, h - 1);
-
-    final Stroke stroke = g.getStroke();
-    g.setStroke(BORDER_STROKE);
-    g.setColor(getGradientThumbBorderColor());
-    final int R = JBUI.scale(3);
-    g.drawRoundRect(hGap, vGap, w, h, R, R);
-    g.setStroke(stroke);
+    ThumbPainter.DEFAULT.setScrollBar(scrollbar);
+    ThumbPainter.DEFAULT.paint(g, 0, 0, thumbBounds.width, thumbBounds.height, myThumbFadeColorShift);
   }
 
   @Override
@@ -893,5 +855,155 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   public interface ScrollbarRepaintCallback {
     void call(Graphics g);
+  }
+
+  /**
+   * The default painter for non-Mac scroll bar.
+   */
+  public static class ThumbPainter implements RegionPainter<Integer> {
+    private static final ThumbPainter DEFAULT = new ThumbPainter(null);
+    private static final BasicStroke BASIC_STROKE = new BasicStroke();
+    private JScrollBar myScrollBar;
+
+    void setScrollBar(JScrollBar bar) {
+      myScrollBar = bar;
+    }
+
+    public ThumbPainter(JScrollBar bar) {
+      setScrollBar(bar);
+    }
+
+    @Override
+    public void paint(Graphics2D g, int x, int y, int width, int height, Integer value) {
+      float alpha = getAlpha();
+      if (alpha > 0) {
+        int gap = getBorderOffset();
+        if (isVertical()) {
+          x += isLeftToRight() ? gap : 0;
+          width -= gap;
+        }
+        else {
+          y += gap;
+          height -= gap;
+        }
+        if (width > 1 && height > 1) {
+          g = (Graphics2D)g.create(x, y, width, height);
+          g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+          g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+          g.setStroke(BASIC_STROKE);
+          if (alpha < 1) {
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+          }
+          paint(g, width, height, value);
+          g.dispose();
+        }
+      }
+    }
+
+    protected void paint(Graphics2D g, int width, int height, Integer value) {
+      int x = 1;
+      int y = 1;
+      width -= x + x;
+      height -= y + y;
+
+      int arc = JBUI.scale(4);
+      Color border = getBorderColor();
+      Color start = getGradientStart(value);
+      Color stop = getGradientStop(value);
+      if (start != null || stop != null) {
+        if (start == null) {
+          g.setColor(stop);
+        }
+        else if (stop == null) {
+          g.setColor(start);
+        }
+        else if (isVertical()) {
+          g.setPaint(UIUtil.getGradientPaint(x, y, start, x + width, y, stop));
+        }
+        else {
+          g.setPaint(UIUtil.getGradientPaint(x, y, start, x, y + height, stop));
+        }
+        g.fillRoundRect(x, y, width, height, arc, arc);
+      }
+      if (border != null) {
+        g.setColor(border);
+        g.setStroke(BASIC_STROKE);
+        g.drawRoundRect(x, y, width - 1, height - 1, arc, arc);
+      }
+    }
+
+    protected boolean isVertical() {
+      return myScrollBar == null || Adjustable.VERTICAL == myScrollBar.getOrientation();
+    }
+
+    protected boolean isLeftToRight() {
+      return myScrollBar == null || myScrollBar.getComponentOrientation().isLeftToRight();
+    }
+
+    /**
+     * Returns the constant alpha to be multiplied with the alpha of the source.
+     * The alpha must be a floating point number in the range [0.0, 1.0].
+     *
+     * @return the constant alpha
+     */
+    protected float getAlpha() {
+      return 1;
+    }
+
+    /**
+     * Returns the offset for a color
+     * according to the specified value from animator.
+     *
+     * @param value the value from animator
+     * @return the offset for a color
+     */
+    protected int getColorOffset(Integer value) {
+      return value == null ? 0 : value;
+    }
+
+    /**
+     * Returns the start color for a gradient of a thumb's background
+     * according to the specified value from animator.
+     *
+     * @param value the value from animator
+     * @return the start color for a gradient
+     */
+    protected Color getGradientStart(Integer value) {
+      int offset = getColorOffset(value);
+      return getColor(UIUtil.isUnderDarcula() ? 95 + offset : 251 - offset);
+    }
+
+    /**
+     * Returns the stop color for a gradient of a thumb's background
+     * according to the specified value from animator.
+     *
+     * @param value the value from animator
+     * @return the stop color for a gradient
+     */
+    protected Color getGradientStop(Integer value) {
+      int offset = getColorOffset(value);
+      return getColor(UIUtil.isUnderDarcula() ? 80 + offset : 215 - offset);
+    }
+
+    /**
+     * Returns the color for thumb's border.
+     *
+     * @return the border color
+     */
+    protected Color getBorderColor() {
+      int offset = getColorOffset(null);
+      return getColor(UIUtil.isUnderDarcula() ? 85 + offset : 201 - offset);
+    }
+
+    /**
+     * @return additional offset corresponding to the default track border
+     */
+    protected int getBorderOffset() {
+      return 1;
+    }
+
+    private static Color getColor(int gray) {
+      return Gray.get(gray < 0 ? 0 : gray > 255 ? 255 : gray);
+    }
   }
 }

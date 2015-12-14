@@ -48,15 +48,24 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 private var sharedModule: Module? = null
 
-/**
- * Project created on request, so, could be used as a bare (only application).
- */
-class ProjectRule() : ExternalResource() {
+open class ApplicationRule : ExternalResource() {
   companion object {
     init {
       Logger.setFactory(TestLoggerFactory::class.java)
     }
+  }
 
+  override public final fun before() {
+    IdeaTestApplication.getInstance()
+    TestRunnerUtil.replaceIdeEventQueueSafely()
+  }
+}
+
+/**
+ * Project created on request, so, could be used as a bare (only application).
+ */
+class ProjectRule() : ApplicationRule() {
+  companion object {
     private var sharedProject: ProjectEx? = null
     private val projectOpened = AtomicBoolean()
 
@@ -67,7 +76,7 @@ class ProjectRule() : ExternalResource() {
       val projectPath = projectFile.systemIndependentPath
 
       val buffer = ByteArrayOutputStream()
-      java.lang.Throwable(projectPath).printStackTrace(PrintStream(buffer))
+      Throwable(projectPath, null).printStackTrace(PrintStream(buffer))
 
       val project = PlatformTestCase.createProject(projectPath, "Light project: $buffer") as ProjectEx
       Disposer.register(ApplicationManager.getApplication(), Disposable {
@@ -89,11 +98,6 @@ class ProjectRule() : ExternalResource() {
       sharedModule = null
       Disposer.dispose(project)
     }
-  }
-
-  override public final fun before() {
-    IdeaTestApplication.getInstance()
-    TestRunnerUtil.replaceIdeEventQueueSafely()
   }
 
   override public fun after() {
@@ -145,27 +149,22 @@ class ProjectRule() : ExternalResource() {
     }
 }
 
-fun runInEdtAndWait(runnable: () -> Unit) {
-  EdtTestUtil.runInEdtAndWait(runnable)
-}
-
+/**
+ * rules: outer, middle, inner
+ * out:
+ * starting outer rule
+ * starting middle rule
+ * starting inner rule
+ * finished inner rule
+ * finished middle rule
+ * finished outer rule
+ */
 class RuleChain(vararg val rules: TestRule) : TestRule {
   override fun apply(base: Statement, description: Description): Statement {
     var statement = base
-    var errors: MutableList<Throwable>? = null
-    for (i in (rules.size() - 1) downTo 0) {
-      try {
-        statement = rules[i].apply(statement, description)
-      }
-      catch (e: Throwable) {
-        if (errors == null) {
-          errors = SmartList<Throwable>()
-        }
-        errors.add(e)
-      }
+    for (i in (rules.size - 1) downTo 0) {
+      statement = rules[i].apply(statement, description)
     }
-
-    CompoundRuntimeException.throwIfNotEmpty(errors)
     return statement
   }
 }
@@ -181,12 +180,14 @@ class EdtRule : TestRule {
       base
     }
     else {
-      object : Statement() {
-        override fun evaluate() {
-          runInEdtAndWait { base.evaluate() }
-        }
-      }
+      statement { runInEdtAndWait { base.evaluate() } }
     }
+  }
+}
+
+private inline fun statement(crossinline runnable: () -> Unit) = object : Statement() {
+  override fun evaluate() {
+    runnable()
   }
 }
 
@@ -203,11 +204,7 @@ class ActiveStoreRule(private val projectRule: ProjectRule) : TestRule {
       base
     }
     else {
-      object : Statement() {
-        override fun evaluate() {
-          projectRule.project.runInLoadComponentStateMode { base.evaluate() }
-        }
-      }
+      statement { projectRule.project.runInLoadComponentStateMode { base.evaluate() } }
     }
   }
 }
@@ -228,6 +225,17 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
   finally {
     if (isModeDisabled) {
       store.isOptimiseTestLoadSpeed = true
+    }
+  }
+}
+
+class DisposeNonLightProjectsRule() : ExternalResource() {
+  override fun after() {
+    val projectManager = ProjectManager.getInstance() as ProjectManagerImpl
+    projectManager.openProjects.forEachGuaranteed {
+      if (!ProjectManagerImpl.isLight(it)) {
+        runInEdtAndWait { projectManager.closeProject(it, false, true, false) }
+      }
     }
   }
 }
@@ -268,17 +276,13 @@ inline fun <T> Array<out T>.forEachGuaranteed(operation: (T) -> Unit): Unit {
  * So, should be one task per rule.
  */
 class WrapRule(private val before: () -> () -> Unit) : TestRule {
-  override final fun apply(base: Statement, description: Description): Statement {
-    return object : Statement() {
-      override fun evaluate() {
-        val after = before()
-        try {
-          base.evaluate()
-        }
-        finally {
-          after()
-        }
-      }
+  override fun apply(base: Statement, description: Description) = statement {
+    val after = before()
+    try {
+      base.evaluate()
+    }
+    finally {
+      after()
     }
   }
 }

@@ -47,6 +47,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
@@ -158,6 +159,12 @@ public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDes
   @Override
   public String getName() {
     return "External annotations";
+  }
+
+  @Nullable
+  @Override
+  public Icon getIcon() {
+    return AllIcons.Gutter.ExtAnnotation;
   }
 
   private static class MyIconGutterHandler implements GutterIconNavigationHandler<PsiElement> {

@@ -187,8 +187,9 @@ abstract class LineLayout {
     }
   }
   
+  @SuppressWarnings("AssignmentToForLoopParameter")
   private static void addFragments(BidiRun run, Chunk chunk, char[] text, int start, int end, int fontStyle,
-                                   FontPreferences fontPreferences, FontRenderContext fontRenderContext, 
+                                   FontPreferences fontPreferences, FontRenderContext fontRenderContext,
                                    @Nullable TabFragment tabFragment) {
     assert start < end;
     FontInfo currentFontInfo = null;
@@ -203,12 +204,22 @@ abstract class LineLayout {
         currentIndex = i + 1;
       }
       else {
-        FontInfo fontInfo = ComplementaryFontsRegistry.getFontAbleToDisplay(c, fontStyle, fontPreferences);
+        boolean surrogatePair = false;
+        int codePoint = c;
+        if (Character.isHighSurrogate(c) && (i + 1 < end)) {
+          char nextChar = text[i + 1];
+          if (Character.isLowSurrogate(nextChar)) {
+            codePoint = Character.toCodePoint(c, nextChar);
+            surrogatePair = true;
+          }
+        }
+        FontInfo fontInfo = ComplementaryFontsRegistry.getFontAbleToDisplay(codePoint, fontStyle, fontPreferences);
         if (currentFontInfo == null || !fontInfo.getFont().equals(currentFontInfo.getFont())) {
           addTextFragmentIfNeeded(chunk, text, currentIndex, i, currentFontInfo, fontRenderContext, run.isRtl());
           currentFontInfo = fontInfo;
           currentIndex = i;
         }
+        if (surrogatePair) i++;
       }
     }
     addTextFragmentIfNeeded(chunk, text, currentIndex, end, currentFontInfo, fontRenderContext, run.isRtl());

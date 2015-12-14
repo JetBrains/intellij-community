@@ -138,6 +138,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
         // this is needed in order to make UI calculate the height for each particular row
       }
     };
+    myTree.getEmptyText().setText(IdeBundle.message("errortree.noMessages"));
     myBuilder = new ErrorViewTreeBuilder(myTree, treeModel, myErrorViewStructure);
 
     myExporterToTextFile = new ErrorViewTextExporter(myErrorViewStructure);

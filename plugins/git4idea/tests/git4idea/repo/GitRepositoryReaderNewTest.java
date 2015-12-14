@@ -62,7 +62,7 @@ public class GitRepositoryReaderNewTest extends GitSingleRepoTest {
     final String INVALID_REMOTE_BRANCH = "master";
     git("update-ref refs/remotes/" + INVALID_REMOTE + "/" + INVALID_REMOTE_BRANCH + " HEAD");
 
-    Collection<GitRemoteBranch> remoteBranches = readState().getRemoteBranches();
+    Collection<GitRemoteBranch> remoteBranches = readState().getRemoteBranches().keySet();
     assertTrue("Remote branch not found", ContainerUtil.exists(remoteBranches, new Condition<GitRemoteBranch>() {
       @Override
       public boolean value(GitRemoteBranch branch) {

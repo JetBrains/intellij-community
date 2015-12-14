@@ -579,10 +579,8 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
                                             final PsiType toType) {
     final RulesProvider provider = new RulesProvider() {
       @Override
-      public TypeMigrationRules provide() throws Exception {
-        final TypeMigrationRules rules = new TypeMigrationRules();
-        rules.setMigrationRootType(toType);
-        return rules;
+      public PsiType migrationType() throws Exception {
+        return toType;
       }
 
       @Override

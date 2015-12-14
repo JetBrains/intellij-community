@@ -30,7 +30,7 @@ public interface StreamProvider {
    * @param content bytes of content, size of array is not actual size of data, you must use `size`
    * @param size actual size of data
    */
-  public fun write(fileSpec: String, content: ByteArray, size: Int = content.size(), roamingType: RoamingType = RoamingType.DEFAULT)
+  public fun write(fileSpec: String, content: ByteArray, size: Int = content.size, roamingType: RoamingType = RoamingType.DEFAULT)
 
   public fun read(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT): InputStream?
 

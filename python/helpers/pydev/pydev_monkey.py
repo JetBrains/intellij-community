@@ -125,7 +125,7 @@ def patch_args(args):
                     break
             i += 1
 
-        if i < len(args) and _is_managed_arg(args[i]):  # no need to add pydevd twice
+        if i >= len(args) or _is_managed_arg(args[i]):  # no need to add pydevd twice
             return args
 
         for x in original:

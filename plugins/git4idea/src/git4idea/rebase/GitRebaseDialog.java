@@ -427,12 +427,12 @@ public class GitRebaseDialog extends DialogWrapper {
         else {
           mergeBranch = GitBranchUtil.stripRefsPrefix(mergeBranch);
           if (remote.equals(".")) {
-            trackedBranch = new GitSvnRemoteBranch(mergeBranch, GitBranch.DUMMY_HASH);
+            trackedBranch = new GitSvnRemoteBranch(mergeBranch);
           }
           else {
             GitRemote r = GitBranchUtil.findRemoteByNameOrLogError(myProject, root, remote);
             if (r != null) {
-              trackedBranch = new GitStandardRemoteBranch(r, mergeBranch, GitBranch.DUMMY_HASH);
+              trackedBranch = new GitStandardRemoteBranch(r, mergeBranch);
             }
           }
         }

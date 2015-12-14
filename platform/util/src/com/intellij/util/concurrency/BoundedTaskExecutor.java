@@ -15,6 +15,7 @@
  */
 package com.intellij.util.concurrency;
 
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Function;
@@ -156,7 +157,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   }
 
   @TestOnly
-  public void waitAllTasksExecuted() throws ExecutionException, InterruptedException {
+  public void waitAllTasksExecuted(int timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException {
     final CountDownLatch started = new CountDownLatch(myMaxTasks);
     final CountDownLatch readyToFinish = new CountDownLatch(1);
     // start myMaxTasks runnables which will spread to all available executor threads
@@ -179,12 +180,17 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
       }
     });
     try {
-      started.await();
+      if (!started.await(timeout, unit)) {
+        throw new RuntimeException("Interrupted by timeout. " + this +
+                                   "; Thread dump:\n" + ThreadDumper.dumpThreadsToString());
+      }
     }
     catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
-    readyToFinish.countDown();
+    finally {
+      readyToFinish.countDown();
+    }
     for (Future future : futures) {
       future.get();
     }
@@ -200,5 +206,17 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
       }
     }
     return queued;
+  }
+
+  @Override
+  public String toString() {
+    return "BoundedExecutor(" + myMaxTasks + ") " + (isShutdown() ? "SHUTDOWN " : "") +
+           "inProgress: " + myInProgress +
+           "; tasks in queue: [" + ContainerUtil.map(myTaskQueue, new Function<Runnable, Object>() {
+      @Override
+      public Object fun(Runnable runnable) {
+        return info(runnable);
+      }
+    }) +"]";
   }
 }

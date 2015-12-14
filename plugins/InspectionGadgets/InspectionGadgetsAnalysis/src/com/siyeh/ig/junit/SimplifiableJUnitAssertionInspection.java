@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -182,12 +183,41 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
       if (message != null) {
         newExpression.append(message.getText()).append(',');
       }
-      newExpression.append(lhs.getText()).append(',').append(rhs.getText());
-      if (TypeUtils.hasFloatingPointType(lhs) || TypeUtils.hasFloatingPointType(rhs)) {
+      final PsiType lhsType = lhs.getType();
+      final PsiType rhsType = rhs.getType();
+      if (lhsType != null && rhsType != null && PsiUtil.isLanguageLevel5OrHigher(lhs)) {
+        if (isPrimitiveAndBoxedInteger(lhsType, rhsType)) {
+          final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(rhsType);
+          assert unboxedType != null;
+          newExpression.append(lhs.getText()).append(",(").append(unboxedType.getCanonicalText()).append(')').append(rhs.getText());
+        }
+        else if (isPrimitiveAndBoxedInteger(rhsType, lhsType)) {
+          final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(lhsType);
+          assert unboxedType != null;
+          newExpression.append('(').append(unboxedType.getCanonicalText()).append(')').append(lhs.getText()).append(',').append(rhs.getText());
+        }
+        else {
+          newExpression.append(lhs.getText()).append(',').append(rhs.getText());
+        }
+      }
+      else {
+        newExpression.append(lhs.getText()).append(',').append(rhs.getText());
+      }
+      if (TypeUtils.hasFloatingPointType(lhs) || TypeUtils.hasFloatingPointType(rhs) ||
+          isPrimitiveAndBoxedFloat(lhsType, rhsType) || isPrimitiveAndBoxedFloat(rhsType, lhsType)) {
         newExpression.append(",0.0");
       }
       newExpression.append(')');
       PsiReplacementUtil.replaceExpressionAndShorten(callExpression, newExpression.toString());
+    }
+
+    private static boolean isPrimitiveAndBoxedInteger(PsiType lhsType, PsiType rhsType) {
+      return lhsType instanceof PsiPrimitiveType && rhsType instanceof PsiClassType && PsiType.LONG.isAssignableFrom(rhsType);
+    }
+
+    private static boolean isPrimitiveAndBoxedFloat(PsiType lhsType, PsiType rhsType) {
+      return lhsType instanceof PsiPrimitiveType && rhsType instanceof PsiClassType &&
+             (PsiType.DOUBLE.equals(rhsType) && PsiType.FLOAT.equals(rhsType));
     }
 
     private static void replaceAssertWithAssertNull(PsiMethodCallExpression callExpression) {

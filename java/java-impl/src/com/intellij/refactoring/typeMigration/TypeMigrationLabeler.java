@@ -65,6 +65,7 @@ public class TypeMigrationLabeler {
   }
 
   private final TypeMigrationRules myRules;
+  private final Function<PsiElement, PsiType> myMigrationRootTypeFunction;
   private TypeEvaluator myTypeEvaluator;
   private final LinkedHashMap<PsiElement, Object> myConversions;
   private final HashSet<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>> myFailedConversions;
@@ -80,10 +81,14 @@ public class TypeMigrationLabeler {
   private final Map<Pair<TypeMigrationUsageInfo, TypeMigrationUsageInfo>, Set<PsiElement>> myRootUsagesTree = new HashMap<Pair<TypeMigrationUsageInfo, TypeMigrationUsageInfo>, Set<PsiElement>>();
   private final Set<TypeMigrationUsageInfo> myProcessedRoots = new HashSet<TypeMigrationUsageInfo>();
 
+  public TypeMigrationLabeler(final TypeMigrationRules rules, PsiType rootType) {
+    this(rules, Functions.<PsiElement, PsiType>constant(rootType));
+  }
 
-  public TypeMigrationLabeler(final TypeMigrationRules rules) {
+  public TypeMigrationLabeler(final TypeMigrationRules rules, Function<PsiElement, PsiType> migrationRootTypeFunction) {
     myRules = rules;
-    
+    myMigrationRootTypeFunction = migrationRootTypeFunction;
+
     myConversions = new LinkedHashMap<PsiElement, Object>();
     myFailedConversions = new HashSet<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>>();
     myNewExpressionTypeChange = new LinkedHashMap<TypeMigrationUsageInfo, PsiType>();
@@ -92,6 +97,10 @@ public class TypeMigrationLabeler {
 
   public boolean hasFailedConversions() {
     return myFailedConversions.size() > 0;
+  }
+
+  public Function<PsiElement, PsiType> getMigrationRootTypeFunction() {
+    return myMigrationRootTypeFunction;
   }
 
   public String[] getFailedConversionsReport() {
@@ -755,7 +764,7 @@ public class TypeMigrationLabeler {
 
   public void setRootAndMigrate(final TypeMigrationUsageInfo newRootUsageInfo, final PsiType migrationType, final PsiReference[] usages) {
     final TypeMigrationUsageInfo oldRoot = getCurrentRoot();
-    setCurrentRoot(newRootUsageInfo);
+    myCurrentRoot = newRootUsageInfo;
     PsiElement root = newRootUsageInfo.getElement();
     if (root instanceof PsiMethod) {
       migrateMethodReturnExpression(migrationType, (PsiMethod)root);
@@ -884,9 +893,8 @@ public class TypeMigrationLabeler {
     myTypeEvaluator = new TypeEvaluator(myMigrationRoots, this);
 
 
-    final PsiType rootType = myRules.getMigrationRootType();
     for (PsiElement victim : victims) {
-      addMigrationRoot(victim, rootType, null, false, true, true);
+      addMigrationRoot(victim, myMigrationRootTypeFunction.fun(victim), null, false, true, true);
     }
 
     if (autoMigrate) {
@@ -902,10 +910,6 @@ public class TypeMigrationLabeler {
 
   public Map<TypeMigrationUsageInfo, HashSet<Pair<TypeMigrationUsageInfo, PsiType>>> getRootsTree() {
     return myRootsTree;
-  }
-
-  public void setCurrentRoot(final TypeMigrationUsageInfo currentRoot) {
-    myCurrentRoot = currentRoot;
   }
 
   TypeMigrationUsageInfo getCurrentRoot() {

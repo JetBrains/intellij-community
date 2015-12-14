@@ -1287,7 +1287,8 @@ public class InferenceSession {
     if (formula instanceof ExpressionCompatibilityConstraint) {
       PsiExpression expression = ((ExpressionCompatibilityConstraint)formula).getExpression();
       if (expression instanceof PsiLambdaExpression) {
-        PsiType parameterType = ((ExpressionCompatibilityConstraint)formula).getT();
+        PsiType parameterType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(((ExpressionCompatibilityConstraint)formula).getT(),
+                                                                                            (PsiLambdaExpression)expression);
         collectLambdaReturnExpression(additionalConstraints, (PsiLambdaExpression)expression, parameterType, !isProperType(parameterType), substitutor);
       }
     }

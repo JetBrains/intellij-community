@@ -30,7 +30,7 @@ import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CompressionUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.concurrency.BoundedTaskExecutorService;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
@@ -280,7 +280,8 @@ public class FSRecords implements Forceable {
           @NotNull
           @Override
           protected ExecutorService createExecutor() {
-            return new BoundedTaskExecutorService(PooledThreadExecutor.INSTANCE, 1);
+            final ExecutorService backendExecutor = PooledThreadExecutor.INSTANCE;
+            return new BoundedTaskExecutor(backendExecutor, 1);
           }
         }; // sources usually zipped with 4x ratio
         myContentHashesEnumerator = weHaveContentHashes ? new ContentHashesUtil.HashEnumerator(contentsHashesFile, storageLockContext): null;

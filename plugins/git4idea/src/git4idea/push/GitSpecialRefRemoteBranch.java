@@ -15,7 +15,6 @@
  */
 package git4idea.push;
 
-import git4idea.GitBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.repo.GitRemote;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +27,7 @@ class GitSpecialRefRemoteBranch extends GitRemoteBranch {
   private final GitRemote myRemote;
 
   public GitSpecialRefRemoteBranch(@NotNull String ref, @NotNull GitRemote remote) {
-    super(ref, GitBranch.DUMMY_HASH);
+    super(ref);
     myRef = ref;
     myRemote = remote;
   }

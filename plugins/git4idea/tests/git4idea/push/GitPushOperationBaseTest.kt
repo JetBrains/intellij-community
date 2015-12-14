@@ -125,7 +125,7 @@ abstract class GitPushOperationBaseTest : GitPlatformTest() {
     if (target == null) {
       val firstSlash = to.indexOf('/')
       val remote = GitUtil.findRemoteByName(repository, to.substring(0, firstSlash))!!
-      target = GitStandardRemoteBranch(remote, to.substring(firstSlash + 1), GitBranch.DUMMY_HASH)
+      target = GitStandardRemoteBranch(remote, to.substring(firstSlash + 1))
       newBranch = true
     }
     else {

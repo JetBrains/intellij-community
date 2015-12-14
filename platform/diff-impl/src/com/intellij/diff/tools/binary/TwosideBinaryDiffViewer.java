@@ -28,6 +28,7 @@ import com.intellij.diff.tools.util.side.TwosideDiffViewer;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
@@ -185,6 +186,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
       myBaseSide = baseSide;
       getTemplatePresentation().setText("Copy Content to " + baseSide.select("Right", "Left"));
       getTemplatePresentation().setIcon(baseSide.select(AllIcons.Vcs.Arrow_right, AllIcons.Vcs.Arrow_left));
+      setShortcutSet(ActionManager.getInstance().getAction(baseSide.select("Diff.ApplyLeftSide", "Diff.ApplyRightSide")).getShortcutSet());
     }
 
     @Override

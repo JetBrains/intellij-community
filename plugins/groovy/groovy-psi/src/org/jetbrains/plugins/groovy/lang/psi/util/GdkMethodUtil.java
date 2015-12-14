@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignatureVisitor;
@@ -550,9 +549,7 @@ public class GdkMethodUtil {
     });
   }
 
-  public static boolean isWithOrIdentity(@NotNull GroovyResolveResult result) {
-    PsiElement element = result.getElement();
-
+  public static boolean isWithOrIdentity(@Nullable PsiElement element) {
     if (element instanceof PsiMethod && isWithName(((PsiMethod)element).getName())) {
       if (element instanceof GrGdkMethod) {
         element = ((GrGdkMethod)element).getStaticMethod();

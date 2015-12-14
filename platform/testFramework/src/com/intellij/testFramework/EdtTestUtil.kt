@@ -23,28 +23,30 @@ import javax.swing.SwingUtilities
 class EdtTestUtil {
   companion object {
     @TestOnly @JvmStatic fun runInEdtAndWait(runnable: ThrowableRunnable<Throwable>) {
-      runInEdtAndWait({ runnable.run() })
+      runInEdtAndWait { runnable.run() }
     }
 
     @TestOnly @JvmStatic fun runInEdtAndWait(runnable: Runnable) {
-      runInEdtAndWait({ runnable.run() })
+      runInEdtAndWait { runnable.run() }
     }
+  }
+}
 
-    // Test only because in production you must use Application.invokeAndWait(Runnable, ModalityState).
-    // The problem is - Application logs errors, but not throws. But in tests must be thrown.
-    // In any case name "runInEdtAndWait" is better than "invokeAndWait".
-    @TestOnly @JvmStatic fun runInEdtAndWait(runnable: () -> Unit) {
-      if (SwingUtilities.isEventDispatchThread()) {
-        runnable()
-      }
-      else {
-        try {
-          SwingUtilities.invokeAndWait(runnable)
-        }
-        catch (e: InvocationTargetException) {
-          throw e.cause ?: e
-        }
-      }
+
+// Test only because in production you must use Application.invokeAndWait(Runnable, ModalityState).
+// The problem is - Application logs errors, but not throws. But in tests must be thrown.
+// In any case name "runInEdtAndWait" is better than "invokeAndWait".
+@TestOnly
+fun runInEdtAndWait(runnable: () -> Unit) {
+  if (SwingUtilities.isEventDispatchThread()) {
+    runnable()
+  }
+  else {
+    try {
+      SwingUtilities.invokeAndWait(runnable)
+    }
+    catch (e: InvocationTargetException) {
+      throw e.cause ?: e
     }
   }
 }

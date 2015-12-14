@@ -31,6 +31,8 @@ import com.intellij.psi.util.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.hash.EqualityPolicy;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -135,7 +137,37 @@ public class PsiSuperMethodImplUtil {
                                                                                         boolean isInRawContext,
                                                                                         GlobalSearchScope resolveScope) {
     ProgressManager.checkCanceled();
-    Map<MethodSignature, HierarchicalMethodSignature> result = new LinkedHashMap<MethodSignature, HierarchicalMethodSignature>();
+    Map<MethodSignature, HierarchicalMethodSignature> result = new LinkedHashMap<MethodSignature, HierarchicalMethodSignature>(
+      new EqualityPolicy<MethodSignature>() {
+        @Override
+        public int getHashCode(MethodSignature object) {
+          return object.hashCode();
+        }
+
+        @Override
+        public boolean isEqual(MethodSignature o1, MethodSignature o2) {
+          if (o1.equals(o2)) {
+            final PsiMethod method1 = ((MethodSignatureBackedByPsiMethod)o1).getMethod();
+            final PsiType returnType1 = method1.getReturnType();
+            final PsiMethod method2 = ((MethodSignatureBackedByPsiMethod)o2).getMethod();
+            final PsiType returnType2 = method2.getReturnType();
+            if (method1.hasModifierProperty(PsiModifier.STATIC) || method2.hasModifierProperty(PsiModifier.STATIC)) {
+              return true;
+            }
+
+            if (MethodSignatureUtil.isReturnTypeSubstitutable(o1, o2, returnType1, returnType2)) {
+              return true;
+            }
+
+            final PsiClass containingClass1 = method1.getContainingClass();
+            final PsiClass containingClass2 = method2.getContainingClass();
+            if (containingClass1 != null && containingClass2 != null) {
+              return containingClass1.isAnnotationType() || containingClass2.isAnnotationType();
+            }
+          }
+          return false;
+        }
+      });
     final Map<MethodSignature, List<PsiMethod>> sameParameterErasureMethods = new THashMap<MethodSignature, List<PsiMethod>>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
 
     Map<MethodSignature, HierarchicalMethodSignatureImpl> map = new THashMap<MethodSignature, HierarchicalMethodSignatureImpl>(new TObjectHashingStrategy<MethodSignature>() {

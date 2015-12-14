@@ -24,13 +24,10 @@ import com.siyeh.ig.junit.SimplifiableJUnitAssertionInspection;
  */
 public class SimplifiableJUnitAssertionFixTest extends IGQuickFixesTestCase {
 
-  public void testJUnit3TestCase() {
-    doTest();
-  }
-
-  public void testJUnit4TestCase() {
-    doTest();
-  }
+  public void testJUnit3TestCase() { doTest(); }
+  public void testJUnit4TestCase() { doTest(); }
+  public void testIntegerPrimitive() { doTest(); }
+  public void testDoublePrimitive() { doTest(); }
 
   @Override
   protected void setUp() throws Exception {
@@ -57,7 +54,7 @@ public class SimplifiableJUnitAssertionFixTest extends IGQuickFixesTestCase {
 
     myFixture.addClass("package org.junit;" +
                        "public class Assert {" +
-                       "    public static public void assertTrue(boolean condition) {}" +
+                       "    public static void assertTrue(boolean condition) {}" +
                        "    public static void assertEquals(boolean expected, boolean actual) {}" +
                        "    public static void assertFalse(String message, boolean condition) {}" +
                        "}");

@@ -15,10 +15,7 @@
  */
 package com.intellij.lang.properties.editor.inspections.incomplete;
 
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.ModifiableModel;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.QuickFix;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
@@ -49,7 +46,7 @@ import java.util.List;
 /**
  * @author Dmitry Batkovich
  */
-public class IncompletePropertyInspection extends ResourceBundleEditorInspection {
+public class IncompletePropertyInspection extends LocalInspectionTool implements ResourceBundleEditorInspection {
   private static final String SUFFIXES_TAG_NAME = "suffixes";
   private static final String TOOL_KEY = "IncompleteProperty";
 
