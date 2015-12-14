@@ -407,7 +407,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
       @Override
       public void paintComponent(Graphics g, Component c, Container p, int x, int y, int w, int h, boolean shouldValidate) {
         if (c instanceof JComponent && myWideSelection) {
-          if (!c.isOpaque()) {
+          if (c.isOpaque()) {
             ((JComponent)c).setOpaque(false);
           }
         }
