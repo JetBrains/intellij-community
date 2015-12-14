@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude" url="https://confluence.jetbrains.com/display/PYH/">
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.jetbrains.python.configuration.PyConfigurableInterpreterList"
                     serviceImplementation="com.jetbrains.python.configuration.PyConfigurableInterpreterList"/>
