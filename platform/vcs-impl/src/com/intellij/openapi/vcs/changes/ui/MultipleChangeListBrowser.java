@@ -69,8 +69,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
                                    boolean capableOfExcludingChanges,
                                    boolean highlightProblems,
                                    Runnable rebuildListListener,
-                                   @Nullable Runnable inclusionListener,
-                                   AnAction... additionalActions) {
+                                   @Nullable Runnable inclusionListener) {
     super(project, changeLists, changes, initialListSelection, capableOfExcludingChanges, highlightProblems, inclusionListener, MyUseCase.LOCAL_CHANGES, null);
     myParentDisposable = parentDisposable;
     myRebuildListListener = rebuildListListener;
@@ -80,7 +79,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     myShowingAllChangeLists = Comparing.haveEqualElements(changeLists, ChangeListManager.getInstance(project).getChangeLists());
     ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
 
-    myExtender = new Extender(project, this, additionalActions);
+    myExtender = new Extender(project, this);
 
     ActionManager actionManager = ActionManager.getInstance();
     final AnAction moveAction = actionManager.getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST);
@@ -247,12 +246,10 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   private static class Extender implements ChangesBrowserExtender {
     private final Project myProject;
     private final MultipleChangeListBrowser myBrowser;
-    private final AnAction[] myAdditionalActions;
 
-    private Extender(final Project project, final MultipleChangeListBrowser browser, AnAction[] additionalActions) {
+    private Extender(final Project project, final MultipleChangeListBrowser browser) {
       myProject = project;
       myBrowser = browser;
-      myAdditionalActions = additionalActions;
     }
 
     public void addToolbarActions(final DialogWrapper dialogWrapper) {
@@ -283,11 +280,6 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
       final List<AnAction> actions = AdditionalLocalChangeActionsInstaller.calculateActions(myProject, myBrowser.getAllChanges());
       if (actions != null) {
         for (AnAction action : actions) {
-          myBrowser.addToolbarAction(action);
-        }
-      }
-      if (myAdditionalActions != null && myAdditionalActions.length > 0) {
-        for (AnAction action : myAdditionalActions) {
           myBrowser.addToolbarAction(action);
         }
       }
