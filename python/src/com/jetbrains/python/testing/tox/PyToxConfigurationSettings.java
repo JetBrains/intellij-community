@@ -19,6 +19,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.PyCommonOptionsFormData;
@@ -57,7 +58,11 @@ final class PyToxConfigurationSettings extends SettingsEditor<PyToxConfiguration
 
   @NotNull
   private static String[] asArray(@NotNull final JTextComponent field) {
-    return ARG_SEPARATOR.split(field.getText());
+    final String text = field.getText();
+    if (text.isEmpty()) {
+      return ArrayUtil.EMPTY_STRING_ARRAY;
+    }
+    return ARG_SEPARATOR.split(text);
   }
 
   @Override
