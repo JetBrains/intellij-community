@@ -21,7 +21,7 @@ class SenderComponent(val sender: StatisticSender) : ApplicationComponent.Adapte
         if (!ApplicationManager.getApplication().isUnitTestMode) {
             val uid = UpdateChecker.getInstallationUID(PropertiesComponent.getInstance())
             sender.sendStatsData(uid)
-            alarm.addRequest({ send() }, Time.HOUR)
+            alarm.addRequest({ send() }, Time.MINUTE)
         }
     }
     
@@ -40,7 +40,7 @@ class StatisticSender(val urlProvider: UrlProvider, val logFileManager: LogFileM
     private val LOG = Logger.getInstance(StatisticSender::class.java)
 
     fun sendStatsData(uid: String) {
-        assertNotEDT()
+        assert(!SwingUtilities.isEventDispatchThread())
         try {
             logFileManager.withFileLock {
                 val text = logFileManager.read()
@@ -55,11 +55,7 @@ class StatisticSender(val urlProvider: UrlProvider, val logFileManager: LogFileM
             LOG.error(e)
         }
     }
-
-    private fun assertNotEDT() {
-        assert(!SwingUtilities.isEventDispatchThread())
-    }
-
+    
     private fun sendContent(url: String, uid: String, content: String, okAction: Runnable) {
         val map = mapOf(Pair("uid", uid), Pair("content", content))
         val data = requestService.post(url, map)
