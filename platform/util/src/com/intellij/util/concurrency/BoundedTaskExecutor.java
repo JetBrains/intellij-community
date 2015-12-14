@@ -160,17 +160,21 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   public void waitAllTasksExecuted(int timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException {
     final CountDownLatch started = new CountDownLatch(myMaxTasks);
     final CountDownLatch readyToFinish = new CountDownLatch(1);
+    final StringBuffer log = new StringBuffer("waitAllTasksExecuted: " + this + "\n");
     // start myMaxTasks runnables which will spread to all available executor threads
     // and wait for them all to finish
     List<Future> futures = ContainerUtil.map(Collections.nCopies(myMaxTasks, null), new Function<Object, Future>() {
       @Override
       public Future fun(Object o) {
+        log.append("Submit task");
         return submit(new Runnable() {
           @Override
           public void run() {
             try {
               started.countDown();
+              log.append("Task run. started=" + started);
               readyToFinish.await();
+              log.append("Task finished.");
             }
             catch (InterruptedException e) {
               throw new RuntimeException(e);
@@ -182,6 +186,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
     try {
       if (!started.await(timeout, unit)) {
         throw new RuntimeException("Interrupted by timeout. " + this +
+                                   "\nLog: "+log+"\n"+
                                    "; Thread dump:\n" + ThreadDumper.dumpThreadsToString());
       }
     }
