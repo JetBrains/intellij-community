@@ -663,11 +663,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @Override
-  public void setWritable(@NotNull final VirtualFile file, final boolean writableFlag) throws IOException {
-    FileUtil.setReadOnlyAttribute(file.getPath(), !writableFlag);
-    final File ioFile = convertToIOFile(file);
-    if (ioFile.canWrite() != writableFlag) {
-      throw new IOException("Failed to change read-only flag for " + ioFile.getPath());
+  public void setWritable(@NotNull VirtualFile file, boolean writableFlag) throws IOException {
+    String path = FileUtil.toSystemDependentName(file.getPath());
+    FileUtil.setReadOnlyAttribute(path, !writableFlag);
+    if (FileUtil.canWrite(path) != writableFlag) {
+      throw new IOException("Failed to change read-only flag for " + path);
     }
   }
 
