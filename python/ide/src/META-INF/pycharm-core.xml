@@ -14,6 +14,7 @@
   <xi:include href="/META-INF/RemoteServers.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
+  <xi:include href="/META-INF/python-configure.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <application-components>
     <component>
@@ -40,22 +41,10 @@
 
     <projectAttachProcessor implementation="com.intellij.platform.ModuleAttachProcessor"/>
 
-    <projectConfigurable groupId="project"
-                         id="com.jetbrains.python.configuration.PythonContentEntriesConfigurable"
-                         displayName="Project Structure"
-                         provider="com.jetbrains.python.configuration.PythonContentEntriesConfigurableProvider"/>
     <projectConfigurable groupId="build"
                          id="com.jetbrains.python.buildout.BuildoutModulesConfigurable"
                          displayName="Buildout Support"
                          instance="com.jetbrains.python.buildout.BuildoutModulesConfigurable"/>
-    <projectConfigurable groupId="project"
-                         id="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
-                         displayName="Project Interpreter"
-                         instance="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"/>
-    <projectConfigurable groupId="project"
-                         id="com.jetbrains.python.configuration.PyDependenciesConfigurable"
-                         displayName="Project Dependencies"
-                         provider="com.jetbrains.python.configuration.PyDependenciesConfigurableProvider"/>
 
     <directoryProjectConfigurator implementation="com.jetbrains.python.PythonSdkConfigurator" id="sdk"
                                   order="after PlatformProjectConfigurator"/>
@@ -82,9 +71,6 @@
     <usageFilteringRuleProvider implementation="com.intellij.usages.impl.ImportUsageFilteringRuleProvider"/>
     <applicationService serviceInterface="com.intellij.usages.impl.ImportFilteringUsageViewSetting"
                         serviceImplementation="com.intellij.usages.impl.ImportFilteringUsageViewSetting"/>
-
-    <projectService serviceInterface="com.jetbrains.python.configuration.PyConfigurableInterpreterList"
-                    serviceImplementation="com.jetbrains.python.configuration.PyConfigurableInterpreterList"/>
 
     <bundledColorScheme path="/colorSchemes/monokai"/>
     <bundledColorScheme path="/colorSchemes/twilight"/>

@@ -1,4 +1,5 @@
 <idea-plugin version="2">
+  <xi:include href="/META-INF/python-configure-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <extensions defaultExtensionNs="com.intellij">
     <projectConfigurable groupId="project"
                          id="com.jetbrains.python.configuration.PythonContentEntriesConfigurable"
@@ -12,7 +13,5 @@
                          id="com.jetbrains.python.configuration.PyDependenciesConfigurable"
                          displayName="Project Dependencies"
                          provider="com.jetbrains.python.configuration.PyDependenciesConfigurableProvider"/>
-    <projectService serviceInterface="com.jetbrains.python.configuration.PyConfigurableInterpreterList"
-                    serviceImplementation="com.jetbrains.python.configuration.PyConfigurableInterpreterList"/>
   </extensions>
 </idea-plugin>

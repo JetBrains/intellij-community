@@ -22,6 +22,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -50,6 +51,7 @@ public class VirtualEnvProjectFilter implements Predicate<Sdk> {
     return false;
   }
 
+  @Contract("null, _ -> false")
   public static boolean removeNotMatching(Project project, List<Sdk> sdks) {
     if (project != null) {
       final String basePath = project.getBasePath();

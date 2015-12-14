@@ -20,6 +20,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Contract;
 
 /**
  * @author Sergey.Malenkov
@@ -36,6 +37,7 @@ public final class PythonContentEntriesConfigurableProvider extends Configurable
     return ArrayUtil.getFirstElement(ModuleManager.getInstance(myProject).getModules()) != null;
   }
 
+  @Contract(" -> !null")
   @Override
   public Configurable createConfigurable() {
     return new PythonContentEntriesConfigurable(myProject);

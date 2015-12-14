@@ -1,0 +1,6 @@
+<idea-plugin version="2">
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.jetbrains.python.configuration.PyConfigurableInterpreterList"
+                    serviceImplementation="com.jetbrains.python.configuration.PyConfigurableInterpreterList"/>
+  </extensions>
+</idea-plugin>
